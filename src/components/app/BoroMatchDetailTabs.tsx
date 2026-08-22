@@ -101,7 +101,32 @@ function PlayerChip({ player, arrow }: { player: { name: string; number: string 
   );
 }
 
+/** FotMob's shot-location graphic: goal frame with the ball's crossing point. */
+function GoalMouth({ mouth, onTarget }: { mouth: { x: number; y: number }; onTarget: boolean }) {
+  const left = Math.min(100, Math.max(0, (mouth.x / 2) * 100));
+  const up = Math.min(100, Math.max(0, mouth.y * 100));
+  const cx = 12 + (left / 100) * 216;
+  const cy = 80 - (up / 100) * 66;
+  return (
+    <div className="mt-2 rounded-lg bg-white/[0.08] px-2.5 py-2">
+      <svg viewBox="0 0 240 92" width="100%" className="mx-auto block max-w-[280px]">
+        {[0.2, 0.4, 0.6, 0.8].map((f) => (
+          <line key={`c${f}`} x1={12 + f * 216} y1={14} x2={12 + f * 216} y2={80} stroke="rgba(255,255,255,.18)" strokeWidth={1} />
+        ))}
+        {[0.33, 0.66].map((f) => (
+          <line key={`r${f}`} x1={12} y1={14 + f * 66} x2={228} y2={14 + f * 66} stroke="rgba(255,255,255,.18)" strokeWidth={1} />
+        ))}
+        <path d="M12 80 L12 14 L228 14 L228 80" fill="none" stroke="rgba(255,255,255,.7)" strokeWidth={3} />
+        <line x1={4} y1={80} x2={236} y2={80} stroke="rgba(255,255,255,.45)" strokeWidth={2} />
+        <circle cx={cx.toFixed(1)} cy={cy.toFixed(1)} r={6} fill={onTarget ? "#E11B22" : "rgba(200,200,200,.7)"} stroke="#fff" strokeWidth={2} />
+      </svg>
+      <div className="mt-1 text-center text-[10px] text-white/60">Shot location</div>
+    </div>
+  );
+}
+
 /** FotMob-style commentary card: minute stamp, narrative sentence, player + metric strip. */
+
 function EventRow({ ev, home, away }: { ev: MatchEventItem; home: string | null; away: string | null }) {
   const isGoal = ev.kind === "goal" || ev.kind === "penalty" || ev.kind === "own-goal";
   const detail = ev.detail ?? null;
