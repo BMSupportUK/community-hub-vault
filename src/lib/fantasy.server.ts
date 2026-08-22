@@ -804,6 +804,19 @@ export async function loadLeaderboard(admin: any, withEmails: boolean): Promise<
       for (const g of gs ?? []) if ((g as any).email) emailMap.set((g as any).id, (g as any).email);
     }
   }
+
+  // Current gameweek = the one in play this week; previous = most recent
+  // completed gameweek that isn't the current one.
+  const gameweeks = await loadGameweeks(admin);
+  const currentId = pickCurrentGameweek(gameweeks);
+  const current = gameweeks.find((g) => g.id === currentId) ?? null;
+  const previous =
+    [...gameweeks].reverse().find((g) => g.status === "final" && g.id !== current?.id) ?? null;
+  const [currentPts, previousPts] = await Promise.all([
+    current ? pointsByEntrant(admin, current.id) : Promise.resolve(new Map<string, number | null>()),
+    previous ? pointsByEntrant(admin, previous.id) : Promise.resolve(new Map<string, number | null>()),
+  ]);
+
   return rows.map((r) => ({
     entrantId: r.entrant_id,
     isGuest: !!r.is_guest,
@@ -815,5 +828,10 @@ export async function loadLeaderboard(admin: any, withEmails: boolean): Promise<
     totalHits: r.total_hits ?? 0,
     gameweeksScored: r.gameweeks_scored ?? 0,
     email: emailMap.get(r.entrant_id) ?? null,
+    currentGwPoints: current ? (currentPts.get(r.entrant_id) ?? null) : null,
+    currentGwNumber: current?.gwNumber ?? null,
+    previousGwPoints: previous ? (previousPts.get(r.entrant_id) ?? null) : null,
+    previousGwNumber: previous?.gwNumber ?? null,
+
   }));
 }
