@@ -432,7 +432,7 @@ export function BoroLiveMatchStrip() {
                     eventId={selectedEventId}
                     slug={selectedSlug}
                     live={isLive}
-                     kickoff={isLive ? selectedFixture?.kickoff ?? null : isFixture ? nf?.kickoff ?? null : null}
+                     kickoff={selectedFixture?.kickoff ?? null}
                     initialDetail={preloadedDetail}
                     fixture={selectedFixture}
                   />
