@@ -312,6 +312,7 @@ function RailIcon({
   badge,
   draggable,
   search,
+  params,
 }: {
   to: string;
   label: string;
@@ -321,6 +322,7 @@ function RailIcon({
   badge?: number;
   draggable?: boolean;
   search?: Record<string, string>;
+  params?: Record<string, string>;
 }) {
   return (
     <TooltipProvider delayDuration={150}>
