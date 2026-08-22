@@ -103,7 +103,11 @@ export async function applyLineupSwapsForGameweek(
         continue;
       }
       used.add(inPick.id);
-      const inPlayer = byId.get(inPick.player_id)!;
+      const inPlayer = byId.get(inPick.player_id);
+      if (!inPlayer) {
+        used.delete(inPick.id);
+        continue;
+      }
 
       const posLabel = wanted.toUpperCase();
       const { error: inErr } = await admin
@@ -188,7 +192,15 @@ export async function syncLineupSwaps(opts?: { ignoreWindow?: boolean }): Promis
   if (pErr) return { ok: false, squadsChanged: 0, swaps: [], skipped: [], error: pErr.message };
   const players = (playerRows ?? []) as PlayerRow[];
 
-  const starterIds = await fetchBoroStarterIds(target['boro_fixtures'], players);
+  let starterIds = await fetchBoroStarterIds(target['boro_fixtures'], players);
+  if (!starterIds) {
+    const { fetchTeamSheetStarterIds } = await import("@/lib/fantasy-team-sheet-lineup.server");
+    starterIds = await fetchTeamSheetStarterIds(
+      supabaseAdmin as unknown as Admin,
+      target['boro_fixtures'].id,
+      players,
+    );
+  }
   if (!starterIds) {
     return {
       ok: true,
