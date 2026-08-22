@@ -90,9 +90,31 @@ export async function fetchEspnDetailInBrowser(input: {
   );
   if (!summary) return null;
 
+  // Hand the raw feed to our server so cron jobs (match day forum thread, live
+  // block, half/full-time replies) can keep updating despite the 403 block.
+  void relaySummary(eventId, slug, summary);
+
   try {
     return normaliseBoroMatchDetail(summary);
   } catch {
     return null;
+  }
+}
+
+let lastRelayAt = 0;
+
+async function relaySummary(eventId: string, slug: string, summary: unknown) {
+  const now = Date.now();
+  if (now - lastRelayAt < 10_000) return;
+  lastRelayAt = now;
+  try {
+    await fetch("/api/public/espn-relay", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ eventId, slug, summary }),
+      keepalive: true,
+    });
+  } catch {
+    /* relaying is best-effort */
   }
 }
