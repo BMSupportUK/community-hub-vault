@@ -340,12 +340,13 @@ export function BoroLiveMatchStrip() {
                 )}
                 <div className="mt-6">
                   <BoroMatchDetailTabs
-                    key={`match-detail-live-v2-${selectedEventId ?? "unknown"}`}
+                    key={`match-detail-live-v3-${selectedEventId ?? selectedFixture?.kickoff ?? "unknown"}`}
                     eventId={selectedEventId}
                     slug={selectedSlug}
                     live={isLive}
                     kickoff={isLive ? live!.kickoff : isFixture ? nf!.kickoff : null}
                     initialDetail={initialDetail}
+                    fixture={selectedFixture}
                   />
                 </div>
 
