@@ -135,12 +135,6 @@ function ChannelPage() {
   const [ignoredProfiles, setIgnoredProfiles] = useState<Record<string, Profile>>({});
   const [selectedToUnblock, setSelectedToUnblock] = useState<Set<string>>(new Set());
 
-  useTalkChannelPresence({
-    userId: user?.id,
-    channelId: channel?.id,
-    track: Boolean(user?.id && channel?.id),
-  });
-
   // Reset selection when the panel closes or list changes
   useEffect(() => {
     if (!ignoredOpen) setSelectedToUnblock(new Set());
@@ -304,6 +298,12 @@ function ChannelPage() {
   const [draft, setDraft] = useState("");
   const [replyTo, setReplyTo] = useState<Message | null>(null);
   const [flashMsgId, setFlashMsgId] = useState<string | null>(null);
+
+  useTalkChannelPresence({
+    userId: user?.id,
+    channelId: channel?.id,
+    track: Boolean(user?.id && channel?.id),
+  });
 
   /** Scroll to the original message of a reply and briefly highlight it. */
   const jumpToMessage = (id: string) => {
