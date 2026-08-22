@@ -210,6 +210,10 @@ function PlayerStatsDialog({
   });
   const data = query.data;
   const matches = data?.matches ?? [];
+  const gameweekMatches = useMemo(
+    () => gameweekNumber == null ? matches.slice(0, 1) : matches.filter((match) => match.gwNumber === gameweekNumber),
+    [matches, gameweekNumber],
+  );
   const pos = (scoringAs ?? (data?.position || "mid")) as FantasyPosition;
   const picked = !!scoringAs && scoringAs !== (data?.position as FantasyPosition | undefined);
   /** Subs score half of every line — apply it to every rate we display. */
@@ -220,11 +224,11 @@ function PlayerStatsDialog({
     () => scoringStatKeys(pos).filter((k) => !isOurScoringStat(k) || k === "minutes"),
     [pos],
   );
-  /** Season totals per stat, with the points each one is worth. */
+  /** Selected gameweek totals per stat, with the points each one is worth. */
   const seasonRows = useMemo(
     () =>
       scoringStatKeys(pos).map((k) => {
-        const total = matches.reduce((s, m) => s + (m.stats[k] ?? 0), 0);
+        const total = gameweekMatches.reduce((s, m) => s + (m.stats[k] ?? 0), 0);
         const rate = scaleRate(statPointsPer(k, pos));
         return {
           key: k,
@@ -235,7 +239,7 @@ function PlayerStatsDialog({
           points: rate == null ? null : Math.round(total * rate * 100) / 100,
         };
       }),
-    [matches, pos, rateMul],
+    [gameweekMatches, pos, rateMul],
   );
   /**
    * "Our points" lines. Minutes on their own score nothing — what we actually
@@ -244,11 +248,11 @@ function PlayerStatsDialog({
    */
   const ourRows = useMemo(() => {
     const rows = seasonRows.filter((r) => isOurScoringStat(r.key) && r.key !== "minutes");
-    const apps = matches.filter((m) => (m.stats.minutes ?? 0) > 0).length;
+    const apps = gameweekMatches.filter((m) => (m.stats.minutes ?? 0) > 0).length;
     const appRate = asSub ? 1 : 2;
     // Star player awards (3 / 2 / 1 pts) are stored as a bonus on the match line.
-    const starPoints = matches.reduce((s, m) => s + (m.stats.bonus ?? 0), 0);
-    const starWins = matches.filter((m) => (m.stats.bonus ?? 0) > 0).length;
+    const starPoints = gameweekMatches.reduce((s, m) => s + (m.stats.bonus ?? 0), 0);
+    const starWins = gameweekMatches.filter((m) => (m.stats.bonus ?? 0) > 0).length;
     return [
       {
         key: "app",
@@ -270,7 +274,7 @@ function PlayerStatsDialog({
         points: Math.round(starPoints * 100) / 100,
       },
     ];
-  }, [seasonRows, matches, asSub]);
+  }, [seasonRows, gameweekMatches, asSub]);
   const espnRows = useMemo(
     () => seasonRows.filter((r) => !isOurScoringStat(r.key)),
     [seasonRows],
@@ -280,17 +284,17 @@ function PlayerStatsDialog({
     const rate = scaleRate(pos === "gk" || pos === "def" ? 4 : pos === "mid" ? 1 : null);
     const rateShort = scaleRate(pos === "gk" || pos === "def" ? 2 : pos === "mid" ? 0.5 : null);
     if (rate == null || rateShort == null) return [];
-    const played = matches.filter((m) => (m.stats.minutes ?? 0) > 0 && (m.stats.goals_conceded ?? 0) === 0);
+    const played = gameweekMatches.filter((m) => (m.stats.minutes ?? 0) > 0 && (m.stats.goals_conceded ?? 0) === 0);
     const full = played.filter((m) => (m.stats.minutes ?? 0) >= 60).length;
     const short = played.length - full;
     return [
       { key: "cs", abbr: "CS", means: "Clean sheet (60+ mins)", total: full, rate, points: Math.round(full * rate * 100) / 100 },
       { key: "cs-", abbr: "CS-", means: "Clean sheet (under 60 mins)", total: short, rate: rateShort, points: Math.round(short * rateShort * 100) / 100 },
     ];
-  }, [matches, pos, rateMul]);
+  }, [gameweekMatches, pos, rateMul]);
   const pointRows = useMemo(
     () =>
-      matches.map((match) => {
+      gameweekMatches.map((match) => {
         const minutes = match.stats.minutes ?? 0;
         const appearance = minutes > 0 ? (asSub ? 1 : 2) : 0;
         const ourStatPoints = scoringStatKeys(pos)
@@ -320,12 +324,9 @@ function PlayerStatsDialog({
           espnPoints: Math.round(espnPoints * 100) / 100,
         };
       }),
-    [matches, pos, asSub, rateMul],
+    [gameweekMatches, pos, asSub, rateMul],
   );
-  const weeklyPointRows = useMemo(
-    () => gameweekNumber == null ? pointRows.slice(0, 1) : pointRows.filter((match) => match.gwNumber === gameweekNumber),
-    [pointRows, gameweekNumber],
-  );
+  const weeklyPointRows = pointRows;
   const ourSeasonPoints = pointRows.reduce((sum, match) => sum + match.ourPoints, 0);
   const espnSeasonPoints = pointRows.reduce((sum, match) => sum + match.espnPoints, 0);
 
@@ -391,7 +392,7 @@ function PlayerStatsDialog({
                       <tr className="border-b border-border text-[11px] uppercase tracking-wide text-muted-foreground">
                         <th className="py-2 pr-2">Abbr</th>
                         <th className="py-2 pr-2">Means</th>
-                        <th className="px-2 py-2 text-right">Season</th>
+                        <th className="px-2 py-2 text-right">Game week</th>
                         <th className="py-2 pl-2 text-right">Pts</th>
                       </tr>
                     </thead>
@@ -450,7 +451,7 @@ function PlayerStatsDialog({
                     </div>
                   </div>
                 <div className="mt-3 flex items-center justify-between rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm">
-                  <span className="font-semibold">Our season total</span>
+                  <span className="font-semibold">Our gameweek total</span>
                   <span className="font-bold tabular-nums text-primary">{ourSeasonPoints} pts</span>
                 </div>
               </TabsContent>
@@ -467,7 +468,7 @@ function PlayerStatsDialog({
                       <tr className="border-b border-border text-[11px] uppercase tracking-wide text-muted-foreground">
                         <th className="py-2 pr-2">Abbr</th>
                         <th className="py-2 pr-2">Means</th>
-                        <th className="px-2 py-2 text-right">Season</th>
+                        <th className="px-2 py-2 text-right">Game week</th>
                         <th className="py-2 pl-2 text-right">Pts</th>
                       </tr>
                     </thead>
@@ -541,7 +542,7 @@ function PlayerStatsDialog({
                   </div>
                 )}
                 <div className="mt-3 flex items-center justify-between rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm">
-                  <span className="font-semibold">ESPN season total</span>
+                  <span className="font-semibold">ESPN gameweek total</span>
                   <span className="font-bold tabular-nums text-primary">{espnSeasonPoints} pts</span>
                 </div>
               </TabsContent>
