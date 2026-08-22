@@ -315,6 +315,7 @@ function ChannelPage() {
   const initialScrollDoneRef = useRef(false);
   const lastReadAtRef = useRef<string | null>(null);
   const firstUnreadRef = useRef<HTMLDivElement | null>(null);
+  const latestMessageRef = useRef<Message | null>(null);
 
   const isAtBottom = () => {
     const el = scrollRef.current;
@@ -408,6 +409,7 @@ function ChannelPage() {
     initialScrollDoneRef.current = false;
     setFirstUnreadId(null);
     lastReadAtRef.current = null;
+    latestMessageRef.current = null;
     setBaselineReadAt(null);
     let cancelled = false;
     (async () => {
@@ -435,6 +437,7 @@ function ChannelPage() {
         .limit(200);
       if (cancelled) return;
       const rows = (data as Message[] | null) ?? [];
+      latestMessageRef.current = rows[rows.length - 1] ?? null;
       setMessages(rows);
       if (user) {
         const mine = [...rows].reverse().find((r) => r.sender_id === user.id);
@@ -467,6 +470,7 @@ function ChannelPage() {
         },
         async (payload) => {
           const m = payload.new as Message;
+          latestMessageRef.current = m;
           setMessages((prev) => (prev.some((p) => p.id === m.id) ? prev : [...prev, m]));
           await loadProfiles([m.sender_id]);
         },
@@ -568,9 +572,12 @@ function ChannelPage() {
     if (!initialScrollDoneRef.current) {
       // First render of this channel: jump to first unread, else bottom.
       const lr = lastReadAtRef.current;
+      // With no saved marker this is the user's first visit, so the first
+      // message from another user is genuinely unread rather than silently
+      // suppressing the divider and every Unread badge.
       const firstUnread = lr
         ? messages.find((m) => m.created_at > lr && m.sender_id !== user?.id)
-        : undefined;
+        : messages.find((m) => m.sender_id !== user?.id);
       if (firstUnread) {
         setFirstUnreadId(firstUnread.id);
         // Defer to next frame so the divider DOM exists before scrolling.
@@ -581,6 +588,8 @@ function ChannelPage() {
         el.scrollTo({ top: el.scrollHeight });
       }
       initialScrollDoneRef.current = true;
+      const latest = messages[messages.length - 1];
+      if (latest) persistLastRead(latest.created_at);
     } else if (isAtBottom()) {
       // New message arrived while user is at the bottom -> follow it.
       el.scrollTo({ top: el.scrollHeight });
@@ -593,8 +602,12 @@ function ChannelPage() {
   useEffect(() => {
     return () => {
       if (!channel || !user) return;
-      const latest = messages[messages.length - 1];
-      if (latest) persistLastRead(latest.created_at);
+      const latest = latestMessageRef.current;
+      if (!latest) return;
+      void supabase.from("channel_reads").upsert(
+        { user_id: user.id, channel_id: channel.id, last_read_at: latest.created_at },
+        { onConflict: "user_id,channel_id" },
+      );
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [channel?.id, user?.id]);
@@ -1189,7 +1202,8 @@ function ChannelPage() {
                 const pickerOpen = emojiPickerId === m.id;
                 const canEdit = isSelf;
                 const showUnreadDivider = m.id === firstUnreadId;
-                const isUnread = !isSelf && !!baselineReadAt && m.created_at > baselineReadAt;
+                const isUnread =
+                  !isSelf && (baselineReadAt === null || m.created_at > baselineReadAt);
 
                 return (
                   <div key={m.id}>
@@ -1248,7 +1262,7 @@ function ChannelPage() {
                         );
                       })()}
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 mb-1">
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
                           <Nameplate
                             id={p?.equipped_nameplate_id}
                             className="inline-flex items-center rounded-md px-2.5 py-0.5 min-w-0 shadow-sm"
