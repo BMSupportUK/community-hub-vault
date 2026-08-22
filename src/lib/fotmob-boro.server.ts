@@ -1,3 +1,4 @@
+import type { FotmobEventDetail, FotmobEventPlayer } from "@/lib/fotmob-boro.types";
 // Server-side Boro match feed. FotMob is used because its data endpoint is
 // reachable from the production worker, unlike ESPN's site API.
 
@@ -237,8 +238,6 @@ export async function fetchFotmobSummary(input: {
     _provider: "fotmob",
   };
 }
-import type { FotmobEventDetail, FotmobEventPlayer } from "@/lib/fotmob-boro.types";
-
 type PlayerMeta = { number: string | null; position: string | null };
 
 function playerMetaMap(detail: any): Map<string, PlayerMeta> {

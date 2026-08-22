@@ -1,3 +1,5 @@
+import type { FotmobEventDetail } from "@/lib/fotmob-boro.types";
+
 // Shared, pure normalisers for ESPN soccer summary (Gamecast) payloads.
 // Used by both the match centre UI feed and the forum auto-poster so the two
 // can never disagree about what happened in a game.
@@ -36,7 +38,7 @@ export type EspnMatchEvent = {
   homeScore: number | null;
   awayScore: number | null;
   /** FotMob presentation detail (shot type, xG, shirt numbers, narrative). */
-  detail?: import("@/lib/fotmob-boro.types").FotmobEventDetail | null;
+  detail?: FotmobEventDetail | null;
 };
 
 export type EspnNormalised = {
@@ -148,6 +150,7 @@ function mapOne(d: any, index: number, nameFor: (id: string | null) => string | 
     shortText,
     shootout: !!d?.shootout,
     scoringPlay: !!d?.scoringPlay,
+    detail: (d?.fotmob ?? null) as FotmobEventDetail | null,
     homeScore: running ? running[0]! : d?.homeScore != null ? Number(d.homeScore) : null,
     awayScore: running ? running[1]! : d?.awayScore != null ? Number(d.awayScore) : null,
   };
