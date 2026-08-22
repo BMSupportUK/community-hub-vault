@@ -447,11 +447,12 @@ export function BoroLiveMatchStrip() {
                   )}
                   {isFixture && (
                     <>
-                      <div>{fmtKickoff(nf!.kickoff, tz)}</div>
-                      {countdown(nf!.kickoff, now) && (
-                        <div className="text-xs text-red-200">Kick-off in {countdown(nf!.kickoff, now)}</div>
+                      <div>{fmtKickoff(previewNf!.kickoff, tz)}</div>
+                      {countdown(previewNf!.kickoff, now) && (
+                        <div className="text-xs text-red-200">Kick-off in {countdown(previewNf!.kickoff, now)}</div>
                       )}
-                      {nf!.venue && <div className="text-xs text-white/85">{nf!.venue}</div>}
+                      {previewNf!.venue && <div className="text-xs text-white/85">{previewNf!.venue}</div>}
+
                     </>
                   )}
                   {!isLive && !isFixture && (
