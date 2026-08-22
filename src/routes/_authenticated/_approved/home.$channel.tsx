@@ -296,6 +296,21 @@ function ChannelPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [draft, setDraft] = useState("");
+  const [replyTo, setReplyTo] = useState<Message | null>(null);
+  const [flashMsgId, setFlashMsgId] = useState<string | null>(null);
+
+  /** Scroll to the original message of a reply and briefly highlight it. */
+  const jumpToMessage = (id: string) => {
+    const el = document.getElementById(`msg-${id}`);
+    if (!el) {
+      toast.error("The original message is no longer available.");
+      return;
+    }
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    setFlashMsgId(id);
+    window.setTimeout(() => setFlashMsgId((cur) => (cur === id ? null : cur)), 2000);
+  };
+
   const [pendingGif, setPendingGif] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [uploadingPaste, setUploadingPaste] = useState(false);
