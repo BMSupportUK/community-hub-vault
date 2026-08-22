@@ -5,6 +5,8 @@ import {
   getBoroMatchCentre,
   type MatchCentreDTO,
 } from "@/lib/boro-match-centre.functions";
+import { getBoroUpcomingFixture, type UpcomingFixtureDTO } from "@/lib/boro-upcoming-fixture.functions";
+
 import type { MatchDetailDTO } from "@/lib/boro-match-detail.types";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
 import { TeamKit } from "@/lib/boro-team-kits";
@@ -68,11 +70,31 @@ function BigSide({ name, logo }: { name: string; logo?: string | null }) {
 
 export function BoroLiveMatchStrip() {
   const fetchData = useServerFn(getBoroMatchCentre);
+  const fetchUpcoming = useServerFn(getBoroUpcomingFixture);
   const tz = useUserTimezone();
   const [data, setData] = useState<MatchCentreDTO | null>(null);
+  const [upcoming, setUpcoming] = useState<UpcomingFixtureDTO>(null);
   const [preloadedDetail, setPreloadedDetail] = useState<MatchDetailDTO | null>(null);
   const [open, setOpen] = useState(false);
+  // Which game the pop-up shows. "auto" follows the live/next/last priority;
+  // the switcher lets you preview the upcoming fixture (line-ups, form, stats)
+  // before kick-off even while the last result is still the headline.
+  const [view, setView] = useState<"auto" | "next" | "last">("auto");
   const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetchUpcoming()
+      .then((u) => {
+        if (!cancelled) setUpcoming(u);
+      })
+      .catch((e) => console.error("[boro-match-centre] upcoming fixture failed", e));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+
 
   useEffect(() => {
     let cancelled = false;
@@ -125,7 +147,35 @@ export function BoroLiveMatchStrip() {
       ? null
       : rawNf;
 
-  const selectedMatch = live ?? nf ?? lr;
+  // The fixture the "Next fixture" tab previews. Normally the match centre's
+  // own nextFixture; when the weekly rollover is still holding this week's game
+  // we fall back to the next unplayed fixture from the fixture list, so the
+  // upcoming game can be previewed straight away.
+  const previewNf =
+    nf && Date.parse(nf.kickoff) > now
+      ? nf
+      : upcoming
+        ? {
+            kickoff: upcoming.kickoff,
+            competition: upcoming.competition,
+            home: upcoming.home,
+            away: upcoming.away,
+            venue: upcoming.venue,
+            homeLogo: null,
+            awayLogo: null,
+            eventId: null,
+            espnSlug: null,
+          }
+        : nf;
+
+  const selectedMatch =
+    view === "next"
+      ? (previewNf ?? live ?? lr)
+      : view === "last"
+        ? (lr ?? live ?? previewNf)
+        : (live ?? nf ?? lr);
+
+
   // Never borrow another fixture's ESPN id — that made a new game show the
   // previous match's line-ups, stats and ratings.
   const selectedEventId = selectedMatch?.eventId ?? null;
@@ -311,7 +361,7 @@ export function BoroLiveMatchStrip() {
             <X className="size-4" />
           </DialogClose>
           {(() => {
-            const m = live ?? nf ?? lr;
+            const m = selectedMatch;
             if (!m) return null;
             const detailStatus = (preloadedDetail?.status ?? "").trim();
             const detailStatusLower = detailStatus.toLowerCase();
@@ -328,9 +378,19 @@ export function BoroLiveMatchStrip() {
               now <= selectedKickoff + 5 * 60 * 60 * 1000;
             // The Gamecast detail feed is fresher than the fixture-list cache.
             // In particular, a half-time score must never be presented as FT.
-            const isLive = !!live || detailIsInProgress;
-            const isFixture = !isLive && !!nf;
+            const showingLiveMatch = !!live && m === live;
+            const isLive = showingLiveMatch || detailIsInProgress;
+            const isFixture = !isLive && !!previewNf && m === previewNf;
             const liveStatus = live?.clock || live?.statusDetail || detailStatus || "Live";
+            const canSwitch = !!previewNf && (!!lr || !!live);
+            const switcher: Array<{ key: "auto" | "next" | "last"; label: string }> = [
+              ...(live ? ([{ key: "auto", label: "Live now" }] as const) : []),
+              ...(previewNf ? ([{ key: "next", label: "Next fixture" }] as const) : []),
+              ...(lr ? ([{ key: "last", label: "Last result" }] as const) : []),
+            ];
+            const activeKey: "auto" | "next" | "last" =
+              view !== "auto" ? view : live ? "auto" : nf ? "next" : "last";
+
             return (
               <div className="p-5 pt-8">
                 <div className="text-center">
@@ -340,6 +400,28 @@ export function BoroLiveMatchStrip() {
                   </div>
                   <div className="mt-1 text-xs text-white/85">{m.competition}</div>
                 </div>
+
+                {canSwitch && (
+                  <div className="mt-4 flex justify-center">
+                    <div className="inline-flex rounded-lg border border-white/15 bg-white/5 p-1">
+                      {switcher.map((s) => (
+                        <button
+                          key={s.key}
+                          type="button"
+                          onClick={() => setView(s.key)}
+                          className={`rounded-md px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition ${
+                            activeKey === s.key
+                              ? "bg-[#E11B22] text-white"
+                              : "text-white/70 hover:text-white hover:bg-white/10"
+                          }`}
+                        >
+                          {s.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
 
                 <div className="mt-5 flex items-start gap-3">
                   <BigSide name={m.home} logo={m.homeLogo} />
@@ -365,19 +447,23 @@ export function BoroLiveMatchStrip() {
                   )}
                   {isFixture && (
                     <>
-                      <div>{fmtKickoff(nf!.kickoff, tz)}</div>
-                      {countdown(nf!.kickoff, now) && (
-                        <div className="text-xs text-red-200">Kick-off in {countdown(nf!.kickoff, now)}</div>
+                      <div>{fmtKickoff(previewNf!.kickoff, tz)}</div>
+                      {countdown(previewNf!.kickoff, now) && (
+                        <div className="text-xs text-red-200">Kick-off in {countdown(previewNf!.kickoff, now)}</div>
                       )}
-                      {nf!.venue && <div className="text-xs text-white/85">{nf!.venue}</div>}
+                      {previewNf!.venue && <div className="text-xs text-white/85">{previewNf!.venue}</div>}
+
                     </>
                   )}
                   {!isLive && !isFixture && (
                     <>
                       <div className="text-xs font-bold uppercase tracking-wider text-white/85">Full time</div>
-                      {lr!.venue && <div className="text-xs text-white/85">{lr!.venue}</div>}
+                      {(m as { venue?: string | null }).venue && (
+                        <div className="text-xs text-white/85">{(m as { venue?: string | null }).venue}</div>
+                      )}
                     </>
                   )}
+
                 </div>
 
                 {live && nf && (
@@ -391,7 +477,7 @@ export function BoroLiveMatchStrip() {
                     eventId={selectedEventId}
                     slug={selectedSlug}
                     live={isLive}
-                     kickoff={isLive ? selectedFixture?.kickoff ?? null : isFixture ? nf?.kickoff ?? null : null}
+                     kickoff={selectedFixture?.kickoff ?? null}
                     initialDetail={preloadedDetail}
                     fixture={selectedFixture}
                   />
