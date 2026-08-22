@@ -5,6 +5,7 @@ import {
   getBoroMatchCentre,
   type MatchCentreDTO,
 } from "@/lib/boro-match-centre.functions";
+import type { MatchDetailDTO } from "@/lib/boro-match-detail.types";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
 import { TeamKit } from "@/lib/boro-team-kits";
 import { Dialog, DialogContent, DialogTitle, DialogClose } from "@/components/ui/dialog";
@@ -69,6 +70,7 @@ export function BoroLiveMatchStrip() {
   const fetchData = useServerFn(getBoroMatchCentre);
   const tz = useUserTimezone();
   const [data, setData] = useState<MatchCentreDTO | null>(null);
+  const [preloadedDetail, setPreloadedDetail] = useState<MatchDetailDTO | null>(null);
   const [open, setOpen] = useState(false);
   const [now, setNow] = useState(() => Date.now());
 
@@ -142,6 +144,52 @@ export function BoroLiveMatchStrip() {
         competition: selectedMatch.competition ?? null,
       }
     : null;
+  const selectedFixtureKey = selectedFixture
+    ? `${selectedFixture.home}|${selectedFixture.away}|${selectedFixture.kickoff}|${selectedEventId ?? ""}`
+    : "";
+
+  // Fetch the Gamecast as soon as the strip knows which fixture it represents.
+  // The dialog can then open instantly with real content rather than briefly
+  // mounting an empty detail panel while the first request is still in flight.
+  useEffect(() => {
+    if (!selectedFixture) {
+      setPreloadedDetail(null);
+      return;
+    }
+
+    const controller = new AbortController();
+    const params = new URLSearchParams({
+      home: selectedFixture.home,
+      away: selectedFixture.away,
+      kickoff: selectedFixture.kickoff,
+    });
+    if (selectedEventId) params.set("eventId", selectedEventId);
+    if (selectedSlug) params.set("slug", selectedSlug);
+    if (selectedFixture.competition) params.set("competition", selectedFixture.competition);
+
+    setPreloadedDetail(null);
+    void fetch(`/api/public/boro-match-detail?${params.toString()}`, {
+      headers: { accept: "application/json" },
+      cache: "no-store",
+      signal: controller.signal,
+    })
+      .then(async (response) => {
+        if (!response.ok) return null;
+        return (await response.json()) as MatchDetailDTO;
+      })
+      .then((detail) => {
+        if (detail && (detail.available || detail.home || detail.away)) {
+          setPreloadedDetail(detail);
+        }
+      })
+      .catch((error: unknown) => {
+        if (!(error instanceof DOMException && error.name === "AbortError")) {
+          console.error("[boro-match-centre] preload failed", error);
+        }
+      });
+
+    return () => controller.abort();
+  }, [selectedFixtureKey, selectedEventId, selectedSlug]);
   const openMatchCentre = () => setOpen(true);
 
   if (!data || (!live && !nf && !lr)) return null;
@@ -310,6 +358,7 @@ export function BoroLiveMatchStrip() {
                     slug={selectedSlug}
                     live={isLive}
                     kickoff={isLive ? live!.kickoff : isFixture ? nf!.kickoff : null}
+                    initialDetail={preloadedDetail}
                     fixture={selectedFixture}
                   />
                 </div>
