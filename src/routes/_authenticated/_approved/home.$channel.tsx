@@ -20,6 +20,9 @@ import {
   Timer,
   MicOff,
   Mic,
+  Reply,
+  CornerUpRight,
+
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -76,6 +79,8 @@ interface Message {
   pinned_at: string | null;
   pinned_by: string | null;
   edited_at?: string | null;
+  reply_to?: string | null;
+
 }
 
 interface Profile {
@@ -291,6 +296,21 @@ function ChannelPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [draft, setDraft] = useState("");
+  const [replyTo, setReplyTo] = useState<Message | null>(null);
+  const [flashMsgId, setFlashMsgId] = useState<string | null>(null);
+
+  /** Scroll to the original message of a reply and briefly highlight it. */
+  const jumpToMessage = (id: string) => {
+    const el = document.getElementById(`msg-${id}`);
+    if (!el) {
+      toast.error("The original message is no longer available.");
+      return;
+    }
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    setFlashMsgId(id);
+    window.setTimeout(() => setFlashMsgId((cur) => (cur === id ? null : cur)), 2000);
+  };
+
   const [pendingGif, setPendingGif] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [uploadingPaste, setUploadingPaste] = useState(false);
@@ -431,7 +451,7 @@ function ChannelPage() {
 
       const { data } = await supabase
         .from("chat_messages")
-        .select("id, channel_id, sender_id, content, created_at, pinned_at, pinned_by")
+        .select("id, channel_id, sender_id, content, created_at, pinned_at, pinned_by, reply_to")
         .eq("channel_id", channel.id)
         .order("created_at", { ascending: true })
         .limit(200);
@@ -652,7 +672,12 @@ function ChannelPage() {
     }
     const { error } = await supabase
       .from("chat_messages")
-      .insert({ channel_id: channel.id, sender_id: user.id, content });
+      .insert({
+        channel_id: channel.id,
+        sender_id: user.id,
+        content,
+        reply_to: replyTo?.id ?? null,
+      });
     if (error) {
       const msg = error.message || "";
       const isPermission =
@@ -668,7 +693,9 @@ function ChannelPage() {
       setPendingGif(originalGif);
     } else {
       setLastSentAt(Date.now());
+      setReplyTo(null);
     }
+
     setSending(false);
   };
 
@@ -1204,6 +1231,10 @@ function ChannelPage() {
                 const showUnreadDivider = m.id === firstUnreadId;
                 const isUnread =
                   !isSelf && (baselineReadAt === null || m.created_at > baselineReadAt);
+                const parent = m.reply_to ? messages.find((x) => x.id === m.reply_to) : undefined;
+                const parentProfile = parent ? profiles[parent.sender_id] : undefined;
+                const parentName =
+                  parentProfile?.display_name ?? parentProfile?.username ?? "Unknown";
 
                 return (
                   <div key={m.id}>
@@ -1220,7 +1251,13 @@ function ChannelPage() {
                         <div className="h-0.5 flex-1 bg-destructive" />
                       </div>
                     )}
-                    <div className={cn("group relative flex items-start gap-3 transition-colors")}>
+                    <div
+                      id={`msg-${m.id}`}
+                      className={cn(
+                        "group relative flex items-start gap-3 rounded-xl transition-colors scroll-mt-24",
+                        flashMsgId === m.id && "ring-2 ring-primary bg-primary/10",
+                      )}
+                    >
                       {(() => {
                         const resolvedAvatar = resolveAvatarUrl(
                           m.sender_id,
@@ -1303,6 +1340,31 @@ function ChannelPage() {
                             </span>
                           )}
                         </div>
+                        {m.reply_to && (
+                          <div className="mb-1 flex items-center gap-2 rounded-lg border border-border/70 bg-surface-2/70 px-2.5 py-1.5 text-xs">
+                            <Reply className="size-3.5 shrink-0 text-primary" />
+                            <span className="shrink-0 font-semibold text-foreground">
+                              {parent ? parentName : "Original message"}
+                            </span>
+                            <span className="min-w-0 flex-1 truncate text-muted-foreground">
+                              {parent
+                                ? /^https?:\/\/\S+$/i.test(parent.content.trim())
+                                  ? "Attachment"
+                                  : parent.content
+                                : "This message is no longer available"}
+                            </span>
+                            {parent && (
+                              <button
+                                type="button"
+                                onClick={() => jumpToMessage(parent.id)}
+                                className="inline-flex shrink-0 items-center gap-1 rounded-md border border-border bg-surface-1 px-2 py-0.5 text-[10px] font-semibold text-foreground hover:bg-surface-2"
+                                title="Jump to original message"
+                              >
+                                <CornerUpRight className="size-3" /> Jump
+                              </button>
+                            )}
+                          </div>
+                        )}
                         <div
                           className={cn(
                             "block w-full rounded-2xl px-3.5 py-2 border shadow-sm",
@@ -1424,6 +1486,18 @@ function ChannelPage() {
                         </button>
                         <button
                           onClick={() => {
+                            setReplyTo(m);
+                            setOpenMenuId(null);
+                            setEmojiPickerId(null);
+                            taRef.current?.focus();
+                          }}
+                          className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-surface-2 border-l border-border"
+                          title="Reply"
+                        >
+                          <Reply className="size-4" />
+                        </button>
+                        <button
+                          onClick={() => {
                             setOpenMenuId(menuOpen ? null : m.id);
                             setEmojiPickerId(null);
                           }}
@@ -1449,6 +1523,16 @@ function ChannelPage() {
 
                         {menuOpen && (
                           <div className="absolute right-0 top-full mt-1 w-48 rounded-lg border border-border bg-popover shadow-lg z-20 py-1 text-sm">
+                            <button
+                              onClick={() => {
+                                setReplyTo(m);
+                                setOpenMenuId(null);
+                                taRef.current?.focus();
+                              }}
+                              className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-surface-2 text-left"
+                            >
+                              <Reply className="size-4" /> Reply
+                            </button>
                             <button
                               onClick={() => {
                                 setEmojiPickerId(m.id);
@@ -1570,6 +1654,37 @@ function ChannelPage() {
       </div>
 
       <div className="p-4 border-t border-border shrink-0">
+        {replyTo && (
+          <div className="mb-2 flex items-center gap-2 rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 text-xs">
+            <Reply className="size-3.5 shrink-0 text-primary" />
+            <span className="shrink-0 font-semibold">
+              Replying to{" "}
+              {profiles[replyTo.sender_id]?.display_name ??
+                profiles[replyTo.sender_id]?.username ??
+                "Unknown"}
+            </span>
+            <span className="min-w-0 flex-1 truncate text-muted-foreground">
+              {/^https?:\/\/\S+$/i.test(replyTo.content.trim()) ? "Attachment" : replyTo.content}
+            </span>
+            <button
+              type="button"
+              onClick={() => jumpToMessage(replyTo.id)}
+              className="inline-flex shrink-0 items-center gap-1 rounded-md border border-border bg-surface-1 px-2 py-0.5 text-[10px] font-semibold hover:bg-surface-2"
+              title="Jump to original message"
+            >
+              <CornerUpRight className="size-3" /> Jump
+            </button>
+            <button
+              type="button"
+              onClick={() => setReplyTo(null)}
+              className="grid size-6 shrink-0 place-items-center rounded-md hover:bg-surface-2"
+              title="Cancel reply"
+              aria-label="Cancel reply"
+            >
+              <X className="size-3.5" />
+            </button>
+          </div>
+        )}
         {pendingGif && (
           <div className="mb-2 flex items-start">
             <div className="relative overflow-hidden rounded-lg border border-border bg-surface-2 p-1">
