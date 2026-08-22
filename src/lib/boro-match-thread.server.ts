@@ -238,7 +238,7 @@ export function buildPreviewBody(fx: FixtureLite, json: any): string {
 
   parts.push(
     comp
-      ? `<p><em>Auto-filled from the ESPN Gamecast.</em></p>`
+      ? `<p><em>Auto-filled from the FotMob live feed.</em></p>`
       : `<p><em>Auto-filled from the fixture list — form, standings and odds will be added automatically once the match data is published.</em></p>`,
   );
 
@@ -490,7 +490,7 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
         /XI<\/strong>/.test(existing.body) ||
         /TV \/ stream/.test(existing.body) ||
         !/Our score prediction/.test(existing.body);
-      // A fixture-only preview gets upgraded in place as soon as ESPN lists the game.
+      // A fixture-only preview gets upgraded in place as soon as FotMob lists the game.
       // Detect it from the body too, so a mis-stamped fingerprint can't lock the
       // preview into the stripped-back version forever.
       const basic =
