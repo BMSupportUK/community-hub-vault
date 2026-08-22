@@ -51,6 +51,7 @@ import { cn } from "@/lib/utils";
 import { DEFAULT_AVATAR_URL } from "@/lib/default-avatar";
 import { Nameplate } from "@/components/app/Nameplate";
 import { useOnlineUsers } from "@/hooks/use-online-users";
+import { useTalkChannelPresence } from "@/hooks/use-talk-channel-presence";
 import { PresenceMiniDot, PresenceMiniLabel } from "@/components/app/PresenceIndicators";
 import { formatLastSeen } from "@/lib/relative-time";
 import { useRoleFlashMap, roleFlashClass, resolveAvatarUrl } from "@/lib/role-flash";
@@ -297,6 +298,12 @@ function ChannelPage() {
   const [draft, setDraft] = useState("");
   const [replyTo, setReplyTo] = useState<Message | null>(null);
   const [flashMsgId, setFlashMsgId] = useState<string | null>(null);
+
+  useTalkChannelPresence({
+    userId: user?.id,
+    channelId: channel?.id,
+    track: Boolean(user?.id && channel?.id),
+  });
 
   /** Scroll to the original message of a reply and briefly highlight it. */
   const jumpToMessage = (id: string) => {
