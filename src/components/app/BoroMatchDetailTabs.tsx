@@ -242,7 +242,7 @@ export function BoroMatchDetailTabs({
             hasLineups = direct.lineups.some((lineup) => lineup.players.length > 0);
           }
         }
-        timer = window.setTimeout(load, live ? 15_000 : armed ? (hasLineups ? 30_000 : 10_000) : 5 * 60_000);
+        timer = window.setTimeout(load, live ? 5_000 : armed ? (hasLineups ? 20_000 : 8_000) : 5 * 60_000);
       } catch (error) {
         console.error(error);
         if (!stopped) {
