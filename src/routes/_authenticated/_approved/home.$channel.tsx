@@ -1231,6 +1231,10 @@ function ChannelPage() {
                 const showUnreadDivider = m.id === firstUnreadId;
                 const isUnread =
                   !isSelf && (baselineReadAt === null || m.created_at > baselineReadAt);
+                const parent = m.reply_to ? messages.find((x) => x.id === m.reply_to) : undefined;
+                const parentProfile = parent ? profiles[parent.sender_id] : undefined;
+                const parentName =
+                  parentProfile?.display_name ?? parentProfile?.username ?? "Unknown";
 
                 return (
                   <div key={m.id}>
