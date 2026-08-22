@@ -436,7 +436,7 @@ function ChannelPage() {
 
       const { data } = await supabase
         .from("chat_messages")
-        .select("id, channel_id, sender_id, content, created_at, pinned_at, pinned_by")
+        .select("id, channel_id, sender_id, content, created_at, pinned_at, pinned_by, reply_to")
         .eq("channel_id", channel.id)
         .order("created_at", { ascending: true })
         .limit(200);
