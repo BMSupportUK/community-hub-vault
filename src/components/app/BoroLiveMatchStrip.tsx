@@ -367,16 +367,15 @@ export function BoroLiveMatchStrip() {
             // In particular, a half-time score must never be presented as FT.
             const showingLiveMatch = !!live && m === live;
             const isLive = showingLiveMatch || detailIsInProgress;
-            const isFixture = !isLive && !!previewNf && m === previewNf;
+            const isFixture = !isLive && !!nf && m === nf;
             const liveStatus = live?.clock || live?.statusDetail || detailStatus || "Live";
-            const canSwitch = !!previewNf && (!!lr || !!live);
-            const switcher: Array<{ key: "auto" | "next" | "last"; label: string }> = [
+            const canSwitch = !!live && !!lr;
+            const switcher: Array<{ key: "auto" | "last"; label: string }> = [
               ...(live ? ([{ key: "auto", label: "Live now" }] as const) : []),
-              ...(previewNf ? ([{ key: "next", label: "Next fixture" }] as const) : []),
               ...(lr ? ([{ key: "last", label: "Last result" }] as const) : []),
             ];
-            const activeKey: "auto" | "next" | "last" =
-              view !== "auto" ? view : live ? "auto" : lrIsRecent ? "last" : nf ? "next" : "last";
+            const activeKey: "auto" | "last" = view !== "auto" ? view : live ? "auto" : "last";
+
 
 
             return (
