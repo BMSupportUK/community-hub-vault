@@ -422,7 +422,9 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
       `https://site.api.espn.com/apis/site/v2/sports/soccer/${espn.slug}/summary?event=${encodeURIComponent(espn.eventId)}`,
     );
   }
-  const hasEspn = !!json;
+  // A response is only useful if it actually carries the competition payload —
+  // an empty/partial ESPN body must not count as "we have the data".
+  const hasEspn = Array.isArray(json?.header?.competitions) && json.header.competitions.length > 0;
   if (!hasEspn) {
     skipped.push(espn ? "ESPN summary unavailable — posted fixture-only preview" : "no ESPN match found — posted fixture-only preview");
     json = {};
@@ -486,7 +488,13 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
         /TV \/ stream/.test(existing.body) ||
         !/Our score prediction/.test(existing.body);
       // A fixture-only preview gets upgraded in place as soon as ESPN lists the game.
-      const upgrade = hasEspn && preview.fingerprint === "preview-basic";
+      // Detect it from the body too, so a mis-stamped fingerprint can't lock the
+      // preview into the stripped-back version forever.
+      const basic =
+        preview.fingerprint === "preview-basic" ||
+        /Auto-filled from the fixture list/.test(existing.body) ||
+        !/Form \(last 5\)/.test(existing.body);
+      const upgrade = hasEspn && basic;
       const rebuilt = legacy || upgrade ? buildPreviewBody(fx, json) : stripLiveBlock(existing.body);
       if (rebuilt !== existing.body) {
         const { error: upErr } = await supabaseAdmin
