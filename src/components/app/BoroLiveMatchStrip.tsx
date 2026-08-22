@@ -149,13 +149,13 @@ export function BoroLiveMatchStrip() {
 
 
 
-  // Never borrow another fixture's ESPN id — that made a new game show the
+  // Never borrow another fixture's live-feed id — that made a new game show the
   // previous match's line-ups, stats and ratings.
   const selectedEventId = selectedMatch?.eventId ?? null;
   const selectedSlug = selectedMatch?.espnSlug ?? null;
-  // When the cached ESPN id is missing the pop-up can still resolve the feed
+  // When the cached live-feed id is missing the pop-up can still resolve the feed
   // from the fixture itself (teams + kick-off), so it no longer sits on
-  // "Awaiting kick-off" while ESPN has the game live.
+  // "Awaiting kick-off" while FotMob has the game live.
   const selectedFixture = selectedMatch
     ? {
         home: selectedMatch.home,
@@ -203,18 +203,9 @@ export function BoroLiveMatchStrip() {
         const detail = response.ok ? ((await response.json()) as MatchDetailDTO) : null;
         if (detail && (detail.available || detail.home || detail.away)) setPreloadedDetail(detail);
 
-        // During a live game, fetch directly from the visitor's connection on
-        // every cycle. This also relays the raw summary to the backend, so the
-        // pinned forum post updates even when nobody opens the match popup.
-        if (live?.inPlay) {
-          const { fetchEspnDetailInBrowser } = await import("@/lib/boro-match-detail-client");
-          const direct = await fetchEspnDetailInBrowser({
-            eventId: selectedEventId,
-            slug: selectedSlug,
-            fixture: selectedFixture,
-          });
-          if (direct) setPreloadedDetail(direct);
-        }
+        // No browser relay is needed: FotMob is fetched server-side, so the
+        // endpoint above already returns live data on every 5s cycle.
+
       } catch (error: unknown) {
         if (!(error instanceof DOMException && error.name === "AbortError")) {
           console.error("[boro-match-centre] preload failed", error);

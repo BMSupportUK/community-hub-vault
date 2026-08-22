@@ -6,9 +6,9 @@ import { PLAYER_STAT_COLUMNS, describeEspnEvent } from "@/lib/boro-espn-events";
 
 type StatColumn = { key: string; label: string; title: string };
 
-// FotMob and ESPN record different player stats (FotMob adds a rating and
-// minutes played but has no shots-faced/goals-conceded splits), so the table
-// columns follow whatever the active feed actually reports.
+// Table columns follow whatever the FotMob feed actually reports for a match
+// (it records a rating and minutes played), so empty columns are never shown.
+
 const STAT_CATALOGUE: StatColumn[] = [
   { key: "rating", label: "RTG", title: "Match rating" },
   { key: "minutesPlayed", label: "MIN", title: "Minutes played" },
@@ -185,7 +185,7 @@ export function BoroMatchDetailTabs({
   live: boolean;
   kickoff?: string | null;
   initialDetail?: MatchDetailDTO | null;
-  /** Fallback identity so the feed can be resolved without a cached ESPN id. */
+  /** Fallback identity so the feed can be resolved without a cached live-feed id. */
   fixture?: { home: string; away: string; kickoff: string; competition?: string | null } | null;
 }) {
   const [showMoreStats, setShowMoreStats] = useState(false);
@@ -198,7 +198,7 @@ export function BoroMatchDetailTabs({
   const koMs = kickoff ? Date.parse(kickoff) : NaN;
   const minsToKo = Number.isFinite(koMs) ? Math.round((koMs - now) / 60000) : null;
   const preMatch = !live && minsToKo !== null && minsToKo > -5;
-  // Within 3 hours of kick-off we poll hard so line-ups/stats land the moment ESPN publishes them.
+  // Within 3 hours of kick-off we poll hard so line-ups/stats land the moment FotMob publishes them.
   const armed = live || (preMatch && minsToKo! <= 180);
 
   const fixtureKey = fixture ? `${fixture.home}|${fixture.away}|${fixture.kickoff}` : "";
@@ -249,27 +249,12 @@ export function BoroMatchDetailTabs({
         if (stopped) return;
         setDetail((current) => mergeMatchDetail(current, next));
         setLoading(false);
-        let hasLineups = next.lineups.some((lineup) => lineup.players.length > 0);
+        const hasLineups = next.lineups.some((lineup) => lineup.players.length > 0);
 
-        // ESPN refuses our server's IP (403) in production, so the server answer
-        // can be completely empty. The visitor's browser is not blocked — fetch
-        // the same Gamecast feed directly and merge it in.
-        // While the game is in play, always go direct from the browser so the
-        // panel reflects ESPN as it happens rather than the relayed cache.
-        if (live || (!hasLineups && !next.teamStats.length)) {
-          const { fetchEspnDetailInBrowser } = await import("@/lib/boro-match-detail-client");
-          const direct = await fetchEspnDetailInBrowser({
-            eventId: next.eventId ?? eventId ?? resolvedEventId,
-            slug: next.slug ?? slug ?? null,
-            fixture: fixture ?? null,
-          });
-          if (stopped) return;
-          if (direct) {
-            setDetail((current) => mergeMatchDetail(current, direct));
-            hasLineups = direct.lineups.some((lineup) => lineup.players.length > 0);
-          }
-        }
+        // FotMob is fetched server-side, so there is no browser fallback and no
+        // relay: each poll below returns the live feed as it happens.
         timer = window.setTimeout(load, live ? 5_000 : armed ? (hasLineups ? 20_000 : 8_000) : 5 * 60_000);
+
       } catch (error) {
         console.error(error);
         if (!stopped) {
