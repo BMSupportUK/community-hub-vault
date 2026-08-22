@@ -110,12 +110,12 @@ function EventRow({ ev, home, away }: { ev: MatchEventItem; home: string | null;
   );
 }
 
-function StatHead() {
+function StatHead({ columns }: { columns: StatColumn[] }) {
   return (
     <thead className="text-[10px] uppercase text-white/70">
       <tr>
         <th className="px-3 py-1.5 text-left">Player</th>
-        {STAT_COLUMNS.map((c) => (
+        {columns.map((c) => (
           <th key={c.key} title={c.title} className="px-1.5 py-1.5 text-center">
             {c.label}
           </th>
@@ -125,7 +125,7 @@ function StatHead() {
   );
 }
 
-function PlaceholderRows({ rows }: { rows: number }) {
+function PlaceholderRows({ rows, columns }: { rows: number; columns: StatColumn[] }) {
   return (
     <tbody>
       {Array.from({ length: rows }).map((_, i) => (
@@ -136,7 +136,7 @@ function PlaceholderRows({ rows }: { rows: number }) {
               <span className="h-3 w-24 rounded bg-white/[0.16]" />
             </span>
           </td>
-          {STAT_COLUMNS.map((c) => (
+          {columns.map((c) => (
             <td key={c.key} className="px-1.5 py-1.5 text-center text-white/50">
               –
             </td>
@@ -147,7 +147,7 @@ function PlaceholderRows({ rows }: { rows: number }) {
   );
 }
 
-function PlayerRow({ p }: { p: PlayerLine }) {
+function PlayerRow({ p, columns }: { p: PlayerLine; columns: StatColumn[] }) {
   return (
     <tr className="border-t border-white/15">
       <td className="py-1.5 pr-2 whitespace-nowrap">
@@ -163,7 +163,7 @@ function PlayerRow({ p }: { p: PlayerLine }) {
           {p.subbedOut && <span className="text-[10px] font-bold text-red-300">OUT</span>}
         </span>
       </td>
-      {STAT_COLUMNS.map((c) => (
+      {columns.map((c) => (
         <td key={c.key} className="px-1.5 py-1.5 text-center tabular-nums text-white/90">
           {p.stats[c.key] ?? "0"}
         </td>
@@ -511,7 +511,7 @@ export function BoroMatchDetailTabs({
             ] as const
           ).map((cfg) => (
             <TabsContent key={cfg.value} value={cfg.value} className="mt-4">
-              <LineupPanel side={cfg.side} starters={cfg.starters} team={cfg.team} />
+              <LineupPanel side={cfg.side} starters={cfg.starters} team={cfg.team} columns={statColumns} />
             </TabsContent>
           ))}
         </Tabs>
@@ -524,10 +524,12 @@ function LineupPanel({
   side,
   starters,
   team,
+  columns,
 }: {
   side: "Home" | "Away";
   starters: boolean;
   team: MatchDetailDTO["lineups"][number] | null;
+  columns: StatColumn[];
 }) {
   const label = starters ? `${side} XI` : `${side} substitutes`;
   const players = (team?.players ?? [])
@@ -564,15 +566,15 @@ function LineupPanel({
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-[12px]">
-            <StatHead />
+            <StatHead columns={columns} />
             {players.length ? (
               <tbody>
                 {players.map((p) => (
-                  <PlayerRow key={p.id} p={p} />
+                  <PlayerRow key={p.id} p={p} columns={columns} />
                 ))}
               </tbody>
             ) : (
-              <PlaceholderRows rows={starters ? 11 : 7} />
+              <PlaceholderRows rows={starters ? 11 : 7} columns={columns} />
             )}
           </table>
         </div>
