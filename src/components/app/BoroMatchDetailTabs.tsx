@@ -6,9 +6,9 @@ import { PLAYER_STAT_COLUMNS, describeEspnEvent } from "@/lib/boro-espn-events";
 
 type StatColumn = { key: string; label: string; title: string };
 
-// FotMob records a rating and minutes played, so table columns are resolved from
-// minutes played but has no shots-faced/goals-conceded splits), so the table
-// columns follow whatever the active feed actually reports.
+// Table columns follow whatever the FotMob feed actually reports for a match
+// (it records a rating and minutes played), so empty columns are never shown.
+
 const STAT_CATALOGUE: StatColumn[] = [
   { key: "rating", label: "RTG", title: "Match rating" },
   { key: "minutesPlayed", label: "MIN", title: "Minutes played" },
