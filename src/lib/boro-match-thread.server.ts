@@ -1,4 +1,4 @@
-// Auto-fills the Middlesbrough match day forum thread from the ESPN Gamecast:
+// Auto-fills the Middlesbrough match day forum thread from the FotMob live feed:
 //  1. A single pre-match FIRST REPLY (never a new topic) by "Boro Match Day
 //     Author" ~24h before kick-off: competition, kick-off, venue, TV, league
 //     positions, form, head-to-head, odds, referee and text line-ups.
@@ -8,7 +8,7 @@
 // excluded — the team-sheet job posts the official graphic instead.
 
 import { matchTopicToFixture, type FixtureLite } from "@/lib/boro-team-sheet.server";
-import { findEspnEvent } from "@/lib/boro-match-events.server";
+
 import {
   normaliseEspnSummary,
   describeEspnEvent,
