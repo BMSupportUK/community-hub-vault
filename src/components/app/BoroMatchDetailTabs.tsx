@@ -197,7 +197,12 @@ export function BoroMatchDetailTabs({
           cache: "no-store",
         });
         if (!response.ok) throw new Error(`Match data request failed (${response.status})`);
-        let next = (await response.json()) as MatchDetailDTO;
+        let next = (await response.json()) as MatchDetailDTO & { eventId?: string; slug?: string };
+        if (next.eventId) {
+          directId = next.eventId;
+          directSlug = next.slug || directSlug;
+          setResolvedEventId(next.eventId);
+        }
         if (!next.available) next = await loadDirect();
         if (stopped) return;
         setDetail(next);
