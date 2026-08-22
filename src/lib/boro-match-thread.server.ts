@@ -427,16 +427,26 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
   const usable = (candidate: any) =>
     Array.isArray(candidate?.header?.competitions) && candidate.header.competitions.length > 0;
 
-  // ESPN blocks our server IPs (403), so fall back to the summary relayed from
-  // visitors' browsers by the Fan Zone match centre.
-  if (!usable(json)) {
-    const { getCachedEspnSummary, getCachedSummaryForFixture } = await import("@/lib/espn-summary-cache.server");
-    const cached = espn ? await getCachedEspnSummary(espn.eventId) : null;
-    const relayed = usable(cached) ? cached : await getCachedSummaryForFixture(fx);
-    if (usable(relayed)) {
-      json = relayed;
-      skipped.push("used relayed ESPN summary (server IP blocked)");
-    }
+  // Prefer the browser-relayed summary whenever it is further through the game
+  // or carries richer live data. ESPN sometimes gives our server a valid-looking
+  // but stale pre-match response, which previously prevented this fallback.
+  const { getCachedEspnSummary, getCachedSummaryForFixture } = await import("@/lib/espn-summary-cache.server");
+  const cached = espn ? await getCachedEspnSummary(espn.eventId) : null;
+  const relayed = usable(cached) ? cached : await getCachedSummaryForFixture(fx);
+  const summaryRank = (candidate: any) => {
+    if (!usable(candidate)) return -1;
+    const comp = candidate.header.competitions[0];
+    const state = String(comp?.status?.type?.state ?? "pre");
+    const stateScore = state === "post" ? 3000 : state === "in" ? 2000 : 1000;
+    const eventScore = Array.isArray(candidate?.plays) ? candidate.plays.length : 0;
+    const statScore = Array.isArray(candidate?.boxscore?.teams)
+      ? candidate.boxscore.teams.reduce((count: number, team: any) => count + (team?.statistics?.length ?? 0), 0)
+      : 0;
+    return stateScore + eventScore + statScore;
+  };
+  if (usable(relayed) && summaryRank(relayed) >= summaryRank(json)) {
+    json = relayed;
+    skipped.push("used freshest relayed ESPN summary");
   }
 
   const hasEspn = usable(json);
