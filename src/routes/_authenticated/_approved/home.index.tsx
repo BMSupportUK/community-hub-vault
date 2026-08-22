@@ -86,28 +86,12 @@ function WelcomePage() {
 
   const [order, setOrder] = useState<string[]>(Object.keys(CARDS));
   const [saving, setSaving] = useState(false);
-  const [unreadWelcome, setUnreadWelcome] = useState(0);
+  const [welcomeOnlineCount, setWelcomeOnlineCount] = useState(0);
   const welcomeChannelIdRef = useRef<string | null>(null);
-  const lastReadWelcomeRef = useRef<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    let messageSub: RealtimeChannel | null = null;
-    let readSub: RealtimeChannel | null = null;
-
-    const refreshCount = async () => {
-      const cid = welcomeChannelIdRef.current;
-      if (!cid || !user?.id) return;
-      const query = supabase
-        .from("chat_messages")
-        .select("id", { count: "exact", head: true })
-        .eq("channel_id", cid);
-      if (lastReadWelcomeRef.current) {
-        query.gt("created_at", lastReadWelcomeRef.current);
-      }
-      const { count } = await query;
-      if (!cancelled) setUnreadWelcome(count ?? 0);
-    };
+    let presenceSub: RealtimeChannel | null = null;
 
     const load = async () => {
       if (!user?.id) return;
@@ -118,51 +102,39 @@ function WelcomePage() {
         .maybeSingle();
       if (!channel || cancelled) return;
       welcomeChannelIdRef.current = channel.id;
-      const { data: read } = await supabase
-        .from("channel_reads")
-        .select("last_read_at")
-        .eq("user_id", user.id)
-        .eq("channel_id", channel.id)
-        .maybeSingle();
-      lastReadWelcomeRef.current = read?.last_read_at ?? null;
-      await refreshCount();
-      if (cancelled) return;
 
-      messageSub = supabase
-        .channel(`home-welcome-messages:${channel.id}`)
-        .on(
-          "postgres_changes",
-          { event: "INSERT", schema: "public", table: "chat_messages", filter: `channel_id=eq.${channel.id}` },
-          () => {
-            if (lastReadWelcomeRef.current) {
-              void refreshCount();
-            } else {
-              setUnreadWelcome((n) => n + 1);
-            }
-          }
-        )
-        .subscribe();
+      const syncCount = () => {
+        if (!presenceSub) return;
+        const state = presenceSub.presenceState();
+        const count = Object.keys(state).length;
+        if (!cancelled) setWelcomeOnlineCount(count);
+      };
 
-      readSub = supabase
-        .channel(`home-welcome-reads:${channel.id}`)
-        .on(
-          "postgres_changes",
-          { event: "*", schema: "public", table: "channel_reads", filter: `channel_id=eq.${channel.id}` },
-          (payload) => {
-            const row = payload.new as { user_id: string; last_read_at: string } | undefined;
-            if (row?.user_id !== user?.id) return;
-            lastReadWelcomeRef.current = row?.last_read_at ?? null;
-            void refreshCount();
+      presenceSub = supabase
+        .channel(`presence:welcome:${channel.id}`, {
+          config: { presence: { key: user.id } },
+        })
+        .on("presence", { event: "sync" }, syncCount)
+        .on("presence", { event: "join" }, syncCount)
+        .on("presence", { event: "leave" }, syncCount)
+        .subscribe(async (status) => {
+          if (status === "SUBSCRIBED") {
+            await presenceSub?.track({
+              user_id: user.id,
+              online_at: new Date().toISOString(),
+            });
+            syncCount();
           }
-        )
-        .subscribe();
+        });
     };
 
     load();
     return () => {
       cancelled = true;
-      if (messageSub) supabase.removeChannel(messageSub);
-      if (readSub) supabase.removeChannel(readSub);
+      if (presenceSub) {
+        presenceSub.untrack().catch(() => {});
+        supabase.removeChannel(presenceSub);
+      }
     };
   }, [user?.id]);
 
@@ -281,13 +253,13 @@ function WelcomePage() {
             Open BM Support Customer Chat-room →
             <span
               className={`inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 rounded-full text-[10px] font-bold tabular-nums transition-colors ${
-                unreadWelcome > 0
-                  ? "bg-red-500 text-white animate-unread-flash"
+                welcomeOnlineCount > 0
+                  ? "bg-emerald-500 text-white"
                   : "bg-muted text-muted-foreground"
               }`}
-              aria-label={unreadWelcome > 0 ? `${unreadWelcome} unread messages` : "No unread messages"}
+              aria-label={welcomeOnlineCount > 0 ? `${welcomeOnlineCount} users in chat` : "No users in chat"}
             >
-              {unreadWelcome}
+              {welcomeOnlineCount}
             </span>
           </Link>
         </div>
