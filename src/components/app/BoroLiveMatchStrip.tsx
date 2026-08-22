@@ -203,18 +203,9 @@ export function BoroLiveMatchStrip() {
         const detail = response.ok ? ((await response.json()) as MatchDetailDTO) : null;
         if (detail && (detail.available || detail.home || detail.away)) setPreloadedDetail(detail);
 
-        // During a live game, fetch directly from the visitor's connection on
-        // every cycle. This also relays the raw summary to the backend, so the
-        // pinned forum post updates even when nobody opens the match popup.
-        if (live?.inPlay) {
-          const { fetchEspnDetailInBrowser } = await import("@/lib/boro-match-detail-client");
-          const direct = await fetchEspnDetailInBrowser({
-            eventId: selectedEventId,
-            slug: selectedSlug,
-            fixture: selectedFixture,
-          });
-          if (direct) setPreloadedDetail(direct);
-        }
+        // No browser relay is needed: FotMob is fetched server-side, so the
+        // endpoint above already returns live data on every 5s cycle.
+
       } catch (error: unknown) {
         if (!(error instanceof DOMException && error.name === "AbortError")) {
           console.error("[boro-match-centre] preload failed", error);
