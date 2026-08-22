@@ -34,7 +34,11 @@ export const Route = createFileRoute("/api/public/boro-match-detail")({
         let eventId = parsed.data.eventId ?? null;
         let slug = parsed.data.slug;
 
-        if (!eventId && parsed.data.home && parsed.data.away && parsed.data.kickoff) {
+        // Resolve from the fixture even when a cached id exists. This verifies
+        // both the event id and the competition slug, preventing a new cup tie
+        // from being queried through the default Championship feed (or an old
+        // fixture id being reused after the weekly rollover).
+        if (parsed.data.home && parsed.data.away && parsed.data.kickoff) {
           const { resolveEspnEvent } = await import("@/lib/boro-espn-resolve.server");
           const resolved = await resolveEspnEvent({
             home: parsed.data.home,

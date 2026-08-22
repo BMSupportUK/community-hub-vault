@@ -12,6 +12,7 @@ const COMPETITIONS: Array<{ slug: string; match: RegExp }> = [
   { slug: "eng.league_cup", match: /carabao|league cup|efl cup/i },
   { slug: "eng.fa", match: /fa cup/i },
   { slug: "eng.trophy", match: /trophy/i },
+  { slug: "club.friendly", match: /friendly/i },
 ];
 
 export type ResolvedEspnEvent = { eventId: string; slug: string };
@@ -45,6 +46,7 @@ export async function resolveEspnEvent(input: {
   const dates = espnDateRange(ko - 86_400_000, ko + 86_400_000);
   const wanted = [norm(input.home), norm(input.away)];
 
+  let best: { value: ResolvedEspnEvent; distance: number } | null = null;
   for (const slug of slugOrder(input.competition)) {
     const json = (await espnJson(
       `https://site.api.espn.com/apis/site/v2/sports/soccer/${slug}/scoreboard?dates=${dates}&limit=400`,
@@ -55,13 +57,22 @@ export async function resolveEspnEvent(input: {
       const names = competitors.map((c) => norm(String(c?.team?.displayName ?? "")));
       const hitBoth = wanted.every((w) => names.some((n) => n.includes(w) || w.includes(n)));
       if (!hitBoth || !ev?.id) continue;
-      if (Math.abs(Date.parse(ev.date) - ko) > 2 * 86_400_000) continue;
+      const distance = Math.abs(Date.parse(ev.date) - ko);
+      if (!Number.isFinite(distance) || distance > 2 * 86_400_000) continue;
       const value = { eventId: String(ev.id), slug };
-      cache.set(key, { at: Date.now(), value });
-      return value;
+      if (!best || distance < best.distance) best = { value, distance };
     }
   }
 
-  cache.set(key, { at: Date.now(), value: null });
+  if (best) {
+    cache.set(key, { at: Date.now(), value: best.value });
+    return best.value;
+  }
+
+  // Do not hold a negative lookup near kick-off: providers can publish an
+  // event or recover from a temporary refusal between consecutive polls.
+  if (Math.abs(ko - Date.now()) > 6 * 60 * 60 * 1000) {
+    cache.set(key, { at: Date.now(), value: null });
+  }
   return null;
 }
