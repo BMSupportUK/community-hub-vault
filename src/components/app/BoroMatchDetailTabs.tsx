@@ -184,6 +184,12 @@ function EventRow({ ev, home, away }: { ev: MatchEventItem; home: string | null;
         </div>
       )}
 
+      {isGoal && detail?.goalMouth ? (
+        <GoalMouth mouth={detail.goalMouth} onTarget={detail.onTarget !== false} />
+      ) : null}
+
+
+
       {scoreLine && (
         <span className="mt-2 inline-block rounded bg-white/[0.16] px-1.5 py-0.5 text-[11px] font-bold tabular-nums text-white/95">
           {scoreLine}
