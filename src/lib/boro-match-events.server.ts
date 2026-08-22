@@ -135,7 +135,7 @@ function buildFotmobCard(ev: ParsedEvent, isUpdate: boolean): string {
   const d = ev.detail!;
   const parts: string[] = [];
   parts.push(
-    `<p style="margin:0 0 6px"><strong>${escapeHtml(d.minuteLabel || ev.clock || "")} ${escapeHtml(
+    `<p style="margin:0 0 6px"><strong>${escapeHtml(d.minuteLabel || ev.clock || "")} ${ICON[ev.kind] ?? ""} ${escapeHtml(
       `${isUpdate ? "Updated: " : ""}${d.headline}`,
     )}</strong>${d.teamName ? ` <span style="opacity:.75">· ${escapeHtml(d.teamName)}</span>` : ""}</p>`,
   );
