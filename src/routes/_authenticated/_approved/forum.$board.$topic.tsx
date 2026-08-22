@@ -882,7 +882,7 @@ function TopicPage() {
         );
 
         return (
-          <Tabs value={tab} onValueChange={(v) => setTab(v as "posts" | "reply")} className="w-full">
+          <Tabs value={tab} onValueChange={(v) => setTab(v as "posts" | "reply" | "teams")} className="w-full">
             <div className="mb-3">
               <ForumPoll
                 topicId={topic.id}
