@@ -10,6 +10,7 @@ import {
   type EspnMatchEvent,
 } from "@/lib/boro-espn-events";
 import { espnJson, espnDateRange } from "@/lib/espn-fetch";
+import type { FotmobEventDetail } from "@/lib/fotmob-boro.types";
 
 const SLUGS = ["eng.2", "eng.fa", "eng.league_cup", "eng.trophy"];
 const ESPN_TEAM_ID = "369"; // Middlesbrough
@@ -236,21 +237,53 @@ ${head}${players}${score}${assist}${narrative}${metrics}${diagram}${note}
 }
 
 
+const HEADLINE: Partial<Record<ParsedEvent["kind"], string>> = {
+  goal: "Goal!",
+  penalty: "Penalty scored!",
+  "penalty-missed": "Penalty missed",
+  "own-goal": "Own goal",
+  red: "Red card",
+  yellow: "Yellow card",
+  sub: "Substitution",
+  var: "VAR check",
+  "shootout-scored": "Shootout — scored",
+  "shootout-missed": "Shootout — missed",
+};
+
+/**
+ * Every matchday event renders in the FotMob-style card. When the live source
+ * gives us no FotMob detail block (e.g. ESPN fallback), synthesise the same
+ * shape from the base event so the thread layout never changes between games.
+ */
+function detailFromEvent(ev: ParsedEvent, fx: FixtureLite): FotmobEventDetail {
+  const player = (name: string | null | undefined) =>
+    name ? { name, number: null, position: null } : null;
+  const narrative = ev.text && ev.text !== ev.shortText ? ev.text : ev.shortText || "";
+  const isGoal = ev.kind === "goal" || ev.kind === "own-goal" || ev.kind === "penalty";
+  return {
+    minuteLabel: ev.clock ?? "",
+    headline: HEADLINE[ev.kind] ?? (ev.shortText || describeEvent(ev, fx)),
+    narrative,
+    teamName: ev.teamName,
+    isHome: !!ev.teamName && ev.teamName === fx.home_team,
+    player: ev.kind === "sub" ? null : player(ev.players[0]),
+    playerIn: player(ev.playerIn),
+    playerOut: player(ev.playerOut),
+    assist: ev.assist,
+    shotType: null,
+    xg: null,
+    xgot: null,
+    card: ev.kind === "yellow" ? "Yellow" : ev.kind === "red" ? "Red" : null,
+    teamColor: ev.teamName === "Middlesbrough" ? "#E11B22" : null,
+    scoreLine: isGoal ? scoreLine(ev, fx) : null,
+    goalMouth: null,
+    onTarget: null,
+  };
+}
+
 export function buildEventBody(ev: ParsedEvent, fx: FixtureLite, isUpdate: boolean): string {
   if (ev.detail) return buildFotmobCard(ev, isUpdate);
-  const heading = `${ICON[ev.kind] ?? "\u2022"} ${isUpdate ? "Updated: " : ""}${describeEvent(ev, fx)}`;
-  const parts = [`<p><strong>${escapeHtml(heading)}</strong></p>`];
-  const score = scoreLine(ev, fx);
-  if (score && (ev.kind === "goal" || ev.kind === "own-goal" || ev.kind === "penalty")) {
-    parts.push(`<p>${escapeHtml(score)}</p>`);
-  }
-  if (ev.text && ev.text !== ev.shortText) {
-    parts.push(`<p>${escapeHtml(ev.text)}</p>`);
-  }
-  if (isUpdate) {
-    parts.push(`<p><em>This corrects the earlier post for this incident.</em></p>`);
-  }
-  return parts.join("\n");
+  return buildFotmobCard({ ...ev, detail: detailFromEvent(ev, fx) }, isUpdate);
 }
 
 
@@ -328,14 +361,29 @@ export async function syncBoroMatchEvents(opts?: {
 
   const { data: logged } = await supabaseAdmin
     .from("boro_match_event_posts")
-    .select("id, event_key, fingerprint, revision, post_id")
+    .select("id, event_key, fingerprint, revision, post_id, kind, summary")
     .eq("fixture_id", fx.id);
-  const byKey = new Map(
-    ((logged ?? []) as Array<{ id: string; event_key: string; fingerprint: string; revision: number; post_id: string }>).map((r) => [
-      r.event_key,
-      r,
-    ]),
-  );
+  type LoggedRow = {
+    id: string;
+    event_key: string;
+    fingerprint: string;
+    revision: number;
+    post_id: string;
+    kind: string;
+    summary: string | null;
+  };
+  const loggedRows = (logged ?? []) as LoggedRow[];
+  const byKey = new Map(loggedRows.map((r) => [r.event_key, r]));
+  // Live sources issue different event ids for the same incident (ESPN vs
+  // FotMob), so also index each logged reply by what it describes. That lets a
+  // mid-match source switch adopt the existing reply instead of double-posting.
+  const identity = (kind: string, summary: string | null | undefined) =>
+    `${kind}|${(summary ?? "").split(" (")[0]!.trim().toLowerCase()}`;
+  const byIdentity = new Map<string, LoggedRow>();
+  for (const row of loggedRows) {
+    const id = identity(row.kind, row.summary);
+    if (row.summary && !byIdentity.has(id)) byIdentity.set(id, row);
+  }
 
   const authorId = (await getMatchDayAuthorId()) ?? topic.author_id;
 
@@ -344,12 +392,16 @@ export async function syncBoroMatchEvents(opts?: {
 
   for (const ev of events) {
     const fingerprint = `${ev.kind}|${ev.clock ?? ""}|${ev.teamName ?? ""}|${ev.players.join("/")}|${ev.homeScore ?? ""}-${ev.awayScore ?? ""}`;
-    const prev = byKey.get(ev.key);
-    if (prev && prev.fingerprint === fingerprint && !opts?.rebuild) continue;
+    const summary = describeEvent(ev, fx);
+    const evIdentity = identity(ev.kind, summary);
+    const prev = byKey.get(ev.key) ?? byIdentity.get(evIdentity);
+    // Same incident already logged under a different source's event id.
+    const adopted = !!prev && prev.event_key !== ev.key;
+    if (prev && prev.fingerprint === fingerprint && !adopted && !opts?.rebuild) continue;
 
-    // Rebuild mode: rewrite the existing reply in place so the thread shows the
-    // FotMob layout without duplicating the incident.
-    if (prev && opts?.rebuild && prev.post_id) {
+    // Rebuild mode (or an adopted incident): rewrite the existing reply in place
+    // so the thread shows the current layout without duplicating the incident.
+    if (prev && (opts?.rebuild || adopted) && prev.post_id) {
       const { error: bodyErr } = await supabaseAdmin
         .from("forum_posts")
         .update({ body: buildEventBody(ev, fx, false) })
@@ -360,8 +412,10 @@ export async function syncBoroMatchEvents(opts?: {
       }
       await supabaseAdmin
         .from("boro_match_event_posts")
-        .update({ fingerprint, summary: describeEvent(ev, fx), updated_at: new Date().toISOString() })
+        .update({ event_key: ev.key, clock: ev.clock, fingerprint, summary, updated_at: new Date().toISOString() })
         .eq("id", prev.id);
+      byKey.set(ev.key, { ...prev, event_key: ev.key, fingerprint, summary });
+      byIdentity.set(evIdentity, { ...prev, event_key: ev.key, fingerprint, summary });
       updated += 1;
       continue;
     }
@@ -385,7 +439,7 @@ export async function syncBoroMatchEvents(opts?: {
           post_id: post.id,
           kind: ev.kind,
           clock: ev.clock,
-          summary: describeEvent(ev, fx),
+          summary,
           fingerprint,
           revision: (prev.revision ?? 0) + 1,
           updated_at: new Date().toISOString(),
@@ -401,13 +455,23 @@ export async function syncBoroMatchEvents(opts?: {
         event_key: ev.key,
         kind: ev.kind,
         clock: ev.clock,
-        summary: describeEvent(ev, fx),
+        summary,
         fingerprint,
         revision: 0,
       });
       if (insErr) skipped.push(`log failed (${ev.key}): ${insErr.message}`);
       posted += 1;
-      byKey.set(ev.key, { id: "", event_key: ev.key, fingerprint, revision: 0, post_id: post.id });
+      const row: LoggedRow = {
+        id: "",
+        event_key: ev.key,
+        fingerprint,
+        revision: 0,
+        post_id: post.id,
+        kind: ev.kind,
+        summary,
+      };
+      byKey.set(ev.key, row);
+      byIdentity.set(evIdentity, row);
     }
   }
 
