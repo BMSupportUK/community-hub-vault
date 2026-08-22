@@ -6,6 +6,7 @@
 // summary it fetched into this cache and the server jobs read it from here.
 
 export type CachedSummary = { eventId: string; slug: string; payload: any; updatedAt: string };
+export type CachedSummaryPayload = { payload: any; updatedAt: string };
 
 export function summaryHasCompetition(payload: any): boolean {
   return Array.isArray(payload?.header?.competitions) && payload.header.competitions.length > 0;
@@ -37,6 +38,13 @@ export async function putCachedEspnSummary(input: { eventId: string; slug: strin
 }
 
 export async function getCachedEspnSummary(eventId: string, maxAgeMs = 30 * 60 * 1000): Promise<any | null> {
+  return (await getCachedEspnSummaryWithMeta(eventId, maxAgeMs))?.payload ?? null;
+}
+
+export async function getCachedEspnSummaryWithMeta(
+  eventId: string,
+  maxAgeMs = 30 * 60 * 1000,
+): Promise<CachedSummaryPayload | null> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data } = await supabaseAdmin
     .from("boro_espn_summary_cache")
@@ -46,7 +54,7 @@ export async function getCachedEspnSummary(eventId: string, maxAgeMs = 30 * 60 *
   if (!data?.payload) return null;
   const age = Date.now() - Date.parse(String(data.updated_at ?? ""));
   if (Number.isFinite(age) && age > maxAgeMs) return null;
-  return data.payload as any;
+  return { payload: data.payload as any, updatedAt: String(data.updated_at) };
 }
 
 /** Freshest relayed summary for any Boro game (used when the event id is unknown). */
@@ -95,6 +103,42 @@ export async function getCachedSummaryForFixture(
       if (!Number.isFinite(diff) || diff > 36 * 60 * 60 * 1000) continue;
     }
     return row.payload;
+  }
+  return null;
+}
+
+/** Same fixture lookup with cache time, used to prevent stale status regressions. */
+export async function getCachedSummaryForFixtureWithMeta(
+  fx: { home_team: string; away_team: string; kickoff_at: string },
+  maxAgeMs = 6 * 60 * 60 * 1000,
+): Promise<CachedSummaryPayload | null> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data } = await supabaseAdmin
+    .from("boro_espn_summary_cache")
+    .select("payload, updated_at")
+    .gte("updated_at", new Date(Date.now() - maxAgeMs).toISOString())
+    .order("updated_at", { ascending: false })
+    .limit(20);
+  const wanted = [normName(fx.home_team), normName(fx.away_team)];
+  const koDay = new Date(fx.kickoff_at).toISOString().slice(0, 10);
+  for (const row of (data ?? []) as Array<{ payload?: any; updated_at?: string }>) {
+    const comp = row.payload?.header?.competitions?.[0];
+    if (!comp) continue;
+    const names: string[] = (comp.competitors ?? []).flatMap((competitor: any) =>
+      [competitor?.team?.displayName, competitor?.team?.name, competitor?.team?.shortDisplayName]
+        .filter(Boolean)
+        .map(normName),
+    );
+    const hits = wanted.filter((wantedName) =>
+      names.some((name) => name.includes(wantedName) || wantedName.includes(name)),
+    );
+    if (hits.length !== 2) continue;
+    const date = String(comp.date ?? "");
+    if (date && date.slice(0, 10) !== koDay) {
+      const diff = Math.abs(Date.parse(date) - Date.parse(fx.kickoff_at));
+      if (!Number.isFinite(diff) || diff > 36 * 60 * 60 * 1000) continue;
+    }
+    return { payload: row.payload, updatedAt: String(row.updated_at ?? "") };
   }
   return null;
 }
