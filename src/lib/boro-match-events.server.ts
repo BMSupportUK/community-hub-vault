@@ -120,39 +120,121 @@ function scoreLine(ev: ParsedEvent, fx: FixtureLite): string | null {
   return `${fx.home_team} ${ev.homeScore} - ${ev.awayScore} ${fx.away_team}`;
 }
 
-function playerRow(
-  label: "in" | "out" | null,
-  player: { name: string; number: string | null; position: string | null },
-): string {
-  const arrow = label === "in" ? "\u2b06\ufe0f " : label === "out" ? "\u2b07\ufe0f " : "";
-  const num = player.number ? `${escapeHtml(player.number)} ` : "";
-  const pos = player.position ? `<br /><span style="opacity:.7;font-size:13px">${escapeHtml(player.position)}</span>` : "";
-  return `<p style="margin:2px 0">${arrow}<strong>${num}${escapeHtml(player.name)}</strong>${pos}</p>`;
+type CardPlayer = { name: string; number: string | null; position: string | null };
+
+/** FotMob's shirt-number chip + name + position row, optionally with an in/out arrow. */
+function playerRow(label: "in" | "out" | null, player: CardPlayer, accent: string): string {
+  const arrow =
+    label === "in"
+      ? `<span style="color:#22c55e;font-size:15px;font-weight:700;line-height:1">&#9650;</span>`
+      : label === "out"
+        ? `<span style="color:#ef4444;font-size:15px;font-weight:700;line-height:1">&#9660;</span>`
+        : "";
+  const chip = player.number
+    ? `<span style="display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:22px;padding:0 5px;border-radius:6px;background:${accent};color:#fff;font-size:12px;font-weight:700;line-height:1">${escapeHtml(
+        player.number,
+      )}</span>`
+    : "";
+  const pos = player.position
+    ? `<span style="opacity:.6;font-size:12px">${escapeHtml(player.position)}</span>`
+    : "";
+  return `<div class="not-prose" style="display:flex;align-items:center;gap:8px;margin:4px 0">${arrow}${chip}<span style="font-weight:700;font-size:15px">${escapeHtml(
+    player.name,
+  )}</span>${pos}</div>`;
+}
+
+/** FotMob's three-up metric strip (shot type / xG / xGOT). */
+function metricStrip(items: Array<{ label: string; value: string }>): string {
+  if (items.length === 0) return "";
+  const cells = items
+    .map(
+      (item) =>
+        `<div style="flex:1 1 0;min-width:84px;border-radius:10px;background:rgba(127,127,127,.12);padding:8px 10px;text-align:center">
+  <div style="font-size:15px;font-weight:700;line-height:1.2">${escapeHtml(item.value)}</div>
+  <div style="font-size:11px;letter-spacing:.04em;text-transform:uppercase;opacity:.6;margin-top:2px">${escapeHtml(item.label)}</div>
+</div>`,
+    )
+    .join("");
+  return `<div class="not-prose" style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">${cells}</div>`;
+}
+
+/** FotMob's shot-location graphic: goal frame with the ball's crossing point. */
+function goalMouthSvg(mouth: { x: number; y: number }, accent: string, onTarget: boolean): string {
+  const left = Math.min(100, Math.max(0, (mouth.x / 2) * 100));
+  const up = Math.min(100, Math.max(0, mouth.y * 100));
+  // Goal frame is drawn 240x88 with a 10px margin; y is measured from the ground.
+  const cx = 12 + (left / 100) * 216;
+  const cy = 80 - (up / 100) * 66;
+  const netLines = [0.2, 0.4, 0.6, 0.8]
+    .map((f) => `<line x1="${12 + f * 216}" y1="14" x2="${12 + f * 216}" y2="80" stroke="rgba(127,127,127,.28)" stroke-width="1" />`)
+    .join("");
+  const netRows = [0.33, 0.66]
+    .map((f) => `<line x1="12" y1="${14 + f * 66}" x2="228" y2="${14 + f * 66}" stroke="rgba(127,127,127,.28)" stroke-width="1" />`)
+    .join("");
+  return `<div class="not-prose" style="margin-top:10px;border-radius:10px;background:rgba(127,127,127,.10);padding:8px 10px">
+<svg viewBox="0 0 240 92" width="100%" style="max-width:280px;display:block;margin:0 auto">
+  ${netLines}${netRows}
+  <path d="M12 80 L12 14 L228 14 L228 80" fill="none" stroke="rgba(160,160,160,.85)" stroke-width="3" />
+  <line x1="4" y1="80" x2="236" y2="80" stroke="rgba(160,160,160,.55)" stroke-width="2" />
+  <circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="6" fill="${onTarget ? accent : "rgba(127,127,127,.7)"}" stroke="#fff" stroke-width="2" />
+</svg>
+<div style="text-align:center;font-size:11px;opacity:.6;margin-top:4px">Shot location</div>
+</div>`;
 }
 
 /** FotMob-shaped card: minute badge, headline, player block, narrative, shot metrics. */
 function buildFotmobCard(ev: ParsedEvent, isUpdate: boolean): string {
   const d = ev.detail!;
-  const parts: string[] = [];
-  parts.push(
-    `<p style="margin:0 0 6px"><strong>${escapeHtml(d.minuteLabel || ev.clock || "")} ${ICON[ev.kind] ?? ""} ${escapeHtml(
-      `${isUpdate ? "Updated: " : ""}${d.headline}`,
-    )}</strong>${d.teamName ? ` <span style="opacity:.75">· ${escapeHtml(d.teamName)}</span>` : ""}</p>`,
+  const accent = /^#[0-9a-f]{3,8}$/i.test(d.teamColor ?? "") ? d.teamColor! : "#E11B22";
+  const minute = d.minuteLabel || ev.clock || "";
+  const isGoal = ev.kind === "goal" || ev.kind === "own-goal" || ev.kind === "penalty";
+
+  const head = `<div class="not-prose" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+  ${minute ? `<span style="display:inline-flex;align-items:center;justify-content:center;min-width:38px;height:26px;padding:0 8px;border-radius:999px;background:${accent};color:#fff;font-size:13px;font-weight:800;line-height:1">${escapeHtml(minute)}</span>` : ""}
+  <span style="font-size:17px;font-weight:800;letter-spacing:-.01em">${ICON[ev.kind] ?? ""} ${escapeHtml(d.headline)}</span>
+  ${d.teamName ? `<span style="font-size:13px;opacity:.65">${escapeHtml(d.teamName)}</span>` : ""}
+  ${isUpdate ? `<span style="margin-left:auto;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#f59e0b">Updated</span>` : ""}
+</div>`;
+
+  const players = [
+    d.playerIn ? playerRow("in", d.playerIn, "#16a34a") : "",
+    d.playerOut ? playerRow("out", d.playerOut, "#dc2626") : "",
+    d.player ? playerRow(null, d.player, accent) : "",
+  ].join("");
+
+  const score =
+    isGoal && d.scoreLine
+      ? `<div class="not-prose" style="margin-top:8px;display:inline-block;border-radius:8px;border:1px solid rgba(127,127,127,.3);padding:4px 10px;font-size:13px;font-weight:700">${escapeHtml(d.scoreLine)}</div>`
+      : "";
+
+  const assist =
+    d.assist && !d.narrative.includes(d.assist)
+      ? `<div class="not-prose" style="margin-top:6px;font-size:13px;opacity:.75">Assist: ${escapeHtml(d.assist)}</div>`
+      : "";
+
+  const narrative = d.narrative
+    ? `<div class="not-prose" style="margin-top:8px;font-size:14px;line-height:1.5;opacity:.9">${escapeHtml(d.narrative)}</div>`
+    : "";
+
+  const metrics = metricStrip(
+    [
+      d.shotType ? { label: "Shot type", value: d.shotType } : null,
+      d.xg ? { label: "xG", value: d.xg } : null,
+      d.xgot ? { label: "xGOT", value: d.xgot } : null,
+    ].filter((x): x is { label: string; value: string } => !!x),
   );
-  if (d.playerIn) parts.push(playerRow("in", d.playerIn));
-  if (d.playerOut) parts.push(playerRow("out", d.playerOut));
-  if (d.player) parts.push(playerRow(null, d.player));
-  if (d.narrative) parts.push(`<p style="margin:8px 0 0">${escapeHtml(d.narrative)}</p>`);
-  const metrics: string[] = [];
-  if (d.shotType) metrics.push(`Shot type: ${d.shotType}`);
-  if (d.xg) metrics.push(`xG: ${d.xg}`);
-  if (d.xgot) metrics.push(`xGOT: ${d.xgot}`);
-  if (metrics.length) {
-    parts.push(`<p style="margin:8px 0 0;opacity:.8;font-size:13px">${escapeHtml(metrics.join("  ·  "))}</p>`);
-  }
-  if (isUpdate) parts.push(`<p><em>This corrects the earlier post for this incident.</em></p>`);
-  return parts.join("\n");
+
+  const diagram = d.goalMouth ? goalMouthSvg(d.goalMouth, accent, d.onTarget !== false) : "";
+
+  const note = isUpdate
+    ? `<div class="not-prose" style="margin-top:8px;font-size:12px;opacity:.65"><em>This corrects the earlier post for this incident.</em></div>`
+    : "";
+
+  return `<div class="not-prose" style="max-width:520px;margin:6px 0;border:1px solid rgba(127,127,127,.28);border-left:4px solid ${accent};border-radius:14px;background:rgba(127,127,127,.06);padding:14px 16px">
+${head}${players}${score}${assist}${narrative}${metrics}${diagram}${note}
+</div>`;
 }
+
 
 export function buildEventBody(ev: ParsedEvent, fx: FixtureLite, isUpdate: boolean): string {
   if (ev.detail) return buildFotmobCard(ev, isUpdate);
