@@ -55,6 +55,7 @@ export type EspnNormalised = {
 const PERIOD_TYPES = new Set([
   "kickoff",
   "halftime",
+  "fulltime",
   "start-2nd-half",
   "end-regular-time",
   "end-first-half-extra-time",
