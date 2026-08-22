@@ -3,7 +3,6 @@ import { Goal, Square, RefreshCw, ShieldAlert, Target, ChevronDown } from "lucid
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { MatchDetailDTO, MatchEventItem, PlayerLine } from "@/lib/boro-match-detail.types";
 import { PLAYER_STAT_COLUMNS, describeEspnEvent } from "@/lib/boro-espn-events";
-import { normaliseBoroMatchDetail } from "@/lib/boro-match-detail-normalise";
 
 const STAT_COLUMNS = PLAYER_STAT_COLUMNS;
 
@@ -21,6 +20,30 @@ const ACTION_GROUPS: ActionGroup[] = [
   { value: "pens", label: "Pens", emptyLabel: "Penalties", kinds: ["penalty", "penalty-missed"] },
   { value: "subs", label: "Subs", emptyLabel: "Substitutions", kinds: ["sub"] },
 ];
+
+function mergeMatchDetail(
+  current: MatchDetailDTO | null,
+  incoming: MatchDetailDTO,
+): MatchDetailDTO {
+  if (!current) return incoming;
+  return {
+    ...current,
+    ...incoming,
+    available: current.available || incoming.available,
+    events: incoming.events.length >= current.events.length ? incoming.events : current.events,
+    shootout: incoming.shootout.length >= current.shootout.length ? incoming.shootout : current.shootout,
+    teamStats: incoming.teamStats.length >= current.teamStats.length ? incoming.teamStats : current.teamStats,
+    lineups: incoming.lineups.reduce<MatchDetailDTO["lineups"]>((best, lineup) => {
+      const existing = current.lineups.find(
+        (item) =>
+          (lineup.teamId && item.teamId === lineup.teamId) ||
+          item.team.toLowerCase() === lineup.team.toLowerCase(),
+      );
+      const selected = existing && existing.players.length > lineup.players.length ? existing : lineup;
+      return [...best, selected];
+    }, incoming.lineups.length ? [] : current.lineups),
+  };
+}
 
 function EventIcon({ kind }: { kind: MatchEventItem["kind"] }) {
   if (kind === "yellow") return <Square className="size-3.5 fill-amber-400 text-amber-400" />;
@@ -158,6 +181,15 @@ export function BoroMatchDetailTabs({
     return () => window.clearInterval(t);
   }, []);
 
+  // The parent begins loading before the dialog opens. Adopt that response when
+  // it arrives instead of leaving the child on the older response it fetched at
+  // mount. Never let a sparse response erase already published line-ups.
+  useEffect(() => {
+    if (!initialDetail) return;
+    setDetail((current) => mergeMatchDetail(current, initialDetail));
+    setLoading(false);
+  }, [initialDetail]);
+
   useEffect(() => {
     if (!canLoad) {
       setDetail(null);
@@ -167,20 +199,6 @@ export function BoroMatchDetailTabs({
 
     let stopped = false;
     let timer: number | undefined;
-    let directId = eventId;
-    let directSlug = slug || "eng.2";
-    const loadDirect = async () => {
-      if (!directId) throw new Error("No ESPN event id available yet");
-      const sourceUrl = `http://site.api.espn.com/apis/site/v2/sports/soccer/${encodeURIComponent(directSlug)}/summary?event=${encodeURIComponent(directId)}`;
-      const directResponse = await fetch(`https://r.jina.ai/${sourceUrl}`, {
-        headers: { accept: "application/json", "x-return-format": "text" },
-        cache: "no-store",
-      });
-      if (!directResponse.ok) throw new Error(`Direct match data request failed (${directResponse.status})`);
-      const mirrored = await directResponse.json();
-      const raw = typeof mirrored?.data?.text === "string" ? JSON.parse(mirrored.data.text) : mirrored;
-      return normaliseBoroMatchDetail(raw);
-    };
     const load = async () => {
       const params = new URLSearchParams({ refresh: String(Date.now()) });
       if (eventId) params.set("eventId", eventId);
@@ -197,30 +215,17 @@ export function BoroMatchDetailTabs({
           cache: "no-store",
         });
         if (!response.ok) throw new Error(`Match data request failed (${response.status})`);
-        let next = (await response.json()) as MatchDetailDTO & { eventId?: string; slug?: string };
+        const next = (await response.json()) as MatchDetailDTO & { eventId?: string; slug?: string };
         if (next.eventId) {
-          directId = next.eventId;
-          directSlug = next.slug || directSlug;
           setResolvedEventId(next.eventId);
         }
-        if (!next.available) next = await loadDirect();
         if (stopped) return;
-        setDetail(next);
+        setDetail((current) => mergeMatchDetail(current, next));
         setLoading(false);
-        const hasData = next.available || next.events.length > 0 || next.teamStats.length > 0 || next.lineups.length > 0;
-        timer = window.setTimeout(load, hasData ? (live ? 15_000 : armed ? 30_000 : 5 * 60_000) : 10_000);
+        const hasLineups = next.lineups.some((lineup) => lineup.players.length > 0);
+        timer = window.setTimeout(load, live ? 15_000 : armed ? (hasLineups ? 30_000 : 10_000) : 5 * 60_000);
       } catch (error) {
-        try {
-          const next = await loadDirect();
-          if (stopped) return;
-          setDetail(next);
-          setLoading(false);
-          const hasData = next.available || next.events.length > 0 || next.teamStats.length > 0 || next.lineups.length > 0;
-          timer = window.setTimeout(load, hasData ? (live ? 15_000 : armed ? 30_000 : 5 * 60_000) : 10_000);
-          return;
-        } catch (directError) {
-          console.error(error, directError);
-        }
+        console.error(error);
         if (!stopped) {
           setLoading(false);
           timer = window.setTimeout(load, 10_000);
