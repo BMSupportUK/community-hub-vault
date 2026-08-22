@@ -693,7 +693,9 @@ function ChannelPage() {
       setPendingGif(originalGif);
     } else {
       setLastSentAt(Date.now());
+      setReplyTo(null);
     }
+
     setSending(false);
   };
 
