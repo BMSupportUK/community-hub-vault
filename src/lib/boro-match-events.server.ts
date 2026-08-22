@@ -32,7 +32,11 @@ async function fetchEvents(
   });
   if (!fotmob) return { events: [], status: null };
   const norm = normaliseEspnSummary(fotmob);
-  return { events: norm.events.filter((event) => isReportableEvent(event.kind)), status: norm.status };
+  return {
+    // Period markers (half-time / full-time) post as their own FotMob-style card.
+    events: norm.events.filter((event) => isReportableEvent(event.kind) || event.kind === "period"),
+    status: norm.status,
+  };
 }
 
 
@@ -52,7 +56,19 @@ const ICON: Partial<Record<ParsedEvent["kind"], string>> = {
 };
 
 export function describeEvent(ev: ParsedEvent, _fx: FixtureLite): string {
+  if (ev.kind === "period") return ev.text || ev.shortText || "Period";
   return describeEspnEvent(ev);
+}
+
+/** FotMob's period marker: minute label above the plain "First Half ends, …" sentence. */
+function buildPeriodCard(ev: ParsedEvent, isUpdate: boolean): string {
+  const minute = ev.clock ?? "";
+  const sentence = ev.text || ev.shortText || "";
+  return `<div class="not-prose" style="max-width:520px;margin:6px 0;border:1px solid rgba(127,127,127,.28);border-radius:14px;background:rgba(127,127,127,.04);padding:16px 18px">
+  ${minute ? `<div style="font-size:13px;font-weight:800;letter-spacing:-.01em;margin-bottom:10px">${escapeHtml(minute)}</div>` : ""}
+  <div style="font-size:15px;line-height:1.5">${escapeHtml(sentence)}</div>
+  ${isUpdate ? `<div style="margin-top:8px;font-size:12px;opacity:.65"><em>Updated.</em></div>` : ""}
+</div>`;
 }
 
 function scoreLine(ev: ParsedEvent, fx: FixtureLite): string | null {
@@ -221,6 +237,7 @@ function detailFromEvent(ev: ParsedEvent, fx: FixtureLite): FotmobEventDetail {
 }
 
 export function buildEventBody(ev: ParsedEvent, fx: FixtureLite, isUpdate: boolean): string {
+  if (ev.kind === "period") return buildPeriodCard(ev, isUpdate);
   if (ev.detail) return buildFotmobCard(ev, isUpdate);
   return buildFotmobCard({ ...ev, detail: detailFromEvent(ev, fx) }, isUpdate);
 }
