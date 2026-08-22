@@ -415,59 +415,24 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
   );
   if (!topic) return { ...base, fixture: label, topic: null, skipped: ["no match day thread for this fixture yet"] };
 
-  // ESPN is a bonus, not a requirement: the preview must still go out ~24h
-  // before kick-off using our own fixture data when ESPN has no listing yet.
+  // FotMob is the only live-data source. It is reachable from the server, so no
+  // browser relay is needed and the thread can refresh in real time. Live data
+  // is a bonus, not a requirement: the preview must still go out ~24h before
+  // kick-off from our own fixture list when FotMob has no listing yet.
   const { fetchFotmobSummary } = await import("@/lib/fotmob-boro.server");
   let json: any = await fetchFotmobSummary({ home: fx.home_team, away: fx.away_team, kickoff: fx.kickoff_at });
-  const espn = json ? null : await findEspnEvent(fx);
-  if (!json && espn) {
-    const { espnJson } = await import("@/lib/espn-fetch");
-    json = await espnJson(
-      `https://site.api.espn.com/apis/site/v2/sports/soccer/${espn.slug}/summary?event=${encodeURIComponent(espn.eventId)}`,
-    );
-  }
-  // A response is only useful if it actually carries the competition payload —
-  // an empty/partial ESPN body must not count as "we have the data".
+
+  // A response is only useful if it actually carries the competition payload.
   const usable = (candidate: any) =>
     Array.isArray(candidate?.header?.competitions) && candidate.header.competitions.length > 0;
 
-  // Prefer the browser-relayed summary whenever it is further through the game
-  // or carries richer live data. ESPN sometimes gives our server a valid-looking
-  // but stale pre-match response, which previously prevented this fallback.
-  const { getCachedEspnSummaryWithMeta, getCachedSummaryForFixtureWithMeta } = await import("@/lib/espn-summary-cache.server");
-  const cached = espn ? await getCachedEspnSummaryWithMeta(espn.eventId) : null;
-  const relayRecord = usable(cached?.payload) ? cached : await getCachedSummaryForFixtureWithMeta(fx);
-  const relayed = relayRecord?.payload ?? null;
-  const summaryRank = (candidate: any) => {
-    if (!usable(candidate)) return -1;
-    const comp = candidate.header.competitions[0];
-    const state = String(comp?.status?.type?.state ?? "pre");
-    const stateScore = state === "post" ? 3000 : state === "in" ? 2000 : 1000;
-    const eventScore = Array.isArray(candidate?.plays) ? candidate.plays.length : 0;
-    const statScore = Array.isArray(candidate?.boxscore?.teams)
-      ? candidate.boxscore.teams.reduce((count: number, team: any) => count + (team?.statistics?.length ?? 0), 0)
-      : 0;
-    return stateScore + eventScore + statScore;
-  };
-  const stateOf = (candidate: any) =>
-    String(candidate?.header?.competitions?.[0]?.status?.type?.state ?? "pre").toLowerCase();
-  const relayAge = relayRecord ? Date.now() - Date.parse(relayRecord.updatedAt) : Number.POSITIVE_INFINITY;
-  const freshRelayStillLive =
-    usable(relayed) &&
-    relayAge <= 2 * 60 * 1000 &&
-    stateOf(relayed) === "in" &&
-    stateOf(json) === "post";
-  if (!json && usable(relayed) && (freshRelayStillLive || summaryRank(relayed) >= summaryRank(json))) {
-    json = relayed;
-    skipped.push("used freshest relayed ESPN summary");
-  }
-
   const hasEspn = usable(json);
   if (!hasEspn) {
-    skipped.push(espn ? "live summary unavailable — posted fixture-only preview" : "no live-data match found — posted fixture-only preview");
+    skipped.push("FotMob live summary unavailable — posted fixture-only preview");
     json = {};
   }
   const status = hasEspn ? normaliseEspnSummary(json).status : null;
+
 
 
   const authorId = (await getMatchDayAuthorId()) ?? topic.author_id;
