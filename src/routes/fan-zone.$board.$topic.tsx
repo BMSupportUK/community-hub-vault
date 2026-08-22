@@ -54,6 +54,7 @@ function TopicReadPage() {
       <Tabs defaultValue="posts" className="w-full mt-5">
         <TabsList>
           <TabsTrigger value="posts">Original Post</TabsTrigger>
+          {teamPosts.length > 0 && <TabsTrigger value="teams">Teams ({teamPosts.length})</TabsTrigger>}
           <TabsTrigger value="replies">Replies ({replies.length})</TabsTrigger>
         </TabsList>
 
@@ -62,6 +63,19 @@ function TopicReadPage() {
             <p className="text-sm text-white/60">No post content.</p>
           )}
         </TabsContent>
+
+        <TabsContent value="teams" className="space-y-3 mt-3">
+          {teamPosts.length === 0 ? (
+            <p className="text-sm text-white/60">The team sheet hasn't been announced yet.</p>
+          ) : (
+            <ol className="space-y-3">
+              {teamPosts.map((p) => (
+                <li key={p.id}><PostCard post={p} /></li>
+              ))}
+            </ol>
+          )}
+        </TabsContent>
+
 
         <TabsContent value="replies" className="space-y-3 mt-3">
           {replies.length === 0 ? (
