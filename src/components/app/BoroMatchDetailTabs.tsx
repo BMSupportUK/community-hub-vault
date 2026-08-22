@@ -227,7 +227,9 @@ export function BoroMatchDetailTabs({
         // ESPN refuses our server's IP (403) in production, so the server answer
         // can be completely empty. The visitor's browser is not blocked — fetch
         // the same Gamecast feed directly and merge it in.
-        if (!hasLineups && !next.teamStats.length) {
+        // While the game is in play, always go direct from the browser so the
+        // panel reflects ESPN as it happens rather than the relayed cache.
+        if (live || (!hasLineups && !next.teamStats.length)) {
           const { fetchEspnDetailInBrowser } = await import("@/lib/boro-match-detail-client");
           const direct = await fetchEspnDetailInBrowser({
             eventId: next.eventId ?? eventId ?? resolvedEventId,
