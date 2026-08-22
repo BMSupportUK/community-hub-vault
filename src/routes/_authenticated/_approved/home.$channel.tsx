@@ -47,7 +47,6 @@ import { EmojiPicker } from "@/components/app/EmojiPicker";
 import { resolveGifLink } from "@/lib/giphy.functions";
 
 import { StaffOnDutyStrip } from "@/components/app/StaffOnDutyStrip";
-import { ChannelWelcomeEmbed } from "@/components/app/ChannelWelcomeEmbed";
 import { cn } from "@/lib/utils";
 import { DEFAULT_AVATAR_URL } from "@/lib/default-avatar";
 import { Nameplate } from "@/components/app/Nameplate";
@@ -1218,7 +1217,6 @@ function ChannelPage() {
       <StaffOnDutyStrip />
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
-        <ChannelWelcomeEmbed channelId={channel.id} canEdit={isAdmin} />
         {channel.slug !== "welcome" && channel.slug !== "rules" && (
           <div className="flex items-center gap-2 rounded-lg border border-border bg-surface-2/60 px-3 py-2 text-xs text-muted-foreground">
             <Trash2 className="size-3.5 text-primary shrink-0" />
