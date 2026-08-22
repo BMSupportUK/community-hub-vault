@@ -3574,7 +3574,8 @@ function LeaderboardTable({
                 {r.email && <div className="text-[11px] text-muted-foreground">{r.email}</div>}
               </td>
               <td className="px-3 py-2 text-right tabular-nums">{r.gameweeksScored}</td>
-              <td className="px-3 py-2 text-right font-semibold tabular-nums">{previousPointsFor(r)}</td>
+              {pointsCells(r)}
+
               <td className="px-3 py-2 text-right font-bold tabular-nums text-primary">{r.totalPoints}</td>
               {squadCell(r)}
               {removeButton(r)}
