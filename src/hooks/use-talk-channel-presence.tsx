@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -8,6 +8,19 @@ type TalkPresence = {
   user_id?: string;
   channel_id?: string;
 };
+
+type Tracker = {
+  userId: string;
+  channelId: string;
+};
+
+let sharedChannel: RealtimeChannel | null = null;
+let subscribed = false;
+let trackedSignature = "";
+let currentCount = 0;
+const connectionId = crypto.randomUUID();
+const listeners = new Set<(count: number) => void>();
+const trackers = new Map<symbol, Tracker>();
 
 function countUniqueUsers(channel: RealtimeChannel): number {
   const state = channel.presenceState<TalkPresence>();
@@ -22,74 +35,89 @@ function countUniqueUsers(channel: RealtimeChannel): number {
   return userIds.size;
 }
 
+function publishCount() {
+  if (!sharedChannel) return;
+  currentCount = countUniqueUsers(sharedChannel);
+  for (const listener of listeners) listener(currentCount);
+}
+
+async function syncTracking() {
+  const channel = sharedChannel;
+  if (!channel || !subscribed) return;
+
+  const active = Array.from(trackers.values()).at(-1);
+  const nextSignature = active ? `${active.userId}:${active.channelId}` : "";
+  if (nextSignature === trackedSignature) return;
+
+  if (!active) {
+    trackedSignature = "";
+    await channel.untrack().catch(() => undefined);
+    publishCount();
+    return;
+  }
+
+  trackedSignature = nextSignature;
+  await channel.track({
+    user_id: active.userId,
+    channel_id: active.channelId,
+    online_at: new Date().toISOString(),
+  });
+  publishCount();
+}
+
+function ensureSharedChannel() {
+  if (sharedChannel) return;
+
+  const channel = supabase.channel(TALK_PRESENCE_TOPIC, {
+    config: { presence: { key: connectionId } },
+  });
+
+  const sync = () => publishCount();
+  channel
+    .on("presence", { event: "sync" }, sync)
+    .on("presence", { event: "join" }, sync)
+    .on("presence", { event: "leave" }, sync)
+    .subscribe((status) => {
+      if (status !== "SUBSCRIBED") return;
+      subscribed = true;
+      void syncTracking();
+      publishCount();
+    });
+
+  sharedChannel = channel;
+}
+
 export function useTalkChannelPresence(options: {
   userId?: string;
   channelId?: string;
   track: boolean;
 }): number {
   const { userId, channelId, track } = options;
-  const [count, setCount] = useState(0);
+  const trackerId = useRef(Symbol("talk-presence-tracker"));
+  const [count, setCount] = useState(currentCount);
 
   useEffect(() => {
-    if (track && (!userId || !channelId)) return;
-
-    let active = true;
-    const connectionId = crypto.randomUUID();
-    const syncTimers = new Set<ReturnType<typeof setTimeout>>();
-
-    const presence = supabase.channel(TALK_PRESENCE_TOPIC, {
-      config: {
-        broadcast: { self: false },
-        presence: {
-          key: track && userId ? `${userId}:${connectionId}` : `observer-${connectionId}`,
-        },
-      },
-    });
-
-    const syncCount = () => {
-      if (active) setCount(countUniqueUsers(presence));
-    };
-
-    const syncLiveCount = () => {
-      syncCount();
-      for (const delay of [100, 500]) {
-        const timer = setTimeout(() => {
-          syncTimers.delete(timer);
-          syncCount();
-        }, delay);
-        syncTimers.add(timer);
-      }
-    };
-
-    presence
-      .on("presence", { event: "sync" }, syncLiveCount)
-      .on("presence", { event: "join" }, syncLiveCount)
-      .on("presence", { event: "leave" }, syncLiveCount)
-      .on("broadcast", { event: "occupancy_changed" }, syncLiveCount)
-      .subscribe(async (status) => {
-        if (status !== "SUBSCRIBED") return;
-        if (track && userId && channelId) {
-          await presence.track({
-            user_id: userId,
-            channel_id: channelId,
-            online_at: new Date().toISOString(),
-          });
-          await presence.send({ type: "broadcast", event: "occupancy_changed", payload: {} });
-        }
-        syncLiveCount();
-      });
+    ensureSharedChannel();
+    listeners.add(setCount);
+    setCount(currentCount);
 
     return () => {
-      active = false;
-      for (const timer of syncTimers) clearTimeout(timer);
-      syncTimers.clear();
-      void (async () => {
-        if (track) {
-          await presence.untrack().catch(() => undefined);
-          await presence.send({ type: "broadcast", event: "occupancy_changed", payload: {} }).catch(() => undefined);
-        }
-        await supabase.removeChannel(presence);
-      })();
+      listeners.delete(setCount);
+    };
+  }, []);
+
+  useEffect(() => {
+    const id = trackerId.current;
+    if (track && userId && channelId) {
+      trackers.set(id, { userId, channelId });
+    } else {
+      trackers.delete(id);
+    }
+    void syncTracking();
+
+    return () => {
+      trackers.delete(id);
+      void syncTracking();
     };
   }, [channelId, track, userId]);
 
