@@ -1272,6 +1272,19 @@ function ChannelPage() {
                               minute: "2-digit",
                             })}
                           </span>
+                          {!isSelf && baselineReadAt && (
+                            <span
+                              className={cn(
+                                "inline-flex items-center rounded-full border px-1.5 py-px text-[9px] font-semibold uppercase tracking-wider shrink-0",
+                                isUnread
+                                  ? "border-destructive/60 text-destructive bg-destructive/10"
+                                  : "border-border text-muted-foreground",
+                              )}
+                            >
+                              {isUnread ? "Unread" : "Read"}
+                            </span>
+                          )}
+
                           {isPinned && (
                             <span className="inline-flex items-center gap-1 text-[10px] text-primary">
                               <Pin className="size-3" /> Pinned
