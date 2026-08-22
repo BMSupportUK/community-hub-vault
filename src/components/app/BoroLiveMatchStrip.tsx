@@ -413,9 +413,12 @@ export function BoroLiveMatchStrip() {
                   {!isLive && !isFixture && (
                     <>
                       <div className="text-xs font-bold uppercase tracking-wider text-white/85">Full time</div>
-                      {lr!.venue && <div className="text-xs text-white/85">{lr!.venue}</div>}
+                      {(m as { venue?: string | null }).venue && (
+                        <div className="text-xs text-white/85">{(m as { venue?: string | null }).venue}</div>
+                      )}
                     </>
                   )}
+
                 </div>
 
                 {live && nf && (
