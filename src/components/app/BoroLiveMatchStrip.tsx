@@ -130,7 +130,9 @@ export function BoroLiveMatchStrip() {
       ? null
       : rawNf;
 
-  const selectedMatch = live ?? nf ?? lr;
+  const selectedMatch =
+    view === "next" ? (nf ?? live ?? lr) : view === "last" ? (lr ?? live ?? nf) : (live ?? nf ?? lr);
+
   // Never borrow another fixture's ESPN id — that made a new game show the
   // previous match's line-ups, stats and ratings.
   const selectedEventId = selectedMatch?.eventId ?? null;
