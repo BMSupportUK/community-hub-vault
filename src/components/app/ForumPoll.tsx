@@ -59,9 +59,20 @@ function ForumPollComponent({
     const ch = supabase
       .channel(`forum-poll-${topicId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "forum_poll_votes" }, () => void load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "forum_poll_options" }, () => void load())
       .on("postgres_changes", { event: "*", schema: "public", table: "forum_polls", filter: `topic_id=eq.${topicId}` }, () => void load())
       .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    // Safety net: realtime can drop, so re-check periodically and when the tab regains focus.
+    const timer = window.setInterval(() => { if (!document.hidden) void load(); }, 20_000);
+    const onFocus = () => void load();
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onFocus);
+    return () => {
+      supabase.removeChannel(ch);
+      window.clearInterval(timer);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onFocus);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [topicId]);
 
