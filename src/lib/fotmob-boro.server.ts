@@ -134,8 +134,9 @@ export async function fetchFotmobSummary(input: {
   home: string;
   away: string;
   kickoff: string;
+  matchId?: string | null;
 }): Promise<any | null> {
-  const matchId = await resolveFotmobMatch(input);
+  const matchId = input.matchId ?? (await resolveFotmobMatch(input));
   if (!matchId) return null;
   const detail = await fotmobJson(`https://www.fotmob.com/api/data/matchDetails?matchId=${matchId}`, 5_000);
   const teams: any[] = detail?.header?.teams ?? [];

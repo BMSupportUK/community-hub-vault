@@ -1,6 +1,6 @@
 // Posts live match events (goals + scorer, yellow/red cards, penalties and
 // substitutions) into the Middlesbrough match day forum thread as replies, and
-// posts an updated reply whenever ESPN corrects an event it already reported.
+// posts an updated reply whenever FotMob corrects an event it already reported.
 
 import { matchTopicToFixture, type FixtureLite } from "@/lib/boro-team-sheet.server";
 import {
@@ -9,91 +9,30 @@ import {
   describeEspnEvent,
   type EspnMatchEvent,
 } from "@/lib/boro-espn-events";
-import { espnJson, espnDateRange } from "@/lib/espn-fetch";
 import type { FotmobEventDetail } from "@/lib/fotmob-boro.types";
 
-const SLUGS = ["eng.2", "eng.fa", "eng.league_cup", "eng.trophy"];
-const ESPN_TEAM_ID = "369"; // Middlesbrough
-const BORO_RE = /\bmiddles(?:brough|borough)\b|\bboro\b/i;
 
 const WINDOW_BEFORE_MS = 30 * 60 * 1000; // start watching 30m before KO
 const WINDOW_AFTER_MS = 4 * 60 * 60 * 1000; // keep watching 4h after KO
 
 type ParsedEvent = EspnMatchEvent;
 
-export async function findEspnEvent(fx: FixtureLite): Promise<{ eventId: string; slug: string } | null> {
-  const ko = new Date(fx.kickoff_at);
-  const range = espnDateRange(ko.getTime() - 86_400_000, ko.getTime() + 86_400_000);
-
-  const match = (json: any, slug: string) => {
-    for (const ev of json?.events ?? []) {
-      const comp = ev?.competitions?.[0];
-      const names: string[] = (comp?.competitors ?? []).map((c: any) => String(c?.team?.displayName ?? ""));
-      if (!names.some((n) => BORO_RE.test(n))) continue;
-      const diff = Math.abs(Date.parse(ev.date) - ko.getTime());
-      if (diff > 3 * 86_400_000) continue;
-      if (ev?.id) return { eventId: String(ev.id), slug };
-    }
-    return null;
-  };
-
-  // Team schedule first: one request per competition and it always carries
-  // Boro's own fixtures, so a fixture is found even if the day scoreboard
-  // feed is unavailable.
-  for (const slug of SLUGS) {
-    const json = await espnJson(
-      `https://site.api.espn.com/apis/site/v2/sports/soccer/${slug}/teams/${ESPN_TEAM_ID}/schedule`,
-    );
-    const hit = match(json, slug);
-    if (hit) return hit;
-  }
-
-  for (const slug of SLUGS) {
-    const json = await espnJson(
-      `https://site.api.espn.com/apis/site/v2/sports/soccer/${slug}/scoreboard?dates=${range}&limit=400`,
-    );
-    const hit = match(json, slug);
-    if (hit) return hit;
-  }
-
-  // Last resort: a summary relayed from a visitor's browser already tells us
-  // the event id, so live event posting keeps working even if every ESPN
-  // lookup path is refused for this worker.
-  const { getCachedSummaryForFixture } = await import("@/lib/espn-summary-cache.server");
-  const cached = await getCachedSummaryForFixture(fx);
-  const cachedId = String(cached?.header?.id ?? "");
-  if (/^\d{4,12}$/.test(cachedId)) {
-    return { eventId: cachedId, slug: String(cached?.header?.league?.slug ?? "eng.2") };
-  }
-
-  return null;
-}
-
 async function fetchEvents(
   eventId: string,
-  slug: string,
+  _slug: string,
   fx: FixtureLite,
 ): Promise<{ events: ParsedEvent[]; status: string | null }> {
+  // FotMob is the only live-data source — no ESPN fallback.
   const { fetchFotmobSummary } = await import("@/lib/fotmob-boro.server");
-  const fotmob = await fetchFotmobSummary({ home: fx.home_team, away: fx.away_team, kickoff: fx.kickoff_at });
-  if (fotmob) {
-    const norm = normaliseEspnSummary(fotmob);
-    return { events: norm.events.filter((event) => isReportableEvent(event.kind)), status: norm.status };
-  }
-
-  let json: any = await espnJson(
-    `https://site.api.espn.com/apis/site/v2/sports/soccer/${slug}/summary?event=${encodeURIComponent(eventId)}`,
-  );
-  if (!Array.isArray(json?.header?.competitions) || json.header.competitions.length === 0) {
-    const { getCachedEspnSummary } = await import("@/lib/espn-summary-cache.server");
-    json = (await getCachedEspnSummary(eventId)) ?? json;
-  }
-  if (!json) return { events: [], status: null };
-  const norm = normaliseEspnSummary(json);
-  return {
-    events: norm.events.filter((e) => isReportableEvent(e.kind)),
-    status: norm.status,
-  };
+  const fotmob = await fetchFotmobSummary({
+    home: fx.home_team,
+    away: fx.away_team,
+    kickoff: fx.kickoff_at,
+    matchId: eventId,
+  });
+  if (!fotmob) return { events: [], status: null };
+  const norm = normaliseEspnSummary(fotmob);
+  return { events: norm.events.filter((event) => isReportableEvent(event.kind)), status: norm.status };
 }
 
 
@@ -351,10 +290,9 @@ export async function syncBoroMatchEvents(opts?: {
 
   const { resolveFotmobMatch } = await import("@/lib/fotmob-boro.server");
   const fotmobId = await resolveFotmobMatch({ home: fx.home_team, away: fx.away_team, kickoff: fx.kickoff_at });
-  const espn = fotmobId ? { eventId: fotmobId, slug: "fotmob" } : await findEspnEvent(fx);
-  if (!espn) return { ok: true, fixture: label, topic: topic.title, posted: 0, updated: 0, skipped: ["no live-data match found"] };
+  if (!fotmobId) return { ok: true, fixture: label, topic: topic.title, posted: 0, updated: 0, skipped: ["no FotMob match found"] };
 
-  const { events, status } = await fetchEvents(espn.eventId, espn.slug, fx);
+  const { events, status } = await fetchEvents(fotmobId, "fotmob", fx);
   if (events.length === 0) {
     return { ok: true, fixture: label, topic: topic.title, status, posted: 0, updated: 0, skipped: ["no match events yet"] };
   }
