@@ -111,7 +111,6 @@ import { Route as ApiPublicHooksBoroPredictorInviteRouteImport } from './routes/
 import { Route as ApiPublicHooksBoroTeamSheetRouteImport } from './routes/api/public/hooks/boro-team-sheet'
 import { Route as ApiPublicHooksDeviceReleaseWatchRouteImport } from './routes/api/public/hooks/device-release-watch'
 import { Route as ApiPublicHooksEspnDebugRouteImport } from './routes/api/public/hooks/espn-debug'
-import { Route as ApiPublicHooksFantasyLineupSwapsRouteImport } from './routes/api/public/hooks/fantasy-lineup-swaps'
 import { Route as ApiPublicHooksFantasySquadRemindersRouteImport } from './routes/api/public/hooks/fantasy-squad-reminders'
 import { Route as ApiPublicHooksFantasySquadSyncRouteImport } from './routes/api/public/hooks/fantasy-squad-sync'
 import { Route as ApiPublicHooksNotifyRouteImport } from './routes/api/public/hooks/notify'
@@ -726,12 +725,6 @@ const ApiPublicHooksEspnDebugRoute = ApiPublicHooksEspnDebugRouteImport.update({
   path: '/api/public/hooks/espn-debug',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicHooksFantasyLineupSwapsRoute =
-  ApiPublicHooksFantasyLineupSwapsRouteImport.update({
-    id: '/api/public/hooks/fantasy-lineup-swaps',
-    path: '/api/public/hooks/fantasy-lineup-swaps',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const ApiPublicHooksFantasySquadRemindersRoute =
   ApiPublicHooksFantasySquadRemindersRouteImport.update({
     id: '/api/public/hooks/fantasy-squad-reminders',
@@ -986,7 +979,6 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/boro-team-sheet': typeof ApiPublicHooksBoroTeamSheetRoute
   '/api/public/hooks/device-release-watch': typeof ApiPublicHooksDeviceReleaseWatchRoute
   '/api/public/hooks/espn-debug': typeof ApiPublicHooksEspnDebugRoute
-  '/api/public/hooks/fantasy-lineup-swaps': typeof ApiPublicHooksFantasyLineupSwapsRoute
   '/api/public/hooks/fantasy-squad-reminders': typeof ApiPublicHooksFantasySquadRemindersRoute
   '/api/public/hooks/fantasy-squad-sync': typeof ApiPublicHooksFantasySquadSyncRoute
   '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
@@ -1112,7 +1104,6 @@ export interface FileRoutesByTo {
   '/api/public/hooks/boro-team-sheet': typeof ApiPublicHooksBoroTeamSheetRoute
   '/api/public/hooks/device-release-watch': typeof ApiPublicHooksDeviceReleaseWatchRoute
   '/api/public/hooks/espn-debug': typeof ApiPublicHooksEspnDebugRoute
-  '/api/public/hooks/fantasy-lineup-swaps': typeof ApiPublicHooksFantasyLineupSwapsRoute
   '/api/public/hooks/fantasy-squad-reminders': typeof ApiPublicHooksFantasySquadRemindersRoute
   '/api/public/hooks/fantasy-squad-sync': typeof ApiPublicHooksFantasySquadSyncRoute
   '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
@@ -1244,7 +1235,6 @@ export interface FileRoutesById {
   '/api/public/hooks/boro-team-sheet': typeof ApiPublicHooksBoroTeamSheetRoute
   '/api/public/hooks/device-release-watch': typeof ApiPublicHooksDeviceReleaseWatchRoute
   '/api/public/hooks/espn-debug': typeof ApiPublicHooksEspnDebugRoute
-  '/api/public/hooks/fantasy-lineup-swaps': typeof ApiPublicHooksFantasyLineupSwapsRoute
   '/api/public/hooks/fantasy-squad-reminders': typeof ApiPublicHooksFantasySquadRemindersRoute
   '/api/public/hooks/fantasy-squad-sync': typeof ApiPublicHooksFantasySquadSyncRoute
   '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
@@ -1375,7 +1365,6 @@ export interface FileRouteTypes {
     | '/api/public/hooks/boro-team-sheet'
     | '/api/public/hooks/device-release-watch'
     | '/api/public/hooks/espn-debug'
-    | '/api/public/hooks/fantasy-lineup-swaps'
     | '/api/public/hooks/fantasy-squad-reminders'
     | '/api/public/hooks/fantasy-squad-sync'
     | '/api/public/hooks/notify'
@@ -1501,7 +1490,6 @@ export interface FileRouteTypes {
     | '/api/public/hooks/boro-team-sheet'
     | '/api/public/hooks/device-release-watch'
     | '/api/public/hooks/espn-debug'
-    | '/api/public/hooks/fantasy-lineup-swaps'
     | '/api/public/hooks/fantasy-squad-reminders'
     | '/api/public/hooks/fantasy-squad-sync'
     | '/api/public/hooks/notify'
@@ -1632,7 +1620,6 @@ export interface FileRouteTypes {
     | '/api/public/hooks/boro-team-sheet'
     | '/api/public/hooks/device-release-watch'
     | '/api/public/hooks/espn-debug'
-    | '/api/public/hooks/fantasy-lineup-swaps'
     | '/api/public/hooks/fantasy-squad-reminders'
     | '/api/public/hooks/fantasy-squad-sync'
     | '/api/public/hooks/notify'
@@ -1697,7 +1684,6 @@ export interface RootRouteChildren {
   ApiPublicHooksBoroTeamSheetRoute: typeof ApiPublicHooksBoroTeamSheetRoute
   ApiPublicHooksDeviceReleaseWatchRoute: typeof ApiPublicHooksDeviceReleaseWatchRoute
   ApiPublicHooksEspnDebugRoute: typeof ApiPublicHooksEspnDebugRoute
-  ApiPublicHooksFantasyLineupSwapsRoute: typeof ApiPublicHooksFantasyLineupSwapsRoute
   ApiPublicHooksFantasySquadRemindersRoute: typeof ApiPublicHooksFantasySquadRemindersRoute
   ApiPublicHooksFantasySquadSyncRoute: typeof ApiPublicHooksFantasySquadSyncRoute
   ApiPublicHooksNotifyRoute: typeof ApiPublicHooksNotifyRoute
@@ -2437,13 +2423,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksEspnDebugRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/hooks/fantasy-lineup-swaps': {
-      id: '/api/public/hooks/fantasy-lineup-swaps'
-      path: '/api/public/hooks/fantasy-lineup-swaps'
-      fullPath: '/api/public/hooks/fantasy-lineup-swaps'
-      preLoaderRoute: typeof ApiPublicHooksFantasyLineupSwapsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/api/public/hooks/fantasy-squad-reminders': {
       id: '/api/public/hooks/fantasy-squad-reminders'
       path: '/api/public/hooks/fantasy-squad-reminders'
@@ -2953,7 +2932,6 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksBoroTeamSheetRoute: ApiPublicHooksBoroTeamSheetRoute,
   ApiPublicHooksDeviceReleaseWatchRoute: ApiPublicHooksDeviceReleaseWatchRoute,
   ApiPublicHooksEspnDebugRoute: ApiPublicHooksEspnDebugRoute,
-  ApiPublicHooksFantasyLineupSwapsRoute: ApiPublicHooksFantasyLineupSwapsRoute,
   ApiPublicHooksFantasySquadRemindersRoute:
     ApiPublicHooksFantasySquadRemindersRoute,
   ApiPublicHooksFantasySquadSyncRoute: ApiPublicHooksFantasySquadSyncRoute,
