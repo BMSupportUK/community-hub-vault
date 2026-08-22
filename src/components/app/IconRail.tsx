@@ -280,18 +280,26 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
       </Link>
       <div className="relative z-10 shrink-0 h-px w-12 bg-gradient-to-r from-transparent via-primary-glow to-transparent" />
       <div className="relative z-10 flex-1 min-h-0 w-full overflow-y-auto overflow-x-hidden flex flex-col items-center gap-2 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-      {sorted.map((i) => (
-        <div
-          key={i.to}
-          draggable={isAdmin}
-          onDragStart={() => { dragKey.current = i.to; }}
-          onDragOver={(e) => { if (isAdmin) e.preventDefault(); }}
-          onDrop={() => reorder(i.to)}
-          className={cn("relative z-10 shrink-0", isAdmin ? "cursor-grab active:cursor-grabbing" : undefined)}
-        >
-          <RailIcon to={i.to} label={i.label} Icon={i.icon} active={path.startsWith(i.to)} badge={i.badge} draggable={isAdmin} search={i.search} params={i.params} />
-        </div>
-      ))}
+      {sorted.map((i) => {
+        const active =
+          i.to === "/home"
+            ? path === "/home"
+            : i.to === "/home/$channel"
+              ? path.startsWith("/home/")
+              : path.startsWith(i.to);
+        return (
+          <div
+            key={i.to}
+            draggable={isAdmin}
+            onDragStart={() => { dragKey.current = i.to; }}
+            onDragOver={(e) => { if (isAdmin) e.preventDefault(); }}
+            onDrop={() => reorder(i.to)}
+            className={cn("relative z-10 shrink-0", isAdmin ? "cursor-grab active:cursor-grabbing" : undefined)}
+          >
+            <RailIcon to={i.to} label={i.label} Icon={i.icon} active={active} badge={i.badge} draggable={isAdmin} search={i.search} params={i.params} />
+          </div>
+        );
+      })}
       </div>
       <div className="relative z-10 shrink-0 h-px w-12 bg-gradient-to-r from-transparent via-primary-glow to-transparent" />
       {user && (
