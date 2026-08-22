@@ -232,8 +232,29 @@ export async function fetchFotmobSummary(input: {
         awayName: String(teams[1]?.name ?? ""),
         meta,
       }),
-    };
-  });
+     };
+   });
+
+  // FotMob labels period markers with stoppage time (e.g. 45+2'). The period
+  // event itself carries no added time, so borrow it from the latest event in
+  // that half when one is available.
+  const addedIn = (from: number, to: number) => {
+    let max = 0;
+    for (const event of rawEvents) {
+      const raw = String(event?.timeStr ?? "");
+      const minute = Number(event?.time ?? 0);
+      const plus = raw.includes("+") ? Number(raw.split("+")[1]) : 0;
+      if (minute >= from && minute <= to && Number.isFinite(plus)) max = Math.max(max, plus);
+    }
+    return max;
+  };
+  for (const event of keyEvents) {
+    if (event.type.type !== "halftime" && event.type.type !== "fulltime") continue;
+    const half = event.type.type === "halftime" ? 45 : 90;
+    const added = addedIn(half, half);
+    if (added > 0) event.clock = { displayValue: `${half}+${added}'` };
+  }
+
 
   const allStats: any[] = detail?.content?.stats?.Periods?.All?.stats ?? [];
   const flatStats = allStats.flatMap((group) => group?.stats ?? []);
