@@ -1,6 +1,15 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 
+const normaliseTeam = (value: string | null) =>
+  (value ?? "").toLowerCase().replace(/[^a-z]/g, "").replace(/footballclub$/, "").replace(/fc$/, "");
+
+const teamsMatch = (actual: string | null, expected: string | null | undefined) => {
+  const left = normaliseTeam(actual);
+  const right = normaliseTeam(expected ?? null);
+  return !!left && !!right && (left.includes(right) || right.includes(left));
+};
+
 // Either an explicit ESPN event id, or the fixture itself (teams + kick-off) so
 // the endpoint can resolve the id on its own when the match centre hasn't got
 // one cached.
@@ -34,10 +43,24 @@ export const Route = createFileRoute("/api/public/boro-match-detail")({
         let eventId = parsed.data.eventId ?? null;
         let slug = parsed.data.slug;
 
-        // Resolve from the fixture even when a cached id exists. This verifies
-        // both the event id and the competition slug, preventing a new cup tie
-        // from being queried through the default Championship feed (or an old
-        // fixture id being reused after the weekly rollover).
+        const { fetchBoroMatchDetail } = await import("@/lib/boro-match-detail.server");
+
+        // A known event id is the fastest path. Its response is also checked
+        // against the fixture, so a stale id can never display another match.
+        if (eventId) {
+          const direct = await fetchBoroMatchDetail(eventId, slug);
+          const fixtureMatches =
+            parsed.data.home && parsed.data.away
+              ? teamsMatch(direct.home, parsed.data.home) && teamsMatch(direct.away, parsed.data.away)
+              : true;
+          if (fixtureMatches && (direct.home || direct.away || direct.available)) {
+            return Response.json({ ...direct, eventId, slug }, {
+              headers: { "cache-control": "private, max-age=10, stale-while-revalidate=20" },
+            });
+          }
+        }
+
+        // Only search the scoreboards when the id is absent, stale, or failed.
         if (parsed.data.home && parsed.data.away && parsed.data.kickoff) {
           const { resolveEspnEvent } = await import("@/lib/boro-espn-resolve.server");
           const resolved = await resolveEspnEvent({
@@ -56,7 +79,6 @@ export const Route = createFileRoute("/api/public/boro-match-detail")({
           return Response.json({ error: "Invalid match" }, { status: 400 });
         }
 
-        const { fetchBoroMatchDetail } = await import("@/lib/boro-match-detail.server");
         const detail = { ...(await fetchBoroMatchDetail(eventId, slug)), eventId, slug };
 
         let diag: unknown = undefined;

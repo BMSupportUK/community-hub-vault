@@ -48,6 +48,8 @@ const MIRROR_PROVIDERS: MirrorProvider[] = [
 
 const providerCooldown = new Map<string, number>();
 const COOL_OFF_MS = 60_000;
+const DIRECT_TIMEOUT_MS = 2_500;
+const MIRROR_TIMEOUT_MS = 3_500;
 
 function parseMirrorBody<T>(text: string): T | null {
   try {
@@ -70,7 +72,7 @@ async function viaMirror<T>(url: string): Promise<T | null> {
     if (until > now) continue;
     try {
       const { target, init } = provider.build(url);
-      const res = await fetch(target, init);
+      const res = await fetch(target, { ...init, signal: AbortSignal.timeout(MIRROR_TIMEOUT_MS) });
       if (!res.ok) {
         providerCooldown.set(provider.name, Date.now() + COOL_OFF_MS);
         console.error("[espn-fetch] mirror failed", provider.name, res.status, url);
@@ -100,6 +102,7 @@ export async function espnJson<T = any>(url: string, tries = 2): Promise<T | nul
     try {
       const res = await fetch(url, {
         headers: { accept: "application/json" },
+        signal: AbortSignal.timeout(DIRECT_TIMEOUT_MS),
       });
       if (res.ok) return (await res.json()) as T;
       lastStatus = res.status;
