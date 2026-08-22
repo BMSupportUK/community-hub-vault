@@ -1525,6 +1525,16 @@ function ChannelPage() {
                           <div className="absolute right-0 top-full mt-1 w-48 rounded-lg border border-border bg-popover shadow-lg z-20 py-1 text-sm">
                             <button
                               onClick={() => {
+                                setReplyTo(m);
+                                setOpenMenuId(null);
+                                taRef.current?.focus();
+                              }}
+                              className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-surface-2 text-left"
+                            >
+                              <Reply className="size-4" /> Reply
+                            </button>
+                            <button
+                              onClick={() => {
                                 setEmojiPickerId(m.id);
                                 setOpenMenuId(null);
                               }}
