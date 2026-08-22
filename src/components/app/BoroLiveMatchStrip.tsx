@@ -72,7 +72,12 @@ export function BoroLiveMatchStrip() {
   const [data, setData] = useState<MatchCentreDTO | null>(null);
   const [preloadedDetail, setPreloadedDetail] = useState<MatchDetailDTO | null>(null);
   const [open, setOpen] = useState(false);
+  // Which game the pop-up shows. "auto" follows the live/next/last priority;
+  // the switcher lets you preview the upcoming fixture (line-ups, form, stats)
+  // before kick-off even while the last result is still the headline.
+  const [view, setView] = useState<"auto" | "next" | "last">("auto");
   const [now, setNow] = useState(() => Date.now());
+
 
   useEffect(() => {
     let cancelled = false;
