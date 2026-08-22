@@ -1247,7 +1247,13 @@ function ChannelPage() {
                         <div className="h-0.5 flex-1 bg-destructive" />
                       </div>
                     )}
-                    <div className={cn("group relative flex items-start gap-3 transition-colors")}>
+                    <div
+                      id={`msg-${m.id}`}
+                      className={cn(
+                        "group relative flex items-start gap-3 rounded-xl transition-colors scroll-mt-24",
+                        flashMsgId === m.id && "ring-2 ring-primary bg-primary/10",
+                      )}
+                    >
                       {(() => {
                         const resolvedAvatar = resolveAvatarUrl(
                           m.sender_id,
