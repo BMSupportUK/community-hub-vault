@@ -893,7 +893,10 @@ function TopicPage() {
             </div>
             <TabsList>
               <TabsTrigger value="posts">Original Post</TabsTrigger>
-              <TabsTrigger value="reply">Replies ({topic.reply_count ?? replies.length})</TabsTrigger>
+              {teamPosts.length > 0 && <TabsTrigger value="teams">Teams ({teamPosts.length})</TabsTrigger>}
+              <TabsTrigger value="reply">
+                Replies ({teamPosts.length > 0 ? replies.length + pinnedReplies.length : (topic.reply_count ?? replies.length)})
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="posts" className="space-y-3 mt-3">
@@ -901,6 +904,15 @@ function TopicPage() {
                 <div className="text-sm text-muted-foreground text-center py-6">No original post.</div>
               )}
             </TabsContent>
+
+            <TabsContent value="teams" className="space-y-3 mt-3">
+              {teamPosts.length === 0 ? (
+                <div className="text-sm text-muted-foreground text-center py-6">The team sheet hasn't been announced yet.</div>
+              ) : (
+                teamPosts.map((p, idx) => renderPost(p, idx))
+              )}
+            </TabsContent>
+
 
             <TabsContent value="reply" className="space-y-3 mt-3">
               {pinnedReplies.map((p) => renderPost(p, 0))}
