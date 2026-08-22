@@ -168,12 +168,18 @@ export function BoroLiveMatchStrip() {
           }
         : nf;
 
+  // A result played in the last four days is the most interesting thing to show
+  // when nothing is live — full FotMob action, stats and line-ups are in.
+  const lrKickoff = lr ? Date.parse((lr as { kickoff?: string; date?: string }).kickoff ?? (lr as { date?: string }).date ?? "") : NaN;
+  const lrIsRecent = Number.isFinite(lrKickoff) && now - lrKickoff < 4 * 24 * 60 * 60 * 1000;
+
   const selectedMatch =
     view === "next"
       ? (previewNf ?? live ?? lr)
       : view === "last"
         ? (lr ?? live ?? previewNf)
-        : (live ?? nf ?? lr);
+        : (live ?? (lrIsRecent ? lr : null) ?? nf ?? lr);
+
 
 
   // Never borrow another fixture's ESPN id — that made a new game show the
@@ -389,7 +395,8 @@ export function BoroLiveMatchStrip() {
               ...(lr ? ([{ key: "last", label: "Last result" }] as const) : []),
             ];
             const activeKey: "auto" | "next" | "last" =
-              view !== "auto" ? view : live ? "auto" : nf ? "next" : "last";
+              view !== "auto" ? view : live ? "auto" : lrIsRecent ? "last" : nf ? "next" : "last";
+
 
             return (
               <div className="p-5 pt-8">
