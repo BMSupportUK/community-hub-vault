@@ -62,7 +62,9 @@ export function ChannelColumn({
   const navigate = useNavigate();
   const handleSignOut = async () => {
     await signOut();
-    navigate({ to: "/login" });
+    // Hard redirect: guarantees every cached/protected view is torn down even
+    // if a client-side navigation is swallowed mid-unmount.
+    window.location.replace("/login");
   };
   const roleFlashMap = useRoleFlashMap();
   const [profile, setProfile] = useState<{
