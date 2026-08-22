@@ -167,8 +167,9 @@ export async function fetchFotmobSummary(input: {
     const stableId = ["fotmob", type || "event", event?.time ?? event?.timeStr ?? index, event?.isHome ? "home" : "away", playerIds]
       .join("-")
       .replace(/[^a-zA-Z0-9-]/g, "-");
+    const providerId = event?.eventId ?? event?.reactKey;
     return {
-      id: String(event?.eventId ?? event?.reactKey ?? stableId),
+      id: providerId != null && !String(providerId).startsWith("undefined") ? String(providerId) : stableId,
       type: {
         type: isGoal ? (event?.ownGoal ? "own-goal" : "goal") : isSub ? "substitution" : isPeriod ? "halftime" : `${card || type}-card`,
         text: isGoal ? "Goal" : isSub ? "Substitution" : isPeriod ? "Half Time" : `${event?.card ?? ""} Card`,
