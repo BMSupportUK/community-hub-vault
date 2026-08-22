@@ -10,6 +10,7 @@ import {
   type EspnMatchEvent,
 } from "@/lib/boro-espn-events";
 import { espnJson, espnDateRange } from "@/lib/espn-fetch";
+import type { FotmobEventDetail } from "@/lib/fotmob-boro.types";
 
 const SLUGS = ["eng.2", "eng.fa", "eng.league_cup", "eng.trophy"];
 const ESPN_TEAM_ID = "369"; // Middlesbrough
