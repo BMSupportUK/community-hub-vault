@@ -337,6 +337,29 @@ function ChannelPage() {
   const firstUnreadRef = useRef<HTMLDivElement | null>(null);
   const latestMessageRef = useRef<Message | null>(null);
 
+  // Messages flip from "Unread" to "Read" 30s after they first appear on screen.
+  const seenAtRef = useRef<Map<string, number>>(new Map());
+  const [readTick, setReadTick] = useState(0);
+  const READ_DELAY_MS = 30_000;
+
+  useEffect(() => {
+    const now = Date.now();
+    for (const m of messages) {
+      if (!seenAtRef.current.has(m.id)) seenAtRef.current.set(m.id, now);
+    }
+    setReadTick((t) => t + 1);
+  }, [messages]);
+
+  useEffect(() => {
+    const id = setInterval(() => setReadTick((t) => t + 1), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const isReadByDwell = (messageId: string) => {
+    const seen = seenAtRef.current.get(messageId);
+    return seen !== undefined && Date.now() - seen >= READ_DELAY_MS;
+  };
+
   const isAtBottom = () => {
     const el = scrollRef.current;
     if (!el) return true;
@@ -1228,9 +1251,12 @@ function ChannelPage() {
                 const menuOpen = openMenuId === m.id;
                 const pickerOpen = emojiPickerId === m.id;
                 const canEdit = isSelf;
-                const showUnreadDivider = m.id === firstUnreadId;
+                void readTick;
                 const isUnread =
-                  !isSelf && (baselineReadAt === null || m.created_at > baselineReadAt);
+                  !isSelf &&
+                  (baselineReadAt === null || m.created_at > baselineReadAt) &&
+                  !isReadByDwell(m.id);
+                const showUnreadDivider = m.id === firstUnreadId && isUnread;
                 const parent = m.reply_to ? messages.find((x) => x.id === m.reply_to) : undefined;
                 const parentProfile = parent ? profiles[parent.sender_id] : undefined;
                 const parentName =
