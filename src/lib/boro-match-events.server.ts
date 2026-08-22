@@ -183,7 +183,11 @@ export type EventSyncResult = {
   error?: string;
 };
 
-export async function syncBoroMatchEvents(opts?: { ignoreWindow?: boolean }): Promise<EventSyncResult> {
+export async function syncBoroMatchEvents(opts?: {
+  ignoreWindow?: boolean;
+  /** Rewrite the bodies of posts already made for this fixture (e.g. after a formatting change). */
+  rebuild?: boolean;
+}): Promise<EventSyncResult> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { getMatchDayAuthorId } = await import("@/lib/boro-bot-author.server");
   const skipped: string[] = [];
@@ -202,7 +206,7 @@ export async function syncBoroMatchEvents(opts?: { ignoreWindow?: boolean }): Pr
   const fx = rows.find((row) => {
     const ko = Date.parse(row.kickoff_at);
     if (!Number.isFinite(ko)) return false;
-    if (opts?.ignoreWindow) return true;
+    if (opts?.ignoreWindow || opts?.rebuild) return true;
     return now >= ko - WINDOW_BEFORE_MS && now <= ko + WINDOW_AFTER_MS;
   });
   if (!fx) return { ok: true, posted: 0, updated: 0, skipped: ["no fixture inside the live match window"] };
@@ -242,10 +246,10 @@ export async function syncBoroMatchEvents(opts?: { ignoreWindow?: boolean }): Pr
 
   const { data: logged } = await supabaseAdmin
     .from("boro_match_event_posts")
-    .select("id, event_key, fingerprint, revision")
+    .select("id, event_key, fingerprint, revision, post_id")
     .eq("fixture_id", fx.id);
   const byKey = new Map(
-    ((logged ?? []) as Array<{ id: string; event_key: string; fingerprint: string; revision: number }>).map((r) => [
+    ((logged ?? []) as Array<{ id: string; event_key: string; fingerprint: string; revision: number; post_id: string }>).map((r) => [
       r.event_key,
       r,
     ]),
@@ -259,9 +263,28 @@ export async function syncBoroMatchEvents(opts?: { ignoreWindow?: boolean }): Pr
   for (const ev of events) {
     const fingerprint = `${ev.kind}|${ev.clock ?? ""}|${ev.teamName ?? ""}|${ev.players.join("/")}|${ev.homeScore ?? ""}-${ev.awayScore ?? ""}`;
     const prev = byKey.get(ev.key);
-    if (prev && prev.fingerprint === fingerprint) continue;
+    if (prev && prev.fingerprint === fingerprint && !opts?.rebuild) continue;
 
-    const isUpdate = !!prev;
+    // Rebuild mode: rewrite the existing reply in place so the thread shows the
+    // FotMob layout without duplicating the incident.
+    if (prev && opts?.rebuild && prev.post_id) {
+      const { error: bodyErr } = await supabaseAdmin
+        .from("forum_posts")
+        .update({ body: buildEventBody(ev, fx, false) })
+        .eq("id", prev.post_id);
+      if (bodyErr) {
+        skipped.push(`rewrite failed (${ev.key}): ${bodyErr.message}`);
+        continue;
+      }
+      await supabaseAdmin
+        .from("boro_match_event_posts")
+        .update({ fingerprint, summary: describeEvent(ev, fx), updated_at: new Date().toISOString() })
+        .eq("id", prev.id);
+      updated += 1;
+      continue;
+    }
+
+    const isUpdate = !!prev && !opts?.rebuild;
     const body = buildEventBody(ev, fx, isUpdate);
     const { data: post, error: postErr } = await supabaseAdmin
       .from("forum_posts")
