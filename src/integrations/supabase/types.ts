@@ -773,6 +773,7 @@ export type Database = {
           id: string
           pinned_at: string | null
           pinned_by: string | null
+          reply_to: string | null
           sender_id: string
         }
         Insert: {
@@ -783,6 +784,7 @@ export type Database = {
           id?: string
           pinned_at?: string | null
           pinned_by?: string | null
+          reply_to?: string | null
           sender_id: string
         }
         Update: {
@@ -793,6 +795,7 @@ export type Database = {
           id?: string
           pinned_at?: string | null
           pinned_by?: string | null
+          reply_to?: string | null
           sender_id?: string
         }
         Relationships: [
@@ -801,6 +804,13 @@ export type Database = {
             columns: ["channel_id"]
             isOneToOne: false
             referencedRelation: "chat_channels"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chat_messages_reply_to_fkey"
+            columns: ["reply_to"]
+            isOneToOne: false
+            referencedRelation: "chat_messages"
             referencedColumns: ["id"]
           },
         ]
