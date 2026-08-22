@@ -344,6 +344,13 @@ function fotmobEventDetail(
       xg: shot?.expectedGoals != null ? Number(shot.expectedGoals).toFixed(2) : null,
       xgot: shot?.expectedGoalsOnTarget != null ? Number(shot.expectedGoalsOnTarget).toFixed(2) : null,
       card: null,
+      teamColor: shot?.teamColor ? String(shot.teamColor) : null,
+      scoreLine: `${ctx.homeName} ${event?.newScore?.[0] ?? event?.homeScore ?? 0} - ${event?.newScore?.[1] ?? event?.awayScore ?? 0} ${ctx.awayName}`,
+      goalMouth:
+        shot?.onGoalShot?.x != null && shot?.onGoalShot?.y != null
+          ? { x: Number(shot.onGoalShot.x), y: Number(shot.onGoalShot.y) }
+          : null,
+      onTarget: shot?.isOnTarget ?? null,
     };
   }
 
