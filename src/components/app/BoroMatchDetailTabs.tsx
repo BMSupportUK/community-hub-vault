@@ -6,7 +6,7 @@ import { PLAYER_STAT_COLUMNS, describeEspnEvent } from "@/lib/boro-espn-events";
 
 type StatColumn = { key: string; label: string; title: string };
 
-// FotMob and ESPN record different player stats (FotMob adds a rating and
+// FotMob records a rating and minutes played, so table columns are resolved from
 // minutes played but has no shots-faced/goals-conceded splits), so the table
 // columns follow whatever the active feed actually reports.
 const STAT_CATALOGUE: StatColumn[] = [
@@ -185,7 +185,7 @@ export function BoroMatchDetailTabs({
   live: boolean;
   kickoff?: string | null;
   initialDetail?: MatchDetailDTO | null;
-  /** Fallback identity so the feed can be resolved without a cached ESPN id. */
+  /** Fallback identity so the feed can be resolved without a cached live-feed id. */
   fixture?: { home: string; away: string; kickoff: string; competition?: string | null } | null;
 }) {
   const [showMoreStats, setShowMoreStats] = useState(false);
@@ -198,7 +198,7 @@ export function BoroMatchDetailTabs({
   const koMs = kickoff ? Date.parse(kickoff) : NaN;
   const minsToKo = Number.isFinite(koMs) ? Math.round((koMs - now) / 60000) : null;
   const preMatch = !live && minsToKo !== null && minsToKo > -5;
-  // Within 3 hours of kick-off we poll hard so line-ups/stats land the moment ESPN publishes them.
+  // Within 3 hours of kick-off we poll hard so line-ups/stats land the moment FotMob publishes them.
   const armed = live || (preMatch && minsToKo! <= 180);
 
   const fixtureKey = fixture ? `${fixture.home}|${fixture.away}|${fixture.kickoff}` : "";
