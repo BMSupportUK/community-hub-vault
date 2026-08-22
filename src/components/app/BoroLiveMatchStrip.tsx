@@ -70,8 +70,10 @@ function BigSide({ name, logo }: { name: string; logo?: string | null }) {
 
 export function BoroLiveMatchStrip() {
   const fetchData = useServerFn(getBoroMatchCentre);
+  const fetchUpcoming = useServerFn(getBoroUpcomingFixture);
   const tz = useUserTimezone();
   const [data, setData] = useState<MatchCentreDTO | null>(null);
+  const [upcoming, setUpcoming] = useState<UpcomingFixtureDTO>(null);
   const [preloadedDetail, setPreloadedDetail] = useState<MatchDetailDTO | null>(null);
   const [open, setOpen] = useState(false);
   // Which game the pop-up shows. "auto" follows the live/next/last priority;
@@ -79,6 +81,19 @@ export function BoroLiveMatchStrip() {
   // before kick-off even while the last result is still the headline.
   const [view, setView] = useState<"auto" | "next" | "last">("auto");
   const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetchUpcoming()
+      .then((u) => {
+        if (!cancelled) setUpcoming(u);
+      })
+      .catch((e) => console.error("[boro-match-centre] upcoming fixture failed", e));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
 
 
   useEffect(() => {
