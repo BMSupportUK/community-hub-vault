@@ -1196,14 +1196,14 @@ function ChannelPage() {
                     {showUnreadDivider && (
                       <div
                         ref={firstUnreadRef}
-                        className="flex items-center gap-2 my-2"
-                        aria-label="New messages"
+                        className="flex scroll-mt-20 items-center gap-3 my-3"
+                        aria-label="Unread messages start here"
                       >
-                        <div className="h-px flex-1 bg-destructive/60" />
-                        <span className="text-[10px] font-semibold uppercase tracking-wider text-destructive">
-                          New
+                        <div className="h-0.5 flex-1 bg-destructive" />
+                        <span className="rounded-full border border-destructive bg-destructive/15 px-3 py-1 text-xs font-bold uppercase text-destructive">
+                          Unread messages
                         </span>
-                        <div className="h-px w-6 bg-destructive/60" />
+                        <div className="h-0.5 flex-1 bg-destructive" />
                       </div>
                     )}
                     <div className={cn("group relative flex items-start gap-3 transition-colors")}>
@@ -1272,18 +1272,16 @@ function ChannelPage() {
                               minute: "2-digit",
                             })}
                           </span>
-                          {!isSelf && baselineReadAt && (
-                            <span
-                              className={cn(
-                                "inline-flex items-center rounded-full border px-1.5 py-px text-[9px] font-semibold uppercase tracking-wider shrink-0",
-                                isUnread
-                                  ? "border-destructive/60 text-destructive bg-destructive/10"
-                                  : "border-border text-muted-foreground",
-                              )}
-                            >
-                              {isUnread ? "Unread" : "Read"}
-                            </span>
-                          )}
+                          <span
+                            className={cn(
+                              "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase shrink-0",
+                              isUnread
+                                ? "border-destructive text-destructive bg-destructive/15"
+                                : "border-border bg-surface-2 text-muted-foreground",
+                            )}
+                          >
+                            {isUnread ? "Unread" : "Read"}
+                          </span>
 
                           {isPinned && (
                             <span className="inline-flex items-center gap-1 text-[10px] text-primary">
