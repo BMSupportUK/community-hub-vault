@@ -149,13 +149,13 @@ export function BoroLiveMatchStrip() {
 
 
 
-  // Never borrow another fixture's ESPN id — that made a new game show the
+  // Never borrow another fixture's live-feed id — that made a new game show the
   // previous match's line-ups, stats and ratings.
   const selectedEventId = selectedMatch?.eventId ?? null;
   const selectedSlug = selectedMatch?.espnSlug ?? null;
-  // When the cached ESPN id is missing the pop-up can still resolve the feed
+  // When the cached live-feed id is missing the pop-up can still resolve the feed
   // from the fixture itself (teams + kick-off), so it no longer sits on
-  // "Awaiting kick-off" while ESPN has the game live.
+  // "Awaiting kick-off" while FotMob has the game live.
   const selectedFixture = selectedMatch
     ? {
         home: selectedMatch.home,
