@@ -289,7 +289,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
           onDrop={() => reorder(i.to)}
           className={cn("relative z-10 shrink-0", isAdmin ? "cursor-grab active:cursor-grabbing" : undefined)}
         >
-          <RailIcon to={i.to} label={i.label} Icon={i.icon} active={path.startsWith(i.to)} badge={i.badge} draggable={isAdmin} search={i.search} />
+          <RailIcon to={i.to} label={i.label} Icon={i.icon} active={path.startsWith(i.to)} badge={i.badge} draggable={isAdmin} search={i.search} params={i.params} />
         </div>
       ))}
       </div>
