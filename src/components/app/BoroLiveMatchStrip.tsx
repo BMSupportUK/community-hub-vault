@@ -158,38 +158,56 @@ export function BoroLiveMatchStrip() {
     }
 
     const controller = new AbortController();
-    const params = new URLSearchParams({
-      home: selectedFixture.home,
-      away: selectedFixture.away,
-      kickoff: selectedFixture.kickoff,
-    });
-    if (selectedEventId) params.set("eventId", selectedEventId);
-    if (selectedSlug) params.set("slug", selectedSlug);
-    if (selectedFixture.competition) params.set("competition", selectedFixture.competition);
-
+    let timer: number | undefined;
     setPreloadedDetail(null);
-    void fetch(`/api/public/boro-match-detail?${params.toString()}`, {
-      headers: { accept: "application/json" },
-      cache: "no-store",
-      signal: controller.signal,
-    })
-      .then(async (response) => {
-        if (!response.ok) return null;
-        return (await response.json()) as MatchDetailDTO;
-      })
-      .then((detail) => {
-        if (detail && (detail.available || detail.home || detail.away)) {
-          setPreloadedDetail(detail);
+    const load = async () => {
+      const params = new URLSearchParams({
+        home: selectedFixture.home,
+        away: selectedFixture.away,
+        kickoff: selectedFixture.kickoff,
+        refresh: String(Date.now()),
+      });
+      if (selectedEventId) params.set("eventId", selectedEventId);
+      if (selectedSlug) params.set("slug", selectedSlug);
+      if (selectedFixture.competition) params.set("competition", selectedFixture.competition);
+
+      try {
+        const response = await fetch(`/api/public/boro-match-detail?${params.toString()}`, {
+          headers: { accept: "application/json" },
+          cache: "no-store",
+          signal: controller.signal,
+        });
+        const detail = response.ok ? ((await response.json()) as MatchDetailDTO) : null;
+        if (detail && (detail.available || detail.home || detail.away)) setPreloadedDetail(detail);
+
+        // During a live game, fetch directly from the visitor's connection on
+        // every cycle. This also relays the raw summary to the backend, so the
+        // pinned forum post updates even when nobody opens the match popup.
+        if (live?.inPlay) {
+          const { fetchEspnDetailInBrowser } = await import("@/lib/boro-match-detail-client");
+          const direct = await fetchEspnDetailInBrowser({
+            eventId: selectedEventId,
+            slug: selectedSlug,
+            fixture: selectedFixture,
+          });
+          if (direct) setPreloadedDetail(direct);
         }
-      })
-      .catch((error: unknown) => {
+      } catch (error: unknown) {
         if (!(error instanceof DOMException && error.name === "AbortError")) {
           console.error("[boro-match-centre] preload failed", error);
         }
-      });
+      } finally {
+        if (!controller.signal.aborted && live?.inPlay) timer = window.setTimeout(load, 15_000);
+      }
+    };
 
-    return () => controller.abort();
-  }, [selectedFixtureKey, selectedEventId, selectedSlug]);
+    void load();
+
+    return () => {
+      controller.abort();
+      if (timer) window.clearTimeout(timer);
+    };
+  }, [selectedFixtureKey, selectedEventId, selectedSlug, live?.inPlay]);
   const openMatchCentre = () => setOpen(true);
 
   if (!data || (!live && !nf && !lr)) return null;
