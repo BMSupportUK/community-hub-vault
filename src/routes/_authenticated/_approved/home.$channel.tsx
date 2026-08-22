@@ -1340,6 +1340,31 @@ function ChannelPage() {
                             </span>
                           )}
                         </div>
+                        {m.reply_to && (
+                          <div className="mb-1 flex items-center gap-2 rounded-lg border border-border/70 bg-surface-2/70 px-2.5 py-1.5 text-xs">
+                            <Reply className="size-3.5 shrink-0 text-primary" />
+                            <span className="shrink-0 font-semibold text-foreground">
+                              {parent ? parentName : "Original message"}
+                            </span>
+                            <span className="min-w-0 flex-1 truncate text-muted-foreground">
+                              {parent
+                                ? /^https?:\/\/\S+$/i.test(parent.content.trim())
+                                  ? "Attachment"
+                                  : parent.content
+                                : "This message is no longer available"}
+                            </span>
+                            {parent && (
+                              <button
+                                type="button"
+                                onClick={() => jumpToMessage(parent.id)}
+                                className="inline-flex shrink-0 items-center gap-1 rounded-md border border-border bg-surface-1 px-2 py-0.5 text-[10px] font-semibold text-foreground hover:bg-surface-2"
+                                title="Jump to original message"
+                              >
+                                <CornerUpRight className="size-3" /> Jump
+                              </button>
+                            )}
+                          </div>
+                        )}
                         <div
                           className={cn(
                             "block w-full rounded-2xl px-3.5 py-2 border shadow-sm",
