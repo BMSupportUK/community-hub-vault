@@ -330,6 +330,7 @@ function RailIcon({
         <TooltipTrigger asChild>
           <Link
             to={to}
+            params={params as never}
             search={search as never}
             aria-label={label}
             draggable={false}
