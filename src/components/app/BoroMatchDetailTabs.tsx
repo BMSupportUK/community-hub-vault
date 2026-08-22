@@ -172,6 +172,26 @@ function PlayerRow({ p, columns }: { p: PlayerLine; columns: StatColumn[] }) {
   );
 }
 
+function StatKey({ columns }: { columns: StatColumn[] }) {
+  if (columns.length === 0) return null;
+  return (
+    <div className="mt-4 rounded-lg border border-white/15 bg-black/40 p-3">
+      <div className="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-white/85">
+        <Info className="size-3.5 text-amber-300" />
+        Stat key
+      </div>
+      <dl className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-[11px] sm:grid-cols-3">
+        {columns.map((c) => (
+          <div key={c.key} className="flex items-baseline gap-2">
+            <dt className="shrink-0 rounded bg-white/15 px-1 py-0.5 font-bold tabular-nums text-white">{c.label}</dt>
+            <dd className="text-white/80">{c.title}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  );
+}
+
 export function BoroMatchDetailTabs({
   eventId,
   slug,
