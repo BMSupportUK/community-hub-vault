@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Goal, Square, RefreshCw, ShieldAlert, Target, ChevronDown } from "lucide-react";
+import { Goal, Square, RefreshCw, ShieldAlert, Target, ChevronDown, Info } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { MatchDetailDTO, MatchEventItem, PlayerLine } from "@/lib/boro-match-detail.types";
 import { PLAYER_STAT_COLUMNS, describeEspnEvent } from "@/lib/boro-espn-events";
