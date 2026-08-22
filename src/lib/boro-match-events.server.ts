@@ -120,7 +120,42 @@ function scoreLine(ev: ParsedEvent, fx: FixtureLite): string | null {
   return `${fx.home_team} ${ev.homeScore} - ${ev.awayScore} ${fx.away_team}`;
 }
 
+function playerRow(
+  label: "in" | "out" | null,
+  player: { name: string; number: string | null; position: string | null },
+): string {
+  const arrow = label === "in" ? "\u2b06\ufe0f " : label === "out" ? "\u2b07\ufe0f " : "";
+  const num = player.number ? `${escapeHtml(player.number)} ` : "";
+  const pos = player.position ? `<br /><span style="opacity:.7;font-size:13px">${escapeHtml(player.position)}</span>` : "";
+  return `<p style="margin:2px 0">${arrow}<strong>${num}${escapeHtml(player.name)}</strong>${pos}</p>`;
+}
+
+/** FotMob-shaped card: minute badge, headline, player block, narrative, shot metrics. */
+function buildFotmobCard(ev: ParsedEvent, isUpdate: boolean): string {
+  const d = ev.detail!;
+  const parts: string[] = [];
+  parts.push(
+    `<p style="margin:0 0 6px"><strong>${escapeHtml(d.minuteLabel || ev.clock || "")} ${escapeHtml(
+      `${isUpdate ? "Updated: " : ""}${d.headline}`,
+    )}</strong>${d.teamName ? ` <span style="opacity:.75">· ${escapeHtml(d.teamName)}</span>` : ""}</p>`,
+  );
+  if (d.playerIn) parts.push(playerRow("in", d.playerIn));
+  if (d.playerOut) parts.push(playerRow("out", d.playerOut));
+  if (d.player) parts.push(playerRow(null, d.player));
+  if (d.narrative) parts.push(`<p style="margin:8px 0 0">${escapeHtml(d.narrative)}</p>`);
+  const metrics: string[] = [];
+  if (d.shotType) metrics.push(`Shot type: ${d.shotType}`);
+  if (d.xg) metrics.push(`xG: ${d.xg}`);
+  if (d.xgot) metrics.push(`xGOT: ${d.xgot}`);
+  if (metrics.length) {
+    parts.push(`<p style="margin:8px 0 0;opacity:.8;font-size:13px">${escapeHtml(metrics.join("  ·  "))}</p>`);
+  }
+  if (isUpdate) parts.push(`<p><em>This corrects the earlier post for this incident.</em></p>`);
+  return parts.join("\n");
+}
+
 export function buildEventBody(ev: ParsedEvent, fx: FixtureLite, isUpdate: boolean): string {
+  if (ev.detail) return buildFotmobCard(ev, isUpdate);
   const heading = `${ICON[ev.kind] ?? "\u2022"} ${isUpdate ? "Updated: " : ""}${describeEvent(ev, fx)}`;
   const parts = [`<p><strong>${escapeHtml(heading)}</strong></p>`];
   const score = scoreLine(ev, fx);
@@ -135,6 +170,7 @@ export function buildEventBody(ev: ParsedEvent, fx: FixtureLite, isUpdate: boole
   }
   return parts.join("\n");
 }
+
 
 export type EventSyncResult = {
   ok: boolean;
