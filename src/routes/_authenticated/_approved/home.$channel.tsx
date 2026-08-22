@@ -1251,9 +1251,12 @@ function ChannelPage() {
                 const menuOpen = openMenuId === m.id;
                 const pickerOpen = emojiPickerId === m.id;
                 const canEdit = isSelf;
-                const showUnreadDivider = m.id === firstUnreadId;
+                void readTick;
                 const isUnread =
-                  !isSelf && (baselineReadAt === null || m.created_at > baselineReadAt);
+                  !isSelf &&
+                  (baselineReadAt === null || m.created_at > baselineReadAt) &&
+                  !isReadByDwell(m.id);
+                const showUnreadDivider = m.id === firstUnreadId && isUnread;
                 const parent = m.reply_to ? messages.find((x) => x.id === m.reply_to) : undefined;
                 const parentProfile = parent ? profiles[parent.sender_id] : undefined;
                 const parentName =
