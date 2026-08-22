@@ -55,13 +55,27 @@ export async function findEspnEvent(fx: FixtureLite): Promise<{ eventId: string;
     if (hit) return hit;
   }
 
+  // Last resort: a summary relayed from a visitor's browser already tells us
+  // the event id, so live event posting keeps working even if every ESPN
+  // lookup path is refused for this worker.
+  const { getCachedSummaryForFixture } = await import("@/lib/espn-summary-cache.server");
+  const cached = await getCachedSummaryForFixture(fx);
+  const cachedId = String(cached?.header?.id ?? "");
+  if (/^\d{4,12}$/.test(cachedId)) {
+    return { eventId: cachedId, slug: String(cached?.header?.league?.slug ?? "eng.2") };
+  }
+
   return null;
 }
 
 async function fetchEvents(eventId: string, slug: string): Promise<{ events: ParsedEvent[]; status: string | null }> {
-  const json: any = await espnJson(
+  let json: any = await espnJson(
     `https://site.api.espn.com/apis/site/v2/sports/soccer/${slug}/summary?event=${encodeURIComponent(eventId)}`,
   );
+  if (!Array.isArray(json?.header?.competitions) || json.header.competitions.length === 0) {
+    const { getCachedEspnSummary } = await import("@/lib/espn-summary-cache.server");
+    json = (await getCachedEspnSummary(eventId)) ?? json;
+  }
   if (!json) return { events: [], status: null };
   const norm = normaliseEspnSummary(json);
   return {
@@ -69,6 +83,7 @@ async function fetchEvents(eventId: string, slug: string): Promise<{ events: Par
     status: norm.status,
   };
 }
+
 
 function escapeHtml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
