@@ -126,7 +126,7 @@ export const getBoroMatchCentre = createServerFn({ method: "GET" }).handler(
       Date.now() >= koMs - 15 * 60 * 1000 &&
       Date.now() <= koMs + 5 * 60 * 60 * 1000;
     // While a game is in play refresh every ~20s so the live strip ticks along.
-    const maxAgeMs = liveWindow ? 20 * 1000 : 30 * 60 * 1000;
+    const maxAgeMs = liveWindow ? 5 * 1000 : 30 * 60 * 1000;
     const stale =
       !dto.fetchedAt || Date.now() - new Date(dto.fetchedAt).getTime() > maxAgeMs;
     const needsFetch =

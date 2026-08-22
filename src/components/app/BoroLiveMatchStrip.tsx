@@ -88,7 +88,7 @@ export function BoroLiveMatchStrip() {
         setData(d);
         setNow(Date.now());
         const live = !!d.liveMatch?.inPlay;
-        schedule(live ? 20_000 : 5 * 60_000);
+        schedule(live ? 8_000 : 5 * 60_000);
       } catch (e) {
         console.error(e);
         if (!cancelled) schedule(5 * 60_000);
@@ -197,7 +197,7 @@ export function BoroLiveMatchStrip() {
           console.error("[boro-match-centre] preload failed", error);
         }
       } finally {
-        if (!controller.signal.aborted && live?.inPlay) timer = window.setTimeout(load, 15_000);
+        if (!controller.signal.aborted && live?.inPlay) timer = window.setTimeout(load, 5_000);
       }
     };
 
