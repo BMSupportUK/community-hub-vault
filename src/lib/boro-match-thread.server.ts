@@ -336,7 +336,10 @@ function stripLiveBlock(body: string): string {
 
 function isHalfTime(json: any): boolean {
   const st = json?.header?.competitions?.[0]?.status;
-  const detail = String(st?.type?.shortDetail ?? st?.type?.detail ?? st?.type?.description ?? "").toLowerCase();
+  const detail = [st?.type?.name, st?.type?.shortDetail, st?.type?.detail, st?.type?.description]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
   return /half\s*time|halftime|\bht\b/.test(detail);
 }
 

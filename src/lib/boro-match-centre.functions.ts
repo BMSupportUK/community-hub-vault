@@ -237,7 +237,17 @@ export const getBoroMatchCentre = createServerFn({ method: "GET" }).handler(
             awayLogo: null,
           };
         }
-        const r = (recent ?? []).find((row: any) => isBoroMatch({ home: row.home_team, away: row.away_team })) as any;
+        // A live fixture already has scores, but it is not a result. Only let
+        // the database fallback promote a row into "last result" after the
+        // fixture feed marks it finished (with a four-hour safety fallback).
+        const r = (recent ?? []).find((row: any) => {
+          if (!isBoroMatch({ home: row.home_team, away: row.away_team })) return false;
+          const kickoff = Date.parse(String(row.kickoff_at ?? ""));
+          return (
+            String(row.status ?? "").toUpperCase() === "FINISHED" ||
+            (Number.isFinite(kickoff) && kickoff < Date.now() - 4 * 60 * 60 * 1000)
+          );
+        }) as any;
         if (r) {
           lastFromDb = {
             date: new Date(r.kickoff_at).toISOString(),
