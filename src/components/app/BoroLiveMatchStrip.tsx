@@ -172,6 +172,10 @@ export function BoroLiveMatchStrip() {
   // when nothing is live — full FotMob action, stats and line-ups are in.
   const lrKickoff = lr ? Date.parse((lr as { kickoff?: string; date?: string }).kickoff ?? (lr as { date?: string }).date ?? "") : NaN;
   const lrIsRecent = Number.isFinite(lrKickoff) && now - lrKickoff < 4 * 24 * 60 * 60 * 1000;
+  // Keep the strip and popup on the same headline. A freshly completed match
+  // is shown before the upcoming fixture so the visible strip opens the game
+  // users can currently review (including its FotMob action and stats).
+  const headlineFixture = lrIsRecent ? null : nf;
 
   const selectedMatch =
     view === "next"
@@ -305,20 +309,20 @@ export function BoroLiveMatchStrip() {
                   {live.inPlay ? live.clock || live.statusDetail : live.statusDetail}
                 </span>
               </div>
-            ) : nf ? (
+            ) : headlineFixture ? (
               <div className="flex-1 min-w-0 flex items-center gap-2 sm:gap-3 text-sm">
                 <CalendarDays className="size-4 text-[#E11B22] shrink-0" />
-                <Side name={nf.home} logo={nf.homeLogo} />
+                <Side name={headlineFixture.home} logo={headlineFixture.homeLogo} />
                 <span className="text-[11px] font-bold uppercase tracking-wider text-white/50 px-1">v</span>
-                <Side name={nf.away} logo={nf.awayLogo} />
+                <Side name={headlineFixture.away} logo={headlineFixture.awayLogo} />
                 <span className="ml-auto shrink-0 flex items-center gap-2">
-                  {countdown(nf.kickoff, now) && (
+                  {countdown(headlineFixture.kickoff, now) && (
                     <span className="rounded-md bg-[#E11B22]/20 px-2 py-0.5 text-[11px] font-bold text-red-200">
-                      in {countdown(nf.kickoff, now)}
+                      in {countdown(headlineFixture.kickoff, now)}
                     </span>
                   )}
                   <span className="hidden md:inline text-[11px] text-white/70">
-                    {fmtKickoff(nf.kickoff, tz)} · {nf.competition}
+                    {fmtKickoff(headlineFixture.kickoff, tz)} · {headlineFixture.competition}
                   </span>
                 </span>
               </div>
