@@ -51,6 +51,45 @@ const COOL_OFF_MS = 60_000;
 const DIRECT_TIMEOUT_MS = 2_500;
 const MIRROR_TIMEOUT_MS = 3_500;
 
+// ESPN's main site.api host blocks the production worker, while its
+// site.web.api host serves the same soccer payloads from that environment.
+// Try that first-party host before depending on third-party mirrors or a
+// visitor's browser relay.
+const webApiCache = new Map<string, { at: number; value: unknown }>();
+
+async function viaEspnWebApi<T>(url: string): Promise<T | null> {
+  let target: string;
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname !== "site.api.espn.com") return null;
+    parsed.hostname = "site.web.api.espn.com";
+    target = parsed.toString();
+  } catch {
+    return null;
+  }
+
+  const cached = webApiCache.get(target);
+  if (cached && Date.now() - cached.at < 5_000) return cached.value as T;
+
+  try {
+    const res = await fetch(target, {
+      headers: { accept: "application/json" },
+      cache: "no-store",
+      signal: AbortSignal.timeout(MIRROR_TIMEOUT_MS),
+    });
+    if (!res.ok) {
+      console.error("[espn-fetch] web api refused", res.status, target);
+      return null;
+    }
+    const value = (await res.json()) as T;
+    webApiCache.set(target, { at: Date.now(), value });
+    return value;
+  } catch (error) {
+    console.error("[espn-fetch] web api error", String(error), target);
+    return null;
+  }
+}
+
 function parseMirrorBody<T>(text: string): T | null {
   try {
     const parsed = JSON.parse(text) as any;
@@ -202,7 +241,12 @@ export async function espnJson<T = any>(url: string, tries = 2): Promise<T | nul
   }
   console.error("[espn-fetch] direct request refused", lastStatus, url);
 
-  // cdn.espn.com first: it is the one host that reliably answers our worker.
+  // The first-party web API currently answers reliably from the production
+  // worker and returns the exact same payload shape as site.api.
+  const viaWebApi = await viaEspnWebApi<T>(url);
+  if (viaWebApi != null) return viaWebApi;
+
+  // Keep the CDN and mirrors as independent fallbacks if that host changes.
   const viaCdn = await viaEspnCdn<T>(url);
   if (viaCdn != null) return viaCdn;
 
