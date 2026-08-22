@@ -1189,6 +1189,8 @@ function ChannelPage() {
                 const pickerOpen = emojiPickerId === m.id;
                 const canEdit = isSelf;
                 const showUnreadDivider = m.id === firstUnreadId;
+                const isUnread = !isSelf && !!baselineReadAt && m.created_at > baselineReadAt;
+
                 return (
                   <div key={m.id}>
                     {showUnreadDivider && (
