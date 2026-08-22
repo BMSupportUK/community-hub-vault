@@ -1,6 +1,6 @@
 // Posts live match events (goals + scorer, yellow/red cards, penalties and
 // substitutions) into the Middlesbrough match day forum thread as replies, and
-// posts an updated reply whenever ESPN corrects an event it already reported.
+// posts an updated reply whenever FotMob corrects an event it already reported.
 
 import { matchTopicToFixture, type FixtureLite } from "@/lib/boro-team-sheet.server";
 import {
@@ -11,9 +11,6 @@ import {
 } from "@/lib/boro-espn-events";
 import type { FotmobEventDetail } from "@/lib/fotmob-boro.types";
 
-const SLUGS = ["eng.2", "eng.fa", "eng.league_cup", "eng.trophy"];
-const ESPN_TEAM_ID = "369"; // Middlesbrough
-const BORO_RE = /\bmiddles(?:brough|borough)\b|\bboro\b/i;
 
 const WINDOW_BEFORE_MS = 30 * 60 * 1000; // start watching 30m before KO
 const WINDOW_AFTER_MS = 4 * 60 * 60 * 1000; // keep watching 4h after KO
