@@ -395,7 +395,8 @@ export function BoroLiveMatchStrip() {
               ...(lr ? ([{ key: "last", label: "Last result" }] as const) : []),
             ];
             const activeKey: "auto" | "next" | "last" =
-              view !== "auto" ? view : live ? "auto" : nf ? "next" : "last";
+              view !== "auto" ? view : live ? "auto" : lrIsRecent ? "last" : nf ? "next" : "last";
+
 
             return (
               <div className="p-5 pt-8">
