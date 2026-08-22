@@ -211,7 +211,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
 
   const items: RailItem[] = [
     { to: "/home", label: "Home", icon: Home, show: true },
-    { to: "/home/$channel", label: "Talk", icon: MessageSquare, show: true, params: { channel: "welcome" } },
+    { to: "/home/$channel", label: "Customer Chatroom", icon: MessageSquare, show: true, params: { channel: "welcome" } },
     { to: "/tickets", label: "Tickets", icon: Ticket, show: !hasRole("moderator") },
     { to: "/shop", label: "Shop", icon: ShoppingCart, show: true },
     { to: "/install-guides", label: "Install guides", icon: Wrench, show: true },
