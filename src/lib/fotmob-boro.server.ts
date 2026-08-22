@@ -192,8 +192,16 @@ export async function fetchFotmobSummary(input: {
       homeScore: event?.newScore?.[0] ?? event?.homeScore ?? null,
       awayScore: event?.newScore?.[1] ?? event?.awayScore ?? null,
       shootout: !!event?.isPenaltyShootoutEvent,
+      // FotMob-only presentation detail, used to render match day thread
+      // replies in the same shape FotMob shows them.
+      fotmob: fotmobEventDetail(event, {
+        homeName: String(teams[0]?.name ?? ""),
+        awayName: String(teams[1]?.name ?? ""),
+        meta,
+      }),
     };
   });
+
   const allStats: any[] = detail?.content?.stats?.Periods?.All?.stats ?? [];
   const flatStats = allStats.flatMap((group) => group?.stats ?? []);
   const uniqueStats = new Map<string, any>();
