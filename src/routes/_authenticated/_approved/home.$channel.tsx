@@ -307,6 +307,11 @@ function ChannelPage() {
   // Discord-style "jump to last read" support. Captured once per channel load
   // so the divider stays visible until the user navigates away.
   const [firstUnreadId, setFirstUnreadId] = useState<string | null>(null);
+  // Frozen last-read timestamp captured when the channel was opened. Used for
+  // the per-message read/unread labels so they don't all flip to "Read" as soon
+  // as the marker advances while the user is reading.
+  const [baselineReadAt, setBaselineReadAt] = useState<string | null>(null);
+
   const initialScrollDoneRef = useRef(false);
   const lastReadAtRef = useRef<string | null>(null);
   const firstUnreadRef = useRef<HTMLDivElement | null>(null);
