@@ -75,7 +75,7 @@ export const Route = createFileRoute("/boro-fantasy")({
 // ESPN stat lines and the points those stats earned.
 // ------------------------------------------------------------------
 const PlayerStatsCtx = createContext<
-  (playerId: string, scoringAs?: FantasyPosition | null, asSub?: boolean) => void
+  (playerId: string, scoringAs?: FantasyPosition | null, asSub?: boolean, gameweekNumber?: number | null) => void
 >(
   () => {},
 );
@@ -112,6 +112,7 @@ function PlayerNameButton({
   className = "",
   scoringAs = null,
   asSub = false,
+  gameweekNumber = null,
 }: {
   playerId: string;
   name: string;
@@ -120,13 +121,15 @@ function PlayerNameButton({
   scoringAs?: FantasyPosition | null;
   /** True when the player is named on the bench — subs earn half points. */
   asSub?: boolean;
+  /** The squad gameweek whose points should be shown in the weekly section. */
+  gameweekNumber?: number | null;
 }) {
   const open = useContext(PlayerStatsCtx);
   return (
     <button
       type="button"
       title={`${name} — view stats and points`}
-      onClick={(e) => { e.stopPropagation(); open(playerId, scoringAs, asSub); }}
+      onClick={(e) => { e.stopPropagation(); open(playerId, scoringAs, asSub, gameweekNumber); }}
       className={`w-full text-center underline-offset-2 hover:underline ${className}`}
     >
       {name}
@@ -187,6 +190,7 @@ function PlayerStatsDialog({
   playerId,
   scoringAs,
   asSub = false,
+  gameweekNumber = null,
   onClose,
 }: {
   playerId: string | null;
@@ -194,6 +198,8 @@ function PlayerStatsDialog({
   scoringAs?: FantasyPosition | null;
   /** Named on the bench — every scoring line is worth half. */
   asSub?: boolean;
+  /** Only this selected gameweek belongs in the weekly points table. */
+  gameweekNumber?: number | null;
   onClose: () => void;
 }) {
   const fn = useServerFn(getFantasyPlayerBreakdown);
@@ -282,7 +288,7 @@ function PlayerStatsDialog({
       { key: "cs-", abbr: "CS-", means: "Clean sheet (under 60 mins)", total: short, rate: rateShort, points: Math.round(short * rateShort * 100) / 100 },
     ];
   }, [matches, pos, rateMul]);
-  const weeklyPointRows = useMemo(
+  const pointRows = useMemo(
     () =>
       matches.map((match) => {
         const minutes = match.stats.minutes ?? 0;
@@ -316,8 +322,12 @@ function PlayerStatsDialog({
       }),
     [matches, pos, asSub, rateMul],
   );
-  const ourSeasonPoints = weeklyPointRows.reduce((sum, match) => sum + match.ourPoints, 0);
-  const espnSeasonPoints = weeklyPointRows.reduce((sum, match) => sum + match.espnPoints, 0);
+  const weeklyPointRows = useMemo(
+    () => gameweekNumber == null ? pointRows.slice(0, 1) : pointRows.filter((match) => match.gwNumber === gameweekNumber),
+    [pointRows, gameweekNumber],
+  );
+  const ourSeasonPoints = pointRows.reduce((sum, match) => sum + match.ourPoints, 0);
+  const espnSeasonPoints = pointRows.reduce((sum, match) => sum + match.espnPoints, 0);
 
   return (
     <Dialog open={!!playerId} onOpenChange={(o) => { if (!o) onClose(); }}>
@@ -544,10 +554,10 @@ function PlayerStatsDialog({
 }
 
 function FantasyPageWithStats() {
-  const [stats, setStats] = useState<{ playerId: string; scoringAs: FantasyPosition | null; asSub: boolean } | null>(null);
+  const [stats, setStats] = useState<{ playerId: string; scoringAs: FantasyPosition | null; asSub: boolean; gameweekNumber: number | null } | null>(null);
   const open = useCallback(
-    (playerId: string, scoringAs?: FantasyPosition | null, asSub?: boolean) =>
-      setStats({ playerId, scoringAs: scoringAs ?? null, asSub: !!asSub }),
+    (playerId: string, scoringAs?: FantasyPosition | null, asSub?: boolean, gameweekNumber?: number | null) =>
+      setStats({ playerId, scoringAs: scoringAs ?? null, asSub: !!asSub, gameweekNumber: gameweekNumber ?? null }),
     [],
   );
   return (
@@ -557,6 +567,7 @@ function FantasyPageWithStats() {
         playerId={stats?.playerId ?? null}
         scoringAs={stats?.scoringAs ?? null}
         asSub={stats?.asSub ?? false}
+        gameweekNumber={stats?.gameweekNumber ?? null}
         onClose={() => setStats(null)}
       />
     </PlayerStatsCtx.Provider>
@@ -2835,6 +2846,7 @@ function PitchView({
                         <PlayerNameButton
                           playerId={p.id}
                           name={p.name}
+                          gameweekNumber={gw?.gwNumber ?? null}
                           scoringAs={(() => {
                             const eligible = playerPositions(p).filter((pos) => row.positions.includes(pos));
                             const chosen = slotPositions?.[slotIndex] ?? null;
@@ -2964,6 +2976,7 @@ function PitchView({
                     <PlayerNameButton
                       playerId={p.id}
                       name={p.name}
+                      gameweekNumber={gw?.gwNumber ?? null}
                       className="mt-1 block text-center line-clamp-2 min-h-[24px] break-words text-[10px] font-semibold leading-tight text-white"
                     />
                     {ratingByPlayer?.has(p.id) && (
@@ -3094,6 +3107,7 @@ function BenchPanel({
                     <PlayerNameButton
                       playerId={p.id}
                       name={p.name}
+                      gameweekNumber={gw?.gwNumber ?? null}
                       scoringAs={(() => {
                         const eligible = playerPositions(p);
                         const chosen = benchPositions?.[i] ?? null;
