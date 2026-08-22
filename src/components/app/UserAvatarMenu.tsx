@@ -273,7 +273,7 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
           <DropdownMenuItem
             onSelect={async () => {
               await signOut();
-              navigate({ to: "/login" });
+              window.location.replace("/login");
             }}
             className="cursor-pointer text-destructive focus:text-destructive"
           >

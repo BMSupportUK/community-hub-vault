@@ -115,7 +115,9 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
   const finishedCompetitions = useFinishedCompetitions();
   const handleSignOut = async () => {
     await signOut();
-    navigate({ to: "/login" });
+    // Hard redirect: guarantees every cached/protected view is torn down even
+    // if a client-side navigation is swallowed mid-unmount.
+    window.location.replace("/login");
   };
 
   useEffect(() => {
