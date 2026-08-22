@@ -318,7 +318,7 @@ export function BoroLiveMatchStrip() {
             <X className="size-4" />
           </DialogClose>
           {(() => {
-            const m = live ?? nf ?? lr;
+            const m = selectedMatch;
             if (!m) return null;
             const detailStatus = (preloadedDetail?.status ?? "").trim();
             const detailStatusLower = detailStatus.toLowerCase();
@@ -335,9 +335,18 @@ export function BoroLiveMatchStrip() {
               now <= selectedKickoff + 5 * 60 * 60 * 1000;
             // The Gamecast detail feed is fresher than the fixture-list cache.
             // In particular, a half-time score must never be presented as FT.
-            const isLive = !!live || detailIsInProgress;
-            const isFixture = !isLive && !!nf;
+            const showingLiveMatch = !!live && m === live;
+            const isLive = showingLiveMatch || detailIsInProgress;
+            const isFixture = !isLive && !!nf && m === nf;
             const liveStatus = live?.clock || live?.statusDetail || detailStatus || "Live";
+            const canSwitch = !!nf && (!!lr || !!live);
+            const switcher: Array<{ key: "auto" | "next" | "last"; label: string }> = [
+              ...(live ? ([{ key: "auto", label: "Live now" }] as const) : []),
+              ...(nf ? ([{ key: "next", label: "Next fixture" }] as const) : []),
+              ...(lr ? ([{ key: "last", label: "Last result" }] as const) : []),
+            ];
+            const activeKey: "auto" | "next" | "last" =
+              view !== "auto" ? view : live ? "auto" : nf ? "next" : "last";
             return (
               <div className="p-5 pt-8">
                 <div className="text-center">
@@ -347,6 +356,28 @@ export function BoroLiveMatchStrip() {
                   </div>
                   <div className="mt-1 text-xs text-white/85">{m.competition}</div>
                 </div>
+
+                {canSwitch && (
+                  <div className="mt-4 flex justify-center">
+                    <div className="inline-flex rounded-lg border border-white/15 bg-white/5 p-1">
+                      {switcher.map((s) => (
+                        <button
+                          key={s.key}
+                          type="button"
+                          onClick={() => setView(s.key)}
+                          className={`rounded-md px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider transition ${
+                            activeKey === s.key
+                              ? "bg-[#E11B22] text-white"
+                              : "text-white/70 hover:text-white hover:bg-white/10"
+                          }`}
+                        >
+                          {s.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
 
                 <div className="mt-5 flex items-start gap-3">
                   <BigSide name={m.home} logo={m.homeLogo} />
