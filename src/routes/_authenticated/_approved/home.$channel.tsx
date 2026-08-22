@@ -51,6 +51,7 @@ import { cn } from "@/lib/utils";
 import { DEFAULT_AVATAR_URL } from "@/lib/default-avatar";
 import { Nameplate } from "@/components/app/Nameplate";
 import { useOnlineUsers } from "@/hooks/use-online-users";
+import { useTalkChannelPresence } from "@/hooks/use-talk-channel-presence";
 import { PresenceMiniDot, PresenceMiniLabel } from "@/components/app/PresenceIndicators";
 import { formatLastSeen } from "@/lib/relative-time";
 import { useRoleFlashMap, roleFlashClass, resolveAvatarUrl } from "@/lib/role-flash";
@@ -133,6 +134,12 @@ function ChannelPage() {
   const roleFlashMap = useRoleFlashMap();
   const [ignoredProfiles, setIgnoredProfiles] = useState<Record<string, Profile>>({});
   const [selectedToUnblock, setSelectedToUnblock] = useState<Set<string>>(new Set());
+
+  useTalkChannelPresence({
+    userId: user?.id,
+    channelId: channel?.id,
+    track: Boolean(user?.id && channel?.id),
+  });
 
   // Reset selection when the panel closes or list changes
   useEffect(() => {

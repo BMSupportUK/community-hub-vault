@@ -1,14 +1,14 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Headphones, MessageSquare, Activity, Ticket, ShoppingBag, BookOpen, UserPlus, ArrowUp, ArrowDown, Trophy, KeyRound } from "lucide-react";
-import type { RealtimeChannel } from "@supabase/supabase-js";
 import heroImg from "@/assets/member-hero.jpg";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { ServiceStatusPill } from "@/components/app/ServiceStatusPill";
 import { SubscriptionDetailsCard } from "@/components/app/SubscriptionDetailsCard";
 import { WorkingStatusBox } from "@/components/app/WorkingStatusBox";
+import { useTalkChannelPresence } from "@/hooks/use-talk-channel-presence";
 
 export const Route = createFileRoute("/_authenticated/_approved/home/")({
   component: WelcomePage,
@@ -86,57 +86,7 @@ function WelcomePage() {
 
   const [order, setOrder] = useState<string[]>(Object.keys(CARDS));
   const [saving, setSaving] = useState(false);
-  const [welcomeOnlineCount, setWelcomeOnlineCount] = useState(0);
-  const welcomeChannelIdRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    let presenceSub: RealtimeChannel | null = null;
-
-    const load = async () => {
-      if (!user?.id) return;
-      const { data: channel } = await supabase
-        .from("chat_channels")
-        .select("id")
-        .eq("slug", "welcome")
-        .maybeSingle();
-      if (!channel || cancelled) return;
-      welcomeChannelIdRef.current = channel.id;
-
-      const syncCount = () => {
-        if (!presenceSub) return;
-        const state = presenceSub.presenceState();
-        const count = Object.keys(state).length;
-        if (!cancelled) setWelcomeOnlineCount(count);
-      };
-
-      presenceSub = supabase
-        .channel(`presence:welcome:${channel.id}`, {
-          config: { presence: { key: user.id } },
-        })
-        .on("presence", { event: "sync" }, syncCount)
-        .on("presence", { event: "join" }, syncCount)
-        .on("presence", { event: "leave" }, syncCount)
-        .subscribe(async (status) => {
-          if (status === "SUBSCRIBED") {
-            await presenceSub?.track({
-              user_id: user.id,
-              online_at: new Date().toISOString(),
-            });
-            syncCount();
-          }
-        });
-    };
-
-    load();
-    return () => {
-      cancelled = true;
-      if (presenceSub) {
-        presenceSub.untrack().catch(() => {});
-        supabase.removeChannel(presenceSub);
-      }
-    };
-  }, [user?.id]);
+  const welcomeOnlineCount = useTalkChannelPresence({ track: false });
 
   useEffect(() => {
     let cancelled = false;
