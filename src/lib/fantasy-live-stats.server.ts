@@ -212,7 +212,9 @@ export async function fetchBoroStarterIds(
     const hit = match(rp.athlete?.displayName ?? "");
     if (hit && !ids.includes(hit.id)) ids.push(hit.id);
   }
-  return ids.length >= 9 ? ids : null;
+  // Never perform substitutions from a partial mapping: a missing real starter
+  // would otherwise be mistaken for a player who was left out.
+  return ids.length === 11 ? ids : null;
 }
 
 /**
