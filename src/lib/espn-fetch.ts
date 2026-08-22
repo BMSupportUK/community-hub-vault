@@ -72,7 +72,11 @@ async function viaMirror<T>(url: string): Promise<T | null> {
     if (until > now) continue;
     try {
       const { target, init } = provider.build(url);
-      const res = await fetch(target, { ...init, signal: AbortSignal.timeout(MIRROR_TIMEOUT_MS) });
+      const res = await fetch(target, {
+        ...init,
+        cache: "no-store",
+        signal: AbortSignal.timeout(MIRROR_TIMEOUT_MS),
+      });
       if (!res.ok) {
         providerCooldown.set(provider.name, Date.now() + COOL_OFF_MS);
         console.error("[espn-fetch] mirror failed", provider.name, res.status, url);
@@ -102,6 +106,7 @@ export async function espnJson<T = any>(url: string, tries = 2): Promise<T | nul
     try {
       const res = await fetch(url, {
         headers: { accept: "application/json" },
+        cache: "no-store",
         signal: AbortSignal.timeout(DIRECT_TIMEOUT_MS),
       });
       if (res.ok) return (await res.json()) as T;
