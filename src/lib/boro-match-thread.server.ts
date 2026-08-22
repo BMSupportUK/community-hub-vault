@@ -558,55 +558,9 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
     }
   }
 
-  if (!byKey.get("halftime") && isHalfTime(json)) {
-    const body = buildHalfTimeBody(fx, json);
-    const { data: post, error: postErr } = await supabaseAdmin
-      .from("forum_posts")
-      .insert({ topic_id: topic.id, author_id: authorId, body })
-      .select("id")
-      .single();
-    if (postErr) skipped.push(`half-time post failed: ${postErr.message}`);
-    else {
-      halfTimePosted = true;
-      const { error: logErr } = await supabaseAdmin.from("boro_match_event_posts").insert({
-        fixture_id: fx.id,
-        topic_id: topic.id,
-        post_id: post.id,
-        event_key: "halftime",
-        kind: "halftime",
-        clock: "HT",
-        summary: `Half-time — ${label}`,
-        fingerprint: "halftime",
-        revision: 0,
-      });
-      if (logErr) skipped.push(`half-time log failed: ${logErr.message}`);
-    }
-  }
+  // Half-time and full-time stat round-ups are no longer posted as replies —
+  // the pinned live block already carries the score and key stats.
 
-  if (!byKey.get("fulltime") && isFullTime(json)) {
-    const body = buildFullTimeBody(fx, json);
-    const { data: post, error: postErr } = await supabaseAdmin
-      .from("forum_posts")
-      .insert({ topic_id: topic.id, author_id: authorId, body })
-      .select("id")
-      .single();
-    if (postErr) skipped.push(`full-time post failed: ${postErr.message}`);
-    else {
-      fullTimePosted = true;
-      const { error: logErr } = await supabaseAdmin.from("boro_match_event_posts").insert({
-        fixture_id: fx.id,
-        topic_id: topic.id,
-        post_id: post.id,
-        event_key: "fulltime",
-        kind: "fulltime",
-        clock: "FT",
-        summary: `Full-time — ${label}`,
-        fingerprint: "fulltime",
-        revision: 0,
-      });
-      if (logErr) skipped.push(`full-time log failed: ${logErr.message}`);
-    }
-  }
 
   return {
     ...base,
