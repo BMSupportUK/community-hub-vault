@@ -1,0 +1,1 @@
+DELETE FROM public.boro_espn_summary_cache WHERE event_id = '999999999';

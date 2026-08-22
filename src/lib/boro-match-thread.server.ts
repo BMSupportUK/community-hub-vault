@@ -424,7 +424,22 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
   }
   // A response is only useful if it actually carries the competition payload —
   // an empty/partial ESPN body must not count as "we have the data".
-  const hasEspn = Array.isArray(json?.header?.competitions) && json.header.competitions.length > 0;
+  const usable = (candidate: any) =>
+    Array.isArray(candidate?.header?.competitions) && candidate.header.competitions.length > 0;
+
+  // ESPN blocks our server IPs (403), so fall back to the summary relayed from
+  // visitors' browsers by the Fan Zone match centre.
+  if (!usable(json)) {
+    const { getCachedEspnSummary, getCachedSummaryForFixture } = await import("@/lib/espn-summary-cache.server");
+    const cached = espn ? await getCachedEspnSummary(espn.eventId) : null;
+    const relayed = usable(cached) ? cached : await getCachedSummaryForFixture(fx);
+    if (usable(relayed)) {
+      json = relayed;
+      skipped.push("used relayed ESPN summary (server IP blocked)");
+    }
+  }
+
+  const hasEspn = usable(json);
   if (!hasEspn) {
     skipped.push(espn ? "ESPN summary unavailable — posted fixture-only preview" : "no ESPN match found — posted fixture-only preview");
     json = {};

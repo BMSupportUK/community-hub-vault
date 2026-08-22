@@ -25,7 +25,13 @@ export async function fetchBoroMatchDetail(eventId: string, slug: string): Promi
     const json: any = await espnJson(
       `https://site.api.espn.com/apis/site/v2/sports/soccer/${slug}/summary?event=${encodeURIComponent(eventId)}`,
     );
-    if (!json) return empty;
+    if (!json || !(Array.isArray(json?.header?.competitions) && json.header.competitions.length)) {
+      // Server IPs are 403'd by ESPN — reuse the summary relayed by a visitor's browser.
+      const { getCachedEspnSummary } = await import("@/lib/espn-summary-cache.server");
+      const cached = await getCachedEspnSummary(eventId);
+      if (cached) return normaliseBoroMatchDetail(cached);
+      if (!json) return empty;
+    }
 
     return normaliseBoroMatchDetail(json);
   } catch (error) {

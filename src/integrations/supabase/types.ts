@@ -239,6 +239,30 @@ export type Database = {
         }
         Relationships: []
       }
+      boro_espn_summary_cache: {
+        Row: {
+          created_at: string
+          event_id: string
+          payload: Json
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          payload: Json
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          payload?: Json
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       boro_fixtures: {
         Row: {
           away_reds: number
