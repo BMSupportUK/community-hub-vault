@@ -142,7 +142,6 @@ export function BoroLiveMatchStrip() {
         competition: selectedMatch.competition ?? null,
       }
     : null;
-  const canResolve = !!(selectedFixture?.home && selectedFixture?.away && selectedFixture?.kickoff);
   const openMatchCentre = () => setOpen(true);
 
   if (!data || (!live && !nf && !lr)) return null;
