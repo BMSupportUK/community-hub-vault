@@ -237,7 +237,7 @@ export function BoroMatchDetailTabs({
       stopped = true;
       if (timer) window.clearTimeout(timer);
     };
-  }, [eventId, slug, live, armed, initialDetail]);
+  }, [eventId, slug, live, armed, initialDetail, canLoad, fixtureKey]);
 
   const homeTeam = detail?.lineups.find((lineup) => lineup.teamId === detail.homeTeamId) ?? detail?.lineups[0] ?? null;
   const awayTeam = detail?.lineups.find((lineup) => lineup.teamId === detail.awayTeamId) ?? detail?.lineups[1] ?? null;
@@ -246,7 +246,7 @@ export function BoroMatchDetailTabs({
   const primaryStats = detail?.teamStats.filter((s) => s.primary) ?? [];
   const extraStats = detail?.teamStats.filter((s) => !s.primary) ?? [];
 
-  if (!eventId) {
+  if (!eventId && !resolvedEventId && !canLoad) {
     return (
       <div className="rounded-xl border border-[#E11B22]/40 bg-[#E11B22]/10 px-4 py-8 text-center">
         <div className="text-sm font-bold uppercase tracking-wider text-red-200">Awaiting kick-off</div>
