@@ -57,8 +57,16 @@ export function normaliseBoroMatchDetail(json: any): MatchDetailDTO {
         jersey: player?.jersey ?? null,
         position: player?.position?.abbreviation ?? player?.position?.name ?? null,
         starter: !!player?.starter,
-        subbedIn: !!player?.subbedIn,
-        subbedOut: !!player?.subbedOut,
+        // ESPN sends objects here ({ didSub: false }), so a plain truthy check
+        // marked every player as both subbed on and off.
+        subbedIn:
+          typeof player?.subbedIn === "object"
+            ? player?.subbedIn?.didSub === true
+            : !!player?.subbedIn,
+        subbedOut:
+          typeof player?.subbedOut === "object"
+            ? player?.subbedOut?.didSub === true
+            : !!player?.subbedOut,
         stats,
       };
     }),
