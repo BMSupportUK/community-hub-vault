@@ -35,6 +35,8 @@ export type EspnMatchEvent = {
   scoringPlay: boolean;
   homeScore: number | null;
   awayScore: number | null;
+  /** FotMob presentation detail (shot type, xG, shirt numbers, narrative). */
+  detail?: import("@/lib/fotmob-boro.types").FotmobEventDetail | null;
 };
 
 export type EspnNormalised = {
