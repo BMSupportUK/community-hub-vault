@@ -426,12 +426,12 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
   const usable = (candidate: any) =>
     Array.isArray(candidate?.header?.competitions) && candidate.header.competitions.length > 0;
 
-  const hasEspn = usable(json);
-  if (!hasEspn) {
+  const hasLiveData = usable(json);
+  if (!hasLiveData) {
     skipped.push("FotMob live summary unavailable — posted fixture-only preview");
     json = {};
   }
-  const status = hasEspn ? normaliseEspnSummary(json).status : null;
+  const status = hasLiveData ? normaliseEspnSummary(json).status : null;
 
 
 
@@ -472,7 +472,7 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
         kind: "preview",
         clock: null,
         summary: `Match preview — ${label}`,
-        fingerprint: hasEspn ? "preview" : "preview-basic",
+        fingerprint: hasLiveData ? "preview" : "preview-basic",
         revision: 0,
       });
       if (logErr) skipped.push(`preview log failed: ${logErr.message}`);
@@ -497,7 +497,7 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
         preview.fingerprint === "preview-basic" ||
         /Auto-filled from the fixture list/.test(existing.body) ||
         !/Form \(last 5\)/.test(existing.body);
-      const upgrade = hasEspn && basic;
+      const upgrade = hasLiveData && basic;
       const rebuilt = legacy || upgrade ? buildPreviewBody(fx, json) : stripLiveBlock(existing.body);
       if (rebuilt !== existing.body) {
         const { error: upErr } = await supabaseAdmin
