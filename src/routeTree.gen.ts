@@ -84,7 +84,6 @@ import { Route as AuthenticatedApprovedTicketsRouteImport } from './routes/_auth
 import { Route as AuthenticatedApprovedVpnRouteImport } from './routes/_authenticated/_approved/vpn'
 import { Route as AuthenticatedApprovedWhatToWatchRouteImport } from './routes/_authenticated/_approved/what-to-watch'
 import { Route as ApiPublicBoroMatchDetailRouteImport } from './routes/api/public/boro-match-detail'
-import { Route as ApiPublicEspnRelayRouteImport } from './routes/api/public/espn-relay'
 import { Route as ApiPublicLinkPreviewRouteImport } from './routes/api/public/link-preview'
 import { Route as ApiPublicTweetRouteImport } from './routes/api/public/tweet'
 import { Route as ApiPublicTweetImageRouteImport } from './routes/api/public/tweet-image'
@@ -572,11 +571,6 @@ const ApiPublicBoroMatchDetailRoute =
     path: '/api/public/boro-match-detail',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicEspnRelayRoute = ApiPublicEspnRelayRouteImport.update({
-  id: '/api/public/espn-relay',
-  path: '/api/public/espn-relay',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiPublicLinkPreviewRoute = ApiPublicLinkPreviewRouteImport.update({
   id: '/api/public/link-preview',
   path: '/api/public/link-preview',
@@ -959,7 +953,6 @@ export interface FileRoutesByFullPath {
   '/vpn': typeof AuthenticatedApprovedVpnRoute
   '/what-to-watch': typeof AuthenticatedApprovedWhatToWatchRoute
   '/api/public/boro-match-detail': typeof ApiPublicBoroMatchDetailRoute
-  '/api/public/espn-relay': typeof ApiPublicEspnRelayRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
   '/api/public/tweet-image': typeof ApiPublicTweetImageRoute
@@ -1085,7 +1078,6 @@ export interface FileRoutesByTo {
   '/vpn': typeof AuthenticatedApprovedVpnRoute
   '/what-to-watch': typeof AuthenticatedApprovedWhatToWatchRoute
   '/api/public/boro-match-detail': typeof ApiPublicBoroMatchDetailRoute
-  '/api/public/espn-relay': typeof ApiPublicEspnRelayRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
   '/api/public/tweet-image': typeof ApiPublicTweetImageRoute
@@ -1217,7 +1209,6 @@ export interface FileRoutesById {
   '/_authenticated/_approved/vpn': typeof AuthenticatedApprovedVpnRoute
   '/_authenticated/_approved/what-to-watch': typeof AuthenticatedApprovedWhatToWatchRoute
   '/api/public/boro-match-detail': typeof ApiPublicBoroMatchDetailRoute
-  '/api/public/espn-relay': typeof ApiPublicEspnRelayRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
   '/api/public/tweet-image': typeof ApiPublicTweetImageRoute
@@ -1348,7 +1339,6 @@ export interface FileRouteTypes {
     | '/vpn'
     | '/what-to-watch'
     | '/api/public/boro-match-detail'
-    | '/api/public/espn-relay'
     | '/api/public/link-preview'
     | '/api/public/tweet'
     | '/api/public/tweet-image'
@@ -1474,7 +1464,6 @@ export interface FileRouteTypes {
     | '/vpn'
     | '/what-to-watch'
     | '/api/public/boro-match-detail'
-    | '/api/public/espn-relay'
     | '/api/public/link-preview'
     | '/api/public/tweet'
     | '/api/public/tweet-image'
@@ -1605,7 +1594,6 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/vpn'
     | '/_authenticated/_approved/what-to-watch'
     | '/api/public/boro-match-detail'
-    | '/api/public/espn-relay'
     | '/api/public/link-preview'
     | '/api/public/tweet'
     | '/api/public/tweet-image'
@@ -1681,7 +1669,6 @@ export interface RootRouteChildren {
   UnsubscribeRoute: typeof UnsubscribeRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   ApiPublicBoroMatchDetailRoute: typeof ApiPublicBoroMatchDetailRoute
-  ApiPublicEspnRelayRoute: typeof ApiPublicEspnRelayRoute
   ApiPublicLinkPreviewRoute: typeof ApiPublicLinkPreviewRoute
   ApiPublicTweetRoute: typeof ApiPublicTweetRoute
   ApiPublicTweetImageRoute: typeof ApiPublicTweetImageRoute
@@ -2245,13 +2232,6 @@ declare module '@tanstack/react-router' {
       path: '/api/public/boro-match-detail'
       fullPath: '/api/public/boro-match-detail'
       preLoaderRoute: typeof ApiPublicBoroMatchDetailRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/public/espn-relay': {
-      id: '/api/public/espn-relay'
-      path: '/api/public/espn-relay'
-      fullPath: '/api/public/espn-relay'
-      preLoaderRoute: typeof ApiPublicEspnRelayRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/link-preview': {
@@ -2935,7 +2915,6 @@ const rootRouteChildren: RootRouteChildren = {
   UnsubscribeRoute: UnsubscribeRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   ApiPublicBoroMatchDetailRoute: ApiPublicBoroMatchDetailRoute,
-  ApiPublicEspnRelayRoute: ApiPublicEspnRelayRoute,
   ApiPublicLinkPreviewRoute: ApiPublicLinkPreviewRoute,
   ApiPublicTweetRoute: ApiPublicTweetRoute,
   ApiPublicTweetImageRoute: ApiPublicTweetImageRoute,
