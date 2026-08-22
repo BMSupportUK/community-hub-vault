@@ -488,7 +488,7 @@ function PlayerStatsDialog({
                     </tbody>
                   </table>
                 </div>
-                {matches.length === 0 ? (
+                {gameweekMatches.length === 0 ? (
                   <p className="rounded-lg border border-border bg-muted/30 p-3 text-sm text-muted-foreground">
                     No ESPN match stats yet — they arrive automatically from the ESPN match centre once
                     this player features in a finished game week.
@@ -509,26 +509,21 @@ function PlayerStatsDialog({
                                 <div className="font-normal normal-case">{m.label}</div>
                               </th>
                             ))}
-                            <th className="px-2 py-2 text-right">Season</th>
                           </tr>
                         </thead>
                         <tbody>
                           {statKeys.map((k) => {
                             const meta = PLAYER_STAT_META[k]!;
-                            const seasonTotal = matches.reduce((s, m) => s + (m.stats[k] ?? 0), 0);
                             return (
                               <tr key={k} className="border-b border-border/60">
                                 <td className="py-1.5 pr-2 text-muted-foreground">
                                   <StatAbbrLabel abbr={meta.abbr} means={meta.means} rate={statPointsPer(k, pos)} />
                                 </td>
-                                {matches.map((m) => (
+                                {gameweekMatches.map((m) => (
                                   <td key={m.fixtureId} className="px-2 py-1.5 text-center tabular-nums">
                                     {m.stats[k] ?? 0}
                                   </td>
                                 ))}
-                                <td className="px-2 py-1.5 text-right font-bold tabular-nums">
-                                  {seasonTotal}
-                                </td>
                               </tr>
                             );
                           })}
@@ -541,10 +536,6 @@ function PlayerStatsDialog({
                     </div>
                   </div>
                 )}
-                <div className="mt-3 flex items-center justify-between rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm">
-                  <span className="font-semibold">ESPN gameweek total</span>
-                  <span className="font-bold tabular-nums text-primary">{espnSeasonPoints} pts</span>
-                </div>
               </TabsContent>
             </Tabs>
           </>
