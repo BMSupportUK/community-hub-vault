@@ -147,42 +147,19 @@ export function BoroLiveMatchStrip() {
       ? null
       : rawNf;
 
-  // The fixture the "Next fixture" tab previews. Normally the match centre's
-  // own nextFixture; when the weekly rollover is still holding this week's game
-  // we fall back to the next unplayed fixture from the fixture list, so the
-  // upcoming game can be previewed straight away.
-  const previewNf =
-    nf && Date.parse(nf.kickoff) > now
-      ? nf
-      : upcoming
-        ? {
-            kickoff: upcoming.kickoff,
-            competition: upcoming.competition,
-            home: upcoming.home,
-            away: upcoming.away,
-            venue: upcoming.venue,
-            homeLogo: null,
-            awayLogo: null,
-            eventId: null,
-            espnSlug: null,
-          }
-        : nf;
-
-  // A result played in the last four days is the most interesting thing to show
-  // when nothing is live — full FotMob action, stats and line-ups are in.
+  // A result stays on screen for the rest of its own game week. Once the new
+  // week starts (Monday, London time) the upcoming fixture takes over.
   const lrKickoff = lr ? Date.parse((lr as { kickoff?: string; date?: string }).kickoff ?? (lr as { date?: string }).date ?? "") : NaN;
-  const lrIsRecent = Number.isFinite(lrKickoff) && now - lrKickoff < 4 * 24 * 60 * 60 * 1000;
-  // Keep the strip and popup on the same headline. A freshly completed match
-  // is shown before the upcoming fixture so the visible strip opens the game
-  // users can currently review (including its FotMob action and stats).
+  const lrIsRecent =
+    Number.isFinite(lrKickoff) && lrKickoff >= londonWeekStart(now);
+  // Keep the strip and popup on the same headline.
   const headlineFixture = lrIsRecent ? null : nf;
 
   const selectedMatch =
-    view === "next"
-      ? (previewNf ?? live ?? lr)
-      : view === "last"
-        ? (lr ?? live ?? previewNf)
-        : (live ?? (lrIsRecent ? lr : null) ?? nf ?? lr);
+    view === "last"
+      ? (lr ?? live ?? nf)
+      : (live ?? (lrIsRecent ? lr : null) ?? nf ?? lr);
+
 
 
 
