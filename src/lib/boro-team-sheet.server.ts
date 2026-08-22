@@ -387,6 +387,16 @@ export async function syncBoroTeamSheet(opts?: { ignoreWindow?: boolean }): Prom
     posted += 1;
   }
 
+  // The official graphic is also the fallback source for fantasy automatic
+  // substitutions when ESPN has not published its structured line-up yet.
+  try {
+    const { syncLineupSwaps } = await import("@/lib/fantasy-lineup-swap.server");
+    const swaps = await syncLineupSwaps();
+    if (swaps.error) skipped.push(`fantasy swaps: ${swaps.error}`);
+  } catch (error) {
+    skipped.push(`fantasy swaps: ${error instanceof Error ? error.message : String(error)}`);
+  }
+
   return { ok: true, fixture: label, topic: topic.title, posted, skipped };
 }
 

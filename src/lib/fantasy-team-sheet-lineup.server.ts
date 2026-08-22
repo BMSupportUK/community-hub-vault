@@ -34,6 +34,17 @@ export async function fetchTeamSheetStarterIds(
   fixtureId: string,
   players: FantasyPlayer[],
 ): Promise<string[] | null> {
+  const cacheKey = `fantasy_official_xi_${fixtureId}`;
+  const { data: cached } = await admin
+    .from("app_settings")
+    .select("value")
+    .eq("key", cacheKey)
+    .maybeSingle();
+  const cachedIds = Array.isArray(cached?.value?.starterIds)
+    ? cached.value.starterIds.filter((id: unknown): id is string => typeof id === "string")
+    : [];
+  if (cachedIds.length >= 9) return cachedIds;
+
   const { data: sheet } = await admin
     .from("boro_team_sheets")
     .select("image_url")
@@ -82,7 +93,13 @@ export async function fetchTeamSheetStarterIds(
     const ids = parsed.starters
       .map((name) => (typeof name === "string" ? matchPlayer(name, players)?.id : undefined))
       .filter((id): id is string => typeof id === "string");
-    return new Set(ids).size >= 9 ? [...new Set(ids)] : null;
+    const uniqueIds = [...new Set(ids)];
+    if (uniqueIds.length < 9) return null;
+    await admin.from("app_settings").upsert(
+      { key: cacheKey, value: { starterIds: uniqueIds, extractedAt: new Date().toISOString() } },
+      { onConflict: "key" },
+    );
+    return uniqueIds;
   } catch {
     return null;
   }
