@@ -422,7 +422,9 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
       `https://site.api.espn.com/apis/site/v2/sports/soccer/${espn.slug}/summary?event=${encodeURIComponent(espn.eventId)}`,
     );
   }
-  const hasEspn = !!json;
+  // A response is only useful if it actually carries the competition payload —
+  // an empty/partial ESPN body must not count as "we have the data".
+  const hasEspn = Array.isArray(json?.header?.competitions) && json.header.competitions.length > 0;
   if (!hasEspn) {
     skipped.push(espn ? "ESPN summary unavailable — posted fixture-only preview" : "no ESPN match found — posted fixture-only preview");
     json = {};
