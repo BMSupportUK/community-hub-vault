@@ -177,7 +177,7 @@ export function BoroMatchDetailTabs({
   const fixtureKey = fixture ? `${fixture.home}|${fixture.away}|${fixture.kickoff}` : "";
 
   useEffect(() => {
-    const t = window.setInterval(() => setNow(Date.now()), 30_000);
+    const t = window.setInterval(() => setNow(Date.now()), 5_000);
     return () => window.clearInterval(t);
   }, []);
 
