@@ -754,13 +754,34 @@ export type FantasyLeaderboardRow = {
   totalHits: number;
   gameweeksScored: number;
   email: string | null;
+  /** Points scored in the gameweek currently in play (null when not scored yet). */
+  currentGwPoints: number | null;
+  currentGwNumber: number | null;
+  /** Points scored in the most recently completed gameweek. */
+  previousGwPoints: number | null;
+  previousGwNumber: number | null;
 };
+
+/** Squad points for one gameweek, keyed by entrant id. */
+async function pointsByEntrant(admin: any, gameweekId: string) {
+  const { data } = await admin
+    .from("fantasy_squads")
+    .select("user_id, guest_id, points")
+    .eq("gameweek_id", gameweekId);
+  const map = new Map<string, number | null>();
+  for (const s of (data ?? []) as any[]) {
+    const id = (s.guest_id ?? s.user_id) as string | null;
+    if (id) map.set(id, s.points ?? null);
+  }
+  return map;
+}
 
 export async function loadLeaderboard(admin: any, withEmails: boolean): Promise<FantasyLeaderboardRow[]> {
   const { data, error } = await admin
     .from("fantasy_leaderboard")
     .select("*")
     .order("total_points", { ascending: false });
+
   if (error) throw new Error(error.message);
   const rows = (data ?? []) as any[];
   const emailMap = new Map<string, string>();
