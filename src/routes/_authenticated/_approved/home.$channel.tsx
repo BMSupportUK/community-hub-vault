@@ -337,6 +337,29 @@ function ChannelPage() {
   const firstUnreadRef = useRef<HTMLDivElement | null>(null);
   const latestMessageRef = useRef<Message | null>(null);
 
+  // Messages flip from "Unread" to "Read" 30s after they first appear on screen.
+  const seenAtRef = useRef<Map<string, number>>(new Map());
+  const [readTick, setReadTick] = useState(0);
+  const READ_DELAY_MS = 30_000;
+
+  useEffect(() => {
+    const now = Date.now();
+    for (const m of messages) {
+      if (!seenAtRef.current.has(m.id)) seenAtRef.current.set(m.id, now);
+    }
+    setReadTick((t) => t + 1);
+  }, [messages]);
+
+  useEffect(() => {
+    const id = setInterval(() => setReadTick((t) => t + 1), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const isReadByDwell = (messageId: string) => {
+    const seen = seenAtRef.current.get(messageId);
+    return seen !== undefined && Date.now() - seen >= READ_DELAY_MS;
+  };
+
   const isAtBottom = () => {
     const el = scrollRef.current;
     if (!el) return true;
