@@ -403,21 +403,25 @@ function ChannelPage() {
     initialScrollDoneRef.current = false;
     setFirstUnreadId(null);
     lastReadAtRef.current = null;
+    setBaselineReadAt(null);
     let cancelled = false;
-    // Fetch the persisted last-read marker for this channel before messages
-    // so the initial-scroll effect uses the cross-device value.
-    if (user) {
-      void supabase
-        .from("channel_reads")
-        .select("last_read_at")
-        .eq("user_id", user.id)
-        .eq("channel_id", channel.id)
-        .maybeSingle()
-        .then(({ data }) => {
-          if (!cancelled && data?.last_read_at) lastReadAtRef.current = data.last_read_at;
-        });
-    }
     (async () => {
+      // Fetch the persisted last-read marker BEFORE messages so the
+      // initial-scroll effect and read/unread labels use the stored value.
+      if (user) {
+        const { data: readRow } = await supabase
+          .from("channel_reads")
+          .select("last_read_at")
+          .eq("user_id", user.id)
+          .eq("channel_id", channel.id)
+          .maybeSingle();
+        if (cancelled) return;
+        if (readRow?.last_read_at) {
+          lastReadAtRef.current = readRow.last_read_at;
+          setBaselineReadAt(readRow.last_read_at);
+        }
+      }
+
       const { data } = await supabase
         .from("chat_messages")
         .select("id, channel_id, sender_id, content, created_at, pinned_at, pinned_by")
