@@ -313,8 +313,24 @@ export function BoroLiveMatchStrip() {
           {(() => {
             const m = live ?? nf ?? lr;
             if (!m) return null;
-            const isLive = !!live;
-            const isFixture = !live && !!nf;
+            const detailStatus = (preloadedDetail?.status ?? "").trim();
+            const detailStatusLower = detailStatus.toLowerCase();
+            const detailIsFinal = /^(ft|aet)$|full\s*time|final/.test(detailStatusLower);
+            const detailIsPreMatch = /scheduled|not started|pre-match/.test(detailStatusLower);
+            const selectedKickoff = selectedFixture?.kickoff ? Date.parse(selectedFixture.kickoff) : NaN;
+            const detailIsInProgress =
+              !!preloadedDetail &&
+              !!detailStatus &&
+              !detailIsFinal &&
+              !detailIsPreMatch &&
+              Number.isFinite(selectedKickoff) &&
+              now >= selectedKickoff - 15 * 60 * 1000 &&
+              now <= selectedKickoff + 5 * 60 * 60 * 1000;
+            // The Gamecast detail feed is fresher than the fixture-list cache.
+            // In particular, a half-time score must never be presented as FT.
+            const isLive = !!live || detailIsInProgress;
+            const isFixture = !isLive && !!nf;
+            const liveStatus = live?.clock || live?.statusDetail || detailStatus || "Live";
             return (
               <div className="p-5 pt-8">
                 <div className="text-center">
@@ -344,7 +360,7 @@ export function BoroLiveMatchStrip() {
                 <div className="mt-5 space-y-1.5 text-center text-sm text-white/80">
                   {isLive && (
                     <div className="font-semibold text-amber-200">
-                      {live!.inPlay ? live!.clock || live!.statusDetail : live!.statusDetail}
+                      {liveStatus}
                     </div>
                   )}
                   {isFixture && (
@@ -375,7 +391,7 @@ export function BoroLiveMatchStrip() {
                     eventId={selectedEventId}
                     slug={selectedSlug}
                     live={isLive}
-                    kickoff={isLive ? live!.kickoff : isFixture ? nf!.kickoff : null}
+                     kickoff={isLive ? selectedFixture?.kickoff ?? null : isFixture ? nf?.kickoff ?? null : null}
                     initialDetail={preloadedDetail}
                     fixture={selectedFixture}
                   />

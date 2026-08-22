@@ -336,7 +336,10 @@ function stripLiveBlock(body: string): string {
 
 function isHalfTime(json: any): boolean {
   const st = json?.header?.competitions?.[0]?.status;
-  const detail = String(st?.type?.shortDetail ?? st?.type?.detail ?? st?.type?.description ?? "").toLowerCase();
+  const detail = [st?.type?.name, st?.type?.shortDetail, st?.type?.detail, st?.type?.description]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
   return /half\s*time|halftime|\bht\b/.test(detail);
 }
 
@@ -430,9 +433,10 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
   // Prefer the browser-relayed summary whenever it is further through the game
   // or carries richer live data. ESPN sometimes gives our server a valid-looking
   // but stale pre-match response, which previously prevented this fallback.
-  const { getCachedEspnSummary, getCachedSummaryForFixture } = await import("@/lib/espn-summary-cache.server");
-  const cached = espn ? await getCachedEspnSummary(espn.eventId) : null;
-  const relayed = usable(cached) ? cached : await getCachedSummaryForFixture(fx);
+  const { getCachedEspnSummaryWithMeta, getCachedSummaryForFixtureWithMeta } = await import("@/lib/espn-summary-cache.server");
+  const cached = espn ? await getCachedEspnSummaryWithMeta(espn.eventId) : null;
+  const relayRecord = usable(cached?.payload) ? cached : await getCachedSummaryForFixtureWithMeta(fx);
+  const relayed = relayRecord?.payload ?? null;
   const summaryRank = (candidate: any) => {
     if (!usable(candidate)) return -1;
     const comp = candidate.header.competitions[0];
@@ -444,7 +448,15 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
       : 0;
     return stateScore + eventScore + statScore;
   };
-  if (usable(relayed) && summaryRank(relayed) >= summaryRank(json)) {
+  const stateOf = (candidate: any) =>
+    String(candidate?.header?.competitions?.[0]?.status?.type?.state ?? "pre").toLowerCase();
+  const relayAge = relayRecord ? Date.now() - Date.parse(relayRecord.updatedAt) : Number.POSITIVE_INFINITY;
+  const freshRelayStillLive =
+    usable(relayed) &&
+    relayAge <= 2 * 60 * 1000 &&
+    stateOf(relayed) === "in" &&
+    stateOf(json) === "post";
+  if (usable(relayed) && (freshRelayStillLive || summaryRank(relayed) >= summaryRank(json))) {
     json = relayed;
     skipped.push("used freshest relayed ESPN summary");
   }
