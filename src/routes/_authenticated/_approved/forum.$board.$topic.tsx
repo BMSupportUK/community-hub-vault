@@ -269,6 +269,12 @@ function sortPostsForTopic(a: Post, b: Post) {
   return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
 }
 
+export function isTeamSheetPost(body: string | null | undefined): boolean {
+  if (!body) return false;
+  const text = body.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").toLowerCase();
+  return /team news\s*[—–-]\s*(updated\s+)?(official\s+)?line-?up/.test(text) || /confirmed line-?ups?/.test(text);
+}
+
 function shouldShowInsertedReply(currentPage: number, replyCountBeforeInsert: number, repliesPerPage: number) {
   const targetPage = Math.max(1, Math.ceil((replyCountBeforeInsert + 1) / repliesPerPage));
   return targetPage === currentPage;
