@@ -84,7 +84,40 @@ export async function applyLineupSwapsForGameweek(
       .sort((a, b) => a.slot_order - b.slot_order);
     if (outs.length === 0 || ins.length === 0) continue;
 
-    const used = new Set<string>();
+    // Match the most constrained positions first. This prevents a flexible
+    // dual-position substitute taking a slot that an exact-position substitute
+    // could fill and leaving another valid swap unmatched.
+    const candidatesFor = (out: PickRow) => {
+      const outPlayer = byId.get(out.player_id);
+      if (!outPlayer) return [];
+      const wanted = slotPosition(out, outPlayer);
+      return ins.filter((candidate) => {
+        const player = byId.get(candidate.player_id);
+        return !!player && eligible(player).includes(wanted);
+      });
+    };
+    outs.sort((a, b) => candidatesFor(a).length - candidatesFor(b).length || a.slot_order - b.slot_order);
+
+    const assigned = new Map<string, PickRow>();
+    const claim = (out: PickRow, visited: Set<string>): boolean => {
+      for (const candidate of candidatesFor(out)) {
+        if (visited.has(candidate.id)) continue;
+        visited.add(candidate.id);
+        const previous = assigned.get(candidate.id);
+        if (!previous || claim(previous, visited)) {
+          assigned.set(candidate.id, out);
+          return true;
+        }
+      }
+      return false;
+    };
+    for (const out of outs) claim(out, new Set());
+    const incomingByOut = new Map<string, PickRow>();
+    for (const [incomingId, out] of assigned) {
+      const incoming = ins.find((candidate) => candidate.id === incomingId);
+      if (incoming) incomingByOut.set(out.id, incoming);
+    }
+
     let changed = 0;
 
     for (const out of outs) {
@@ -92,18 +125,15 @@ export async function applyLineupSwapsForGameweek(
       if (!outPlayer) continue;
       const wanted = slotPosition(out, outPlayer);
 
-      const inPick = ins.find((cand) => {
-        if (used.has(cand.id)) return false;
-        const candPlayer = byId.get(cand.player_id);
-        if (!candPlayer) return false;
-        return eligible(candPlayer).includes(wanted);
-      });
+      const inPick = incomingByOut.get(out.id);
       if (!inPick) {
-        skipped.push(`no like-for-like ${wanted.toUpperCase()} on the bench for ${outPlayer.name}`);
+        skipped.push(`squad ${squad.id}: no like-for-like ${wanted.toUpperCase()} on the bench for ${outPlayer.name}`);
         continue;
       }
-      used.add(inPick.id);
-      const inPlayer = byId.get(inPick.player_id)!;
+      const inPlayer = byId.get(inPick.player_id);
+      if (!inPlayer) {
+        continue;
+      }
 
       const posLabel = wanted.toUpperCase();
       const { error: inErr } = await admin
@@ -118,7 +148,6 @@ export async function applyLineupSwapsForGameweek(
         .eq("id", inPick.id);
       if (inErr) {
         skipped.push(`swap in ${inPlayer.name}: ${inErr.message}`);
-        used.delete(inPick.id);
         continue;
       }
 
@@ -176,7 +205,7 @@ export async function syncLineupSwaps(opts?: { ignoreWindow?: boolean }): Promis
     if (!Number.isFinite(ko)) return false;
     // Team sheets land about an hour before kick-off; keep watching into the
     // first half in case the feed is late.
-    return nowMs >= ko - 3 * 3600_000 && nowMs <= ko + 2 * 3600_000;
+    return nowMs >= ko - 3 * 3600_000 && nowMs <= ko + 4 * 3600_000;
   });
   if (!target) {
     return { ok: true, squadsChanged: 0, swaps: [], skipped: ["no gameweek inside the team-news window"] };
@@ -188,7 +217,15 @@ export async function syncLineupSwaps(opts?: { ignoreWindow?: boolean }): Promis
   if (pErr) return { ok: false, squadsChanged: 0, swaps: [], skipped: [], error: pErr.message };
   const players = (playerRows ?? []) as PlayerRow[];
 
-  const starterIds = await fetchBoroStarterIds(target['boro_fixtures'], players);
+  let starterIds = await fetchBoroStarterIds(target['boro_fixtures'], players);
+  if (!starterIds) {
+    const { fetchTeamSheetStarterIds } = await import("@/lib/fantasy-team-sheet-lineup.server");
+    starterIds = await fetchTeamSheetStarterIds(
+      supabaseAdmin as unknown as Admin,
+      target['boro_fixtures'].id,
+      players,
+    );
+  }
   if (!starterIds) {
     return {
       ok: true,
