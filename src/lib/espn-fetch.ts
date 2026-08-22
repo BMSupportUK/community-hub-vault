@@ -100,6 +100,88 @@ async function viaMirror<T>(url: string): Promise<T | null> {
 
 const mirrorCache = new Map<string, { at: number; value: unknown }>();
 
+// ---------------------------------------------------------------------------
+// cdn.espn.com fallback.
+//
+// site.api.espn.com answers 403 to every request from our serverless egress,
+// but cdn.espn.com (the host the espn.com website itself reads) serves the very
+// same payloads and does NOT block us. `commentary` carries header + keyEvents +
+// boxscore + rosters, i.e. a drop-in replacement for the `summary` feed.
+// ---------------------------------------------------------------------------
+
+/** Translate a site.api URL into its cdn.espn.com equivalent + unwrapper. */
+function espnCdnEquivalent(url: string): { target: string; unwrap: (json: any) => any } | null {
+  const summary = url.match(/\/sports\/soccer\/([^/]+)\/summary\?.*event=(\d+)/);
+  if (summary) {
+    return {
+      target: `https://cdn.espn.com/core/soccer/commentary?xhr=1&gameId=${summary[2]}`,
+      unwrap: (json) => json?.gamepackageJSON ?? null,
+    };
+  }
+
+  const scoreboard = url.match(/\/sports\/soccer\/([^/]+)\/scoreboard\?(.*)$/);
+  if (scoreboard) {
+    const params = new URLSearchParams(scoreboard[2]);
+    const dates = params.get("dates");
+    return {
+      target: `https://cdn.espn.com/core/soccer/scoreboard?xhr=1&league=${scoreboard[1]}${dates ? `&dates=${dates}` : ""}`,
+      unwrap: (json) => {
+        const sb = json?.content?.sbData;
+        return sb?.events ? sb : null;
+      },
+    };
+  }
+
+  const schedule = url.match(/\/sports\/soccer\/([^/]+)\/teams\/(\d+)\/schedule/);
+  if (schedule) {
+    return {
+      target: `https://cdn.espn.com/core/soccer/team/schedule?xhr=1&league=${schedule[1]}&team=${schedule[2]}`,
+      unwrap: (json) => {
+        const events = json?.content?.schedule;
+        // The website groups the schedule by date key; flatten back to `events`.
+        const flat = Array.isArray(events)
+          ? events
+          : Object.values(events ?? {}).flatMap((entry: any) => entry?.games ?? entry?.events ?? []);
+        return flat.length ? { events: flat } : null;
+      },
+    };
+  }
+
+  return null;
+}
+
+const cdnCache = new Map<string, { at: number; value: unknown }>();
+
+async function viaEspnCdn<T>(url: string): Promise<T | null> {
+  const mapped = espnCdnEquivalent(url);
+  if (!mapped) return null;
+
+  const cached = cdnCache.get(mapped.target);
+  if (cached && Date.now() - cached.at < 10_000) return cached.value as T | null;
+
+  try {
+    const res = await fetch(mapped.target, {
+      headers: { accept: "application/json" },
+      cache: "no-store",
+      signal: AbortSignal.timeout(MIRROR_TIMEOUT_MS),
+    });
+    if (!res.ok) {
+      console.error("[espn-fetch] cdn refused", res.status, mapped.target);
+      return null;
+    }
+    const value = mapped.unwrap(await res.json());
+    if (value == null) {
+      console.error("[espn-fetch] cdn payload unusable", mapped.target);
+      return null;
+    }
+    cdnCache.set(mapped.target, { at: Date.now(), value });
+    return value as T;
+  } catch (error) {
+    console.error("[espn-fetch] cdn error", String(error), mapped.target);
+    return null;
+  }
+}
+
 export async function espnJson<T = any>(url: string, tries = 2): Promise<T | null> {
   let lastStatus: number | string = "none";
   for (let attempt = 0; attempt < tries; attempt += 1) {
@@ -119,8 +201,14 @@ export async function espnJson<T = any>(url: string, tries = 2): Promise<T | nul
     }
   }
   console.error("[espn-fetch] direct request refused", lastStatus, url);
+
+  // cdn.espn.com first: it is the one host that reliably answers our worker.
+  const viaCdn = await viaEspnCdn<T>(url);
+  if (viaCdn != null) return viaCdn;
+
   return viaMirror<T>(url);
 }
+
 
 /** ESPN date-range query string, e.g. 20260814-20260817. */
 export function espnDateRange(fromMs: number, toMs: number): string {
