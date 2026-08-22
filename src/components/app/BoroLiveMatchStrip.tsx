@@ -5,11 +5,12 @@ import {
   getBoroMatchCentre,
   type MatchCentreDTO,
 } from "@/lib/boro-match-centre.functions";
-import { getBoroUpcomingFixture, type UpcomingFixtureDTO } from "@/lib/boro-upcoming-fixture.functions";
 
 import type { MatchDetailDTO } from "@/lib/boro-match-detail.types";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
 import { TeamKit } from "@/lib/boro-team-kits";
+import { londonWeekStart } from "@/lib/boro-match-week";
+
 import { Dialog, DialogContent, DialogTitle, DialogClose } from "@/components/ui/dialog";
 import { BoroMatchDetailTabs } from "@/components/app/BoroMatchDetailTabs";
 
@@ -70,29 +71,14 @@ function BigSide({ name, logo }: { name: string; logo?: string | null }) {
 
 export function BoroLiveMatchStrip() {
   const fetchData = useServerFn(getBoroMatchCentre);
-  const fetchUpcoming = useServerFn(getBoroUpcomingFixture);
   const tz = useUserTimezone();
   const [data, setData] = useState<MatchCentreDTO | null>(null);
-  const [upcoming, setUpcoming] = useState<UpcomingFixtureDTO>(null);
   const [preloadedDetail, setPreloadedDetail] = useState<MatchDetailDTO | null>(null);
   const [open, setOpen] = useState(false);
-  // Which game the pop-up shows. "auto" follows the live/next/last priority;
-  // the switcher lets you preview the upcoming fixture (line-ups, form, stats)
-  // before kick-off even while the last result is still the headline.
-  const [view, setView] = useState<"auto" | "next" | "last">("auto");
+  // Which game the pop-up shows. "auto" follows live, then the last result
+  // until the new game week rolls the next fixture in.
+  const [view, setView] = useState<"auto" | "last">("auto");
   const [now, setNow] = useState(() => Date.now());
-
-  useEffect(() => {
-    let cancelled = false;
-    void fetchUpcoming()
-      .then((u) => {
-        if (!cancelled) setUpcoming(u);
-      })
-      .catch((e) => console.error("[boro-match-centre] upcoming fixture failed", e));
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
 
 
@@ -147,42 +133,19 @@ export function BoroLiveMatchStrip() {
       ? null
       : rawNf;
 
-  // The fixture the "Next fixture" tab previews. Normally the match centre's
-  // own nextFixture; when the weekly rollover is still holding this week's game
-  // we fall back to the next unplayed fixture from the fixture list, so the
-  // upcoming game can be previewed straight away.
-  const previewNf =
-    nf && Date.parse(nf.kickoff) > now
-      ? nf
-      : upcoming
-        ? {
-            kickoff: upcoming.kickoff,
-            competition: upcoming.competition,
-            home: upcoming.home,
-            away: upcoming.away,
-            venue: upcoming.venue,
-            homeLogo: null,
-            awayLogo: null,
-            eventId: null,
-            espnSlug: null,
-          }
-        : nf;
-
-  // A result played in the last four days is the most interesting thing to show
-  // when nothing is live — full FotMob action, stats and line-ups are in.
+  // A result stays on screen for the rest of its own game week. Once the new
+  // week starts (Monday, London time) the upcoming fixture takes over.
   const lrKickoff = lr ? Date.parse((lr as { kickoff?: string; date?: string }).kickoff ?? (lr as { date?: string }).date ?? "") : NaN;
-  const lrIsRecent = Number.isFinite(lrKickoff) && now - lrKickoff < 4 * 24 * 60 * 60 * 1000;
-  // Keep the strip and popup on the same headline. A freshly completed match
-  // is shown before the upcoming fixture so the visible strip opens the game
-  // users can currently review (including its FotMob action and stats).
+  const lrIsRecent =
+    Number.isFinite(lrKickoff) && lrKickoff >= londonWeekStart(now);
+  // Keep the strip and popup on the same headline.
   const headlineFixture = lrIsRecent ? null : nf;
 
   const selectedMatch =
-    view === "next"
-      ? (previewNf ?? live ?? lr)
-      : view === "last"
-        ? (lr ?? live ?? previewNf)
-        : (live ?? (lrIsRecent ? lr : null) ?? nf ?? lr);
+    view === "last"
+      ? (lr ?? live ?? nf)
+      : (live ?? (lrIsRecent ? lr : null) ?? nf ?? lr);
+
 
 
 
@@ -390,16 +353,15 @@ export function BoroLiveMatchStrip() {
             // In particular, a half-time score must never be presented as FT.
             const showingLiveMatch = !!live && m === live;
             const isLive = showingLiveMatch || detailIsInProgress;
-            const isFixture = !isLive && !!previewNf && m === previewNf;
+            const isFixture = !isLive && !!nf && m === nf;
             const liveStatus = live?.clock || live?.statusDetail || detailStatus || "Live";
-            const canSwitch = !!previewNf && (!!lr || !!live);
-            const switcher: Array<{ key: "auto" | "next" | "last"; label: string }> = [
+            const canSwitch = !!live && !!lr;
+            const switcher: Array<{ key: "auto" | "last"; label: string }> = [
               ...(live ? ([{ key: "auto", label: "Live now" }] as const) : []),
-              ...(previewNf ? ([{ key: "next", label: "Next fixture" }] as const) : []),
               ...(lr ? ([{ key: "last", label: "Last result" }] as const) : []),
             ];
-            const activeKey: "auto" | "next" | "last" =
-              view !== "auto" ? view : live ? "auto" : lrIsRecent ? "last" : nf ? "next" : "last";
+            const activeKey: "auto" | "last" = view !== "auto" ? view : live ? "auto" : "last";
+
 
 
             return (
@@ -458,11 +420,11 @@ export function BoroLiveMatchStrip() {
                   )}
                   {isFixture && (
                     <>
-                      <div>{fmtKickoff(previewNf!.kickoff, tz)}</div>
-                      {countdown(previewNf!.kickoff, now) && (
-                        <div className="text-xs text-red-200">Kick-off in {countdown(previewNf!.kickoff, now)}</div>
+                      <div>{fmtKickoff(nf!.kickoff, tz)}</div>
+                      {countdown(nf!.kickoff, now) && (
+                        <div className="text-xs text-red-200">Kick-off in {countdown(nf!.kickoff, now)}</div>
                       )}
-                      {previewNf!.venue && <div className="text-xs text-white/85">{previewNf!.venue}</div>}
+                      {nf!.venue && <div className="text-xs text-white/85">{nf!.venue}</div>}
 
                     </>
                   )}
