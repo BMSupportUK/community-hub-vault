@@ -253,13 +253,13 @@ function WelcomePage() {
             Open BM Support Customer Chat-room →
             <span
               className={`inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 rounded-full text-[10px] font-bold tabular-nums transition-colors ${
-                unreadWelcome > 0
-                  ? "bg-red-500 text-white animate-unread-flash"
+                welcomeOnlineCount > 0
+                  ? "bg-emerald-500 text-white"
                   : "bg-muted text-muted-foreground"
               }`}
-              aria-label={unreadWelcome > 0 ? `${unreadWelcome} unread messages` : "No unread messages"}
+              aria-label={welcomeOnlineCount > 0 ? `${welcomeOnlineCount} users in chat` : "No users in chat"}
             >
-              {unreadWelcome}
+              {welcomeOnlineCount}
             </span>
           </Link>
         </div>
