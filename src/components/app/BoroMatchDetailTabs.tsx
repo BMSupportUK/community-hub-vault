@@ -82,30 +82,88 @@ function EventIcon({ kind }: { kind: MatchEventItem["kind"] }) {
   return <Goal className="size-3.5 text-white" />;
 }
 
+function PlayerChip({ player, arrow }: { player: { name: string; number: string | null; position: string | null }; arrow?: "in" | "out" }) {
+  return (
+    <span className="flex min-w-0 items-center gap-2">
+      {arrow ? (
+        <span className={`text-xs font-bold ${arrow === "in" ? "text-emerald-300" : "text-red-300"}`}>
+          {arrow === "in" ? "\u2191" : "\u2193"}
+        </span>
+      ) : null}
+      {player.number ? (
+        <span className="grid size-5 shrink-0 place-items-center rounded bg-white/[0.16] text-[10px] font-bold tabular-nums text-white/90">
+          {player.number}
+        </span>
+      ) : null}
+      <span className="truncate text-[13px] font-semibold text-white">{player.name}</span>
+      {player.position ? <span className="shrink-0 text-[11px] text-white/60">{player.position}</span> : null}
+    </span>
+  );
+}
+
+/** FotMob-style commentary card: minute stamp, narrative sentence, player + metric strip. */
 function EventRow({ ev, home, away }: { ev: MatchEventItem; home: string | null; away: string | null }) {
   const isGoal = ev.kind === "goal" || ev.kind === "penalty" || ev.kind === "own-goal";
+  const detail = ev.detail ?? null;
+  const minute = detail?.minuteLabel || ev.clock || "-";
+  const narrative = detail?.narrative || ev.text || describeEspnEvent(ev);
+  const metrics = detail
+    ? [
+        detail.shotType ? { label: "Shot type", value: detail.shotType } : null,
+        detail.xg ? { label: "xG", value: detail.xg } : null,
+        detail.xgot ? { label: "xGOT", value: detail.xgot } : null,
+      ].filter((m): m is { label: string; value: string } => !!m)
+    : [];
+  const scoreLine =
+    detail?.scoreLine ??
+    (isGoal && ev.homeScore != null && ev.awayScore != null
+      ? `${home ?? "Home"} ${ev.homeScore} - ${ev.awayScore} ${away ?? "Away"}`
+      : null);
+
   return (
     <li
-      className={`flex items-start gap-3 rounded-lg border px-3 py-2 text-sm ${
-        isGoal ? "border-[#E11B22]/45 bg-[#E11B22]/10" : "border-white/20 bg-white/10"
+      className={`rounded-xl border px-3 py-2.5 text-sm ${
+        isGoal ? "border-[#E11B22]/45 bg-[#E11B22]/10" : "border-white/20 bg-white/[0.07]"
       }`}
     >
-      <span className="w-12 shrink-0 pt-0.5 tabular-nums text-xs font-bold text-amber-200">{ev.clock ?? "-"}</span>
-      <span className="pt-0.5">
-        <EventIcon kind={ev.kind} />
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block font-semibold text-white">{describeEspnEvent(ev)}</span>
-        {ev.text && ev.text !== ev.shortText && (
-          <span className="mt-0.5 block text-[12px] leading-snug text-white/85">{ev.text}</span>
-        )}
-        {isGoal && ev.homeScore != null && ev.awayScore != null && (
-          <span className="mt-1 inline-block rounded bg-white/[0.16] px-1.5 py-0.5 text-[11px] font-bold tabular-nums text-white/95">
-            {home ?? "Home"} {ev.homeScore} - {ev.awayScore} {away ?? "Away"}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <span className="tabular-nums text-[13px] font-extrabold text-amber-200">{minute}</span>
+          <EventIcon kind={ev.kind} />
+          <span className="text-[13px] font-extrabold uppercase tracking-wide text-white">
+            {detail?.headline || ev.shortText || describeEspnEvent(ev)}
           </span>
-        )}
-      </span>
-      <span className="shrink-0 pt-0.5 text-[11px] text-white/75">{ev.teamName ?? ""}</span>
+        </div>
+        <span className="shrink-0 text-[11px] text-white/70">{detail?.teamName ?? ev.teamName ?? ""}</span>
+      </div>
+
+      {(detail?.playerIn || detail?.playerOut || detail?.player) && (
+        <div className="mt-2 space-y-1">
+          {detail?.playerIn ? <PlayerChip player={detail.playerIn} arrow="in" /> : null}
+          {detail?.playerOut ? <PlayerChip player={detail.playerOut} arrow="out" /> : null}
+          {!detail?.playerIn && !detail?.playerOut && detail?.player ? <PlayerChip player={detail.player} /> : null}
+          {detail?.assist ? <span className="block text-[11px] text-white/70">Assist: {detail.assist}</span> : null}
+        </div>
+      )}
+
+      <p className="mt-2 text-[12.5px] leading-snug text-white/85">{narrative}</p>
+
+      {metrics.length > 0 && (
+        <div className="mt-2 grid grid-cols-3 gap-1.5">
+          {metrics.map((m) => (
+            <div key={m.label} className="rounded-lg bg-white/[0.08] px-2 py-1 text-center">
+              <div className="text-[9px] uppercase tracking-wide text-white/60">{m.label}</div>
+              <div className="text-[12px] font-bold text-white">{m.value}</div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {scoreLine && (
+        <span className="mt-2 inline-block rounded bg-white/[0.16] px-1.5 py-0.5 text-[11px] font-bold tabular-nums text-white/95">
+          {scoreLine}
+        </span>
+      )}
     </li>
   );
 }
