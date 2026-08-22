@@ -439,7 +439,7 @@ export async function syncBoroMatchEvents(opts?: {
           post_id: post.id,
           kind: ev.kind,
           clock: ev.clock,
-          summary: describeEvent(ev, fx),
+          summary,
           fingerprint,
           revision: (prev.revision ?? 0) + 1,
           updated_at: new Date().toISOString(),
