@@ -1,3 +1,4 @@
+import type { FotmobEventDetail, FotmobEventPlayer } from "@/lib/fotmob-boro.types";
 // Server-side Boro match feed. FotMob is used because its data endpoint is
 // reachable from the production worker, unlike ESPN's site API.
 
@@ -148,6 +149,7 @@ export async function fetchFotmobSummary(input: {
     score: String(team.score ?? 0),
   }));
   const rawEvents: any[] = detail?.content?.matchFacts?.events?.events ?? [];
+  const meta = playerMetaMap(detail);
   const keyEvents = rawEvents.map((event, index) => {
     const type = String(event?.type ?? "");
     const card = String(event?.card ?? "").toLowerCase();
@@ -191,8 +193,16 @@ export async function fetchFotmobSummary(input: {
       homeScore: event?.newScore?.[0] ?? event?.homeScore ?? null,
       awayScore: event?.newScore?.[1] ?? event?.awayScore ?? null,
       shootout: !!event?.isPenaltyShootoutEvent,
+      // FotMob-only presentation detail, used to render match day thread
+      // replies in the same shape FotMob shows them.
+      fotmob: fotmobEventDetail(event, {
+        homeName: String(teams[0]?.name ?? ""),
+        awayName: String(teams[1]?.name ?? ""),
+        meta,
+      }),
     };
   });
+
   const allStats: any[] = detail?.content?.stats?.Periods?.All?.stats ?? [];
   const flatStats = allStats.flatMap((group) => group?.stats ?? []);
   const uniqueStats = new Map<string, any>();
@@ -226,5 +236,154 @@ export async function fetchFotmobSummary(input: {
     rosters: lineups,
     gameInfo: {},
     _provider: "fotmob",
+  };
+}
+type PlayerMeta = { number: string | null; position: string | null };
+
+function playerMetaMap(detail: any): Map<string, PlayerMeta> {
+  const map = new Map<string, PlayerMeta>();
+  for (const side of ["homeTeam", "awayTeam"] as const) {
+    const team = detail?.content?.lineup?.[side];
+    for (const player of [...(team?.starters ?? []), ...(team?.subs ?? [])] as any[]) {
+      if (player?.id == null) continue;
+      map.set(String(player.id), {
+        number: player?.shirtNumber != null ? String(player.shirtNumber) : null,
+        position: player?.usualPosition ? String(player.usualPosition) : null,
+      });
+    }
+  }
+  return map;
+}
+
+const SHOT_TYPE_LABEL: Record<string, string> = {
+  LeftFoot: "Left foot",
+  RightFoot: "Right foot",
+  Header: "Header",
+  Other: "Other",
+};
+
+const SHOT_PHRASE: Record<string, string> = {
+  LeftFoot: "left footed shot",
+  RightFoot: "right footed shot",
+  Header: "header",
+  Other: "shot",
+};
+
+const SITUATION_PHRASE: Record<string, string> = {
+  FromCorner: "following a corner",
+  SetPiece: "from a set piece",
+  FastBreak: "on the counter attack",
+  Penalty: "from the penalty spot",
+  ThrowInSetPiece: "from a throw-in",
+};
+
+function positionLabel(abbrev: string | null): string | null {
+  if (!abbrev) return null;
+  const map: Record<string, string> = {
+    GK: "Goalkeeper",
+    CB: "Centre back",
+    LB: "Left back",
+    RB: "Right back",
+    LWB: "Left wing back",
+    RWB: "Right wing back",
+    DM: "Defensive midfield",
+    CM: "Central midfield",
+    AM: "Attacking midfield",
+    LM: "Left midfield",
+    RM: "Right midfield",
+    LW: "Left winger",
+    RW: "Right winger",
+    ST: "Striker",
+    CF: "Centre forward",
+  };
+  return map[abbrev] ?? abbrev;
+}
+
+function fotmobEventDetail(
+  event: any,
+  ctx: { homeName: string; awayName: string; meta: Map<string, PlayerMeta> },
+): FotmobEventDetail | null {
+  const type = String(event?.type ?? "");
+  if (type === "Half") return null;
+  const isHome = !!event?.isHome;
+  const teamName = isHome ? ctx.homeName : ctx.awayName;
+  const minute = event?.timeStr != null ? String(event.timeStr).replace(/\s+/g, "") : String(event?.time ?? "");
+  const minuteLabel = minute ? `${minute}'` : "";
+
+  const person = (id: unknown, name: unknown) => {
+    if (!name) return null;
+    const m = ctx.meta.get(String(id ?? ""));
+    const out: FotmobEventPlayer = { name: String(name), number: m?.number ?? null, position: positionLabel(m?.position ?? null) };
+    return out;
+  };
+
+  if (type === "Goal") {
+    const shot = event?.shotmapEvent ?? null;
+    const ownGoal = !!event?.ownGoal || !!shot?.isOwnGoal;
+    const scorer = person(event?.player?.id, event?.player?.name);
+    const assist = event?.assistStr ? String(event.assistStr).replace(/^assist by\s*/i, "") : null;
+    const shotType = shot?.shotType ? (SHOT_TYPE_LABEL[String(shot.shotType)] ?? String(shot.shotType)) : null;
+    const phrase = shot?.shotType ? (SHOT_PHRASE[String(shot.shotType)] ?? "shot") : "shot";
+    const where = shot ? (shot.isFromInsideBox ? " from inside the box" : " from outside the box") : "";
+    const situation = shot?.situation ? (SITUATION_PHRASE[String(shot.situation)] ?? "") : "";
+    const scoreLine = `${ctx.homeName} ${event?.newScore?.[0] ?? event?.homeScore ?? 0}, ${ctx.awayName} ${event?.newScore?.[1] ?? event?.awayScore ?? 0}.`;
+    const sentence = ownGoal
+      ? `Own goal! ${scoreLine} ${scorer?.name ?? ""} (${teamName}).`
+      : `Goal! ${scoreLine} ${scorer?.name ?? ""} (${teamName}) ${phrase}${where}${situation ? ` ${situation}` : ""}.${assist ? ` Assisted by ${assist}.` : ""}`;
+    return {
+      minuteLabel,
+      headline: ownGoal ? "Own goal!" : event?.isPenaltyShootoutEvent ? "Shootout penalty" : "Goal!",
+      narrative: sentence.replace(/\s+/g, " ").trim(),
+      teamName,
+      isHome,
+      player: scorer,
+      playerIn: null,
+      playerOut: null,
+      assist,
+      shotType,
+      xg: shot?.expectedGoals != null ? Number(shot.expectedGoals).toFixed(2) : null,
+      xgot: shot?.expectedGoalsOnTarget != null ? Number(shot.expectedGoalsOnTarget).toFixed(2) : null,
+      card: null,
+    };
+  }
+
+  if (type === "Substitution") {
+    const inPlayer = person(event?.swap?.[0]?.id, event?.swap?.[0]?.name);
+    const outPlayer = person(event?.swap?.[1]?.id, event?.swap?.[1]?.name);
+    return {
+      minuteLabel,
+      headline: "Substitution",
+      narrative: `Substitution, ${teamName}. ${inPlayer?.name ?? ""} replaces ${outPlayer?.name ?? ""}.${event?.injuredPlayerOut ? " Injury substitution." : ""}`.replace(/\s+/g, " ").trim(),
+      teamName,
+      isHome,
+      player: null,
+      playerIn: inPlayer,
+      playerOut: outPlayer,
+      assist: null,
+      shotType: null,
+      xg: null,
+      xgot: null,
+      card: null,
+    };
+  }
+
+  const card = event?.card ? String(event.card) : null;
+  const shown = person(event?.player?.id, event?.player?.name);
+  return {
+    minuteLabel,
+    headline: card ? `${card} card` : type || "Match event",
+    narrative: card
+      ? `${card} card, ${teamName}. ${shown?.name ?? ""} is shown a ${card.toLowerCase()} card.${event?.cardDescription ? ` ${event.cardDescription}` : ""}`.replace(/\s+/g, " ").trim()
+      : `${type} — ${teamName}`,
+    teamName,
+    isHome,
+    player: shown,
+    playerIn: null,
+    playerOut: null,
+    assist: null,
+    shotType: null,
+    xg: null,
+    xgot: null,
+    card,
   };
 }

@@ -120,7 +120,42 @@ function scoreLine(ev: ParsedEvent, fx: FixtureLite): string | null {
   return `${fx.home_team} ${ev.homeScore} - ${ev.awayScore} ${fx.away_team}`;
 }
 
+function playerRow(
+  label: "in" | "out" | null,
+  player: { name: string; number: string | null; position: string | null },
+): string {
+  const arrow = label === "in" ? "\u2b06\ufe0f " : label === "out" ? "\u2b07\ufe0f " : "";
+  const num = player.number ? `${escapeHtml(player.number)} ` : "";
+  const pos = player.position ? `<br /><span style="opacity:.7;font-size:13px">${escapeHtml(player.position)}</span>` : "";
+  return `<p style="margin:2px 0">${arrow}<strong>${num}${escapeHtml(player.name)}</strong>${pos}</p>`;
+}
+
+/** FotMob-shaped card: minute badge, headline, player block, narrative, shot metrics. */
+function buildFotmobCard(ev: ParsedEvent, isUpdate: boolean): string {
+  const d = ev.detail!;
+  const parts: string[] = [];
+  parts.push(
+    `<p style="margin:0 0 6px"><strong>${escapeHtml(d.minuteLabel || ev.clock || "")} ${ICON[ev.kind] ?? ""} ${escapeHtml(
+      `${isUpdate ? "Updated: " : ""}${d.headline}`,
+    )}</strong>${d.teamName ? ` <span style="opacity:.75">· ${escapeHtml(d.teamName)}</span>` : ""}</p>`,
+  );
+  if (d.playerIn) parts.push(playerRow("in", d.playerIn));
+  if (d.playerOut) parts.push(playerRow("out", d.playerOut));
+  if (d.player) parts.push(playerRow(null, d.player));
+  if (d.narrative) parts.push(`<p style="margin:8px 0 0">${escapeHtml(d.narrative)}</p>`);
+  const metrics: string[] = [];
+  if (d.shotType) metrics.push(`Shot type: ${d.shotType}`);
+  if (d.xg) metrics.push(`xG: ${d.xg}`);
+  if (d.xgot) metrics.push(`xGOT: ${d.xgot}`);
+  if (metrics.length) {
+    parts.push(`<p style="margin:8px 0 0;opacity:.8;font-size:13px">${escapeHtml(metrics.join("  ·  "))}</p>`);
+  }
+  if (isUpdate) parts.push(`<p><em>This corrects the earlier post for this incident.</em></p>`);
+  return parts.join("\n");
+}
+
 export function buildEventBody(ev: ParsedEvent, fx: FixtureLite, isUpdate: boolean): string {
+  if (ev.detail) return buildFotmobCard(ev, isUpdate);
   const heading = `${ICON[ev.kind] ?? "\u2022"} ${isUpdate ? "Updated: " : ""}${describeEvent(ev, fx)}`;
   const parts = [`<p><strong>${escapeHtml(heading)}</strong></p>`];
   const score = scoreLine(ev, fx);
@@ -136,6 +171,7 @@ export function buildEventBody(ev: ParsedEvent, fx: FixtureLite, isUpdate: boole
   return parts.join("\n");
 }
 
+
 export type EventSyncResult = {
   ok: boolean;
   fixture?: string;
@@ -147,7 +183,11 @@ export type EventSyncResult = {
   error?: string;
 };
 
-export async function syncBoroMatchEvents(opts?: { ignoreWindow?: boolean }): Promise<EventSyncResult> {
+export async function syncBoroMatchEvents(opts?: {
+  ignoreWindow?: boolean;
+  /** Rewrite the bodies of posts already made for this fixture (e.g. after a formatting change). */
+  rebuild?: boolean;
+}): Promise<EventSyncResult> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { getMatchDayAuthorId } = await import("@/lib/boro-bot-author.server");
   const skipped: string[] = [];
@@ -166,7 +206,7 @@ export async function syncBoroMatchEvents(opts?: { ignoreWindow?: boolean }): Pr
   const fx = rows.find((row) => {
     const ko = Date.parse(row.kickoff_at);
     if (!Number.isFinite(ko)) return false;
-    if (opts?.ignoreWindow) return true;
+    if (opts?.ignoreWindow || opts?.rebuild) return true;
     return now >= ko - WINDOW_BEFORE_MS && now <= ko + WINDOW_AFTER_MS;
   });
   if (!fx) return { ok: true, posted: 0, updated: 0, skipped: ["no fixture inside the live match window"] };
@@ -206,10 +246,10 @@ export async function syncBoroMatchEvents(opts?: { ignoreWindow?: boolean }): Pr
 
   const { data: logged } = await supabaseAdmin
     .from("boro_match_event_posts")
-    .select("id, event_key, fingerprint, revision")
+    .select("id, event_key, fingerprint, revision, post_id")
     .eq("fixture_id", fx.id);
   const byKey = new Map(
-    ((logged ?? []) as Array<{ id: string; event_key: string; fingerprint: string; revision: number }>).map((r) => [
+    ((logged ?? []) as Array<{ id: string; event_key: string; fingerprint: string; revision: number; post_id: string }>).map((r) => [
       r.event_key,
       r,
     ]),
@@ -223,9 +263,28 @@ export async function syncBoroMatchEvents(opts?: { ignoreWindow?: boolean }): Pr
   for (const ev of events) {
     const fingerprint = `${ev.kind}|${ev.clock ?? ""}|${ev.teamName ?? ""}|${ev.players.join("/")}|${ev.homeScore ?? ""}-${ev.awayScore ?? ""}`;
     const prev = byKey.get(ev.key);
-    if (prev && prev.fingerprint === fingerprint) continue;
+    if (prev && prev.fingerprint === fingerprint && !opts?.rebuild) continue;
 
-    const isUpdate = !!prev;
+    // Rebuild mode: rewrite the existing reply in place so the thread shows the
+    // FotMob layout without duplicating the incident.
+    if (prev && opts?.rebuild && prev.post_id) {
+      const { error: bodyErr } = await supabaseAdmin
+        .from("forum_posts")
+        .update({ body: buildEventBody(ev, fx, false) })
+        .eq("id", prev.post_id);
+      if (bodyErr) {
+        skipped.push(`rewrite failed (${ev.key}): ${bodyErr.message}`);
+        continue;
+      }
+      await supabaseAdmin
+        .from("boro_match_event_posts")
+        .update({ fingerprint, summary: describeEvent(ev, fx), updated_at: new Date().toISOString() })
+        .eq("id", prev.id);
+      updated += 1;
+      continue;
+    }
+
+    const isUpdate = !!prev && !opts?.rebuild;
     const body = buildEventBody(ev, fx, isUpdate);
     const { data: post, error: postErr } = await supabaseAdmin
       .from("forum_posts")
@@ -266,7 +325,7 @@ export async function syncBoroMatchEvents(opts?: { ignoreWindow?: boolean }): Pr
       });
       if (insErr) skipped.push(`log failed (${ev.key}): ${insErr.message}`);
       posted += 1;
-      byKey.set(ev.key, { id: "", event_key: ev.key, fingerprint, revision: 0 });
+      byKey.set(ev.key, { id: "", event_key: ev.key, fingerprint, revision: 0, post_id: post.id });
     }
   }
 
