@@ -100,6 +100,7 @@ interface RailItem {
   show: boolean;
   badge?: number;
   search?: Record<string, string>;
+  params?: Record<string, string>;
 }
 
 export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
