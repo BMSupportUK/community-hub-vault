@@ -161,8 +161,14 @@ export async function fetchFotmobSummary(input: {
         : [];
     if (isGoal && event?.assistInput) players.push({ athlete: { id: event?.assistPlayerId, displayName: event.assistInput } });
     const minute = Number(event?.time ?? event?.timeStr ?? 0);
+    const playerIds = isSub
+      ? (event?.swap ?? []).map((player: any) => String(player?.id ?? player?.name ?? "")).join("-")
+      : String(event?.player?.id ?? event?.player?.name ?? "");
+    const stableId = ["fotmob", type || "event", event?.time ?? event?.timeStr ?? index, event?.isHome ? "home" : "away", playerIds]
+      .join("-")
+      .replace(/[^a-zA-Z0-9-]/g, "-");
     return {
-      id: String(event?.eventId ?? event?.reactKey ?? `fotmob-${index}`),
+      id: String(event?.eventId ?? event?.reactKey ?? stableId),
       type: {
         type: isGoal ? (event?.ownGoal ? "own-goal" : "goal") : isSub ? "substitution" : isPeriod ? "halftime" : `${card || type}-card`,
         text: isGoal ? "Goal" : isSub ? "Substitution" : isPeriod ? "Half Time" : `${event?.card ?? ""} Card`,
