@@ -4,7 +4,34 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { MatchDetailDTO, MatchEventItem, PlayerLine } from "@/lib/boro-match-detail.types";
 import { PLAYER_STAT_COLUMNS, describeEspnEvent } from "@/lib/boro-espn-events";
 
-const STAT_COLUMNS = PLAYER_STAT_COLUMNS;
+type StatColumn = { key: string; label: string; title: string };
+
+// FotMob and ESPN record different player stats (FotMob adds a rating and
+// minutes played but has no shots-faced/goals-conceded splits), so the table
+// columns follow whatever the active feed actually reports.
+const STAT_CATALOGUE: StatColumn[] = [
+  { key: "rating", label: "RTG", title: "Match rating" },
+  { key: "minutesPlayed", label: "MIN", title: "Minutes played" },
+  ...PLAYER_STAT_COLUMNS,
+];
+
+const FALLBACK_COLUMNS: StatColumn[] = STAT_CATALOGUE.filter((c) =>
+  ["totalGoals", "goalAssists", "totalShots", "shotsOnTarget", "foulsCommitted", "yellowCards", "redCards"].includes(c.key),
+);
+
+function resolveStatColumns(detail: MatchDetailDTO | null): StatColumn[] {
+  const seen = new Set<string>();
+  for (const lineup of detail?.lineups ?? []) {
+    for (const player of lineup.players) {
+      for (const [key, value] of Object.entries(player.stats ?? {})) {
+        if (value != null && String(value).trim() !== "") seen.add(key);
+      }
+    }
+  }
+  const columns = STAT_CATALOGUE.filter((c) => seen.has(c.key));
+  return columns.length ? columns : FALLBACK_COLUMNS;
+}
+
 
 type ActionGroup = {
   value: string;
@@ -83,12 +110,12 @@ function EventRow({ ev, home, away }: { ev: MatchEventItem; home: string | null;
   );
 }
 
-function StatHead() {
+function StatHead({ columns }: { columns: StatColumn[] }) {
   return (
     <thead className="text-[10px] uppercase text-white/70">
       <tr>
         <th className="px-3 py-1.5 text-left">Player</th>
-        {STAT_COLUMNS.map((c) => (
+        {columns.map((c) => (
           <th key={c.key} title={c.title} className="px-1.5 py-1.5 text-center">
             {c.label}
           </th>
@@ -98,7 +125,7 @@ function StatHead() {
   );
 }
 
-function PlaceholderRows({ rows }: { rows: number }) {
+function PlaceholderRows({ rows, columns }: { rows: number; columns: StatColumn[] }) {
   return (
     <tbody>
       {Array.from({ length: rows }).map((_, i) => (
@@ -109,7 +136,7 @@ function PlaceholderRows({ rows }: { rows: number }) {
               <span className="h-3 w-24 rounded bg-white/[0.16]" />
             </span>
           </td>
-          {STAT_COLUMNS.map((c) => (
+          {columns.map((c) => (
             <td key={c.key} className="px-1.5 py-1.5 text-center text-white/50">
               –
             </td>
@@ -120,7 +147,7 @@ function PlaceholderRows({ rows }: { rows: number }) {
   );
 }
 
-function PlayerRow({ p }: { p: PlayerLine }) {
+function PlayerRow({ p, columns }: { p: PlayerLine; columns: StatColumn[] }) {
   return (
     <tr className="border-t border-white/15">
       <td className="py-1.5 pr-2 whitespace-nowrap">
@@ -136,7 +163,7 @@ function PlayerRow({ p }: { p: PlayerLine }) {
           {p.subbedOut && <span className="text-[10px] font-bold text-red-300">OUT</span>}
         </span>
       </td>
-      {STAT_COLUMNS.map((c) => (
+      {columns.map((c) => (
         <td key={c.key} className="px-1.5 py-1.5 text-center tabular-nums text-white/90">
           {p.stats[c.key] ?? "0"}
         </td>
@@ -266,6 +293,8 @@ export function BoroMatchDetailTabs({
   const homeTeam = detail?.lineups.find((lineup) => lineup.teamId === detail.homeTeamId) ?? detail?.lineups[0] ?? null;
   const awayTeam = detail?.lineups.find((lineup) => lineup.teamId === detail.awayTeamId) ?? detail?.lineups[1] ?? null;
   const teams = { home: homeTeam, away: awayTeam };
+  const statColumns = resolveStatColumns(detail);
+
 
   const primaryStats = detail?.teamStats.filter((s) => s.primary) ?? [];
   const extraStats = detail?.teamStats.filter((s) => !s.primary) ?? [];
@@ -484,7 +513,7 @@ export function BoroMatchDetailTabs({
             ] as const
           ).map((cfg) => (
             <TabsContent key={cfg.value} value={cfg.value} className="mt-4">
-              <LineupPanel side={cfg.side} starters={cfg.starters} team={cfg.team} />
+              <LineupPanel side={cfg.side} starters={cfg.starters} team={cfg.team} columns={statColumns} />
             </TabsContent>
           ))}
         </Tabs>
@@ -497,10 +526,12 @@ function LineupPanel({
   side,
   starters,
   team,
+  columns,
 }: {
   side: "Home" | "Away";
   starters: boolean;
   team: MatchDetailDTO["lineups"][number] | null;
+  columns: StatColumn[];
 }) {
   const label = starters ? `${side} XI` : `${side} substitutes`;
   const players = (team?.players ?? [])
@@ -537,15 +568,15 @@ function LineupPanel({
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-[12px]">
-            <StatHead />
+            <StatHead columns={columns} />
             {players.length ? (
               <tbody>
                 {players.map((p) => (
-                  <PlayerRow key={p.id} p={p} />
+                  <PlayerRow key={p.id} p={p} columns={columns} />
                 ))}
               </tbody>
             ) : (
-              <PlaceholderRows rows={starters ? 11 : 7} />
+              <PlaceholderRows rows={starters ? 11 : 7} columns={columns} />
             )}
           </table>
         </div>
