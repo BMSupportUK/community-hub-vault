@@ -148,6 +148,7 @@ export async function fetchFotmobSummary(input: {
     score: String(team.score ?? 0),
   }));
   const rawEvents: any[] = detail?.content?.matchFacts?.events?.events ?? [];
+  const meta = playerMetaMap(detail);
   const keyEvents = rawEvents.map((event, index) => {
     const type = String(event?.type ?? "");
     const card = String(event?.card ?? "").toLowerCase();
