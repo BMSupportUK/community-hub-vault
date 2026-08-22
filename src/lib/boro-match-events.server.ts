@@ -392,12 +392,16 @@ export async function syncBoroMatchEvents(opts?: {
 
   for (const ev of events) {
     const fingerprint = `${ev.kind}|${ev.clock ?? ""}|${ev.teamName ?? ""}|${ev.players.join("/")}|${ev.homeScore ?? ""}-${ev.awayScore ?? ""}`;
-    const prev = byKey.get(ev.key);
-    if (prev && prev.fingerprint === fingerprint && !opts?.rebuild) continue;
+    const summary = describeEvent(ev, fx);
+    const evIdentity = identity(ev.kind, summary);
+    const prev = byKey.get(ev.key) ?? byIdentity.get(evIdentity);
+    // Same incident already logged under a different source's event id.
+    const adopted = !!prev && prev.event_key !== ev.key;
+    if (prev && prev.fingerprint === fingerprint && !adopted && !opts?.rebuild) continue;
 
-    // Rebuild mode: rewrite the existing reply in place so the thread shows the
-    // FotMob layout without duplicating the incident.
-    if (prev && opts?.rebuild && prev.post_id) {
+    // Rebuild mode (or an adopted incident): rewrite the existing reply in place
+    // so the thread shows the current layout without duplicating the incident.
+    if (prev && (opts?.rebuild || adopted) && prev.post_id) {
       const { error: bodyErr } = await supabaseAdmin
         .from("forum_posts")
         .update({ body: buildEventBody(ev, fx, false) })
@@ -408,8 +412,10 @@ export async function syncBoroMatchEvents(opts?: {
       }
       await supabaseAdmin
         .from("boro_match_event_posts")
-        .update({ fingerprint, summary: describeEvent(ev, fx), updated_at: new Date().toISOString() })
+        .update({ event_key: ev.key, clock: ev.clock, fingerprint, summary, updated_at: new Date().toISOString() })
         .eq("id", prev.id);
+      byKey.set(ev.key, { ...prev, event_key: ev.key, fingerprint, summary });
+      byIdentity.set(evIdentity, { ...prev, event_key: ev.key, fingerprint, summary });
       updated += 1;
       continue;
     }
