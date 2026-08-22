@@ -334,7 +334,7 @@ function stripLiveBlock(body: string): string {
   return `${body.slice(0, start)}${body.slice(end + LIVE_END.length)}`;
 }
 
-function isHalfTime(json: any): boolean {
+export function isHalfTime(json: any): boolean {
   const st = json?.header?.competitions?.[0]?.status;
   const detail = [st?.type?.name, st?.type?.shortDetail, st?.type?.detail, st?.type?.description]
     .filter(Boolean)
@@ -343,7 +343,7 @@ function isHalfTime(json: any): boolean {
   return /half\s*time|halftime|\bht\b/.test(detail);
 }
 
-function isFullTime(json: any): boolean {
+export function isFullTime(json: any): boolean {
   const st = json?.header?.competitions?.[0]?.status;
   const state = String(st?.type?.state ?? "").toLowerCase();
   const detail = String(st?.type?.shortDetail ?? st?.type?.detail ?? st?.type?.description ?? "").toLowerCase();
