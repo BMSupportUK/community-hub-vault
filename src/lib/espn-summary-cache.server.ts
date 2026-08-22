@@ -63,3 +63,38 @@ export async function getLatestCachedEspnSummary(maxAgeMs = 30 * 60 * 1000): Pro
   if (Number.isFinite(age) && age > maxAgeMs) return null;
   return row.payload;
 }
+
+const normName = (s: string) => s.toLowerCase().replace(/[^a-z]/g, "");
+
+/** Find a relayed summary that matches one of our fixtures by teams + kick-off day. */
+export async function getCachedSummaryForFixture(
+  fx: { home_team: string; away_team: string; kickoff_at: string },
+  maxAgeMs = 6 * 60 * 60 * 1000,
+): Promise<any | null> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data } = await supabaseAdmin
+    .from("boro_espn_summary_cache")
+    .select("payload, updated_at")
+    .gte("updated_at", new Date(Date.now() - maxAgeMs).toISOString())
+    .order("updated_at", { ascending: false })
+    .limit(20);
+  const wanted = [normName(fx.home_team), normName(fx.away_team)];
+  const koDay = new Date(fx.kickoff_at).toISOString().slice(0, 10);
+  for (const row of (data ?? []) as Array<{ payload?: any }>) {
+    const comp = row.payload?.header?.competitions?.[0];
+    if (!comp) continue;
+    const names: string[] = (comp.competitors ?? []).flatMap((c: any) =>
+      [c?.team?.displayName, c?.team?.name, c?.team?.shortDisplayName].filter(Boolean).map(normName),
+    );
+    const hits = wanted.filter((w) => names.some((n) => n.includes(w) || w.includes(n)));
+    if (hits.length !== 2) continue;
+    const date = String(comp.date ?? row.payload?.header?.competitions?.[0]?.date ?? "");
+    if (date && date.slice(0, 10) !== koDay) {
+      // allow a day either side for time-zone edges
+      const diff = Math.abs(Date.parse(date) - Date.parse(fx.kickoff_at));
+      if (!Number.isFinite(diff) || diff > 36 * 60 * 60 * 1000) continue;
+    }
+    return row.payload;
+  }
+  return null;
+}
