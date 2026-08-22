@@ -164,6 +164,17 @@ export async function fetchFotmobSummary(input: {
         : [];
     if (isGoal && event?.assistInput) players.push({ athlete: { id: event?.assistPlayerId, displayName: event.assistInput } });
     const minute = Number(event?.time ?? event?.timeStr ?? 0);
+    const periodShort = String(event?.halfStrShort ?? "").toUpperCase();
+    const periodScore = `${teams[0]?.name ?? ""} ${event?.homeScore ?? 0}, ${teams[1]?.name ?? ""} ${event?.awayScore ?? 0}`;
+    // FotMob writes period markers as "First Half ends, Home 0, Away 1."
+    const periodText =
+      periodShort === "FT"
+        ? `Second Half ends, ${periodScore}.`
+        : periodShort === "HT"
+          ? `First Half ends, ${periodScore}.`
+          : `${event?.halfStrShort ?? "Period"}, ${periodScore}.`;
+    const addedTime = Number(event?.overloadTime ?? 0);
+    const periodClock = addedTime > 0 ? `${minute}+${addedTime}'` : `${minute}'`;
     const playerIds = isSub
       ? (event?.swap ?? []).map((player: any) => String(player?.id ?? player?.name ?? "")).join("-")
       : String(event?.player?.id ?? event?.player?.name ?? "");
@@ -174,16 +185,36 @@ export async function fetchFotmobSummary(input: {
     return {
       id: providerId != null && !String(providerId).startsWith("undefined") ? String(providerId) : stableId,
       type: {
-        type: isGoal ? (event?.ownGoal ? "own-goal" : "goal") : isSub ? "substitution" : isPeriod ? "halftime" : `${card || type}-card`,
-        text: isGoal ? "Goal" : isSub ? "Substitution" : isPeriod ? "Half Time" : `${event?.card ?? ""} Card`,
+        type: isGoal
+          ? (event?.ownGoal ? "own-goal" : "goal")
+          : isSub
+            ? "substitution"
+            : isPeriod
+              ? periodShort === "FT" ? "fulltime" : "halftime"
+              : `${card || type}-card`,
+        text: isGoal
+          ? "Goal"
+          : isSub
+            ? "Substitution"
+            : isPeriod
+              ? periodShort === "FT" ? "Full Time" : "Half Time"
+              : `${event?.card ?? ""} Card`,
       },
-      shortText: isGoal ? `${event?.player?.name ?? "Goal"} Goal` : isSub ? "Substitution" : `${event?.card ?? ""} Card`,
+      shortText: isGoal
+        ? `${event?.player?.name ?? "Goal"} Goal`
+        : isSub
+          ? "Substitution"
+          : isPeriod
+            ? periodText
+            : `${event?.card ?? ""} Card`,
       text: isGoal
         ? `Goal! ${teams[0].name} ${event?.newScore?.[0] ?? event?.homeScore ?? 0}, ${teams[1].name} ${event?.newScore?.[1] ?? event?.awayScore ?? 0}. ${event?.player?.name ?? ""}`
         : isSub
           ? `Substitution, ${(event?.isHome ? teams[0] : teams[1])?.name ?? ""}.`
-          : `${event?.card ?? ""} card for ${event?.player?.name ?? ""}`,
-      clock: { displayValue: minute ? `${minute}'` : String(event?.timeStr ?? "") },
+          : isPeriod
+            ? periodText
+            : `${event?.card ?? ""} card for ${event?.player?.name ?? ""}`,
+      clock: { displayValue: isPeriod ? periodClock : minute ? `${minute}'` : String(event?.timeStr ?? "") },
       period: { number: minute <= 45 ? 1 : 2 },
       team: { id: String((event?.isHome ? teams[0] : teams[1])?.id ?? "") },
       participants: players,
