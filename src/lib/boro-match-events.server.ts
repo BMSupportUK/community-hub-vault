@@ -455,7 +455,7 @@ export async function syncBoroMatchEvents(opts?: {
         event_key: ev.key,
         kind: ev.kind,
         clock: ev.clock,
-        summary: describeEvent(ev, fx),
+        summary,
         fingerprint,
         revision: 0,
       });
