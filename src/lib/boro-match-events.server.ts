@@ -361,14 +361,29 @@ export async function syncBoroMatchEvents(opts?: {
 
   const { data: logged } = await supabaseAdmin
     .from("boro_match_event_posts")
-    .select("id, event_key, fingerprint, revision, post_id")
+    .select("id, event_key, fingerprint, revision, post_id, kind, summary")
     .eq("fixture_id", fx.id);
-  const byKey = new Map(
-    ((logged ?? []) as Array<{ id: string; event_key: string; fingerprint: string; revision: number; post_id: string }>).map((r) => [
-      r.event_key,
-      r,
-    ]),
-  );
+  type LoggedRow = {
+    id: string;
+    event_key: string;
+    fingerprint: string;
+    revision: number;
+    post_id: string;
+    kind: string;
+    summary: string | null;
+  };
+  const loggedRows = (logged ?? []) as LoggedRow[];
+  const byKey = new Map(loggedRows.map((r) => [r.event_key, r]));
+  // Live sources issue different event ids for the same incident (ESPN vs
+  // FotMob), so also index each logged reply by what it describes. That lets a
+  // mid-match source switch adopt the existing reply instead of double-posting.
+  const identity = (kind: string, summary: string | null | undefined) =>
+    `${kind}|${(summary ?? "").split(" (")[0]!.trim().toLowerCase()}`;
+  const byIdentity = new Map<string, LoggedRow>();
+  for (const row of loggedRows) {
+    const id = identity(row.kind, row.summary);
+    if (row.summary && !byIdentity.has(id)) byIdentity.set(id, row);
+  }
 
   const authorId = (await getMatchDayAuthorId()) ?? topic.author_id;
 
