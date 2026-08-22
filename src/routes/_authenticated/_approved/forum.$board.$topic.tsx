@@ -333,7 +333,7 @@ function TopicPage() {
   const [editText, setEditText] = useState("");
   const [historyFor, setHistoryFor] = useState<Post | null>(null);
   const [history, setHistory] = useState<EditEntry[]>([]);
-  const [tab, setTab] = useState<"posts" | "reply">("posts");
+  const [tab, setTab] = useState<"posts" | "reply" | "teams">("posts");
   const [page, setPage] = useState(1);
   const REPLIES_PER_PAGE = 20;
   const [viewers, setViewers] = useState<Viewer[]>([]);
