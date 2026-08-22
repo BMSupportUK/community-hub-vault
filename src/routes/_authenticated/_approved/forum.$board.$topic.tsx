@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { HtmlEditor } from "@/components/ui/html-editor";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { isTeamSheetPost } from "@/lib/forum-team-sheet";
 import { ForumPostBody } from "@/components/app/ForumPostBody";
 import { ForumPostReactions } from "@/components/app/ForumPostReactions";
 import { isPreparedForumPostBody, markPreparedForumPostBody, normalizeForumPostInput, prepareForumPostBody } from "@/lib/forum-embeds";
@@ -333,7 +334,7 @@ function TopicPage() {
   const [editText, setEditText] = useState("");
   const [historyFor, setHistoryFor] = useState<Post | null>(null);
   const [history, setHistory] = useState<EditEntry[]>([]);
-  const [tab, setTab] = useState<"posts" | "reply">("posts");
+  const [tab, setTab] = useState<"posts" | "reply" | "teams">("posts");
   const [page, setPage] = useState(1);
   const REPLIES_PER_PAGE = 20;
   const [viewers, setViewers] = useState<Viewer[]>([]);
@@ -722,11 +723,13 @@ function TopicPage() {
   };
 
   const visiblePosts = useMemo(() => {
-    if (!posts) return { opPost: null as Post | null, replies: [] as Post[], pinnedReplies: [] as Post[] };
+    if (!posts) return { opPost: null as Post | null, replies: [] as Post[], pinnedReplies: [] as Post[], teamPosts: [] as Post[] };
+    const visible = posts.filter((p) => p.is_op || !blocked.has(p.author_id));
     return {
-      opPost: posts.find((p) => p.is_op) ?? null,
-      replies: posts.filter((p) => !p.is_op && !p.is_pinned && !blocked.has(p.author_id)),
-      pinnedReplies: posts.filter((p) => !p.is_op && p.is_pinned && !blocked.has(p.author_id)),
+      opPost: visible.find((p) => p.is_op) ?? null,
+      replies: visible.filter((p) => !p.is_op && !p.is_pinned && !isTeamSheetPost(p.body)),
+      pinnedReplies: visible.filter((p) => !p.is_op && p.is_pinned && !isTeamSheetPost(p.body)),
+      teamPosts: visible.filter((p) => !p.is_op && isTeamSheetPost(p.body)),
     };
   }, [posts, blocked]);
 
@@ -746,7 +749,7 @@ function TopicPage() {
       }}
     />
   );
-  const { opPost, replies, pinnedReplies } = visiblePosts;
+  const { opPost, replies, pinnedReplies, teamPosts } = visiblePosts;
 
   return (
     <div className="boro-topic-page space-y-4">
@@ -874,7 +877,7 @@ function TopicPage() {
         );
 
         return (
-          <Tabs value={tab} onValueChange={(v) => setTab(v as "posts" | "reply")} className="w-full">
+          <Tabs value={tab} onValueChange={(v) => setTab(v as "posts" | "reply" | "teams")} className="w-full">
             <div className="mb-3">
               <ForumPoll
                 topicId={topic.id}
@@ -885,7 +888,10 @@ function TopicPage() {
             </div>
             <TabsList>
               <TabsTrigger value="posts">Original Post</TabsTrigger>
-              <TabsTrigger value="reply">Replies ({topic.reply_count ?? replies.length})</TabsTrigger>
+              {teamPosts.length > 0 && <TabsTrigger value="teams">Teams ({teamPosts.length})</TabsTrigger>}
+              <TabsTrigger value="reply">
+                Replies ({teamPosts.length > 0 ? replies.length + pinnedReplies.length : (topic.reply_count ?? replies.length)})
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="posts" className="space-y-3 mt-3">
@@ -893,6 +899,15 @@ function TopicPage() {
                 <div className="text-sm text-muted-foreground text-center py-6">No original post.</div>
               )}
             </TabsContent>
+
+            <TabsContent value="teams" className="space-y-3 mt-3">
+              {teamPosts.length === 0 ? (
+                <div className="text-sm text-muted-foreground text-center py-6">The team sheet hasn't been announced yet.</div>
+              ) : (
+                teamPosts.map((p, idx) => renderPost(p, idx))
+              )}
+            </TabsContent>
+
 
             <TabsContent value="reply" className="space-y-3 mt-3">
               {pinnedReplies.map((p) => renderPost(p, 0))}

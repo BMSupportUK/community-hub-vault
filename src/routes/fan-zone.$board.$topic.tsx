@@ -5,6 +5,7 @@ import { ForumPostBody } from "@/components/app/ForumPostBody";
 import { RelativeTime } from "@/components/app/RelativeTime";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { isTeamSheetPost } from "@/lib/forum-team-sheet";
 import { FanZoneShell } from "./fan-zone";
 
 export const Route = createFileRoute("/fan-zone/$board/$topic")({
@@ -34,7 +35,8 @@ function TopicReadPage() {
 
   const posts = data.posts as PublicPost[];
   const op = posts.find((p) => p.is_op) ?? null;
-  const replies = posts.filter((p) => !p.is_op);
+  const teamPosts = posts.filter((p) => !p.is_op && isTeamSheetPost(p.body));
+  const replies = posts.filter((p) => !p.is_op && !isTeamSheetPost(p.body));
 
   return (
     <FanZoneShell>
@@ -53,6 +55,7 @@ function TopicReadPage() {
       <Tabs defaultValue="posts" className="w-full mt-5">
         <TabsList>
           <TabsTrigger value="posts">Original Post</TabsTrigger>
+          {teamPosts.length > 0 && <TabsTrigger value="teams">Teams ({teamPosts.length})</TabsTrigger>}
           <TabsTrigger value="replies">Replies ({replies.length})</TabsTrigger>
         </TabsList>
 
@@ -61,6 +64,19 @@ function TopicReadPage() {
             <p className="text-sm text-white/60">No post content.</p>
           )}
         </TabsContent>
+
+        <TabsContent value="teams" className="space-y-3 mt-3">
+          {teamPosts.length === 0 ? (
+            <p className="text-sm text-white/60">The team sheet hasn't been announced yet.</p>
+          ) : (
+            <ol className="space-y-3">
+              {teamPosts.map((p) => (
+                <li key={p.id}><PostCard post={p} /></li>
+              ))}
+            </ol>
+          )}
+        </TabsContent>
+
 
         <TabsContent value="replies" className="space-y-3 mt-3">
           {replies.length === 0 ? (
