@@ -391,6 +391,8 @@ function ChannelPage() {
     onChange: setDraft,
     textareaRef: taRef,
     canBroadcast: isAdmin,
+    // Staff roles can tag any staff role; everyone else can tag management/moderator/staff only.
+    roleMentions: isModOrAdmin ? [...STAFF_ROLE_TAGS] : [...MEMBER_ROLE_TAGS],
   });
 
   useEffect(() => {
