@@ -199,12 +199,19 @@ export function useMentionAutocomplete({
             ] as MentionUser[]
           ).filter((b) => !q || b.username.startsWith(q.toLowerCase()))
         : [];
-      setResults([...broadcast, ...users]);
+      const roles: MentionUser[] = roleMentions
+        .map((r) => ({
+          id: `__role_${r}`,
+          username: r,
+          display_name: ROLE_MENTION_LABELS[r] ?? `All ${r}`,
+        }))
+        .filter((r) => !q || r.username.startsWith(q.toLowerCase()));
+      setResults([...broadcast, ...roles, ...users]);
     })();
     return () => {
       cancelled = true;
     };
-  }, [query, canBroadcast]);
+  }, [query, canBroadcast, roleMentions.join(",")]);
 
   const apply = (user: MentionUser) => {
     const ta = textareaRef.current;
