@@ -1078,7 +1078,7 @@ function ChannelPage() {
                     const p = profiles[m.sender_id];
                     const name = p?.display_name ?? p?.username ?? "Unknown";
                     return (
-                      <li key={m.id} className="p-3 hover:bg-surface-2/40">
+                      <li key={m.id} className="p-3 hover:bg-surface-2/40 rounded-lg border border-primary/30 ring-1 ring-primary/30 shadow-[0_0_10px_var(--primary-glow)]">
                         <div className="flex items-baseline justify-between gap-2 mb-1">
                           <span
                             className={cn(
@@ -1408,7 +1408,7 @@ function ChannelPage() {
                           className={cn(
                             "block w-full rounded-2xl px-3.5 py-2 border shadow-sm",
                             isPinned
-                              ? "bg-primary/10 border-primary/30 rounded-tl-sm"
+                              ? "bg-primary/10 border-primary/40 rounded-tl-sm ring-1 ring-primary/40 shadow-[0_0_14px_var(--primary-glow)]"
                               : highlight
                                 ? "bg-amber-400/10 border-amber-400/30 rounded-tl-sm"
                                 : isSelf
