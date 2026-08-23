@@ -54,7 +54,7 @@ interface ProfileRow {
 
 interface ShiftRow { id: string; user_id: string; clock_in: string; clock_out: string | null; }
 interface BreakRow { id: string; user_id: string; kind: "break" | "lunch"; started_at: string; ended_at: string | null; }
-interface CredRow { id: string; account_number: number; account_type: string | null; app_login_name: string; password: string; expiry_at: string | null; notes: string | null; }
+interface CredRow { id: string; account_number: number; account_type: string | null; app_login_name: string; password: string; expiry_at: string | null; }
 
 function accountTypeLabel(type: string | null | undefined) {
   const t = (type ?? "single").toLowerCase();
@@ -1404,7 +1404,7 @@ function CredentialsReveal({ targetUserId, isOwner }: { targetUserId: string; is
   const [unlocked, setUnlocked] = useState(false);
   const [creds, setCreds] = useState<CredRow[]>([]);
   const [dns, setDns] = useState<DnsRow[]>([]);
-  const [tab, setTab] = useState<"creds" | "dns">("creds");
+  const [tab, setTab] = useState<"creds" | "dns" | "smart-player">("creds");
   const [loading, setLoading] = useState(false);
   const [reveal, setReveal] = useState<Record<string, boolean>>({});
   const [copied, setCopied] = useState<string | null>(null);
@@ -1456,6 +1456,7 @@ function CredentialsReveal({ targetUserId, isOwner }: { targetUserId: string; is
               {([
                 { id: "creds", label: `App Credentials (${creds.length})` },
                 { id: "dns", label: `QD DNS Codes (${dns.length})` },
+                { id: "smart-player", label: "Smart Player App Online Login Setup" },
               ] as const).map((t) => (
                 <button key={t.id} onClick={() => setTab(t.id)}
                   className={cn("px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition-colors",
@@ -1534,10 +1535,6 @@ function CredentialsReveal({ targetUserId, isOwner }: { targetUserId: string; is
                         </p>
                       </div>
 
-                      <div>
-                        <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1 flex items-center gap-1.5"><StickyNote className="size-3" /> Notes</p>
-                        <p className="text-sm whitespace-pre-wrap">{c.notes || <span className="text-muted-foreground">—</span>}</p>
-                      </div>
                     </li>
                   );
                 })}
