@@ -1293,7 +1293,7 @@ function ChannelPage() {
                     <div
                       id={`msg-${m.id}`}
                       className={cn(
-                        "group relative flex items-start gap-3 rounded-xl transition-colors scroll-mt-24",
+                        "group relative flex items-start gap-3 rounded-xl transition-colors scroll-mt-24 mb-4",
                         flashMsgId === m.id && "ring-2 ring-primary bg-primary/10",
                       )}
                     >
