@@ -1408,7 +1408,7 @@ function ChannelPage() {
                           className={cn(
                             "block w-full rounded-2xl px-3.5 py-2 border shadow-sm",
                             isPinned
-                              ? "bg-primary/10 border-primary/30 rounded-tl-sm"
+                              ? "bg-primary/10 border-primary/40 rounded-tl-sm ring-1 ring-primary/40 shadow-[0_0_14px_var(--primary-glow)]"
                               : highlight
                                 ? "bg-amber-400/10 border-amber-400/30 rounded-tl-sm"
                                 : isSelf
