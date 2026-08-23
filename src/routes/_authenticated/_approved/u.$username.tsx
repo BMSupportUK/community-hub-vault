@@ -1534,13 +1534,12 @@ function CredentialsReveal({ targetUserId, isOwner }: { targetUserId: string; is
                           {c.expiry_at ? new Date(c.expiry_at).toLocaleString("en-GB") : "No expiry set"}
                         </p>
                       </div>
-
                     </li>
                   );
                 })}
               </ul>
             )
-          ) : (
+          ) : tab === "dns" ? (
             dns.length === 0 ? (
               <p className="text-sm text-muted-foreground">No QD DNS codes have been added yet.</p>
             ) : (
@@ -1572,6 +1571,22 @@ function CredentialsReveal({ targetUserId, isOwner }: { targetUserId: string; is
                 ))}
               </ul>
             )
+          ) : (
+            <div className="rounded-xl border border-border bg-surface-2 p-5 space-y-4">
+              <h3 className="font-display font-semibold text-lg">Smart Player App Online Login Setup</h3>
+              <p className="text-sm text-muted-foreground">
+                You can now setup your app login via your browser using this link.
+              </p>
+              <a
+                href="https://addmyplaylist.com/HYHC"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 transition-opacity"
+              >
+                <Globe className="size-4" />
+                Open setup link
+              </a>
+            </div>
           )}
         </>
       )}
