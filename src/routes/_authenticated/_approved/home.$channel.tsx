@@ -332,6 +332,8 @@ function ChannelPage() {
   const [canSend, setCanSend] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const taRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   // Discord-style "jump to last read" support. Captured once per channel load
   // so the divider stays visible until the user navigates away.
   const [firstUnreadId, setFirstUnreadId] = useState<string | null>(null);
