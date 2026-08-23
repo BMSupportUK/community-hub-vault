@@ -15,6 +15,8 @@ import {
   ShieldOff,
   MoreHorizontal,
   SmilePlus,
+  Plus,
+
   Pencil,
   Check,
   Timer,
