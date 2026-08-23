@@ -6,18 +6,40 @@ import { censorText, useProfanityWords } from "@/lib/profanity";
 const MENTION_RE = /(@[a-zA-Z0-9_.\-]+)/g;
 const TOKEN_RE = /(@[a-zA-Z0-9_.\-]+)|\[([^\]]+)\]\(([^)]+)\)|(https?:\/\/[^\s<>"{}|\\^`\[\]]+|www\.[^\s<>"{}|\\^`\[\]]+)/g;
 
+/** Staff role tags mentionable in chat channels. */
+export const STAFF_ROLE_TAGS = ["admin", "management", "moderator", "staff"] as const;
+/** Roles any approved member is allowed to tag (admin excluded — staff only). */
+export const MEMBER_ROLE_TAGS = ["management", "moderator", "staff"] as const;
+
+export const ROLE_MENTION_LABELS: Record<string, string> = {
+  admin: "Notify all admins",
+  management: "Notify all management",
+  moderator: "Notify all moderators",
+  staff: "Notify all staff",
+};
+
+export function isRoleMentionTag(tag: string): boolean {
+  return (STAFF_ROLE_TAGS as readonly string[]).includes(tag.toLowerCase());
+}
+
 /**
  * Returns true if the message content mentions the current user
  * (by username, or via the @all / @here broadcasts).
  */
-export function mentionsCurrentUser(content: string, currentUsername?: string | null): boolean {
+export function mentionsCurrentUser(
+  content: string,
+  currentUsername?: string | null,
+  myRoles?: string[] | null,
+): boolean {
   const me = currentUsername?.toLowerCase() ?? null;
+  const roles = (myRoles ?? []).map((r) => r.toLowerCase());
   const matches = content.match(MENTION_RE);
   if (!matches) return false;
   for (const raw of matches) {
     const tag = raw.slice(1).toLowerCase();
     if (tag === "all" || tag === "here") return true;
     if (me && tag === me) return true;
+    if (isRoleMentionTag(tag) && roles.includes(tag)) return true;
   }
   return false;
 }
@@ -59,6 +81,7 @@ export function MentionText({
     if (mention) {
       const tag = mention.slice(1).toLowerCase();
       const isBroadcast = tag === "all" || tag === "here";
+      const isRole = isRoleMentionTag(tag);
       const isMe = !!me && tag === me;
       nodes.push(
         <span
@@ -69,7 +92,9 @@ export function MentionText({
               ? "bg-amber-300 text-amber-950 ring-amber-500"
               : isBroadcast
                 ? "bg-rose-600 text-white ring-rose-700"
-                : "bg-indigo-600 text-white ring-indigo-700 hover:bg-indigo-500",
+                : isRole
+                  ? "bg-emerald-600 text-white ring-emerald-700 hover:bg-emerald-500"
+                  : "bg-indigo-600 text-white ring-indigo-700 hover:bg-indigo-500",
           )}
         >
           {mention}
@@ -129,11 +154,14 @@ export function useMentionAutocomplete({
   onChange,
   textareaRef,
   canBroadcast,
+  roleMentions = [],
 }: {
   value: string;
   onChange: (next: string) => void;
   textareaRef: React.RefObject<HTMLTextAreaElement | HTMLDivElement | null>;
   canBroadcast: boolean;
+  /** Staff role tags the current user is allowed to insert, e.g. ["staff","management"]. */
+  roleMentions?: string[];
 }) {
   const [query, setQuery] = useState<string | null>(null);
   const [results, setResults] = useState<MentionUser[]>([]);
@@ -196,12 +224,19 @@ export function useMentionAutocomplete({
             ] as MentionUser[]
           ).filter((b) => !q || b.username.startsWith(q.toLowerCase()))
         : [];
-      setResults([...broadcast, ...users]);
+      const roles: MentionUser[] = roleMentions
+        .map((r) => ({
+          id: `__role_${r}`,
+          username: r,
+          display_name: ROLE_MENTION_LABELS[r] ?? `All ${r}`,
+        }))
+        .filter((r) => !q || r.username.startsWith(q.toLowerCase()));
+      setResults([...broadcast, ...roles, ...users]);
     })();
     return () => {
       cancelled = true;
     };
-  }, [query, canBroadcast]);
+  }, [query, canBroadcast, roleMentions.join(",")]);
 
   const apply = (user: MentionUser) => {
     const ta = textareaRef.current;
@@ -294,9 +329,11 @@ export function useMentionAutocomplete({
                 <span
                   className={cn(
                     "inline-block rounded px-1.5 py-0.5 text-xs font-semibold",
-                    u.id.startsWith("__")
-                      ? "bg-rose-500/20 text-rose-300"
-                      : "bg-indigo-500/20 text-indigo-300",
+                    u.id.startsWith("__role_")
+                      ? "bg-emerald-500/20 text-emerald-300"
+                      : u.id.startsWith("__")
+                        ? "bg-rose-500/20 text-rose-300"
+                        : "bg-indigo-500/20 text-indigo-300",
                   )}
                 >
                   @{u.username}
