@@ -41,6 +41,8 @@ import {
   MentionText,
   mentionsCurrentUser,
   useMentionAutocomplete,
+  STAFF_ROLE_TAGS,
+  MEMBER_ROLE_TAGS,
 } from "@/components/app/mentions";
 import { GifPicker, extractStandaloneGif } from "@/components/app/GifPicker";
 import { EmojiPicker } from "@/components/app/EmojiPicker";
