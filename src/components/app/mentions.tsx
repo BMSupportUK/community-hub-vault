@@ -323,9 +323,11 @@ export function useMentionAutocomplete({
                 <span
                   className={cn(
                     "inline-block rounded px-1.5 py-0.5 text-xs font-semibold",
-                    u.id.startsWith("__")
-                      ? "bg-rose-500/20 text-rose-300"
-                      : "bg-indigo-500/20 text-indigo-300",
+                    u.id.startsWith("__role_")
+                      ? "bg-emerald-500/20 text-emerald-300"
+                      : u.id.startsWith("__")
+                        ? "bg-rose-500/20 text-rose-300"
+                        : "bg-indigo-500/20 text-indigo-300",
                   )}
                 >
                   @{u.username}
