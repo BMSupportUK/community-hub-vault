@@ -23,7 +23,6 @@ export function MentionsBadge() {
   const { user, isPending } = useAuth();
   const navigate = useNavigate();
   const channelInstanceId = useRef(Math.random().toString(36).slice(2)).current;
-  const [count, setCount] = useState(0);
   const [pulse, setPulse] = useState(false);
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<MentionRow[]>([]);
@@ -41,51 +40,38 @@ export function MentionsBadge() {
 
   useEffect(() => {
     if (!user || isPending) return;
-    let active = true;
-    const load = async () => {
-      const { count: c } = await supabase
-        .from("user_notifications")
-        .select("id", { count: "exact", head: true })
-        .eq("user_id", user.id)
-        .eq("kind", "mention")
-        .is("read_at", null);
-      if (active) setCount(c ?? 0);
-    };
-    load();
-    loadList(user.id);
+    void loadList(user.id);
     const ch = supabase
       .channel(`mentions-badge-${user.id}-${channelInstanceId}`)
       .on(
         "postgres_changes",
-        { event: "INSERT", schema: "public", table: "user_notifications", filter: `user_id=eq.${user.id}` },
+        { event: "*", schema: "public", table: "user_notifications" },
         (payload) => {
-          const r = payload.new as { kind: string; title: string; body?: string | null; link_path?: string | null };
-          if (r.kind !== "mention") return;
-          setCount((n) => n + 1);
-          setPulse(true);
-          setTimeout(() => setPulse(false), 1500);
-          loadList(user.id);
+          const r = (payload.new ?? {}) as { user_id?: string; kind?: string };
+          if (payload.eventType === "INSERT") {
+            if (r.user_id !== user.id || r.kind !== "mention") return;
+            setPulse(true);
+            setTimeout(() => setPulse(false), 1500);
+          }
+          void loadList(user.id);
           // Toast is fired by NotificationBell to avoid duplicate toasts.
         },
       )
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "user_notifications", filter: `user_id=eq.${user.id}` },
-        () => { load(); loadList(user.id); },
-      )
-      .on(
-        "postgres_changes",
-        { event: "DELETE", schema: "public", table: "user_notifications", filter: `user_id=eq.${user.id}` },
-        () => { load(); loadList(user.id); },
-      )
       .subscribe();
+    const onFocus = () => void loadList(user.id);
+    window.addEventListener("focus", onFocus);
+    const poll = window.setInterval(onFocus, 60_000);
     return () => {
-      active = false;
+      window.removeEventListener("focus", onFocus);
+      window.clearInterval(poll);
       supabase.removeChannel(ch);
     };
   }, [user, isPending, channelInstanceId, navigate]);
 
   if (!user || isPending) return null;
+
+  // Count is derived from the list so the badge can never disagree with it.
+  const count = items.filter((m) => !m.read_at).length;
 
   const markAllRead = async () => {
     await supabase
@@ -93,17 +79,16 @@ export function MentionsBadge() {
       .delete()
       .eq("user_id", user.id)
       .eq("kind", "mention");
-    loadList(user.id);
-    setCount(0);
+    setItems([]);
   };
 
   const openItem = async (m: MentionRow) => {
     await supabase.from("user_notifications").delete().eq("id", m.id);
     setItems((prev) => prev.filter((x) => x.id !== m.id));
-    if (!m.read_at) setCount((n) => Math.max(0, n - 1));
     setOpen(false);
     if (m.link_path) navigate({ to: m.link_path } as never);
   };
+
 
   return (
     <Popover open={open} onOpenChange={(v) => { setOpen(v); if (v) loadList(user.id); }}>
