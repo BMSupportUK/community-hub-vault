@@ -6,6 +6,22 @@ import { censorText, useProfanityWords } from "@/lib/profanity";
 const MENTION_RE = /(@[a-zA-Z0-9_.\-]+)/g;
 const TOKEN_RE = /(@[a-zA-Z0-9_.\-]+)|\[([^\]]+)\]\(([^)]+)\)|(https?:\/\/[^\s<>"{}|\\^`\[\]]+|www\.[^\s<>"{}|\\^`\[\]]+)/g;
 
+/** Staff role tags mentionable in chat channels. */
+export const STAFF_ROLE_TAGS = ["admin", "management", "moderator", "staff"] as const;
+/** Roles any approved member is allowed to tag (admin excluded — staff only). */
+export const MEMBER_ROLE_TAGS = ["management", "moderator", "staff"] as const;
+
+export const ROLE_MENTION_LABELS: Record<string, string> = {
+  admin: "Notify all admins",
+  management: "Notify all management",
+  moderator: "Notify all moderators",
+  staff: "Notify all staff",
+};
+
+export function isRoleMentionTag(tag: string): boolean {
+  return (STAFF_ROLE_TAGS as readonly string[]).includes(tag.toLowerCase());
+}
+
 /**
  * Returns true if the message content mentions the current user
  * (by username, or via the @all / @here broadcasts).
