@@ -15,6 +15,8 @@ import {
   ShieldOff,
   MoreHorizontal,
   SmilePlus,
+  Plus,
+
   Pencil,
   Check,
   Timer,
@@ -332,6 +334,8 @@ function ChannelPage() {
   const [canSend, setCanSend] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const taRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
   // Discord-style "jump to last read" support. Captured once per channel load
   // so the divider stays visible until the user navigates away.
   const [firstUnreadId, setFirstUnreadId] = useState<string | null>(null);
@@ -1851,7 +1855,31 @@ function ChannelPage() {
               <span>{muteCountdown}</span>
             </div>
           )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const files = Array.from(e.target.files ?? []).filter((f) =>
+                f.type.startsWith("image/"),
+              );
+              if (files.length) void sendPastedImages(files);
+              e.target.value = "";
+            }}
+          />
+          <button
+            type="button"
+            title="Add an attachment"
+            aria-label="Add an attachment"
+            disabled={!canSend || slowRemaining > 0 || isMuted || uploadingPaste}
+            onClick={() => fileInputRef.current?.click()}
+            className="size-8 rounded-lg bg-surface-2 border border-border text-muted-foreground hover:text-foreground hover:bg-surface-2/70 grid place-items-center disabled:opacity-50"
+          >
+            <Plus className="size-4" />
+          </button>
           <EmojiPicker disabled={!canSend || slowRemaining > 0 || isMuted} onSelect={insertEmoji} />
+
           <GifPicker
             disabled={!canSend || slowRemaining > 0 || isMuted}
             onSelect={(url) => setPendingGif(url)}
