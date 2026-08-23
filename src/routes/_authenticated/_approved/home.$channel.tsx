@@ -114,7 +114,7 @@ function ChannelPage() {
   const onlineUsers = useOnlineUsers();
   const markContentReady = useHomeChannelContentReady();
   const { channel: slug } = Route.useParams();
-  const { user, hasAny } = useAuth();
+  const { user, hasAny, roles } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
   const canPin = hasAny(["admin", "management", "moderator", "staff"]);
   const canManageSlow = hasAny(["admin", "management", "moderator", "staff"]);
@@ -1249,7 +1249,7 @@ function ChannelPage() {
                 const isSelf = m.sender_id === user?.id;
                 const isStaff = staffIds.has(m.sender_id);
                 const isIgnored = ignoredIds.has(m.sender_id);
-                const highlight = mentionsCurrentUser(m.content, myUsername);
+                const highlight = mentionsCurrentUser(m.content, myUsername, roles);
                 const isPinned = !!m.pinned_at;
                 const msgReactions = reactions.filter((r) => r.message_id === m.id);
                 const grouped = msgReactions.reduce<Record<string, Reaction[]>>((acc, r) => {
