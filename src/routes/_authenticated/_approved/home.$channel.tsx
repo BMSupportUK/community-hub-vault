@@ -1338,7 +1338,7 @@ function ChannelPage() {
                         );
                       })()}
                       <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                        <div className="flex flex-wrap items-center gap-2 mb-2">
                           <Nameplate
                             id={p?.equipped_nameplate_id}
                             className="inline-flex items-center rounded-md px-2.5 py-0.5 min-w-0 shadow-sm"
