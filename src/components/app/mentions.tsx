@@ -75,6 +75,7 @@ export function MentionText({
     if (mention) {
       const tag = mention.slice(1).toLowerCase();
       const isBroadcast = tag === "all" || tag === "here";
+      const isRole = isRoleMentionTag(tag);
       const isMe = !!me && tag === me;
       nodes.push(
         <span
@@ -85,7 +86,9 @@ export function MentionText({
               ? "bg-amber-300 text-amber-950 ring-amber-500"
               : isBroadcast
                 ? "bg-rose-600 text-white ring-rose-700"
-                : "bg-indigo-600 text-white ring-indigo-700 hover:bg-indigo-500",
+                : isRole
+                  ? "bg-emerald-600 text-white ring-emerald-700 hover:bg-emerald-500"
+                  : "bg-indigo-600 text-white ring-indigo-700 hover:bg-indigo-500",
           )}
         >
           {mention}
