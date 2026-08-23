@@ -26,14 +26,20 @@ export function isRoleMentionTag(tag: string): boolean {
  * Returns true if the message content mentions the current user
  * (by username, or via the @all / @here broadcasts).
  */
-export function mentionsCurrentUser(content: string, currentUsername?: string | null): boolean {
+export function mentionsCurrentUser(
+  content: string,
+  currentUsername?: string | null,
+  myRoles?: string[] | null,
+): boolean {
   const me = currentUsername?.toLowerCase() ?? null;
+  const roles = (myRoles ?? []).map((r) => r.toLowerCase());
   const matches = content.match(MENTION_RE);
   if (!matches) return false;
   for (const raw of matches) {
     const tag = raw.slice(1).toLowerCase();
     if (tag === "all" || tag === "here") return true;
     if (me && tag === me) return true;
+    if (isRoleMentionTag(tag) && roles.includes(tag)) return true;
   }
   return false;
 }
