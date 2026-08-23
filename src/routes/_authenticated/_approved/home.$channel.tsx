@@ -1410,7 +1410,7 @@ function ChannelPage() {
                             isPinned
                               ? "bg-primary/10 border-primary/40 rounded-tl-sm ring-1 ring-primary/40 shadow-[0_0_14px_var(--primary-glow)]"
                               : highlight
-                                ? "bg-amber-400/10 border-amber-400/30 rounded-tl-sm"
+                                ? "bg-amber-400/10 border-amber-400/40 rounded-tl-sm ring-1 ring-warning/40 shadow-[0_0_14px_var(--warning)]"
                                 : isSelf
                                   ? "bg-primary/15 border-primary/20 rounded-tl-sm"
                                   : "bg-surface-2 border-border rounded-tl-sm",
