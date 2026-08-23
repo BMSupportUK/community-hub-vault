@@ -129,11 +129,14 @@ export function useMentionAutocomplete({
   onChange,
   textareaRef,
   canBroadcast,
+  roleMentions = [],
 }: {
   value: string;
   onChange: (next: string) => void;
   textareaRef: React.RefObject<HTMLTextAreaElement | HTMLDivElement | null>;
   canBroadcast: boolean;
+  /** Staff role tags the current user is allowed to insert, e.g. ["staff","management"]. */
+  roleMentions?: string[];
 }) {
   const [query, setQuery] = useState<string | null>(null);
   const [results, setResults] = useState<MentionUser[]>([]);
