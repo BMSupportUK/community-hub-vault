@@ -110,10 +110,9 @@ export function FanZoneMentionsBell() {
             <div className="px-3 py-6 text-sm text-muted-foreground text-center">No mentions yet</div>
           ) : (
             items.map((m) => (
-              <button
+              <div
                 key={m.id}
-                onClick={() => openItem(m)}
-                className={`w-full text-left px-3 py-2 border-b border-border last:border-b-0 hover:bg-muted/50 ${!m.read_at ? "bg-[#E11B22]/5" : ""}`}
+                className={`px-3 py-2 border-b border-border last:border-b-0 ${!m.read_at ? "bg-[#E11B22]/5" : ""}`}
               >
                 <div className="flex items-start gap-2">
                   {!m.read_at && <span className="mt-1.5 size-2 rounded-full bg-[#E11B22] shrink-0" />}
@@ -125,7 +124,16 @@ export function FanZoneMentionsBell() {
                     </div>
                   </div>
                 </div>
-              </button>
+                {m.link_path && (
+                  <button
+                    type="button"
+                    onClick={() => void openItem(m)}
+                    className="mt-2 inline-flex items-center gap-1 rounded-md bg-[#E11B22]/15 px-2 py-1 text-xs font-medium text-[#E11B22] hover:bg-[#E11B22]/25"
+                  >
+                    <CornerUpRight className="size-3" /> Jump to mention
+                  </button>
+                )}
+              </div>
             ))
           )}
         </div>
