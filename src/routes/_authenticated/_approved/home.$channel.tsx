@@ -62,6 +62,8 @@ import { useRoleFlashMap, roleFlashClass, resolveAvatarUrl } from "@/lib/role-fl
 import { useHomeChannelContentReady } from "@/components/app/HomeChannelReadyContext";
 
 export const Route = createFileRoute("/_authenticated/_approved/home/$channel")({
+  validateSearch: (search: Record<string, unknown>): { msg?: string } =>
+    typeof search.msg === "string" ? { msg: search.msg } : {},
   component: ChannelPage,
 });
 
@@ -320,6 +322,17 @@ function ChannelPage() {
     setFlashMsgId(id);
     window.setTimeout(() => setFlashMsgId((cur) => (cur === id ? null : cur)), 2000);
   };
+
+  // Deep link support: /home/<channel>?msg=<id> scrolls to that message once loaded.
+  const { msg: targetMsgId } = Route.useSearch();
+  const jumpedToTargetRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!targetMsgId || jumpedToTargetRef.current === targetMsgId) return;
+    if (!messages.some((m) => m.id === targetMsgId)) return;
+    jumpedToTargetRef.current = targetMsgId;
+    requestAnimationFrame(() => jumpToMessage(targetMsgId));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [targetMsgId, messages]);
 
   const [pendingGif, setPendingGif] = useState<string | null>(null);
   const [sending, setSending] = useState(false);

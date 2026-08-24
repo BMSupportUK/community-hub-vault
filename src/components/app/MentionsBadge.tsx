@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { AtSign, Check } from "lucide-react";
+import { AtSign, Check, CornerUpRight } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -11,9 +11,17 @@ type MentionRow = {
   title: string;
   body: string | null;
   link_path: string | null;
+  source_id: string | null;
   read_at: string | null;
   created_at: string;
 };
+
+/** Path for a mention, including the ?msg= anchor when we know the message id. */
+function mentionHref(m: MentionRow): string | null {
+  if (!m.link_path) return null;
+  if (!m.source_id || m.link_path.includes("?")) return m.link_path;
+  return `${m.link_path}?msg=${m.source_id}`;
+}
 
 /**
  * Live counter of unread @mentions for the current user.
@@ -30,7 +38,7 @@ export function MentionsBadge() {
   const loadList = async (uid: string) => {
     const { data } = await supabase
       .from("user_notifications")
-      .select("id, title, body, link_path, read_at, created_at")
+      .select("id, title, body, link_path, source_id, read_at, created_at")
       .eq("user_id", uid)
       .eq("kind", "mention")
       .order("created_at", { ascending: false })
@@ -86,7 +94,8 @@ export function MentionsBadge() {
     await supabase.from("user_notifications").delete().eq("id", m.id);
     setItems((prev) => prev.filter((x) => x.id !== m.id));
     setOpen(false);
-    if (m.link_path) navigate({ to: m.link_path } as never);
+    const href = mentionHref(m);
+    if (href) navigate({ to: href } as never);
   };
 
 
@@ -123,10 +132,9 @@ export function MentionsBadge() {
             <div className="px-3 py-6 text-sm text-muted-foreground text-center">No mentions yet</div>
           ) : (
             items.map((m) => (
-              <button
+              <div
                 key={m.id}
-                onClick={() => openItem(m)}
-                className={`w-full text-left px-3 py-2 border-b last:border-b-0 hover:bg-muted/50 ${!m.read_at ? "bg-indigo-500/5" : ""}`}
+                className={`px-3 py-2 border-b last:border-b-0 ${!m.read_at ? "bg-indigo-500/5" : ""}`}
               >
                 <div className="flex items-start gap-2">
                   {!m.read_at && <span className="mt-1.5 size-2 rounded-full bg-indigo-500 shrink-0" />}
@@ -136,7 +144,16 @@ export function MentionsBadge() {
                     <div className="text-[10px] text-muted-foreground mt-0.5">{formatDistanceToNow(new Date(m.created_at), { addSuffix: true })}</div>
                   </div>
                 </div>
-              </button>
+                {mentionHref(m) && (
+                  <button
+                    type="button"
+                    onClick={() => openItem(m)}
+                    className="mt-2 inline-flex items-center gap-1 rounded-md bg-indigo-500/15 px-2 py-1 text-xs font-medium text-indigo-300 hover:bg-indigo-500/30"
+                  >
+                    <CornerUpRight className="size-3" /> Jump to mention
+                  </button>
+                )}
+              </div>
             ))
           )}
         </div>
