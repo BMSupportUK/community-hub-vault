@@ -11,9 +11,17 @@ type MentionRow = {
   title: string;
   body: string | null;
   link_path: string | null;
+  source_id: string | null;
   read_at: string | null;
   created_at: string;
 };
+
+/** Path for a mention, including the ?msg= anchor when we know the message id. */
+function mentionHref(m: MentionRow): string | null {
+  if (!m.link_path) return null;
+  if (!m.source_id || m.link_path.includes("?")) return m.link_path;
+  return `${m.link_path}?msg=${m.source_id}`;
+}
 
 /**
  * Live counter of unread @mentions for the current user.
@@ -30,7 +38,7 @@ export function MentionsBadge() {
   const loadList = async (uid: string) => {
     const { data } = await supabase
       .from("user_notifications")
-      .select("id, title, body, link_path, read_at, created_at")
+      .select("id, title, body, link_path, source_id, read_at, created_at")
       .eq("user_id", uid)
       .eq("kind", "mention")
       .order("created_at", { ascending: false })
