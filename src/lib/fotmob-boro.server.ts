@@ -288,6 +288,13 @@ export async function fetchFotmobSummary(input: {
     },
     rosters: lineups,
     gameInfo: {},
+    // FotMob serves a predicted XI (lineupType "lastStarting11", source
+    // "lastStartingLineups") long before kick-off. Only a real team sheet
+    // counts as confirmed.
+    _lineupsConfirmed:
+      lineups.length === 2 &&
+      String(detail?.content?.lineup?.lineupType ?? "") !== "lastStarting11" &&
+      String(detail?.content?.lineup?.source ?? "") !== "lastStartingLineups",
     _provider: "fotmob",
   };
 }

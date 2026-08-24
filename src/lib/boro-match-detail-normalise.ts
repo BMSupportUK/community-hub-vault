@@ -84,6 +84,9 @@ export function normaliseBoroMatchDetail(json: any): MatchDetailDTO {
     shootout,
     teamStats,
     lineups: populatedLineups,
+    // Only trust the XI when the provider says it is the real team sheet.
+    // FotMob pre-fills a predicted side ("lastStarting11") days in advance.
+    lineupsConfirmed: json?._lineupsConfirmed === true && populatedLineups.length > 0,
     source: norm.source,
     fetchedAt: new Date().toISOString(),
   };

@@ -389,7 +389,10 @@ export function BoroMatchDetailTabs({
   const teams = { home: homeTeam, away: awayTeam };
   const startersCount = (team: MatchDetailDTO["lineups"][number] | null) =>
     (team?.players ?? []).filter((p) => p.starter).length;
-  const lineupsConfirmed = startersCount(homeTeam) >= 11 && startersCount(awayTeam) >= 11;
+  // The feed publishes a *predicted* XI days early, so counting 11 starters is
+  // not proof. Trust the provider's confirmation flag instead.
+  const lineupsConfirmed =
+    detail?.lineupsConfirmed === true && startersCount(homeTeam) >= 11 && startersCount(awayTeam) >= 11;
   const statColumns = resolveStatColumns(detail);
 
 

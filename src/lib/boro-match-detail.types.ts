@@ -41,6 +41,8 @@ export type MatchDetailDTO = {
   shootout: MatchEventItem[];
   teamStats: TeamStatLine[];
   lineups: TeamLineup[];
+  /** True only when the provider publishes the actual confirmed team sheet. */
+  lineupsConfirmed?: boolean;
   source: string;
   fetchedAt: string;
 };
