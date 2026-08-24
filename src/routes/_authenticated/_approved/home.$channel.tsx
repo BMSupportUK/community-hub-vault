@@ -324,6 +324,17 @@ function ChannelPage() {
     window.setTimeout(() => setFlashMsgId((cur) => (cur === id ? null : cur)), 2000);
   };
 
+  // Deep link support: /home/<channel>?msg=<id> scrolls to that message once loaded.
+  const { msg: targetMsgId } = Route.useSearch();
+  const jumpedToTargetRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!targetMsgId || jumpedToTargetRef.current === targetMsgId) return;
+    if (!messages.some((m) => m.id === targetMsgId)) return;
+    jumpedToTargetRef.current = targetMsgId;
+    requestAnimationFrame(() => jumpToMessage(targetMsgId));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [targetMsgId, messages]);
+
   const [pendingGif, setPendingGif] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [uploadingPaste, setUploadingPaste] = useState(false);
