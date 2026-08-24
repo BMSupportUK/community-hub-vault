@@ -142,6 +142,67 @@ function mentionsPlayer(text: string, playerName: string): boolean {
   return t.includes(` ${last} `);
 }
 
+/** Pull the player name from the wording used in official signing posts. */
+export function incomingPlayerName(rawText: string): string | null {
+  const text = normalizeFancyText(rawText).replace(/[\r\n]+/g, " ").replace(/\s+/g, " ").trim();
+  const patterns = [
+    /\b(?:announce|confirm) the signing of ([A-Z][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+(?:\s+[A-Z][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+){1,3})(?=\s+(?:on|from|for|after)\b|[.!?]|$)/,
+    /\b(?:have|has|we(?:'ve| have)) signed ([A-Z][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+(?:\s+[A-Z][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+){1,3})(?=\s+(?:on|from|for|after)\b|[.!?]|$)/,
+    /\b([A-Z][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+(?:\s+[A-Z][A-Za-zÀ-ÖØ-öø-ÿ'’.-]+){1,3}) (?:has signed for|joins) (?:Boro|Middlesbrough)\b/,
+  ];
+  for (const pattern of patterns) {
+    const name = text.match(pattern)?.[1]?.trim();
+    if (name) return name;
+  }
+  return null;
+}
+
+type FantasyPosition = "gk" | "def" | "mid" | "fwd";
+
+/**
+ * The club squad feed can lag behind its announcement. Use a public football
+ * biography to assign a sensible provisional fantasy position until the club
+ * feed supplies the authoritative position and player id.
+ */
+async function provisionalPosition(playerName: string): Promise<FantasyPosition> {
+  try {
+    const params = new URLSearchParams({
+      action: "query",
+      generator: "search",
+      gsrsearch: `${playerName} footballer`,
+      gsrlimit: "3",
+      prop: "extracts",
+      exintro: "1",
+      explaintext: "1",
+      format: "json",
+      origin: "*",
+    });
+    const res = await fetch(`https://en.wikipedia.org/w/api.php?${params.toString()}`, {
+      headers: { accept: "application/json", "user-agent": "BMSupportFantasy/1.0" },
+    });
+    if (res.ok) {
+      const json = (await res.json()) as { query?: { pages?: Record<string, { title?: string; extract?: string }> } };
+      const pages = Object.values(json.query?.pages ?? {});
+      const page = pages.find((p) => normName(p.title ?? "").includes(normName(playerName))) ?? pages[0];
+      const bio = `${page?.title ?? ""} ${page?.extract ?? ""}`.toLowerCase();
+      if (/\bgoalkeeper\b|\bgoalie\b/.test(bio)) return "gk";
+      if (/\bdefender\b|\bcentre-back\b|\bcenter-back\b|\bright-back\b|\bleft-back\b|\bfull-back\b/.test(bio)) return "def";
+      if (/\bmidfielder\b|\bwinger\b/.test(bio)) return "mid";
+      if (/\bforward\b|\bstriker\b/.test(bio)) return "fwd";
+    }
+  } catch {
+    // The official club feed will correct the provisional position shortly.
+  }
+  return "mid";
+}
+
+function provisionalValue(position: FantasyPosition): number {
+  if (position === "gk") return 5;
+  if (position === "def") return 4.5;
+  if (position === "fwd") return 7;
+  return 5.5;
+}
+
 export type XTransferSyncResult = {
   ok: boolean;
   posts?: number;
@@ -179,7 +240,39 @@ export async function syncFantasyTransfersFromX(admin: Admin): Promise<XTransfer
   const logged: string[] = [];
 
   for (const post of posts) {
-    const matches = players.filter((p) => mentionsPlayer(post.text, p.name));
+    let matches = players.filter((p) => mentionsPlayer(post.text, p.name));
+    if (matches.length === 0 && post.direction === "in") {
+      const announcedName = incomingPlayerName(post.text);
+      if (announcedName) {
+        const position = await provisionalPosition(announcedName);
+        const { data: inserted, error: insertError } = await admin
+          .from("fantasy_players")
+          .insert({
+            name: announcedName,
+            position,
+            value_m: provisionalValue(position),
+            status: "active",
+            squad_level: "first",
+            loan_from: post.kind === "loan" ? post.otherClub : null,
+            last_seen_at: new Date().toISOString(),
+          })
+          .select("id, name, status, status_locked, loan_club, squad_level")
+          .single();
+        if (!insertError && inserted) {
+          const player = inserted as {
+            id: string;
+            name: string;
+            status: string;
+            status_locked?: boolean | null;
+            loan_club?: string | null;
+            squad_level?: string | null;
+          };
+          players.push(player);
+          matches = [player];
+          applied.push(`${player.name}: added as ${position}`);
+        }
+      }
+    }
     // A post naming half the squad is a round-up, not a transfer announcement.
     if (matches.length === 0 || matches.length > 2) continue;
     const date = post.createdAtMs ? new Date(post.createdAtMs).toISOString().slice(0, 10) : null;
