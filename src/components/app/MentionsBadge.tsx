@@ -132,10 +132,9 @@ export function MentionsBadge() {
             <div className="px-3 py-6 text-sm text-muted-foreground text-center">No mentions yet</div>
           ) : (
             items.map((m) => (
-              <button
+              <div
                 key={m.id}
-                onClick={() => openItem(m)}
-                className={`w-full text-left px-3 py-2 border-b last:border-b-0 hover:bg-muted/50 ${!m.read_at ? "bg-indigo-500/5" : ""}`}
+                className={`px-3 py-2 border-b last:border-b-0 ${!m.read_at ? "bg-indigo-500/5" : ""}`}
               >
                 <div className="flex items-start gap-2">
                   {!m.read_at && <span className="mt-1.5 size-2 rounded-full bg-indigo-500 shrink-0" />}
@@ -145,7 +144,16 @@ export function MentionsBadge() {
                     <div className="text-[10px] text-muted-foreground mt-0.5">{formatDistanceToNow(new Date(m.created_at), { addSuffix: true })}</div>
                   </div>
                 </div>
-              </button>
+                {mentionHref(m) && (
+                  <button
+                    type="button"
+                    onClick={() => openItem(m)}
+                    className="mt-2 inline-flex items-center gap-1 rounded-md bg-indigo-500/15 px-2 py-1 text-xs font-medium text-indigo-300 hover:bg-indigo-500/30"
+                  >
+                    <CornerUpRight className="size-3" /> Jump to mention
+                  </button>
+                )}
+              </div>
             ))
           )}
         </div>
