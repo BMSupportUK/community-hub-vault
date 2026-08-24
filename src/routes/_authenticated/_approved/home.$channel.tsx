@@ -62,9 +62,8 @@ import { useRoleFlashMap, roleFlashClass, resolveAvatarUrl } from "@/lib/role-fl
 import { useHomeChannelContentReady } from "@/components/app/HomeChannelReadyContext";
 
 export const Route = createFileRoute("/_authenticated/_approved/home/$channel")({
-  validateSearch: (search: Record<string, unknown>) => ({
-    msg: typeof search.msg === "string" ? search.msg : undefined,
-  }),
+  validateSearch: (search: Record<string, unknown>): { msg?: string } =>
+    typeof search.msg === "string" ? { msg: search.msg } : {},
   component: ChannelPage,
 });
 
