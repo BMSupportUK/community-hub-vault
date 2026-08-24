@@ -94,7 +94,8 @@ export function MentionsBadge() {
     await supabase.from("user_notifications").delete().eq("id", m.id);
     setItems((prev) => prev.filter((x) => x.id !== m.id));
     setOpen(false);
-    if (m.link_path) navigate({ to: m.link_path } as never);
+    const href = mentionHref(m);
+    if (href) navigate({ to: href } as never);
   };
 
 
