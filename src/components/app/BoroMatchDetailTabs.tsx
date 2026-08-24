@@ -583,36 +583,48 @@ export function BoroMatchDetailTabs({
       </TabsContent>
 
       <TabsContent value="lineups" className="mt-4">
-        <Tabs defaultValue="home-xi" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 gap-1 sm:grid-cols-4 rounded-lg border border-white/15 bg-black/60 p-1">
-            <TabsTrigger value="home-xi" className="text-[11px] sm:text-xs text-white/70 data-[state=active]:bg-[#E11B22] data-[state=active]:text-white data-[state=active]:shadow-[0_2px_10px_-2px_rgba(225,27,34,0.8)]">
-              Home XI
-            </TabsTrigger>
-            <TabsTrigger value="away-xi" className="text-[11px] sm:text-xs text-white/70 data-[state=active]:bg-[#E11B22] data-[state=active]:text-white data-[state=active]:shadow-[0_2px_10px_-2px_rgba(225,27,34,0.8)]">
-              Away XI
-            </TabsTrigger>
-            <TabsTrigger value="home-subs" className="text-[11px] sm:text-xs text-white/70 data-[state=active]:bg-[#E11B22] data-[state=active]:text-white data-[state=active]:shadow-[0_2px_10px_-2px_rgba(225,27,34,0.8)]">
-              Home subs
-            </TabsTrigger>
-            <TabsTrigger value="away-subs" className="text-[11px] sm:text-xs text-white/70 data-[state=active]:bg-[#E11B22] data-[state=active]:text-white data-[state=active]:shadow-[0_2px_10px_-2px_rgba(225,27,34,0.8)]">
-              Away subs
-            </TabsTrigger>
-          </TabsList>
-          {(
-            [
-              { value: "home-xi", side: "Home", starters: true, team: teams.home },
-              { value: "away-xi", side: "Away", starters: true, team: teams.away },
-              { value: "home-subs", side: "Home", starters: false, team: teams.home },
-              { value: "away-subs", side: "Away", starters: false, team: teams.away },
-            ] as const
-          ).map((cfg) => (
-            <TabsContent key={cfg.value} value={cfg.value} className="mt-4">
-              <LineupPanel side={cfg.side} starters={cfg.starters} team={cfg.team} columns={statColumns} />
-            </TabsContent>
-          ))}
-        </Tabs>
-        <StatKey columns={statColumns} />
+        {!lineupsConfirmed ? (
+          <div className="rounded-xl border border-dashed border-white/25 bg-white/5 px-4 py-10 text-center">
+            <div className="text-sm font-bold uppercase tracking-wider text-red-200">Awaiting Lineups</div>
+            <div className="mt-1.5 text-xs text-white/70">
+              The starting XI and substitutes appear here once both teams are confirmed before kick-off.
+            </div>
+          </div>
+        ) : (
+          <>
+            <Tabs defaultValue="home-xi" className="w-full">
+              <TabsList className="grid w-full grid-cols-2 gap-1 sm:grid-cols-4 rounded-lg border border-white/15 bg-black/60 p-1">
+                <TabsTrigger value="home-xi" className="text-[11px] sm:text-xs text-white/70 data-[state=active]:bg-[#E11B22] data-[state=active]:text-white data-[state=active]:shadow-[0_2px_10px_-2px_rgba(225,27,34,0.8)]">
+                  Home XI
+                </TabsTrigger>
+                <TabsTrigger value="away-xi" className="text-[11px] sm:text-xs text-white/70 data-[state=active]:bg-[#E11B22] data-[state=active]:text-white data-[state=active]:shadow-[0_2px_10px_-2px_rgba(225,27,34,0.8)]">
+                  Away XI
+                </TabsTrigger>
+                <TabsTrigger value="home-subs" className="text-[11px] sm:text-xs text-white/70 data-[state=active]:bg-[#E11B22] data-[state=active]:text-white data-[state=active]:shadow-[0_2px_10px_-2px_rgba(225,27,34,0.8)]">
+                  Home subs
+                </TabsTrigger>
+                <TabsTrigger value="away-subs" className="text-[11px] sm:text-xs text-white/70 data-[state=active]:bg-[#E11B22] data-[state=active]:text-white data-[state=active]:shadow-[0_2px_10px_-2px_rgba(225,27,34,0.8)]">
+                  Away subs
+                </TabsTrigger>
+              </TabsList>
+              {(
+                [
+                  { value: "home-xi", side: "Home", starters: true, team: teams.home },
+                  { value: "away-xi", side: "Away", starters: true, team: teams.away },
+                  { value: "home-subs", side: "Home", starters: false, team: teams.home },
+                  { value: "away-subs", side: "Away", starters: false, team: teams.away },
+                ] as const
+              ).map((cfg) => (
+                <TabsContent key={cfg.value} value={cfg.value} className="mt-4">
+                  <LineupPanel side={cfg.side} starters={cfg.starters} team={cfg.team} columns={statColumns} />
+                </TabsContent>
+              ))}
+            </Tabs>
+            <StatKey columns={statColumns} />
+          </>
+        )}
       </TabsContent>
+
     </Tabs>
   );
 }
