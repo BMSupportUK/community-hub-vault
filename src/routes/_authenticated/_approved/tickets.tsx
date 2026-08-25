@@ -1714,7 +1714,7 @@ function StaffOnDutyStrip() {
                       <div className={cn("text-sm font-semibold text-white truncate", roleFlashClass(roleFlashMap.get(s.user_id)))}>{name}</div>
                       {roleFlashMap.get(s.user_id) && (
                         <span className="text-[9px] font-medium uppercase tracking-wider text-white/70">
-                          {roleFlashMap.get(s.user_id)}
+                          {formatRoleLabel(roleFlashMap.get(s.user_id))}
                         </span>
                       )}
                     </div>
