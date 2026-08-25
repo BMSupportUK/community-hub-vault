@@ -705,11 +705,15 @@ function ChannelPage() {
       }
     }
     setSending(true);
-    const originalContent = draft.trim();
+    // Keep the formatted HTML when the toolbar was used, otherwise send plain text.
+    const richHtml = draftHtml.trim();
+    const originalContent =
+      richHtml && isRichChatContent(richHtml) ? richHtml : draft.trim();
     const originalGif = pendingGif;
     let content = pendingGif ?? originalContent;
     setDraft("");
-    if (taRef.current) taRef.current.textContent = "";
+    setDraftHtml("");
+    if (taRef.current) taRef.current.innerHTML = "";
     setPendingGif(null);
     if (/^https?:\/\/\S+$/i.test(content) && /(tenor\.com|giphy\.com|gph\.is)\//i.test(content)) {
       setUploadingPaste(true);
