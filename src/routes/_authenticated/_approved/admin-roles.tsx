@@ -39,6 +39,11 @@ interface RoleDef {
   sort_order: number;
 }
 
+function displayRoleLabel(name: string, label: string) {
+  if (name === "admin") return "Owner";
+  return label;
+}
+
 interface CredLite {
   id: string;
   app_login_name: string;
@@ -314,7 +319,7 @@ function AdminRolesPage() {
                           : "bg-transparent text-muted-foreground border-border hover:text-foreground",
                       )}
                     >
-                      {rd.label} ({count})
+                      {displayRoleLabel(rd.name, rd.label)} ({count})
                     </button>
                   );
                 })}
@@ -426,7 +431,7 @@ function AdminRolesPage() {
                               busy && "opacity-60 cursor-wait",
                             )}
                           >
-                            {busy ? "…" : rd.label}
+                            {busy ? "…" : displayRoleLabel(rd.name, rd.label)}
                           </button>
                         );
                       })}
