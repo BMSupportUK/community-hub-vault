@@ -1400,20 +1400,8 @@ function ChannelPage() {
                             {initial}
                           </div>
                         );
-                        const miniProfile = {
-                          userId: m.sender_id,
-                          name,
-                          username: p?.username ?? null,
-                          avatarUrl: resolvedAvatar,
-                          hasAvatar,
-                          nameplateId: p?.equipped_nameplate_id ?? null,
-                          role: roleFlashMap.get(m.sender_id) ?? null,
-                          isOnline,
-                          lastSeenAt: p?.last_seen_at ?? null,
-                          isSelf,
-                        };
                         const avatarEl = (
-                          <ChatMiniProfile profile={miniProfile}>{rawAvatarEl}</ChatMiniProfile>
+                          <ChatMiniProfile profile={senderMiniProfile}>{rawAvatarEl}</ChatMiniProfile>
                         );
                         return (
                           <div className="flex flex-col items-center gap-0.5 shrink-0 mt-0.5">
