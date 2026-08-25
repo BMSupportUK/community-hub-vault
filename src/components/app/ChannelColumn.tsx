@@ -22,6 +22,8 @@ export interface ChannelGroup {
     label: string;
     icon?: React.ComponentType<{ className?: string }>;
     badge?: number;
+    /** Unread message count, rendered as a flashing red pill next to the name. */
+    unread?: number;
     /** Override the auto path-match active state (useful for query-param views). */
     active?: boolean;
     /** When provided, render as a button instead of a Link. */
@@ -299,8 +301,16 @@ export function ChannelColumn({
                           >
                             <Icon className="size-4 shrink-0" />
                             <span className="truncate">{it.label}</span>
+                            {it.unread && it.unread > 0 ? (
+                              <span
+                                title={`${it.unread} unread message${it.unread === 1 ? "" : "s"}`}
+                                className="ml-auto min-w-5 h-5 px-1.5 rounded-full bg-red-600 text-white text-[10px] font-bold grid place-items-center animate-unread-flash"
+                              >
+                                {it.unread > 99 ? "99+" : it.unread}
+                              </span>
+                            ) : null}
                             {it.badge && it.badge > 0 ? (
-                              <span className="ml-auto min-w-5 h-5 px-1.5 rounded-full bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 text-white text-[10px] font-bold grid place-items-center shadow-glow">
+                              <span className={cn("min-w-5 h-5 px-1.5 rounded-full bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 text-white text-[10px] font-bold grid place-items-center shadow-glow", !(it.unread && it.unread > 0) && "ml-auto")}>
                                 {it.badge > 99 ? "99+" : it.badge}
                               </span>
                             ) : null}
@@ -318,8 +328,16 @@ export function ChannelColumn({
                           >
                             <Icon className="size-4 shrink-0" />
                             <span className="truncate">{it.label}</span>
+                            {it.unread && it.unread > 0 ? (
+                              <span
+                                title={`${it.unread} unread message${it.unread === 1 ? "" : "s"}`}
+                                className="ml-auto min-w-5 h-5 px-1.5 rounded-full bg-red-600 text-white text-[10px] font-bold grid place-items-center animate-unread-flash"
+                              >
+                                {it.unread > 99 ? "99+" : it.unread}
+                              </span>
+                            ) : null}
                             {it.badge && it.badge > 0 ? (
-                              <span className="ml-auto min-w-5 h-5 px-1.5 rounded-full bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 text-white text-[10px] font-bold grid place-items-center shadow-glow">
+                              <span className={cn("min-w-5 h-5 px-1.5 rounded-full bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 text-white text-[10px] font-bold grid place-items-center shadow-glow", !(it.unread && it.unread > 0) && "ml-auto")}>
                                 {it.badge > 99 ? "99+" : it.badge}
                               </span>
                             ) : null}
