@@ -3,6 +3,7 @@ import { CircleDot } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { useRoleFlashMap, roleFlashClass, resolveAvatarUrl } from "@/lib/role-flash";
+import { formatRoleLabel } from "@/lib/role-label";
 import { DndCountdown } from "@/components/app/DndCountdown";
 import { type BreakKind, BREAK_LIMITS as STAFF_BREAK_LIMITS, breakLabel, breakIcon } from "@/lib/breaks";
 
