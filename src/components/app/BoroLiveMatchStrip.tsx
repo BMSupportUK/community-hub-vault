@@ -232,7 +232,12 @@ export function BoroLiveMatchStrip() {
           console.error("[boro-match-centre] preload failed", error);
         }
       } finally {
-        if (!controller.signal.aborted && live?.inPlay) timer = window.setTimeout(load, 5_000);
+        // Keep polling whenever the game is in play — either the fixture cache
+        // says so, or the Gamecast feed itself is still mid-match.
+        const feedLive = statusIsInProgress(detailStatusRef.current);
+        if (!controller.signal.aborted && (live?.inPlay || feedLive)) {
+          timer = window.setTimeout(load, 5_000);
+        }
       }
     };
 
