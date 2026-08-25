@@ -22,6 +22,8 @@ export interface ChannelGroup {
     label: string;
     icon?: React.ComponentType<{ className?: string }>;
     badge?: number;
+    /** Unread message count, rendered as a flashing red pill next to the name. */
+    unread?: number;
     /** Override the auto path-match active state (useful for query-param views). */
     active?: boolean;
     /** When provided, render as a button instead of a Link. */
