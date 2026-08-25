@@ -75,8 +75,22 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
     return `${h}h ${m}m`;
   };
 
+  const isSidebar = variant === "sidebar";
+  const roleRank = (id: string) => {
+    const r = roleFlashMap.get(id);
+    const i = ROLE_ORDER.indexOf((r ?? "") as (typeof ROLE_ORDER)[number]);
+    return i === -1 ? ROLE_ORDER.length : i;
+  };
+  const orderedShifts = [...shifts].sort((a, b) => {
+    const d = roleRank(a.user_id) - roleRank(b.user_id);
+    if (d !== 0) return d;
+    const an = profiles[a.user_id]?.display_name || profiles[a.user_id]?.username || "";
+    const bn = profiles[b.user_id]?.display_name || profiles[b.user_id]?.username || "";
+    return an.localeCompare(bn);
+  });
+
   return (
-    <div className="px-4 pt-4">
+    <div className={isSidebar ? "p-3 h-full overflow-y-auto" : "px-4 pt-4"}>
       <div className="rounded-xl border border-white/15 p-3 shadow-lg relative overflow-hidden bg-gradient-to-r from-violet-600/40 via-fuchsia-600/40 to-blue-600/40 backdrop-blur">
         <div className="flex items-center justify-between mb-2 relative">
           <div className="text-[11px] font-semibold uppercase tracking-wider text-white/90">
@@ -86,14 +100,17 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
             <span className="size-2 rounded-full bg-emerald-400 animate-pulse" /> live
           </div>
         </div>
-        <div className="flex gap-2 overflow-x-auto pb-1 relative">
+        <div className={cn("relative", isSidebar ? "flex flex-col gap-2" : "flex gap-2 overflow-x-auto pb-1")}>
           {shifts.length === 0 && (
-            <div className="shrink-0 min-w-[180px] rounded-lg p-2.5 border border-white/20 bg-white/10 text-white/80 text-xs flex items-center gap-2">
+            <div className={cn(
+              "rounded-lg p-2.5 border border-white/20 bg-white/10 text-white/80 text-xs flex items-center gap-2",
+              isSidebar ? "w-full" : "shrink-0 min-w-[180px]",
+            )}>
               <CircleDot className="size-3.5 opacity-60" />
               <span>No staff currently on duty</span>
             </div>
           )}
-          {shifts.map((s) => {
+          {orderedShifts.map((s) => {
             const p = profiles[s.user_id];
             const name = p?.display_name || p?.username || "Staff";
             const br = breakByUser.get(s.user_id);
