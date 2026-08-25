@@ -109,6 +109,7 @@ interface Reaction {
 }
 
 const QUICK_EMOJIS = ["👍", "❤️", "😂", "😮", "😢", "🙏", "🔥", "🎉"];
+const CHANNEL_READ_EVENT = "bm-support:channel-read";
 
 function formatSlow(s: number): string {
   if (s <= 0) return "off";
@@ -401,15 +402,25 @@ function ChannelPage() {
   const persistLastRead = (iso: string) => {
     if (!channel || !user) return;
     const prev = lastReadAtRef.current;
-    if (prev && prev >= iso) return;
+    const nextTime = Date.parse(iso);
+    const prevTime = prev ? Date.parse(prev) : 0;
+    if (Number.isFinite(nextTime) && Number.isFinite(prevTime) && prevTime >= nextTime) return;
     lastReadAtRef.current = iso;
-    // Fire-and-forget upsert; ignore errors so chat keeps working offline.
+    const detail = { channelId: channel.id, slug: channel.slug, readAt: iso };
+    window.dispatchEvent(new CustomEvent(CHANNEL_READ_EVENT, { detail }));
     void supabase
       .from("channel_reads")
       .upsert(
         { user_id: user.id, channel_id: channel.id, last_read_at: iso },
         { onConflict: "user_id,channel_id" },
-      );
+      )
+      .then(({ error }) => {
+        if (error) {
+          console.error("Could not update channel read marker", error);
+          return;
+        }
+        window.dispatchEvent(new CustomEvent(CHANNEL_READ_EVENT, { detail }));
+      });
   };
 
   const mention = useMentionAutocomplete({
@@ -559,6 +570,7 @@ function ChannelPage() {
           latestMessageRef.current = m;
           setMessages((prev) => (prev.some((p) => p.id === m.id) ? prev : [...prev, m]));
           await loadProfiles([m.sender_id]);
+          if (document.visibilityState === "visible") persistLastRead(m.created_at);
         },
       )
       .on(
@@ -683,6 +695,26 @@ function ChannelPage() {
       if (latest) persistLastRead(latest.created_at);
     }
   }, [messages, user?.id]);
+
+  useEffect(() => {
+    if (!channel || !user) return;
+    const markVisibleMessagesRead = () => {
+      if (document.visibilityState !== "visible") return;
+      const latest = latestMessageRef.current;
+      if (latest) persistLastRead(latest.created_at);
+    };
+    const timer = window.setTimeout(markVisibleMessagesRead, READ_DELAY_MS);
+    document.addEventListener("visibilitychange", markVisibleMessagesRead);
+    window.addEventListener("focus", markVisibleMessagesRead);
+    window.addEventListener("online", markVisibleMessagesRead);
+    return () => {
+      window.clearTimeout(timer);
+      document.removeEventListener("visibilitychange", markVisibleMessagesRead);
+      window.removeEventListener("focus", markVisibleMessagesRead);
+      window.removeEventListener("online", markVisibleMessagesRead);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [channel?.id, user?.id, messages.length]);
 
   // Mark as read when leaving the channel (or on unmount).
   useEffect(() => {

@@ -13,6 +13,14 @@ import { UserAvatarMenu } from "@/components/app/UserAvatarMenu";
 import { DndDialogButton } from "@/components/app/DndDialogButton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
+const CHANNEL_READ_EVENT = "bm-support:channel-read";
+
+type ChannelReadEventDetail = {
+  channelId?: string;
+  slug?: string;
+  readAt?: string;
+};
+
 export interface ChannelGroup {
   label: string;
   icon?: React.ComponentType<{ className?: string }>;
@@ -102,10 +110,12 @@ export function ChannelColumn({
     [chatChannelItems],
   );
   const [localUnreadCounts, setLocalUnreadCounts] = useState<Record<string, number>>({});
+  const [localUnreadLoaded, setLocalUnreadLoaded] = useState(false);
 
   useEffect(() => {
     if (!user?.id || chatChannelItems.length === 0) {
       setLocalUnreadCounts({});
+      setLocalUnreadLoaded(false);
       return;
     }
 
@@ -115,10 +125,17 @@ export function ChannelColumn({
     let timer: ReturnType<typeof setTimeout> | null = null;
 
     const loadUnread = async () => {
-      const { data: reads } = await supabase
+      const { data: reads, error: readsError } = await supabase
         .from("channel_reads")
         .select("channel_id, last_read_at")
         .eq("user_id", uid);
+      if (readsError) {
+        if (!cancelled) {
+          setLocalUnreadCounts({});
+          setLocalUnreadLoaded(true);
+        }
+        return;
+      }
       const readMap = new Map(
         (reads ?? []).map((row: { channel_id: string; last_read_at: string | null }) => [
           row.channel_id,
@@ -136,8 +153,8 @@ export function ChannelColumn({
             .neq("sender_id", uid);
           const since = readMap.get(item.id);
           if (since) query = query.gt("created_at", since);
-          const { count } = await query;
-          return [item.slug, count ?? 0] as const;
+          const { count, error } = await query;
+          return [item.slug, error ? 0 : (count ?? 0)] as const;
         }),
       );
 
@@ -147,6 +164,7 @@ export function ChannelColumn({
         if (count > 0) next[slug] = count;
       }
       setLocalUnreadCounts(next);
+      setLocalUnreadLoaded(true);
     };
 
     const scheduleLoad = () => {
@@ -154,6 +172,19 @@ export function ChannelColumn({
       timer = setTimeout(() => void loadUnread(), 250);
     };
 
+    const clearReadChannel = (event: Event) => {
+      const detail = (event as CustomEvent<ChannelReadEventDetail>).detail ?? {};
+      const readSlug = detail.slug ?? items.find((item) => item.id === detail.channelId)?.slug;
+      if (!readSlug) return;
+      setLocalUnreadCounts((prev) => {
+        if (!(readSlug in prev)) return prev;
+        const next = { ...prev };
+        delete next[readSlug];
+        return next;
+      });
+    };
+
+    setLocalUnreadLoaded(false);
     void loadUnread();
     const channel = supabase
       .channel(`channel-column-unread-${uid}`)
@@ -171,6 +202,7 @@ export function ChannelColumn({
     document.addEventListener("visibilitychange", onVisible);
     window.addEventListener("focus", scheduleLoad);
     window.addEventListener("online", scheduleLoad);
+    window.addEventListener(CHANNEL_READ_EVENT, clearReadChannel);
 
     return () => {
       cancelled = true;
@@ -178,6 +210,7 @@ export function ChannelColumn({
       document.removeEventListener("visibilitychange", onVisible);
       window.removeEventListener("focus", scheduleLoad);
       window.removeEventListener("online", scheduleLoad);
+      window.removeEventListener(CHANNEL_READ_EVENT, clearReadChannel);
       supabase.removeChannel(channel);
     };
   }, [activeSlug, chatChannelItems, chatChannelKey, user?.id]);
@@ -188,6 +221,7 @@ export function ChannelColumn({
     if (slug && slug === activeSlug) return 0;
     const provided = typeof item.unread === "number" ? item.unread : 0;
     const local = slug ? (localUnreadCounts[slug] ?? 0) : 0;
+    if (slug && localUnreadLoaded) return local;
     return Math.max(provided, local);
   };
 
