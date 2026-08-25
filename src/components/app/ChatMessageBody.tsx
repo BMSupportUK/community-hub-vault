@@ -1,6 +1,6 @@
 import { sanitizeRichHtml } from "@/lib/sanitize-html";
 import { MentionText, isRoleMentionTag } from "@/components/app/mentions";
-import { censorHtml } from "@/lib/profanity";
+import { censorHtml, useProfanityWords } from "@/lib/profanity";
 import { cn } from "@/lib/utils";
 
 const URL_IN_TEXT_RE = /(https?:\/\/[^\s<>"{}|\\^`[\]]+|www\.[^\s<>"{}|\\^`[\]]+)/g;
