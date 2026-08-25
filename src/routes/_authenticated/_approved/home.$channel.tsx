@@ -1910,6 +1910,11 @@ function ChannelPage() {
               e.target.value = "";
             }}
           />
+          <ChatFormatToolbar
+            editorRef={taRef}
+            onAfterCommand={syncComposer}
+            disabled={!canSend || slowRemaining > 0 || isMuted}
+          />
           <button
             type="button"
             title="Add an attachment"
