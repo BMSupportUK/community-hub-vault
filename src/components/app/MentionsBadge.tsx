@@ -153,7 +153,7 @@ export function MentionsBadge() {
                     <div className="text-[10px] text-muted-foreground mt-0.5">{formatDistanceToNow(new Date(m.created_at), { addSuffix: true })}</div>
                   </div>
                 </div>
-                {mentionHref(m) && (
+                {mentionNav(m) && (
                   <button
                     type="button"
                     onClick={() => openItem(m)}
