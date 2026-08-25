@@ -1505,7 +1505,7 @@ function ChannelPage() {
                                   );
                                 }
                                 return (
-                                  <MentionText
+                                  <ChatMessageBody
                                     content={m.content}
                                     currentUsername={myUsername}
                                     className="text-sm"
@@ -1806,6 +1806,11 @@ function ChannelPage() {
             </div>
           </div>
         )}
+        <ChatFormatToolbar
+          editorRef={taRef}
+          onAfterCommand={syncComposer}
+          disabled={!canSend || slowRemaining > 0 || isMuted}
+        />
         <div className="relative flex items-end gap-2 rounded-xl bg-surface-2 border border-border focus-within:border-primary px-3 py-2">
           {mention.dropdown}
           <div
@@ -1837,6 +1842,7 @@ function ChannelPage() {
               const linked = editor.querySelector("a")?.getAttribute("href");
               const next = editor.innerText.replace(/\n$/, "");
               setDraft(next);
+              setDraftHtml(editor.innerHTML);
               // Windows 11's GIF panel commonly reports a GIF URL as a plain
               // `insertText` input rather than a paste. Detect the inserted
               // media itself instead of relying on the browser's input type.
