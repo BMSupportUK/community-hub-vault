@@ -710,6 +710,13 @@ function ChannelPage() {
     const originalContent =
       richHtml && isRichChatContent(richHtml) ? richHtml : draft.trim();
     const originalGif = pendingGif;
+    const originalPlain = draft.trim();
+    const originalHtml = richHtml;
+    const restoreDraft = () => {
+      setDraft(originalPlain);
+      setDraftHtml(originalHtml);
+      if (taRef.current) taRef.current.innerHTML = originalHtml;
+    };
     let content = pendingGif ?? originalContent;
     setDraft("");
     setDraftHtml("");
@@ -721,7 +728,7 @@ function ChannelPage() {
         const resolved = await resolveGif({ data: { url: content } });
         if (!resolved.url) {
           toast.error("That GIF could not be loaded. Please choose it again.");
-          setDraft(originalContent);
+          restoreDraft();
           setPendingGif(originalGif);
           setSending(false);
           return;
@@ -729,7 +736,7 @@ function ChannelPage() {
         content = resolved.url;
       } catch {
         toast.error("That GIF could not be loaded. Please choose it again.");
-        setDraft(originalContent);
+        restoreDraft();
         setPendingGif(originalGif);
         setSending(false);
         return;
@@ -756,7 +763,7 @@ function ChannelPage() {
             ? "You don't have permission to send messages in this channel."
             : msg,
       );
-      setDraft(originalContent);
+      restoreDraft();
       setPendingGif(originalGif);
     } else {
       setLastSentAt(Date.now());
