@@ -99,6 +99,12 @@ export function WorkingStatusBox() {
     return `${Math.floor(s / 60).toString().padStart(2, "0")}:${(s % 60).toString().padStart(2, "0")}`;
   };
 
+  const displayName =
+    (user.user_metadata?.display_name as string | undefined) ||
+    (user.user_metadata?.full_name as string | undefined) ||
+    user.email?.split("@")[0] ||
+    "User";
+
   return (
     <section className="px-2 pt-4">
       <div className="rounded-lg bg-surface-2/60 border border-border overflow-hidden">
@@ -109,6 +115,9 @@ export function WorkingStatusBox() {
           </div>
         </div>
         <div className="px-3 py-3 space-y-2 text-xs">
+          <div className="flex items-center gap-2 pb-1 border-b border-border/60">
+            <span className="font-display font-semibold text-sm text-foreground">{displayName}</span>
+          </div>
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">Shift</span>
             <span className="inline-flex items-center gap-1.5 font-semibold tabular-nums text-emerald-400">
