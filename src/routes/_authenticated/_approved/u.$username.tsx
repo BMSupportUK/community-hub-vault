@@ -1482,7 +1482,7 @@ function CredentialsReveal({ targetUserId, isOwner }: { targetUserId: string; is
           {tab === "creds" ? (
             creds.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                {isOwner ? "No credentials assigned to you yet. An admin will set them up." : "This member has no credentials assigned."}
+                {isOwner ? "No credentials assigned to you yet. An owner will set them up." : "This member has no credentials assigned."}
               </p>
             ) : (
               <ul className="space-y-3">

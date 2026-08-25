@@ -31,7 +31,7 @@ export const deleteMember = createServerFn({ method: "POST" })
       .eq("user_id", data.userId);
     const targetIsAdmin = (targetRoles ?? []).some((r) => String(r.role) === "admin");
     if (targetIsAdmin && !callerRoles.includes("admin")) {
-      throw new Error("Only an admin can delete another admin.");
+      throw new Error("Only an owner can delete another owner.");
     }
 
     const { error: delError } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
