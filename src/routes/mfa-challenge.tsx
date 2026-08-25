@@ -134,7 +134,7 @@ function MfaChallengePage() {
                     setSendingReset(true);
                     try {
                       const r = await requestReset({ data: { reason: reason || undefined } });
-                      toast.success(`Request sent — ${r.notifiedAdmins} admin(s) notified`);
+                      toast.success(`Request sent — ${r.notifiedAdmins} owner(s) notified`);
                       setShowReset(false);
                     } catch (e: any) {
                       toast.error(e?.message ?? "Failed to send request");

@@ -2114,7 +2114,7 @@ function LeaderboardList({
                     onClick={() => setConfirmDelete(r)}
                     disabled={deletingId === r.userId}
                     className="ml-1 text-muted-foreground hover:text-red-500 disabled:opacity-50"
-                    title="Admin: delete this entrant and their predictions"
+                    title="Owner: delete this entrant and their predictions"
                     aria-label="Delete entrant"
                   >
                     {deletingId === r.userId ? (

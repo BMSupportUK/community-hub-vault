@@ -464,7 +464,7 @@ function ShiftsPage() {
                 <li><strong>Staff & Management:</strong> claim full shifts on the rota.</li>
                 <li><strong>Moderators:</strong> pick hourly slots assigned by management.</li>
                 <li>Each day needs <strong>{DAY_TARGET} staff filled</strong> — keep an eye on the day counters.</li>
-                <li>Need time off? Submit a holiday request. Admin will review.</li>
+                <li>Need time off? Submit a holiday request. Owner will review.</li>
                 <li>Need to swap a shift? Open the slot and tap <em>Request swap</em>.</li>
               </ul>
               <Button className="mt-6 bg-gradient-primary hover:opacity-90 text-white border-0 shadow-soft" onClick={() => setTab("rota")}>Open the rota</Button>

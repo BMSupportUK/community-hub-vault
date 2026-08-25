@@ -330,7 +330,7 @@ function NewContentPage() {
                 Stay up to date with every new channel and category added to the platform.
               </p>
               <p className="mt-4 text-muted-foreground max-w-2xl">
-                Browse the <span className="font-semibold text-foreground">New Channels</span> tab for newly added channels, or the <span className="font-semibold text-foreground">New Categories</span> tab for new content categories. Admins post details, images, and setup info here so you'll never miss what's new.
+                Browse the <span className="font-semibold text-foreground">New Channels</span> tab for newly added channels, or the <span className="font-semibold text-foreground">New Categories</span> tab for new content categories. Owners post details, images, and setup info here so you'll never miss what's new.
               </p>
               <div className="mt-6 grid gap-2 sm:flex sm:flex-wrap">
                 <Button onClick={() => setTab("channel")} className="w-full sm:w-auto min-w-0 bg-gradient-primary text-primary-foreground border-0 shadow-glow hover:opacity-90">
