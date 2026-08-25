@@ -10,6 +10,8 @@ import type { MatchDetailDTO } from "@/lib/boro-match-detail.types";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
 import { TeamKit } from "@/lib/boro-team-kits";
 import { londonWeekStart } from "@/lib/boro-match-week";
+import { useBoroFixtureRealtime } from "@/hooks/use-boro-fixture-realtime";
+
 
 import { Dialog, DialogContent, DialogTitle, DialogClose } from "@/components/ui/dialog";
 import { BoroMatchDetailTabs } from "@/components/app/BoroMatchDetailTabs";
@@ -104,14 +106,20 @@ export function BoroLiveMatchStrip() {
 
 
 
+  // Realtime hooks below re-run these when the backend writes a new score.
+  const refreshCentreRef = useRef<() => void>(() => {});
+  const refreshDetailRef = useRef<() => void>(() => {});
+
   useEffect(() => {
     let cancelled = false;
     let timer: number | undefined;
 
     const schedule = (ms: number) => {
+      if (timer) window.clearTimeout(timer);
       timer = window.setTimeout(run, ms);
     };
     const run = async () => {
+      if (timer) window.clearTimeout(timer);
       try {
         const d = await fetchData();
         if (cancelled) return;
@@ -124,11 +132,13 @@ export function BoroLiveMatchStrip() {
         if (!cancelled) schedule(5 * 60_000);
       }
     };
+    refreshCentreRef.current = () => {
+      void run();
+    };
     void run();
 
     const onVisible = () => {
       if (document.visibilityState === "visible") {
-        if (timer) window.clearTimeout(timer);
         void run();
       }
     };
@@ -136,11 +146,20 @@ export function BoroLiveMatchStrip() {
     const tick = window.setInterval(() => setNow(Date.now()), 1_000);
     return () => {
       cancelled = true;
+      refreshCentreRef.current = () => {};
       if (timer) window.clearTimeout(timer);
       window.clearInterval(tick);
       document.removeEventListener("visibilitychange", onVisible);
     };
   }, []);
+
+  // Instant push from the backend: any score/minute write refreshes both the
+  // strip headline and the Gamecast feed behind the pop-up.
+  useBoroFixtureRealtime(() => {
+    refreshCentreRef.current();
+    refreshDetailRef.current();
+  });
+
 
   const live = data?.liveMatch ?? null;
   const lr = data?.lastResult ?? null;
@@ -240,18 +259,25 @@ export function BoroLiveMatchStrip() {
         // says so, or the Gamecast feed itself is still mid-match.
         const feedLive = statusIsInProgress(detailStatusRef.current);
         if (!controller.signal.aborted && (live?.inPlay || feedLive)) {
+          if (timer) window.clearTimeout(timer);
           timer = window.setTimeout(load, 5_000);
         }
       }
     };
 
+    refreshDetailRef.current = () => {
+      if (timer) window.clearTimeout(timer);
+      void load();
+    };
     void load();
 
     return () => {
+      refreshDetailRef.current = () => {};
       controller.abort();
       if (timer) window.clearTimeout(timer);
     };
   }, [selectedFixtureKey, selectedEventId, selectedSlug, live?.inPlay]);
+
   const openMatchCentre = () => setOpen(true);
 
   if (!data || (!live && !nf && !lr)) return null;
