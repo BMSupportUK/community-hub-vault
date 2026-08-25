@@ -422,7 +422,16 @@ function ChannelPage() {
     const editor = taRef.current;
     if (!editor || editor.innerText.replace(/\n$/, "") === draft) return;
     editor.textContent = draft;
+    setDraftHtml(editor.innerHTML);
   }, [draft]);
+
+  /** Sync both the plain-text and rich-HTML drafts from the live composer. */
+  const syncComposer = () => {
+    const editor = taRef.current;
+    if (!editor) return;
+    setDraft(editor.innerText.replace(/\n$/, ""));
+    setDraftHtml(editor.innerHTML);
+  };
 
   // Load channel
   useEffect(() => {
