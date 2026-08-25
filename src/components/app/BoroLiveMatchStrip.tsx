@@ -391,8 +391,7 @@ export function BoroLiveMatchStrip() {
             const displayHome = isLive && liveHome !== null ? liveHome : shownHome;
             const displayAway = isLive && liveAway !== null ? liveAway : shownAway;
             const liveStatus =
-              preloadedDetail?.clock ||
-              (isLive ? detailStatus : "") ||
+              (isLive ? preloadedDetail?.clock || detailStatus : "") ||
               live?.clock ||
               live?.statusDetail ||
               detailStatus ||
@@ -445,9 +444,9 @@ export function BoroLiveMatchStrip() {
                       <span className="font-display text-xl font-black text-white/85">v</span>
                     ) : (
                       <span className="font-display text-3xl font-black tabular-nums text-white">
-                        {(m as { homeScore: number }).homeScore}
+                        {displayHome ?? 0}
                         <span className="px-1 text-white/70">-</span>
-                        {(m as { awayScore: number }).awayScore}
+                        {displayAway ?? 0}
                       </span>
                     )}
                   </div>
