@@ -1021,10 +1021,11 @@ function ChannelPage() {
     return () => document.removeEventListener("mousedown", onDoc);
   }, [openMenuId, emojiPickerId]);
 
-  // Populate the full-size edit composer when editing starts.
+  // Populate and focus the full-size edit composer when editing starts.
   useEffect(() => {
     if (editingId && editEditorRef.current) {
       editEditorRef.current.innerHTML = editDraftHtml;
+      editEditorRef.current.focus();
     }
   }, [editingId]);
 
