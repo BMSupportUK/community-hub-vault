@@ -10,7 +10,6 @@ import type { MatchDetailDTO } from "@/lib/boro-match-detail.types";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
 import { TeamKit } from "@/lib/boro-team-kits";
 import { londonWeekStart } from "@/lib/boro-match-week";
-import { useBoroFixtureRealtime } from "@/hooks/use-boro-fixture-realtime";
 
 
 import { Dialog, DialogContent, DialogTitle, DialogClose } from "@/components/ui/dialog";
@@ -106,10 +105,6 @@ export function BoroLiveMatchStrip() {
 
 
 
-  // Realtime hooks below re-run these when the backend writes a new score.
-  const refreshCentreRef = useRef<() => void>(() => {});
-  const refreshDetailRef = useRef<() => void>(() => {});
-
   useEffect(() => {
     let cancelled = false;
     let timer: number | undefined;
@@ -132,9 +127,6 @@ export function BoroLiveMatchStrip() {
         if (!cancelled) schedule(5 * 60_000);
       }
     };
-    refreshCentreRef.current = () => {
-      void run();
-    };
     void run();
 
     const onVisible = () => {
@@ -146,19 +138,11 @@ export function BoroLiveMatchStrip() {
     const tick = window.setInterval(() => setNow(Date.now()), 1_000);
     return () => {
       cancelled = true;
-      refreshCentreRef.current = () => {};
       if (timer) window.clearTimeout(timer);
       window.clearInterval(tick);
       document.removeEventListener("visibilitychange", onVisible);
     };
   }, []);
-
-  // Instant push from the backend: any score/minute write refreshes both the
-  // strip headline and the Gamecast feed behind the pop-up.
-  useBoroFixtureRealtime(() => {
-    refreshCentreRef.current();
-    refreshDetailRef.current();
-  });
 
 
   const live = data?.liveMatch ?? null;
@@ -265,14 +249,9 @@ export function BoroLiveMatchStrip() {
       }
     };
 
-    refreshDetailRef.current = () => {
-      if (timer) window.clearTimeout(timer);
-      void load();
-    };
     void load();
 
     return () => {
-      refreshDetailRef.current = () => {};
       controller.abort();
       if (timer) window.clearTimeout(timer);
     };
