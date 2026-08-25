@@ -20,7 +20,7 @@ const TwoFaResetUserEmail = ({ userName }: Props) => (
         </Text>
         <Section style={card}>
           <Text style={text}>
-            An admin will review the request and contact you shortly. For security, we may ask you to verify your identity before resetting 2FA.
+            An owner will review the request and contact you shortly. For security, we may ask you to verify your identity before resetting 2FA.
           </Text>
         </Section>
         <Text style={text}>

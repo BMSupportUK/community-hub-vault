@@ -13,7 +13,7 @@ const PAGES: { label: string; path: string }[] = [
   { label: "Shop", path: "/shop" },
   { label: "Members", path: "/members" },
   { label: "Staff", path: "/staff" },
-  { label: "Admin", path: "/admin" },
+  { label: "Owner dashboard", path: "/admin" },
   { label: "Moderation", path: "/moderation" },
   { label: "Knowledge base", path: "/knowledge-base" },
   { label: "Leaderboard", path: "/leaderboard" },

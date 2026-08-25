@@ -81,7 +81,7 @@ export function FanZoneAccessCard() {
               <Trophy className="size-5 text-amber-300" /> Join the Boro Fan Zone
             </DialogTitle>
             <DialogDescription>
-              Tell us briefly why you'd like in — match-day banter, transfer talk, the lot. An admin will review your request.
+              Tell us briefly why you'd like in — match-day banter, transfer talk, the lot. An owner will review your request.
             </DialogDescription>
           </DialogHeader>
           <Textarea

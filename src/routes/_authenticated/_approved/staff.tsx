@@ -42,7 +42,7 @@ type FriendState =
 
 const ROLE_ORDER = ["admin", "management", "staff", "moderator"] as const;
 const ROLE_LABEL: Record<string, string> = {
-  admin: "Administrators",
+  admin: "Owners",
   management: "Management",
   moderator: "Moderators",
   staff: "Staff",

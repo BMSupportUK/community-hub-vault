@@ -100,8 +100,8 @@ function AdminDashboard() {
               <ShieldCheck className="size-6 text-white" />
             </div>
             <div className="flex-1">
-              <h1 className="font-display text-2xl sm:text-3xl font-bold text-white drop-shadow">Admin Dashboard</h1>
-              <p className="text-sm text-white/85">Server-wide controls — restricted to admin &amp; management.</p>
+              <h1 className="font-display text-2xl sm:text-3xl font-bold text-white drop-shadow">Owner Dashboard</h1>
+              <p className="text-sm text-white/85">Server-wide controls — restricted to owner &amp; management.</p>
             </div>
           {unlocked && (
             <button onClick={lockNow} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/15 backdrop-blur border border-white/25 text-sm text-white hover:bg-white/25">
@@ -222,7 +222,7 @@ function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () 
       });
       if (vErr) throw new Error("Incorrect 2FA code");
       await clearFailures();
-      toast.success("Admin unlocked");
+      toast.success("Owner unlocked");
       onUnlocked();
     } catch (e: any) {
       await recordFailure();
@@ -253,7 +253,7 @@ function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () 
         .eq("id", row.id);
       if (upErr) throw upErr;
       await clearFailures();
-      toast.success("Admin unlocked with backup code");
+      toast.success("Owner unlocked with backup code");
       onUnlocked();
     } catch (e: any) {
       await recordFailure();
@@ -289,7 +289,7 @@ function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () 
       const { data: row } = await supabase.from("vault_pins").select("pin_hash").eq("user_id", user.id).maybeSingle();
       if (!row || row.pin_hash !== hash) throw new Error("Incorrect PIN");
       await clearFailures();
-      toast.success("Admin unlocked");
+      toast.success("Owner unlocked");
       onUnlocked();
     } catch (e: any) {
       await recordFailure();
@@ -334,8 +334,8 @@ function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () 
       )}
       {!hasPin ? (
         <>
-          <h2 className="font-display text-lg font-bold">Set your admin PIN</h2>
-          <p className="text-sm text-muted-foreground mb-4">A personal PIN plus your account password is required to enter the admin dashboard.</p>
+          <h2 className="font-display text-lg font-bold">Set your owner PIN</h2>
+          <p className="text-sm text-muted-foreground mb-4">A personal PIN plus your account password is required to enter the owner dashboard.</p>
           <input value={pin} onChange={(e) => setPin(e.target.value)} type="password" placeholder="New PIN (min 4)" className="w-full mb-2 px-3 py-2.5 rounded-lg bg-surface-2 border border-border text-sm" />
           <input value={confirmPin} onChange={(e) => setConfirmPin(e.target.value)} type="password" placeholder="Confirm PIN" className="w-full mb-4 px-3 py-2.5 rounded-lg bg-surface-2 border border-border text-sm" />
           <button onClick={setupPin} disabled={busy} className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-medium disabled:opacity-60">
@@ -344,10 +344,10 @@ function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () 
         </>
       ) : mode === "unlock" ? (
         <>
-          <h2 className="font-display text-lg font-bold">Admin security check</h2>
-          <p className="text-sm text-muted-foreground mb-4">Enter your account password and admin PIN to continue.</p>
+          <h2 className="font-display text-lg font-bold">Owner security check</h2>
+          <p className="text-sm text-muted-foreground mb-4">Enter your account password and owner PIN to continue.</p>
           <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder="Account password" className="w-full mb-2 px-3 py-2.5 rounded-lg bg-surface-2 border border-border text-sm" autoFocus />
-          <input value={pin} onChange={(e) => setPin(e.target.value)} type="password" placeholder="Admin PIN" className="w-full mb-4 px-3 py-2.5 rounded-lg bg-surface-2 border border-border text-sm" onKeyDown={(e) => e.key === "Enter" && unlock()} />
+          <input value={pin} onChange={(e) => setPin(e.target.value)} type="password" placeholder="Owner PIN" className="w-full mb-4 px-3 py-2.5 rounded-lg bg-surface-2 border border-border text-sm" onKeyDown={(e) => e.key === "Enter" && unlock()} />
           <button onClick={unlock} disabled={busy || isLocked} className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-medium disabled:opacity-60 flex items-center justify-center gap-2">
             {busy ? <Loader2 className="size-4 animate-spin" /> : <KeyRound className="size-4" />} Unlock dashboard
           </button>
@@ -425,7 +425,7 @@ function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () 
         </>
       ) : (
         <>
-          <h2 className="font-display text-lg font-bold">Reset admin PIN</h2>
+          <h2 className="font-display text-lg font-bold">Reset owner PIN</h2>
           <p className="text-sm text-muted-foreground mb-4">Confirm your account password, then choose a new PIN.</p>
           <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder="Account password" className="w-full mb-2 px-3 py-2.5 rounded-lg bg-surface-2 border border-border text-sm" autoFocus />
           <input value={pin} onChange={(e) => setPin(e.target.value)} type="password" placeholder="New PIN (min 4)" className="w-full mb-2 px-3 py-2.5 rounded-lg bg-surface-2 border border-border text-sm" />
@@ -521,7 +521,7 @@ function DashboardBody() {
       <VpnBackfillCard />
       <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
         <section className="order-1">
-          <h2 className="font-display text-sm uppercase tracking-wide text-muted-foreground mb-3">Admin tools</h2>
+          <h2 className="font-display text-sm uppercase tracking-wide text-muted-foreground mb-3">Owner tools</h2>
           <div className="grid sm:grid-cols-2 gap-3">
             {tools.map((t) => (
               <Link
@@ -678,7 +678,7 @@ function RecoveryCodes() {
     if (!fresh) return;
     const blob = new Blob(
       [
-        `Admin recovery codes\nGenerated: ${new Date().toISOString()}\nUser: ${user?.email ?? user?.id}\n\nEach code can be used once.\n\n${fresh.join("\n")}\n`,
+        `Owner recovery codes\nGenerated: ${new Date().toISOString()}\nUser: ${user?.email ?? user?.id}\n\nEach code can be used once.\n\n${fresh.join("\n")}\n`,
       ],
       { type: "text/plain" },
     );
@@ -701,7 +701,7 @@ function RecoveryCodes() {
           </div>
           <div>
             <h2 className="font-display font-bold">Backup recovery codes</h2>
-            <p className="text-xs text-muted-foreground">One-time codes to unlock the admin dashboard if you lose your password, PIN, or 2FA device.</p>
+            <p className="text-xs text-muted-foreground">One-time codes to unlock the owner dashboard if you lose your password, PIN, or 2FA device.</p>
           </div>
         </div>
         <div className="flex items-center gap-2">

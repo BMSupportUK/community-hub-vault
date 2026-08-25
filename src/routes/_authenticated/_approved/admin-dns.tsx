@@ -70,7 +70,7 @@ function AdminDnsPage() {
     <main className="flex-1 overflow-y-auto">
       <div className="max-w-5xl mx-auto px-6 py-8">
         <Link to="/admin" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4">
-          <ArrowLeft className="size-4" /> Back to admin dashboard
+          <ArrowLeft className="size-4" /> Back to owner dashboard
         </Link>
         <div className="relative rounded-3xl overflow-hidden border border-primary/30 shadow-glow bg-gradient-primary p-5 sm:p-6 mb-6">
           <div className="absolute inset-0 bg-gradient-to-tr from-background/40 via-transparent to-transparent pointer-events-none" />

@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 export type ProtectedRole = "admin" | "management" | "moderator" | "boro_fan_zone_moderator";
 
 const ROLE_LABEL: Record<ProtectedRole, string> = {
-  admin: "Admin",
+  admin: "Owner",
   management: "Management",
   moderator: "Moderator",
   boro_fan_zone_moderator: "Fan Zone Moderator",
@@ -42,7 +42,7 @@ function load() {
 }
 
 /**
- * Admins, management and moderators are protected — members can't block them.
+ * Owners, management and moderators are protected — members can't block them.
  * Returns a lookup so the UI can flag those accounts before attempting a block.
  */
 export function useProtectedUsers() {

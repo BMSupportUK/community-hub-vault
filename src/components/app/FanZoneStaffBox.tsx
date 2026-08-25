@@ -77,7 +77,7 @@ export function FanZoneStaffBox() {
               <div className="min-w-0 flex-1">
                 <div className="text-sm font-semibold truncate leading-tight">{name}</div>
                 <div className={`text-[10px] uppercase tracking-wider font-bold ${isAdmin ? "text-amber-400" : "text-[#E11B22]"}`}>
-                  {isAdmin ? "Admin" : "Fan Zone Mod"}
+                  {isAdmin ? "Owner" : "Fan Zone Mod"}
                 </div>
                 <DndCountdown userId={m.user_id} compact className="mt-1" />
               </div>

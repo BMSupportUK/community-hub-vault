@@ -143,11 +143,11 @@ function AuthLayout() {
             {isAdmin && (
               <Link
                 to="/admin"
-                title="Admin dashboard"
+                title="Owner dashboard"
                 className="flex items-center gap-2 rounded-full px-3 py-1.5 bg-surface-2 hover:bg-primary hover:text-primary-foreground text-xs font-medium transition-colors"
               >
                 <LayoutDashboard className="size-4" />
-                <span className="hidden xl:inline">Admin dashboard</span>
+                <span className="hidden xl:inline">Owner dashboard</span>
               </Link>
             )}
             {isAdmin && (
@@ -169,7 +169,7 @@ function AuthLayout() {
                 onClick={openSalesChats}
               >
                 <Receipt className="size-4" />
-                <span className="hidden xl:inline">Shop Admin</span>
+                <span className="hidden xl:inline">Shop Owner</span>
                 <DeferUntilIdle><PendingOrdersBadge /></DeferUntilIdle>
               </button>
             )}

@@ -327,7 +327,7 @@ function ShopPage() {
     ...(isAdmin && adminUnlocked
       ? [
           {
-            label: "Admin",
+            label: "Owner",
             items: [
               ...(isAdminOnly
                 ? [
@@ -349,7 +349,7 @@ function ShopPage() {
                 : []),
               {
                 to: "/shop",
-                label: "Shop Admin",
+                label: "Shop Owner",
                 icon: Receipt,
                 active: view === "orders" && scope === "all",
                 onClick: () => go({ view: "orders", scope: "all" }),
@@ -367,7 +367,7 @@ function ShopPage() {
         {isAdmin && adminUnlocked && (
           <nav className="shrink-0 border-b border-border bg-surface/60 backdrop-blur px-3 md:px-6 py-2 flex items-center gap-4 overflow-x-auto scrollbar-hide">
             {groups
-              .filter((g) => g.label === "Admin")
+              .filter((g) => g.label === "Owner")
               .map((g) => (
                 <div key={g.label} className="flex items-center gap-1 shrink-0">
                   <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70 mr-1 hidden md:inline">
@@ -2784,7 +2784,7 @@ function OrdersView({
       />
       <header className="relative px-6 md:px-8 pt-8 pb-6 border-b border-purple-500/30 bg-purple-950/40 backdrop-blur">
         <h1 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 bg-clip-text text-transparent">
-          {scope === "all" ? "Shop Admin · Orders" : "Your Orders"}
+          {scope === "all" ? "Shop Owner · Orders" : "Your Orders"}
         </h1>
         <p className="text-purple-200/80 mt-1">
           Every order in one place — full details, live status, and direct chat with our team.

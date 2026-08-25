@@ -1120,7 +1120,7 @@ function InviteCard({
         {canAssign && (
           <div className="mt-3 pt-3 border-t border-white/15 space-y-2">
             <div className="text-[11px] uppercase tracking-wider text-amber-100/80">
-              Admin · Redeem referral code
+              Owner · Redeem referral code
             </div>
             <div className="flex items-center gap-2">
               <input
@@ -1238,7 +1238,7 @@ function ReferralsPanel({
           <div className="mb-6 rounded-2xl border border-amber-300/40 bg-amber-500/10 backdrop-blur-xl p-5 text-white">
             <div className="flex items-center gap-2 mb-2">
               <UserPlus className="size-4 text-amber-200" />
-              <p className="text-xs uppercase tracking-wider text-amber-100">Admin · Redeem referral code</p>
+              <p className="text-xs uppercase tracking-wider text-amber-100">Owner · Redeem referral code</p>
             </div>
             <p className="text-sm text-white/80 mb-3">
               This user has no referrer on record. Enter the referral code the referrer gave them — we'll check it's still active and mark it used.
@@ -1482,7 +1482,7 @@ function CredentialsReveal({ targetUserId, isOwner }: { targetUserId: string; is
           {tab === "creds" ? (
             creds.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                {isOwner ? "No credentials assigned to you yet. An admin will set them up." : "This member has no credentials assigned."}
+                {isOwner ? "No credentials assigned to you yet. An owner will set them up." : "This member has no credentials assigned."}
               </p>
             ) : (
               <ul className="space-y-3">

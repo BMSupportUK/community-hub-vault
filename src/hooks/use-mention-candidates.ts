@@ -14,7 +14,7 @@ export type MentionCandidate = {
 const STAFF_SPECIALS: MentionCandidate[] = [
   { type: "special", key: "all", label: "all", sublabel: "Notify everyone in this thread" },
   { type: "special", key: "everyone", label: "everyone", sublabel: "Notify everyone in this thread" },
-  { type: "special", key: "admin", label: "admin", sublabel: "All admins" },
+  { type: "special", key: "admin", label: "admin", sublabel: "All owners" },
   { type: "special", key: "management", label: "management", sublabel: "All management" },
   { type: "special", key: "staff", label: "staff", sublabel: "All staff" },
   { type: "special", key: "moderator", label: "moderator", sublabel: "All moderators" },

@@ -42,7 +42,7 @@ const WinnerEmail = ({
           </Text>
         </Section>
         <Text style={text}>
-          Once you've confirmed, an admin will send your voucher across shortly. 🎉
+          Once you've confirmed, an owner will send your voucher across shortly. 🎉
         </Text>
         <Hr style={hr} />
         <Text style={footer}>{SITE_NAME}</Text>

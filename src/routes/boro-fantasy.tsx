@@ -2509,7 +2509,7 @@ function InjuryIcon({
     s === "suspended" ? "Suspended" : s === "doubtful" ? "Doubtful" : "Injured — out",
     p.injuryNote || null,
     p.injuryReturn ? `Expected back: ${p.injuryReturn}` : null,
-    p.injurySource === "admin" ? "(set by admin)" : p.injurySource === "feed" ? "(EFL Fantasy feed)" : null,
+    p.injurySource === "admin" ? "(set by owner)" : p.injurySource === "feed" ? "(EFL Fantasy feed)" : null,
   ].filter(Boolean);
   const title = bits.join(" · ");
   const Icon = s === "suspended" ? Ban : s === "doubtful" ? AlertTriangle : Cross;

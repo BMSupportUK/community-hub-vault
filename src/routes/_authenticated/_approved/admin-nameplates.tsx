@@ -61,7 +61,7 @@ function AdminNameplates() {
       <div className="flex items-center justify-between gap-3 mb-6">
         <div>
           <Link to="/admin" className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1 mb-1">
-            <ArrowLeft className="size-3" /> Admin dashboard
+            <ArrowLeft className="size-3" /> Owner dashboard
           </Link>
           <h1 className="font-display text-2xl font-bold">Nameplates</h1>
           <p className="text-sm text-muted-foreground">Discord-style decorative banners users can equip behind their name.</p>

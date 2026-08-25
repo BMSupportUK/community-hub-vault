@@ -39,6 +39,11 @@ interface RoleDef {
   sort_order: number;
 }
 
+function displayRoleLabel(name: string, label: string) {
+  if (name === "admin") return "Owner";
+  return label;
+}
+
 interface CredLite {
   id: string;
   app_login_name: string;
@@ -162,7 +167,7 @@ function AdminRolesPage() {
 
   const toggleRole = async (row: Row, role: string) => {
     if (row.id === user?.id && role === "admin" && row.roles.includes("admin")) {
-      toast.error("You can't remove your own admin role.");
+      toast.error("You can't remove your own owner role.");
       return;
     }
     const has = row.roles.includes(role);
@@ -234,7 +239,7 @@ function AdminRolesPage() {
           to="/admin"
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4"
         >
-          <ArrowLeft className="size-4" /> Back to admin dashboard
+          <ArrowLeft className="size-4" /> Back to owner dashboard
         </Link>
         <header className="flex items-center gap-3 mb-6">
           <div className="size-11 rounded-2xl bg-gradient-primary grid place-items-center shadow-glow">
@@ -314,7 +319,7 @@ function AdminRolesPage() {
                           : "bg-transparent text-muted-foreground border-border hover:text-foreground",
                       )}
                     >
-                      {rd.label} ({count})
+                      {displayRoleLabel(rd.name, rd.label)} ({count})
                     </button>
                   );
                 })}
@@ -426,7 +431,7 @@ function AdminRolesPage() {
                               busy && "opacity-60 cursor-wait",
                             )}
                           >
-                            {busy ? "…" : rd.label}
+                            {busy ? "…" : displayRoleLabel(rd.name, rd.label)}
                           </button>
                         );
                       })}
@@ -696,7 +701,7 @@ function RolesManager({ defs, onChange }: { defs: RoleDef[]; onChange: () => voi
             key={r.name}
             className="grid grid-cols-[1fr_1fr_auto_auto] gap-4 px-5 py-3 border-b border-border last:border-0 items-center text-sm"
           >
-            <div className="font-medium">{r.label}</div>
+            <div className="font-medium">{displayRoleLabel(r.name, r.label)}</div>
             <code className="text-xs text-muted-foreground">{r.name}</code>
             <span
               className={cn(

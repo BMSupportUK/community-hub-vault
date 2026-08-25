@@ -89,7 +89,7 @@ function AdminNotifications() {
           "Content-Type": "application/json",
           apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string,
         },
-        body: JSON.stringify({ test: true, text: "✅ Test from BM Support admin panel" }),
+        body: JSON.stringify({ test: true, text: "✅ Test from BM Support owner panel" }),
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok || json?.ok === false) {

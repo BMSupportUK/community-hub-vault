@@ -38,7 +38,7 @@ const TwoFaResetAdminEmail = ({ userEmail, userName, reason, resetUrl, requested
         </Section>
         {resetUrl ? (
           <Section style={{ textAlign: 'center', margin: '24px 0' }}>
-            <Button href={resetUrl} style={button}>Open Admin Roles</Button>
+            <Button href={resetUrl} style={button}>Open Owner Roles</Button>
           </Section>
         ) : null}
         <Hr style={hr} />

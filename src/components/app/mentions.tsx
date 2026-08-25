@@ -12,7 +12,7 @@ export const STAFF_ROLE_TAGS = ["admin", "management", "moderator", "staff"] as 
 export const MEMBER_ROLE_TAGS = ["management", "moderator", "staff"] as const;
 
 export const ROLE_MENTION_LABELS: Record<string, string> = {
-  admin: "Notify all admins",
+  admin: "Notify all owners",
   management: "Notify all management",
   moderator: "Notify all moderators",
   staff: "Notify all staff",

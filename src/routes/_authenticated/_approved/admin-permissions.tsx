@@ -109,7 +109,7 @@ function AdminPermissionsPage() {
     <main className="flex-1 overflow-y-auto">
       <div className="max-w-6xl mx-auto px-6 py-8">
         <Link to="/admin" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4">
-          <ArrowLeft className="size-4" /> Back to admin dashboard
+          <ArrowLeft className="size-4" /> Back to owner dashboard
         </Link>
         <header className="flex items-center gap-3 mb-6">
           <div className="size-11 rounded-2xl bg-gradient-primary grid place-items-center shadow-glow">

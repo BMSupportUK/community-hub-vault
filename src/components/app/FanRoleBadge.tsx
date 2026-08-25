@@ -16,7 +16,7 @@ export function FanRoleBadge({ role, className = "" }: { role: FanStaffRole | nu
       } ${className}`}
     >
       <Icon className="size-3.5" />
-      {isAdmin ? "Admin" : "Fan Zone Moderator"}
+      {isAdmin ? "Owner" : "Fan Zone Moderator"}
     </span>
   );
 }

@@ -1348,7 +1348,7 @@ function FixturesList({
       <div className="rounded-2xl border border-border bg-surface-1 p-8 text-center text-sm text-muted-foreground">
         {mode === "completed"
           ? "No completed matches yet."
-          : "No fixtures yet. An admin can add them from the admin panel."}
+          : "No fixtures yet. An owner can add them from the owner panel."}
       </div>
     );
   }
@@ -2114,7 +2114,7 @@ function LeaderboardList({
                     onClick={() => setConfirmDelete(r)}
                     disabled={deletingId === r.userId}
                     className="ml-1 text-muted-foreground hover:text-red-500 disabled:opacity-50"
-                    title="Admin: delete this entrant and their predictions"
+                    title="Owner: delete this entrant and their predictions"
                     aria-label="Delete entrant"
                   >
                     {deletingId === r.userId ? (

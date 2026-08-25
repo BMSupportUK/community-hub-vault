@@ -1829,11 +1829,11 @@ function RequestAdminHelpButton({ ticketId }: { ticketId: string }) {
         _ticket_id: ticketId,
       } as never);
       if (error) {
-        toast.error(error.message || "Couldn't notify admins");
+        toast.error(error.message || "Couldn't notify owners");
       } else if (typeof data === "number" && data === 0) {
-        toast.message("Admins were already notified recently. Please wait a few minutes.");
+        toast.message("Owners were already notified recently. Please wait a few minutes.");
       } else {
-        toast.success("Admin and management have been notified.");
+        toast.success("Owner and management have been notified.");
       }
     } finally {
       setBusy(false);
@@ -1844,11 +1844,11 @@ function RequestAdminHelpButton({ ticketId }: { ticketId: string }) {
       type="button"
       onClick={onClick}
       disabled={busy}
-      title="Request help from admin or management"
+      title="Request help from owner or management"
       className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-amber-300 text-amber-950 hover:bg-amber-200 disabled:opacity-60 text-xs font-semibold shadow"
     >
       <HelpCircle className="size-3.5" />
-      {busy ? "Notifying…" : "Request admin help"}
+      {busy ? "Notifying…" : "Request owner help"}
     </button>
   );
 }
