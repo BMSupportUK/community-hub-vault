@@ -60,35 +60,36 @@ export function ChatMiniProfile({
           {children}
         </button>
       </PopoverTrigger>
-      <PopoverContent align="start" className="w-72 p-0 overflow-hidden">
-        <div className="bg-gradient-primary h-14" />
-        <div className="px-4 pb-4 -mt-7">
-          {hasAvatar ? (
-            <img
-              src={avatarUrl}
-              alt=""
-              className="size-14 rounded-full object-cover ring-2 ring-background"
-            />
-          ) : (
-            <div className="size-14 rounded-full bg-gradient-primary grid place-items-center text-lg font-semibold text-primary-foreground ring-2 ring-background">
-              {initial}
+      <PopoverContent align="start" className="w-80 max-w-[calc(100vw-2rem)] p-0 overflow-hidden">
+        <div className="relative">
+          <Nameplate
+            id={profile.nameplateId}
+            className="flex min-h-32 w-full flex-col justify-end rounded-none px-4 pb-4 pt-16 shadow-sm isolate"
+            fallbackStyle={{
+              background: "linear-gradient(135deg, hsl(var(--primary) / 0.45), hsl(var(--accent) / 0.35), hsl(var(--primary) / 0.55))",
+            }}
+          >
+            <div className="relative z-10 min-w-0 pr-2">
+              <div className="truncate text-xl font-bold leading-tight text-foreground drop-shadow-sm">{name}</div>
+              {username && <div className="mt-1 truncate text-xs font-medium text-foreground/80">@{username}</div>}
             </div>
-          )}
-          <div className="mt-2 min-w-0">
-            <Nameplate
-              id={profile.nameplateId}
-              className="flex h-20 w-full items-center justify-center rounded-lg px-4 min-w-0 shadow-sm isolate"
-              fallbackStyle={{
-                background: "linear-gradient(135deg, #1a4a2a 0%, #2d6a3f 50%, #1a4a2a 100%)",
-              }}
-            >
-              <span className="relative z-10 truncate text-base font-bold">{name}</span>
-            </Nameplate>
-            {username && (
-              <p className="mt-1 truncate text-xs text-muted-foreground">@{username}</p>
+          </Nameplate>
+          <div className="absolute left-4 top-4">
+            {hasAvatar ? (
+              <img
+                src={avatarUrl}
+                alt=""
+                className="size-14 rounded-full object-cover ring-2 ring-background shadow-lg"
+              />
+            ) : (
+              <div className="size-14 rounded-full bg-gradient-primary grid place-items-center text-lg font-semibold text-primary-foreground ring-2 ring-background shadow-lg">
+                {initial}
+              </div>
             )}
           </div>
-          <div className="mt-3 flex flex-wrap items-center gap-2">
+        </div>
+        <div className="px-4 pb-4 pt-3">
+          <div className="flex flex-wrap items-center gap-2">
             {role && (
               <span
                 className={cn(
