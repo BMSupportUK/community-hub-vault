@@ -16,20 +16,30 @@ type MentionRow = {
   created_at: string;
 };
 
-/** Navigation target for a mention. Preserves any existing query params and
- *  adds `msg=<source_id>` so the talk-channel route can scroll/flash the message. */
-function mentionNav(m: MentionRow): { to: string; search?: Record<string, string> } | null {
+/** Navigation target for a mention.
+ *  Talk-channel mentions use the typed `/home/$channel` route and pass the
+ *  message id as `?msg=...` so the channel page scrolls/flashes the message.
+ *  Other links navigate to the stored path as-is. */
+function mentionNav(m: MentionRow):
+  | { to: "/home/$channel"; params: { channel: string }; search?: { msg: string } }
+  | { to: string }
+  | null {
   if (!m.link_path) return null;
   const [base, qs] = m.link_path.split("?");
-  const search: Record<string, string> = {};
+  const existing: Record<string, string> = {};
   if (qs) {
     const params = new URLSearchParams(qs);
     params.forEach((value, key) => {
-      search[key] = value;
+      existing[key] = value;
     });
   }
-  if (m.source_id) search.msg = m.source_id;
-  return { to: base, search: Object.keys(search).length ? search : undefined };
+  const homeMatch = base.match(/^\/home\/([^/]+)$/);
+  if (homeMatch) {
+    const search: { msg?: string } = {};
+    if (m.source_id) search.msg = m.source_id;
+    return { to: "/home/$channel", params: { channel: homeMatch[1] }, search: Object.keys(search).length ? search : undefined };
+  }
+  return { to: base };
 }
 
 /**
