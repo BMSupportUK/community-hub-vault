@@ -257,18 +257,25 @@ export function BoroLiveMatchStrip() {
         // says so, or the Gamecast feed itself is still mid-match.
         const feedLive = statusIsInProgress(detailStatusRef.current);
         if (!controller.signal.aborted && (live?.inPlay || feedLive)) {
+          if (timer) window.clearTimeout(timer);
           timer = window.setTimeout(load, 5_000);
         }
       }
     };
 
+    refreshDetailRef.current = () => {
+      if (timer) window.clearTimeout(timer);
+      void load();
+    };
     void load();
 
     return () => {
+      refreshDetailRef.current = () => {};
       controller.abort();
       if (timer) window.clearTimeout(timer);
     };
   }, [selectedFixtureKey, selectedEventId, selectedSlug, live?.inPlay]);
+
   const openMatchCentre = () => setOpen(true);
 
   if (!data || (!live && !nf && !lr)) return null;
