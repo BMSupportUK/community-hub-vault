@@ -24,8 +24,41 @@ export const Route = createFileRoute("/fan-zone/$board/$topic")({
 });
 
 function TopicReadPage() {
-  const { board: slug } = Route.useParams();
+  const { board: slug, topic: topicId } = Route.useParams();
   const data = Route.useLoaderData();
+  const router = useRouter();
+
+  // Coalesce bursts (a goal writes the fixture and posts a match update almost
+  // together) into one reload.
+  const pending = useRef<number | undefined>(undefined);
+  const reload = () => {
+    if (pending.current) window.clearTimeout(pending.current);
+    pending.current = window.setTimeout(() => {
+      void router.invalidate();
+    }, 300);
+  };
+
+  // Live match-day thread: new bot replies (score/minute updates) push straight in.
+  useEffect(() => {
+    const channel = supabase
+      .channel(`fanzone-topic-${topicId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "forum_posts", filter: `topic_id=eq.${topicId}` },
+        () => reload(),
+      )
+      .subscribe();
+    return () => {
+      if (pending.current) window.clearTimeout(pending.current);
+      void supabase.removeChannel(channel);
+    };
+  }, [topicId]);
+
+  // Guests can't read forum_posts over realtime, but fixture score writes are
+  // public — they land at the same moment the match-day post is updated.
+  useBoroFixtureRealtime(reload, `fanzone-topic-fixtures-${topicId}`);
+
+
 
   if (!data) {
     return (
