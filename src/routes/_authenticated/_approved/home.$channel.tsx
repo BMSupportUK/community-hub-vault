@@ -49,6 +49,7 @@ import {
 import { GifPicker, extractStandaloneGif } from "@/components/app/GifPicker";
 import { ChatMessageBody, isRichChatContent } from "@/components/app/ChatMessageBody";
 import { ChatFormatToolbar } from "@/components/app/ChatFormatToolbar";
+import { ChatMiniProfile } from "@/components/app/ChatMiniProfile";
 import { EmojiPicker } from "@/components/app/EmojiPicker";
 import { resolveGifLink } from "@/lib/giphy.functions";
 
