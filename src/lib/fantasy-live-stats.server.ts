@@ -491,7 +491,7 @@ export async function syncFantasyScoring(): Promise<{
     scored.push(`gw${raw['gw_number']} (${rows.length} players)`);
 
     // Full time and all stats in — source man of the match automatically from
-    // the match stats (top scoring Boro player). Admins can override it after.
+    // the match stats (top scoring Boro player). Owners can override it after.
     try {
       const { autoAwardMotm } = await import("@/lib/fantasy-motm-auto.server");
       const res = await autoAwardMotm(fx.id, raw['id']);

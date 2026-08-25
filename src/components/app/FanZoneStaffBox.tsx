@@ -12,7 +12,7 @@ type StaffMember = {
   fan_avatar_url: string;
 };
 
-/** Side box listing Admins and Boro Fan Zone Moderators with mini cards. */
+/** Side box listing Owners and Boro Fan Zone Moderators with mini cards. */
 export function FanZoneStaffBox() {
   const profileTo = useFanProfileTo();
   const [members, setMembers] = useState<StaffMember[] | null>(null);

@@ -218,7 +218,7 @@ export const getWcLeaderboard = createServerFn({ method: "GET" })
       .order("total_points", { ascending: false });
     if (error) throw new Error(error.message);
     const rows = (data ?? []) as any[];
-    // Admins/management see the entrant's email under their name.
+    // Owners/management see the entrant's email under their name.
     const isAdmin = await isAdminOrManagement(context.supabase, context.userId);
     const emailMap = new Map<string, string>();
     if (isAdmin) {

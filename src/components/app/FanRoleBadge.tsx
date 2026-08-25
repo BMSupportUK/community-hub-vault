@@ -2,7 +2,7 @@ import { Shield, ShieldCheck } from "lucide-react";
 
 export type FanStaffRole = "admin" | "boro_fan_zone_moderator";
 
-/** Small badge showing a Fan Zone staff role (Admin / Fan Zone Moderator) with an icon. */
+/** Small badge showing a Fan Zone staff role (Owner / Fan Zone Moderator) with an icon. */
 export function FanRoleBadge({ role, className = "" }: { role: FanStaffRole | null | undefined; className?: string }) {
   if (!role) return null;
   const isAdmin = role === "admin";

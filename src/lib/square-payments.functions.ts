@@ -180,7 +180,7 @@ export const chargeOrderWithSquare = createServerFn({ method: "POST" })
   });
 
 /**
- * Admin-only reconciliation: scans recent Square payments and matches them
+ * Owner-only reconciliation: scans recent Square payments and matches them
  * against an internal order by `reference_id`. If a COMPLETED payment is
  * found for an unpaid order, upserts `order_payments` and marks paid.
  * Safety net for the rare case where Square charged but our follow-up DB
@@ -191,13 +191,13 @@ export const reconcileSquareOrder = createServerFn({ method: "POST" })
   .inputValidator((input) => z.object({ orderId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
-    // Admin-only
+    // Owner-only
     const { data: roles } = await supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", userId)
       .in("role", ["admin", "management"]);
-    if (!roles || roles.length === 0) throw new Error("Admin access required");
+    if (!roles || roles.length === 0) throw new Error("Owner access required");
 
     const { data: order } = await supabaseAdmin
       .from("orders")

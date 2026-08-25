@@ -62,7 +62,7 @@ function SignupPage() {
       setBusy(false);
       return toast.error(error.message);
     }
-    // Capture as much client/browser info as we can for admin review
+    // Capture as much client/browser info as we can for owner review
     try {
       const nav = navigator as Navigator & {
         deviceMemory?: number;

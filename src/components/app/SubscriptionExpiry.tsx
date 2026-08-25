@@ -45,7 +45,7 @@ export function SubscriptionExpiry() {
 
   // Trigger server-side revoke the moment the latest expiry passes, so the
   // 'subscriber' role drops in real time (cron is the backstop every minute).
-  // Admin/management/staff/moderator are protected inside the RPC.
+  // Owner/management/staff/moderator are protected inside the RPC.
   // Must run before any early return to keep hook order stable.
   // Never auto-revoke roles for admin/management/staff/moderator — they
   // shouldn't be logged out / downgraded when an app credential expires.
