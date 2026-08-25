@@ -77,12 +77,12 @@ export function ChatMiniProfile({
           <div className="mt-2 min-w-0">
             <Nameplate
               id={profile.nameplateId}
-              className="inline-flex items-center rounded-md px-3 py-1.5 min-w-0 shadow-sm isolate"
+              className="flex h-20 w-full items-center justify-center rounded-lg px-4 min-w-0 shadow-sm isolate"
               fallbackStyle={{
                 background: "linear-gradient(135deg, #1a4a2a 0%, #2d6a3f 50%, #1a4a2a 100%)",
               }}
             >
-              <span className="relative z-10 truncate text-sm font-semibold">{name}</span>
+              <span className="relative z-10 truncate text-base font-bold">{name}</span>
             </Nameplate>
             {username && (
               <p className="mt-1 truncate text-xs text-muted-foreground">@{username}</p>
