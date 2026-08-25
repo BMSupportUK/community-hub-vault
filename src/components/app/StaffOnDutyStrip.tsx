@@ -10,7 +10,13 @@ type StaffShift = { id: string; user_id: string; clock_in: string };
 type StaffBreak = { id: string; shift_id: string; user_id: string; kind: BreakKind; started_at: string };
 type StaffProfile = { id: string; username: string | null; display_name: string | null; avatar_url: string | null };
 
-export function StaffOnDutyStrip() {
+const ROLE_ORDER = ["admin", "management", "moderator", "staff"] as const;
+
+export function StaffOnDutySidebar() {
+  return <StaffOnDutyStrip variant="sidebar" />;
+}
+
+export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "sidebar" } = {}) {
   const [shifts, setShifts] = useState<StaffShift[]>([]);
   const [breaks, setBreaks] = useState<StaffBreak[]>([]);
   const [profiles, setProfiles] = useState<Record<string, StaffProfile>>({});
