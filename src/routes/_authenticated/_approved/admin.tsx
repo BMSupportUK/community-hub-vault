@@ -334,8 +334,8 @@ function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () 
       )}
       {!hasPin ? (
         <>
-          <h2 className="font-display text-lg font-bold">Set your admin PIN</h2>
-          <p className="text-sm text-muted-foreground mb-4">A personal PIN plus your account password is required to enter the admin dashboard.</p>
+          <h2 className="font-display text-lg font-bold">Set your owner PIN</h2>
+          <p className="text-sm text-muted-foreground mb-4">A personal PIN plus your account password is required to enter the owner dashboard.</p>
           <input value={pin} onChange={(e) => setPin(e.target.value)} type="password" placeholder="New PIN (min 4)" className="w-full mb-2 px-3 py-2.5 rounded-lg bg-surface-2 border border-border text-sm" />
           <input value={confirmPin} onChange={(e) => setConfirmPin(e.target.value)} type="password" placeholder="Confirm PIN" className="w-full mb-4 px-3 py-2.5 rounded-lg bg-surface-2 border border-border text-sm" />
           <button onClick={setupPin} disabled={busy} className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-medium disabled:opacity-60">
@@ -425,7 +425,7 @@ function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () 
         </>
       ) : (
         <>
-          <h2 className="font-display text-lg font-bold">Reset admin PIN</h2>
+          <h2 className="font-display text-lg font-bold">Reset owner PIN</h2>
           <p className="text-sm text-muted-foreground mb-4">Confirm your account password, then choose a new PIN.</p>
           <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder="Account password" className="w-full mb-2 px-3 py-2.5 rounded-lg bg-surface-2 border border-border text-sm" autoFocus />
           <input value={pin} onChange={(e) => setPin(e.target.value)} type="password" placeholder="New PIN (min 4)" className="w-full mb-2 px-3 py-2.5 rounded-lg bg-surface-2 border border-border text-sm" />
@@ -701,7 +701,7 @@ function RecoveryCodes() {
           </div>
           <div>
             <h2 className="font-display font-bold">Backup recovery codes</h2>
-            <p className="text-xs text-muted-foreground">One-time codes to unlock the admin dashboard if you lose your password, PIN, or 2FA device.</p>
+            <p className="text-xs text-muted-foreground">One-time codes to unlock the owner dashboard if you lose your password, PIN, or 2FA device.</p>
           </div>
         </div>
         <div className="flex items-center gap-2">

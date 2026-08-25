@@ -167,7 +167,7 @@ function AdminRolesPage() {
 
   const toggleRole = async (row: Row, role: string) => {
     if (row.id === user?.id && role === "admin" && row.roles.includes("admin")) {
-      toast.error("You can't remove your own admin role.");
+      toast.error("You can't remove your own owner role.");
       return;
     }
     const has = row.roles.includes(role);
@@ -239,7 +239,7 @@ function AdminRolesPage() {
           to="/admin"
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4"
         >
-          <ArrowLeft className="size-4" /> Back to admin dashboard
+          <ArrowLeft className="size-4" /> Back to owner dashboard
         </Link>
         <header className="flex items-center gap-3 mb-6">
           <div className="size-11 rounded-2xl bg-gradient-primary grid place-items-center shadow-glow">

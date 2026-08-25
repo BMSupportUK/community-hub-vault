@@ -1348,7 +1348,7 @@ function FixturesList({
       <div className="rounded-2xl border border-border bg-surface-1 p-8 text-center text-sm text-muted-foreground">
         {mode === "completed"
           ? "No completed matches yet."
-          : "No fixtures yet. An admin can add them from the admin panel."}
+          : "No fixtures yet. An owner can add them from the owner panel."}
       </div>
     );
   }

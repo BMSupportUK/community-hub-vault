@@ -96,7 +96,7 @@ function AdminReviewsPage() {
       <div className="max-w-5xl mx-auto px-6 py-8">
         <div className="mb-4">
           <Link to="/admin" className="inline-flex items-center gap-2 text-sm text-purple-200 hover:text-white">
-            <ArrowLeft className="size-4" /> Back to Admin Dashboard
+            <ArrowLeft className="size-4" /> Back to Owner Dashboard
           </Link>
         </div>
         <header className="mb-6">
