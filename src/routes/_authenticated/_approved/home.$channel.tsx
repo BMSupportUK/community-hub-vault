@@ -50,7 +50,7 @@ import { GifPicker, extractStandaloneGif } from "@/components/app/GifPicker";
 import { EmojiPicker } from "@/components/app/EmojiPicker";
 import { resolveGifLink } from "@/lib/giphy.functions";
 
-import { StaffOnDutyStrip } from "@/components/app/StaffOnDutyStrip";
+import { StaffOnDutySidebar } from "@/components/app/StaffOnDutyStrip";
 import { cn } from "@/lib/utils";
 import { DEFAULT_AVATAR_URL } from "@/lib/default-avatar";
 import { Nameplate } from "@/components/app/Nameplate";
