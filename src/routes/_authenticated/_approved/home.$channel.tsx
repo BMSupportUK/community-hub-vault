@@ -348,6 +348,8 @@ function ChannelPage() {
   const [emojiPickerId, setEmojiPickerId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState("");
+  const [editDraftHtml, setEditDraftHtml] = useState("");
+  const editEditorRef = useRef<HTMLDivElement>(null);
   const [canSend, setCanSend] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const taRef = useRef<HTMLDivElement>(null);
