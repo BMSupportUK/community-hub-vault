@@ -118,7 +118,7 @@ function MfaChallengePage() {
             {showReset && (
               <div className="mt-2 rounded-lg border border-border bg-background p-3 space-y-2">
                 <p className="text-xs text-muted-foreground">
-                  We'll email our admin team and send you a confirmation. They'll verify your identity before resetting.
+                  We'll email our owner team and send you a confirmation. They'll verify your identity before resetting.
                 </p>
                 <textarea
                   value={reason}

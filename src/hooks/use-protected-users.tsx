@@ -42,7 +42,7 @@ function load() {
 }
 
 /**
- * Admins, management and moderators are protected — members can't block them.
+ * Owners, management and moderators are protected — members can't block them.
  * Returns a lookup so the UI can flag those accounts before attempting a block.
  */
 export function useProtectedUsers() {
