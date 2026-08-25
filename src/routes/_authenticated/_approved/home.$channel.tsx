@@ -1806,11 +1806,6 @@ function ChannelPage() {
             </div>
           </div>
         )}
-        <ChatFormatToolbar
-          editorRef={taRef}
-          onAfterCommand={syncComposer}
-          disabled={!canSend || slowRemaining > 0 || isMuted}
-        />
         <div className="relative flex items-end gap-2 rounded-xl bg-surface-2 border border-border focus-within:border-primary px-3 py-2">
           {mention.dropdown}
           <div
@@ -1914,6 +1909,11 @@ function ChannelPage() {
               if (files.length) void sendPastedImages(files);
               e.target.value = "";
             }}
+          />
+          <ChatFormatToolbar
+            editorRef={taRef}
+            onAfterCommand={syncComposer}
+            disabled={!canSend || slowRemaining > 0 || isMuted}
           />
           <button
             type="button"
