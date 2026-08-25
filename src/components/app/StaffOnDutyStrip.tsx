@@ -123,7 +123,8 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
               <div
                 key={s.id}
                 className={cn(
-                  "shrink-0 min-w-[180px] rounded-lg p-2.5 border backdrop-blur transition-colors",
+                  "rounded-lg p-2.5 border backdrop-blur transition-colors",
+                  isSidebar ? "w-full" : "shrink-0 min-w-[180px]",
                   onBreak
                     ? (over ? "bg-red-500/30 border-red-300/60" : "bg-amber-300/30 border-amber-200/60")
                     : "bg-emerald-400/25 border-emerald-200/50",
