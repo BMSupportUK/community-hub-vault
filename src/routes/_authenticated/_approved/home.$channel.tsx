@@ -47,6 +47,8 @@ import {
   MEMBER_ROLE_TAGS,
 } from "@/components/app/mentions";
 import { GifPicker, extractStandaloneGif } from "@/components/app/GifPicker";
+import { ChatMessageBody, isRichChatContent } from "@/components/app/ChatMessageBody";
+import { ChatFormatToolbar } from "@/components/app/ChatFormatToolbar";
 import { EmojiPicker } from "@/components/app/EmojiPicker";
 import { resolveGifLink } from "@/lib/giphy.functions";
 
@@ -302,6 +304,8 @@ function ChannelPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [draft, setDraft] = useState("");
+  /** Rich HTML of the composer, used when the formatting toolbar was applied. */
+  const [draftHtml, setDraftHtml] = useState("");
   const [replyTo, setReplyTo] = useState<Message | null>(null);
   const [flashMsgId, setFlashMsgId] = useState<string | null>(null);
 
@@ -418,7 +422,16 @@ function ChannelPage() {
     const editor = taRef.current;
     if (!editor || editor.innerText.replace(/\n$/, "") === draft) return;
     editor.textContent = draft;
+    setDraftHtml(editor.innerHTML);
   }, [draft]);
+
+  /** Sync both the plain-text and rich-HTML drafts from the live composer. */
+  const syncComposer = () => {
+    const editor = taRef.current;
+    if (!editor) return;
+    setDraft(editor.innerText.replace(/\n$/, ""));
+    setDraftHtml(editor.innerHTML);
+  };
 
   // Load channel
   useEffect(() => {
@@ -692,11 +705,22 @@ function ChannelPage() {
       }
     }
     setSending(true);
-    const originalContent = draft.trim();
+    // Keep the formatted HTML when the toolbar was used, otherwise send plain text.
+    const richHtml = draftHtml.trim();
+    const originalContent =
+      richHtml && isRichChatContent(richHtml) ? richHtml : draft.trim();
     const originalGif = pendingGif;
+    const originalPlain = draft.trim();
+    const originalHtml = richHtml;
+    const restoreDraft = () => {
+      setDraft(originalPlain);
+      setDraftHtml(originalHtml);
+      if (taRef.current) taRef.current.innerHTML = originalHtml;
+    };
     let content = pendingGif ?? originalContent;
     setDraft("");
-    if (taRef.current) taRef.current.textContent = "";
+    setDraftHtml("");
+    if (taRef.current) taRef.current.innerHTML = "";
     setPendingGif(null);
     if (/^https?:\/\/\S+$/i.test(content) && /(tenor\.com|giphy\.com|gph\.is)\//i.test(content)) {
       setUploadingPaste(true);
@@ -704,7 +728,7 @@ function ChannelPage() {
         const resolved = await resolveGif({ data: { url: content } });
         if (!resolved.url) {
           toast.error("That GIF could not be loaded. Please choose it again.");
-          setDraft(originalContent);
+          restoreDraft();
           setPendingGif(originalGif);
           setSending(false);
           return;
@@ -712,7 +736,7 @@ function ChannelPage() {
         content = resolved.url;
       } catch {
         toast.error("That GIF could not be loaded. Please choose it again.");
-        setDraft(originalContent);
+        restoreDraft();
         setPendingGif(originalGif);
         setSending(false);
         return;
@@ -739,7 +763,7 @@ function ChannelPage() {
             ? "You don't have permission to send messages in this channel."
             : msg,
       );
-      setDraft(originalContent);
+      restoreDraft();
       setPendingGif(originalGif);
     } else {
       setLastSentAt(Date.now());
@@ -1481,7 +1505,7 @@ function ChannelPage() {
                                   );
                                 }
                                 return (
-                                  <MentionText
+                                  <ChatMessageBody
                                     content={m.content}
                                     currentUsername={myUsername}
                                     className="text-sm"
@@ -1782,6 +1806,11 @@ function ChannelPage() {
             </div>
           </div>
         )}
+        <ChatFormatToolbar
+          editorRef={taRef}
+          onAfterCommand={syncComposer}
+          disabled={!canSend || slowRemaining > 0 || isMuted}
+        />
         <div className="relative flex items-end gap-2 rounded-xl bg-surface-2 border border-border focus-within:border-primary px-3 py-2">
           {mention.dropdown}
           <div
@@ -1813,6 +1842,7 @@ function ChannelPage() {
               const linked = editor.querySelector("a")?.getAttribute("href");
               const next = editor.innerText.replace(/\n$/, "");
               setDraft(next);
+              setDraftHtml(editor.innerHTML);
               // Windows 11's GIF panel commonly reports a GIF URL as a plain
               // `insertText` input rather than a paste. Detect the inserted
               // media itself instead of relying on the browser's input type.
