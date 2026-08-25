@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Radio, CalendarDays, Trophy, ChevronRight, X } from "lucide-react";
 import {
@@ -43,6 +43,27 @@ function countdown(toIso: string, now: number) {
   return `${m}m ${ss}s`;
 }
 
+/** Latest score published by the Gamecast feed, read off its running event scores. */
+function detailScore(detail: MatchDetailDTO | null) {
+  if (!detail) return null;
+  let best: { home: number; away: number } | null = null;
+  for (const ev of detail.events ?? []) {
+    const h = (ev as { homeScore?: number | null }).homeScore;
+    const a = (ev as { awayScore?: number | null }).awayScore;
+    if (typeof h !== "number" || typeof a !== "number") continue;
+    if (!best || h + a >= best.home + best.away) best = { home: h, away: a };
+  }
+  return best;
+}
+
+function statusIsInProgress(status: string | null | undefined) {
+  const s = (status ?? "").trim().toLowerCase();
+  if (!s) return false;
+  if (/^(ft|aet)$|full\s*time|final/.test(s)) return false;
+  if (/scheduled|not started|pre-match/.test(s)) return false;
+  return true;
+}
+
 function Side({ name, logo }: { name: string; logo?: string | null }) {
   return (
     <span className="flex items-center gap-1.5 min-w-0">
@@ -79,6 +100,7 @@ export function BoroLiveMatchStrip() {
   // until the new game week rolls the next fixture in.
   const [view, setView] = useState<"auto" | "last">("auto");
   const [now, setNow] = useState(() => Date.now());
+  const detailStatusRef = useRef<string | null>(null);
 
 
 
@@ -201,7 +223,10 @@ export function BoroLiveMatchStrip() {
           signal: controller.signal,
         });
         const detail = response.ok ? ((await response.json()) as MatchDetailDTO) : null;
-        if (detail && (detail.available || detail.home || detail.away)) setPreloadedDetail(detail);
+        if (detail && (detail.available || detail.home || detail.away)) {
+          detailStatusRef.current = detail.status ?? null;
+          setPreloadedDetail(detail);
+        }
 
         // No browser relay is needed: FotMob is fetched server-side, so the
         // endpoint above already returns live data on every 5s cycle.
@@ -211,7 +236,12 @@ export function BoroLiveMatchStrip() {
           console.error("[boro-match-centre] preload failed", error);
         }
       } finally {
-        if (!controller.signal.aborted && live?.inPlay) timer = window.setTimeout(load, 5_000);
+        // Keep polling whenever the game is in play — either the fixture cache
+        // says so, or the Gamecast feed itself is still mid-match.
+        const feedLive = statusIsInProgress(detailStatusRef.current);
+        if (!controller.signal.aborted && (live?.inPlay || feedLive)) {
+          timer = window.setTimeout(load, 5_000);
+        }
       }
     };
 
@@ -345,7 +375,27 @@ export function BoroLiveMatchStrip() {
             const showingLiveMatch = !!live && m === live;
             const isLive = showingLiveMatch || detailIsInProgress;
             const isFixture = !isLive && !!nf && m === nf;
-            const liveStatus = live?.clock || live?.statusDetail || detailStatus || "Live";
+            // Score + clock come from the Gamecast feed while a game is on —
+            // it refreshes every 5s, so the pop-up ticks along with play.
+            const feedScore = detailScore(preloadedDetail);
+            const feedFlipped =
+              !!preloadedDetail?.home &&
+              !!m.home &&
+              preloadedDetail.home.trim().toLowerCase() !== m.home.trim().toLowerCase();
+            const liveHome = feedScore ? (feedFlipped ? feedScore.away : feedScore.home) : null;
+            const liveAway = feedScore ? (feedFlipped ? feedScore.home : feedScore.away) : null;
+            const shownHome =
+              (m as { homeScore?: number | null }).homeScore ?? (isLive ? (liveHome ?? 0) : null);
+            const shownAway =
+              (m as { awayScore?: number | null }).awayScore ?? (isLive ? (liveAway ?? 0) : null);
+            const displayHome = isLive && liveHome !== null ? liveHome : shownHome;
+            const displayAway = isLive && liveAway !== null ? liveAway : shownAway;
+            const liveStatus =
+              (isLive ? preloadedDetail?.clock || detailStatus : "") ||
+              live?.clock ||
+              live?.statusDetail ||
+              detailStatus ||
+              "Live";
             const canSwitch = !!live && !!lr;
             const switcher: Array<{ key: "auto" | "last"; label: string }> = [
               ...(live ? ([{ key: "auto", label: "Live now" }] as const) : []),
@@ -394,9 +444,9 @@ export function BoroLiveMatchStrip() {
                       <span className="font-display text-xl font-black text-white/85">v</span>
                     ) : (
                       <span className="font-display text-3xl font-black tabular-nums text-white">
-                        {(m as { homeScore: number }).homeScore}
+                        {displayHome ?? 0}
                         <span className="px-1 text-white/70">-</span>
-                        {(m as { awayScore: number }).awayScore}
+                        {displayAway ?? 0}
                       </span>
                     )}
                   </div>
