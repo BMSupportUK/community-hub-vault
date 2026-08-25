@@ -66,7 +66,7 @@ export function ReportButton({ kind, targetId, disabled, className, variant = "c
           <DialogTitle>Report {kind === "dm_message" ? "message" : "post"}</DialogTitle>
         </DialogHeader>
         <p className="text-xs text-muted-foreground">
-          Tell the moderators what's wrong. Reports are reviewed by admins and Boro Fan Zone moderators.
+          Tell the moderators what's wrong. Reports are reviewed by owners and Boro Fan Zone moderators.
         </p>
         <Textarea
           value={reason}

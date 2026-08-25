@@ -19,7 +19,7 @@ const VaultPinResetEmail = ({ userName, tempPin = '0000', resetByName, loginUrl 
       <Container style={container}>
         <Heading style={h1}>{userName ? `Hi ${userName},` : 'Hi,'}</Heading>
         <Text style={text}>
-          Your credentials vault PIN on {SITE_NAME} has been reset{resetByName ? ` by ${resetByName}` : ' by an administrator'}.
+          Your credentials vault PIN on {SITE_NAME} has been reset{resetByName ? ` by ${resetByName}` : ' by an owner'}.
         </Text>
         <Section style={card}>
           <Text style={cardLabel}>Your temporary PIN</Text>
@@ -48,7 +48,7 @@ export const template = {
   component: VaultPinResetEmail,
   subject: 'Your credentials vault PIN has been reset',
   displayName: 'Vault PIN reset',
-  previewData: { userName: 'Jane', tempPin: '0000', resetByName: 'Admin' },
+  previewData: { userName: 'Jane', tempPin: '0000', resetByName: 'Owner' },
 } satisfies TemplateEntry
 
 const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }

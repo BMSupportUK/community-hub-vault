@@ -125,7 +125,7 @@ function AdminAffiliateBannersPage() {
   return (
     <div className="w-full h-dvh overflow-y-auto px-4 md:px-8 py-6 space-y-5">
       <Button asChild variant="ghost" size="sm" className="-ml-2">
-        <Link to="/admin"><ArrowLeft className="size-4 mr-1" />Admin</Link>
+        <Link to="/admin"><ArrowLeft className="size-4 mr-1" />Owner panel</Link>
       </Button>
       <div>
         <h1 className="font-display text-2xl font-bold">Affiliate banners</h1>

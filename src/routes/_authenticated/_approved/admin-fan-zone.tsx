@@ -355,7 +355,7 @@ function AdminFanZonePage() {
               <Tabs value={roleTab} onValueChange={(v) => setRoleTab(v as RoleTab)}>
                 <TabsList className="bg-transparent p-0 h-auto gap-1">
                   <TabsTrigger value="admins" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
-                    <Shield className="size-3.5 mr-1.5 text-amber-400" /> Admins{counts.admins > 0 && <span className="ml-1.5 text-xs text-amber-400">{counts.admins}</span>}
+                    <Shield className="size-3.5 mr-1.5 text-amber-400" /> Owners{counts.admins > 0 && <span className="ml-1.5 text-xs text-amber-400">{counts.admins}</span>}
                   </TabsTrigger>
                   <TabsTrigger value="moderators" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
                     <ShieldCheck className="size-3.5 mr-1.5 text-sky-400" /> Moderators{counts.moderators > 0 && <span className="ml-1.5 text-xs text-sky-400">{counts.moderators}</span>}
@@ -397,7 +397,7 @@ function AdminFanZonePage() {
           <div className="flex items-center gap-2">
             <Trophy className="size-5 text-amber-500" />
             <h1 className="text-xl font-semibold">
-              {roleTab === "admins" ? "Admin Team" : roleTab === "moderators" ? "Moderators" : statusTab === "all" ? "Recent Members" : statusTab.charAt(0).toUpperCase() + statusTab.slice(1) + " Members"}
+              {roleTab === "admins" ? "Owner Team" : roleTab === "moderators" ? "Moderators" : statusTab === "all" ? "Recent Members" : statusTab.charAt(0).toUpperCase() + statusTab.slice(1) + " Members"}
             </h1>
           </div>
           <div className="flex items-center gap-2">
@@ -542,7 +542,7 @@ function AdminFanZonePage() {
                               <div className="flex items-center gap-1.5 mt-1">
                                 {isAdminRole(r.user_id) && (
                                   <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
-                                    <Shield className="size-3" /> Admin
+                                    <Shield className="size-3" /> Owner
                                   </span>
                                 )}
                                 {isModeratorRole(r.user_id) && !isAdminRole(r.user_id) && (

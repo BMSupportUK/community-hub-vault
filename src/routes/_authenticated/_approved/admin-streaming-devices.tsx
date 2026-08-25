@@ -145,7 +145,7 @@ function AdminStreamingDevicesPage() {
       <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
         <header className="flex items-start justify-between gap-3 flex-wrap">
           <div>
-            <h1 className="text-2xl font-bold">Streaming devices admin</h1>
+            <h1 className="text-2xl font-bold">Streaming devices owner panel</h1>
             <p className="text-sm text-muted-foreground">Manage the device catalogue and refresh prices.</p>
           </div>
           <div className="flex gap-2">

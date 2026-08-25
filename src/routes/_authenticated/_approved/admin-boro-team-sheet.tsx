@@ -17,9 +17,9 @@ import {
 export const Route = createFileRoute("/_authenticated/_approved/admin-boro-team-sheet")({
   head: () => ({
     meta: [
-      { title: "Boro Team Sheets — Admin" },
+      { title: "Boro Team Sheets — Owner" },
       { name: "description", content: "Monitor and manage the automatic Middlesbrough team sheet posts in match day threads." },
-      { property: "og:title", content: "Boro Team Sheets — Admin" },
+      { property: "og:title", content: "Boro Team Sheets — Owner" },
       { property: "og:description", content: "Monitor and manage the automatic Middlesbrough team sheet posts in match day threads." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -104,7 +104,7 @@ function AdminBoroTeamSheetPage() {
       <div className="flex items-center gap-3">
         <Button asChild variant="ghost" size="sm">
           <Link to="/admin">
-            <ArrowLeft className="size-4 mr-1" /> Admin
+            <ArrowLeft className="size-4 mr-1" /> Owner panel
           </Link>
         </Button>
       </div>

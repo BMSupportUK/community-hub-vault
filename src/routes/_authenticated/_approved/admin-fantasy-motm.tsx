@@ -12,9 +12,9 @@ import { getFantasyMotmData, adminSetFantasyMotm } from "@/lib/fantasy.functions
 export const Route = createFileRoute("/_authenticated/_approved/admin-fantasy-motm")({
   head: () => ({
     meta: [
-      { title: "Fantasy Man of the Match — Admin" },
+      { title: "Fantasy Man of the Match — Owner" },
       { name: "description", content: "Award the 3-point Man of the Match bonus for each MFC Fantasy Manager gameweek." },
-      { property: "og:title", content: "Fantasy Man of the Match — Admin" },
+      { property: "og:title", content: "Fantasy Man of the Match — Owner" },
       { property: "og:description", content: "Award the 3-point Man of the Match bonus for each MFC Fantasy Manager gameweek." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -83,7 +83,7 @@ function AdminFantasyMotmPage() {
       <div className="flex items-center gap-3">
         <Button asChild variant="ghost" size="sm">
           <Link to="/admin">
-            <ArrowLeft className="size-4 mr-1" /> Admin
+            <ArrowLeft className="size-4 mr-1" /> Owner panel
           </Link>
         </Button>
       </div>

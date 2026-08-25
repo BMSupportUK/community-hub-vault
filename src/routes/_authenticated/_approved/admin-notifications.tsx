@@ -111,7 +111,7 @@ function AdminNotifications() {
         <div className="absolute inset-0 bg-gradient-to-br from-sky-700 via-indigo-700 to-violet-700" />
         <div className="relative p-6 md:p-10 text-white">
           <Link to="/admin" className="inline-flex items-center gap-1 text-xs text-white/70 hover:text-white mb-3">
-            <ArrowLeft className="size-3.5" /> Admin
+            <ArrowLeft className="size-3.5" /> Owner panel
           </Link>
           <div className="text-xs uppercase tracking-[0.2em] text-indigo-200/80 mb-3 flex items-center gap-2">
             <BellRing className="size-3.5" /> Notifications

@@ -5,7 +5,7 @@ import adminAvatarAsset from "@/assets/admin-avatar.png.asset.json";
 /** Fixed avatar every Fan Zone moderator uses. */
 export const MODERATOR_AVATAR_URL = moderatorAvatarAsset.url;
 
-/** Fixed avatar every admin account uses. */
+/** Fixed avatar every owner account uses. */
 export const ADMIN_AVATAR_URL = adminAvatarAsset.url;
 
 /** Staff roles that may not change their Fan Zone avatar. */
@@ -31,7 +31,7 @@ export function useFanAvatarLock() {
     isAdmin,
     forcedAvatar: isAdmin ? ADMIN_AVATAR_URL : isModerator ? MODERATOR_AVATAR_URL : null,
     lockMessage: isAdmin
-      ? "Admins use the official Admin badge picture — it can't be changed."
+      ? "Owners use the official Owner badge picture — it can't be changed."
       : isModerator
         ? "Moderators use the official Moderator badge picture — it can't be changed."
         : "Staff accounts can't change their Fan Zone picture.",

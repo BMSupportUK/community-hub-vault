@@ -18,9 +18,9 @@ import {
 export const Route = createFileRoute("/_authenticated/_approved/admin-fantasy-injuries")({
   head: () => ({
     meta: [
-      { title: "Fantasy injuries — Admin" },
+      { title: "Fantasy injuries — Owner" },
       { name: "description", content: "Flag injured, doubtful or suspended Middlesbrough players in the MFC Fantasy Manager." },
-      { property: "og:title", content: "Fantasy injuries — Admin" },
+      { property: "og:title", content: "Fantasy injuries — Owner" },
       { property: "og:description", content: "Flag injured, doubtful or suspended Middlesbrough players in the MFC Fantasy Manager." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -116,7 +116,7 @@ function AdminFantasyInjuriesPage() {
       <div className="flex items-center gap-3">
         <Button asChild variant="ghost" size="sm">
           <Link to="/admin">
-            <ArrowLeft className="size-4 mr-1" /> Admin
+            <ArrowLeft className="size-4 mr-1" /> Owner panel
           </Link>
         </Button>
       </div>

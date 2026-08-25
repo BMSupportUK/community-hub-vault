@@ -217,7 +217,7 @@ function AdminPredictionsPage() {
             </div>
             <div className="flex-1">
               <h1 className="font-display text-2xl sm:text-3xl font-bold text-white">
-                World Cup 2026 — Admin
+                World Cup 2026 — Owner
               </h1>
               <p className="text-sm text-white/85">
                 Manage fixtures, view the leaderboard and edit settings.

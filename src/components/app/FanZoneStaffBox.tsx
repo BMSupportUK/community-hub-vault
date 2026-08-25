@@ -31,7 +31,7 @@ export function FanZoneStaffBox() {
         fan_alias: r.fan_alias,
         fan_avatar_url: r.fan_avatar_url,
       }));
-      // Admins first, then moderators; alphabetical within each
+      // Owners first, then moderators; alphabetical within each
       out.sort((a, b) => {
         if (a.role !== b.role) return a.role === "admin" ? -1 : 1;
         return a.fan_alias.toLowerCase().localeCompare(b.fan_alias.toLowerCase());

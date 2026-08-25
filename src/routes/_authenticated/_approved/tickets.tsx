@@ -1258,7 +1258,7 @@ function TicketDetail({
       const msg = error.message;
       return toast.error(
         msg.includes("@all") || msg.includes("@here")
-          ? "Only admin and management can use @all or @here."
+          ? "Only owner and management can use @all or @here."
           : msg,
       );
     }
