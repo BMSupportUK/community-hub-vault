@@ -309,7 +309,7 @@ export function WinnersTab({ title, subtitle, winners = [], competition, viewerU
       {canSeeEmails && competition && derivedReady && (
         <div className="rounded-xl border border-border bg-surface-2/60 p-3 flex items-center justify-between gap-3 flex-wrap">
           <div className="text-xs text-muted-foreground">
-            Admin: {hasPersisted ? "Re-send winner emails or refresh the announcement below." : "Announce these winners and email them a confirmation link."}
+            Owner: {hasPersisted ? "Re-send winner emails or refresh the announcement below." : "Announce these winners and email them a confirmation link."}
           </div>
           <Button size="sm" onClick={handleAnnounce} disabled={announcing} className="gap-2">
             {announcing ? <Loader2 className="size-4 animate-spin" /> : <Mail className="size-4" />}

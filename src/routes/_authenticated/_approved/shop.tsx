@@ -2784,7 +2784,7 @@ function OrdersView({
       />
       <header className="relative px-6 md:px-8 pt-8 pb-6 border-b border-purple-500/30 bg-purple-950/40 backdrop-blur">
         <h1 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 bg-clip-text text-transparent">
-          {scope === "all" ? "Shop Admin · Orders" : "Your Orders"}
+          {scope === "all" ? "Shop Owner · Orders" : "Your Orders"}
         </h1>
         <p className="text-purple-200/80 mt-1">
           Every order in one place — full details, live status, and direct chat with our team.
