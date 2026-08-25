@@ -104,7 +104,12 @@ export function MentionsBadge() {
     setItems((prev) => prev.filter((x) => x.id !== m.id));
     setOpen(false);
     const nav = mentionNav(m);
-    if (nav) navigate({ to: nav.to as any, search: nav.search });
+    if (nav) {
+      navigate({
+        to: nav.to as any,
+        search: nav.search ? (prev) => ({ ...prev, ...nav.search }) : undefined,
+      });
+    }
   };
 
 
