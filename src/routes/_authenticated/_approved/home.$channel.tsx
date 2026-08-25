@@ -49,6 +49,7 @@ import {
 import { GifPicker, extractStandaloneGif } from "@/components/app/GifPicker";
 import { ChatMessageBody, isRichChatContent } from "@/components/app/ChatMessageBody";
 import { ChatFormatToolbar } from "@/components/app/ChatFormatToolbar";
+import { ChatMiniProfile } from "@/components/app/ChatMiniProfile";
 import { EmojiPicker } from "@/components/app/EmojiPicker";
 import { resolveGifLink } from "@/lib/giphy.functions";
 
@@ -1334,7 +1335,25 @@ function ChannelPage() {
                 const parent = m.reply_to ? messages.find((x) => x.id === m.reply_to) : undefined;
                 const parentProfile = parent ? profiles[parent.sender_id] : undefined;
                 const parentName =
-                  parentProfile?.display_name ?? parentProfile?.username ?? "Unknown";
+                   parentProfile?.display_name ?? parentProfile?.username ?? "Unknown";
+                const senderRole = roleFlashMap.get(m.sender_id) ?? null;
+                const senderMiniProfile = {
+                  userId: m.sender_id,
+                  name,
+                  username: p?.username ?? null,
+                  avatarUrl: resolveAvatarUrl(m.sender_id, p?.avatar_url, roleFlashMap),
+                  hasAvatar:
+                    !!p?.avatar_url ||
+                    senderRole === "staff" ||
+                    senderRole === "management" ||
+                    senderRole === "moderator",
+                  nameplateId: p?.equipped_nameplate_id ?? null,
+                  role: senderRole,
+                  isOnline: p?.id ? onlineUsers.has(p.id) : false,
+                  lastSeenAt: p?.last_seen_at ?? null,
+                  isSelf,
+                };
+
 
                 return (
                   <div key={m.id}>
@@ -1371,7 +1390,7 @@ function ChannelPage() {
                           roleFlashMap.get(m.sender_id) === "moderator";
                         const profileId = p?.id;
                         const isOnline = profileId ? onlineUsers.has(profileId) : false;
-                        const avatarEl = hasAvatar ? (
+                        const rawAvatarEl = hasAvatar ? (
                           <img
                             src={resolvedAvatar}
                             alt=""
@@ -1381,6 +1400,9 @@ function ChannelPage() {
                           <div className="size-9 rounded-full bg-gradient-primary grid place-items-center text-xs font-semibold text-primary-foreground shrink-0 mt-1">
                             {initial}
                           </div>
+                        );
+                        const avatarEl = (
+                          <ChatMiniProfile profile={senderMiniProfile}>{rawAvatarEl}</ChatMiniProfile>
                         );
                         return (
                           <div className="flex flex-col items-center gap-0.5 shrink-0 mt-0.5">
@@ -1400,27 +1422,29 @@ function ChannelPage() {
                       })()}
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2 mb-2">
-                          <Nameplate
-                            id={p?.equipped_nameplate_id}
-                            className="inline-flex items-center rounded-md px-4 py-2 min-w-0 min-h-10 pr-16 shadow-sm isolate"
-                            fallbackStyle={{
-                              background:
-                                "linear-gradient(135deg, #1a4a2a 0%, #2d6a3f 50%, #1a4a2a 100%)",
-                            }}
-                          >
-                            <span
-                              className={cn(
-                                "relative z-10 font-semibold text-sm truncate px-2 -mx-2 rounded",
-                                roleFlashClass(roleFlashMap.get(m.sender_id)),
-                              )}
-                              style={{
+                          <ChatMiniProfile profile={senderMiniProfile} className="min-w-0">
+                            <Nameplate
+                              id={p?.equipped_nameplate_id}
+                              className="inline-flex items-center rounded-md px-4 py-2 min-w-0 min-h-10 pr-16 shadow-sm isolate"
+                              fallbackStyle={{
                                 background:
-                                  "linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.35) 12%, rgba(0,0,0,0.35) 88%, transparent 100%)",
+                                  "linear-gradient(135deg, #1a4a2a 0%, #2d6a3f 50%, #1a4a2a 100%)",
                               }}
                             >
-                              {name}
-                            </span>
-                          </Nameplate>
+                              <span
+                                className={cn(
+                                  "relative z-10 font-semibold text-sm truncate px-2 -mx-2 rounded",
+                                  roleFlashClass(roleFlashMap.get(m.sender_id)),
+                                )}
+                                style={{
+                                  background:
+                                    "linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.35) 12%, rgba(0,0,0,0.35) 88%, transparent 100%)",
+                                }}
+                              >
+                                {name}
+                              </span>
+                            </Nameplate>
+                          </ChatMiniProfile>
                           <span className="text-[10px] text-muted-foreground shrink-0">
                             {new Date(m.created_at).toLocaleTimeString("en-GB", {
                               hour: "2-digit",
