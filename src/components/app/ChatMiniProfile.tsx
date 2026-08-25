@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import { Link } from "@tanstack/react-router";
+import { User } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Nameplate } from "@/components/app/Nameplate";
 import { PresenceMiniDot } from "@/components/app/PresenceIndicators";
@@ -107,6 +109,18 @@ export function ChatMiniProfile({
             <PresenceMiniDot userId={profile.userId} isOnline={isOnline} />
             <span>{isOnline ? "Online now" : `Active ${formatLastSeen(lastSeenAt)}`}</span>
           </div>
+          {username && (
+            <div className="mt-3">
+              <Link
+                to="/u/$username"
+                params={{ username }}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <User className="size-4" />
+                View full profile
+              </Link>
+            </div>
+          )}
         </div>
       </PopoverContent>
     </Popover>
