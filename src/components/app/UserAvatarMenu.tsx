@@ -265,7 +265,7 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
             <DropdownMenuItem asChild className="cursor-pointer">
               <Link to="/admin">
                 <Settings className="size-4 mr-2" />
-                Admin dashboard
+                Owner dashboard
               </Link>
             </DropdownMenuItem>
           ) : null}
