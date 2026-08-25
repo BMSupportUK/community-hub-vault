@@ -1421,27 +1421,29 @@ function ChannelPage() {
                       })()}
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2 mb-2">
-                          <Nameplate
-                            id={p?.equipped_nameplate_id}
-                            className="inline-flex items-center rounded-md px-4 py-2 min-w-0 min-h-10 pr-16 shadow-sm isolate"
-                            fallbackStyle={{
-                              background:
-                                "linear-gradient(135deg, #1a4a2a 0%, #2d6a3f 50%, #1a4a2a 100%)",
-                            }}
-                          >
-                            <span
-                              className={cn(
-                                "relative z-10 font-semibold text-sm truncate px-2 -mx-2 rounded",
-                                roleFlashClass(roleFlashMap.get(m.sender_id)),
-                              )}
-                              style={{
+                          <ChatMiniProfile profile={senderMiniProfile} className="min-w-0">
+                            <Nameplate
+                              id={p?.equipped_nameplate_id}
+                              className="inline-flex items-center rounded-md px-4 py-2 min-w-0 min-h-10 pr-16 shadow-sm isolate"
+                              fallbackStyle={{
                                 background:
-                                  "linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.35) 12%, rgba(0,0,0,0.35) 88%, transparent 100%)",
+                                  "linear-gradient(135deg, #1a4a2a 0%, #2d6a3f 50%, #1a4a2a 100%)",
                               }}
                             >
-                              {name}
-                            </span>
-                          </Nameplate>
+                              <span
+                                className={cn(
+                                  "relative z-10 font-semibold text-sm truncate px-2 -mx-2 rounded",
+                                  roleFlashClass(roleFlashMap.get(m.sender_id)),
+                                )}
+                                style={{
+                                  background:
+                                    "linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.35) 12%, rgba(0,0,0,0.35) 88%, transparent 100%)",
+                                }}
+                              >
+                                {name}
+                              </span>
+                            </Nameplate>
+                          </ChatMiniProfile>
                           <span className="text-[10px] text-muted-foreground shrink-0">
                             {new Date(m.created_at).toLocaleTimeString("en-GB", {
                               hour: "2-digit",
