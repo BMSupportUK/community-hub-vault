@@ -701,7 +701,7 @@ function RolesManager({ defs, onChange }: { defs: RoleDef[]; onChange: () => voi
             key={r.name}
             className="grid grid-cols-[1fr_1fr_auto_auto] gap-4 px-5 py-3 border-b border-border last:border-0 items-center text-sm"
           >
-            <div className="font-medium">{r.label}</div>
+            <div className="font-medium">{displayRoleLabel(r.name, r.label)}</div>
             <code className="text-xs text-muted-foreground">{r.name}</code>
             <span
               className={cn(
