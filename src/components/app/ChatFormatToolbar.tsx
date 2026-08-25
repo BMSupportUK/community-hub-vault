@@ -8,9 +8,11 @@ import {
   List,
   ListOrdered,
   Strikethrough,
+  Type,
   Underline,
 } from "lucide-react";
-import type { RefObject } from "react";
+import { useState, type RefObject } from "react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 type Props = {
   /** The contentEditable composer element. */
@@ -33,8 +35,10 @@ const BUTTONS: Array<{ cmd: string; icon: typeof Bold; label: string }> = [
   { cmd: "removeFormat", icon: Eraser, label: "Clear formatting" },
 ];
 
-/** Formatting toolbar for the talk-channel message composer. */
+/** Formatting popover for the talk-channel message composer. */
 export function ChatFormatToolbar({ editorRef, onAfterCommand, disabled }: Props) {
+  const [open, setOpen] = useState(false);
+
   const run = (cmd: string) => {
     const editor = editorRef.current;
     if (!editor) return;
@@ -52,21 +56,35 @@ export function ChatFormatToolbar({ editorRef, onAfterCommand, disabled }: Props
   };
 
   return (
-    <div className="mb-1 flex flex-wrap items-center gap-0.5 rounded-lg border border-border bg-surface-2/60 px-1.5 py-1">
-      {BUTTONS.map(({ cmd, icon: Icon, label }) => (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
         <button
-          key={cmd}
           type="button"
-          title={label}
-          aria-label={label}
+          title="Formatting"
+          aria-label="Formatting"
           disabled={disabled}
-          onMouseDown={(e) => e.preventDefault()}
-          onClick={() => run(cmd)}
-          className="grid size-7 place-items-center rounded-md text-muted-foreground hover:bg-surface-2 hover:text-foreground disabled:opacity-40"
+          className="size-8 rounded-lg bg-surface-2 border border-border text-muted-foreground hover:text-foreground hover:bg-surface-2/70 grid place-items-center disabled:opacity-50"
         >
-          <Icon className="size-3.5" />
+          <Type className="size-4" />
         </button>
-      ))}
-    </div>
+      </PopoverTrigger>
+      <PopoverContent align="end" side="top" className="w-auto p-1.5">
+        <div className="grid grid-cols-5 gap-0.5">
+          {BUTTONS.map(({ cmd, icon: Icon, label }) => (
+            <button
+              key={cmd}
+              type="button"
+              title={label}
+              aria-label={label}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => run(cmd)}
+              className="grid size-8 place-items-center rounded-md text-muted-foreground hover:bg-surface-2 hover:text-foreground"
+            >
+              <Icon className="size-4" />
+            </button>
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 }
