@@ -1371,7 +1371,7 @@ function ChannelPage() {
                           roleFlashMap.get(m.sender_id) === "moderator";
                         const profileId = p?.id;
                         const isOnline = profileId ? onlineUsers.has(profileId) : false;
-                        const avatarEl = hasAvatar ? (
+                        const rawAvatarEl = hasAvatar ? (
                           <img
                             src={resolvedAvatar}
                             alt=""
