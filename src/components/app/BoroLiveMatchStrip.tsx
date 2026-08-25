@@ -222,7 +222,10 @@ export function BoroLiveMatchStrip() {
           signal: controller.signal,
         });
         const detail = response.ok ? ((await response.json()) as MatchDetailDTO) : null;
-        if (detail && (detail.available || detail.home || detail.away)) setPreloadedDetail(detail);
+        if (detail && (detail.available || detail.home || detail.away)) {
+          detailStatusRef.current = detail.status ?? null;
+          setPreloadedDetail(detail);
+        }
 
         // No browser relay is needed: FotMob is fetched server-side, so the
         // endpoint above already returns live data on every 5s cycle.
