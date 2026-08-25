@@ -1334,7 +1334,25 @@ function ChannelPage() {
                 const parent = m.reply_to ? messages.find((x) => x.id === m.reply_to) : undefined;
                 const parentProfile = parent ? profiles[parent.sender_id] : undefined;
                 const parentName =
-                  parentProfile?.display_name ?? parentProfile?.username ?? "Unknown";
+                   parentProfile?.display_name ?? parentProfile?.username ?? "Unknown";
+                const senderRole = roleFlashMap.get(m.sender_id) ?? null;
+                const senderMiniProfile = {
+                  userId: m.sender_id,
+                  name,
+                  username: p?.username ?? null,
+                  avatarUrl: resolveAvatarUrl(m.sender_id, p?.avatar_url, roleFlashMap),
+                  hasAvatar:
+                    !!p?.avatar_url ||
+                    senderRole === "staff" ||
+                    senderRole === "management" ||
+                    senderRole === "moderator",
+                  nameplateId: p?.equipped_nameplate_id ?? null,
+                  role: senderRole,
+                  isOnline: p?.id ? onlineUsers.has(p.id) : false,
+                  lastSeenAt: p?.last_seen_at ?? null,
+                  isSelf,
+                };
+
 
                 return (
                   <div key={m.id}>
