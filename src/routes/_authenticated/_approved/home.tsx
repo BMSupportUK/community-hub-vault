@@ -205,6 +205,68 @@ function HomeLayout() {
     };
   }, [path, user?.id]);
 
+  // Per-channel unread message counts, kept live via realtime.
+  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
+  const activeSlug = path.startsWith("/home/") ? path.slice("/home/".length) : null;
+  useEffect(() => {
+    if (!user || !channels || channels.length === 0) return;
+    const uid = user.id;
+    let cancelled = false;
+    const chanList = channels.map((c) => ({ id: c.id, slug: c.slug }));
+
+    const loadUnread = async () => {
+      const { data: reads } = await supabase
+        .from("channel_reads")
+        .select("channel_id, last_read_at")
+        .eq("user_id", uid);
+      const readMap = new Map(
+        (reads ?? []).map((r: { channel_id: string; last_read_at: string | null }) => [
+          r.channel_id,
+          r.last_read_at,
+        ]),
+      );
+      const entries = await Promise.all(
+        chanList.map(async (c) => {
+          if (c.slug === activeSlug) return [c.slug, 0] as const;
+          let q = supabase
+            .from("chat_messages")
+            .select("id", { count: "exact", head: true })
+            .eq("channel_id", c.id)
+            .neq("sender_id", uid);
+          const since = readMap.get(c.id);
+          if (since) q = q.gt("created_at", since);
+          const { count } = await q;
+          return [c.slug, count ?? 0] as const;
+        }),
+      );
+      if (cancelled) return;
+      const map: Record<string, number> = {};
+      for (const [slug, count] of entries) if (count > 0) map[slug] = count;
+      setUnreadCounts(map);
+    };
+
+    void loadUnread();
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const schedule = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => void loadUnread(), 400);
+    };
+    const ch = supabase
+      .channel(`home-unread-${uid}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "chat_messages" }, schedule)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "channel_reads", filter: `user_id=eq.${uid}` },
+        schedule,
+      )
+      .subscribe();
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+      supabase.removeChannel(ch);
+    };
+  }, [user?.id, channels, activeSlug]);
+
   // Clear the visible per-channel mention badge as soon as that channel is opened.
   useEffect(() => {
     if (!user || !path.startsWith("/home/")) return;
