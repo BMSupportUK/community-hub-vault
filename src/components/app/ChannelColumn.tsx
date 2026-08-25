@@ -158,14 +158,30 @@ export function ChannelColumn({
     const channel = supabase
       .channel(`channel-column-unread-${uid}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "chat_messages" }, scheduleLoad)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "channel_reads", filter: `user_id=eq.${uid}` },
+        scheduleLoad,
+      )
       .subscribe();
+
+    const onVisible = () => {
+      if (document.visibilityState === "visible") scheduleLoad();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", scheduleLoad);
+    window.addEventListener("online", scheduleLoad);
 
     return () => {
       cancelled = true;
       if (timer) clearTimeout(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", scheduleLoad);
+      window.removeEventListener("online", scheduleLoad);
       supabase.removeChannel(channel);
     };
   }, [activeSlug, chatChannelItems, chatChannelKey, user?.id]);
+
 
   const unreadFor = (item: ChannelGroup["items"][number]) => {
     const slug = item.to.startsWith("/home/") ? item.to.slice("/home/".length).replace(/\/$/, "") : null;
