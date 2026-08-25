@@ -1914,9 +1914,10 @@ function ChannelPage() {
         </div>
       </div>
       </div>
-      <aside className="hidden lg:block w-64 shrink-0 border-l border-border overflow-y-auto">
+      <aside className="hidden md:block w-56 xl:w-64 shrink-0 border-l border-border overflow-y-auto bg-surface/40">
         <StaffOnDutySidebar />
       </aside>
+
       </div>
 
       {isMuted && (
