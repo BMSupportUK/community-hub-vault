@@ -260,11 +260,21 @@ function HomeLayout() {
         schedule,
       )
       .subscribe();
+    const onVisible = () => {
+      if (document.visibilityState === "visible") schedule();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", schedule);
+    window.addEventListener("online", schedule);
     return () => {
       cancelled = true;
       if (timer) clearTimeout(timer);
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", schedule);
+      window.removeEventListener("online", schedule);
       supabase.removeChannel(ch);
     };
+
   }, [user?.id, channels, activeSlug]);
 
   // Clear the visible per-channel mention badge as soon as that channel is opened.
