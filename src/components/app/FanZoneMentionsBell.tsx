@@ -67,7 +67,7 @@ export function FanZoneMentionsBell() {
     setItems((prev) => prev.filter((x) => x.id !== m.id));
     setOpen(false);
     await supabase.from("user_notifications").delete().eq("id", m.id);
-    if (m.link_path) navigate({ to: m.link_path } as never);
+    if (m.link_path) navigate({ to: m.link_path as any });
   };
 
   const clearAll = async () => {
