@@ -16,11 +16,31 @@ type MentionRow = {
   created_at: string;
 };
 
-/** Path for a mention, including the ?msg= anchor when we know the message id. */
-function mentionHref(m: MentionRow): string | null {
+/** Navigation target for a mention.
+ *  Talk-channel mentions use the typed `/home/$channel` route and pass the
+ *  message id as `?msg=...` so the channel page scrolls/flashes the message.
+ *  Other links navigate to the stored path as-is. */
+function mentionNav(m: MentionRow):
+  | { to: "/home/$channel"; params: { channel: string }; search?: { msg: string } }
+  | { to: string }
+  | null {
   if (!m.link_path) return null;
-  if (!m.source_id || m.link_path.includes("?")) return m.link_path;
-  return `${m.link_path}?msg=${m.source_id}`;
+  const [base, qs] = m.link_path.split("?");
+  const existing: Record<string, string> = {};
+  if (qs) {
+    const params = new URLSearchParams(qs);
+    params.forEach((value, key) => {
+      existing[key] = value;
+    });
+  }
+  const homeMatch = base.match(/^\/home\/([^/]+)$/);
+  if (homeMatch) {
+    if (m.source_id) {
+      return { to: "/home/$channel", params: { channel: homeMatch[1] }, search: { msg: m.source_id } };
+    }
+    return { to: "/home/$channel", params: { channel: homeMatch[1] } };
+  }
+  return { to: base };
 }
 
 /**
@@ -94,8 +114,8 @@ export function MentionsBadge() {
     await supabase.from("user_notifications").delete().eq("id", m.id);
     setItems((prev) => prev.filter((x) => x.id !== m.id));
     setOpen(false);
-    const href = mentionHref(m);
-    if (href) navigate({ to: href } as never);
+    const nav = mentionNav(m);
+    if (nav) navigate(nav as any);
   };
 
 
@@ -144,7 +164,7 @@ export function MentionsBadge() {
                     <div className="text-[10px] text-muted-foreground mt-0.5">{formatDistanceToNow(new Date(m.created_at), { addSuffix: true })}</div>
                   </div>
                 </div>
-                {mentionHref(m) && (
+                {mentionNav(m) && (
                   <button
                     type="button"
                     onClick={() => openItem(m)}
