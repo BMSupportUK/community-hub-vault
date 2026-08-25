@@ -64,6 +64,8 @@ export function ChatMessageBody({
   currentUsername?: string | null;
   className?: string;
 }) {
+  // Ensure the custom word list is loaded/refreshed for the HTML branch too.
+  useProfanityWords();
   if (!isRichChatContent(content)) {
     return <MentionText content={content} currentUsername={currentUsername} className={className} />;
   }
