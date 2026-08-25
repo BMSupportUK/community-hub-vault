@@ -327,7 +327,7 @@ function ShopPage() {
     ...(isAdmin && adminUnlocked
       ? [
           {
-            label: "Admin",
+            label: "Owner",
             items: [
               ...(isAdminOnly
                 ? [
@@ -349,7 +349,7 @@ function ShopPage() {
                 : []),
               {
                 to: "/shop",
-                label: "Shop Admin",
+                label: "Shop Owner",
                 icon: Receipt,
                 active: view === "orders" && scope === "all",
                 onClick: () => go({ view: "orders", scope: "all" }),
@@ -367,7 +367,7 @@ function ShopPage() {
         {isAdmin && adminUnlocked && (
           <nav className="shrink-0 border-b border-border bg-surface/60 backdrop-blur px-3 md:px-6 py-2 flex items-center gap-4 overflow-x-auto scrollbar-hide">
             {groups
-              .filter((g) => g.label === "Admin")
+              .filter((g) => g.label === "Owner")
               .map((g) => (
                 <div key={g.label} className="flex items-center gap-1 shrink-0">
                   <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70 mr-1 hidden md:inline">
