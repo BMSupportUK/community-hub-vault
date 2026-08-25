@@ -3,7 +3,7 @@ import { Hash, ChevronDown, Plus, Trash2, Shield, Smile, Pencil, ChevronUp, LogO
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useRoleFlashMap, resolveAvatarUrl, roleFlashClass } from "@/lib/role-flash";
 import { VpnBadge } from "@/lib/vpn-flags";
@@ -81,6 +81,99 @@ export function ChannelColumn({
     | { type: "item"; group: ChannelGroup; itemTo: string; itemLabel: string }
     | null
   >(null);
+  const activeSlug = path.startsWith("/home/") ? path.slice("/home/".length).replace(/\/$/, "") : null;
+  const chatChannelItems = useMemo(
+    () =>
+      groups.flatMap((group) =>
+        group.items.flatMap((item) => {
+          if (!item.id || !item.to.startsWith("/home/")) return [];
+          return [
+            {
+              id: item.id,
+              slug: item.to.slice("/home/".length).replace(/\/$/, ""),
+            },
+          ];
+        }),
+      ),
+    [groups],
+  );
+  const chatChannelKey = useMemo(
+    () => chatChannelItems.map((item) => `${item.id}:${item.slug}`).join("|"),
+    [chatChannelItems],
+  );
+  const [localUnreadCounts, setLocalUnreadCounts] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    if (!user?.id || chatChannelItems.length === 0) {
+      setLocalUnreadCounts({});
+      return;
+    }
+
+    const uid = user.id;
+    const items = chatChannelItems;
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+
+    const loadUnread = async () => {
+      const { data: reads } = await supabase
+        .from("channel_reads")
+        .select("channel_id, last_read_at")
+        .eq("user_id", uid);
+      const readMap = new Map(
+        (reads ?? []).map((row: { channel_id: string; last_read_at: string | null }) => [
+          row.channel_id,
+          row.last_read_at,
+        ]),
+      );
+
+      const entries = await Promise.all(
+        items.map(async (item) => {
+          if (item.slug === activeSlug) return [item.slug, 0] as const;
+          let query = supabase
+            .from("chat_messages")
+            .select("id", { count: "exact", head: true })
+            .eq("channel_id", item.id)
+            .neq("sender_id", uid);
+          const since = readMap.get(item.id);
+          if (since) query = query.gt("created_at", since);
+          const { count } = await query;
+          return [item.slug, count ?? 0] as const;
+        }),
+      );
+
+      if (cancelled) return;
+      const next: Record<string, number> = {};
+      for (const [slug, count] of entries) {
+        if (count > 0) next[slug] = count;
+      }
+      setLocalUnreadCounts(next);
+    };
+
+    const scheduleLoad = () => {
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(() => void loadUnread(), 250);
+    };
+
+    void loadUnread();
+    const channel = supabase
+      .channel(`channel-column-unread-${uid}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "chat_messages" }, scheduleLoad)
+      .subscribe();
+
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+      supabase.removeChannel(channel);
+    };
+  }, [activeSlug, chatChannelItems, chatChannelKey, user?.id]);
+
+  const unreadFor = (item: ChannelGroup["items"][number]) => {
+    const slug = item.to.startsWith("/home/") ? item.to.slice("/home/".length).replace(/\/$/, "") : null;
+    if (slug && slug === activeSlug) return 0;
+    const provided = typeof item.unread === "number" ? item.unread : 0;
+    const local = slug ? (localUnreadCounts[slug] ?? 0) : 0;
+    return Math.max(provided, local);
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -246,6 +339,7 @@ export function ChannelColumn({
                     const Icon = it.icon ?? Hash;
                     const active = it.active ?? (path === it.to || path.startsWith(it.to + "/"));
                     const canDrag = !!onReorderChannels && !!it.id;
+                    const unreadCount = unreadFor(it);
                     return (
                       <div
                         key={it.to}
@@ -259,8 +353,8 @@ export function ChannelColumn({
                         )}
                         draggable={canDrag}
                         onDragStart={(e) => {
-                          if (!canDrag) return;
-                          setDragChan({ id: it.id!, group: g.label });
+                          if (!canDrag || !it.id) return;
+                          setDragChan({ id: it.id, group: g.label });
                           e.dataTransfer.effectAllowed = "move";
                           e.dataTransfer.setData("text/plain", `chan:${it.id}`);
                           e.stopPropagation();
@@ -301,16 +395,17 @@ export function ChannelColumn({
                           >
                             <Icon className="size-4 shrink-0" />
                             <span className="truncate">{it.label}</span>
-                            {it.unread && it.unread > 0 ? (
+                            {unreadCount > 0 ? (
                               <span
-                                title={`${it.unread} unread message${it.unread === 1 ? "" : "s"}`}
-                                className="ml-auto min-w-5 h-5 px-1.5 rounded-full bg-red-600 text-white text-[10px] font-bold grid place-items-center animate-unread-flash"
+                                title={`${unreadCount} unread message${unreadCount === 1 ? "" : "s"}`}
+                                aria-label={`${unreadCount} unread message${unreadCount === 1 ? "" : "s"}`}
+                                className="ml-auto inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-destructive px-1.5 text-[10px] font-bold text-destructive-foreground ring-2 ring-destructive/30 animate-unread-flash"
                               >
-                                {it.unread > 99 ? "99+" : it.unread}
+                                {unreadCount > 99 ? "99+" : unreadCount}
                               </span>
                             ) : null}
                             {it.badge && it.badge > 0 ? (
-                              <span className={cn("min-w-5 h-5 px-1.5 rounded-full bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 text-white text-[10px] font-bold grid place-items-center shadow-glow", !(it.unread && it.unread > 0) && "ml-auto")}>
+                              <span className={cn("min-w-5 h-5 px-1.5 rounded-full bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 text-white text-[10px] font-bold grid place-items-center shadow-glow", unreadCount === 0 && "ml-auto")}>
                                 {it.badge > 99 ? "99+" : it.badge}
                               </span>
                             ) : null}
@@ -328,16 +423,17 @@ export function ChannelColumn({
                           >
                             <Icon className="size-4 shrink-0" />
                             <span className="truncate">{it.label}</span>
-                            {it.unread && it.unread > 0 ? (
+                            {unreadCount > 0 ? (
                               <span
-                                title={`${it.unread} unread message${it.unread === 1 ? "" : "s"}`}
-                                className="ml-auto min-w-5 h-5 px-1.5 rounded-full bg-red-600 text-white text-[10px] font-bold grid place-items-center animate-unread-flash"
+                                title={`${unreadCount} unread message${unreadCount === 1 ? "" : "s"}`}
+                                aria-label={`${unreadCount} unread message${unreadCount === 1 ? "" : "s"}`}
+                                className="ml-auto inline-flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full bg-destructive px-1.5 text-[10px] font-bold text-destructive-foreground ring-2 ring-destructive/30 animate-unread-flash"
                               >
-                                {it.unread > 99 ? "99+" : it.unread}
+                                {unreadCount > 99 ? "99+" : unreadCount}
                               </span>
                             ) : null}
                             {it.badge && it.badge > 0 ? (
-                              <span className={cn("min-w-5 h-5 px-1.5 rounded-full bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 text-white text-[10px] font-bold grid place-items-center shadow-glow", !(it.unread && it.unread > 0) && "ml-auto")}>
+                              <span className={cn("min-w-5 h-5 px-1.5 rounded-full bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 text-white text-[10px] font-bold grid place-items-center shadow-glow", unreadCount === 0 && "ml-auto")}>
                                 {it.badge > 99 ? "99+" : it.badge}
                               </span>
                             ) : null}
