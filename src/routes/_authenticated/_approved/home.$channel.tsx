@@ -50,7 +50,7 @@ import { GifPicker, extractStandaloneGif } from "@/components/app/GifPicker";
 import { EmojiPicker } from "@/components/app/EmojiPicker";
 import { resolveGifLink } from "@/lib/giphy.functions";
 
-import { StaffOnDutyStrip } from "@/components/app/StaffOnDutyStrip";
+import { StaffOnDutySidebar } from "@/components/app/StaffOnDutyStrip";
 import { cn } from "@/lib/utils";
 import { DEFAULT_AVATAR_URL } from "@/lib/default-avatar";
 import { Nameplate } from "@/components/app/Nameplate";
@@ -1242,8 +1242,8 @@ function ChannelPage() {
         </div>
       </header>
 
-      <StaffOnDutyStrip />
-
+      <div className="flex-1 flex min-w-0 min-h-0">
+      <div className="flex-1 flex flex-col min-w-0 min-h-0">
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
         {channel.slug !== "welcome" && channel.slug !== "rules" && (
           <div className="flex items-center gap-2 rounded-lg border border-border bg-surface-2/60 px-3 py-2 text-xs text-muted-foreground">
@@ -1912,6 +1912,11 @@ function ChannelPage() {
             {sending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
           </button>
         </div>
+      </div>
+      </div>
+      <aside className="hidden lg:block w-64 shrink-0 border-l border-border overflow-y-auto">
+        <StaffOnDutySidebar />
+      </aside>
       </div>
 
       {isMuted && (
