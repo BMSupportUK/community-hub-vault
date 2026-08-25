@@ -1,4 +1,5 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useRouter } from "@tanstack/react-router";
+import { useEffect, useRef } from "react";
 import { Lock, Pin, ArrowLeft } from "lucide-react";
 import { getPublicTopic, type PublicPost } from "@/lib/fan-zone-public.functions";
 import { ForumPostBody } from "@/components/app/ForumPostBody";
@@ -6,7 +7,10 @@ import { RelativeTime } from "@/components/app/RelativeTime";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { isTeamSheetPost } from "@/lib/forum-team-sheet";
+import { supabase } from "@/integrations/supabase/client";
+import { useBoroFixtureRealtime } from "@/hooks/use-boro-fixture-realtime";
 import { FanZoneShell } from "./fan-zone";
+
 
 export const Route = createFileRoute("/fan-zone/$board/$topic")({
   loader: ({ params }) => getPublicTopic({ data: { topicId: params.topic } }),
