@@ -375,7 +375,28 @@ export function BoroLiveMatchStrip() {
             const showingLiveMatch = !!live && m === live;
             const isLive = showingLiveMatch || detailIsInProgress;
             const isFixture = !isLive && !!nf && m === nf;
-            const liveStatus = live?.clock || live?.statusDetail || detailStatus || "Live";
+            // Score + clock come from the Gamecast feed while a game is on —
+            // it refreshes every 5s, so the pop-up ticks along with play.
+            const feedScore = detailScore(preloadedDetail);
+            const feedFlipped =
+              !!preloadedDetail?.home &&
+              !!m.home &&
+              preloadedDetail.home.trim().toLowerCase() !== m.home.trim().toLowerCase();
+            const liveHome = feedScore ? (feedFlipped ? feedScore.away : feedScore.home) : null;
+            const liveAway = feedScore ? (feedFlipped ? feedScore.home : feedScore.away) : null;
+            const shownHome =
+              (m as { homeScore?: number | null }).homeScore ?? (isLive ? (liveHome ?? 0) : null);
+            const shownAway =
+              (m as { awayScore?: number | null }).awayScore ?? (isLive ? (liveAway ?? 0) : null);
+            const displayHome = isLive && liveHome !== null ? liveHome : shownHome;
+            const displayAway = isLive && liveAway !== null ? liveAway : shownAway;
+            const liveStatus =
+              preloadedDetail?.clock ||
+              (isLive ? detailStatus : "") ||
+              live?.clock ||
+              live?.statusDetail ||
+              detailStatus ||
+              "Live";
             const canSwitch = !!live && !!lr;
             const switcher: Array<{ key: "auto" | "last"; label: string }> = [
               ...(live ? ([{ key: "auto", label: "Live now" }] as const) : []),
