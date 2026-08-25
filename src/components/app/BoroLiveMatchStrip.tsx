@@ -100,6 +100,7 @@ export function BoroLiveMatchStrip() {
   // until the new game week rolls the next fixture in.
   const [view, setView] = useState<"auto" | "last">("auto");
   const [now, setNow] = useState(() => Date.now());
+  const detailStatusRef = useRef<string | null>(null);
 
 
 
