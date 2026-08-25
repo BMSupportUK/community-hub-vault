@@ -108,12 +108,6 @@ export function WorkingStatusBox() {
     return `${Math.floor(s / 60).toString().padStart(2, "0")}:${(s % 60).toString().padStart(2, "0")}`;
   };
 
-  const displayName =
-    (user.user_metadata?.display_name as string | undefined) ||
-    (user.user_metadata?.full_name as string | undefined) ||
-    user.email?.split("@")[0] ||
-    "User";
-
   return (
     <section className="px-2 pt-4">
       <div className="rounded-lg bg-surface-2/60 border border-border overflow-hidden">
