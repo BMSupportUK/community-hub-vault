@@ -348,6 +348,8 @@ function ChannelPage() {
   const [emojiPickerId, setEmojiPickerId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState("");
+  const [editDraftHtml, setEditDraftHtml] = useState("");
+  const editEditorRef = useRef<HTMLDivElement>(null);
   const [canSend, setCanSend] = useState(true);
   const scrollRef = useRef<HTMLDivElement>(null);
   const taRef = useRef<HTMLDivElement>(null);
@@ -965,11 +967,24 @@ function ChannelPage() {
   const startEdit = (m: Message) => {
     setEditingId(m.id);
     setEditDraft(m.content);
+    setEditDraftHtml(
+      isRichChatContent(m.content)
+        ? m.content
+        : m.content
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/\n/g, "<br>"),
+    );
     setOpenMenuId(null);
   };
 
   const saveEdit = async (id: string) => {
-    const content = editDraft.trim();
+    const editor = editEditorRef.current;
+    const content = (editor?.innerHTML.trim() || editDraftHtml.trim()).replace(
+      /<br\s*\/?>$/i,
+      "",
+    );
     if (!content) return;
     const { error } = await supabase
       .from("chat_messages")
@@ -978,6 +993,7 @@ function ChannelPage() {
     if (error) return toast.error(error.message);
     setEditingId(null);
     setEditDraft("");
+    setEditDraftHtml("");
   };
 
   const setSlowMode = async (seconds: number) => {
@@ -1004,6 +1020,14 @@ function ChannelPage() {
     document.addEventListener("mousedown", onDoc);
     return () => document.removeEventListener("mousedown", onDoc);
   }, [openMenuId, emojiPickerId]);
+
+  // Populate and focus the full-size edit composer when editing starts.
+  useEffect(() => {
+    if (editingId && editEditorRef.current) {
+      editEditorRef.current.innerHTML = editDraftHtml;
+      editEditorRef.current.focus();
+    }
+  }, [editingId]);
 
   // Tick once a second while slow mode cooldown is active.
   useEffect(() => {
@@ -1458,22 +1482,45 @@ function ChannelPage() {
                           )}
                         >
                           {isEditing ? (
-                            <div className="flex flex-col gap-2 min-w-[220px]">
-                              <textarea
-                                value={editDraft}
-                                onChange={(e) => setEditDraft(e.target.value)}
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter" && !e.shiftKey) {
-                                    e.preventDefault();
-                                    saveEdit(m.id);
-                                  } else if (e.key === "Escape") {
-                                    setEditingId(null);
-                                  }
-                                }}
-                                rows={2}
-                                className="bg-transparent resize-none outline-none text-sm"
-                                autoFocus
-                              />
+                            <div className="flex flex-col gap-2 w-full min-w-[280px]">
+                              <div className="relative flex items-end gap-2 rounded-xl bg-surface-2 border border-primary px-3 py-2 focus-within:ring-1 focus-within:ring-primary/40">
+                                <div
+                                  ref={editEditorRef}
+                                  contentEditable
+                                  suppressContentEditableWarning
+                                  role="textbox"
+                                  aria-multiline="true"
+                                  aria-label="Edit message"
+                                  data-placeholder="Edit your message…"
+                                  onInput={(e) => {
+                                    const editor = e.currentTarget;
+                                    setEditDraft(editor.innerText.replace(/\n$/, ""));
+                                    setEditDraftHtml(editor.innerHTML);
+                                  }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter" && !e.shiftKey) {
+                                      e.preventDefault();
+                                      saveEdit(m.id);
+                                    } else if (e.key === "Escape") {
+                                      setEditingId(null);
+                                      setEditDraft("");
+                                      setEditDraftHtml("");
+                                    }
+                                  }}
+                                  className="flex-1 min-h-[80px] overflow-y-auto bg-transparent outline-none text-sm py-1 max-h-40 whitespace-pre-wrap break-words empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground empty:before:pointer-events-none"
+                                />
+                                <ChatFormatToolbar
+                                  editorRef={editEditorRef}
+                                  onAfterCommand={() => {
+                                    const editor = editEditorRef.current;
+                                    if (editor) {
+                                      setEditDraft(editor.innerText.replace(/\n$/, ""));
+                                      setEditDraftHtml(editor.innerHTML);
+                                    }
+                                  }}
+                                  disabled={false}
+                                />
+                              </div>
                               <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
                                 <button
                                   onClick={() => saveEdit(m.id)}
@@ -1482,7 +1529,11 @@ function ChannelPage() {
                                   <Check className="size-3" /> Save
                                 </button>
                                 <button
-                                  onClick={() => setEditingId(null)}
+                                  onClick={() => {
+                                    setEditingId(null);
+                                    setEditDraft("");
+                                    setEditDraftHtml("");
+                                  }}
                                   className="hover:text-foreground"
                                 >
                                   Cancel
