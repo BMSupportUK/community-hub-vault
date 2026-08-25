@@ -1,4 +1,6 @@
 import type { ReactNode } from "react";
+import { Link } from "@tanstack/react-router";
+import { User } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Nameplate } from "@/components/app/Nameplate";
 import { PresenceMiniDot } from "@/components/app/PresenceIndicators";
