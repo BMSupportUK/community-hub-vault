@@ -1913,6 +1913,11 @@ function ChannelPage() {
           </button>
         </div>
       </div>
+      </div>
+      <aside className="hidden lg:block w-64 shrink-0 border-l border-border overflow-y-auto">
+        <StaffOnDutySidebar />
+      </aside>
+      </div>
 
       {isMuted && (
         <div className="pointer-events-none fixed bottom-4 right-4 z-50 max-w-sm rounded-xl border-2 border-red-500 bg-neutral-950/95 backdrop-blur-md px-4 py-3 shadow-2xl shadow-red-500/30 ring-1 ring-red-500/20">
