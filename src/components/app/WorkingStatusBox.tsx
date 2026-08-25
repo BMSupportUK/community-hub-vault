@@ -52,6 +52,12 @@ export function WorkingStatusBox() {
 
   if (!user) return null;
 
+  const displayName =
+    (user.user_metadata?.display_name as string | undefined) ||
+    (user.user_metadata?.full_name as string | undefined) ||
+    user.email?.split("@")[0] ||
+    "User";
+
   // DND overrides all other status — show a dedicated DND card.
   if (dnd?.active) {
     const until = dnd.endsAt
@@ -67,7 +73,10 @@ export function WorkingStatusBox() {
               <DndCountdown userId={user.id} compact />
             </div>
           </div>
-          <div className="px-3 py-3 space-y-1 text-xs">
+          <div className="px-3 py-3 space-y-2 text-xs">
+            <div className="flex items-center gap-2 pb-1 border-b border-violet-500/30">
+              <span className="font-display font-semibold text-sm text-violet-100">{displayName}</span>
+            </div>
             {dnd.note && <p className="text-foreground/90">{dnd.note}</p>}
             {until && (
               <p className="text-muted-foreground">
@@ -109,6 +118,9 @@ export function WorkingStatusBox() {
           </div>
         </div>
         <div className="px-3 py-3 space-y-2 text-xs">
+          <div className="flex items-center gap-2 pb-1 border-b border-border/60">
+            <span className="font-display font-semibold text-sm text-foreground">{displayName}</span>
+          </div>
           <div className="flex items-center justify-between">
             <span className="text-muted-foreground">Shift</span>
             <span className="inline-flex items-center gap-1.5 font-semibold tabular-nums text-emerald-400">
