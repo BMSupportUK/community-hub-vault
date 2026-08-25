@@ -967,11 +967,24 @@ function ChannelPage() {
   const startEdit = (m: Message) => {
     setEditingId(m.id);
     setEditDraft(m.content);
+    setEditDraftHtml(
+      isRichChatContent(m.content)
+        ? m.content
+        : m.content
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/\n/g, "<br>"),
+    );
     setOpenMenuId(null);
   };
 
   const saveEdit = async (id: string) => {
-    const content = editDraft.trim();
+    const editor = editEditorRef.current;
+    const content = (editor?.innerHTML.trim() || editDraftHtml.trim()).replace(
+      /<br\s*\/?>$/i,
+      "",
+    );
     if (!content) return;
     const { error } = await supabase
       .from("chat_messages")
@@ -980,6 +993,7 @@ function ChannelPage() {
     if (error) return toast.error(error.message);
     setEditingId(null);
     setEditDraft("");
+    setEditDraftHtml("");
   };
 
   const setSlowMode = async (seconds: number) => {
