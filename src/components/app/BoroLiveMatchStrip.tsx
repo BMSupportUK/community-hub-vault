@@ -43,6 +43,27 @@ function countdown(toIso: string, now: number) {
   return `${m}m ${ss}s`;
 }
 
+/** Latest score published by the Gamecast feed, read off its running event scores. */
+function detailScore(detail: MatchDetailDTO | null) {
+  if (!detail) return null;
+  let best: { home: number; away: number } | null = null;
+  for (const ev of detail.events ?? []) {
+    const h = (ev as { homeScore?: number | null }).homeScore;
+    const a = (ev as { awayScore?: number | null }).awayScore;
+    if (typeof h !== "number" || typeof a !== "number") continue;
+    if (!best || h + a >= best.home + best.away) best = { home: h, away: a };
+  }
+  return best;
+}
+
+function statusIsInProgress(status: string | null | undefined) {
+  const s = (status ?? "").trim().toLowerCase();
+  if (!s) return false;
+  if (/^(ft|aet)$|full\s*time|final/.test(s)) return false;
+  if (/scheduled|not started|pre-match/.test(s)) return false;
+  return true;
+}
+
 function Side({ name, logo }: { name: string; logo?: string | null }) {
   return (
     <span className="flex items-center gap-1.5 min-w-0">
