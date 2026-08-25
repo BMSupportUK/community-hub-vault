@@ -1021,6 +1021,13 @@ function ChannelPage() {
     return () => document.removeEventListener("mousedown", onDoc);
   }, [openMenuId, emojiPickerId]);
 
+  // Populate the full-size edit composer when editing starts.
+  useEffect(() => {
+    if (editingId && editEditorRef.current) {
+      editEditorRef.current.innerHTML = editDraftHtml;
+    }
+  }, [editingId]);
+
   // Tick once a second while slow mode cooldown is active.
   useEffect(() => {
     if (!channel || channel.slow_mode_seconds <= 0 || isModOrAdmin || !lastSentAt) return;
