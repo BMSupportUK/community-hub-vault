@@ -390,7 +390,7 @@ function GatePage() {
           {status === "approved"
             ? "Welcome aboard. Refreshing your access…"
             : status === "denied"
-            ? "Your request was denied. Contact an administrator if you believe this is a mistake."
+            ? "Your request was denied. Contact an owner if you believe this is a mistake."
             : `Your account is awaiting approval for ${intentLabel}.`}
         </p>
 
@@ -398,7 +398,7 @@ function GatePage() {
           <div className="mt-8 w-full max-w-md rounded-xl border border-red-500/40 bg-red-950/30 backdrop-blur-sm p-5 text-left">
             <div className="text-center font-semibold text-white text-sm">What should I do?</div>
             <p className="text-center text-red-100/80 text-sm mt-2">
-              You can chat with an admin to request access to {intentLabel}.
+              You can chat with an owner to request access to {intentLabel}.
             </p>
             <p className="text-center text-red-100/80 text-sm mt-2">
               Click the button below to start a conversation with the {isFanZone ? "Fan Zone moderators" : "support team"}.

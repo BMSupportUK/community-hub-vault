@@ -1684,7 +1684,7 @@ function RevealGate({ hasPin, onUnlocked, onPinSet }: { hasPin: boolean | null; 
       const { data: row } = await supabase.from("vault_pins").select("pin_hash, must_change").eq("user_id", user.id).maybeSingle() as { data: { pin_hash: string; must_change?: boolean } | null };
       if (!row || row.pin_hash !== hash) throw new Error("Incorrect PIN");
       if (row.must_change) {
-        toast.info("Your PIN was reset by an admin. Please choose a new PIN.");
+        toast.info("Your PIN was reset by an owner. Please choose a new PIN.");
         setMode("reset");
         setPin(""); setConfirmPin("");
         return;

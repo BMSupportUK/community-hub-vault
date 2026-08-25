@@ -26,7 +26,7 @@ function load() {
         const map = new Map<string, ProtectedRole>();
         ((data ?? []) as Array<{ user_id: string; role: string }>).forEach((r) => {
           const role = r.role as ProtectedRole;
-          // Admin outranks the rest when a user holds several roles.
+          // Owner outranks the rest when a user holds several roles.
           if (role === "admin" || !map.has(r.user_id)) map.set(r.user_id, role);
         });
         cache = map;

@@ -14,7 +14,7 @@ import {
 import { useProtectedUsers, protectedRoleLabel } from "@/hooks/use-protected-users";
 
 /**
- * Small block icon shown beside a forum username. Admins, management and
+ * Small block icon shown beside a forum username. Owners, management and
  * moderators are protected: clicking their icon explains why they can't be
  * blocked instead of attempting the block.
  */
@@ -72,7 +72,7 @@ export function BlockUserButton({
               <ShieldCheck className="size-5 text-[#F4B400]" /> This member is protected
             </DialogTitle>
             <DialogDescription>
-              {name} is {protectedRoleLabel(role) || "a staff member"} on BM Support. Admins, management
+              {name} is {protectedRoleLabel(role) || "a staff member"} on BM Support. Owners, management
               and moderators keep the Fan Zone running, so they can't be blocked. If you have an issue
               with a member of staff, please open a support ticket instead.
             </DialogDescription>

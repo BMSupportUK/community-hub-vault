@@ -24,9 +24,9 @@ import {
 export const Route = createFileRoute("/_authenticated/_approved/admin-fantasy-squad-numbers")({
   head: () => ({
     meta: [
-      { title: "Fantasy squad numbers — Admin" },
+      { title: "Fantasy squad numbers — Owner" },
       { name: "description", content: "Set the squad number for every Middlesbrough player in the MFC Fantasy Manager." },
-      { property: "og:title", content: "Fantasy squad numbers — Admin" },
+      { property: "og:title", content: "Fantasy squad numbers — Owner" },
       { property: "og:description", content: "Set the squad number for every Middlesbrough player in the MFC Fantasy Manager." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -126,7 +126,7 @@ function AdminFantasySquadNumbersPage() {
       <div className="flex items-center gap-3">
         <Button asChild variant="ghost" size="sm">
           <Link to="/admin">
-            <ArrowLeft className="mr-1 size-4" /> Admin
+            <ArrowLeft className="mr-1 size-4" /> Owner panel
           </Link>
         </Button>
         <h1 className="flex items-center gap-2 text-xl font-semibold">

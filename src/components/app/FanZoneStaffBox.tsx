@@ -12,7 +12,7 @@ type StaffMember = {
   fan_avatar_url: string;
 };
 
-/** Side box listing Admins and Boro Fan Zone Moderators with mini cards. */
+/** Side box listing Owners and Boro Fan Zone Moderators with mini cards. */
 export function FanZoneStaffBox() {
   const profileTo = useFanProfileTo();
   const [members, setMembers] = useState<StaffMember[] | null>(null);
@@ -31,7 +31,7 @@ export function FanZoneStaffBox() {
         fan_alias: r.fan_alias,
         fan_avatar_url: r.fan_avatar_url,
       }));
-      // Admins first, then moderators; alphabetical within each
+      // Owners first, then moderators; alphabetical within each
       out.sort((a, b) => {
         if (a.role !== b.role) return a.role === "admin" ? -1 : 1;
         return a.fan_alias.toLowerCase().localeCompare(b.fan_alias.toLowerCase());

@@ -114,7 +114,7 @@ export const ROUTE_RULES: RouteRule[] = [
 
 /**
  * Route a single event title to a Category + Subcategory.
- * Returns null when nothing matches (caller should queue for admin review).
+ * Returns null when nothing matches (caller should queue for owner review).
  */
 export function routeEvent(text: string): { category: string; subcategory?: string } | null {
   const haystack = ` ${text.toLowerCase()} `;

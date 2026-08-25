@@ -130,7 +130,7 @@ function AdminCredentialsPage() {
             <KeyRound className="size-5 text-primary-foreground" />
           </div>
           <div className="flex-1">
-            <h1 className="font-display text-2xl font-bold">User Credentials Admin</h1>
+            <h1 className="font-display text-2xl font-bold">User Credentials Owner Panel</h1>
             <p className="text-sm text-muted-foreground">Manage app login credentials assigned to each user.</p>
           </div>
           <button

@@ -730,7 +730,7 @@ function ShiftsPage() {
                   </div>
                   {newSlot.type === "shift" ? (
                     <div className="md:col-span-2">
-                      <Label className="text-muted-foreground">Block shift (admin / management / staff)</Label>
+                      <Label className="text-muted-foreground">Block shift (owner / management / staff)</Label>
                       <Select value={newSlot.presetId} onValueChange={(v) => setNewSlot({ ...newSlot, presetId: v })}>
                         <SelectTrigger className="bg-surface-2 border-border text-foreground"><SelectValue placeholder="Pick a block" /></SelectTrigger>
                         <SelectContent>
@@ -762,7 +762,7 @@ function ShiftsPage() {
                     <Select value={newSlot.type} onValueChange={(v) => setNewSlot({ ...newSlot, type: v as SlotType })}>
                       <SelectTrigger className="bg-surface-2 border-border text-foreground"><SelectValue /></SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="shift">Block shift (admin / management / staff)</SelectItem>
+                        <SelectItem value="shift">Block shift (owner / management / staff)</SelectItem>
                         <SelectItem value="hourly">Hourly (moderator)</SelectItem>
                       </SelectContent>
                     </Select>
@@ -817,7 +817,7 @@ function ShiftsPage() {
                 </Select>
               </div>
               <div>
-                <Label>Message to admin</Label>
+                <Label>Message to owner</Label>
                 <Textarea value={swapMsg} onChange={(e) => setSwapMsg(e.target.value)} placeholder="Why do you need to swap?" />
               </div>
             </div>

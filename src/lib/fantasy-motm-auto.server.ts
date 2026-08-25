@@ -3,8 +3,8 @@
 // There is no reliable public "man of the match" feed for the competitions we
 // cover, so the three star players are derived from the ESPN match stats we
 // already store: each Boro player who featured gets a 0-10 performance rating
-// and the top three earn 3 / 2 / 1 bonus points. Admins can still override the
-// top pick on the admin screen, and an existing award is never overwritten.
+// and the top three earn 3 / 2 / 1 bonus points. Owners can still override the
+// top pick on the owner screen, and an existing award is never overwritten.
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { STAR_BONUSES, computeStarRating, isStarEligible, type StarRatingStats } from "@/lib/fantasy-star-rating";
 

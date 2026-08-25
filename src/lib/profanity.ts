@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 /**
  * Default UK profanity / slur list used to censor chat messages.
  * Stored lowercased, matched as whole words (with letter/symbol leetspeak tolerance).
- * Admins can extend this via the Admin → Word filter page (stored in app_settings).
+ * Owners can extend this via the Owner → Word filter page (stored in app_settings).
  */
 export const DEFAULT_UK_PROFANITY: string[] = [
   // Core swears

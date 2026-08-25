@@ -53,7 +53,7 @@ const TwoFaResetAdminEmail = ({ userEmail, userName, reason, resetUrl, requested
 export const template = {
   component: TwoFaResetAdminEmail,
   subject: (d: Record<string, any>) => `2FA reset requested — ${d?.userEmail || 'user'}`,
-  displayName: '2FA reset — admin notice',
+  displayName: '2FA reset — owner notice',
   previewData: { userEmail: 'user@example.com', userName: 'Jane Doe', reason: 'Lost phone' },
 } satisfies TemplateEntry
 

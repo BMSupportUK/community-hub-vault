@@ -127,7 +127,7 @@ function ReadPage() {
       a.textContent = label;
       const holder = document.createElement("div");
       holder.className = "flex flex-col items-start gap-2";
-      // Admins can type intro text directly above the link in the editor —
+      // Owners can type intro text directly above the link in the editor —
       // pull those contiguous text blocks into the same card so the copy
       // stays attached above the bubble instead of paginating separately.
       const intro: HTMLElement[] = [];

@@ -17,9 +17,9 @@ import {
 export const Route = createFileRoute("/_authenticated/_approved/admin-fantasy-scoring")({
   head: () => ({
     meta: [
-      { title: "Fantasy Points Scoring — Admin" },
+      { title: "Fantasy Points Scoring — Owner" },
       { name: "description", content: "Change or remove the points awarded for every match stat in the MFC Fantasy Manager." },
-      { property: "og:title", content: "Fantasy Points Scoring — Admin" },
+      { property: "og:title", content: "Fantasy Points Scoring — Owner" },
       { property: "og:description", content: "Change or remove the points awarded for every match stat in the MFC Fantasy Manager." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
@@ -92,7 +92,7 @@ function AdminFantasyScoringPage() {
       <div className="flex items-center gap-3">
         <Button asChild variant="ghost" size="sm">
           <Link to="/admin">
-            <ArrowLeft className="size-4 mr-1" /> Admin
+            <ArrowLeft className="size-4 mr-1" /> Owner panel
           </Link>
         </Button>
       </div>

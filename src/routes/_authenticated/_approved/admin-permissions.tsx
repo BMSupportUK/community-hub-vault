@@ -117,7 +117,7 @@ function AdminPermissionsPage() {
           </div>
           <div className="flex-1">
             <h1 className="font-display text-2xl font-bold">Role permissions</h1>
-            <p className="text-sm text-muted-foreground">Control which roles can access pages and what they can do in channels. Admin and management always bypass these checks.</p>
+            <p className="text-sm text-muted-foreground">Control which roles can access pages and what they can do in channels. Owner and management always bypass these checks.</p>
           </div>
           <button
             onClick={() => load({ silent: true })}
