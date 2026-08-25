@@ -304,6 +304,8 @@ function ChannelPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [draft, setDraft] = useState("");
+  /** Rich HTML of the composer, used when the formatting toolbar was applied. */
+  const [draftHtml, setDraftHtml] = useState("");
   const [replyTo, setReplyTo] = useState<Message | null>(null);
   const [flashMsgId, setFlashMsgId] = useState<string | null>(null);
 
