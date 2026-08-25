@@ -1,6 +1,29 @@
 import { sanitizeRichHtml } from "@/lib/sanitize-html";
 import { MentionText, isRoleMentionTag } from "@/components/app/mentions";
+import { censorHtml } from "@/lib/profanity";
 import { cn } from "@/lib/utils";
+
+const URL_IN_TEXT_RE = /(https?:\/\/[^\s<>"{}|\\^`[\]]+|www\.[^\s<>"{}|\\^`[\]]+)/g;
+
+/**
+ * Turn bare URLs inside HTML text nodes into links. Skips anything already
+ * inside an <a> element and never touches tags or attribute values.
+ */
+function autolinkHtml(html: string): string {
+  let depth = 0;
+  return html.replace(/(<[^>]+>)|([^<]+)/g, (match, tag: string | undefined, text: string | undefined) => {
+    if (tag) {
+      if (/^<a\b/i.test(tag)) depth++;
+      else if (/^<\/a\s*>/i.test(tag)) depth = Math.max(0, depth - 1);
+      return match;
+    }
+    if (!text || depth > 0) return match;
+    return text.replace(URL_IN_TEXT_RE, (url) => {
+      const href = url.startsWith("www.") ? `https://${url}` : url;
+      return `<a href="${href}" target="_blank" rel="noopener noreferrer nofollow">${url}</a>`;
+    });
+  });
+}
 
 const HTML_TAG_RE = /<(\/?)(b|strong|i|em|u|s|strike|del|ul|ol|li|p|div|br|span|blockquote|code)\b/i;
 
