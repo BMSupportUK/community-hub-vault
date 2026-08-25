@@ -16,11 +16,20 @@ type MentionRow = {
   created_at: string;
 };
 
-/** Path for a mention, including the ?msg= anchor when we know the message id. */
-function mentionHref(m: MentionRow): string | null {
+/** Navigation target for a mention. Preserves any existing query params and
+ *  adds `msg=<source_id>` so the talk-channel route can scroll/flash the message. */
+function mentionNav(m: MentionRow): { to: string; search?: Record<string, string> } | null {
   if (!m.link_path) return null;
-  if (!m.source_id || m.link_path.includes("?")) return m.link_path;
-  return `${m.link_path}?msg=${m.source_id}`;
+  const [base, qs] = m.link_path.split("?");
+  const search: Record<string, string> = {};
+  if (qs) {
+    const params = new URLSearchParams(qs);
+    params.forEach((value, key) => {
+      search[key] = value;
+    });
+  }
+  if (m.source_id) search.msg = m.source_id;
+  return { to: base, search: Object.keys(search).length ? search : undefined };
 }
 
 /**
