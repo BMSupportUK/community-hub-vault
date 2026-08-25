@@ -453,6 +453,7 @@ function HomeLayout() {
           label: c.name,
           icon: getIcon(c.icon),
           badge: mentionCounts[`/home/${c.slug}`] ?? 0,
+          unread: c.slug === activeSlug ? 0 : (unreadCounts[c.slug] ?? 0),
         })),
         onAddItem: isAdmin ? () => setAddChannelGroup(label) : undefined,
         onDeleteItem: isAdmin ? (to) => deleteChannel(to.replace("/home/", "")) : undefined,
