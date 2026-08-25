@@ -637,7 +637,7 @@ function GatePage() {
                     <div className={`max-w-[80%] px-3 py-2 rounded-2xl text-sm ${
                       mine ? "bg-red-600 text-white rounded-br-sm" : "bg-white/5 text-white/90 rounded-bl-sm border border-white/10"
                     }`}>
-                      {!mine && <div className="text-[10px] text-red-300 font-medium mb-0.5">{senderNames[m.sender_id] ?? "Admin"}</div>}
+                      {!mine && <div className="text-[10px] text-red-300 font-medium mb-0.5">{senderNames[m.sender_id] ?? "Owner"}</div>}
                       <div className="whitespace-pre-wrap">{m.content}</div>
                       <div className={`text-[10px] mt-0.5 flex items-center gap-1 ${mine ? "justify-end text-white/60" : "text-white/40"}`}>
                         <span>{new Date(m.created_at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}</span>
@@ -658,7 +658,7 @@ function GatePage() {
                       <span className="size-1.5 rounded-full bg-white/60 animate-bounce" style={{ animationDelay: "150ms" }} />
                       <span className="size-1.5 rounded-full bg-white/60 animate-bounce" style={{ animationDelay: "300ms" }} />
                     </span>
-                    Admin is typing…
+                    Owner is typing…
                   </div>
                 </div>
               )}

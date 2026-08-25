@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 export type ProtectedRole = "admin" | "management" | "moderator" | "boro_fan_zone_moderator";
 
 const ROLE_LABEL: Record<ProtectedRole, string> = {
-  admin: "Admin",
+  admin: "Owner",
   management: "Management",
   moderator: "Moderator",
   boro_fan_zone_moderator: "Fan Zone Moderator",

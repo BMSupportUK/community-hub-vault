@@ -205,7 +205,7 @@ function GuestStaffBox() {
                 <div className="text-sm font-semibold truncate">{m.fan_alias}</div>
                 <div className="text-[10px] uppercase tracking-wider font-bold text-[#F4B400] flex items-center gap-1">
                   {m.role === "admin" ? <Star className="size-3" /> : <Shield className="size-3" />}
-                  {m.role === "admin" ? "Admin" : "Moderator"}
+                  {m.role === "admin" ? "Owner" : "Moderator"}
                 </div>
               </div>
             </Link>
