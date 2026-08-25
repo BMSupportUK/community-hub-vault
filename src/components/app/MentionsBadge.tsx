@@ -35,9 +35,10 @@ function mentionNav(m: MentionRow):
   }
   const homeMatch = base.match(/^\/home\/([^/]+)$/);
   if (homeMatch) {
-    const search: { msg?: string } = {};
-    if (m.source_id) search.msg = m.source_id;
-    return { to: "/home/$channel", params: { channel: homeMatch[1] }, search: Object.keys(search).length ? search : undefined };
+    if (m.source_id) {
+      return { to: "/home/$channel", params: { channel: homeMatch[1] }, search: { msg: m.source_id } };
+    }
+    return { to: "/home/$channel", params: { channel: homeMatch[1] } };
   }
   return { to: base };
 }
