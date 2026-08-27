@@ -97,14 +97,22 @@ function FixtureCard({
       {meta && (
         <div className="text-[11px] text-muted-foreground mb-1 px-1">{meta}</div>
       )}
-      <div className="flex items-stretch gap-3">
-        <div className="flex-1 divide-y divide-border/60">{children}</div>
-        <div className="flex items-center pl-3 border-l border-border/60">
-          <span className="text-xs font-bold text-muted-foreground tracking-wider">
-            {rightLabel}
+      <div className="flex items-stretch gap-2">
+        <div className="min-w-0 flex-1 divide-y divide-border/60">{children}</div>
+        <div className="shrink-0 flex items-center justify-center pl-2 border-l border-border/60">
+          <span className="text-[10px] font-bold text-muted-foreground tracking-wide text-center leading-tight whitespace-nowrap">
+            {rightLabel.startsWith("KO ") ? (
+              <>
+                KO
+                <span className="block text-[11px] tabular-nums">{rightLabel.slice(3)}</span>
+              </>
+            ) : (
+              rightLabel
+            )}
           </span>
         </div>
       </div>
+
     </section>
   );
 }
