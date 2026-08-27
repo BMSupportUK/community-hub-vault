@@ -303,7 +303,11 @@ export const getBoroMatchCentre = createServerFn({ method: "GET" }).handler(
         else if (invalidCachedLast) patch.last_result = null;
       }
       if (!dto.nextFixtureManual) {
-        const nf = live.nextFixture ?? nextFromDb;
+        const nf =
+          espnNextIsStale && nextFromDb && Date.parse(nextFromDb.kickoff) > Date.now()
+            ? nextFromDb
+            : (live.nextFixture ?? nextFromDb);
+
         if (nf) patch.next_fixture = await withEspnEvent(nf);
         else if (invalidCachedNext) patch.next_fixture = null;
       }
