@@ -129,8 +129,15 @@ export const getBoroMatchCentre = createServerFn({ method: "GET" }).handler(
     const maxAgeMs = liveWindow ? 5 * 1000 : 30 * 60 * 1000;
     const stale =
       !dto.fetchedAt || Date.now() - new Date(dto.fetchedAt).getTime() > maxAgeMs;
+    // Once a completed midweek fixture has been held for the requested
+    // 24-hour post-match period, do not leave it behind the normal 30-minute
+    // cache. Refresh immediately so the weekend fixture can replace it.
+    const cachedNextKickoff = dto.nextFixture ? Date.parse(dto.nextFixture.kickoff) : NaN;
+    const rolloverDue =
+      Number.isFinite(cachedNextKickoff) &&
+      Date.now() >= cachedNextKickoff + 26 * 60 * 60 * 1000;
     const needsFetch =
-      (stale || invalidCachedNext || invalidCachedLast) &&
+      (stale || rolloverDue || invalidCachedNext || invalidCachedLast) &&
       (!dto.lastResultManual || !dto.nextFixtureManual || !dto.leaguePositionManual);
     if (!needsFetch) {
       const cached =

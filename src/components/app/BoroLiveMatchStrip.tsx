@@ -158,18 +158,24 @@ export function BoroLiveMatchStrip() {
       ? null
       : rawNf;
 
-  // A result stays on screen for the rest of its own game week. Once the new
-  // week starts (Monday, London time) the upcoming fixture takes over.
+  // Keep the result while the backend is deliberately holding the completed
+  // fixture. As soon as it rolls nextFixture to a different game (24 hours
+  // after a midweek finish), the strip and pop-up must move to that game too.
   const lrKickoff = lr ? Date.parse((lr as { kickoff?: string; date?: string }).kickoff ?? (lr as { date?: string }).date ?? "") : NaN;
   const lrIsRecent =
     Number.isFinite(lrKickoff) && lrKickoff >= londonWeekStart(now);
+  const nextIsHeldResult =
+    !!nf &&
+    !!lr &&
+    ((nf.eventId && lr.eventId && nf.eventId === lr.eventId) ||
+      Math.abs(Date.parse(nf.kickoff) - lrKickoff) < 60 * 60 * 1000);
   // Keep the strip and popup on the same headline.
-  const headlineFixture = lrIsRecent ? null : nf;
+  const headlineFixture = lrIsRecent && nextIsHeldResult ? null : nf;
 
   const selectedMatch =
     view === "last"
       ? (lr ?? live ?? nf)
-      : (live ?? (lrIsRecent ? lr : null) ?? nf ?? lr);
+      : (live ?? (headlineFixture ?? (lrIsRecent ? lr : null)) ?? nf ?? lr);
 
 
 
