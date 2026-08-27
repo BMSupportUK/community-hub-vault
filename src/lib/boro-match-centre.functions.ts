@@ -191,7 +191,17 @@ export const getBoroMatchCentre = createServerFn({ method: "GET" }).handler(
       // didn't supply, and never override manual admin entries.
       let nextFromDb: NextFixture | null = null;
       let lastFromDb: LastResult | null = null;
-      if ((!live.nextFixture && !dto.nextFixtureManual) || (!live.lastResult && !dto.lastResultManual)) {
+      // ESPN sometimes hasn't listed the next game yet, which leaves the
+      // weekly pick stuck on the midweek game it already played. Treat a
+      // "next fixture" whose kick-off is in the past as missing too, so the
+      // database fixture list can supply the real upcoming game.
+      const espnNextIsStale =
+        !!live.nextFixture && Date.parse(live.nextFixture.kickoff) < Date.now();
+      if (
+        ((!live.nextFixture || espnNextIsStale) && !dto.nextFixtureManual) ||
+        (!live.lastResult && !dto.lastResultManual)
+      ) {
+
         // Include a game that has already kicked off but isn't finished, plus
         // games played earlier this week (the card holds them until Monday).
         const weekIso = new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString();
