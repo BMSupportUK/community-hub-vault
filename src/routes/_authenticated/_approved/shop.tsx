@@ -1427,7 +1427,7 @@ function Storefront() {
           await supabase.from("ticket_messages").insert({
             ticket_id: ticket.id,
             sender_id: user.id,
-            content: `💳 How would you like to pay for this order (${fmt(finalTotal)})?\n\nStep 1 — Select your payment method using the "Pay" button at the top of this ticket: Square (card / Apple Pay / Google Pay), USDT, or Stripe (card).\n\nStep 2 — Once you've sent payment, If paying by Square click on Paid Invoice Button. If paying by Crypto please post a screenshot of the crypto transaction so our team can match it against our payment records and mark the order as paid. Stripe card payments are confirmed automatically.`,
+            content: `💳 How would you like to pay for this order (${fmt(finalTotal)})?\n\nStep 1 — Click the "Pay" button in the order panel on the right-hand sidebar at the top of this ticket, then choose your payment method: Square (card / Apple Pay / Google Pay), Stripe (card), or USDT (crypto).\n\nStep 2 — Once you've sent payment, press the "I've paid" button so we can check Stripe and Square and confirm your order. If paying by Crypto please post a screenshot of the crypto transaction so our team can match it against our payment records and mark the order as paid.`,
           } as never);
           const oohMsg = await getOutOfHoursMessage();
           if (oohMsg) {
