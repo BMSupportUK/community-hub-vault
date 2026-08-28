@@ -59,6 +59,7 @@ import {
   createStripePaymentIntent,
   confirmStripePayment,
 } from "@/lib/stripe-payments.functions";
+import { verifyStripePaymentForOrder } from "@/components/app/StripeOrderPanel";
 import {
   createCryptoInvoice,
   getCryptoConfig,
