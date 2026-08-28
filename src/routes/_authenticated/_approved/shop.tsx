@@ -3108,6 +3108,7 @@ function OrderDetailImpl({
     provider: string;
     providerPaymentId: string | null;
   } | null>(null);
+  const [recordedStripeSessionId, setRecordedStripeSessionId] = useState<string | null>(null);
   useEffect(() => {
     let cancelled = false;
     const loadPay = async () => {
@@ -3125,6 +3126,9 @@ function OrderDetailImpl({
       setPendingCrypto(pending ? { status: data!.status as string } : null);
       const paymentIsSettled =
         !!data && ["finished", "completed", "captured", "paid"].includes(String(data.status ?? "").toLowerCase());
+      setRecordedStripeSessionId(
+        data?.provider === "stripe" && data.provider_payment_id ? data.provider_payment_id : null,
+      );
       setSettledPayment(
         paymentIsSettled
           ? { provider: String(data.provider), providerPaymentId: data.provider_payment_id ?? null }
@@ -3172,8 +3176,7 @@ function OrderDetailImpl({
     if (
       !order ||
       orderMarkedPaid ||
-      settledPayment?.provider !== "stripe" ||
-      !settledPayment.providerPaymentId
+      !recordedStripeSessionId
     ) return;
     let cancelled = false;
     (async () => {
@@ -3181,7 +3184,7 @@ function OrderDetailImpl({
         const result = await confirmStripe({
           data: {
             orderId,
-            sessionId: settledPayment.providerPaymentId,
+            sessionId: recordedStripeSessionId,
             environment: getStripeEnvironment(),
           },
         });
@@ -3193,7 +3196,7 @@ function OrderDetailImpl({
     return () => {
       cancelled = true;
     };
-  }, [orderId, order?.id, orderMarkedPaid, settledPayment?.provider, settledPayment?.providerPaymentId]);
+  }, [orderId, order?.id, orderMarkedPaid, recordedStripeSessionId]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
