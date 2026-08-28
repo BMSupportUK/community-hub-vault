@@ -1081,6 +1081,14 @@ function TicketDetail({
     if (!linkedOrder || orderBusy || linkedOrder.paid_at) return;
     setOrderBusy(true);
     try {
+      // A card payment may have completed through Stripe — check that first.
+      const stripeRes = await verifyStripePaymentForOrder(confirmStripe, linkedOrder.id);
+      if (stripeRes && !("error" in stripeRes)) {
+        await loadLinkedOrder();
+        await postTicketSystem(`✅ Card payment received — thank you! Your order is now marked as paid.`);
+        toast.success("Card payment confirmed — order marked paid");
+        return;
+      }
       const res = (await refreshSquareInvoice({ data: { orderId: linkedOrder.id } })) as { status?: string };
       await loadLinkedOrder();
       if (res.status === "PAID") {
