@@ -47,6 +47,8 @@ import { useCurrency } from "@/hooks/use-currency";
 import { downloadReceipt } from "@/lib/receipt";
 import { Download } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
+import { getStripe, getStripeEnvironment } from "@/lib/stripe";
 import {
   chargeOrderWithSquare,
   getSquareWebConfig,
@@ -56,7 +58,6 @@ import { createSquareInvoiceForOrder, refreshSquareInvoiceStatus, cancelOrderAnd
 import {
   createStripePaymentIntent,
   confirmStripePayment,
-  getStripeWebConfig,
 } from "@/lib/stripe-payments.functions";
 import {
   createCryptoInvoice,
