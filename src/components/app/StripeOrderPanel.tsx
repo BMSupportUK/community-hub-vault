@@ -54,6 +54,7 @@ export function StripeOrderPanel({
   onChange?: () => void | Promise<void>;
 }) {
   const [paid, setPaid] = useState<any | null>(null);
+  const [orderPaidAt, setOrderPaidAt] = useState<string | null>(null);
   const [bootError, setBootError] = useState<string | null>(null);
   const [fetchingSecret, setFetchingSecret] = useState(false);
   const [checking, setChecking] = useState(false);
@@ -61,22 +62,53 @@ export function StripeOrderPanel({
   const createPI = useServerFn(createStripePaymentIntent);
   const confirmStripe = useServerFn(confirmStripePayment);
   const isFinalPaid = Boolean(
-    paid && ["COMPLETED", "completed", "finished"].includes(String(paid.status ?? "")),
+    (paid && ["COMPLETED", "completed", "finished"].includes(String(paid.status ?? ""))) ||
+      (orderPaidAt && paid?.provider === "stripe"),
   );
 
   const loadPayment = async () => {
-    const { data } = await supabase
-      .from("order_payments")
-      .select("*")
-      .eq("order_id", orderId)
-      .maybeSingle();
+    const [{ data }, { data: order }] = await Promise.all([
+      supabase.from("order_payments").select("*").eq("order_id", orderId).maybeSingle(),
+      supabase.from("orders").select("paid_at").eq("id", orderId).maybeSingle(),
+    ]);
     setPaid(data);
+    setOrderPaidAt((order as any)?.paid_at ?? null);
   };
 
   useEffect(() => {
     loadPayment();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId]);
+
+  // Silently reconcile the recorded Stripe session so a completed card payment
+  // is confirmed (and the order marked paid) even if the customer never came
+  // back through the return URL — this prevents paying the same order twice.
+  useEffect(() => {
+    if (isFinalPaid) return;
+    let cancelled = false;
+    const sync = async () => {
+      try {
+        const res = await verifyStripePaymentForOrder(confirmStripe, orderId);
+        if (cancelled || !res || "error" in res) return;
+        await loadPayment();
+        await onChange?.();
+      } catch {
+        /* ignore background reconciliation errors */
+      }
+    };
+    sync();
+    const timer = window.setInterval(sync, 10_000);
+    const onFocus = () => sync();
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onFocus);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onFocus);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orderId, isFinalPaid]);
 
   useEffect(() => {
     const ch = supabase
@@ -92,6 +124,7 @@ export function StripeOrderPanel({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId]);
+
 
   const fetchClientSecret = useCallback(async () => {
     setFetchingSecret(true);
@@ -163,6 +196,10 @@ export function StripeOrderPanel({
       </div>
     );
   }
+
+  // Order already settled (e.g. paid via another provider) — never offer a
+  // second card payment for it.
+  if (orderPaidAt) return null;
 
   if (!canPay) return null;
 
