@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { useRoleFlashMap, resolveAvatarUrl, roleFlashClass } from "@/lib/role-flash";
 import { ActiveOutagesBox } from "@/components/app/ActiveOutagesBox";
 import { PayOrderDialog, OrderProgressStrip } from "@/components/app/OrderPaymentDialog";
+import { PaymentStatusTimeline, type PayCheckPhase } from "@/components/app/PaymentStatusTimeline";
 import { refreshSquareInvoiceStatus, cancelOrderAndSquareInvoice } from "@/lib/square-invoices.functions";
 import { getOrderPaymentState } from "@/lib/order-payment-state.functions";
 import { formatRoleLabel } from "@/lib/role-label";
@@ -933,6 +934,7 @@ function TicketDetail({
   const [linkedOrder, setLinkedOrder] = useState<LinkedOrder | null>(null);
   const [linkedOrderUsername, setLinkedOrderUsername] = useState<string | null>(null);
   const [orderBusy, setOrderBusy] = useState(false);
+  const [payCheckPhase, setPayCheckPhase] = useState<PayCheckPhase | null>(null);
   const refreshSquareInvoice = useServerFn(refreshSquareInvoiceStatus);
   const confirmStripe = useServerFn(confirmStripePayment);
   const cancelOrderAndSquareInvoiceRpc = useServerFn(cancelOrderAndSquareInvoice);
@@ -1091,24 +1093,30 @@ function TicketDetail({
   const orderRefreshSquareStatus = async () => {
     if (!linkedOrder || orderBusy || linkedOrder.paid_at) return;
     setOrderBusy(true);
+    setPayCheckPhase("checking_stripe");
     try {
       // A card payment may have completed through Stripe — check that first.
       const stripeRes = await verifyStripePaymentForOrder(confirmStripe, linkedOrder.id);
       if (stripeRes && !("error" in stripeRes)) {
+        setPayCheckPhase("confirmed");
         await loadLinkedOrder();
         await postTicketSystem(`✅ Card payment received — thank you! Your order is now marked as paid.`);
         toast.success("Card payment confirmed — order marked paid");
         return;
       }
+      setPayCheckPhase("checking_square");
       const res = (await refreshSquareInvoice({ data: { orderId: linkedOrder.id } })) as { status?: string };
       await loadLinkedOrder();
       if (res.status === "PAID") {
+        setPayCheckPhase("confirmed");
         await postTicketSystem(`✅ Payment received — thank you! Your order is now marked as paid.`);
         toast.success("Payment confirmed — order marked paid");
       } else {
+        setPayCheckPhase("failed");
         toast.message(`Square still shows this invoice as ${res.status ?? "unpaid"}`);
       }
     } catch (e) {
+      setPayCheckPhase("failed");
       toast.error((e as Error).message || "Failed to refresh payment status");
     } finally { setOrderBusy(false); }
   };
@@ -1340,6 +1348,9 @@ function TicketDetail({
         </div>
       </div>
       <OrderProgressStrip order={linkedOrder} />
+      <PaymentStatusTimeline
+        phase={linkedOrder.paid_at ? "confirmed" : (payCheckPhase ?? "awaiting")}
+      />
       {orderIsUnpaid && linkedOrder.user_id === currentUserId ? (
         <div className="[&>button]:!bg-gradient-to-r [&>button]:!from-emerald-400 [&>button]:!via-emerald-500 [&>button]:!to-emerald-600 [&>button]:!text-white [&>button]:!font-bold [&>button]:!text-base [&>button]:!py-3.5 [&>button]:!rounded-xl [&>button]:!shadow-[0_10px_30px_-8px_rgba(16,185,129,0.7),0_0_0_1px_rgba(255,255,255,0.15)_inset] [&>button]:!ring-2 [&>button]:!ring-emerald-300/60 [&>button]:hover:!brightness-110 [&>button]:hover:!shadow-[0_14px_40px_-8px_rgba(16,185,129,0.9),0_0_0_1px_rgba(255,255,255,0.2)_inset] [&>button]:!transition-all [&>button]:!tracking-wide [&>button]:animate-[pulse_2.4s_ease-in-out_infinite] [&>button>svg]:!size-5">
           <PayOrderDialog
