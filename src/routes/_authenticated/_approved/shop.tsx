@@ -2240,6 +2240,8 @@ function Checkout({
     discount_code: string;
     discount_cents: number;
     wants_adult_content: boolean;
+    purchase_kind: "renewal" | "additional" | "new";
+    owned_logins: string[];
   }) => void;
   onRemoveItem: (id: string) => void;
 }) {
@@ -2251,6 +2253,44 @@ function Checkout({
   const [adultContent, setAdultContent] = useState<"yes" | "no" | "">("");
   const [appliedCode, setAppliedCode] = useState<DiscountCode | null>(null);
   const [autoLoading, setAutoLoading] = useState(true);
+  const [myCreds, setMyCreds] = useState<
+    { id: string; account_number: number; account_type: string | null; app_login_name: string | null; expiry_at: string | null }[]
+  >([]);
+  const [credsLoaded, setCredsLoaded] = useState(false);
+  // "" = nothing chosen yet, "additional" = buying an extra account,
+  // otherwise the id of the credential being renewed.
+  const [credChoice, setCredChoice] = useState<string>("");
+
+  useEffect(() => {
+    if (!user?.id) {
+      setMyCreds([]);
+      setCredsLoaded(true);
+      return;
+    }
+    let active = true;
+    supabase
+      .from("app_credentials")
+      .select("id, account_number, account_type, app_login_name, expiry_at")
+      .eq("owner_id", user.id)
+      .order("account_number", { ascending: true })
+      .then(({ data }) => {
+        if (!active) return;
+        const rows = (data ?? []) as typeof myCreds;
+        setMyCreds(rows);
+        setCredsLoaded(true);
+        if (rows.length > 0) {
+          setCustomerType("existing");
+          if (rows.length === 1) {
+            setCredChoice(rows[0].id);
+            setExistingUsername(rows[0].app_login_name ?? "");
+          }
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [user?.id]);
+
 
   const requiresMulti = useMemo(
     () => items.some((i) => (i.category ?? "").toLowerCase().includes("multi")),
