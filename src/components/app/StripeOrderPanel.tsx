@@ -46,6 +46,7 @@ export function StripeLogo({ className = "" }: { className?: string }) {
 export function StripeOrderPanel({
   orderId,
   canPay = true,
+  onChange,
 }: {
   orderId: string;
   amountCents?: number;
@@ -55,7 +56,10 @@ export function StripeOrderPanel({
   const [paid, setPaid] = useState<any | null>(null);
   const [bootError, setBootError] = useState<string | null>(null);
   const [fetchingSecret, setFetchingSecret] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [checkMsg, setCheckMsg] = useState<string | null>(null);
   const createPI = useServerFn(createStripePaymentIntent);
+  const confirmStripe = useServerFn(confirmStripePayment);
   const isFinalPaid = Boolean(
     paid && ["COMPLETED", "completed", "finished"].includes(String(paid.status ?? "")),
   );
