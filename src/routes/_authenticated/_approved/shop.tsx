@@ -3170,24 +3170,14 @@ function OrderDetailImpl({
   const orderMarkedPaid = Boolean(order?.paid_at || order?.status === "paid");
   const isOrderPaid = Boolean(orderMarkedPaid || settledPayment);
 
-  // Reconcile the Stripe session as soon as the order opens. This closes the
-  // gap where Stripe has taken payment but the return redirect was interrupted.
+  // Reconcile through the server as soon as the order opens. The browser may
+  // not be allowed to read order_payments, so never depend on its local row.
   useEffect(() => {
-    if (
-      !order ||
-      orderMarkedPaid ||
-      !recordedStripeSessionId
-    ) return;
+    if (!order || orderMarkedPaid) return;
     let cancelled = false;
     (async () => {
       try {
-        const result = await confirmStripe({
-          data: {
-            orderId,
-            sessionId: recordedStripeSessionId,
-            environment: getStripeEnvironment(),
-          },
-        });
+        const result = await verifyStripePaymentForOrder(confirmStripe, orderId);
         if (!cancelled && !("error" in result)) await load();
       } catch {
         // Keep the order usable while Stripe is still processing the session.
@@ -3196,7 +3186,7 @@ function OrderDetailImpl({
     return () => {
       cancelled = true;
     };
-  }, [orderId, order?.id, orderMarkedPaid, recordedStripeSessionId]);
+  }, [orderId, order?.id, orderMarkedPaid]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
