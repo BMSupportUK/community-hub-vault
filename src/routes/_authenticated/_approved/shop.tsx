@@ -3104,12 +3104,16 @@ function OrderDetailImpl({
   // while the customer's USDT payment is on its way.
   const [pendingCrypto, setPendingCrypto] = useState<{ status: string } | null>(null);
   const [paidMethodLabel, setPaidMethodLabel] = useState<string | null>(null);
+  const [settledPayment, setSettledPayment] = useState<{
+    provider: string;
+    providerPaymentId: string | null;
+  } | null>(null);
   useEffect(() => {
     let cancelled = false;
     const loadPay = async () => {
       const { data } = await supabase
         .from("order_payments")
-        .select("provider,status,card_brand,last_4")
+        .select("provider,provider_payment_id,status,card_brand,last_4")
         .eq("order_id", orderId)
         .maybeSingle();
       if (cancelled) return;
@@ -3119,13 +3123,14 @@ function OrderDetailImpl({
           (data.status ?? "").toLowerCase(),
         );
       setPendingCrypto(pending ? { status: data!.status as string } : null);
-      if (
-        data &&
-        (data.status === "finished" ||
-          data.status === "COMPLETED" ||
-          data.status === "captured" ||
-          data.status === "paid")
-      ) {
+      const paymentIsSettled =
+        !!data && ["finished", "completed", "captured", "paid"].includes(String(data.status ?? "").toLowerCase());
+      setSettledPayment(
+        paymentIsSettled
+          ? { provider: String(data.provider), providerPaymentId: data.provider_payment_id ?? null }
+          : null,
+      );
+      if (paymentIsSettled && data) {
         if (data.provider === "nowpayments") {
           setPaidMethodLabel(data.card_brand || "USDT");
         } else {
@@ -3143,7 +3148,10 @@ function OrderDetailImpl({
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "order_payments", filter: `order_id=eq.${orderId}` },
-        () => loadPay(),
+        () => {
+          void loadPay();
+          void load();
+        },
       )
       .subscribe();
     return () => {
@@ -3155,6 +3163,37 @@ function OrderDetailImpl({
   // Verify a Stripe Embedded Checkout session when the user returns with
   // ?session_id=... after completing payment.
   const confirmStripe = useServerFn(confirmStripePayment);
+  const isOrderPaid = Boolean(order?.paid_at || order?.status === "paid" || settledPayment);
+
+  // Reconcile the Stripe session as soon as the order opens. This closes the
+  // gap where Stripe has taken payment but the return redirect was interrupted.
+  useEffect(() => {
+    if (
+      !order ||
+      isOrderPaid ||
+      settledPayment?.provider !== "stripe" ||
+      !settledPayment.providerPaymentId
+    ) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const result = await confirmStripe({
+          data: {
+            orderId,
+            sessionId: settledPayment.providerPaymentId,
+            environment: getStripeEnvironment(),
+          },
+        });
+        if (!cancelled && !("error" in result)) await load();
+      } catch {
+        // Keep the order usable while Stripe is still processing the session.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [orderId, order?.id, isOrderPaid, settledPayment?.provider, settledPayment?.providerPaymentId]);
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const sessionId = params.get("session_id");
@@ -3582,7 +3621,7 @@ function OrderDetailImpl({
 
   const cancelOrder = async () => {
     if (!order) return;
-    if (order.status === "completed" || !!order.completed_at || !!order.paid_at) {
+    if (order.status === "completed" || !!order.completed_at || isOrderPaid) {
       toast.error("This order can no longer be cancelled.");
       return;
     }
@@ -3688,7 +3727,7 @@ function OrderDetailImpl({
                 onClick={markPaid}
                 disabled={
                   busy ||
-                  !!order.paid_at ||
+                  isOrderPaid ||
                   !!order.completed_at ||
                   order.status === "cancelled" ||
                   order.status !== "processing"
@@ -3718,14 +3757,12 @@ function OrderDetailImpl({
               >
                 {order.status}
               </span>
-              {order.user_id === user?.id &&
-                !order.paid_at &&
-                !order.completed_at &&
-                order.status !== "cancelled" && (
+              {order.user_id === user?.id && order.status !== "cancelled" && !order.completed_at && (
                   <button
                     onClick={cancelOrder}
-                    disabled={busy}
-                    className="px-2.5 py-1 rounded-md bg-destructive/15 text-destructive text-xs font-medium flex items-center gap-1 hover:bg-destructive/25 disabled:opacity-50"
+                    disabled={busy || isOrderPaid}
+                    title={isOrderPaid ? "Paid orders cannot be cancelled" : "Cancel order"}
+                    className="px-2.5 py-1 rounded-md bg-destructive/15 text-destructive text-xs font-medium flex items-center gap-1 hover:bg-destructive/25 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground disabled:opacity-60"
                   >
                     <Ban className="size-3.5" /> Cancel Order
                   </button>
@@ -3835,7 +3872,7 @@ function OrderDetailImpl({
                     onChange={load}
                   />
                 </>
-              ) : order.paid_at || order.completed_at || order.status === "cancelled" ? (
+              ) : isOrderPaid || order.completed_at || order.status === "cancelled" ? (
                 <>
                   <SquareCardPanel
                     orderId={orderId}
