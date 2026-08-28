@@ -931,6 +931,7 @@ function TicketDetail({
   const [linkedOrderUsername, setLinkedOrderUsername] = useState<string | null>(null);
   const [orderBusy, setOrderBusy] = useState(false);
   const refreshSquareInvoice = useServerFn(refreshSquareInvoiceStatus);
+  const confirmStripe = useServerFn(confirmStripePayment);
   const cancelOrderAndSquareInvoiceRpc = useServerFn(cancelOrderAndSquareInvoice);
   const loadLinkedOrder = async () => {
     if (!ticket.order_id) { setLinkedOrder(null); setLinkedOrderUsername(null); return; }
