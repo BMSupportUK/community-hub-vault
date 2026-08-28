@@ -197,7 +197,8 @@ export function buildPreviewBody(fx: FixtureLite, json: any): string {
   const city = json?.gameInfo?.venue?.address?.city ?? null;
   const ref = refereeOf(json);
   const odds = oddsLine(json);
-  const h2h = headToHead(json, homeId, awayId);
+  const h2h = fotmobHeadToHead(json, home, away);
+  const legacyH2h = h2h.lines.length ? [] : headToHead(json, homeId, awayId);
 
   const parts: string[] = [];
   parts.push(`<p><strong>Match preview — ${esc(home)} v ${esc(away)}</strong></p>`);
