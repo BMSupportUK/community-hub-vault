@@ -114,6 +114,27 @@ export function StripeOrderPanel({
 
   const checkoutOptions = useMemo(() => ({ fetchClientSecret }), [fetchClientSecret]);
 
+  const checkPaid = async () => {
+    setChecking(true);
+    setCheckMsg(null);
+    try {
+      const res = await verifyStripePaymentForOrder(confirmStripe, orderId);
+      if (!res) {
+        setCheckMsg("No card payment found for this order yet.");
+      } else if ("error" in res) {
+        setCheckMsg(res.error);
+      } else {
+        setCheckMsg("Card payment confirmed.");
+        await loadPayment();
+        await onChange?.();
+      }
+    } catch (e) {
+      setCheckMsg((e as Error).message || "Could not check the card payment");
+    } finally {
+      setChecking(false);
+    }
+  };
+
   if (isFinalPaid) {
     if (paid.provider !== "stripe") return null;
     return (
