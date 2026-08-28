@@ -195,16 +195,17 @@ export const confirmStripePayment = createServerFn({ method: "POST" })
   .inputValidator((input) =>
     z.object({ orderId: z.string().uuid(), sessionId: z.string().min(4).max(256), environment: z.enum(["sandbox", "live"]) }).parse(input),
   )
-  .handler(async ({ data, context }): Promise<{ status: string; amountCents: number; cardBrand?: string; last4?: string; receiptUrl?: string } | { error: string }> => {
+  .handler(async ({ data, context }): Promise<{ status: string; amountCents: number; cardBrand?: string; last4?: string; receiptUrl?: string; ticketId?: string } | { error: string }> => {
     try {
       const { supabase, userId } = context;
       await assertAdminOrOrderOwner(supabase, userId, data.orderId);
 
       const { data: order, error: orderErr } = await supabase
         .from("orders")
-        .select("id,total_cents,paid_at")
+        .select("id,total_cents,paid_at,user_id")
         .eq("id", data.orderId)
         .single();
+
       if (orderErr || !order) throw new Error(orderErr?.message || "Order not found");
       if (order.paid_at) return { status: "already_paid", amountCents: order.total_cents ?? 0 };
       const totalCents = order.total_cents ?? 0;
@@ -285,15 +286,18 @@ export const confirmStripePayment = createServerFn({ method: "POST" })
         console.error("Failed to post Stripe payment message to order:", e);
       }
 
+      let ticketId: string | undefined;
       try {
+        const content =
+          `✅ Card payment captured via Stripe for order #${String(order.id).slice(0, 8)}` +
+          `${cardBrand && last4 ? ` (${cardBrand} •••• ${last4})` : ""}` +
+          ` — £${(totalCents / 100).toFixed(2)}.` +
+          `\nPurchase ref: ${pi?.id ?? session.id}` +
+          (receiptUrl ? `\nReceipt: ${receiptUrl}` : "");
+
         const { data: linkedTickets } = await supabaseAdmin.from("tickets").select("id,user_id").eq("order_id", String(order.id));
         if (linkedTickets && linkedTickets.length > 0) {
-          const content =
-            `✅ Card payment captured via Stripe for order #${String(order.id).slice(0, 8)}` +
-            `${cardBrand && last4 ? ` (${cardBrand} •••• ${last4})` : ""}` +
-            ` — £${(totalCents / 100).toFixed(2)}.` +
-            `\nTransaction ref: ${pi?.id ?? session.id}` +
-            (receiptUrl ? `\nReceipt: ${receiptUrl}` : "");
+          ticketId = String(linkedTickets[0]!.id);
           await supabaseAdmin.from("ticket_messages").insert(
             linkedTickets.map((t: { id: string }) => ({
               ticket_id: t.id,
@@ -301,12 +305,43 @@ export const confirmStripePayment = createServerFn({ method: "POST" })
               content,
             })),
           );
+        } else {
+          // No ticket linked yet (e.g. order created outside the shop flow) —
+          // open one in the admin/management-only "Orders" category so the
+          // purchase reference is always tracked in support.
+          const { data: ordersCat } = await supabaseAdmin
+            .from("ticket_categories")
+            .select("id")
+            .eq("slug", "orders")
+            .maybeSingle();
+          if (ordersCat?.id) {
+            const { data: ticket } = await supabaseAdmin
+              .from("tickets")
+              .insert({
+                user_id: (order as { user_id?: string }).user_id ?? userId,
+                category_id: ordersCat.id,
+                subject: `Order #${String(order.id).slice(0, 8)} — Stripe payment received`,
+                priority: "normal",
+                order_id: String(order.id),
+              } as never)
+              .select("id")
+              .single();
+            if (ticket?.id) {
+              ticketId = String(ticket.id);
+              await supabaseAdmin.from("ticket_messages").insert({
+                ticket_id: ticket.id,
+                sender_id: userId,
+                content: `🧾 Order ID: ${order.id}\n\n${content}`,
+              } as never);
+            }
+          }
         }
       } catch (e) {
         console.error("Failed to post Stripe payment message to ticket:", e);
       }
 
-      return { status: "COMPLETED", amountCents: totalCents, cardBrand, last4, receiptUrl };
+      return { status: "COMPLETED", amountCents: totalCents, cardBrand, last4, receiptUrl, ticketId };
+
     } catch (error) {
       return { error: getStripeErrorMessage(error) };
     }

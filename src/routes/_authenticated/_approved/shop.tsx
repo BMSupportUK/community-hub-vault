@@ -3170,7 +3170,16 @@ function OrderDetailImpl({
           return;
         }
         toast.success(`Stripe payment confirmed — ${format(result.amountCents)}`);
+        if (result.ticketId) {
+          toast.message("Support ticket updated with your purchase reference", {
+            action: {
+              label: "Open ticket",
+              onClick: () => navigate({ to: "/tickets", search: { id: result.ticketId! } }),
+            },
+          });
+        }
         await load();
+
         // Remove session_id from URL so a refresh doesn't re-verify.
         params.delete("session_id");
         const newUrl = `${window.location.pathname}?${params.toString()}${window.location.hash}`;
