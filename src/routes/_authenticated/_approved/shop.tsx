@@ -4230,46 +4230,6 @@ function prewarmSquareConfig(fn: (...args: any[]) => Promise<any>): Promise<any>
   return _squareConfigPromise;
 }
 
-let _stripeConfigPromise: Promise<any> | null = null;
-function prewarmStripeConfig(fn: (...args: any[]) => Promise<any>): Promise<any> {
-  if (!_stripeConfigPromise) {
-    _stripeConfigPromise = fn().catch((e) => {
-      _stripeConfigPromise = null;
-      throw e;
-    });
-  }
-  return _stripeConfigPromise;
-}
-
-let _stripeSdkPromise: Promise<any> | null = null;
-function loadStripeSdk(): Promise<any> {
-  if (typeof window === "undefined") return Promise.reject(new Error("No window"));
-  const w = window as any;
-  if (w.Stripe) return Promise.resolve(w.Stripe);
-  if (_stripeSdkPromise) return _stripeSdkPromise;
-  _stripeSdkPromise = new Promise((resolve, reject) => {
-    const id = "stripe-js-sdk";
-    const existing = document.getElementById(id) as HTMLScriptElement | null;
-    if (existing) {
-      existing.addEventListener("load", () => resolve((window as any).Stripe));
-      existing.addEventListener("error", () => reject(new Error("Failed to load Stripe SDK")));
-      if ((window as any).Stripe) resolve((window as any).Stripe);
-      return;
-    }
-    const s = document.createElement("script");
-    s.id = id;
-    s.src = "https://js.stripe.com/v3/";
-    s.async = true;
-    s.onload = () => resolve((window as any).Stripe);
-    s.onerror = () => {
-      _stripeSdkPromise = null;
-      reject(new Error("Failed to load Stripe SDK"));
-    };
-    document.head.appendChild(s);
-  });
-  return _stripeSdkPromise;
-}
-
 function StripeLogo({ className = "" }: { className?: string }) {
   return (
     <span className={`inline-flex items-center gap-1.5 ${className}`} aria-label="Stripe">
