@@ -60,6 +60,7 @@ import {
   confirmStripePayment,
 } from "@/lib/stripe-payments.functions";
 import { verifyStripePaymentForOrder } from "@/components/app/StripeOrderPanel";
+import { PaymentStatusTimeline, type PayCheckPhase } from "@/components/app/PaymentStatusTimeline";
 import {
   createCryptoInvoice,
   getCryptoConfig,
