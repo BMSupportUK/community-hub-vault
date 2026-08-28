@@ -5,7 +5,26 @@ import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe
 
 import { supabase } from "@/integrations/supabase/client";
 import { getStripe, getStripeEnvironment } from "@/lib/stripe";
-import { createStripePaymentIntent } from "@/lib/stripe-payments.functions";
+import { createStripePaymentIntent, confirmStripePayment } from "@/lib/stripe-payments.functions";
+
+/**
+ * Look up the Stripe checkout session recorded for an order and ask the server
+ * to verify it. Used by the "I've paid" buttons so a completed card payment is
+ * detected even if the customer never came back through the return URL.
+ */
+export async function verifyStripePaymentForOrder(
+  confirmFn: (args: { data: { orderId: string; sessionId: string; environment: ReturnType<typeof getStripeEnvironment> } }) => Promise<any>,
+  orderId: string,
+): Promise<any | null> {
+  const { data } = await supabase
+    .from("order_payments")
+    .select("provider,provider_payment_id")
+    .eq("order_id", orderId)
+    .maybeSingle();
+  const sessionId = (data as any)?.provider_payment_id as string | undefined;
+  if (!data || (data as any).provider !== "stripe" || !sessionId) return null;
+  return confirmFn({ data: { orderId, sessionId, environment: getStripeEnvironment() } });
+}
 
 export function StripeLogo({ className = "" }: { className?: string }) {
   return (
