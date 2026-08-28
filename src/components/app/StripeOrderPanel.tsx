@@ -197,6 +197,10 @@ export function StripeOrderPanel({
     );
   }
 
+  // Order already settled (e.g. paid via another provider) — never offer a
+  // second card payment for it.
+  if (orderPaidAt) return null;
+
   if (!canPay) return null;
 
   return (
