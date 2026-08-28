@@ -30,9 +30,11 @@ type StepDef = {
 export function PaymentStatusTimeline({
   phase,
   method = null,
+  started = false,
 }: {
   phase: PayCheckPhase;
   method?: PayMethod;
+  started?: boolean;
 }) {
   const failed = phase === "failed";
   const confirmed = phase === "confirmed";
