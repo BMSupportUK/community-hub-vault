@@ -4166,6 +4166,12 @@ function SquareInvoicePanel({
     setBusy(true);
     setErr(null);
     try {
+      const stripeRes: any = await verifyStripePaymentForOrder(confirmStripeFn, orderId);
+      if (stripeRes && !("error" in stripeRes)) {
+        setStatus("PAID");
+        await onChange?.();
+        return;
+      }
       const res: any = await refreshInvoice({ data: { orderId } });
       if (res?.status) setStatus(res.status);
       if (res?.public_url) setUrl(res.public_url);
