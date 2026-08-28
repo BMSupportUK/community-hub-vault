@@ -363,7 +363,7 @@ export const confirmStripePayment = createServerFn({ method: "POST" })
               await supabaseAdmin.from("ticket_messages").insert({
                 ticket_id: ticket.id,
                 sender_id: userId,
-                content: `🧾 Order ID: ${order.id}\n\n${content}`,
+                content: `🧾 Order ID: ${order.id}\n\n${staffContent}`,
               } as never);
             }
           }
