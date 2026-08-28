@@ -1360,8 +1360,10 @@ function Storefront() {
         status: "pending",
         shipping_name: info.name,
         email: info.email,
-        customer_type: info.customer_type,
-        existing_username: info.existing_username?.trim() || null,
+        customer_type: info.purchase_kind === "additional" ? "new" : info.customer_type,
+        existing_username:
+          info.purchase_kind === "additional" ? null : info.existing_username?.trim() || null,
+
         discount_code: submittedCode || null,
         discount_cents: verifiedDiscountCents,
         wants_adult_content: info.wants_adult_content,
@@ -1418,17 +1420,23 @@ function Storefront() {
               kind === "renewal"
                 ? `🔁 Renewal — login: ${info.existing_username.trim() || "(not specified)"}`
                 : kind === "additional"
-                  ? `➕ Purchase additional account`
+                  ? `➕ Additional account — create a BRAND NEW login (do not renew an existing account)`
                   : `🆕 New customer`
             }`,
-            ...(ownedLogins.length > 0
+            ...(ownedLogins.length > 0 && kind !== "additional"
               ? [`Existing accounts on file: ${ownedLogins.join(", ")}`]
+              : []),
+            ...(ownedLogins.length > 0 && kind === "additional"
+              ? [
+                  `Other accounts already on file (reference only — none of these are being renewed): ${ownedLogins.join(", ")}`,
+                ]
               : []),
             `Adult content access: ${info.wants_adult_content ? "Yes" : "No"}`,
             ``,
             `Items:`,
             itemLines,
           ].join("\n");
+
 
           await supabase.from("ticket_messages").insert({
             ticket_id: ticket.id,
@@ -2511,9 +2519,10 @@ function Checkout({
                     type="button"
                     onClick={() => {
                       setCredChoice("additional");
-                      setCustomerType("existing");
+                      setCustomerType("new");
                       setExistingUsername("");
                     }}
+
                     className={cn(
                       "w-full text-left px-3 py-2 rounded-lg text-sm border",
                       credChoice === "additional"
