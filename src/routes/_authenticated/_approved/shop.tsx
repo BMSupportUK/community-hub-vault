@@ -16,7 +16,7 @@ import {
   Pencil,
   Image as ImageIcon,
   Tag,
-  CheckCircle2,
+  
   BadgeCheck,
   Check,
   Wrench,
@@ -66,7 +66,7 @@ import {
   getCryptoConfig,
   getCryptoInvoiceStatus,
 } from "@/lib/nowpayments.functions";
-import { CreditCard, Ban, XCircle, Clock } from "lucide-react";
+import { CreditCard, Ban } from "lucide-react";
 import { getOutOfHoursMessage } from "@/lib/business-hours";
 import { isAdminUnlocked } from "@/lib/admin-unlock";
 import { useRouter } from "@tanstack/react-router";
