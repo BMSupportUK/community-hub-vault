@@ -63,6 +63,31 @@ type Recipient = {
   display_name: string | null
   missing_count: number
   next_kickoff_at: string
+  gameweek_id: string | null
+  gw_number: number | null
+  fixture_label: string | null
+}
+
+/**
+ * Final safety net: the reminder must never claim "no squad" for an entrant who
+ * saved one between the recipient query and this send. Re-checks the squad (and
+ * that it actually has picks) immediately before enqueueing.
+ */
+async function stillMissingSquad(supabase: any, r: Recipient): Promise<boolean> {
+  if (!r.gameweek_id) return true
+  const col = r.entrant_kind === 'guest' ? 'guest_id' : 'user_id'
+  const { data, error } = await supabase
+    .from('fantasy_squads')
+    .select('id')
+    .eq('gameweek_id', r.gameweek_id)
+    .eq(col, r.entrant_id)
+    .maybeSingle()
+  if (error || !data) return true
+  const { count } = await supabase
+    .from('fantasy_squad_picks')
+    .select('id', { count: 'exact', head: true })
+    .eq('squad_id', data.id)
+  return (count ?? 0) === 0
 }
 
 export const Route = createFileRoute('/api/public/hooks/fantasy-squad-reminders')({
