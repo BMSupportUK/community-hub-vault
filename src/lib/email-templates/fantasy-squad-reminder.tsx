@@ -9,13 +9,16 @@ interface Props {
   missingCount?: number
   nextKickoffAt?: string
   fantasyUrl?: string
+  gwNumber?: number
+  fixtureLabel?: string
 }
 
-const FantasySquadReminderEmail = ({ displayName, missingCount, nextKickoffAt, fantasyUrl }: Props) => {
+const FantasySquadReminderEmail = ({ displayName, missingCount, nextKickoffAt, fantasyUrl, gwNumber, fixtureLabel }: Props) => {
   const count = missingCount ?? 1
+  const gwLabel = gwNumber ? `Gameweek ${gwNumber}` : 'the next gameweek'
   const headline = count > 1
-    ? `You have ${count} fantasy gameweeks with no squad picked`
-    : 'You have a fantasy gameweek with no squad picked'
+    ? `You haven't picked a squad for your next ${count} fantasy gameweeks yet`
+    : `You haven't picked your squad for ${gwLabel} yet`
   return (
     <Html lang="en" dir="ltr">
       <Head />
@@ -24,13 +27,15 @@ const FantasySquadReminderEmail = ({ displayName, missingCount, nextKickoffAt, f
         <Container style={container}>
           <Heading style={h1}>{displayName ? `Hi ${displayName},` : 'Hi,'}</Heading>
           <Text style={text}>
-            {headline} in the next 24 hours{nextKickoffAt ? <> — the next Boro match kicks off at <strong>{nextKickoffAt}</strong></> : null}.
+            {headline}
+            {fixtureLabel ? <> — <strong>{fixtureLabel}</strong></> : null}
+            {nextKickoffAt ? <>, kick-off <strong>{nextKickoffAt}</strong></> : null}.
           </Text>
           <Section style={card}>
             <Text style={text}>
-              <strong>Heads up:</strong> your squad locks <strong>30 minutes before kick-off</strong>.
-              After that you can't change your starting XI, formation, captain or transfers for that gameweek —
-              and an unsubmitted squad scores nothing.
+              <strong>Remember:</strong> squads don't carry over — every gameweek is a fresh pick,
+              so last week's team isn't entered for this one. Picks lock <strong>30 minutes before kick-off</strong>,
+              and a gameweek with no squad saved scores nothing.
             </Text>
           </Section>
           {fantasyUrl ? (
@@ -51,14 +56,17 @@ export const template = {
   component: FantasySquadReminderEmail,
   subject: (data: Record<string, any>) => {
     const c = data?.missingCount ?? 1
-    return c > 1
-      ? `Reminder: ${c} fantasy gameweeks still need a squad`
+    if (c > 1) return `Reminder: ${c} fantasy gameweeks still need a squad`
+    return data?.gwNumber
+      ? `Reminder: pick your Gameweek ${data.gwNumber} squad before kick-off`
       : 'Reminder: pick your MFC Fantasy squad before kick-off'
   },
   displayName: 'Fantasy squad reminder',
   previewData: {
     displayName: 'Alex',
     missingCount: 1,
+    gwNumber: 4,
+    fixtureLabel: 'Middlesbrough v West Bromwich Albion',
     nextKickoffAt: 'Today, 15:00 BST',
     fantasyUrl: 'https://bmsupport.uk/boro-fantasy',
   },

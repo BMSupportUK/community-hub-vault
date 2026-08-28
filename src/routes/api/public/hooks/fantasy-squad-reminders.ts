@@ -63,6 +63,31 @@ type Recipient = {
   display_name: string | null
   missing_count: number
   next_kickoff_at: string
+  gameweek_id: string | null
+  gw_number: number | null
+  fixture_label: string | null
+}
+
+/**
+ * Final safety net: the reminder must never claim "no squad" for an entrant who
+ * saved one between the recipient query and this send. Re-checks the squad (and
+ * that it actually has picks) immediately before enqueueing.
+ */
+async function stillMissingSquad(supabase: any, r: Recipient): Promise<boolean> {
+  if (!r.gameweek_id) return true
+  const col = r.entrant_kind === 'guest' ? 'guest_id' : 'user_id'
+  const { data, error } = await supabase
+    .from('fantasy_squads')
+    .select('id')
+    .eq('gameweek_id', r.gameweek_id)
+    .eq(col, r.entrant_id)
+    .maybeSingle()
+  if (error || !data) return true
+  const { count } = await supabase
+    .from('fantasy_squad_picks')
+    .select('id', { count: 'exact', head: true })
+    .eq('squad_id', data.id)
+  return (count ?? 0) === 0
 }
 
 export const Route = createFileRoute('/api/public/hooks/fantasy-squad-reminders')({
@@ -113,6 +138,9 @@ export const Route = createFileRoute('/api/public/hooks/fantasy-squad-reminders'
             const allowed = await canEmailList(supabase, recipient, EMAIL_LIST_COMPETITIONS)
             if (!allowed) { stats.skipped++; continue }
 
+            // Squad saved since the query ran? Then there's nothing to remind about.
+            if (!(await stillMissingSquad(supabase, r))) { stats.skipped++; continue }
+
             // Dedupe — one reminder per entrant per UK day
             const { error: claimErr } = await supabase
               .from('fantasy_squad_reminders')
@@ -131,6 +159,8 @@ export const Route = createFileRoute('/api/public/hooks/fantasy-squad-reminders'
               displayName: r.display_name ?? undefined,
               missingCount: r.missing_count,
               nextKickoffAt: fmtKickoff(r.next_kickoff_at),
+              gwNumber: r.gw_number ?? undefined,
+              fixtureLabel: r.fixture_label ?? undefined,
               fantasyUrl: FANTASY_URL,
             }
             const element = React.createElement(template.component, props)
