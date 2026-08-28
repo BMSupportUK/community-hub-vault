@@ -1409,7 +1409,8 @@ function TicketDetail({
           )}
           {isAdmin && (
             <>
-              {linkedOrder.customer_type === "existing" ? (
+              {linkedOrder.customer_type === "existing" &&
+              Boolean((linkedOrder as { existing_username?: string | null }).existing_username) ? (
                 <button
                   onClick={orderExtendSubscription}
                   disabled={orderBusy || !linkedOrder.paid_at || extendSubMessageExists}
