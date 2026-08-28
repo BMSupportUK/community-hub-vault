@@ -257,7 +257,27 @@ export const confirmStripePayment = createServerFn({ method: "POST" })
         .single();
 
       if (orderErr || !order) throw new Error(orderErr?.message || "Order not found");
-      if (order.paid_at) return { status: "already_paid", amountCents: order.total_cents ?? 0 };
+      if (order.paid_at) {
+        // Already settled (e.g. a previous check or a repaired paid state) —
+        // still make sure the automated thank-you notice exists on the ticket.
+        try {
+          const existing = await getOrderPayment(String(order.id));
+          const { postOrderPaymentReceivedNotice } = await import("@/lib/order-payment-notice.server");
+          const notice = await postOrderPaymentReceivedNotice({
+            orderId: String(order.id),
+            provider: existing?.provider === "square" ? "Square" : "Stripe",
+            amountCents: order.total_cents ?? 0,
+            reference: existing?.provider_payment_id ? String(existing.provider_payment_id) : null,
+            actorId: userId,
+            paidAt: order.paid_at,
+          });
+          return { status: "already_paid", amountCents: order.total_cents ?? 0, ticketId: notice.ticketId };
+        } catch (e) {
+          console.error("Failed to post payment notice for already-paid order:", e);
+        }
+        return { status: "already_paid", amountCents: order.total_cents ?? 0 };
+      }
+
       const totalCents = order.total_cents ?? 0;
       if (totalCents <= 0) throw new Error("Order total must be greater than zero");
 
