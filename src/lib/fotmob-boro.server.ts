@@ -297,7 +297,15 @@ export async function fetchFotmobSummary(input: {
       teams: competitors.map((competitor, index) => ({ ...competitor, statistics: teamStats(index) })),
     },
     rosters: lineups,
-    gameInfo: {},
+    gameInfo: {
+      venue: stadium?.name
+        ? { fullName: String(stadium.name), address: { city: stadium?.city ? String(stadium.city) : null } }
+        : null,
+      officials: referee ? [{ displayName: referee, position: { displayName: "Referee" } }] : [],
+    },
+    lastFiveGames,
+    h2h,
+    insights,
     // FotMob serves a predicted XI (lineupType "lastStarting11", source
     // "lastStartingLineups") long before kick-off. Only a real team sheet
     // counts as confirmed.
