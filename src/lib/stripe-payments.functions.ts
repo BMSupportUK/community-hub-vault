@@ -288,12 +288,44 @@ export const confirmStripePayment = createServerFn({ method: "POST" })
 
       let ticketId: string | undefined;
       try {
+        // Build a staff-ready summary: items, total and customer details so
+        // support can action the order without cross-checking other screens.
+        const orderUserId = (order as { user_id?: string }).user_id ?? userId;
+        const [{ data: items }, { data: profile }] = await Promise.all([
+          supabaseAdmin
+            .from("order_items")
+            .select("product_name,quantity,unit_price_cents")
+            .eq("order_id", String(order.id)),
+          supabaseAdmin
+            .from("profiles")
+            .select("username,display_name")
+            .eq("id", orderUserId)
+            .maybeSingle(),
+        ]);
+
+        const itemLines = (items ?? []).map(
+          (it: { product_name: string | null; quantity: number | null; unit_price_cents: number | null }) =>
+            `• ${it.quantity ?? 1} × ${it.product_name ?? "Item"} — £${(((it.unit_price_cents ?? 0) * (it.quantity ?? 1)) / 100).toFixed(2)}`,
+        );
+        const customerLines = [
+          profile?.display_name ? `Name: ${profile.display_name}` : null,
+          profile?.username ? `Username: @${profile.username}` : null,
+          session.customer_details?.email ? `Email: ${session.customer_details.email}` : null,
+          `User ID: ${orderUserId}`,
+        ].filter(Boolean);
+
         const content =
           `✅ Card payment captured via Stripe for order #${String(order.id).slice(0, 8)}` +
           `${cardBrand && last4 ? ` (${cardBrand} •••• ${last4})` : ""}` +
           ` — £${(totalCents / 100).toFixed(2)}.` +
           `\nPurchase ref: ${pi?.id ?? session.id}` +
-          (receiptUrl ? `\nReceipt: ${receiptUrl}` : "");
+          (receiptUrl ? `\nReceipt: ${receiptUrl}` : "") +
+          (itemLines.length ? `\n\n🛒 Items:\n${itemLines.join("\n")}` : "") +
+          `\nTotal: £${(totalCents / 100).toFixed(2)} GBP`;
+
+        // Staff-only version adds customer contact details (email is
+        // admin/management-only and must not appear on customer-visible tickets).
+        const staffContent = `${content}\n\n👤 Customer:\n${customerLines.join("\n")}`;
 
         const { data: linkedTickets } = await supabaseAdmin.from("tickets").select("id,user_id").eq("order_id", String(order.id));
         if (linkedTickets && linkedTickets.length > 0) {
@@ -331,7 +363,7 @@ export const confirmStripePayment = createServerFn({ method: "POST" })
               await supabaseAdmin.from("ticket_messages").insert({
                 ticket_id: ticket.id,
                 sender_id: userId,
-                content: `🧾 Order ID: ${order.id}\n\n${content}`,
+                content: `🧾 Order ID: ${order.id}\n\n${staffContent}`,
               } as never);
             }
           }
