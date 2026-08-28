@@ -138,6 +138,9 @@ export const Route = createFileRoute('/api/public/hooks/fantasy-squad-reminders'
             const allowed = await canEmailList(supabase, recipient, EMAIL_LIST_COMPETITIONS)
             if (!allowed) { stats.skipped++; continue }
 
+            // Squad saved since the query ran? Then there's nothing to remind about.
+            if (!(await stillMissingSquad(supabase, r))) { stats.skipped++; continue }
+
             // Dedupe — one reminder per entrant per UK day
             const { error: claimErr } = await supabase
               .from('fantasy_squad_reminders')
