@@ -164,7 +164,6 @@ export const createStripePaymentIntent = createServerFn({ method: "POST" })
             metadata: { order_id: String(order.id), user_id: userId },
           },
           metadata: { order_id: String(order.id), user_id: userId },
-          managed_payments: { enabled: true },
         } as any,
       );
 
