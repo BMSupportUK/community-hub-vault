@@ -197,7 +197,8 @@ export function buildPreviewBody(fx: FixtureLite, json: any): string {
   const city = json?.gameInfo?.venue?.address?.city ?? null;
   const ref = refereeOf(json);
   const odds = oddsLine(json);
-  const h2h = headToHead(json, homeId, awayId);
+  const h2h = fotmobHeadToHead(json, home, away);
+  const legacyH2h = h2h.lines.length ? [] : headToHead(json, homeId, awayId);
 
   const parts: string[] = [];
   parts.push(`<p><strong>Match preview — ${esc(home)} v ${esc(away)}</strong></p>`);
@@ -232,9 +233,20 @@ export function buildPreviewBody(fx: FixtureLite, json: any): string {
     );
   }
 
-  if (h2h.length) {
-    parts.push(`<p><strong>Recent meetings</strong></p><ul>${h2h.map((l) => `<li>${esc(l)}</li>`).join("")}</ul>`);
+  if (h2h.lines.length || legacyH2h.length) {
+    const lines = h2h.lines.length ? h2h.lines : legacyH2h;
+    parts.push(
+      `<p><strong>Head to head</strong></p>${h2h.record ? `<p>${esc(h2h.record)}</p>` : ""}<ul>${lines
+        .map((l) => `<li>${esc(l)}</li>`)
+        .join("")}</ul>`,
+    );
   }
+
+  const prose = previewProse(fx, json, sides, h2h, { venue, city, ref });
+  if (prose.length) {
+    parts.push(`<p><strong>The preview</strong></p>${prose.map((p) => `<p>${esc(p)}</p>`).join("")}`);
+  }
+
 
   parts.push(
     comp
@@ -269,6 +281,102 @@ function predictScore(sides: SideInfo[], odds: string | null): { home: number; a
   }
   return { home: Math.max(0, Math.min(4, Math.round(h))), away: Math.max(0, Math.min(4, Math.round(a))) };
 }
+
+type H2H = { record: string | null; lines: string[]; homeWins: number; draws: number; awayWins: number };
+
+/** Head-to-head straight from the FotMob h2h block (overall record + previous meetings). */
+function fotmobHeadToHead(json: any, home: string, away: string): H2H {
+  const block = json?.h2h ?? null;
+  const summary = block?.summary ?? null;
+  const homeWins = Number(summary?.homeWins ?? 0);
+  const draws = Number(summary?.draws ?? 0);
+  const awayWins = Number(summary?.awayWins ?? 0);
+  const lines: string[] = (block?.matches ?? []).map((m: any) => {
+    const d = m?.date ? new Date(String(m.date)) : null;
+    const when =
+      d && Number.isFinite(d.getTime())
+        ? new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "Europe/London" }).format(d)
+        : "";
+    const comp = m?.competition ? ` (${m.competition})` : "";
+    return `${when ? `${when} — ` : ""}${m?.home ?? ""} ${m?.score ?? ""} ${m?.away ?? ""}${comp}`.replace(/\s+/g, " ").trim();
+  });
+  const record =
+    summary && homeWins + draws + awayWins > 0
+      ? `Last ${homeWins + draws + awayWins} meetings: ${home} ${homeWins} win${homeWins === 1 ? "" : "s"}, ${draws} draw${draws === 1 ? "" : "s"}, ${away} ${awayWins} win${awayWins === 1 ? "" : "s"}.`
+      : null;
+  return { record, lines, homeWins, draws, awayWins };
+}
+
+function formWords(form: string[]): string {
+  const w = form.filter((r) => r === "W").length;
+  const d = form.filter((r) => r === "D").length;
+  const l = form.filter((r) => r === "L").length;
+  return `${w} win${w === 1 ? "" : "s"}, ${d} draw${d === 1 ? "" : "s"} and ${l} defeat${l === 1 ? "" : "s"}`;
+}
+
+/** A couple of readable paragraphs built from the same FotMob data as the bullet points. */
+function previewProse(
+  fx: FixtureLite,
+  json: any,
+  sides: SideInfo[],
+  h2h: H2H,
+  place: { venue: string | null; city: string | null; ref: string | null },
+): string[] {
+  const homeSide = sides[0];
+  const awaySide = sides[1];
+  if (!homeSide || !awaySide) return [];
+  const paras: string[] = [];
+  const competition = fx.competition || "the fixture list";
+  const where = place.venue ? `${place.venue}${place.city ? `, ${place.city}` : ""}` : null;
+
+  const standing = [homeSide, awaySide]
+    .filter((s) => s.rank)
+    .map((s) => `${s.name} sit ${s.rank}${s.points ? ` on ${s.points} points` : ""}`)
+    .join(", while ");
+  paras.push(
+    `${homeSide.name} host ${awaySide.name} in ${competition} on ${londonKickoff(fx.kickoff_at)} UK time${where ? ` at ${where}` : ""}.` +
+      (standing ? ` ${standing}.` : "") +
+      (place.ref ? ` ${place.ref} takes charge.` : ""),
+  );
+
+  const formBits: string[] = [];
+  const resultWord: Record<string, string> = { W: "win", D: "draw", L: "defeat" };
+  for (const s of [homeSide, awaySide]) {
+    if (!s.form.length) continue;
+    const last = s.formLines[0]?.replace(/^([WDL])\s+/, (_m, r: string) => "").trim();
+    const lastResult = resultWord[s.form[0] ?? ""] ?? null;
+    formBits.push(
+      `${s.name} arrive with ${formWords(s.form)} from their last ${s.form.length}${
+        last && lastResult ? `, most recently a ${last.replace(/^(\S+)\s/, `$1 ${lastResult} `)}` : ""
+      }`,
+    );
+  }
+  if (formBits.length) paras.push(`${formBits.join(". ")}.`);
+
+  const named = (t: string, teamId: string | null) => {
+    const side = sides.find((s) => s.id && s.id === teamId);
+    const withName = side && !t.toLowerCase().includes(side.name.toLowerCase()) ? `${side.name}: ${t}` : t;
+    return /[.!?]$/.test(withName) ? withName : `${withName}.`;
+  };
+  const insights: string[] = (json?.insights ?? [])
+    .filter((i: any) => String(i?.text ?? "").trim())
+    .slice(0, 3)
+    .map((i: any) => named(String(i.text).trim(), i?.teamId != null ? String(i.teamId) : null));
+  const h2hBit = h2h.record
+    ? `${h2h.record}${h2h.lines[0] ? ` The most recent was ${h2h.lines[0]}.` : ""}`
+    : h2h.lines[0]
+      ? `The sides last met in ${h2h.lines[0]}.`
+      : "";
+  if (h2hBit || insights.length) {
+    paras.push(`${h2hBit}${h2hBit && insights.length ? " " : ""}${insights.join(" ")}`.trim());
+  }
+
+  paras.push(
+    `Team news follows in the thread once the official line-ups drop, and the pinned live block above updates with goals, cards and key stats as the game goes on.`,
+  );
+  return paras.filter(Boolean);
+}
+
 
 
 export function buildHalfTimeBody(fx: FixtureLite, json: any): string {
@@ -489,7 +597,8 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
       const legacy =
         /XI<\/strong>/.test(existing.body) ||
         /TV \/ stream/.test(existing.body) ||
-        !/Our score prediction/.test(existing.body);
+        !/Our score prediction/.test(existing.body) ||
+        !/The preview<\/strong>/.test(existing.body);
       // A fixture-only preview gets upgraded in place as soon as FotMob lists the game.
       // Detect it from the body too, so a mis-stamped fingerprint can't lock the
       // preview into the stripped-back version forever.
