@@ -3984,16 +3984,13 @@ function PayOrderDialog({
   const handleChange = async () => {
     await onChange?.();
   };
-  // Prewarm payment SDKs (config + script) as soon as the Pay button mounts,
-  // so by the time the user clicks Pay the SDK is already cached.
-  const prewarmStripe = useServerFn(getStripeWebConfig);
+  // Prewarm Stripe SDK as soon as the Pay button mounts,
+  // so by the time the user clicks the Stripe tab the SDK is already cached.
   useEffect(() => {
     const idle = (cb: () => void) =>
       (window as any).requestIdleCallback?.(cb, { timeout: 1500 }) ?? window.setTimeout(cb, 200);
     idle(() => {
-      prewarmStripeConfig(prewarmStripe).then(() => {
-        loadStripeSdk().catch(() => {});
-      });
+      getStripe().catch(() => {});
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -4014,9 +4011,10 @@ function PayOrderDialog({
             <div className="text-sm text-muted-foreground">Total {fmt(amountCents)}</div>
           </DialogHeader>
           <Tabs defaultValue="square" className="pt-2">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="square">Square</TabsTrigger>
               <TabsTrigger value="usdt">USDT</TabsTrigger>
+              <TabsTrigger value="stripe">Stripe</TabsTrigger>
             </TabsList>
             <TabsContent value="square" className="mt-3">
               <SquareInvoicePanel
@@ -4027,6 +4025,14 @@ function PayOrderDialog({
             </TabsContent>
             <TabsContent value="usdt" className="mt-3">
               <CryptoPanel
+                orderId={orderId}
+                amountCents={amountCents}
+                canPay={true}
+                onChange={handleChange}
+              />
+            </TabsContent>
+            <TabsContent value="stripe" className="mt-3">
+              <StripePanel
                 orderId={orderId}
                 amountCents={amountCents}
                 canPay={true}
