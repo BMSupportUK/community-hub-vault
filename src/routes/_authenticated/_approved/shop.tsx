@@ -1321,7 +1321,10 @@ function Storefront() {
     discount_code: string;
     discount_cents: number;
     wants_adult_content: boolean;
+    purchase_kind?: "renewal" | "additional" | "new";
+    owned_logins?: string[];
   }) => {
+
     if (!user || cartItems.length === 0) return;
     let verifiedDiscountCents = 0;
     const submittedCode = info.discount_code.trim();
