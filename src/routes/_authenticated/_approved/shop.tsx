@@ -3147,6 +3147,41 @@ function OrderDetailImpl({
       supabase.removeChannel(ch);
     };
   }, [orderId]);
+
+  // Verify a Stripe Embedded Checkout session when the user returns with
+  // ?session_id=... after completing payment.
+  const confirmStripe = useServerFn(confirmStripePayment);
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const sessionId = params.get("session_id");
+    if (!sessionId || !order || order.status === "paid" || order.status === "completed") return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const result = await confirmStripe({
+          data: { orderId, sessionId, environment: getStripeEnvironment() },
+        });
+        if (cancelled) return;
+        if ("error" in result) {
+          toast.error(result.error);
+          return;
+        }
+        toast.success(`Stripe payment confirmed — ${formatCurrency(result.amountCents)}`);
+        await load();
+        await loadPay();
+        // Remove session_id from URL so a refresh doesn't re-verify.
+        params.delete("session_id");
+        const newUrl = `${window.location.pathname}?${params.toString()}${window.location.hash}`;
+        window.history.replaceState({}, "", newUrl);
+      } catch (e) {
+        if (!cancelled) toast.error((e as Error).message || "Stripe verification failed");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [orderId, order?.status]);
+
   useEffect(() => {
     const ch = supabase
       .channel(`order-${orderId}`, {
