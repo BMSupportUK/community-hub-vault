@@ -2376,10 +2376,20 @@ function Checkout({
     };
   }, [items, total, user?.id]);
 
+  const hasCreds = myCreds.length > 0;
+  const purchaseKind: "renewal" | "additional" | "new" =
+    hasCreds && credChoice && credChoice !== "additional"
+      ? "renewal"
+      : hasCreds && credChoice === "additional"
+        ? "additional"
+        : "new";
+
   const canSubmit =
     !!name &&
     !!email &&
-    (customerType === "new" || !!existingUsername.trim()) &&
+    (hasCreds ? !!credChoice : customerType === "new" || !!existingUsername.trim()) &&
+    (purchaseKind !== "renewal" || !!existingUsername.trim()) &&
+
     adultContent !== "" &&
     (!requiresMulti || agreedMulti) &&
     (!requiresTriple || agreedTriple);
