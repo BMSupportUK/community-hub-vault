@@ -5584,6 +5584,9 @@ export type Database = {
           display_name: string
           entrant_id: string
           entrant_kind: string
+          fixture_label: string
+          gameweek_id: string
+          gw_number: number
           missing_count: number
           next_kickoff_at: string
           recipient_email: string
