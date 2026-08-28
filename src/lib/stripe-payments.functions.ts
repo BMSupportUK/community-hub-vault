@@ -406,14 +406,23 @@ export const confirmStripePayment = createServerFn({ method: "POST" })
           `User ID: ${orderUserId}`,
         ].filter(Boolean);
 
+        const paidStamp = new Intl.DateTimeFormat("en-GB", {
+          dateStyle: "full",
+          timeStyle: "short",
+          timeZone: "Europe/London",
+        }).format(new Date());
+
         const content =
           `✅ Card payment captured via Stripe for order #${String(order.id).slice(0, 8)}` +
           `${cardBrand && last4 ? ` (${cardBrand} •••• ${last4})` : ""}` +
           ` — £${(totalCents / 100).toFixed(2)}.` +
+          `\nPayment date: ${paidStamp} (UK time)` +
           `\nPurchase ref: ${pi?.id ?? session.id}` +
           (receiptUrl ? `\nReceipt: ${receiptUrl}` : "") +
           (itemLines.length ? `\n\n🛒 Items:\n${itemLines.join("\n")}` : "") +
-          `\nTotal: £${(totalCents / 100).toFixed(2)} GBP`;
+          `\nTotal: £${(totalCents / 100).toFixed(2)} GBP` +
+          `\n\n🙏 Thank you for your payment — we really appreciate your custom. Your order is now being processed and we'll update you on this ticket.`;
+
 
         // Staff-only version adds customer contact details (email is
         // admin/management-only and must not appear on customer-visible tickets).
