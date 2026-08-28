@@ -969,7 +969,9 @@ function TicketDetail({
   const orderIsUnpaid = !!linkedOrder && !linkedOrder.paid_at && linkedOrder.status !== "cancelled" && linkedOrder.status !== "refunded" && linkedOrder.status !== "completed";
   const accountSetupMessageExists = messages.some((m) => (m.content ?? "").startsWith("🛠️"));
   const extendSubMessageExists = messages.some((m) => (m.content ?? "").startsWith("🔄"));
+  const accountSetupDoneExists = messages.some((m) => (m.content ?? "").startsWith("🟢"));
   const accountSetupStarted = accountSetupMessageExists || extendSubMessageExists;
+
 
   const postTicketSystem = async (content: string) => {
     if (!currentUserId) return;
@@ -1002,7 +1004,22 @@ function TicketDetail({
     } finally { setOrderBusy(false); }
   };
 
+  const orderAccountSetupDone = async () => {
+    if (!linkedOrder || orderBusy) return;
+    setOrderBusy(true);
+    try {
+      const profileLink = linkedOrderUsername
+        ? `\n\n🔗 [Click here to view your Credentials](${window.location.origin}/u/${linkedOrderUsername}?tab=creds)`
+        : "";
+      await postTicketSystem(
+        `🟢 Your account is now set up and ready to use! Your login details are available in the Credentials section of your profile.${profileLink}`,
+      );
+      toast.success("Account setup confirmed");
+    } finally { setOrderBusy(false); }
+  };
+
   const orderExtendSubscription = async () => {
+
     if (!linkedOrder || orderBusy) return;
     if (linkedOrder.status === "completed" || linkedOrder.completed_at) {
       toast.error("This order is completed and cannot be changed.");
@@ -1401,21 +1418,44 @@ function TicketDetail({
                   🔄 Extend Subscription
                 </button>
               ) : (
-                <button
-                  onClick={orderSettingUpAccount}
-                  disabled={orderBusy || !linkedOrder.paid_at || accountSetupMessageExists}
-                  title={
-                    !linkedOrder.paid_at
-                      ? "Waiting for payment confirmation"
-                      : accountSetupMessageExists
-                        ? "Account setup already sent"
-                        : undefined
-                  }
-                  className="px-2.5 py-1 rounded-md bg-blue-500/20 text-blue-50 text-xs font-medium hover:bg-blue-500/30 disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  🛠️ Setting Up Account
-                </button>
+                <>
+                  <button
+                    onClick={orderSettingUpAccount}
+                    disabled={orderBusy || !linkedOrder.paid_at || accountSetupMessageExists}
+                    title={
+                      !linkedOrder.paid_at
+                        ? "Waiting for payment confirmation"
+                        : accountSetupMessageExists
+                          ? "Account setup already sent"
+                          : undefined
+                    }
+                    className="px-2.5 py-1 rounded-md bg-blue-500/20 text-blue-50 text-xs font-medium hover:bg-blue-500/30 disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    🛠️ Setting Up Account
+                  </button>
+                  <button
+                    onClick={orderAccountSetupDone}
+                    disabled={orderBusy || !linkedOrder.paid_at || accountSetupDoneExists}
+                    title={
+                      !linkedOrder.paid_at
+                        ? "Waiting for payment confirmation"
+                        : accountSetupDoneExists
+                          ? "Account setup already confirmed"
+                          : "Tick once the account is set up — notifies the customer"
+                    }
+                    className={cn(
+                      "px-2.5 py-1 rounded-md text-xs font-semibold inline-flex items-center gap-1 border transition disabled:cursor-not-allowed",
+                      accountSetupDoneExists
+                        ? "bg-emerald-500/40 border-emerald-300/60 text-emerald-50 opacity-100"
+                        : "bg-emerald-500/20 border-emerald-300/40 text-emerald-50 hover:bg-emerald-500/35 disabled:opacity-40",
+                    )}
+                  >
+                    <CheckCircle2 className="size-3.5 text-emerald-300" />
+                    {accountSetupDoneExists ? "Account Set Up ✓" : "Account Set Up"}
+                  </button>
+                </>
               )}
+
               <button
                 onClick={orderCompleteSale}
                 disabled={orderBusy || !linkedOrder.paid_at || !accountSetupStarted || !!linkedOrder.completed_at}
