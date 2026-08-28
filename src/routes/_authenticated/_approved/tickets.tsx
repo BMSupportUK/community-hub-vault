@@ -969,7 +969,9 @@ function TicketDetail({
   const orderIsUnpaid = !!linkedOrder && !linkedOrder.paid_at && linkedOrder.status !== "cancelled" && linkedOrder.status !== "refunded" && linkedOrder.status !== "completed";
   const accountSetupMessageExists = messages.some((m) => (m.content ?? "").startsWith("🛠️"));
   const extendSubMessageExists = messages.some((m) => (m.content ?? "").startsWith("🔄"));
+  const accountSetupDoneExists = messages.some((m) => (m.content ?? "").startsWith("🟢"));
   const accountSetupStarted = accountSetupMessageExists || extendSubMessageExists;
+
 
   const postTicketSystem = async (content: string) => {
     if (!currentUserId) return;
