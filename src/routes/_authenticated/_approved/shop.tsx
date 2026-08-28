@@ -2519,9 +2519,10 @@ function Checkout({
                     type="button"
                     onClick={() => {
                       setCredChoice("additional");
-                      setCustomerType("existing");
+                      setCustomerType("new");
                       setExistingUsername("");
                     }}
+
                     className={cn(
                       "w-full text-left px-3 py-2 rounded-lg text-sm border",
                       credChoice === "additional"
