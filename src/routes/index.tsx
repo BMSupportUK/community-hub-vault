@@ -191,8 +191,6 @@ function Landing() {
 
               {/* Divider */}
 
-
-              {/* Divider */}
               <div className="w-px bg-red-500/30 self-stretch" aria-hidden />
 
               {/* Crypto group */}
