@@ -3222,6 +3222,7 @@ function OrderDetailImpl({
   const textRef = useRef("");
   const [credsOpen, setCredsOpen] = useState(false);
   const [linkedTicketId, setLinkedTicketId] = useState<string | null>(null);
+  const [checkPhase, setCheckPhase] = useState<PayCheckPhase | null>(null);
 
   // Look up the support ticket that was opened for this order so we can
   // redirect customers/staff there instead of using the legacy chat.
@@ -3634,21 +3635,27 @@ function OrderDetailImpl({
     if (!order || order.paid_at || order.completed_at || order.status === "cancelled") return;
     if (busy) return;
     setBusy(true);
+    setCheckPhase("checking_stripe");
     try {
       const stripeRes = await verifyStripePaymentForOrder(confirmStripe, orderId);
       if (stripeRes && !("error" in stripeRes)) {
+        setCheckPhase("confirmed");
         await load();
         toast.success("Card payment confirmed — your order is now marked paid");
         return;
       }
+      setCheckPhase("checking_square");
       const res = (await refreshSquareInvoice({ data: { orderId } })) as { status?: string };
       await load();
       if (res.status === "PAID") {
+        setCheckPhase("confirmed");
         toast.success("Payment confirmed — your order is now marked paid");
       } else {
+        setCheckPhase("failed");
         toast.message(`Square still shows this invoice as ${res.status ?? "unpaid"}`);
       }
     } catch (e) {
+      setCheckPhase("failed");
       toast.error((e as Error).message || "Failed to refresh payment status");
     } finally {
       setBusy(false);
