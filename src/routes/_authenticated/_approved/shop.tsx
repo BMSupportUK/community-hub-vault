@@ -3046,6 +3046,7 @@ function OrderDetailImpl({
 }) {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { format } = useCurrency();
   const [order, setOrder] = useState<Order | null>(null);
   const [items, setItems] = useState<OrderItem[]>([]);
   const [msgs, setMsgs] = useState<OrderMessage[]>([]);
