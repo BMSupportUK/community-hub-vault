@@ -16,6 +16,8 @@ import { MentionText, useMentionAutocomplete } from "@/components/app/mentions";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
 import { useServerFn } from "@tanstack/react-start";
 import { verifyTurnstile } from "@/lib/turnstile.functions";
+import { confirmStripePayment } from "@/lib/stripe-payments.functions";
+import { verifyStripePaymentForOrder } from "@/components/app/StripeOrderPanel";
 import { TurnstileWidget } from "@/components/app/TurnstileWidget";
 import { getOutOfHoursMessage } from "@/lib/business-hours";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -931,6 +933,7 @@ function TicketDetail({
   const [linkedOrderUsername, setLinkedOrderUsername] = useState<string | null>(null);
   const [orderBusy, setOrderBusy] = useState(false);
   const refreshSquareInvoice = useServerFn(refreshSquareInvoiceStatus);
+  const confirmStripe = useServerFn(confirmStripePayment);
   const cancelOrderAndSquareInvoiceRpc = useServerFn(cancelOrderAndSquareInvoice);
   const loadLinkedOrder = async () => {
     if (!ticket.order_id) { setLinkedOrder(null); setLinkedOrderUsername(null); return; }
@@ -1081,6 +1084,14 @@ function TicketDetail({
     if (!linkedOrder || orderBusy || linkedOrder.paid_at) return;
     setOrderBusy(true);
     try {
+      // A card payment may have completed through Stripe — check that first.
+      const stripeRes = await verifyStripePaymentForOrder(confirmStripe, linkedOrder.id);
+      if (stripeRes && !("error" in stripeRes)) {
+        await loadLinkedOrder();
+        await postTicketSystem(`✅ Card payment received — thank you! Your order is now marked as paid.`);
+        toast.success("Card payment confirmed — order marked paid");
+        return;
+      }
       const res = (await refreshSquareInvoice({ data: { orderId: linkedOrder.id } })) as { status?: string };
       await loadLinkedOrder();
       if (res.status === "PAID") {

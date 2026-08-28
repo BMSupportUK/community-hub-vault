@@ -5,7 +5,26 @@ import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe
 
 import { supabase } from "@/integrations/supabase/client";
 import { getStripe, getStripeEnvironment } from "@/lib/stripe";
-import { createStripePaymentIntent } from "@/lib/stripe-payments.functions";
+import { createStripePaymentIntent, confirmStripePayment } from "@/lib/stripe-payments.functions";
+
+/**
+ * Look up the Stripe checkout session recorded for an order and ask the server
+ * to verify it. Used by the "I've paid" buttons so a completed card payment is
+ * detected even if the customer never came back through the return URL.
+ */
+export async function verifyStripePaymentForOrder(
+  confirmFn: (args: { data: { orderId: string; sessionId: string; environment: ReturnType<typeof getStripeEnvironment> } }) => Promise<any>,
+  orderId: string,
+): Promise<any | null> {
+  const { data } = await supabase
+    .from("order_payments")
+    .select("provider,provider_payment_id")
+    .eq("order_id", orderId)
+    .maybeSingle();
+  const sessionId = (data as any)?.provider_payment_id as string | undefined;
+  if (!data || (data as any).provider !== "stripe" || !sessionId) return null;
+  return confirmFn({ data: { orderId, sessionId, environment: getStripeEnvironment() } });
+}
 
 export function StripeLogo({ className = "" }: { className?: string }) {
   return (
@@ -27,6 +46,7 @@ export function StripeLogo({ className = "" }: { className?: string }) {
 export function StripeOrderPanel({
   orderId,
   canPay = true,
+  onChange,
 }: {
   orderId: string;
   amountCents?: number;
@@ -36,7 +56,10 @@ export function StripeOrderPanel({
   const [paid, setPaid] = useState<any | null>(null);
   const [bootError, setBootError] = useState<string | null>(null);
   const [fetchingSecret, setFetchingSecret] = useState(false);
+  const [checking, setChecking] = useState(false);
+  const [checkMsg, setCheckMsg] = useState<string | null>(null);
   const createPI = useServerFn(createStripePaymentIntent);
+  const confirmStripe = useServerFn(confirmStripePayment);
   const isFinalPaid = Boolean(
     paid && ["COMPLETED", "completed", "finished"].includes(String(paid.status ?? "")),
   );
@@ -91,6 +114,27 @@ export function StripeOrderPanel({
 
   const checkoutOptions = useMemo(() => ({ fetchClientSecret }), [fetchClientSecret]);
 
+  const checkPaid = async () => {
+    setChecking(true);
+    setCheckMsg(null);
+    try {
+      const res = await verifyStripePaymentForOrder(confirmStripe, orderId);
+      if (!res) {
+        setCheckMsg("No card payment found for this order yet.");
+      } else if ("error" in res) {
+        setCheckMsg(res.error);
+      } else {
+        setCheckMsg("Card payment confirmed.");
+        await loadPayment();
+        await onChange?.();
+      }
+    } catch (e) {
+      setCheckMsg((e as Error).message || "Could not check the card payment");
+    } finally {
+      setChecking(false);
+    }
+  };
+
   if (isFinalPaid) {
     if (paid.provider !== "stripe") return null;
     return (
@@ -142,6 +186,15 @@ export function StripeOrderPanel({
           <Loader2 className="size-3 animate-spin" /> Loading checkout…
         </div>
       )}
+      <button
+        type="button"
+        onClick={checkPaid}
+        disabled={checking}
+        className="w-full text-xs text-primary hover:underline disabled:opacity-60"
+      >
+        {checking ? "Checking…" : "I've paid — check card payment"}
+      </button>
+      {checkMsg && <div className="text-[11px] text-muted-foreground text-center">{checkMsg}</div>}
     </div>
   );
 }

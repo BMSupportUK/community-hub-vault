@@ -59,6 +59,7 @@ import {
   createStripePaymentIntent,
   confirmStripePayment,
 } from "@/lib/stripe-payments.functions";
+import { verifyStripePaymentForOrder } from "@/components/app/StripeOrderPanel";
 import {
   createCryptoInvoice,
   getCryptoConfig,
@@ -3170,20 +3171,19 @@ function OrderDetailImpl({
           return;
         }
         toast.success(`Stripe payment confirmed — ${format(result.amountCents)}`);
-        if (result.ticketId) {
-          toast.message("Support ticket updated with your purchase reference", {
-            action: {
-              label: "Open ticket",
-              onClick: () => navigate({ to: "/tickets", search: { id: result.ticketId! } }),
-            },
-          });
-        }
         await load();
 
         // Remove session_id from URL so a refresh doesn't re-verify.
         params.delete("session_id");
         const newUrl = `${window.location.pathname}?${params.toString()}${window.location.hash}`;
         window.history.replaceState({}, "", newUrl);
+
+        // Card payments belong to a support ticket — take the customer there
+        // instead of leaving them on the orders list.
+        if (result.ticketId) {
+          toast.message("Support ticket updated with your purchase reference");
+          navigate({ to: "/tickets", search: { id: result.ticketId } });
+        }
       } catch (e) {
         if (!cancelled) toast.error((e as Error).message || "Stripe verification failed");
       }
@@ -3489,6 +3489,12 @@ function OrderDetailImpl({
     if (busy) return;
     setBusy(true);
     try {
+      const stripeRes = await verifyStripePaymentForOrder(confirmStripe, orderId);
+      if (stripeRes && !("error" in stripeRes)) {
+        await load();
+        toast.success("Card payment confirmed — your order is now marked paid");
+        return;
+      }
       const res = (await refreshSquareInvoice({ data: { orderId } })) as { status?: string };
       await load();
       if (res.status === "PAID") {
@@ -4113,6 +4119,8 @@ function SquareInvoicePanel({
   const [err, setErr] = useState<string | null>(null);
   const createInvoice = useServerFn(createSquareInvoiceForOrder);
   const refreshInvoice = useServerFn(refreshSquareInvoiceStatus);
+  const confirmStripeFn = useServerFn(confirmStripePayment);
+
 
   useEffect(() => {
     let cancelled = false;
@@ -4158,6 +4166,12 @@ function SquareInvoicePanel({
     setBusy(true);
     setErr(null);
     try {
+      const stripeRes: any = await verifyStripePaymentForOrder(confirmStripeFn, orderId);
+      if (stripeRes && !("error" in stripeRes)) {
+        setStatus("PAID");
+        await onChange?.();
+        return;
+      }
       const res: any = await refreshInvoice({ data: { orderId } });
       if (res?.status) setStatus(res.status);
       if (res?.public_url) setUrl(res.public_url);
