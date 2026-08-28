@@ -4283,25 +4283,57 @@ function StripePanel({
   onChange?: () => void | Promise<void>;
 }) {
   const [paid, setPaid] = useState<any | null>(null);
+  const [orderPaidAt, setOrderPaidAt] = useState<string | null>(null);
   const [bootError, setBootError] = useState<string | null>(null);
   const [fetchingSecret, setFetchingSecret] = useState(false);
   const { format } = useCurrency();
   const createPI = useServerFn(createStripePaymentIntent);
+  const confirmStripeFn2 = useServerFn(confirmStripePayment);
   const isFinalPaid = Boolean(
-    paid && ["COMPLETED", "completed", "finished"].includes(String(paid.status ?? "")),
+    (paid && ["COMPLETED", "completed", "finished"].includes(String(paid.status ?? ""))) ||
+      (orderPaidAt && paid?.provider === "stripe"),
   );
 
   const loadPayment = async () => {
-    const { data } = await supabase
-      .from("order_payments")
-      .select("*")
-      .eq("order_id", orderId)
-      .maybeSingle();
+    const [{ data }, { data: order }] = await Promise.all([
+      supabase.from("order_payments").select("*").eq("order_id", orderId).maybeSingle(),
+      supabase.from("orders").select("paid_at").eq("id", orderId).maybeSingle(),
+    ]);
     setPaid(data);
+    setOrderPaidAt((order as any)?.paid_at ?? null);
   };
   useEffect(() => {
     loadPayment();
   }, [orderId]);
+  // Reconcile the recorded Stripe session in the background so a completed card
+  // payment always confirms the order, preventing a second payment attempt.
+  useEffect(() => {
+    if (isFinalPaid) return;
+    let cancelled = false;
+    const sync = async () => {
+      try {
+        const res: any = await verifyStripePaymentForOrder(confirmStripeFn2, orderId);
+        if (cancelled || !res || "error" in res) return;
+        await loadPayment();
+        await onChange?.();
+      } catch {
+        /* ignore background reconciliation errors */
+      }
+    };
+    sync();
+    const timer = window.setInterval(sync, 10_000);
+    const onFocus = () => sync();
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onFocus);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onFocus);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orderId, isFinalPaid]);
+
   useEffect(() => {
     const ch = supabase
       .channel(`op-stripe-${orderId}`)
