@@ -19,6 +19,7 @@ import {
   getCryptoInvoiceStatus,
 } from "@/lib/nowpayments.functions";
 import { StripeOrderPanel, verifyStripePaymentForOrder } from "@/components/app/StripeOrderPanel";
+import { confirmStripePayment } from "@/lib/stripe-payments.functions";
 
 
 const fallbackFormat = (cents: number) =>
