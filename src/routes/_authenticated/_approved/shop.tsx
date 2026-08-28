@@ -358,6 +358,7 @@ function ShopPage() {
 
   return (
     <>
+      <PaymentTestModeBanner />
       <div className="flex h-full max-h-full min-h-0 flex-1 flex-col overflow-hidden min-w-0">
         {/* Admin-only quick nav: regular users navigate via Storefront tabs */}
         {isAdmin && adminUnlocked && (
