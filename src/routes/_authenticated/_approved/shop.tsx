@@ -3169,7 +3169,6 @@ function OrderDetailImpl({
         }
         toast.success(`Stripe payment confirmed — ${format(result.amountCents)}`);
         await load();
-        await loadPay();
         // Remove session_id from URL so a refresh doesn't re-verify.
         params.delete("session_id");
         const newUrl = `${window.location.pathname}?${params.toString()}${window.location.hash}`;
