@@ -4263,21 +4263,10 @@ function StripePanel({
   onChange?: () => void | Promise<void>;
 }) {
   const [paid, setPaid] = useState<any | null>(null);
-  const [loading, setLoading] = useState(false);
   const [bootError, setBootError] = useState<string | null>(null);
-  const [ready, setReady] = useState(false);
-  const [open, setOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const stripeRef = useRef<any>(null);
-  const elementsRef = useRef<any>(null);
-  const paymentElementRef = useRef<any>(null);
-  const clientSecretRef = useRef<string | null>(null);
-  const paymentIntentIdRef = useRef<string | null>(null);
-  const submittingRef = useRef(false);
+  const [fetchingSecret, setFetchingSecret] = useState(false);
   const { format } = useCurrency();
-  const getConfig = useServerFn(getStripeWebConfig);
   const createPI = useServerFn(createStripePaymentIntent);
-  const confirmPI = useServerFn(confirmStripePayment);
   const isFinalPaid = Boolean(
     paid && ["COMPLETED", "completed", "finished"].includes(String(paid.status ?? "")),
   );
@@ -4307,92 +4296,27 @@ function StripePanel({
     };
   }, [orderId]);
 
-  useEffect(() => {
-    let cancelled = false;
-    if (!canPay || isFinalPaid || !open) return;
-    (async () => {
-      try {
-        const [cfg, StripeCtor] = await Promise.all([
-          prewarmStripeConfig(getConfig),
-          loadStripeSdk(),
-        ]);
-        if (cancelled) return;
-        const { clientSecret, paymentIntentId } = await createPI({ data: { orderId } });
-        if (cancelled) return;
-        clientSecretRef.current = clientSecret;
-        paymentIntentIdRef.current = paymentIntentId;
-        const stripe = StripeCtor(cfg.publishableKey);
-        stripeRef.current = stripe;
-        const elements = stripe.elements({ clientSecret, appearance: { theme: "night" as const } });
-        elementsRef.current = elements;
-        const pe = elements.create("payment", {
-          layout: "tabs",
-          fields: { billingDetails: { name: "auto", email: "auto" } },
-        });
-        if (cancelled) return;
-        if (containerRef.current) {
-          pe.mount(containerRef.current);
-          paymentElementRef.current = pe;
-          pe.on("ready", () => {
-            if (!cancelled) setReady(true);
-          });
-        }
-      } catch (e) {
-        if (!cancelled) setBootError((e as Error).message);
-      }
-    })();
-    return () => {
-      cancelled = true;
-      try {
-        paymentElementRef.current?.unmount();
-      } catch {}
-      paymentElementRef.current = null;
-      elementsRef.current = null;
-      setReady(false);
-    };
-  }, [canPay, isFinalPaid, orderId, open]);
-
-  const handlePay = async () => {
-    if (!stripeRef.current || !elementsRef.current || !paymentIntentIdRef.current) return;
-    if (submittingRef.current) return;
-    submittingRef.current = true;
-    setLoading(true);
+  const fetchClientSecret = useCallback(async () => {
+    setFetchingSecret(true);
+    setBootError(null);
     try {
-      const { error, paymentIntent } = await stripeRef.current.confirmPayment({
-        elements: elementsRef.current,
-        confirmParams: { return_url: window.location.href },
-        redirect: "if_required",
+      const returnUrl = `${window.location.origin}/shop?view=orders&id=${orderId}&session_id={CHECKOUT_SESSION_ID}`;
+      const result = await createPI({
+        data: { orderId, environment: getStripeEnvironment(), returnUrl },
       });
-      let confirmedPaymentIntentId = paymentIntent?.id ?? paymentIntentIdRef.current;
-      if (error) {
-        const clientSecret = clientSecretRef.current;
-        if (!clientSecret) throw new Error(error.message || "Card declined");
-        const { paymentIntent: retrievedPaymentIntent, error: retrieveError } =
-          await stripeRef.current.retrievePaymentIntent(clientSecret);
-        if (retrievedPaymentIntent?.status !== "succeeded") {
-          throw new Error(error.message || retrieveError?.message || "Card declined");
-        }
-        confirmedPaymentIntentId = retrievedPaymentIntent.id;
-      }
-      const res = await confirmPI({ data: { orderId, paymentIntentId: confirmedPaymentIntentId } });
-      toast.success(`Paid ${format(amountCents)}`);
-      setPaid({
-        status: res.status,
-        provider: "stripe",
-        card_brand: (res as any).cardBrand,
-        last_4: (res as any).last4,
-        receipt_url: (res as any).receiptUrl,
-        amount_cents: amountCents,
-      });
-      setOpen(false);
-      await onChange?.();
+      if ("error" in result) throw new Error(result.error);
+      if (!result.clientSecret) throw new Error("Stripe did not return a client secret");
+      return result.clientSecret;
     } catch (e) {
-      toast.error((e as Error).message);
+      const message = (e as Error).message || "Failed to start Stripe checkout";
+      setBootError(message);
+      throw e;
     } finally {
-      submittingRef.current = false;
-      setLoading(false);
+      setFetchingSecret(false);
     }
-  };
+  }, [createPI, orderId]);
+
+  const checkoutOptions = useMemo(() => ({ fetchClientSecret }), [fetchClientSecret]);
 
   if (isFinalPaid) {
     if (paid.provider !== "stripe") return null;
@@ -4429,43 +4353,25 @@ function StripePanel({
   if (!canPay) return null;
 
   return (
-    <div>
+    <div className="space-y-3">
       <StripeLogo className="mb-1.5" />
       <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
         Pay by card
       </div>
-      <button
-        onClick={() => setOpen(true)}
-        disabled={loading}
-        className="w-full px-2.5 py-2 rounded-md bg-primary text-primary-foreground text-xs font-medium flex items-center justify-center gap-1.5 hover:bg-primary/90"
-      >
-        <CreditCard className="size-3.5" />
-        Pay {format(amountCents)} by card
-      </button>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <StripeLogo /> Card Payment
-            </DialogTitle>
-          </DialogHeader>
-          {bootError ? (
-            <div className="text-xs text-destructive">{bootError}</div>
-          ) : (
-            <div className="space-y-3">
-              <div ref={containerRef} className="min-h-[120px]" />
-              <button
-                onClick={handlePay}
-                disabled={!ready || loading}
-                className="w-full px-2.5 py-2 rounded-md bg-primary text-primary-foreground text-xs font-medium flex items-center justify-center gap-1.5 hover:bg-primary/90 disabled:opacity-50"
-              >
-                <CreditCard className="size-3.5" />
-                {loading ? "Processing…" : ready ? `Pay ${format(amountCents)}` : "Loading…"}
-              </button>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+      {bootError ? (
+        <div className="text-xs text-destructive">{bootError}</div>
+      ) : (
+        <div className="min-h-[280px] rounded-md border border-border bg-surface-2/50 p-2">
+          <EmbeddedCheckoutProvider stripe={getStripe()} options={checkoutOptions}>
+            <EmbeddedCheckout />
+          </EmbeddedCheckoutProvider>
+        </div>
+      )}
+      {fetchingSecret && (
+        <div className="text-xs text-muted-foreground flex items-center gap-2">
+          <Loader2 className="size-3 animate-spin" /> Loading checkout…
+        </div>
+      )}
     </div>
   );
 }
