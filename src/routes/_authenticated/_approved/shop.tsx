@@ -3171,20 +3171,19 @@ function OrderDetailImpl({
           return;
         }
         toast.success(`Stripe payment confirmed — ${format(result.amountCents)}`);
-        if (result.ticketId) {
-          toast.message("Support ticket updated with your purchase reference", {
-            action: {
-              label: "Open ticket",
-              onClick: () => navigate({ to: "/tickets", search: { id: result.ticketId! } }),
-            },
-          });
-        }
         await load();
 
         // Remove session_id from URL so a refresh doesn't re-verify.
         params.delete("session_id");
         const newUrl = `${window.location.pathname}?${params.toString()}${window.location.hash}`;
         window.history.replaceState({}, "", newUrl);
+
+        // Card payments belong to a support ticket — take the customer there
+        // instead of leaving them on the orders list.
+        if (result.ticketId) {
+          toast.message("Support ticket updated with your purchase reference");
+          navigate({ to: "/tickets", search: { id: result.ticketId } });
+        }
       } catch (e) {
         if (!cancelled) toast.error((e as Error).message || "Stripe verification failed");
       }
