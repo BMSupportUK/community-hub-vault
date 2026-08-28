@@ -3167,7 +3167,7 @@ function OrderDetailImpl({
           toast.error(result.error);
           return;
         }
-        toast.success(`Stripe payment confirmed — ${formatCurrency(result.amountCents)}`);
+        toast.success(`Stripe payment confirmed — ${format(result.amountCents)}`);
         await load();
         await loadPay();
         // Remove session_id from URL so a refresh doesn't re-verify.
