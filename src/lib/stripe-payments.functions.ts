@@ -321,8 +321,11 @@ export const confirmStripePayment = createServerFn({ method: "POST" })
           `\nPurchase ref: ${pi?.id ?? session.id}` +
           (receiptUrl ? `\nReceipt: ${receiptUrl}` : "") +
           (itemLines.length ? `\n\n🛒 Items:\n${itemLines.join("\n")}` : "") +
-          `\nTotal: £${(totalCents / 100).toFixed(2)} GBP` +
-          `\n\n👤 Customer:\n${customerLines.join("\n")}`;
+          `\nTotal: £${(totalCents / 100).toFixed(2)} GBP`;
+
+        // Staff-only version adds customer contact details (email is
+        // admin/management-only and must not appear on customer-visible tickets).
+        const staffContent = `${content}\n\n👤 Customer:\n${customerLines.join("\n")}`;
 
         const { data: linkedTickets } = await supabaseAdmin.from("tickets").select("id,user_id").eq("order_id", String(order.id));
         if (linkedTickets && linkedTickets.length > 0) {
