@@ -3489,6 +3489,12 @@ function OrderDetailImpl({
     if (busy) return;
     setBusy(true);
     try {
+      const stripeRes = await verifyStripePaymentForOrder(confirmStripe, orderId);
+      if (stripeRes && !("error" in stripeRes)) {
+        await load();
+        toast.success("Card payment confirmed — your order is now marked paid");
+        return;
+      }
       const res = (await refreshSquareInvoice({ data: { orderId } })) as { status?: string };
       await load();
       if (res.status === "PAID") {
