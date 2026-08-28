@@ -30,9 +30,11 @@ type StepDef = {
 export function PaymentStatusTimeline({
   phase,
   method = null,
+  started = false,
 }: {
   phase: PayCheckPhase;
   method?: PayMethod;
+  started?: boolean;
 }) {
   const failed = phase === "failed";
   const confirmed = phase === "confirmed";
@@ -82,6 +84,8 @@ export function PaymentStatusTimeline({
               },
             ];
 
+  const showChecks = started || phase !== "awaiting";
+
   const steps: StepDef[] = [
     {
       key: "awaiting",
@@ -90,24 +94,26 @@ export function PaymentStatusTimeline({
       icon: Clock,
       state: phase === "awaiting" ? "active" : "done",
     },
-    ...checkSteps.map((c, i) => {
-      const isLastCheck = i === checkSteps.length - 1;
-      // While a check is running, mark every check step up to the active one
-      // as done; when the flow ends (confirmed/failed) all checks are done.
-      const isActiveCheck =
-        checking &&
-        (phase === c.key ||
-          // If only one provider is shown, any "checking" phase lights it up.
-          (method !== null && checkSteps.length === 1));
-      const state: StepDef["state"] = isActiveCheck
-        ? "active"
-        : confirmed || failed
-          ? "done"
-          : checking && !isLastCheck && checkSteps[i + 1]?.key === phase
-            ? "done"
-            : "upcoming";
-      return { ...c, state };
-    }),
+    ...(showChecks
+      ? checkSteps.map((c, i) => {
+          const isLastCheck = i === checkSteps.length - 1;
+          // While a check is running, mark every check step up to the active one
+          // as done; when the flow ends (confirmed/failed) all checks are done.
+          const isActiveCheck =
+            checking &&
+            (phase === c.key ||
+              // If only one provider is shown, any "checking" phase lights it up.
+              (method !== null && checkSteps.length === 1));
+          const state: StepDef["state"] = isActiveCheck
+            ? "active"
+            : confirmed || failed
+              ? "done"
+              : checking && !isLastCheck && checkSteps[i + 1]?.key === phase
+                ? "done"
+                : "upcoming";
+          return { ...c, state };
+        })
+      : []),
     {
       key: "result",
       title: failed ? "Failed" : "Confirmed",
