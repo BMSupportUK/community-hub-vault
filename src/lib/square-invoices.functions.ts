@@ -340,6 +340,16 @@ export const cancelOrderAndSquareInvoice = createServerFn({ method: "POST" })
       throw new Error("This order can no longer be cancelled.");
     }
 
+    const { data: payment, error: paymentError } = await supabaseAdmin
+      .from("order_payments")
+      .select("status")
+      .eq("order_id", data.orderId)
+      .maybeSingle();
+    if (paymentError) throw new Error(paymentError.message);
+    if (["finished", "completed", "captured", "paid"].includes(String(payment?.status ?? "").toLowerCase())) {
+      throw new Error("This paid order cannot be cancelled.");
+    }
+
     if (order.status !== "cancelled") {
       const { error } = await supabase
         .from("orders")
