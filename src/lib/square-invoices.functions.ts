@@ -246,7 +246,8 @@ export const refreshSquareInvoiceStatus = createServerFn({ method: "POST" })
       .single();
     if (error) throw new Error(error.message);
 
-    // If Square reports the invoice as PAID, mark the order paid too.
+    // If Square reports the invoice as PAID, mark the order paid too and post
+    // the automated "payment received" notice to the order + support ticket.
     if (invoice.status === "PAID") {
       const { data: order } = await supabase
         .from("orders")
@@ -259,9 +260,19 @@ export const refreshSquareInvoiceStatus = createServerFn({ method: "POST" })
           .update({ paid_at: new Date().toISOString() })
           .eq("id", data.orderId);
       }
+      const { postOrderPaymentReceivedNotice } = await import("@/lib/order-payment-notice.server");
+      const notice = await postOrderPaymentReceivedNotice({
+        orderId: data.orderId,
+        provider: "Square",
+        reference: invoice.invoice_number ?? row.invoice_number ?? row.square_invoice_id,
+        receiptUrl: invoice.public_url ?? row.public_url ?? null,
+        actorId: userId,
+      });
+      return { ...(updated as Record<string, unknown>), ticketId: notice.ticketId ?? null };
     }
 
     return updated;
+
   });
 
 async function cancelSquareInvoiceForOrder(orderId: string) {
