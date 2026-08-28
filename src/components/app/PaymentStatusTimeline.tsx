@@ -1,5 +1,6 @@
 import {
   BadgeCheck,
+  Bitcoin,
   Check,
   CheckCircle2,
   Clock,
@@ -16,18 +17,72 @@ export type PayCheckPhase =
   | "confirmed"
   | "failed";
 
-export function PaymentStatusTimeline({ phase }: { phase: PayCheckPhase }) {
-  const flow = ["awaiting", "checking_stripe", "checking_square"] as const;
-  const currentIdx = flow.indexOf(phase as (typeof flow)[number]);
-  const failed = phase === "failed";
+export type PayMethod = "stripe" | "square" | "nowpayments" | null;
 
-  const steps: {
-    key: string;
-    title: string;
-    desc: string;
-    icon: typeof Clock;
-    state: "done" | "active" | "upcoming" | "failed";
-  }[] = [
+type StepDef = {
+  key: string;
+  title: string;
+  desc: string;
+  icon: typeof Clock;
+  state: "done" | "active" | "upcoming" | "failed";
+};
+
+export function PaymentStatusTimeline({
+  phase,
+  method = null,
+}: {
+  phase: PayCheckPhase;
+  method?: PayMethod;
+}) {
+  const failed = phase === "failed";
+  const confirmed = phase === "confirmed";
+  const checking = phase === "checking_stripe" || phase === "checking_square";
+
+  // Only surface the check step for the provider actually used on this order.
+  const checkSteps: { key: string; title: string; desc: string; icon: typeof Clock }[] =
+    method === "stripe"
+      ? [
+          {
+            key: "checking_stripe",
+            title: "Checking Stripe",
+            desc: "Verifying your card payment with Stripe.",
+            icon: CreditCard,
+          },
+        ]
+      : method === "square"
+        ? [
+            {
+              key: "checking_square",
+              title: "Checking Square",
+              desc: "Verifying your Square invoice payment.",
+              icon: BadgeCheck,
+            },
+          ]
+        : method === "nowpayments"
+          ? [
+              {
+                key: "checking_crypto",
+                title: "Crypto payment",
+                desc: "USDT payment via NOWPayments.",
+                icon: Bitcoin,
+              },
+            ]
+          : [
+              {
+                key: "checking_stripe",
+                title: "Checking Stripe",
+                desc: "Verifying your card payment with Stripe.",
+                icon: CreditCard,
+              },
+              {
+                key: "checking_square",
+                title: "Checking Square",
+                desc: "No Stripe match — checking Square invoices.",
+                icon: BadgeCheck,
+              },
+            ];
+
+  const steps: StepDef[] = [
     {
       key: "awaiting",
       title: "Awaiting payment",
@@ -35,30 +90,24 @@ export function PaymentStatusTimeline({ phase }: { phase: PayCheckPhase }) {
       icon: Clock,
       state: phase === "awaiting" ? "active" : "done",
     },
-    {
-      key: "checking_stripe",
-      title: "Checking Stripe",
-      desc: "Verifying your card payment with Stripe.",
-      icon: CreditCard,
-      state:
-        phase === "checking_stripe"
-          ? "active"
-          : currentIdx > 0 || phase === "confirmed" || failed
+    ...checkSteps.map((c, i) => {
+      const isLastCheck = i === checkSteps.length - 1;
+      // While a check is running, mark every check step up to the active one
+      // as done; when the flow ends (confirmed/failed) all checks are done.
+      const isActiveCheck =
+        checking &&
+        (phase === c.key ||
+          // If only one provider is shown, any "checking" phase lights it up.
+          (method !== null && checkSteps.length === 1));
+      const state: StepDef["state"] = isActiveCheck
+        ? "active"
+        : confirmed || failed
+          ? "done"
+          : checking && !isLastCheck && checkSteps[i + 1]?.key === phase
             ? "done"
-            : "upcoming",
-    },
-    {
-      key: "checking_square",
-      title: "Checking Square",
-      desc: "No Stripe match — checking Square invoices.",
-      icon: BadgeCheck,
-      state:
-        phase === "checking_square"
-          ? "active"
-          : phase === "confirmed" || failed
-            ? "done"
-            : "upcoming",
-    },
+            : "upcoming";
+      return { ...c, state };
+    }),
     {
       key: "result",
       title: failed ? "Failed" : "Confirmed",
@@ -66,7 +115,7 @@ export function PaymentStatusTimeline({ phase }: { phase: PayCheckPhase }) {
         ? "No payment found yet — try again once it clears."
         : "Payment confirmed — order marked as paid.",
       icon: failed ? XCircle : CheckCircle2,
-      state: failed ? "failed" : phase === "confirmed" ? "done" : "upcoming",
+      state: failed ? "failed" : confirmed ? "done" : "upcoming",
     },
   ];
 
@@ -81,14 +130,14 @@ export function PaymentStatusTimeline({ phase }: { phase: PayCheckPhase }) {
             "text-[10px] font-bold uppercase tracking-wider",
             failed
               ? "text-destructive"
-              : phase === "confirmed"
+              : confirmed
                 ? "text-emerald-400"
                 : "text-fuchsia-300",
           )}
         >
           {failed
             ? "Not found"
-            : phase === "confirmed"
+            : confirmed
               ? "Paid"
               : phase === "awaiting"
                 ? "Awaiting payment"
