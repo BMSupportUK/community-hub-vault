@@ -72,6 +72,7 @@ import { MonitorPlay } from "lucide-react";
 import { AppDemosView } from "@/components/app/AppDemos";
 import { Film } from "lucide-react";
 import { VpnGuideView } from "@/components/app/VpnGuideView";
+import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 
 type View = "store" | "orders" | "admin" | "refund" | "multi_room" | "triple_room" | "streaming_devices" | "reviews" | "app_demos";
 
