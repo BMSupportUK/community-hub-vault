@@ -3109,6 +3109,7 @@ function OrderDetailImpl({
   // while the customer's USDT payment is on its way.
   const [pendingCrypto, setPendingCrypto] = useState<{ status: string } | null>(null);
   const [paidMethodLabel, setPaidMethodLabel] = useState<string | null>(null);
+  const [payProvider, setPayProvider] = useState<"stripe" | "square" | "nowpayments" | null>(null);
   const [settledPayment, setSettledPayment] = useState<{
     provider: string;
     providerPaymentId: string | null;
@@ -3126,6 +3127,10 @@ function OrderDetailImpl({
           (data.paymentStatus ?? "").toLowerCase(),
         );
       setPendingCrypto(pending ? { status: data?.paymentStatus as string } : null);
+      const prov = data?.provider;
+      setPayProvider(
+        prov === "stripe" || prov === "square" || prov === "nowpayments" ? prov : null,
+      );
       const paymentIsSettled = Boolean(data?.settled);
       setRecordedStripeSessionId(
         data?.provider === "stripe" && data.providerPaymentId ? data.providerPaymentId : null,
@@ -3818,6 +3823,7 @@ function OrderDetailImpl({
           {order.status !== "cancelled" && (
             <PaymentStatusTimeline
               phase={isOrderPaid ? "confirmed" : (checkPhase ?? "awaiting")}
+              method={payProvider}
             />
           )}
           {order.user_id === user?.id && (
