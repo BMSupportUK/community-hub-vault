@@ -18,6 +18,8 @@ import {
   getCryptoConfig,
   getCryptoInvoiceStatus,
 } from "@/lib/nowpayments.functions";
+import { StripeOrderPanel } from "@/components/app/StripeOrderPanel";
+
 
 const fallbackFormat = (cents: number) =>
   new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format((cents || 0) / 100);
