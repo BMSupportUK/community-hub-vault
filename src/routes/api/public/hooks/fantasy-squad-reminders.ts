@@ -159,6 +159,8 @@ export const Route = createFileRoute('/api/public/hooks/fantasy-squad-reminders'
               displayName: r.display_name ?? undefined,
               missingCount: r.missing_count,
               nextKickoffAt: fmtKickoff(r.next_kickoff_at),
+              gwNumber: r.gw_number ?? undefined,
+              fixtureLabel: r.fixture_label ?? undefined,
               fantasyUrl: FANTASY_URL,
             }
             const element = React.createElement(template.component, props)
