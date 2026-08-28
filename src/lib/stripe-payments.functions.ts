@@ -195,16 +195,17 @@ export const confirmStripePayment = createServerFn({ method: "POST" })
   .inputValidator((input) =>
     z.object({ orderId: z.string().uuid(), sessionId: z.string().min(4).max(256), environment: z.enum(["sandbox", "live"]) }).parse(input),
   )
-  .handler(async ({ data, context }): Promise<{ status: string; amountCents: number; cardBrand?: string; last4?: string; receiptUrl?: string } | { error: string }> => {
+  .handler(async ({ data, context }): Promise<{ status: string; amountCents: number; cardBrand?: string; last4?: string; receiptUrl?: string; ticketId?: string } | { error: string }> => {
     try {
       const { supabase, userId } = context;
       await assertAdminOrOrderOwner(supabase, userId, data.orderId);
 
       const { data: order, error: orderErr } = await supabase
         .from("orders")
-        .select("id,total_cents,paid_at")
+        .select("id,total_cents,paid_at,user_id")
         .eq("id", data.orderId)
         .single();
+
       if (orderErr || !order) throw new Error(orderErr?.message || "Order not found");
       if (order.paid_at) return { status: "already_paid", amountCents: order.total_cents ?? 0 };
       const totalCents = order.total_cents ?? 0;
