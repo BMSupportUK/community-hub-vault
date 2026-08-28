@@ -184,9 +184,10 @@ export function PayOrderDialog({
             <div className="text-sm text-muted-foreground">Total {format(amountCents)}</div>
           </DialogHeader>
           <Tabs defaultValue="square" className="pt-2">
-            <TabsList className="grid w-full grid-cols-2">
+            <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="square">Square</TabsTrigger>
               <TabsTrigger value="usdt">USDT</TabsTrigger>
+              <TabsTrigger value="stripe">Stripe</TabsTrigger>
             </TabsList>
             <TabsContent value="square" className="mt-3">
               <SquareInvoicePanel orderId={orderId} amountCents={amountCents} onChange={handleChange} />
@@ -194,7 +195,16 @@ export function PayOrderDialog({
             <TabsContent value="usdt" className="mt-3">
               <CryptoPanel orderId={orderId} amountCents={amountCents} canPay onChange={handleChange} />
             </TabsContent>
+            <TabsContent value="stripe" className="mt-3">
+              <StripeOrderPanel
+                orderId={orderId}
+                amountCents={amountCents}
+                canPay
+                onChange={handleChange}
+              />
+            </TabsContent>
           </Tabs>
+
         </DialogContent>
       </Dialog>
     </>
