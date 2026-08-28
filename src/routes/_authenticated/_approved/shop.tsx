@@ -1321,7 +1321,10 @@ function Storefront() {
     discount_code: string;
     discount_cents: number;
     wants_adult_content: boolean;
+    purchase_kind?: "renewal" | "additional" | "new";
+    owned_logins?: string[];
   }) => {
+
     if (!user || cartItems.length === 0) return;
     let verifiedDiscountCents = 0;
     const submittedCode = info.discount_code.trim();
@@ -1406,19 +1409,27 @@ function Storefront() {
           .single();
         if (ticket?.id) {
           newTicketId = ticket.id;
+          const ownedLogins = info.owned_logins ?? [];
+          const kind = info.purchase_kind ?? (info.customer_type === "existing" ? "renewal" : "new");
           const ticketBody = [
             `🧾 New order placed`,
             `Order ID: ${order.id}`,
-            `Customer: ${
-              info.customer_type === "existing"
-                ? `Existing — upgrading @${info.existing_username.trim()}`
-                : "New customer"
+            `Order type: ${
+              kind === "renewal"
+                ? `🔁 Renewal — login: ${info.existing_username.trim() || "(not specified)"}`
+                : kind === "additional"
+                  ? `➕ Purchase additional account`
+                  : `🆕 New customer`
             }`,
+            ...(ownedLogins.length > 0
+              ? [`Existing accounts on file: ${ownedLogins.join(", ")}`]
+              : []),
             `Adult content access: ${info.wants_adult_content ? "Yes" : "No"}`,
             ``,
             `Items:`,
             itemLines,
           ].join("\n");
+
           await supabase.from("ticket_messages").insert({
             ticket_id: ticket.id,
             sender_id: user.id,
@@ -2240,6 +2251,8 @@ function Checkout({
     discount_code: string;
     discount_cents: number;
     wants_adult_content: boolean;
+    purchase_kind: "renewal" | "additional" | "new";
+    owned_logins: string[];
   }) => void;
   onRemoveItem: (id: string) => void;
 }) {
@@ -2251,6 +2264,44 @@ function Checkout({
   const [adultContent, setAdultContent] = useState<"yes" | "no" | "">("");
   const [appliedCode, setAppliedCode] = useState<DiscountCode | null>(null);
   const [autoLoading, setAutoLoading] = useState(true);
+  const [myCreds, setMyCreds] = useState<
+    { id: string; account_number: number; account_type: string | null; app_login_name: string | null; expiry_at: string | null }[]
+  >([]);
+  const [credsLoaded, setCredsLoaded] = useState(false);
+  // "" = nothing chosen yet, "additional" = buying an extra account,
+  // otherwise the id of the credential being renewed.
+  const [credChoice, setCredChoice] = useState<string>("");
+
+  useEffect(() => {
+    if (!user?.id) {
+      setMyCreds([]);
+      setCredsLoaded(true);
+      return;
+    }
+    let active = true;
+    supabase
+      .from("app_credentials")
+      .select("id, account_number, account_type, app_login_name, expiry_at")
+      .eq("owner_id", user.id)
+      .order("account_number", { ascending: true })
+      .then(({ data }) => {
+        if (!active) return;
+        const rows = (data ?? []) as typeof myCreds;
+        setMyCreds(rows);
+        setCredsLoaded(true);
+        if (rows.length > 0) {
+          setCustomerType("existing");
+          if (rows.length === 1) {
+            setCredChoice(rows[0].id);
+            setExistingUsername(rows[0].app_login_name ?? "");
+          }
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [user?.id]);
+
 
   const requiresMulti = useMemo(
     () => items.some((i) => (i.category ?? "").toLowerCase().includes("multi")),
@@ -2336,10 +2387,20 @@ function Checkout({
     };
   }, [items, total, user?.id]);
 
+  const hasCreds = myCreds.length > 0;
+  const purchaseKind: "renewal" | "additional" | "new" =
+    hasCreds && credChoice && credChoice !== "additional"
+      ? "renewal"
+      : hasCreds && credChoice === "additional"
+        ? "additional"
+        : "new";
+
   const canSubmit =
     !!name &&
     !!email &&
-    (customerType === "new" || !!existingUsername.trim()) &&
+    (hasCreds ? !!credChoice : customerType === "new" || !!existingUsername.trim()) &&
+    (purchaseKind !== "renewal" || !!existingUsername.trim()) &&
+
     adultContent !== "" &&
     (!requiresMulti || agreedMulti) &&
     (!requiresTriple || agreedTriple);
@@ -2403,46 +2464,125 @@ function Checkout({
               placeholder="Email"
               className="w-full px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border focus:border-primary outline-none"
             />
-            <div>
-              <div className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1">
-                Customer
+            {hasCreds ? (
+              <div>
+                <div className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1">
+                  What is this order for? <span className="text-destructive">*</span>
+                </div>
+                <div className="space-y-2">
+                  {myCreds.map((c) => {
+                    const selected = credChoice === c.id;
+                    const label = c.app_login_name?.trim() || `Account ${c.account_number}`;
+                    const type = (c.account_type ?? "single").toLowerCase();
+                    const typeLabel =
+                      type === "multi" ? "Multi-room" : type === "triple" ? "Triple-room" : "Single";
+                    return (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => {
+                          setCredChoice(c.id);
+                          setCustomerType("existing");
+                          setExistingUsername(c.app_login_name?.trim() || label);
+                        }}
+                        className={cn(
+                          "w-full text-left px-3 py-2 rounded-lg text-sm border",
+                          selected
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-surface-2 border-border",
+                        )}
+                      >
+                        <div className="font-medium truncate">Renew — {label}</div>
+                        <div
+                          className={cn(
+                            "text-[11px]",
+                            selected ? "text-primary-foreground/80" : "text-muted-foreground",
+                          )}
+                        >
+                          Account {c.account_number} · {typeLabel}
+                          {c.expiry_at
+                            ? ` · expires ${new Date(c.expiry_at).toLocaleDateString("en-GB")}`
+                            : ""}
+                        </div>
+                      </button>
+                    );
+                  })}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCredChoice("additional");
+                      setCustomerType("existing");
+                      setExistingUsername("");
+                    }}
+                    className={cn(
+                      "w-full text-left px-3 py-2 rounded-lg text-sm border",
+                      credChoice === "additional"
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-surface-2 border-border",
+                    )}
+                  >
+                    <div className="font-medium">Purchase additional account</div>
+                    <div
+                      className={cn(
+                        "text-[11px]",
+                        credChoice === "additional"
+                          ? "text-primary-foreground/80"
+                          : "text-muted-foreground",
+                      )}
+                    >
+                      A brand new account alongside the one(s) you already have
+                    </div>
+                  </button>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setCustomerType("new")}
-                  className={cn(
-                    "flex-1 px-3 py-2 rounded-lg text-sm border",
-                    customerType === "new"
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-surface-2 border-border",
-                  )}
-                >
-                  New customer
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setCustomerType("existing")}
-                  className={cn(
-                    "flex-1 px-3 py-2 rounded-lg text-sm border",
-                    customerType === "existing"
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-surface-2 border-border",
-                  )}
-                >
-                  Existing customer
-                </button>
-              </div>
-            </div>
-            {customerType === "existing" && (
-              <input
-                value={existingUsername}
-                onChange={(e) => setExistingUsername(e.target.value)}
-                placeholder="Username you're extending *"
-                required
-                className="w-full px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border focus:border-primary outline-none"
-              />
+            ) : (
+              <>
+                <div>
+                  <div className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1">
+                    Customer
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setCustomerType("new")}
+                      className={cn(
+                        "flex-1 px-3 py-2 rounded-lg text-sm border",
+                        customerType === "new"
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-surface-2 border-border",
+                      )}
+                    >
+                      New customer
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCustomerType("existing")}
+                      className={cn(
+                        "flex-1 px-3 py-2 rounded-lg text-sm border",
+                        customerType === "existing"
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-surface-2 border-border",
+                      )}
+                    >
+                      Existing customer
+                    </button>
+                  </div>
+                </div>
+                {customerType === "existing" && (
+                  <input
+                    value={existingUsername}
+                    onChange={(e) => setExistingUsername(e.target.value)}
+                    placeholder="Username you're extending *"
+                    required
+                    className="w-full px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border focus:border-primary outline-none"
+                  />
+                )}
+              </>
             )}
+            {!credsLoaded && (
+              <div className="text-[11px] text-muted-foreground">Checking your accounts…</div>
+            )}
+
             <div>
               <div className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1">
                 Adult content access <span className="text-destructive">*</span>
@@ -2563,6 +2703,11 @@ function Checkout({
                 discount_code: appliedCode?.code ?? "",
                 discount_cents: discountCents,
                 wants_adult_content: adultContent === "yes",
+                purchase_kind: purchaseKind,
+                owned_logins: myCreds.map(
+                  (c) => c.app_login_name?.trim() || `Account ${c.account_number}`,
+                ),
+
               })
             }
             disabled={!canSubmit}
