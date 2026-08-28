@@ -233,9 +233,20 @@ export function buildPreviewBody(fx: FixtureLite, json: any): string {
     );
   }
 
-  if (h2h.length) {
-    parts.push(`<p><strong>Recent meetings</strong></p><ul>${h2h.map((l) => `<li>${esc(l)}</li>`).join("")}</ul>`);
+  if (h2h.lines.length || legacyH2h.length) {
+    const lines = h2h.lines.length ? h2h.lines : legacyH2h;
+    parts.push(
+      `<p><strong>Head to head</strong></p>${h2h.record ? `<p>${esc(h2h.record)}</p>` : ""}<ul>${lines
+        .map((l) => `<li>${esc(l)}</li>`)
+        .join("")}</ul>`,
+    );
   }
+
+  const prose = previewProse(fx, json, sides, h2h, { venue, city, ref });
+  if (prose.length) {
+    parts.push(`<p><strong>The preview</strong></p>${prose.map((p) => `<p>${esc(p)}</p>`).join("")}`);
+  }
+
 
   parts.push(
     comp
