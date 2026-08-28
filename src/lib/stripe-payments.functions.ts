@@ -257,7 +257,27 @@ export const confirmStripePayment = createServerFn({ method: "POST" })
         .single();
 
       if (orderErr || !order) throw new Error(orderErr?.message || "Order not found");
-      if (order.paid_at) return { status: "already_paid", amountCents: order.total_cents ?? 0 };
+      if (order.paid_at) {
+        // Already settled (e.g. a previous check or a repaired paid state) —
+        // still make sure the automated thank-you notice exists on the ticket.
+        try {
+          const existing = await getOrderPayment(String(order.id));
+          const { postOrderPaymentReceivedNotice } = await import("@/lib/order-payment-notice.server");
+          const notice = await postOrderPaymentReceivedNotice({
+            orderId: String(order.id),
+            provider: existing?.provider === "square" ? "Square" : "Stripe",
+            amountCents: order.total_cents ?? 0,
+            reference: existing?.provider_payment_id ? String(existing.provider_payment_id) : null,
+            actorId: userId,
+            paidAt: order.paid_at,
+          });
+          return { status: "already_paid", amountCents: order.total_cents ?? 0, ticketId: notice.ticketId };
+        } catch (e) {
+          console.error("Failed to post payment notice for already-paid order:", e);
+        }
+        return { status: "already_paid", amountCents: order.total_cents ?? 0 };
+      }
+
       const totalCents = order.total_cents ?? 0;
       if (totalCents <= 0) throw new Error("Order total must be greater than zero");
 
@@ -386,14 +406,23 @@ export const confirmStripePayment = createServerFn({ method: "POST" })
           `User ID: ${orderUserId}`,
         ].filter(Boolean);
 
+        const paidStamp = new Intl.DateTimeFormat("en-GB", {
+          dateStyle: "full",
+          timeStyle: "short",
+          timeZone: "Europe/London",
+        }).format(new Date());
+
         const content =
           `✅ Card payment captured via Stripe for order #${String(order.id).slice(0, 8)}` +
           `${cardBrand && last4 ? ` (${cardBrand} •••• ${last4})` : ""}` +
           ` — £${(totalCents / 100).toFixed(2)}.` +
+          `\nPayment date: ${paidStamp} (UK time)` +
           `\nPurchase ref: ${pi?.id ?? session.id}` +
           (receiptUrl ? `\nReceipt: ${receiptUrl}` : "") +
           (itemLines.length ? `\n\n🛒 Items:\n${itemLines.join("\n")}` : "") +
-          `\nTotal: £${(totalCents / 100).toFixed(2)} GBP`;
+          `\nTotal: £${(totalCents / 100).toFixed(2)} GBP` +
+          `\n\n🙏 Thank you for your payment — we really appreciate your custom. Your order is now being processed and we'll update you on this ticket.`;
+
 
         // Staff-only version adds customer contact details (email is
         // admin/management-only and must not appear on customer-visible tickets).

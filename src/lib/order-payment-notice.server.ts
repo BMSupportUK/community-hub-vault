@@ -11,6 +11,8 @@ type NoticeInput = {
   receiptUrl?: string | null;
   /** Who triggered the check (used as sender on the automated message). */
   actorId?: string | null;
+  /** When the payment was confirmed (ISO). Defaults to now. */
+  paidAt?: string | null;
 };
 
 /**
@@ -55,11 +57,20 @@ export async function postOrderPaymentReceivedNotice(input: NoticeInput): Promis
       `• ${it.quantity ?? 1} × ${it.product_name ?? "Item"} — £${(((it.unit_price_cents ?? 0) * (it.quantity ?? 1)) / 100).toFixed(2)}`,
   );
 
+  const paidAtDate = input.paidAt ? new Date(input.paidAt) : new Date();
+  const paidStamp = new Intl.DateTimeFormat("en-GB", {
+    dateStyle: "full",
+    timeStyle: "short",
+    timeZone: "Europe/London",
+  }).format(paidAtDate);
+
   const content =
     `✅ Payment received via ${provider} for order #${orderId.slice(0, 8)} — £${(totalCents / 100).toFixed(2)} GBP.` +
+    `\nPayment date: ${paidStamp} (UK time)` +
     (input.reference ? `\nPurchase ref: ${input.reference}` : "") +
     (input.receiptUrl ? `\nReceipt: ${input.receiptUrl}` : "") +
     (itemLines.length ? `\n\n🛒 Items:\n${itemLines.join("\n")}` : "") +
+    `\n\n🙏 Thank you for your payment — we really appreciate your custom. Your order is now being processed and we'll update you on this ticket.` +
     `\n\n(${marker})`;
 
   try {

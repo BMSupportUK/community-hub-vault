@@ -48,6 +48,25 @@ export const getOrderPaymentState = createServerFn({ method: "GET" })
       if (syncError) throw new Error(syncError.message);
     }
 
+    // Make sure the automated thank-you notice exists on the order thread and
+    // the linked ticket whenever the order is settled (idempotent).
+    if (paidAt) {
+      try {
+        const { postOrderPaymentReceivedNotice } = await import("@/lib/order-payment-notice.server");
+        await postOrderPaymentReceivedNotice({
+          orderId: data.orderId,
+          provider: payment?.provider === "square" ? "Square" : payment?.provider === "stripe" ? "Stripe" : (payment?.provider ?? "card"),
+          amountCents: payment?.amount_cents ?? visibleOrder.total_cents ?? 0,
+          reference: payment?.provider_payment_id ? String(payment.provider_payment_id) : null,
+          actorId: context.userId,
+          paidAt,
+        });
+      } catch (e) {
+        console.error("Failed to post payment thank-you notice:", e);
+      }
+    }
+
+
     return {
       settled,
       paidAt,
