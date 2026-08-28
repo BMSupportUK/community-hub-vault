@@ -4294,34 +4294,8 @@ function StripePanel({
   useEffect(() => {
     loadPayment();
   }, [orderId]);
-  // Reconcile the recorded Stripe session in the background so a completed card
-  // payment always confirms the order, preventing a second payment attempt.
-  useEffect(() => {
-    if (isFinalPaid) return;
-    let cancelled = false;
-    const sync = async () => {
-      try {
-        const res: any = await verifyStripePaymentForOrder(confirmStripeFn2, orderId);
-        if (cancelled || !res || "error" in res) return;
-        await loadPayment();
-        await onChange?.();
-      } catch {
-        /* ignore background reconciliation errors */
-      }
-    };
-    sync();
-    const timer = window.setInterval(sync, 10_000);
-    const onFocus = () => sync();
-    window.addEventListener("focus", onFocus);
-    document.addEventListener("visibilitychange", onFocus);
-    return () => {
-      cancelled = true;
-      window.clearInterval(timer);
-      window.removeEventListener("focus", onFocus);
-      document.removeEventListener("visibilitychange", onFocus);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [orderId, isFinalPaid]);
+  // No background reconciliation: card payments are only verified when the
+  // customer presses "I've paid".
 
   useEffect(() => {
     const ch = supabase
