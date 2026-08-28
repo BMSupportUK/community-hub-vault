@@ -3967,6 +3967,11 @@ function OrderDetailImpl({
               <div className="text-muted-foreground text-xs whitespace-pre-line">{order.notes}</div>
             </div>
           )}
+          {order.status !== "cancelled" && (
+            <PaymentStatusTimeline
+              phase={isOrderPaid ? "confirmed" : (checkPhase ?? "awaiting")}
+            />
+          )}
           {order.user_id === user?.id && (
             <div className="space-y-3">
               {pendingCrypto ? (
