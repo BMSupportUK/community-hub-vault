@@ -1423,14 +1423,10 @@ function Storefront() {
                   ? `➕ Additional account — create a BRAND NEW login (do not renew an existing account)`
                   : `🆕 New customer`
             }`,
-            ...(ownedLogins.length > 0 && kind !== "additional"
+            ...(ownedLogins.length > 0 && kind === "renewal"
               ? [`Existing accounts on file: ${ownedLogins.join(", ")}`]
               : []),
-            ...(ownedLogins.length > 0 && kind === "additional"
-              ? [
-                  `Other accounts already on file (reference only — none of these are being renewed): ${ownedLogins.join(", ")}`,
-                ]
-              : []),
+
             `Adult content access: ${info.wants_adult_content ? "Yes" : "No"}`,
             ``,
             `Items:`,
