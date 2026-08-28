@@ -348,14 +348,17 @@ export const confirmStripePayment = createServerFn({ method: "POST" })
         const { data: linkedTickets } = await supabaseAdmin.from("tickets").select("id,user_id").eq("order_id", String(order.id));
         if (linkedTickets && linkedTickets.length > 0) {
           ticketId = String(linkedTickets[0]!.id);
-          await supabaseAdmin.from("ticket_messages").insert(
-            linkedTickets.map((t: { id: string }) => ({
-              ticket_id: t.id,
-              sender_id: userId,
-              content,
-            })),
-          );
-        } else {
+          if (!alreadyNotified) {
+            await supabaseAdmin.from("ticket_messages").insert(
+              linkedTickets.map((t: { id: string }) => ({
+                ticket_id: t.id,
+                sender_id: userId,
+                content,
+              })),
+            );
+          }
+        } else if (!alreadyNotified) {
+
           // No ticket linked yet (e.g. order created outside the shop flow) —
           // open one in the admin/management-only "Orders" category so the
           // purchase reference is always tracked in support.
