@@ -472,3 +472,52 @@ function fotmobEventDetail(
     card,
   };
 }
+
+/** FotMob "teamForm" → the ESPN-shaped lastFiveGames block the forum builders read. */
+function mapTeamForm(detail: any, teams: any[]): any[] {
+  const form: any[] = detail?.content?.matchFacts?.teamForm ?? [];
+  return form.slice(0, 2).map((entries: any[], index: number) => {
+    const teamId = String(teams[index]?.id ?? "");
+    const events = (entries ?? [])
+      .slice(-5)
+      .reverse()
+      .map((entry: any) => {
+        const wasHome = String(entry?.home?.id ?? "") === teamId;
+        const opponent = wasHome ? entry?.away : entry?.home;
+        return {
+          gameResult: String(entry?.resultString ?? "").toUpperCase(),
+          score: entry?.score ? String(entry.score).replace(/\s+/g, "") : "",
+          atVs: wasHome ? "vs" : "@",
+          opponent: { id: String(opponent?.id ?? ""), displayName: String(opponent?.name ?? "Opponent") },
+          gameDate: entry?.date?.utcTime ?? null,
+        };
+      });
+    return { team: { id: teamId }, events };
+  });
+}
+
+/** FotMob head-to-head block: overall record plus the completed previous meetings. */
+function mapHeadToHead(detail: any): {
+  summary: { homeWins: number; draws: number; awayWins: number } | null;
+  matches: Array<{ date: string | null; home: string; away: string; score: string; competition: string | null }>;
+} {
+  const block = detail?.content?.h2h ?? null;
+  const summary = Array.isArray(block?.summary)
+    ? {
+        homeWins: Number(block.summary[0] ?? 0),
+        draws: Number(block.summary[1] ?? 0),
+        awayWins: Number(block.summary[2] ?? 0),
+      }
+    : null;
+  const matches = (block?.matches ?? [])
+    .filter((match: any) => match?.status?.finished && match?.status?.scoreStr)
+    .slice(0, 6)
+    .map((match: any) => ({
+      date: match?.status?.utcTime ?? match?.time?.utcTime ?? null,
+      home: String(match?.home?.name ?? ""),
+      away: String(match?.away?.name ?? ""),
+      score: String(match.status.scoreStr).replace(/\s+/g, ""),
+      competition: match?.league?.name ? String(match.league.name) : null,
+    }));
+  return { summary, matches };
+}
