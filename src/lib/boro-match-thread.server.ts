@@ -340,19 +340,28 @@ function previewProse(
   );
 
   const formBits: string[] = [];
+  const resultWord: Record<string, string> = { W: "win", D: "draw", L: "defeat" };
   for (const s of [homeSide, awaySide]) {
     if (!s.form.length) continue;
-    const last = s.formLines[0];
+    const last = s.formLines[0]?.replace(/^([WDL])\s+/, (_m, r: string) => "").trim();
+    const lastResult = resultWord[s.form[0] ?? ""] ?? null;
     formBits.push(
-      `${s.name} arrive with ${formWords(s.form)} from their last ${s.form.length}${last ? ` — most recently a ${last}` : ""}`,
+      `${s.name} arrive with ${formWords(s.form)} from their last ${s.form.length}${
+        last && lastResult ? `, most recently a ${last.replace(/^(\S+)\s/, `$1 ${lastResult} `)}` : ""
+      }`,
     );
   }
-  if (formBits.length) paras.push(`${formBits.join(". ")}.`.replace(/\.\./g, "."));
+  if (formBits.length) paras.push(`${formBits.join(". ")}.`);
 
+  const named = (t: string, teamId: string | null) => {
+    const side = sides.find((s) => s.id && s.id === teamId);
+    const withName = side && !t.toLowerCase().includes(side.name.toLowerCase()) ? `${side.name}: ${t}` : t;
+    return /[.!?]$/.test(withName) ? withName : `${withName}.`;
+  };
   const insights: string[] = (json?.insights ?? [])
-    .map((i: any) => String(i?.text ?? ""))
-    .filter((t: string) => t && !/^\s*$/.test(t))
-    .slice(0, 3);
+    .filter((i: any) => String(i?.text ?? "").trim())
+    .slice(0, 3)
+    .map((i: any) => named(String(i.text).trim(), i?.teamId != null ? String(i.teamId) : null));
   const h2hBit = h2h.record
     ? `${h2h.record}${h2h.lines[0] ? ` The most recent was ${h2h.lines[0]}.` : ""}`
     : h2h.lines[0]
