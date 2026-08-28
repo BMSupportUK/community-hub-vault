@@ -2692,6 +2692,11 @@ function Checkout({
                 discount_code: appliedCode?.code ?? "",
                 discount_cents: discountCents,
                 wants_adult_content: adultContent === "yes",
+                purchase_kind: purchaseKind,
+                owned_logins: myCreds.map(
+                  (c) => c.app_login_name?.trim() || `Account ${c.account_number}`,
+                ),
+
               })
             }
             disabled={!canSubmit}
