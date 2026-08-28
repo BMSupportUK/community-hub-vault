@@ -4119,6 +4119,8 @@ function SquareInvoicePanel({
   const [err, setErr] = useState<string | null>(null);
   const createInvoice = useServerFn(createSquareInvoiceForOrder);
   const refreshInvoice = useServerFn(refreshSquareInvoiceStatus);
+  const confirmStripeFn = useServerFn(confirmStripePayment);
+
 
   useEffect(() => {
     let cancelled = false;
