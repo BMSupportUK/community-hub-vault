@@ -1409,19 +1409,27 @@ function Storefront() {
           .single();
         if (ticket?.id) {
           newTicketId = ticket.id;
+          const ownedLogins = info.owned_logins ?? [];
+          const kind = info.purchase_kind ?? (info.customer_type === "existing" ? "renewal" : "new");
           const ticketBody = [
             `🧾 New order placed`,
             `Order ID: ${order.id}`,
-            `Customer: ${
-              info.customer_type === "existing"
-                ? `Existing — upgrading @${info.existing_username.trim()}`
-                : "New customer"
+            `Order type: ${
+              kind === "renewal"
+                ? `🔁 Renewal — login: ${info.existing_username.trim() || "(not specified)"}`
+                : kind === "additional"
+                  ? `➕ Purchase additional account`
+                  : `🆕 New customer`
             }`,
+            ...(ownedLogins.length > 0
+              ? [`Existing accounts on file: ${ownedLogins.join(", ")}`]
+              : []),
             `Adult content access: ${info.wants_adult_content ? "Yes" : "No"}`,
             ``,
             `Items:`,
             itemLines,
           ].join("\n");
+
           await supabase.from("ticket_messages").insert({
             ticket_id: ticket.id,
             sender_id: user.id,
