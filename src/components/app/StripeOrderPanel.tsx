@@ -13,17 +13,10 @@ import { createStripePaymentIntent, confirmStripePayment } from "@/lib/stripe-pa
  * detected even if the customer never came back through the return URL.
  */
 export async function verifyStripePaymentForOrder(
-  confirmFn: (args: { data: { orderId: string; sessionId: string; environment: ReturnType<typeof getStripeEnvironment> } }) => Promise<any>,
+  confirmFn: (args: { data: { orderId: string; sessionId?: string; environment: ReturnType<typeof getStripeEnvironment> } }) => Promise<any>,
   orderId: string,
 ): Promise<any | null> {
-  const { data } = await supabase
-    .from("order_payments")
-    .select("provider,provider_payment_id")
-    .eq("order_id", orderId)
-    .maybeSingle();
-  const sessionId = (data as any)?.provider_payment_id as string | undefined;
-  if (!data || (data as any).provider !== "stripe" || !sessionId) return null;
-  return confirmFn({ data: { orderId, sessionId, environment: getStripeEnvironment() } });
+  return confirmFn({ data: { orderId, environment: getStripeEnvironment() } });
 }
 
 export function StripeLogo({ className = "" }: { className?: string }) {
