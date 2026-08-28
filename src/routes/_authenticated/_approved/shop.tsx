@@ -3164,67 +3164,25 @@ function OrderDetailImpl({
     };
   }, [orderId]);
 
-  // Verify a Stripe Embedded Checkout session when the user returns with
-  // ?session_id=... after completing payment.
+  // Payments are never auto-confirmed. The customer must press "I've paid",
+  // which checks Stripe first and then Square.
   const confirmStripe = useServerFn(confirmStripePayment);
   const orderMarkedPaid = Boolean(order?.paid_at || order?.status === "paid");
   const isOrderPaid = Boolean(orderMarkedPaid || settledPayment);
 
-  // Reconcile through the server as soon as the order opens. The browser may
-  // not be allowed to read order_payments, so never depend on its local row.
-  useEffect(() => {
-    if (!order || orderMarkedPaid) return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const result = await verifyStripePaymentForOrder(confirmStripe, orderId);
-        if (!cancelled && !("error" in result)) await load();
-      } catch {
-        // Keep the order usable while Stripe is still processing the session.
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [orderId, order?.id, orderMarkedPaid]);
-
+  // When the customer returns from Stripe Checkout, just clean the URL and ask
+  // them to confirm with the "I've paid" button.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const sessionId = params.get("session_id");
-    if (!sessionId || !order || order.status === "paid" || order.status === "completed") return;
-    let cancelled = false;
-    (async () => {
-      try {
-        const result = await confirmStripe({
-          data: { orderId, sessionId, environment: getStripeEnvironment() },
-        });
-        if (cancelled) return;
-        if ("error" in result) {
-          toast.error(result.error);
-          return;
-        }
-        toast.success(`Stripe payment confirmed — ${format(result.amountCents)}`);
-        await load();
-
-        // Remove session_id from URL so a refresh doesn't re-verify.
-        params.delete("session_id");
-        const newUrl = `${window.location.pathname}?${params.toString()}${window.location.hash}`;
-        window.history.replaceState({}, "", newUrl);
-
-        // Card payments belong to a support ticket — take the customer there
-        // instead of leaving them on the orders list.
-        if (result.ticketId) {
-          toast.message("Support ticket updated with your purchase reference");
-          navigate({ to: "/tickets", search: { id: result.ticketId } });
-        }
-      } catch (e) {
-        if (!cancelled) toast.error((e as Error).message || "Stripe verification failed");
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [orderId, order?.status]);
+    if (!sessionId) return;
+    params.delete("session_id");
+    const newUrl = `${window.location.pathname}${params.toString() ? `?${params.toString()}` : ""}${window.location.hash}`;
+    window.history.replaceState({}, "", newUrl);
+    if (!orderMarkedPaid) {
+      toast.message("Press \"I've paid\" to check your payment");
+    }
+  }, [orderId, orderMarkedPaid]);
 
   useEffect(() => {
     const ch = supabase
@@ -4319,7 +4277,6 @@ function StripePanel({
   const [fetchingSecret, setFetchingSecret] = useState(false);
   const { format } = useCurrency();
   const createPI = useServerFn(createStripePaymentIntent);
-  const confirmStripeFn2 = useServerFn(confirmStripePayment);
   const isFinalPaid = Boolean(
     (paid && ["COMPLETED", "completed", "finished"].includes(String(paid.status ?? ""))) ||
       (orderPaidAt && paid?.provider === "stripe"),
@@ -4336,34 +4293,8 @@ function StripePanel({
   useEffect(() => {
     loadPayment();
   }, [orderId]);
-  // Reconcile the recorded Stripe session in the background so a completed card
-  // payment always confirms the order, preventing a second payment attempt.
-  useEffect(() => {
-    if (isFinalPaid) return;
-    let cancelled = false;
-    const sync = async () => {
-      try {
-        const res: any = await verifyStripePaymentForOrder(confirmStripeFn2, orderId);
-        if (cancelled || !res || "error" in res) return;
-        await loadPayment();
-        await onChange?.();
-      } catch {
-        /* ignore background reconciliation errors */
-      }
-    };
-    sync();
-    const timer = window.setInterval(sync, 10_000);
-    const onFocus = () => sync();
-    window.addEventListener("focus", onFocus);
-    document.addEventListener("visibilitychange", onFocus);
-    return () => {
-      cancelled = true;
-      window.clearInterval(timer);
-      window.removeEventListener("focus", onFocus);
-      document.removeEventListener("visibilitychange", onFocus);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [orderId, isFinalPaid]);
+  // No background reconciliation: card payments are only verified when the
+  // customer presses "I've paid".
 
   useEffect(() => {
     const ch = supabase

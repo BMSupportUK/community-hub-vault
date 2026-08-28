@@ -73,35 +73,8 @@ export function StripeOrderPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderId]);
 
-  // Silently reconcile the recorded Stripe session so a completed card payment
-  // is confirmed (and the order marked paid) even if the customer never came
-  // back through the return URL — this prevents paying the same order twice.
-  useEffect(() => {
-    if (isFinalPaid) return;
-    let cancelled = false;
-    const sync = async () => {
-      try {
-        const res = await verifyStripePaymentForOrder(confirmStripe, orderId);
-        if (cancelled || !res || "error" in res) return;
-        await loadPayment();
-        await onChange?.();
-      } catch {
-        /* ignore background reconciliation errors */
-      }
-    };
-    sync();
-    const timer = window.setInterval(sync, 10_000);
-    const onFocus = () => sync();
-    window.addEventListener("focus", onFocus);
-    document.addEventListener("visibilitychange", onFocus);
-    return () => {
-      cancelled = true;
-      window.clearInterval(timer);
-      window.removeEventListener("focus", onFocus);
-      document.removeEventListener("visibilitychange", onFocus);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [orderId, isFinalPaid]);
+  // No automatic reconciliation — the customer confirms with "I've paid",
+  // which checks Stripe and then Square.
 
   useEffect(() => {
     const ch = supabase
