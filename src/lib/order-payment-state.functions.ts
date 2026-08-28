@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { isSettledPaymentStatus } from "@/lib/payment-status";
 
 export const getOrderPaymentState = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -29,8 +30,7 @@ export const getOrderPaymentState = createServerFn({ method: "GET" })
       .eq("order_id", data.orderId)
       .maybeSingle();
 
-    const paymentStatus = String(payment?.status ?? "").toLowerCase();
-    const paymentSettled = ["paid", "completed", "captured", "finished"].includes(paymentStatus);
+    const paymentSettled = isSettledPaymentStatus(payment?.status);
     const amountMatches = Number(payment?.amount_cents ?? -1) === Number(visibleOrder.total_cents ?? 0);
     const settled = Boolean(visibleOrder.paid_at || (paymentSettled && amountMatches));
 
@@ -39,12 +39,12 @@ export const getOrderPaymentState = createServerFn({ method: "GET" })
     let paidAt = visibleOrder.paid_at;
     if (!paidAt && paymentSettled && amountMatches) {
       paidAt = new Date().toISOString();
-      const patch: { paid_at: string; paid_by: string; status?: "paid" } = {
+      const patch: Record<string, string> = {
         paid_at: paidAt,
         paid_by: context.userId,
       };
       if (visibleOrder.status !== "completed" && visibleOrder.status !== "cancelled") patch.status = "paid";
-      const { error: syncError } = await supabaseAdmin.from("orders").update(patch).eq("id", data.orderId);
+      const { error: syncError } = await supabaseAdmin.from("orders").update(patch as never).eq("id", data.orderId);
       if (syncError) throw new Error(syncError.message);
     }
 

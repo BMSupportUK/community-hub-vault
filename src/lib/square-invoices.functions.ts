@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { isSettledPaymentStatus } from "@/lib/payment-status";
 
 const baseUrl = () =>
   (process.env.SQUARE_ENVIRONMENT ?? "production").toLowerCase() === "sandbox"
@@ -346,7 +347,7 @@ export const cancelOrderAndSquareInvoice = createServerFn({ method: "POST" })
       .eq("order_id", data.orderId)
       .maybeSingle();
     if (paymentError) throw new Error(paymentError.message);
-    if (["finished", "completed", "captured", "paid"].includes(String(payment?.status ?? "").toLowerCase())) {
+    if (isSettledPaymentStatus(payment?.status)) {
       throw new Error("This paid order cannot be cancelled.");
     }
 

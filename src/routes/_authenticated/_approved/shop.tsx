@@ -75,6 +75,7 @@ import { Film } from "lucide-react";
 import { VpnGuideView } from "@/components/app/VpnGuideView";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { getOrderPaymentState } from "@/lib/order-payment-state.functions";
+import { isSettledPaymentStatus } from "@/lib/payment-status";
 
 type View = "store" | "orders" | "admin" | "refund" | "multi_room" | "triple_room" | "streaming_devices" | "reviews" | "app_demos";
 
@@ -3119,9 +3120,9 @@ function OrderDetailImpl({
       const pending =
         data?.provider === "nowpayments" &&
         ["waiting", "confirming", "partially_paid", "sending", "pending"].includes(
-          (data.status ?? "").toLowerCase(),
+          (data.paymentStatus ?? "").toLowerCase(),
         );
-      setPendingCrypto(pending ? { status: data!.status as string } : null);
+      setPendingCrypto(pending ? { status: data?.paymentStatus as string } : null);
       const paymentIsSettled = Boolean(data?.settled);
       setRecordedStripeSessionId(
         data?.provider === "stripe" && data.providerPaymentId ? data.providerPaymentId : null,
@@ -4278,7 +4279,7 @@ function StripePanel({
   const { format } = useCurrency();
   const createPI = useServerFn(createStripePaymentIntent);
   const isFinalPaid = Boolean(
-    (paid && ["COMPLETED", "completed", "finished"].includes(String(paid.status ?? ""))) ||
+    (paid && isSettledPaymentStatus(paid.status)) ||
       (orderPaidAt && paid?.provider === "stripe"),
   );
 
