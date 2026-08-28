@@ -25,6 +25,7 @@ import { Button } from "@/components/ui/button";
 import { useRoleFlashMap, resolveAvatarUrl, roleFlashClass } from "@/lib/role-flash";
 import { ActiveOutagesBox } from "@/components/app/ActiveOutagesBox";
 import { PayOrderDialog, OrderProgressStrip } from "@/components/app/OrderPaymentDialog";
+import { PaymentStatusTimeline, type PayCheckPhase } from "@/components/app/PaymentStatusTimeline";
 import { refreshSquareInvoiceStatus, cancelOrderAndSquareInvoice } from "@/lib/square-invoices.functions";
 import { getOrderPaymentState } from "@/lib/order-payment-state.functions";
 import { formatRoleLabel } from "@/lib/role-label";
@@ -933,6 +934,7 @@ function TicketDetail({
   const [linkedOrder, setLinkedOrder] = useState<LinkedOrder | null>(null);
   const [linkedOrderUsername, setLinkedOrderUsername] = useState<string | null>(null);
   const [orderBusy, setOrderBusy] = useState(false);
+  const [payCheckPhase, setPayCheckPhase] = useState<PayCheckPhase | null>(null);
   const refreshSquareInvoice = useServerFn(refreshSquareInvoiceStatus);
   const confirmStripe = useServerFn(confirmStripePayment);
   const cancelOrderAndSquareInvoiceRpc = useServerFn(cancelOrderAndSquareInvoice);
