@@ -4277,7 +4277,8 @@ function StripePanel({
   const [fetchingSecret, setFetchingSecret] = useState(false);
   const { format } = useCurrency();
   const createPI = useServerFn(createStripePaymentIntent);
-  const confirmStripeFn2 = useServerFn(confirmStripePayment);
+  // Stripe verification only happens via the "I've paid" button.
+  void confirmStripePayment;
   const isFinalPaid = Boolean(
     (paid && ["COMPLETED", "completed", "finished"].includes(String(paid.status ?? ""))) ||
       (orderPaidAt && paid?.provider === "stripe"),
