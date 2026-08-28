@@ -269,6 +269,16 @@ export async function fetchFotmobSummary(input: {
     displayValue: String(stat.stats[index] ?? "-"),
   }));
   const lineups = [mapLineup(detail, "homeTeam"), mapLineup(detail, "awayTeam")].filter(Boolean);
+  const infoBox = detail?.content?.matchFacts?.infoBox ?? {};
+  const stadium = infoBox?.Stadium ?? null;
+  const referee = infoBox?.Referee?.text ? String(infoBox.Referee.text) : null;
+  const lastFiveGames = mapTeamForm(detail, teams);
+  const h2h = mapHeadToHead(detail);
+  const insights: Array<{ teamId: string | null; text: string }> = (
+    detail?.content?.matchFacts?.insights ?? []
+  )
+    .filter((item: any) => item?.text)
+    .map((item: any) => ({ teamId: item?.teamId != null ? String(item.teamId) : null, text: String(item.text) }));
   return {
     header: {
       id: matchId,
