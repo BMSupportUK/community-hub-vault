@@ -56,14 +56,17 @@ export const template = {
   component: FantasySquadReminderEmail,
   subject: (data: Record<string, any>) => {
     const c = data?.missingCount ?? 1
-    return c > 1
-      ? `Reminder: ${c} fantasy gameweeks still need a squad`
+    if (c > 1) return `Reminder: ${c} fantasy gameweeks still need a squad`
+    return data?.gwNumber
+      ? `Reminder: pick your Gameweek ${data.gwNumber} squad before kick-off`
       : 'Reminder: pick your MFC Fantasy squad before kick-off'
   },
   displayName: 'Fantasy squad reminder',
   previewData: {
     displayName: 'Alex',
     missingCount: 1,
+    gwNumber: 4,
+    fixtureLabel: 'Middlesbrough v West Bromwich Albion',
     nextKickoffAt: 'Today, 15:00 BST',
     fantasyUrl: 'https://bmsupport.uk/boro-fantasy',
   },
