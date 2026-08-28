@@ -3163,14 +3163,15 @@ function OrderDetailImpl({
   // Verify a Stripe Embedded Checkout session when the user returns with
   // ?session_id=... after completing payment.
   const confirmStripe = useServerFn(confirmStripePayment);
-  const isOrderPaid = Boolean(order?.paid_at || order?.status === "paid" || settledPayment);
+  const orderMarkedPaid = Boolean(order?.paid_at || order?.status === "paid");
+  const isOrderPaid = Boolean(orderMarkedPaid || settledPayment);
 
   // Reconcile the Stripe session as soon as the order opens. This closes the
   // gap where Stripe has taken payment but the return redirect was interrupted.
   useEffect(() => {
     if (
       !order ||
-      isOrderPaid ||
+      orderMarkedPaid ||
       settledPayment?.provider !== "stripe" ||
       !settledPayment.providerPaymentId
     ) return;
@@ -3192,7 +3193,7 @@ function OrderDetailImpl({
     return () => {
       cancelled = true;
     };
-  }, [orderId, order?.id, isOrderPaid, settledPayment?.provider, settledPayment?.providerPaymentId]);
+  }, [orderId, order?.id, orderMarkedPaid, settledPayment?.provider, settledPayment?.providerPaymentId]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
