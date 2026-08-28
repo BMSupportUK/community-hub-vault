@@ -495,7 +495,9 @@ function CryptoPanel({
     );
   }
 
-  if (paid) return null;
+  // Only hide when a payment actually completed — an abandoned/pending attempt
+  // on another provider (e.g. Stripe) must not remove the USDT checkout button.
+  if (paid && (paid.status === "COMPLETED" || paid.status === "finished")) return null;
   if (enabled === false) return null;
   if (!canPay) return null;
 
