@@ -27,11 +27,14 @@ export async function postOrderPaymentReceivedNotice(input: NoticeInput): Promis
 
   const { data: existing } = await supabaseAdmin
     .from("order_messages")
-    .select("id")
-    .eq("order_id", orderId)
-    .ilike("content", `%${marker}%`)
-    .limit(1);
-  if (existing && existing.length > 0) return { posted: false };
+    .select("id,content")
+    .eq("order_id", orderId);
+  const alreadyNotified = (existing ?? []).some((m: { content: string | null }) => {
+    const c = m.content ?? "";
+    return c.includes(marker) || c.includes("Payment received via") || c.includes("Card payment captured via Stripe");
+  });
+  if (alreadyNotified) return { posted: false };
+
 
   const { data: order } = await supabaseAdmin
     .from("orders")
