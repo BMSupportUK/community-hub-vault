@@ -26,6 +26,7 @@ import { useRoleFlashMap, resolveAvatarUrl, roleFlashClass } from "@/lib/role-fl
 import { ActiveOutagesBox } from "@/components/app/ActiveOutagesBox";
 import { PayOrderDialog, OrderProgressStrip } from "@/components/app/OrderPaymentDialog";
 import { refreshSquareInvoiceStatus, cancelOrderAndSquareInvoice } from "@/lib/square-invoices.functions";
+import { getOrderPaymentState } from "@/lib/order-payment-state.functions";
 import { formatRoleLabel } from "@/lib/role-label";
 import { notifyTicketReply } from "@/lib/ticket-notify.functions";
 import { sendNewTicketPush } from "@/lib/push.functions";
@@ -935,6 +936,7 @@ function TicketDetail({
   const refreshSquareInvoice = useServerFn(refreshSquareInvoiceStatus);
   const confirmStripe = useServerFn(confirmStripePayment);
   const cancelOrderAndSquareInvoiceRpc = useServerFn(cancelOrderAndSquareInvoice);
+  const getPaymentState = useServerFn(getOrderPaymentState);
   const loadLinkedOrder = async () => {
     if (!ticket.order_id) { setLinkedOrder(null); setLinkedOrderUsername(null); return; }
     const { data } = await supabase
@@ -942,7 +944,13 @@ function TicketDetail({
       .select("id,user_id,total_cents,status,paid_at,completed_at,customer_type,existing_username")
       .eq("id", ticket.order_id)
       .maybeSingle();
-    const ord = data ? (data as LinkedOrder) : null;
+    let ord = data ? (data as LinkedOrder) : null;
+    if (ord) {
+      const paymentState = await getPaymentState({ data: { orderId: ord.id } }).catch(() => null);
+      if (paymentState?.settled && !ord.paid_at) {
+        ord = { ...ord, paid_at: paymentState.paidAt ?? new Date().toISOString(), status: "paid" };
+      }
+    }
     setLinkedOrder(ord);
     if (ord?.user_id) {
       const { data: prof } = await supabase
@@ -955,7 +963,7 @@ function TicketDetail({
       setLinkedOrderUsername(null);
     }
   };
-  useEffect(() => { loadLinkedOrder(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [ticket.order_id]);
+  useEffect(() => { loadLinkedOrder(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [ticket.order_id, getPaymentState]);
   const orderIsUnpaid = !!linkedOrder && !linkedOrder.paid_at && linkedOrder.status !== "cancelled" && linkedOrder.status !== "refunded" && linkedOrder.status !== "completed";
   const accountSetupMessageExists = messages.some((m) => (m.content ?? "").startsWith("🛠️"));
   const extendSubMessageExists = messages.some((m) => (m.content ?? "").startsWith("🔄"));

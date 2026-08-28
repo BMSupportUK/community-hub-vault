@@ -74,6 +74,8 @@ import { AppDemosView } from "@/components/app/AppDemos";
 import { Film } from "lucide-react";
 import { VpnGuideView } from "@/components/app/VpnGuideView";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
+import { getOrderPaymentState } from "@/lib/order-payment-state.functions";
+import { isSettledPaymentStatus } from "@/lib/payment-status";
 
 type View = "store" | "orders" | "admin" | "refund" | "multi_room" | "triple_room" | "streaming_devices" | "reviews" | "app_demos";
 
@@ -3109,37 +3111,36 @@ function OrderDetailImpl({
     providerPaymentId: string | null;
   } | null>(null);
   const [recordedStripeSessionId, setRecordedStripeSessionId] = useState<string | null>(null);
+  const getPaymentState = useServerFn(getOrderPaymentState);
   useEffect(() => {
     let cancelled = false;
     const loadPay = async () => {
-      const { data } = await supabase
-        .from("order_payments")
-        .select("provider,provider_payment_id,status,card_brand,last_4")
-        .eq("order_id", orderId)
-        .maybeSingle();
+      const data = await getPaymentState({ data: { orderId } }).catch(() => null);
       if (cancelled) return;
       const pending =
         data?.provider === "nowpayments" &&
         ["waiting", "confirming", "partially_paid", "sending", "pending"].includes(
-          (data.status ?? "").toLowerCase(),
+          (data.paymentStatus ?? "").toLowerCase(),
         );
-      setPendingCrypto(pending ? { status: data!.status as string } : null);
-      const paymentIsSettled =
-        !!data && ["finished", "completed", "captured", "paid"].includes(String(data.status ?? "").toLowerCase());
+      setPendingCrypto(pending ? { status: data?.paymentStatus as string } : null);
+      const paymentIsSettled = Boolean(data?.settled);
       setRecordedStripeSessionId(
-        data?.provider === "stripe" && data.provider_payment_id ? data.provider_payment_id : null,
+        data?.provider === "stripe" && data.providerPaymentId ? data.providerPaymentId : null,
       );
       setSettledPayment(
         paymentIsSettled
-          ? { provider: String(data.provider), providerPaymentId: data.provider_payment_id ?? null }
+          ? { provider: String(data?.provider ?? "card"), providerPaymentId: data?.providerPaymentId ?? null }
           : null,
       );
+      if (data?.paidAt) {
+        setOrder((current) => current ? { ...current, paid_at: data.paidAt, status: current.status === "completed" ? current.status : "paid" } : current);
+      }
       if (paymentIsSettled && data) {
         if (data.provider === "nowpayments") {
-          setPaidMethodLabel(data.card_brand || "USDT");
+          setPaidMethodLabel(data.cardBrand || "USDT");
         } else {
           setPaidMethodLabel(
-            data.card_brand && data.last_4 ? `${data.card_brand} •••• ${data.last_4}` : "Card",
+            data.cardBrand && data.last4 ? `${data.cardBrand} •••• ${data.last4}` : "Card",
           );
         }
       } else {
@@ -3162,7 +3163,7 @@ function OrderDetailImpl({
       cancelled = true;
       supabase.removeChannel(ch);
     };
-  }, [orderId]);
+  }, [getPaymentState, orderId]);
 
   // Payments are never auto-confirmed. The customer must press "I've paid",
   // which checks Stripe first and then Square.
@@ -3691,7 +3692,7 @@ function OrderDetailImpl({
                   <span className="ml-1 font-mono text-[11px] opacity-80">· {paidMethodLabel}</span>
                 )}
               </button>
-              {!order.paid_at && order.status !== "cancelled" && !order.completed_at && (
+              {!isOrderPaid && order.status !== "cancelled" && !order.completed_at && (
                 <button
                   onClick={reconcileWithSquare}
                   disabled={busy}
@@ -4278,7 +4279,7 @@ function StripePanel({
   const { format } = useCurrency();
   const createPI = useServerFn(createStripePaymentIntent);
   const isFinalPaid = Boolean(
-    (paid && ["COMPLETED", "completed", "finished"].includes(String(paid.status ?? ""))) ||
+    (paid && isSettledPaymentStatus(paid.status)) ||
       (orderPaidAt && paid?.provider === "stripe"),
   );
 
