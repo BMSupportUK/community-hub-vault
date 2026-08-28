@@ -2453,46 +2453,125 @@ function Checkout({
               placeholder="Email"
               className="w-full px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border focus:border-primary outline-none"
             />
-            <div>
-              <div className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1">
-                Customer
+            {hasCreds ? (
+              <div>
+                <div className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1">
+                  What is this order for? <span className="text-destructive">*</span>
+                </div>
+                <div className="space-y-2">
+                  {myCreds.map((c) => {
+                    const selected = credChoice === c.id;
+                    const label = c.app_login_name?.trim() || `Account ${c.account_number}`;
+                    const type = (c.account_type ?? "single").toLowerCase();
+                    const typeLabel =
+                      type === "multi" ? "Multi-room" : type === "triple" ? "Triple-room" : "Single";
+                    return (
+                      <button
+                        key={c.id}
+                        type="button"
+                        onClick={() => {
+                          setCredChoice(c.id);
+                          setCustomerType("existing");
+                          setExistingUsername(c.app_login_name?.trim() || label);
+                        }}
+                        className={cn(
+                          "w-full text-left px-3 py-2 rounded-lg text-sm border",
+                          selected
+                            ? "bg-primary text-primary-foreground border-primary"
+                            : "bg-surface-2 border-border",
+                        )}
+                      >
+                        <div className="font-medium truncate">Renew — {label}</div>
+                        <div
+                          className={cn(
+                            "text-[11px]",
+                            selected ? "text-primary-foreground/80" : "text-muted-foreground",
+                          )}
+                        >
+                          Account {c.account_number} · {typeLabel}
+                          {c.expiry_at
+                            ? ` · expires ${new Date(c.expiry_at).toLocaleDateString("en-GB")}`
+                            : ""}
+                        </div>
+                      </button>
+                    );
+                  })}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCredChoice("additional");
+                      setCustomerType("existing");
+                      setExistingUsername("");
+                    }}
+                    className={cn(
+                      "w-full text-left px-3 py-2 rounded-lg text-sm border",
+                      credChoice === "additional"
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-surface-2 border-border",
+                    )}
+                  >
+                    <div className="font-medium">Purchase additional account</div>
+                    <div
+                      className={cn(
+                        "text-[11px]",
+                        credChoice === "additional"
+                          ? "text-primary-foreground/80"
+                          : "text-muted-foreground",
+                      )}
+                    >
+                      A brand new account alongside the one(s) you already have
+                    </div>
+                  </button>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setCustomerType("new")}
-                  className={cn(
-                    "flex-1 px-3 py-2 rounded-lg text-sm border",
-                    customerType === "new"
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-surface-2 border-border",
-                  )}
-                >
-                  New customer
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setCustomerType("existing")}
-                  className={cn(
-                    "flex-1 px-3 py-2 rounded-lg text-sm border",
-                    customerType === "existing"
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-surface-2 border-border",
-                  )}
-                >
-                  Existing customer
-                </button>
-              </div>
-            </div>
-            {customerType === "existing" && (
-              <input
-                value={existingUsername}
-                onChange={(e) => setExistingUsername(e.target.value)}
-                placeholder="Username you're extending *"
-                required
-                className="w-full px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border focus:border-primary outline-none"
-              />
+            ) : (
+              <>
+                <div>
+                  <div className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1">
+                    Customer
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setCustomerType("new")}
+                      className={cn(
+                        "flex-1 px-3 py-2 rounded-lg text-sm border",
+                        customerType === "new"
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-surface-2 border-border",
+                      )}
+                    >
+                      New customer
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCustomerType("existing")}
+                      className={cn(
+                        "flex-1 px-3 py-2 rounded-lg text-sm border",
+                        customerType === "existing"
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-surface-2 border-border",
+                      )}
+                    >
+                      Existing customer
+                    </button>
+                  </div>
+                </div>
+                {customerType === "existing" && (
+                  <input
+                    value={existingUsername}
+                    onChange={(e) => setExistingUsername(e.target.value)}
+                    placeholder="Username you're extending *"
+                    required
+                    className="w-full px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border focus:border-primary outline-none"
+                  />
+                )}
+              </>
             )}
+            {!credsLoaded && (
+              <div className="text-[11px] text-muted-foreground">Checking your accounts…</div>
+            )}
+
             <div>
               <div className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1">
                 Adult content access <span className="text-destructive">*</span>
