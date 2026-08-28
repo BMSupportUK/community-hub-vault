@@ -1360,8 +1360,10 @@ function Storefront() {
         status: "pending",
         shipping_name: info.name,
         email: info.email,
-        customer_type: info.customer_type,
-        existing_username: info.existing_username?.trim() || null,
+        customer_type: info.purchase_kind === "additional" ? "new" : info.customer_type,
+        existing_username:
+          info.purchase_kind === "additional" ? null : info.existing_username?.trim() || null,
+
         discount_code: submittedCode || null,
         discount_cents: verifiedDiscountCents,
         wants_adult_content: info.wants_adult_content,
