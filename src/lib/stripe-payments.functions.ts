@@ -193,9 +193,9 @@ export const createStripePaymentIntent = createServerFn({ method: "POST" })
 export const confirmStripePayment = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) =>
-    z.object({ orderId: z.string().uuid(), paymentIntentId: z.string().min(4).max(256), environment: z.enum(["sandbox", "live"]) }).parse(input),
+    z.object({ orderId: z.string().uuid(), sessionId: z.string().min(4).max(256), environment: z.enum(["sandbox", "live"]) }).parse(input),
   )
-  .handler(async ({ data, context }): Promise<{ status: string; cardBrand?: string; last4?: string; receiptUrl?: string } | { error: string }> => {
+  .handler(async ({ data, context }): Promise<{ status: string; amountCents: number; cardBrand?: string; last4?: string; receiptUrl?: string } | { error: string }> => {
     try {
       const { supabase, userId } = context;
       await assertAdminOrOrderOwner(supabase, userId, data.orderId);
@@ -206,14 +206,14 @@ export const confirmStripePayment = createServerFn({ method: "POST" })
         .eq("id", data.orderId)
         .single();
       if (orderErr || !order) throw new Error(orderErr?.message || "Order not found");
-      if (order.paid_at) return { status: "already_paid" };
+      if (order.paid_at) return { status: "already_paid", amountCents: order.total_cents ?? 0 };
       const totalCents = order.total_cents ?? 0;
       if (totalCents <= 0) throw new Error("Order total must be greater than zero");
 
       const existingPayment = await getOrderPayment(String(order.id));
       if (existingPayment) {
         if (FINAL_PAYMENT_STATUSES.has(String(existingPayment.status ?? ""))) {
-          if (existingPayment.provider_payment_id !== data.paymentIntentId) {
+          if (existingPayment.provider_payment_id !== data.sessionId) {
             throw new Error("Payment is already recorded for this order. Refresh the order status.");
           }
         }
@@ -223,7 +223,7 @@ export const confirmStripePayment = createServerFn({ method: "POST" })
       }
 
       const stripe = createStripeClient(data.environment);
-      const session = await stripe.checkout.sessions.retrieve(data.paymentIntentId, {
+      const session = await stripe.checkout.sessions.retrieve(data.sessionId, {
         expand: ["payment_intent"],
       });
 
@@ -306,7 +306,7 @@ export const confirmStripePayment = createServerFn({ method: "POST" })
         console.error("Failed to post Stripe payment message to ticket:", e);
       }
 
-      return { status: "COMPLETED", cardBrand, last4, receiptUrl };
+      return { status: "COMPLETED", amountCents: totalCents, cardBrand, last4, receiptUrl };
     } catch (error) {
       return { error: getStripeErrorMessage(error) };
     }
