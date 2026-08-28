@@ -275,15 +275,34 @@ export const confirmStripePayment = createServerFn({ method: "POST" })
         if (fallbackPaidErr) throw new Error(fallbackPaidErr.message);
       }
 
+      // Don't duplicate the automated notice if a previous check (Stripe or
+      // Square) already posted one for this order.
+      let alreadyNotified = false;
       try {
-        await supabaseAdmin.from("order_messages").insert({
-          order_id: String(order.id),
-          sender_id: userId,
-          content: `✅ Card payment captured via Stripe${cardBrand && last4 ? ` (${cardBrand} •••• ${last4})` : ""}.`,
+        const { data: priorMsgs } = await supabaseAdmin
+          .from("order_messages")
+          .select("content")
+          .eq("order_id", String(order.id));
+        alreadyNotified = (priorMsgs ?? []).some((m: { content: string | null }) => {
+          const c = m.content ?? "";
+          return c.includes("Payment received via") || c.includes("Card payment captured via Stripe");
         });
+      } catch {
+        alreadyNotified = false;
+      }
+
+      try {
+        if (!alreadyNotified) {
+          await supabaseAdmin.from("order_messages").insert({
+            order_id: String(order.id),
+            sender_id: userId,
+            content: `✅ Card payment captured via Stripe${cardBrand && last4 ? ` (${cardBrand} •••• ${last4})` : ""}.`,
+          });
+        }
       } catch (e) {
         console.error("Failed to post Stripe payment message to order:", e);
       }
+
 
       let ticketId: string | undefined;
       try {
@@ -329,14 +348,17 @@ export const confirmStripePayment = createServerFn({ method: "POST" })
         const { data: linkedTickets } = await supabaseAdmin.from("tickets").select("id,user_id").eq("order_id", String(order.id));
         if (linkedTickets && linkedTickets.length > 0) {
           ticketId = String(linkedTickets[0]!.id);
-          await supabaseAdmin.from("ticket_messages").insert(
-            linkedTickets.map((t: { id: string }) => ({
-              ticket_id: t.id,
-              sender_id: userId,
-              content,
-            })),
-          );
-        } else {
+          if (!alreadyNotified) {
+            await supabaseAdmin.from("ticket_messages").insert(
+              linkedTickets.map((t: { id: string }) => ({
+                ticket_id: t.id,
+                sender_id: userId,
+                content,
+              })),
+            );
+          }
+        } else if (!alreadyNotified) {
+
           // No ticket linked yet (e.g. order created outside the shop flow) —
           // open one in the admin/management-only "Orders" category so the
           // purchase reference is always tracked in support.
