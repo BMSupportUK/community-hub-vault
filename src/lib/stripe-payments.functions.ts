@@ -143,27 +143,78 @@ export const createStripePaymentIntent = createServerFn({ method: "POST" })
         userId,
       });
 
+      // Load the purchased items so the checkout shows what was bought,
+      // alongside the order number and the customer's name.
+      const shortRef = String(order.id).slice(0, 8);
+      const { data: orderItems } = await supabaseAdmin
+        .from("order_items")
+        .select("product_name,quantity,unit_price_cents")
+        .eq("order_id", String(order.id));
+
+      const itemsTotal = (orderItems ?? []).reduce(
+        (sum, it: any) => sum + (it.unit_price_cents ?? 0) * (it.quantity ?? 0),
+        0,
+      );
+
+      const purchasedBy = customerName ? `Purchased by ${customerName}` : undefined;
+
+      const lineItems =
+        orderItems && orderItems.length > 0 && itemsTotal === order.total_cents
+          ? orderItems.map((it: any) => ({
+              price_data: {
+                currency: "gbp",
+                product_data: {
+                  name: `Order #${shortRef} — ${it.product_name}`,
+                  ...(purchasedBy ? { description: purchasedBy } : {}),
+                },
+                unit_amount: it.unit_price_cents,
+              },
+              quantity: it.quantity ?? 1,
+            }))
+          : [
+              {
+                price_data: {
+                  currency: "gbp",
+                  product_data: {
+                    name:
+                      orderItems && orderItems.length > 0
+                        ? `Order #${shortRef} — ${orderItems.map((i: any) => i.product_name).join(", ")}`
+                        : `Order #${shortRef}`,
+                    ...(purchasedBy ? { description: purchasedBy } : {}),
+                  },
+                  unit_amount: order.total_cents,
+                },
+                quantity: 1,
+              },
+            ];
+
+      const itemsSummary =
+        orderItems && orderItems.length > 0
+          ? orderItems.map((i: any) => `${i.quantity ?? 1}x ${i.product_name}`).join(", ")
+          : undefined;
+
       const session = await stripe.checkout.sessions.create(
         {
           mode: "payment",
           ui_mode: "embedded_page",
-          line_items: [
-            {
-              price_data: {
-                currency: "gbp",
-                product_data: { name: `Order #${String(order.id).slice(0, 8)}`, ...(customerName ? { description: `Placed by ${customerName}` } : {}) },
-                unit_amount: order.total_cents,
-              },
-              quantity: 1,
-            },
-          ],
+          line_items: lineItems,
           return_url: data.returnUrl,
           ...(customerId ? { customer: customerId } : {}),
           payment_intent_data: {
-            description: `Order #${String(order.id).slice(0, 8)}`,
-            metadata: { order_id: String(order.id), user_id: userId },
+            description: `Order #${shortRef}${itemsSummary ? ` — ${itemsSummary}` : ""}${customerName ? ` (${customerName})` : ""}`.slice(0, 1000),
+            metadata: {
+              order_id: String(order.id),
+              user_id: userId,
+              ...(customerName ? { customer_name: customerName } : {}),
+              ...(itemsSummary ? { items: itemsSummary.slice(0, 450) } : {}),
+            },
           },
-          metadata: { order_id: String(order.id), user_id: userId },
+          metadata: {
+            order_id: String(order.id),
+            user_id: userId,
+            ...(customerName ? { customer_name: customerName } : {}),
+            ...(itemsSummary ? { items: itemsSummary.slice(0, 450) } : {}),
+          },
         } as any,
       );
 
