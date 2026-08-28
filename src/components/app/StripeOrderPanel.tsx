@@ -186,6 +186,15 @@ export function StripeOrderPanel({
           <Loader2 className="size-3 animate-spin" /> Loading checkout…
         </div>
       )}
+      <button
+        type="button"
+        onClick={checkPaid}
+        disabled={checking}
+        className="w-full text-xs text-primary hover:underline disabled:opacity-60"
+      >
+        {checking ? "Checking…" : "I've paid — check card payment"}
+      </button>
+      {checkMsg && <div className="text-[11px] text-muted-foreground text-center">{checkMsg}</div>}
     </div>
   );
 }
