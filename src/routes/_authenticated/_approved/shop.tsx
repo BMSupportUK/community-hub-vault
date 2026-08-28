@@ -4402,6 +4402,10 @@ function StripePanel({
     );
   }
 
+  // Order already settled (possibly via another provider) — don't offer a
+  // second card payment.
+  if (orderPaidAt) return null;
+
   if (!canPay) return null;
 
   return (
