@@ -235,7 +235,14 @@ export function WorkingStatusBox() {
         </div>
         <div className="px-3 py-3 space-y-2 text-xs">
           <div className="flex items-center justify-between gap-2 pb-1 border-b border-border/60">
-            <span className="font-display font-semibold text-sm text-foreground truncate">{displayName}</span>
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="font-display font-semibold text-sm text-foreground truncate">{displayName}</span>
+              {staffRoleLabel && (
+                <span className="inline-flex items-center shrink-0 rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary ring-1 ring-primary/40">
+                  {staffRoleLabel}
+                </span>
+              )}
+            </div>
             <ActionIcons />
           </div>
           {shift ? (
