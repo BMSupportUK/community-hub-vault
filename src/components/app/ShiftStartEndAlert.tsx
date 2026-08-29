@@ -1,19 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
 import { Play, StopCircle, Clock } from "lucide-react";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { addDaysToDateStr, useTimezone } from "@/hooks/use-timezone";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import shiftStartAudio from "@/assets/shift-start.mp3";
 import shiftEndAudio from "@/assets/shift-end.mp3";
 import { playSound } from "@/lib/sound";
@@ -37,7 +27,6 @@ interface OpenShift {
 }
 
 type Stage = "start" | "end";
-type Phase = "warn" | "overdue";
 
 function fmtCountdown(ms: number) {
   const s = Math.max(0, Math.round(ms / 1000));
@@ -49,12 +38,10 @@ function fmtCountdown(ms: number) {
 export function ShiftStartEndAlert() {
   const { user, isStaff } = useAuth();
   const { dateInTimeZone, shiftWindowToUtcMs } = useTimezone();
-  const navigate = useNavigate();
   const [slots, setSlots] = useState<Slot[]>([]);
   const [openShift, setOpenShift] = useState<OpenShift | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [active, setActive] = useState<{ slot: Slot; stage: Stage } | null>(null);
-  const dismissedRef = useRef<Set<string>>(new Set()); // `${slotId}:${stage}:${phase}`
   const autoClockedRef = useRef<Set<string>>(new Set());
   const autoEndedRef = useRef<Set<string>>(new Set());
   const [autoEndAt, setAutoEndAt] = useState<number | null>(null);
@@ -67,10 +54,7 @@ export function ShiftStartEndAlert() {
     return () => clearInterval(t);
   }, [isStaff]);
 
-  // Background tabs get setInterval throttled (or paused entirely), which
-  // means `now` stops advancing and the warning dialog never crosses its
-  // threshold until the user interacts. Re-sync the clock the moment the
-  // tab becomes visible / focused so the alert fires immediately.
+  // Re-sync the clock the moment the tab becomes visible / focused so the alert fires immediately.
   useEffect(() => {
     if (!isStaff) return;
     const resync = () => setNow(Date.now());
@@ -136,7 +120,6 @@ export function ShiftStartEndAlert() {
       if (now >= startsAt && now < endsAt) {
         autoClockedRef.current.add(slot.id);
         (async () => {
-          // Double-check no open shift exists for this user before inserting
           const { data: existing } = await supabase
             .from("shifts")
             .select("id")
@@ -156,33 +139,25 @@ export function ShiftStartEndAlert() {
     }
   }, [user, isStaff, slots, openShift, now, shiftWindowToUtcMs]);
 
-  // Determine which alert (if any) should currently be visible
+  // Determine which warning (if any) should currently be active
   const candidate = useMemo(() => {
     const openShiftClockIn = openShift ? new Date(openShift.clock_in).getTime() : NaN;
     for (const slot of slots) {
       const { startsAt, endsAt } = shiftWindowToUtcMs(slot.shift_date, slot.start_time, slot.end_time);
       if (isNaN(startsAt) || isNaN(endsAt)) continue;
 
-      // End: warn before end OR keep showing overdue while still clocked in
       const toEnd = endsAt - now;
       const isOpenForThisSlot = openShift && !isNaN(openShiftClockIn) && openShiftClockIn <= endsAt && now >= startsAt - WARN_BEFORE;
-      if (isOpenForThisSlot) {
-        if (toEnd <= 0) {
-          const key = `${slot.id}:end:overdue`;
-          if (!dismissedRef.current.has(key)) return { slot, stage: "end" as Stage };
-        }
+      if (isOpenForThisSlot && toEnd <= 0) {
+        return { slot, stage: "end" as Stage };
       }
 
-      // Start: warn before start OR keep showing overdue while not yet clocked in
       const toStart = startsAt - now;
       if (!openShift) {
-        // Overdue only for a short grace window after start (don't nag all shift)
         if (toStart <= 0 && now < Math.min(endsAt, startsAt + START_OVERDUE_GRACE)) {
-          const key = `${slot.id}:start:overdue`;
-          if (!dismissedRef.current.has(key)) return { slot, stage: "start" as Stage };
+          return { slot, stage: "start" as Stage };
         } else if (toStart > 0 && toStart <= WARN_BEFORE) {
-          const key = `${slot.id}:start:warn`;
-          if (!dismissedRef.current.has(key)) return { slot, stage: "start" as Stage };
+          return { slot, stage: "start" as Stage };
         }
       }
     }
@@ -197,7 +172,7 @@ export function ShiftStartEndAlert() {
     }
   }, [candidate, active]);
 
-  // Play the matching voice clip when a "start" or "end" dialog first opens for a given slot.
+  // Play the matching voice clip when a warning first appears for a given slot.
   const playedRef = useRef<Set<string>>(new Set());
   useEffect(() => {
     if (!active) return;
@@ -208,7 +183,72 @@ export function ShiftStartEndAlert() {
     playSound(src, { label: `shift-${active.stage}`, gain: 2.2 });
   }, [active]);
 
-  // Auto-end shift 30s after the "shift has ended" overdue dialog appears
+  // Render or update the non-blocking warning toast.
+  useEffect(() => {
+    if (!active) {
+      toast.dismiss("shift-start-warning");
+      toast.dismiss("shift-end-warning");
+      return;
+    }
+    const { startsAt, endsAt } = shiftWindowToUtcMs(active.slot.shift_date, active.slot.start_time, active.slot.end_time);
+    const isStart = active.stage === "start";
+    const target = isStart ? startsAt : endsAt;
+    const remaining = target - now;
+    const overdue = remaining <= 0;
+    const toastId = isStart ? "shift-start-warning" : "shift-end-warning";
+    const title = isStart
+      ? overdue ? "Shift has started" : "Shift starting soon"
+      : overdue ? "Shift has ended" : "Shift ending soon";
+
+    const Icon = isStart ? Play : StopCircle;
+    const accent = isStart ? "text-emerald-500" : "text-amber-500";
+
+    toast.info(
+      <div className="flex items-start gap-3">
+        <div className={`grid place-items-center size-10 rounded-full shrink-0 ${isStart ? "bg-emerald-500/15" : "bg-amber-500/15"} ${overdue ? "animate-pulse" : ""}`}>
+          <Icon className={`size-5 ${accent}`} />
+        </div>
+        <div className="min-w-0">
+          <div className="font-semibold text-sm">{title}</div>
+          <div className="text-xs text-muted-foreground mt-0.5">
+            {isStart ? (
+              overdue ? (
+                <>Your shift has started. Please clock in.</>
+              ) : (
+                <>
+                  Your shift starts in{" "}
+                  <span className={`font-semibold inline-flex items-center gap-1 ${accent}`}>
+                    <Clock className="size-3" /> {fmtCountdown(remaining)}
+                  </span>
+                  .
+                </>
+              )
+            ) : (
+              overdue ? (
+                <>Your shift has ended. Please clock out.</>
+              ) : (
+                <>
+                  Your shift ends in{" "}
+                  <span className={`font-semibold inline-flex items-center gap-1 ${accent}`}>
+                    <Clock className="size-3" /> {fmtCountdown(remaining)}
+                  </span>
+                  .
+                </>
+              )
+            )}
+          </div>
+        </div>
+      </div>,
+      {
+        id: toastId,
+        duration: Infinity,
+        dismissible: true,
+        className: isStart ? "border-l-4 border-l-emerald-500" : "border-l-4 border-l-amber-500",
+      }
+    );
+  }, [active, now, shiftWindowToUtcMs]);
+
+  // Auto-end shift 30s after the "shift has ended" warning appears
   useEffect(() => {
     if (!active || active.stage !== "end") { setAutoEndAt(null); return; }
     const { endsAt: e } = shiftWindowToUtcMs(active.slot.shift_date, active.slot.start_time, active.slot.end_time);
@@ -230,7 +270,6 @@ export function ShiftStartEndAlert() {
         .from("shifts")
         .update({ clock_out: new Date(e).toISOString() })
         .eq("id", openShift.id);
-      dismissedRef.current.add(`${active.slot.id}:end:overdue`);
       setActive(null);
       setAutoEndAt(null);
     }, 30_000);
@@ -238,78 +277,5 @@ export function ShiftStartEndAlert() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [active, openShift?.id]);
 
-  if (!active) return null;
-
-  const { startsAt, endsAt } = shiftWindowToUtcMs(active.slot.shift_date, active.slot.start_time, active.slot.end_time);
-  const isStart = active.stage === "start";
-  const target = isStart ? startsAt : endsAt;
-  const remaining = target - now;
-  const overdue = remaining <= 0;
-  const autoRemaining = autoEndAt != null ? Math.max(0, autoEndAt - now) : null;
-
-  const dismiss = () => {
-    const phase: Phase = remaining <= 0 ? "overdue" : "warn";
-    dismissedRef.current.add(`${active.slot.id}:${active.stage}:${phase}`);
-    setActive(null);
-  };
-
-  return (
-    <AlertDialog open onOpenChange={(o) => { if (!o) dismiss(); }}>
-      <AlertDialogContent className={isStart ? "border-emerald-500/60" : "border-amber-500/60"}>
-        <AlertDialogHeader>
-          <div className={`mx-auto mb-2 grid place-items-center size-14 rounded-full ${isStart ? "bg-emerald-500/15 text-emerald-500" : "bg-amber-500/15 text-amber-500"} ${overdue ? "animate-pulse" : ""}`}>
-            {isStart ? <Play className="size-7" /> : <StopCircle className="size-7" />}
-          </div>
-          <AlertDialogTitle className="text-center text-xl">
-            {isStart
-              ? overdue ? "Shift has started" : "Shift starting soon"
-              : overdue ? "Shift has ended" : "Shift ending soon"}
-          </AlertDialogTitle>
-          <AlertDialogDescription className="text-center">
-            {isStart ? (
-              overdue ? (
-                <>Your shift has started. Please clock in.</>
-              ) : (
-                <>
-                  Your shift starts in{" "}
-                  <span className={`font-semibold inline-flex items-center gap-1 ${isStart ? "text-emerald-500" : "text-amber-500"}`}>
-                    <Clock className="size-3.5" /> {fmtCountdown(remaining)}
-                  </span>
-                  . Head to the clock to start.
-                </>
-              )
-            ) : (
-              overdue ? (
-                <>
-                  Your shift has ended. Please clock out.
-                  {autoRemaining != null && (
-                    <div className="mt-2 text-xs text-amber-500">
-                      Auto clock-out in {Math.ceil(autoRemaining / 1000)}s…
-                    </div>
-                  )}
-                </>
-              ) : (
-                <>
-                  Your shift ends in{" "}
-                  <span className="font-semibold text-amber-500 inline-flex items-center gap-1">
-                    <Clock className="size-3.5" /> {fmtCountdown(remaining)}
-                  </span>
-                  . Don't forget to clock out.
-                </>
-              )
-            )}
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter className="sm:justify-center gap-2">
-          <AlertDialogCancel>Dismiss</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={() => { dismiss(); navigate({ to: "/clock" }); }}
-            className={isStart ? "bg-emerald-600 hover:bg-emerald-700" : "bg-amber-600 hover:bg-amber-700"}
-          >
-            Open clock
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-  );
+  return null;
 }
