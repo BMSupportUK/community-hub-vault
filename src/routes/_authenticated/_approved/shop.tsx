@@ -6076,3 +6076,133 @@ function CryptoPanel({
     </div>
   );
 }
+
+const HOW_TO_ORDER_VIDEO_KEY = "how_to_order_video";
+
+function HowToOrderVideo({ isAdmin }: { isAdmin: boolean }) {
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const loadUrl = async (path: string | null) => {
+    if (!path) {
+      setVideoUrl(null);
+      return;
+    }
+    const { data, error } = await supabase.storage
+      .from("shop-media")
+      .createSignedUrl(path, 60 * 60 * 6);
+    if (!error && data) setVideoUrl(data.signedUrl);
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("app_settings")
+        .select("value")
+        .eq("key", HOW_TO_ORDER_VIDEO_KEY)
+        .maybeSingle();
+      if (cancelled) return;
+      const path =
+        data && typeof data.value === "object" && data.value !== null
+          ? ((data.value as { path?: string }).path ?? null)
+          : null;
+      await loadUrl(path);
+      if (!cancelled) setLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const onPickFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 200 * 1024 * 1024) {
+      toast.error("Video must be under 200MB");
+      return;
+    }
+    setUploading(true);
+    try {
+      const ext = (file.name.split(".").pop() || "mp4").toLowerCase();
+      const path = `how-to-order-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("shop-media")
+        .upload(path, file, { contentType: file.type, upsert: false });
+      if (upErr) throw upErr;
+      const { error: setErr } = await supabase
+        .from("app_settings")
+        .upsert(
+          { key: HOW_TO_ORDER_VIDEO_KEY, value: { path } as never },
+          { onConflict: "key" },
+        );
+      if (setErr) throw setErr;
+      await loadUrl(path);
+      toast.success("How-to video updated");
+    } catch (err: any) {
+      toast.error(err?.message ?? "Upload failed");
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = "";
+    }
+  };
+
+  return (
+    <section className="px-2 md:px-6 pb-10 -mt-10 md:-mt-14 relative z-10">
+      <div className="max-w-3xl mx-auto">
+        <div className="rounded-2xl border border-border bg-surface-1 p-4 md:p-6 shadow-lg">
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <h2 className="font-display font-semibold text-lg flex items-center gap-2">
+              <Video className="size-5 text-sky-400" /> Walkthrough video
+            </h2>
+            {isAdmin && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  disabled={uploading}
+                  className="inline-flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+                >
+                  {uploading ? (
+                    <Loader2 className="size-3.5 animate-spin" />
+                  ) : (
+                    <Upload className="size-3.5" />
+                  )}
+                  {uploading ? "Uploading…" : videoUrl ? "Replace video" : "Upload video"}
+                </button>
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="video/mp4,video/webm,video/quicktime"
+                  className="hidden"
+                  onChange={onPickFile}
+                />
+              </>
+            )}
+          </div>
+          {loading ? (
+            <div className="grid place-items-center py-16 text-muted-foreground">
+              <Loader2 className="size-5 animate-spin" />
+            </div>
+          ) : videoUrl ? (
+            <video
+              key={videoUrl}
+              src={videoUrl}
+              controls
+              playsInline
+              className="w-full rounded-xl border border-border/60 bg-black"
+            />
+          ) : (
+            <div className="grid place-items-center py-16 text-center text-sm text-muted-foreground rounded-xl border border-dashed border-border">
+              {isAdmin
+                ? "No video yet — upload one so customers can see how to order."
+                : "A walkthrough video is coming soon."}
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
