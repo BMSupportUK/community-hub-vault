@@ -180,6 +180,7 @@ function ShiftsPage() {
   const [loading, setLoading] = useState(true);
 
   // Manage rota state
+  const [rotaRole, setRotaRole] = useState<"all" | ShiftRole>("all");
   const [newSlot, setNewSlot] = useState({ date: fmtDate(new Date()), start: "09:00", end: "17:00", type: "shift" as SlotType, notes: "", presetId: "midweek", role: "staff" as ShiftRole });
 
   // Block-shift presets (admin)
@@ -666,7 +667,36 @@ function ShiftsPage() {
               })}
             </div>
 
+            <div className="mb-4 flex flex-wrap gap-1 rounded-xl bg-surface-2 border border-border p-1">
+              {([
+                { v: "all", label: "All roles" },
+                { v: "admin", label: roleLabel("admin") },
+                { v: "management", label: roleLabel("management") },
+                { v: "staff", label: roleLabel("staff") },
+                { v: "moderator", label: roleLabel("moderator") },
+              ] as const).map(({ v, label }) => (
+                <button
+                  key={v}
+                  onClick={() => setRotaRole(v)}
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors",
+                    rotaRole === v
+                      ? "bg-gradient-primary text-white shadow-soft"
+                      : "text-muted-foreground hover:bg-surface hover:text-foreground",
+                  )}
+                >
+                  {label}
+                  {v !== "all" && (
+                    <span className="ml-1.5 opacity-80 font-normal">
+                      {roleTargets[v as ShiftRole].filled}/{roleTargets[v as ShiftRole].target}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+
             <div className="flex flex-wrap items-center gap-3 mb-4">
+
 
               <Button variant="outline" className="bg-surface/60 border-border text-foreground hover:bg-surface-2" onClick={() => { const d = new Date(weekStart); d.setDate(d.getDate() - 7); setWeekStart(d); }}>← Prev week</Button>
               <div className="font-display text-lg text-foreground">Week of {dayLabel(weekStart)}</div>
@@ -700,13 +730,20 @@ function ShiftsPage() {
 
                     <div className="space-y-3 flex-1">
                       {daySlots.length === 0 && <div className="text-xs text-muted-foreground italic">No slots</div>}
-                      {(["admin", "management", "staff", "moderator", "other"] as const).map((grp) => {
+                      {(rotaRole === "all"
+                        ? (["admin", "management", "staff", "moderator", "other"] as const)
+                        : ([rotaRole] as const)
+                      ).map((grp) => {
                         const groupSlots = daySlots.filter((s) =>
                           grp === "other"
                             ? !s.required_role || !["admin", "management", "staff", "moderator"].includes(s.required_role)
                             : s.required_role === grp
                         );
-                        if (groupSlots.length === 0) return null;
+                        if (groupSlots.length === 0) {
+                          return rotaRole === "all" ? null : (
+                            <div key={grp} className="text-xs text-muted-foreground italic">No {roleLabel(grp as ShiftRole)} slots</div>
+                          );
+                        }
                         return (
                           <div key={grp} className="space-y-2">
                             <div className="flex items-center gap-2">
