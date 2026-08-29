@@ -16,7 +16,7 @@ type Shift = { id: string; clock_in: string };
 type Break = { id: string; kind: BreakKind; started_at: string };
 
 export function WorkingStatusBox() {
-  const { user } = useAuth();
+  const { user, roles } = useAuth();
   const dnd = useDndStatus(user?.id);
   const notifyShift = useServerFn(sendShiftEventPush);
   const notifyBreak = useServerFn(sendBreakEventPush);
