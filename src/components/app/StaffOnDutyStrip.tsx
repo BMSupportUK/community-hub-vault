@@ -200,6 +200,50 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
             );
           })}
         </div>
+        {offDuty.length > 0 && (
+          <div className="relative mt-3 pt-3 border-t border-white/15">
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-white/70 mb-2">
+              Off duty · {offDuty.length}
+            </div>
+            <div className={cn(isSidebar ? "flex flex-col gap-2" : "flex gap-2 overflow-x-auto pb-1")}>
+              {offDuty.map((p) => {
+                const name = p.display_name || p.username || "Staff";
+                return (
+                  <div
+                    key={p.id}
+                    className={cn(
+                      "rounded-lg p-2.5 border border-white/15 bg-white/5 backdrop-blur",
+                      isSidebar ? "w-full" : "shrink-0 min-w-[180px]",
+                    )}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="relative">
+                        <img
+                          src={resolveAvatarUrl(p.id, p.avatar_url, roleFlashMap)}
+                          alt={name}
+                          className="size-8 rounded-full object-cover ring-2 ring-white/20 opacity-70 grayscale"
+                        />
+                        <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-2 ring-white bg-gray-400" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <div className={cn("text-sm font-semibold text-white/80 truncate", roleFlashClass(roleFlashMap.get(p.id)))}>{name}</div>
+                          {p.role && (
+                            <span className="text-[9px] font-medium uppercase tracking-wider text-white/60">
+                              {formatRoleLabel(p.role)}
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-[10px] text-white/60">Off duty</div>
+                        <DndCountdown userId={p.id} compact className="mt-1" />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
