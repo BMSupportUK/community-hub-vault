@@ -705,6 +705,11 @@ function ShiftsPage() {
                 const ok = dailyTarget === 0 || filled >= dailyTarget;
                 const past = isDayPastOrStarted(d);
 
+                const staffSlots = (allSlotsByDay[dateStr] ?? []).filter((s) => (s.required_role || "staff") === "staff");
+                const staffTarget = staffSlots.length;
+                const staffFilled = staffSlots.filter((s) => s.assigned_to).length;
+                const staffOk = staffTarget === 0 || staffFilled >= staffTarget;
+
                 const groups: Partial<Record<ShiftRole, Slot[]>> = {};
                 for (const s of daySlots) {
                   const r = (s.required_role || "staff") as ShiftRole;
@@ -723,8 +728,8 @@ function ShiftsPage() {
                     )}
                     <div className="flex items-center justify-between mb-2">
                       <div className="text-sm font-semibold text-foreground">{dayLabel(d)}</div>
-                      <span className={cn("text-[11px] px-2 py-0.5 rounded-full font-semibold", past ? "bg-rose-500/20 text-rose-200 border border-rose-500/40" : ok ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40" : "bg-rose-500/20 text-rose-300 border border-rose-500/40")}>
-                        {past ? "Closed" : `${filled}/${dailyTarget}${filled < dailyTarget ? ` · ${dailyTarget - filled} more` : ""}`}
+                      <span className={cn("text-[11px] px-2 py-0.5 rounded-full font-semibold border", past ? "bg-rose-500/20 text-rose-200 border-rose-500/40" : staffOk ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40" : "bg-sky-500/20 text-sky-300 border-sky-500/40")}>
+                        {past ? "Closed" : `Staff ${staffFilled}/${staffTarget}${staffFilled < staffTarget ? ` · ${staffTarget - staffFilled} more` : ""}`}
                       </span>
                     </div>
 
