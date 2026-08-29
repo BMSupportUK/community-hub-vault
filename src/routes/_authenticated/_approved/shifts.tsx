@@ -239,7 +239,27 @@ function ShiftsPage() {
     })();
   }, []);
 
+  /** A slot is only relevant to you if it's tagged with a role you hold (admins see everything). */
+  const canSeeSlot = (s: Slot) =>
+    isAdmin ||
+    s.assigned_to === user?.id ||
+    !s.required_role ||
+    roles.includes(s.required_role as AppRole);
+
+  const visibleSlots = useMemo(
+    () => slots.filter(canSeeSlot),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [slots, roles, isAdmin, user?.id],
+  );
+
   const slotsByDay = useMemo(() => {
+    const m: Record<string, Slot[]> = {};
+    for (const s of visibleSlots) (m[s.shift_date] ||= []).push(s);
+    return m;
+  }, [visibleSlots]);
+
+  /** All slots for a day, regardless of role — used for day counters. */
+  const allSlotsByDay = useMemo(() => {
     const m: Record<string, Slot[]> = {};
     for (const s of slots) (m[s.shift_date] ||= []).push(s);
     return m;
