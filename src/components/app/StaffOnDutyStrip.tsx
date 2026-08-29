@@ -57,7 +57,6 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
         .from("profiles").select("id,username,display_name,avatar_url").in("id", ids);
       const map = Object.fromEntries(((profs as StaffProfile[]) ?? []).map((p) => [p.id, p]));
       setProfiles(map);
-      const OFF_ORDER = ["admin", "management", "staff", "moderator"] as const;
       const isDane = (n: string) => /\bdane\b/i.test(n);
       const off = allIds
         .filter((id) => !workingIds.has(id))
