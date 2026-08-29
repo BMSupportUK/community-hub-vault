@@ -180,7 +180,7 @@ function ShiftsPage() {
   const [loading, setLoading] = useState(true);
 
   // Manage rota state
-  const [rotaRole, setRotaRole] = useState<"all" | ShiftRole>("all");
+  const [rotaRole, setRotaRole] = useState<ShiftRole>("admin");
   const [newSlot, setNewSlot] = useState({ date: fmtDate(new Date()), start: "09:00", end: "17:00", type: "shift" as SlotType, notes: "", presetId: "midweek", role: "staff" as ShiftRole });
 
   // Block-shift presets (admin)
@@ -669,7 +669,6 @@ function ShiftsPage() {
 
             <div className="mb-4 flex flex-wrap gap-1 rounded-xl bg-surface-2 border border-border p-1">
               {([
-                { v: "all", label: "All roles" },
                 { v: "admin", label: roleLabel("admin") },
                 { v: "management", label: roleLabel("management") },
                 { v: "staff", label: roleLabel("staff") },
@@ -686,11 +685,9 @@ function ShiftsPage() {
                   )}
                 >
                   {label}
-                  {v !== "all" && (
-                    <span className="ml-1.5 opacity-80 font-normal">
-                      {roleTargets[v as ShiftRole].filled}/{roleTargets[v as ShiftRole].target}
-                    </span>
-                  )}
+                  <span className="ml-1.5 opacity-80 font-normal">
+                    {roleTargets[v].filled}/{roleTargets[v].target}
+                  </span>
                 </button>
               ))}
             </div>
@@ -730,25 +727,16 @@ function ShiftsPage() {
 
                     <div className="space-y-3 flex-1">
                       {daySlots.length === 0 && <div className="text-xs text-muted-foreground italic">No slots</div>}
-                      {(rotaRole === "all"
-                        ? (["admin", "management", "staff", "moderator", "other"] as const)
-                        : ([rotaRole] as const)
-                      ).map((grp) => {
-                        const groupSlots = daySlots.filter((s) =>
-                          grp === "other"
-                            ? !s.required_role || !["admin", "management", "staff", "moderator"].includes(s.required_role)
-                            : s.required_role === grp
-                        );
+                      {([rotaRole] as const).map((grp) => {
+                        const groupSlots = daySlots.filter((s) => s.required_role === grp);
                         if (groupSlots.length === 0) {
-                          return rotaRole === "all" ? null : (
-                            <div key={grp} className="text-xs text-muted-foreground italic">No {roleLabel(grp as ShiftRole)} slots</div>
-                          );
+                          return <div key={grp} className="text-xs text-muted-foreground italic">No {roleLabel(grp)} slots</div>;
                         }
                         return (
                           <div key={grp} className="space-y-2">
                             <div className="flex items-center gap-2">
-                              <span className={cn("text-[10px] px-2 py-0.5 rounded-full border font-semibold uppercase tracking-wide", grp === "other" ? "bg-surface-2 text-muted-foreground border-border" : roleBadgeClass(grp))}>
-                                {grp === "other" ? "Unassigned role" : roleLabel(grp)}
+                              <span className={cn("text-[10px] px-2 py-0.5 rounded-full border font-semibold uppercase tracking-wide", roleBadgeClass(grp))}>
+                                {roleLabel(grp)}
                               </span>
                               <span className="text-[10px] text-muted-foreground">{groupSlots.filter((s) => s.assigned_to).length}/{groupSlots.length}</span>
                             </div>
