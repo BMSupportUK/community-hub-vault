@@ -65,6 +65,15 @@ const SHIFT_ROLES: { value: ShiftRole; label: string }[] = [
   { value: "moderator", label: "Moderator" },
 ];
 const roleLabel = (r: ShiftRole | null) => SHIFT_ROLES.find((x) => x.value === r)?.label ?? "Any";
+const roleBadgeClass = (r: ShiftRole | null) => {
+  switch (r) {
+    case "admin": return "bg-amber-500/20 text-amber-300 border-amber-500/40";
+    case "management": return "bg-violet-500/20 text-violet-300 border-violet-500/40";
+    case "staff": return "bg-sky-500/20 text-sky-300 border-sky-500/40";
+    case "moderator": return "bg-emerald-500/20 text-emerald-300 border-emerald-500/40";
+    default: return "bg-surface-2 text-muted-foreground border-border";
+  }
+};
 
 /** How many block shifts each role covers per day. */
 const ROLE_SHIFT_QUOTA: Record<string, number> = { admin: 2, management: 1, staff: 3 };
