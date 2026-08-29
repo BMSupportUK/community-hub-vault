@@ -168,7 +168,7 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
                     )} />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex flex-col leading-tight">
                       <div className={cn("text-sm font-semibold text-white truncate", roleFlashClass(roleFlashMap.get(s.user_id)))}>{name}</div>
                       {roleFlashMap.get(s.user_id) && (
                         <span className="text-[9px] font-medium uppercase tracking-wider text-white/70">
@@ -226,7 +226,7 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
                         <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-2 ring-white bg-gray-400" />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex flex-col leading-tight">
                           <div className={cn("text-sm font-semibold text-white/80 truncate", roleFlashClass(roleFlashMap.get(p.id)))}>{name}</div>
                           {p.role && (
                             <span className="text-[9px] font-medium uppercase tracking-wider text-white/60">
