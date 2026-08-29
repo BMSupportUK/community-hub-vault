@@ -659,11 +659,21 @@ function ShiftsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-7 gap-3">
               {days.map((d) => {
                 const dateStr = fmtDate(d);
-                const daySlots = selectedRoleSlotsByDay[dateStr] ?? [];
+                const daySlots = slotsByDay[dateStr] ?? [];
                 const filled = daySlots.filter((slot) => slot.assigned_to).length;
                 const dailyTarget = daySlots.length;
                 const ok = dailyTarget === 0 || filled >= dailyTarget;
                 const past = isDayPastOrStarted(d);
+
+                const groups = useMemo(() => {
+                  const m: Partial<Record<ShiftRole, Slot[]>> = {};
+                  for (const s of daySlots) {
+                    const r = (s.required_role || "staff") as ShiftRole;
+                    (m[r] ||= []).push(s);
+                  }
+                  return m;
+                }, [daySlots]);
+
                 return (
                   <div key={dateStr} className={cn("relative rounded-2xl bg-surface border border-border p-3 backdrop-blur min-h-[180px] flex flex-col", past && "opacity-80")}>
                     {past && (
@@ -683,11 +693,9 @@ function ShiftsPage() {
 
                     <div className="space-y-3 flex-1">
                       {daySlots.length === 0 && <div className="text-xs text-muted-foreground italic">No slots</div>}
-                      {([rotaRole] as const).map((grp) => {
-                        const groupSlots = daySlots;
-                        if (groupSlots.length === 0) {
-                          return <div key={grp} className="text-xs text-muted-foreground italic">No {roleLabel(grp)} slots</div>;
-                        }
+                      {(["admin", "management", "staff", "moderator"] as ShiftRole[]).map((grp) => {
+                        const groupSlots = groups[grp] ?? [];
+                        if (groupSlots.length === 0) return null;
                         return (
                           <div key={grp} className="space-y-2">
                             <div className="flex items-center gap-2">
@@ -697,38 +705,38 @@ function ShiftsPage() {
                               <span className="text-[10px] text-muted-foreground">{groupSlots.filter((s) => s.assigned_to).length}/{groupSlots.length}</span>
                             </div>
                             {groupSlots.map((s) => {
-                        const mine = s.assigned_to === user?.id;
-                        const taken = !!s.assigned_to;
-                        const shiftStartsAt = toUtcMs(s.shift_date, s.start_time);
-                        const shiftNotStarted = !isNaN(shiftStartsAt) && shiftStartsAt > Date.now();
-                        return (
-                          <div key={s.id} className={cn("rounded-lg p-2 border text-xs", taken ? (mine ? "bg-primary/20 border-primary/50" : "bg-surface-2 border-border") : "bg-surface/60 border-dashed border-border")}>
-                            <div className="flex items-center justify-between gap-1">
-                              <div className="font-mono text-foreground">{fmtRange(s.shift_date, s.start_time, s.end_time)}</div>
-                              <span className={cn("text-[10px] px-1.5 py-0.5 rounded uppercase font-semibold", s.slot_type === "hourly" ? "bg-accent/30 text-accent-foreground" : "bg-primary/30 text-foreground")}>{s.slot_type === "hourly" ? "hourly" : "shift"}</span>
-                            </div>
-                            {s.notes && <div className="text-muted-foreground mt-0.5">{s.notes}</div>}
-                            <div className="mt-1.5 flex items-center justify-between gap-1">
-                              <div className="text-muted-foreground truncate">{taken ? profName(s.assigned_to) : "Open"}</div>
-                              <div className="flex items-center gap-1">
-                                {!taken && canPick && shiftNotStarted && (
-                                  ((s.slot_type === "hourly" && (isMod || isAdmin)) || (s.slot_type === "shift" && isStaffOrAdmin)) && (
-                                    <button onClick={() => claim(s)} className="px-2 py-0.5 rounded bg-gradient-primary text-white font-semibold">Claim</button>
-                                  )
-                                )}
-                                {mine && (
-                                  <>
-                                    <button onClick={() => openSwap(s)} className="px-2 py-0.5 rounded bg-accent/30 text-accent-foreground hover:bg-accent/50">Swap</button>
-                                    <button onClick={() => release(s)} className="px-2 py-0.5 rounded bg-rose-500/30 text-rose-100 hover:bg-rose-500/50">Release</button>
-                                  </>
-                                )}
-                                {isAdmin && (
-                                  <button onClick={() => adminDeleteSlot(s.id)} className="text-rose-300/70 hover:text-rose-300"><Trash2 className="size-3" /></button>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        );
+                              const mine = s.assigned_to === user?.id;
+                              const taken = !!s.assigned_to;
+                              const shiftStartsAt = toUtcMs(s.shift_date, s.start_time);
+                              const shiftNotStarted = !isNaN(shiftStartsAt) && shiftStartsAt > Date.now();
+                              return (
+                                <div key={s.id} className={cn("rounded-lg p-2 border text-xs", taken ? (mine ? "bg-primary/20 border-primary/50" : "bg-surface-2 border-border") : "bg-surface/60 border-dashed border-border")}>
+                                  <div className="flex items-center justify-between gap-1">
+                                    <div className="font-mono text-foreground">{fmtRange(s.shift_date, s.start_time, s.end_time)}</div>
+                                    <span className={cn("text-[10px] px-1.5 py-0.5 rounded uppercase font-semibold", s.slot_type === "hourly" ? "bg-accent/30 text-accent-foreground" : "bg-primary/30 text-foreground")}>{s.slot_type === "hourly" ? "hourly" : "shift"}</span>
+                                  </div>
+                                  {s.notes && <div className="text-muted-foreground mt-0.5">{s.notes}</div>}
+                                  <div className="mt-1.5 flex items-center justify-between gap-1">
+                                    <div className="text-muted-foreground truncate">{taken ? profName(s.assigned_to) : "Open"}</div>
+                                    <div className="flex items-center gap-1">
+                                      {!taken && canPick && shiftNotStarted && (
+                                        ((s.slot_type === "hourly" && (isMod || isAdmin)) || (s.slot_type === "shift" && isStaffOrAdmin)) && (
+                                          <button onClick={() => claim(s)} className="px-2 py-0.5 rounded bg-gradient-primary text-white font-semibold">Claim</button>
+                                        )
+                                      )}
+                                      {mine && (
+                                        <>
+                                          <button onClick={() => openSwap(s)} className="px-2 py-0.5 rounded bg-accent/30 text-accent-foreground hover:bg-accent/50">Swap</button>
+                                          <button onClick={() => release(s)} className="px-2 py-0.5 rounded bg-rose-500/30 text-rose-100 hover:bg-rose-500/50">Release</button>
+                                        </>
+                                      )}
+                                      {isAdmin && (
+                                        <button onClick={() => adminDeleteSlot(s.id)} className="text-rose-300/70 hover:text-rose-300"><Trash2 className="size-3" /></button>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              );
                             })}
                           </div>
                         );
