@@ -180,6 +180,7 @@ function ShiftsPage() {
   const [loading, setLoading] = useState(true);
 
   // Manage rota state
+  const [rotaRole, setRotaRole] = useState<"all" | ShiftRole>("all");
   const [newSlot, setNewSlot] = useState({ date: fmtDate(new Date()), start: "09:00", end: "17:00", type: "shift" as SlotType, notes: "", presetId: "midweek", role: "staff" as ShiftRole });
 
   // Block-shift presets (admin)
