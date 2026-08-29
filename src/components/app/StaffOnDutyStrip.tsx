@@ -38,13 +38,40 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
     const ss = (s as StaffShift[]) ?? [];
     setShifts(ss);
     setBreaks((b as StaffBreak[]) ?? []);
-    const ids = Array.from(new Set(ss.map((x) => x.user_id)));
+    const workingIds = new Set(ss.map((x) => x.user_id));
+    // All staff-role users for the off-duty section
+    const { data: roleRows } = await supabase
+      .from("user_roles").select("user_id,role")
+      .in("role", ["admin", "management", "moderator", "staff"]);
+    const bestRole = new Map<string, string>();
+    const rank = (r: string) => ROLE_ORDER.indexOf(r as (typeof ROLE_ORDER)[number]);
+    for (const r of (roleRows as Array<{ user_id: string; role: string }>) ?? []) {
+      const cur = bestRole.get(r.user_id);
+      if (!cur || rank(r.role) < rank(cur)) bestRole.set(r.user_id, r.role);
+    }
+    const allIds = Array.from(bestRole.keys());
+    const ids = Array.from(new Set([...allIds, ...workingIds]));
     if (ids.length) {
       const { data: profs } = await supabase
         .from("profiles").select("id,username,display_name,avatar_url").in("id", ids);
-      setProfiles(Object.fromEntries(((profs as StaffProfile[]) ?? []).map((p) => [p.id, p])));
+      const map = Object.fromEntries(((profs as StaffProfile[]) ?? []).map((p) => [p.id, p]));
+      setProfiles(map);
+      const OFF_ORDER = ["management", "staff", "moderator", "admin"] as const;
+      const off = allIds
+        .filter((id) => !workingIds.has(id))
+        .map((id) => ({ ...map[id], id, role: bestRole.get(id)! }))
+        .filter((p) => p.id)
+        .sort((a, b) => {
+          const d = OFF_ORDER.indexOf(a.role as (typeof OFF_ORDER)[number]) - OFF_ORDER.indexOf(b.role as (typeof OFF_ORDER)[number]);
+          if (d !== 0) return d;
+          const an = a.display_name || a.username || "";
+          const bn = b.display_name || b.username || "";
+          return an.localeCompare(bn);
+        });
+      setOffDuty(off);
     } else {
       setProfiles({});
+      setOffDuty([]);
     }
   };
 
