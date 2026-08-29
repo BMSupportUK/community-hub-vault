@@ -178,7 +178,7 @@ function ShiftsPage() {
 
   const [tab, setTab] = useState("welcome");
   const [rotaRole, setRotaRole] = useState<"all" | ShiftRole>(() => myRotaRoles[0] ?? "all");
-  const [claimedRole, setClaimedRole] = useState<"all" | ShiftRole>("all");
+  const [claimedRole, setClaimedRole] = useState<ShiftRole>(() => myRotaRoles[0] ?? "admin");
 
   // Keep rotaRole valid if roles change.
   useEffect(() => {
@@ -824,17 +824,6 @@ function ShiftsPage() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2 mb-4">
-              <button
-                onClick={() => setClaimedRole("all")}
-                className={cn(
-                  "text-[11px] px-2.5 py-1 rounded-full border transition-colors font-medium",
-                  claimedRole === "all"
-                    ? "bg-primary/20 text-foreground border-primary/50"
-                    : "bg-surface border-border text-muted-foreground hover:bg-surface-2",
-                )}
-              >
-                All
-              </button>
               {SHIFT_ROLES.map(({ value, label }) => (
                 <button
                   key={value}
@@ -858,20 +847,35 @@ function ShiftsPage() {
                   (s) =>
                     s.assigned_to &&
                     (s.required_role || "staff") === role &&
-                    (claimedRole === "all" || claimedRole === role),
+                    claimedRole === role,
                 );
-                if (roleSlots.length === 0) return null;
+                if (roleSlots.length === 0 && claimedRole !== role) return null;
                 const byDay: Record<string, Slot[]> = {};
                 for (const s of roleSlots) (byDay[s.shift_date] ||= []).push(s);
+                const weeklyTarget = ROLE_SHIFT_QUOTA[role] ? ROLE_SHIFT_QUOTA[role] * 7 : 0;
+                const covered = roleSlots.length;
+                const left = Math.max(0, weeklyTarget - covered);
+                const fullyCovered = weeklyTarget > 0 && covered >= weeklyTarget;
                 return (
-                  <div key={role} className="rounded-2xl bg-surface border border-border p-4">
+                  <div key={role} className={cn("rounded-2xl bg-surface border border-border p-4", claimedRole !== role && "hidden")}>
                     <div className="flex items-center gap-2 mb-3">
                       <span className={cn("text-[11px] px-2 py-0.5 rounded-full border font-semibold uppercase tracking-wide", roleBadgeClass(role))}>
                         {roleLabel(role)}
                       </span>
-                      <span className="text-[11px] text-muted-foreground">
-                        {roleSlots.length} shift{roleSlots.length === 1 ? "" : "s"}
-                      </span>
+                      {weeklyTarget > 0 ? (
+                        <span className={cn(
+                          "text-[11px] px-2 py-0.5 rounded-full border font-semibold",
+                          fullyCovered
+                            ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                            : "bg-sky-500/20 text-sky-300 border-sky-500/40",
+                        )}>
+                          {covered}/{weeklyTarget} · {left} left
+                        </span>
+                      ) : (
+                        <span className="text-[11px] text-muted-foreground">
+                          {covered} shift{covered === 1 ? "" : "s"}
+                        </span>
+                      )}
                     </div>
                     <div className="space-y-3">
                       {Object.entries(byDay)
@@ -895,7 +899,7 @@ function ShiftsPage() {
                   </div>
                 );
               })}
-              {slots.filter((s) => s.assigned_to && (claimedRole === "all" || (s.required_role || "staff") === claimedRole)).length === 0 && (
+              {slots.filter((s) => s.assigned_to && (s.required_role || "staff") === claimedRole).length === 0 && (
                 <div className="md:col-span-2 lg:col-span-4 rounded-2xl border border-dashed border-border p-12 text-center text-muted-foreground bg-surface/40">
                   No claimed shifts for the week of {dayLabel(weekStart)}.
                 </div>
