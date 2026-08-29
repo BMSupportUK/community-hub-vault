@@ -521,9 +521,9 @@ function ShiftsPage() {
                 Browse the upcoming rota, claim open shifts that fit your role, and manage time off — all in one place.
               </p>
               <ul className="mt-5 space-y-2 text-foreground/80 max-w-2xl list-disc pl-5">
-                <li><strong>Staff & Management:</strong> claim full shifts on the rota.</li>
-                <li><strong>Moderators:</strong> pick hourly slots assigned by management.</li>
-                <li>Each day needs <strong>{DAY_TARGET} staff filled</strong> — keep an eye on the day counters.</li>
+                <li><strong>Staff &amp; Management:</strong> claim full shifts on the rota.</li>
+                <li><strong>Moderators:</strong> add your own hours — they default to the business opening hours, and you can change the start and finish.</li>
+                <li>Daily cover: <strong>Owner {ROLE_SHIFT_QUOTA.admin}</strong>, <strong>Management {ROLE_SHIFT_QUOTA.management}</strong>, <strong>Staff {ROLE_SHIFT_QUOTA.staff}</strong> — {DAY_TARGET} shifts in total per day.</li>
                 <li>Need time off? Submit a holiday request. Owner will review.</li>
                 <li>Need to swap a shift? Open the slot and tap <em>Request swap</em>.</li>
               </ul>
