@@ -202,7 +202,7 @@ function ShiftsPage() {
     setSwaps((sw ?? []) as Swap[]);
 
     const ids = new Set<string>();
-    (s ?? []).forEach((x: Slot) => x.assigned_to && ids.add(x.assigned_to));
+    (s ?? []).forEach((x) => { if (x.assigned_to) ids.add(x.assigned_to); });
     (h ?? []).forEach((x: Holiday) => ids.add(x.user_id));
     (sw ?? []).forEach((x: Swap) => { ids.add(x.requester_id); if (x.target_user_id) ids.add(x.target_user_id); });
     if (ids.size) {
