@@ -353,6 +353,7 @@ function ShiftsPage() {
       start_time: start,
       end_time: end,
       slot_type: newSlot.type,
+      required_role: newSlot.type === "hourly" ? "moderator" : newSlot.role,
       notes: notes || null,
       created_by: user?.id ?? null,
     });
