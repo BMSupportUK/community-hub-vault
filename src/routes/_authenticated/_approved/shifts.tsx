@@ -880,21 +880,41 @@ function ShiftsPage() {
                     <div className="space-y-3">
                       {Object.entries(byDay)
                         .sort(([a], [b]) => a.localeCompare(b))
-                        .map(([dateStr, ds]) => (
-                          <div key={dateStr}>
-                            <div className="text-xs font-semibold text-foreground mb-1">{dayLabel(new Date(dateStr))}</div>
-                            <div className="space-y-1">
-                              {ds
-                                .sort((a, b) => a.start_time.localeCompare(b.start_time))
-                                .map((s) => (
-                                  <div key={s.id} className="flex items-center justify-between gap-2 text-xs">
-                                    <span className="font-mono text-foreground">{fmtRange(s.shift_date, s.start_time, s.end_time)}</span>
-                                    <span className="text-muted-foreground truncate">{profName(s.assigned_to)}</span>
-                                  </div>
-                                ))}
+                        .map(([dateStr, ds]) => {
+                          const dailyTarget = ROLE_SHIFT_QUOTA[role] ?? 0;
+                          const dailyCovered = ds.length;
+                          const dailyLeft = Math.max(0, dailyTarget - dailyCovered);
+                          const dailyFully = dailyTarget > 0 && dailyCovered >= dailyTarget;
+                          return (
+                            <div key={dateStr}>
+                              <div className="flex items-center justify-between gap-2 mb-1">
+                                <div className="text-xs font-semibold text-foreground">{dayLabel(new Date(dateStr))}</div>
+                                {dailyTarget > 0 ? (
+                                  <span className={cn(
+                                    "text-[10px] px-1.5 py-0.5 rounded border font-medium",
+                                    dailyFully
+                                      ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                                      : "bg-sky-500/20 text-sky-300 border-sky-500/40",
+                                  )}>
+                                    {dailyCovered}/{dailyTarget} · {dailyLeft} left
+                                  </span>
+                                ) : (
+                                  <span className="text-[10px] text-muted-foreground">{dailyCovered} shift{dailyCovered === 1 ? "" : "s"}</span>
+                                )}
+                              </div>
+                              <div className="space-y-1">
+                                {ds
+                                  .sort((a, b) => a.start_time.localeCompare(b.start_time))
+                                  .map((s) => (
+                                    <div key={s.id} className="flex items-center justify-between gap-2 text-xs">
+                                      <span className="font-mono text-foreground">{fmtRange(s.shift_date, s.start_time, s.end_time)}</span>
+                                      <span className="text-muted-foreground truncate">{profName(s.assigned_to)}</span>
+                                    </div>
+                                  ))}
+                              </div>
                             </div>
-                          </div>
-                        ))}
+                          );
+                        })}
                     </div>
                   </div>
                 );
