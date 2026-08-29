@@ -257,6 +257,30 @@ export const getBoroMatchCentre = createServerFn({ method: "GET" }).handler(
             homeLogo: null,
             awayLogo: null,
           };
+          const uKo = new Date(u.kickoff_at).getTime();
+          const uStatus = String(u.status ?? "").toUpperCase();
+          if (
+            uStatus !== "FINISHED" &&
+            Number.isFinite(uKo) &&
+            Date.now() >= uKo &&
+            Date.now() <= uKo + 4 * 60 * 60 * 1000
+          ) {
+            liveFromDb = {
+              kickoff: new Date(uKo).toISOString(),
+              competition: u.competition ?? "Championship",
+              home: u.home_team,
+              away: u.away_team,
+              homeScore: u.home_score ?? 0,
+              awayScore: u.away_score ?? 0,
+              statusDetail: "Live",
+              clock: null,
+              inPlay: true,
+              homeLogo: null,
+              awayLogo: null,
+              eventId: null,
+              espnSlug: null,
+            };
+          }
         }
         // A live fixture already has scores, but it is not a result. Only let
         // the database fallback promote a row into "last result" after the
