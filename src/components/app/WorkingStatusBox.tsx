@@ -294,10 +294,24 @@ export function WorkingStatusBox({ stackActions = false }: { stackActions?: bool
               </span>
             </div>
           ) : (
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Shift</span>
-              <span className="text-muted-foreground italic">Not signed in</span>
-            </div>
+            <>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Shift</span>
+                <span className="text-muted-foreground italic">Not signed in</span>
+              </div>
+              {nextSlot && (
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-muted-foreground">Next shift</span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-500/15 px-2 py-0.5 font-semibold tabular-nums text-sky-300 ring-1 ring-sky-500/40">
+                    <Calendar className="size-3" />
+                    {new Date(`${nextSlot.shift_date}T00:00:00`).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })}
+                    {" · "}
+                    {nextSlot.start_time.slice(0, 5)}–{nextSlot.end_time.slice(0, 5)}
+                  </span>
+                </div>
+              )}
+            </>
+
           )}
           {brk && (
             <div className="flex items-center justify-between">
