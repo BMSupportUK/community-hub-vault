@@ -34,6 +34,7 @@ interface Slot {
   slot_type: SlotType;
   assigned_to: string | null;
   notes: string | null;
+  required_role: ShiftRole | null;
 }
 interface Holiday {
   id: string;
