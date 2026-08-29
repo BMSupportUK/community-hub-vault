@@ -129,8 +129,8 @@ export function HomeChannelsSidebar() {
             })),
           },
         ]}
-        header={<WorkingStatusBox />}
-        footer={<ServiceStatusBox />}
+        header={<ServiceStatusBox />}
+        footer={<WorkingStatusBox />}
       />
     );
   }
