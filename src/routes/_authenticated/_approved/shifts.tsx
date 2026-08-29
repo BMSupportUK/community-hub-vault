@@ -824,17 +824,6 @@ function ShiftsPage() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2 mb-4">
-              <button
-                onClick={() => setClaimedRole("all")}
-                className={cn(
-                  "text-[11px] px-2.5 py-1 rounded-full border transition-colors font-medium",
-                  claimedRole === "all"
-                    ? "bg-primary/20 text-foreground border-primary/50"
-                    : "bg-surface border-border text-muted-foreground hover:bg-surface-2",
-                )}
-              >
-                All
-              </button>
               {SHIFT_ROLES.map(({ value, label }) => (
                 <button
                   key={value}
