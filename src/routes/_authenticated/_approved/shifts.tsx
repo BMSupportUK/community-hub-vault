@@ -758,7 +758,6 @@ function ShiftsPage() {
                               <span className={cn("text-[10px] px-2 py-0.5 rounded-full border font-semibold uppercase tracking-wide", roleBadgeClass(grp))}>
                                 {roleLabel(grp)}
                               </span>
-                              <span className="text-[10px] text-muted-foreground">{groupSlots.filter((s) => s.assigned_to).length}/{groupSlots.length}</span>
                             </div>
                             {groupSlots.map((s) => {
                               const mine = s.assigned_to === user?.id;
