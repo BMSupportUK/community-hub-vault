@@ -633,8 +633,8 @@ function ShiftsPage() {
                               <span className={cn("text-[10px] px-1.5 py-0.5 rounded uppercase font-semibold", s.slot_type === "hourly" ? "bg-accent/30 text-accent-foreground" : "bg-primary/30 text-foreground")}>{s.slot_type === "hourly" ? "hourly" : "shift"}</span>
                             </div>
                             {s.required_role && (
-                              <div className="mt-0.5">
-                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-surface-2 border border-border text-muted-foreground font-semibold uppercase">
+                              <div className="mt-1">
+                                <span className={cn("text-[10px] px-2 py-0.5 rounded-full border font-semibold uppercase tracking-wide", roleBadgeClass(s.required_role))}>
                                   {roleLabel(s.required_role)}
                                 </span>
                               </div>
