@@ -56,6 +56,50 @@ export function WorkingStatusBox() {
     return () => { supabase.removeChannel(ch); };
   }, [user?.id]);
 
+  const clockIn = async () => {
+    if (!user) return;
+    setBusy(true);
+    const { error } = await supabase.from("shifts").insert({ user_id: user.id });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Clocked in");
+    notifyShift({ data: { kind: "clock_in" } }).catch(() => {});
+  };
+
+  const clockOut = async () => {
+    if (!shift) return;
+    setBusy(true);
+    if (brk) {
+      await supabase.from("breaks").update({ ended_at: new Date().toISOString() }).eq("id", brk.id);
+      notifyBreak({ data: { kind: "end", breakKind: brk.kind } }).catch(() => {});
+    }
+    const { error } = await supabase.from("shifts").update({ clock_out: new Date().toISOString() }).eq("id", shift.id);
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Clocked out");
+    notifyShift({ data: { kind: "clock_out" } }).catch(() => {});
+  };
+
+  const startBreak = async (kind: BreakKind) => {
+    if (!shift || brk) return;
+    setBusy(true);
+    const { error } = await supabase.from("breaks").insert({ shift_id: shift.id, user_id: user!.id, kind });
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success(kind === "lunch" ? "Lunch started" : "Break started");
+    notifyBreak({ data: { kind: "start", breakKind: kind } }).catch(() => {});
+  };
+
+  const endBreak = async () => {
+    if (!brk) return;
+    setBusy(true);
+    const { error } = await supabase.from("breaks").update({ ended_at: new Date().toISOString() }).eq("id", brk.id);
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    toast.success("Break ended");
+    notifyBreak({ data: { kind: "end", breakKind: brk.kind } }).catch(() => {});
+  };
+
   if (!user) return null;
 
   const displayName =
