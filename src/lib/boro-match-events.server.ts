@@ -354,29 +354,39 @@ export async function syncBoroMatchEvents(opts?: {
     const adopted = !!prev && prev.event_key !== ev.key;
     if (prev && prev.fingerprint === fingerprint && !adopted && !opts?.rebuild) continue;
 
-    // Rebuild mode (or an adopted incident): rewrite the existing reply in place
-    // so the thread shows the current layout without duplicating the incident.
-    if (prev && (opts?.rebuild || adopted) && prev.post_id) {
+    // If we already have a post for this incident, amend it in place instead of
+    // adding a second reply. This covers source switches, FotMob corrections and
+    // admin rebuilds.
+    if (prev && prev.post_id) {
+      const body = buildEventBody(ev, fx, true);
       const { error: bodyErr } = await supabaseAdmin
         .from("forum_posts")
-        .update({ body: buildEventBody(ev, fx, false) })
+        .update({ body })
         .eq("id", prev.post_id);
       if (bodyErr) {
         skipped.push(`rewrite failed (${ev.key}): ${bodyErr.message}`);
         continue;
       }
+      const nextRevision = (prev.revision ?? 0) + 1;
       await supabaseAdmin
         .from("boro_match_event_posts")
-        .update({ event_key: ev.key, clock: ev.clock, fingerprint, summary, updated_at: new Date().toISOString() })
+        .update({
+          event_key: ev.key,
+          clock: ev.clock,
+          fingerprint,
+          summary,
+          revision: nextRevision,
+          updated_at: new Date().toISOString(),
+        })
         .eq("id", prev.id);
-      byKey.set(ev.key, { ...prev, event_key: ev.key, fingerprint, summary });
-      byIdentity.set(evIdentity, { ...prev, event_key: ev.key, fingerprint, summary });
+      const row: LoggedRow = { ...prev, event_key: ev.key, fingerprint, summary, revision: nextRevision };
+      byKey.set(ev.key, row);
+      byIdentity.set(evIdentity, row);
       updated += 1;
       continue;
     }
 
-    const isUpdate = !!prev && !opts?.rebuild;
-    const body = buildEventBody(ev, fx, isUpdate);
+    const body = buildEventBody(ev, fx, false);
     const { data: post, error: postErr } = await supabaseAdmin
       .from("forum_posts")
       .insert({ topic_id: topic.id, author_id: authorId, body })
@@ -387,47 +397,30 @@ export async function syncBoroMatchEvents(opts?: {
       continue;
     }
 
-    if (prev) {
-      const { error: upErr } = await supabaseAdmin
-        .from("boro_match_event_posts")
-        .update({
-          post_id: post.id,
-          kind: ev.kind,
-          clock: ev.clock,
-          summary,
-          fingerprint,
-          revision: (prev.revision ?? 0) + 1,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", prev.id);
-      if (upErr) skipped.push(`log update failed (${ev.key}): ${upErr.message}`);
-      updated += 1;
-    } else {
-      const { error: insErr } = await supabaseAdmin.from("boro_match_event_posts").insert({
-        fixture_id: fx.id,
-        topic_id: topic.id,
-        post_id: post.id,
-        event_key: ev.key,
-        kind: ev.kind,
-        clock: ev.clock,
-        summary,
-        fingerprint,
-        revision: 0,
-      });
-      if (insErr) skipped.push(`log failed (${ev.key}): ${insErr.message}`);
-      posted += 1;
-      const row: LoggedRow = {
-        id: "",
-        event_key: ev.key,
-        fingerprint,
-        revision: 0,
-        post_id: post.id,
-        kind: ev.kind,
-        summary,
-      };
-      byKey.set(ev.key, row);
-      byIdentity.set(evIdentity, row);
-    }
+    const { error: insErr } = await supabaseAdmin.from("boro_match_event_posts").insert({
+      fixture_id: fx.id,
+      topic_id: topic.id,
+      post_id: post.id,
+      event_key: ev.key,
+      kind: ev.kind,
+      clock: ev.clock,
+      summary,
+      fingerprint,
+      revision: 0,
+    });
+    if (insErr) skipped.push(`log failed (${ev.key}): ${insErr.message}`);
+    posted += 1;
+    const row: LoggedRow = {
+      id: "",
+      event_key: ev.key,
+      fingerprint,
+      revision: 0,
+      post_id: post.id,
+      kind: ev.kind,
+      summary,
+    };
+    byKey.set(ev.key, row);
+    byIdentity.set(evIdentity, row);
   }
 
   return { ok: true, fixture: label, topic: topic.title, status, posted, updated, skipped };
