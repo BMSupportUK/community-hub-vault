@@ -942,6 +942,11 @@ function ShiftsPage() {
                         <div className="font-mono text-muted-foreground w-28">{s.shift_date}</div>
                         <div className="font-mono text-primary w-28">{fmtRange(s.shift_date, s.start_time, s.end_time)}</div>
                         <div className="uppercase text-xs text-muted-foreground w-20">{s.slot_type}</div>
+                        <div className="w-28">
+                          <span className={cn("text-[10px] px-2 py-0.5 rounded-full border font-semibold uppercase tracking-wide", roleBadgeClass(s.required_role))}>
+                            {roleLabel(s.required_role)}
+                          </span>
+                        </div>
                         <div className="flex-1 text-foreground">{s.assigned_to ? profName(s.assigned_to) : <span className="text-muted-foreground">Open</span>}</div>
                         <Button size="sm" variant="ghost" className="text-rose-300 hover:text-rose-200 hover:bg-rose-500/10" onClick={() => adminDeleteSlot(s.id)}><Trash2 className="size-4" /></Button>
                       </li>
