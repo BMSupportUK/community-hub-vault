@@ -197,7 +197,7 @@ function ShiftsPage() {
       supabase.from("holiday_requests").select("*").order("created_at", { ascending: false }),
       supabase.from("shift_swap_requests").select("*").order("created_at", { ascending: false }),
     ]);
-    setSlots((s ?? []) as Slot[]);
+    setSlots((s ?? []) as unknown as Slot[]);
     setHolidays((h ?? []) as Holiday[]);
     setSwaps((sw ?? []) as Swap[]);
 
