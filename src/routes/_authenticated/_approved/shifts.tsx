@@ -819,7 +819,12 @@ function ShiftsPage() {
                         <li key={s.id} className="px-5 py-3 flex items-center gap-3">
                           <div className="flex-1">
                             <div className="text-foreground"><strong>{profName(s.requester_id)}</strong> wants to swap {slot ? `${slot.shift_date} ${fmtRange(slot.shift_date, slot.start_time, slot.end_time)}` : "a shift"}</div>
-                            {s.message && <div className="text-xs text-muted-foreground">{s.message}</div>}
+                            {slot?.required_role && (
+                              <span className={cn("inline-block mt-1 text-[10px] px-2 py-0.5 rounded-full border font-semibold uppercase tracking-wide", roleBadgeClass(slot.required_role))}>
+                                {roleLabel(slot.required_role)}
+                              </span>
+                            )}
+                            {s.message && <div className="text-xs text-muted-foreground mt-1">{s.message}</div>}
                           </div>
                           <StatusPill status={s.status} />
                           {s.status === "pending" && (
