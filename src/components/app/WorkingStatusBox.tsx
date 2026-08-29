@@ -131,6 +131,11 @@ export function WorkingStatusBox() {
           <div className="px-3 py-3 space-y-2 text-xs">
             <div className="flex items-center gap-2 pb-1 border-b border-violet-500/30">
               <span className="font-display font-semibold text-sm text-violet-100">{displayName}</span>
+              {staffRoleLabel && (
+                <span className="inline-flex items-center rounded-full bg-violet-500/20 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-violet-200 ring-1 ring-violet-500/30">
+                  {staffRoleLabel}
+                </span>
+              )}
             </div>
             {dnd.note && <p className="text-foreground/90">{dnd.note}</p>}
             {until && (
