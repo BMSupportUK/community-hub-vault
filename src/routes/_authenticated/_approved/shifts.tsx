@@ -666,7 +666,36 @@ function ShiftsPage() {
               })}
             </div>
 
+            <div className="mb-4 flex flex-wrap gap-1 rounded-xl bg-surface-2 border border-border p-1">
+              {([
+                { v: "all", label: "All roles" },
+                { v: "admin", label: roleLabel("admin") },
+                { v: "management", label: roleLabel("management") },
+                { v: "staff", label: roleLabel("staff") },
+                { v: "moderator", label: roleLabel("moderator") },
+              ] as const).map(({ v, label }) => (
+                <button
+                  key={v}
+                  onClick={() => setRotaRole(v)}
+                  className={cn(
+                    "px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors",
+                    rotaRole === v
+                      ? "bg-gradient-primary text-white shadow-soft"
+                      : "text-muted-foreground hover:bg-surface hover:text-foreground",
+                  )}
+                >
+                  {label}
+                  {v !== "all" && (
+                    <span className="ml-1.5 opacity-80 font-normal">
+                      {roleTargets[v as ShiftRole].filled}/{roleTargets[v as ShiftRole].target}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+
             <div className="flex flex-wrap items-center gap-3 mb-4">
+
 
               <Button variant="outline" className="bg-surface/60 border-border text-foreground hover:bg-surface-2" onClick={() => { const d = new Date(weekStart); d.setDate(d.getDate() - 7); setWeekStart(d); }}>← Prev week</Button>
               <div className="font-display text-lg text-foreground">Week of {dayLabel(weekStart)}</div>
