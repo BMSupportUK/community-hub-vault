@@ -73,6 +73,7 @@ import { useRouter } from "@tanstack/react-router";
 import { MonitorPlay } from "lucide-react";
 import { AppDemosView } from "@/components/app/AppDemos";
 import { Film } from "lucide-react";
+import { Video, Upload } from "lucide-react";
 import { VpnGuideView } from "@/components/app/VpnGuideView";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { getOrderPaymentState } from "@/lib/order-payment-state.functions";
@@ -1511,6 +1512,12 @@ function Storefront() {
                 className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-sky-400 data-[state=active]:text-white"
               >
                 Shop
+              </TabsTrigger>
+              <TabsTrigger
+                value="how_to_order"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-sky-400 data-[state=active]:text-white"
+              >
+                How to Order?
               </TabsTrigger>
               <TabsTrigger
                 value="vpn"
