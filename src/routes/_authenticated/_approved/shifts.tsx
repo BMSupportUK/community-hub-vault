@@ -172,6 +172,7 @@ function ShiftsPage() {
 
 
   const [tab, setTab] = useState("welcome");
+  const [rotaRole, setRotaRole] = useState<"all" | ShiftRole>("all");
   const [weekStart, setWeekStart] = useState<Date>(() => startOfWeek(new Date()));
   const [slots, setSlots] = useState<Slot[]>([]);
   const [holidays, setHolidays] = useState<Holiday[]>([]);
@@ -278,6 +279,15 @@ function ShiftsPage() {
     for (const s of visibleSlots) (m[s.shift_date] ||= []).push(s);
     return m;
   }, [visibleSlots]);
+
+  const filteredSlotsByDay = useMemo(() => {
+    const m: Record<string, Slot[]> = {};
+    for (const s of visibleSlots) {
+      if (rotaRole !== "all" && (s.required_role || "staff") !== rotaRole) continue;
+      (m[s.shift_date] ||= []).push(s);
+    }
+    return m;
+  }, [visibleSlots, rotaRole]);
 
   /** All slots for a day, regardless of role — used for day counters. */
   const allSlotsByDay = useMemo(() => {
@@ -647,7 +657,37 @@ function ShiftsPage() {
               </div>
             </div>
 
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              <button
+                onClick={() => setRotaRole("all")}
+                className={cn(
+                  "text-[11px] px-2.5 py-1 rounded-full border transition-colors font-medium",
+                  rotaRole === "all"
+                    ? "bg-primary/20 text-foreground border-primary/50"
+                    : "bg-surface border-border text-muted-foreground hover:bg-surface-2",
+                )}
+              >
+                All
+              </button>
+              {SHIFT_ROLES.map(({ value, label }) => (
+                <button
+                  key={value}
+                  onClick={() => setRotaRole(value)}
+                  className={cn(
+                    "text-[11px] px-2.5 py-1 rounded-full border transition-colors font-medium flex items-center gap-1.5",
+                    rotaRole === value
+                      ? roleBadgeClass(value)
+                      : "bg-surface border-border text-muted-foreground hover:bg-surface-2",
+                  )}
+                >
+                  <span className={cn("size-1.5 rounded-full", value === "admin" ? "bg-amber-400" : value === "management" ? "bg-violet-400" : value === "staff" ? "bg-sky-400" : "bg-emerald-400")} />
+                  {label}
+                </button>
+              ))}
+            </div>
+
             <div className="flex flex-wrap items-center gap-3 mb-4">
+
 
 
               <Button variant="outline" className="bg-surface/60 border-border text-foreground hover:bg-surface-2" onClick={() => { const d = new Date(weekStart); d.setDate(d.getDate() - 7); setWeekStart(d); }}>← Prev week</Button>
@@ -659,7 +699,7 @@ function ShiftsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-7 gap-3">
               {days.map((d) => {
                 const dateStr = fmtDate(d);
-                const daySlots = slotsByDay[dateStr] ?? [];
+                const daySlots = filteredSlotsByDay[dateStr] ?? [];
                 const filled = daySlots.filter((slot) => slot.assigned_to).length;
                 const dailyTarget = daySlots.length;
                 const ok = dailyTarget === 0 || filled >= dailyTarget;
