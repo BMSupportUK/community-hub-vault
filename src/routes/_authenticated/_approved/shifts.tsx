@@ -65,6 +65,15 @@ const SHIFT_ROLES: { value: ShiftRole; label: string }[] = [
   { value: "moderator", label: "Moderator" },
 ];
 const roleLabel = (r: ShiftRole | null) => SHIFT_ROLES.find((x) => x.value === r)?.label ?? "Any";
+const roleBadgeClass = (r: ShiftRole | null) => {
+  switch (r) {
+    case "admin": return "bg-amber-500/20 text-amber-300 border-amber-500/40";
+    case "management": return "bg-violet-500/20 text-violet-300 border-violet-500/40";
+    case "staff": return "bg-sky-500/20 text-sky-300 border-sky-500/40";
+    case "moderator": return "bg-emerald-500/20 text-emerald-300 border-emerald-500/40";
+    default: return "bg-surface-2 text-muted-foreground border-border";
+  }
+};
 
 /** How many block shifts each role covers per day. */
 const ROLE_SHIFT_QUOTA: Record<string, number> = { admin: 2, management: 1, staff: 3 };
@@ -624,8 +633,8 @@ function ShiftsPage() {
                               <span className={cn("text-[10px] px-1.5 py-0.5 rounded uppercase font-semibold", s.slot_type === "hourly" ? "bg-accent/30 text-accent-foreground" : "bg-primary/30 text-foreground")}>{s.slot_type === "hourly" ? "hourly" : "shift"}</span>
                             </div>
                             {s.required_role && (
-                              <div className="mt-0.5">
-                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-surface-2 border border-border text-muted-foreground font-semibold uppercase">
+                              <div className="mt-1">
+                                <span className={cn("text-[10px] px-2 py-0.5 rounded-full border font-semibold uppercase tracking-wide", roleBadgeClass(s.required_role))}>
                                   {roleLabel(s.required_role)}
                                 </span>
                               </div>
@@ -701,7 +710,14 @@ function ShiftsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {myShifts.map((s) => (
                   <div key={s.id} className="rounded-2xl bg-surface border border-border p-4">
-                    <div className="text-foreground font-semibold">{dayLabel(new Date(s.shift_date))}</div>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="text-foreground font-semibold">{dayLabel(new Date(s.shift_date))}</div>
+                      {s.required_role && (
+                        <span className={cn("text-[10px] px-2 py-0.5 rounded-full border font-semibold uppercase tracking-wide", roleBadgeClass(s.required_role))}>
+                          {roleLabel(s.required_role)}
+                        </span>
+                      )}
+                    </div>
                     <div className="font-mono text-primary mt-1">{fmtRange(s.shift_date, s.start_time, s.end_time)}</div>
                     <div className="text-xs text-muted-foreground mt-1 uppercase">{s.slot_type}</div>
                     {s.notes && <div className="text-sm text-muted-foreground mt-2">{s.notes}</div>}
@@ -803,7 +819,12 @@ function ShiftsPage() {
                         <li key={s.id} className="px-5 py-3 flex items-center gap-3">
                           <div className="flex-1">
                             <div className="text-foreground"><strong>{profName(s.requester_id)}</strong> wants to swap {slot ? `${slot.shift_date} ${fmtRange(slot.shift_date, slot.start_time, slot.end_time)}` : "a shift"}</div>
-                            {s.message && <div className="text-xs text-muted-foreground">{s.message}</div>}
+                            {slot?.required_role && (
+                              <span className={cn("inline-block mt-1 text-[10px] px-2 py-0.5 rounded-full border font-semibold uppercase tracking-wide", roleBadgeClass(slot.required_role))}>
+                                {roleLabel(slot.required_role)}
+                              </span>
+                            )}
+                            {s.message && <div className="text-xs text-muted-foreground mt-1">{s.message}</div>}
                           </div>
                           <StatusPill status={s.status} />
                           {s.status === "pending" && (
@@ -926,6 +947,11 @@ function ShiftsPage() {
                         <div className="font-mono text-muted-foreground w-28">{s.shift_date}</div>
                         <div className="font-mono text-primary w-28">{fmtRange(s.shift_date, s.start_time, s.end_time)}</div>
                         <div className="uppercase text-xs text-muted-foreground w-20">{s.slot_type}</div>
+                        <div className="w-28">
+                          <span className={cn("text-[10px] px-2 py-0.5 rounded-full border font-semibold uppercase tracking-wide", roleBadgeClass(s.required_role))}>
+                            {roleLabel(s.required_role)}
+                          </span>
+                        </div>
                         <div className="flex-1 text-foreground">{s.assigned_to ? profName(s.assigned_to) : <span className="text-muted-foreground">Open</span>}</div>
                         <Button size="sm" variant="ghost" className="text-rose-300 hover:text-rose-200 hover:bg-rose-500/10" onClick={() => adminDeleteSlot(s.id)}><Trash2 className="size-4" /></Button>
                       </li>
