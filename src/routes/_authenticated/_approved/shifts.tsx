@@ -712,14 +712,7 @@ function ShiftsPage() {
                 const daySlots = filteredSlotsByDay[dateStr] ?? [];
                 const past = isDayPastOrStarted(d);
 
-                const displayedRoles = Array.from(
-                  new Set(daySlots.map((s) => (s.required_role || "staff") as ShiftRole)),
-                );
-                const countRole = rotaRole !== "all"
-                  ? rotaRole
-                  : displayedRoles.length === 1
-                    ? displayedRoles[0]
-                    : null;
+                const countRole = rotaRole !== "all" ? rotaRole : null;
                 const countSlots = (allSlotsByDay[dateStr] ?? []).filter((s) => {
                   const slotRole = (s.required_role || "staff") as ShiftRole;
                   return countRole ? slotRole === countRole : slotRole !== "moderator";
