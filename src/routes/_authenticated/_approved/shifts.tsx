@@ -277,6 +277,34 @@ function ShiftsPage() {
   const filledShiftsForDay = (dateStr: string) =>
     (allSlotsByDay[dateStr] ?? []).filter((s) => s.slot_type === "shift" && s.assigned_to).length;
 
+  const weeklyTarget = DAY_TARGET * 7;
+  const weeklyFilled = useMemo(
+    () => days.reduce((sum, d) => sum + filledShiftsForDay(fmtDate(d)), 0),
+    [days, allSlotsByDay],
+  );
+  const weeklyRemaining = weeklyTarget - weeklyFilled;
+
+  const roleTargets = useMemo(() => {
+    const targets: Record<AppRole, { target: number; filled: number; remaining: number }> = {
+      admin: { target: ROLE_SHIFT_QUOTA.admin * 7, filled: 0, remaining: 0 },
+      management: { target: ROLE_SHIFT_QUOTA.management * 7, filled: 0, remaining: 0 },
+      staff: { target: ROLE_SHIFT_QUOTA.staff * 7, filled: 0, remaining: 0 },
+      moderator: { target: 0, filled: 0, remaining: 0 },
+    };
+    for (const s of slots) {
+      if (s.slot_type !== "shift") continue;
+      const role = (s.required_role || "staff") as AppRole;
+      if (targets[role]) {
+        targets[role].filled += s.assigned_to ? 1 : 0;
+      }
+    }
+    for (const role of Object.keys(targets) as AppRole[]) {
+      targets[role].remaining = Math.max(0, targets[role].target - targets[role].filled);
+    }
+    return targets;
+  }, [slots]);
+
+
   const profName = (id: string | null) => {
     if (!id) return "";
     const p = profiles[id];
@@ -591,7 +619,31 @@ function ShiftsPage() {
 
           {/* ROTA */}
           <TabsContent value="rota" className="mt-6">
+            <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+              <div className="rounded-xl bg-surface border border-border p-3 text-center">
+                <div className="text-xs uppercase tracking-wide text-muted-foreground">Weekly target</div>
+                <div className="font-display text-2xl font-bold text-foreground">{weeklyTarget}</div>
+              </div>
+              <div className="rounded-xl bg-surface border border-border p-3 text-center">
+                <div className="text-xs uppercase tracking-wide text-muted-foreground">Filled</div>
+                <div className="font-display text-2xl font-bold text-emerald-400">{weeklyFilled}</div>
+              </div>
+              <div className={cn("rounded-xl border p-3 text-center", weeklyRemaining > 0 ? "bg-rose-500/10 border-rose-500/40" : "bg-emerald-500/10 border-emerald-500/40")}>
+                <div className="text-xs uppercase tracking-wide text-muted-foreground">Remaining</div>
+                <div className={cn("font-display text-2xl font-bold", weeklyRemaining > 0 ? "text-rose-300" : "text-emerald-300")}>{weeklyRemaining}</div>
+              </div>
+              <div className="rounded-xl bg-surface border border-border p-3 text-center">
+                <div className="text-xs uppercase tracking-wide text-muted-foreground">Owner / Mgmt</div>
+                <div className="font-display text-xl font-bold text-foreground">{roleTargets.admin.filled + roleTargets.management.filled}<span className="text-sm text-muted-foreground font-normal">/{roleTargets.admin.target + roleTargets.management.target}</span></div>
+              </div>
+              <div className="rounded-xl bg-surface border border-border p-3 text-center">
+                <div className="text-xs uppercase tracking-wide text-muted-foreground">Staff</div>
+                <div className="font-display text-xl font-bold text-foreground">{roleTargets.staff.filled}<span className="text-sm text-muted-foreground font-normal">/{roleTargets.staff.target}</span></div>
+              </div>
+            </div>
+
             <div className="flex flex-wrap items-center gap-3 mb-4">
+
               <Button variant="outline" className="bg-surface/60 border-border text-foreground hover:bg-surface-2" onClick={() => { const d = new Date(weekStart); d.setDate(d.getDate() - 7); setWeekStart(d); }}>← Prev week</Button>
               <div className="font-display text-lg text-foreground">Week of {dayLabel(weekStart)}</div>
               <Button variant="outline" className="bg-surface/60 border-border text-foreground hover:bg-surface-2" onClick={() => { const d = new Date(weekStart); d.setDate(d.getDate() + 7); setWeekStart(d); }}>Next week →</Button>
@@ -617,8 +669,11 @@ function ShiftsPage() {
                     )}
                     <div className="flex items-center justify-between mb-2">
                       <div className="text-sm font-semibold text-foreground">{dayLabel(d)}</div>
-                      <span className={cn("text-[11px] px-2 py-0.5 rounded-full font-semibold", past ? "bg-rose-500/20 text-rose-200 border border-rose-500/40" : ok ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40" : "bg-rose-500/20 text-rose-300 border border-rose-500/40")}>{past ? "Closed" : `${filled}/${DAY_TARGET}`}</span>
+                      <span className={cn("text-[11px] px-2 py-0.5 rounded-full font-semibold", past ? "bg-rose-500/20 text-rose-200 border border-rose-500/40" : ok ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40" : "bg-rose-500/20 text-rose-300 border border-rose-500/40")}>
+                        {past ? "Closed" : `${filled}/${DAY_TARGET}${filled < DAY_TARGET ? ` · ${DAY_TARGET - filled} more` : ""}`}
+                      </span>
                     </div>
+
                     <div className="space-y-2 flex-1">
                       {daySlots.length === 0 && <div className="text-xs text-muted-foreground italic">No slots</div>}
                       {daySlots.map((s) => {
