@@ -109,6 +109,10 @@ export function WorkingStatusBox() {
     user.email?.split("@")[0] ||
     "User";
 
+  const STAFF_ROLE_PRIORITY: AppRole[] = ["admin", "management", "moderator", "staff"];
+  const staffRole = STAFF_ROLE_PRIORITY.find((r) => roles.includes(r));
+  const staffRoleLabel = formatRoleLabel(staffRole);
+
   // DND overrides all other status — show a dedicated DND card.
   if (dnd?.active) {
     const until = dnd.endsAt
