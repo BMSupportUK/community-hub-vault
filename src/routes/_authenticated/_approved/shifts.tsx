@@ -1141,23 +1141,53 @@ function ShiftsPage() {
                 {slots.length === 0 ? (
                   <div className="px-5 py-6 text-sm text-muted-foreground">No slots configured for this week.</div>
                 ) : (
-                  <ul className="divide-y divide-border">
-                    {slots.map((s) => (
-                      <li key={s.id} className="px-5 py-3 flex items-center gap-3 text-sm">
-                        <div className="font-mono text-muted-foreground w-28">{s.shift_date}</div>
-                        <div className="font-mono text-primary w-28">{fmtRange(s.shift_date, s.start_time, s.end_time)}</div>
-                        <div className="uppercase text-xs text-muted-foreground w-20">{s.slot_type}</div>
-                        <div className="w-28">
-                          <span className={cn("text-[10px] px-2 py-0.5 rounded-full border font-semibold uppercase tracking-wide", roleBadgeClass(s.required_role))}>
-                            {roleLabel(s.required_role)}
-                          </span>
+                  <div className="divide-y divide-border">
+                    {days.map((d) => {
+                      const key = fmtDate(d);
+                      const daySlots = slots.filter((s) => s.shift_date === key);
+                      return (
+                        <div key={key} className="px-5 py-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-sm font-semibold text-foreground">{dayLabel(d)}</span>
+                            <span className="text-xs text-muted-foreground">{daySlots.length} slot{daySlots.length === 1 ? "" : "s"}</span>
+                          </div>
+                          {daySlots.length === 0 ? (
+                            <div className="text-sm text-muted-foreground italic">No slots</div>
+                          ) : (
+                            <div className="space-y-3">
+                              {SHIFT_ROLES.map((r) => {
+                                const roleSlots = daySlots.filter((s) => s.required_role === r.value);
+                                if (roleSlots.length === 0) return null;
+                                const filled = roleSlots.filter((s) => s.assigned_to).length;
+                                return (
+                                  <div key={r.value}>
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <span className={cn("text-[10px] px-2 py-0.5 rounded-full border font-semibold uppercase tracking-wide", roleBadgeClass(r.value))}>
+                                        {r.label}
+                                      </span>
+                                      <span className="text-xs text-muted-foreground">{filled}/{roleSlots.length} filled</span>
+                                    </div>
+                                    <ul className="space-y-1">
+                                      {roleSlots.map((s) => (
+                                        <li key={s.id} className="flex items-center gap-3 text-sm">
+                                          <div className="font-mono text-primary w-28">{fmtRange(s.shift_date, s.start_time, s.end_time)}</div>
+                                          <div className="uppercase text-xs text-muted-foreground w-20">{s.slot_type}</div>
+                                          <div className="flex-1 text-foreground">{s.assigned_to ? profName(s.assigned_to) : <span className="text-muted-foreground">Open</span>}</div>
+                                          <Button size="sm" variant="ghost" className="text-rose-300 hover:text-rose-200 hover:bg-rose-500/10" onClick={() => adminDeleteSlot(s.id)}><Trash2 className="size-4" /></Button>
+                                        </li>
+                                      ))}
+                                    </ul>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
                         </div>
-                        <div className="flex-1 text-foreground">{s.assigned_to ? profName(s.assigned_to) : <span className="text-muted-foreground">Open</span>}</div>
-                        <Button size="sm" variant="ghost" className="text-rose-300 hover:text-rose-200 hover:bg-rose-500/10" onClick={() => adminDeleteSlot(s.id)}><Trash2 className="size-4" /></Button>
-                      </li>
-                    ))}
-                  </ul>
+                      );
+                    })}
+                  </div>
                 )}
+
               </div>
             </TabsContent>
           )}
