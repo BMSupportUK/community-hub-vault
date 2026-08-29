@@ -15,7 +15,7 @@ import { formatRoleLabel } from "@/lib/role-label";
 type Shift = { id: string; clock_in: string };
 type Break = { id: string; kind: BreakKind; started_at: string };
 
-export function WorkingStatusBox() {
+export function WorkingStatusBox({ stackActions = false }: { stackActions?: boolean } = {}) {
   const { user, roles } = useAuth();
   const dnd = useDndStatus(user?.id);
   const notifyShift = useServerFn(sendShiftEventPush);
@@ -234,7 +234,7 @@ export function WorkingStatusBox() {
           </div>
         </div>
         <div className="px-3 py-3 space-y-2 text-xs">
-          <div className="flex items-center justify-between gap-2 pb-1 border-b border-border/60">
+          <div className={cn("gap-2 pb-1 border-b border-border/60", stackActions ? "flex flex-col items-start" : "flex items-center justify-between")}>
             <div className="flex items-center gap-2 min-w-0">
               <span className="font-display font-semibold text-sm text-foreground truncate">{displayName}</span>
               {staffRoleLabel && (
