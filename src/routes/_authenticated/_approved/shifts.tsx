@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Calendar as CalendarIcon, Plus, Trash2, Check, X, Clock, Users, Plane, Repeat, ShieldCheck, Loader2, Zap, Save, Globe, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { addModeratorHours } from "@/lib/moderator-hours.functions";
 import { useTimezone, zonedWallTimeToUtcMs } from "@/hooks/use-timezone";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
