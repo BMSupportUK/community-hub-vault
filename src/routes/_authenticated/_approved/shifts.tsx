@@ -164,6 +164,11 @@ function ShiftsPage() {
     () => Math.max(0, ...roles.map((r) => ROLE_SHIFT_QUOTA[r] ?? 0)),
     [roles],
   );
+  // Only show claim/rota tabs for roles the current user actually holds.
+  const myRotaRoles = useMemo<ShiftRole[]>(
+    () => SHIFT_ROLES.filter(({ value }) => roles.includes(value as AppRole)).map(({ value }) => value),
+    [roles],
+  );
 
   const [businessHours, setBusinessHours] = useState<Record<number, { open: string; close: string; closed: boolean }>>({});
   const [modHoursDay, setModHoursDay] = useState<string | null>(null);
@@ -172,8 +177,15 @@ function ShiftsPage() {
 
 
   const [tab, setTab] = useState("welcome");
-  const [rotaRole, setRotaRole] = useState<"all" | ShiftRole>("all");
+  const [rotaRole, setRotaRole] = useState<"all" | ShiftRole>(() => myRotaRoles[0] ?? "all");
   const [claimedRole, setClaimedRole] = useState<"all" | ShiftRole>("all");
+
+  // Keep rotaRole valid if roles change.
+  useEffect(() => {
+    if (rotaRole !== "all" && !myRotaRoles.includes(rotaRole)) {
+      setRotaRole(myRotaRoles[0] ?? "all");
+    }
+  }, [myRotaRoles, rotaRole]);
   const [weekStart, setWeekStart] = useState<Date>(() => startOfWeek(new Date()));
   const [slots, setSlots] = useState<Slot[]>([]);
   const [holidays, setHolidays] = useState<Holiday[]>([]);
@@ -660,32 +672,28 @@ function ShiftsPage() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2 mb-4">
-              <button
-                onClick={() => setRotaRole("all")}
-                className={cn(
-                  "text-[11px] px-2.5 py-1 rounded-full border transition-colors font-medium",
-                  rotaRole === "all"
-                    ? "bg-primary/20 text-foreground border-primary/50"
-                    : "bg-surface border-border text-muted-foreground hover:bg-surface-2",
-                )}
-              >
-                All
-              </button>
-              {SHIFT_ROLES.map(({ value, label }) => (
-                <button
-                  key={value}
-                  onClick={() => setRotaRole(value)}
-                  className={cn(
-                    "text-[11px] px-2.5 py-1 rounded-full border transition-colors font-medium flex items-center gap-1.5",
-                    rotaRole === value
-                      ? roleBadgeClass(value)
-                      : "bg-surface border-border text-muted-foreground hover:bg-surface-2",
-                  )}
-                >
-                  <span className={cn("size-1.5 rounded-full", value === "admin" ? "bg-amber-400" : value === "management" ? "bg-violet-400" : value === "staff" ? "bg-sky-400" : "bg-emerald-400")} />
-                  {label}
-                </button>
-              ))}
+              {myRotaRoles.length === 0 ? (
+                <span className="text-xs text-muted-foreground">No claimable roles on your account.</span>
+              ) : (
+                myRotaRoles.map((value) => {
+                  const label = roleLabel(value);
+                  return (
+                    <button
+                      key={value}
+                      onClick={() => setRotaRole(value)}
+                      className={cn(
+                        "text-[11px] px-2.5 py-1 rounded-full border transition-colors font-medium flex items-center gap-1.5",
+                        rotaRole === value
+                          ? roleBadgeClass(value)
+                          : "bg-surface border-border text-muted-foreground hover:bg-surface-2",
+                      )}
+                    >
+                      <span className={cn("size-1.5 rounded-full", value === "admin" ? "bg-amber-400" : value === "management" ? "bg-violet-400" : value === "staff" ? "bg-sky-400" : "bg-emerald-400")} />
+                      {label}
+                    </button>
+                  );
+                })
+              )}
             </div>
 
             <div className="flex flex-wrap items-center gap-3 mb-4">
@@ -704,14 +712,7 @@ function ShiftsPage() {
                 const daySlots = filteredSlotsByDay[dateStr] ?? [];
                 const past = isDayPastOrStarted(d);
 
-                const displayedRoles = Array.from(
-                  new Set(daySlots.map((s) => (s.required_role || "staff") as ShiftRole)),
-                );
-                const countRole = rotaRole !== "all"
-                  ? rotaRole
-                  : displayedRoles.length === 1
-                    ? displayedRoles[0]
-                    : null;
+                const countRole = rotaRole !== "all" ? rotaRole : null;
                 const countSlots = (allSlotsByDay[dateStr] ?? []).filter((s) => {
                   const slotRole = (s.required_role || "staff") as ShiftRole;
                   return countRole ? slotRole === countRole : slotRole !== "moderator";
