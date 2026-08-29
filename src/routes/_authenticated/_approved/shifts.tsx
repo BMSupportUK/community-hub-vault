@@ -298,23 +298,25 @@ function ShiftsPage() {
   const weeklyRemaining = weeklyTarget - weeklyFilled;
 
   const roleTargets = useMemo(() => {
-    const targets: Partial<Record<AppRole, { target: number; filled: number; remaining: number }>> = {
-      admin: { target: ROLE_SHIFT_QUOTA.admin * 7, filled: 0, remaining: 0 },
-      management: { target: ROLE_SHIFT_QUOTA.management * 7, filled: 0, remaining: 0 },
-      staff: { target: ROLE_SHIFT_QUOTA.staff * 7, filled: 0, remaining: 0 },
+    const targets: Record<ShiftRole, { target: number; filled: number; remaining: number }> = {
+      admin: { target: 0, filled: 0, remaining: 0 },
+      management: { target: 0, filled: 0, remaining: 0 },
+      staff: { target: 0, filled: 0, remaining: 0 },
       moderator: { target: 0, filled: 0, remaining: 0 },
     };
     for (const s of slots) {
-      if (s.slot_type !== "shift") continue;
-      const role = (s.required_role || "staff") as AppRole;
+      const role = (s.required_role || "staff") as ShiftRole;
+      if (s.slot_type === "hourly" && role !== "moderator") continue;
       const t = targets[role];
-      if (t) t.filled += s.assigned_to ? 1 : 0;
+      if (!t) continue;
+      t.target += 1;
+      if (s.assigned_to) t.filled += 1;
     }
-    for (const role of Object.keys(targets) as AppRole[]) {
-      const t = targets[role]!;
+    for (const role of Object.keys(targets) as ShiftRole[]) {
+      const t = targets[role];
       t.remaining = Math.max(0, t.target - t.filled);
     }
-    return targets as Record<ShiftRole, { target: number; filled: number; remaining: number }>;
+    return targets;
   }, [slots]);
 
   const selectedRoleSlots = useMemo(
@@ -707,7 +709,7 @@ function ShiftsPage() {
                 const dateStr = fmtDate(d);
                 const daySlots = selectedRoleSlotsByDay[dateStr] ?? [];
                 const filled = daySlots.filter((slot) => slot.assigned_to).length;
-                const dailyTarget = ROLE_SHIFT_QUOTA[rotaRole] ?? daySlots.length;
+                const dailyTarget = daySlots.length;
                 const ok = dailyTarget === 0 || filled >= dailyTarget;
                 const past = isDayPastOrStarted(d);
                 return (
