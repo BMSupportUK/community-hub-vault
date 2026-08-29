@@ -12,6 +12,7 @@ type StaffBreak = { id: string; shift_id: string; user_id: string; kind: BreakKi
 type StaffProfile = { id: string; username: string | null; display_name: string | null; avatar_url: string | null };
 
 const ROLE_ORDER = ["admin", "management", "staff", "moderator"] as const;
+const OFF_ORDER = ["admin", "management", "staff", "moderator"] as const;
 
 export function StaffOnDutySidebar() {
   return <StaffOnDutyStrip variant="sidebar" />;
