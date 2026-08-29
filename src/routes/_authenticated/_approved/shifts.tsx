@@ -172,6 +172,7 @@ function ShiftsPage() {
 
 
   const [tab, setTab] = useState("welcome");
+  const [rotaRole, setRotaRole] = useState<"all" | ShiftRole>("all");
   const [weekStart, setWeekStart] = useState<Date>(() => startOfWeek(new Date()));
   const [slots, setSlots] = useState<Slot[]>([]);
   const [holidays, setHolidays] = useState<Holiday[]>([]);
