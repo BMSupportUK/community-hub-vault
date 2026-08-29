@@ -57,18 +57,24 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
         .from("profiles").select("id,username,display_name,avatar_url").in("id", ids);
       const map = Object.fromEntries(((profs as StaffProfile[]) ?? []).map((p) => [p.id, p]));
       setProfiles(map);
-      const isDane = (n: string) => /\bdane\b/i.test(n);
+      const isDaneJ = (profile: StaffProfile) => {
+        const displayName = profile.display_name?.trim() ?? "";
+        const username = profile.username?.trim() ?? "";
+        return /^dane\s+j(?:\b|$)/i.test(displayName) || /^dane[._ -]?j(?:\b|$)/i.test(username);
+      };
       const off = allIds
         .filter((id) => !workingIds.has(id))
-        .map((id) => ({ ...map[id], id, role: bestRole.get(id)! }))
+        .map((id) => ({ ...map[id], id, role: bestRole.get(id) ?? "moderator" }))
         .filter((p) => p.id)
         .sort((a, b) => {
           const d = OFF_ORDER.indexOf(a.role as (typeof OFF_ORDER)[number]) - OFF_ORDER.indexOf(b.role as (typeof OFF_ORDER)[number]);
           if (d !== 0) return d;
+          if (a.role === "admin") {
+            if (isDaneJ(a) && !isDaneJ(b)) return -1;
+            if (!isDaneJ(a) && isDaneJ(b)) return 1;
+          }
           const an = a.display_name || a.username || "";
           const bn = b.display_name || b.username || "";
-          if (isDane(an) && !isDane(bn)) return -1;
-          if (!isDane(an) && isDane(bn)) return 1;
           return an.localeCompare(bn);
         });
       setOffDuty(off);
