@@ -138,8 +138,8 @@ export function HomeChannelsSidebar() {
     <ChannelColumn
       title="Support Community"
       groups={groups}
-      header={<WorkingStatusBox />}
-      footer={<ServiceStatusBox />}
+      header={<ServiceStatusBox />}
+      footer={<WorkingStatusBox />}
     />
   );
 }
