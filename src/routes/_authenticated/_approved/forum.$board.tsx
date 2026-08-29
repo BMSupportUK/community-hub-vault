@@ -330,7 +330,9 @@ function BoardPage() {
       setTopics((current) => {
         if (!current) return current;
         const withoutDuplicate = current.filter((item) => item.id !== createdTopic.id);
-        return [{ ...createdTopic, last_post_by: user.id }, ...withoutDuplicate].slice(0, PAGE_SIZE);
+        return [{ ...createdTopic, last_post_by: user.id }, ...withoutDuplicate]
+          .sort(sortBoardTopics)
+          .slice(0, PAGE_SIZE);
       });
       setTotalTopics((current) => current + 1);
       setProfiles((current) => ({
