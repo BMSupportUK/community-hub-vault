@@ -707,10 +707,11 @@ function ShiftsPage() {
                 const ok = dailyTarget === 0 || filled >= dailyTarget;
                 const past = isDayPastOrStarted(d);
 
-                const staffSlots = (allSlotsByDay[dateStr] ?? []).filter((s) => (s.required_role || "staff") === "staff");
-                const staffTarget = staffSlots.length;
-                const staffFilled = staffSlots.filter((s) => s.assigned_to).length;
-                const staffOk = staffTarget === 0 || staffFilled >= staffTarget;
+                const countRole = rotaRole === "all" ? "staff" : rotaRole;
+                const countSlots = (allSlotsByDay[dateStr] ?? []).filter((s) => (s.required_role || "staff") === countRole);
+                const countTarget = countRole in ROLE_SHIFT_QUOTA ? ROLE_SHIFT_QUOTA[countRole as keyof typeof ROLE_SHIFT_QUOTA] : countSlots.length;
+                const countFilled = countSlots.filter((s) => s.assigned_to).length;
+                const countOk = countTarget === 0 || countFilled >= countTarget;
 
                 const groups: Partial<Record<ShiftRole, Slot[]>> = {};
                 for (const s of daySlots) {
