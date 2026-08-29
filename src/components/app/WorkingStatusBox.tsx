@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { CircleDot, Briefcase, LogIn, LogOut, Coffee, UtensilsCrossed, PlayCircle, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { useDndStatus } from "@/hooks/use-dnd";
 import { Moon } from "lucide-react";
@@ -10,12 +10,13 @@ import { type BreakKind, BREAK_LIMITS as LIMITS, breakLabel, breakIcon } from "@
 import { useServerFn } from "@tanstack/react-start";
 import { sendShiftEventPush, sendBreakEventPush } from "@/lib/push.functions";
 import { toast } from "sonner";
+import { formatRoleLabel } from "@/lib/role-label";
 
 type Shift = { id: string; clock_in: string };
 type Break = { id: string; kind: BreakKind; started_at: string };
 
 export function WorkingStatusBox() {
-  const { user } = useAuth();
+  const { user, roles } = useAuth();
   const dnd = useDndStatus(user?.id);
   const notifyShift = useServerFn(sendShiftEventPush);
   const notifyBreak = useServerFn(sendBreakEventPush);
@@ -108,6 +109,10 @@ export function WorkingStatusBox() {
     user.email?.split("@")[0] ||
     "User";
 
+  const STAFF_ROLE_PRIORITY: AppRole[] = ["admin", "management", "moderator", "staff"];
+  const staffRole = STAFF_ROLE_PRIORITY.find((r) => roles.includes(r));
+  const staffRoleLabel = formatRoleLabel(staffRole);
+
   // DND overrides all other status — show a dedicated DND card.
   if (dnd?.active) {
     const until = dnd.endsAt
@@ -126,6 +131,11 @@ export function WorkingStatusBox() {
           <div className="px-3 py-3 space-y-2 text-xs">
             <div className="flex items-center gap-2 pb-1 border-b border-violet-500/30">
               <span className="font-display font-semibold text-sm text-violet-100">{displayName}</span>
+              {staffRoleLabel && (
+                <span className="inline-flex items-center rounded-full bg-violet-500/20 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-violet-200 ring-1 ring-violet-500/30">
+                  {staffRoleLabel}
+                </span>
+              )}
             </div>
             {dnd.note && <p className="text-foreground/90">{dnd.note}</p>}
             {until && (
@@ -225,7 +235,14 @@ export function WorkingStatusBox() {
         </div>
         <div className="px-3 py-3 space-y-2 text-xs">
           <div className="flex items-center justify-between gap-2 pb-1 border-b border-border/60">
-            <span className="font-display font-semibold text-sm text-foreground truncate">{displayName}</span>
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="font-display font-semibold text-sm text-foreground truncate">{displayName}</span>
+              {staffRoleLabel && (
+                <span className="inline-flex items-center shrink-0 rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary ring-1 ring-primary/40">
+                  {staffRoleLabel}
+                </span>
+              )}
+            </div>
             <ActionIcons />
           </div>
           {shift ? (
