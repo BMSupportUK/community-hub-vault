@@ -15,6 +15,8 @@ import { formatRoleLabel } from "@/lib/role-label";
 
 type Shift = { id: string; clock_in: string };
 type Break = { id: string; kind: BreakKind; started_at: string };
+type NextSlot = { id: string; shift_date: string; start_time: string; end_time: string };
+
 
 export function WorkingStatusBox({ stackActions = false }: { stackActions?: boolean } = {}) {
   const { user, roles } = useAuth();
