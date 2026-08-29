@@ -475,7 +475,7 @@ function HomeLayout() {
         <ChannelColumn
           title="Support Community"
           groups={channelsQuery.isLoading && channels === null ? channelSkeletonGroups : groups}
-          header={<WorkingStatusBox />}
+          header={<WorkingStatusBox stackActions />}
           onAddGroup={isAdmin ? () => setShowAddGroup(true) : undefined}
           onReorderChannels={isAdmin && channels !== null ? reorderChannels : undefined}
           onReorderGroups={isAdmin && channels !== null ? reorderGroups : undefined}
@@ -497,7 +497,7 @@ function HomeLayout() {
                   groups={
                     channelsQuery.isLoading && channels === null ? channelSkeletonGroups : groups
                   }
-                  header={<WorkingStatusBox />}
+                  header={<WorkingStatusBox stackActions />}
                   onAddGroup={isAdmin ? () => setShowAddGroup(true) : undefined}
                   onReorderChannels={isAdmin && channels !== null ? reorderChannels : undefined}
                   onReorderGroups={isAdmin && channels !== null ? reorderGroups : undefined}
