@@ -129,8 +129,12 @@ export function HomeChannelsSidebar() {
             })),
           },
         ]}
-        header={<ServiceStatusBox />}
-        footer={<WorkingStatusBox />}
+        footer={
+          <div className="space-y-4">
+            <ServiceStatusBox />
+            <WorkingStatusBox />
+          </div>
+        }
       />
     );
   }
@@ -138,8 +142,12 @@ export function HomeChannelsSidebar() {
     <ChannelColumn
       title="Support Community"
       groups={groups}
-      header={<ServiceStatusBox />}
-      footer={<WorkingStatusBox />}
+      footer={
+        <div className="space-y-4">
+          <ServiceStatusBox />
+          <WorkingStatusBox />
+        </div>
+      }
     />
   );
 }
