@@ -619,7 +619,7 @@ function ShiftsPage() {
 
           {/* ROTA */}
           <TabsContent value="rota" className="mt-6">
-            <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+            <div className="mb-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="rounded-xl bg-surface border border-border p-3 text-center">
                 <div className="text-xs uppercase tracking-wide text-muted-foreground">Weekly target</div>
                 <div className="font-display text-2xl font-bold text-foreground">{weeklyTarget}</div>
@@ -632,14 +632,26 @@ function ShiftsPage() {
                 <div className="text-xs uppercase tracking-wide text-muted-foreground">Remaining</div>
                 <div className={cn("font-display text-2xl font-bold", weeklyRemaining > 0 ? "text-rose-300" : "text-emerald-300")}>{weeklyRemaining}</div>
               </div>
-              <div className="rounded-xl bg-surface border border-border p-3 text-center">
-                <div className="text-xs uppercase tracking-wide text-muted-foreground">Owner / Mgmt</div>
-                <div className="font-display text-xl font-bold text-foreground">{roleTargets.admin.filled + roleTargets.management.filled}<span className="text-sm text-muted-foreground font-normal">/{roleTargets.admin.target + roleTargets.management.target}</span></div>
-              </div>
-              <div className="rounded-xl bg-surface border border-border p-3 text-center">
-                <div className="text-xs uppercase tracking-wide text-muted-foreground">Staff</div>
-                <div className="font-display text-xl font-bold text-foreground">{roleTargets.staff.filled}<span className="text-sm text-muted-foreground font-normal">/{roleTargets.staff.target}</span></div>
-              </div>
+            </div>
+
+            <div className="mb-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+              {(["admin", "management", "staff", "moderator"] as ShiftRole[]).map((role) => {
+                const t = roleTargets[role];
+                const remaining = Math.max(0, t.target - t.filled);
+                return (
+                  <div key={role} className={cn("rounded-xl border p-3 text-center", remaining > 0 ? "bg-surface border-border" : "bg-emerald-500/10 border-emerald-500/40")}>
+                    <div className={cn("text-[10px] uppercase tracking-wide font-semibold", role === "admin" ? "text-amber-300" : role === "management" ? "text-violet-300" : role === "staff" ? "text-sky-300" : "text-emerald-300")}>
+                      {roleLabel(role)}
+                    </div>
+                    <div className="font-display text-xl font-bold text-foreground mt-0.5">
+                      {t.filled}<span className="text-sm text-muted-foreground font-normal">/{t.target}</span>
+                    </div>
+                    <div className={cn("text-[11px] font-medium", remaining > 0 ? "text-rose-300" : "text-emerald-300")}>
+                      {remaining > 0 ? `${remaining} needed` : "covered"}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
 
             <div className="flex flex-wrap items-center gap-3 mb-4">
