@@ -183,26 +183,6 @@ function AuthLayout() {
                 <span className="hidden xl:inline">User roles</span>
               </Link>
             )}
-            {isStaff && (
-              <Link
-                to="/clock"
-                title="Clock in / out"
-                className="flex items-center gap-2 rounded-full px-3 py-1.5 bg-surface-2 hover:bg-primary hover:text-primary-foreground text-xs font-medium transition-colors"
-              >
-                <Clock className="size-4" />
-                <span className="hidden xl:inline">Clock</span>
-              </Link>
-            )}
-            {isStaff && (
-              <Link
-                to="/shifts"
-                title="Shifts"
-                className="flex items-center justify-center size-9 rounded-full bg-surface-2 hover:bg-primary hover:text-primary-foreground text-muted-foreground transition-colors"
-                aria-label="Shifts"
-              >
-                <Calendar className="size-4" />
-              </Link>
-            )}
             {user && (
               <DeferUntilIdle>
                 <MentionsBadge />
