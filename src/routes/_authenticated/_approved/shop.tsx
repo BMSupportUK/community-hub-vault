@@ -1327,30 +1327,28 @@ function Storefront() {
   }) => {
 
     if (!user || cartItems.length === 0) return;
-    // Guard against double-submits / accidental duplicate orders: if the same
-    // user already has an unpaid pending order for the same amount created in
-    // the last 15 minutes, reuse it instead of creating another one.
+    // Guard against double-submits / accidental duplicate orders.
     if (placingRef.current) return;
     placingRef.current = true;
-    try {
-      const since = new Date(Date.now() - 15 * 60 * 1000).toISOString();
-      const { data: dupe } = await supabase
-        .from("orders")
-        .select("id")
-        .eq("user_id", user.id)
-        .eq("status", "pending")
-        .is("paid_at", null)
-        .gte("created_at", since)
-        .limit(1)
-        .maybeSingle();
-      if (dupe?.id) {
-        toast.error("You already have a pending order — please pay or cancel it before placing another.");
-        setShowCheckout(false);
-        return;
-      }
-    } finally {
+    setTimeout(() => {
       placingRef.current = false;
+    }, 8000);
+    const since = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+    const { data: dupe } = await supabase
+      .from("orders")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("status", "pending")
+      .is("paid_at", null)
+      .gte("created_at", since)
+      .limit(1)
+      .maybeSingle();
+    if (dupe?.id) {
+      toast.error("You already have a pending order — please pay or cancel it before placing another.");
+      setShowCheckout(false);
+      return;
     }
+
 
     let verifiedDiscountCents = 0;
     const submittedCode = info.discount_code.trim();
