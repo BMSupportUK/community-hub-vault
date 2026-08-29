@@ -307,12 +307,56 @@ export const getBoroMatchCentre = createServerFn({ method: "GET" }).handler(
           };
         }
       }
+      // ESPN's schedule feed can stay on "in play" long after full time. Our
+      // own fixture table (BBC-fed) is the authority on a game being over, so
+      // read the finished Boro games directly and use them to (a) kill a stale
+      // live strip and (b) promote the newest finished game to last result.
+      const { data: finishedRows } = await supabaseAdmin
+        .from("boro_fixtures")
+        .select("competition, home_team, away_team, kickoff_at, venue, home_score, away_score, status")
+        .eq("status", "FINISHED")
+        .lt("kickoff_at", new Date().toISOString())
+        .order("kickoff_at", { ascending: false })
+        .limit(10);
+      const finished = (finishedRows ?? []).filter((row: any) =>
+        isBoroMatch({ home: row.home_team, away: row.away_team }),
+      );
+      const sameFixture = (
+        a: { home: string; away: string; kickoff: string },
+        row: any,
+      ) => {
+        const norm = (v: string) => v.toLowerCase().replace(/[^a-z]/g, "");
+        const gap = Math.abs(Date.parse(a.kickoff) - Date.parse(String(row.kickoff_at)));
+        return (
+          norm(a.home) === norm(String(row.home_team)) &&
+          norm(a.away) === norm(String(row.away_team)) &&
+          Number.isFinite(gap) &&
+          gap < 6 * 60 * 60 * 1000
+        );
+      };
+      const finishedRowToResult = (row: any): LastResult => ({
+        date: new Date(row.kickoff_at).toISOString(),
+        competition: row.competition ?? "Championship",
+        home: row.home_team,
+        away: row.away_team,
+        homeScore: row.home_score ?? 0,
+        awayScore: row.away_score ?? 0,
+        venue: row.venue ?? null,
+        homeLogo: null,
+        awayLogo: null,
+      });
       const patch: Record<string, unknown> = {
         fetched_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
       if (!dto.lastResultManual) {
-        const lr = live.lastResult ?? lastFromDb;
+        const espnLast = live.lastResult ?? lastFromDb;
+        const newestFinished = finished[0] ? finishedRowToResult(finished[0]) : null;
+        const lr =
+          newestFinished &&
+          (!espnLast || Date.parse(newestFinished.date) > Date.parse(espnLast.date))
+            ? newestFinished
+            : espnLast;
         if (lr) {
           const enriched = lr.eventId
             ? null
