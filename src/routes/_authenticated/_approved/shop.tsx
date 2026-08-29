@@ -1597,6 +1597,32 @@ function Storefront() {
               />
             </TabsContent>
 
+            <TabsContent value="how_to_order" className="mt-3 min-h-0 flex-1 overflow-y-auto scrollbar-hide">
+              <section className="relative overflow-hidden -mx-6 -mt-6">
+                <div className="absolute inset-0">
+                  <img src={shopHero} alt="" aria-hidden className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-background/85 via-background/40 to-transparent" />
+                  <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-b from-transparent to-background" />
+                </div>
+                <div className="relative px-6 md:px-10 pt-10 md:pt-16 pb-16 md:pb-24 max-w-3xl">
+                  <div className="text-xs uppercase tracking-[0.2em] text-sky-200/90 mb-3">
+                    BM Support · Shop
+                  </div>
+                  <h1 className="font-display text-4xl md:text-6xl font-bold leading-tight text-white drop-shadow">
+                    How To Purchase or Renew Your Subscription
+                  </h1>
+                  <p className="mt-4 text-sky-100/90 max-w-xl text-base md:text-lg">
+                    Watch the short walkthrough below to see exactly how to place a new order or
+                    renew your existing subscription — from picking a package to pressing
+                    "I've paid".
+                  </p>
+                </div>
+              </section>
+
+              <HowToOrderVideo isAdmin={isAdmin} />
+            </TabsContent>
+
+
             <TabsContent value="shop" className="mt-3 min-h-0 flex-1 overflow-y-auto scrollbar-hide pb-5">
               <div
                 id="products"
