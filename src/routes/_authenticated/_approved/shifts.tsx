@@ -271,6 +271,28 @@ function ShiftsPage() {
     load();
   };
 
+  const openModHours = (d: Date) => {
+    const bh = businessHours[d.getDay()];
+    setModHoursForm({ start: bh?.open ?? "09:00", end: bh?.close ?? "19:00" });
+    setModHoursDay(fmtDate(d));
+  };
+
+  const saveModHours = async () => {
+    if (!modHoursDay) return;
+    if (modHoursForm.end <= modHoursForm.start) return toast.error("Finish must be after start");
+    setSavingModHours(true);
+    try {
+      await addModeratorHours({ data: { shift_date: modHoursDay, start_time: modHoursForm.start, end_time: modHoursForm.end } });
+      toast.success("Hours added to the rota");
+      setModHoursDay(null);
+      load();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not add your hours");
+    } finally {
+      setSavingModHours(false);
+    }
+  };
+
   const adminDeleteSlot = async (id: string) => {
     if (!confirm("Delete this slot?")) return;
     const { error } = await supabase.from("shift_slots").delete().eq("id", id);
