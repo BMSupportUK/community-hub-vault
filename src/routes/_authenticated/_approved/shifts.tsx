@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Calendar as CalendarIcon, Plus, Trash2, Check, X, Clock, Users, Plane, Repeat, ShieldCheck, Loader2, Zap, Save, Globe, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { addModeratorHours } from "@/lib/moderator-hours.functions";
 import { useTimezone, zonedWallTimeToUtcMs } from "@/hooks/use-timezone";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -54,7 +55,9 @@ interface Swap {
 }
 interface Profile { id: string; username: string | null; display_name: string | null; }
 
-const DAY_TARGET = 3;
+/** How many block shifts each role covers per day. */
+const ROLE_SHIFT_QUOTA: Record<string, number> = { admin: 2, management: 1, staff: 3 };
+const DAY_TARGET = ROLE_SHIFT_QUOTA.admin + ROLE_SHIFT_QUOTA.management + ROLE_SHIFT_QUOTA.staff; // 6
 
 type BlockPreset = { id: string; label: string; start: string; end: string; days: number[] /* 0=Sun..6=Sat */ };
 const DEFAULT_PRESETS: BlockPreset[] = [
@@ -129,13 +132,24 @@ function useLocalDisplayTz(rotaTz: string) {
 }
 
 function ShiftsPage() {
-  const { user, hasAny, hasRole } = useAuth();
+  const { user, hasAny, hasRole, roles } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
   const isStaffOrAdmin = hasAny(["admin", "management", "staff"]);
   const { toUtcMs, tz } = useTimezone();
   const { localMode, toggle: toggleLocalTz, browserTz, fmtRange } = useLocalDisplayTz(tz);
   const isMod = hasRole("moderator");
   const canPick = isStaffOrAdmin || isMod;
+  // Daily block-shift quota: Owner 2, Management 1, Staff 3.
+  const myQuota = useMemo(
+    () => Math.max(0, ...roles.map((r) => ROLE_SHIFT_QUOTA[r] ?? 0)),
+    [roles],
+  );
+
+  const [businessHours, setBusinessHours] = useState<Record<number, { open: string; close: string; closed: boolean }>>({});
+  const [modHoursDay, setModHoursDay] = useState<string | null>(null);
+  const [modHoursForm, setModHoursForm] = useState({ start: "09:00", end: "19:00" });
+  const [savingModHours, setSavingModHours] = useState(false);
+
 
   const [tab, setTab] = useState("welcome");
   const [weekStart, setWeekStart] = useState<Date>(() => startOfWeek(new Date()));
@@ -198,6 +212,22 @@ function ShiftsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [weekStart.getTime()]);
 
+  // Business opening hours — used as the default start/finish for moderator hourly slots.
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.from("business_hours").select("day_of_week, open_time, close_time, is_closed");
+      const map: Record<number, { open: string; close: string; closed: boolean }> = {};
+      for (const r of data ?? []) {
+        map[r.day_of_week] = {
+          open: String(r.open_time ?? "09:00").slice(0, 5),
+          close: String(r.close_time ?? "19:00").slice(0, 5),
+          closed: !!r.is_closed,
+        };
+      }
+      setBusinessHours(map);
+    })();
+  }, []);
+
   const slotsByDay = useMemo(() => {
     const m: Record<string, Slot[]> = {};
     for (const s of slots) (m[s.shift_date] ||= []).push(s);
@@ -217,6 +247,14 @@ function ShiftsPage() {
     if (!user) return;
     if (s.slot_type === "hourly" && !isMod && !isAdmin) return toast.error("Hourly slots are for moderators");
     if (s.slot_type === "shift" && !isStaffOrAdmin) return toast.error("Full shifts are for staff");
+    if (s.slot_type === "shift") {
+      const mineThatDay = (slotsByDay[s.shift_date] ?? []).filter(
+        (x) => x.slot_type === "shift" && x.assigned_to === user.id,
+      ).length;
+      if (myQuota > 0 && mineThatDay >= myQuota) {
+        return toast.error(`Your role covers ${myQuota} shift${myQuota === 1 ? "" : "s"} per day`);
+      }
+    }
     const { error } = await supabase.from("shift_slots").update({ assigned_to: user.id }).eq("id", s.id).is("assigned_to", null);
     if (error) {
       if ((error as any).code === "23505") return toast.error("You're already on another shift at this time");
@@ -232,6 +270,28 @@ function ShiftsPage() {
     if (error) return toast.error(error.message);
     toast.success("Shift released");
     load();
+  };
+
+  const openModHours = (d: Date) => {
+    const bh = businessHours[d.getDay()];
+    setModHoursForm({ start: bh?.open ?? "09:00", end: bh?.close ?? "19:00" });
+    setModHoursDay(fmtDate(d));
+  };
+
+  const saveModHours = async () => {
+    if (!modHoursDay) return;
+    if (modHoursForm.end <= modHoursForm.start) return toast.error("Finish must be after start");
+    setSavingModHours(true);
+    try {
+      await addModeratorHours({ data: { shift_date: modHoursDay, start_time: modHoursForm.start, end_time: modHoursForm.end } });
+      toast.success("Hours added to the rota");
+      setModHoursDay(null);
+      load();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not add your hours");
+    } finally {
+      setSavingModHours(false);
+    }
   };
 
   const adminDeleteSlot = async (id: string) => {
@@ -461,9 +521,9 @@ function ShiftsPage() {
                 Browse the upcoming rota, claim open shifts that fit your role, and manage time off — all in one place.
               </p>
               <ul className="mt-5 space-y-2 text-foreground/80 max-w-2xl list-disc pl-5">
-                <li><strong>Staff & Management:</strong> claim full shifts on the rota.</li>
-                <li><strong>Moderators:</strong> pick hourly slots assigned by management.</li>
-                <li>Each day needs <strong>{DAY_TARGET} staff filled</strong> — keep an eye on the day counters.</li>
+                <li><strong>Staff &amp; Management:</strong> claim full shifts on the rota.</li>
+                <li><strong>Moderators:</strong> add your own hours — they default to the business opening hours, and you can change the start and finish.</li>
+                <li>Daily cover: <strong>Owner {ROLE_SHIFT_QUOTA.admin}</strong>, <strong>Management {ROLE_SHIFT_QUOTA.management}</strong>, <strong>Staff {ROLE_SHIFT_QUOTA.staff}</strong> — {DAY_TARGET} shifts in total per day.</li>
                 <li>Need time off? Submit a holiday request. Owner will review.</li>
                 <li>Need to swap a shift? Open the slot and tap <em>Request swap</em>.</li>
               </ul>
@@ -538,11 +598,22 @@ function ShiftsPage() {
                         );
                       })}
                     </div>
+                    {(isMod || isAdmin) && !past && (
+                      <button
+                        onClick={() => openModHours(d)}
+                        className="mt-2 z-20 relative w-full rounded-lg border border-dashed border-accent/60 text-accent-foreground/90 bg-accent/10 hover:bg-accent/20 text-[11px] py-1.5 font-semibold"
+                      >
+                        + My hours{businessHours[d.getDay()] && !businessHours[d.getDay()].closed
+                          ? ` (${businessHours[d.getDay()].open}–${businessHours[d.getDay()].close})`
+                          : ""}
+                      </button>
+                    )}
                   </div>
                 );
               })}
             </div>
           </TabsContent>
+
 
           {/* MY SHIFTS */}
           <TabsContent value="mine" className="mt-6">
@@ -799,6 +870,34 @@ function ShiftsPage() {
       </div>
 
       {/* SWAP DIALOG */}
+      {/* Moderator hours */}
+      <Dialog open={!!modHoursDay} onOpenChange={(o) => { if (!o) setModHoursDay(null); }}>
+        <DialogContent className="bg-surface-2 border-border">
+          <DialogHeader>
+            <DialogTitle className="text-foreground">Your hours{modHoursDay ? ` — ${modHoursDay}` : ""}</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Defaults to the business opening hours for that day. Change the start and finish to suit you.
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-muted-foreground">Start</Label>
+              <Input type="time" value={modHoursForm.start} onChange={(e) => setModHoursForm({ ...modHoursForm, start: e.target.value })} className="bg-surface border-border text-foreground" />
+            </div>
+            <div>
+              <Label className="text-muted-foreground">Finish</Label>
+              <Input type="time" value={modHoursForm.end} onChange={(e) => setModHoursForm({ ...modHoursForm, end: e.target.value })} className="bg-surface border-border text-foreground" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" className="bg-surface border-border text-foreground" onClick={() => setModHoursDay(null)}>Cancel</Button>
+            <Button className="bg-gradient-primary text-white border-0" disabled={savingModHours} onClick={saveModHours}>
+              {savingModHours ? <Loader2 className="size-4 mr-2 animate-spin" /> : null}Add to rota
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={!!swapFor} onOpenChange={(o) => { if (!o) setSwapFor(null); }}>
         <DialogContent>
           <DialogHeader><DialogTitle>Request shift swap</DialogTitle></DialogHeader>
