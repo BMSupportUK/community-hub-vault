@@ -894,6 +894,19 @@ function ShiftsPage() {
                       </SelectContent>
                     </Select>
                   </div>
+                  {newSlot.type === "shift" && (
+                    <div className="md:col-span-2">
+                      <Label className="text-muted-foreground">For role</Label>
+                      <Select value={newSlot.role} onValueChange={(v) => setNewSlot({ ...newSlot, role: v as ShiftRole })}>
+                        <SelectTrigger className="bg-surface-2 border-border text-foreground"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {SHIFT_ROLES.filter((r) => r.value !== "moderator").map((r) => (
+                            <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                   <div className="md:col-span-5">
                     <Label className="text-muted-foreground">Notes (optional)</Label>
                     <Input value={newSlot.notes} onChange={(e) => setNewSlot({ ...newSlot, notes: e.target.value })} className="bg-surface-2 border-border text-foreground" />
