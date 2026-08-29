@@ -17,9 +17,12 @@ type Break = { id: string; kind: BreakKind; started_at: string };
 export function WorkingStatusBox() {
   const { user } = useAuth();
   const dnd = useDndStatus(user?.id);
+  const notifyShift = useServerFn(sendShiftEventPush);
+  const notifyBreak = useServerFn(sendBreakEventPush);
   const [shift, setShift] = useState<Shift | null>(null);
   const [brk, setBrk] = useState<Break | null>(null);
   const [now, setNow] = useState(() => Date.now());
+  const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
