@@ -710,7 +710,14 @@ function ShiftsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {myShifts.map((s) => (
                   <div key={s.id} className="rounded-2xl bg-surface border border-border p-4">
-                    <div className="text-foreground font-semibold">{dayLabel(new Date(s.shift_date))}</div>
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="text-foreground font-semibold">{dayLabel(new Date(s.shift_date))}</div>
+                      {s.required_role && (
+                        <span className={cn("text-[10px] px-2 py-0.5 rounded-full border font-semibold uppercase tracking-wide", roleBadgeClass(s.required_role))}>
+                          {roleLabel(s.required_role)}
+                        </span>
+                      )}
+                    </div>
                     <div className="font-mono text-primary mt-1">{fmtRange(s.shift_date, s.start_time, s.end_time)}</div>
                     <div className="text-xs text-muted-foreground mt-1 uppercase">{s.slot_type}</div>
                     {s.notes && <div className="text-sm text-muted-foreground mt-2">{s.notes}</div>}
