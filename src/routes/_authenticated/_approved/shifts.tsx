@@ -285,7 +285,7 @@ function ShiftsPage() {
   const weeklyRemaining = weeklyTarget - weeklyFilled;
 
   const roleTargets = useMemo(() => {
-    const targets: Record<AppRole, { target: number; filled: number; remaining: number }> = {
+    const targets: Partial<Record<AppRole, { target: number; filled: number; remaining: number }>> = {
       admin: { target: ROLE_SHIFT_QUOTA.admin * 7, filled: 0, remaining: 0 },
       management: { target: ROLE_SHIFT_QUOTA.management * 7, filled: 0, remaining: 0 },
       staff: { target: ROLE_SHIFT_QUOTA.staff * 7, filled: 0, remaining: 0 },
