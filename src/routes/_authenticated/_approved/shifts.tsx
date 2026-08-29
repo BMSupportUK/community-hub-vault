@@ -396,10 +396,21 @@ function ShiftsPage() {
         );
       }) as any[];
     if (rows.length === 0) return toast.error("No presets match this week");
-    // Insert one-by-one and skip duplicates so partial weeks still fill in.
+    // Don't re-create slots that already exist for the same day/time/role.
+    const existing = new Map<string, number>();
+    for (const s of slots) {
+      const k = `${s.shift_date}|${s.start_time.slice(0, 5)}|${s.end_time.slice(0, 5)}|${s.required_role ?? ""}`;
+      existing.set(k, (existing.get(k) ?? 0) + 1);
+    }
     let added = 0;
     let skipped = 0;
-    for (const row of rows) {
+    const toInsert = rows.filter((row) => {
+      const k = `${row.shift_date}|${row.start_time.slice(0, 5)}|${row.end_time.slice(0, 5)}|${row.required_role}`;
+      const left = existing.get(k) ?? 0;
+      if (left > 0) { existing.set(k, left - 1); skipped++; return false; }
+      return true;
+    });
+    for (const row of toInsert) {
       const { error } = await supabase.from("shift_slots").insert(row);
       if (!error) added++;
       else if ((error as any).code === "23505") skipped++;
