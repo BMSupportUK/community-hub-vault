@@ -198,6 +198,10 @@ export const getBoroMatchCentre = createServerFn({ method: "GET" }).handler(
       // didn't supply, and never override manual admin entries.
       let nextFromDb: NextFixture | null = null;
       let lastFromDb: LastResult | null = null;
+      // A game that has kicked off but not finished, taken straight from our
+      // own fixture feed. ESPN sometimes lags on kick-off, which used to leave
+      // the card stuck on the previous (midweek) result while Boro were playing.
+      let liveFromDb: LiveMatch | null = null;
       // ESPN sometimes hasn't listed the next game yet, which leaves the
       // weekly pick stuck on the midweek game it already played. Treat a
       // "next fixture" whose kick-off is in the past as missing too, so the
