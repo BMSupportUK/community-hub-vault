@@ -366,32 +366,35 @@ function ShiftsPage() {
     load();
   };
 
-  const addBlockShift = async (preset: BlockPreset, date: string) => {
+  const addBlockShift = async (preset: BlockPreset, date: string, role: ShiftRole = newSlot.role) => {
     if (!date) return toast.error("Pick a date");
     const { error } = await supabase.from("shift_slots").insert({
       shift_date: date, start_time: preset.start, end_time: preset.end,
-      slot_type: "shift", notes: preset.label, created_by: user?.id ?? null,
+      slot_type: "shift", required_role: role, notes: preset.label, created_by: user?.id ?? null,
     });
     if (error) {
       if ((error as any).code === "23505") return toast.error(`${preset.label} already exists for this date`);
       return toast.error(error.message);
     }
-    toast.success(`Shift added successfully — ${preset.label}`);
+    toast.success(`Shift added successfully — ${preset.label} (${roleLabel(role)})`);
     load();
   };
 
   const fillWeekFromPresets = async () => {
+    // One slot per role per day, following the daily cover quota (Owner 2, Management 1, Staff 3).
     const rows = days
-      .map((d) => {
+      .flatMap((d) => {
         const dow = d.getDay();
         const p = presets.find((pp) => pp.days.includes(dow));
-        if (!p) return null;
-        return {
-          shift_date: fmtDate(d), start_time: p.start, end_time: p.end,
-          slot_type: "shift" as SlotType, notes: p.label, created_by: user?.id ?? null,
-        };
-      })
-      .filter(Boolean) as any[];
+        if (!p) return [];
+        return (["admin", "management", "staff"] as ShiftRole[]).flatMap((role) =>
+          Array.from({ length: ROLE_SHIFT_QUOTA[role] ?? 0 }, () => ({
+            shift_date: fmtDate(d), start_time: p.start, end_time: p.end,
+            slot_type: "shift" as SlotType, required_role: role,
+            notes: `${p.label} — ${roleLabel(role)}`, created_by: user?.id ?? null,
+          })),
+        );
+      }) as any[];
     if (rows.length === 0) return toast.error("No presets match this week");
     // Insert one-by-one and skip duplicates so partial weeks still fill in.
     let added = 0;
