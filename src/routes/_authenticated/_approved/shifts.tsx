@@ -672,32 +672,28 @@ function ShiftsPage() {
             </div>
 
             <div className="flex flex-wrap items-center gap-2 mb-4">
-              <button
-                onClick={() => setRotaRole("all")}
-                className={cn(
-                  "text-[11px] px-2.5 py-1 rounded-full border transition-colors font-medium",
-                  rotaRole === "all"
-                    ? "bg-primary/20 text-foreground border-primary/50"
-                    : "bg-surface border-border text-muted-foreground hover:bg-surface-2",
-                )}
-              >
-                All
-              </button>
-              {SHIFT_ROLES.map(({ value, label }) => (
-                <button
-                  key={value}
-                  onClick={() => setRotaRole(value)}
-                  className={cn(
-                    "text-[11px] px-2.5 py-1 rounded-full border transition-colors font-medium flex items-center gap-1.5",
-                    rotaRole === value
-                      ? roleBadgeClass(value)
-                      : "bg-surface border-border text-muted-foreground hover:bg-surface-2",
-                  )}
-                >
-                  <span className={cn("size-1.5 rounded-full", value === "admin" ? "bg-amber-400" : value === "management" ? "bg-violet-400" : value === "staff" ? "bg-sky-400" : "bg-emerald-400")} />
-                  {label}
-                </button>
-              ))}
+              {myRotaRoles.length === 0 ? (
+                <span className="text-xs text-muted-foreground">No claimable roles on your account.</span>
+              ) : (
+                myRotaRoles.map((value) => {
+                  const label = roleLabel(value);
+                  return (
+                    <button
+                      key={value}
+                      onClick={() => setRotaRole(value)}
+                      className={cn(
+                        "text-[11px] px-2.5 py-1 rounded-full border transition-colors font-medium flex items-center gap-1.5",
+                        rotaRole === value
+                          ? roleBadgeClass(value)
+                          : "bg-surface border-border text-muted-foreground hover:bg-surface-2",
+                      )}
+                    >
+                      <span className={cn("size-1.5 rounded-full", value === "admin" ? "bg-amber-400" : value === "management" ? "bg-violet-400" : value === "staff" ? "bg-sky-400" : "bg-emerald-400")} />
+                      {label}
+                    </button>
+                  );
+                })
+              )}
             </div>
 
             <div className="flex flex-wrap items-center gap-3 mb-4">
