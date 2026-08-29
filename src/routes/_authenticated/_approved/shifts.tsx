@@ -709,7 +709,7 @@ function ShiftsPage() {
                 const dateStr = fmtDate(d);
                 const daySlots = selectedRoleSlotsByDay[dateStr] ?? [];
                 const filled = daySlots.filter((slot) => slot.assigned_to).length;
-                const dailyTarget = ROLE_SHIFT_QUOTA[rotaRole] ?? daySlots.length;
+                const dailyTarget = daySlots.length;
                 const ok = dailyTarget === 0 || filled >= dailyTarget;
                 const past = isDayPastOrStarted(d);
                 return (
