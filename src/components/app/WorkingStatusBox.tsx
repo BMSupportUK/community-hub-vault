@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { CircleDot, Briefcase, LogIn, LogOut, Coffee, UtensilsCrossed, PlayCircle, Loader2 } from "lucide-react";
+import { CircleDot, Briefcase, LogIn, LogOut, Coffee, UtensilsCrossed, PlayCircle, Loader2, Calendar, Clock } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
