@@ -285,7 +285,7 @@ function ShiftsPage() {
   const weeklyRemaining = weeklyTarget - weeklyFilled;
 
   const roleTargets = useMemo(() => {
-    const targets: Record<AppRole, { target: number; filled: number; remaining: number }> = {
+    const targets: Partial<Record<AppRole, { target: number; filled: number; remaining: number }>> = {
       admin: { target: ROLE_SHIFT_QUOTA.admin * 7, filled: 0, remaining: 0 },
       management: { target: ROLE_SHIFT_QUOTA.management * 7, filled: 0, remaining: 0 },
       staff: { target: ROLE_SHIFT_QUOTA.staff * 7, filled: 0, remaining: 0 },
@@ -294,14 +294,14 @@ function ShiftsPage() {
     for (const s of slots) {
       if (s.slot_type !== "shift") continue;
       const role = (s.required_role || "staff") as AppRole;
-      if (targets[role]) {
-        targets[role].filled += s.assigned_to ? 1 : 0;
-      }
+      const t = targets[role];
+      if (t) t.filled += s.assigned_to ? 1 : 0;
     }
     for (const role of Object.keys(targets) as AppRole[]) {
-      targets[role].remaining = Math.max(0, targets[role].target - targets[role].filled);
+      const t = targets[role]!;
+      t.remaining = Math.max(0, t.target - t.filled);
     }
-    return targets;
+    return targets as Record<ShiftRole, { target: number; filled: number; remaining: number }>;
   }, [slots]);
 
 
