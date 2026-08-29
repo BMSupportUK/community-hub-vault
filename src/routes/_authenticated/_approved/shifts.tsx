@@ -669,8 +669,11 @@ function ShiftsPage() {
                     )}
                     <div className="flex items-center justify-between mb-2">
                       <div className="text-sm font-semibold text-foreground">{dayLabel(d)}</div>
-                      <span className={cn("text-[11px] px-2 py-0.5 rounded-full font-semibold", past ? "bg-rose-500/20 text-rose-200 border border-rose-500/40" : ok ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40" : "bg-rose-500/20 text-rose-300 border border-rose-500/40")}>{past ? "Closed" : `${filled}/${DAY_TARGET}`}</span>
+                      <span className={cn("text-[11px] px-2 py-0.5 rounded-full font-semibold", past ? "bg-rose-500/20 text-rose-200 border border-rose-500/40" : ok ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40" : "bg-rose-500/20 text-rose-300 border border-rose-500/40")}>
+                        {past ? "Closed" : `${filled}/${DAY_TARGET}${filled < DAY_TARGET ? ` · ${DAY_TARGET - filled} more` : ""}`}
+                      </span>
                     </div>
+
                     <div className="space-y-2 flex-1">
                       {daySlots.length === 0 && <div className="text-xs text-muted-foreground italic">No slots</div>}
                       {daySlots.map((s) => {
