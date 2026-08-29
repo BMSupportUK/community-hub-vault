@@ -318,18 +318,6 @@ function ShiftsPage() {
     return targets;
   }, [slots]);
 
-  const selectedRoleSlots = useMemo(
-    () => visibleSlots.filter((slot) => (slot.required_role || "staff") === rotaRole),
-    [visibleSlots, rotaRole],
-  );
-
-  const selectedRoleSlotsByDay = useMemo(() => {
-    const grouped: Record<string, Slot[]> = {};
-    for (const slot of selectedRoleSlots) (grouped[slot.shift_date] ||= []).push(slot);
-    return grouped;
-  }, [selectedRoleSlots]);
-
-
   const profName = (id: string | null) => {
     if (!id) return "";
     const p = profiles[id];
