@@ -198,6 +198,10 @@ export const getBoroMatchCentre = createServerFn({ method: "GET" }).handler(
       // didn't supply, and never override manual admin entries.
       let nextFromDb: NextFixture | null = null;
       let lastFromDb: LastResult | null = null;
+      // A game that has kicked off but not finished, taken straight from our
+      // own fixture feed. ESPN sometimes lags on kick-off, which used to leave
+      // the card stuck on the previous (midweek) result while Boro were playing.
+      let liveFromDb: LiveMatch | null = null;
       // ESPN sometimes hasn't listed the next game yet, which leaves the
       // weekly pick stuck on the midweek game it already played. Treat a
       // "next fixture" whose kick-off is in the past as missing too, so the
@@ -253,6 +257,30 @@ export const getBoroMatchCentre = createServerFn({ method: "GET" }).handler(
             homeLogo: null,
             awayLogo: null,
           };
+          const uKo = new Date(u.kickoff_at).getTime();
+          const uStatus = String(u.status ?? "").toUpperCase();
+          if (
+            uStatus !== "FINISHED" &&
+            Number.isFinite(uKo) &&
+            Date.now() >= uKo &&
+            Date.now() <= uKo + 4 * 60 * 60 * 1000
+          ) {
+            liveFromDb = {
+              kickoff: new Date(uKo).toISOString(),
+              competition: u.competition ?? "Championship",
+              home: u.home_team,
+              away: u.away_team,
+              homeScore: u.home_score ?? 0,
+              awayScore: u.away_score ?? 0,
+              statusDetail: "Live",
+              clock: null,
+              inPlay: true,
+              homeLogo: null,
+              awayLogo: null,
+              eventId: null,
+              espnSlug: null,
+            };
+          }
         }
         // A live fixture already has scores, but it is not a result. Only let
         // the database fallback promote a row into "last result" after the
@@ -310,8 +338,15 @@ export const getBoroMatchCentre = createServerFn({ method: "GET" }).handler(
         else if (invalidCachedLast) patch.last_result = null;
       }
       if (!dto.nextFixtureManual) {
+        // Our own fixture list wins whenever ESPN's "next" game is in the past,
+        // as long as ours is either still to come or currently being played —
+        // otherwise a game kicking off held the card on the previous result.
+        const dbNextIsCurrent =
+          !!nextFromDb &&
+          (Date.parse(nextFromDb.kickoff) > Date.now() ||
+            Date.parse(nextFromDb.kickoff) > Date.now() - 4 * 60 * 60 * 1000);
         const nf =
-          espnNextIsStale && nextFromDb && Date.parse(nextFromDb.kickoff) > Date.now()
+          espnNextIsStale && dbNextIsCurrent
             ? nextFromDb
             : (live.nextFixture ?? nextFromDb);
 
@@ -333,8 +368,9 @@ export const getBoroMatchCentre = createServerFn({ method: "GET" }).handler(
         .select("*")
         .eq("id", "singleton")
         .maybeSingle();
-      liveMatchCache = { at: Date.now(), value: live.liveMatch ?? null };
-      return { ...rowToDto(fresh), liveMatch: live.liveMatch ?? null };
+      const liveNow = live.liveMatch ?? liveFromDb;
+      liveMatchCache = { at: Date.now(), value: liveNow };
+      return { ...rowToDto(fresh), liveMatch: liveNow };
     } catch (e) {
       console.error("[boro-match-centre] ESPN fetch failed", e);
       return { ...dto, liveMatch: liveMatchCache?.value ?? null };
