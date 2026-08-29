@@ -248,6 +248,18 @@ function ShiftsPage() {
     })();
   }, []);
 
+  // Moderator hourly slots default to the business opening/closing time for that day.
+  useEffect(() => {
+    if (newSlot.type !== "hourly" || !newSlot.date) return;
+    const bh = businessHours[new Date(newSlot.date + "T00:00:00").getDay()];
+    if (!bh) return;
+    setNewSlot((s) =>
+      s.start === bh.open && s.end === bh.close ? s : { ...s, start: bh.open, end: bh.close },
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [newSlot.type, newSlot.date, businessHours]);
+
+
   /** A slot is only relevant to you if it's tagged with a role you hold (admins see everything). */
   const canSeeSlot = (s: Slot) =>
     isAdmin ||
