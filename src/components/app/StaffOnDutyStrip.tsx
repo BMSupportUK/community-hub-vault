@@ -12,6 +12,7 @@ type StaffBreak = { id: string; shift_id: string; user_id: string; kind: BreakKi
 type StaffProfile = { id: string; username: string | null; display_name: string | null; avatar_url: string | null };
 
 const ROLE_ORDER = ["admin", "management", "staff", "moderator"] as const;
+const OFF_ORDER = ["admin", "management", "staff", "moderator"] as const;
 
 export function StaffOnDutySidebar() {
   return <StaffOnDutyStrip variant="sidebar" />;
@@ -56,7 +57,7 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
         .from("profiles").select("id,username,display_name,avatar_url").in("id", ids);
       const map = Object.fromEntries(((profs as StaffProfile[]) ?? []).map((p) => [p.id, p]));
       setProfiles(map);
-      const OFF_ORDER = ["admin", "management", "staff", "moderator"] as const;
+      const isDane = (n: string) => /\bdane\b/i.test(n);
       const off = allIds
         .filter((id) => !workingIds.has(id))
         .map((id) => ({ ...map[id], id, role: bestRole.get(id)! }))
@@ -66,6 +67,8 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
           if (d !== 0) return d;
           const an = a.display_name || a.username || "";
           const bn = b.display_name || b.username || "";
+          if (isDane(an) && !isDane(bn)) return -1;
+          if (!isDane(an) && isDane(bn)) return 1;
           return an.localeCompare(bn);
         });
       setOffDuty(off);
@@ -205,42 +208,56 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
             <div className="text-[11px] font-semibold uppercase tracking-wider text-white/70 mb-2">
               Off duty · {offDuty.length}
             </div>
-            <div className={cn(isSidebar ? "flex flex-col gap-2" : "flex gap-2 overflow-x-auto pb-1")}>
-              {offDuty.map((p) => {
-                const name = p.display_name || p.username || "Staff";
-                return (
-                  <div
-                    key={p.id}
-                    className={cn(
-                      "rounded-lg p-2.5 border border-white/15 bg-white/5 backdrop-blur",
-                      isSidebar ? "w-full" : "shrink-0 min-w-[180px]",
-                    )}
-                  >
-                    <div className="flex items-center gap-2">
-                      <div className="relative">
-                        <img
-                          src={resolveAvatarUrl(p.id, p.avatar_url, roleFlashMap)}
-                          alt={name}
-                          className="size-8 rounded-full object-cover ring-2 ring-white/20 opacity-70 grayscale"
-                        />
-                        <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-2 ring-white bg-gray-400" />
+            <div className={cn("flex", isSidebar ? "flex-col gap-4" : "flex-col gap-4")}>
+              {(() => {
+                const groups: Record<string, typeof offDuty> = {};
+                for (const p of offDuty) {
+                  (groups[p.role] ??= []).push(p);
+                }
+                return OFF_ORDER.filter((r) => groups[r]?.length).map((role) => {
+                  const members = groups[role];
+                  return (
+                    <div key={role}>
+                      <div className={cn("text-[10px] font-bold uppercase tracking-wider mb-1.5 flex items-center gap-1.5", roleFlashClass(roleFlashMap.get(members[0].id)))}>
+                        <span>{formatRoleLabel(role)}</span>
+                        <span className="px-1.5 py-0.5 rounded-full bg-white/10 text-white/80">{members.length}</span>
                       </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-col leading-tight">
-                          <div className={cn("text-sm font-semibold text-white/80 truncate", roleFlashClass(roleFlashMap.get(p.id)))}>{name}</div>
-                          {p.role && (
-                            <span className="text-[9px] font-medium uppercase tracking-wider text-white/60">
-                              {formatRoleLabel(p.role)}
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-[10px] text-white/60">Off duty</div>
-                        <DndCountdown userId={p.id} compact className="mt-1" />
+                      <div className={cn(isSidebar ? "flex flex-col gap-2" : "flex gap-2 overflow-x-auto pb-1")}>
+                        {members.map((p) => {
+                          const name = p.display_name || p.username || "Staff";
+                          return (
+                            <div
+                              key={p.id}
+                              className={cn(
+                                "rounded-lg p-2.5 border border-white/15 bg-white/5 backdrop-blur",
+                                isSidebar ? "w-full" : "shrink-0 min-w-[180px]",
+                              )}
+                            >
+                              <div className="flex items-center gap-2">
+                                <div className="relative">
+                                  <img
+                                    src={resolveAvatarUrl(p.id, p.avatar_url, roleFlashMap)}
+                                    alt={name}
+                                    className="size-8 rounded-full object-cover ring-2 ring-white/20 opacity-70 grayscale"
+                                  />
+                                  <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-2 ring-white bg-gray-400" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="flex flex-col leading-tight">
+                                    <div className={cn("text-sm font-semibold text-white/80 truncate", roleFlashClass(roleFlashMap.get(p.id)))}>{name}</div>
+                                  </div>
+                                  <div className="text-[10px] text-white/60">Off duty</div>
+                                  <DndCountdown userId={p.id} compact className="mt-1" />
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                });
+              })()}
             </div>
           </div>
         )}
