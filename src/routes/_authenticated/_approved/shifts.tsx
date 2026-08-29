@@ -731,25 +731,10 @@ function ShiftsPage() {
                     )}
                     <div className="flex items-center justify-between mb-2">
                       <div className="text-sm font-semibold text-foreground">{dayLabel(d)}</div>
-                      <span className={cn("text-[11px] px-2 py-0.5 rounded-full font-semibold border", past ? "bg-rose-500/20 text-rose-200 border-rose-500/40" : staffOk ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40" : "bg-sky-500/20 text-sky-300 border-sky-500/40")}>
-                        {past ? "Closed" : `Staff ${staffFilled}/${staffTarget}${staffFilled < staffTarget ? ` · ${staffTarget - staffFilled} more` : ""}`}
+                      <span className={cn("text-[11px] px-2 py-0.5 rounded-full font-semibold border", past ? "bg-rose-500/20 text-rose-200 border-rose-500/40" : countOk ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40" : "bg-sky-500/20 text-sky-300 border-sky-500/40")}>
+                        {past ? "Closed" : `${roleLabel(countRole)} ${countFilled}/${countTarget}${countFilled < countTarget ? ` · ${countTarget - countFilled} more` : ""}`}
                       </span>
                     </div>
-
-                    {filled > 0 && (
-                      <div className="mb-2 flex flex-wrap gap-1.5">
-                        {(["admin", "management", "staff", "moderator"] as ShiftRole[]).map((grp) => {
-                          const assigned = (groups[grp] ?? []).filter((s) => s.assigned_to);
-                          if (assigned.length === 0) return null;
-                          return (
-                            <div key={grp} className={cn("flex items-center gap-1.5 text-[10px] px-2 py-0.5 rounded-full border", roleBadgeClass(grp))}>
-                              <span className="font-semibold uppercase tracking-wide">{roleLabel(grp)}</span>
-                              <span className="opacity-90">{assigned.map((s) => profName(s.assigned_to)).join(", ")}</span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
 
                     <div className="space-y-3 flex-1">
                       {daySlots.length === 0 && <div className="text-xs text-muted-foreground italic">No slots</div>}
