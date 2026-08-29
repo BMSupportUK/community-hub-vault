@@ -171,7 +171,7 @@ function ShiftsPage() {
   const [loading, setLoading] = useState(true);
 
   // Manage rota state
-  const [newSlot, setNewSlot] = useState({ date: fmtDate(new Date()), start: "09:00", end: "17:00", type: "shift" as SlotType, notes: "", presetId: "midweek" });
+  const [newSlot, setNewSlot] = useState({ date: fmtDate(new Date()), start: "09:00", end: "17:00", type: "shift" as SlotType, notes: "", presetId: "midweek", role: "staff" as ShiftRole });
 
   // Block-shift presets (admin)
   const [presets, setPresets] = useState<BlockPreset[]>(() => loadPresets());
