@@ -52,14 +52,33 @@ export function WorkingStatusBox({ stackActions = false }: { stackActions?: bool
       } else {
         setBrk(null);
       }
+      // Next claimed rota slot (today, still to come — or any future day).
+      const today = new Date();
+      const pad = (n: number) => String(n).padStart(2, "0");
+      const todayStr = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+      const nowTime = `${pad(today.getHours())}:${pad(today.getMinutes())}:00`;
+      const { data: slots } = await supabase
+        .from("shift_slots")
+        .select("id,shift_date,start_time,end_time")
+        .eq("assigned_to", user.id)
+        .gte("shift_date", todayStr)
+        .order("shift_date")
+        .order("start_time")
+        .limit(10);
+      const upcoming = ((slots ?? []) as NextSlot[]).find(
+        (sl) => sl.shift_date > todayStr || sl.end_time > nowTime,
+      );
+      setNextSlot(upcoming ?? null);
     };
     refresh();
     const ch = supabase
       .channel(`working-box-${user.id}-${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "shifts", filter: `user_id=eq.${user.id}` }, () => refresh())
       .on("postgres_changes", { event: "*", schema: "public", table: "breaks", filter: `user_id=eq.${user.id}` }, () => refresh())
+      .on("postgres_changes", { event: "*", schema: "public", table: "shift_slots" }, () => refresh())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
+
   }, [user?.id]);
 
   const clockIn = async () => {
