@@ -15,6 +15,8 @@ import { formatRoleLabel } from "@/lib/role-label";
 
 type Shift = { id: string; clock_in: string };
 type Break = { id: string; kind: BreakKind; started_at: string };
+type NextSlot = { id: string; shift_date: string; start_time: string; end_time: string };
+
 
 export function WorkingStatusBox({ stackActions = false }: { stackActions?: boolean } = {}) {
   const { user, roles } = useAuth();
@@ -25,6 +27,8 @@ export function WorkingStatusBox({ stackActions = false }: { stackActions?: bool
   const [brk, setBrk] = useState<Break | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [busy, setBusy] = useState(false);
+  const [nextSlot, setNextSlot] = useState<NextSlot | null>(null);
+
 
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
@@ -48,14 +52,33 @@ export function WorkingStatusBox({ stackActions = false }: { stackActions?: bool
       } else {
         setBrk(null);
       }
+      // Next claimed rota slot (today, still to come — or any future day).
+      const today = new Date();
+      const pad = (n: number) => String(n).padStart(2, "0");
+      const todayStr = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+      const nowTime = `${pad(today.getHours())}:${pad(today.getMinutes())}:00`;
+      const { data: slots } = await supabase
+        .from("shift_slots")
+        .select("id,shift_date,start_time,end_time")
+        .eq("assigned_to", user.id)
+        .gte("shift_date", todayStr)
+        .order("shift_date")
+        .order("start_time")
+        .limit(10);
+      const upcoming = ((slots ?? []) as NextSlot[]).find(
+        (sl) => sl.shift_date > todayStr || sl.end_time > nowTime,
+      );
+      setNextSlot(upcoming ?? null);
     };
     refresh();
     const ch = supabase
       .channel(`working-box-${user.id}-${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "shifts", filter: `user_id=eq.${user.id}` }, () => refresh())
       .on("postgres_changes", { event: "*", schema: "public", table: "breaks", filter: `user_id=eq.${user.id}` }, () => refresh())
+      .on("postgres_changes", { event: "*", schema: "public", table: "shift_slots" }, () => refresh())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
+
   }, [user?.id]);
 
   const clockIn = async () => {
@@ -271,10 +294,24 @@ export function WorkingStatusBox({ stackActions = false }: { stackActions?: bool
               </span>
             </div>
           ) : (
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Shift</span>
-              <span className="text-muted-foreground italic">Not signed in</span>
-            </div>
+            <>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">Shift</span>
+                <span className="text-muted-foreground italic">Not signed in</span>
+              </div>
+              {nextSlot && (
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-muted-foreground">Next shift</span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-500/15 px-2 py-0.5 font-semibold tabular-nums text-sky-300 ring-1 ring-sky-500/40">
+                    <Calendar className="size-3" />
+                    {new Date(`${nextSlot.shift_date}T00:00:00`).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })}
+                    {" · "}
+                    {nextSlot.start_time.slice(0, 5)}–{nextSlot.end_time.slice(0, 5)}
+                  </span>
+                </div>
+              )}
+            </>
+
           )}
           {brk && (
             <div className="flex items-center justify-between">
