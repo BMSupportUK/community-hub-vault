@@ -246,6 +246,14 @@ function ShiftsPage() {
     if (!user) return;
     if (s.slot_type === "hourly" && !isMod && !isAdmin) return toast.error("Hourly slots are for moderators");
     if (s.slot_type === "shift" && !isStaffOrAdmin) return toast.error("Full shifts are for staff");
+    if (s.slot_type === "shift") {
+      const mineThatDay = (slotsByDay[s.shift_date] ?? []).filter(
+        (x) => x.slot_type === "shift" && x.assigned_to === user.id,
+      ).length;
+      if (myQuota > 0 && mineThatDay >= myQuota) {
+        return toast.error(`Your role covers ${myQuota} shift${myQuota === 1 ? "" : "s"} per day`);
+      }
+    }
     const { error } = await supabase.from("shift_slots").update({ assigned_to: user.id }).eq("id", s.id).is("assigned_to", null);
     if (error) {
       if ((error as any).code === "23505") return toast.error("You're already on another shift at this time");
