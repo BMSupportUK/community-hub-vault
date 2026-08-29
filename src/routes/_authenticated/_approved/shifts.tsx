@@ -841,90 +841,48 @@ function ShiftsPage() {
               ))}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {(["admin", "management", "staff", "moderator"] as ShiftRole[]).map((role) => {
-                const roleSlots = slots.filter(
-                  (s) =>
-                    s.assigned_to &&
-                    (s.required_role || "staff") === role &&
-                    claimedRole === role,
-                );
-                if (roleSlots.length === 0 && claimedRole !== role) return null;
-                const byDay: Record<string, Slot[]> = {};
-                for (const s of roleSlots) (byDay[s.shift_date] ||= []).push(s);
-                const weeklyTarget = ROLE_SHIFT_QUOTA[role] ? ROLE_SHIFT_QUOTA[role] * 7 : 0;
-                const covered = roleSlots.length;
-                const left = Math.max(0, weeklyTarget - covered);
-                const fullyCovered = weeklyTarget > 0 && covered >= weeklyTarget;
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-7 gap-3">
+              {days.map((d) => {
+                const dateStr = fmtDate(d);
+                const past = isDayPastOrStarted(d);
+                const ds = (allSlotsByDay[dateStr] ?? [])
+                  .filter((s) => s.assigned_to && (s.required_role || "staff") === claimedRole)
+                  .sort((a, b) => a.start_time.localeCompare(b.start_time));
+                const dailyTarget = ROLE_SHIFT_QUOTA[claimedRole] ?? 0;
+                const dailyCovered = ds.length;
+                const dailyLeft = Math.max(0, dailyTarget - dailyCovered);
+                const dailyFully = dailyTarget > 0 && dailyCovered >= dailyTarget;
                 return (
-                  <div key={role} className={cn("rounded-2xl bg-surface border border-border p-4", claimedRole !== role && "hidden")}>
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className={cn("text-[11px] px-2 py-0.5 rounded-full border font-semibold uppercase tracking-wide", roleBadgeClass(role))}>
-                        {roleLabel(role)}
-                      </span>
-                      {weeklyTarget > 0 ? (
+                  <div key={dateStr} className={cn("rounded-2xl bg-surface border border-border p-3 backdrop-blur min-h-[150px] flex flex-col", past && "opacity-80")}>
+                    <div className="flex items-center justify-between gap-2 mb-2">
+                      <div className="text-sm font-semibold text-foreground">{dayLabel(d)}</div>
+                      {dailyTarget > 0 ? (
                         <span className={cn(
-                          "text-[11px] px-2 py-0.5 rounded-full border font-semibold",
-                          fullyCovered
+                          "text-[10px] px-1.5 py-0.5 rounded-full border font-semibold",
+                          dailyFully
                             ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
                             : "bg-sky-500/20 text-sky-300 border-sky-500/40",
                         )}>
-                          {covered}/{weeklyTarget} · {left} left
+                          {dailyCovered}/{dailyTarget}{dailyLeft > 0 ? ` · ${dailyLeft} left` : ""}
                         </span>
                       ) : (
-                        <span className="text-[11px] text-muted-foreground">
-                          {covered} shift{covered === 1 ? "" : "s"}
-                        </span>
+                        <span className="text-[10px] text-muted-foreground">{dailyCovered} shift{dailyCovered === 1 ? "" : "s"}</span>
                       )}
                     </div>
-                    <div className="space-y-3">
-                      {Object.entries(byDay)
-                        .sort(([a], [b]) => a.localeCompare(b))
-                        .map(([dateStr, ds]) => {
-                          const dailyTarget = ROLE_SHIFT_QUOTA[role] ?? 0;
-                          const dailyCovered = ds.length;
-                          const dailyLeft = Math.max(0, dailyTarget - dailyCovered);
-                          const dailyFully = dailyTarget > 0 && dailyCovered >= dailyTarget;
-                          return (
-                            <div key={dateStr}>
-                              <div className="flex items-center justify-between gap-2 mb-1">
-                                <div className="text-xs font-semibold text-foreground">{dayLabel(new Date(dateStr))}</div>
-                                {dailyTarget > 0 ? (
-                                  <span className={cn(
-                                    "text-[10px] px-1.5 py-0.5 rounded border font-medium",
-                                    dailyFully
-                                      ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
-                                      : "bg-sky-500/20 text-sky-300 border-sky-500/40",
-                                  )}>
-                                    {dailyCovered}/{dailyTarget} · {dailyLeft} left
-                                  </span>
-                                ) : (
-                                  <span className="text-[10px] text-muted-foreground">{dailyCovered} shift{dailyCovered === 1 ? "" : "s"}</span>
-                                )}
-                              </div>
-                              <div className="space-y-1">
-                                {ds
-                                  .sort((a, b) => a.start_time.localeCompare(b.start_time))
-                                  .map((s) => (
-                                    <div key={s.id} className="flex items-center justify-between gap-2 text-xs">
-                                      <span className="font-mono text-foreground">{fmtRange(s.shift_date, s.start_time, s.end_time)}</span>
-                                      <span className="text-muted-foreground truncate">{profName(s.assigned_to)}</span>
-                                    </div>
-                                  ))}
-                              </div>
-                            </div>
-                          );
-                        })}
+                    <div className="space-y-1.5 flex-1">
+                      {ds.length === 0 && <div className="text-xs text-muted-foreground italic">No claimed shifts</div>}
+                      {ds.map((s) => (
+                        <div key={s.id} className={cn("rounded-lg p-2 border text-xs", s.assigned_to === user?.id ? "bg-primary/20 border-primary/50" : "bg-surface-2 border-border")}>
+                          <div className="font-mono text-foreground">{fmtRange(s.shift_date, s.start_time, s.end_time)}</div>
+                          <div className="text-muted-foreground truncate mt-0.5">{profName(s.assigned_to)}</div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 );
               })}
-              {slots.filter((s) => s.assigned_to && (s.required_role || "staff") === claimedRole).length === 0 && (
-                <div className="md:col-span-2 lg:col-span-4 rounded-2xl border border-dashed border-border p-12 text-center text-muted-foreground bg-surface/40">
-                  No claimed shifts for the week of {dayLabel(weekStart)}.
-                </div>
-              )}
             </div>
+
           </TabsContent>
 
           {/* MY SHIFTS */}
