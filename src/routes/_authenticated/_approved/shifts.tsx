@@ -317,6 +317,17 @@ function ShiftsPage() {
     return targets as Record<ShiftRole, { target: number; filled: number; remaining: number }>;
   }, [slots]);
 
+  const selectedRoleSlots = useMemo(
+    () => visibleSlots.filter((slot) => (slot.required_role || "staff") === rotaRole),
+    [visibleSlots, rotaRole],
+  );
+
+  const selectedRoleSlotsByDay = useMemo(() => {
+    const grouped: Record<string, Slot[]> = {};
+    for (const slot of selectedRoleSlots) (grouped[slot.shift_date] ||= []).push(slot);
+    return grouped;
+  }, [selectedRoleSlots]);
+
 
   const profName = (id: string | null) => {
     if (!id) return "";
@@ -647,12 +658,27 @@ function ShiftsPage() {
               </div>
             </div>
 
-            <div className="mb-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div className="mb-4 grid grid-cols-2 md:grid-cols-4 gap-3" role="tablist" aria-label="Filter rota by role">
               {(["admin", "management", "staff", "moderator"] as ShiftRole[]).map((role) => {
                 const t = roleTargets[role];
                 const remaining = Math.max(0, t.target - t.filled);
                 return (
-                  <div key={role} className={cn("rounded-xl border p-3 text-center", remaining > 0 ? "bg-surface border-border" : "bg-emerald-500/10 border-emerald-500/40")}>
+                  <Button
+                    key={role}
+                    type="button"
+                    role="tab"
+                    aria-selected={rotaRole === role}
+                    variant="outline"
+                    onClick={() => setRotaRole(role)}
+                    className={cn(
+                      "h-auto min-h-20 flex-col gap-0 rounded-xl border p-3 text-center transition-colors",
+                      rotaRole === role
+                        ? "border-primary bg-primary/15 ring-2 ring-primary/40"
+                        : remaining > 0
+                          ? "bg-surface border-border hover:bg-surface-2"
+                          : "bg-emerald-500/10 border-emerald-500/40 hover:bg-emerald-500/15",
+                    )}
+                  >
                     <div className={cn("text-[10px] uppercase tracking-wide font-semibold", role === "admin" ? "text-amber-300" : role === "management" ? "text-violet-300" : role === "staff" ? "text-sky-300" : "text-emerald-300")}>
                       {roleLabel(role)}
                     </div>
@@ -662,34 +688,9 @@ function ShiftsPage() {
                     <div className={cn("text-[11px] font-medium", remaining > 0 ? "text-rose-300" : "text-emerald-300")}>
                       {remaining > 0 ? `${remaining} needed` : "covered"}
                     </div>
-                  </div>
+                  </Button>
                 );
               })}
-            </div>
-
-            <div className="mb-4 flex flex-wrap gap-1 rounded-xl bg-surface-2 border border-border p-1">
-              {([
-                { v: "admin", label: roleLabel("admin") },
-                { v: "management", label: roleLabel("management") },
-                { v: "staff", label: roleLabel("staff") },
-                { v: "moderator", label: roleLabel("moderator") },
-              ] as const).map(({ v, label }) => (
-                <button
-                  key={v}
-                  onClick={() => setRotaRole(v)}
-                  className={cn(
-                    "px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors",
-                    rotaRole === v
-                      ? "bg-gradient-primary text-white shadow-soft"
-                      : "text-muted-foreground hover:bg-surface hover:text-foreground",
-                  )}
-                >
-                  {label}
-                  <span className="ml-1.5 opacity-80 font-normal">
-                    {roleTargets[v].filled}/{roleTargets[v].target}
-                  </span>
-                </button>
-              ))}
             </div>
 
             <div className="flex flex-wrap items-center gap-3 mb-4">
@@ -704,9 +705,10 @@ function ShiftsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-7 gap-3">
               {days.map((d) => {
                 const dateStr = fmtDate(d);
-                const daySlots = slotsByDay[dateStr] ?? [];
-                const filled = filledShiftsForDay(dateStr);
-                const ok = filled >= DAY_TARGET;
+                const daySlots = selectedRoleSlotsByDay[dateStr] ?? [];
+                const filled = daySlots.filter((slot) => slot.assigned_to).length;
+                const dailyTarget = ROLE_SHIFT_QUOTA[rotaRole] ?? daySlots.length;
+                const ok = dailyTarget === 0 || filled >= dailyTarget;
                 const past = isDayPastOrStarted(d);
                 return (
                   <div key={dateStr} className={cn("relative rounded-2xl bg-surface border border-border p-3 backdrop-blur min-h-[180px] flex flex-col", past && "opacity-80")}>
@@ -721,14 +723,14 @@ function ShiftsPage() {
                     <div className="flex items-center justify-between mb-2">
                       <div className="text-sm font-semibold text-foreground">{dayLabel(d)}</div>
                       <span className={cn("text-[11px] px-2 py-0.5 rounded-full font-semibold", past ? "bg-rose-500/20 text-rose-200 border border-rose-500/40" : ok ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40" : "bg-rose-500/20 text-rose-300 border border-rose-500/40")}>
-                        {past ? "Closed" : `${filled}/${DAY_TARGET}${filled < DAY_TARGET ? ` · ${DAY_TARGET - filled} more` : ""}`}
+                        {past ? "Closed" : `${filled}/${dailyTarget}${filled < dailyTarget ? ` · ${dailyTarget - filled} more` : ""}`}
                       </span>
                     </div>
 
                     <div className="space-y-3 flex-1">
                       {daySlots.length === 0 && <div className="text-xs text-muted-foreground italic">No slots</div>}
                       {([rotaRole] as const).map((grp) => {
-                        const groupSlots = daySlots.filter((s) => s.required_role === grp);
+                        const groupSlots = daySlots;
                         if (groupSlots.length === 0) {
                           return <div key={grp} className="text-xs text-muted-foreground italic">No {roleLabel(grp)} slots</div>;
                         }
