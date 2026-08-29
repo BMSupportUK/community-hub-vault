@@ -56,6 +56,16 @@ interface Swap {
 }
 interface Profile { id: string; username: string | null; display_name: string | null; }
 
+/** Roles a rota slot can be reserved for. */
+type ShiftRole = "admin" | "management" | "staff" | "moderator";
+const SHIFT_ROLES: { value: ShiftRole; label: string }[] = [
+  { value: "admin", label: "Owner" },
+  { value: "management", label: "Management" },
+  { value: "staff", label: "Staff" },
+  { value: "moderator", label: "Moderator" },
+];
+const roleLabel = (r: ShiftRole | null) => SHIFT_ROLES.find((x) => x.value === r)?.label ?? "Any";
+
 /** How many block shifts each role covers per day. */
 const ROLE_SHIFT_QUOTA: Record<string, number> = { admin: 2, management: 1, staff: 3 };
 const DAY_TARGET = ROLE_SHIFT_QUOTA.admin + ROLE_SHIFT_QUOTA.management + ROLE_SHIFT_QUOTA.staff; // 6
