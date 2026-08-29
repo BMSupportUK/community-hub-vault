@@ -140,9 +140,7 @@ export function WorkingStatusBox() {
     );
   }
 
-  if (!shift) return null;
-
-  const shiftSec = (now - new Date(shift.clock_in).getTime()) / 1000;
+  const shiftSec = shift ? (now - new Date(shift.clock_in).getTime()) / 1000 : 0;
   const brSec = brk ? (now - new Date(brk.started_at).getTime()) / 1000 : 0;
   const brRemain = brk ? LIMITS[brk.kind] - brSec : 0;
   const over = brRemain < 0;
@@ -158,6 +156,64 @@ export function WorkingStatusBox() {
     return `${Math.floor(s / 60).toString().padStart(2, "0")}:${(s % 60).toString().padStart(2, "0")}`;
   };
 
+  const ActionIcons = () => {
+    if (busy) {
+      return <Loader2 className="size-3.5 animate-spin text-muted-foreground" />;
+    }
+    if (!shift) {
+      return (
+        <button
+          type="button"
+          onClick={clockIn}
+          title="Sign in"
+          className="inline-flex items-center justify-center size-6 rounded-md bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/40 hover:bg-emerald-500/25 transition"
+        >
+          <LogIn className="size-3.5" />
+        </button>
+      );
+    }
+    if (brk) {
+      return (
+        <button
+          type="button"
+          onClick={endBreak}
+          title="End break"
+          className="inline-flex items-center justify-center size-6 rounded-md bg-primary/15 text-primary ring-1 ring-primary/40 hover:bg-primary/25 transition"
+        >
+          <PlayCircle className="size-3.5" />
+        </button>
+      );
+    }
+    return (
+      <div className="flex items-center gap-1">
+        <button
+          type="button"
+          onClick={() => startBreak("break")}
+          title="Take a break"
+          className="inline-flex items-center justify-center size-6 rounded-md bg-amber-500/15 text-amber-400 ring-1 ring-amber-500/40 hover:bg-amber-500/25 transition"
+        >
+          <Coffee className="size-3.5" />
+        </button>
+        <button
+          type="button"
+          onClick={() => startBreak("lunch")}
+          title="Start lunch"
+          className="inline-flex items-center justify-center size-6 rounded-md bg-orange-500/15 text-orange-400 ring-1 ring-orange-500/40 hover:bg-orange-500/25 transition"
+        >
+          <UtensilsCrossed className="size-3.5" />
+        </button>
+        <button
+          type="button"
+          onClick={clockOut}
+          title="Sign out"
+          className="inline-flex items-center justify-center size-6 rounded-md bg-destructive/15 text-destructive ring-1 ring-destructive/40 hover:bg-destructive/25 transition"
+        >
+          <LogOut className="size-3.5" />
+        </button>
+      </div>
+    );
+  };
+
   return (
     <section className="px-2 pt-4">
       <div className="rounded-lg bg-surface-2/60 border border-border overflow-hidden">
@@ -168,16 +224,24 @@ export function WorkingStatusBox() {
           </div>
         </div>
         <div className="px-3 py-3 space-y-2 text-xs">
-          <div className="flex items-center gap-2 pb-1 border-b border-border/60">
-            <span className="font-display font-semibold text-sm text-foreground">{displayName}</span>
+          <div className="flex items-center justify-between gap-2 pb-1 border-b border-border/60">
+            <span className="font-display font-semibold text-sm text-foreground truncate">{displayName}</span>
+            <ActionIcons />
           </div>
-          <div className="flex items-center justify-between">
-            <span className="text-muted-foreground">Shift</span>
-            <span className="inline-flex items-center gap-1.5 font-semibold tabular-nums text-emerald-400">
-              <CircleDot className="size-3" />
-              {fmtHM(shiftSec)}
-            </span>
-          </div>
+          {shift ? (
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Shift</span>
+              <span className="inline-flex items-center gap-1.5 font-semibold tabular-nums text-emerald-400">
+                <CircleDot className="size-3" />
+                {fmtHM(shiftSec)}
+              </span>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between">
+              <span className="text-muted-foreground">Shift</span>
+              <span className="text-muted-foreground italic">Not signed in</span>
+            </div>
+          )}
           {brk && (
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">{breakLabel(brk.kind)}</span>
