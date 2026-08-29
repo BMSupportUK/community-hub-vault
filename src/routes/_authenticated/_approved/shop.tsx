@@ -1133,6 +1133,8 @@ function Storefront() {
   const [dbCategories, setDbCategories] = useState<ProductCategory[]>([]);
   const [cart, setCart] = useState<Record<string, number>>({});
   const [showCheckout, setShowCheckout] = useState(false);
+  const placingRef = useRef(false);
+
   const initialTab = Route.useSearch().tab;
   const [tab, setTab] = useState<string>(initialTab ?? "welcome");
   const navigate = useNavigate();
