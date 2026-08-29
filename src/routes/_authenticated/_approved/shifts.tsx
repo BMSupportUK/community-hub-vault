@@ -735,8 +735,8 @@ function ShiftsPage() {
                         return (
                           <div key={grp} className="space-y-2">
                             <div className="flex items-center gap-2">
-                              <span className={cn("text-[10px] px-2 py-0.5 rounded-full border font-semibold uppercase tracking-wide", grp === "other" ? "bg-surface-2 text-muted-foreground border-border" : roleBadgeClass(grp))}>
-                                {grp === "other" ? "Unassigned role" : roleLabel(grp)}
+                              <span className={cn("text-[10px] px-2 py-0.5 rounded-full border font-semibold uppercase tracking-wide", roleBadgeClass(grp))}>
+                                {roleLabel(grp)}
                               </span>
                               <span className="text-[10px] text-muted-foreground">{groupSlots.filter((s) => s.assigned_to).length}/{groupSlots.length}</span>
                             </div>
