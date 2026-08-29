@@ -699,7 +699,7 @@ function ShiftsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-7 gap-3">
               {days.map((d) => {
                 const dateStr = fmtDate(d);
-                const daySlots = slotsByDay[dateStr] ?? [];
+                const daySlots = filteredSlotsByDay[dateStr] ?? [];
                 const filled = daySlots.filter((slot) => slot.assigned_to).length;
                 const dailyTarget = daySlots.length;
                 const ok = dailyTarget === 0 || filled >= dailyTarget;
