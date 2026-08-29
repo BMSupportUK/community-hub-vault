@@ -280,6 +280,15 @@ function ShiftsPage() {
     return m;
   }, [visibleSlots]);
 
+  const filteredSlotsByDay = useMemo(() => {
+    const m: Record<string, Slot[]> = {};
+    for (const s of visibleSlots) {
+      if (rotaRole !== "all" && (s.required_role || "staff") !== rotaRole) continue;
+      (m[s.shift_date] ||= []).push(s);
+    }
+    return m;
+  }, [visibleSlots, rotaRole]);
+
   /** All slots for a day, regardless of role — used for day counters. */
   const allSlotsByDay = useMemo(() => {
     const m: Record<string, Slot[]> = {};
