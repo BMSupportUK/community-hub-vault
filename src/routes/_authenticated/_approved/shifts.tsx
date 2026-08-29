@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { Calendar as CalendarIcon, Plus, Trash2, Check, X, Clock, Users, Plane, Repeat, ShieldCheck, Loader2, Zap, Save, Globe, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { addModeratorHours } from "@/lib/moderator-hours.functions";
 import { useTimezone, zonedWallTimeToUtcMs } from "@/hooks/use-timezone";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -34,6 +34,7 @@ interface Slot {
   slot_type: SlotType;
   assigned_to: string | null;
   notes: string | null;
+  required_role: ShiftRole | null;
 }
 interface Holiday {
   id: string;
@@ -54,6 +55,16 @@ interface Swap {
   created_at: string;
 }
 interface Profile { id: string; username: string | null; display_name: string | null; }
+
+/** Roles a rota slot can be reserved for. */
+type ShiftRole = "admin" | "management" | "staff" | "moderator";
+const SHIFT_ROLES: { value: ShiftRole; label: string }[] = [
+  { value: "admin", label: "Owner" },
+  { value: "management", label: "Management" },
+  { value: "staff", label: "Staff" },
+  { value: "moderator", label: "Moderator" },
+];
+const roleLabel = (r: ShiftRole | null) => SHIFT_ROLES.find((x) => x.value === r)?.label ?? "Any";
 
 /** How many block shifts each role covers per day. */
 const ROLE_SHIFT_QUOTA: Record<string, number> = { admin: 2, management: 1, staff: 3 };
@@ -160,7 +171,7 @@ function ShiftsPage() {
   const [loading, setLoading] = useState(true);
 
   // Manage rota state
-  const [newSlot, setNewSlot] = useState({ date: fmtDate(new Date()), start: "09:00", end: "17:00", type: "shift" as SlotType, notes: "", presetId: "midweek" });
+  const [newSlot, setNewSlot] = useState({ date: fmtDate(new Date()), start: "09:00", end: "17:00", type: "shift" as SlotType, notes: "", presetId: "midweek", role: "staff" as ShiftRole });
 
   // Block-shift presets (admin)
   const [presets, setPresets] = useState<BlockPreset[]>(() => loadPresets());
@@ -186,12 +197,12 @@ function ShiftsPage() {
       supabase.from("holiday_requests").select("*").order("created_at", { ascending: false }),
       supabase.from("shift_swap_requests").select("*").order("created_at", { ascending: false }),
     ]);
-    setSlots((s ?? []) as Slot[]);
+    setSlots((s ?? []) as unknown as Slot[]);
     setHolidays((h ?? []) as Holiday[]);
     setSwaps((sw ?? []) as Swap[]);
 
     const ids = new Set<string>();
-    (s ?? []).forEach((x: Slot) => x.assigned_to && ids.add(x.assigned_to));
+    (s ?? []).forEach((x) => { if (x.assigned_to) ids.add(x.assigned_to); });
     (h ?? []).forEach((x: Holiday) => ids.add(x.user_id));
     (sw ?? []).forEach((x: Swap) => { ids.add(x.requester_id); if (x.target_user_id) ids.add(x.target_user_id); });
     if (ids.size) {
@@ -228,14 +239,34 @@ function ShiftsPage() {
     })();
   }, []);
 
+  /** A slot is only relevant to you if it's tagged with a role you hold (admins see everything). */
+  const canSeeSlot = (s: Slot) =>
+    isAdmin ||
+    s.assigned_to === user?.id ||
+    !s.required_role ||
+    roles.includes(s.required_role as AppRole);
+
+  const visibleSlots = useMemo(
+    () => slots.filter(canSeeSlot),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [slots, roles, isAdmin, user?.id],
+  );
+
   const slotsByDay = useMemo(() => {
+    const m: Record<string, Slot[]> = {};
+    for (const s of visibleSlots) (m[s.shift_date] ||= []).push(s);
+    return m;
+  }, [visibleSlots]);
+
+  /** All slots for a day, regardless of role — used for day counters. */
+  const allSlotsByDay = useMemo(() => {
     const m: Record<string, Slot[]> = {};
     for (const s of slots) (m[s.shift_date] ||= []).push(s);
     return m;
   }, [slots]);
 
   const filledShiftsForDay = (dateStr: string) =>
-    (slotsByDay[dateStr] ?? []).filter((s) => s.slot_type === "shift" && s.assigned_to).length;
+    (allSlotsByDay[dateStr] ?? []).filter((s) => s.slot_type === "shift" && s.assigned_to).length;
 
   const profName = (id: string | null) => {
     if (!id) return "";
@@ -245,6 +276,9 @@ function ShiftsPage() {
 
   const claim = async (s: Slot) => {
     if (!user) return;
+    if (s.required_role && !isAdmin && !roles.includes(s.required_role as AppRole)) {
+      return toast.error(`That shift is reserved for ${roleLabel(s.required_role)}`);
+    }
     if (s.slot_type === "hourly" && !isMod && !isAdmin) return toast.error("Hourly slots are for moderators");
     if (s.slot_type === "shift" && !isStaffOrAdmin) return toast.error("Full shifts are for staff");
     if (s.slot_type === "shift") {
@@ -319,6 +353,7 @@ function ShiftsPage() {
       start_time: start,
       end_time: end,
       slot_type: newSlot.type,
+      required_role: newSlot.type === "hourly" ? "moderator" : newSlot.role,
       notes: notes || null,
       created_by: user?.id ?? null,
     });
@@ -331,37 +366,51 @@ function ShiftsPage() {
     load();
   };
 
-  const addBlockShift = async (preset: BlockPreset, date: string) => {
+  const addBlockShift = async (preset: BlockPreset, date: string, role: ShiftRole = newSlot.role) => {
     if (!date) return toast.error("Pick a date");
     const { error } = await supabase.from("shift_slots").insert({
       shift_date: date, start_time: preset.start, end_time: preset.end,
-      slot_type: "shift", notes: preset.label, created_by: user?.id ?? null,
+      slot_type: "shift", required_role: role, notes: preset.label, created_by: user?.id ?? null,
     });
     if (error) {
       if ((error as any).code === "23505") return toast.error(`${preset.label} already exists for this date`);
       return toast.error(error.message);
     }
-    toast.success(`Shift added successfully — ${preset.label}`);
+    toast.success(`Shift added successfully — ${preset.label} (${roleLabel(role)})`);
     load();
   };
 
   const fillWeekFromPresets = async () => {
+    // One slot per role per day, following the daily cover quota (Owner 2, Management 1, Staff 3).
     const rows = days
-      .map((d) => {
+      .flatMap((d) => {
         const dow = d.getDay();
         const p = presets.find((pp) => pp.days.includes(dow));
-        if (!p) return null;
-        return {
-          shift_date: fmtDate(d), start_time: p.start, end_time: p.end,
-          slot_type: "shift" as SlotType, notes: p.label, created_by: user?.id ?? null,
-        };
-      })
-      .filter(Boolean) as any[];
+        if (!p) return [];
+        return (["admin", "management", "staff"] as ShiftRole[]).flatMap((role) =>
+          Array.from({ length: ROLE_SHIFT_QUOTA[role] ?? 0 }, () => ({
+            shift_date: fmtDate(d), start_time: p.start, end_time: p.end,
+            slot_type: "shift" as SlotType, required_role: role,
+            notes: `${p.label} — ${roleLabel(role)}`, created_by: user?.id ?? null,
+          })),
+        );
+      }) as any[];
     if (rows.length === 0) return toast.error("No presets match this week");
-    // Insert one-by-one and skip duplicates so partial weeks still fill in.
+    // Don't re-create slots that already exist for the same day/time/role.
+    const existing = new Map<string, number>();
+    for (const s of slots) {
+      const k = `${s.shift_date}|${s.start_time.slice(0, 5)}|${s.end_time.slice(0, 5)}|${s.required_role ?? ""}`;
+      existing.set(k, (existing.get(k) ?? 0) + 1);
+    }
     let added = 0;
     let skipped = 0;
-    for (const row of rows) {
+    const toInsert = rows.filter((row) => {
+      const k = `${row.shift_date}|${row.start_time.slice(0, 5)}|${row.end_time.slice(0, 5)}|${row.required_role}`;
+      const left = existing.get(k) ?? 0;
+      if (left > 0) { existing.set(k, left - 1); skipped++; return false; }
+      return true;
+    });
+    for (const row of toInsert) {
       const { error } = await supabase.from("shift_slots").insert(row);
       if (!error) added++;
       else if ((error as any).code === "23505") skipped++;
@@ -574,6 +623,13 @@ function ShiftsPage() {
                               <div className="font-mono text-foreground">{fmtRange(s.shift_date, s.start_time, s.end_time)}</div>
                               <span className={cn("text-[10px] px-1.5 py-0.5 rounded uppercase font-semibold", s.slot_type === "hourly" ? "bg-accent/30 text-accent-foreground" : "bg-primary/30 text-foreground")}>{s.slot_type === "hourly" ? "hourly" : "shift"}</span>
                             </div>
+                            {s.required_role && (
+                              <div className="mt-0.5">
+                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-surface-2 border border-border text-muted-foreground font-semibold uppercase">
+                                  {roleLabel(s.required_role)}
+                                </span>
+                              </div>
+                            )}
                             {s.notes && <div className="text-muted-foreground mt-0.5">{s.notes}</div>}
                             <div className="mt-1.5 flex items-center justify-between gap-1">
                               <div className="text-muted-foreground truncate">{taken ? profName(s.assigned_to) : "Open"}</div>
@@ -838,6 +894,19 @@ function ShiftsPage() {
                       </SelectContent>
                     </Select>
                   </div>
+                  {newSlot.type === "shift" && (
+                    <div className="md:col-span-2">
+                      <Label className="text-muted-foreground">For role</Label>
+                      <Select value={newSlot.role} onValueChange={(v) => setNewSlot({ ...newSlot, role: v as ShiftRole })}>
+                        <SelectTrigger className="bg-surface-2 border-border text-foreground"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {SHIFT_ROLES.filter((r) => r.value !== "moderator").map((r) => (
+                            <SelectItem key={r.value} value={r.value}>{r.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
                   <div className="md:col-span-5">
                     <Label className="text-muted-foreground">Notes (optional)</Label>
                     <Input value={newSlot.notes} onChange={(e) => setNewSlot({ ...newSlot, notes: e.target.value })} className="bg-surface-2 border-border text-foreground" />

@@ -1,0 +1,1 @@
+DROP INDEX IF EXISTS public.shift_slots_unique_slot;

@@ -30,6 +30,7 @@ export const addModeratorHours = createServerFn({ method: "POST" })
       start_time: data.start_time,
       end_time: data.end_time,
       slot_type: "hourly",
+      required_role: "moderator",
       assigned_to: context.userId,
       notes: "Moderator hours",
       created_by: context.userId,
