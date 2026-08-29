@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { CircleDot, Briefcase, LogIn, LogOut, Coffee, UtensilsCrossed, PlayCircle, Loader2 } from "lucide-react";
+import { CircleDot, Briefcase, LogIn, LogOut, Coffee, UtensilsCrossed, PlayCircle, Loader2, Calendar, Clock } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
@@ -231,6 +232,22 @@ export function WorkingStatusBox({ stackActions = false }: { stackActions?: bool
           <div className="flex items-center gap-2">
             <Briefcase className="size-3.5 text-emerald-300" />
             <h2 className="font-display text-[11px] font-bold tracking-wider uppercase">Working Status</h2>
+          </div>
+          <div className="flex items-center gap-1">
+            <Link
+              to="/clock"
+              title="Clock page"
+              className="inline-flex items-center justify-center size-6 rounded-md text-muted-foreground hover:text-foreground hover:bg-surface-2 transition"
+            >
+              <Clock className="size-3.5" />
+            </Link>
+            <Link
+              to="/shifts"
+              title="Shifts"
+              className="inline-flex items-center justify-center size-6 rounded-md text-muted-foreground hover:text-foreground hover:bg-surface-2 transition"
+            >
+              <Calendar className="size-3.5" />
+            </Link>
           </div>
         </div>
         <div className="px-3 py-3 space-y-2 text-xs">
