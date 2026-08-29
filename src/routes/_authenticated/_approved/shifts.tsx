@@ -718,7 +718,7 @@ function ShiftsPage() {
                         );
                       })}
                     </div>
-                    {(isMod || isAdmin) && !past && (
+                    {isMod && !past && (
                       <button
                         onClick={() => openModHours(d)}
                         className="mt-2 z-20 relative w-full rounded-lg border border-dashed border-accent/60 text-accent-foreground/90 bg-accent/10 hover:bg-accent/20 text-[11px] py-1.5 font-semibold"
