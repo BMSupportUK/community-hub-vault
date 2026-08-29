@@ -21,6 +21,7 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
   const [shifts, setShifts] = useState<StaffShift[]>([]);
   const [breaks, setBreaks] = useState<StaffBreak[]>([]);
   const [profiles, setProfiles] = useState<Record<string, StaffProfile>>({});
+  const [offDuty, setOffDuty] = useState<Array<StaffProfile & { role: string }>>([]);
   const [now, setNow] = useState(() => Date.now());
   const roleFlashMap = useRoleFlashMap();
 
