@@ -27,6 +27,8 @@ export function WorkingStatusBox({ stackActions = false }: { stackActions?: bool
   const [brk, setBrk] = useState<Break | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [busy, setBusy] = useState(false);
+  const [nextSlot, setNextSlot] = useState<NextSlot | null>(null);
+
 
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
