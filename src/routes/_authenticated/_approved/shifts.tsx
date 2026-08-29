@@ -727,19 +727,10 @@ function ShiftsPage() {
 
                     <div className="space-y-3 flex-1">
                       {daySlots.length === 0 && <div className="text-xs text-muted-foreground italic">No slots</div>}
-                      {(rotaRole === "all"
-                        ? (["admin", "management", "staff", "moderator", "other"] as const)
-                        : ([rotaRole] as const)
-                      ).map((grp) => {
-                        const groupSlots = daySlots.filter((s) =>
-                          grp === "other"
-                            ? !s.required_role || !["admin", "management", "staff", "moderator"].includes(s.required_role)
-                            : s.required_role === grp
-                        );
+                      {([rotaRole] as const).map((grp) => {
+                        const groupSlots = daySlots.filter((s) => s.required_role === grp);
                         if (groupSlots.length === 0) {
-                          return rotaRole === "all" ? null : (
-                            <div key={grp} className="text-xs text-muted-foreground italic">No {roleLabel(grp as ShiftRole)} slots</div>
-                          );
+                          return <div key={grp} className="text-xs text-muted-foreground italic">No {roleLabel(grp)} slots</div>;
                         }
                         return (
                           <div key={grp} className="space-y-2">
