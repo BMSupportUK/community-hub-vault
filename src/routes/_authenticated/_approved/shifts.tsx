@@ -138,6 +138,17 @@ function ShiftsPage() {
   const { localMode, toggle: toggleLocalTz, browserTz, fmtRange } = useLocalDisplayTz(tz);
   const isMod = hasRole("moderator");
   const canPick = isStaffOrAdmin || isMod;
+  // Daily block-shift quota: Owner 2, Management 1, Staff 3.
+  const myQuota = useMemo(
+    () => Math.max(0, ...roles.map((r) => ROLE_SHIFT_QUOTA[r] ?? 0)),
+    [roles],
+  );
+
+  const [businessHours, setBusinessHours] = useState<Record<number, { open: string; close: string; closed: boolean }>>({});
+  const [modHoursDay, setModHoursDay] = useState<string | null>(null);
+  const [modHoursForm, setModHoursForm] = useState({ start: "09:00", end: "19:00" });
+  const [savingModHours, setSavingModHours] = useState(false);
+
 
   const [tab, setTab] = useState("welcome");
   const [weekStart, setWeekStart] = useState<Date>(() => startOfWeek(new Date()));
