@@ -131,7 +131,7 @@ function useLocalDisplayTz(rotaTz: string) {
 }
 
 function ShiftsPage() {
-  const { user, hasAny, hasRole } = useAuth();
+  const { user, hasAny, hasRole, roles } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
   const isStaffOrAdmin = hasAny(["admin", "management", "staff"]);
   const { toUtcMs, tz } = useTimezone();
