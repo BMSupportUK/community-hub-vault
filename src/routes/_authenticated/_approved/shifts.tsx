@@ -899,7 +899,7 @@ function ShiftsPage() {
                   </div>
                 );
               })}
-              {slots.filter((s) => s.assigned_to && (claimedRole === "all" || (s.required_role || "staff") === claimedRole)).length === 0 && (
+              {slots.filter((s) => s.assigned_to && (s.required_role || "staff") === claimedRole).length === 0 && (
                 <div className="md:col-span-2 lg:col-span-4 rounded-2xl border border-dashed border-border p-12 text-center text-muted-foreground bg-surface/40">
                   No claimed shifts for the week of {dayLabel(weekStart)}.
                 </div>
