@@ -276,6 +276,9 @@ function ShiftsPage() {
 
   const claim = async (s: Slot) => {
     if (!user) return;
+    if (s.required_role && !isAdmin && !roles.includes(s.required_role as AppRole)) {
+      return toast.error(`That shift is reserved for ${roleLabel(s.required_role)}`);
+    }
     if (s.slot_type === "hourly" && !isMod && !isAdmin) return toast.error("Hourly slots are for moderators");
     if (s.slot_type === "shift" && !isStaffOrAdmin) return toast.error("Full shifts are for staff");
     if (s.slot_type === "shift") {
