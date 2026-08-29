@@ -338,8 +338,15 @@ export const getBoroMatchCentre = createServerFn({ method: "GET" }).handler(
         else if (invalidCachedLast) patch.last_result = null;
       }
       if (!dto.nextFixtureManual) {
+        // Our own fixture list wins whenever ESPN's "next" game is in the past,
+        // as long as ours is either still to come or currently being played —
+        // otherwise a game kicking off held the card on the previous result.
+        const dbNextIsCurrent =
+          !!nextFromDb &&
+          (Date.parse(nextFromDb.kickoff) > Date.now() ||
+            Date.parse(nextFromDb.kickoff) > Date.now() - 4 * 60 * 60 * 1000);
         const nf =
-          espnNextIsStale && nextFromDb && Date.parse(nextFromDb.kickoff) > Date.now()
+          espnNextIsStale && dbNextIsCurrent
             ? nextFromDb
             : (live.nextFixture ?? nextFromDb);
 
