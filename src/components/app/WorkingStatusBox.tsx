@@ -233,6 +233,22 @@ export function WorkingStatusBox({ stackActions = false }: { stackActions?: bool
             <Briefcase className="size-3.5 text-emerald-300" />
             <h2 className="font-display text-[11px] font-bold tracking-wider uppercase">Working Status</h2>
           </div>
+          <div className="flex items-center gap-1">
+            <Link
+              to="/clock"
+              title="Clock page"
+              className="inline-flex items-center justify-center size-6 rounded-md text-muted-foreground hover:text-foreground hover:bg-surface-2 transition"
+            >
+              <Clock className="size-3.5" />
+            </Link>
+            <Link
+              to="/shifts"
+              title="Shifts"
+              className="inline-flex items-center justify-center size-6 rounded-md text-muted-foreground hover:text-foreground hover:bg-surface-2 transition"
+            >
+              <Calendar className="size-3.5" />
+            </Link>
+          </div>
         </div>
         <div className="px-3 py-3 space-y-2 text-xs">
           <div className={cn("gap-2 pb-1 border-b border-border/60", stackActions ? "flex flex-col items-start" : "flex items-center justify-between")}>
