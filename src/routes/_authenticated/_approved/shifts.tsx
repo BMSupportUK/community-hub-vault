@@ -754,11 +754,6 @@ function ShiftsPage() {
                         if (groupSlots.length === 0) return null;
                         return (
                           <div key={grp} className="space-y-2">
-                            <div className="flex items-center gap-2">
-                              <span className={cn("text-[10px] px-2 py-0.5 rounded-full border font-semibold uppercase tracking-wide", roleBadgeClass(grp))}>
-                                {roleLabel(grp)}
-                              </span>
-                            </div>
                             {groupSlots.map((s) => {
                               const mine = s.assigned_to === user?.id;
                               const taken = !!s.assigned_to;
