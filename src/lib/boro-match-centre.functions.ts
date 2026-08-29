@@ -146,7 +146,7 @@ export const getBoroMatchCentre = createServerFn({ method: "GET" }).handler(
           : null;
       let lastResult = dto.lastResult;
       if (lastResult && !lastResult.eventId) {
-        const enriched = await withEspnEvent({
+        const enriched = await withMatchFeedEvent({
           kickoff: lastResult.date,
           competition: lastResult.competition,
           home: lastResult.home,
@@ -173,7 +173,7 @@ export const getBoroMatchCentre = createServerFn({ method: "GET" }).handler(
       // centre tabs have no Gamecast feed to poll.
       let nextFixture = dto.nextFixture;
       if (nextFixture && !nextFixture.eventId) {
-        const enrichedNext = await withEspnEvent(nextFixture);
+        const enrichedNext = await withMatchFeedEvent(nextFixture);
         if (enrichedNext.eventId) {
           nextFixture = enrichedNext;
           await supabaseAdmin
@@ -186,8 +186,8 @@ export const getBoroMatchCentre = createServerFn({ method: "GET" }).handler(
     }
     try {
       const [live, standings] = await Promise.all([
-        fetchEspnBoro(),
-        fetchEspnStandings().catch((e: unknown) => {
+        fetchBoroFeed(),
+        fetchBoroStandings().catch((e: unknown) => {
           console.error("[boro-match-centre] standings fetch failed", e);
           return null;
         }),
@@ -360,7 +360,7 @@ export const getBoroMatchCentre = createServerFn({ method: "GET" }).handler(
         if (lr) {
           const enriched = lr.eventId
             ? null
-            : await withEspnEvent({
+            : await withMatchFeedEvent({
                 kickoff: lr.date,
                 competition: lr.competition,
                 home: lr.home,
@@ -394,13 +394,13 @@ export const getBoroMatchCentre = createServerFn({ method: "GET" }).handler(
             ? nextFromDb
             : (live.nextFixture ?? nextFromDb);
 
-        if (nf) patch.next_fixture = await withEspnEvent(nf);
+        if (nf) patch.next_fixture = await withMatchFeedEvent(nf);
         else if (invalidCachedNext) patch.next_fixture = null;
       }
       // A manually-set or previously cached fixture may predate the ESPN
       // lookup: top it up so the match centre tabs have a feed to poll.
       if (dto.nextFixtureManual && dto.nextFixture && !dto.nextFixture.eventId) {
-        patch.next_fixture = await withEspnEvent(dto.nextFixture);
+        patch.next_fixture = await withMatchFeedEvent(dto.nextFixture);
       }
       if (!dto.leaguePositionManual && standings) patch.league_position = standings;
       await supabaseAdmin
@@ -427,17 +427,17 @@ export const getBoroMatchCentre = createServerFn({ method: "GET" }).handler(
   },
 );
 
-async function withEspnEvent(nf: NextFixture): Promise<NextFixture> {
+async function withMatchFeedEvent(nf: NextFixture): Promise<NextFixture> {
   const { withFotmobEvent } = await import("@/lib/boro-match-centre-fotmob.server");
   return withFotmobEvent(nf);
 }
 
-async function fetchEspnStandings(): Promise<LeaguePosition | null> {
+async function fetchBoroStandings(): Promise<LeaguePosition | null> {
   const { fetchFotmobStandings } = await import("@/lib/boro-match-centre-fotmob.server");
   return fetchFotmobStandings();
 }
 
-async function fetchEspnBoro(): Promise<{
+async function fetchBoroFeed(): Promise<{
   lastResult: LastResult | null;
   nextFixture: NextFixture | null;
   liveMatch: LiveMatch | null;
