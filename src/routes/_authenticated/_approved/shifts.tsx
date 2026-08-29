@@ -669,7 +669,6 @@ function ShiftsPage() {
 
             <div className="mb-4 flex flex-wrap gap-1 rounded-xl bg-surface-2 border border-border p-1">
               {([
-                { v: "all", label: "All roles" },
                 { v: "admin", label: roleLabel("admin") },
                 { v: "management", label: roleLabel("management") },
                 { v: "staff", label: roleLabel("staff") },
@@ -686,11 +685,9 @@ function ShiftsPage() {
                   )}
                 >
                   {label}
-                  {v !== "all" && (
-                    <span className="ml-1.5 opacity-80 font-normal">
-                      {roleTargets[v as ShiftRole].filled}/{roleTargets[v as ShiftRole].target}
-                    </span>
-                  )}
+                  <span className="ml-1.5 opacity-80 font-normal">
+                    {roleTargets[v].filled}/{roleTargets[v].target}
+                  </span>
                 </button>
               ))}
             </div>
