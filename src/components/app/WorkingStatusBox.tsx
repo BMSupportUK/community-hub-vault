@@ -275,10 +275,10 @@ export function WorkingStatusBox({ stackActions = false }: { stackActions?: bool
         </div>
         <div className="px-3 py-3 space-y-2 text-xs">
           <div className={cn("gap-2 pb-1 border-b border-border/60", stackActions ? "flex flex-col items-start" : "flex items-center justify-between")}>
-            <div className="flex items-center gap-2 min-w-0">
+            <div className="flex flex-col gap-1 min-w-0">
               <span className="font-display font-semibold text-sm text-foreground truncate">{displayName}</span>
               {staffRoleLabel && (
-                <span className="inline-flex items-center shrink-0 rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary ring-1 ring-primary/40">
+                <span className="inline-flex items-center self-start rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary ring-1 ring-primary/40">
                   {staffRoleLabel}
                 </span>
               )}
