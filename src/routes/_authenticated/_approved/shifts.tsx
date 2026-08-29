@@ -173,6 +173,7 @@ function ShiftsPage() {
 
   const [tab, setTab] = useState("welcome");
   const [rotaRole, setRotaRole] = useState<"all" | ShiftRole>("all");
+  const [claimedRole, setClaimedRole] = useState<"all" | ShiftRole>("all");
   const [weekStart, setWeekStart] = useState<Date>(() => startOfWeek(new Date()));
   const [slots, setSlots] = useState<Slot[]>([]);
   const [holidays, setHolidays] = useState<Holiday[]>([]);
@@ -612,6 +613,7 @@ function ShiftsPage() {
             {[
               { v: "welcome", label: "Welcome", Icon: CalendarIcon },
               { v: "rota", label: "Rota", Icon: Users },
+              { v: "claimed", label: "Claimed Shifts", Icon: Users },
               { v: "mine", label: "My Shifts", Icon: Clock },
               { v: "holidays", label: "Holidays", Icon: Plane },
               ...(isAdmin ? [{ v: "requests", label: "Requests", Icon: ShieldCheck }, { v: "manage", label: "Manage Rota", Icon: Plus }] : []),
@@ -816,6 +818,94 @@ function ShiftsPage() {
             </div>
           </TabsContent>
 
+          {/* CLAIMED SHIFTS */}
+          <TabsContent value="claimed" className="mt-6">
+            <div className="flex flex-wrap items-center gap-3 mb-4">
+              <Button variant="outline" className="bg-surface/60 border-border text-foreground hover:bg-surface-2" onClick={() => { const d = new Date(weekStart); d.setDate(d.getDate() - 7); setWeekStart(d); }}>← Prev week</Button>
+              <div className="font-display text-lg text-foreground">Week of {dayLabel(weekStart)}</div>
+              <Button variant="outline" className="bg-surface/60 border-border text-foreground hover:bg-surface-2" onClick={() => { const d = new Date(weekStart); d.setDate(d.getDate() + 7); setWeekStart(d); }}>Next week →</Button>
+              <Button variant="outline" className="bg-surface/60 border-border text-foreground hover:bg-surface-2 ml-auto" onClick={() => setWeekStart(startOfWeek(new Date()))}>Today</Button>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              <button
+                onClick={() => setClaimedRole("all")}
+                className={cn(
+                  "text-[11px] px-2.5 py-1 rounded-full border transition-colors font-medium",
+                  claimedRole === "all"
+                    ? "bg-primary/20 text-foreground border-primary/50"
+                    : "bg-surface border-border text-muted-foreground hover:bg-surface-2",
+                )}
+              >
+                All
+              </button>
+              {SHIFT_ROLES.map(({ value, label }) => (
+                <button
+                  key={value}
+                  onClick={() => setClaimedRole(value)}
+                  className={cn(
+                    "text-[11px] px-2.5 py-1 rounded-full border transition-colors font-medium flex items-center gap-1.5",
+                    claimedRole === value
+                      ? roleBadgeClass(value)
+                      : "bg-surface border-border text-muted-foreground hover:bg-surface-2",
+                  )}
+                >
+                  <span className={cn("size-1.5 rounded-full", value === "admin" ? "bg-amber-400" : value === "management" ? "bg-violet-400" : value === "staff" ? "bg-sky-400" : "bg-emerald-400")} />
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {(["admin", "management", "staff", "moderator"] as ShiftRole[]).map((role) => {
+                const roleSlots = slots.filter(
+                  (s) =>
+                    s.assigned_to &&
+                    (s.required_role || "staff") === role &&
+                    (claimedRole === "all" || claimedRole === role),
+                );
+                if (roleSlots.length === 0) return null;
+                const byDay: Record<string, Slot[]> = {};
+                for (const s of roleSlots) (byDay[s.shift_date] ||= []).push(s);
+                return (
+                  <div key={role} className="rounded-2xl bg-surface border border-border p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className={cn("text-[11px] px-2 py-0.5 rounded-full border font-semibold uppercase tracking-wide", roleBadgeClass(role))}>
+                        {roleLabel(role)}
+                      </span>
+                      <span className="text-[11px] text-muted-foreground">
+                        {roleSlots.length} shift{roleSlots.length === 1 ? "" : "s"}
+                      </span>
+                    </div>
+                    <div className="space-y-3">
+                      {Object.entries(byDay)
+                        .sort(([a], [b]) => a.localeCompare(b))
+                        .map(([dateStr, ds]) => (
+                          <div key={dateStr}>
+                            <div className="text-xs font-semibold text-foreground mb-1">{dayLabel(new Date(dateStr))}</div>
+                            <div className="space-y-1">
+                              {ds
+                                .sort((a, b) => a.start_time.localeCompare(b.start_time))
+                                .map((s) => (
+                                  <div key={s.id} className="flex items-center justify-between gap-2 text-xs">
+                                    <span className="font-mono text-foreground">{fmtRange(s.shift_date, s.start_time, s.end_time)}</span>
+                                    <span className="text-muted-foreground truncate">{profName(s.assigned_to)}</span>
+                                  </div>
+                                ))}
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                );
+              })}
+              {slots.filter((s) => s.assigned_to && (claimedRole === "all" || (s.required_role || "staff") === claimedRole)).length === 0 && (
+                <div className="md:col-span-2 lg:col-span-4 rounded-2xl border border-dashed border-border p-12 text-center text-muted-foreground bg-surface/40">
+                  No claimed shifts for the week of {dayLabel(weekStart)}.
+                </div>
+              )}
+            </div>
+          </TabsContent>
 
           {/* MY SHIFTS */}
           <TabsContent value="mine" className="mt-6">
