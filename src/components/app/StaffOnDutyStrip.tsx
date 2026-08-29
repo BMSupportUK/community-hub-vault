@@ -57,6 +57,7 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
       const map = Object.fromEntries(((profs as StaffProfile[]) ?? []).map((p) => [p.id, p]));
       setProfiles(map);
       const OFF_ORDER = ["admin", "management", "staff", "moderator"] as const;
+      const isDane = (n: string) => /\bdane\b/i.test(n);
       const off = allIds
         .filter((id) => !workingIds.has(id))
         .map((id) => ({ ...map[id], id, role: bestRole.get(id)! }))
@@ -66,6 +67,8 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
           if (d !== 0) return d;
           const an = a.display_name || a.username || "";
           const bn = b.display_name || b.username || "";
+          if (isDane(an) && !isDane(bn)) return -1;
+          if (!isDane(an) && isDane(bn)) return 1;
           return an.localeCompare(bn);
         });
       setOffDuty(off);
