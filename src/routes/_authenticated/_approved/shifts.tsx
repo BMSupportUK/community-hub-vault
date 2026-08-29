@@ -266,7 +266,7 @@ function ShiftsPage() {
   }, [slots]);
 
   const filledShiftsForDay = (dateStr: string) =>
-    (slotsByDay[dateStr] ?? []).filter((s) => s.slot_type === "shift" && s.assigned_to).length;
+    (allSlotsByDay[dateStr] ?? []).filter((s) => s.slot_type === "shift" && s.assigned_to).length;
 
   const profName = (id: string | null) => {
     if (!id) return "";
