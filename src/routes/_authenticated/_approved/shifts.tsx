@@ -164,6 +164,11 @@ function ShiftsPage() {
     () => Math.max(0, ...roles.map((r) => ROLE_SHIFT_QUOTA[r] ?? 0)),
     [roles],
   );
+  // Only show claim/rota tabs for roles the current user actually holds.
+  const myRotaRoles = useMemo<ShiftRole[]>(
+    () => SHIFT_ROLES.filter(({ value }) => roles.includes(value as AppRole)).map(({ value }) => value),
+    [roles],
+  );
 
   const [businessHours, setBusinessHours] = useState<Record<number, { open: string; close: string; closed: boolean }>>({});
   const [modHoursDay, setModHoursDay] = useState<string | null>(null);
@@ -172,8 +177,15 @@ function ShiftsPage() {
 
 
   const [tab, setTab] = useState("welcome");
-  const [rotaRole, setRotaRole] = useState<"all" | ShiftRole>("all");
+  const [rotaRole, setRotaRole] = useState<"all" | ShiftRole>(() => myRotaRoles[0] ?? "all");
   const [claimedRole, setClaimedRole] = useState<"all" | ShiftRole>("all");
+
+  // Keep rotaRole valid if roles change.
+  useEffect(() => {
+    if (rotaRole !== "all" && !myRotaRoles.includes(rotaRole)) {
+      setRotaRole(myRotaRoles[0] ?? "all");
+    }
+  }, [myRotaRoles, rotaRole]);
   const [weekStart, setWeekStart] = useState<Date>(() => startOfWeek(new Date()));
   const [slots, setSlots] = useState<Slot[]>([]);
   const [holidays, setHolidays] = useState<Holiday[]>([]);
