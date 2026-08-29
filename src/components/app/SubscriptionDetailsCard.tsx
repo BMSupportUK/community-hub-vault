@@ -54,7 +54,15 @@ export function SubscriptionDetailsCard() {
         .order("account_number", { ascending: true })
         .then(({ data }) => {
           if (!active) return;
-          setCreds((data as CredRow[] | null) ?? []);
+          const rows = (data as CredRow[] | null) ?? [];
+          const nowTs = Date.now();
+          rows.sort((a, b) => {
+            const aExpired = a.expiry_at ? new Date(a.expiry_at).getTime() < nowTs : false;
+            const bExpired = b.expiry_at ? new Date(b.expiry_at).getTime() < nowTs : false;
+            if (aExpired !== bExpired) return aExpired ? 1 : -1;
+            return a.account_number - b.account_number;
+          });
+          setCreds(rows);
           setLoaded(true);
         });
     };
