@@ -54,7 +54,9 @@ interface Swap {
 }
 interface Profile { id: string; username: string | null; display_name: string | null; }
 
-const DAY_TARGET = 3;
+/** How many block shifts each role covers per day. */
+const ROLE_SHIFT_QUOTA: Record<string, number> = { admin: 2, management: 1, staff: 3 };
+const DAY_TARGET = ROLE_SHIFT_QUOTA.admin + ROLE_SHIFT_QUOTA.management + ROLE_SHIFT_QUOTA.staff; // 6
 
 type BlockPreset = { id: string; label: string; start: string; end: string; days: number[] /* 0=Sun..6=Sat */ };
 const DEFAULT_PRESETS: BlockPreset[] = [
