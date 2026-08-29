@@ -728,6 +728,21 @@ function ShiftsPage() {
                       </span>
                     </div>
 
+                    {filled > 0 && (
+                      <div className="mb-2 flex flex-wrap gap-1.5">
+                        {(["admin", "management", "staff", "moderator"] as ShiftRole[]).map((grp) => {
+                          const assigned = (groups[grp] ?? []).filter((s) => s.assigned_to);
+                          if (assigned.length === 0) return null;
+                          return (
+                            <div key={grp} className={cn("flex items-center gap-1.5 text-[10px] px-2 py-0.5 rounded-full border", roleBadgeClass(grp))}>
+                              <span className="font-semibold uppercase tracking-wide">{roleLabel(grp)}</span>
+                              <span className="opacity-90">{assigned.map((s) => profName(s.assigned_to)).join(", ")}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+
                     <div className="space-y-3 flex-1">
                       {daySlots.length === 0 && <div className="text-xs text-muted-foreground italic">No slots</div>}
                       {(["admin", "management", "staff", "moderator"] as ShiftRole[]).map((grp) => {
