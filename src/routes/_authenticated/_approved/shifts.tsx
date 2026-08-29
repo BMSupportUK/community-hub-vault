@@ -211,6 +211,22 @@ function ShiftsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [weekStart.getTime()]);
 
+  // Business opening hours — used as the default start/finish for moderator hourly slots.
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.from("business_hours").select("day_of_week, open_time, close_time, is_closed");
+      const map: Record<number, { open: string; close: string; closed: boolean }> = {};
+      for (const r of data ?? []) {
+        map[r.day_of_week] = {
+          open: String(r.open_time ?? "09:00").slice(0, 5),
+          close: String(r.close_time ?? "19:00").slice(0, 5),
+          closed: !!r.is_closed,
+        };
+      }
+      setBusinessHours(map);
+    })();
+  }, []);
+
   const slotsByDay = useMemo(() => {
     const m: Record<string, Slot[]> = {};
     for (const s of slots) (m[s.shift_date] ||= []).push(s);
