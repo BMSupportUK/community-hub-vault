@@ -427,8 +427,6 @@ export const getBoroMatchCentre = createServerFn({ method: "GET" }).handler(
   },
 );
 
-const BORO_FEED_NOTE = "FotMob is the only match feed used by the match centre.";
-
 async function withEspnEvent(nf: NextFixture): Promise<NextFixture> {
   const { withFotmobEvent } = await import("@/lib/boro-match-centre-fotmob.server");
   return withFotmobEvent(nf);
