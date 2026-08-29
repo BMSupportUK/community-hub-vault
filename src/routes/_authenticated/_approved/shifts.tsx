@@ -665,14 +665,11 @@ function ShiftsPage() {
                 const ok = dailyTarget === 0 || filled >= dailyTarget;
                 const past = isDayPastOrStarted(d);
 
-                const groups = useMemo(() => {
-                  const m: Partial<Record<ShiftRole, Slot[]>> = {};
-                  for (const s of daySlots) {
-                    const r = (s.required_role || "staff") as ShiftRole;
-                    (m[r] ||= []).push(s);
-                  }
-                  return m;
-                }, [daySlots]);
+                const groups: Partial<Record<ShiftRole, Slot[]>> = {};
+                for (const s of daySlots) {
+                  const r = (s.required_role || "staff") as ShiftRole;
+                  (groups[r] ||= []).push(s);
+                }
 
                 return (
                   <div key={dateStr} className={cn("relative rounded-2xl bg-surface border border-border p-3 backdrop-blur min-h-[180px] flex flex-col", past && "opacity-80")}>
