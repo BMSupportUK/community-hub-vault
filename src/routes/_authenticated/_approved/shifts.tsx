@@ -870,6 +870,34 @@ function ShiftsPage() {
       </div>
 
       {/* SWAP DIALOG */}
+      {/* Moderator hours */}
+      <Dialog open={!!modHoursDay} onOpenChange={(o) => { if (!o) setModHoursDay(null); }}>
+        <DialogContent className="bg-surface-2 border-border">
+          <DialogHeader>
+            <DialogTitle className="text-foreground">Your hours{modHoursDay ? ` — ${modHoursDay}` : ""}</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Defaults to the business opening hours for that day. Change the start and finish to suit you.
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label className="text-muted-foreground">Start</Label>
+              <Input type="time" value={modHoursForm.start} onChange={(e) => setModHoursForm({ ...modHoursForm, start: e.target.value })} className="bg-surface border-border text-foreground" />
+            </div>
+            <div>
+              <Label className="text-muted-foreground">Finish</Label>
+              <Input type="time" value={modHoursForm.end} onChange={(e) => setModHoursForm({ ...modHoursForm, end: e.target.value })} className="bg-surface border-border text-foreground" />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" className="bg-surface border-border text-foreground" onClick={() => setModHoursDay(null)}>Cancel</Button>
+            <Button className="bg-gradient-primary text-white border-0" disabled={savingModHours} onClick={saveModHours}>
+              {savingModHours ? <Loader2 className="size-4 mr-2 animate-spin" /> : null}Add to rota
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={!!swapFor} onOpenChange={(o) => { if (!o) setSwapFor(null); }}>
         <DialogContent>
           <DialogHeader><DialogTitle>Request shift swap</DialogTitle></DialogHeader>
