@@ -704,11 +704,24 @@ function ShiftsPage() {
                 const daySlots = filteredSlotsByDay[dateStr] ?? [];
                 const past = isDayPastOrStarted(d);
 
-                const countRole = rotaRole === "all" ? "staff" : rotaRole;
-                const countSlots = (allSlotsByDay[dateStr] ?? []).filter((s) => (s.required_role || "staff") === countRole);
-                const countTarget = countRole in ROLE_SHIFT_QUOTA ? ROLE_SHIFT_QUOTA[countRole as keyof typeof ROLE_SHIFT_QUOTA] : countSlots.length;
+                const displayedRoles = Array.from(
+                  new Set(daySlots.map((s) => (s.required_role || "staff") as ShiftRole)),
+                );
+                const countRole = rotaRole !== "all"
+                  ? rotaRole
+                  : displayedRoles.length === 1
+                    ? displayedRoles[0]
+                    : null;
+                const countSlots = (allSlotsByDay[dateStr] ?? []).filter((s) => {
+                  const slotRole = (s.required_role || "staff") as ShiftRole;
+                  return countRole ? slotRole === countRole : slotRole !== "moderator";
+                });
+                const countTarget = countRole
+                  ? ROLE_SHIFT_QUOTA[countRole] ?? countSlots.length
+                  : DAY_TARGET;
                 const countFilled = countSlots.filter((s) => s.assigned_to).length;
                 const countOk = countTarget === 0 || countFilled >= countTarget;
+                const countLabel = countRole ? roleLabel(countRole) : "All";
 
                 const groups: Partial<Record<ShiftRole, Slot[]>> = {};
                 for (const s of daySlots) {
@@ -729,7 +742,7 @@ function ShiftsPage() {
                     <div className="flex items-center justify-between mb-2">
                       <div className="text-sm font-semibold text-foreground">{dayLabel(d)}</div>
                       <span className={cn("text-[11px] px-2 py-0.5 rounded-full font-semibold border", past ? "bg-rose-500/20 text-rose-200 border-rose-500/40" : countOk ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40" : "bg-sky-500/20 text-sky-300 border-sky-500/40")}>
-                        {past ? "Closed" : `${roleLabel(countRole)} ${countFilled}/${countTarget}${countFilled < countTarget ? ` · ${countTarget - countFilled} more` : ""}`}
+                        {past ? "Closed" : `${countLabel} ${countFilled}/${countTarget}${countFilled < countTarget ? ` · ${countTarget - countFilled} more` : ""}`}
                       </span>
                     </div>
 
