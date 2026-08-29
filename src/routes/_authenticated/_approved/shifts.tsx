@@ -702,9 +702,6 @@ function ShiftsPage() {
               {days.map((d) => {
                 const dateStr = fmtDate(d);
                 const daySlots = filteredSlotsByDay[dateStr] ?? [];
-                const filled = daySlots.filter((slot) => slot.assigned_to).length;
-                const dailyTarget = daySlots.length;
-                const ok = dailyTarget === 0 || filled >= dailyTarget;
                 const past = isDayPastOrStarted(d);
 
                 const countRole = rotaRole === "all" ? "staff" : rotaRole;
