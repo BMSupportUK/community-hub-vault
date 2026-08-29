@@ -623,6 +623,13 @@ function ShiftsPage() {
                               <div className="font-mono text-foreground">{fmtRange(s.shift_date, s.start_time, s.end_time)}</div>
                               <span className={cn("text-[10px] px-1.5 py-0.5 rounded uppercase font-semibold", s.slot_type === "hourly" ? "bg-accent/30 text-accent-foreground" : "bg-primary/30 text-foreground")}>{s.slot_type === "hourly" ? "hourly" : "shift"}</span>
                             </div>
+                            {s.required_role && (
+                              <div className="mt-0.5">
+                                <span className="text-[10px] px-1.5 py-0.5 rounded bg-surface-2 border border-border text-muted-foreground font-semibold uppercase">
+                                  {roleLabel(s.required_role)}
+                                </span>
+                              </div>
+                            )}
                             {s.notes && <div className="text-muted-foreground mt-0.5">{s.notes}</div>}
                             <div className="mt-1.5 flex items-center justify-between gap-1">
                               <div className="text-muted-foreground truncate">{taken ? profName(s.assigned_to) : "Open"}</div>
