@@ -294,14 +294,14 @@ function ShiftsPage() {
     for (const s of slots) {
       if (s.slot_type !== "shift") continue;
       const role = (s.required_role || "staff") as AppRole;
-      if (targets[role]) {
-        targets[role].filled += s.assigned_to ? 1 : 0;
-      }
+      const t = targets[role];
+      if (t) t.filled += s.assigned_to ? 1 : 0;
     }
     for (const role of Object.keys(targets) as AppRole[]) {
-      targets[role].remaining = Math.max(0, targets[role].target - targets[role].filled);
+      const t = targets[role]!;
+      t.remaining = Math.max(0, t.target - t.filled);
     }
-    return targets;
+    return targets as Record<ShiftRole, { target: number; filled: number; remaining: number }>;
   }, [slots]);
 
 
