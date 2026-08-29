@@ -21,6 +21,7 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
   const [shifts, setShifts] = useState<StaffShift[]>([]);
   const [breaks, setBreaks] = useState<StaffBreak[]>([]);
   const [profiles, setProfiles] = useState<Record<string, StaffProfile>>({});
+  const [offDuty, setOffDuty] = useState<Array<StaffProfile & { role: string }>>([]);
   const [now, setNow] = useState(() => Date.now());
   const roleFlashMap = useRoleFlashMap();
 
@@ -37,13 +38,40 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
     const ss = (s as StaffShift[]) ?? [];
     setShifts(ss);
     setBreaks((b as StaffBreak[]) ?? []);
-    const ids = Array.from(new Set(ss.map((x) => x.user_id)));
+    const workingIds = new Set(ss.map((x) => x.user_id));
+    // All staff-role users for the off-duty section
+    const { data: roleRows } = await supabase
+      .from("user_roles").select("user_id,role")
+      .in("role", ["admin", "management", "moderator", "staff"]);
+    const bestRole = new Map<string, string>();
+    const rank = (r: string) => ROLE_ORDER.indexOf(r as (typeof ROLE_ORDER)[number]);
+    for (const r of (roleRows as Array<{ user_id: string; role: string }>) ?? []) {
+      const cur = bestRole.get(r.user_id);
+      if (!cur || rank(r.role) < rank(cur)) bestRole.set(r.user_id, r.role);
+    }
+    const allIds = Array.from(bestRole.keys());
+    const ids = Array.from(new Set([...allIds, ...workingIds]));
     if (ids.length) {
       const { data: profs } = await supabase
         .from("profiles").select("id,username,display_name,avatar_url").in("id", ids);
-      setProfiles(Object.fromEntries(((profs as StaffProfile[]) ?? []).map((p) => [p.id, p])));
+      const map = Object.fromEntries(((profs as StaffProfile[]) ?? []).map((p) => [p.id, p]));
+      setProfiles(map);
+      const OFF_ORDER = ["management", "staff", "moderator", "admin"] as const;
+      const off = allIds
+        .filter((id) => !workingIds.has(id))
+        .map((id) => ({ ...map[id], id, role: bestRole.get(id)! }))
+        .filter((p) => p.id)
+        .sort((a, b) => {
+          const d = OFF_ORDER.indexOf(a.role as (typeof OFF_ORDER)[number]) - OFF_ORDER.indexOf(b.role as (typeof OFF_ORDER)[number]);
+          if (d !== 0) return d;
+          const an = a.display_name || a.username || "";
+          const bn = b.display_name || b.username || "";
+          return an.localeCompare(bn);
+        });
+      setOffDuty(off);
     } else {
       setProfiles({});
+      setOffDuty([]);
     }
   };
 
@@ -172,6 +200,50 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
             );
           })}
         </div>
+        {offDuty.length > 0 && (
+          <div className="relative mt-3 pt-3 border-t border-white/15">
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-white/70 mb-2">
+              Off duty · {offDuty.length}
+            </div>
+            <div className={cn(isSidebar ? "flex flex-col gap-2" : "flex gap-2 overflow-x-auto pb-1")}>
+              {offDuty.map((p) => {
+                const name = p.display_name || p.username || "Staff";
+                return (
+                  <div
+                    key={p.id}
+                    className={cn(
+                      "rounded-lg p-2.5 border border-white/15 bg-white/5 backdrop-blur",
+                      isSidebar ? "w-full" : "shrink-0 min-w-[180px]",
+                    )}
+                  >
+                    <div className="flex items-center gap-2">
+                      <div className="relative">
+                        <img
+                          src={resolveAvatarUrl(p.id, p.avatar_url, roleFlashMap)}
+                          alt={name}
+                          className="size-8 rounded-full object-cover ring-2 ring-white/20 opacity-70 grayscale"
+                        />
+                        <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-2 ring-white bg-gray-400" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5">
+                          <div className={cn("text-sm font-semibold text-white/80 truncate", roleFlashClass(roleFlashMap.get(p.id)))}>{name}</div>
+                          {p.role && (
+                            <span className="text-[9px] font-medium uppercase tracking-wider text-white/60">
+                              {formatRoleLabel(p.role)}
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-[10px] text-white/60">Off duty</div>
+                        <DndCountdown userId={p.id} compact className="mt-1" />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
