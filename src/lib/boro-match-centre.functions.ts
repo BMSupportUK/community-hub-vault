@@ -368,8 +368,9 @@ export const getBoroMatchCentre = createServerFn({ method: "GET" }).handler(
         .select("*")
         .eq("id", "singleton")
         .maybeSingle();
-      liveMatchCache = { at: Date.now(), value: live.liveMatch ?? null };
-      return { ...rowToDto(fresh), liveMatch: live.liveMatch ?? null };
+      const liveNow = live.liveMatch ?? liveFromDb;
+      liveMatchCache = { at: Date.now(), value: liveNow };
+      return { ...rowToDto(fresh), liveMatch: liveNow };
     } catch (e) {
       console.error("[boro-match-centre] ESPN fetch failed", e);
       return { ...dto, liveMatch: liveMatchCache?.value ?? null };
