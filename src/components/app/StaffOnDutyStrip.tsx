@@ -11,7 +11,7 @@ type StaffShift = { id: string; user_id: string; clock_in: string };
 type StaffBreak = { id: string; shift_id: string; user_id: string; kind: BreakKind; started_at: string };
 type StaffProfile = { id: string; username: string | null; display_name: string | null; avatar_url: string | null };
 
-const ROLE_ORDER = ["admin", "management", "moderator", "staff"] as const;
+const ROLE_ORDER = ["admin", "management", "staff", "moderator"] as const;
 
 export function StaffOnDutySidebar() {
   return <StaffOnDutyStrip variant="sidebar" />;
@@ -56,7 +56,7 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
         .from("profiles").select("id,username,display_name,avatar_url").in("id", ids);
       const map = Object.fromEntries(((profs as StaffProfile[]) ?? []).map((p) => [p.id, p]));
       setProfiles(map);
-      const OFF_ORDER = ["management", "staff", "moderator", "admin"] as const;
+      const OFF_ORDER = ["admin", "management", "staff", "moderator"] as const;
       const off = allIds
         .filter((id) => !workingIds.has(id))
         .map((id) => ({ ...map[id], id, role: bestRole.get(id)! }))
