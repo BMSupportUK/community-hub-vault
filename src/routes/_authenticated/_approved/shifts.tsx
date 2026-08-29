@@ -178,7 +178,7 @@ function ShiftsPage() {
 
   const [tab, setTab] = useState("welcome");
   const [rotaRole, setRotaRole] = useState<"all" | ShiftRole>(() => myRotaRoles[0] ?? "all");
-  const [claimedRole, setClaimedRole] = useState<"all" | ShiftRole>("all");
+  const [claimedRole, setClaimedRole] = useState<ShiftRole>(() => myRotaRoles[0] ?? "admin");
 
   // Keep rotaRole valid if roles change.
   useEffect(() => {
