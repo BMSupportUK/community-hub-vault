@@ -3756,6 +3756,7 @@ export type Database = {
           end_time: string
           id: string
           notes: string | null
+          required_role: Database["public"]["Enums"]["app_role"] | null
           shift_date: string
           slot_type: Database["public"]["Enums"]["slot_type"]
           start_time: string
@@ -3768,6 +3769,7 @@ export type Database = {
           end_time: string
           id?: string
           notes?: string | null
+          required_role?: Database["public"]["Enums"]["app_role"] | null
           shift_date: string
           slot_type?: Database["public"]["Enums"]["slot_type"]
           start_time: string
@@ -3780,6 +3782,7 @@ export type Database = {
           end_time?: string
           id?: string
           notes?: string | null
+          required_role?: Database["public"]["Enums"]["app_role"] | null
           shift_date?: string
           slot_type?: Database["public"]["Enums"]["slot_type"]
           start_time?: string
