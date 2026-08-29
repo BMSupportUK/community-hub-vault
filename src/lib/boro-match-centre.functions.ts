@@ -412,7 +412,12 @@ export const getBoroMatchCentre = createServerFn({ method: "GET" }).handler(
         .select("*")
         .eq("id", "singleton")
         .maybeSingle();
-      const liveNow = live.liveMatch ?? liveFromDb;
+      const liveCandidate = live.liveMatch ?? liveFromDb;
+      // Drop the live strip once our fixture feed says that game has finished.
+      const liveNow =
+        liveCandidate && finished.some((row: any) => sameFixture(liveCandidate, row))
+          ? null
+          : liveCandidate;
       liveMatchCache = { at: Date.now(), value: liveNow };
       return { ...rowToDto(fresh), liveMatch: liveNow };
     } catch (e) {
