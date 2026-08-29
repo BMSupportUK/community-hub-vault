@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { CircleDot, Briefcase, LogIn, LogOut, Coffee, UtensilsCrossed, PlayCircle, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { useDndStatus } from "@/hooks/use-dnd";
 import { Moon } from "lucide-react";
@@ -10,6 +10,7 @@ import { type BreakKind, BREAK_LIMITS as LIMITS, breakLabel, breakIcon } from "@
 import { useServerFn } from "@tanstack/react-start";
 import { sendShiftEventPush, sendBreakEventPush } from "@/lib/push.functions";
 import { toast } from "sonner";
+import { formatRoleLabel } from "@/lib/role-label";
 
 type Shift = { id: string; clock_in: string };
 type Break = { id: string; kind: BreakKind; started_at: string };
