@@ -1133,6 +1133,8 @@ function Storefront() {
   const [dbCategories, setDbCategories] = useState<ProductCategory[]>([]);
   const [cart, setCart] = useState<Record<string, number>>({});
   const [showCheckout, setShowCheckout] = useState(false);
+  const placingRef = useRef(false);
+
   const initialTab = Route.useSearch().tab;
   const [tab, setTab] = useState<string>(initialTab ?? "welcome");
   const navigate = useNavigate();
@@ -1327,6 +1329,29 @@ function Storefront() {
   }) => {
 
     if (!user || cartItems.length === 0) return;
+    // Guard against double-submits / accidental duplicate orders.
+    if (placingRef.current) return;
+    placingRef.current = true;
+    setTimeout(() => {
+      placingRef.current = false;
+    }, 8000);
+    const since = new Date(Date.now() - 15 * 60 * 1000).toISOString();
+    const { data: dupe } = await supabase
+      .from("orders")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("status", "pending")
+      .is("paid_at", null)
+      .gte("created_at", since)
+      .limit(1)
+      .maybeSingle();
+    if (dupe?.id) {
+      toast.error("You already have a pending order — please pay or cancel it before placing another.");
+      setShowCheckout(false);
+      return;
+    }
+
+
     let verifiedDiscountCents = 0;
     const submittedCode = info.discount_code.trim();
     if (submittedCode) {
