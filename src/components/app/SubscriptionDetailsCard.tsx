@@ -157,6 +157,11 @@ export function SubscriptionDetailsCard() {
                       · {accountTypeLabel(c.account_type)}
                     </span>
                   </div>
+                  {c.app_login_name && (
+                    <div className="text-[11px] text-muted-foreground truncate">
+                      Login: <span className="font-semibold text-foreground">{c.app_login_name}</span>
+                    </div>
+                  )}
                   <div className={cn(
                     "text-[11px] font-medium mt-0.5",
                     expired ? "text-red-300" : expSoon ? "text-amber-300" : "text-emerald-300"
