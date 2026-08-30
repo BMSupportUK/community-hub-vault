@@ -101,6 +101,7 @@ interface RailItem {
   icon: React.ComponentType<{ className?: string }>;
   show: boolean;
   badge?: number;
+  badgeVariant?: "alert" | "online";
   search?: Record<string, string>;
   params?: Record<string, string>;
 }
