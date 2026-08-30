@@ -4028,9 +4028,9 @@ function OrderDetailImpl({
               <div className="text-muted-foreground text-xs whitespace-pre-line">{order.notes}</div>
             </div>
           )}
-          {order.status !== "cancelled" && (payProvider !== null || checkPhase !== null || order.paid_at !== null) && (
+          {(payProvider !== null || checkPhase !== null || order.paid_at !== null || order.status === "cancelled") && (
             <PaymentStatusTimeline
-              phase={isOrderPaid ? "confirmed" : (checkPhase ?? "awaiting")}
+              phase={order.status === "cancelled" ? "cancelled" : isOrderPaid ? "confirmed" : (checkPhase ?? "awaiting")}
               method={payProvider}
             />
           )}
