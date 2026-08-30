@@ -17,6 +17,7 @@ import {
   GuideLockBadge,
   GuideAccessCodeBox,
   GuidePasscodeAdmin,
+  GuideAccessTimer,
   useGuideAccess,
 } from "@/components/app/GuideVaultCardActions";
 
@@ -131,6 +132,10 @@ function InstallGuidesPage() {
   const accessQuery = useGuideAccess();
   const unlockedIds = useMemo(
     () => new Set((accessQuery.data ?? []).map((a) => a.blogId)),
+    [accessQuery.data],
+  );
+  const accessExpiry = useMemo(
+    () => new Map((accessQuery.data ?? []).map((a) => [a.blogId, a.expiresAt])),
     [accessQuery.data],
   );
   const [unlocked, setUnlocked] = useState<UnlockedGuide | null>(null);
@@ -602,7 +607,12 @@ function InstallGuidesPage() {
                               <span className="text-xs px-2 py-1 rounded-md bg-primary/15 text-primary-glow font-medium">{b.badge}</span>
                             )}
                           </div>
-                          <h3 className="font-display font-semibold text-lg leading-snug text-foreground">{b.title}</h3>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h3 className="font-display font-semibold text-lg leading-snug text-foreground">{b.title}</h3>
+                            {unlockedIds.has(b.id) && (
+                              <GuideAccessTimer blogId={b.id} expiresAt={accessExpiry.get(b.id)} />
+                            )}
+                          </div>
                           {b.excerpt && (
                             <div className="flex flex-wrap items-center gap-2">
                               <p className="text-sm text-muted-foreground line-clamp-2">{b.excerpt}</p>
