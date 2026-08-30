@@ -12,10 +12,8 @@ async function assertAdmin(supabase: any, userId: string) {
   }
 }
 
-function normalize(kind: "email" | "ip", value: string) {
-  const v = value.trim();
-  if (kind === "email") return v.toLowerCase();
-  return v;
+function normalize(_kind: "email" | "ip", value: string) {
+  return value.trim().toLowerCase();
 }
 
 export const listBlacklist = createServerFn({ method: "GET" })
