@@ -3005,6 +3005,7 @@ export type Database = {
           id: string
           image_url: string | null
           is_active: boolean
+          is_free: boolean
           name: string
           sort_order: number
           updated_at: string
@@ -3017,6 +3018,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean
+          is_free?: boolean
           name: string
           sort_order?: number
           updated_at?: string
@@ -3029,6 +3031,7 @@ export type Database = {
           id?: string
           image_url?: string | null
           is_active?: boolean
+          is_free?: boolean
           name?: string
           sort_order?: number
           updated_at?: string

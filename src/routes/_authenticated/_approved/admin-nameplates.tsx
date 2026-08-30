@@ -31,7 +31,7 @@ function AdminNameplates() {
     setLoading(true);
     const { data, error } = await supabase
       .from("nameplates")
-      .select("id,name,description,image_url,gradient_css,is_active,sort_order")
+      .select("id,name,description,image_url,gradient_css,animation_class,is_active,sort_order,is_free")
       .order("sort_order", { ascending: true })
       .order("created_at", { ascending: false });
     if (error) toast.error(error.message);
@@ -136,6 +136,7 @@ function EditDialog({ row, onClose, onSaved }: { row: NameplateRow | null; onClo
   const [imageUrl, setImageUrl] = useState(row?.image_url ?? "");
   const [gradientCss, setGradientCss] = useState(row?.gradient_css ?? "");
   const [isActive, setIsActive] = useState(row?.is_active ?? true);
+  const [isFree, setIsFree] = useState(row?.is_free ?? true);
   const [sortOrder, setSortOrder] = useState(row?.sort_order ?? 100);
   const [busy, setBusy] = useState(false);
 
@@ -164,6 +165,7 @@ function EditDialog({ row, onClose, onSaved }: { row: NameplateRow | null; onClo
       image_url: imageUrl.trim() || null,
       gradient_css: gradientCss.trim() || null,
       is_active: isActive,
+      is_free: isFree,
       sort_order: sortOrder,
     };
     const { error } = row
@@ -219,6 +221,12 @@ function EditDialog({ row, onClose, onSaved }: { row: NameplateRow | null; onClo
               </label>
             </Field>
           </div>
+          <Field label="Availability">
+            <label className="flex items-center gap-2 text-sm h-[38px] px-3 rounded-lg bg-surface-2 border border-border">
+              <input type="checkbox" checked={isFree} onChange={(e) => setIsFree(e.target.checked)} />
+              Free for everyone (no grant needed)
+            </label>
+          </Field>
         </div>
         <div className="flex justify-end gap-2 px-5 py-3 border-t border-border">
           <button onClick={onClose} className="px-3 py-2 rounded-lg text-sm hover:bg-surface-2">Cancel</button>
