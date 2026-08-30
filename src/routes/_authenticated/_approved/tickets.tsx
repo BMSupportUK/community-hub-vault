@@ -8,7 +8,8 @@ import ticketsHero from "@/assets/tickets-hero.jpg";
 import {
   Ticket as TicketIcon, Plus, Send, Lock, X, LifeBuoy, CreditCard, Bug, Sparkles, UserCog,
   Tv, Film, Circle, CircleDot, Clock4, CheckCircle2, XCircle, ChevronDown, Trash2,
-  Paperclip, FileText, Star, HelpCircle, Ban,
+  Paperclip, FileText, Star, HelpCircle, Ban, Home,
+
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
