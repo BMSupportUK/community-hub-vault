@@ -6,6 +6,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { banUserFromGate } from "@/lib/blacklist.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { ChannelColumn } from "@/components/app/ChannelColumn";
+import { WorkingStatusBox } from "@/components/app/WorkingStatusBox";
 import { toast } from "sonner";
 import { isAdminUnlocked } from "@/lib/admin-unlock";
 import { SignupInfoDialog } from "@/components/app/SignupInfoDialog";
@@ -29,6 +30,7 @@ interface ThreadMsg { id: string; sender_id: string; content: string; created_at
 
 function ModerationPage() {
   const { isMod, user, hasAny } = useAuth();
+  const isOwnerOrManagement = hasAny(["admin", "management"]);
   const canBan = hasAny(["admin", "management"]);
   const banFromGate = useServerFn(banUserFromGate);
   if (!isAdminUnlocked(user?.id)) {
@@ -304,8 +306,8 @@ function ModerationPage() {
             ))}
           </div>
         </header>
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="max-w-3xl mx-auto space-y-3">
+        <div className="flex-1 overflow-y-auto p-6 flex gap-6 items-start">
+          <div className="flex-1 min-w-0 space-y-3">
             {apps.length === 0 && (
               <div className="text-center text-sm text-muted-foreground py-12">No {filter} requests.</div>
             )}
@@ -481,7 +483,13 @@ function ModerationPage() {
               );
             })}
           </div>
+          {isOwnerOrManagement && (
+            <aside className="hidden xl:block w-[320px] shrink-0 sticky top-0">
+              <WorkingStatusBox stackActions />
+            </aside>
+          )}
         </div>
+
       </main>
     </>
   );
