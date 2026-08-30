@@ -115,6 +115,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
   const dragKey = useRef<string | null>(null);
   const navigate = useNavigate();
   const finishedCompetitions = useFinishedCompetitions();
+  const onlineUsers = useOnlineUsers();
   const handleSignOut = async () => {
     await signOut();
     // Hard redirect: guarantees every cached/protected view is torn down even
