@@ -54,12 +54,14 @@ export const addBlacklist = createServerFn({ method: "POST" })
       }
     }
 
-    const { data: existing } = await supabaseAdmin
+    const { data: existingRows } = await supabaseAdmin
       .from("blacklist_entries")
-      .select("id")
+      .select("id, value")
       .eq("kind", data.kind)
-      .eq("value", value)
-      .maybeSingle();
+      .ilike("value", value);
+    const existing = (existingRows ?? []).find(
+      (r: any) => String(r.value ?? "").trim().toLowerCase() === value,
+    );
 
     if (existing) {
       return { ok: true, banned: 0, duplicate: true as const };
