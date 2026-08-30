@@ -481,56 +481,44 @@ function DashboardBody() {
     { to: "/shop", search: { view: "admin" }, label: "Shop products", desc: "Add, edit and reorder shop products and categories.", icon: Package, adminOnly: true },
     { to: "/shop", search: { view: "discounts" }, label: "Discount codes", desc: "Create and manage promotional discount codes.", icon: Tag, adminOnly: true },
   ];
-  const tools = allTools.filter((t) => !t.adminOnly || isAdminOnly);
+  const tools = allTools
+    .filter((t) => !t.adminOnly || isAdminOnly)
+    .sort((a, b) => a.label.localeCompare(b.label, "en-GB", { sensitivity: "base" }));
 
   return (
-    <div className="space-y-6">
-      <RecoveryCodes />
-      <VpnBackfillCard />
-      <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
-        <section className="order-1">
-          <h2 className="font-display text-sm uppercase tracking-wide text-muted-foreground mb-3">Owner tools</h2>
-          <div className="grid sm:grid-cols-2 gap-3">
-            {tools.map((t) => (
-              <Link
-                key={`${t.to}-${t.label}`}
-                to={t.to}
-                search={t.search as any}
-                className="group relative rounded-2xl border border-border bg-surface-1 p-4 hover:border-primary hover:shadow-glow transition-all overflow-hidden"
-              >
-                <div className="absolute inset-x-0 top-0 h-1 bg-gradient-accent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="size-10 rounded-xl bg-gradient-primary grid place-items-center text-primary-foreground shadow-glow">
-                    <t.icon className="size-5" />
-                  </div>
-                  <div className="font-display font-bold">{t.label}</div>
+    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px] items-start">
+      <section className="min-w-0">
+        <h2 className="font-display text-sm uppercase tracking-wide text-muted-foreground mb-3">Owner tools</h2>
+        <div className="grid sm:grid-cols-2 2xl:grid-cols-3 gap-3">
+          {tools.map((t) => (
+            <Link
+              key={`${t.to}-${t.label}`}
+              to={t.to}
+              search={t.search as any}
+              className="group relative rounded-2xl border border-border bg-surface-1 p-4 hover:border-primary hover:shadow-glow transition-all overflow-hidden"
+            >
+              <div className="absolute inset-x-0 top-0 h-1 bg-gradient-accent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="flex items-center gap-3 mb-2">
+                <div className="size-10 rounded-xl bg-gradient-primary grid place-items-center text-primary-foreground shadow-glow">
+                  <t.icon className="size-5" />
                 </div>
-                <p className="text-xs text-muted-foreground">{t.desc}</p>
-              </Link>
-            ))}
-          </div>
-        </section>
+                <div className="font-display font-bold">{t.label}</div>
+              </div>
+              <p className="text-xs text-muted-foreground">{t.desc}</p>
+            </Link>
+          ))}
+        </div>
+      </section>
 
-        <aside className="order-2 lg:sticky lg:top-4 lg:self-start">
-          <div className="rounded-2xl border border-border bg-surface-1 p-4">
-            <h2 className="font-display text-sm uppercase tracking-wide text-muted-foreground mb-3">Live snapshot</h2>
-            <div className="grid grid-cols-2 gap-2">
-              {tiles.map((t) => (
-                <div key={t.label} className="rounded-xl border border-border bg-background p-3 hover:border-primary/50 transition-all">
-                  <div className={`size-8 rounded-lg grid place-items-center mb-2 ${t.accent === "amber" ? "bg-amber-500/15 text-amber-400" : "bg-primary/15 text-primary"}`}>
-                    <t.icon className="size-4" />
-                  </div>
-                  <div className="font-display text-xl font-bold leading-none">{t.value ?? "—"}</div>
-                  <div className="text-[11px] text-muted-foreground mt-1 leading-tight">{t.label}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </aside>
-      </div>
+      <aside className="min-w-0 space-y-4 xl:sticky xl:top-4 xl:self-start">
+        <ThemePickerCard />
+        <RecoveryCodes />
+        <VpnBackfillCard />
+      </aside>
     </div>
   );
 }
+
 
 interface BackupCodeRow {
   id: string;
