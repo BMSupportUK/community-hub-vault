@@ -616,17 +616,52 @@ function RecoveryCodes() {
     } finally { setBusy(false); }
   };
 
+  const writeClipboard = async (text: string) => {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+    } catch {
+      /* fall through to legacy path */
+    }
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "fixed";
+      ta.style.top = "0";
+      ta.style.left = "0";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      ta.setSelectionRange(0, text.length);
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return ok;
+    } catch {
+      return false;
+    }
+  };
+
   const copyAll = async () => {
     const list = fresh ?? rows?.filter((r) => !r.used_at && r.code).map((r) => r.code!);
-    if (!list || list.length === 0) return;
-    await navigator.clipboard.writeText(list.join("\n"));
-    toast.success("Codes copied to clipboard");
+    if (!list || list.length === 0) {
+      toast.error("No codes available to copy — generate a new batch");
+      return;
+    }
+    const ok = await writeClipboard(list.join("\n"));
+    if (ok) toast.success(`Copied ${list.length} codes to clipboard`);
+    else toast.error("Clipboard blocked — select the codes manually to copy");
   };
 
   const copySingle = async (code: string) => {
-    await navigator.clipboard.writeText(code);
-    toast.success("Code copied to clipboard");
+    const ok = await writeClipboard(code);
+    if (ok) toast.success(`Copied ${code}`);
+    else toast.error("Clipboard blocked — select the code manually to copy");
   };
+
 
   const download = () => {
     if (!fresh) return;
