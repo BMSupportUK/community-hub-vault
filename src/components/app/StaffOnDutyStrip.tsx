@@ -16,17 +16,37 @@ type StaffBreak = { id: string; shift_id: string; user_id: string; kind: BreakKi
 type StaffProfile = { id: string; username: string | null; display_name: string | null; avatar_url: string | null; equipped_nameplate_id: string | null; last_seen_at?: string | null };
 
 /** Presence dot that turns purple in realtime while the user has DND active. */
-function PresenceDot({ userId, baseClass }: { userId: string; baseClass: string }) {
+function PresenceDot({ userId, baseClass, dndClass }: { userId: string; baseClass: string; dndClass?: string }) {
   const dnd = useDndStatus(userId);
   return (
     <span
       className={cn(
         "absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-2 ring-white",
-        dnd?.active ? "bg-purple-500 shadow-[0_0_6px_2px_rgba(168,85,247,0.7)]" : baseClass,
+        dnd?.active ? (dndClass ?? "bg-purple-500 shadow-[0_0_6px_2px_rgba(168,85,247,0.7)]") : baseClass,
       )}
     />
   );
 }
+
+/** Dane J is always presented as online unless DND is active. */
+function isDaneJProfile(profile?: { display_name?: string | null; username?: string | null } | null) {
+  if (!profile) return false;
+  const displayName = profile.display_name?.trim() ?? "";
+  const username = profile.username?.trim() ?? "";
+  return /^dane\s+j(?:\b|$)/i.test(displayName) || /^dane[._ -]?j(?:\b|$)/i.test(username);
+}
+
+/** Status line for Dane J's card: Online, or Away when DND is set. */
+function DaneStatusLine({ userId }: { userId: string }) {
+  const dnd = useDndStatus(userId);
+  if (dnd?.active) {
+    return <div className="text-[10px] text-white/80 drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]">Away - Outside of Business Hours</div>;
+  }
+  return (
+    <div className="text-[10px] font-semibold text-emerald-200 drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]">Online</div>
+  );
+}
+
 
 const ROLE_ORDER = ["admin", "management", "staff", "moderator"] as const;
 const OFF_ORDER = ["admin", "management", "staff", "moderator"] as const;
