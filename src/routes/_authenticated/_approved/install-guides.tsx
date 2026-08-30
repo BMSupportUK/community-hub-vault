@@ -15,6 +15,7 @@ import { HeaderVideoUpload } from "@/components/ui/header-video-upload";
 import {
   GuideVaultCardActions,
   GuideLockBadge,
+  GuideAccessCodeBox,
   GuidePasscodeAdmin,
   useGuideAccess,
 } from "@/components/app/GuideVaultCardActions";
@@ -509,6 +510,7 @@ function InstallGuidesPage() {
                     );
                   })}
                 </div>
+                <GuideAccessCodeBox />
               </aside>
 
               <section>
