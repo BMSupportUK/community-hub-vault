@@ -411,7 +411,7 @@ function TicketsPage() {
         isChatting && "px-0 md:px-0 pb-0 h-full"
       )}>
         <Tabs value={tab} onValueChange={(v) => setTab(v as "welcome" | "tickets")}>
-          {!isChatting && (
+          {tab === "welcome" && (
             <header className="mx-auto max-w-5xl">
               <div className="flex flex-wrap items-center justify-center gap-3 md:gap-4 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-[0_0_50px_-12px_rgba(244,63,94,0.35)] p-3 md:p-4">
                 <TabsList className="bg-black/20 border border-white/15 rounded-2xl shadow-inner">
@@ -459,6 +459,7 @@ function TicketsPage() {
               </div>
             </header>
           )}
+
 
           <TabsContent value="welcome" className="mt-6">
             <div className="rounded-2xl bg-gradient-to-br from-rose-600/30 via-fuchsia-600/20 to-violet-700/30 border border-rose-500/30 p-8 md:p-10 shadow-[0_0_60px_-15px_rgba(244,63,94,0.4)]">
