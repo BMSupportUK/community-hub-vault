@@ -37,7 +37,7 @@ export function GateStaffPresence() {
   const onlineCount = staff.filter((s) => s.online || s.on_shift).length;
 
   return (
-    <div className="mt-8 w-full max-w-md rounded-xl border border-white/15 bg-white/5 backdrop-blur-md p-4 text-left shadow-[0_0_40px_rgba(0,0,0,0.4)]">
+    <div className="w-full rounded-lg border border-white/15 bg-white/5 p-3 text-left shadow-[0_0_24px_rgba(0,0,0,0.35)]">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm font-semibold text-white">
           <UserCog className="size-4 text-emerald-400" />
@@ -53,13 +53,13 @@ export function GateStaffPresence() {
           {onlineCount > 0 ? `${onlineCount} online` : "All offline"}
         </span>
       </div>
-      <div className="mt-3 flex flex-wrap gap-2">
+      <div className="mt-2 flex gap-2 overflow-x-auto pb-1">
         {staff.map((s) => {
           const active = s.online || s.on_shift;
           return (
             <div
               key={s.user_id}
-              className="flex items-center gap-2 rounded-full border border-white/10 bg-black/30 pl-1 pr-3 py-1"
+              className="flex shrink-0 items-center gap-2 rounded-full border border-white/10 bg-black/30 py-1 pl-1 pr-3"
             >
               <div className="relative">
                 {s.avatar_url ? (
