@@ -418,13 +418,23 @@ function InstallGuidesPage() {
 
       <div className="px-8 py-6">
         <Tabs value={tab} onValueChange={setTab} className="w-full">
-          <TabsList className={`grid ${canManageCategories ? "grid-cols-3" : "grid-cols-2"} max-w-2xl bg-surface/70 border border-border`}>
+          <TabsList className={`grid ${canManagePasscodes ? "grid-cols-4" : canManageCategories ? "grid-cols-3" : "grid-cols-2"} max-w-2xl bg-surface/70 border border-border`}>
             <TabsTrigger value="welcome" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Welcome</TabsTrigger>
             <TabsTrigger value="guides" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Guides</TabsTrigger>
             {canManageCategories && (
               <TabsTrigger value="categories" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Categories</TabsTrigger>
             )}
+            {canManagePasscodes && (
+              <TabsTrigger value="passcodes" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Passcodes</TabsTrigger>
+            )}
           </TabsList>
+
+          {canManagePasscodes && (
+            <TabsContent value="passcodes" className="mt-6">
+              <GuidePasscodeAdmin />
+            </TabsContent>
+          )}
+
 
           <TabsContent value="welcome" className="mt-6">
             <div className="relative overflow-hidden rounded-2xl border border-border shadow-glow min-h-[60vh] lg:min-h-[70vh]">
