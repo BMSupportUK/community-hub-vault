@@ -79,7 +79,21 @@ type Blog = {
   published: boolean;
   created_at: string;
   sort_order: number;
+  file_path?: string | null;
+  file_name?: string | null;
+  file_mime?: string | null;
+  file_size?: number | null;
 };
+
+/** Unlocked view of a stored guide, returned after a valid passcode. */
+type UnlockedGuide = {
+  blog: Blog;
+  url: string | null;
+  viewUrl: string | null;
+  fileName: string | null;
+  body: string | null;
+};
+
 
 function InstallGuidesPage() {
   const { isMod, user, hasAny } = useAuth();
