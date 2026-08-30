@@ -134,6 +134,10 @@ function InstallGuidesPage() {
     () => new Set((accessQuery.data ?? []).map((a) => a.blogId)),
     [accessQuery.data],
   );
+  const accessExpiry = useMemo(
+    () => new Map((accessQuery.data ?? []).map((a) => [a.blogId, a.expiresAt])),
+    [accessQuery.data],
+  );
   const [unlocked, setUnlocked] = useState<UnlockedGuide | null>(null);
   const [uploadingFile, setUploadingFile] = useState(false);
 
