@@ -616,17 +616,52 @@ function RecoveryCodes() {
     } finally { setBusy(false); }
   };
 
+  const writeClipboard = async (text: string) => {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+    } catch {
+      /* fall through to legacy path */
+    }
+    try {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "fixed";
+      ta.style.top = "0";
+      ta.style.left = "0";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      ta.setSelectionRange(0, text.length);
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return ok;
+    } catch {
+      return false;
+    }
+  };
+
   const copyAll = async () => {
     const list = fresh ?? rows?.filter((r) => !r.used_at && r.code).map((r) => r.code!);
-    if (!list || list.length === 0) return;
-    await navigator.clipboard.writeText(list.join("\n"));
-    toast.success("Codes copied to clipboard");
+    if (!list || list.length === 0) {
+      toast.error("No codes available to copy — generate a new batch");
+      return;
+    }
+    const ok = await writeClipboard(list.join("\n"));
+    if (ok) toast.success(`Copied ${list.length} codes to clipboard`);
+    else toast.error("Clipboard blocked — select the codes manually to copy");
   };
 
   const copySingle = async (code: string) => {
-    await navigator.clipboard.writeText(code);
-    toast.success("Code copied to clipboard");
+    const ok = await writeClipboard(code);
+    if (ok) toast.success(`Copied ${code}`);
+    else toast.error("Clipboard blocked — select the code manually to copy");
   };
+
 
   const download = () => {
     if (!fresh) return;
@@ -705,7 +740,15 @@ function RecoveryCodes() {
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 font-mono text-sm">
             {fresh.map((c) => (
-              <div key={c} className="px-2 py-1.5 rounded-md bg-background border border-border text-center tracking-wider">{c}</div>
+              <button
+                key={c}
+                type="button"
+                onClick={() => copySingle(c)}
+                title="Click to copy"
+                className="px-2 py-1.5 rounded-md bg-background border border-border text-center tracking-wider hover:bg-surface-2 cursor-pointer select-all"
+              >
+                {c}
+              </button>
             ))}
           </div>
         </div>
@@ -718,23 +761,21 @@ function RecoveryCodes() {
             {rows.map((r, i) => (
               <div
                 key={r.id}
-                className={`flex items-center justify-between gap-2 px-2 py-1.5 rounded-md border ${r.used_at ? "bg-surface-2 border-border text-muted-foreground" : "bg-background border-border"}`}
-                title={r.used_at ? `Used ${new Date(r.used_at).toLocaleString("en-GB")}` : "Unused"}
+                role={!r.used_at && r.code ? "button" : undefined}
+                tabIndex={!r.used_at && r.code ? 0 : undefined}
+                onClick={() => { if (!r.used_at && r.code) copySingle(r.code); }}
+                onKeyDown={(e) => { if ((e.key === "Enter" || e.key === " ") && !r.used_at && r.code) { e.preventDefault(); copySingle(r.code); } }}
+                className={`flex items-center justify-between gap-2 px-2 py-1.5 rounded-md border ${r.used_at ? "bg-surface-2 border-border text-muted-foreground" : "bg-background border-border hover:bg-surface-2 cursor-pointer"}`}
+                title={r.used_at ? `Used ${new Date(r.used_at).toLocaleString("en-GB")}` : "Click to copy"}
               >
-                <span className={`tracking-wider ${r.used_at ? "line-through" : ""}`}>
+                <span className={`tracking-wider select-all ${r.used_at ? "line-through" : ""}`}>
                   {r.code ?? `Code #${String(i + 1).padStart(2, "0")}`}
                 </span>
                 {!r.used_at && r.code && (
-                  <button
-                    onClick={() => copySingle(r.code!)}
-                    className="p-1 rounded-md hover:bg-surface-2 text-muted-foreground hover:text-foreground"
-                    aria-label="Copy code"
-                    title="Copy code"
-                  >
-                    <Copy className="size-3.5" />
-                  </button>
+                  <Copy className="size-3.5 text-muted-foreground shrink-0" />
                 )}
               </div>
+
             ))}
           </div>
         </div>
