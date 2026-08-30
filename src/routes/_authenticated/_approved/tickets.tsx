@@ -388,7 +388,6 @@ function TicketsPage() {
   }, [search.new2fa, creating, search.id]);
 
   const isChatting = selected && tab === "tickets";
-  const hideHero = tab === "tickets";
 
   return (
     <main className={cn(
@@ -403,42 +402,6 @@ function TicketsPage() {
           <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-b from-transparent to-rose-950" />
         </div>
 
-
-      {/* Hero — hidden on the Tickets tab (list + chat view) */}
-      {!hideHero && (
-        <section className="relative z-10 overflow-hidden">
-          <div className="relative px-6 md:px-10 pt-10 md:pt-14 pb-20 md:pb-24 flex flex-col md:flex-row md:items-center md:gap-8">
-            <div className="max-w-3xl flex-1">
-             <div className="text-xs uppercase tracking-[0.2em] text-rose-100/90 mb-3">BM Support · Help Desk</div>
-             <div className="mt-2 inline-flex items-center gap-3 rounded-2xl bg-white/10 backdrop-blur border border-white/25 px-4 py-2.5 shadow-lg">
-               <div className="flex">
-                 {[1, 2, 3, 4, 5].map((n) => (
-                   <Star
-                     key={n}
-                     className={cn(
-                       "size-4",
-                       n <= Math.round(avgRating)
-                         ? "text-amber-300 fill-amber-300"
-                         : "text-white/40",
-                     )}
-                   />
-                 ))}
-               </div>
-               <div className="text-sm">
-                 <span className="font-bold tabular-nums">
-                   {ratingCount > 0 ? avgRating.toFixed(1) : "—"}
-                 </span>
-                 <span className="text-rose-100/85 ml-1.5">
-                   {ratingCount > 0
-                     ? `from ${ratingCount} customer rating${ratingCount === 1 ? "" : "s"}`
-                     : "No ratings yet"}
-                 </span>
-               </div>
-             </div>
-            </div>
-          </div>
-        </section>
-      )}
 
       {/* Tabs — hidden when actively chatting on a ticket */}
       <div className={cn(
@@ -463,6 +426,31 @@ function TicketsPage() {
                   Tickets
                 </TabsTrigger>
               </TabsList>
+              <div className="inline-flex items-center gap-3 rounded-2xl bg-white/10 backdrop-blur border border-white/25 px-4 py-2.5 shadow-lg">
+                <div className="flex">
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <Star
+                      key={n}
+                      className={cn(
+                        "size-4",
+                        n <= Math.round(avgRating)
+                          ? "text-amber-300 fill-amber-300"
+                          : "text-white/40",
+                      )}
+                    />
+                  ))}
+                </div>
+                <div className="text-sm">
+                  <span className="font-bold tabular-nums">
+                    {ratingCount > 0 ? avgRating.toFixed(1) : "—"}
+                  </span>
+                  <span className="text-rose-100/85 ml-1.5">
+                    {ratingCount > 0
+                      ? `from ${ratingCount} customer rating${ratingCount === 1 ? "" : "s"}`
+                      : "No ratings yet"}
+                  </span>
+                </div>
+              </div>
               <ActiveOutagesBox />
             </div>
           )}
