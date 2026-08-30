@@ -186,7 +186,7 @@ function AdminCredentialsPage() {
                       <div className="text-xs text-muted-foreground truncate">@{p.username ?? p.id.slice(0, 8)}</div>
                       {loginNames.length > 0 && (
                         <div className="text-xs text-muted-foreground truncate mt-0.5">
-                          <span className="text-primary/80 font-medium">Logins:</span> {loginNames.join(", ")}
+                          <span className="text-primary/80 font-medium">Logins:</span> {loginNames.join(" | ")}
                         </div>
                       )}
                     </div>
