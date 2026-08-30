@@ -1145,35 +1145,16 @@ function ChannelPage() {
                     pinnedOpen ? "text-primary fill-primary/30 rotate-45" : "text-primary fill-primary/20 group-hover:-translate-y-0.5"
                   )} />
                 </span>
-                {!pinnedOpen && pinnedMessages[0] && (
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="text-[11px] font-bold text-primary truncate max-w-[140px]">
-                      {(() => {
-                        const p = profiles[pinnedMessages[0].sender_id];
-                        const name = p?.display_name ?? p?.username ?? "Unknown";
-                        return name;
-                      })()}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground truncate max-w-[160px]">
-                      <MentionText
-                        content={pinnedMessages[0].content}
-                        currentUsername={myUsername}
-                        className="text-[10px] text-muted-foreground"
-                      />
-                    </span>
-                  </div>
-                )}
                 <span className={cn(
                   "text-xs font-bold transition-colors",
                   pinnedOpen ? "text-primary" : "text-foreground/90 group-hover:text-foreground"
                 )}>
                   {pinnedMessages.length}
                 </span>
-                {!pinnedOpen && (
-                  <span className="ml-1 text-[9px] font-semibold text-primary/80 uppercase tracking-wider hidden sm:inline">
-                    pinned
-                  </span>
-                )}
+                <span className="text-[9px] font-semibold text-primary/80 uppercase tracking-wider hidden sm:inline">
+                  pinned
+                </span>
+
               </button>
             )}
             {pinnedMessages.length === 0 && (
@@ -1187,13 +1168,14 @@ function ChannelPage() {
               </button>
             )}
             {pinnedOpen && (
-              <div className="absolute right-0 top-full mt-2 w-80 max-h-96 overflow-y-auto rounded-xl border border-primary/40 bg-surface/95 backdrop-blur-xl shadow-[0_0_40px_-8px_color-mix(in_oklab,var(--primary)_25%,transparent)] z-30 animate-scale-in">
-                <div className="flex items-center justify-between px-3 py-2.5 border-b border-primary/20 bg-gradient-to-r from-primary/10 to-fuchsia-500/10">
+              <div className="absolute right-0 top-full mt-3 w-[440px] max-w-[calc(100vw-2rem)] max-h-[70vh] overflow-y-auto rounded-2xl border-2 border-primary/60 bg-surface shadow-[0_24px_70px_-12px_rgb(0_0_0/0.75),0_0_60px_-12px_color-mix(in_oklab,var(--primary)_55%,transparent)] z-50 animate-scale-in">
+                <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 border-b-2 border-primary/30 bg-surface">
                   <div className="flex items-center gap-2">
-                    <Pin className="size-3.5 text-primary fill-primary/30" />
-                    <span className="text-xs font-bold uppercase tracking-wider text-primary">
+                    <Pin className="size-4 text-primary fill-primary/40" />
+                    <span className="text-sm font-extrabold uppercase tracking-wider text-primary">
                       Pinned messages
                     </span>
+
                   </div>
                   <button
                     onClick={() => setPinnedOpen(false)}
@@ -1207,34 +1189,35 @@ function ChannelPage() {
                     No pinned messages yet.
                   </div>
                 ) : (
-                  <ul className="p-2 space-y-2">
+                  <ul className="p-3 space-y-3">
                     {pinnedMessages.map((m, idx) => {
                       const p = profiles[m.sender_id];
                       const name = p?.display_name ?? p?.username ?? "Unknown";
                       return (
                         <li
                           key={m.id}
-                          className="p-3 rounded-xl border border-primary/20 bg-gradient-to-br from-primary/10 via-surface-2/80 to-fuchsia-500/10 ring-1 ring-primary/20 shadow-[0_4px_20px_-8px_color-mix(in_oklab,var(--primary)_30%,transparent)] hover:shadow-[0_6px_24px_-6px_color-mix(in_oklab,var(--primary)_45%,transparent)] hover:border-primary/40 transition-all animate-fade-in"
+                          className="p-4 rounded-xl border border-primary/30 bg-surface-2 shadow-[0_6px_24px_-10px_rgb(0_0_0/0.8)] hover:border-primary/60 transition-all animate-fade-in"
                           style={{ animationDelay: `${idx * 60}ms` }}
                         >
-                          <div className="flex items-baseline justify-between gap-2 mb-1.5">
+                          <div className="flex items-baseline justify-between gap-2 mb-2">
                             <span
                               className={cn(
-                                "text-xs font-bold",
+                                "text-sm font-bold",
                                 roleFlashClass(roleFlashMap.get(m.sender_id)),
                               )}
                             >
                               {name}
                             </span>
-                            <span className="text-[10px] text-muted-foreground shrink-0">
+                            <span className="text-[11px] text-muted-foreground shrink-0">
                               {new Date(m.created_at).toLocaleDateString("en-GB")}
                             </span>
                           </div>
                           <MentionText
                             content={m.content}
                             currentUsername={myUsername}
-                            className="text-xs text-foreground/90 line-clamp-3"
+                            className="text-sm leading-relaxed text-foreground break-words [overflow-wrap:anywhere]"
                           />
+
                           {canPin && (
                             <button
                               onClick={() => togglePin(m)}
