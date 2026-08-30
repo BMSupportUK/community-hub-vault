@@ -571,6 +571,19 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
   const BLOCK_SELECTOR = "li, p, tr, div, h1, h2, h3, h4, h5, h6";
   const INLINE_LINE_SELECTOR = "b, strong";
 
+  // If a guide is published in US Eastern time (a zone token appears anywhere
+  // in the content), bare times without a zone must be read as ET so the
+  // reader can put UK time first. Explicit per-line zones still win.
+  const rootText = root.textContent ?? "";
+  if (
+    (!defaultZone || UK_GUIDE_ZONE_TOKENS.has(defaultZone.toUpperCase())) &&
+    /\b(ET|EST|EDT)\b/.test(rootText) &&
+    !/\b(GMT|BST|UK|UTC)\b/i.test(rootText)
+  ) {
+    defaultZone = "ET";
+  }
+
+
   // Restore any previously transformed rows back to their original markup so
   // re-runs (e.g. body content changed) stay idempotent.
   root.querySelectorAll("[data-tz-row]").forEach((row) => {
