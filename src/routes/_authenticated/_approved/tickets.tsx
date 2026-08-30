@@ -474,7 +474,15 @@ function TicketsPage() {
                   Account questions, billing, Live TV or Movies & Series issues — we've got you
                   covered. Open a ticket and we'll respond as soon as a staff member is on duty.
                 </p>
-                <p className="mt-3 text-rose-200/80 max-w-2xl text-sm">
+                <div className="mt-5">
+                  <button
+                    onClick={() => { setCreating(true); navigate({ to: "/tickets", search: { id: undefined, view } }); }}
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-white text-rose-600 text-sm font-semibold hover:bg-white/90 shadow transition-colors"
+                  >
+                    <Plus className="size-4" /> Open a ticket
+                  </button>
+                </div>
+                <p className="mt-5 text-rose-200/80 max-w-2xl text-sm">
                   Once your ticket is resolved, leave a rating so we know how we did.
                 </p>
               </div>
