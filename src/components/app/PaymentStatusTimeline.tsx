@@ -39,7 +39,8 @@ export function PaymentStatusTimeline({
 }) {
   const failed = phase === "failed";
   const confirmed = phase === "confirmed";
-  const checking = phase === "checking_stripe" || phase === "checking_square";
+  const cancelled = phase === "cancelled";
+  const checking = !cancelled && (phase === "checking_stripe" || phase === "checking_square");
 
   // Only surface the check step for the provider actually used on this order.
   const checkSteps: { key: string; title: string; desc: string; icon: typeof Clock }[] =
