@@ -1189,34 +1189,35 @@ function ChannelPage() {
                     No pinned messages yet.
                   </div>
                 ) : (
-                  <ul className="p-2 space-y-2">
+                  <ul className="p-3 space-y-3">
                     {pinnedMessages.map((m, idx) => {
                       const p = profiles[m.sender_id];
                       const name = p?.display_name ?? p?.username ?? "Unknown";
                       return (
                         <li
                           key={m.id}
-                          className="p-3 rounded-xl border border-primary/20 bg-gradient-to-br from-primary/10 via-surface-2/80 to-fuchsia-500/10 ring-1 ring-primary/20 shadow-[0_4px_20px_-8px_color-mix(in_oklab,var(--primary)_30%,transparent)] hover:shadow-[0_6px_24px_-6px_color-mix(in_oklab,var(--primary)_45%,transparent)] hover:border-primary/40 transition-all animate-fade-in"
+                          className="p-4 rounded-xl border border-primary/30 bg-surface-2 shadow-[0_6px_24px_-10px_rgb(0_0_0/0.8)] hover:border-primary/60 transition-all animate-fade-in"
                           style={{ animationDelay: `${idx * 60}ms` }}
                         >
-                          <div className="flex items-baseline justify-between gap-2 mb-1.5">
+                          <div className="flex items-baseline justify-between gap-2 mb-2">
                             <span
                               className={cn(
-                                "text-xs font-bold",
+                                "text-sm font-bold",
                                 roleFlashClass(roleFlashMap.get(m.sender_id)),
                               )}
                             >
                               {name}
                             </span>
-                            <span className="text-[10px] text-muted-foreground shrink-0">
+                            <span className="text-[11px] text-muted-foreground shrink-0">
                               {new Date(m.created_at).toLocaleDateString("en-GB")}
                             </span>
                           </div>
                           <MentionText
                             content={m.content}
                             currentUsername={myUsername}
-                            className="text-xs text-foreground/90 line-clamp-3"
+                            className="text-sm leading-relaxed text-foreground break-words [overflow-wrap:anywhere]"
                           />
+
                           {canPin && (
                             <button
                               onClick={() => togglePin(m)}
