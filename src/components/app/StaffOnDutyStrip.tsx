@@ -36,12 +36,10 @@ function isDaneJProfile(profile?: { display_name?: string | null; username?: str
   return /^dane\s+j(?:\b|$)/i.test(displayName) || /^dane[._ -]?j(?:\b|$)/i.test(username);
 }
 
-/** Status line for Dane J's card: Online, or Away when DND is set. */
+/** Status line for Dane J's card: Online. Hidden when DND is set (the DND badge below says it). */
 function DaneStatusLine({ userId }: { userId: string }) {
   const dnd = useDndStatus(userId);
-  if (dnd?.active) {
-    return <div className="text-[10px] text-white/80 drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]">Away - Outside of Business Hours</div>;
-  }
+  if (dnd?.active) return null;
   return (
     <div className="text-[10px] font-semibold text-emerald-200 drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]">Online</div>
   );
