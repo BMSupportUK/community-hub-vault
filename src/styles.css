@@ -1432,3 +1432,270 @@ html.boro-bg-active .min-h-dvh.bg-background {
   text-shadow: 0 0 10px color-mix(in oklab, currentColor 45%, transparent);
 }
 
+
+/* =========================================================================
+   Nameplate pack v2 — original recreations (gradient bar + animated mascot)
+   ========================================================================= */
+.nameplate-mascot {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  height: 92%;
+  width: auto;
+  z-index: 3;
+  transform: translateY(-50%);
+  pointer-events: none;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+}
+.np2 > * { position: relative; z-index: 2; }
+.np2::before,
+.np2::after { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; }
+
+/* shared sheen sweep */
+@keyframes np2-sheen {
+  0%   { transform: translateX(-130%) skewX(-22deg); opacity: 0; }
+  40%  { opacity: 0.6; }
+  100% { transform: translateX(220%) skewX(-22deg); opacity: 0; }
+}
+@keyframes np2-bob {
+  0%, 100% { transform: translateY(-50%) rotate(-3deg); }
+  50%      { transform: translateY(-58%) rotate(3deg); }
+}
+@keyframes np2-float {
+  0%, 100% { transform: translateY(-46%); }
+  50%      { transform: translateY(-56%); }
+}
+@keyframes np2-pulse-glow {
+  0%, 100% { opacity: 0.3; }
+  50%      { opacity: 0.85; }
+}
+@keyframes np2-drift {
+  0%   { background-position: 0 0, 0 0; }
+  100% { background-position: 90px -30px, -70px 40px; }
+}
+@keyframes np2-scan {
+  0%   { transform: translateY(-100%); }
+  100% { transform: translateY(400%); }
+}
+
+/* ---- Alpine Cross ---- */
+.nameplate-alpine::after {
+  background: linear-gradient(115deg, transparent 40%, rgba(255,255,255,0.5) 50%, transparent 60%);
+  mix-blend-mode: screen;
+  animation: np2-sheen 5s ease-in-out infinite;
+}
+.nameplate-alpine .nameplate-alpine-cross {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 26px;
+  height: 26px;
+  z-index: 3;
+  background: #ffffff;
+  clip-path: polygon(38% 0, 62% 0, 62% 38%, 100% 38%, 100% 62%, 62% 62%, 62% 100%, 38% 100%, 38% 62%, 0 62%, 0 38%, 38% 38%);
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.4));
+  animation: np2-pulse-glow 3.5s ease-in-out infinite;
+}
+
+/* ---- Sunlit Radiance ---- */
+@keyframes np2-sun-spin { to { transform: translateY(-50%) rotate(360deg); } }
+.nameplate-sunlit::before {
+  background: radial-gradient(circle at 88% 50%, rgba(255,196,84,0.7), transparent 55%);
+  mix-blend-mode: screen;
+  animation: np2-pulse-glow 3s ease-in-out infinite;
+}
+.nameplate-sunlit .nameplate-mascot { animation: np2-sun-spin 22s linear infinite; }
+
+/* ---- Crimson Static ---- */
+@keyframes np2-static-flicker {
+  0%, 100% { opacity: 0.18; }
+  20%      { opacity: 0.5; }
+  35%      { opacity: 0.1; }
+  60%      { opacity: 0.62; }
+  80%      { opacity: 0.22; }
+}
+@keyframes np2-static-shift {
+  0%   { background-position: 0 0; }
+  100% { background-position: 0 12px; }
+}
+.nameplate-static::before {
+  background-image: repeating-linear-gradient(0deg, rgba(255,255,255,0.55) 0 1px, transparent 1px 3px);
+  animation: np2-static-flicker 0.5s steps(2, end) infinite, np2-static-shift 0.7s linear infinite;
+}
+.nameplate-static::after {
+  background: radial-gradient(ellipse at 80% 50%, rgba(255,60,60,0.65), transparent 60%);
+  mix-blend-mode: screen;
+  animation: np2-pulse-glow 1.8s ease-in-out infinite;
+}
+
+/* ---- Swamp Sage ---- */
+.nameplate-swampsage::before {
+  background:
+    radial-gradient(ellipse at 30% 90%, rgba(190,255,200,0.35), transparent 60%),
+    radial-gradient(ellipse at 70% 100%, rgba(160,230,170,0.3), transparent 55%);
+  mix-blend-mode: screen;
+  animation: np2-pulse-glow 6s ease-in-out infinite;
+}
+.nameplate-swampsage .nameplate-mascot { animation: np2-float 4.5s ease-in-out infinite; }
+
+/* ---- Little Green Crew ---- */
+.nameplate-greencrew::before {
+  background-image:
+    radial-gradient(circle at 20% 40%, rgba(255,255,255,0.9) 0 1.4px, transparent 2px),
+    radial-gradient(circle at 65% 70%, rgba(180,230,255,0.85) 0 1.4px, transparent 2px);
+  background-size: 70px 70px, 55px 55px;
+  mix-blend-mode: screen;
+  animation: np2-drift 6s linear infinite;
+}
+.nameplate-greencrew .nameplate-mascot { animation: np2-bob 1.8s ease-in-out infinite; }
+
+/* ---- Rolling Droid ---- */
+@keyframes np2-droid-roll {
+  0%   { transform: translateY(-50%) translateX(0) rotate(0deg); }
+  50%  { transform: translateY(-50%) translateX(-58px) rotate(-320deg); }
+  100% { transform: translateY(-50%) translateX(0) rotate(0deg); }
+}
+.nameplate-droid::after {
+  background: linear-gradient(115deg, transparent 42%, rgba(255,235,180,0.45) 50%, transparent 58%);
+  mix-blend-mode: screen;
+  animation: np2-sheen 6s ease-in-out infinite;
+}
+.nameplate-droid .nameplate-mascot { animation: np2-droid-roll 5.5s ease-in-out infinite; }
+
+/* ---- Web Rivals ---- */
+@keyframes np2-rivals-tension {
+  0%, 100% { transform: translateY(-50%) scale(1); }
+  50%      { transform: translateY(-50%) scale(1.07); }
+}
+.nameplate-rivals::before {
+  background: radial-gradient(ellipse at 80% 50%, rgba(255,40,40,0.5), transparent 60%);
+  mix-blend-mode: screen;
+  animation: np2-pulse-glow 2.2s ease-in-out infinite;
+}
+.nameplate-rivals .nameplate-mascot { animation: np2-rivals-tension 2.2s ease-in-out infinite; }
+
+/* ---- Web Lines ---- */
+@keyframes np2-web-spin { to { transform: rotate(360deg); } }
+.nameplate-weblines::before {
+  right: -30%;
+  left: 55%;
+  background:
+    repeating-conic-gradient(from 0deg at 100% 50%, rgba(255,255,255,0.75) 0 0.6deg, transparent 0.6deg 11deg),
+    repeating-radial-gradient(circle at 100% 50%, rgba(255,255,255,0.5) 0 1px, transparent 1px 16px);
+  animation: np2-web-spin 40s linear infinite;
+  opacity: 0.75;
+  transform-origin: 100% 50%;
+}
+.nameplate-weblines::after {
+  background: linear-gradient(90deg, rgba(0,0,0,0.35), transparent 45%);
+}
+
+/* ---- Ice Rider ---- */
+@keyframes np2-ride {
+  0%   { transform: translateY(-50%) translateX(120%); opacity: 0; }
+  15%  { opacity: 1; }
+  55%  { transform: translateY(-50%) translateX(0); opacity: 1; }
+  85%  { transform: translateY(-50%) translateX(-30%); opacity: 1; }
+  100% { transform: translateY(-50%) translateX(-140%); opacity: 0; }
+}
+@keyframes np2-streaks {
+  0%   { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+.nameplate-icerider::before {
+  background-image: repeating-linear-gradient(90deg, rgba(255,255,255,0.55) 0 24px, transparent 24px 90px);
+  background-size: 200% 100%;
+  mix-blend-mode: screen;
+  opacity: 0.5;
+  animation: np2-streaks 1.2s linear infinite;
+}
+.nameplate-icerider .nameplate-mascot { animation: np2-ride 7s ease-in-out infinite; }
+
+/* ---- Dark Helm ---- */
+.nameplate-darkhelm::before {
+  background: radial-gradient(circle at 86% 50%, rgba(255,30,30,0.6), transparent 50%);
+  mix-blend-mode: screen;
+  animation: np2-pulse-glow 2.6s ease-in-out infinite;
+}
+.nameplate-darkhelm::after {
+  background: linear-gradient(90deg, rgba(0,0,0,0.55), transparent 55%);
+}
+
+/* ---- Desert Pod ---- */
+.nameplate-desertpod::before {
+  background:
+    radial-gradient(ellipse at 50% 115%, rgba(226,190,120,0.85), transparent 60%),
+    radial-gradient(ellipse at 15% 120%, rgba(198,160,95,0.7), transparent 55%);
+}
+.nameplate-desertpod .nameplate-mascot { animation: np2-float 3.6s ease-in-out infinite; }
+
+/* ---- Retro Broadcast ---- */
+.nameplate-retrobroadcast::before {
+  background: repeating-linear-gradient(0deg, rgba(255,255,255,0.14) 0 1px, transparent 1px 3px);
+}
+.nameplate-retrobroadcast::after {
+  inset: auto 0 auto 0;
+  height: 22%;
+  background: linear-gradient(180deg, transparent, rgba(255,255,255,0.35), transparent);
+  mix-blend-mode: screen;
+  animation: np2-scan 3.4s linear infinite;
+}
+.nameplate-retrobroadcast .nameplate-mascot { animation: np2-bob 3s ease-in-out infinite; }
+
+/* ---- Cosmic Cub ---- */
+@keyframes np2-bubbles {
+  0%   { background-position: 0 100%, 30px 100%, 60px 100%; }
+  100% { background-position: -20px -40%, 10px -60%, 50px -30%; }
+}
+.nameplate-cosmiccub::before {
+  background-image:
+    radial-gradient(circle at 20% 60%, rgba(255,255,255,0.35) 0 6px, transparent 7px),
+    radial-gradient(circle at 55% 40%, rgba(255,255,255,0.28) 0 9px, transparent 10px),
+    radial-gradient(circle at 80% 70%, rgba(255,255,255,0.22) 0 5px, transparent 6px);
+  background-size: 120px 120px, 150px 150px, 90px 90px;
+  mix-blend-mode: screen;
+  animation: np2-bubbles 9s linear infinite;
+}
+.nameplate-cosmiccub .nameplate-mascot { animation: np2-bob 3.2s ease-in-out infinite; }
+
+/* ---- Berry Kitty ---- */
+@keyframes np2-hearts {
+  0%   { background-position: 10% 110%, 45% 130%, 75% 120%; opacity: 0.2; }
+  50%  { opacity: 0.85; }
+  100% { background-position: 5% -30%, 40% -20%, 80% -40%; opacity: 0.2; }
+}
+.nameplate-berrykitty::before {
+  background-image:
+    radial-gradient(circle, rgba(255,120,160,0.85) 0 3px, transparent 4px),
+    radial-gradient(circle, rgba(255,160,190,0.8) 0 2.5px, transparent 3.5px),
+    radial-gradient(circle, rgba(255,200,215,0.8) 0 2px, transparent 3px);
+  background-repeat: no-repeat;
+  animation: np2-hearts 5s linear infinite;
+}
+.nameplate-berrykitty .nameplate-mascot { animation: np2-bob 2.4s ease-in-out infinite; }
+
+/* ---- Midnight Kitty ---- */
+@keyframes np2-sparkle-twinkle {
+  0%, 100% { opacity: 0.25; transform: scale(0.9); }
+  50%      { opacity: 1; transform: scale(1.15); }
+}
+.nameplate-midnightkitty::before {
+  background-image:
+    radial-gradient(circle at 25% 35%, rgba(140,220,255,0.95) 0 1.6px, transparent 2.4px),
+    radial-gradient(circle at 60% 65%, rgba(255,255,255,0.9) 0 1.4px, transparent 2.2px);
+  background-size: 60px 60px, 85px 85px;
+  mix-blend-mode: screen;
+  animation: np2-drift 8s linear infinite;
+}
+.nameplate-midnightkitty::after {
+  background: radial-gradient(circle at 84% 50%, rgba(80,180,255,0.55), transparent 50%);
+  mix-blend-mode: screen;
+  animation: np2-sparkle-twinkle 3s ease-in-out infinite;
+}
+.nameplate-midnightkitty .nameplate-mascot { animation: np2-bob 3.4s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .np2::before, .np2::after, .np2 .nameplate-mascot,
+  .nameplate-alpine .nameplate-alpine-cross { animation: none !important; }
+}
