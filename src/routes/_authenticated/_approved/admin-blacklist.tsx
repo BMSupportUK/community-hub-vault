@@ -7,6 +7,7 @@ import { isAdminUnlocked } from "@/lib/admin-unlock";
 import { addBlacklist, listBlacklist, removeBlacklist } from "@/lib/blacklist.functions";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-blacklist")({
   component: AdminBlacklistPage,
