@@ -57,19 +57,37 @@ export function DndDialogButton({ className }: { className?: string }) {
   const [now, setNow] = useState(() => Date.now());
   const [hydrated, setHydrated] = useState(false);
 
+  // Prefill from the saved schedule only while it is still relevant (running or
+  // upcoming). An expired window must never seed the form, otherwise saving
+  // re-submits a window in the past and DND never turns on.
   useEffect(() => {
-    if (!info || (open && hydrated)) return;
-    if (info.startsAt) {
-      setStartDay(dateInTimeZone(info.startsAt, userTimezone));
-      setStartTime(toHHMMInTimeZone(info.startsAt, userTimezone));
+    if (!open) {
+      setHydrated(false);
+      return;
     }
-    if (info.endsAt) {
-      setEndDay(dateInTimeZone(info.endsAt, userTimezone));
-      setEndTime(toHHMMInTimeZone(info.endsAt, userTimezone));
+    if (hydrated) return;
+    const stillRelevant =
+      !!info?.enabled && (!info.endsAt || info.endsAt.getTime() > Date.now());
+    if (stillRelevant && info) {
+      const start = info.startsAt ?? new Date();
+      const end = info.endsAt ?? new Date(Date.now() + 60 * 60 * 1000);
+      setStartDay(dateInTimeZone(start, userTimezone));
+      setStartTime(toHHMMInTimeZone(start, userTimezone));
+      setEndDay(dateInTimeZone(end, userTimezone));
+      setEndTime(toHHMMInTimeZone(end, userTimezone));
+      setNote(info.note ?? "");
+    } else {
+      const now = new Date();
+      const later = new Date(now.getTime() + 60 * 60 * 1000);
+      setStartDay(dateInTimeZone(now, userTimezone));
+      setStartTime(toHHMMInTimeZone(now, userTimezone));
+      setEndDay(dateInTimeZone(later, userTimezone));
+      setEndTime(toHHMMInTimeZone(later, userTimezone));
+      setNote("");
     }
-    setNote(info.note ?? "");
     setHydrated(true);
   }, [info, open, hydrated, userTimezone]);
+
 
   useEffect(() => {
     if (!info?.active || !info.endsAt) return;
