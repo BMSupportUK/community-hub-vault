@@ -386,7 +386,7 @@ function TicketsPage() {
   useEffect(() => {
     if (search.new2fa === 1 && !creating && !search.id) {
       setCreating(true);
-      setTab("tickets");
+      setTab("open");
     }
   }, [search.new2fa, creating, search.id]);
 
