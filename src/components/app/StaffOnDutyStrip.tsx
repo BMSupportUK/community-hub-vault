@@ -10,6 +10,7 @@ import { Nameplate } from "@/components/app/Nameplate";
 import { ChatMiniProfile, type ChatMiniProfileData } from "@/components/app/ChatMiniProfile";
 import { type BreakKind, BREAK_LIMITS as STAFF_BREAK_LIMITS, breakLabel, breakIcon } from "@/lib/breaks";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { useTalkChannelPresentUsers } from "@/hooks/use-talk-channel-presence";
 
 type StaffShift = { id: string; user_id: string; clock_in: string };
 type StaffBreak = { id: string; shift_id: string; user_id: string; kind: BreakKind; started_at: string };
