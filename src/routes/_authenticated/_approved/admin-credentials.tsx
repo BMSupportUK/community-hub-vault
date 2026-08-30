@@ -58,10 +58,15 @@ function AdminCredentialsPage() {
   const load = async () => {
     setLoading(true);
     const [{ data: profs }, { data: c }] = await Promise.all([
-      supabase.from("profiles").select("id, username, display_name").order("created_at", { ascending: true }),
+      supabase.from("profiles").select("id, username, display_name").order("display_name", { ascending: true }),
       supabase.from("app_credentials").select("*").order("created_at", { ascending: false }),
     ]);
-    setProfiles((profs ?? []) as ProfileLite[]);
+    const sortedProfs = ((profs ?? []) as ProfileLite[]).sort((a, b) => {
+      const nameA = (a.display_name || a.username || "").toLowerCase();
+      const nameB = (b.display_name || b.username || "").toLowerCase();
+      return nameA.localeCompare(nameB);
+    });
+    setProfiles(sortedProfs);
     setCreds((c ?? []) as CredentialRow[]);
     setLoading(false);
   };
@@ -162,70 +167,92 @@ function AdminCredentialsPage() {
         ) : filtered.length === 0 ? (
           <div className="rounded-2xl border border-border bg-surface-1 px-6 py-16 text-center text-muted-foreground text-sm">No users found.</div>
         ) : (
-          <div className="rounded-2xl border border-border bg-surface-1 overflow-hidden divide-y divide-border">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {filtered.map((p) => {
               const list = grouped.get(p.id) ?? [];
               const open = !!expanded[p.id] || !!query.trim();
+              const loginNames = list
+                .slice()
+                .sort((a, b) => a.account_number - b.account_number)
+                .map((c) => c.app_login_name)
+                .filter(Boolean);
               return (
-                <div key={p.id}>
-                  <button
-                    onClick={() => setExpanded((s) => ({ ...s, [p.id]: !s[p.id] }))}
-                    className="w-full flex items-center gap-3 px-5 py-3.5 hover:bg-surface-2 transition-colors text-left"
-                  >
-                    {open ? <ChevronDown className="size-4 text-muted-foreground" /> : <ChevronRight className="size-4 text-muted-foreground" />}
+                <div key={p.id} className="rounded-2xl border border-border bg-surface-1 p-4 flex flex-col gap-3">
+                  <div className="flex items-start gap-3">
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium truncate">{p.display_name || p.username || "Unnamed"}</div>
+                      <div className="font-medium truncate text-base">
+                        {p.display_name || p.username || "Unnamed"}
+                        {loginNames.length > 0 && (
+                          <span className="text-muted-foreground font-normal">
+                            {" "}- {loginNames.join(", ")}
+                          </span>
+                        )}
+                      </div>
                       <div className="text-xs text-muted-foreground truncate">@{p.username ?? p.id.slice(0, 8)}</div>
                     </div>
-                    <span className={cn("text-xs px-2 py-0.5 rounded-full border", list.length > 0 ? "border-primary text-primary" : "border-border text-muted-foreground")}>
+                    <span className={cn("text-xs px-2 py-0.5 rounded-full border shrink-0", list.length > 0 ? "border-primary text-primary" : "border-border text-muted-foreground")}>
                       {list.length} {list.length === 1 ? "credential" : "credentials"}
                     </span>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2">
                     <button
-                      onClick={(e) => { e.stopPropagation(); resetPin(p); }}
-                      disabled={pinBusyFor === p.id}
-                      title="Reset this user's credentials vault PIN"
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-500/50 bg-amber-500/10 text-amber-300 text-xs font-medium hover:bg-amber-500/20 disabled:opacity-60"
+                      onClick={() => setExpanded((s) => ({ ...s, [p.id]: !s[p.id] }))}
+                      className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground"
                     >
-                      {pinBusyFor === p.id ? <Loader2 className="size-3.5 animate-spin" /> : <Lock className="size-3.5" />} Reset PIN
+                      {open ? <ChevronDown className="size-3.5" /> : <ChevronRight className="size-3.5" />}
+                      {open ? "Hide credentials" : "Show credentials"}
                     </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setEditor({ ownerId: p.id, row: null }); }}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:opacity-90"
-                    >
-                      <Plus className="size-3.5" /> Add
-                    </button>
-                  </button>
+                    <div className="ml-auto flex items-center gap-2">
+                      <button
+                        onClick={() => resetPin(p)}
+                        disabled={pinBusyFor === p.id}
+                        title="Reset this user's credentials vault PIN"
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-amber-500/50 bg-amber-500/10 text-amber-300 text-xs font-medium hover:bg-amber-500/20 disabled:opacity-60"
+                      >
+                        {pinBusyFor === p.id ? <Loader2 className="size-3.5 animate-spin" /> : <Lock className="size-3.5" />} Reset PIN
+                      </button>
+                      <button
+                        onClick={() => setEditor({ ownerId: p.id, row: null })}
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-medium hover:opacity-90"
+                      >
+                        <Plus className="size-3.5" /> Add
+                      </button>
+                    </div>
+                  </div>
 
                   {open && list.length > 0 && (
-                    <div className="px-5 pb-4 pt-1 grid gap-2 bg-surface-2/30">
-                       {list.slice().sort((a, b) => a.account_number - b.account_number).map((c) => {
+                    <div className="grid gap-2">
+                      {list.slice().sort((a, b) => a.account_number - b.account_number).map((c) => {
                         const exp = c.expiry_at ? new Date(c.expiry_at) : null;
                         const expired = exp && exp.getTime() < Date.now();
                         const soon = exp && !expired && exp.getTime() - Date.now() < 7 * 86400000;
                         return (
-                          <div key={c.id} className="rounded-lg border border-border bg-background/40 p-3 grid sm:grid-cols-[1fr_auto_auto] gap-3 items-center">
-                            <div className="min-w-0">
-                               <div className="font-display font-semibold truncate">Account {c.account_number}</div>
-                              <div className="text-[11px] text-muted-foreground">
-                                 {c.app_login_name} · {ACCOUNT_TYPES.find((t) => t.value === (c.account_type ?? "single"))?.label ?? "Single account"}
-                              </div>
-                              {exp && (
-                                <div className={cn("text-xs", expired ? "text-destructive" : soon ? "text-amber-400" : "text-muted-foreground")}>
-                                  {expired ? "Expired" : "Expires"} {exp.toLocaleString("en-GB")}
+                          <div key={c.id} className="rounded-xl border border-border bg-surface-2/50 p-3 grid gap-3">
+                            <div className="min-w-0 flex items-start justify-between gap-2">
+                              <div>
+                                <div className="font-display font-semibold truncate">Account {c.account_number}</div>
+                                <div className="text-[11px] text-muted-foreground">
+                                  {c.app_login_name} · {ACCOUNT_TYPES.find((t) => t.value === (c.account_type ?? "single"))?.label ?? "Single account"}
                                 </div>
-                              )}
+                                {exp && (
+                                  <div className={cn("text-xs", expired ? "text-destructive" : soon ? "text-amber-400" : "text-muted-foreground")}>
+                                    {expired ? "Expired" : "Expires"} {exp.toLocaleString("en-GB")}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex gap-1">
+                                <button onClick={() => setEditor({ ownerId: p.id, row: c })} className="p-1.5 rounded hover:bg-surface-2 text-muted-foreground hover:text-foreground"><Pencil className="size-3.5" /></button>
+                                <button onClick={() => remove(c.id)} className="p-1.5 rounded hover:bg-surface-2 text-muted-foreground hover:text-destructive"><Trash2 className="size-3.5" /></button>
+                              </div>
                             </div>
 
-                            <div className="flex items-center gap-2 px-2.5 py-1.5 rounded bg-surface-2 border border-border font-mono text-xs min-w-[170px]">
+                            <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-surface-2 border border-border font-mono text-xs">
                               <span className="flex-1 truncate">{revealed[c.id] ? c.password : "•".repeat(Math.min(c.password.length, 12))}</span>
                               <button onClick={() => setRevealed((s) => ({ ...s, [c.id]: !s[c.id] }))} className="text-muted-foreground hover:text-foreground">
                                 {revealed[c.id] ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
                               </button>
                               <button onClick={() => { navigator.clipboard.writeText(c.password); toast.success("Copied"); }} className="text-muted-foreground hover:text-foreground">Copy</button>
-                            </div>
-                            <div className="flex gap-1 justify-end">
-                              <button onClick={() => setEditor({ ownerId: p.id, row: c })} className="p-1.5 rounded hover:bg-surface-2 text-muted-foreground hover:text-foreground"><Pencil className="size-3.5" /></button>
-                              <button onClick={() => remove(c.id)} className="p-1.5 rounded hover:bg-surface-2 text-muted-foreground hover:text-destructive"><Trash2 className="size-3.5" /></button>
                             </div>
                           </div>
                         );
