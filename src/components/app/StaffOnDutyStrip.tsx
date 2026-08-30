@@ -26,9 +26,11 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
   const [profiles, setProfiles] = useState<Record<string, StaffProfile>>({});
   const [offDuty, setOffDuty] = useState<Array<StaffProfile & { role: string }>>([]);
   const [now, setNow] = useState(() => Date.now());
+  const [selfId, setSelfId] = useState<string | null>(null);
   const roleFlashMap = useRoleFlashMap();
 
   useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setSelfId(data.user?.id ?? null));
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
