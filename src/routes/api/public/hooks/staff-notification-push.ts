@@ -34,6 +34,9 @@ function titlePrefix(kind: string): string {
       return "🛒 ";
     case "gate_application":
       return "👋 ";
+    case "gate_message":
+      return "💬 ";
+
     case "ticket_raised":
       return "🎫 ";
     default:
