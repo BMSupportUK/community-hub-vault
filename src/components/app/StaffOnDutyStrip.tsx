@@ -181,15 +181,15 @@ export function StaffOnDutyStrip({
     const card = (
       <div
         className={cn(
-          "rounded-lg p-2.5 border backdrop-blur transition-colors",
-          isTickets ? "w-[220px]" : "w-full",
+          "rounded-lg p-2.5 border backdrop-blur transition-colors min-w-0",
+          isTickets ? "w-full sm:w-[220px]" : "w-full",
           onBreak
             ? (over ? "bg-red-500/30 border-red-300/60" : "bg-amber-300/30 border-amber-200/60")
             : "bg-emerald-400/25 border-emerald-200/50",
         )}
       >
-        <div className="flex items-center gap-2">
-          <div className="relative">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="relative shrink-0">
             <img src={resolveAvatarUrl(s.user_id, p?.avatar_url, roleFlashMap)} alt={name} className="size-8 rounded-full object-cover ring-2 ring-white/40" />
             <span className={cn(
               "absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-2 ring-white",
@@ -199,7 +199,10 @@ export function StaffOnDutyStrip({
           <div className="min-w-0 flex-1">
             <Nameplate
               id={p?.equipped_nameplate_id}
-              className="flex flex-col justify-center w-full rounded-md px-2 py-1 pr-12 shadow-sm isolate"
+              className={cn(
+                "flex flex-col justify-center w-full rounded-md px-2 py-1 shadow-sm isolate",
+                isTickets ? "pr-2" : "pr-12",
+              )}
             >
               <span className={cn("text-xs font-semibold text-white truncate drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]", roleFlashClass(roleFlashMap.get(s.user_id)))}>{name}</span>
               {roleFlashMap.get(s.user_id) && (
@@ -210,8 +213,8 @@ export function StaffOnDutyStrip({
               <div className="text-[10px] text-white/90 drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]">
                 {onBreak ? (
                   <span className="flex items-center gap-1">
-                    {(() => { const Icon = breakIcon(br!.kind); return <Icon className="size-3" />; })()}
-                    <span>{breakLabel(br!.kind)} {over ? `+${fmtMinSec(-brRemain)}` : fmtMinSec(brRemain)}</span>
+                    {(() => { const Icon = breakIcon(br!.kind); return <Icon className="size-3 shrink-0" />; })()}
+                    <span className="truncate">{breakLabel(br!.kind)} {over ? `+${fmtMinSec(-brRemain)}` : fmtMinSec(brRemain)}</span>
                   </span>
                 ) : (
                   <span>{fmtHMS(shiftElapsed)}</span>
@@ -238,12 +241,12 @@ export function StaffOnDutyStrip({
     const card = (
       <div
         className={cn(
-          "rounded-lg p-2.5 border border-white/15 bg-white/5 backdrop-blur",
-          isTickets ? "w-[220px]" : "w-full",
+          "rounded-lg p-2.5 border border-white/15 bg-white/5 backdrop-blur min-w-0",
+          isTickets ? "w-full sm:w-[220px]" : "w-full",
         )}
       >
-        <div className="flex items-center gap-2">
-          <div className="relative">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="relative shrink-0">
             <img
               src={resolveAvatarUrl(p.id, p.avatar_url, roleFlashMap)}
               alt={name}
@@ -254,7 +257,10 @@ export function StaffOnDutyStrip({
           <div className="min-w-0 flex-1">
             <Nameplate
               id={p.equipped_nameplate_id}
-              className="flex flex-col justify-center w-full rounded-md px-2 py-1 pr-12 shadow-sm isolate opacity-80"
+              className={cn(
+                "flex flex-col justify-center w-full rounded-md px-2 py-1 shadow-sm isolate opacity-80",
+                isTickets ? "pr-2" : "pr-12",
+              )}
             >
               <span className={cn("text-xs font-semibold text-white/90 truncate drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]", roleFlashClass(roleFlashMap.get(p.id)))}>{name}</span>
               {roleFlashMap.get(p.id) && (
@@ -283,42 +289,42 @@ export function StaffOnDutyStrip({
       <div className="px-4 pt-4">
         <div className="rounded-xl border border-white/15 p-3 shadow-lg relative overflow-hidden bg-gradient-to-r from-violet-600/40 via-fuchsia-600/40 to-blue-600/40 backdrop-blur">
           <Tabs value={dutyTab} onValueChange={(v) => setDutyTab(v as "on" | "off")}>
-            <TabsList className="w-full bg-white/10 border border-white/20 p-1 mb-2">
+            <TabsList className="w-full bg-white/10 border border-white/20 p-1 mb-2 flex-wrap h-auto gap-1">
               <TabsTrigger
                 value="on"
-                className="flex-1 text-xs font-semibold uppercase tracking-wider text-white/80 data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500/80 data-[state=active]:to-teal-500/80 data-[state=active]:text-white data-[state=active]:shadow"
+                className="flex-1 min-w-0 text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-white/80 data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500/80 data-[state=active]:to-teal-500/80 data-[state=active]:text-white data-[state=active]:shadow px-1.5 sm:px-3"
               >
-                Staff on duty · {orderedShifts.length}
+                <span className="truncate">Staff on duty · {orderedShifts.length}</span>
               </TabsTrigger>
               <TabsTrigger
                 value="off"
-                className="flex-1 text-xs font-semibold uppercase tracking-wider text-white/80 data-[state=active]:bg-gradient-to-r data-[state=active]:from-white/25 data-[state=active]:to-white/15 data-[state=active]:text-white data-[state=active]:shadow"
+                className="flex-1 min-w-0 text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-white/80 data-[state=active]:bg-gradient-to-r data-[state=active]:from-white/25 data-[state=active]:to-white/15 data-[state=active]:text-white data-[state=active]:shadow px-1.5 sm:px-3"
               >
-                Off duty · {visibleOffDuty.length}
+                <span className="truncate">Off duty · {visibleOffDuty.length}</span>
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="on" className="mt-0">
+            <TabsContent value="on" className="mt-0 min-w-0">
               {orderedShifts.length === 0 ? (
                 <div className="rounded-lg p-2.5 border border-white/20 bg-white/10 text-white/80 text-xs flex items-center gap-2 w-full">
-                  <CircleDot className="size-3.5 opacity-60" />
+                  <CircleDot className="size-3.5 opacity-60 shrink-0" />
                   <span>No staff currently on duty</span>
                 </div>
               ) : (
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 min-w-0">
                   {orderedShifts.map((s) => renderOnDutyCard(s))}
                 </div>
               )}
             </TabsContent>
 
-            <TabsContent value="off" className="mt-0">
+            <TabsContent value="off" className="mt-0 min-w-0">
               {visibleOffDuty.length === 0 ? (
                 <div className="rounded-lg p-2.5 border border-white/20 bg-white/10 text-white/80 text-xs flex items-center gap-2 w-full">
-                  <CircleDot className="size-3.5 opacity-60" />
+                  <CircleDot className="size-3.5 opacity-60 shrink-0" />
                   <span>All staff are on duty</span>
                 </div>
               ) : (
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 min-w-0">
                   {visibleOffDuty.map((p) => renderOffDutyCard(p))}
                 </div>
               )}
