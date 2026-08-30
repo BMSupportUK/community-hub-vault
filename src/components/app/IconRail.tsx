@@ -211,16 +211,8 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     );
   }
 
-  const FAN_ZONE_PREFIXES = [
-    "/forum",
-    "/fanzone",
-    "/fan-zone",
-    "/boro-fantasy",
-    "/boro-predictions",
-    "/predictions",
-    "/competition-winners",
-  ];
-  const inFanZone = FAN_ZONE_PREFIXES.some((p) => path === p || path.startsWith(`${p}/`));
+  const inFanZone = isFanZonePath(path);
+
 
   const supportItems: RailItem[] = [
     { to: "/home", label: "Home", icon: Home, show: true },
