@@ -56,12 +56,23 @@ export const addBlacklist = createServerFn({ method: "POST" })
       }
     }
 
+    const { data: existing } = await supabaseAdmin
+      .from("blacklist_entries")
+      .select("id")
+      .eq("kind", data.kind)
+      .eq("value", value)
+      .maybeSingle();
+
+    if (existing) {
+      return { ok: true, banned: 0, duplicate: true as const };
+    }
+
     const { error: insErr } = await supabaseAdmin
       .from("blacklist_entries")
       .insert({ kind: data.kind, value, reason: data.reason ?? null, created_by: userId });
     if (insErr) {
       if ((insErr as any).code === "23505") {
-        throw new Error("That entry is already on the blacklist.");
+        return { ok: true, banned: 0, duplicate: true as const };
       }
       throw new Error(insErr.message);
     }
@@ -101,7 +112,7 @@ export const addBlacklist = createServerFn({ method: "POST" })
       if (!bErr) banned += 1;
     }
 
-    return { ok: true, banned };
+    return { ok: true, banned, duplicate: false as const };
   });
 
 export const removeBlacklist = createServerFn({ method: "POST" })
