@@ -208,7 +208,7 @@ function AdminPredictionsPage() {
 
   return (
     <main className="flex-1 overflow-y-auto">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+      <div className="w-full px-4 sm:px-6 py-6">
         <header className="relative rounded-3xl overflow-hidden border border-primary/30 shadow-glow bg-gradient-primary p-6 mb-6">
           <div className="absolute inset-0 bg-gradient-to-tr from-background/40 via-transparent to-transparent pointer-events-none" />
           <div className="relative flex items-center gap-3">

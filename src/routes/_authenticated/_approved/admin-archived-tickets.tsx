@@ -89,7 +89,7 @@ function AdminArchivedTicketsPage() {
 
   return (
     <main className="flex-1 overflow-y-auto bg-gradient-to-br from-[#1a0b2e] via-[#2d1b4e] to-[#1a0b2e]">
-      <div className="max-w-5xl mx-auto px-6 py-8">
+      <div className="w-full px-6 py-8">
         <div className="mb-4">
           <Link to="/admin" className="inline-flex items-center gap-2 text-sm text-purple-200 hover:text-white">
             <ArrowLeft className="size-4" /> Back to Owner Dashboard

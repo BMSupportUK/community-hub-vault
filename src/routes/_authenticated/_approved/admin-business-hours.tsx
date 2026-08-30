@@ -77,7 +77,7 @@ function AdminBusinessHours() {
 
   return (
     <main className="flex-1 overflow-y-auto">
-      <div className="max-w-3xl mx-auto px-6 py-8">
+      <div className="w-full px-6 py-8">
         <Link to="/admin" className="inline-flex items-center gap-2 text-xs text-muted-foreground hover:text-foreground mb-4">
           <ArrowLeft className="size-3.5" /> Back to owner panel
         </Link>

@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { isAdminUnlocked } from "@/lib/admin-unlock";
 import { addBlacklist, listBlacklist, removeBlacklist } from "@/lib/blacklist.functions";
 import { toast } from "sonner";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-blacklist")({
   component: AdminBlacklistPage,
@@ -32,6 +33,7 @@ function AdminBlacklistPage() {
   const [value, setValue] = useState("");
   const [reason, setReason] = useState("");
   const [saving, setSaving] = useState(false);
+  const [tab, setTab] = useState<"email" | "ip">("email");
 
   const load = async () => {
     setLoading(true);
@@ -62,11 +64,15 @@ function AdminBlacklistPage() {
     setSaving(true);
     try {
       const res = await add({ data: { kind, value: v, reason: reason.trim() || undefined } });
-      toast.success(
-        res.banned > 0
-          ? `Added — ${res.banned} matching user${res.banned === 1 ? "" : "s"} banned.`
-          : "Added to blacklist.",
-      );
+      if ((res as any).duplicate) {
+        toast.info("That entry is already on the blacklist.");
+      } else {
+        toast.success(
+          res.banned > 0
+            ? `Added — ${res.banned} matching user${res.banned === 1 ? "" : "s"} banned.`
+            : "Added to blacklist.",
+        );
+      }
       setValue("");
       setReason("");
       await load();
@@ -93,7 +99,7 @@ function AdminBlacklistPage() {
 
   return (
     <main className="flex-1 overflow-y-auto">
-      <div className="max-w-4xl mx-auto px-6 py-8 space-y-6">
+      <div className="w-full px-6 py-8 space-y-6">
         <div className="flex items-center gap-3">
           <Link to="/admin" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
             <ArrowLeft className="size-4" /> Back
@@ -154,57 +160,70 @@ function AdminBlacklistPage() {
         {loading ? (
           <div className="py-10 text-center text-muted-foreground"><Loader2 className="size-5 animate-spin inline" /></div>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2">
-            <Section title="Blocked emails" icon={Mail} items={emails} onRemove={onRemove} />
-            <Section title="Blocked IPs" icon={Globe} items={ips} onRemove={onRemove} />
-          </div>
+          <Tabs value={tab} onValueChange={(v) => setTab(v as "email" | "ip")}>
+            <TabsList>
+              <TabsTrigger value="email" className="gap-2">
+                <Mail className="size-4" /> Blocked emails ({emails.length})
+              </TabsTrigger>
+              <TabsTrigger value="ip" className="gap-2">
+                <Globe className="size-4" /> Blocked IPs ({ips.length})
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="email" className="mt-4">
+              <EntryCards items={emails} icon={Mail} onRemove={onRemove} empty="No blocked emails yet." />
+            </TabsContent>
+            <TabsContent value="ip" className="mt-4">
+              <EntryCards items={ips} icon={Globe} onRemove={onRemove} empty="No blocked IPs yet." />
+            </TabsContent>
+          </Tabs>
         )}
       </div>
     </main>
   );
 }
 
-function Section({
-  title,
-  icon: Icon,
+function EntryCards({
   items,
+  icon: Icon,
   onRemove,
+  empty,
 }: {
-  title: string;
-  icon: any;
   items: Entry[];
+  icon: any;
   onRemove: (id: string) => void;
+  empty: string;
 }) {
+  if (items.length === 0) {
+    return (
+      <div className="rounded-2xl border border-dashed border-border bg-surface-1 p-10 text-center text-sm text-muted-foreground">
+        {empty}
+      </div>
+    );
+  }
   return (
-    <div className="rounded-2xl border border-border bg-surface-1 p-4">
-      <h2 className="font-display text-sm uppercase tracking-wide text-muted-foreground mb-3 flex items-center gap-2">
-        <Icon className="size-4" /> {title} ({items.length})
-      </h2>
-      {items.length === 0 ? (
-        <p className="text-sm text-muted-foreground py-6 text-center">None yet.</p>
-      ) : (
-        <ul className="space-y-2">
-          {items.map((it) => (
-            <li key={it.id} className="flex items-start gap-2 rounded-lg border border-border bg-background p-3">
-              <div className="flex-1 min-w-0">
-                <div className="font-mono text-sm break-all">{it.value}</div>
-                {it.reason && <div className="text-xs text-muted-foreground mt-0.5">{it.reason}</div>}
-                <div className="text-[11px] text-muted-foreground mt-1">
-                  Added {new Date(it.created_at).toLocaleString("en-GB")}
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => onRemove(it.id)}
-                title="Remove"
-                className="p-2 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-              >
-                <Trash2 className="size-4" />
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      {items.map((it) => (
+        <div key={it.id} className="rounded-2xl border border-border bg-surface-1 p-4 flex flex-col gap-2">
+          <div className="flex items-start gap-2">
+            <div className="size-8 shrink-0 rounded-lg bg-destructive/15 grid place-items-center">
+              <Icon className="size-4 text-destructive" />
+            </div>
+            <div className="flex-1 min-w-0 font-mono text-sm break-all">{it.value}</div>
+            <button
+              type="button"
+              onClick={() => onRemove(it.id)}
+              title="Remove"
+              className="p-1.5 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+            >
+              <Trash2 className="size-4" />
+            </button>
+          </div>
+          {it.reason && <p className="text-xs text-muted-foreground break-words">{it.reason}</p>}
+          <p className="text-[11px] text-muted-foreground mt-auto">
+            Added {new Date(it.created_at).toLocaleString("en-GB")}
+          </p>
+        </div>
+      ))}
     </div>
   );
 }
