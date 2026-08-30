@@ -91,6 +91,7 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
       .channel("shared-staff-onduty-" + Math.random().toString(36).slice(2))
       .on("postgres_changes", { event: "*", schema: "public", table: "shifts" }, () => refresh())
       .on("postgres_changes", { event: "*", schema: "public", table: "breaks" }, () => refresh())
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "profiles" }, () => refresh())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, []);
@@ -178,8 +179,13 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
                     )} />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="flex flex-col leading-tight">
-                      <div className={cn("text-sm font-semibold text-white truncate", roleFlashClass(roleFlashMap.get(s.user_id)))}>{name}</div>
+                    <div className="flex flex-col leading-tight gap-0.5">
+                      <Nameplate
+                        id={p?.equipped_nameplate_id}
+                        className="inline-flex items-center self-start max-w-full rounded-md px-2 py-0.5 h-6 max-h-6 pr-9 shadow-sm isolate"
+                      >
+                        <span className={cn("text-xs font-semibold text-white truncate drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]", roleFlashClass(roleFlashMap.get(s.user_id)))}>{name}</span>
+                      </Nameplate>
                       {roleFlashMap.get(s.user_id) && (
                         <span className="text-[9px] font-medium uppercase tracking-wider text-white/70">
                           {formatRoleLabel(roleFlashMap.get(s.user_id))}
@@ -250,8 +256,13 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
                                   <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-2 ring-white bg-gray-400" />
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                  <div className="flex flex-col leading-tight">
-                                    <div className={cn("text-sm font-semibold text-white/80 truncate", roleFlashClass(roleFlashMap.get(p.id)))}>{name}</div>
+                                  <div className="flex flex-col leading-tight gap-0.5">
+                                    <Nameplate
+                                      id={p.equipped_nameplate_id}
+                                      className="inline-flex items-center self-start max-w-full rounded-md px-2 py-0.5 h-6 max-h-6 pr-9 shadow-sm isolate opacity-80"
+                                    >
+                                      <span className={cn("text-xs font-semibold text-white/90 truncate drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]", roleFlashClass(roleFlashMap.get(p.id)))}>{name}</span>
+                                    </Nameplate>
                                   </div>
                                   <div className="text-[10px] text-white/60">Off duty</div>
                                   <DndCountdown userId={p.id} compact className="mt-1" />
