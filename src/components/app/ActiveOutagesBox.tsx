@@ -4,7 +4,11 @@ import { Activity, CheckCircle2, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
-export function ActiveOutagesBox() {
+interface ActiveOutagesBoxProps {
+  className?: string;
+}
+
+export function ActiveOutagesBox({ className }: ActiveOutagesBoxProps) {
   const [count, setCount] = useState<number | null>(null);
 
   useEffect(() => {
