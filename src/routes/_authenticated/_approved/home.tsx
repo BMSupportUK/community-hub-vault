@@ -88,7 +88,7 @@ function HomeLayout() {
       const [{ data: channelRows }, { data: iconRows }, { data: orderRows }] = await Promise.all([
         supabase
           .from("chat_channels")
-          .select("id, slug, name, group_label, icon, staff_only, sort_order")
+          .select("id, slug, name, group_label, icon, staff_only, sort_order, is_protected")
           .order("sort_order"),
         supabase.from("app_settings").select("value").eq("key", "category_icons").maybeSingle(),
         supabase.from("app_settings").select("value").eq("key", "category_order").maybeSingle(),
