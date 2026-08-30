@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ShieldCheck, Lock, KeyRound, Users, Ticket, ShoppingBag, ShieldAlert, KeySquare, Globe, Clock, FileText, Loader2, Shield, Star, Filter, Sparkles, LifeBuoy, RefreshCw, Copy, Download, Ban, Tag, Receipt, Package, Bell, Wallet, Trophy, MessageSquare, Image as ImageIcon, MonitorPlay } from "lucide-react";
+import { ShieldCheck, Lock, KeyRound, ShieldAlert, KeySquare, Globe, Clock, FileText, Loader2, Shield, Star, Filter, Sparkles, LifeBuoy, RefreshCw, Copy, Download, Ban, Tag, Package, Bell, Trophy, MessageSquare, Image as ImageIcon, MonitorPlay } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -37,17 +37,8 @@ function normalizeCode(input: string) {
 const UNLOCK_TTL_MS = 60 * 60 * 1000;
 const UNLOCK_KEY = (uid: string) => `admin_unlock_until:${uid}`;
 
-interface Stats {
-  users: number;
-  pending: number;
-  openTickets: number;
-  pendingOrders: number;
-  activeShifts: number;
-  credentials: number;
-  dnsCodes: number;
-  blogs: number;
-  pendingReviews: number;
-}
+
+
 
 function AdminDashboard() {
   const { user, hasAny } = useAuth();
