@@ -182,7 +182,7 @@ export function StaffOnDutyStrip({
       <div
         className={cn(
           "rounded-lg p-2.5 border backdrop-blur transition-colors",
-          "w-full",
+          isTickets ? "w-[220px]" : "w-full",
           onBreak
             ? (over ? "bg-red-500/30 border-red-300/60" : "bg-amber-300/30 border-amber-200/60")
             : "bg-emerald-400/25 border-emerald-200/50",
