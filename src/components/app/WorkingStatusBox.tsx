@@ -127,15 +127,17 @@ export function WorkingStatusBox({ stackActions = false }: { stackActions?: bool
 
   if (!user) return null;
 
+  const STAFF_ROLE_PRIORITY: AppRole[] = ["admin", "management", "moderator", "staff"];
+  const staffRole = STAFF_ROLE_PRIORITY.find((r) => roles.includes(r));
+  // Working status is a staff-only tool — hide the whole box from regular members.
+  if (!staffRole) return null;
+  const staffRoleLabel = formatRoleLabel(staffRole);
+
   const displayName =
     (user.user_metadata?.display_name as string | undefined) ||
     (user.user_metadata?.full_name as string | undefined) ||
     user.email?.split("@")[0] ||
     "User";
-
-  const STAFF_ROLE_PRIORITY: AppRole[] = ["admin", "management", "moderator", "staff"];
-  const staffRole = STAFF_ROLE_PRIORITY.find((r) => roles.includes(r));
-  const staffRoleLabel = formatRoleLabel(staffRole);
 
   // DND overrides all other status — show a dedicated DND card.
   if (dnd?.active) {
