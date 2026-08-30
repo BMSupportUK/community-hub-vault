@@ -245,17 +245,20 @@ export function StaffOnDutyStrip({
             );
           })}
         </div>
-        {offDuty.length > 0 && (
+        {(() => {
+          const visibleOffDuty = offDuty.filter((p) => !hideRoles.includes(p.role));
+          if (visibleOffDuty.length === 0) return null;
+          const groups: Record<string, typeof visibleOffDuty> = {};
+          for (const p of visibleOffDuty) {
+            (groups[p.role] ??= []).push(p);
+          }
+          return (
           <div className="relative mt-3 pt-3 border-t border-white/15">
             <div className="text-[11px] font-semibold uppercase tracking-wider text-white/70 mb-2">
-              Off duty · {offDuty.length}
+              Off duty · {visibleOffDuty.length}
             </div>
             <div className={cn(isSidebar ? "flex flex-col gap-4" : "grid gap-4 grid-cols-[repeat(auto-fit,minmax(240px,1fr))]")}>
               {(() => {
-                const groups: Record<string, typeof offDuty> = {};
-                for (const p of offDuty) {
-                  (groups[p.role] ??= []).push(p);
-                }
                 return OFF_ORDER.filter((r) => groups[r]?.length).map((role) => {
                   const members = groups[role];
                   return (
