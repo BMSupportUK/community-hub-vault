@@ -10,6 +10,7 @@ import { Nameplate } from "@/components/app/Nameplate";
 import { ChatMiniProfile, type ChatMiniProfileData } from "@/components/app/ChatMiniProfile";
 import { type BreakKind, BREAK_LIMITS as STAFF_BREAK_LIMITS, breakLabel, breakIcon } from "@/lib/breaks";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { useTalkChannelPresentUsers } from "@/hooks/use-talk-channel-presence";
 
 type StaffShift = { id: string; user_id: string; clock_in: string };
 type StaffBreak = { id: string; shift_id: string; user_id: string; kind: BreakKind; started_at: string };
@@ -68,6 +69,7 @@ export function StaffOnDutyStrip({
   const [selfId, setSelfId] = useState<string | null>(null);
   const [dutyTab, setDutyTab] = useState<"on" | "off">("on");
   const roleFlashMap = useRoleFlashMap();
+  const presentUserIds = useTalkChannelPresentUsers();
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setSelfId(data.user?.id ?? null));
@@ -285,12 +287,17 @@ export function StaffOnDutyStrip({
   const renderOffDutyCard = (p: StaffProfile & { role: string }) => {
     const name = p.display_name || p.username || "Staff";
     const dane = daneOverride && isDaneJProfile(p);
-    const mp = miniProfile(p.id, dane);
+    const inChat = presentUserIds.has(p.id);
+    const mp = miniProfile(p.id, dane || inChat);
     const card = (
       <div
         className={cn(
           "rounded-lg p-2.5 border backdrop-blur min-w-0",
-          dane ? "bg-emerald-400/25 border-emerald-200/50" : "border-white/15 bg-white/5",
+          dane
+            ? "bg-emerald-400/25 border-emerald-200/50"
+            : inChat
+              ? "bg-emerald-400/10 border-emerald-200/30"
+              : "border-white/15 bg-white/5",
           isTickets ? "w-full sm:w-[220px]" : "w-full",
         )}
       >
@@ -301,12 +308,12 @@ export function StaffOnDutyStrip({
               alt={name}
               className={cn(
                 "size-8 rounded-full object-cover",
-                dane ? "ring-2 ring-white/40" : "ring-2 ring-white/20 opacity-70 grayscale",
+                dane || inChat ? "ring-2 ring-white/40" : "ring-2 ring-white/20 opacity-70 grayscale",
               )}
             />
             <PresenceDot
               userId={p.id}
-              baseClass={dane ? "bg-emerald-500" : "bg-gray-400"}
+              baseClass={dane || inChat ? "bg-emerald-500" : "bg-gray-400"}
               {...(dane ? { dndClass: "bg-gray-400" } : {})}
             />
           </div>
@@ -315,7 +322,7 @@ export function StaffOnDutyStrip({
               id={p.equipped_nameplate_id}
               className={cn(
                 "flex flex-col justify-center w-full rounded-md px-2 py-1 shadow-sm isolate",
-                dane ? "" : "opacity-80",
+                dane || inChat ? "" : "opacity-80",
                 isTickets ? "pr-2" : "pr-12",
               )}
             >
@@ -327,6 +334,8 @@ export function StaffOnDutyStrip({
               )}
               {dane ? (
                 <DaneStatusLine userId={p.id} />
+              ) : inChat ? (
+                <div className="text-[10px] font-semibold text-emerald-200 drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]">In chat · off duty</div>
               ) : (
                 <div className="text-[10px] text-white/70 drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]">Off duty</div>
               )}
