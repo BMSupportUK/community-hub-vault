@@ -73,7 +73,7 @@ interface Ticket {
 }
 interface Message { id: string; ticket_id: string; sender_id: string; content: string; is_internal: boolean; created_at: string; attachments?: Attachment[]; }
 interface Attachment { name: string; path: string; size: number; type: string; }
-interface Profile { id: string; display_name: string | null; username: string | null; avatar_url?: string | null; role?: "admin" | "management" | "staff" | "moderator" | null; }
+interface Profile { id: string; display_name: string | null; username: string | null; avatar_url?: string | null; equipped_nameplate_id?: string | null; role?: "admin" | "management" | "staff" | "moderator" | null; }
 
 const newTicketSchema = z.object({
   subject: z.string().trim().min(3, "Subject must be at least 3 characters").max(120),
@@ -351,7 +351,7 @@ function TicketsPage() {
         const cur = topRole.get(r.user_id);
         if (!cur || rank[r.role] > rank[cur]) topRole.set(r.user_id, r.role);
       }
-      const { data: profs } = await supabase.from("profiles").select("id, display_name, username, avatar_url").in("id", ids);
+      const { data: profs } = await supabase.from("profiles").select("id, display_name, username, avatar_url, equipped_nameplate_id").in("id", ids);
       setStaff(((profs ?? []) as Profile[]).map((p) => ({ ...p, role: topRole.get(p.id) ?? null })));
     })();
   }, [isStaff]);
