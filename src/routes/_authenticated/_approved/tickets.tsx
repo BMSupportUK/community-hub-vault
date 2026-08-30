@@ -73,7 +73,7 @@ interface Ticket {
 }
 interface Message { id: string; ticket_id: string; sender_id: string; content: string; is_internal: boolean; created_at: string; attachments?: Attachment[]; }
 interface Attachment { name: string; path: string; size: number; type: string; }
-interface Profile { id: string; display_name: string | null; username: string | null; avatar_url?: string | null; role?: "admin" | "management" | "staff" | "moderator" | null; }
+interface Profile { id: string; display_name: string | null; username: string | null; avatar_url?: string | null; equipped_nameplate_id?: string | null; role?: "admin" | "management" | "staff" | "moderator" | null; }
 
 const newTicketSchema = z.object({
   subject: z.string().trim().min(3, "Subject must be at least 3 characters").max(120),
@@ -351,7 +351,7 @@ function TicketsPage() {
         const cur = topRole.get(r.user_id);
         if (!cur || rank[r.role] > rank[cur]) topRole.set(r.user_id, r.role);
       }
-      const { data: profs } = await supabase.from("profiles").select("id, display_name, username, avatar_url").in("id", ids);
+      const { data: profs } = await supabase.from("profiles").select("id, display_name, username, avatar_url, equipped_nameplate_id").in("id", ids);
       setStaff(((profs ?? []) as Profile[]).map((p) => ({ ...p, role: topRole.get(p.id) ?? null })));
     })();
   }, [isStaff]);
@@ -1575,8 +1575,8 @@ function TicketDetail({
               if (!a) return null;
               return <StaffIdCard profile={a} />;
             })()}
-            <span className={cn("ml-auto px-2 py-1 rounded text-xs capitalize", PRI_CLS[ticket.priority])}>{ticket.priority}</span>
             <RequestAdminHelpButton ticketId={ticket.id} />
+            <span className={cn("ml-auto px-2 py-1 rounded text-xs capitalize", PRI_CLS[ticket.priority])}>{ticket.priority}</span>
           </div>
         )}
       </header>
@@ -1869,24 +1869,27 @@ function StaffIdCard({ profile }: { profile: Profile }) {
   const name = profile.display_name || profile.username || "Staff";
   const role = profile.role ?? "staff";
   return (
-    <div
-      className={cn(
-        "inline-flex items-center gap-2 pl-1 pr-2 py-1 rounded-full bg-white/10 border border-white/20 shadow-sm backdrop-blur",
-        roleFlashClass(role),
-      )}
-      title={`Assigned to ${name}`}
+    <Nameplate
+      id={profile.equipped_nameplate_id}
+      className="inline-flex items-center gap-2 pl-1 pr-3 py-1 rounded-full shadow-sm isolate min-h-8"
+      fallbackStyle={{ background: "rgba(255,255,255,0.10)", border: "1px solid rgba(255,255,255,0.20)", backdropFilter: "blur(4px)" }}
     >
-      <img
-        src={resolveAvatarUrl(profile.id, profile.avatar_url ?? null, roleFlashMap)}
-        alt={name}
-        className="size-6 rounded-full object-cover ring-1 ring-white/40"
-      />
-      <div className="flex flex-col leading-tight">
-        <span className="text-[11px] font-semibold text-white">{name}</span>
-        <span className={cn("text-[9px] uppercase tracking-wider px-1 rounded border self-start", ROLE_BADGE[role] ?? ROLE_BADGE.staff)}>
-          {formatRoleLabel(role)}
+      <span
+        className={cn("relative z-10 inline-flex items-center gap-2", roleFlashClass(role))}
+        title={`Assigned to ${name}`}
+      >
+        <img
+          src={resolveAvatarUrl(profile.id, profile.avatar_url ?? null, roleFlashMap)}
+          alt={name}
+          className="size-6 rounded-full object-cover ring-1 ring-white/40"
+        />
+        <span className="flex flex-col leading-tight">
+          <span className="text-[11px] font-semibold text-white drop-shadow">{name}</span>
+          <span className={cn("text-[9px] uppercase tracking-wider px-1 rounded border self-start", ROLE_BADGE[role] ?? ROLE_BADGE.staff)}>
+            {formatRoleLabel(role)}
+          </span>
         </span>
-      </div>
-    </div>
+      </span>
+    </Nameplate>
   );
 }
