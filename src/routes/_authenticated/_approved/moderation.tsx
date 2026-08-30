@@ -485,7 +485,7 @@ function ModerationPage() {
           </div>
           {isOwnerOrManagement && (
             <aside className="hidden xl:block w-[320px] shrink-0 sticky top-0">
-              <WorkingStatusBox stackActions />
+              <StaffOnDutyStrip variant="sidebar" />
             </aside>
           )}
         </div>
