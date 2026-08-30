@@ -71,7 +71,8 @@ export const approveLockReset = createServerFn({ method: "POST" })
 
     const { error: upErr } = await supabaseAdmin
       .from("screen_lock_settings")
-      .upsert({ user_id: targetUserId, code_hash: codeHash, must_change: true } as never);
+      .update({ code_hash: codeHash, must_change: true } as never)
+      .eq("user_id", targetUserId);
     if (upErr) throw new Error(upErr.message);
 
     await supabaseAdmin

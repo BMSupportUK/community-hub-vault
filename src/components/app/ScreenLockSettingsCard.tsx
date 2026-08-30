@@ -57,7 +57,8 @@ export function ScreenLockSettingsCard() {
     setTimeoutMins(next.timeout_minutes);
     const { error } = await supabase
       .from("screen_lock_settings")
-      .upsert({ user_id: user.id, ...next });
+      .update(next)
+      .eq("user_id", user.id);
     if (error) toast.error(error.message);
   };
 
@@ -75,7 +76,8 @@ export function ScreenLockSettingsCard() {
     const hash = await hashLockCode(user.id, newCode);
     const { error } = await supabase
       .from("screen_lock_settings")
-      .upsert({ user_id: user.id, code_hash: hash, must_change: false, enabled, timeout_minutes: timeout });
+      .update({ code_hash: hash, must_change: false, enabled, timeout_minutes: timeout })
+      .eq("user_id", user.id);
     setBusy(false);
     if (error) {
       toast.error(error.message);
