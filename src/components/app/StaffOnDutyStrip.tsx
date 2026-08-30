@@ -130,13 +130,15 @@ export function StaffOnDutyStrip({
     const i = ROLE_ORDER.indexOf((r ?? "") as (typeof ROLE_ORDER)[number]);
     return i === -1 ? ROLE_ORDER.length : i;
   };
-  const orderedShifts = [...shifts].sort((a, b) => {
-    const d = roleRank(a.user_id) - roleRank(b.user_id);
-    if (d !== 0) return d;
-    const an = profiles[a.user_id]?.display_name || profiles[a.user_id]?.username || "";
-    const bn = profiles[b.user_id]?.display_name || profiles[b.user_id]?.username || "";
-    return an.localeCompare(bn);
-  });
+  const orderedShifts = [...shifts]
+    .sort((a, b) => {
+      const d = roleRank(a.user_id) - roleRank(b.user_id);
+      if (d !== 0) return d;
+      const an = profiles[a.user_id]?.display_name || profiles[a.user_id]?.username || "";
+      const bn = profiles[b.user_id]?.display_name || profiles[b.user_id]?.username || "";
+      return an.localeCompare(bn);
+    })
+    .filter((s) => !hideRoles.includes(roleFlashMap.get(s.user_id) ?? ""));
 
   const miniProfile = (userId: string, isWorking: boolean): ChatMiniProfileData | null => {
     const p = profiles[userId];
