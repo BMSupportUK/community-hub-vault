@@ -52,16 +52,6 @@ export const requestGuidePasscode = createServerFn({ method: "POST" })
     });
     if (error) throw new Error(error.message);
 
-    await supabaseAdmin.from("user_notifications").insert({
-      user_id: userId,
-      kind: "guide_passcode",
-      title: `Guide passcode: ${code}`,
-      body: `Use ${code} to unlock "${blog.title}". Valid for 24 hours.`,
-      link_path: "/install-guides",
-      source_type: "install_blog",
-      source_id: data.blogId,
-    });
-
     return { code, expiresAt: expiresAt.toISOString() };
   });
 
