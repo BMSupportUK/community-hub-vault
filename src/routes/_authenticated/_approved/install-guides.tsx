@@ -17,6 +17,7 @@ import {
   GuideLockBadge,
   GuideAccessCodeBox,
   GuidePasscodeAdmin,
+  GuideAccessTimer,
   useGuideAccess,
 } from "@/components/app/GuideVaultCardActions";
 
