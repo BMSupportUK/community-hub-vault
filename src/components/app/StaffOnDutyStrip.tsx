@@ -24,7 +24,7 @@ export function StaffOnDutyStrip({
   variant = "strip",
   hideRoles = [],
 }: {
-  variant?: "strip" | "sidebar";
+  variant?: "strip" | "sidebar" | "tickets";
   hideRoles?: string[];
 } = {}) {
   const [shifts, setShifts] = useState<StaffShift[]>([]);
@@ -125,6 +125,7 @@ export function StaffOnDutyStrip({
   };
 
   const isSidebar = variant === "sidebar";
+  const isTickets = variant === "tickets";
   const roleRank = (id: string) => {
     const r = roleFlashMap.get(id);
     const i = ROLE_ORDER.indexOf((r ?? "") as (typeof ROLE_ORDER)[number]);
@@ -162,8 +163,11 @@ export function StaffOnDutyStrip({
 
   return (
     <div className={isSidebar ? "p-3 h-full overflow-y-auto" : "px-4 pt-4"}>
-      <div className="rounded-xl border border-white/15 p-3 shadow-lg relative overflow-hidden bg-gradient-to-r from-violet-600/40 via-fuchsia-600/40 to-blue-600/40 backdrop-blur">
-        <div className="flex items-center justify-between mb-2 relative">
+      <div className={cn(
+        "rounded-xl border border-white/15 p-3 shadow-lg relative overflow-hidden bg-gradient-to-r from-violet-600/40 via-fuchsia-600/40 to-blue-600/40 backdrop-blur",
+        isTickets && "grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-2",
+      )}>
+        <div className={cn("flex items-center justify-between mb-2 relative", isTickets && "col-span-full")}>
           <div className="text-[11px] font-semibold uppercase tracking-wider text-white/90">
             Staff on duty · {shifts.length}
           </div>
@@ -171,7 +175,10 @@ export function StaffOnDutyStrip({
             <span className="size-2 rounded-full bg-emerald-400 animate-pulse" /> live
           </div>
         </div>
-        <div className={cn("relative", isSidebar ? "flex flex-col gap-2" : "grid gap-2 grid-cols-[repeat(auto-fill,minmax(220px,1fr))]")}>
+        <div className={cn(
+          "relative",
+          isTickets ? "contents" : isSidebar ? "flex flex-col gap-2" : "grid gap-2 grid-cols-[repeat(auto-fill,minmax(220px,1fr))]",
+        )}>
           {shifts.length === 0 && (
             <div className={cn(
               "rounded-lg p-2.5 border border-white/20 bg-white/10 text-white/80 text-xs flex items-center gap-2",
@@ -253,20 +260,20 @@ export function StaffOnDutyStrip({
             (groups[p.role] ??= []).push(p);
           }
           return (
-            <div className="relative mt-3 pt-3 border-t border-white/15">
-              <div className="text-[11px] font-semibold uppercase tracking-wider text-white/70 mb-2">
+            <div className={cn("relative mt-3 pt-3 border-t border-white/15", isTickets && "contents")}>
+              <div className={cn("text-[11px] font-semibold uppercase tracking-wider text-white/70 mb-2", isTickets && "hidden")}>
                 Off duty · {visibleOffDuty.length}
               </div>
-              <div className={cn(isSidebar ? "flex flex-col gap-4" : "flex flex-col gap-4")}>
+              <div className={cn(isTickets ? "contents" : "flex flex-col gap-4")}>
                 {OFF_ORDER.filter((r) => groups[r]?.length).map((role) => {
                   const members = groups[role];
                   return (
-                    <div key={role} className="min-w-0">
-                      <div className={cn("text-[10px] font-bold uppercase tracking-wider mb-1.5 flex items-center gap-1.5", roleFlashClass(roleFlashMap.get(members[0].id)))}>
+                    <div key={role} className={cn("min-w-0", isTickets && "contents")}>
+                      <div className={cn("text-[10px] font-bold uppercase tracking-wider mb-1.5 flex items-center gap-1.5", roleFlashClass(roleFlashMap.get(members[0].id)), isTickets && "hidden")}>
                         <span>{formatRoleLabel(role)}</span>
                         <span className="px-1.5 py-0.5 rounded-full bg-white/10 text-white/80">{members.length}</span>
                       </div>
-                       <div className={cn(isSidebar ? "flex flex-col gap-2" : "grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4")}>
+                       <div className={cn(isTickets ? "contents" : isSidebar ? "flex flex-col gap-2" : "grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4")}>
                         {members.map((p) => {
                           const name = p.display_name || p.username || "Staff";
                           const mp = miniProfile(p.id, false);
