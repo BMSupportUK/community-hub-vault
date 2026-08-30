@@ -130,7 +130,9 @@ function RootComponent() {
       <AuthProvider>
         <RightClickGuard />
         <Outlet />
-        <Toaster theme="dark" position="bottom-right" />
+        {/* z-index keeps toasts visible above the inactivity lock overlay (z-200) */}
+        <Toaster theme="dark" position="bottom-right" style={{ zIndex: 2147483000 }} />
+
       </AuthProvider>
     </QueryClientProvider>
   );
