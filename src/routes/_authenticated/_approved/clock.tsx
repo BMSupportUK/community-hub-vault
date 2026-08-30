@@ -11,6 +11,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { sendShiftEventPush, sendBreakEventPush } from "@/lib/push.functions";
 import { PushNotificationsToggle } from "@/components/app/PushNotificationsToggle";
 import { type BreakKind, BREAK_LIMITS, breakLabel } from "@/lib/breaks";
+import { StaffOnDutyStrip } from "@/components/app/StaffOnDutyStrip";
 
 export const Route = createFileRoute("/_authenticated/_approved/clock")({
   component: ClockPage,
