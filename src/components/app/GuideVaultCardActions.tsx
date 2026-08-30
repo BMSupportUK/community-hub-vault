@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Lock, LockOpen, KeyRound, Download, FileText, Loader2 } from "lucide-react";
+import { Lock, LockOpen, KeyRound, FileText, Loader2 } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -145,7 +145,7 @@ export function GuideVaultCardActions({
           disabled={busy}
           className="flex-1 bg-gradient-primary text-primary-foreground hover:opacity-90"
         >
-          {busy ? <Loader2 className="size-4 mr-1 animate-spin" /> : <Download className="size-4 mr-1" />}
+          {busy ? <Loader2 className="size-4 mr-1 animate-spin" /> : <LockOpen className="size-4 mr-1" />}
           Open guide
         </Button>
       ) : (
