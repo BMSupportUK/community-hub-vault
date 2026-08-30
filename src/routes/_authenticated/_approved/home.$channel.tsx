@@ -1125,23 +1125,79 @@ function ChannelPage() {
             </button>
           )}
           <div className="relative">
-            <button
-              onClick={() => setPinnedOpen((v) => !v)}
-              className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-surface-2/60 hover:bg-surface-2 border border-white/10 hover:border-white/20 transition-all cursor-pointer group shadow-lg shadow-black/20"
-              title="Pinned messages"
-            >
-              <Pin className="size-4 text-primary group-hover:-translate-y-0.5 transition-transform" />
-              <span className="text-xs font-bold text-foreground/90">{pinnedMessages.length}</span>
-            </button>
-            {pinnedOpen && (
-              <div className="absolute right-0 top-full mt-2 w-80 max-h-96 overflow-y-auto rounded-lg border border-border bg-popover shadow-lg z-30">
-                <div className="flex items-center justify-between px-3 py-2 border-b border-border">
-                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Pinned messages
+            {pinnedMessages.length > 0 && (
+              <button
+                onClick={() => setPinnedOpen((v) => !v)}
+                className={cn(
+                  "group relative flex items-center gap-2 rounded-full transition-all duration-300 cursor-pointer overflow-hidden",
+                  pinnedOpen
+                    ? "px-3.5 py-1.5 bg-primary/15 border border-primary/60 shadow-[0_0_20px_rgba(var(--primary-rgb),0.35)]"
+                    : "pl-1 pr-3.5 py-1 bg-gradient-to-r from-primary/20 via-fuchsia-500/15 to-primary/10 border border-primary/40 hover:border-primary/70 shadow-[0_0_16px_rgba(var(--primary-rgb),0.25)] hover:shadow-[0_0_24px_rgba(var(--primary-rgb),0.45)]",
+                )}
+                title="Pinned messages"
+              >
+                <span className={cn(
+                  "flex items-center justify-center rounded-full shrink-0 transition-all",
+                  pinnedOpen ? "size-7 bg-primary/20" : "size-7 bg-primary/25 group-hover:bg-primary/35 group-hover:scale-110"
+                )}>
+                  <Pin className={cn(
+                    "size-3.5 transition-transform",
+                    pinnedOpen ? "text-primary fill-primary/30 rotate-45" : "text-primary fill-primary/20 group-hover:-translate-y-0.5"
+                  )} />
+                </span>
+                {!pinnedOpen && pinnedMessages[0] && (
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-[11px] font-bold text-primary truncate max-w-[140px]">
+                      {(() => {
+                        const p = profiles[pinnedMessages[0].sender_id];
+                        const name = p?.display_name ?? p?.username ?? "Unknown";
+                        return name;
+                      })()}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground truncate max-w-[160px]">
+                      <MentionText
+                        content={pinnedMessages[0].content}
+                        currentUsername={myUsername}
+                        className="text-[10px] text-muted-foreground"
+                      />
+                    </span>
+                  </div>
+                )}
+                <span className={cn(
+                  "text-xs font-bold transition-colors",
+                  pinnedOpen ? "text-primary" : "text-foreground/90 group-hover:text-foreground"
+                )}>
+                  {pinnedMessages.length}
+                </span>
+                {!pinnedOpen && (
+                  <span className="ml-1 text-[9px] font-semibold text-primary/80 uppercase tracking-wider hidden sm:inline">
+                    pinned
                   </span>
+                )}
+              </button>
+            )}
+            {pinnedMessages.length === 0 && (
+              <button
+                onClick={() => setPinnedOpen((v) => !v)}
+                className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-surface-2/60 hover:bg-surface-2 border border-white/10 hover:border-white/20 transition-all cursor-pointer group shadow-lg shadow-black/20"
+                title="Pinned messages"
+              >
+                <Pin className="size-4 text-primary/60 group-hover:-translate-y-0.5 transition-transform" />
+                <span className="text-xs font-bold text-foreground/60">0</span>
+              </button>
+            )}
+            {pinnedOpen && (
+              <div className="absolute right-0 top-full mt-2 w-80 max-h-96 overflow-y-auto rounded-xl border border-primary/40 bg-surface/95 backdrop-blur-xl shadow-[0_0_40px_rgba(var(--primary-rgb),0.25)] z-30 animate-scale-in">
+                <div className="flex items-center justify-between px-3 py-2.5 border-b border-primary/20 bg-gradient-to-r from-primary/10 to-fuchsia-500/10">
+                  <div className="flex items-center gap-2">
+                    <Pin className="size-3.5 text-primary fill-primary/30" />
+                    <span className="text-xs font-bold uppercase tracking-wider text-primary">
+                      Pinned messages
+                    </span>
+                  </div>
                   <button
                     onClick={() => setPinnedOpen(false)}
-                    className="text-muted-foreground hover:text-foreground"
+                    className="rounded-md p-1 text-muted-foreground hover:text-foreground hover:bg-surface-2 transition-colors"
                   >
                     <X className="size-4" />
                   </button>
@@ -1151,37 +1207,38 @@ function ChannelPage() {
                     No pinned messages yet.
                   </div>
                 ) : (
-                  <ul className="divide-y divide-border">
-                    {pinnedMessages.map((m) => {
+                  <ul className="p-2 space-y-2">
+                    {pinnedMessages.map((m, idx) => {
                       const p = profiles[m.sender_id];
                       const name = p?.display_name ?? p?.username ?? "Unknown";
                       return (
                         <li
                           key={m.id}
-                          className="p-3 hover:bg-surface-2/40 rounded-lg border border-primary/30 ring-1 ring-primary/30 shadow-[0_0_10px_var(--primary-glow)]"
+                          className="p-3 rounded-xl border border-primary/20 bg-gradient-to-br from-primary/10 via-surface-2/80 to-fuchsia-500/10 ring-1 ring-primary/20 shadow-[0_4px_20px_-8px_rgba(var(--primary-rgb),0.3)] hover:shadow-[0_6px_24px_-6px_rgba(var(--primary-rgb),0.45)] hover:border-primary/40 transition-all animate-fade-in"
+                          style={{ animationDelay: `${idx * 60}ms` }}
                         >
-                          <div className="flex items-baseline justify-between gap-2 mb-1">
+                          <div className="flex items-baseline justify-between gap-2 mb-1.5">
                             <span
                               className={cn(
-                                "text-xs font-medium",
+                                "text-xs font-bold",
                                 roleFlashClass(roleFlashMap.get(m.sender_id)),
                               )}
                             >
                               {name}
                             </span>
-                            <span className="text-[10px] text-muted-foreground">
+                            <span className="text-[10px] text-muted-foreground shrink-0">
                               {new Date(m.created_at).toLocaleDateString("en-GB")}
                             </span>
                           </div>
                           <MentionText
                             content={m.content}
                             currentUsername={myUsername}
-                            className="text-xs text-muted-foreground line-clamp-3"
+                            className="text-xs text-foreground/90 line-clamp-3"
                           />
                           {canPin && (
                             <button
                               onClick={() => togglePin(m)}
-                              className="mt-1 text-[10px] text-muted-foreground hover:text-destructive flex items-center gap-1"
+                              className="mt-2 text-[10px] text-muted-foreground hover:text-destructive flex items-center gap-1 transition-colors"
                             >
                               <PinOff className="size-3" /> Unpin
                             </button>
