@@ -32,6 +32,7 @@ const SAMPLES: { label: string; src: string; gain: number }[] = [
   { label: "Sale / Order", src: orderAudio, gain: 1.8 },
   { label: "Ticket", src: ticketAudio, gain: 2.0 },
   { label: "Ticket reply", src: ticketReplyAudio, gain: 2.0 },
+  { label: "Payment confirmed", src: paymentReceivedAudio, gain: 2.0 },
   { label: "New signup", src: newSignupAudio, gain: 1.8 },
   { label: "Shift start", src: shiftStartAudio, gain: 2.2 },
   { label: "Shift end", src: shiftEndAudio, gain: 2.2 },
