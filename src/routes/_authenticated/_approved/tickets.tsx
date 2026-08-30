@@ -1355,6 +1355,32 @@ function TicketDetail({
     return p?.display_name || p?.username || (id === currentUserId ? "You" : "User");
   };
 
+  const chatRoleFlashMap = useRoleFlashMap();
+  const [senderMeta, setSenderMeta] = useState<
+    Record<string, { avatar_url: string | null; equipped_nameplate_id: string | null }>
+  >({});
+  useEffect(() => {
+    const ids = [...new Set(messages.map((m) => m.sender_id))].filter((id) => !senderMeta[id]);
+    if (!ids.length) return;
+    let alive = true;
+    (async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id,avatar_url,equipped_nameplate_id")
+        .in("id", ids);
+      if (!alive || !data) return;
+      setSenderMeta((prev) => {
+        const next = { ...prev };
+        for (const p of data as Array<{ id: string; avatar_url: string | null; equipped_nameplate_id: string | null }>) {
+          next[p.id] = { avatar_url: p.avatar_url, equipped_nameplate_id: p.equipped_nameplate_id };
+        }
+        return next;
+      });
+    })();
+    return () => { alive = false; };
+  }, [messages, senderMeta]);
+
+
   const orderPanelInner = linkedOrder ? (
     <div className="space-y-2 text-white text-xs">
       <div className="flex items-center justify-between gap-3">
