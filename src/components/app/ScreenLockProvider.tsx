@@ -41,28 +41,46 @@ export function ScreenLockProvider() {
     }
     let cancelled = false;
     void (async () => {
-      const { data } = await supabase
-        .from("screen_lock_settings")
-        .select("enabled, timeout_minutes, code_hash, must_change")
-        .eq("user_id", user.id)
-        .maybeSingle();
+      let data: ScreenLockSettings | null = null;
+      let loadError: { message: string } | null = null;
+
+      // A session can still be hydrating when this provider first mounts. Never
+      // mistake a failed read for a user who has not configured a lock code.
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        const result = await supabase
+          .from("screen_lock_settings")
+          .select("enabled, timeout_minutes, code_hash, must_change")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        data = result.data as ScreenLockSettings | null;
+        loadError = result.error;
+        if (!loadError) break;
+        await new Promise((resolve) => window.setTimeout(resolve, 250 * (attempt + 1)));
+      }
       if (cancelled) return;
+      if (loadError) {
+        console.error("Could not load screen lock settings", loadError);
+        return;
+      }
       if (data) {
-        setSettings(data as ScreenLockSettings);
+        setSettings(data);
       } else {
         const row = {
           user_id: user.id,
           enabled: true,
           timeout_minutes: isStaff ? STAFF_MAX_TIMEOUT_MINUTES : DEFAULT_TIMEOUT_MINUTES,
         };
-        await supabase.from("screen_lock_settings").insert(row);
+        const { data: created, error: createError } = await supabase
+          .from("screen_lock_settings")
+          .insert(row)
+          .select("enabled, timeout_minutes, code_hash, must_change")
+          .single();
         if (cancelled) return;
-        setSettings({
-          enabled: true,
-          timeout_minutes: row.timeout_minutes,
-          code_hash: null,
-          must_change: false,
-        });
+        if (createError || !created) {
+          console.error("Could not create screen lock settings", createError);
+          return;
+        }
+        setSettings(created as ScreenLockSettings);
       }
       // Restore a lock that was active before a reload.
       if (typeof window !== "undefined" && localStorage.getItem(`screenlock:locked:${user.id}`) === "1") {
@@ -83,8 +101,16 @@ export function ScreenLockProvider() {
         "postgres_changes",
         { event: "*", schema: "public", table: "screen_lock_settings", filter: `user_id=eq.${user.id}` },
         (p) => {
-          const row = p.new as ScreenLockSettings | null;
-          if (row) setSettings({ ...row });
+          const row = p.new as Partial<ScreenLockSettings> | null;
+          if (
+            row &&
+            typeof row.enabled === "boolean" &&
+            typeof row.timeout_minutes === "number" &&
+            Object.prototype.hasOwnProperty.call(row, "code_hash") &&
+            typeof row.must_change === "boolean"
+          ) {
+            setSettings(row as ScreenLockSettings);
+          }
         },
       )
       .subscribe();
