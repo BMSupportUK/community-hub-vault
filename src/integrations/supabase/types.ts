@@ -2616,6 +2616,7 @@ export type Database = {
       guide_passcodes: {
         Row: {
           blog_id: string
+          code: string | null
           code_hash: string
           created_at: string
           expires_at: string
@@ -2627,6 +2628,7 @@ export type Database = {
         }
         Insert: {
           blog_id: string
+          code?: string | null
           code_hash: string
           created_at?: string
           expires_at: string
@@ -2638,6 +2640,7 @@ export type Database = {
         }
         Update: {
           blog_id?: string
+          code?: string | null
           code_hash?: string
           created_at?: string
           expires_at?: string
