@@ -6,8 +6,6 @@ import { getGateStaffPresence, type GateStaffPresenceEntry } from "@/lib/gate-st
 const ROLE_LABEL: Record<string, string> = {
   admin: "Owner",
   management: "Management",
-  staff: "Staff",
-  moderator: "Moderator",
 };
 
 export function GateStaffPresence() {
