@@ -256,7 +256,7 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
                         <span>{formatRoleLabel(role)}</span>
                         <span className="px-1.5 py-0.5 rounded-full bg-white/10 text-white/80">{members.length}</span>
                       </div>
-                      <div className={cn(isSidebar ? "flex flex-col gap-2" : "flex gap-2 overflow-x-auto pb-1")}>
+                      <div className={cn(isSidebar ? "flex flex-col gap-2" : "grid gap-2 grid-cols-[repeat(auto-fill,minmax(200px,1fr))]")}>
                         {members.map((p) => {
                           const name = p.display_name || p.username || "Staff";
                           const mp = miniProfile(p.id, false);
