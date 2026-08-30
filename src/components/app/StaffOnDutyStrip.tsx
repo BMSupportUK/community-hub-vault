@@ -284,7 +284,7 @@ export function StaffOnDutyStrip({
 
   const renderOffDutyCard = (p: StaffProfile & { role: string }) => {
     const name = p.display_name || p.username || "Staff";
-    const dane = isDaneJProfile(p);
+    const dane = daneOverride && isDaneJProfile(p);
     const mp = miniProfile(p.id, dane);
     const card = (
       <div
