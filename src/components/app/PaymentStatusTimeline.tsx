@@ -147,13 +147,15 @@ export function PaymentStatusTimeline({
                 : "text-fuchsia-300",
           )}
         >
-          {failed
-            ? "Not found"
-            : confirmed
-              ? "Paid"
-              : phase === "awaiting"
-                ? "Awaiting payment"
-                : "Checking…"}
+          {cancelled
+            ? "Cancelled"
+            : failed
+              ? "Not found"
+              : confirmed
+                ? "Paid"
+                : phase === "awaiting"
+                  ? "Awaiting payment"
+                  : "Checking…"}
         </span>
       </div>
       <ol className="relative space-y-1.5">
