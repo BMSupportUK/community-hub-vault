@@ -48,7 +48,7 @@ function fmtRemaining(ms: number): string {
   return `${s}s`;
 }
 
-export function DndDialogButton() {
+export function DndDialogButton({ className }: { className?: string }) {
   const { user, hasAny } = useAuth();
   const userTimezone = useUserTimezone();
   const canUse = !!user && hasAny(["admin", "management"]);
