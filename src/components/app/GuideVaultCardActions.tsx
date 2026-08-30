@@ -9,7 +9,10 @@ import {
   requestGuidePasscode,
   unlockGuide,
   getMyGuideAccess,
+  listGuidePasscodes,
+  revokeGuidePasscode,
 } from "@/lib/guide-vault.functions";
+
 
 /** Guides the signed-in member currently holds a live passcode for. */
 export function useGuideAccess() {
