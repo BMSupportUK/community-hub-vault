@@ -15,7 +15,8 @@ export type PayCheckPhase =
   | "checking_stripe"
   | "checking_square"
   | "confirmed"
-  | "failed";
+  | "failed"
+  | "cancelled";
 
 export type PayMethod = "stripe" | "square" | "nowpayments" | null;
 
