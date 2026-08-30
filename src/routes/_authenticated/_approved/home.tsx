@@ -35,6 +35,7 @@ interface ChannelRow {
   icon: string;
   staff_only: boolean;
   sort_order: number;
+  is_protected?: boolean | null;
 }
 
 const SidebarSkeletonIcon = () => <Skeleton className="size-4 rounded" />;
