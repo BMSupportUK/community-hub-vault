@@ -58,10 +58,15 @@ function AdminCredentialsPage() {
   const load = async () => {
     setLoading(true);
     const [{ data: profs }, { data: c }] = await Promise.all([
-      supabase.from("profiles").select("id, username, display_name").order("created_at", { ascending: true }),
+      supabase.from("profiles").select("id, username, display_name").order("display_name", { ascending: true }),
       supabase.from("app_credentials").select("*").order("created_at", { ascending: false }),
     ]);
-    setProfiles((profs ?? []) as ProfileLite[]);
+    const sortedProfs = ((profs ?? []) as ProfileLite[]).sort((a, b) => {
+      const nameA = (a.display_name || a.username || "").toLowerCase();
+      const nameB = (b.display_name || b.username || "").toLowerCase();
+      return nameA.localeCompare(nameB);
+    });
+    setProfiles(sortedProfs);
     setCreds((c ?? []) as CredentialRow[]);
     setLoading(false);
   };
