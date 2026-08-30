@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { pushToUser } from "@/lib/fcm.server";
 import { broadcastToUser } from "@/lib/push.functions";
+import { reconcileUnpaidOrders } from "@/lib/order-payment-reconcile.server";
 
 
 // POST /api/public/hooks/scheduled-reminders
@@ -288,8 +289,21 @@ export const Route = createFileRoute("/api/public/hooks/scheduled-reminders")({
           }
         }
 
+        // --- Payment reconciliation safety net ------------------------------
+        // Catches orders whose payment completed at the provider but were
+        // never flagged paid locally (customer closed the tab, network error,
+        // etc). Repairs settled payment rows and verifies pending Stripe
+        // checkout sessions directly with Stripe.
+        let reconciledOrders = 0;
+        try {
+          const rec = await reconcileUnpaidOrders();
+          reconciledOrders = rec.repaired;
+        } catch (e) {
+          console.error("[scheduled-reminders] payment reconcile failed", e);
+        }
+
         if (!jobs.length) {
-          return Response.json({ ok: true, evaluated: 0, sent: 0, autoClockedIn });
+          return Response.json({ ok: true, evaluated: 0, sent: 0, autoClockedIn, reconciledOrders });
         }
 
 
@@ -354,6 +368,7 @@ export const Route = createFileRoute("/api/public/hooks/scheduled-reminders")({
           sent,
           failed,
           autoClockedIn,
+          reconciledOrders,
         });
 
       },
