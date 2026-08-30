@@ -332,7 +332,13 @@ export function NotificationBell() {
           )}
         </button>
       </PopoverTrigger>
-      <PopoverContent side="right" align="start" className="w-96 p-0" sideOffset={12}>
+      <PopoverContent
+        side="bottom"
+        align="end"
+        collisionPadding={8}
+        className="w-[min(24rem,calc(100vw-1rem))] p-0"
+        sideOffset={8}
+      >
         <div className="flex items-center justify-between px-4 py-3 border-b border-border">
           <div className="font-display font-semibold">Notifications</div>
           {unread.length > 0 && (
