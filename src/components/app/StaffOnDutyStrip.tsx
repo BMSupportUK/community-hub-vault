@@ -20,7 +20,13 @@ export function StaffOnDutySidebar() {
   return <StaffOnDutyStrip variant="sidebar" />;
 }
 
-export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "sidebar" } = {}) {
+export function StaffOnDutyStrip({
+  variant = "strip",
+  hideRoles = [],
+}: {
+  variant?: "strip" | "sidebar";
+  hideRoles?: string[];
+} = {}) {
   const [shifts, setShifts] = useState<StaffShift[]>([]);
   const [breaks, setBreaks] = useState<StaffBreak[]>([]);
   const [profiles, setProfiles] = useState<Record<string, StaffProfile>>({});
@@ -124,13 +130,15 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
     const i = ROLE_ORDER.indexOf((r ?? "") as (typeof ROLE_ORDER)[number]);
     return i === -1 ? ROLE_ORDER.length : i;
   };
-  const orderedShifts = [...shifts].sort((a, b) => {
-    const d = roleRank(a.user_id) - roleRank(b.user_id);
-    if (d !== 0) return d;
-    const an = profiles[a.user_id]?.display_name || profiles[a.user_id]?.username || "";
-    const bn = profiles[b.user_id]?.display_name || profiles[b.user_id]?.username || "";
-    return an.localeCompare(bn);
-  });
+  const orderedShifts = [...shifts]
+    .sort((a, b) => {
+      const d = roleRank(a.user_id) - roleRank(b.user_id);
+      if (d !== 0) return d;
+      const an = profiles[a.user_id]?.display_name || profiles[a.user_id]?.username || "";
+      const bn = profiles[b.user_id]?.display_name || profiles[b.user_id]?.username || "";
+      return an.localeCompare(bn);
+    })
+    .filter((s) => !hideRoles.includes(roleFlashMap.get(s.user_id) ?? ""));
 
   const miniProfile = (userId: string, isWorking: boolean): ChatMiniProfileData | null => {
     const p = profiles[userId];
@@ -237,18 +245,20 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
             );
           })}
         </div>
-        {offDuty.length > 0 && (
-          <div className="relative mt-3 pt-3 border-t border-white/15">
-            <div className="text-[11px] font-semibold uppercase tracking-wider text-white/70 mb-2">
-              Off duty · {offDuty.length}
-            </div>
-            <div className={cn(isSidebar ? "flex flex-col gap-4" : "grid gap-4 grid-cols-[repeat(auto-fit,minmax(240px,1fr))]")}>
-              {(() => {
-                const groups: Record<string, typeof offDuty> = {};
-                for (const p of offDuty) {
-                  (groups[p.role] ??= []).push(p);
-                }
-                return OFF_ORDER.filter((r) => groups[r]?.length).map((role) => {
+        {(() => {
+          const visibleOffDuty = offDuty.filter((p) => !hideRoles.includes(p.role));
+          if (visibleOffDuty.length === 0) return null;
+          const groups: Record<string, typeof visibleOffDuty> = {};
+          for (const p of visibleOffDuty) {
+            (groups[p.role] ??= []).push(p);
+          }
+          return (
+            <div className="relative mt-3 pt-3 border-t border-white/15">
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-white/70 mb-2">
+                Off duty · {visibleOffDuty.length}
+              </div>
+              <div className={cn(isSidebar ? "flex flex-col gap-4" : "grid gap-4 grid-cols-[repeat(auto-fit,minmax(240px,1fr))]")}>
+                {OFF_ORDER.filter((r) => groups[r]?.length).map((role) => {
                   const members = groups[role];
                   return (
                     <div key={role} className="min-w-0">
@@ -305,11 +315,11 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
                       </div>
                     </div>
                   );
-                });
-              })()}
+                })}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
       </div>
     </div>
   );
