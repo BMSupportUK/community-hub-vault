@@ -13,6 +13,7 @@ import {
 import mentionAudio from "@/assets/mention-notify.mp3";
 import ticketAudio from "@/assets/ticket-notify.mp3";
 import ticketReplyAudio from "@/assets/ticket-reply-notify.mp3";
+import paymentReceivedAudio from "@/assets/payment-received.mp3";
 import shiftStartAudio from "@/assets/shift-start.mp3";
 import endBreakAudio from "@/assets/end-break.mp3";
 import outageAudio from "@/assets/outage-notify.mp3";
