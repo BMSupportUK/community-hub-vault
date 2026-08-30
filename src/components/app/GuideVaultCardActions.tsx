@@ -189,3 +189,67 @@ export function GuideLockBadge({ unlocked }: { unlocked: boolean }) {
 export function GuideFileIcon() {
   return <FileText className="size-10" />;
 }
+
+/** Admin/management panel listing live guide passcodes with a revoke action. */
+export function GuidePasscodeAdmin() {
+  const queryClient = useQueryClient();
+  const list = useServerFn(listGuidePasscodes);
+  const revoke = useServerFn(revokeGuidePasscode);
+  const { data, isLoading } = useQuery({
+    queryKey: ["guide-passcodes"],
+    queryFn: () => list(),
+    staleTime: 30 * 1000,
+  });
+  const [busyId, setBusyId] = useState<string | null>(null);
+
+  const onRevoke = async (id: string) => {
+    setBusyId(id);
+    try {
+      await revoke({ data: { id } });
+      toast.success("Passcode revoked");
+      queryClient.invalidateQueries({ queryKey: ["guide-passcodes"] });
+    } catch {
+      toast.error("Couldn't revoke that passcode");
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <Loader2 className="size-4 animate-spin" /> Loading passcodes…
+      </div>
+    );
+  }
+
+  const rows = data ?? [];
+  if (!rows.length) {
+    return <p className="text-sm text-muted-foreground">No live guide passcodes right now.</p>;
+  }
+
+  return (
+    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      {rows.map((r) => (
+        <div key={r.id} className="rounded-2xl border border-border bg-card p-4 flex flex-col gap-1.5">
+          <h3 className="font-semibold text-sm text-foreground">{r.guide}</h3>
+          <p className="text-xs text-muted-foreground">{r.member}</p>
+          <p className="text-xs text-muted-foreground">
+            Expires {new Date(r.expiresAt).toLocaleString()}
+          </p>
+          <Button
+            size="sm"
+            variant="secondary"
+            className="mt-2 self-start"
+            disabled={busyId === r.id}
+            onClick={() => onRevoke(r.id)}
+          >
+            {busyId === r.id ? <Loader2 className="size-4 mr-1 animate-spin" /> : <Lock className="size-4 mr-1" />}
+            Revoke
+          </Button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
