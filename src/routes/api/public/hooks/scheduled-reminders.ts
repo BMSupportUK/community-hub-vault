@@ -289,8 +289,9 @@ export const Route = createFileRoute("/api/public/hooks/scheduled-reminders")({
         }
 
         if (!jobs.length) {
-          return Response.json({ ok: true, evaluated: 0, sent: 0 });
+          return Response.json({ ok: true, evaluated: 0, sent: 0, autoClockedIn });
         }
+
 
         // Dedup: drop any job we've already logged.
         const keys = jobs.map((j) => j.key);
