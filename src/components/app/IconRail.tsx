@@ -4,6 +4,7 @@ import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { useFinishedCompetitions } from "@/hooks/use-finished-competitions";
 import { COMPETITIONS } from "@/lib/competitions";
 import { cn } from "@/lib/utils";
+import { isFanZonePath } from "@/lib/fan-zone-nav";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { UserAvatarMenu } from "@/components/app/UserAvatarMenu";

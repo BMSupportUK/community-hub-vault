@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   UserCircle2,
   Pencil,
@@ -37,6 +37,7 @@ import {
 } from "@/lib/role-flash";
 import { VpnBadge } from "@/lib/vpn-flags";
 import { cn } from "@/lib/utils";
+import { isFanZonePath } from "@/lib/fan-zone-nav";
 
 interface MiniProfile {
   id: string;
