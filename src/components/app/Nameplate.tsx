@@ -1,6 +1,42 @@
 import { CSSProperties, ReactNode } from "react";
 import { cn } from "@/lib/utils";
 import { useNameplate, nameplateBackgroundStyle } from "@/lib/nameplates";
+import npSwampSage from "@/assets/np-swamp-sage.png.asset.json";
+import npGreenCrew from "@/assets/np-green-crew.png.asset.json";
+import npRollingDroid from "@/assets/np-rolling-droid.png.asset.json";
+import npDarkHelm from "@/assets/np-dark-helm.png.asset.json";
+import npRetroBroadcast from "@/assets/np-retro-broadcast.png.asset.json";
+import npCosmicCub from "@/assets/np-cosmic-cub.png.asset.json";
+import npSunlit from "@/assets/np-sunlit.png.asset.json";
+import npWebRivals from "@/assets/np-web-rivals.png.asset.json";
+import npIceRider from "@/assets/np-ice-rider.png.asset.json";
+import npDesertPod from "@/assets/np-desert-pod.png.asset.json";
+import npBerryKitty from "@/assets/np-berry-kitty.png.asset.json";
+import npMidnightKitty from "@/assets/np-midnight-kitty.png.asset.json";
+
+/** Nameplate pack v2: animation class -> mascot artwork (original designs). */
+const MASCOTS: Record<string, { url: string; alt: string }> = {
+  "nameplate-sunlit": { url: npSunlit.url, alt: "" },
+  "nameplate-swampsage": { url: npSwampSage.url, alt: "" },
+  "nameplate-greencrew": { url: npGreenCrew.url, alt: "" },
+  "nameplate-droid": { url: npRollingDroid.url, alt: "" },
+  "nameplate-rivals": { url: npWebRivals.url, alt: "" },
+  "nameplate-icerider": { url: npIceRider.url, alt: "" },
+  "nameplate-darkhelm": { url: npDarkHelm.url, alt: "" },
+  "nameplate-desertpod": { url: npDesertPod.url, alt: "" },
+  "nameplate-retrobroadcast": { url: npRetroBroadcast.url, alt: "" },
+  "nameplate-cosmiccub": { url: npCosmicCub.url, alt: "" },
+  "nameplate-berrykitty": { url: npBerryKitty.url, alt: "" },
+  "nameplate-midnightkitty": { url: npMidnightKitty.url, alt: "" },
+};
+
+/** v2 plates that use the shared layering helpers in styles.css. */
+const V2_CLASSES = new Set([
+  ...Object.keys(MASCOTS),
+  "nameplate-alpine",
+  "nameplate-static",
+  "nameplate-weblines",
+]);
 
 interface NameplateProps {
   id: string | null | undefined;
