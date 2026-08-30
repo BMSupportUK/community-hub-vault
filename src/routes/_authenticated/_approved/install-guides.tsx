@@ -261,11 +261,41 @@ function InstallGuidesPage() {
       published: draft?.published ?? true,
       created_at: "",
       sort_order: 0,
+      file_path: draft?.file_path ?? null,
+      file_name: draft?.file_name ?? null,
+      file_mime: draft?.file_mime ?? null,
+      file_size: draft?.file_size ?? null,
     });
     if (draft && (draft.title || draft.body || draft.excerpt || draft.image_url || draft.pdf_url || draft.video_url)) {
       toast.message("Draft restored");
     }
     setShowEditor(true);
+  };
+
+  /** Uploads a guide file into the private vault bucket (admin/management). */
+  const uploadGuideFile = async (file: File) => {
+    if (!editing) return;
+    setUploadingFile(true);
+    try {
+      const ext = file.name.split(".").pop()?.toLowerCase() || "pdf";
+      const path = `${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage
+        .from("guide-files")
+        .upload(path, file, { contentType: file.type || undefined, upsert: false });
+      if (error) throw error;
+      setEditing({
+        ...editing,
+        file_path: path,
+        file_name: file.name,
+        file_mime: file.type || null,
+        file_size: file.size,
+      });
+      toast.success("Guide file uploaded");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Upload failed");
+    } finally {
+      setUploadingFile(false);
+    }
   };
 
   const saveBlog = async () => {
@@ -284,7 +314,12 @@ function InstallGuidesPage() {
       video_url: editing.video_url?.trim() || null,
       badge: editing.badge?.trim() || null,
       published: editing.published,
+      file_path: editing.file_path || null,
+      file_name: editing.file_name || null,
+      file_mime: editing.file_mime || null,
+      file_size: editing.file_size ?? null,
     };
+
     const { error } = editing.id
       ? await supabase.from("install_blogs").update(payload).eq("id", editing.id)
       : await supabase.from("install_blogs").insert({ ...payload, created_by: user?.id ?? null });
