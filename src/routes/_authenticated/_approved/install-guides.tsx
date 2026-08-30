@@ -744,6 +744,7 @@ function InstallGuidesPage() {
               <DialogHeader>
                 <DialogTitle className="font-display text-2xl flex flex-wrap items-center gap-3 text-white">
                   <span className="flex-1">{unlocked.blog.title}</span>
+                  <GuideAccessTimer blogId={unlocked.blog.id} expiresAt={accessExpiry.get(unlocked.blog.id)} />
                 </DialogTitle>
               </DialogHeader>
               {unlocked.viewUrl ? (
