@@ -371,8 +371,8 @@ export function NotificationBell() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
-                          <div className="font-medium text-sm truncate">{n.title}</div>
-                          {n.body && <div className="text-xs text-muted-foreground mt-0.5">{n.body}</div>}
+                          <div className="font-medium text-sm break-words">{n.title}</div>
+                          {n.body && <div className="text-xs text-muted-foreground mt-0.5 break-words">{n.body}</div>}
                           <div className="text-[10px] text-muted-foreground/70 mt-1">
                             {new Date(n.created_at).toLocaleString("en-GB")}
                           </div>
