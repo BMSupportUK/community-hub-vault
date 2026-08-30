@@ -585,7 +585,7 @@ function RecoveryCodes() {
     if (!user) return;
     const { data, error } = await supabase
       .from("admin_backup_codes")
-      .select("id, used_at, created_at, batch_id")
+      .select("id, used_at, created_at, batch_id, code")
       .eq("user_id", user.id)
       .order("created_at", { ascending: true });
     if (error) { toast.error(error.message); return; }
@@ -605,7 +605,7 @@ function RecoveryCodes() {
       // Wipe old codes for this user
       const { error: delErr } = await supabase.from("admin_backup_codes").delete().eq("user_id", user.id);
       if (delErr) throw delErr;
-      const rowsToInsert = hashes.map((h) => ({ user_id: user.id, code_hash: h, batch_id: batchId }));
+      const rowsToInsert = hashes.map((h, i) => ({ user_id: user.id, code_hash: h, batch_id: batchId, code: codes[i] }));
       const { error: insErr } = await supabase.from("admin_backup_codes").insert(rowsToInsert);
       if (insErr) throw insErr;
       setFresh(codes);
