@@ -168,7 +168,7 @@ function ClockPage() {
       style={{ backgroundImage: `url(${clockBg})` }}
     >
       <div className="absolute inset-0 bg-background/45 backdrop-blur-[2px] pointer-events-none" aria-hidden />
-      <div className="relative max-w-5xl mx-auto px-6 py-8 space-y-6">
+      <div className="relative w-full px-4 sm:px-6 py-8 space-y-6">
         <header className="flex items-center gap-3 flex-wrap">
           <div className="size-12 rounded-2xl bg-primary/20 backdrop-blur grid place-items-center ring-1 ring-primary/30">
             <Clock className="size-6 text-primary-foreground" />
