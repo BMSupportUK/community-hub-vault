@@ -625,6 +625,7 @@ function TicketsPage() {
           </TabsContent>
         </Tabs>
       </div>
+      </div>
     </main>
   );
 }
