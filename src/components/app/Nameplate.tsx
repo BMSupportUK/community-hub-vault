@@ -52,9 +52,11 @@ export function Nameplate({ id, className, style, fallbackStyle, children }: Nam
   const np = useNameplate(id);
   const bg = nameplateBackgroundStyle(np);
   const finalStyle: CSSProperties = { ...(bg ?? fallbackStyle ?? {}), ...style };
+  const cls = np?.animation_class ?? "";
+  const mascot = MASCOTS[cls];
   return (
     <div
-      className={cn("relative overflow-hidden", np?.animation_class, className)}
+      className={cn("relative overflow-hidden", cls, V2_CLASSES.has(cls) && "np2", className)}
       style={finalStyle}
       aria-hidden={!children}
     >
