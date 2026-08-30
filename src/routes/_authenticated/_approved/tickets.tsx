@@ -406,7 +406,7 @@ function TicketsPage() {
 
       {/* Hero — hidden on the Tickets tab (list + chat view) */}
       {!hideHero && (
-        <section className="relative overflow-hidden">
+        <section className="relative z-10 overflow-hidden">
           <div className="relative px-6 md:px-10 pt-10 md:pt-14 pb-20 md:pb-24 flex flex-col md:flex-row md:items-center md:gap-8">
             <div className="max-w-3xl flex-1">
              <div className="text-xs uppercase tracking-[0.2em] text-rose-100/90 mb-3">BM Support · Help Desk</div>
