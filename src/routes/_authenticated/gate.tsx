@@ -12,6 +12,7 @@ import mentionAudio from "@/assets/mention-notify.mp3";
 import ticketAudio from "@/assets/ticket-notify.mp3";
 import { playSound } from "@/lib/sound";
 import { MentionText } from "@/components/app/mentions";
+import { GateStaffPresence } from "@/components/app/GateStaffPresence";
 
 export const Route = createFileRoute("/_authenticated/gate")({
   validateSearch: (search: Record<string, unknown>): { intent?: "fan-zone" | "bm-support"; invite?: string } => ({
@@ -394,6 +395,8 @@ function GatePage() {
             ? "Your request was denied. Contact an owner if you believe this is a mistake."
             : `Your account is awaiting approval for ${intentLabel}.`}
         </p>
+
+        {status !== "approved" && <GateStaffPresence />}
 
         {status !== "approved" && (
           <div className="mt-8 w-full max-w-md rounded-xl border border-red-500/40 bg-red-950/30 backdrop-blur-sm p-5 text-left">
