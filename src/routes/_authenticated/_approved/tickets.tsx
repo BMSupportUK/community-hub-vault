@@ -497,21 +497,22 @@ function TicketsPage() {
                 isChatting && "rounded-none border-y-0 border-l-0 h-full overflow-y-auto hidden lg:block"
               )}>
                 {isChatting && (
-                  <div className="flex flex-col gap-2">
+                  <div className="flex flex-col sm:flex-row gap-2">
                     <button
                       onClick={() => { setTab("welcome"); navigate({ to: "/tickets", search: { id: undefined, view } }); }}
-                      className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white text-rose-600 text-sm font-semibold hover:bg-white/90 border border-white shadow transition-colors"
+                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white text-rose-600 text-sm font-semibold hover:bg-white/90 border border-white shadow transition-colors"
                     >
-                      <Home className="size-4" /> Back to welcome
+                      <Home className="size-4" /> Welcome
                     </button>
                     <button
                       onClick={() => { navigate({ to: "/tickets", search: { id: undefined, view } }); }}
-                      className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white/10 text-white text-sm font-semibold hover:bg-white/20 border border-white/20"
+                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white/10 text-white text-sm font-semibold hover:bg-white/20 border border-white/20"
                     >
-                      <X className="size-4" /> Close ticket
+                      <X className="size-4" /> Close
                     </button>
                   </div>
                 )}
+
 
                 {isStaff && (
                   <div className="flex gap-1 bg-white/10 p-1 rounded-lg text-xs">
