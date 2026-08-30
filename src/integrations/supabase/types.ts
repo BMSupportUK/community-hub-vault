@@ -5224,32 +5224,6 @@ export type Database = {
           password: string | null
           updated_at: string | null
         }
-        Insert: {
-          account_number?: number | null
-          account_type?: string | null
-          app_login_name?: string | null
-          created_at?: string | null
-          created_by?: string | null
-          expiry_at?: string | null
-          id?: string | null
-          notes?: never
-          owner_id?: string | null
-          password?: never
-          updated_at?: string | null
-        }
-        Update: {
-          account_number?: number | null
-          account_type?: string | null
-          app_login_name?: string | null
-          created_at?: string | null
-          created_by?: string | null
-          expiry_at?: string | null
-          id?: string | null
-          notes?: never
-          owner_id?: string | null
-          password?: never
-          updated_at?: string | null
-        }
         Relationships: []
       }
       boro_leaderboard: {
@@ -5464,6 +5438,22 @@ export type Database = {
           _vpn_raw: Json
         }
         Returns: undefined
+      }
+      app_credentials_visible: {
+        Args: never
+        Returns: {
+          account_number: number
+          account_type: string
+          app_login_name: string
+          created_at: string
+          created_by: string
+          expiry_at: string
+          id: string
+          notes: string
+          owner_id: string
+          password: string
+          updated_at: string
+        }[]
       }
       app_encrypt: { Args: { p: string }; Returns: string }
       apply_blacklist_ban: { Args: { _user_id: string }; Returns: undefined }
