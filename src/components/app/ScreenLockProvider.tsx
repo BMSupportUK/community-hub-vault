@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import {
@@ -170,4 +171,21 @@ export function ScreenLockProvider() {
   if (!user || !locked || !settings) return null;
 
   return <ScreenLockOverlay settings={settings} onUnlock={() => doUnlock()} />;
+}
+
+/** Header pill: lock the app immediately before stepping away from the PC. */
+export function LockNowPill() {
+  const { user } = useAuth();
+  if (!user) return null;
+  return (
+    <button
+      type="button"
+      onClick={() => lockScreenNow()}
+      title="Lock the app now"
+      className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 bg-sky-500/15 border border-sky-500/40 text-sky-300 text-[11px] font-semibold hover:bg-sky-500/25 transition-colors"
+    >
+      <Lock className="size-3.5" />
+      <span className="hidden xl:inline">Lock now</span>
+    </button>
+  );
 }
