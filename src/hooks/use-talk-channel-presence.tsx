@@ -127,3 +127,20 @@ export function useTalkChannelPresence(options: {
 
   return count;
 }
+
+/** Set of user IDs currently present in the talk channels (read-only, never tracks). */
+export function useTalkChannelPresentUsers(): Set<string> {
+  const [ids, setIds] = useState<Set<string>>(currentUserIds);
+
+  useEffect(() => {
+    ensureSharedChannel();
+    userListeners.add(setIds);
+    setIds(currentUserIds);
+
+    return () => {
+      userListeners.delete(setIds);
+    };
+  }, []);
+
+  return ids;
+}
