@@ -134,6 +134,41 @@ export const getMyGuideAccess = createServerFn({ method: "GET" })
     return (data ?? []).map((r) => ({ blogId: r.blog_id, expiresAt: r.expires_at }));
   });
 
+/**
+ * The caller's current live passcode, recovered from the notification issued
+ * with it (codes themselves are only stored hashed). Returns null once the
+ * code expires or is revoked so the UI can hide it.
+ */
+export const getMyActiveGuidePasscode = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data: live } = await context.supabase
+      .from("guide_passcodes")
+      .select("blog_id, expires_at, issued_at")
+      .eq("user_id", context.userId)
+      .is("revoked_at", null)
+      .gt("expires_at", new Date().toISOString())
+      .order("issued_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (!live) return null;
+
+    const { data: note } = await context.supabase
+      .from("user_notifications")
+      .select("body")
+      .eq("user_id", context.userId)
+      .eq("kind", "guide_passcode")
+      .eq("source_id", live.blog_id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    const code = note?.body?.match(/Use ([A-Z0-9]{6}) to unlock/)?.[1] ?? null;
+    if (!code) return null;
+
+    return { code, expiresAt: live.expires_at };
+  });
+
 /** Admin/management: live passcodes across all customers. */
 export const listGuidePasscodes = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
