@@ -312,6 +312,7 @@ export function NotificationBell() {
 
   const iconFor = (kind: string) =>
     kind === "gate_application" ? UserPlus
+      : kind === "gate_message" ? MessageSquare
       : kind === "order_placed" ? ShoppingBag
       : kind === "mention" ? AtSign
       : Bell;
@@ -387,7 +388,7 @@ export function NotificationBell() {
                             onClick={() => {
                               markRead(n.id);
                               setOpen(false);
-                              if (n.kind === "gate_application") {
+                              if (n.kind === "gate_application" || n.kind === "gate_message") {
                                 navigate({ to: "/moderation" } as never);
                               } else if (n.kind === "order_placed" && n.entity_id) {
                                   navigate({ to: "/shop", search: { view: "orders", id: n.entity_id } } as never);
