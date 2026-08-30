@@ -2,15 +2,16 @@ import { useEffect, useMemo, useState } from "react";
 import { CircleDot } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
-import { useRoleFlashMap, roleFlashClass, resolveAvatarUrl } from "@/lib/role-flash";
+import { useRoleFlashMap, roleFlashClass, resolveAvatarUrl, type FlashRole } from "@/lib/role-flash";
 import { formatRoleLabel } from "@/lib/role-label";
 import { DndCountdown } from "@/components/app/DndCountdown";
 import { Nameplate } from "@/components/app/Nameplate";
+import { ChatMiniProfile, type ChatMiniProfileData } from "@/components/app/ChatMiniProfile";
 import { type BreakKind, BREAK_LIMITS as STAFF_BREAK_LIMITS, breakLabel, breakIcon } from "@/lib/breaks";
 
 type StaffShift = { id: string; user_id: string; clock_in: string };
 type StaffBreak = { id: string; shift_id: string; user_id: string; kind: BreakKind; started_at: string };
-type StaffProfile = { id: string; username: string | null; display_name: string | null; avatar_url: string | null; equipped_nameplate_id: string | null };
+type StaffProfile = { id: string; username: string | null; display_name: string | null; avatar_url: string | null; equipped_nameplate_id: string | null; last_seen_at?: string | null };
 
 const ROLE_ORDER = ["admin", "management", "staff", "moderator"] as const;
 const OFF_ORDER = ["admin", "management", "staff", "moderator"] as const;
@@ -25,9 +26,11 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
   const [profiles, setProfiles] = useState<Record<string, StaffProfile>>({});
   const [offDuty, setOffDuty] = useState<Array<StaffProfile & { role: string }>>([]);
   const [now, setNow] = useState(() => Date.now());
+  const [selfId, setSelfId] = useState<string | null>(null);
   const roleFlashMap = useRoleFlashMap();
 
   useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setSelfId(data.user?.id ?? null));
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
@@ -55,7 +58,7 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
     const ids = Array.from(new Set([...allIds, ...workingIds]));
     if (ids.length) {
       const { data: profs } = await supabase
-        .from("profiles").select("id,username,display_name,avatar_url,equipped_nameplate_id").in("id", ids);
+        .from("profiles").select("id,username,display_name,avatar_url,equipped_nameplate_id,last_seen_at").in("id", ids);
       const map = Object.fromEntries(((profs as StaffProfile[]) ?? []).map((p) => [p.id, p]));
       setProfiles(map);
       const isDaneJ = (profile: StaffProfile) => {
@@ -129,6 +132,26 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
     return an.localeCompare(bn);
   });
 
+  const miniProfile = (userId: string, isWorking: boolean): ChatMiniProfileData | null => {
+    const p = profiles[userId];
+    if (!p) return null;
+    const name = p.display_name || p.username || "Staff";
+    const lastSeen = p.last_seen_at ?? null;
+    const recentlyActive = lastSeen ? now - new Date(lastSeen).getTime() < 10 * 60 * 1000 : false;
+    return {
+      userId,
+      name,
+      username: p.username,
+      avatarUrl: resolveAvatarUrl(userId, p.avatar_url, roleFlashMap),
+      hasAvatar: Boolean(p.avatar_url),
+      nameplateId: p.equipped_nameplate_id,
+      role: (roleFlashMap.get(userId) ?? null) as FlashRole | null,
+      isOnline: isWorking || recentlyActive,
+      lastSeenAt: lastSeen,
+      isSelf: userId === selfId,
+    };
+  };
+
   return (
     <div className={isSidebar ? "p-3 h-full overflow-y-auto" : "px-4 pt-4"}>
       <div className="rounded-xl border border-white/15 p-3 shadow-lg relative overflow-hidden bg-gradient-to-r from-violet-600/40 via-fuchsia-600/40 to-blue-600/40 backdrop-blur">
@@ -159,9 +182,9 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
             const brElapsed = br ? (now - new Date(br.started_at).getTime()) / 1000 : 0;
             const brRemain = br ? STAFF_BREAK_LIMITS[br.kind] - brElapsed : 0;
             const over = brRemain < 0;
-            return (
+            const mp = miniProfile(s.user_id, true);
+            const card = (
               <div
-                key={s.id}
                 className={cn(
                   "rounded-lg p-2.5 border backdrop-blur transition-colors",
                   isSidebar ? "w-full" : "shrink-0 min-w-[180px]",
@@ -205,6 +228,13 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
                 </div>
               </div>
             );
+            return mp ? (
+              <ChatMiniProfile key={s.id} profile={mp} className={cn("block", isSidebar ? "w-full" : "shrink-0")}>
+                {card}
+              </ChatMiniProfile>
+            ) : (
+              <div key={s.id}>{card}</div>
+            );
           })}
         </div>
         {offDuty.length > 0 && (
@@ -229,9 +259,9 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
                       <div className={cn(isSidebar ? "flex flex-col gap-2" : "flex gap-2 overflow-x-auto pb-1")}>
                         {members.map((p) => {
                           const name = p.display_name || p.username || "Staff";
-                          return (
+                          const mp = miniProfile(p.id, false);
+                          const card = (
                             <div
-                              key={p.id}
                               className={cn(
                                 "rounded-lg p-2.5 border border-white/15 bg-white/5 backdrop-blur",
                                 isSidebar ? "w-full" : "shrink-0 min-w-[180px]",
@@ -263,6 +293,13 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
                                 </div>
                               </div>
                             </div>
+                          );
+                          return mp ? (
+                            <ChatMiniProfile key={p.id} profile={mp} className={cn("block", isSidebar ? "w-full" : "shrink-0")}>
+                              {card}
+                            </ChatMiniProfile>
+                          ) : (
+                            <div key={p.id}>{card}</div>
                           );
                         })}
                       </div>
