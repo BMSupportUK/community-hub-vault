@@ -516,6 +516,7 @@ interface BackupCodeRow {
   used_at: string | null;
   created_at: string;
   batch_id: string;
+  code: string | null;
 }
 
 function VpnBackfillCard() {
