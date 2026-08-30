@@ -439,8 +439,8 @@ function TicketsPage() {
               </div>
             </div>
            </div>
-           <div className="mt-6 md:mt-0 md:w-[340px] md:shrink-0 [&>div]:px-0 [&>div]:pt-0">
-             <StaffOnDutyStrip />
+           <div className="mt-6 md:mt-0 md:w-[340px] md:shrink-0">
+             <ActiveOutagesBox />
            </div>
           </div>
         </section>
