@@ -48,7 +48,13 @@ function AdminBlacklistPage() {
   };
 
   useEffect(() => {
-    if (isAdmin) load();
+    if (!isAdmin) return;
+    load();
+    const ch = supabase
+      .channel("blacklist-entries-live")
+      .on("postgres_changes", { event: "*", schema: "public", table: "blacklist_entries" }, () => load())
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin]);
 
