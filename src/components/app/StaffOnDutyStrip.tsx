@@ -242,7 +242,7 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
             <div className="text-[11px] font-semibold uppercase tracking-wider text-white/70 mb-2">
               Off duty · {offDuty.length}
             </div>
-            <div className={cn("flex", isSidebar ? "flex-col gap-4" : "flex-col gap-4")}>
+            <div className={cn("flex", isSidebar ? "flex-col gap-4" : "flex-row gap-4 overflow-x-auto")}>
               {(() => {
                 const groups: Record<string, typeof offDuty> = {};
                 for (const p of offDuty) {
