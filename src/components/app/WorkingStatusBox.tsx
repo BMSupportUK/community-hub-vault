@@ -199,6 +199,10 @@ export function WorkingStatusBox({ stackActions = false }: { stackActions?: bool
               </h2>
               <DndCountdown userId={user.id} compact />
             </div>
+            <DndDialogButton
+              icon="pencil"
+              className="inline-flex items-center justify-center size-7 rounded-full p-0 text-violet-200 hover:text-white hover:bg-violet-500/30 transition"
+            />
           </div>
           <div className="px-3 py-3 space-y-2 text-xs">
             <div className="flex items-center gap-2 pb-1 border-b border-violet-500/30">
