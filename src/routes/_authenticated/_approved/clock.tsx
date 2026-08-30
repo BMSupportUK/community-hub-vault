@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Clock, LogIn, LogOut, Coffee, UtensilsCrossed, Loader2, PlayCircle, Bell } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -19,7 +19,6 @@ export const Route = createFileRoute("/_authenticated/_approved/clock")({
 
 interface Shift { id: string; user_id: string; clock_in: string; clock_out: string | null; }
 interface Break { id: string; shift_id: string; user_id: string; kind: BreakKind; started_at: string; ended_at: string | null; }
-interface Profile { id: string; username: string | null; display_name: string | null; }
 
 function fmt(seconds: number) {
   const s = Math.max(0, Math.floor(seconds));
@@ -53,7 +52,6 @@ function ClockPage() {
   const [myBreak, setMyBreak] = useState<Break | null>(null);
   const [activeShifts, setActiveShifts] = useState<Shift[]>([]);
   const [activeBreaks, setActiveBreaks] = useState<Break[]>([]);
-  const [profiles, setProfiles] = useState<Record<string, Profile>>({});
 
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
@@ -79,11 +77,6 @@ function ClockPage() {
       setMyBreak(null);
     }
 
-    const ids = Array.from(new Set([...(allShifts ?? []).map((s: Shift) => s.user_id)]));
-    if (ids.length) {
-      const { data: profs } = await supabase.from("profiles").select("id, username, display_name").in("id", ids);
-      setProfiles(Object.fromEntries((profs ?? []).map((p) => [p.id, p as Profile])));
-    }
     setLoading(false);
   };
 
