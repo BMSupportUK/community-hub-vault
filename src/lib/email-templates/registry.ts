@@ -28,6 +28,7 @@ import { template as boroPredictorInvite } from './boro-predictor-invite'
 import { template as ticketReply } from './ticket-reply'
 import { template as vaultPinReset } from './vault-pin-reset'
 import { template as winnerNotification } from './winner-notification'
+import { template as screenLockReset } from './screen-lock-reset'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'twofa-reset-admin': twofaResetAdmin,
