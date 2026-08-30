@@ -289,42 +289,42 @@ export function StaffOnDutyStrip({
       <div className="px-4 pt-4">
         <div className="rounded-xl border border-white/15 p-3 shadow-lg relative overflow-hidden bg-gradient-to-r from-violet-600/40 via-fuchsia-600/40 to-blue-600/40 backdrop-blur">
           <Tabs value={dutyTab} onValueChange={(v) => setDutyTab(v as "on" | "off")}>
-            <TabsList className="w-full bg-white/10 border border-white/20 p-1 mb-2">
+            <TabsList className="w-full bg-white/10 border border-white/20 p-1 mb-2 flex-wrap h-auto gap-1">
               <TabsTrigger
                 value="on"
-                className="flex-1 text-xs font-semibold uppercase tracking-wider text-white/80 data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500/80 data-[state=active]:to-teal-500/80 data-[state=active]:text-white data-[state=active]:shadow"
+                className="flex-1 min-w-0 text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-white/80 data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500/80 data-[state=active]:to-teal-500/80 data-[state=active]:text-white data-[state=active]:shadow px-1.5 sm:px-3"
               >
-                Staff on duty · {orderedShifts.length}
+                <span className="truncate">Staff on duty · {orderedShifts.length}</span>
               </TabsTrigger>
               <TabsTrigger
                 value="off"
-                className="flex-1 text-xs font-semibold uppercase tracking-wider text-white/80 data-[state=active]:bg-gradient-to-r data-[state=active]:from-white/25 data-[state=active]:to-white/15 data-[state=active]:text-white data-[state=active]:shadow"
+                className="flex-1 min-w-0 text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-white/80 data-[state=active]:bg-gradient-to-r data-[state=active]:from-white/25 data-[state=active]:to-white/15 data-[state=active]:text-white data-[state=active]:shadow px-1.5 sm:px-3"
               >
-                Off duty · {visibleOffDuty.length}
+                <span className="truncate">Off duty · {visibleOffDuty.length}</span>
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="on" className="mt-0">
+            <TabsContent value="on" className="mt-0 min-w-0">
               {orderedShifts.length === 0 ? (
                 <div className="rounded-lg p-2.5 border border-white/20 bg-white/10 text-white/80 text-xs flex items-center gap-2 w-full">
-                  <CircleDot className="size-3.5 opacity-60" />
+                  <CircleDot className="size-3.5 opacity-60 shrink-0" />
                   <span>No staff currently on duty</span>
                 </div>
               ) : (
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 min-w-0">
                   {orderedShifts.map((s) => renderOnDutyCard(s))}
                 </div>
               )}
             </TabsContent>
 
-            <TabsContent value="off" className="mt-0">
+            <TabsContent value="off" className="mt-0 min-w-0">
               {visibleOffDuty.length === 0 ? (
                 <div className="rounded-lg p-2.5 border border-white/20 bg-white/10 text-white/80 text-xs flex items-center gap-2 w-full">
-                  <CircleDot className="size-3.5 opacity-60" />
+                  <CircleDot className="size-3.5 opacity-60 shrink-0" />
                   <span>All staff are on duty</span>
                 </div>
               ) : (
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 min-w-0">
                   {visibleOffDuty.map((p) => renderOffDutyCard(p))}
                 </div>
               )}
