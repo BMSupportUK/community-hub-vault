@@ -167,7 +167,7 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
           {shifts.length === 0 && (
             <div className={cn(
               "rounded-lg p-2.5 border border-white/20 bg-white/10 text-white/80 text-xs flex items-center gap-2",
-              isSidebar ? "w-full" : "shrink-0 min-w-[180px]",
+              "w-full",
             )}>
               <CircleDot className="size-3.5 opacity-60" />
               <span>No staff currently on duty</span>
