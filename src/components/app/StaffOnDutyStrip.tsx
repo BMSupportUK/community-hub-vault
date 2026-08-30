@@ -163,11 +163,11 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
             <span className="size-2 rounded-full bg-emerald-400 animate-pulse" /> live
           </div>
         </div>
-        <div className={cn("relative", isSidebar ? "flex flex-col gap-2" : "flex gap-2 overflow-x-auto pb-1")}>
+        <div className={cn("relative", isSidebar ? "flex flex-col gap-2" : "grid gap-2 grid-cols-[repeat(auto-fill,minmax(220px,1fr))]")}>
           {shifts.length === 0 && (
             <div className={cn(
               "rounded-lg p-2.5 border border-white/20 bg-white/10 text-white/80 text-xs flex items-center gap-2",
-              isSidebar ? "w-full" : "shrink-0 min-w-[180px]",
+              "w-full",
             )}>
               <CircleDot className="size-3.5 opacity-60" />
               <span>No staff currently on duty</span>
@@ -187,7 +187,7 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
               <div
                 className={cn(
                   "rounded-lg p-2.5 border backdrop-blur transition-colors",
-                  isSidebar ? "w-full" : "shrink-0 min-w-[180px]",
+                  "w-full",
                   onBreak
                     ? (over ? "bg-red-500/30 border-red-300/60" : "bg-amber-300/30 border-amber-200/60")
                     : "bg-emerald-400/25 border-emerald-200/50",
@@ -229,7 +229,7 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
               </div>
             );
             return mp ? (
-              <ChatMiniProfile key={s.id} profile={mp} className={cn("block", isSidebar ? "w-full" : "shrink-0")}>
+              <ChatMiniProfile key={s.id} profile={mp} className="block w-full">
                 {card}
               </ChatMiniProfile>
             ) : (
@@ -242,7 +242,7 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
             <div className="text-[11px] font-semibold uppercase tracking-wider text-white/70 mb-2">
               Off duty · {offDuty.length}
             </div>
-            <div className={cn("flex", isSidebar ? "flex-col gap-4" : "flex-row gap-4 overflow-x-auto")}>
+            <div className={cn(isSidebar ? "flex flex-col gap-4" : "grid gap-4 grid-cols-[repeat(auto-fit,minmax(240px,1fr))]")}>
               {(() => {
                 const groups: Record<string, typeof offDuty> = {};
                 for (const p of offDuty) {
@@ -251,12 +251,12 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
                 return OFF_ORDER.filter((r) => groups[r]?.length).map((role) => {
                   const members = groups[role];
                   return (
-                    <div key={role}>
+                    <div key={role} className="min-w-0">
                       <div className={cn("text-[10px] font-bold uppercase tracking-wider mb-1.5 flex items-center gap-1.5", roleFlashClass(roleFlashMap.get(members[0].id)))}>
                         <span>{formatRoleLabel(role)}</span>
                         <span className="px-1.5 py-0.5 rounded-full bg-white/10 text-white/80">{members.length}</span>
                       </div>
-                      <div className={cn(isSidebar ? "flex flex-col gap-2" : "flex gap-2 overflow-x-auto pb-1")}>
+                      <div className={cn(isSidebar ? "flex flex-col gap-2" : "grid gap-2 grid-cols-[repeat(auto-fill,minmax(200px,1fr))]")}>
                         {members.map((p) => {
                           const name = p.display_name || p.username || "Staff";
                           const mp = miniProfile(p.id, false);
@@ -264,7 +264,7 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
                             <div
                               className={cn(
                                 "rounded-lg p-2.5 border border-white/15 bg-white/5 backdrop-blur",
-                                isSidebar ? "w-full" : "shrink-0 min-w-[180px]",
+                                "w-full",
                               )}
                             >
                               <div className="flex items-center gap-2">
@@ -295,7 +295,7 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
                             </div>
                           );
                           return mp ? (
-                            <ChatMiniProfile key={p.id} profile={mp} className={cn("block", isSidebar ? "w-full" : "shrink-0")}>
+                            <ChatMiniProfile key={p.id} profile={mp} className="block w-full">
                               {card}
                             </ChatMiniProfile>
                           ) : (
