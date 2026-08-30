@@ -567,11 +567,10 @@ function InstallGuidesPage() {
                               <Film className="size-3" /> Video
                             </span>
                           )}
-                          {b.pdf_url && (
-                            <span className="absolute top-2 right-2 text-[10px] uppercase tracking-wider px-2 py-1 rounded-md bg-primary text-primary-foreground font-semibold flex items-center gap-1">
-                              <FileText className="size-3" /> PDF
-                            </span>
+                          {(b.file_path || b.pdf_url) && (
+                            <GuideLockBadge unlocked={unlockedIds.has(b.id)} />
                           )}
+
                           {isMod && (
                             <div className="absolute bottom-2 left-2 size-8 rounded-md bg-background/70 backdrop-blur grid place-items-center text-foreground cursor-grab">
                               <GripVertical className="size-4" />
