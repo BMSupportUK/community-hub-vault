@@ -264,7 +264,7 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
                             <div
                               className={cn(
                                 "rounded-lg p-2.5 border border-white/15 bg-white/5 backdrop-blur",
-                                isSidebar ? "w-full" : "shrink-0 min-w-[180px]",
+                                "w-full",
                               )}
                             >
                               <div className="flex items-center gap-2">
