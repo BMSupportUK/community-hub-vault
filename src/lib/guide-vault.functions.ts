@@ -93,13 +93,13 @@ export const unlockGuide = createServerFn({ method: "POST" })
       .maybeSingle();
     if (!blog) return { ok: false as const };
 
+    // View-only: never issue a download-forcing URL — guides can only be
+    // opened inside the app viewer.
     let url: string | null = blog.pdf_url ?? null;
     if (blog.file_path) {
       const { data: signed, error } = await supabaseAdmin.storage
         .from("guide-files")
-        .createSignedUrl(blog.file_path, SIGNED_URL_SECONDS, {
-          download: blog.file_name ?? `${blog.title}.pdf`,
-        });
+        .createSignedUrl(blog.file_path, SIGNED_URL_SECONDS);
       if (error) throw new Error(error.message);
       url = signed?.signedUrl ?? null;
     }

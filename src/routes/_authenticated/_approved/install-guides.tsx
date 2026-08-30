@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, X, Pencil, Trash2, ImageIcon, GripVertical, FileText, ExternalLink, Play, Film, Copy, Check, Upload, Loader2 } from "lucide-react";
+import { Plus, Search, X, Pencil, Trash2, ImageIcon, GripVertical, FileText, Play, Film, Copy, Check, Upload, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
