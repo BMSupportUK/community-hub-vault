@@ -164,6 +164,16 @@ export function NotificationBell() {
             });
             return;
           }
+          if (n.kind === "gate_message") {
+            playSound(mentionAudio, { label: "gate-reply", gain: 1.6 });
+            toast(`💬 ${n.title}`, {
+              description: n.body ?? "An applicant replied in the access chat.",
+              duration: 8000,
+              action: { label: "Open", onClick: () => navigate({ to: "/moderation" } as never) },
+            });
+            return;
+          }
+
           toast(n.title, {
             description: n.body ?? undefined,
             action:
