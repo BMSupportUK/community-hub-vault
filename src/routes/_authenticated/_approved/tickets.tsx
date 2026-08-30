@@ -395,17 +395,18 @@ function TicketsPage() {
       "flex-1 overflow-y-auto text-white",
       isChatting && "overflow-hidden"
     )}>
-      <div className="relative min-h-full">
+      <div className="relative min-h-full bg-rose-950">
         {/* Full-page background image */}
-        <div className="absolute inset-0 -z-10">
+        <div className="pointer-events-none absolute inset-0 z-0">
           <img src={ticketsHero} alt="" aria-hidden className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-br from-rose-700/85 via-fuchsia-700/75 to-violet-800/85" />
           <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-b from-transparent to-rose-950" />
         </div>
 
+
       {/* Hero — hidden on the Tickets tab (list + chat view) */}
       {!hideHero && (
-        <section className="relative overflow-hidden">
+        <section className="relative z-10 overflow-hidden">
           <div className="relative px-6 md:px-10 pt-10 md:pt-14 pb-20 md:pb-24 flex flex-col md:flex-row md:items-center md:gap-8">
             <div className="max-w-3xl flex-1">
              <div className="text-xs uppercase tracking-[0.2em] text-rose-100/90 mb-3">BM Support · Help Desk</div>
@@ -441,7 +442,7 @@ function TicketsPage() {
 
       {/* Tabs — hidden when actively chatting on a ticket */}
       <div className={cn(
-        "px-6 md:px-10 pb-10 relative",
+        "px-6 md:px-10 pb-10 relative z-10",
         !isChatting && "mt-6",
         isChatting && "px-0 md:px-0 pb-0 h-full"
       )}>
