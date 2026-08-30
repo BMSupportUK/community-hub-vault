@@ -1457,7 +1457,7 @@ function ChannelPage() {
                           <ChatMiniProfile profile={senderMiniProfile} className="min-w-0">
                             <Nameplate
                               id={p?.equipped_nameplate_id}
-                              className="inline-flex items-center rounded-md px-4 py-2 min-w-0 min-h-10 pr-16 shadow-sm isolate"
+                              className="inline-flex items-center rounded-md px-3 py-1 min-w-0 h-7 max-h-7 pr-12 shadow-sm isolate"
                               fallbackStyle={{
                                 background:
                                   "linear-gradient(135deg, #1a4a2a 0%, #2d6a3f 50%, #1a4a2a 100%)",
