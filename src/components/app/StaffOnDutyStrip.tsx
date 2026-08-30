@@ -253,13 +253,12 @@ export function StaffOnDutyStrip({
             (groups[p.role] ??= []).push(p);
           }
           return (
-          <div className="relative mt-3 pt-3 border-t border-white/15">
-            <div className="text-[11px] font-semibold uppercase tracking-wider text-white/70 mb-2">
-              Off duty · {visibleOffDuty.length}
-            </div>
-            <div className={cn(isSidebar ? "flex flex-col gap-4" : "grid gap-4 grid-cols-[repeat(auto-fit,minmax(240px,1fr))]")}>
-              {(() => {
-                return OFF_ORDER.filter((r) => groups[r]?.length).map((role) => {
+            <div className="relative mt-3 pt-3 border-t border-white/15">
+              <div className="text-[11px] font-semibold uppercase tracking-wider text-white/70 mb-2">
+                Off duty · {visibleOffDuty.length}
+              </div>
+              <div className={cn(isSidebar ? "flex flex-col gap-4" : "grid gap-4 grid-cols-[repeat(auto-fit,minmax(240px,1fr))]")}>
+                {OFF_ORDER.filter((r) => groups[r]?.length).map((role) => {
                   const members = groups[role];
                   return (
                     <div key={role} className="min-w-0">
@@ -316,11 +315,11 @@ export function StaffOnDutyStrip({
                       </div>
                     </div>
                   );
-                });
-              })()}
+                })}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
       </div>
     </div>
   );
