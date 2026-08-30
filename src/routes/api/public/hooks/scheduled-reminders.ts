@@ -353,7 +353,9 @@ export const Route = createFileRoute("/api/public/hooks/scheduled-reminders")({
           pending: pending.length,
           sent,
           failed,
+          autoClockedIn,
         });
+
       },
     },
   },
