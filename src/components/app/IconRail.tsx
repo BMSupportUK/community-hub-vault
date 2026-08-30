@@ -2,6 +2,7 @@ import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { Home, Ticket, ShoppingCart, BookOpen, FileText, LogOut, MessageSquare, MessagesSquare, UserCircle2, Star, Trophy, Tv, Volleyball, Wrench, Goal, Users, Briefcase, MonitorPlay, Popcorn, Crown } from "lucide-react";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { useFinishedCompetitions } from "@/hooks/use-finished-competitions";
+import { useOnlineUsers } from "@/hooks/use-online-users";
 import { COMPETITIONS } from "@/lib/competitions";
 import { cn } from "@/lib/utils";
 import { isFanZonePath } from "@/lib/fan-zone-nav";
@@ -100,6 +101,7 @@ interface RailItem {
   icon: React.ComponentType<{ className?: string }>;
   show: boolean;
   badge?: number;
+  badgeVariant?: "alert" | "online";
   search?: Record<string, string>;
   params?: Record<string, string>;
 }
@@ -114,6 +116,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
   const dragKey = useRef<string | null>(null);
   const navigate = useNavigate();
   const finishedCompetitions = useFinishedCompetitions();
+  const onlineUsers = useOnlineUsers();
   const handleSignOut = async () => {
     await signOut();
     // Hard redirect: guarantees every cached/protected view is torn down even
@@ -217,7 +220,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
 
   const supportItems: RailItem[] = [
     { to: "/home", label: "Home", icon: Home, show: true },
-    { to: "/home/$channel", label: "Customer Chatroom", icon: MessageSquare, show: true, params: { channel: "welcome" } },
+    { to: "/home/$channel", label: "Customer Chatroom", icon: MessageSquare, show: true, params: { channel: "welcome" }, badge: onlineUsers.size, badgeVariant: "online" },
     { to: "/tickets", label: "Tickets", icon: Ticket, show: !hasRole("moderator") },
     { to: "/shop", label: "Shop", icon: ShoppingCart, show: true },
     { to: "/install-guides", label: "Install guides", icon: Wrench, show: true },
@@ -311,7 +314,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
             onDrop={() => reorder(i.to)}
             className={cn("relative z-10 shrink-0", isAdmin ? "cursor-grab active:cursor-grabbing" : undefined)}
           >
-            <RailIcon to={i.to} label={i.label} Icon={i.icon} active={active} badge={i.badge} draggable={isAdmin} search={i.search} params={i.params} />
+            <RailIcon to={i.to} label={i.label} Icon={i.icon} active={active} badge={i.badge} badgeVariant={i.badgeVariant} draggable={isAdmin} search={i.search} params={i.params} />
           </div>
         );
       })}
@@ -333,6 +336,7 @@ function RailIcon({
   active,
   accent,
   badge,
+  badgeVariant = "alert",
   draggable,
   search,
   params,
@@ -343,6 +347,7 @@ function RailIcon({
   active?: boolean;
   accent?: boolean;
   badge?: number;
+  badgeVariant?: "alert" | "online";
   draggable?: boolean;
   search?: Record<string, string>;
   params?: Record<string, string>;
@@ -369,7 +374,10 @@ function RailIcon({
           >
             <Icon className="size-[22px]" />
             {badge && badge > 0 ? (
-              <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-red-500 text-white text-[11px] font-bold flex items-center justify-center shadow-lg ring-2 ring-rail animate-pulse">
+              <span className={cn(
+                "absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full text-white text-[11px] font-bold flex items-center justify-center shadow-lg ring-2 ring-rail",
+                badgeVariant === "online" ? "bg-emerald-500" : "bg-red-500 animate-pulse",
+              )}>
                 {badge > 99 ? "99+" : badge}
               </span>
             ) : null}
