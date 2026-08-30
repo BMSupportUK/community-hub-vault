@@ -3748,6 +3748,69 @@ export type Database = {
         }
         Relationships: []
       }
+      screen_lock_reset_requests: {
+        Row: {
+          created_at: string
+          handled_at: string | null
+          handled_by: string | null
+          id: string
+          requested_at: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          handled_at?: string | null
+          handled_by?: string | null
+          id?: string
+          requested_at?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          handled_at?: string | null
+          handled_by?: string | null
+          id?: string
+          requested_at?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      screen_lock_settings: {
+        Row: {
+          code_hash: string | null
+          created_at: string
+          enabled: boolean
+          must_change: boolean
+          timeout_minutes: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          code_hash?: string | null
+          created_at?: string
+          enabled?: boolean
+          must_change?: boolean
+          timeout_minutes?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          code_hash?: string | null
+          created_at?: string
+          enabled?: boolean
+          must_change?: boolean
+          timeout_minutes?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       shift_slots: {
         Row: {
           assigned_to: string | null
