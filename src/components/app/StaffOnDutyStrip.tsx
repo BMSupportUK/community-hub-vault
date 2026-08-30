@@ -219,7 +219,7 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
                             <span>{breakLabel(br!.kind)} {over ? `+${fmtMinSec(-brRemain)}` : fmtMinSec(brRemain)}</span>
                           </span>
                         ) : (
-                          <span>On {fmtHMS(shiftElapsed)}</span>
+                          <span>{fmtHMS(shiftElapsed)}</span>
                         )}
                       </div>
                     </Nameplate>
