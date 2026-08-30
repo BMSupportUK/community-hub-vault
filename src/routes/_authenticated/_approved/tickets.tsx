@@ -7,7 +7,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import ticketsHero from "@/assets/tickets-hero.jpg";
 import {
   Ticket as TicketIcon, Plus, Send, Lock, X, LifeBuoy, CreditCard, Bug, Sparkles, UserCog,
-  Tv, Film, Circle, CircleDot, Clock4, CheckCircle2, XCircle, ChevronDown, Trash2, Coffee, UtensilsCrossed,
+  Tv, Film, Circle, CircleDot, Clock4, CheckCircle2, XCircle, ChevronDown, Trash2,
   Paperclip, FileText, Star, HelpCircle, Ban,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -31,6 +31,8 @@ import { getOrderPaymentState } from "@/lib/order-payment-state.functions";
 import { formatRoleLabel } from "@/lib/role-label";
 import { notifyTicketReply } from "@/lib/ticket-notify.functions";
 import { sendNewTicketPush } from "@/lib/push.functions";
+import { StaffOnDutyStrip } from "@/components/app/StaffOnDutyStrip";
+import { Nameplate } from "@/components/app/Nameplate";
 
 export const Route = createFileRoute("/_authenticated/_approved/tickets")({
   validateSearch: (s: Record<string, unknown>): { id?: string; view?: "mine" | "all" | "assigned"; new2fa?: 1 } => ({
@@ -1353,6 +1355,32 @@ function TicketDetail({
     return p?.display_name || p?.username || (id === currentUserId ? "You" : "User");
   };
 
+  const chatRoleFlashMap = useRoleFlashMap();
+  const [senderMeta, setSenderMeta] = useState<
+    Record<string, { avatar_url: string | null; equipped_nameplate_id: string | null }>
+  >({});
+  useEffect(() => {
+    const ids = [...new Set(messages.map((m) => m.sender_id))].filter((id) => !senderMeta[id]);
+    if (!ids.length) return;
+    let alive = true;
+    (async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("id,avatar_url,equipped_nameplate_id")
+        .in("id", ids);
+      if (!alive || !data) return;
+      setSenderMeta((prev) => {
+        const next = { ...prev };
+        for (const p of data as Array<{ id: string; avatar_url: string | null; equipped_nameplate_id: string | null }>) {
+          next[p.id] = { avatar_url: p.avatar_url, equipped_nameplate_id: p.equipped_nameplate_id };
+        }
+        return next;
+      });
+    })();
+    return () => { alive = false; };
+  }, [messages, senderMeta]);
+
+
   const orderPanelInner = linkedOrder ? (
     <div className="space-y-2 text-white text-xs">
       <div className="flex items-center justify-between gap-3">
@@ -1560,28 +1588,74 @@ function TicketDetail({
         onRate={onRate}
       />
 
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-3 sm:px-5 py-3 sm:py-4 space-y-3">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-3 sm:px-5 py-3 sm:py-4">
         {messages.map((m) => {
-          const mine = m.sender_id === currentUserId;
+          const name = senderName(m.sender_id);
+          const meta = senderMeta[m.sender_id];
+          const role = chatRoleFlashMap.get(m.sender_id);
+          const avatarUrl = resolveAvatarUrl(m.sender_id, meta?.avatar_url ?? null, chatRoleFlashMap);
+          const hasAvatar = !!meta?.avatar_url || role === "staff" || role === "management" || role === "moderator";
           return (
-            <div key={m.id} className={cn("flex gap-3", mine && "flex-row-reverse")}>
-              <div className="size-8 rounded-full bg-white text-rose-600 grid place-items-center text-xs font-bold shrink-0 shadow">
-                {senderName(m.sender_id).slice(0, 1).toUpperCase()}
-              </div>
-              <div className={cn("max-w-[88%] sm:max-w-[70%] rounded-2xl px-3 sm:px-4 py-2 text-sm shadow",
-                m.is_internal ? "bg-amber-200/90 text-amber-950 border border-amber-300" :
-                mine ? "bg-white text-rose-700" : "bg-white/20 backdrop-blur text-white border border-white/25",
-              )}>
-                <div className="text-[10px] uppercase tracking-wider opacity-70 mb-0.5 flex items-center gap-1">
-                  {m.is_internal && <Lock className="size-3" />}
-                  {senderName(m.sender_id)} · {new Date(m.created_at).toLocaleString("en-GB", { dateStyle: "short", timeStyle: "short", timeZone: tz })}
+            <div key={m.id} className="group relative flex items-start gap-3 rounded-xl mb-4">
+              {hasAvatar ? (
+                <img src={avatarUrl} alt="" className="size-9 rounded-full object-cover shrink-0 mt-1" />
+              ) : (
+                <div className="size-9 rounded-full bg-white/90 text-rose-600 grid place-items-center text-xs font-bold shrink-0 mt-1 shadow">
+                  {name.slice(0, 1).toUpperCase()}
                 </div>
-                <MentionText content={m.content} currentUsername={myUsername} />
-                <TicketAttachments items={m.attachments} />
+              )}
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2 mb-2">
+                  <Nameplate
+                    id={meta?.equipped_nameplate_id}
+                    className="inline-flex items-center rounded-md px-3 py-1 min-w-0 h-7 max-h-7 pr-12 shadow-sm isolate"
+                    fallbackStyle={{
+                      background: "linear-gradient(135deg, #1a4a2a 0%, #2d6a3f 50%, #1a4a2a 100%)",
+                    }}
+                  >
+                    <span
+                      className={cn(
+                        "relative z-10 font-semibold text-sm truncate px-2 -mx-2 rounded text-white",
+                        roleFlashClass(role),
+                      )}
+                      style={{
+                        background:
+                          "linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.35) 12%, rgba(0,0,0,0.35) 88%, transparent 100%)",
+                      }}
+                    >
+                      {name}
+                    </span>
+                  </Nameplate>
+                  {role && (
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-white/75 shrink-0">
+                      {formatRoleLabel(role)}
+                    </span>
+                  )}
+                  <span className="text-[10px] text-white/70 shrink-0">
+                    {new Date(m.created_at).toLocaleString("en-GB", { dateStyle: "short", timeStyle: "short", timeZone: tz })}
+                  </span>
+                  {m.is_internal && (
+                    <span className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-300/20 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-100 shrink-0">
+                      <Lock className="size-3" /> Internal
+                    </span>
+                  )}
+                </div>
+                <div
+                  className={cn(
+                    "rounded-2xl px-3 sm:px-4 py-2 text-sm shadow max-w-[90%] sm:max-w-[75%]",
+                    m.is_internal
+                      ? "bg-amber-200/90 text-amber-950 border border-amber-300"
+                      : "bg-white/15 backdrop-blur text-white border border-white/25",
+                  )}
+                >
+                  <MentionText content={m.content} currentUsername={myUsername} />
+                  <TicketAttachments items={m.attachments} />
+                </div>
               </div>
             </div>
           );
         })}
+
       </div>
 
       {othersTyping && Object.keys(othersTyping).length > 0 && ticket.status !== "closed" && (() => {
@@ -1673,154 +1747,6 @@ function Select({
         ))}
       </select>
     </label>
-  );
-}
-
-type StaffShift = { id: string; user_id: string; clock_in: string };
-type StaffBreak = { id: string; shift_id: string; user_id: string; kind: "break" | "lunch"; started_at: string };
-type StaffProfile = { id: string; username: string | null; display_name: string | null; avatar_url: string | null };
-const STAFF_BREAK_LIMITS = { break: 15 * 60, lunch: 30 * 60 } as const;
-
-function StaffOnDutyStrip() {
-  const [shifts, setShifts] = useState<StaffShift[]>([]);
-  const [breaks, setBreaks] = useState<StaffBreak[]>([]);
-  const [profiles, setProfiles] = useState<Record<string, StaffProfile>>({});
-  const [now, setNow] = useState(() => Date.now());
-  const roleFlashMap = useRoleFlashMap();
-
-  const visibleShifts = useMemo(
-    () => shifts.filter((s) => roleFlashMap.get(s.user_id) !== "moderator"),
-    [shifts, roleFlashMap],
-  );
-
-  useEffect(() => {
-    const t = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(t);
-  }, []);
-
-  const refresh = async () => {
-    const [{ data: s }, { data: b }] = await Promise.all([
-      supabase.from("shifts").select("id,user_id,clock_in").is("clock_out", null),
-      supabase.from("breaks").select("id,shift_id,user_id,kind,started_at").is("ended_at", null),
-    ]);
-    const ss = (s as StaffShift[]) ?? [];
-    setShifts(ss);
-    setBreaks((b as StaffBreak[]) ?? []);
-    const ids = Array.from(new Set(ss.map((x) => x.user_id)));
-    if (ids.length) {
-      const { data: profs } = await supabase
-        .from("profiles").select("id,username,display_name,avatar_url").in("id", ids);
-      setProfiles(Object.fromEntries(((profs as StaffProfile[]) ?? []).map((p) => [p.id, p])));
-    } else {
-      setProfiles({});
-    }
-  };
-
-  useEffect(() => {
-    refresh();
-    const ch = supabase
-      .channel("tickets-staff-onduty")
-      .on("postgres_changes", { event: "*", schema: "public", table: "shifts" }, () => refresh())
-      .on("postgres_changes", { event: "*", schema: "public", table: "breaks" }, () => refresh())
-      .subscribe();
-    return () => { supabase.removeChannel(ch); };
-  }, []);
-
-  const breakByUser = useMemo(() => {
-    const m = new Map<string, StaffBreak>();
-    for (const br of breaks) m.set(br.user_id, br);
-    return m;
-  }, [breaks]);
-
-  if (visibleShifts.length === 0) return null;
-
-  const fmtMinSec = (sec: number) => {
-    const s = Math.max(0, Math.floor(sec));
-    const m = Math.floor(s / 60).toString().padStart(2, "0");
-    const ss = (s % 60).toString().padStart(2, "0");
-    return `${m}:${ss}`;
-  };
-  const fmtHMS = (sec: number) => {
-    const s = Math.max(0, Math.floor(sec));
-    const h = Math.floor(s / 3600).toString().padStart(2, "0");
-    const m = Math.floor((s % 3600) / 60).toString().padStart(2, "0");
-    return `${h}h ${m}m`;
-  };
-
-  return (
-    <div className="px-4 pt-4">
-      <div className="rounded-xl bg-white/15 backdrop-blur border border-white/25 p-3 shadow-lg">
-        <div className="flex items-center justify-between mb-2">
-          <div className="text-[11px] font-semibold uppercase tracking-wider text-white/90">
-            Staff on duty · {visibleShifts.length}
-          </div>
-          <div className="flex items-center gap-1 text-[10px] text-white/80">
-            <span className="size-2 rounded-full bg-emerald-400 animate-pulse" /> live
-          </div>
-        </div>
-        <div className="flex gap-2 overflow-x-auto pb-1">
-          {visibleShifts.map((s) => {
-            const p = profiles[s.user_id];
-            const name = p?.display_name || p?.username || "Staff";
-            const initials = name.slice(0, 2).toUpperCase();
-            const br = breakByUser.get(s.user_id);
-            const shiftElapsed = (now - new Date(s.clock_in).getTime()) / 1000;
-            const onBreak = !!br;
-            const brElapsed = br ? (now - new Date(br.started_at).getTime()) / 1000 : 0;
-            const brRemain = br ? STAFF_BREAK_LIMITS[br.kind] - brElapsed : 0;
-            const over = brRemain < 0;
-            return (
-              <div
-                key={s.id}
-                className={cn(
-                  "shrink-0 min-w-[180px] rounded-lg p-2.5 border backdrop-blur transition-colors",
-                  onBreak
-                    ? (over ? "bg-red-500/30 border-red-300/60" : "bg-amber-300/30 border-amber-200/60")
-                    : "bg-emerald-400/25 border-emerald-200/50",
-                )}
-              >
-                <div className="flex items-center gap-2">
-                  <div className="relative">
-                    <img src={resolveAvatarUrl(s.user_id, p?.avatar_url, roleFlashMap)} alt={name} className="size-8 rounded-full object-cover ring-2 ring-white/40" />
-                    <span className={cn(
-                      "absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-2 ring-white",
-                      onBreak ? (over ? "bg-red-500" : "bg-amber-400") : "bg-emerald-500",
-                    )} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5">
-                      <div className={cn("text-sm font-semibold text-white truncate", roleFlashClass(roleFlashMap.get(s.user_id)))}>{name}</div>
-                      {roleFlashMap.get(s.user_id) && (
-                        <span className="text-[9px] font-medium uppercase tracking-wider text-white/70">
-                          {formatRoleLabel(roleFlashMap.get(s.user_id))}
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-[10px] text-white/80">On {fmtHMS(shiftElapsed)}</div>
-                  </div>
-                </div>
-                <div className="mt-2 flex items-center gap-1.5 text-[11px] font-medium text-white">
-                  {onBreak ? (
-                    <>
-                      {br!.kind === "lunch" ? <UtensilsCrossed className="size-3.5" /> : <Coffee className="size-3.5" />}
-                      <span className="capitalize">{br!.kind}</span>
-                      <span className="ml-auto tabular-nums">
-                        {over ? `+${fmtMinSec(-brRemain)}` : fmtMinSec(brRemain)}
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <CircleDot className="size-3.5" />
-                      <span>Working</span>
-                    </>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </div>
   );
 }
 
