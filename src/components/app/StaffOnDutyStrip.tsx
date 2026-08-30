@@ -182,7 +182,7 @@ export function StaffOnDutyStrip({
       <div
         className={cn(
           "rounded-lg p-2.5 border backdrop-blur transition-colors",
-          "w-full",
+          isTickets ? "w-[220px]" : "w-full",
           onBreak
             ? (over ? "bg-red-500/30 border-red-300/60" : "bg-amber-300/30 border-amber-200/60")
             : "bg-emerald-400/25 border-emerald-200/50",
@@ -239,7 +239,7 @@ export function StaffOnDutyStrip({
       <div
         className={cn(
           "rounded-lg p-2.5 border border-white/15 bg-white/5 backdrop-blur",
-          "w-full",
+          isTickets ? "w-[220px]" : "w-full",
         )}
       >
         <div className="flex items-center gap-2">
@@ -305,7 +305,7 @@ export function StaffOnDutyStrip({
                   <span>No staff currently on duty</span>
                 </div>
               ) : (
-                <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-2">
+                <div className="flex flex-wrap gap-2">
                   {orderedShifts.map((s) => renderOnDutyCard(s))}
                 </div>
               )}
@@ -318,7 +318,7 @@ export function StaffOnDutyStrip({
                   <span>All staff are on duty</span>
                 </div>
               ) : (
-                <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-2">
+                <div className="flex flex-wrap gap-2">
                   {visibleOffDuty.map((p) => renderOffDutyCard(p))}
                 </div>
               )}
