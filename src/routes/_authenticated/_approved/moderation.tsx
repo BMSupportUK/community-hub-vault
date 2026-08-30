@@ -6,6 +6,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { banUserFromGate } from "@/lib/blacklist.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { ChannelColumn } from "@/components/app/ChannelColumn";
+import { WorkingStatusBox } from "@/components/app/WorkingStatusBox";
 import { toast } from "sonner";
 import { isAdminUnlocked } from "@/lib/admin-unlock";
 import { SignupInfoDialog } from "@/components/app/SignupInfoDialog";
@@ -29,6 +30,7 @@ interface ThreadMsg { id: string; sender_id: string; content: string; created_at
 
 function ModerationPage() {
   const { isMod, user, hasAny } = useAuth();
+  const isOwnerOrManagement = hasAny(["admin", "management"]);
   const canBan = hasAny(["admin", "management"]);
   const banFromGate = useServerFn(banUserFromGate);
   if (!isAdminUnlocked(user?.id)) {
