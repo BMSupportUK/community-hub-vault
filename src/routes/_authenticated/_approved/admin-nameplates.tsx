@@ -165,6 +165,7 @@ function EditDialog({ row, onClose, onSaved }: { row: NameplateRow | null; onClo
       image_url: imageUrl.trim() || null,
       gradient_css: gradientCss.trim() || null,
       is_active: isActive,
+      is_free: isFree,
       sort_order: sortOrder,
     };
     const { error } = row
@@ -220,6 +221,12 @@ function EditDialog({ row, onClose, onSaved }: { row: NameplateRow | null; onClo
               </label>
             </Field>
           </div>
+          <Field label="Availability">
+            <label className="flex items-center gap-2 text-sm h-[38px] px-3 rounded-lg bg-surface-2 border border-border">
+              <input type="checkbox" checked={isFree} onChange={(e) => setIsFree(e.target.checked)} />
+              Free for everyone (no grant needed)
+            </label>
+          </Field>
         </div>
         <div className="flex justify-end gap-2 px-5 py-3 border-t border-border">
           <button onClick={onClose} className="px-3 py-2 rounded-lg text-sm hover:bg-surface-2">Cancel</button>
