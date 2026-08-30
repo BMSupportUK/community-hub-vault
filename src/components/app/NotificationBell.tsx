@@ -17,6 +17,7 @@ import staffMentionAudio from "@/assets/staff-mention.mp3";
 import orderAudio from "@/assets/order-notify.mp3";
 import ticketAudio from "@/assets/ticket-notify.mp3";
 import ticketReplyAudio from "@/assets/ticket-reply-notify.mp3";
+import paymentReceivedAudio from "@/assets/payment-received.mp3";
 import newSignupAudio from "@/assets/new-signup-notify.mp3";
 import { playSound } from "@/lib/sound";
 import { cancelOrderAndSquareInvoice } from "@/lib/square-invoices.functions";
@@ -127,6 +128,15 @@ export function NotificationBell() {
               duration: 10000,
               action: n.link_path
                 ? { label: "Go to ticket", onClick: () => navigate({ to: n.link_path! } as never) }
+                : undefined,
+            });
+          } else if (n.kind === "order_paid") {
+            playSound(paymentReceivedAudio, { label: "payment-received", gain: 2.0 });
+            toast(`💳 ${n.title}`, {
+              description: n.body ?? "A payment has been confirmed.",
+              duration: 10000,
+              action: n.link_path
+                ? { label: "Go to order", onClick: () => navigate({ to: n.link_path! } as never) }
                 : undefined,
             });
           } else if (n.kind === "ticket_assigned") {
