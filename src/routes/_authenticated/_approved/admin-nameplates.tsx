@@ -31,7 +31,7 @@ function AdminNameplates() {
     setLoading(true);
     const { data, error } = await supabase
       .from("nameplates")
-      .select("id,name,description,image_url,gradient_css,is_active,sort_order")
+      .select("id,name,description,image_url,gradient_css,animation_class,is_active,sort_order,is_free")
       .order("sort_order", { ascending: true })
       .order("created_at", { ascending: false });
     if (error) toast.error(error.message);
@@ -136,6 +136,7 @@ function EditDialog({ row, onClose, onSaved }: { row: NameplateRow | null; onClo
   const [imageUrl, setImageUrl] = useState(row?.image_url ?? "");
   const [gradientCss, setGradientCss] = useState(row?.gradient_css ?? "");
   const [isActive, setIsActive] = useState(row?.is_active ?? true);
+  const [isFree, setIsFree] = useState(row?.is_free ?? true);
   const [sortOrder, setSortOrder] = useState(row?.sort_order ?? 100);
   const [busy, setBusy] = useState(false);
 
