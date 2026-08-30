@@ -16,10 +16,10 @@ export const getGateStaffPresence = createServerFn({ method: "GET" }).handler(
     const { data: roleRows } = await supabaseAdmin
       .from("user_roles")
       .select("user_id,role")
-      .in("role", ["admin", "management", "staff", "moderator"]);
+      .in("role", ["admin", "management"]);
     if (!roleRows || roleRows.length === 0) return [];
 
-    const rank: Record<string, number> = { admin: 0, management: 1, staff: 2, moderator: 3 };
+    const rank: Record<string, number> = { admin: 0, management: 1 };
     const bestRole = new Map<string, string>();
     for (const r of roleRows) {
       const cur = bestRole.get(r.user_id);
