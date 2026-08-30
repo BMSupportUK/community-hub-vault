@@ -99,13 +99,13 @@ export function GuideVaultCardActions({
     setBusy(true);
     try {
       const res = await request({ data: { blogId } });
-      toast.success(`Your passcode is ${res.code}`, {
-        description: "Valid for 24 hours — also saved in your notifications.",
-        duration: 15000,
+      toast.success("Passcode issued — valid for 24 hours.", {
+        description: "Copy it from the Access code box on the left.",
+        duration: 8000,
       });
       setEntering(true);
-      setCode(res.code);
       queryClient.invalidateQueries({ queryKey: ["guide-access"] });
+      queryClient.invalidateQueries({ queryKey: ["guide-active-passcode"] });
     } catch {
       toast.error("Couldn't create a passcode — please try again.");
     } finally {

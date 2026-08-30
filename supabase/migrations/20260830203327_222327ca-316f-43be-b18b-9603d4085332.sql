@@ -1,0 +1,1 @@
+ALTER TABLE public.guide_passcodes ADD COLUMN IF NOT EXISTS code text;

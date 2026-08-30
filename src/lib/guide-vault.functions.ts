@@ -47,20 +47,11 @@ export const requestGuidePasscode = createServerFn({ method: "POST" })
       blog_id: data.blogId,
       user_id: userId,
       code_hash: hashCode(userId, code),
+      code,
       issued_at: now.toISOString(),
       expires_at: expiresAt.toISOString(),
     });
     if (error) throw new Error(error.message);
-
-    await supabaseAdmin.from("user_notifications").insert({
-      user_id: userId,
-      kind: "guide_passcode",
-      title: `Guide passcode: ${code}`,
-      body: `Use ${code} to unlock "${blog.title}". Valid for 24 hours.`,
-      link_path: "/install-guides",
-      source_type: "install_blog",
-      source_id: data.blogId,
-    });
 
     return { code, expiresAt: expiresAt.toISOString() };
   });
@@ -135,38 +126,24 @@ export const getMyGuideAccess = createServerFn({ method: "GET" })
   });
 
 /**
- * The caller's current live passcode, recovered from the notification issued
- * with it (codes themselves are only stored hashed). Returns null once the
- * code expires or is revoked so the UI can hide it.
+ * The caller's current live passcode, shown in the Access code box on the
+ * Install Guides page. Returns null once the code expires or is revoked.
  */
 export const getMyActiveGuidePasscode = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const { data: live } = await context.supabase
       .from("guide_passcodes")
-      .select("blog_id, expires_at, issued_at")
+      .select("code, expires_at, issued_at")
       .eq("user_id", context.userId)
       .is("revoked_at", null)
       .gt("expires_at", new Date().toISOString())
       .order("issued_at", { ascending: false })
       .limit(1)
       .maybeSingle();
-    if (!live) return null;
+    if (!live?.code) return null;
 
-    const { data: note } = await context.supabase
-      .from("user_notifications")
-      .select("body")
-      .eq("user_id", context.userId)
-      .eq("kind", "guide_passcode")
-      .eq("source_id", live.blog_id)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    const code = note?.body?.match(/Use ([A-Z0-9]{6}) to unlock/)?.[1] ?? null;
-    if (!code) return null;
-
-    return { code, expiresAt: live.expires_at };
+    return { code: live.code, expiresAt: live.expires_at };
   });
 
 /** Admin/management: live passcodes across all customers. */
