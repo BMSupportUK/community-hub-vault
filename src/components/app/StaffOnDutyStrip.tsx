@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 import { useRoleFlashMap, roleFlashClass, resolveAvatarUrl, type FlashRole } from "@/lib/role-flash";
 import { formatRoleLabel } from "@/lib/role-label";
 import { DndCountdown } from "@/components/app/DndCountdown";
+import { useDndStatus } from "@/hooks/use-dnd";
 import { Nameplate } from "@/components/app/Nameplate";
 import { ChatMiniProfile, type ChatMiniProfileData } from "@/components/app/ChatMiniProfile";
 import { type BreakKind, BREAK_LIMITS as STAFF_BREAK_LIMITS, breakLabel, breakIcon } from "@/lib/breaks";
@@ -13,6 +14,19 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 type StaffShift = { id: string; user_id: string; clock_in: string };
 type StaffBreak = { id: string; shift_id: string; user_id: string; kind: BreakKind; started_at: string };
 type StaffProfile = { id: string; username: string | null; display_name: string | null; avatar_url: string | null; equipped_nameplate_id: string | null; last_seen_at?: string | null };
+
+/** Presence dot that turns purple in realtime while the user has DND active. */
+function PresenceDot({ userId, baseClass }: { userId: string; baseClass: string }) {
+  const dnd = useDndStatus(userId);
+  return (
+    <span
+      className={cn(
+        "absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-2 ring-white",
+        dnd?.active ? "bg-purple-500 shadow-[0_0_6px_2px_rgba(168,85,247,0.7)]" : baseClass,
+      )}
+    />
+  );
+}
 
 const ROLE_ORDER = ["admin", "management", "staff", "moderator"] as const;
 const OFF_ORDER = ["admin", "management", "staff", "moderator"] as const;
@@ -191,10 +205,10 @@ export function StaffOnDutyStrip({
         <div className="flex items-center gap-2 min-w-0">
           <div className="relative shrink-0">
             <img src={resolveAvatarUrl(s.user_id, p?.avatar_url, roleFlashMap)} alt={name} className="size-8 rounded-full object-cover ring-2 ring-white/40" />
-            <span className={cn(
-              "absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-2 ring-white",
-              onBreak ? (over ? "bg-red-500" : "bg-amber-400") : "bg-emerald-500",
-            )} />
+            <PresenceDot
+              userId={s.user_id}
+              baseClass={onBreak ? (over ? "bg-red-500" : "bg-amber-400") : "bg-emerald-500"}
+            />
           </div>
           <div className="min-w-0 flex-1">
             <Nameplate
@@ -252,7 +266,7 @@ export function StaffOnDutyStrip({
               alt={name}
               className="size-8 rounded-full object-cover ring-2 ring-white/20 opacity-70 grayscale"
             />
-            <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-2 ring-white bg-gray-400" />
+            <PresenceDot userId={p.id} baseClass="bg-gray-400" />
           </div>
           <div className="min-w-0 flex-1">
             <Nameplate
