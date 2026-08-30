@@ -193,6 +193,28 @@ function Landing() {
 
               <div className="w-px bg-red-500/30 self-stretch" aria-hidden />
 
+              {/* Stripe group */}
+              <div className="flex flex-col items-center gap-2">
+                <div className="px-3 py-1.5 rounded-md bg-white shadow-sm flex items-center justify-center h-7">
+                  <svg viewBox="0 0 60 24" className="h-4 w-auto" aria-label="Stripe">
+                    <text x="0" y="18" fontFamily="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif" fontSize="18" fontWeight="600" fill="#635BFF">stripe</text>
+                  </svg>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="px-2 py-1 rounded bg-white text-[#1a1f71] text-[10px] font-extrabold italic tracking-tight shadow-sm">VISA</div>
+                  <div className="px-2 py-1 rounded bg-white text-[10px] font-bold shadow-sm">
+                    <span className="text-[#eb001b]">●</span><span className="text-[#f79e1b] -ml-1.5">●</span>
+                    <span className="ml-1 text-black">MC</span>
+                  </div>
+                  <div className="px-2 py-1 rounded bg-white text-[#006fcf] text-[10px] font-extrabold shadow-sm">AMEX</div>
+                  <div className="px-2 py-1 rounded bg-white text-[#0079be] text-[10px] font-bold shadow-sm">Maestro</div>
+                </div>
+              </div>
+
+              {/* Divider */}
+
+              <div className="w-px bg-red-500/30 self-stretch" aria-hidden />
+
               {/* Crypto group */}
               <div className="flex flex-col items-center gap-2">
                 <div className="px-3 py-1.5 rounded-md bg-white shadow-sm flex items-center justify-center h-7">
