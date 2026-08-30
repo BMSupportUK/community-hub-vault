@@ -868,13 +868,57 @@ function InstallGuidesPage() {
                 <Input value={editing.title} onChange={(e) => setEditing({ ...editing, title: e.target.value })} />
               </div>
               <div>
-                <Label>PDF URL (optional — opens inline in browser)</Label>
+                <Label>Guide file (stored in the app — members need a passcode)</Label>
+                <div className="mt-1 flex items-center gap-2">
+                  <input
+                    id="guide-file-input"
+                    type="file"
+                    accept=".pdf,.zip,image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      e.target.value = "";
+                      if (f) uploadGuideFile(f);
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={uploadingFile}
+                    onClick={() => document.getElementById("guide-file-input")?.click()}
+                  >
+                    {uploadingFile ? <Loader2 className="size-4 mr-1 animate-spin" /> : <Upload className="size-4 mr-1" />}
+                    {editing.file_path ? "Replace file" : "Upload file"}
+                  </Button>
+                  {editing.file_path && (
+                    <>
+                      <span className="text-xs text-muted-foreground truncate max-w-[14rem]">
+                        {editing.file_name ?? editing.file_path}
+                      </span>
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        title="Remove file"
+                        onClick={() =>
+                          setEditing({ ...editing, file_path: null, file_name: null, file_mime: null, file_size: null })
+                        }
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+              <div>
+                <Label>Legacy PDF URL (optional — also passcode protected)</Label>
                 <Input
                   value={editing.pdf_url ?? ""}
                   onChange={(e) => setEditing({ ...editing, pdf_url: e.target.value })}
                   placeholder="https://…/guide.pdf"
                 />
               </div>
+
               <div>
                 <Label>Video (optional — shows a play button on the card)</Label>
                 <HeaderVideoUpload
