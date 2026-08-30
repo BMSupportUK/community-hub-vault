@@ -342,6 +342,19 @@ function ModerationPage() {
                     <div className="border-t border-border bg-background/50">
                       <div className="px-4 pt-3 flex justify-end">
                         <SignupInfoDialog userId={a.user_id} displayName={name} />
+                        {canBan && (
+                          <button
+                            type="button"
+                            onClick={() => banApplicant(a)}
+                            disabled={banningId === a.id}
+                            title="Ban user and blacklist their email + IPs"
+                            aria-label="Ban user and blacklist their email and IPs"
+                            className="ml-2 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-destructive/15 text-destructive hover:bg-destructive/25 text-xs font-medium disabled:opacity-50"
+                          >
+                            {banningId === a.id ? <Loader2 className="size-3.5 animate-spin" /> : <Ban className="size-3.5" />}
+                            Ban
+                          </button>
+                        )}
                       </div>
                       {isAppeal && (
                         <div className="mx-4 mb-3 rounded-lg border border-fuchsia-500/30 bg-fuchsia-500/10 px-3 py-2 text-xs text-fuchsia-200">
