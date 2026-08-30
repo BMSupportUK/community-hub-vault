@@ -491,14 +491,6 @@ function TicketsPage() {
                 "rounded-2xl bg-rose-950/50 border border-rose-500/30 p-4 h-fit backdrop-blur space-y-3",
                 isChatting && "rounded-none border-y-0 border-l-0 h-full overflow-y-auto hidden lg:block"
               )}>
-                {!isChatting && (
-                  <button
-                    onClick={() => { setCreating(true); navigate({ to: "/tickets", search: { id: undefined, view } }); }}
-                    className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white text-rose-600 text-sm font-semibold hover:bg-white/90 shadow"
-                  >
-                    <Plus className="size-4" /> New ticket
-                  </button>
-                )}
                 {isChatting && (
                   <button
                     onClick={() => { navigate({ to: "/tickets", search: { id: undefined, view } }); }}
