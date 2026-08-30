@@ -481,20 +481,6 @@ function TicketsPage() {
                 <p className="mt-3 text-rose-200/80 max-w-2xl text-sm">
                   Once your ticket is resolved, leave a rating so we know how we did.
                 </p>
-                <div className="mt-6 flex flex-wrap gap-3">
-                  <button
-                    onClick={() => { setCreating(true); setTab("tickets"); }}
-                    className="inline-flex items-center gap-2 rounded-xl bg-white text-rose-600 font-semibold px-4 py-2.5 shadow-lg shadow-rose-900/40 hover:bg-white/90"
-                  >
-                    <Plus className="size-4" /> New ticket
-                  </button>
-                  <button
-                    onClick={() => setTab("tickets")}
-                    className="inline-flex items-center gap-2 rounded-xl border border-white/25 bg-white/10 backdrop-blur px-4 py-2.5 text-sm hover:bg-white/20"
-                  >
-                    <TicketIcon className="size-4" /> View tickets
-                  </button>
-                </div>
               </div>
               <div className="mt-8 w-full [&>div]:px-0 [&>div]:pt-0">
                 <StaffOnDutyStrip variant="tickets" hideRoles={["moderator"]} />
