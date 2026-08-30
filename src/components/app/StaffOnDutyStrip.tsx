@@ -179,38 +179,29 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
                     )} />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="flex flex-col leading-tight gap-0.5">
-                      <Nameplate
-                        id={p?.equipped_nameplate_id}
-                        className="inline-flex items-center self-start max-w-full rounded-md px-2 py-0.5 h-6 max-h-6 pr-9 shadow-sm isolate"
-                      >
-                        <span className={cn("text-xs font-semibold text-white truncate drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]", roleFlashClass(roleFlashMap.get(s.user_id)))}>{name}</span>
-                      </Nameplate>
+                    <Nameplate
+                      id={p?.equipped_nameplate_id}
+                      className="flex flex-col justify-center w-full rounded-md px-2 py-1 pr-12 shadow-sm isolate"
+                    >
+                      <span className={cn("text-xs font-semibold text-white truncate drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]", roleFlashClass(roleFlashMap.get(s.user_id)))}>{name}</span>
                       {roleFlashMap.get(s.user_id) && (
-                        <span className="text-[9px] font-medium uppercase tracking-wider text-white/70">
+                        <span className="text-[9px] font-medium uppercase tracking-wider text-white/90 drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]">
                           {formatRoleLabel(roleFlashMap.get(s.user_id))}
                         </span>
                       )}
-                    </div>
-                    <div className="text-[10px] text-white/80">On {fmtHMS(shiftElapsed)}</div>
+                      <div className="text-[10px] text-white/90 drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]">
+                        {onBreak ? (
+                          <span className="flex items-center gap-1">
+                            {(() => { const Icon = breakIcon(br!.kind); return <Icon className="size-3" />; })()}
+                            <span>{breakLabel(br!.kind)} {over ? `+${fmtMinSec(-brRemain)}` : fmtMinSec(brRemain)}</span>
+                          </span>
+                        ) : (
+                          <span>On {fmtHMS(shiftElapsed)}</span>
+                        )}
+                      </div>
+                    </Nameplate>
                     <DndCountdown userId={s.user_id} compact className="mt-1" />
                   </div>
-                </div>
-                <div className="mt-2 flex items-center gap-1.5 text-[11px] font-medium text-white">
-                  {onBreak ? (
-                    <>
-                      {(() => { const Icon = breakIcon(br!.kind); return <Icon className="size-3.5" />; })()}
-                      <span>{breakLabel(br!.kind)}</span>
-                      <span className="ml-auto tabular-nums">
-                        {over ? `+${fmtMinSec(-brRemain)}` : fmtMinSec(brRemain)}
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <CircleDot className="size-3.5" />
-                      <span>Working</span>
-                    </>
-                  )}
                 </div>
               </div>
             );
@@ -256,15 +247,18 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
                                   <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-2 ring-white bg-gray-400" />
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                  <div className="flex flex-col leading-tight gap-0.5">
-                                    <Nameplate
-                                      id={p.equipped_nameplate_id}
-                                      className="inline-flex items-center self-start max-w-full rounded-md px-2 py-0.5 h-6 max-h-6 pr-9 shadow-sm isolate opacity-80"
-                                    >
-                                      <span className={cn("text-xs font-semibold text-white/90 truncate drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]", roleFlashClass(roleFlashMap.get(p.id)))}>{name}</span>
-                                    </Nameplate>
-                                  </div>
-                                  <div className="text-[10px] text-white/60">Off duty</div>
+                                  <Nameplate
+                                    id={p.equipped_nameplate_id}
+                                    className="flex flex-col justify-center w-full rounded-md px-2 py-1 pr-12 shadow-sm isolate opacity-80"
+                                  >
+                                    <span className={cn("text-xs font-semibold text-white/90 truncate drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]", roleFlashClass(roleFlashMap.get(p.id)))}>{name}</span>
+                                    {roleFlashMap.get(p.id) && (
+                                      <span className="text-[9px] font-medium uppercase tracking-wider text-white/80 drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]">
+                                        {formatRoleLabel(roleFlashMap.get(p.id))}
+                                      </span>
+                                    )}
+                                    <div className="text-[10px] text-white/70 drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]">Off duty</div>
+                                  </Nameplate>
                                   <DndCountdown userId={p.id} compact className="mt-1" />
                                 </div>
                               </div>
