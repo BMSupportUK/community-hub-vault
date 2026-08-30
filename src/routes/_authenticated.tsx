@@ -19,7 +19,6 @@ const TwoFactorPill = lazy(() => import("@/components/app/TwoFactorBanner").then
 const VpnPill = lazy(() => import("@/components/app/TwoFactorBanner").then((m) => ({ default: m.VpnPill })));
 const LockNowPill = lazy(() => import("@/components/app/ScreenLockProvider").then((m) => ({ default: m.LockNowPill })));
 
-const DndDialogButton = lazy(() => import("@/components/app/DndDialogButton").then((m) => ({ default: m.DndDialogButton })));
 const BreakEndingAlert = lazy(() => import("@/components/app/BreakEndingAlert").then((m) => ({ default: m.BreakEndingAlert })));
 const ShiftStartEndAlert = lazy(() => import("@/components/app/ShiftStartEndAlert").then((m) => ({ default: m.ShiftStartEndAlert })));
 const ModerationPendingBadge = lazy(() => import("@/components/app/ModerationPendingBadge").then((m) => ({ default: m.ModerationPendingBadge })));
@@ -206,9 +205,6 @@ function AuthLayout() {
 
             <DeferUntilIdle>
               <VpnPill />
-            </DeferUntilIdle>
-            <DeferUntilIdle>
-              <DndDialogButton />
             </DeferUntilIdle>
             <div className="hidden lg:flex items-center gap-2">
               <DeferUntilIdle>
