@@ -9,6 +9,7 @@ import { ChannelColumn } from "@/components/app/ChannelColumn";
 import { toast } from "sonner";
 import { isAdminUnlocked } from "@/lib/admin-unlock";
 import { SignupInfoDialog } from "@/components/app/SignupInfoDialog";
+import { MentionText, STAFF_ROLE_TAGS, useMentionAutocomplete } from "@/components/app/mentions";
 
 export const Route = createFileRoute("/_authenticated/_approved/moderation")({
   component: ModerationPage,
@@ -42,6 +43,7 @@ function ModerationPage() {
   const [processingId, setProcessingId] = useState<string | null>(null);
   const [banningId, setBanningId] = useState<string | null>(null);
   const scrollerRef = useRef<HTMLDivElement>(null);
+  const replyRef = useRef<HTMLTextAreaElement>(null);
   const threadChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const [peerTyping, setPeerTyping] = useState<{ id: string } | null>(null);
   const peerTypingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -267,6 +269,14 @@ function ModerationPage() {
     });
   };
 
+  const mention = useMentionAutocomplete({
+    value: reply,
+    onChange: setReply,
+    textareaRef: replyRef,
+    canBroadcast: true,
+    roleMentions: [...STAFF_ROLE_TAGS],
+  });
+
   return (
     <>
       <ChannelColumn
@@ -392,7 +402,7 @@ function ModerationPage() {
                                       {senderNames[m.sender_id] ?? (fromApplicant ? "Applicant" : "Staff")}
                                     </div>
                                   )}
-                                  <div className="whitespace-pre-wrap">{m.content}</div>
+                                  <MentionText content={m.content} className="block" />
                                   <div className={`text-[10px] mt-0.5 flex items-center gap-1 ${mine ? "justify-end text-primary-foreground/70" : "text-muted-foreground"}`}>
                                     <span>{new Date(m.created_at).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}</span>
                                     {mine && m.status === "sending" && <Loader2 className="size-3 animate-spin" aria-label="Sending" />}
@@ -420,13 +430,23 @@ function ModerationPage() {
 
                         {a.status === "pending" ? (
                           <>
-                            <form onSubmit={sendReply} className="mt-3 flex items-center gap-2 bg-surface-2 border border-border rounded-lg px-3">
-                              <input
+                            <form onSubmit={sendReply} className="mt-3 relative flex items-center gap-2 bg-surface-2 border border-border rounded-lg px-3">
+                              {mention.dropdown}
+                              <textarea
+                                ref={replyRef}
                                 value={reply}
                                 onChange={(e) => { setReply(e.target.value); if (e.target.value) notifyTyping(); }}
-                                placeholder="Reply to applicant…"
+                                onKeyDown={(e) => {
+                                  if (mention.onKeyDown(e)) return;
+                                  if (e.key === "Enter" && !e.shiftKey) {
+                                    e.preventDefault();
+                                    sendReply(e as unknown as React.FormEvent);
+                                  }
+                                }}
+                                rows={1}
+                                placeholder="Reply to applicant… use @ to mention"
                                 maxLength={1000}
-                                className="flex-1 h-10 bg-transparent outline-none text-sm"
+                                className="flex-1 py-2.5 bg-transparent outline-none text-sm resize-none max-h-24"
                               />
                               <button type="submit" disabled={!reply.trim()} className="text-primary hover:text-primary-glow disabled:opacity-30">
                                 <Send className="size-4" />

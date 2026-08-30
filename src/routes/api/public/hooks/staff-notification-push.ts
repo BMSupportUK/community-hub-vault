@@ -18,7 +18,9 @@ function rolesForKind(kind: string): StaffRole[] {
     case "order_placed":
       return ["admin", "management"];
     case "gate_application":
+    case "gate_message":
       return ["admin", "management", "moderator"];
+
     case "ticket_raised":
       return ["admin", "management", "staff", "moderator"];
     default:
@@ -32,6 +34,9 @@ function titlePrefix(kind: string): string {
       return "🛒 ";
     case "gate_application":
       return "👋 ";
+    case "gate_message":
+      return "💬 ";
+
     case "ticket_raised":
       return "🎫 ";
     default:

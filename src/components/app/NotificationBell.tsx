@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { AtSign, Bell, Check, ShieldCheck, ShoppingBag, UserPlus, X } from "lucide-react";
+import { AtSign, Bell, Check, MessageSquare, ShieldCheck, ShoppingBag, UserPlus, X } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -164,6 +164,16 @@ export function NotificationBell() {
             });
             return;
           }
+          if (n.kind === "gate_message") {
+            playSound(mentionAudio, { label: "gate-reply", gain: 1.6 });
+            toast(`💬 ${n.title}`, {
+              description: n.body ?? "An applicant replied in the access chat.",
+              duration: 8000,
+              action: { label: "Open", onClick: () => navigate({ to: "/moderation" } as never) },
+            });
+            return;
+          }
+
           toast(n.title, {
             description: n.body ?? undefined,
             action:
@@ -302,6 +312,7 @@ export function NotificationBell() {
 
   const iconFor = (kind: string) =>
     kind === "gate_application" ? UserPlus
+      : kind === "gate_message" ? MessageSquare
       : kind === "order_placed" ? ShoppingBag
       : kind === "mention" ? AtSign
       : Bell;
@@ -377,7 +388,7 @@ export function NotificationBell() {
                             onClick={() => {
                               markRead(n.id);
                               setOpen(false);
-                              if (n.kind === "gate_application") {
+                              if (n.kind === "gate_application" || n.kind === "gate_message") {
                                 navigate({ to: "/moderation" } as never);
                               } else if (n.kind === "order_placed" && n.entity_id) {
                                   navigate({ to: "/shop", search: { view: "orders", id: n.entity_id } } as never);
