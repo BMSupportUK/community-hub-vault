@@ -167,7 +167,7 @@ export function StaffOnDutyStrip({
     const i = ROLE_ORDER.indexOf((r ?? "") as (typeof ROLE_ORDER)[number]);
     return i === -1 ? ROLE_ORDER.length : i;
   };
-  const orderedShifts = [...shifts]
+  const allOrderedShifts = [...shifts]
     .sort((a, b) => {
       const d = roleRank(a.user_id) - roleRank(b.user_id);
       if (d !== 0) return d;
@@ -177,10 +177,19 @@ export function StaffOnDutyStrip({
     })
     .filter((s) => !hideRoles.includes(roleFlashMap.get(s.user_id) ?? ""));
 
-  const visibleOffDuty = useMemo(
+  const daneShift = allOrderedShifts.find((s) => isDaneJProfile(profiles[s.user_id]));
+  const orderedShifts = allOrderedShifts.filter((s) => !isDaneJProfile(profiles[s.user_id]));
+
+  const allVisibleOffDuty = useMemo(
     () => offDuty.filter((p) => !hideRoles.includes(p.role)),
     [offDuty, hideRoles]
   );
+  const daneOff = daneShift ? undefined : allVisibleOffDuty.find((p) => isDaneJProfile(p));
+  const visibleOffDuty = useMemo(
+    () => allVisibleOffDuty.filter((p) => !isDaneJProfile(p)),
+    [allVisibleOffDuty]
+  );
+
 
   const miniProfile = (userId: string, isWorking: boolean): ChatMiniProfileData | null => {
     const p = profiles[userId];
@@ -336,11 +345,24 @@ export function StaffOnDutyStrip({
     );
   };
 
+  const daneSection = (daneShift || daneOff) ? (
+    <div className="relative mb-3 pb-3 border-b border-white/15">
+      <div className="text-[10px] font-bold uppercase tracking-wider text-amber-200 mb-1.5">
+        Owner
+      </div>
+      <div className={cn(isSidebar ? "flex flex-col gap-2" : "flex flex-wrap gap-2 min-w-0")}>
+        {daneShift ? renderOnDutyCard(daneShift) : renderOffDutyCard(daneOff!)}
+      </div>
+    </div>
+  ) : null;
+
   if (isTickets) {
     return (
       <div className="px-4 pt-4">
         <div className="rounded-xl border border-white/15 p-3 shadow-lg relative overflow-hidden bg-gradient-to-r from-violet-600/40 via-fuchsia-600/40 to-blue-600/40 backdrop-blur">
+          {daneSection}
           <Tabs value={dutyTab} onValueChange={(v) => setDutyTab(v as "on" | "off")}>
+
             <TabsList className="w-full bg-white/10 border border-white/20 p-1 mb-2 flex-wrap h-auto gap-1">
               <TabsTrigger
                 value="on"
@@ -396,9 +418,11 @@ export function StaffOnDutyStrip({
       <div className={cn(
         "rounded-xl border border-white/15 p-3 shadow-lg relative overflow-hidden bg-gradient-to-r from-violet-600/40 via-fuchsia-600/40 to-blue-600/40 backdrop-blur",
       )}>
+        {daneSection}
         <div className="flex items-center justify-between mb-2 relative">
           <div className="text-[11px] font-semibold uppercase tracking-wider text-white/90">
-            Staff on duty · {shifts.length}
+            Staff on duty · {orderedShifts.length}
+
           </div>
           <div className="flex items-center gap-1 text-[10px] text-white/80">
             <span className="size-2 rounded-full bg-emerald-400 animate-pulse" /> live
@@ -408,7 +432,7 @@ export function StaffOnDutyStrip({
           "relative",
           isSidebar ? "flex flex-col gap-2" : "grid gap-2 grid-cols-[repeat(auto-fill,minmax(220px,1fr))]",
         )}>
-          {shifts.length === 0 && (
+          {orderedShifts.length === 0 && (
             <div className={cn(
               "rounded-lg p-2.5 border border-white/20 bg-white/10 text-white/80 text-xs flex items-center gap-2",
               "w-full",
