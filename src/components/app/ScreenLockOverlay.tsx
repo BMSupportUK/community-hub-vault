@@ -69,7 +69,8 @@ export function ScreenLockOverlay({ settings, onUnlock }: Props) {
     const hash = await hashLockCode(user.id, newCode);
     const { error } = await supabase
       .from("screen_lock_settings")
-      .upsert({ user_id: user.id, code_hash: hash, must_change: false });
+      .update({ code_hash: hash, must_change: false })
+      .eq("user_id", user.id);
     setBusy(false);
     if (error) {
       toast.error(error.message);
