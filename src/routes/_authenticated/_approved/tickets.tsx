@@ -404,16 +404,9 @@ function TicketsPage() {
             <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-b from-transparent to-rose-950" />
           </div>
           <div className="relative px-6 md:px-10 pt-10 md:pt-14 pb-20 md:pb-24 flex flex-col md:flex-row md:items-center md:gap-8">
-           <div className="max-w-3xl flex-1">
-            <div className="text-xs uppercase tracking-[0.2em] text-rose-100/90 mb-3">BM Support · Help Desk</div>
-            <h1 className="font-display text-4xl md:text-5xl font-bold leading-tight drop-shadow">
-              Support Tickets
-            </h1>
-            <p className="mt-4 text-rose-100/90 max-w-xl text-base md:text-lg">
-              Open a ticket and our team will get back to you fast. Rate every conversation
-              to help us keep our support world-class.
-            </p>
-            <div className="mt-6 inline-flex items-center gap-3 rounded-2xl bg-white/10 backdrop-blur border border-white/25 px-4 py-2.5 shadow-lg">
+            <div className="max-w-3xl flex-1">
+             <div className="text-xs uppercase tracking-[0.2em] text-rose-100/90 mb-3">BM Support · Help Desk</div>
+             <div className="mt-2 inline-flex items-center gap-3 rounded-2xl bg-white/10 backdrop-blur border border-white/25 px-4 py-2.5 shadow-lg">
               <div className="flex">
                 {[1, 2, 3, 4, 5].map((n) => (
                   <Star
