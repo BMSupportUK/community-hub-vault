@@ -134,6 +134,25 @@ function ModerationPage() {
     );
   }
 
+  const banApplicant = async (app: AppRow) => {
+    const name = app.profile?.display_name ?? app.profile?.username ?? "this user";
+    if (!window.confirm(`Ban ${name}? Their email address and known IPs will be added to the blacklist.`)) return;
+    setBanningId(app.id);
+    try {
+      const res = await banFromGate({ data: { userId: app.user_id, applicationId: app.id } });
+      const parts: string[] = [];
+      if (res.email) parts.push(res.email);
+      if (res.ips?.length) parts.push(`${res.ips.length} IP${res.ips.length === 1 ? "" : "s"}`);
+      toast.success(`${name} banned${parts.length ? ` — blacklisted ${parts.join(" + ")}` : ""}`);
+      setExpandedId(null);
+      load();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Ban failed");
+    } finally {
+      setBanningId(null);
+    }
+  };
+
   const decide = async (app: AppRow, decision: "approved" | "denied") => {
     setProcessingId(app.id);
     try {
