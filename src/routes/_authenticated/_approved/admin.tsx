@@ -580,6 +580,7 @@ function RecoveryCodes() {
   const [rows, setRows] = useState<BackupCodeRow[] | null>(null);
   const [fresh, setFresh] = useState<string[] | null>(null);
   const [busy, setBusy] = useState(false);
+  const [confirmRegenerate, setConfirmRegenerate] = useState(false);
 
   const load = async () => {
     if (!user) return;
@@ -596,7 +597,6 @@ function RecoveryCodes() {
 
   const generate = async () => {
     if (!user) return;
-    if (!confirm("Generate a new batch of 10 codes? Any existing codes will be invalidated.")) return;
     setBusy(true);
     try {
       const batchId = crypto.randomUUID();
@@ -609,6 +609,7 @@ function RecoveryCodes() {
       const { error: insErr } = await supabase.from("admin_backup_codes").insert(rowsToInsert);
       if (insErr) throw insErr;
       setFresh(codes);
+      setConfirmRegenerate(false);
       await load();
       toast.success("New backup codes generated. Save them now!");
     } catch (e: any) {
@@ -705,14 +706,38 @@ function RecoveryCodes() {
               <Copy className="size-4" /> Copy all
             </button>
           )}
-          <button
-            onClick={generate}
-            disabled={busy}
-            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-60"
-          >
-            {busy ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
-            {total === 0 ? "Generate codes" : "Regenerate batch"}
-          </button>
+          {total > 0 && confirmRegenerate ? (
+            <div className="flex items-center gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-1">
+              <span className="px-2 text-xs text-destructive">Replace all codes?</span>
+              <button
+                type="button"
+                onClick={generate}
+                disabled={busy}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-destructive text-destructive-foreground text-sm font-medium disabled:opacity-60"
+              >
+                {busy ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
+                {busy ? "Regenerating…" : "Yes, regenerate all"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setConfirmRegenerate(false)}
+                disabled={busy}
+                className="px-3 py-1.5 rounded-md bg-surface-2 border border-border text-sm font-medium disabled:opacity-60"
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => total === 0 ? generate() : setConfirmRegenerate(true)}
+              disabled={busy}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-60"
+            >
+              {busy ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
+              {busy ? "Generating…" : total === 0 ? "Generate codes" : "Regenerate all"}
+            </button>
+          )}
         </div>
       </div>
 
