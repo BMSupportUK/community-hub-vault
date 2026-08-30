@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Lock, LockOpen, KeyRound, FileText, Loader2, Copy } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -18,11 +19,51 @@ import {
 /** Guides the signed-in member currently holds a live passcode for. */
 export function useGuideAccess() {
   const fetchAccess = useServerFn(getMyGuideAccess);
-  return useQuery({
+  const queryClient = useQueryClient();
+  const query = useQuery({
     queryKey: ["guide-access"],
     queryFn: () => fetchAccess(),
     staleTime: 60 * 1000,
   });
+
+  // Live updates: a new, revoked, or re-issued passcode refreshes the UI
+  // immediately without a page reload.
+  useEffect(() => {
+    const channel = supabase
+      .channel("guide-passcodes-live")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "guide_passcodes" },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ["guide-access"] });
+          queryClient.invalidateQueries({ queryKey: ["guide-active-passcode"] });
+        },
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
+  // Expiry isn't a database event, so fire a one-shot refresh the moment the
+  // earliest live code lapses.
+  const access = query.data;
+  useEffect(() => {
+    if (!access?.length) return;
+    const next = Math.min(...access.map((a) => new Date(a.expiresAt).getTime()));
+    const ms = next - Date.now() + 1000;
+    if (ms <= 0) {
+      queryClient.invalidateQueries({ queryKey: ["guide-access"] });
+      return;
+    }
+    const t = setTimeout(() => {
+      queryClient.invalidateQueries({ queryKey: ["guide-access"] });
+      queryClient.invalidateQueries({ queryKey: ["guide-active-passcode"] });
+    }, ms);
+    return () => clearTimeout(t);
+  }, [access, queryClient]);
+
+  return query;
 }
 
 type UnlockResult = {
