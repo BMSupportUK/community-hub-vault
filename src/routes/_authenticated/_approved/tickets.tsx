@@ -414,8 +414,9 @@ function TicketsPage() {
       )}>
         <Tabs value={tab} onValueChange={(v) => setTab(v as "welcome" | "tickets")}>
           {tab === "welcome" && (
-            <header className="mx-auto max-w-5xl mt-6">
-              <div className="flex flex-wrap items-center justify-center gap-3 md:gap-4 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 border-t-2 border-t-white/40 shadow-[0_0_50px_-12px_rgba(244,63,94,0.35)] p-3 md:p-4">
+            <header className="mx-auto max-w-5xl pt-6">
+              <div aria-hidden="true" className="mb-6 h-px w-full bg-white/60 shadow-[0_0_12px_rgba(255,255,255,0.55)]" />
+              <div className="flex flex-wrap items-center justify-center gap-3 md:gap-4 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-[0_0_50px_-12px_rgba(244,63,94,0.35)] p-3 md:p-4">
                 <TabsList className="bg-black/20 border border-white/15 rounded-2xl shadow-inner">
                   <TabsTrigger
                     value="welcome"
