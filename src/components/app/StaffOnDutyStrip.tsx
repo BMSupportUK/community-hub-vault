@@ -332,6 +332,8 @@ export function StaffOnDutyStrip({
               )}
               {dane ? (
                 <DaneStatusLine userId={p.id} />
+              ) : inChat ? (
+                <div className="text-[10px] font-semibold text-emerald-200 drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]">In chat · off duty</div>
               ) : (
                 <div className="text-[10px] text-white/70 drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]">Off duty</div>
               )}
