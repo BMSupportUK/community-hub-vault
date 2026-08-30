@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, X, Pencil, Trash2, ImageIcon, GripVertical, FileText, ExternalLink, Play, Film, Copy, Check } from "lucide-react";
+import { Plus, Search, X, Pencil, Trash2, ImageIcon, GripVertical, FileText, ExternalLink, Play, Film, Copy, Check, Upload, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -12,8 +12,16 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { HeaderImageUpload } from "@/components/ui/header-image-upload";
 import { HeaderVideoUpload } from "@/components/ui/header-video-upload";
+import {
+  GuideVaultCardActions,
+  GuideLockBadge,
+  GuidePasscodeAdmin,
+  useGuideAccess,
+} from "@/components/app/GuideVaultCardActions";
+
 import { toast } from "sonner";
 import installHero from "@/assets/install-guides-bg.jpg";
+
 
 export const Route = createFileRoute("/_authenticated/_approved/install-guides")({
   component: InstallGuidesPage,
@@ -73,12 +81,28 @@ type Blog = {
   published: boolean;
   created_at: string;
   sort_order: number;
+  file_path?: string | null;
+  file_name?: string | null;
+  file_mime?: string | null;
+  file_size?: number | null;
 };
+
+/** Unlocked view of a stored guide, returned after a valid passcode. */
+type UnlockedGuide = {
+  blog: Blog;
+  url: string | null;
+  viewUrl: string | null;
+  fileName: string | null;
+  body: string | null;
+};
+
 
 function InstallGuidesPage() {
   const { isMod, user, hasAny } = useAuth();
   const queryClient = useQueryClient();
   const canManageCategories = hasAny(["admin", "management", "staff"]);
+  const canManagePasscodes = hasAny(["admin", "management"]);
+
   const [tab, setTab] = useState<string>(() => {
     try { return sessionStorage.getItem(IG_TAB_KEY) || "welcome"; } catch { return "welcome"; }
   });
@@ -101,6 +125,16 @@ function InstallGuidesPage() {
   const dragBlogId = useRef<string | null>(null);
   const [playingVideo, setPlayingVideo] = useState<Blog | null>(null);
   const videoElRef = useRef<HTMLVideoElement | null>(null);
+  // Guide vault: which stored guides this member currently holds a live
+  // passcode for, plus the guide they just unlocked for viewing.
+  const accessQuery = useGuideAccess();
+  const unlockedIds = useMemo(
+    () => new Set((accessQuery.data ?? []).map((a) => a.blogId)),
+    [accessQuery.data],
+  );
+  const [unlocked, setUnlocked] = useState<UnlockedGuide | null>(null);
+  const [uploadingFile, setUploadingFile] = useState(false);
+
   // Remembers which guide card the user came from so save/cancel returns there
   // instead of dumping them at the top of the list.
   const focusGuideId = useRef<string | null>(null);
@@ -231,11 +265,41 @@ function InstallGuidesPage() {
       published: draft?.published ?? true,
       created_at: "",
       sort_order: 0,
+      file_path: draft?.file_path ?? null,
+      file_name: draft?.file_name ?? null,
+      file_mime: draft?.file_mime ?? null,
+      file_size: draft?.file_size ?? null,
     });
     if (draft && (draft.title || draft.body || draft.excerpt || draft.image_url || draft.pdf_url || draft.video_url)) {
       toast.message("Draft restored");
     }
     setShowEditor(true);
+  };
+
+  /** Uploads a guide file into the private vault bucket (admin/management). */
+  const uploadGuideFile = async (file: File) => {
+    if (!editing) return;
+    setUploadingFile(true);
+    try {
+      const ext = file.name.split(".").pop()?.toLowerCase() || "pdf";
+      const path = `${crypto.randomUUID()}.${ext}`;
+      const { error } = await supabase.storage
+        .from("guide-files")
+        .upload(path, file, { contentType: file.type || undefined, upsert: false });
+      if (error) throw error;
+      setEditing({
+        ...editing,
+        file_path: path,
+        file_name: file.name,
+        file_mime: file.type || null,
+        file_size: file.size,
+      });
+      toast.success("Guide file uploaded");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Upload failed");
+    } finally {
+      setUploadingFile(false);
+    }
   };
 
   const saveBlog = async () => {
@@ -254,7 +318,12 @@ function InstallGuidesPage() {
       video_url: editing.video_url?.trim() || null,
       badge: editing.badge?.trim() || null,
       published: editing.published,
+      file_path: editing.file_path || null,
+      file_name: editing.file_name || null,
+      file_mime: editing.file_mime || null,
+      file_size: editing.file_size ?? null,
     };
+
     const { error } = editing.id
       ? await supabase.from("install_blogs").update(payload).eq("id", editing.id)
       : await supabase.from("install_blogs").insert({ ...payload, created_by: user?.id ?? null });
@@ -353,13 +422,23 @@ function InstallGuidesPage() {
 
       <div className="px-8 py-6">
         <Tabs value={tab} onValueChange={setTab} className="w-full">
-          <TabsList className={`grid ${canManageCategories ? "grid-cols-3" : "grid-cols-2"} max-w-2xl bg-surface/70 border border-border`}>
+          <TabsList className={`grid ${canManagePasscodes ? "grid-cols-4" : canManageCategories ? "grid-cols-3" : "grid-cols-2"} max-w-2xl bg-surface/70 border border-border`}>
             <TabsTrigger value="welcome" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Welcome</TabsTrigger>
             <TabsTrigger value="guides" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Guides</TabsTrigger>
             {canManageCategories && (
               <TabsTrigger value="categories" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Categories</TabsTrigger>
             )}
+            {canManagePasscodes && (
+              <TabsTrigger value="passcodes" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Passcodes</TabsTrigger>
+            )}
           </TabsList>
+
+          {canManagePasscodes && (
+            <TabsContent value="passcodes" className="mt-6">
+              <GuidePasscodeAdmin />
+            </TabsContent>
+          )}
+
 
           <TabsContent value="welcome" className="mt-6">
             <div className="relative overflow-hidden rounded-2xl border border-border shadow-glow min-h-[60vh] lg:min-h-[70vh]">
@@ -502,11 +581,10 @@ function InstallGuidesPage() {
                               <Film className="size-3" /> Video
                             </span>
                           )}
-                          {b.pdf_url && (
-                            <span className="absolute top-2 right-2 text-[10px] uppercase tracking-wider px-2 py-1 rounded-md bg-primary text-primary-foreground font-semibold flex items-center gap-1">
-                              <FileText className="size-3" /> PDF
-                            </span>
+                          {(b.file_path || b.pdf_url) && (
+                            <GuideLockBadge unlocked={unlockedIds.has(b.id)} />
                           )}
+
                           {isMod && (
                             <div className="absolute bottom-2 left-2 size-8 rounded-md bg-background/70 backdrop-blur grid place-items-center text-foreground cursor-grab">
                               <GripVertical className="size-4" />
@@ -532,22 +610,22 @@ function InstallGuidesPage() {
                             </div>
                           )}
                           <div className="mt-auto pt-3 flex items-center gap-2">
-                            {b.pdf_url ? (
-                              <Button asChild size="sm" className="flex-1 bg-gradient-primary text-primary-foreground hover:opacity-90">
-                                <a
-                                  href={b.pdf_url}
-                                  download={`${b.title}.pdf`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                >
-                                  Download PDF
-                                </a>
-                              </Button>
+                            {b.file_path || b.pdf_url ? (
+                              <GuideVaultCardActions
+                                blogId={b.id}
+                                title={b.title}
+                                hasAccess={unlockedIds.has(b.id)}
+                                onOpen={(res) => {
+                                  focusGuideId.current = b.id;
+                                  setUnlocked({ blog: b, ...res });
+                                }}
+                              />
                             ) : (
                               <Button size="sm" className="flex-1 bg-gradient-primary text-primary-foreground hover:opacity-90" onClick={() => { focusGuideId.current = b.id; setReading(b); }}>
                                 Click to Read
                               </Button>
                             )}
+
                             {isMod && (
                               <>
                                 <Button size="icon" variant="ghost" className="text-violet-200 hover:bg-surface-2/80 hover:text-foreground" onClick={() => { focusGuideId.current = b.id; setEditing(b); setShowEditor(true); }}>
@@ -646,7 +724,54 @@ function InstallGuidesPage() {
         </Tabs>
       </div>
 
+      {/* Unlocked guide viewer — link is short-lived and only issued after a valid passcode */}
+      <Dialog open={!!unlocked} onOpenChange={(o) => { if (!o) { setUnlocked(null); scrollBackToGuide(); } }}>
+        <DialogContent className="max-w-5xl h-[90vh] flex flex-col">
+          {unlocked && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="font-display text-2xl flex flex-wrap items-center gap-3 text-white">
+                  <span className="flex-1">{unlocked.blog.title}</span>
+                  {unlocked.url && (
+                    <a
+                      href={unlocked.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-sm font-normal inline-flex items-center gap-1 text-primary hover:underline"
+                    >
+                      <FileText className="size-4" /> Download
+                    </a>
+                  )}
+                  {unlocked.viewUrl && (
+                    <a
+                      href={unlocked.viewUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-sm font-normal inline-flex items-center gap-1 text-primary hover:underline"
+                    >
+                      <ExternalLink className="size-4" /> Open in new tab
+                    </a>
+                  )}
+                </DialogTitle>
+              </DialogHeader>
+              {unlocked.viewUrl ? (
+                <iframe
+                  src={unlocked.viewUrl}
+                  title={unlocked.blog.title}
+                  className="flex-1 w-full rounded-lg border border-border bg-white"
+                />
+              ) : (
+                <div className="whitespace-pre-wrap text-sm leading-relaxed overflow-y-auto">
+                  {unlocked.body || "This guide has no readable content yet."}
+                </div>
+              )}
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Reader */}
+
       <Dialog open={!!reading} onOpenChange={(o) => { if (!o) { setReading(null); scrollBackToGuide(); } }}>
         <DialogContent className={reading?.pdf_url ? "max-w-5xl h-[90vh] flex flex-col" : "max-w-2xl max-h-[85vh] overflow-y-auto"}>
           {reading && (
@@ -757,13 +882,57 @@ function InstallGuidesPage() {
                 <Input value={editing.title} onChange={(e) => setEditing({ ...editing, title: e.target.value })} />
               </div>
               <div>
-                <Label>PDF URL (optional — opens inline in browser)</Label>
+                <Label>Guide file (stored in the app — members need a passcode)</Label>
+                <div className="mt-1 flex items-center gap-2">
+                  <input
+                    id="guide-file-input"
+                    type="file"
+                    accept=".pdf,.zip,image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      e.target.value = "";
+                      if (f) uploadGuideFile(f);
+                    }}
+                  />
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={uploadingFile}
+                    onClick={() => document.getElementById("guide-file-input")?.click()}
+                  >
+                    {uploadingFile ? <Loader2 className="size-4 mr-1 animate-spin" /> : <Upload className="size-4 mr-1" />}
+                    {editing.file_path ? "Replace file" : "Upload file"}
+                  </Button>
+                  {editing.file_path && (
+                    <>
+                      <span className="text-xs text-muted-foreground truncate max-w-[14rem]">
+                        {editing.file_name ?? editing.file_path}
+                      </span>
+                      <Button
+                        type="button"
+                        size="icon"
+                        variant="ghost"
+                        title="Remove file"
+                        onClick={() =>
+                          setEditing({ ...editing, file_path: null, file_name: null, file_mime: null, file_size: null })
+                        }
+                      >
+                        <Trash2 className="size-4" />
+                      </Button>
+                    </>
+                  )}
+                </div>
+              </div>
+              <div>
+                <Label>Legacy PDF URL (optional — also passcode protected)</Label>
                 <Input
                   value={editing.pdf_url ?? ""}
                   onChange={(e) => setEditing({ ...editing, pdf_url: e.target.value })}
                   placeholder="https://…/guide.pdf"
                 />
               </div>
+
               <div>
                 <Label>Video (optional — shows a play button on the card)</Label>
                 <HeaderVideoUpload
