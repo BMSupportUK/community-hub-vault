@@ -318,7 +318,7 @@ export function StaffOnDutyStrip({
                   <span>All staff are on duty</span>
                 </div>
               ) : (
-                <div className="grid grid-cols-[repeat(auto-fit,minmax(220px,1fr))] gap-2">
+                <div className="flex flex-wrap gap-2">
                   {visibleOffDuty.map((p) => renderOffDutyCard(p))}
                 </div>
               )}
