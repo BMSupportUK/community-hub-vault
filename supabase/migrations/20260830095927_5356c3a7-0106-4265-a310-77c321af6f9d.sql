@@ -1,0 +1,1 @@
+ALTER TABLE public.admin_backup_codes ADD COLUMN IF NOT EXISTS code text;
