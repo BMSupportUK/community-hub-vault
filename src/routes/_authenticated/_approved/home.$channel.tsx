@@ -1311,6 +1311,7 @@ function ChannelPage() {
             </div>
           )}
         </div>
+        </div>
       </header>
 
       <div className="flex-1 flex min-w-0 min-h-0">
