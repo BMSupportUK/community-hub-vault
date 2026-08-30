@@ -100,10 +100,9 @@ export function DndDialogButton({
 
 
   useEffect(() => {
-    if (!info?.active || !info.endsAt) return;
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
-  }, [info?.active, info?.endsAt]);
+  }, []);
 
   const remainingLabel = useMemo(() => {
     if (!info?.active) return null;
