@@ -175,6 +175,54 @@ export function GuideVaultCardActions({
   );
 }
 
+/**
+ * Persistent "Access code" box: shows the member's live passcode with a copy
+ * button. Hides itself and prompts for a new code once it expires.
+ */
+export function GuideAccessCodeBox() {
+  const fetchCode = useServerFn(getMyActiveGuidePasscode);
+  const { data } = useQuery({
+    queryKey: ["guide-active-passcode"],
+    queryFn: () => fetchCode(),
+    refetchInterval: 60 * 1000,
+    staleTime: 30 * 1000,
+  });
+
+  return (
+    <div className="mt-4 border-t border-border pt-3 px-2">
+      <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
+        <KeyRound className="size-3.5" /> Access code
+      </h4>
+      {data ? (
+        <div className="rounded-xl border border-violet-500/30 bg-violet-950/50 p-3">
+          <div className="flex items-center justify-between gap-2">
+            <span className="font-mono text-lg tracking-[0.3em] text-foreground">{data.code}</span>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="size-8 text-violet-200 hover:text-foreground hover:bg-surface-2/80"
+              title="Copy access code"
+              onClick={() => {
+                navigator.clipboard.writeText(data.code);
+                toast.success("Access code copied");
+              }}
+            >
+              <Copy className="size-4" />
+            </Button>
+          </div>
+          <p className="mt-1.5 text-[11px] text-muted-foreground">
+            Expires {new Date(data.expiresAt).toLocaleString()}
+          </p>
+        </div>
+      ) : (
+        <p className="text-xs text-muted-foreground">
+          No active code. Request a passcode on any guide to unlock it for 24 hours.
+        </p>
+      )}
+    </div>
+  );
+}
+
 export function GuideLockBadge({ unlocked }: { unlocked: boolean }) {
   return (
     <span
