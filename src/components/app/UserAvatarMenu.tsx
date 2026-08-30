@@ -270,6 +270,12 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
             </DropdownMenuItem>
           ) : null}
           <DropdownMenuSeparator />
+          <DropdownMenuItem onSelect={() => lockScreenNow()} className="cursor-pointer">
+            <Lock className="size-4 mr-2" />
+            Lock screen
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+
           <DropdownMenuItem
             onSelect={async () => {
               await signOut();
