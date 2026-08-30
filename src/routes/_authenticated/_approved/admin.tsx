@@ -446,37 +446,8 @@ function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () 
 function DashboardBody() {
   const { hasRole } = useAuth();
   const isAdminOnly = hasRole("admin");
-  const [stats, setStats] = useState<Stats | null>(null);
 
-  useEffect(() => {
-    (async () => {
-      const cnt = (q: any) => q.then((r: any) => r.count ?? 0);
-      const [users, pending, tickets, orders, shifts, creds, dns, blogs, reviews] = await Promise.all([
-        cnt(supabase.from("profiles").select("id", { count: "exact", head: true })),
-        cnt(supabase.from("user_roles").select("user_id", { count: "exact", head: true }).eq("role", "pending")),
-        cnt(supabase.from("tickets").select("id", { count: "exact", head: true }).neq("status", "closed")),
-        cnt(supabase.from("orders").select("id", { count: "exact", head: true }).eq("status", "pending")),
-        cnt(supabase.from("shifts").select("id", { count: "exact", head: true }).is("clock_out", null)),
-        cnt(supabase.from("app_credentials").select("id", { count: "exact", head: true })),
-        cnt(supabase.from("qd_dns_codes").select("id", { count: "exact", head: true })),
-        cnt(supabase.from("sports_blogs").select("id", { count: "exact", head: true })),
-        cnt(supabase.from("customer_reviews").select("id", { count: "exact", head: true }).eq("status", "pending")),
-      ]);
-      setStats({ users, pending, openTickets: tickets, pendingOrders: orders, activeShifts: shifts, credentials: creds, dnsCodes: dns, blogs, pendingReviews: reviews });
-    })();
-  }, []);
 
-  const tiles = [
-    { label: "Total members", value: stats?.users, icon: Users, accent: "primary" },
-    { label: "Pending approvals", value: stats?.pending, icon: ShieldAlert, accent: "amber" },
-    { label: "Open tickets", value: stats?.openTickets, icon: Ticket, accent: "primary" },
-    { label: "Pending orders", value: stats?.pendingOrders, icon: ShoppingBag, accent: "primary" },
-    { label: "On shift now", value: stats?.activeShifts, icon: Clock, accent: "primary" },
-    { label: "Credentials stored", value: stats?.credentials, icon: KeySquare, accent: "primary" },
-    { label: "QD DNS codes", value: stats?.dnsCodes, icon: Globe, accent: "primary" },
-    { label: "Sports blogs", value: stats?.blogs, icon: FileText, accent: "primary" },
-    { label: "Reviews to approve", value: stats?.pendingReviews, icon: Star, accent: "amber" },
-  ];
 
   const allTools: { to: string; search?: Record<string, string>; label: string; desc: string; icon: any; adminOnly?: boolean }[] = [
     { to: "/admin-roles", label: "Members & roles", desc: "Assign roles to members and create or delete custom roles.", icon: ShieldCheck },
