@@ -69,6 +69,7 @@ export function StaffOnDutyStrip({
   const [selfId, setSelfId] = useState<string | null>(null);
   const [dutyTab, setDutyTab] = useState<"on" | "off">("on");
   const roleFlashMap = useRoleFlashMap();
+  const presentUserIds = useTalkChannelPresentUsers();
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setSelfId(data.user?.id ?? null));
