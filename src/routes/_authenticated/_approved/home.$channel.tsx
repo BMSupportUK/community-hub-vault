@@ -1214,7 +1214,7 @@ function ChannelPage() {
                       return (
                         <li
                           key={m.id}
-                          className="p-3 rounded-xl border border-primary/20 bg-gradient-to-br from-primary/10 via-surface-2/80 to-fuchsia-500/10 ring-1 ring-primary/20 shadow-[0_4px_20px_-8px_rgba(var(--primary-rgb),0.3)] hover:shadow-[0_6px_24px_-6px_rgba(var(--primary-rgb),0.45)] hover:border-primary/40 transition-all animate-fade-in"
+                          className="p-3 rounded-xl border border-primary/20 bg-gradient-to-br from-primary/10 via-surface-2/80 to-fuchsia-500/10 ring-1 ring-primary/20 shadow-[0_4px_20px_-8px_color-mix(in_oklab,var(--primary)_30%,transparent)] hover:shadow-[0_6px_24px_-6px_color-mix(in_oklab,var(--primary)_45%,transparent)] hover:border-primary/40 transition-all animate-fade-in"
                           style={{ animationDelay: `${idx * 60}ms` }}
                         >
                           <div className="flex items-baseline justify-between gap-2 mb-1.5">
