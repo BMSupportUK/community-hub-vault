@@ -124,6 +124,18 @@ export function Nameplate({ id, className, style, fallbackStyle, children }: Nam
           <span className="nameplate-retrotv-knob k2" aria-hidden />
         </span>
       )}
+      {mascot && (
+        <img
+          src={mascot.url}
+          alt=""
+          aria-hidden
+          loading="lazy"
+          width={512}
+          height={512}
+          className="nameplate-mascot"
+        />
+      )}
+      {cls === "nameplate-alpine" && <span className="nameplate-alpine-cross" aria-hidden />}
       {children}
     </div>
   );
