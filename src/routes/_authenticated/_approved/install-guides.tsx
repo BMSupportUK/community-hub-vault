@@ -15,8 +15,10 @@ import { HeaderVideoUpload } from "@/components/ui/header-video-upload";
 import {
   GuideVaultCardActions,
   GuideLockBadge,
+  GuidePasscodeAdmin,
   useGuideAccess,
 } from "@/components/app/GuideVaultCardActions";
+
 import { toast } from "sonner";
 import installHero from "@/assets/install-guides-bg.jpg";
 
