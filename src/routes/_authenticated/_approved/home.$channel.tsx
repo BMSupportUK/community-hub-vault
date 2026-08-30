@@ -1131,8 +1131,8 @@ function ChannelPage() {
                 className={cn(
                   "group relative flex items-center gap-2 rounded-full transition-all duration-300 cursor-pointer overflow-hidden",
                   pinnedOpen
-                    ? "px-3.5 py-1.5 bg-primary/15 border border-primary/60 shadow-[0_0_20px_rgba(var(--primary-rgb),0.35)]"
-                    : "pl-1 pr-3.5 py-1 bg-gradient-to-r from-primary/20 via-fuchsia-500/15 to-primary/10 border border-primary/40 hover:border-primary/70 shadow-[0_0_16px_rgba(var(--primary-rgb),0.25)] hover:shadow-[0_0_24px_rgba(var(--primary-rgb),0.45)]",
+                    ? "px-3.5 py-1.5 bg-primary/15 border border-primary/60 shadow-[0_0_20px_-4px_color-mix(in_oklab,var(--primary)_35%,transparent)]"
+                    : "pl-1 pr-3.5 py-1 bg-gradient-to-r from-primary/20 via-fuchsia-500/15 to-primary/10 border border-primary/40 hover:border-primary/70 shadow-[0_0_16px_-4px_color-mix(in_oklab,var(--primary)_25%,transparent)] hover:shadow-[0_0_24px_-4px_color-mix(in_oklab,var(--primary)_45%,transparent)]",
                 )}
                 title="Pinned messages"
               >
