@@ -944,12 +944,31 @@ function TicketDetail({
     let ord = data ? (data as LinkedOrder) : null;
     if (ord) {
       const paymentState = await getPaymentState({ data: { orderId: ord.id } }).catch(() => null);
-      if (paymentState?.settled && !ord.paid_at) {
-        ord = { ...ord, paid_at: paymentState.paidAt ?? new Date().toISOString(), status: "paid" };
+      let prov = paymentState?.provider ?? null;
+      let settled = Boolean(paymentState?.settled);
+      let settledAt = paymentState?.paidAt ?? null;
+      // Fallback: read the payment row directly if the server check failed, so
+      // the payment status box still appears for a paid order.
+      if (!paymentState) {
+        const { data: pay } = await supabase
+          .from("order_payments")
+          .select("provider,status,amount_cents")
+          .eq("order_id", ord.id)
+          .maybeSingle();
+        const p = pay as { provider: string | null; status: string | null; amount_cents: number | null } | null;
+        if (p) {
+          prov = p.provider ?? null;
+          settled =
+            isSettledPaymentStatus(p.status) &&
+            Number(p.amount_cents ?? -1) === Number(ord.total_cents ?? 0);
+        }
       }
-      const prov = paymentState?.provider;
+      if (settled && !ord.paid_at) {
+        ord = { ...ord, paid_at: settledAt ?? new Date().toISOString(), status: "paid" };
+      }
       setPayProvider(prov === "stripe" || prov === "square" || prov === "nowpayments" ? prov : null);
     }
+
     setLinkedOrder(ord);
     if (ord?.user_id) {
       const { data: prof } = await supabase
