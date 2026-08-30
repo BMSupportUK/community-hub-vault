@@ -228,6 +228,7 @@ export function StaffOnDutyStrip({
             <PresenceDot
               userId={s.user_id}
               baseClass={onBreak ? (over ? "bg-red-500" : "bg-amber-400") : "bg-emerald-500"}
+              {...(isDaneJProfile(p) ? { dndClass: "bg-gray-400" } : {})}
             />
           </div>
           <div className="min-w-0 flex-1">
@@ -250,10 +251,13 @@ export function StaffOnDutyStrip({
                     {(() => { const Icon = breakIcon(br!.kind); return <Icon className="size-3 shrink-0" />; })()}
                     <span className="truncate">{breakLabel(br!.kind)} {over ? `+${fmtMinSec(-brRemain)}` : fmtMinSec(brRemain)}</span>
                   </span>
+                ) : isDaneJProfile(p) ? (
+                  <DaneStatusLine userId={s.user_id} />
                 ) : (
                   <span>{fmtHMS(shiftElapsed)}</span>
                 )}
               </div>
+
             </Nameplate>
             <DndCountdown userId={s.user_id} compact className="mt-1" />
           </div>
