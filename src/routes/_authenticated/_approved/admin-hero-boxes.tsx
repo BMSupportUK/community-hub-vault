@@ -40,7 +40,7 @@ function AdminHeroBoxesPage() {
 
   return (
     <main className="flex-1 overflow-y-auto">
-      <div className="max-w-3xl mx-auto px-6 py-8">
+      <div className="w-full px-6 py-8">
         <header className="flex items-center gap-3 mb-6">
           <div className="size-12 rounded-2xl bg-gradient-primary grid place-items-center shadow-glow">
             <Sparkles className="size-6 text-primary-foreground" />

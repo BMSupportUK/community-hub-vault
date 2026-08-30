@@ -74,7 +74,7 @@ function AdminProfanityPage() {
 
   return (
     <main className="flex-1 overflow-y-auto">
-      <div className="max-w-4xl mx-auto px-6 py-8 space-y-6">
+      <div className="w-full px-6 py-8 space-y-6">
         <div className="flex items-center gap-3">
           <Link to="/admin" className="size-9 rounded-xl border border-border bg-surface-1 grid place-items-center hover:bg-surface-2">
             <ArrowLeft className="size-4" />

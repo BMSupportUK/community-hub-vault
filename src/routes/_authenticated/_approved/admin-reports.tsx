@@ -65,7 +65,7 @@ function AdminReportsPage() {
 
   return (
     <main className="flex-1 w-full min-w-0 min-h-full self-stretch overflow-y-auto">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 space-y-4">
+      <div className="w-full px-4 sm:px-6 py-6 space-y-4">
         <div className="flex items-center justify-between gap-3">
           <Button asChild variant="ghost" size="sm" className="-ml-2">
             <Link to="/home"><ArrowLeft className="size-4 mr-1" />Home</Link>

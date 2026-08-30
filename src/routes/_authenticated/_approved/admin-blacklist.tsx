@@ -93,7 +93,7 @@ function AdminBlacklistPage() {
 
   return (
     <main className="flex-1 overflow-y-auto">
-      <div className="max-w-4xl mx-auto px-6 py-8 space-y-6">
+      <div className="w-full px-6 py-8 space-y-6">
         <div className="flex items-center gap-3">
           <Link to="/admin" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
             <ArrowLeft className="size-4" /> Back

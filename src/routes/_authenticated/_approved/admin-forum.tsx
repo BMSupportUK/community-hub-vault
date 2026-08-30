@@ -185,7 +185,7 @@ function AdminForumPage() {
     perms.find((p) => p.board_id === boardId && p.role === role);
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-4 py-6 space-y-4">
+    <div className="w-full px-4 py-6 space-y-4">
       <Button asChild variant="ghost" size="sm" className="-ml-2"><Link to="/admin"><ArrowLeft className="size-4 mr-1" />Owner panel</Link></Button>
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <h1 className="font-display text-2xl font-bold">Forum boards</h1>

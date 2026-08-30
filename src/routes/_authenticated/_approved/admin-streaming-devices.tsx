@@ -142,7 +142,7 @@ function AdminStreamingDevicesPage() {
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="max-w-5xl mx-auto px-4 py-6 space-y-6">
+      <div className="w-full px-4 py-6 space-y-6">
         <header className="flex items-start justify-between gap-3 flex-wrap">
           <div>
             <h1 className="text-2xl font-bold">Streaming devices owner panel</h1>
