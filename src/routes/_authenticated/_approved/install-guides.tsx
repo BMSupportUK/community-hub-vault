@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, X, Pencil, Trash2, ImageIcon, GripVertical, FileText, ExternalLink, Play, Film, Copy, Check } from "lucide-react";
+import { Plus, Search, X, Pencil, Trash2, ImageIcon, GripVertical, FileText, ExternalLink, Play, Film, Copy, Check, Upload, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -12,8 +12,14 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { HeaderImageUpload } from "@/components/ui/header-image-upload";
 import { HeaderVideoUpload } from "@/components/ui/header-video-upload";
+import {
+  GuideVaultCardActions,
+  GuideLockBadge,
+  useGuideAccess,
+} from "@/components/app/GuideVaultCardActions";
 import { toast } from "sonner";
 import installHero from "@/assets/install-guides-bg.jpg";
+
 
 export const Route = createFileRoute("/_authenticated/_approved/install-guides")({
   component: InstallGuidesPage,
