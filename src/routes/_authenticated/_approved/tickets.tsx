@@ -515,20 +515,26 @@ function TicketsPage() {
                 )}
 
 
-                {isStaff && (
-                  <div className="flex gap-1 bg-white/10 p-1 rounded-lg text-xs">
-                    {(["mine", "assigned", "all"] as const).map((v) => (
-                      <button
-                        key={v}
-                        onClick={() => setView(v)}
-                        className={cn(
-                          "flex-1 px-2 py-1 rounded-md capitalize transition-colors",
-                          view === v ? "bg-white text-rose-600" : "text-white/70 hover:text-white",
-                        )}
-                      >{v}</button>
-                    ))}
-                  </div>
-                )}
+                <div className="flex gap-1 bg-white/10 p-1 rounded-lg text-xs">
+                  <button
+                    onClick={() => { setTab("welcome"); navigate({ to: "/tickets", search: { id: undefined, view } }); }}
+                    className="flex items-center justify-center gap-1 px-2 py-1 rounded-md text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+                    title="Back to welcome"
+                  >
+                    <Home className="size-3" />
+                  </button>
+                  {isStaff && (["mine", "assigned", "all"] as const).map((v) => (
+                    <button
+                      key={v}
+                      onClick={() => setView(v)}
+                      className={cn(
+                        "flex-1 px-2 py-1 rounded-md capitalize transition-colors",
+                        view === v ? "bg-white text-rose-600" : "text-white/70 hover:text-white",
+                      )}
+                    >{v}</button>
+                  ))}
+                </div>
+
                 <div className="space-y-3">
                   {tickets.length === 0 && (
                     <div className="text-xs text-white/70 px-2 py-3 text-center">No tickets yet.</div>
