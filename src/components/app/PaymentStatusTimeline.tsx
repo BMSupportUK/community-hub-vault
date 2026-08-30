@@ -140,7 +140,7 @@ export function PaymentStatusTimeline({
         <span
           className={cn(
             "text-[10px] font-bold uppercase tracking-wider",
-            failed
+            cancelled || failed
               ? "text-destructive"
               : confirmed
                 ? "text-emerald-400"
