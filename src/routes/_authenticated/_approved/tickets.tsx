@@ -388,7 +388,6 @@ function TicketsPage() {
   }, [search.new2fa, creating, search.id]);
 
   const isChatting = selected && tab === "tickets";
-  const hideHero = tab === "tickets";
 
   return (
     <main className={cn(
