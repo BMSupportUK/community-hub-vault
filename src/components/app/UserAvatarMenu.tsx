@@ -11,9 +11,12 @@ import {
   Shield,
   ShieldCheck,
   Smartphone,
+  Lock,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { lockScreenNow } from "@/components/app/ScreenLockProvider";
+
 import { usePresence } from "@/components/app/PresenceIndicators";
 import {
   DropdownMenu,
@@ -270,6 +273,12 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
             </DropdownMenuItem>
           ) : null}
           <DropdownMenuSeparator />
+          <DropdownMenuItem onSelect={() => lockScreenNow()} className="cursor-pointer">
+            <Lock className="size-4 mr-2" />
+            Lock screen
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+
           <DropdownMenuItem
             onSelect={async () => {
               await signOut();

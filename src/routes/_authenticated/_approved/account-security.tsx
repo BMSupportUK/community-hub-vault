@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ShieldCheck, ShieldOff, Loader2, KeyRound, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { ScreenLockSettingsCard } from "@/components/app/ScreenLockSettingsCard";
+
 
 export const Route = createFileRoute("/_authenticated/_approved/account-security")({
   component: AccountSecurityPage,
@@ -198,7 +200,10 @@ function AccountSecurityPage() {
           </div>
         </div>
 
+        <ScreenLockSettingsCard />
+
         <div className="rounded-2xl border border-border bg-surface p-6 text-sm text-muted-foreground">
+
           <h3 className="font-display font-semibold text-foreground mb-2">Lost your device?</h3>
           <p>
             If you lose access to your authenticator app, raise a support ticket and our staff will verify your identity and reset 2FA on your account.
