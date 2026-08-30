@@ -1871,7 +1871,7 @@ function StaffIdCard({ profile }: { profile: Profile }) {
   return (
     <Nameplate
       id={profile.equipped_nameplate_id}
-      className="inline-flex items-center gap-2 pl-1 pr-3 py-1 rounded-full shadow-sm isolate min-h-8"
+      className="inline-flex items-center gap-2 pl-1 pr-10 py-1.5 rounded-full shadow-md isolate min-h-9 shrink-0 overflow-visible"
       fallbackStyle={{ background: "rgba(255,255,255,0.10)", border: "1px solid rgba(255,255,255,0.20)", backdropFilter: "blur(4px)" }}
     >
       <span
@@ -1881,11 +1881,11 @@ function StaffIdCard({ profile }: { profile: Profile }) {
         <img
           src={resolveAvatarUrl(profile.id, profile.avatar_url ?? null, roleFlashMap)}
           alt={name}
-          className="size-6 rounded-full object-cover ring-1 ring-white/40"
+          className="size-7 rounded-full object-cover ring-1 ring-white/40"
         />
         <span className="flex flex-col leading-tight">
-          <span className="text-[11px] font-semibold text-white drop-shadow">{name}</span>
-          <span className={cn("text-[9px] uppercase tracking-wider px-1 rounded border self-start", ROLE_BADGE[role] ?? ROLE_BADGE.staff)}>
+          <span className="text-xs font-semibold text-white drop-shadow whitespace-nowrap">{name}</span>
+          <span className={cn("text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded border self-start", ROLE_BADGE[role] ?? ROLE_BADGE.staff)}>
             {formatRoleLabel(role)}
           </span>
         </span>
