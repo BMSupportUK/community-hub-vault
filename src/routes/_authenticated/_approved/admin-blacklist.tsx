@@ -7,6 +7,7 @@ import { isAdminUnlocked } from "@/lib/admin-unlock";
 import { addBlacklist, listBlacklist, removeBlacklist } from "@/lib/blacklist.functions";
 import { toast } from "sonner";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-blacklist")({
   component: AdminBlacklistPage,
@@ -48,7 +49,13 @@ function AdminBlacklistPage() {
   };
 
   useEffect(() => {
-    if (isAdmin) load();
+    if (!isAdmin) return;
+    load();
+    const ch = supabase
+      .channel("blacklist-entries-live")
+      .on("postgres_changes", { event: "*", schema: "public", table: "blacklist_entries" }, () => load())
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAdmin]);
 

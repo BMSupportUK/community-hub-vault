@@ -1,7 +1,9 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Shield, Check, X, Send, ChevronDown, ChevronRight, MessageSquare, FileText, CheckCheck, AlertCircle, Loader2 } from "lucide-react";
+import { Shield, Check, X, Send, ChevronDown, ChevronRight, MessageSquare, FileText, CheckCheck, AlertCircle, Loader2, Ban } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { banUserFromGate } from "@/lib/blacklist.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { ChannelColumn } from "@/components/app/ChannelColumn";
 import { toast } from "sonner";
@@ -25,7 +27,9 @@ type MsgStatus = "sending" | "sent" | "failed";
 interface ThreadMsg { id: string; sender_id: string; content: string; created_at: string; status?: MsgStatus }
 
 function ModerationPage() {
-  const { isMod, user } = useAuth();
+  const { isMod, user, hasAny } = useAuth();
+  const canBan = hasAny(["admin", "management"]);
+  const banFromGate = useServerFn(banUserFromGate);
   if (!isAdminUnlocked(user?.id)) {
     return <Navigate to="/admin" search={{ next: "/moderation" } as never} />;
   }
@@ -36,6 +40,7 @@ function ModerationPage() {
   const [reply, setReply] = useState("");
   const [senderNames, setSenderNames] = useState<Record<string, string>>({});
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [banningId, setBanningId] = useState<string | null>(null);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const threadChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const [peerTyping, setPeerTyping] = useState<{ id: string } | null>(null);
@@ -128,6 +133,25 @@ function ModerationPage() {
       </main>
     );
   }
+
+  const banApplicant = async (app: AppRow) => {
+    const name = app.profile?.display_name ?? app.profile?.username ?? "this user";
+    if (!window.confirm(`Ban ${name}? Their email address and known IPs will be added to the blacklist.`)) return;
+    setBanningId(app.id);
+    try {
+      const res = await banFromGate({ data: { userId: app.user_id, applicationId: app.id } });
+      const parts: string[] = [];
+      if (res.email) parts.push(res.email);
+      if (res.ips?.length) parts.push(`${res.ips.length} IP${res.ips.length === 1 ? "" : "s"}`);
+      toast.success(`${name} banned${parts.length ? ` — blacklisted ${parts.join(" + ")}` : ""}`);
+      setExpandedId(null);
+      load();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Ban failed");
+    } finally {
+      setBanningId(null);
+    }
+  };
 
   const decide = async (app: AppRow, decision: "approved" | "denied") => {
     setProcessingId(app.id);
@@ -318,6 +342,19 @@ function ModerationPage() {
                     <div className="border-t border-border bg-background/50">
                       <div className="px-4 pt-3 flex justify-end">
                         <SignupInfoDialog userId={a.user_id} displayName={name} />
+                        {canBan && (
+                          <button
+                            type="button"
+                            onClick={() => banApplicant(a)}
+                            disabled={banningId === a.id}
+                            title="Ban user and blacklist their email + IPs"
+                            aria-label="Ban user and blacklist their email and IPs"
+                            className="ml-2 inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-destructive/15 text-destructive hover:bg-destructive/25 text-xs font-medium disabled:opacity-50"
+                          >
+                            {banningId === a.id ? <Loader2 className="size-3.5 animate-spin" /> : <Ban className="size-3.5" />}
+                            Ban
+                          </button>
+                        )}
                       </div>
                       {isAppeal && (
                         <div className="mx-4 mb-3 rounded-lg border border-fuchsia-500/30 bg-fuchsia-500/10 px-3 py-2 text-xs text-fuchsia-200">
