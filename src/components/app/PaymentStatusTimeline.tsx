@@ -15,7 +15,8 @@ export type PayCheckPhase =
   | "checking_stripe"
   | "checking_square"
   | "confirmed"
-  | "failed";
+  | "failed"
+  | "cancelled";
 
 export type PayMethod = "stripe" | "square" | "nowpayments" | null;
 
@@ -38,7 +39,8 @@ export function PaymentStatusTimeline({
 }) {
   const failed = phase === "failed";
   const confirmed = phase === "confirmed";
-  const checking = phase === "checking_stripe" || phase === "checking_square";
+  const cancelled = phase === "cancelled";
+  const checking = !cancelled && (phase === "checking_stripe" || phase === "checking_square");
 
   // Only surface the check step for the provider actually used on this order.
   const checkSteps: { key: string; title: string; desc: string; icon: typeof Clock }[] =
@@ -89,12 +91,14 @@ export function PaymentStatusTimeline({
   const steps: StepDef[] = [
     {
       key: "awaiting",
-      title: "Awaiting payment",
-      desc: "Order placed — pay via Square, Stripe or USDT.",
-      icon: Clock,
-      state: phase === "awaiting" ? "active" : "done",
+      title: cancelled ? "Order cancelled" : "Awaiting payment",
+      desc: cancelled
+        ? "This order was cancelled — no payment is required."
+        : "Order placed — pay via Square, Stripe or USDT.",
+      icon: cancelled ? XCircle : Clock,
+      state: cancelled ? "failed" : phase === "awaiting" ? "active" : "done",
     },
-    ...(showChecks
+    ...(showChecks && !cancelled
       ? checkSteps.map((c, i) => {
           const isLastCheck = i === checkSteps.length - 1;
           // While a check is running, mark every check step up to the active one
@@ -116,12 +120,14 @@ export function PaymentStatusTimeline({
       : []),
     {
       key: "result",
-      title: failed ? "Failed" : "Confirmed",
-      desc: failed
-        ? "No payment found yet — try again once it clears."
-        : "Payment confirmed — order marked as paid.",
-      icon: failed ? XCircle : CheckCircle2,
-      state: failed ? "failed" : confirmed ? "done" : "upcoming",
+      title: cancelled ? "Cancelled" : failed ? "Failed" : "Confirmed",
+      desc: cancelled
+        ? "Order cancelled — no payment will be taken."
+        : failed
+          ? "No payment found yet — try again once it clears."
+          : "Payment confirmed — order marked as paid.",
+      icon: cancelled ? XCircle : failed ? XCircle : CheckCircle2,
+      state: cancelled ? "failed" : failed ? "failed" : confirmed ? "done" : "upcoming",
     },
   ];
 
@@ -134,20 +140,22 @@ export function PaymentStatusTimeline({
         <span
           className={cn(
             "text-[10px] font-bold uppercase tracking-wider",
-            failed
+            cancelled || failed
               ? "text-destructive"
               : confirmed
                 ? "text-emerald-400"
                 : "text-fuchsia-300",
           )}
         >
-          {failed
-            ? "Not found"
-            : confirmed
-              ? "Paid"
-              : phase === "awaiting"
-                ? "Awaiting payment"
-                : "Checking…"}
+          {cancelled
+            ? "Cancelled"
+            : failed
+              ? "Not found"
+              : confirmed
+                ? "Paid"
+                : phase === "awaiting"
+                  ? "Awaiting payment"
+                  : "Checking…"}
         </span>
       </div>
       <ol className="relative space-y-1.5">

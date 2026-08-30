@@ -1396,11 +1396,11 @@ function TicketDetail({
         </div>
       </div>
       <OrderProgressStrip order={linkedOrder} />
-      {(payProvider !== null || payCheckPhase !== null || linkedOrder.paid_at !== null) && (
+      {(payProvider !== null || payCheckPhase !== null || linkedOrder.paid_at !== null || linkedOrder.status === "cancelled") && (
         <PaymentStatusTimeline
-          phase={linkedOrder.paid_at ? "confirmed" : (payCheckPhase ?? "awaiting")}
+          phase={linkedOrder.status === "cancelled" ? "cancelled" : linkedOrder.paid_at ? "confirmed" : (payCheckPhase ?? "awaiting")}
           method={payProvider}
-          started={payCheckPhase !== null || linkedOrder.paid_at !== null}
+          started={payCheckPhase !== null || linkedOrder.paid_at !== null || linkedOrder.status === "cancelled"}
         />
       )}
       {orderIsUnpaid && linkedOrder.user_id === currentUserId ? (
