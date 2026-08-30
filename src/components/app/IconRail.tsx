@@ -374,7 +374,10 @@ function RailIcon({
           >
             <Icon className="size-[22px]" />
             {badge && badge > 0 ? (
-              <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-red-500 text-white text-[11px] font-bold flex items-center justify-center shadow-lg ring-2 ring-rail animate-pulse">
+              <span className={cn(
+                "absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full text-white text-[11px] font-bold flex items-center justify-center shadow-lg ring-2 ring-rail",
+                badgeVariant === "online" ? "bg-emerald-500" : "bg-red-500 animate-pulse",
+              )}>
                 {badge > 99 ? "99+" : badge}
               </span>
             ) : null}
