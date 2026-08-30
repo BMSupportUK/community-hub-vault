@@ -326,12 +326,6 @@ export function StaffOnDutyStrip({
           </div>
         </div>
       </div>
-
-            </Nameplate>
-            <DndCountdown userId={p.id} compact className="mt-1" />
-          </div>
-        </div>
-      </div>
     );
     return mp ? (
       <ChatMiniProfile key={p.id} profile={mp} className="block w-full">
