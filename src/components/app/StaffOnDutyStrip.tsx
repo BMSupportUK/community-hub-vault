@@ -229,7 +229,7 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
               </div>
             );
             return mp ? (
-              <ChatMiniProfile key={s.id} profile={mp} className={cn("block", isSidebar ? "w-full" : "shrink-0")}>
+              <ChatMiniProfile key={s.id} profile={mp} className="block w-full">
                 {card}
               </ChatMiniProfile>
             ) : (
