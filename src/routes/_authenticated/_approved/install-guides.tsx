@@ -99,6 +99,8 @@ function InstallGuidesPage() {
   const { isMod, user, hasAny } = useAuth();
   const queryClient = useQueryClient();
   const canManageCategories = hasAny(["admin", "management", "staff"]);
+  const canManagePasscodes = hasAny(["admin", "management"]);
+
   const [tab, setTab] = useState<string>(() => {
     try { return sessionStorage.getItem(IG_TAB_KEY) || "welcome"; } catch { return "welcome"; }
   });
