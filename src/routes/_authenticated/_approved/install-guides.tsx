@@ -596,22 +596,22 @@ function InstallGuidesPage() {
                             </div>
                           )}
                           <div className="mt-auto pt-3 flex items-center gap-2">
-                            {b.pdf_url ? (
-                              <Button asChild size="sm" className="flex-1 bg-gradient-primary text-primary-foreground hover:opacity-90">
-                                <a
-                                  href={b.pdf_url}
-                                  download={`${b.title}.pdf`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                >
-                                  Download PDF
-                                </a>
-                              </Button>
+                            {b.file_path || b.pdf_url ? (
+                              <GuideVaultCardActions
+                                blogId={b.id}
+                                title={b.title}
+                                hasAccess={unlockedIds.has(b.id)}
+                                onOpen={(res) => {
+                                  focusGuideId.current = b.id;
+                                  setUnlocked({ blog: b, ...res });
+                                }}
+                              />
                             ) : (
                               <Button size="sm" className="flex-1 bg-gradient-primary text-primary-foreground hover:opacity-90" onClick={() => { focusGuideId.current = b.id; setReading(b); }}>
                                 Click to Read
                               </Button>
                             )}
+
                             {isMod && (
                               <>
                                 <Button size="icon" variant="ghost" className="text-violet-200 hover:bg-surface-2/80 hover:text-foreground" onClick={() => { focusGuideId.current = b.id; setEditing(b); setShowEditor(true); }}>
