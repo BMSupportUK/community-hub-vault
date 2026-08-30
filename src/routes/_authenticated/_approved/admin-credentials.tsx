@@ -182,13 +182,13 @@ function AdminCredentialsPage() {
                     <div className="flex-1 min-w-0">
                       <div className="font-medium truncate text-base">
                         {p.display_name || p.username || "Unnamed"}
-                        {loginNames.length > 0 && (
-                          <span className="text-muted-foreground font-normal">
-                            {" "}- {loginNames.join(", ")}
-                          </span>
-                        )}
                       </div>
                       <div className="text-xs text-muted-foreground truncate">@{p.username ?? p.id.slice(0, 8)}</div>
+                      {loginNames.length > 0 && (
+                        <div className="text-xs text-muted-foreground truncate mt-0.5">
+                          <span className="text-primary/80 font-medium">Logins:</span> {loginNames.join(", ")}
+                        </div>
+                      )}
                     </div>
                     <span className={cn("text-xs px-2 py-0.5 rounded-full border shrink-0", list.length > 0 ? "border-primary text-primary" : "border-border text-muted-foreground")}>
                       {list.length} {list.length === 1 ? "credential" : "credentials"}
