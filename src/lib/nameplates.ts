@@ -10,6 +10,8 @@ export interface NameplateRow {
   animation_class: string | null;
   is_active: boolean;
   sort_order: number;
+  /** True when every member can equip it without an admin grant. */
+  is_free?: boolean;
 }
 
 const cache = new Map<string, NameplateRow | null>();
