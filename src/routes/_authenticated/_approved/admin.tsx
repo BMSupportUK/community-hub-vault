@@ -516,6 +516,7 @@ interface BackupCodeRow {
   used_at: string | null;
   created_at: string;
   batch_id: string;
+  code: string | null;
 }
 
 function VpnBackfillCard() {
@@ -584,7 +585,7 @@ function RecoveryCodes() {
     if (!user) return;
     const { data, error } = await supabase
       .from("admin_backup_codes")
-      .select("id, used_at, created_at, batch_id")
+      .select("id, used_at, created_at, batch_id, code")
       .eq("user_id", user.id)
       .order("created_at", { ascending: true });
     if (error) { toast.error(error.message); return; }
@@ -604,7 +605,7 @@ function RecoveryCodes() {
       // Wipe old codes for this user
       const { error: delErr } = await supabase.from("admin_backup_codes").delete().eq("user_id", user.id);
       if (delErr) throw delErr;
-      const rowsToInsert = hashes.map((h) => ({ user_id: user.id, code_hash: h, batch_id: batchId }));
+      const rowsToInsert = hashes.map((h, i) => ({ user_id: user.id, code_hash: h, batch_id: batchId, code: codes[i] }));
       const { error: insErr } = await supabase.from("admin_backup_codes").insert(rowsToInsert);
       if (insErr) throw insErr;
       setFresh(codes);
@@ -616,9 +617,15 @@ function RecoveryCodes() {
   };
 
   const copyAll = async () => {
-    if (!fresh) return;
-    await navigator.clipboard.writeText(fresh.join("\n"));
+    const list = fresh ?? rows?.filter((r) => !r.used_at && r.code).map((r) => r.code!);
+    if (!list || list.length === 0) return;
+    await navigator.clipboard.writeText(list.join("\n"));
     toast.success("Codes copied to clipboard");
+  };
+
+  const copySingle = async (code: string) => {
+    await navigator.clipboard.writeText(code);
+    toast.success("Code copied to clipboard");
   };
 
   const download = () => {
@@ -655,6 +662,14 @@ function RecoveryCodes() {
           <span className={`text-xs px-2 py-1 rounded-md border ${low ? "border-amber-500/40 text-amber-400 bg-amber-500/10" : "border-border text-muted-foreground bg-surface-2"}`}>
             {remaining} / {total} unused
           </span>
+          {rows && rows.length > 0 && (
+            <button
+              onClick={copyAll}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-2 border border-border text-sm font-medium hover:bg-surface-3"
+            >
+              <Copy className="size-4" /> Copy all
+            </button>
+          )}
           <button
             onClick={generate}
             disabled={busy}
@@ -699,14 +714,26 @@ function RecoveryCodes() {
       {rows && rows.length > 0 && (
         <div>
           <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Current batch ({rows.length})</div>
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 font-mono text-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 font-mono text-sm">
             {rows.map((r, i) => (
               <div
                 key={r.id}
-                className={`px-2 py-1.5 rounded-md border text-center tracking-wider ${r.used_at ? "bg-surface-2 border-border text-muted-foreground line-through" : "bg-background border-border"}`}
+                className={`flex items-center justify-between gap-2 px-2 py-1.5 rounded-md border ${r.used_at ? "bg-surface-2 border-border text-muted-foreground" : "bg-background border-border"}`}
                 title={r.used_at ? `Used ${new Date(r.used_at).toLocaleString("en-GB")}` : "Unused"}
               >
-                Code #{String(i + 1).padStart(2, "0")}
+                <span className={`tracking-wider ${r.used_at ? "line-through" : ""}`}>
+                  {r.code ?? `Code #${String(i + 1).padStart(2, "0")}`}
+                </span>
+                {!r.used_at && r.code && (
+                  <button
+                    onClick={() => copySingle(r.code!)}
+                    className="p-1 rounded-md hover:bg-surface-2 text-muted-foreground hover:text-foreground"
+                    aria-label="Copy code"
+                    title="Copy code"
+                  >
+                    <Copy className="size-3.5" />
+                  </button>
+                )}
               </div>
             ))}
           </div>

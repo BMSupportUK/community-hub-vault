@@ -50,6 +50,7 @@ export type Database = {
       admin_backup_codes: {
         Row: {
           batch_id: string
+          code: string | null
           code_hash: string
           created_at: string
           id: string
@@ -58,6 +59,7 @@ export type Database = {
         }
         Insert: {
           batch_id: string
+          code?: string | null
           code_hash: string
           created_at?: string
           id?: string
@@ -66,6 +68,7 @@ export type Database = {
         }
         Update: {
           batch_id?: string
+          code?: string | null
           code_hash?: string
           created_at?: string
           id?: string
