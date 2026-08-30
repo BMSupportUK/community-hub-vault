@@ -27,6 +27,8 @@ import { useRoleFlashMap, resolveAvatarUrl, roleFlashClass } from "@/lib/role-fl
 import { ActiveOutagesBox } from "@/components/app/ActiveOutagesBox";
 import { PayOrderDialog, OrderProgressStrip } from "@/components/app/OrderPaymentDialog";
 import { PaymentStatusTimeline, type PayCheckPhase } from "@/components/app/PaymentStatusTimeline";
+import { isSettledPaymentStatus } from "@/lib/payment-status";
+
 import { refreshSquareInvoiceStatus, cancelOrderAndSquareInvoice } from "@/lib/square-invoices.functions";
 import { getOrderPaymentState } from "@/lib/order-payment-state.functions";
 import { formatRoleLabel } from "@/lib/role-label";
@@ -944,12 +946,31 @@ function TicketDetail({
     let ord = data ? (data as LinkedOrder) : null;
     if (ord) {
       const paymentState = await getPaymentState({ data: { orderId: ord.id } }).catch(() => null);
-      if (paymentState?.settled && !ord.paid_at) {
-        ord = { ...ord, paid_at: paymentState.paidAt ?? new Date().toISOString(), status: "paid" };
+      let prov = paymentState?.provider ?? null;
+      let settled = Boolean(paymentState?.settled);
+      let settledAt = paymentState?.paidAt ?? null;
+      // Fallback: read the payment row directly if the server check failed, so
+      // the payment status box still appears for a paid order.
+      if (!paymentState) {
+        const { data: pay } = await supabase
+          .from("order_payments")
+          .select("provider,status,amount_cents")
+          .eq("order_id", ord.id)
+          .maybeSingle();
+        const p = pay as { provider: string | null; status: string | null; amount_cents: number | null } | null;
+        if (p) {
+          prov = p.provider ?? null;
+          settled =
+            isSettledPaymentStatus(p.status) &&
+            Number(p.amount_cents ?? -1) === Number(ord.total_cents ?? 0);
+        }
       }
-      const prov = paymentState?.provider;
+      if (settled && !ord.paid_at) {
+        ord = { ...ord, paid_at: settledAt ?? new Date().toISOString(), status: "paid" };
+      }
       setPayProvider(prov === "stripe" || prov === "square" || prov === "nowpayments" ? prov : null);
     }
+
     setLinkedOrder(ord);
     if (ord?.user_id) {
       const { data: prof } = await supabase
@@ -1388,13 +1409,18 @@ function TicketDetail({
         </div>
       </div>
       <OrderProgressStrip order={linkedOrder} />
-      {(payProvider !== null || payCheckPhase !== null || linkedOrder.paid_at !== null || linkedOrder.status === "cancelled") && (
-        <PaymentStatusTimeline
-          phase={linkedOrder.status === "cancelled" ? "cancelled" : linkedOrder.paid_at ? "confirmed" : (payCheckPhase ?? "awaiting")}
-          method={payProvider}
-          started={payCheckPhase !== null || linkedOrder.paid_at !== null || linkedOrder.status === "cancelled"}
-        />
-      )}
+      <PaymentStatusTimeline
+        phase={
+          linkedOrder.status === "cancelled"
+            ? "cancelled"
+            : linkedOrder.paid_at || linkedOrder.status === "paid" || linkedOrder.status === "processing" || linkedOrder.status === "completed"
+              ? "confirmed"
+              : (payCheckPhase ?? "awaiting")
+        }
+        method={payProvider}
+        started
+      />
+
       {orderIsUnpaid && linkedOrder.user_id === currentUserId ? (
         <div className="[&>button]:!bg-gradient-to-r [&>button]:!from-emerald-400 [&>button]:!via-emerald-500 [&>button]:!to-emerald-600 [&>button]:!text-white [&>button]:!font-bold [&>button]:!text-base [&>button]:!py-3.5 [&>button]:!rounded-xl [&>button]:!shadow-[0_10px_30px_-8px_rgba(16,185,129,0.7),0_0_0_1px_rgba(255,255,255,0.15)_inset] [&>button]:!ring-2 [&>button]:!ring-emerald-300/60 [&>button]:hover:!brightness-110 [&>button]:hover:!shadow-[0_14px_40px_-8px_rgba(16,185,129,0.9),0_0_0_1px_rgba(255,255,255,0.2)_inset] [&>button]:!transition-all [&>button]:!tracking-wide [&>button]:animate-[pulse_2.4s_ease-in-out_infinite] [&>button>svg]:!size-5">
           <PayOrderDialog
