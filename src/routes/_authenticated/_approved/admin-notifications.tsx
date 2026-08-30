@@ -123,7 +123,7 @@ function AdminNotifications() {
         </div>
       </section>
 
-      <div className="p-6 max-w-3xl mx-auto space-y-6">
+      <div className="p-6 w-full space-y-6">
         {!settings ? (
           <div className="text-sm text-muted-foreground flex items-center gap-2"><Loader2 className="size-4 animate-spin" /> Loading…</div>
         ) : (
