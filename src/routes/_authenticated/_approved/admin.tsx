@@ -714,14 +714,26 @@ function RecoveryCodes() {
       {rows && rows.length > 0 && (
         <div>
           <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Current batch ({rows.length})</div>
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 font-mono text-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 font-mono text-sm">
             {rows.map((r, i) => (
               <div
                 key={r.id}
-                className={`px-2 py-1.5 rounded-md border text-center tracking-wider ${r.used_at ? "bg-surface-2 border-border text-muted-foreground line-through" : "bg-background border-border"}`}
+                className={`flex items-center justify-between gap-2 px-2 py-1.5 rounded-md border ${r.used_at ? "bg-surface-2 border-border text-muted-foreground" : "bg-background border-border"}`}
                 title={r.used_at ? `Used ${new Date(r.used_at).toLocaleString("en-GB")}` : "Unused"}
               >
-                Code #{String(i + 1).padStart(2, "0")}
+                <span className={`tracking-wider ${r.used_at ? "line-through" : ""}`}>
+                  {r.code ?? `Code #${String(i + 1).padStart(2, "0")}`}
+                </span>
+                {!r.used_at && r.code && (
+                  <button
+                    onClick={() => copySingle(r.code!)}
+                    className="p-1 rounded-md hover:bg-surface-2 text-muted-foreground hover:text-foreground"
+                    aria-label="Copy code"
+                    title="Copy code"
+                  >
+                    <Copy className="size-3.5" />
+                  </button>
+                )}
               </div>
             ))}
           </div>
