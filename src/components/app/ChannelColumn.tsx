@@ -328,61 +328,61 @@ export function ChannelColumn({
                 }}
               >
                 <div className="group/cat px-2 pb-1">
-                  <div className="text-[11px] font-bold uppercase tracking-wider text-foreground flex items-center gap-1">
-                    <ChevronDown className="size-3" />
-                    {g.icon ? <g.icon className="size-3" /> : null}
+                  <div className="text-[11px] font-bold uppercase tracking-wider text-foreground flex items-center gap-1 min-w-0">
+                    <ChevronDown className="size-3 shrink-0" />
+                    {g.icon ? <g.icon className="size-3 shrink-0" /> : null}
                     <span className="flex-1 truncate">{g.label}</span>
+                    {(g.onAddItem ||
+                      g.onEditGroupIcon ||
+                      g.onRenameGroup ||
+                      g.onEditGroupPerms ||
+                      g.onDeleteGroup ||
+                      onReorderGroups) && (
+                      <div className="flex items-center gap-1 text-muted-foreground shrink-0">
+                        {onReorderGroups && (
+                          <>
+                            <button
+                              onClick={() => moveGroup(-1)}
+                              disabled={!canMoveUp}
+                              title="Move category up"
+                              className="hover:text-foreground p-0.5 disabled:opacity-30 disabled:hover:text-muted-foreground"
+                            >
+                              <ChevronUp className="size-3.5" />
+                            </button>
+                            <button
+                              onClick={() => moveGroup(1)}
+                              disabled={!canMoveDown}
+                              title="Move category down"
+                              className="hover:text-foreground p-0.5 disabled:opacity-30 disabled:hover:text-muted-foreground"
+                            >
+                              <ChevronDown className="size-3.5" />
+                            </button>
+                          </>
+                        )}
+                        {g.onAddItem && (
+                          <button
+                            onClick={g.onAddItem}
+                            title="Add channel"
+                            className="hover:text-foreground p-0.5"
+                          >
+                            <Plus className="size-3.5" />
+                          </button>
+                        )}
+                        {(g.onRenameGroup ||
+                          g.onEditGroupIcon ||
+                          g.onEditGroupPerms ||
+                          g.onDeleteGroup) && (
+                          <button
+                            onClick={() => setSettings({ type: "group", group: g })}
+                            title="Category settings"
+                            className="hover:text-foreground p-0.5"
+                          >
+                            <Settings className="size-3.5" />
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </div>
-                  {(g.onAddItem ||
-                    g.onEditGroupIcon ||
-                    g.onRenameGroup ||
-                    g.onEditGroupPerms ||
-                    g.onDeleteGroup ||
-                    onReorderGroups) && (
-                    <div className="flex items-center gap-1 pt-1 pl-5 text-muted-foreground">
-                      {onReorderGroups && (
-                        <>
-                          <button
-                            onClick={() => moveGroup(-1)}
-                            disabled={!canMoveUp}
-                            title="Move category up"
-                            className="hover:text-foreground p-0.5 disabled:opacity-30 disabled:hover:text-muted-foreground"
-                          >
-                            <ChevronUp className="size-3.5" />
-                          </button>
-                          <button
-                            onClick={() => moveGroup(1)}
-                            disabled={!canMoveDown}
-                            title="Move category down"
-                            className="hover:text-foreground p-0.5 disabled:opacity-30 disabled:hover:text-muted-foreground"
-                          >
-                            <ChevronDown className="size-3.5" />
-                          </button>
-                        </>
-                      )}
-                      {g.onAddItem && (
-                        <button
-                          onClick={g.onAddItem}
-                          title="Add channel"
-                          className="hover:text-foreground p-0.5"
-                        >
-                          <Plus className="size-3.5" />
-                        </button>
-                      )}
-                      {(g.onRenameGroup ||
-                        g.onEditGroupIcon ||
-                        g.onEditGroupPerms ||
-                        g.onDeleteGroup) && (
-                        <button
-                          onClick={() => setSettings({ type: "group", group: g })}
-                          title="Category settings"
-                          className="hover:text-foreground p-0.5"
-                        >
-                          <Settings className="size-3.5" />
-                        </button>
-                      )}
-                    </div>
-                  )}
                 </div>
                 <div className="space-y-px">
                   {g.items.map((it) => {
