@@ -74,7 +74,7 @@ export function ChatMessageBody({
   return (
     <div
       className={cn(
-        "text-sm break-words [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-5 [&_ol]:pl-5 [&_a]:underline [&_a]:text-blue-600 [&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:pl-2 [&_blockquote]:text-muted-foreground",
+        "text-sm break-words whitespace-pre-wrap [&_ul]:list-disc [&_ol]:list-decimal [&_ul]:pl-5 [&_ol]:pl-5 [&_a]:underline [&_a]:text-blue-600 [&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:pl-2 [&_blockquote]:text-muted-foreground [&_p]:min-h-[1.25em] [&_div]:min-h-[1.25em] [&_p:empty]:before:content-['\\00a0'] [&_div:empty]:before:content-['\\00a0'] [&_p+p]:mt-1 [&_ul]:my-1 [&_ol]:my-1",
         className,
       )}
       dangerouslySetInnerHTML={{ __html: html }}
