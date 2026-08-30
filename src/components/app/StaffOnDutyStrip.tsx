@@ -418,9 +418,11 @@ export function StaffOnDutyStrip({
       <div className={cn(
         "rounded-xl border border-white/15 p-3 shadow-lg relative overflow-hidden bg-gradient-to-r from-violet-600/40 via-fuchsia-600/40 to-blue-600/40 backdrop-blur",
       )}>
+        {daneSection}
         <div className="flex items-center justify-between mb-2 relative">
           <div className="text-[11px] font-semibold uppercase tracking-wider text-white/90">
-            Staff on duty · {shifts.length}
+            Staff on duty · {orderedShifts.length}
+
           </div>
           <div className="flex items-center gap-1 text-[10px] text-white/80">
             <span className="size-2 rounded-full bg-emerald-400 animate-pulse" /> live
