@@ -229,40 +229,26 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
                       <div className={cn(isSidebar ? "flex flex-col gap-2" : "flex gap-2 overflow-x-auto pb-1")}>
                         {members.map((p) => {
                           const name = p.display_name || p.username || "Staff";
-                          return (
+                          const mp = miniProfile(p.id, false);
+                          const card = (
                             <div
-                              key={p.id}
                               className={cn(
                                 "rounded-lg p-2.5 border border-white/15 bg-white/5 backdrop-blur",
                                 isSidebar ? "w-full" : "shrink-0 min-w-[180px]",
                               )}
                             >
-                              <div className="flex items-center gap-2">
-                                <div className="relative">
-                                  <img
-                                    src={resolveAvatarUrl(p.id, p.avatar_url, roleFlashMap)}
-                                    alt={name}
-                                    className="size-8 rounded-full object-cover ring-2 ring-white/20 opacity-70 grayscale"
-                                  />
-                                  <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-2 ring-white bg-gray-400" />
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                  <Nameplate
-                                    id={p.equipped_nameplate_id}
-                                    className="flex flex-col justify-center w-full rounded-md px-2 py-1 pr-12 shadow-sm isolate opacity-80"
-                                  >
-                                    <span className={cn("text-xs font-semibold text-white/90 truncate drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]", roleFlashClass(roleFlashMap.get(p.id)))}>{name}</span>
-                                    {roleFlashMap.get(p.id) && (
-                                      <span className="text-[9px] font-medium uppercase tracking-wider text-white/80 drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]">
-                                        {formatRoleLabel(roleFlashMap.get(p.id))}
-                                      </span>
-                                    )}
-                                    <div className="text-[10px] text-white/70 drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]">Off duty</div>
-                                  </Nameplate>
+...
                                   <DndCountdown userId={p.id} compact className="mt-1" />
                                 </div>
                               </div>
                             </div>
+                          );
+                          return mp ? (
+                            <ChatMiniProfile key={p.id} profile={mp} className={cn("block", isSidebar ? "w-full" : "shrink-0")}>
+                              {card}
+                            </ChatMiniProfile>
+                          ) : (
+                            <div key={p.id}>{card}</div>
                           );
                         })}
                       </div>
