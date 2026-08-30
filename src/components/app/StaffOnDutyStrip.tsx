@@ -167,7 +167,7 @@ export function StaffOnDutyStrip({
     const i = ROLE_ORDER.indexOf((r ?? "") as (typeof ROLE_ORDER)[number]);
     return i === -1 ? ROLE_ORDER.length : i;
   };
-  const orderedShifts = [...shifts]
+  const allOrderedShifts = [...shifts]
     .sort((a, b) => {
       const d = roleRank(a.user_id) - roleRank(b.user_id);
       if (d !== 0) return d;
@@ -177,10 +177,19 @@ export function StaffOnDutyStrip({
     })
     .filter((s) => !hideRoles.includes(roleFlashMap.get(s.user_id) ?? ""));
 
-  const visibleOffDuty = useMemo(
+  const daneShift = allOrderedShifts.find((s) => isDaneJProfile(profiles[s.user_id]));
+  const orderedShifts = allOrderedShifts.filter((s) => !isDaneJProfile(profiles[s.user_id]));
+
+  const allVisibleOffDuty = useMemo(
     () => offDuty.filter((p) => !hideRoles.includes(p.role)),
     [offDuty, hideRoles]
   );
+  const daneOff = daneShift ? undefined : allVisibleOffDuty.find((p) => isDaneJProfile(p));
+  const visibleOffDuty = useMemo(
+    () => allVisibleOffDuty.filter((p) => !isDaneJProfile(p)),
+    [allVisibleOffDuty]
+  );
+
 
   const miniProfile = (userId: string, isWorking: boolean): ChatMiniProfileData | null => {
     const p = profiles[userId];
