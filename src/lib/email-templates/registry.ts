@@ -42,4 +42,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'ticket-reply': ticketReply,
   'vault-pin-reset': vaultPinReset,
   'winner-notification': winnerNotification,
+  'screen-lock-reset': screenLockReset,
 }
