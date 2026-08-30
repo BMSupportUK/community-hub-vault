@@ -306,12 +306,12 @@ export function StaffOnDutyStrip({
               alt={name}
               className={cn(
                 "size-8 rounded-full object-cover",
-                dane ? "ring-2 ring-white/40" : "ring-2 ring-white/20 opacity-70 grayscale",
+                dane || inChat ? "ring-2 ring-white/40" : "ring-2 ring-white/20 opacity-70 grayscale",
               )}
             />
             <PresenceDot
               userId={p.id}
-              baseClass={dane ? "bg-emerald-500" : "bg-gray-400"}
+              baseClass={dane || inChat ? "bg-emerald-500" : "bg-gray-400"}
               {...(dane ? { dndClass: "bg-gray-400" } : {})}
             />
           </div>
