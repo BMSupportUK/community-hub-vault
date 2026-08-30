@@ -1145,35 +1145,16 @@ function ChannelPage() {
                     pinnedOpen ? "text-primary fill-primary/30 rotate-45" : "text-primary fill-primary/20 group-hover:-translate-y-0.5"
                   )} />
                 </span>
-                {!pinnedOpen && pinnedMessages[0] && (
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span className="text-[11px] font-bold text-primary truncate max-w-[140px]">
-                      {(() => {
-                        const p = profiles[pinnedMessages[0].sender_id];
-                        const name = p?.display_name ?? p?.username ?? "Unknown";
-                        return name;
-                      })()}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground truncate max-w-[160px]">
-                      <MentionText
-                        content={pinnedMessages[0].content}
-                        currentUsername={myUsername}
-                        className="text-[10px] text-muted-foreground"
-                      />
-                    </span>
-                  </div>
-                )}
                 <span className={cn(
                   "text-xs font-bold transition-colors",
                   pinnedOpen ? "text-primary" : "text-foreground/90 group-hover:text-foreground"
                 )}>
                   {pinnedMessages.length}
                 </span>
-                {!pinnedOpen && (
-                  <span className="ml-1 text-[9px] font-semibold text-primary/80 uppercase tracking-wider hidden sm:inline">
-                    pinned
-                  </span>
-                )}
+                <span className="text-[9px] font-semibold text-primary/80 uppercase tracking-wider hidden sm:inline">
+                  pinned
+                </span>
+
               </button>
             )}
             {pinnedMessages.length === 0 && (
