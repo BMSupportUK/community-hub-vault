@@ -18,11 +18,13 @@ let sharedChannel: RealtimeChannel | null = null;
 let subscribed = false;
 let trackedSignature = "";
 let currentCount = 0;
+let currentUserIds: Set<string> = new Set();
 const connectionId = crypto.randomUUID();
 const listeners = new Set<(count: number) => void>();
+const userListeners = new Set<(ids: Set<string>) => void>();
 const trackers = new Map<symbol, Tracker>();
 
-function countUniqueUsers(channel: RealtimeChannel): number {
+function collectUniqueUsers(channel: RealtimeChannel): Set<string> {
   const state = channel.presenceState<TalkPresence>();
   const userIds = new Set<string>();
 
@@ -32,13 +34,15 @@ function countUniqueUsers(channel: RealtimeChannel): number {
     }
   }
 
-  return userIds.size;
+  return userIds;
 }
 
 function publishCount() {
   if (!sharedChannel) return;
-  currentCount = countUniqueUsers(sharedChannel);
+  currentUserIds = collectUniqueUsers(sharedChannel);
+  currentCount = currentUserIds.size;
   for (const listener of listeners) listener(currentCount);
+  for (const listener of userListeners) listener(currentUserIds);
 }
 
 async function syncTracking() {
