@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ShieldCheck, Lock, KeyRound, Users, Ticket, ShoppingBag, ShieldAlert, KeySquare, Globe, Clock, FileText, Loader2, Shield, Star, Filter, Sparkles, LifeBuoy, RefreshCw, Copy, Download, Ban, Tag, Receipt, Package, Bell, Wallet, Trophy, MessageSquare, Image as ImageIcon, MonitorPlay } from "lucide-react";
+import { ShieldCheck, Lock, KeyRound, ShieldAlert, KeySquare, Globe, Clock, FileText, Loader2, Shield, Star, Filter, Sparkles, LifeBuoy, RefreshCw, Copy, Download, Ban, Tag, Package, Bell, Trophy, MessageSquare, Image as ImageIcon, MonitorPlay } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -37,17 +37,8 @@ function normalizeCode(input: string) {
 const UNLOCK_TTL_MS = 60 * 60 * 1000;
 const UNLOCK_KEY = (uid: string) => `admin_unlock_until:${uid}`;
 
-interface Stats {
-  users: number;
-  pending: number;
-  openTickets: number;
-  pendingOrders: number;
-  activeShifts: number;
-  credentials: number;
-  dnsCodes: number;
-  blogs: number;
-  pendingReviews: number;
-}
+
+
 
 function AdminDashboard() {
   const { user, hasAny } = useAuth();
@@ -92,7 +83,7 @@ function AdminDashboard() {
 
   return (
     <main className="flex-1 overflow-y-auto">
-      <div className="max-w-6xl mx-auto px-6 py-8">
+      <div className="w-full px-4 sm:px-6 py-8">
         <div className="relative rounded-3xl overflow-hidden border border-primary/30 shadow-glow bg-gradient-primary p-6 sm:p-8 mb-6">
           <div className="absolute inset-0 bg-gradient-to-tr from-background/40 via-transparent to-transparent pointer-events-none" />
           <header className="relative flex items-center gap-3">
@@ -111,9 +102,6 @@ function AdminDashboard() {
           </header>
         </div>
 
-        <div className="mb-6">
-          <ThemePickerCard />
-        </div>
 
         {hasPin === null ? (
           <div className="grid place-items-center py-16 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>
@@ -449,37 +437,8 @@ function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () 
 function DashboardBody() {
   const { hasRole } = useAuth();
   const isAdminOnly = hasRole("admin");
-  const [stats, setStats] = useState<Stats | null>(null);
 
-  useEffect(() => {
-    (async () => {
-      const cnt = (q: any) => q.then((r: any) => r.count ?? 0);
-      const [users, pending, tickets, orders, shifts, creds, dns, blogs, reviews] = await Promise.all([
-        cnt(supabase.from("profiles").select("id", { count: "exact", head: true })),
-        cnt(supabase.from("user_roles").select("user_id", { count: "exact", head: true }).eq("role", "pending")),
-        cnt(supabase.from("tickets").select("id", { count: "exact", head: true }).neq("status", "closed")),
-        cnt(supabase.from("orders").select("id", { count: "exact", head: true }).eq("status", "pending")),
-        cnt(supabase.from("shifts").select("id", { count: "exact", head: true }).is("clock_out", null)),
-        cnt(supabase.from("app_credentials").select("id", { count: "exact", head: true })),
-        cnt(supabase.from("qd_dns_codes").select("id", { count: "exact", head: true })),
-        cnt(supabase.from("sports_blogs").select("id", { count: "exact", head: true })),
-        cnt(supabase.from("customer_reviews").select("id", { count: "exact", head: true }).eq("status", "pending")),
-      ]);
-      setStats({ users, pending, openTickets: tickets, pendingOrders: orders, activeShifts: shifts, credentials: creds, dnsCodes: dns, blogs, pendingReviews: reviews });
-    })();
-  }, []);
 
-  const tiles = [
-    { label: "Total members", value: stats?.users, icon: Users, accent: "primary" },
-    { label: "Pending approvals", value: stats?.pending, icon: ShieldAlert, accent: "amber" },
-    { label: "Open tickets", value: stats?.openTickets, icon: Ticket, accent: "primary" },
-    { label: "Pending orders", value: stats?.pendingOrders, icon: ShoppingBag, accent: "primary" },
-    { label: "On shift now", value: stats?.activeShifts, icon: Clock, accent: "primary" },
-    { label: "Credentials stored", value: stats?.credentials, icon: KeySquare, accent: "primary" },
-    { label: "QD DNS codes", value: stats?.dnsCodes, icon: Globe, accent: "primary" },
-    { label: "Sports blogs", value: stats?.blogs, icon: FileText, accent: "primary" },
-    { label: "Reviews to approve", value: stats?.pendingReviews, icon: Star, accent: "amber" },
-  ];
 
   const allTools: { to: string; search?: Record<string, string>; label: string; desc: string; icon: any; adminOnly?: boolean }[] = [
     { to: "/admin-roles", label: "Members & roles", desc: "Assign roles to members and create or delete custom roles.", icon: ShieldCheck },
@@ -513,56 +472,44 @@ function DashboardBody() {
     { to: "/shop", search: { view: "admin" }, label: "Shop products", desc: "Add, edit and reorder shop products and categories.", icon: Package, adminOnly: true },
     { to: "/shop", search: { view: "discounts" }, label: "Discount codes", desc: "Create and manage promotional discount codes.", icon: Tag, adminOnly: true },
   ];
-  const tools = allTools.filter((t) => !t.adminOnly || isAdminOnly);
+  const tools = allTools
+    .filter((t) => !t.adminOnly || isAdminOnly)
+    .sort((a, b) => a.label.localeCompare(b.label, "en-GB", { sensitivity: "base" }));
 
   return (
-    <div className="space-y-6">
-      <RecoveryCodes />
-      <VpnBackfillCard />
-      <div className="grid gap-6 lg:grid-cols-[1fr_300px]">
-        <section className="order-1">
-          <h2 className="font-display text-sm uppercase tracking-wide text-muted-foreground mb-3">Owner tools</h2>
-          <div className="grid sm:grid-cols-2 gap-3">
-            {tools.map((t) => (
-              <Link
-                key={`${t.to}-${t.label}`}
-                to={t.to}
-                search={t.search as any}
-                className="group relative rounded-2xl border border-border bg-surface-1 p-4 hover:border-primary hover:shadow-glow transition-all overflow-hidden"
-              >
-                <div className="absolute inset-x-0 top-0 h-1 bg-gradient-accent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="size-10 rounded-xl bg-gradient-primary grid place-items-center text-primary-foreground shadow-glow">
-                    <t.icon className="size-5" />
-                  </div>
-                  <div className="font-display font-bold">{t.label}</div>
+    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px] items-start">
+      <section className="min-w-0">
+        <h2 className="font-display text-sm uppercase tracking-wide text-muted-foreground mb-3">Owner tools</h2>
+        <div className="grid sm:grid-cols-2 2xl:grid-cols-3 gap-3">
+          {tools.map((t) => (
+            <Link
+              key={`${t.to}-${t.label}`}
+              to={t.to}
+              search={t.search as any}
+              className="group relative rounded-2xl border border-border bg-surface-1 p-4 hover:border-primary hover:shadow-glow transition-all overflow-hidden"
+            >
+              <div className="absolute inset-x-0 top-0 h-1 bg-gradient-accent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="flex items-center gap-3 mb-2">
+                <div className="size-10 rounded-xl bg-gradient-primary grid place-items-center text-primary-foreground shadow-glow">
+                  <t.icon className="size-5" />
                 </div>
-                <p className="text-xs text-muted-foreground">{t.desc}</p>
-              </Link>
-            ))}
-          </div>
-        </section>
+                <div className="font-display font-bold">{t.label}</div>
+              </div>
+              <p className="text-xs text-muted-foreground">{t.desc}</p>
+            </Link>
+          ))}
+        </div>
+      </section>
 
-        <aside className="order-2 lg:sticky lg:top-4 lg:self-start">
-          <div className="rounded-2xl border border-border bg-surface-1 p-4">
-            <h2 className="font-display text-sm uppercase tracking-wide text-muted-foreground mb-3">Live snapshot</h2>
-            <div className="grid grid-cols-2 gap-2">
-              {tiles.map((t) => (
-                <div key={t.label} className="rounded-xl border border-border bg-background p-3 hover:border-primary/50 transition-all">
-                  <div className={`size-8 rounded-lg grid place-items-center mb-2 ${t.accent === "amber" ? "bg-amber-500/15 text-amber-400" : "bg-primary/15 text-primary"}`}>
-                    <t.icon className="size-4" />
-                  </div>
-                  <div className="font-display text-xl font-bold leading-none">{t.value ?? "—"}</div>
-                  <div className="text-[11px] text-muted-foreground mt-1 leading-tight">{t.label}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </aside>
-      </div>
+      <aside className="min-w-0 space-y-4 xl:sticky xl:top-4 xl:self-start">
+        <ThemePickerCard />
+        <RecoveryCodes />
+        <VpnBackfillCard />
+      </aside>
     </div>
   );
 }
+
 
 interface BackupCodeRow {
   id: string;
