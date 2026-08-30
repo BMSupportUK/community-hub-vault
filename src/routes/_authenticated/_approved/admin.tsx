@@ -7,6 +7,14 @@ import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { backfillVpnDetection } from "@/lib/vpn-backfill.functions";
 import { useAppTheme, setAppTheme, type AppTheme } from "@/hooks/use-app-theme";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin")({
   validateSearch: (search: Record<string, unknown>): { next?: string } => ({
@@ -747,37 +755,50 @@ function RecoveryCodes() {
         </div>
       )}
 
-      {fresh && (
-        <div className="mb-4 rounded-xl border border-primary/40 bg-primary/5 p-4">
-          <div className="flex items-center justify-between gap-2 mb-2">
-            <div className="text-sm font-medium">Save these codes now — they won't be shown again</div>
-            <div className="flex gap-2">
-              <button onClick={copyAll} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-surface-2 border border-border text-xs hover:bg-surface-3">
-                <Copy className="size-3.5" /> Copy
-              </button>
-              <button onClick={download} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-surface-2 border border-border text-xs hover:bg-surface-3">
-                <Download className="size-3.5" /> Download
-              </button>
-              <button onClick={() => setFresh(null)} className="px-2.5 py-1.5 rounded-md bg-surface-2 border border-border text-xs hover:bg-surface-3">
-                Done
-              </button>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 font-mono text-sm">
-            {fresh.map((c) => (
-              <button
-                key={c}
-                type="button"
-                onClick={() => copySingle(c)}
-                title="Click to copy"
-                className="px-2 py-1.5 rounded-md bg-background border border-border text-center tracking-wider hover:bg-surface-2 cursor-pointer select-all"
-              >
-                {c}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+      <Dialog open={!!fresh} onOpenChange={(open) => { if (!open) setFresh(null); }}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <LifeBuoy className="size-5 text-primary" /> New recovery codes generated
+            </DialogTitle>
+            <DialogDescription>
+              Save these codes somewhere safe — they will not be shown again. Each code can only be used once.
+            </DialogDescription>
+          </DialogHeader>
+
+          {fresh && (
+            <>
+              <div className="rounded-xl border border-primary/40 bg-primary/5 p-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 font-mono text-sm">
+                  {fresh.map((c) => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => copySingle(c)}
+                      title="Click to copy"
+                      className="px-2 py-2 rounded-md bg-background border border-border text-center tracking-wider hover:bg-surface-2 cursor-pointer select-all"
+                    >
+                      {c}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <DialogFooter className="flex-col sm:flex-row gap-2">
+                <button onClick={copyAll} className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-surface-2 border border-border text-sm font-medium hover:bg-surface-3">
+                  <Copy className="size-4" /> Copy all
+                </button>
+                <button onClick={download} className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-surface-2 border border-border text-sm font-medium hover:bg-surface-3">
+                  <Download className="size-4" /> Download
+                </button>
+                <button onClick={() => setFresh(null)} className="flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:bg-primary/90">
+                  Done
+                </button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {rows && rows.length > 0 && (
         <div>
