@@ -5,6 +5,8 @@ import { TicketAssignedAlert } from "@/components/app/TicketAssignedAlert";
 import { TicketHelpRequestedAlert } from "@/components/app/TicketHelpRequestedAlert";
 import { FanZoneAccessCard } from "@/components/app/FanZoneAccessCard";
 import { SoundUnlocker } from "@/components/app/SoundUnlocker";
+import { ScreenLockProvider } from "@/components/app/ScreenLockProvider";
+import { ScreenLockResetAlerts } from "@/components/app/ScreenLockResetAlerts";
 import { usePushRegister } from "@/hooks/use-push-register";
 
 export function ApprovedDeferredExtras() {
@@ -19,6 +21,8 @@ export function ApprovedDeferredExtras() {
       <TicketAssignedAlert />
       <TicketHelpRequestedAlert />
       <FanZoneAccessCard />
+      <ScreenLockProvider />
+      <ScreenLockResetAlerts />
     </>
   );
 }
