@@ -392,49 +392,52 @@ function TicketsPage() {
 
   return (
     <main className={cn(
-      "flex-1 overflow-y-auto bg-gradient-to-br from-rose-950 via-fuchsia-950/60 to-slate-950 text-white",
+      "flex-1 overflow-y-auto text-white",
       isChatting && "overflow-hidden"
     )}>
+      <div className="relative min-h-full">
+        {/* Full-page background image */}
+        <div className="absolute inset-0 -z-10">
+          <img src={ticketsHero} alt="" aria-hidden className="w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-br from-rose-700/85 via-fuchsia-700/75 to-violet-800/85" />
+          <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-b from-transparent to-rose-950" />
+        </div>
+
       {/* Hero — hidden on the Tickets tab (list + chat view) */}
       {!hideHero && (
         <section className="relative overflow-hidden">
-          <div className="absolute inset-0">
-            <img src={ticketsHero} alt="" aria-hidden className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-gradient-to-br from-rose-700/85 via-fuchsia-700/75 to-violet-800/85" />
-            <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-b from-transparent to-rose-950" />
-          </div>
           <div className="relative px-6 md:px-10 pt-10 md:pt-14 pb-20 md:pb-24 flex flex-col md:flex-row md:items-center md:gap-8">
             <div className="max-w-3xl flex-1">
              <div className="text-xs uppercase tracking-[0.2em] text-rose-100/90 mb-3">BM Support · Help Desk</div>
              <div className="mt-2 inline-flex items-center gap-3 rounded-2xl bg-white/10 backdrop-blur border border-white/25 px-4 py-2.5 shadow-lg">
-              <div className="flex">
-                {[1, 2, 3, 4, 5].map((n) => (
-                  <Star
-                    key={n}
-                    className={cn(
-                      "size-4",
-                      n <= Math.round(avgRating)
-                        ? "text-amber-300 fill-amber-300"
-                        : "text-white/40",
-                    )}
-                  />
-                ))}
-              </div>
-              <div className="text-sm">
-                <span className="font-bold tabular-nums">
-                  {ratingCount > 0 ? avgRating.toFixed(1) : "—"}
-                </span>
-                <span className="text-rose-100/85 ml-1.5">
-                  {ratingCount > 0
-                    ? `from ${ratingCount} customer rating${ratingCount === 1 ? "" : "s"}`
-                    : "No ratings yet"}
-                </span>
-              </div>
+               <div className="flex">
+                 {[1, 2, 3, 4, 5].map((n) => (
+                   <Star
+                     key={n}
+                     className={cn(
+                       "size-4",
+                       n <= Math.round(avgRating)
+                         ? "text-amber-300 fill-amber-300"
+                         : "text-white/40",
+                     )}
+                   />
+                 ))}
+               </div>
+               <div className="text-sm">
+                 <span className="font-bold tabular-nums">
+                   {ratingCount > 0 ? avgRating.toFixed(1) : "—"}
+                 </span>
+                 <span className="text-rose-100/85 ml-1.5">
+                   {ratingCount > 0
+                     ? `from ${ratingCount} customer rating${ratingCount === 1 ? "" : "s"}`
+                     : "No ratings yet"}
+                 </span>
+               </div>
+             </div>
             </div>
-           </div>
-           <div className="mt-6 md:mt-0 md:w-[340px] md:shrink-0">
-             <ActiveOutagesBox />
-           </div>
+            <div className="mt-6 md:mt-0 md:w-[340px] md:shrink-0">
+              <ActiveOutagesBox />
+            </div>
           </div>
         </section>
       )}
