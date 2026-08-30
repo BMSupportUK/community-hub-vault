@@ -27,7 +27,9 @@ type MsgStatus = "sending" | "sent" | "failed";
 interface ThreadMsg { id: string; sender_id: string; content: string; created_at: string; status?: MsgStatus }
 
 function ModerationPage() {
-  const { isMod, user } = useAuth();
+  const { isMod, user, hasAny } = useAuth();
+  const canBan = hasAny(["admin", "management"]);
+  const banFromGate = useServerFn(banUserFromGate);
   if (!isAdminUnlocked(user?.id)) {
     return <Navigate to="/admin" search={{ next: "/moderation" } as never} />;
   }
