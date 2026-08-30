@@ -339,7 +339,7 @@ export function ChannelColumn({
                     g.onEditGroupPerms ||
                     g.onDeleteGroup ||
                     onReorderGroups) && (
-                    <div className="hidden group-hover/cat:flex items-center gap-1 pt-1 pl-5 text-muted-foreground">
+                    <div className="flex items-center gap-1 pt-1 pl-5 text-muted-foreground">
                       {onReorderGroups && (
                         <>
                           <button
