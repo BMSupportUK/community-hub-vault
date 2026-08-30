@@ -320,7 +320,7 @@ export function StaffOnDutyStrip({
               id={p.equipped_nameplate_id}
               className={cn(
                 "flex flex-col justify-center w-full rounded-md px-2 py-1 shadow-sm isolate",
-                dane ? "" : "opacity-80",
+                dane || inChat ? "" : "opacity-80",
                 isTickets ? "pr-2" : "pr-12",
               )}
             >
