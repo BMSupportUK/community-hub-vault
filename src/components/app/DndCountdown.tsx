@@ -61,14 +61,15 @@ export function DndCountdown({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full bg-violet-500/15 text-violet-300 ring-1 ring-violet-500/40 font-semibold tabular-nums",
-        compact ? "px-1.5 py-0.5 text-[10px]" : "px-2 py-0.5 text-[11px]",
+        "inline-flex items-center gap-1 rounded-full bg-violet-500 text-white ring-1 ring-violet-200/70 font-bold tabular-nums shadow-[0_0_10px_2px_rgba(168,85,247,0.6)] animate-pulse",
+        compact ? "px-2 py-0.5 text-[11px]" : "px-2.5 py-0.5 text-xs",
         className,
       )}
       title={title}
     >
-      <Moon className={compact ? "size-2.5" : "size-3"} />
+      <Moon className={compact ? "size-3" : "size-3.5"} />
       <span>DND{remaining !== null ? ` • ${formatRemaining(remaining)}` : ""}</span>
     </span>
   );
 }
+
