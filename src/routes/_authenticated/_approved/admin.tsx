@@ -740,7 +740,15 @@ function RecoveryCodes() {
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 font-mono text-sm">
             {fresh.map((c) => (
-              <div key={c} className="px-2 py-1.5 rounded-md bg-background border border-border text-center tracking-wider">{c}</div>
+              <button
+                key={c}
+                type="button"
+                onClick={() => copySingle(c)}
+                title="Click to copy"
+                className="px-2 py-1.5 rounded-md bg-background border border-border text-center tracking-wider hover:bg-surface-2 cursor-pointer select-all"
+              >
+                {c}
+              </button>
             ))}
           </div>
         </div>
@@ -753,23 +761,21 @@ function RecoveryCodes() {
             {rows.map((r, i) => (
               <div
                 key={r.id}
-                className={`flex items-center justify-between gap-2 px-2 py-1.5 rounded-md border ${r.used_at ? "bg-surface-2 border-border text-muted-foreground" : "bg-background border-border"}`}
-                title={r.used_at ? `Used ${new Date(r.used_at).toLocaleString("en-GB")}` : "Unused"}
+                role={!r.used_at && r.code ? "button" : undefined}
+                tabIndex={!r.used_at && r.code ? 0 : undefined}
+                onClick={() => { if (!r.used_at && r.code) copySingle(r.code); }}
+                onKeyDown={(e) => { if ((e.key === "Enter" || e.key === " ") && !r.used_at && r.code) { e.preventDefault(); copySingle(r.code); } }}
+                className={`flex items-center justify-between gap-2 px-2 py-1.5 rounded-md border ${r.used_at ? "bg-surface-2 border-border text-muted-foreground" : "bg-background border-border hover:bg-surface-2 cursor-pointer"}`}
+                title={r.used_at ? `Used ${new Date(r.used_at).toLocaleString("en-GB")}` : "Click to copy"}
               >
-                <span className={`tracking-wider ${r.used_at ? "line-through" : ""}`}>
+                <span className={`tracking-wider select-all ${r.used_at ? "line-through" : ""}`}>
                   {r.code ?? `Code #${String(i + 1).padStart(2, "0")}`}
                 </span>
                 {!r.used_at && r.code && (
-                  <button
-                    onClick={() => copySingle(r.code!)}
-                    className="p-1 rounded-md hover:bg-surface-2 text-muted-foreground hover:text-foreground"
-                    aria-label="Copy code"
-                    title="Copy code"
-                  >
-                    <Copy className="size-3.5" />
-                  </button>
+                  <Copy className="size-3.5 text-muted-foreground shrink-0" />
                 )}
               </div>
+
             ))}
           </div>
         </div>
