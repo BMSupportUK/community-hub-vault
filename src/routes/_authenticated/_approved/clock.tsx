@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Clock, LogIn, LogOut, Coffee, UtensilsCrossed, Loader2, PlayCircle, Bell } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -11,6 +11,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { sendShiftEventPush, sendBreakEventPush } from "@/lib/push.functions";
 import { PushNotificationsToggle } from "@/components/app/PushNotificationsToggle";
 import { type BreakKind, BREAK_LIMITS, breakLabel } from "@/lib/breaks";
+import { StaffOnDutyStrip } from "@/components/app/StaffOnDutyStrip";
 
 export const Route = createFileRoute("/_authenticated/_approved/clock")({
   component: ClockPage,
@@ -18,7 +19,6 @@ export const Route = createFileRoute("/_authenticated/_approved/clock")({
 
 interface Shift { id: string; user_id: string; clock_in: string; clock_out: string | null; }
 interface Break { id: string; shift_id: string; user_id: string; kind: BreakKind; started_at: string; ended_at: string | null; }
-interface Profile { id: string; username: string | null; display_name: string | null; }
 
 function fmt(seconds: number) {
   const s = Math.max(0, Math.floor(seconds));
@@ -52,7 +52,6 @@ function ClockPage() {
   const [myBreak, setMyBreak] = useState<Break | null>(null);
   const [activeShifts, setActiveShifts] = useState<Shift[]>([]);
   const [activeBreaks, setActiveBreaks] = useState<Break[]>([]);
-  const [profiles, setProfiles] = useState<Record<string, Profile>>({});
 
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
@@ -78,11 +77,6 @@ function ClockPage() {
       setMyBreak(null);
     }
 
-    const ids = Array.from(new Set([...(allShifts ?? []).map((s: Shift) => s.user_id)]));
-    if (ids.length) {
-      const { data: profs } = await supabase.from("profiles").select("id, username, display_name").in("id", ids);
-      setProfiles(Object.fromEntries((profs ?? []).map((p) => [p.id, p as Profile])));
-    }
     setLoading(false);
   };
 
@@ -150,11 +144,8 @@ function ClockPage() {
   const breakRemaining = myBreak ? BREAK_LIMITS[myBreak.kind] - breakElapsed : 0;
   const overBreak = breakRemaining < 0;
 
-  const breaksByUser = useMemo(() => {
-    const m = new Map<string, Break>();
-    activeBreaks.forEach((b) => m.set(b.user_id, b));
-    return m;
-  }, [activeBreaks]);
+
+
 
   if (loading) {
     return (
@@ -168,7 +159,7 @@ function ClockPage() {
       style={{ backgroundImage: `url(${clockBg})` }}
     >
       <div className="absolute inset-0 bg-background/45 backdrop-blur-[2px] pointer-events-none" aria-hidden />
-      <div className="relative max-w-5xl mx-auto px-6 py-8 space-y-6">
+      <div className="relative w-full px-4 sm:px-6 py-8 space-y-6">
         <header className="flex items-center gap-3 flex-wrap">
           <div className="size-12 rounded-2xl bg-primary/20 backdrop-blur grid place-items-center ring-1 ring-primary/30">
             <Clock className="size-6 text-primary-foreground" />
@@ -247,51 +238,19 @@ function ClockPage() {
           )}
         </div>
 
-        {/* Staff status panel */}
+        {/* Staff status panel — staff strip cards, side by side */}
         {isStaff && (
           <section className="rounded-2xl border border-border bg-surface-1/70 backdrop-blur-md overflow-hidden">
-            <div className="px-5 py-3 border-b border-border bg-surface-2/70 flex items-center justify-between">
+            <div className="px-5 py-3 border-b border-border bg-surface-2/70 flex items-center justify-between gap-3 flex-wrap">
               <div className="text-sm font-semibold">On shift right now</div>
               <div className="text-xs text-muted-foreground">{activeShifts.length} working · {activeBreaks.length} on break</div>
             </div>
-            {activeShifts.length === 0 ? (
-              <div className="px-5 py-10 text-center text-sm text-muted-foreground">Nobody's clocked in.</div>
-            ) : (
-              <ul className="divide-y divide-border">
-                {activeShifts.map((s) => {
-                  const p = profiles[s.user_id];
-                  const br = breaksByUser.get(s.user_id);
-                  const elapsed = (now - new Date(s.clock_in).getTime()) / 1000;
-                  const brElapsed = br ? (now - new Date(br.started_at).getTime()) / 1000 : 0;
-                  const brRemain = br ? BREAK_LIMITS[br.kind] - brElapsed : 0;
-                  const over = brRemain < 0;
-                  return (
-                    <li key={s.id} className="px-5 py-3 flex items-center gap-4">
-                      <div className="size-10 rounded-full bg-surface-2 grid place-items-center font-semibold uppercase">
-                        {(p?.display_name ?? p?.username ?? "?").slice(0, 1)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium truncate">{p?.display_name || p?.username || "Unknown"}</div>
-                        <div className="text-xs text-muted-foreground">@{p?.username ?? s.user_id.slice(0, 8)}</div>
-                        {br ? (
-                          <div className={cn("text-xs mt-0.5 font-medium", over ? "text-destructive" : "text-amber-400")}>
-                            {br.kind === "lunch" ? "🍽 Lunch" : br.kind === "travel" ? "🚗 Travelling home" : "☕ Break"} · {over ? `over by ${fmtMin(-brRemain)}` : `${fmtMin(brRemain)} left`}
-                          </div>
-                        ) : (
-                          <div className="text-xs mt-0.5 text-emerald-400 font-medium">● Working</div>
-                        )}
-                      </div>
-                      <div className="text-right">
-                        <div className="font-mono tabular-nums text-sm">{fmt(elapsed)}</div>
-                        <div className="text-[10px] text-muted-foreground">since {fmtTime(s.clock_in)}</div>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
+            <div className="p-4">
+              <StaffOnDutyStrip variant="tickets" />
+            </div>
           </section>
         )}
+
       </div>
     </main>
   );

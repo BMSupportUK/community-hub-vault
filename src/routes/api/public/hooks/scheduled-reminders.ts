@@ -100,6 +100,10 @@ export const Route = createFileRoute("/api/public/hooks/scheduled-reminders")({
           shiftsByUser.set(sh.user_id, arr);
         }
 
+        // Slots whose start time has passed with nobody clocked in — these get
+        // auto clocked in below.
+        const autoClockIns: { slotId: string; userId: string; startsAt: number; endsAt: number }[] = [];
+
         for (const slot of slots ?? []) {
           const userId = slot.assigned_to as string;
           const startsAt = shiftStartsAt(slot.shift_date as string, slot.start_time as string);
@@ -133,15 +137,16 @@ export const Route = createFileRoute("/api/public/hooks/scheduled-reminders")({
               kind: "shift_start_warn",
             });
           }
-          // START overdue
+          // START overdue — nobody clocked in, so sign them in automatically.
           if (!openShift && !alreadyWorked && toStart <= 0 && now < endsAt) {
+            autoClockIns.push({ slotId: slot.id as string, userId, startsAt, endsAt });
             jobs.push({
               key: `slot:${slot.id}:start:over`,
               userId,
-              title: "Shift has started",
-              body: "Your shift has started. Please clock in.",
+              title: "Clocked in automatically",
+              body: "Your shift has started, so we've clocked you in for you.",
               url: "/clock",
-              kind: "shift_start_over",
+              kind: "shift_auto_clock_in",
             });
           }
           // END warn
@@ -167,6 +172,87 @@ export const Route = createFileRoute("/api/public/hooks/scheduled-reminders")({
             });
           }
         }
+
+        // --- Auto clock-in ----------------------------------------------------
+        // Claimed rota slots that have started without a clock-in get an open
+        // shift created from the slot's start time, then admins/management are
+        // alerted with who was signed in and at what time. The new shift shows
+        // up in the "on shift right now" list on the clock page instantly.
+        let autoClockedIn = 0;
+        if (autoClockIns.length) {
+          const autoKeys = autoClockIns.map((a) => `slot:${a.slotId}:autoclock`);
+          const { data: doneRows } = await (supabaseAdmin as unknown as {
+            from: (t: string) => {
+              select: (cols: string) => {
+                in: (col: string, vals: string[]) => Promise<{ data: { alert_key: string }[] | null }>;
+              };
+            };
+          })
+            .from("scheduled_alert_log")
+            .select("alert_key")
+            .in("alert_key", autoKeys);
+          const done = new Set((doneRows ?? []).map((r) => r.alert_key));
+
+          const todo = autoClockIns.filter((a) => !done.has(`slot:${a.slotId}:autoclock`));
+          const names = new Map<string, string>();
+          if (todo.length) {
+            const { data: profs } = await supabaseAdmin
+              .from("profiles")
+              .select("id, username, display_name")
+              .in("id", Array.from(new Set(todo.map((a) => a.userId))));
+            for (const p of profs ?? []) {
+              names.set(
+                p.id as string,
+                (p.display_name as string | null) || (p.username as string | null) || "Unknown staff",
+              );
+            }
+          }
+
+          for (const a of todo) {
+            // Guard against a race: skip if an open shift appeared meanwhile.
+            const { data: stillOpen } = await supabaseAdmin
+              .from("shifts")
+              .select("id")
+              .eq("user_id", a.userId)
+              .is("clock_out", null)
+              .limit(1)
+              .maybeSingle();
+            if (stillOpen) continue;
+
+            const { error: insErr } = await supabaseAdmin.from("shifts").insert({
+              user_id: a.userId,
+              clock_in: new Date(a.startsAt).toISOString(),
+            });
+            if (insErr) {
+              console.error("[scheduled-reminders] auto clock-in failed", a.slotId, insErr.message);
+              continue;
+            }
+            autoClockedIn++;
+
+            const name = names.get(a.userId) ?? "Unknown staff";
+            const clockedAt = new Date(a.startsAt).toLocaleTimeString("en-GB", {
+              hour: "2-digit",
+              minute: "2-digit",
+              timeZone: "Europe/London",
+            });
+            await supabaseAdmin.from("staff_notifications").insert({
+              kind: "staff_auto_clock_in",
+              title: `${name} auto clocked in`,
+              body: `${name} hadn't clocked in for their claimed shift, so they were signed in automatically at ${clockedAt} (shift start time).`,
+              link_path: "/clock",
+              entity_id: a.userId,
+            });
+
+            await (supabaseAdmin as unknown as {
+              from: (t: string) => {
+                upsert: (row: unknown, opts: { onConflict: string }) => Promise<unknown>;
+              };
+            })
+              .from("scheduled_alert_log")
+              .upsert({ alert_key: `slot:${a.slotId}:autoclock`, user_id: a.userId }, { onConflict: "alert_key" });
+          }
+        }
+
 
         // --- Break end --------------------------------------------------------
         const { data: breaks } = await supabaseAdmin
@@ -203,8 +289,9 @@ export const Route = createFileRoute("/api/public/hooks/scheduled-reminders")({
         }
 
         if (!jobs.length) {
-          return Response.json({ ok: true, evaluated: 0, sent: 0 });
+          return Response.json({ ok: true, evaluated: 0, sent: 0, autoClockedIn });
         }
+
 
         // Dedup: drop any job we've already logged.
         const keys = jobs.map((j) => j.key);
@@ -266,7 +353,9 @@ export const Route = createFileRoute("/api/public/hooks/scheduled-reminders")({
           pending: pending.length,
           sent,
           failed,
+          autoClockedIn,
         });
+
       },
     },
   },
