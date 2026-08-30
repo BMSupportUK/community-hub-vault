@@ -1575,8 +1575,8 @@ function TicketDetail({
               if (!a) return null;
               return <StaffIdCard profile={a} />;
             })()}
-            <span className={cn("ml-auto px-2 py-1 rounded text-xs capitalize", PRI_CLS[ticket.priority])}>{ticket.priority}</span>
             <RequestAdminHelpButton ticketId={ticket.id} />
+            <span className={cn("ml-auto px-2 py-1 rounded text-xs capitalize", PRI_CLS[ticket.priority])}>{ticket.priority}</span>
           </div>
         )}
       </header>
@@ -1869,24 +1869,27 @@ function StaffIdCard({ profile }: { profile: Profile }) {
   const name = profile.display_name || profile.username || "Staff";
   const role = profile.role ?? "staff";
   return (
-    <div
-      className={cn(
-        "inline-flex items-center gap-2 pl-1 pr-2 py-1 rounded-full bg-white/10 border border-white/20 shadow-sm backdrop-blur",
-        roleFlashClass(role),
-      )}
-      title={`Assigned to ${name}`}
+    <Nameplate
+      id={profile.equipped_nameplate_id}
+      className="inline-flex items-center gap-2 pl-1 pr-3 py-1 rounded-full shadow-sm isolate min-h-8"
+      fallbackStyle={{ background: "rgba(255,255,255,0.10)", border: "1px solid rgba(255,255,255,0.20)", backdropFilter: "blur(4px)" }}
     >
-      <img
-        src={resolveAvatarUrl(profile.id, profile.avatar_url ?? null, roleFlashMap)}
-        alt={name}
-        className="size-6 rounded-full object-cover ring-1 ring-white/40"
-      />
-      <div className="flex flex-col leading-tight">
-        <span className="text-[11px] font-semibold text-white">{name}</span>
-        <span className={cn("text-[9px] uppercase tracking-wider px-1 rounded border self-start", ROLE_BADGE[role] ?? ROLE_BADGE.staff)}>
-          {formatRoleLabel(role)}
+      <span
+        className={cn("relative z-10 inline-flex items-center gap-2", roleFlashClass(role))}
+        title={`Assigned to ${name}`}
+      >
+        <img
+          src={resolveAvatarUrl(profile.id, profile.avatar_url ?? null, roleFlashMap)}
+          alt={name}
+          className="size-6 rounded-full object-cover ring-1 ring-white/40"
+        />
+        <span className="flex flex-col leading-tight">
+          <span className="text-[11px] font-semibold text-white drop-shadow">{name}</span>
+          <span className={cn("text-[9px] uppercase tracking-wider px-1 rounded border self-start", ROLE_BADGE[role] ?? ROLE_BADGE.staff)}>
+            {formatRoleLabel(role)}
+          </span>
         </span>
-      </div>
-    </div>
+      </span>
+    </Nameplate>
   );
 }
