@@ -497,7 +497,7 @@ function TicketsPage() {
                 </div>
               </div>
               <div className="mt-8 w-full [&>div]:px-0 [&>div]:pt-0">
-                <StaffOnDutyStrip />
+                <StaffOnDutyStrip hideRoles={["moderator"]} />
               </div>
             </div>
           </TabsContent>
