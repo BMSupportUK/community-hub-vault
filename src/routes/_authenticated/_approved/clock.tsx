@@ -247,51 +247,19 @@ function ClockPage() {
           )}
         </div>
 
-        {/* Staff status panel */}
+        {/* Staff status panel — staff strip cards, side by side */}
         {isStaff && (
           <section className="rounded-2xl border border-border bg-surface-1/70 backdrop-blur-md overflow-hidden">
-            <div className="px-5 py-3 border-b border-border bg-surface-2/70 flex items-center justify-between">
+            <div className="px-5 py-3 border-b border-border bg-surface-2/70 flex items-center justify-between gap-3 flex-wrap">
               <div className="text-sm font-semibold">On shift right now</div>
               <div className="text-xs text-muted-foreground">{activeShifts.length} working · {activeBreaks.length} on break</div>
             </div>
-            {activeShifts.length === 0 ? (
-              <div className="px-5 py-10 text-center text-sm text-muted-foreground">Nobody's clocked in.</div>
-            ) : (
-              <ul className="divide-y divide-border">
-                {activeShifts.map((s) => {
-                  const p = profiles[s.user_id];
-                  const br = breaksByUser.get(s.user_id);
-                  const elapsed = (now - new Date(s.clock_in).getTime()) / 1000;
-                  const brElapsed = br ? (now - new Date(br.started_at).getTime()) / 1000 : 0;
-                  const brRemain = br ? BREAK_LIMITS[br.kind] - brElapsed : 0;
-                  const over = brRemain < 0;
-                  return (
-                    <li key={s.id} className="px-5 py-3 flex items-center gap-4">
-                      <div className="size-10 rounded-full bg-surface-2 grid place-items-center font-semibold uppercase">
-                        {(p?.display_name ?? p?.username ?? "?").slice(0, 1)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium truncate">{p?.display_name || p?.username || "Unknown"}</div>
-                        <div className="text-xs text-muted-foreground">@{p?.username ?? s.user_id.slice(0, 8)}</div>
-                        {br ? (
-                          <div className={cn("text-xs mt-0.5 font-medium", over ? "text-destructive" : "text-amber-400")}>
-                            {br.kind === "lunch" ? "🍽 Lunch" : br.kind === "travel" ? "🚗 Travelling home" : "☕ Break"} · {over ? `over by ${fmtMin(-brRemain)}` : `${fmtMin(brRemain)} left`}
-                          </div>
-                        ) : (
-                          <div className="text-xs mt-0.5 text-emerald-400 font-medium">● Working</div>
-                        )}
-                      </div>
-                      <div className="text-right">
-                        <div className="font-mono tabular-nums text-sm">{fmt(elapsed)}</div>
-                        <div className="text-[10px] text-muted-foreground">since {fmtTime(s.clock_in)}</div>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
+            <div className="p-4">
+              <StaffOnDutyStrip variant="tickets" />
+            </div>
           </section>
         )}
+
       </div>
     </main>
   );
