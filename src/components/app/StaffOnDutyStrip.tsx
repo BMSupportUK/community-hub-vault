@@ -20,7 +20,13 @@ export function StaffOnDutySidebar() {
   return <StaffOnDutyStrip variant="sidebar" />;
 }
 
-export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "sidebar" } = {}) {
+export function StaffOnDutyStrip({
+  variant = "strip",
+  hideRoles = [],
+}: {
+  variant?: "strip" | "sidebar";
+  hideRoles?: string[];
+} = {}) {
   const [shifts, setShifts] = useState<StaffShift[]>([]);
   const [breaks, setBreaks] = useState<StaffBreak[]>([]);
   const [profiles, setProfiles] = useState<Record<string, StaffProfile>>({});
