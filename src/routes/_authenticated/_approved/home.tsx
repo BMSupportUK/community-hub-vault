@@ -400,8 +400,11 @@ function HomeLayout() {
           badge: mentionCounts[`/home/${c.slug}`] ?? 0,
         })),
         onAddItem: isAdmin ? () => setAddChannelGroup(label) : undefined,
-        onDeleteItem: isAdmin ? (to) => deleteChannel(to.replace("/home/", "")) : undefined,
-        onDeleteGroup: isAdmin ? () => deleteGroup(label) : undefined,
+        onDeleteItem:
+          isAdmin && !items.every((c) => c.is_protected)
+            ? (to) => deleteChannel(to.replace("/home/", ""))
+            : undefined,
+        onDeleteGroup: isAdmin && !isProtectedLabel(label) ? () => deleteGroup(label) : undefined,
         onEditItemPerms: isAdmin
           ? (to) => {
               const slug = to.replace("/home/", "");
