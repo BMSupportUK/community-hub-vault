@@ -67,7 +67,8 @@ export function useDndStatus(userId: string | null | undefined): DndInfo | null 
       )
       .subscribe();
 
-    // Roll over time windows once a minute even without DB changes.
+    // Roll over time windows quickly even without DB changes, so the badge
+    // flips on/off within seconds of the scheduled boundary.
     const tick = setInterval(() => {
       setInfo((prev) =>
         prev
@@ -81,7 +82,7 @@ export function useDndStatus(userId: string | null | undefined): DndInfo | null 
             }
           : prev,
       );
-    }, 30_000);
+    }, 5_000);
 
     return () => {
       cancelled = true;
