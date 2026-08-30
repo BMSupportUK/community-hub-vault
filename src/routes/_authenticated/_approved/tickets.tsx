@@ -8,7 +8,8 @@ import ticketsHero from "@/assets/tickets-hero.jpg";
 import {
   Ticket as TicketIcon, Plus, Send, Lock, X, LifeBuoy, CreditCard, Bug, Sparkles, UserCog,
   Tv, Film, Circle, CircleDot, Clock4, CheckCircle2, XCircle, ChevronDown, Trash2,
-  Paperclip, FileText, Star, HelpCircle, Ban,
+  Paperclip, FileText, Star, HelpCircle, Ban, Home,
+
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -496,13 +497,22 @@ function TicketsPage() {
                 isChatting && "rounded-none border-y-0 border-l-0 h-full overflow-y-auto hidden lg:block"
               )}>
                 {isChatting && (
-                  <button
-                    onClick={() => { navigate({ to: "/tickets", search: { id: undefined, view } }); }}
-                    className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white/10 text-white text-sm font-semibold hover:bg-white/20 border border-white/20"
-                  >
-                    <X className="size-4" /> Close ticket
-                  </button>
+                  <div className="flex flex-col gap-2">
+                    <button
+                      onClick={() => { setTab("welcome"); navigate({ to: "/tickets", search: { id: undefined, view } }); }}
+                      className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white text-rose-600 text-sm font-semibold hover:bg-white/90 border border-white shadow transition-colors"
+                    >
+                      <Home className="size-4" /> Back to welcome
+                    </button>
+                    <button
+                      onClick={() => { navigate({ to: "/tickets", search: { id: undefined, view } }); }}
+                      className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white/10 text-white text-sm font-semibold hover:bg-white/20 border border-white/20"
+                    >
+                      <X className="size-4" /> Close ticket
+                    </button>
+                  </div>
                 )}
+
                 {isStaff && (
                   <div className="flex gap-1 bg-white/10 p-1 rounded-lg text-xs">
                     {(["mine", "assigned", "all"] as const).map((v) => (
