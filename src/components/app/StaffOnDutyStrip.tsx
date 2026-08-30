@@ -237,7 +237,7 @@ export function StaffOnDutyStrip({
             <PresenceDot
               userId={s.user_id}
               baseClass={onBreak ? (over ? "bg-red-500" : "bg-amber-400") : "bg-emerald-500"}
-              {...(isDaneJProfile(p) ? { dndClass: "bg-gray-400" } : {})}
+              {...(daneOverride && isDaneJProfile(p) ? { dndClass: "bg-gray-400" } : {})}
             />
           </div>
           <div className="min-w-0 flex-1">
