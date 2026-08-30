@@ -304,8 +304,8 @@ function ModerationPage() {
             ))}
           </div>
         </header>
-        <div className="flex-1 overflow-y-auto p-6">
-          <div className="max-w-3xl mx-auto space-y-3">
+        <div className="flex-1 overflow-y-auto p-6 flex gap-6 items-start">
+          <div className="flex-1 min-w-0 space-y-3">
             {apps.length === 0 && (
               <div className="text-center text-sm text-muted-foreground py-12">No {filter} requests.</div>
             )}
