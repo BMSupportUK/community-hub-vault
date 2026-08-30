@@ -260,7 +260,7 @@ export function StaffOnDutyStrip({
                     {(() => { const Icon = breakIcon(br!.kind); return <Icon className="size-3 shrink-0" />; })()}
                     <span className="truncate">{breakLabel(br!.kind)} {over ? `+${fmtMinSec(-brRemain)}` : fmtMinSec(brRemain)}</span>
                   </span>
-                ) : isDaneJProfile(p) ? (
+                ) : daneOverride && isDaneJProfile(p) ? (
                   <DaneStatusLine userId={s.user_id} />
                 ) : (
                   <span>{fmtHMS(shiftElapsed)}</span>
