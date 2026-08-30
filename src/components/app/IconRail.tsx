@@ -211,7 +211,18 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     );
   }
 
-  const items: RailItem[] = [
+  const FAN_ZONE_PREFIXES = [
+    "/forum",
+    "/fanzone",
+    "/fan-zone",
+    "/boro-fantasy",
+    "/boro-predictions",
+    "/predictions",
+    "/competition-winners",
+  ];
+  const inFanZone = FAN_ZONE_PREFIXES.some((p) => path === p || path.startsWith(`${p}/`));
+
+  const supportItems: RailItem[] = [
     { to: "/home", label: "Home", icon: Home, show: true },
     { to: "/home/$channel", label: "Customer Chatroom", icon: MessageSquare, show: true, params: { channel: "welcome" } },
     { to: "/tickets", label: "Tickets", icon: Ticket, show: !hasRole("moderator") },
@@ -221,19 +232,27 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     { to: "/knowledge-base", label: "Knowledge base", icon: BookOpen, show: true },
     { to: "/what-to-watch", label: "What to Watch", icon: Popcorn, show: true },
     { to: "/leaderboard", label: "Referrals", icon: Trophy, show: true },
+    { to: "/new-content", label: "New content", icon: Tv, show: true, badge: unreadNewContent },
+    { to: "/members", label: "Members", icon: Users, show: true },
+    { to: "/staff", label: "Staff", icon: Briefcase, show: true },
+    { to: "/forum", label: "Boro Fan Zone", icon: BoroBadgeIcon, show: true },
+  ];
+
+  const fanZoneItems: RailItem[] = [
+    { to: "/forum", label: "Boro Fan Zone", icon: BoroBadgeIcon, show: true },
+    { to: "/fanzone/messages", label: "Fan Zone Messages", icon: MessagesSquare, show: true },
+    { to: "/fanzone/profile", label: "Fan Zone Profile", icon: UserCircle2, show: true },
+    { to: "/boro-fantasy", label: "Boro Fantasy", icon: FantasyBenchIcon, show: true },
     ...COMPETITIONS.map((c) => ({
       to: c.to,
       label: c.railLabel,
       icon: c.key === "boro2026" ? PredictionsGoalIcon : Goal,
       show: !finishedCompetitions.includes(c.key),
     })),
-    { to: "/boro-fantasy", label: "Boro Fantasy", icon: FantasyBenchIcon, show: true },
     { to: "/competition-winners", label: "Competition Winners", icon: Crown, show: true },
-    { to: "/new-content", label: "New content", icon: Tv, show: true, badge: unreadNewContent },
-    { to: "/members", label: "Members", icon: Users, show: true },
-    { to: "/staff", label: "Staff", icon: Briefcase, show: true },
-    { to: "/forum", label: "Boro Fan Zone", icon: BoroBadgeIcon, show: true },
   ];
+
+  const items = inFanZone ? fanZoneItems : supportItems;
 
   const allowedByPerms = (to: string) => {
     if (to === "/forum") return true;
@@ -244,6 +263,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     return roles.some((r: AppRole) => allowed.includes(r));
   };
   const visible = items.filter((i) => i.show && allowedByPerms(i.to));
+
   const sorted = [...visible].sort((a, b) => {
     const ai = order[a.to] ?? items.findIndex((x) => x.to === a.to) * 10 + 1000;
     const bi = order[b.to] ?? items.findIndex((x) => x.to === b.to) * 10 + 1000;
