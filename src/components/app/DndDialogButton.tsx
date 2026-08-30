@@ -184,6 +184,7 @@ export function DndDialogButton({ className }: { className?: string }) {
           className={cn(
             "relative p-2 rounded-lg hover:bg-surface-2 transition-colors",
             active ? "text-violet-300" : "hover:text-foreground",
+            className,
           )}
         >
           <Moon className="size-4" />
