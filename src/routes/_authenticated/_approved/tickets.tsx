@@ -395,13 +395,14 @@ function TicketsPage() {
       "flex-1 overflow-y-auto text-white",
       isChatting && "overflow-hidden"
     )}>
-      <div className="relative min-h-full">
+      <div className="relative min-h-full bg-rose-950">
         {/* Full-page background image */}
-        <div className="absolute inset-0 -z-10">
+        <div className="pointer-events-none absolute inset-0 z-0">
           <img src={ticketsHero} alt="" aria-hidden className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-br from-rose-700/85 via-fuchsia-700/75 to-violet-800/85" />
           <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-b from-transparent to-rose-950" />
         </div>
+
 
       {/* Hero — hidden on the Tickets tab (list + chat view) */}
       {!hideHero && (
