@@ -19,14 +19,19 @@ export function NameplatePicker({ userId, currentId, onClose, onChange }: Namepl
 
   useEffect(() => {
     (async () => {
-      const { data: nps } = await supabase
-        .from("nameplates")
-        .select("id,name,description,image_url,gradient_css,animation_class,is_active,sort_order")
-        .eq("is_active", true)
-        .order("sort_order", { ascending: true });
-      const list = (nps as NameplateRow[]) ?? [];
-      setRows(list);
-      primeNameplates(list);
+      const [{ data: nps }, { data: owned }] = await Promise.all([
+        supabase
+          .from("nameplates")
+          .select("id,name,description,image_url,gradient_css,animation_class,is_active,sort_order,is_free")
+          .eq("is_active", true)
+          .order("sort_order", { ascending: true }),
+        supabase.from("user_nameplates").select("nameplate_id").eq("user_id", userId),
+      ]);
+      const all = (nps as NameplateRow[]) ?? [];
+      primeNameplates(all);
+      const ownedIds = new Set(((owned as { nameplate_id: string }[]) ?? []).map((o) => o.nameplate_id));
+      // Free nameplates are available to everyone; the rest need an admin grant.
+      setRows(all.filter((r) => r.is_free || ownedIds.has(r.id)));
       setLoading(false);
     })();
   }, [userId]);
