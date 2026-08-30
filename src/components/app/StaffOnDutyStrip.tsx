@@ -163,7 +163,7 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
             <span className="size-2 rounded-full bg-emerald-400 animate-pulse" /> live
           </div>
         </div>
-        <div className={cn("relative", isSidebar ? "flex flex-col gap-2" : "flex gap-2 overflow-x-auto pb-1")}>
+        <div className={cn("relative", isSidebar ? "flex flex-col gap-2" : "grid gap-2 grid-cols-[repeat(auto-fill,minmax(220px,1fr))]")}>
           {shifts.length === 0 && (
             <div className={cn(
               "rounded-lg p-2.5 border border-white/20 bg-white/10 text-white/80 text-xs flex items-center gap-2",
