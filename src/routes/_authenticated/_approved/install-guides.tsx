@@ -456,7 +456,7 @@ function InstallGuidesPage() {
                   Welcome to Install Guides
                 </h2>
                 <p className="mt-4 text-base sm:text-lg text-foreground/90 drop-shadow">
-                  Everything you need to get up and running — written walkthroughs and downloadable PDF references.
+                  Everything you need to get up and running — written walkthroughs and PDF references, viewable securely in-app.
                 </p>
                 <p className="mt-3 text-foreground/80 drop-shadow">
                   Browse by category, search for what you need, and open PDFs directly in your browser.
