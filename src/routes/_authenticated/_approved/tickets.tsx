@@ -1588,28 +1588,74 @@ function TicketDetail({
         onRate={onRate}
       />
 
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-3 sm:px-5 py-3 sm:py-4 space-y-3">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-3 sm:px-5 py-3 sm:py-4">
         {messages.map((m) => {
-          const mine = m.sender_id === currentUserId;
+          const name = senderName(m.sender_id);
+          const meta = senderMeta[m.sender_id];
+          const role = chatRoleFlashMap.get(m.sender_id);
+          const avatarUrl = resolveAvatarUrl(m.sender_id, meta?.avatar_url ?? null, chatRoleFlashMap);
+          const hasAvatar = !!meta?.avatar_url || role === "staff" || role === "management" || role === "moderator";
           return (
-            <div key={m.id} className={cn("flex gap-3", mine && "flex-row-reverse")}>
-              <div className="size-8 rounded-full bg-white text-rose-600 grid place-items-center text-xs font-bold shrink-0 shadow">
-                {senderName(m.sender_id).slice(0, 1).toUpperCase()}
-              </div>
-              <div className={cn("max-w-[88%] sm:max-w-[70%] rounded-2xl px-3 sm:px-4 py-2 text-sm shadow",
-                m.is_internal ? "bg-amber-200/90 text-amber-950 border border-amber-300" :
-                mine ? "bg-white text-rose-700" : "bg-white/20 backdrop-blur text-white border border-white/25",
-              )}>
-                <div className="text-[10px] uppercase tracking-wider opacity-70 mb-0.5 flex items-center gap-1">
-                  {m.is_internal && <Lock className="size-3" />}
-                  {senderName(m.sender_id)} · {new Date(m.created_at).toLocaleString("en-GB", { dateStyle: "short", timeStyle: "short", timeZone: tz })}
+            <div key={m.id} className="group relative flex items-start gap-3 rounded-xl mb-4">
+              {hasAvatar ? (
+                <img src={avatarUrl} alt="" className="size-9 rounded-full object-cover shrink-0 mt-1" />
+              ) : (
+                <div className="size-9 rounded-full bg-white/90 text-rose-600 grid place-items-center text-xs font-bold shrink-0 mt-1 shadow">
+                  {name.slice(0, 1).toUpperCase()}
                 </div>
-                <MentionText content={m.content} currentUsername={myUsername} />
-                <TicketAttachments items={m.attachments} />
+              )}
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2 mb-2">
+                  <Nameplate
+                    id={meta?.equipped_nameplate_id}
+                    className="inline-flex items-center rounded-md px-3 py-1 min-w-0 h-7 max-h-7 pr-12 shadow-sm isolate"
+                    fallbackStyle={{
+                      background: "linear-gradient(135deg, #1a4a2a 0%, #2d6a3f 50%, #1a4a2a 100%)",
+                    }}
+                  >
+                    <span
+                      className={cn(
+                        "relative z-10 font-semibold text-sm truncate px-2 -mx-2 rounded text-white",
+                        roleFlashClass(role),
+                      )}
+                      style={{
+                        background:
+                          "linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.35) 12%, rgba(0,0,0,0.35) 88%, transparent 100%)",
+                      }}
+                    >
+                      {name}
+                    </span>
+                  </Nameplate>
+                  {role && (
+                    <span className="text-[10px] font-semibold uppercase tracking-wider text-white/75 shrink-0">
+                      {formatRoleLabel(role)}
+                    </span>
+                  )}
+                  <span className="text-[10px] text-white/70 shrink-0">
+                    {new Date(m.created_at).toLocaleString("en-GB", { dateStyle: "short", timeStyle: "short", timeZone: tz })}
+                  </span>
+                  {m.is_internal && (
+                    <span className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-300/20 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-100 shrink-0">
+                      <Lock className="size-3" /> Internal
+                    </span>
+                  )}
+                </div>
+                <div
+                  className={cn(
+                    "rounded-2xl px-3 sm:px-4 py-2 text-sm shadow max-w-[90%] sm:max-w-[75%]",
+                    m.is_internal
+                      ? "bg-amber-200/90 text-amber-950 border border-amber-300"
+                      : "bg-white/15 backdrop-blur text-white border border-white/25",
+                  )}
+                >
+                  <MentionText content={m.content} currentUsername={myUsername} />
+                  <TicketAttachments items={m.attachments} />
+                </div>
               </div>
             </div>
           );
         })}
+
       </div>
 
       {othersTyping && Object.keys(othersTyping).length > 0 && ticket.status !== "closed" && (() => {
