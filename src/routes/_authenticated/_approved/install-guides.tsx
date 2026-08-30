@@ -710,7 +710,54 @@ function InstallGuidesPage() {
         </Tabs>
       </div>
 
+      {/* Unlocked guide viewer — link is short-lived and only issued after a valid passcode */}
+      <Dialog open={!!unlocked} onOpenChange={(o) => { if (!o) { setUnlocked(null); scrollBackToGuide(); } }}>
+        <DialogContent className="max-w-5xl h-[90vh] flex flex-col">
+          {unlocked && (
+            <>
+              <DialogHeader>
+                <DialogTitle className="font-display text-2xl flex flex-wrap items-center gap-3 text-white">
+                  <span className="flex-1">{unlocked.blog.title}</span>
+                  {unlocked.url && (
+                    <a
+                      href={unlocked.url}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-sm font-normal inline-flex items-center gap-1 text-primary hover:underline"
+                    >
+                      <FileText className="size-4" /> Download
+                    </a>
+                  )}
+                  {unlocked.viewUrl && (
+                    <a
+                      href={unlocked.viewUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-sm font-normal inline-flex items-center gap-1 text-primary hover:underline"
+                    >
+                      <ExternalLink className="size-4" /> Open in new tab
+                    </a>
+                  )}
+                </DialogTitle>
+              </DialogHeader>
+              {unlocked.viewUrl ? (
+                <iframe
+                  src={unlocked.viewUrl}
+                  title={unlocked.blog.title}
+                  className="flex-1 w-full rounded-lg border border-border bg-white"
+                />
+              ) : (
+                <div className="whitespace-pre-wrap text-sm leading-relaxed overflow-y-auto">
+                  {unlocked.body || "This guide has no readable content yet."}
+                </div>
+              )}
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Reader */}
+
       <Dialog open={!!reading} onOpenChange={(o) => { if (!o) { setReading(null); scrollBackToGuide(); } }}>
         <DialogContent className={reading?.pdf_url ? "max-w-5xl h-[90vh] flex flex-col" : "max-w-2xl max-h-[85vh] overflow-y-auto"}>
           {reading && (
