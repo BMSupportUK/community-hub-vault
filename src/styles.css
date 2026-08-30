@@ -1436,18 +1436,22 @@ html.boro-bg-active .min-h-dvh.bg-background {
 /* =========================================================================
    Nameplate pack v2 — original recreations (gradient bar + animated mascot)
    ========================================================================= */
+/* Discord-style compact plate: artwork hugs the right edge, never grows the bar. */
 .nameplate-mascot {
-  position: absolute;
-  right: 4px;
+  position: absolute !important;
+  right: 2px;
   top: 50%;
   height: 92%;
+  max-height: 100%;
   width: auto;
+  max-width: 40%;
+  object-fit: contain;
   z-index: 3;
   transform: translateY(-50%);
   pointer-events: none;
   filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
 }
-.np2 > * { position: relative; z-index: 2; }
+.np2 > *:not(.nameplate-mascot) { position: relative; z-index: 2; }
 .np2::before,
 .np2::after { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; }
 
