@@ -336,6 +336,7 @@ function RailIcon({
   active,
   accent,
   badge,
+  badgeVariant = "alert",
   draggable,
   search,
   params,
@@ -346,6 +347,7 @@ function RailIcon({
   active?: boolean;
   accent?: boolean;
   badge?: number;
+  badgeVariant?: "alert" | "online";
   draggable?: boolean;
   search?: Record<string, string>;
   params?: Record<string, string>;
