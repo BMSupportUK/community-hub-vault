@@ -396,8 +396,6 @@ function GatePage() {
             : `Your account is awaiting approval for ${intentLabel}.`}
         </p>
 
-        {status !== "approved" && <GateStaffPresence />}
-
         {status !== "approved" && (
           <div className="mt-8 w-full max-w-md rounded-xl border border-red-500/40 bg-red-950/30 backdrop-blur-sm p-5 text-left">
             <div className="text-center font-semibold text-white text-sm">What should I do?</div>
@@ -629,6 +627,10 @@ function GatePage() {
               </div>
               <button onClick={() => setChatOpen(false)} className="text-white/60 hover:text-white"><X className="size-5" /></button>
             </header>
+
+            <div className="border-b border-white/10 px-4 py-3">
+              <GateStaffPresence />
+            </div>
 
             <div ref={scrollerRef} className="flex-1 overflow-y-auto overscroll-contain px-4 py-4 space-y-3">
               <div className="rounded-xl bg-red-500/10 border border-red-500/20 p-3 text-xs text-red-100/90">
