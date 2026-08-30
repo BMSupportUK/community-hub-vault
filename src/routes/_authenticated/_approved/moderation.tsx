@@ -40,6 +40,7 @@ function ModerationPage() {
   const [reply, setReply] = useState("");
   const [senderNames, setSenderNames] = useState<Record<string, string>>({});
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [banningId, setBanningId] = useState<string | null>(null);
   const scrollerRef = useRef<HTMLDivElement>(null);
   const threadChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const [peerTyping, setPeerTyping] = useState<{ id: string } | null>(null);
