@@ -283,6 +283,51 @@ export function GuideFileIcon() {
   return <FileText className="size-10" />;
 }
 
+function formatAccessRemaining(ms: number): string {
+  const total = Math.max(0, Math.ceil(ms / 1000));
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  if (h > 0) return `${h}h ${m.toString().padStart(2, "0")}m ${s.toString().padStart(2, "0")}s`;
+  return `${m.toString().padStart(2, "0")}m ${s.toString().padStart(2, "0")}s`;
+}
+
+/**
+ * Vibrant flashing countdown timer showing how much longer a guide stays unlocked.
+ * Renders nothing if the guide is not currently unlocked.
+ */
+export function GuideAccessTimer({ blogId, expiresAt }: { blogId: string; expiresAt?: string | null }) {
+  const end = expiresAt ? new Date(expiresAt).getTime() : null;
+  const [, setTick] = useState(0);
+
+  useEffect(() => {
+    if (!end || end <= Date.now()) return;
+    const id = setInterval(() => setTick((n) => n + 1), 1000);
+    return () => clearInterval(id);
+  }, [end]);
+
+  if (!end) return null;
+  const remaining = end - Date.now();
+  if (remaining <= 0) return null;
+
+  // Colour shifts from neon green → yellow → orange → red as time runs low.
+  const hoursLeft = remaining / (1000 * 60 * 60);
+  let colourClass = "from-emerald-400 to-lime-400 text-emerald-950";
+  if (hoursLeft <= 1) colourClass = "from-rose-500 to-red-600 text-white animate-pulse";
+  else if (hoursLeft <= 4) colourClass = "from-orange-500 to-amber-500 text-white";
+  else if (hoursLeft <= 12) colourClass = "from-yellow-400 to-amber-400 text-amber-950";
+
+  return (
+    <span
+      title={`Access expires at ${new Date(end).toLocaleString()}`}
+      className={`inline-flex items-center gap-1 rounded-full bg-gradient-to-r ${colourClass} px-2 py-0.5 text-[11px] font-bold tracking-wide shadow-[0_0_12px_rgba(250,204,21,0.55)] ring-1 ring-white/40 animate-pulse`}
+    >
+      <Timer className="size-3" />
+      {formatAccessRemaining(remaining)}
+    </span>
+  );
+}
+
 /** Admin/management panel listing live guide passcodes with a revoke action. */
 export function GuidePasscodeAdmin() {
   const queryClient = useQueryClient();
