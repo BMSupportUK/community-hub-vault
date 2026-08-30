@@ -31,6 +31,8 @@ import { getOrderPaymentState } from "@/lib/order-payment-state.functions";
 import { formatRoleLabel } from "@/lib/role-label";
 import { notifyTicketReply } from "@/lib/ticket-notify.functions";
 import { sendNewTicketPush } from "@/lib/push.functions";
+import { StaffOnDutyStrip } from "@/components/app/StaffOnDutyStrip";
+import { Nameplate } from "@/components/app/Nameplate";
 
 export const Route = createFileRoute("/_authenticated/_approved/tickets")({
   validateSearch: (s: Record<string, unknown>): { id?: string; view?: "mine" | "all" | "assigned"; new2fa?: 1 } => ({
