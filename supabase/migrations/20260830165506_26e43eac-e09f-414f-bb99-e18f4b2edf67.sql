@@ -1,0 +1,1 @@
+revoke all on function public.notify_ticket_assignee_of_reply() from public, anon, authenticated;

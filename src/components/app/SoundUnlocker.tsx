@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { ensureSoundUnlocked } from "@/lib/sound";
 import mentionAudio from "@/assets/mention-notify.mp3";
 import ticketAudio from "@/assets/ticket-notify.mp3";
+import ticketReplyAudio from "@/assets/ticket-reply-notify.mp3";
 import shiftStartAudio from "@/assets/shift-start.mp3";
 import shiftEndAudio from "@/assets/shift-end.mp3";
 import endBreakAudio from "@/assets/end-break.mp3";
@@ -19,6 +20,7 @@ const NOTIFICATION_SOUNDS = [
   broadcastAudio,
   orderAudio,
   ticketAudio,
+  ticketReplyAudio,
   newSignupAudio,
   shiftStartAudio,
   shiftEndAudio,
