@@ -732,31 +732,11 @@ function InstallGuidesPage() {
               <DialogHeader>
                 <DialogTitle className="font-display text-2xl flex flex-wrap items-center gap-3 text-white">
                   <span className="flex-1">{unlocked.blog.title}</span>
-                  {unlocked.url && (
-                    <a
-                      href={unlocked.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-sm font-normal inline-flex items-center gap-1 text-primary hover:underline"
-                    >
-                      <FileText className="size-4" /> Download
-                    </a>
-                  )}
-                  {unlocked.viewUrl && (
-                    <a
-                      href={unlocked.viewUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-sm font-normal inline-flex items-center gap-1 text-primary hover:underline"
-                    >
-                      <ExternalLink className="size-4" /> Open in new tab
-                    </a>
-                  )}
                 </DialogTitle>
               </DialogHeader>
               {unlocked.viewUrl ? (
                 <iframe
-                  src={unlocked.viewUrl}
+                  src={`${unlocked.viewUrl}#toolbar=0&navpanes=0`}
                   title={unlocked.blog.title}
                   className="flex-1 w-full rounded-lg border border-border bg-white"
                 />
@@ -779,21 +759,11 @@ function InstallGuidesPage() {
               <DialogHeader>
                 <DialogTitle className="font-display text-2xl flex items-center gap-3 text-white">
                   <span className="flex-1">{reading.title}</span>
-                  {reading.pdf_url && (
-                    <a
-                      href={reading.pdf_url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-sm font-normal inline-flex items-center gap-1 text-primary hover:underline"
-                    >
-                      <ExternalLink className="size-4" /> Open in new tab
-                    </a>
-                  )}
                 </DialogTitle>
               </DialogHeader>
               {reading.pdf_url ? (
                 <iframe
-                  src={reading.pdf_url}
+                  src={`${reading.pdf_url}#toolbar=0&navpanes=0`}
                   title={reading.title}
                   className="flex-1 w-full rounded-lg border border-border bg-white"
                 />
