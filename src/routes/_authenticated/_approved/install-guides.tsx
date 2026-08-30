@@ -121,6 +121,16 @@ function InstallGuidesPage() {
   const dragBlogId = useRef<string | null>(null);
   const [playingVideo, setPlayingVideo] = useState<Blog | null>(null);
   const videoElRef = useRef<HTMLVideoElement | null>(null);
+  // Guide vault: which stored guides this member currently holds a live
+  // passcode for, plus the guide they just unlocked for viewing.
+  const accessQuery = useGuideAccess();
+  const unlockedIds = useMemo(
+    () => new Set((accessQuery.data ?? []).map((a) => a.blogId)),
+    [accessQuery.data],
+  );
+  const [unlocked, setUnlocked] = useState<UnlockedGuide | null>(null);
+  const [uploadingFile, setUploadingFile] = useState(false);
+
   // Remembers which guide card the user came from so save/cancel returns there
   // instead of dumping them at the top of the list.
   const focusGuideId = useRef<string | null>(null);
