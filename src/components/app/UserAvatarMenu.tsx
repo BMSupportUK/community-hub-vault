@@ -11,9 +11,12 @@ import {
   Shield,
   ShieldCheck,
   Smartphone,
+  Lock,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { lockScreenNow } from "@/components/app/ScreenLockProvider";
+
 import { usePresence } from "@/components/app/PresenceIndicators";
 import {
   DropdownMenu,
