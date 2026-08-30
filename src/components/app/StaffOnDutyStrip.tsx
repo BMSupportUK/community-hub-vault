@@ -58,7 +58,7 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
     const ids = Array.from(new Set([...allIds, ...workingIds]));
     if (ids.length) {
       const { data: profs } = await supabase
-        .from("profiles").select("id,username,display_name,avatar_url,equipped_nameplate_id").in("id", ids);
+        .from("profiles").select("id,username,display_name,avatar_url,equipped_nameplate_id,last_seen_at").in("id", ids);
       const map = Object.fromEntries(((profs as StaffProfile[]) ?? []).map((p) => [p.id, p]));
       setProfiles(map);
       const isDaneJ = (profile: StaffProfile) => {
@@ -131,6 +131,26 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
     const bn = profiles[b.user_id]?.display_name || profiles[b.user_id]?.username || "";
     return an.localeCompare(bn);
   });
+
+  const miniProfile = (userId: string, isWorking: boolean): ChatMiniProfileData | null => {
+    const p = profiles[userId];
+    if (!p) return null;
+    const name = p.display_name || p.username || "Staff";
+    const lastSeen = p.last_seen_at ?? null;
+    const recentlyActive = lastSeen ? now - new Date(lastSeen).getTime() < 10 * 60 * 1000 : false;
+    return {
+      userId,
+      name,
+      username: p.username,
+      avatarUrl: resolveAvatarUrl(userId, p.avatar_url, roleFlashMap),
+      hasAvatar: Boolean(p.avatar_url),
+      nameplateId: p.equipped_nameplate_id,
+      role: (roleFlashMap.get(userId) ?? null) as FlashRole | null,
+      isOnline: isWorking || recentlyActive,
+      lastSeenAt: lastSeen,
+      isSelf: userId === selfId,
+    };
+  };
 
   return (
     <div className={isSidebar ? "p-3 h-full overflow-y-auto" : "px-4 pt-4"}>
