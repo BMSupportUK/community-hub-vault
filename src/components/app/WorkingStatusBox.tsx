@@ -318,6 +318,7 @@ export function WorkingStatusBox({ stackActions = false }: { stackActions?: bool
             >
               <Calendar className="size-4" />
             </Link>
+            <DndDialogButton className="inline-flex items-center justify-center size-8 rounded-full text-white/80 hover:text-white hover:bg-white/10 transition" />
           </div>
         </div>
         <div className="px-5 py-5 space-y-4 text-sm">
