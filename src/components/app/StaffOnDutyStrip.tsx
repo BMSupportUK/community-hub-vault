@@ -345,11 +345,24 @@ export function StaffOnDutyStrip({
     );
   };
 
+  const daneSection = (daneShift || daneOff) ? (
+    <div className="relative mb-3 pb-3 border-b border-white/15">
+      <div className="text-[10px] font-bold uppercase tracking-wider text-amber-200 mb-1.5">
+        Owner
+      </div>
+      <div className={cn(isSidebar ? "flex flex-col gap-2" : "flex flex-wrap gap-2 min-w-0")}>
+        {daneShift ? renderOnDutyCard(daneShift) : renderOffDutyCard(daneOff!)}
+      </div>
+    </div>
+  ) : null;
+
   if (isTickets) {
     return (
       <div className="px-4 pt-4">
         <div className="rounded-xl border border-white/15 p-3 shadow-lg relative overflow-hidden bg-gradient-to-r from-violet-600/40 via-fuchsia-600/40 to-blue-600/40 backdrop-blur">
+          {daneSection}
           <Tabs value={dutyTab} onValueChange={(v) => setDutyTab(v as "on" | "off")}>
+
             <TabsList className="w-full bg-white/10 border border-white/20 p-1 mb-2 flex-wrap h-auto gap-1">
               <TabsTrigger
                 value="on"
