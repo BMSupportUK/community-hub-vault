@@ -411,48 +411,52 @@ function TicketsPage() {
       )}>
         <Tabs value={tab} onValueChange={(v) => setTab(v as "welcome" | "tickets")}>
           {!isChatting && (
-            <div className="flex flex-col md:flex-row md:items-start gap-4">
-              <TabsList className="bg-rose-950/60 border border-rose-500/30">
-                <TabsTrigger
-                  value="welcome"
-                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-rose-500 data-[state=active]:to-fuchsia-500 data-[state=active]:text-white"
-                >
-                  Welcome
-                </TabsTrigger>
-                <TabsTrigger
-                  value="tickets"
-                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-rose-500 data-[state=active]:to-fuchsia-500 data-[state=active]:text-white"
-                >
-                  Tickets
-                </TabsTrigger>
-              </TabsList>
-              <div className="inline-flex items-center gap-3 rounded-2xl bg-white/10 backdrop-blur border border-white/25 px-4 py-2.5 shadow-lg">
-                <div className="flex">
-                  {[1, 2, 3, 4, 5].map((n) => (
-                    <Star
-                      key={n}
-                      className={cn(
-                        "size-4",
-                        n <= Math.round(avgRating)
-                          ? "text-amber-300 fill-amber-300"
-                          : "text-white/40",
-                      )}
-                    />
-                  ))}
+            <header className="mx-auto max-w-5xl">
+              <div className="flex flex-wrap items-center justify-center gap-3 md:gap-4 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-[0_0_50px_-12px_rgba(244,63,94,0.35)] p-3 md:p-4">
+                <TabsList className="bg-black/20 border border-white/15 rounded-2xl shadow-inner">
+                  <TabsTrigger
+                    value="welcome"
+                    className="rounded-xl px-5 data-[state=active]:bg-gradient-to-r data-[state=active]:from-rose-500 data-[state=active]:to-fuchsia-500 data-[state=active]:text-white data-[state=active]:shadow-lg"
+                  >
+                    Welcome
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="tickets"
+                    className="rounded-xl px-5 data-[state=active]:bg-gradient-to-r data-[state=active]:from-rose-500 data-[state=active]:to-fuchsia-500 data-[state=active]:text-white data-[state=active]:shadow-lg"
+                  >
+                    Tickets
+                  </TabsTrigger>
+                </TabsList>
+
+                <div className="inline-flex items-center gap-3 rounded-2xl bg-black/20 backdrop-blur border border-white/15 px-4 py-2.5 shadow-lg">
+                  <div className="flex">
+                    {[1, 2, 3, 4, 5].map((n) => (
+                      <Star
+                        key={n}
+                        className={cn(
+                          "size-4",
+                          n <= Math.round(avgRating)
+                            ? "text-amber-300 fill-amber-300 drop-shadow"
+                            : "text-white/30",
+                        )}
+                      />
+                    ))}
+                  </div>
+                  <div className="text-sm">
+                    <span className="font-bold tabular-nums">
+                      {ratingCount > 0 ? avgRating.toFixed(1) : "—"}
+                    </span>
+                    <span className="text-rose-100/90 ml-1.5">
+                      {ratingCount > 0
+                        ? `from ${ratingCount} customer rating${ratingCount === 1 ? "" : "s"}`
+                        : "No ratings yet"}
+                    </span>
+                  </div>
                 </div>
-                <div className="text-sm">
-                  <span className="font-bold tabular-nums">
-                    {ratingCount > 0 ? avgRating.toFixed(1) : "—"}
-                  </span>
-                  <span className="text-rose-100/85 ml-1.5">
-                    {ratingCount > 0
-                      ? `from ${ratingCount} customer rating${ratingCount === 1 ? "" : "s"}`
-                      : "No ratings yet"}
-                  </span>
-                </div>
+
+                <ActiveOutagesBox className="bg-black/20 border-white/15 shadow-lg" />
               </div>
-              <ActiveOutagesBox />
-            </div>
+            </header>
           )}
 
           <TabsContent value="welcome" className="mt-6">
