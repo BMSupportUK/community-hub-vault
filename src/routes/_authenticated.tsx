@@ -17,6 +17,8 @@ const MentionsBadge = lazy(() => import("@/components/app/MentionsBadge").then((
 const NotificationBell = lazy(() => import("@/components/app/NotificationBell").then((m) => ({ default: m.NotificationBell })));
 const TwoFactorPill = lazy(() => import("@/components/app/TwoFactorBanner").then((m) => ({ default: m.TwoFactorPill })));
 const VpnPill = lazy(() => import("@/components/app/TwoFactorBanner").then((m) => ({ default: m.VpnPill })));
+const LockNowPill = lazy(() => import("@/components/app/ScreenLockProvider").then((m) => ({ default: m.LockNowPill })));
+
 const DndDialogButton = lazy(() => import("@/components/app/DndDialogButton").then((m) => ({ default: m.DndDialogButton })));
 const BreakEndingAlert = lazy(() => import("@/components/app/BreakEndingAlert").then((m) => ({ default: m.BreakEndingAlert })));
 const ShiftStartEndAlert = lazy(() => import("@/components/app/ShiftStartEndAlert").then((m) => ({ default: m.ShiftStartEndAlert })));
@@ -196,8 +198,12 @@ function AuthLayout() {
           </div>
           <div className="hidden xl:flex flex-1 min-w-0 px-3" />
             <DeferUntilIdle>
+              <LockNowPill />
+            </DeferUntilIdle>
+            <DeferUntilIdle>
               <TwoFactorPill />
             </DeferUntilIdle>
+
             <DeferUntilIdle>
               <VpnPill />
             </DeferUntilIdle>
