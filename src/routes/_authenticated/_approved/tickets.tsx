@@ -27,6 +27,8 @@ import { useRoleFlashMap, resolveAvatarUrl, roleFlashClass } from "@/lib/role-fl
 import { ActiveOutagesBox } from "@/components/app/ActiveOutagesBox";
 import { PayOrderDialog, OrderProgressStrip } from "@/components/app/OrderPaymentDialog";
 import { PaymentStatusTimeline, type PayCheckPhase } from "@/components/app/PaymentStatusTimeline";
+import { isSettledPaymentStatus } from "@/lib/payment-status";
+
 import { refreshSquareInvoiceStatus, cancelOrderAndSquareInvoice } from "@/lib/square-invoices.functions";
 import { getOrderPaymentState } from "@/lib/order-payment-state.functions";
 import { formatRoleLabel } from "@/lib/role-label";
