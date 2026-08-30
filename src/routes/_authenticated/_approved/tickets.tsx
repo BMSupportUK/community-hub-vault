@@ -439,8 +439,8 @@ function TicketsPage() {
               </div>
             </div>
            </div>
-           <div className="mt-6 md:mt-0 md:w-[340px] md:shrink-0 [&>div]:px-0 [&>div]:pt-0">
-             <StaffOnDutyStrip />
+           <div className="mt-6 md:mt-0 md:w-[340px] md:shrink-0">
+             <ActiveOutagesBox />
            </div>
           </div>
         </section>
@@ -472,34 +472,32 @@ function TicketsPage() {
 
           <TabsContent value="welcome" className="mt-6">
             <div className="rounded-2xl bg-gradient-to-br from-rose-600/30 via-fuchsia-600/20 to-violet-700/30 border border-rose-500/30 p-8 md:p-10 shadow-[0_0_60px_-15px_rgba(244,63,94,0.4)]">
-              <div className="flex flex-col md:flex-row md:items-start md:gap-8">
-                <div className="flex-1 min-w-0">
-                  <h2 className="font-display text-2xl md:text-3xl font-bold">Welcome to the Help Desk</h2>
-                  <p className="mt-3 text-rose-100/90 max-w-2xl">
-                    Account questions, billing, Live TV or Movies & Series issues — we've got you
-                    covered. Open a ticket and we'll respond as soon as a staff member is on duty.
-                  </p>
-                  <p className="mt-3 text-rose-200/80 max-w-2xl text-sm">
-                    Once your ticket is resolved, leave a rating so we know how we did.
-                  </p>
-                  <div className="mt-6 flex flex-wrap gap-3">
-                    <button
-                      onClick={() => { setCreating(true); setTab("tickets"); }}
-                      className="inline-flex items-center gap-2 rounded-xl bg-white text-rose-600 font-semibold px-4 py-2.5 shadow-lg shadow-rose-900/40 hover:bg-white/90"
-                    >
-                      <Plus className="size-4" /> New ticket
-                    </button>
-                    <button
-                      onClick={() => setTab("tickets")}
-                      className="inline-flex items-center gap-2 rounded-xl border border-white/25 bg-white/10 backdrop-blur px-4 py-2.5 text-sm hover:bg-white/20"
-                    >
-                      <TicketIcon className="size-4" /> View tickets
-                    </button>
-                  </div>
+              <div className="min-w-0">
+                <h2 className="font-display text-2xl md:text-3xl font-bold">Welcome to the Help Desk</h2>
+                <p className="mt-3 text-rose-100/90 max-w-2xl">
+                  Account questions, billing, Live TV or Movies & Series issues — we've got you
+                  covered. Open a ticket and we'll respond as soon as a staff member is on duty.
+                </p>
+                <p className="mt-3 text-rose-200/80 max-w-2xl text-sm">
+                  Once your ticket is resolved, leave a rating so we know how we did.
+                </p>
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <button
+                    onClick={() => { setCreating(true); setTab("tickets"); }}
+                    className="inline-flex items-center gap-2 rounded-xl bg-white text-rose-600 font-semibold px-4 py-2.5 shadow-lg shadow-rose-900/40 hover:bg-white/90"
+                  >
+                    <Plus className="size-4" /> New ticket
+                  </button>
+                  <button
+                    onClick={() => setTab("tickets")}
+                    className="inline-flex items-center gap-2 rounded-xl border border-white/25 bg-white/10 backdrop-blur px-4 py-2.5 text-sm hover:bg-white/20"
+                  >
+                    <TicketIcon className="size-4" /> View tickets
+                  </button>
                 </div>
-                <div className="mt-6 md:mt-0 md:w-[320px] md:shrink-0">
-                  <ActiveOutagesBox />
-                </div>
+              </div>
+              <div className="mt-8 w-full [&>div]:px-0 [&>div]:pt-0">
+                <StaffOnDutyStrip />
               </div>
             </div>
           </TabsContent>
