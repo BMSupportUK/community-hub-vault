@@ -755,6 +755,7 @@ export type Database = {
           group_label: string
           icon: string
           id: string
+          is_protected: boolean
           name: string
           requires_fan_zone: boolean
           slow_mode_seconds: number
@@ -768,6 +769,7 @@ export type Database = {
           group_label?: string
           icon?: string
           id?: string
+          is_protected?: boolean
           name: string
           requires_fan_zone?: boolean
           slow_mode_seconds?: number
@@ -781,6 +783,7 @@ export type Database = {
           group_label?: string
           icon?: string
           id?: string
+          is_protected?: boolean
           name?: string
           requires_fan_zone?: boolean
           slow_mode_seconds?: number
