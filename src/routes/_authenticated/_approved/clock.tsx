@@ -151,11 +151,8 @@ function ClockPage() {
   const breakRemaining = myBreak ? BREAK_LIMITS[myBreak.kind] - breakElapsed : 0;
   const overBreak = breakRemaining < 0;
 
-  const breaksByUser = useMemo(() => {
-    const m = new Map<string, Break>();
-    activeBreaks.forEach((b) => m.set(b.user_id, b));
-    return m;
-  }, [activeBreaks]);
+
+
 
   if (loading) {
     return (
