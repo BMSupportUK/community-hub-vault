@@ -35,6 +35,7 @@ interface ChannelRow {
   icon: string;
   staff_only: boolean;
   sort_order: number;
+  is_protected?: boolean | null;
 }
 
 const SidebarSkeletonIcon = () => <Skeleton className="size-4 rounded" />;
@@ -87,7 +88,7 @@ function HomeLayout() {
       const [{ data: channelRows }, { data: iconRows }, { data: orderRows }] = await Promise.all([
         supabase
           .from("chat_channels")
-          .select("id, slug, name, group_label, icon, staff_only, sort_order")
+          .select("id, slug, name, group_label, icon, staff_only, sort_order, is_protected")
           .order("sort_order"),
         supabase.from("app_settings").select("value").eq("key", "category_icons").maybeSingle(),
         supabase.from("app_settings").select("value").eq("key", "category_order").maybeSingle(),
@@ -293,9 +294,13 @@ function HomeLayout() {
     load();
   };
 
+  const isProtectedLabel = (label: string) =>
+    (channels ?? []).some((c) => c.group_label === label && c.is_protected);
+
   const deleteChannel = async (slug: string) => {
     const ch = channels?.find((c) => c.slug === slug);
     if (!ch) return;
+    if (ch.is_protected) return toast.error(`#${ch.name} is protected and cannot be deleted`);
     if (!confirm(`Delete channel #${ch.name}? This removes all messages.`)) return;
     const { error } = await supabase.from("chat_channels").delete().eq("id", ch.id);
     if (error) return toast.error(error.message);
@@ -306,6 +311,8 @@ function HomeLayout() {
   const deleteGroup = async (label: string) => {
     const inGroup = (channels ?? []).filter((c) => c.group_label === label);
     if (!inGroup.length) return;
+    if (inGroup.some((c) => c.is_protected))
+      return toast.error(`"${label}" is protected and cannot be deleted`);
     if (!confirm(`Delete category "${label}" and its ${inGroup.length} channel(s)?`)) return;
     const { error } = await supabase
       .from("chat_channels")
@@ -393,8 +400,11 @@ function HomeLayout() {
           badge: mentionCounts[`/home/${c.slug}`] ?? 0,
         })),
         onAddItem: isAdmin ? () => setAddChannelGroup(label) : undefined,
-        onDeleteItem: isAdmin ? (to) => deleteChannel(to.replace("/home/", "")) : undefined,
-        onDeleteGroup: isAdmin ? () => deleteGroup(label) : undefined,
+        onDeleteItem:
+          isAdmin && !items.every((c) => c.is_protected)
+            ? (to) => deleteChannel(to.replace("/home/", ""))
+            : undefined,
+        onDeleteGroup: isAdmin && !isProtectedLabel(label) ? () => deleteGroup(label) : undefined,
         onEditItemPerms: isAdmin
           ? (to) => {
               const slug = to.replace("/home/", "");
