@@ -44,6 +44,7 @@ export function ActiveOutagesBox({ className }: ActiveOutagesBoxProps) {
           : operational
             ? "border-emerald-500/60 shadow-[0_0_12px_rgba(16,185,129,0.25)]"
             : "border-red-500 membership-expired-flash",
+        className,
       )}
     >
       <div className="grid place-items-center size-10 rounded-lg bg-gradient-to-br from-violet-600 to-blue-600 shrink-0">
