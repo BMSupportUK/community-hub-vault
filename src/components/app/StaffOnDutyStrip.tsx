@@ -241,12 +241,12 @@ export function StaffOnDutyStrip({
     const card = (
       <div
         className={cn(
-          "rounded-lg p-2.5 border border-white/15 bg-white/5 backdrop-blur",
-          isTickets ? "w-[220px]" : "w-full",
+          "rounded-lg p-2.5 border border-white/15 bg-white/5 backdrop-blur min-w-0",
+          isTickets ? "w-full sm:w-[220px]" : "w-full",
         )}
       >
-        <div className="flex items-center gap-2">
-          <div className="relative">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="relative shrink-0">
             <img
               src={resolveAvatarUrl(p.id, p.avatar_url, roleFlashMap)}
               alt={name}
@@ -257,7 +257,10 @@ export function StaffOnDutyStrip({
           <div className="min-w-0 flex-1">
             <Nameplate
               id={p.equipped_nameplate_id}
-              className="flex flex-col justify-center w-full rounded-md px-2 py-1 pr-12 shadow-sm isolate opacity-80"
+              className={cn(
+                "flex flex-col justify-center w-full rounded-md px-2 py-1 shadow-sm isolate opacity-80",
+                isTickets ? "pr-2" : "pr-12",
+              )}
             >
               <span className={cn("text-xs font-semibold text-white/90 truncate drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]", roleFlashClass(roleFlashMap.get(p.id)))}>{name}</span>
               {roleFlashMap.get(p.id) && (
