@@ -129,6 +129,15 @@ export function NotificationBell() {
                 ? { label: "Go to ticket", onClick: () => navigate({ to: n.link_path! } as never) }
                 : undefined,
             });
+          } else if (n.kind === "order_paid") {
+            playSound(paymentReceivedAudio, { label: "payment-received", gain: 2.0 });
+            toast(`💳 ${n.title}`, {
+              description: n.body ?? "A payment has been confirmed.",
+              duration: 10000,
+              action: n.link_path
+                ? { label: "Go to order", onClick: () => navigate({ to: n.link_path! } as never) }
+                : undefined,
+            });
           } else if (n.kind === "ticket_assigned") {
             playSound(ticketAudio, { label: "ticket-assigned", gain: 2.0 });
             toast(`🎫 ${n.title}`, {
