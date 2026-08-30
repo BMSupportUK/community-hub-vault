@@ -5,11 +5,12 @@ import { cn } from "@/lib/utils";
 import { useRoleFlashMap, roleFlashClass, resolveAvatarUrl } from "@/lib/role-flash";
 import { formatRoleLabel } from "@/lib/role-label";
 import { DndCountdown } from "@/components/app/DndCountdown";
+import { Nameplate } from "@/components/app/Nameplate";
 import { type BreakKind, BREAK_LIMITS as STAFF_BREAK_LIMITS, breakLabel, breakIcon } from "@/lib/breaks";
 
 type StaffShift = { id: string; user_id: string; clock_in: string };
 type StaffBreak = { id: string; shift_id: string; user_id: string; kind: BreakKind; started_at: string };
-type StaffProfile = { id: string; username: string | null; display_name: string | null; avatar_url: string | null };
+type StaffProfile = { id: string; username: string | null; display_name: string | null; avatar_url: string | null; equipped_nameplate_id: string | null };
 
 const ROLE_ORDER = ["admin", "management", "staff", "moderator"] as const;
 const OFF_ORDER = ["admin", "management", "staff", "moderator"] as const;
@@ -54,7 +55,7 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
     const ids = Array.from(new Set([...allIds, ...workingIds]));
     if (ids.length) {
       const { data: profs } = await supabase
-        .from("profiles").select("id,username,display_name,avatar_url").in("id", ids);
+        .from("profiles").select("id,username,display_name,avatar_url,equipped_nameplate_id").in("id", ids);
       const map = Object.fromEntries(((profs as StaffProfile[]) ?? []).map((p) => [p.id, p]));
       setProfiles(map);
       const isDaneJ = (profile: StaffProfile) => {
