@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Clock, Moon, Save } from "lucide-react";
+import { Clock, Moon, Pencil, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useDndStatus } from "@/hooks/use-dnd";
@@ -37,7 +37,13 @@ function fmtRemaining(ms: number): string {
   return `${s}s`;
 }
 
-export function DndDialogButton({ className }: { className?: string }) {
+export function DndDialogButton({
+  className,
+  icon = "moon",
+}: {
+  className?: string;
+  icon?: "moon" | "pencil";
+}) {
   const { user, hasAny } = useAuth();
   const userTimezone = useUserTimezone();
   const canUse = !!user && hasAny(["admin", "management"]);
