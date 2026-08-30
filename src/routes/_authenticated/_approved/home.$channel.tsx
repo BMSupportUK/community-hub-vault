@@ -1187,7 +1187,7 @@ function ChannelPage() {
               </button>
             )}
             {pinnedOpen && (
-              <div className="absolute right-0 top-full mt-2 w-80 max-h-96 overflow-y-auto rounded-xl border border-primary/40 bg-surface/95 backdrop-blur-xl shadow-[0_0_40px_rgba(var(--primary-rgb),0.25)] z-30 animate-scale-in">
+              <div className="absolute right-0 top-full mt-2 w-80 max-h-96 overflow-y-auto rounded-xl border border-primary/40 bg-surface/95 backdrop-blur-xl shadow-[0_0_40px_-8px_color-mix(in_oklab,var(--primary)_25%,transparent)] z-30 animate-scale-in">
                 <div className="flex items-center justify-between px-3 py-2.5 border-b border-primary/20 bg-gradient-to-r from-primary/10 to-fuchsia-500/10">
                   <div className="flex items-center gap-2">
                     <Pin className="size-3.5 text-primary fill-primary/30" />
