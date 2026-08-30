@@ -16,17 +16,37 @@ type StaffBreak = { id: string; shift_id: string; user_id: string; kind: BreakKi
 type StaffProfile = { id: string; username: string | null; display_name: string | null; avatar_url: string | null; equipped_nameplate_id: string | null; last_seen_at?: string | null };
 
 /** Presence dot that turns purple in realtime while the user has DND active. */
-function PresenceDot({ userId, baseClass }: { userId: string; baseClass: string }) {
+function PresenceDot({ userId, baseClass, dndClass }: { userId: string; baseClass: string; dndClass?: string }) {
   const dnd = useDndStatus(userId);
   return (
     <span
       className={cn(
         "absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-2 ring-white",
-        dnd?.active ? "bg-purple-500 shadow-[0_0_6px_2px_rgba(168,85,247,0.7)]" : baseClass,
+        dnd?.active ? (dndClass ?? "bg-purple-500 shadow-[0_0_6px_2px_rgba(168,85,247,0.7)]") : baseClass,
       )}
     />
   );
 }
+
+/** Dane J is always presented as online unless DND is active. */
+function isDaneJProfile(profile?: { display_name?: string | null; username?: string | null } | null) {
+  if (!profile) return false;
+  const displayName = profile.display_name?.trim() ?? "";
+  const username = profile.username?.trim() ?? "";
+  return /^dane\s+j(?:\b|$)/i.test(displayName) || /^dane[._ -]?j(?:\b|$)/i.test(username);
+}
+
+/** Status line for Dane J's card: Online, or Away when DND is set. */
+function DaneStatusLine({ userId }: { userId: string }) {
+  const dnd = useDndStatus(userId);
+  if (dnd?.active) {
+    return <div className="text-[10px] text-white/80 drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]">Away - Outside of Business Hours</div>;
+  }
+  return (
+    <div className="text-[10px] font-semibold text-emerald-200 drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]">Online</div>
+  );
+}
+
 
 const ROLE_ORDER = ["admin", "management", "staff", "moderator"] as const;
 const OFF_ORDER = ["admin", "management", "staff", "moderator"] as const;
@@ -208,6 +228,7 @@ export function StaffOnDutyStrip({
             <PresenceDot
               userId={s.user_id}
               baseClass={onBreak ? (over ? "bg-red-500" : "bg-amber-400") : "bg-emerald-500"}
+              {...(isDaneJProfile(p) ? { dndClass: "bg-gray-400" } : {})}
             />
           </div>
           <div className="min-w-0 flex-1">
@@ -230,10 +251,13 @@ export function StaffOnDutyStrip({
                     {(() => { const Icon = breakIcon(br!.kind); return <Icon className="size-3 shrink-0" />; })()}
                     <span className="truncate">{breakLabel(br!.kind)} {over ? `+${fmtMinSec(-brRemain)}` : fmtMinSec(brRemain)}</span>
                   </span>
+                ) : isDaneJProfile(p) ? (
+                  <DaneStatusLine userId={s.user_id} />
                 ) : (
                   <span>{fmtHMS(shiftElapsed)}</span>
                 )}
               </div>
+
             </Nameplate>
             <DndCountdown userId={s.user_id} compact className="mt-1" />
           </div>
@@ -251,11 +275,13 @@ export function StaffOnDutyStrip({
 
   const renderOffDutyCard = (p: StaffProfile & { role: string }) => {
     const name = p.display_name || p.username || "Staff";
-    const mp = miniProfile(p.id, false);
+    const dane = isDaneJProfile(p);
+    const mp = miniProfile(p.id, dane);
     const card = (
       <div
         className={cn(
-          "rounded-lg p-2.5 border border-white/15 bg-white/5 backdrop-blur min-w-0",
+          "rounded-lg p-2.5 border backdrop-blur min-w-0",
+          dane ? "bg-emerald-400/25 border-emerald-200/50" : "border-white/15 bg-white/5",
           isTickets ? "w-full sm:w-[220px]" : "w-full",
         )}
       >
@@ -264,15 +290,23 @@ export function StaffOnDutyStrip({
             <img
               src={resolveAvatarUrl(p.id, p.avatar_url, roleFlashMap)}
               alt={name}
-              className="size-8 rounded-full object-cover ring-2 ring-white/20 opacity-70 grayscale"
+              className={cn(
+                "size-8 rounded-full object-cover",
+                dane ? "ring-2 ring-white/40" : "ring-2 ring-white/20 opacity-70 grayscale",
+              )}
             />
-            <PresenceDot userId={p.id} baseClass="bg-gray-400" />
+            <PresenceDot
+              userId={p.id}
+              baseClass={dane ? "bg-emerald-500" : "bg-gray-400"}
+              {...(dane ? { dndClass: "bg-gray-400" } : {})}
+            />
           </div>
           <div className="min-w-0 flex-1">
             <Nameplate
               id={p.equipped_nameplate_id}
               className={cn(
-                "flex flex-col justify-center w-full rounded-md px-2 py-1 shadow-sm isolate opacity-80",
+                "flex flex-col justify-center w-full rounded-md px-2 py-1 shadow-sm isolate",
+                dane ? "" : "opacity-80",
                 isTickets ? "pr-2" : "pr-12",
               )}
             >
@@ -282,7 +316,11 @@ export function StaffOnDutyStrip({
                   {formatRoleLabel(roleFlashMap.get(p.id))}
                 </span>
               )}
-              <div className="text-[10px] text-white/70 drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]">Off duty</div>
+              {dane ? (
+                <DaneStatusLine userId={p.id} />
+              ) : (
+                <div className="text-[10px] text-white/70 drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]">Off duty</div>
+              )}
             </Nameplate>
             <DndCountdown userId={p.id} compact className="mt-1" />
           </div>
