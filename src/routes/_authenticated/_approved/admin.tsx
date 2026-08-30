@@ -7,6 +7,14 @@ import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { backfillVpnDetection } from "@/lib/vpn-backfill.functions";
 import { useAppTheme, setAppTheme, type AppTheme } from "@/hooks/use-app-theme";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin")({
   validateSearch: (search: Record<string, unknown>): { next?: string } => ({
