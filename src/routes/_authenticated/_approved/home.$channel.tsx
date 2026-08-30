@@ -1103,7 +1103,7 @@ function ChannelPage() {
 
   return (
     <main className="flex-1 flex flex-col min-w-0 min-h-0 h-full">
-      <header className="h-14 border-b border-border px-5 flex items-center gap-2 shrink-0 relative">
+      <header className="h-14 border-b border-border px-5 flex items-center gap-2 shrink-0 relative z-[60]">
         <Icon className="size-4 text-muted-foreground" />
         <h1 className="font-display font-semibold">{channel.name}</h1>
         {channel.staff_only && (
@@ -1168,7 +1168,7 @@ function ChannelPage() {
               </button>
             )}
             {pinnedOpen && (
-              <div className="absolute right-0 top-full mt-3 w-[440px] max-w-[calc(100vw-2rem)] max-h-[70vh] overflow-y-auto rounded-2xl border-2 border-primary/60 bg-surface shadow-[0_24px_70px_-12px_rgb(0_0_0/0.75),0_0_60px_-12px_color-mix(in_oklab,var(--primary)_55%,transparent)] z-50 animate-scale-in">
+              <div className="fixed right-4 top-28 md:right-[14.75rem] xl:right-[16.75rem] w-[440px] max-w-[calc(100vw-2rem)] max-h-[70vh] overflow-y-auto rounded-2xl border-2 border-primary/60 bg-surface shadow-[0_24px_70px_-12px_rgb(0_0_0/0.75),0_0_60px_-12px_color-mix(in_oklab,var(--primary)_55%,transparent)] z-[100] animate-scale-in">
                 <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 border-b-2 border-primary/30 bg-surface">
                   <div className="flex items-center gap-2">
                     <Pin className="size-4 text-primary fill-primary/40" />
@@ -2095,7 +2095,7 @@ function ChannelPage() {
             </div>
           </div>
         </div>
-        <aside className="hidden md:block w-56 xl:w-64 shrink-0 border-l border-border overflow-y-auto bg-surface/40">
+        <aside className="relative z-0 hidden md:block w-56 xl:w-64 shrink-0 border-l border-border overflow-y-auto bg-surface/40">
           <StaffOnDutySidebar />
         </aside>
       </div>
