@@ -4,6 +4,7 @@ import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { useFinishedCompetitions } from "@/hooks/use-finished-competitions";
 import { COMPETITIONS } from "@/lib/competitions";
 import { cn } from "@/lib/utils";
+import { isFanZonePath } from "@/lib/fan-zone-nav";
 import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { UserAvatarMenu } from "@/components/app/UserAvatarMenu";
@@ -211,16 +212,8 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     );
   }
 
-  const FAN_ZONE_PREFIXES = [
-    "/forum",
-    "/fanzone",
-    "/fan-zone",
-    "/boro-fantasy",
-    "/boro-predictions",
-    "/predictions",
-    "/competition-winners",
-  ];
-  const inFanZone = FAN_ZONE_PREFIXES.some((p) => path === p || path.startsWith(`${p}/`));
+  const inFanZone = isFanZonePath(path);
+
 
   const supportItems: RailItem[] = [
     { to: "/home", label: "Home", icon: Home, show: true },

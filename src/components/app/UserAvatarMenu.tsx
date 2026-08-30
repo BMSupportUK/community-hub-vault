@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   UserCircle2,
   Pencil,
@@ -37,6 +37,7 @@ import {
 } from "@/lib/role-flash";
 import { VpnBadge } from "@/lib/vpn-flags";
 import { cn } from "@/lib/utils";
+import { isFanZonePath } from "@/lib/fan-zone-nav";
 
 interface MiniProfile {
   id: string;
@@ -55,6 +56,8 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
   const roleFlashMap = useRoleFlashMap();
   const instanceId = useRef(Math.random().toString(36).slice(2)).current;
   const presence = usePresence(user?.id, Boolean(user));
+  const path = useRouterState({ select: (s) => s.location.pathname });
+  const inFanZone = isFanZonePath(path);
 
   useEffect(() => {
     if (!user) return;
@@ -214,13 +217,32 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
         </div>
         <div className="p-1">
           <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">
-            Account
+            {inFanZone ? "Fan Zone account" : "Account"}
           </DropdownMenuLabel>
-          <DropdownMenuItem onSelect={goEdit} className="cursor-pointer">
-            <Pencil className="size-4 mr-2" />
-            Edit profile
-          </DropdownMenuItem>
-          {profile?.username ? (
+          {!inFanZone ? (
+            <DropdownMenuItem onSelect={goEdit} className="cursor-pointer">
+              <Pencil className="size-4 mr-2" />
+              Edit profile
+            </DropdownMenuItem>
+          ) : null}
+          {inFanZone ? (
+            <DropdownMenuItem asChild className="cursor-pointer">
+              <Link to="/fanzone/profile">
+                <Settings className="size-4 mr-2" />
+                Fan Zone profile &amp; settings
+              </Link>
+            </DropdownMenuItem>
+          ) : null}
+          {inFanZone ? (
+            user ? (
+              <DropdownMenuItem asChild className="cursor-pointer">
+                <Link to="/fanzone/u/$userId" params={{ userId: user.id }}>
+                  <UserCircle2 className="size-4 mr-2" />
+                  View profile
+                </Link>
+              </DropdownMenuItem>
+            ) : null
+          ) : profile?.username ? (
             <DropdownMenuItem asChild className="cursor-pointer">
               <Link to="/u/$username" params={{ username: profile.username }}>
                 <UserCircle2 className="size-4 mr-2" />
@@ -228,12 +250,6 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
               </Link>
             </DropdownMenuItem>
           ) : null}
-          <DropdownMenuItem asChild className="cursor-pointer">
-            <Link to="/fanzone/profile">
-              <Settings className="size-4 mr-2" />
-              Fan Zone profile &amp; settings
-            </Link>
-          </DropdownMenuItem>
           <DropdownMenuItem
             onSelect={(e) => {
               e.preventDefault();
@@ -254,17 +270,19 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
               Security & 2FA
             </Link>
           </DropdownMenuItem>
-          <DropdownMenuItem asChild className="cursor-pointer">
-            <a
-              href="https://github.com/BMSupportUK/community-hub-vault/releases/latest/download/BMSupport.apk"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <Smartphone className="size-4 mr-2" />
-              Get the Android app
-            </a>
-          </DropdownMenuItem>
-          {isAdmin ? (
+          {!inFanZone ? (
+            <DropdownMenuItem asChild className="cursor-pointer">
+              <a
+                href="https://github.com/BMSupportUK/community-hub-vault/releases/latest/download/BMSupport.apk"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Smartphone className="size-4 mr-2" />
+                Get the Android app
+              </a>
+            </DropdownMenuItem>
+          ) : null}
+          {!inFanZone && isAdmin ? (
             <DropdownMenuItem asChild className="cursor-pointer">
               <Link to="/admin">
                 <Settings className="size-4 mr-2" />
@@ -272,6 +290,7 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
               </Link>
             </DropdownMenuItem>
           ) : null}
+
           <DropdownMenuSeparator />
           <DropdownMenuItem onSelect={() => lockScreenNow()} className="cursor-pointer">
             <Lock className="size-4 mr-2" />
