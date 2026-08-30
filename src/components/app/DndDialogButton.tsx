@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Clock, Moon, Save } from "lucide-react";
+import { Clock, Moon, Pencil, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useDndStatus } from "@/hooks/use-dnd";
@@ -37,7 +37,13 @@ function fmtRemaining(ms: number): string {
   return `${s}s`;
 }
 
-export function DndDialogButton({ className }: { className?: string }) {
+export function DndDialogButton({
+  className,
+  icon = "moon",
+}: {
+  className?: string;
+  icon?: "moon" | "pencil";
+}) {
   const { user, hasAny } = useAuth();
   const userTimezone = useUserTimezone();
   const canUse = !!user && hasAny(["admin", "management"]);
@@ -147,15 +153,21 @@ export function DndDialogButton({ className }: { className?: string }) {
       <DialogTrigger asChild>
         <button
           type="button"
-          title={active ? `Do Not Disturb · ${remainingLabel ?? "on"}` : "Do Not Disturb"}
+          title={
+            icon === "pencil"
+              ? "Edit Do Not Disturb"
+              : active
+                ? `Do Not Disturb · ${remainingLabel ?? "on"}`
+                : "Do Not Disturb"
+          }
           className={cn(
             "relative p-2 rounded-lg hover:bg-surface-2 transition-colors",
             active ? "text-violet-300" : "hover:text-foreground",
             className,
           )}
         >
-          <Moon className="size-4" />
-          {active && (
+          {icon === "pencil" ? <Pencil className="size-4" /> : <Moon className="size-4" />}
+          {active && icon !== "pencil" && (
             <span className="absolute top-1 right-1 size-2 rounded-full bg-violet-400 ring-2 ring-rail" />
           )}
         </button>
