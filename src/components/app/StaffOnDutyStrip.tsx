@@ -162,6 +162,8 @@ export function StaffOnDutyStrip({
 
   const isSidebar = variant === "sidebar";
   const isTickets = variant === "tickets";
+  /** On the tickets strip, Dane J's presence follows business hours like everyone else. */
+  const daneOverride = !isTickets;
   const roleRank = (id: string) => {
     const r = roleFlashMap.get(id);
     const i = ROLE_ORDER.indexOf((r ?? "") as (typeof ROLE_ORDER)[number]);
@@ -237,7 +239,7 @@ export function StaffOnDutyStrip({
             <PresenceDot
               userId={s.user_id}
               baseClass={onBreak ? (over ? "bg-red-500" : "bg-amber-400") : "bg-emerald-500"}
-              {...(isDaneJProfile(p) ? { dndClass: "bg-gray-400" } : {})}
+              {...(daneOverride && isDaneJProfile(p) ? { dndClass: "bg-gray-400" } : {})}
             />
           </div>
           <div className="min-w-0 flex-1">
@@ -260,7 +262,7 @@ export function StaffOnDutyStrip({
                     {(() => { const Icon = breakIcon(br!.kind); return <Icon className="size-3 shrink-0" />; })()}
                     <span className="truncate">{breakLabel(br!.kind)} {over ? `+${fmtMinSec(-brRemain)}` : fmtMinSec(brRemain)}</span>
                   </span>
-                ) : isDaneJProfile(p) ? (
+                ) : daneOverride && isDaneJProfile(p) ? (
                   <DaneStatusLine userId={s.user_id} />
                 ) : (
                   <span>{fmtHMS(shiftElapsed)}</span>
@@ -284,7 +286,7 @@ export function StaffOnDutyStrip({
 
   const renderOffDutyCard = (p: StaffProfile & { role: string }) => {
     const name = p.display_name || p.username || "Staff";
-    const dane = isDaneJProfile(p);
+    const dane = daneOverride && isDaneJProfile(p);
     const mp = miniProfile(p.id, dane);
     const card = (
       <div
