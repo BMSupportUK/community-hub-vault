@@ -182,9 +182,9 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
             const brElapsed = br ? (now - new Date(br.started_at).getTime()) / 1000 : 0;
             const brRemain = br ? STAFF_BREAK_LIMITS[br.kind] - brElapsed : 0;
             const over = brRemain < 0;
-            return (
+            const mp = miniProfile(s.user_id, true);
+            const card = (
               <div
-                key={s.id}
                 className={cn(
                   "rounded-lg p-2.5 border backdrop-blur transition-colors",
                   isSidebar ? "w-full" : "shrink-0 min-w-[180px]",
@@ -193,40 +193,17 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
                     : "bg-emerald-400/25 border-emerald-200/50",
                 )}
               >
-                <div className="flex items-center gap-2">
-                  <div className="relative">
-                    <img src={resolveAvatarUrl(s.user_id, p?.avatar_url, roleFlashMap)} alt={name} className="size-8 rounded-full object-cover ring-2 ring-white/40" />
-                    <span className={cn(
-                      "absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-2 ring-white",
-                      onBreak ? (over ? "bg-red-500" : "bg-amber-400") : "bg-emerald-500",
-                    )} />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <Nameplate
-                      id={p?.equipped_nameplate_id}
-                      className="flex flex-col justify-center w-full rounded-md px-2 py-1 pr-12 shadow-sm isolate"
-                    >
-                      <span className={cn("text-xs font-semibold text-white truncate drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]", roleFlashClass(roleFlashMap.get(s.user_id)))}>{name}</span>
-                      {roleFlashMap.get(s.user_id) && (
-                        <span className="text-[9px] font-medium uppercase tracking-wider text-white/90 drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]">
-                          {formatRoleLabel(roleFlashMap.get(s.user_id))}
-                        </span>
-                      )}
-                      <div className="text-[10px] text-white/90 drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]">
-                        {onBreak ? (
-                          <span className="flex items-center gap-1">
-                            {(() => { const Icon = breakIcon(br!.kind); return <Icon className="size-3" />; })()}
-                            <span>{breakLabel(br!.kind)} {over ? `+${fmtMinSec(-brRemain)}` : fmtMinSec(brRemain)}</span>
-                          </span>
-                        ) : (
-                          <span>On {fmtHMS(shiftElapsed)}</span>
-                        )}
-                      </div>
-                    </Nameplate>
-                    <DndCountdown userId={s.user_id} compact className="mt-1" />
+...
                   </div>
                 </div>
               </div>
+            );
+            return mp ? (
+              <ChatMiniProfile key={s.id} profile={mp} className={cn("block", isSidebar ? "w-full" : "shrink-0")}>
+                {card}
+              </ChatMiniProfile>
+            ) : (
+              <div key={s.id}>{card}</div>
             );
           })}
         </div>
