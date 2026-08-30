@@ -92,7 +92,7 @@ function AdminDashboard() {
 
   return (
     <main className="flex-1 overflow-y-auto">
-      <div className="max-w-6xl mx-auto px-6 py-8">
+      <div className="w-full px-4 sm:px-6 py-8">
         <div className="relative rounded-3xl overflow-hidden border border-primary/30 shadow-glow bg-gradient-primary p-6 sm:p-8 mb-6">
           <div className="absolute inset-0 bg-gradient-to-tr from-background/40 via-transparent to-transparent pointer-events-none" />
           <header className="relative flex items-center gap-3">
@@ -111,9 +111,6 @@ function AdminDashboard() {
           </header>
         </div>
 
-        <div className="mb-6">
-          <ThemePickerCard />
-        </div>
 
         {hasPin === null ? (
           <div className="grid place-items-center py-16 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>
