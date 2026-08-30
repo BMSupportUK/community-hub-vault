@@ -239,7 +239,7 @@ export function StaffOnDutyStrip({
       <div
         className={cn(
           "rounded-lg p-2.5 border border-white/15 bg-white/5 backdrop-blur",
-          "w-full",
+          isTickets ? "w-[220px]" : "w-full",
         )}
       >
         <div className="flex items-center gap-2">
