@@ -109,6 +109,12 @@ function AuthLayout() {
     );
   }
 
+  // Auth state clears before route navigation completes during sign-out.
+  // Handle that state first so an empty role list can never route via /gate.
+  if (!user) {
+    return <Navigate to="/login" replace />;
+  }
+
   // Banned users are locked to /banned
   if (isBanned && !path.startsWith("/banned")) {
     return <Navigate to="/banned" />;

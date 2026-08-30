@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { checkMyVpnOnLogin } from "@/lib/vpn-login-check.functions";
@@ -42,6 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [roles, setRoles] = useState<AppRole[]>([]);
   const [loading, setLoading] = useState(true);
   const [rolesLoaded, setRolesLoaded] = useState(false);
+  const activeUidRef = useRef<string | null>(null);
 
   const loadRoles = async (uid: string) => {
     const { data, error } = await supabase.from("user_roles").select("role").eq("user_id", uid);
@@ -57,6 +58,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }, 2000);
       return;
     }
+    // A role request may finish after sign-out. Never let that stale response
+    // restore an authenticated role state for a user whose session is gone.
+    if (activeUidRef.current !== uid) return;
     setRoles((data ?? []).map((r) => r.role as AppRole));
     setRolesLoaded(true);
   };
@@ -67,6 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(s);
       setUser(s?.user ?? null);
       const nextUid = s?.user?.id ?? null;
+      activeUidRef.current = nextUid;
       if (nextUid && nextUid !== currentUid) {
         currentUid = nextUid;
         setRolesLoaded(false);
@@ -84,8 +89,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(s?.user ?? null);
       if (s?.user) {
         currentUid = s.user.id;
+        activeUidRef.current = s.user.id;
         await loadRoles(s.user.id);
       } else {
+        activeUidRef.current = null;
         setRolesLoaded(true);
       }
       setLoading(false);
@@ -158,7 +165,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // While roles are still loading we should NOT treat the user as pending —
   // otherwise approved users get bounced to /gate on login/reload.
   const isPending =
-    rolesLoaded && (roles.length === 0 || (roles.length === 1 && roles[0] === "pending"));
+    !!user && rolesLoaded && (roles.length === 0 || (roles.length === 1 && roles[0] === "pending"));
   const isBanned = roles.includes("banned");
   const isRejected = roles.includes("rejected");
   const isStaff = hasAny(["admin", "management", "staff", "moderator"]);
@@ -179,17 +186,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isBanned,
         isRejected,
         signOut: async () => {
+          const signingOutUser = user;
+          // Invalidate any in-flight role lookup immediately. Without this, a
+          // late response can briefly restore the old user's route state.
+          activeUidRef.current = null;
           // Auto-clock-out any active shift (and end any active break) so the
           // staff member doesn't stay "on shift" after leaving. This is
           // best-effort only: it must never be able to block or delay the
           // actual sign out (a slow/failing query used to leave the user
           // stuck signed in).
           const autoClockOut = async () => {
-            if (!user) return;
+            if (!signingOutUser) return;
             const { data: shift } = await supabase
               .from("shifts")
               .select("id")
-              .eq("user_id", user.id)
+              .eq("user_id", signingOutUser.id)
               .is("clock_out", null)
               .order("clock_in", { ascending: true })
               .limit(1)
