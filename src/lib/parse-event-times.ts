@@ -978,9 +978,13 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     pillsRow.className = "mt-auto grid w-full grid-cols-2 gap-2 pl-0 md:pl-[3.25rem]";
     block.appendChild(pillsRow);
 
-    // For US-source guides (ET/EST/EDT) show British time first, with the
-    // original source time second. Otherwise keep source-first, local-second.
-    const isEtSource = ["ET", "EST", "EDT"].includes(m.sourceZone.toUpperCase());
+    // For US-source guides (ET/EST/EDT, or a numeric GMT-4/GMT-5 fallback
+    // abbreviation) show British time first, with the original source time
+    // second. Otherwise keep source-first, local-second.
+    const sourceZoneUpper = m.sourceZone.toUpperCase();
+    const isEtSource =
+      ["ET", "EST", "EDT"].includes(sourceZoneUpper) || /^GMT[-−]\d/.test(sourceZoneUpper);
+
     const ukDate = isEtSource
       ? new Intl.DateTimeFormat("en-GB", {
           timeZone: "Europe/London",
