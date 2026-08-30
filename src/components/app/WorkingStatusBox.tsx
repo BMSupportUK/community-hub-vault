@@ -194,7 +194,7 @@ export function WorkingStatusBox({ stackActions = false }: { stackActions?: bool
 
   const ActionIcons = () => {
     if (busy) {
-      return <Loader2 className="size-3.5 animate-spin text-muted-foreground" />;
+      return <Loader2 className="size-5 animate-spin text-muted-foreground" />;
     }
     if (!shift) {
       return (
@@ -202,9 +202,9 @@ export function WorkingStatusBox({ stackActions = false }: { stackActions?: bool
           type="button"
           onClick={clockIn}
           title="Sign in"
-          className="inline-flex items-center justify-center size-6 rounded-md bg-emerald-500/15 text-emerald-400 ring-1 ring-emerald-500/40 hover:bg-emerald-500/25 transition"
+          className="inline-flex items-center justify-center size-10 rounded-full border border-success/30 bg-success/10 text-success hover:bg-success/20 transition-all"
         >
-          <LogIn className="size-3.5" />
+          <LogIn className="size-5" />
         </button>
       );
     }
@@ -214,37 +214,37 @@ export function WorkingStatusBox({ stackActions = false }: { stackActions?: bool
           type="button"
           onClick={endBreak}
           title="End break"
-          className="inline-flex items-center justify-center size-6 rounded-md bg-primary/15 text-primary ring-1 ring-primary/40 hover:bg-primary/25 transition"
+          className="inline-flex items-center justify-center size-10 rounded-full border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-all"
         >
-          <PlayCircle className="size-3.5" />
+          <PlayCircle className="size-5" />
         </button>
       );
     }
     return (
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-3">
         <button
           type="button"
           onClick={() => startBreak("break")}
           title="Take a break"
-          className="inline-flex items-center justify-center size-6 rounded-md bg-amber-500/15 text-amber-400 ring-1 ring-amber-500/40 hover:bg-amber-500/25 transition"
+          className="inline-flex items-center justify-center size-10 rounded-full border border-warning/30 bg-warning/10 text-warning hover:bg-warning/20 transition-all"
         >
-          <Coffee className="size-3.5" />
+          <Coffee className="size-5" />
         </button>
         <button
           type="button"
           onClick={() => startBreak("lunch")}
           title="Start lunch"
-          className="inline-flex items-center justify-center size-6 rounded-md bg-orange-500/15 text-orange-400 ring-1 ring-orange-500/40 hover:bg-orange-500/25 transition"
+          className="inline-flex items-center justify-center size-10 rounded-full border border-accent/30 bg-accent/10 text-accent hover:bg-accent/20 transition-all"
         >
-          <UtensilsCrossed className="size-3.5" />
+          <UtensilsCrossed className="size-5" />
         </button>
         <button
           type="button"
           onClick={clockOut}
           title="Sign out"
-          className="inline-flex items-center justify-center size-6 rounded-md bg-destructive/15 text-destructive ring-1 ring-destructive/40 hover:bg-destructive/25 transition"
+          className="inline-flex items-center justify-center size-10 rounded-full border border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/20 transition-all"
         >
-          <LogOut className="size-3.5" />
+          <LogOut className="size-5" />
         </button>
       </div>
     );
@@ -252,35 +252,35 @@ export function WorkingStatusBox({ stackActions = false }: { stackActions?: bool
 
   return (
     <section className="px-2 pt-4">
-      <div className="rounded-lg bg-surface-2/60 border border-border overflow-hidden">
-        <div className="flex items-center justify-between px-3 py-2 border-b border-border bg-gradient-to-r from-emerald-600/10 via-amber-600/10 to-rose-600/10">
-          <div className="flex items-center gap-2">
-            <Briefcase className="size-3.5 text-emerald-300" />
-            <h2 className="font-display text-[11px] font-bold tracking-wider uppercase">Working Status</h2>
+      <div className="rounded-2xl bg-card border border-white/10 shadow-2xl overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-gradient-to-r from-success/80 to-primary/80">
+          <div className="flex items-center gap-2.5">
+            <Briefcase className="size-5 text-white/90" />
+            <h2 className="font-display text-[11px] font-bold tracking-widest uppercase text-white">Working Status</h2>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2.5 text-white/80">
             <Link
               to="/clock"
               title="Clock page"
-              className="inline-flex items-center justify-center size-6 rounded-md text-muted-foreground hover:text-foreground hover:bg-surface-2 transition"
+              className="inline-flex items-center justify-center size-8 rounded-full text-white/80 hover:text-white hover:bg-white/10 transition"
             >
-              <Clock className="size-3.5" />
+              <Clock className="size-4" />
             </Link>
             <Link
               to="/shifts"
               title="Shifts"
-              className="inline-flex items-center justify-center size-6 rounded-md text-muted-foreground hover:text-foreground hover:bg-surface-2 transition"
+              className="inline-flex items-center justify-center size-8 rounded-full text-white/80 hover:text-white hover:bg-white/10 transition"
             >
-              <Calendar className="size-3.5" />
+              <Calendar className="size-4" />
             </Link>
           </div>
         </div>
-        <div className="px-3 py-3 space-y-2 text-xs">
-          <div className={cn("gap-2 pb-1 border-b border-border/60", stackActions ? "flex flex-col items-start" : "flex items-center justify-between")}>
-            <div className="flex flex-col gap-1 min-w-0">
-              <span className="font-display font-semibold text-sm text-foreground truncate">{displayName}</span>
+        <div className="px-5 py-5 space-y-4 text-sm">
+          <div className={cn("gap-4 pb-4 border-b border-white/10", stackActions ? "flex flex-col items-start" : "flex items-center justify-between")}>
+            <div className="flex flex-col gap-1.5 min-w-0">
+              <span className="font-display font-bold text-lg text-foreground truncate">{displayName}</span>
               {staffRoleLabel && (
-                <span className="inline-flex items-center self-start rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-primary ring-1 ring-primary/40">
+                <span className="inline-flex items-center self-start rounded-full bg-warning px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-background shadow-lg shadow-warning/20">
                   {staffRoleLabel}
                 </span>
               )}
@@ -289,23 +289,23 @@ export function WorkingStatusBox({ stackActions = false }: { stackActions?: bool
           </div>
           {shift ? (
             <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">Shift</span>
-              <span className="inline-flex items-center gap-1.5 font-semibold tabular-nums text-emerald-400">
-                <CircleDot className="size-3" />
+              <span className="text-muted-foreground font-medium">Shift</span>
+              <span className="inline-flex items-center gap-1.5 font-bold tabular-nums text-success text-lg">
+                <CircleDot className="size-5" />
                 {fmtHM(shiftSec)}
               </span>
             </div>
           ) : (
             <>
               <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">Shift</span>
+                <span className="text-muted-foreground font-medium">Shift</span>
                 <span className="text-muted-foreground italic">Not signed in</span>
               </div>
               {nextSlot && (
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-muted-foreground">Next shift</span>
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-sky-500/15 px-2 py-0.5 font-semibold tabular-nums text-sky-300 ring-1 ring-sky-500/40">
-                    <Calendar className="size-3" />
+                  <span className="text-muted-foreground font-medium">Next shift</span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-2.5 py-1 font-semibold tabular-nums text-primary ring-1 ring-primary/40">
+                    <Calendar className="size-3.5" />
                     {new Date(`${nextSlot.shift_date}T00:00:00`).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })}
                     {" · "}
                     {nextSlot.start_time.slice(0, 5)}–{nextSlot.end_time.slice(0, 5)}
@@ -313,20 +313,19 @@ export function WorkingStatusBox({ stackActions = false }: { stackActions?: bool
                 </div>
               )}
             </>
-
           )}
           {brk && (
             <div className="flex items-center justify-between">
-              <span className="text-muted-foreground">{breakLabel(brk.kind)}</span>
+              <span className="text-muted-foreground font-medium">{breakLabel(brk.kind)}</span>
               <span
                 className={cn(
-                  "inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 font-semibold tabular-nums ring-1",
+                  "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-bold tabular-nums ring-1",
                   over
                     ? "bg-destructive/15 text-destructive ring-destructive/40"
-                    : "bg-amber-500/15 text-amber-400 ring-amber-500/40",
+                    : "bg-warning/15 text-warning ring-warning/40",
                 )}
               >
-                {(() => { const Icon = breakIcon(brk.kind); return <Icon className="size-3" />; })()}
+                {(() => { const Icon = breakIcon(brk.kind); return <Icon className="size-3.5" />; })()}
                 {over ? `+${fmtMS(-brRemain)}` : fmtMS(brRemain)}
               </span>
             </div>
