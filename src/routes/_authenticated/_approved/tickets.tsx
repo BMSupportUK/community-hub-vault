@@ -256,7 +256,7 @@ function TicketsPage() {
   const [profiles, setProfiles] = useState<Map<string, Profile>>(new Map());
   const [staff, setStaff] = useState<Profile[]>([]);
   const [creating, setCreating] = useState(false);
-  const [tab, setTab] = useState<"welcome" | "tickets">("welcome");
+  const [tab, setTab] = useState<"welcome" | "tickets" | "open">("welcome");
   const [allRatings, setAllRatings] = useState<{ rating: number }[]>([]);
   const [myRatings, setMyRatings] = useState<Record<string, number>>({});
 
@@ -379,14 +379,14 @@ function TicketsPage() {
     navigate({ to: "/tickets", search: { view: v, id: undefined } });
 
   useEffect(() => {
-    if (search.id || creating) setTab("tickets");
-  }, [search.id, creating]);
+    if (search.id) setTab("tickets");
+  }, [search.id]);
 
   // Deep-link from /mfa-challenge: open the new-ticket form prefilled for a 2FA reset
   useEffect(() => {
     if (search.new2fa === 1 && !creating && !search.id) {
       setCreating(true);
-      setTab("tickets");
+      setTab("open");
     }
   }, [search.new2fa, creating, search.id]);
 
@@ -412,8 +412,8 @@ function TicketsPage() {
         !isChatting && "mt-6",
         isChatting && "px-0 md:px-0 pb-0 h-full"
       )}>
-        <Tabs value={tab} onValueChange={(v) => setTab(v as "welcome" | "tickets")}>
-          {tab === "welcome" && (
+        <Tabs value={tab} onValueChange={(v) => setTab(v as "welcome" | "tickets" | "open")}>
+          {tab !== "tickets" && (
             <header className="mx-auto max-w-5xl pt-6">
               <div aria-hidden="true" className="mb-6 h-px w-full bg-white/60 shadow-[0_0_12px_rgba(255,255,255,0.55)]" />
               <div className="flex flex-wrap items-center justify-center gap-3 md:gap-4 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-[0_0_50px_-12px_rgba(244,63,94,0.35)] p-3 md:p-4">
@@ -429,6 +429,13 @@ function TicketsPage() {
                     className="rounded-xl px-5 data-[state=active]:bg-gradient-to-r data-[state=active]:from-rose-500 data-[state=active]:to-fuchsia-500 data-[state=active]:text-white data-[state=active]:shadow-lg"
                   >
                     Tickets
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="open"
+                    onClick={() => setCreating(true)}
+                    className="rounded-xl px-5 data-[state=active]:bg-gradient-to-r data-[state=active]:from-rose-500 data-[state=active]:to-fuchsia-500 data-[state=active]:text-white data-[state=active]:shadow-lg"
+                  >
+                    Open ticket
                   </TabsTrigger>
                 </TabsList>
 
@@ -472,20 +479,55 @@ function TicketsPage() {
                   Account questions, billing, Live TV or Movies & Series issues — we've got you
                   covered. Open a ticket and we'll respond as soon as a staff member is on duty.
                 </p>
-                <div className="mt-5">
-                  <button
-                    onClick={() => { setCreating(true); navigate({ to: "/tickets", search: { id: undefined, view } }); }}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-white text-rose-600 text-sm font-semibold hover:bg-white/90 shadow transition-colors"
-                  >
-                    <Plus className="size-4" /> Open a ticket
-                  </button>
-                </div>
                 <p className="mt-5 text-rose-200/80 max-w-2xl text-sm">
                   Once your ticket is resolved, leave a rating so we know how we did.
                 </p>
               </div>
               <div className="mt-8 w-full [&>div]:px-0 [&>div]:pt-0">
                 <StaffOnDutyStrip variant="tickets" hideRoles={["moderator"]} />
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="open" className={cn("mt-6", isChatting && "mt-0 h-full")}>
+            <div className={cn(
+              "grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-4",
+              isChatting && "h-[calc(100dvh-4rem)] gap-0 lg:grid-cols-[280px_1fr] grid-rows-[auto_1fr] lg:grid-rows-1"
+            )}>
+              <aside className={cn(
+                "rounded-2xl bg-rose-950/50 border border-rose-500/30 p-4 h-fit backdrop-blur space-y-3",
+                isChatting && "rounded-none border-y-0 border-l-0 h-full overflow-y-auto hidden lg:block"
+              )}>
+                <div className="flex gap-1 bg-white/10 p-1 rounded-lg text-xs">
+                  <button
+                    onClick={() => { setCreating(false); setTab("welcome"); navigate({ to: "/tickets", search: { id: undefined, view } }); }}
+                    className="flex items-center justify-center gap-1 px-2 py-1 rounded-md text-white/70 hover:text-white hover:bg-white/10 transition-colors"
+                    title="Back to welcome"
+                  >
+                    <Home className="size-3" />
+                  </button>
+                </div>
+              </aside>
+
+              <div
+                ref={detailPanelRef}
+                className={cn(
+                  "rounded-2xl bg-gradient-to-br from-violet-600 via-fuchsia-600 to-rose-600 text-white relative overflow-hidden min-h-[600px] flex flex-col scroll-mt-16",
+                  isChatting ? "h-full rounded-none border-y-0 border-r-0" : "h-[calc(100dvh-8rem)]"
+                )}
+              >
+                <div className="pointer-events-none absolute inset-0 opacity-60" style={{
+                  background:
+                    "radial-gradient(800px 400px at 0% 0%, rgba(244,63,94,0.45), transparent 60%), radial-gradient(700px 400px at 100% 0%, rgba(168,85,247,0.4), transparent 60%)",
+                }} />
+                <div className="relative flex-1 flex flex-col min-h-0">
+                  <NewTicketForm
+                    categories={categories}
+                    onCancel={() => { setCreating(false); setTab("tickets"); navigate({ to: "/tickets", search: { id: undefined, view } }); }}
+                    onCreated={(id) => { setCreating(false); navigate({ to: "/tickets", search: { id, view } }); }}
+                    preset={search.new2fa === 1 ? "2fa-reset" : undefined}
+                  />
+                </div>
               </div>
             </div>
           </TabsContent>
