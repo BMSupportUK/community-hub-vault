@@ -447,20 +447,23 @@ function TicketsPage() {
       )}>
         <Tabs value={tab} onValueChange={(v) => setTab(v as "welcome" | "tickets")}>
           {!isChatting && (
-            <TabsList className="bg-rose-950/60 border border-rose-500/30">
-              <TabsTrigger
-                value="welcome"
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-rose-500 data-[state=active]:to-fuchsia-500 data-[state=active]:text-white"
-              >
-                Welcome
-              </TabsTrigger>
-              <TabsTrigger
-                value="tickets"
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-rose-500 data-[state=active]:to-fuchsia-500 data-[state=active]:text-white"
-              >
-                Tickets
-              </TabsTrigger>
-            </TabsList>
+            <div className="flex flex-col md:flex-row md:items-start gap-4">
+              <TabsList className="bg-rose-950/60 border border-rose-500/30">
+                <TabsTrigger
+                  value="welcome"
+                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-rose-500 data-[state=active]:to-fuchsia-500 data-[state=active]:text-white"
+                >
+                  Welcome
+                </TabsTrigger>
+                <TabsTrigger
+                  value="tickets"
+                  className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-rose-500 data-[state=active]:to-fuchsia-500 data-[state=active]:text-white"
+                >
+                  Tickets
+                </TabsTrigger>
+              </TabsList>
+              <ActiveOutagesBox />
+            </div>
           )}
 
           <TabsContent value="welcome" className="mt-6">
