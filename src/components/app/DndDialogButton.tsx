@@ -153,15 +153,21 @@ export function DndDialogButton({
       <DialogTrigger asChild>
         <button
           type="button"
-          title={active ? `Do Not Disturb · ${remainingLabel ?? "on"}` : "Do Not Disturb"}
+          title={
+            icon === "pencil"
+              ? "Edit Do Not Disturb"
+              : active
+                ? `Do Not Disturb · ${remainingLabel ?? "on"}`
+                : "Do Not Disturb"
+          }
           className={cn(
             "relative p-2 rounded-lg hover:bg-surface-2 transition-colors",
             active ? "text-violet-300" : "hover:text-foreground",
             className,
           )}
         >
-          <Moon className="size-4" />
-          {active && (
+          {icon === "pencil" ? <Pencil className="size-4" /> : <Moon className="size-4" />}
+          {active && icon !== "pencil" && (
             <span className="absolute top-1 right-1 size-2 rounded-full bg-violet-400 ring-2 ring-rail" />
           )}
         </button>
