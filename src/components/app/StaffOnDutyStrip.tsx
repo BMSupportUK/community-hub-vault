@@ -251,7 +251,7 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
                 return OFF_ORDER.filter((r) => groups[r]?.length).map((role) => {
                   const members = groups[role];
                   return (
-                    <div key={role}>
+                    <div key={role} className="min-w-0">
                       <div className={cn("text-[10px] font-bold uppercase tracking-wider mb-1.5 flex items-center gap-1.5", roleFlashClass(roleFlashMap.get(members[0].id)))}>
                         <span>{formatRoleLabel(role)}</span>
                         <span className="px-1.5 py-0.5 rounded-full bg-white/10 text-white/80">{members.length}</span>
