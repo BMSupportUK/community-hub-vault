@@ -294,9 +294,13 @@ function HomeLayout() {
     load();
   };
 
+  const isProtectedLabel = (label: string) =>
+    (channels ?? []).some((c) => c.group_label === label && c.is_protected);
+
   const deleteChannel = async (slug: string) => {
     const ch = channels?.find((c) => c.slug === slug);
     if (!ch) return;
+    if (ch.is_protected) return toast.error(`#${ch.name} is protected and cannot be deleted`);
     if (!confirm(`Delete channel #${ch.name}? This removes all messages.`)) return;
     const { error } = await supabase.from("chat_channels").delete().eq("id", ch.id);
     if (error) return toast.error(error.message);
@@ -307,6 +311,8 @@ function HomeLayout() {
   const deleteGroup = async (label: string) => {
     const inGroup = (channels ?? []).filter((c) => c.group_label === label);
     if (!inGroup.length) return;
+    if (inGroup.some((c) => c.is_protected))
+      return toast.error(`"${label}" is protected and cannot be deleted`);
     if (!confirm(`Delete category "${label}" and its ${inGroup.length} channel(s)?`)) return;
     const { error } = await supabase
       .from("chat_channels")
