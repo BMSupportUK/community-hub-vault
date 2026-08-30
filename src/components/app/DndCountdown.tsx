@@ -4,12 +4,15 @@ import { cn } from "@/lib/utils";
 import { useDndStatus } from "@/hooks/use-dnd";
 
 function formatRemaining(ms: number): string {
-  const total = Math.max(0, Math.ceil(ms / 1000));
-  const h = Math.floor(total / 3600);
+  const total = Math.max(0, Math.floor(ms / 1000));
+  const d = Math.floor(total / 86400);
+  const h = Math.floor((total % 86400) / 3600);
   const m = Math.floor((total % 3600) / 60);
   const s = total % 60;
-  if (h > 0) return `${h}h ${m}m`;
-  if (m > 0) return `${m}m ${s.toString().padStart(2, "0")}s`;
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  if (d > 0) return `${d}d ${h}h ${pad(m)}m ${pad(s)}s`;
+  if (h > 0) return `${h}h ${pad(m)}m ${pad(s)}s`;
+  if (m > 0) return `${m}m ${pad(s)}s`;
   return `${s}s`;
 }
 
@@ -27,22 +30,29 @@ export function DndCountdown({
   compact?: boolean;
 }) {
   const info = useDndStatus(userId);
-  const endsAtTime = info?.endsAt?.getTime();
-  const [, setTick] = useState(0);
+  const endsAtTime = info?.endsAt?.getTime() ?? null;
+  const [now, setNow] = useState(() => Date.now());
 
+  // Always tick while mounted so the label stays second-accurate even if the
+  // DND row is refreshed or the tab was backgrounded.
   useEffect(() => {
-    if (!info?.active || !info.endsAt) return;
-    const id = setInterval(() => setTick((n) => n + 1), 1000);
+    const id = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(id);
-  }, [info?.active, info?.endsAt, endsAtTime]);
+  }, []);
 
   if (!info?.active) return null;
 
-  const remaining = info.endsAt ? info.endsAt.getTime() - Date.now() : null;
+  const remaining = endsAtTime !== null ? endsAtTime - now : null;
   if (remaining !== null && remaining <= 0) return null;
 
-  const endsLabel = info.endsAt
-    ? `until ${info.endsAt.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`
+  const endsLabel = endsAtTime !== null
+    ? `until ${new Date(endsAtTime).toLocaleString("en-GB", {
+        weekday: "short",
+        day: "2-digit",
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit",
+      })}`
     : "";
   const title = info.note
     ? `Do Not Disturb — ${info.note}${endsLabel ? ` (${endsLabel})` : ""}`
