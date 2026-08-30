@@ -291,7 +291,11 @@ export function StaffOnDutyStrip({
       <div
         className={cn(
           "rounded-lg p-2.5 border backdrop-blur min-w-0",
-          dane ? "bg-emerald-400/25 border-emerald-200/50" : "border-white/15 bg-white/5",
+          dane
+            ? "bg-emerald-400/25 border-emerald-200/50"
+            : inChat
+              ? "bg-emerald-400/10 border-emerald-200/30"
+              : "border-white/15 bg-white/5",
           isTickets ? "w-full sm:w-[220px]" : "w-full",
         )}
       >
