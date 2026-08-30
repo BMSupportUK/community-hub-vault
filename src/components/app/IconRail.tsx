@@ -2,6 +2,7 @@ import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { Home, Ticket, ShoppingCart, BookOpen, FileText, LogOut, MessageSquare, MessagesSquare, UserCircle2, Star, Trophy, Tv, Volleyball, Wrench, Goal, Users, Briefcase, MonitorPlay, Popcorn, Crown } from "lucide-react";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { useFinishedCompetitions } from "@/hooks/use-finished-competitions";
+import { useOnlineUsers } from "@/hooks/use-online-users";
 import { COMPETITIONS } from "@/lib/competitions";
 import { cn } from "@/lib/utils";
 import { isFanZonePath } from "@/lib/fan-zone-nav";
