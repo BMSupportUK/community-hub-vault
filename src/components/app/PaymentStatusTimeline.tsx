@@ -91,12 +91,14 @@ export function PaymentStatusTimeline({
   const steps: StepDef[] = [
     {
       key: "awaiting",
-      title: "Awaiting payment",
-      desc: "Order placed — pay via Square, Stripe or USDT.",
-      icon: Clock,
-      state: phase === "awaiting" ? "active" : "done",
+      title: cancelled ? "Order cancelled" : "Awaiting payment",
+      desc: cancelled
+        ? "This order was cancelled — no payment is required."
+        : "Order placed — pay via Square, Stripe or USDT.",
+      icon: cancelled ? XCircle : Clock,
+      state: cancelled ? "failed" : phase === "awaiting" ? "active" : "done",
     },
-    ...(showChecks
+    ...(showChecks && !cancelled
       ? checkSteps.map((c, i) => {
           const isLastCheck = i === checkSteps.length - 1;
           // While a check is running, mark every check step up to the active one
@@ -118,12 +120,14 @@ export function PaymentStatusTimeline({
       : []),
     {
       key: "result",
-      title: failed ? "Failed" : "Confirmed",
-      desc: failed
-        ? "No payment found yet — try again once it clears."
-        : "Payment confirmed — order marked as paid.",
-      icon: failed ? XCircle : CheckCircle2,
-      state: failed ? "failed" : confirmed ? "done" : "upcoming",
+      title: cancelled ? "Cancelled" : failed ? "Failed" : "Confirmed",
+      desc: cancelled
+        ? "Order cancelled — no payment will be taken."
+        : failed
+          ? "No payment found yet — try again once it clears."
+          : "Payment confirmed — order marked as paid.",
+      icon: cancelled ? XCircle : failed ? XCircle : CheckCircle2,
+      state: cancelled ? "failed" : failed ? "failed" : confirmed ? "done" : "upcoming",
     },
   ];
 
