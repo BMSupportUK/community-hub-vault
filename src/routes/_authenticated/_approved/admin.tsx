@@ -617,9 +617,15 @@ function RecoveryCodes() {
   };
 
   const copyAll = async () => {
-    if (!fresh) return;
-    await navigator.clipboard.writeText(fresh.join("\n"));
+    const list = fresh ?? rows?.filter((r) => !r.used_at && r.code).map((r) => r.code!);
+    if (!list || list.length === 0) return;
+    await navigator.clipboard.writeText(list.join("\n"));
     toast.success("Codes copied to clipboard");
+  };
+
+  const copySingle = async (code: string) => {
+    await navigator.clipboard.writeText(code);
+    toast.success("Code copied to clipboard");
   };
 
   const download = () => {
