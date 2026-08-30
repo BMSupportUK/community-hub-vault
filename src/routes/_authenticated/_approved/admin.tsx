@@ -662,6 +662,14 @@ function RecoveryCodes() {
           <span className={`text-xs px-2 py-1 rounded-md border ${low ? "border-amber-500/40 text-amber-400 bg-amber-500/10" : "border-border text-muted-foreground bg-surface-2"}`}>
             {remaining} / {total} unused
           </span>
+          {rows && rows.length > 0 && (
+            <button
+              onClick={copyAll}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-2 border border-border text-sm font-medium hover:bg-surface-3"
+            >
+              <Copy className="size-4" /> Copy all
+            </button>
+          )}
           <button
             onClick={generate}
             disabled={busy}
