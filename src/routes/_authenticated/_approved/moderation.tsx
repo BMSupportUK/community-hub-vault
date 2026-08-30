@@ -1,7 +1,9 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { Shield, Check, X, Send, ChevronDown, ChevronRight, MessageSquare, FileText, CheckCheck, AlertCircle, Loader2 } from "lucide-react";
+import { Shield, Check, X, Send, ChevronDown, ChevronRight, MessageSquare, FileText, CheckCheck, AlertCircle, Loader2, Ban } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { banUserFromGate } from "@/lib/blacklist.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { ChannelColumn } from "@/components/app/ChannelColumn";
 import { toast } from "sonner";
