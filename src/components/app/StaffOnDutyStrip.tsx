@@ -5,11 +5,12 @@ import { cn } from "@/lib/utils";
 import { useRoleFlashMap, roleFlashClass, resolveAvatarUrl } from "@/lib/role-flash";
 import { formatRoleLabel } from "@/lib/role-label";
 import { DndCountdown } from "@/components/app/DndCountdown";
+import { Nameplate } from "@/components/app/Nameplate";
 import { type BreakKind, BREAK_LIMITS as STAFF_BREAK_LIMITS, breakLabel, breakIcon } from "@/lib/breaks";
 
 type StaffShift = { id: string; user_id: string; clock_in: string };
 type StaffBreak = { id: string; shift_id: string; user_id: string; kind: BreakKind; started_at: string };
-type StaffProfile = { id: string; username: string | null; display_name: string | null; avatar_url: string | null };
+type StaffProfile = { id: string; username: string | null; display_name: string | null; avatar_url: string | null; equipped_nameplate_id: string | null };
 
 const ROLE_ORDER = ["admin", "management", "staff", "moderator"] as const;
 const OFF_ORDER = ["admin", "management", "staff", "moderator"] as const;
@@ -54,7 +55,7 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
     const ids = Array.from(new Set([...allIds, ...workingIds]));
     if (ids.length) {
       const { data: profs } = await supabase
-        .from("profiles").select("id,username,display_name,avatar_url").in("id", ids);
+        .from("profiles").select("id,username,display_name,avatar_url,equipped_nameplate_id").in("id", ids);
       const map = Object.fromEntries(((profs as StaffProfile[]) ?? []).map((p) => [p.id, p]));
       setProfiles(map);
       const isDaneJ = (profile: StaffProfile) => {
@@ -90,6 +91,7 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
       .channel("shared-staff-onduty-" + Math.random().toString(36).slice(2))
       .on("postgres_changes", { event: "*", schema: "public", table: "shifts" }, () => refresh())
       .on("postgres_changes", { event: "*", schema: "public", table: "breaks" }, () => refresh())
+      .on("postgres_changes", { event: "UPDATE", schema: "public", table: "profiles" }, () => refresh())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, []);
@@ -177,8 +179,13 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
                     )} />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="flex flex-col leading-tight">
-                      <div className={cn("text-sm font-semibold text-white truncate", roleFlashClass(roleFlashMap.get(s.user_id)))}>{name}</div>
+                    <div className="flex flex-col leading-tight gap-0.5">
+                      <Nameplate
+                        id={p?.equipped_nameplate_id}
+                        className="inline-flex items-center self-start max-w-full rounded-md px-2 py-0.5 h-6 max-h-6 pr-9 shadow-sm isolate"
+                      >
+                        <span className={cn("text-xs font-semibold text-white truncate drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]", roleFlashClass(roleFlashMap.get(s.user_id)))}>{name}</span>
+                      </Nameplate>
                       {roleFlashMap.get(s.user_id) && (
                         <span className="text-[9px] font-medium uppercase tracking-wider text-white/70">
                           {formatRoleLabel(roleFlashMap.get(s.user_id))}
@@ -249,8 +256,13 @@ export function StaffOnDutyStrip({ variant = "strip" }: { variant?: "strip" | "s
                                   <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-2 ring-white bg-gray-400" />
                                 </div>
                                 <div className="min-w-0 flex-1">
-                                  <div className="flex flex-col leading-tight">
-                                    <div className={cn("text-sm font-semibold text-white/80 truncate", roleFlashClass(roleFlashMap.get(p.id)))}>{name}</div>
+                                  <div className="flex flex-col leading-tight gap-0.5">
+                                    <Nameplate
+                                      id={p.equipped_nameplate_id}
+                                      className="inline-flex items-center self-start max-w-full rounded-md px-2 py-0.5 h-6 max-h-6 pr-9 shadow-sm isolate opacity-80"
+                                    >
+                                      <span className={cn("text-xs font-semibold text-white/90 truncate drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]", roleFlashClass(roleFlashMap.get(p.id)))}>{name}</span>
+                                    </Nameplate>
                                   </div>
                                   <div className="text-[10px] text-white/60">Off duty</div>
                                   <DndCountdown userId={p.id} compact className="mt-1" />
