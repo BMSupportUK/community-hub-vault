@@ -442,7 +442,7 @@ function TicketsPage() {
 
       {/* Tabs — hidden when actively chatting on a ticket */}
       <div className={cn(
-        "px-6 md:px-10 pb-10 relative",
+        "px-6 md:px-10 pb-10 relative z-10",
         !isChatting && "mt-6",
         isChatting && "px-0 md:px-0 pb-0 h-full"
       )}>
