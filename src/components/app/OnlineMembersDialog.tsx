@@ -3,7 +3,7 @@ import { Users, User, UserPlus, Check, Clock, EyeOff, Eye, Search } from "lucide
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { useOnlineUsers } from "@/hooks/use-online-users";
+import { useTalkChannelPresentUsers } from "@/hooks/use-talk-channel-presence";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,7 +33,9 @@ const STAFF_ROLES = new Set(["admin", "management", "moderator", "staff"]);
  */
 export function OnlineMembersDialog({ className }: { className?: string }) {
   const { user } = useAuth();
-  const onlineIds = useOnlineUsers();
+  // This control lives in Talk Channels, so its count and list must use the
+  // talk-channel presence feed rather than the separate site-wide presence.
+  const onlineIds = useTalkChannelPresentUsers();
   const roleFlashMap = useRoleFlashMap();
   const [open, setOpen] = useState(false);
   const [profiles, setProfiles] = useState<MemberProfile[]>([]);
