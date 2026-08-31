@@ -3,7 +3,7 @@ import { Users, User, UserPlus, Check, Clock, EyeOff, Eye, Search } from "lucide
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { useTalkChannelMemberCount, useTalkChannelPresentUsers } from "@/hooks/use-talk-channel-presence";
+import { useTalkChannelPresentUsers } from "@/hooks/use-talk-channel-presence";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -93,7 +93,6 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
   // This control lives in Talk Channels, so its count and list must use the
   // talk-channel presence feed rather than the separate site-wide presence.
   const onlineIds = useTalkChannelPresentUsers();
-  const membersOnline = useTalkChannelMemberCount();
   const roleFlashMap = useRoleFlashMap();
   const [open, setOpen] = useState(false);
   const [profiles, setProfiles] = useState<MemberProfile[]>([]);
@@ -255,11 +254,6 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
   }, [memberProfiles, rolesByUser, q, roleFilter, onlineIds]);
 
 
-  // This box is specifically for non-staff members. The side-rail presence
-  // count remains independent and may include staff.
-  const count = membersOnline;
-
-
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -273,9 +267,6 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
         >
           <Users className="size-4 text-primary" />
           <span className="text-xs font-semibold tracking-wide text-foreground/90">Members</span>
-          <span className="rounded-full bg-emerald-500/25 px-1.5 py-0.5 text-[10px] font-bold text-emerald-300">
-            {count}
-          </span>
         </button>
       </DialogTrigger>
 
@@ -521,10 +512,6 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
               )}
             </tbody>
           </table>
-        </div>
-        <div className="shrink-0 border-t border-white/10 px-5 py-3 text-xs text-white/60">
-          Showing <span className="font-semibold text-white">{visible.length}</span> members ·{" "}
-          <span className="font-semibold text-emerald-300">{membersOnline}</span> non-staff members online
         </div>
       </DialogContent>
     </Dialog>
