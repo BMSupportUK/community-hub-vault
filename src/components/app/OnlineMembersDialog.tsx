@@ -118,6 +118,7 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
       display_name: row.display_name,
       avatar_url: row.avatar_url,
       equipped_nameplate_id: row.equipped_nameplate_id,
+      custom_status: row.custom_status,
       created_at: (row as unknown as { created_at?: string | null }).created_at ?? null,
       last_seen_at: (row as unknown as { last_seen_at?: string | null }).last_seen_at ?? null,
     })));
