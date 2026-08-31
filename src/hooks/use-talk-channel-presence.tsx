@@ -387,7 +387,7 @@ export function useTalkChannelMemberCount(): number {
   useEffect(() => {
     const listener = () => refresh((value) => value + 1);
     memberListeners.add(listener);
-    if (!memberDirectoryLoaded) void loadMemberDirectory();
+    if (!memberDirectoryLoaded) void loadMemberDirectory(true);
     const onFocus = () => void loadMemberDirectory();
     window.addEventListener("focus", onFocus);
     return () => {
@@ -395,6 +395,18 @@ export function useTalkChannelMemberCount(): number {
       window.removeEventListener("focus", onFocus);
     };
   }, []);
+
+  // Someone online who isn't in the cached directory yet (just signed up or
+  // just had roles changed) would otherwise be silently uncounted — refresh.
+  useEffect(() => {
+    if (!memberDirectoryLoaded) return;
+    for (const id of onlineIds) {
+      if (!knownDirectoryIds.has(id)) {
+        void loadMemberDirectory();
+        break;
+      }
+    }
+  }, [onlineIds]);
 
   let count = 0;
   for (const id of onlineIds) {
