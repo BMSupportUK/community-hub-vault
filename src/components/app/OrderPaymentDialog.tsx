@@ -29,13 +29,25 @@ const fallbackFormat = (cents: number) =>
 
 export function OrderProgressStrip({
   order,
+  bankTransfer = false,
+  transferReported = false,
 }: {
   order: { status: string; paid_at?: string | null; completed_at?: string | null };
+  bankTransfer?: boolean;
+  transferReported?: boolean;
 }) {
   const placed = true;
   const paid = !!order.paid_at;
   const setup = order.status === "completed" || !!order.completed_at;
   const cancelled = order.status === "cancelled";
+
+  const payTitle = cancelled
+    ? "Cancelled"
+    : bankTransfer && !paid
+      ? transferReported
+        ? "Bank Transfer In Progress"
+        : "Awaiting Bank Transfer"
+      : "Pay For Order";
 
   const steps = [
     {
@@ -48,7 +60,7 @@ export function OrderProgressStrip({
     },
     {
       n: 2,
-      title: cancelled ? "Cancelled" : "Pay For Order",
+      title: payTitle,
       icon: cancelled ? X : Receipt,
       done: paid && !cancelled,
       active: !cancelled && placed && !paid,
