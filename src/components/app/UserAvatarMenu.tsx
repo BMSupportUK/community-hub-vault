@@ -48,7 +48,7 @@ interface MiniProfile {
 }
 
 export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "bar" } = {}) {
-  const { user, roles, signOut, hasAny } = useAuth();
+  const { user, roles, signOut, hasAny, isFanZoneOnly } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<MiniProfile | null>(null);
   const [copied, setCopied] = useState(false);
