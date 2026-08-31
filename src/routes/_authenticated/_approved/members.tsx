@@ -64,6 +64,8 @@ function MembersPage() {
   const [friendByUser, setFriendByUser] = useState<Record<string, FriendState>>({});
   const [busyId, setBusyId] = useState<string | null>(null);
   const [q, setQ] = useState("");
+  const [tab, setTab] = useState<"online" | "offline">("online");
+
   const [resetTarget, setResetTarget] = useState<Profile | null>(null);
   const [resetReason, setResetReason] = useState("");
   const [resetBusy, setResetBusy] = useState(false);
