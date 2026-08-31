@@ -401,13 +401,70 @@ function scheduleConfirmedLeave(channel: RealtimeChannel, departingUserId: strin
   }, 750);
 }
 
+/**
+ * While the app is locked (inactivity screen lock) the person is not really in
+ * the chat, so presence is suspended: no tracking is asserted until unlock.
+ */
+let presenceSuspended = false;
+
+/** Screen lock engaged: announce departure but keep the mounted trackers. */
+export async function suspendTalkPresence(userId: string): Promise<void> {
+  if (presenceSuspended) return;
+  presenceSuspended = true;
+  cancelPendingLeave();
+  trackedSignature = "";
+  const channel = sharedChannel;
+  const departingKey = `${getConnectionId()}:${userId}`;
+  explicitlyDepartedKeys.add(departingKey);
+  cleanlyDepartedUserIds.add(userId);
+
+  if (currentUserIds.has(userId)) {
+    const nextIds = new Set(currentUserIds);
+    nextIds.delete(userId);
+    currentUserIds = nextIds;
+    currentCount = nextIds.size;
+    for (const listener of Array.from(listeners)) listener(currentCount);
+    for (const listener of Array.from(userListeners)) listener(new Set(currentUserIds));
+  }
+
+  if (!channel || channel.state !== "joined") {
+    trackedUserId = null;
+    return;
+  }
+  await Promise.allSettled([
+    channel.send({
+      type: "broadcast",
+      event: "talk-presence-change",
+      payload: {
+        action: "leave",
+        connection_id: getConnectionId(),
+        user_id: userId,
+      } satisfies TalkPresenceSignal,
+    }),
+    channel.untrack(),
+  ]);
+  trackedUserId = null;
+  flushCount();
+}
+
+/** Screen unlocked: re-assert presence for whatever channel is still mounted. */
+export function resumeTalkPresence(): void {
+  if (!presenceSuspended) return;
+  presenceSuspended = false;
+  trackedSignature = "";
+  void syncTracking();
+  publishCount();
+}
+
 async function reconcileTracking() {
   const channel = sharedChannel;
   if (!channel || !subscribed) return;
+  if (presenceSuspended) return;
 
   const active = Array.from(trackers.values()).at(-1);
   const nextSignature = active ? `${active.userId}:${active.channelId}` : "";
   if (nextSignature === trackedSignature) return;
+
 
   if (!active) {
     const departingUserId = trackedUserId;
