@@ -1504,21 +1504,27 @@ function ChannelPage() {
                               </ChatMiniProfile>
                             );
                             return (
-                              <div className="flex flex-col items-center gap-0.5 shrink-0 mt-0.5">
+                              // Fixed-width column: the presence label text changes over
+                              // time ("Online" -> "Active 5 minutes ago"), so a fluid
+                              // width would shift the whole message row sideways.
+                              <div className="flex w-16 flex-col items-center gap-0.5 shrink-0 mt-0.5">
                                 {avatarEl}
                                 {profileId && (
-                                  <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                                  <div className="flex w-16 items-center justify-center gap-1 text-[10px] text-muted-foreground">
                                     <PresenceMiniDot userId={profileId} isOnline={isOnline} />
-                                    <PresenceMiniLabel
-                                      userId={profileId}
-                                      isOnline={isOnline}
-                                      offlineText={`Active ${formatLastSeen(p?.last_seen_at)}`}
-                                    />
+                                    <span className="min-w-0 truncate">
+                                      <PresenceMiniLabel
+                                        userId={profileId}
+                                        isOnline={isOnline}
+                                        offlineText={`Active ${formatLastSeen(p?.last_seen_at)}`}
+                                      />
+                                    </span>
                                   </div>
                                 )}
                               </div>
                             );
                           })()}
+
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-center gap-2 mb-1">
                               <div className="flex flex-col min-w-0">
