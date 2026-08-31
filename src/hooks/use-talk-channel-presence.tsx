@@ -466,7 +466,6 @@ function ensureSharedChannel() {
         // connection. Retire only this connection's snapshot and let the linger
         // grace decide, so members stop flicking offline/online. Genuine exits
         // still evict instantly via the explicit "leave" broadcast above.
-        explicitlyDepartedKeys.add(`${key}:${presence.user_id}`);
         departedPresenceStamps.set(`${key}:${presence.user_id}`, presence.online_at ?? "");
       }
       publishCount();
