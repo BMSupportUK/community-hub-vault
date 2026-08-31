@@ -1,15 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link } from "@tanstack/react-router";
-import { Users, MessageSquare, User as UserIcon, Loader2 } from "lucide-react";
+import { Users, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useTalkChannelPresentUsers } from "@/hooks/use-talk-channel-presence";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Nameplate } from "@/components/app/Nameplate";
+import { TalkMemberProfileCard } from "@/components/app/TalkMemberProfileCard";
 import { useRoleFlashMap, roleFlashClass, resolveAvatarUrl } from "@/lib/role-flash";
 import { formatRoleLabel } from "@/lib/role-label";
 import { sortRolesByPriority, highestRole } from "@/lib/role-rank";
-import { formatLastSeen } from "@/lib/relative-time";
 import { cn } from "@/lib/utils";
 
 type DirectoryRow = {
