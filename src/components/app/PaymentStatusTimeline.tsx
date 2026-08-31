@@ -14,11 +14,13 @@ export type PayCheckPhase =
   | "awaiting"
   | "checking_stripe"
   | "checking_square"
+  | "awaiting_verification"
   | "confirmed"
   | "failed"
   | "cancelled";
 
-export type PayMethod = "stripe" | "square" | "nowpayments" | null;
+export type PayMethod = "stripe" | "square" | "nowpayments" | "bank_transfer" | null;
+
 
 type StepDef = {
   key: string;
