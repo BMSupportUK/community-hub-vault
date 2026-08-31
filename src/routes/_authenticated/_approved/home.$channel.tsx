@@ -416,16 +416,22 @@ function ChannelPage() {
     };
     const observer = new ResizeObserver(() => {
       if (!initialScrollDoneRef.current || !keepScrollPinnedRef.current) return;
-      requestAnimationFrame(() => el.scrollTo({ top: el.scrollHeight, behavior: "instant" }));
+      requestAnimationFrame(() => el.scrollTo({ top: el.scrollHeight }));
     });
+
+    const observeRows = () => {
+      for (const child of Array.from(el.children)) observer.observe(child);
+    };
+    const mutations = new MutationObserver(observeRows);
 
     el.addEventListener("scroll", rememberPosition, { passive: true });
     observer.observe(el);
-    const content = el.firstElementChild;
-    if (content) observer.observe(content);
+    observeRows();
+    mutations.observe(el, { childList: true });
 
     return () => {
       el.removeEventListener("scroll", rememberPosition);
+      mutations.disconnect();
       observer.disconnect();
     };
   }, [channel?.id]);
