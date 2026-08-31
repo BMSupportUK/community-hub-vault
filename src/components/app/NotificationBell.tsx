@@ -347,19 +347,20 @@ export function NotificationBell() {
       <PopoverContent
         side="bottom"
         align="end"
-        collisionPadding={8}
-        className="w-[min(24rem,calc(100vw-1rem))] p-0"
+        collisionPadding={12}
+        avoidCollisions
+        className="w-[min(24rem,calc(100vw-1rem))] p-0 overflow-hidden flex flex-col max-h-[min(70vh,32rem)]"
         sideOffset={8}
       >
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+        <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-border shrink-0">
           <div className="font-display font-semibold">Notifications</div>
           {unread.length > 0 && (
-            <Button variant="ghost" size="sm" onClick={markAll} className="h-7 text-xs">
+            <Button variant="ghost" size="sm" onClick={markAll} className="h-7 text-xs shrink-0">
               <Check className="size-3.5 mr-1" /> Mark all read
             </Button>
           )}
         </div>
-        <ScrollArea className="max-h-[480px]">
+        <ScrollArea className="flex-1 min-h-0">
           {items.length === 0 && (
             <div className="px-4 py-12 text-center text-sm text-muted-foreground">You're all caught up.</div>
           )}
