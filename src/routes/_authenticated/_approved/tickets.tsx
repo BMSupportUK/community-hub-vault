@@ -1521,6 +1521,17 @@ function TicketDetail({
           )}
           {isAdmin && (
             <>
+              {!linkedOrder.paid_at && (bankOnlyOrder || payProvider === "bank_transfer") && (
+                <button
+                  onClick={orderConfirmBankTransfer}
+                  disabled={orderBusy}
+                  title="Tick once the money has landed in the bank — confirms payment and thanks the customer"
+                  className="px-2.5 py-1 rounded-md bg-emerald-500/25 border border-emerald-300/50 text-emerald-50 text-xs font-semibold inline-flex items-center gap-1 hover:bg-emerald-500/40 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <CheckCircle2 className="size-3.5 text-emerald-300" />
+                  {orderBusy ? "Confirming…" : "Confirm Bank Transfer Received"}
+                </button>
+              )}
               {linkedOrder.customer_type === "existing" &&
               Boolean((linkedOrder as { existing_username?: string | null }).existing_username) ? (
                 <button
