@@ -42,10 +42,18 @@ async function loadMemberDirectory() {
       console.error("Could not load Talk Channel member directory", error);
       return;
     }
-    const staffRoles = new Set(["admin", "management", "moderator", "staff"]);
+    const excludedRoles = new Set([
+      "admin",
+      "management",
+      "moderator",
+      "staff",
+      "pending",
+      "banned",
+      "rejected",
+    ]);
     memberIds = new Set(
       (data ?? [])
-        .filter((row) => !(row.roles ?? []).some((role) => staffRoles.has(role)))
+        .filter((row) => !(row.roles ?? []).some((role) => excludedRoles.has(role)))
         .map((row) => row.user_id),
     );
     memberDirectoryLoaded = true;
@@ -311,10 +319,12 @@ export function useTalkChannelPresentUsers(): Set<string> {
   return ids;
 }
 
-/**
- * Live count of everyone currently inside any Talk Channel (staff included) —
- * kept in sync with the Members button so the two never disagree.
- */
+/** Live count of everyone currently inside any Talk Channel, including staff. */
+export function useTalkChannelTotalCount(): number {
+  return useTalkChannelPresentUsers().size;
+}
+
+/** Live count of online non-staff members currently inside a Talk Channel. */
 export function useTalkChannelMemberCount(): number {
   const onlineIds = useTalkChannelPresentUsers();
   const [, refresh] = useState(0);
@@ -331,6 +341,9 @@ export function useTalkChannelMemberCount(): number {
     };
   }, []);
 
-  void memberIds;
-  return onlineIds.size;
+  let count = 0;
+  for (const id of onlineIds) {
+    if (memberIds.has(id)) count++;
+  }
+  return count;
 }
