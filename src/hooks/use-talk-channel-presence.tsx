@@ -7,7 +7,13 @@ const TALK_PRESENCE_TOPIC = "presence:talk-channels";
 type TalkPresence = {
   user_id?: string;
   channel_id?: string;
+  online_at?: string;
 };
+
+/** Presences older than this are treated as gone (dropped tab / dead socket). */
+const STALE_MS = 45_000;
+/** How often the local presence timestamp is refreshed while in a channel. */
+const HEARTBEAT_MS = 15_000;
 
 type Tracker = {
   userId: string;
@@ -27,20 +33,37 @@ const trackers = new Map<symbol, Tracker>();
 function collectUniqueUsers(channel: RealtimeChannel): Set<string> {
   const state = channel.presenceState<TalkPresence>();
   const userIds = new Set<string>();
+  const cutoff = Date.now() - STALE_MS;
 
   for (const presences of Object.values(state)) {
     for (const presence of presences) {
-      if (presence.user_id) userIds.add(presence.user_id);
+      if (!presence.user_id) continue;
+      // Ignore heartbeats that stopped arriving — the device left without a
+      // clean untrack (closed tab, sleeping laptop, dropped connection).
+      if (presence.online_at) {
+        const seen = new Date(presence.online_at).getTime();
+        if (Number.isFinite(seen) && seen < cutoff) continue;
+      }
+      userIds.add(presence.user_id);
     }
   }
 
   return userIds;
 }
 
+function sameIds(a: Set<string>, b: Set<string>): boolean {
+  if (a.size !== b.size) return false;
+  for (const id of a) if (!b.has(id)) return false;
+  return true;
+}
+
 function publishCount() {
   if (!sharedChannel) return;
-  currentUserIds = collectUniqueUsers(sharedChannel);
-  currentCount = currentUserIds.size;
+  const nextIds = collectUniqueUsers(sharedChannel);
+  const changed = !sameIds(nextIds, currentUserIds);
+  currentUserIds = nextIds;
+  currentCount = nextIds.size;
+  if (!changed) return;
   for (const listener of listeners) listener(currentCount);
   for (const listener of userListeners) listener(currentUserIds);
 }
@@ -89,6 +112,39 @@ function ensureSharedChannel() {
     });
 
   sharedChannel = channel;
+
+  // Refresh our own presence timestamp so other devices can tell a live
+  // session from an abandoned one, and re-check everyone else for staleness.
+  setInterval(() => {
+    if (!subscribed) return;
+    const active = Array.from(trackers.values()).at(-1);
+    if (active) {
+      void channel.track({
+        user_id: active.userId,
+        channel_id: active.channelId,
+        online_at: new Date().toISOString(),
+      });
+    }
+    publishCount();
+  }, HEARTBEAT_MS);
+
+  if (typeof window !== "undefined") {
+    // Leaving the page: untrack immediately so every other screen drops the
+    // card right away instead of waiting for the socket to time out.
+    const leave = () => {
+      trackedSignature = "";
+      void channel.untrack().catch(() => undefined);
+    };
+    window.addEventListener("pagehide", leave);
+    window.addEventListener("beforeunload", leave);
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState !== "visible") return;
+      // Coming back from a backgrounded tab: re-assert presence and resync.
+      trackedSignature = "";
+      void syncTracking();
+      publishCount();
+    });
+  }
 }
 
 export function useTalkChannelPresence(options: {
