@@ -105,7 +105,7 @@ export function MentionText({
         <a
           key={key++}
           href={mdUrl}
-          className="underline text-blue-600 hover:opacity-80"
+          className="inline-flex items-center gap-1 rounded-full bg-sky-600 px-2.5 py-0.5 font-semibold text-white no-underline ring-1 ring-sky-400/70 shadow-sm transition-colors hover:bg-sky-500"
         >
           {mdText}
         </a>,
@@ -116,7 +116,7 @@ export function MentionText({
         <a
           key={key++}
           href={href}
-          className="underline text-blue-600 hover:opacity-80"
+          className="font-semibold underline decoration-2 underline-offset-2 decoration-sky-500 text-sky-600 dark:text-sky-300 hover:opacity-80 break-all"
         >
           {bareUrl}
         </a>,
