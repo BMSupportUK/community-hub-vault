@@ -399,7 +399,7 @@ export const getPublicFanProfile = createServerFn({ method: "GET" })
         .from("user_roles")
         .select("role")
         .eq("user_id", data.userId)
-        .in("role", FAN_BADGE_ROLES as unknown as string[]),
+        .in("role", [...FAN_BADGE_ROLES]),
     ]);
 
     const m = memberRes.data as

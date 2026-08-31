@@ -67,7 +67,7 @@ function FanProfilePage() {
         .from("user_roles")
         .select("role")
         .eq("user_id", userId)
-        .in("role", BADGE_ROLES as unknown as string[]);
+        .in("role", [...BADGE_ROLES]);
       const roles = (data ?? []).map((r) => r.role as string);
       // BM Support roles rank above Boro Fan Zone roles.
       setStaffRole((BADGE_ROLES.find((r) => roles.includes(r)) as FanStaffRole) ?? null);
