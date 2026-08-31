@@ -179,15 +179,27 @@ export function PayOrderDialog({
 }) {
   const [open, setOpen] = useState(false);
   const [bankOnly, setBankOnly] = useState<boolean | null>(null);
+  const [bankReported, setBankReported] = useState(false);
   const { format = fallbackFormat } = useCurrency();
   const checkBankAccess = useServerFn(getMyBankTransferAccess);
+  const loadBankDetails = useServerFn(getBankDetailsForOrder);
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
         const res: any = await checkBankAccess({});
-        if (!cancelled) setBankOnly(Boolean(res?.allowed));
+        if (cancelled) return;
+        const allowed = Boolean(res?.allowed);
+        setBankOnly(allowed);
+        if (allowed) {
+          try {
+            const d: any = await loadBankDetails({ data: { orderId } });
+            if (!cancelled) setBankReported(Boolean(d?.reported));
+          } catch {
+            /* ignore */
+          }
+        }
       } catch {
         if (!cancelled) setBankOnly(false);
       }
@@ -196,9 +208,17 @@ export function PayOrderDialog({
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [orderId]);
 
   const handleChange = async () => {
+    try {
+      if (bankOnly) {
+        const d: any = await loadBankDetails({ data: { orderId } });
+        setBankReported(Boolean(d?.reported));
+      }
+    } catch {
+      /* ignore */
+    }
     await onChange?.();
   };
 
@@ -207,11 +227,13 @@ export function PayOrderDialog({
       <Button
         type="button"
         onClick={() => setOpen(true)}
-        className="w-full h-auto px-4 py-2.5 rounded-lg font-medium"
+        disabled={bankReported}
+        className="w-full h-auto px-4 py-2.5 rounded-lg font-medium disabled:opacity-50"
       >
         <CreditCard className="size-4" />
-        Pay {format(amountCents)}
+        {bankReported ? "Bank transfer reported — awaiting verification" : `Pay ${format(amountCents)}`}
       </Button>
+
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
