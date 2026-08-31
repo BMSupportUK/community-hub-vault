@@ -10,37 +10,9 @@ import {
   onSoundPrefsChange,
   playSoundFromGesture,
 } from "@/lib/sound";
-import mentionAudio from "@/assets/mention-notify.mp3";
-import ticketAudio from "@/assets/ticket-notify.mp3";
-import ticketReplyAudio from "@/assets/ticket-reply-notify.mp3";
-import paymentReceivedAudio from "@/assets/payment-received.mp3";
-import shiftStartAudio from "@/assets/shift-start.mp3";
-import endBreakAudio from "@/assets/end-break.mp3";
-import outageAudio from "@/assets/outage-notify.mp3";
-import orderAudio from "@/assets/order-notify.mp3";
-import newSignupAudio from "@/assets/new-signup-notify.mp3";
-import broadcastAudio from "@/assets/broadcast-notify.mp3";
-import staffMentionAudio from "@/assets/staff-mention.mp3";
-import outageResolvedAudio from "@/assets/outage-resolved.mp3";
-import endLunchAudio from "@/assets/end-lunch.mp3";
-import shiftEndAudio from "@/assets/shift-end.mp3";
+import { NOTIFICATION_SOUNDS } from "@/lib/notification-sounds";
 
-const SAMPLES: { label: string; src: string; gain: number }[] = [
-  { label: "Mention", src: mentionAudio, gain: 1.5 },
-  { label: "Staff mention", src: staffMentionAudio, gain: 1.5 },
-  { label: "Broadcast", src: broadcastAudio, gain: 1.5 },
-  { label: "Sale / Order", src: orderAudio, gain: 1.8 },
-  { label: "Ticket", src: ticketAudio, gain: 2.0 },
-  { label: "Ticket reply", src: ticketReplyAudio, gain: 2.0 },
-  { label: "Payment confirmed", src: paymentReceivedAudio, gain: 2.0 },
-  { label: "New signup", src: newSignupAudio, gain: 1.8 },
-  { label: "Shift start", src: shiftStartAudio, gain: 2.2 },
-  { label: "Shift end", src: shiftEndAudio, gain: 2.2 },
-  { label: "Break ending", src: endBreakAudio, gain: 2.2 },
-  { label: "Lunch ending", src: endLunchAudio, gain: 2.2 },
-  { label: "Outage", src: outageAudio, gain: 2.2 },
-  { label: "Outage resolved", src: outageResolvedAudio, gain: 1.8 },
-];
+const SAMPLES = NOTIFICATION_SOUNDS;
 
 export function SoundSettings() {
   const [prefs, setPrefs] = useState(() => getSoundPrefs());
