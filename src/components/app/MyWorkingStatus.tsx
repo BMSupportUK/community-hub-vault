@@ -46,7 +46,17 @@ export function MyWorkingStatus() {
       .on("postgres_changes", { event: "*", schema: "public", table: "shifts", filter: `user_id=eq.${user.id}` }, () => refresh())
       .on("postgres_changes", { event: "*", schema: "public", table: "breaks", filter: `user_id=eq.${user.id}` }, () => refresh())
       .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    // Realtime can miss events; poll and re-check on focus so the timer is right.
+    const poll = setInterval(() => { void refresh(); }, 20_000);
+    const onWake = () => { if (document.visibilityState === "visible") void refresh(); };
+    window.addEventListener("focus", onWake);
+    document.addEventListener("visibilitychange", onWake);
+    return () => {
+      supabase.removeChannel(ch);
+      clearInterval(poll);
+      window.removeEventListener("focus", onWake);
+      document.removeEventListener("visibilitychange", onWake);
+    };
   }, [user?.id]);
 
   if (!user) return null;
