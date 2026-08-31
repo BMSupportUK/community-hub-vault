@@ -442,27 +442,27 @@ function InstallGuidesPage() {
 
   return (
     <div className="flex-1 overflow-y-auto bg-background text-foreground">
-      <header className="px-8 pt-8 pb-6 border-b border-border bg-surface/60 backdrop-blur">
+       <header className="px-4 sm:px-8 pt-8 pb-6 border-b border-border bg-surface/60 backdrop-blur">
         <h1 className="font-display text-3xl font-bold text-foreground">Install Guides</h1>
         <p className="text-muted-foreground mt-1">Step-by-step installation walkthroughs and PDF docs</p>
       </header>
 
-       <div className="px-8 py-6">
+        <div className="px-4 sm:px-8 py-6">
         <Tabs value={tab} onValueChange={setTab} className="w-full">
-          <TabsList className="flex flex-wrap w-full h-auto bg-surface/70 border border-border p-1 gap-1">
-            <TabsTrigger value="welcome" className="shrink-0 flex-1 min-w-0 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Welcome</TabsTrigger>
-            <TabsTrigger value="guides" className="shrink-0 flex-1 min-w-0 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Guides</TabsTrigger>
+           <TabsList className="flex h-auto w-full flex-wrap gap-1 border border-border bg-surface/70 p-1 sm:flex-nowrap">
+             <TabsTrigger value="welcome" className="min-w-0 flex-1 px-2 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">Welcome</TabsTrigger>
+             <TabsTrigger value="guides" className="min-w-0 flex-1 px-2 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">Guides</TabsTrigger>
             {canSeeAppTab && (
-              <TabsTrigger value="get-app" className="shrink-0 flex-1 min-w-0 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Request BM Store Download Link</TabsTrigger>
+               <TabsTrigger value="get-app" className="min-w-fit flex-[2.35] px-2 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">Request BM Store Download Link</TabsTrigger>
             )}
             {canManageCategories && (
-              <TabsTrigger value="categories" className="shrink-0 flex-1 min-w-0 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Categories</TabsTrigger>
+               <TabsTrigger value="categories" className="min-w-0 flex-1 px-2 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">Categories</TabsTrigger>
             )}
             {canManagePasscodes && (
-              <TabsTrigger value="passcodes" className="shrink-0 flex-1 min-w-0 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Passcodes</TabsTrigger>
+               <TabsTrigger value="passcodes" className="min-w-0 flex-1 px-2 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">Passcodes</TabsTrigger>
             )}
             {canManagePasscodes && (
-              <TabsTrigger value="app-apk" className="shrink-0 flex-1 min-w-0 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">App APK</TabsTrigger>
+               <TabsTrigger value="app-apk" className="min-w-0 flex-1 px-2 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">App APK</TabsTrigger>
             )}
           </TabsList>
 
