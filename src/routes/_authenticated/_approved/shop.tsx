@@ -60,7 +60,6 @@ import {
   createStripePaymentIntent,
   confirmStripePayment,
 } from "@/lib/stripe-payments.functions";
-import { verifyStripePaymentForOrder } from "@/components/app/StripeOrderPanel";
 import { PaymentStatusTimeline, type PayCheckPhase } from "@/components/app/PaymentStatusTimeline";
 import { BankTransferPanel } from "@/components/app/BankTransferPanel";
 import { getMyBankTransferAccess } from "@/lib/bank-transfer.functions";
@@ -3413,7 +3412,6 @@ function OrderDetailImpl({
 
   // Payments are never auto-confirmed. The customer must press "I've paid",
   // which checks Stripe first and then Square.
-  const confirmStripe = useServerFn(confirmStripePayment);
   const orderMarkedPaid = Boolean(order?.paid_at || order?.status === "paid");
   const isOrderPaid = Boolean(orderMarkedPaid || settledPayment);
 
