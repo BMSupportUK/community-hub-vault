@@ -49,6 +49,14 @@ const PUBLISH_DEBOUNCE_MS = 250;
  * blips made people appear to go offline and come straight back.
  */
 const LINGER_MS = 8_000;
+/** Anti-stale watchdog tick: re-reads presence and repairs frozen counters. */
+const WATCHDOG_MS = 10_000;
+/** How often the watchdog re-emits the current value even when unchanged. */
+const WATCHDOG_RESYNC_MS = 30_000;
+let watchdogTimer: ReturnType<typeof setInterval> | null = null;
+let lastForcedResyncAt = 0;
+
+
 
 
 type Tracker = {
