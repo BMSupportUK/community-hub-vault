@@ -37,9 +37,9 @@ type TalkPresenceSignal = {
  * Generous vs. the heartbeat so a throttled background tab or a slow phone
  * never gets dropped and re-added — that churn is what made counts flicker.
  */
-const STALE_MS = 120_000;
+const STALE_MS = 180_000;
 /** How often the local presence timestamp is refreshed while in a channel. */
-const HEARTBEAT_MS = 20_000;
+const HEARTBEAT_MS = 45_000;
 /** Counts settle for this long before publishing, so bursts land as one update. */
 const PUBLISH_DEBOUNCE_MS = 250;
 /**
@@ -48,7 +48,8 @@ const PUBLISH_DEBOUNCE_MS = 250;
  * socket re-join momentarily empties one key — without this grace window those
  * blips made people appear to go offline and come straight back.
  */
-const LINGER_MS = 5_000;
+const LINGER_MS = 8_000;
+
 
 type Tracker = {
   userId: string;
@@ -460,12 +461,17 @@ function ensureSharedChannel() {
     .on("presence", { event: "leave" }, ({ key, leftPresences }) => {
       for (const presence of leftPresences as TalkPresence[]) {
         if (!presence.user_id) continue;
+        // A leave diff is NOT proof the person left the chat: every heartbeat
+        // re-track, and every socket rejoin, emits leave+join for the same
+        // connection. Retire only this connection's snapshot and let the linger
+        // grace decide, so members stop flicking offline/online. Genuine exits
+        // still evict instantly via the explicit "leave" broadcast above.
         explicitlyDepartedKeys.add(`${key}:${presence.user_id}`);
         departedPresenceStamps.set(`${key}:${presence.user_id}`, presence.online_at ?? "");
-        cleanlyDepartedUserIds.add(presence.user_id);
       }
       publishCount();
     })
+
     .subscribe((status) => {
       if (status === "SUBSCRIBED") {
         subscribed = true;
