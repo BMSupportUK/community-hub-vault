@@ -49,7 +49,10 @@ export function TalkMemberProfileCard({
 }) {
   const roleFlashMap = useRoleFlashMap();
   const name = row.display_name || row.username || "Member";
-  const roles = sortRolesByPriority(row.roles ?? []);
+  // Boro Fan Zone roles are hidden in Talk Channels; all other roles show.
+  const roles = sortRolesByPriority(
+    (row.roles ?? []).filter((r) => !r.startsWith("boro_fan_zone_")),
+  );
 
   return (
     <>
