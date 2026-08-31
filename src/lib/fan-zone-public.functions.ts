@@ -362,10 +362,25 @@ export type PublicFanProfile = {
   is_private: boolean;
   last_seen_at: string | null;
   stats: { topics: number; posts: number; friends: number; reactions: number } | null;
-  staff_role: "admin" | "boro_fan_zone_moderator" | null;
+  staff_role: FanStaffRoleValue;
 };
 
-export type FanStaffRoleValue = "admin" | "boro_fan_zone_moderator" | null;
+export type FanStaffRoleValue =
+  | "admin"
+  | "management"
+  | "moderator"
+  | "staff"
+  | "boro_fan_zone_moderator"
+  | null;
+
+/** Roles a Fan Zone profile can be badged with, BM Support first. */
+const FAN_BADGE_ROLES = [
+  "admin",
+  "management",
+  "moderator",
+  "staff",
+  "boro_fan_zone_moderator",
+] as const;
 
 /** Guest-viewable Boro Fan Zone profile (read-only, respects the private flag). */
 export const getPublicFanProfile = createServerFn({ method: "GET" })
@@ -384,7 +399,7 @@ export const getPublicFanProfile = createServerFn({ method: "GET" })
         .from("user_roles")
         .select("role")
         .eq("user_id", data.userId)
-        .in("role", ["admin", "boro_fan_zone_moderator"]),
+        .in("role", [...FAN_BADGE_ROLES]),
     ]);
 
     const m = memberRes.data as
@@ -403,11 +418,9 @@ export const getPublicFanProfile = createServerFn({ method: "GET" })
       | null;
     const isStaff = ((roleRes.data ?? []) as Array<{ role: string }>).length > 0;
     const staffRoles = ((roleRes.data ?? []) as Array<{ role: string }>).map((r) => r.role);
-    const staffRole: FanStaffRoleValue = staffRoles.includes("admin")
-      ? "admin"
-      : staffRoles.includes("boro_fan_zone_moderator")
-        ? "boro_fan_zone_moderator"
-        : null;
+    // BM Support roles rank above Boro Fan Zone roles.
+    const staffRole: FanStaffRoleValue =
+      (FAN_BADGE_ROLES.find((r) => staffRoles.includes(r)) as FanStaffRoleValue) ?? null;
 
     // Only Fan Zone members (or listed staff) have a Fan Zone profile.
     if (!isStaff && (!m || m.status !== "approved")) return null;
