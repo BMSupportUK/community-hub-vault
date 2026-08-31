@@ -46,6 +46,7 @@ export function TalkChannelMembersPanel() {
   const onlineIds = useTalkChannelPresentUsers();
   const roleFlashMap = useRoleFlashMap();
   const [rows, setRows] = useState<DirectoryRow[] | null>(null);
+  const [activeTab, setActiveTab] = useState<"online" | "offline">("online");
 
   const load = useCallback(async () => {
     const { data, error } = await supabase.rpc("talk_channel_member_directory");
@@ -122,52 +123,89 @@ export function TalkChannelMembersPanel() {
           {membersInChat}
         </span>
       </div>
-      <div className="flex-1 min-h-0 overflow-y-auto px-2 py-2 space-y-3">
-        {groups.ordered.map(({ role, list }) => (
-          <section key={role}>
-            <h3
-              className={cn(
-                "px-1 pb-1 text-[10px] font-bold uppercase tracking-wider",
-                ROLE_TEXT[role] ?? "text-muted-foreground",
-              )}
-            >
-              {formatRoleLabel(role)}
-            </h3>
-            <div className="space-y-0.5">
-              {list.map((m) => (
-                <MemberRow
-                  key={m.user_id}
-                  row={m}
-                  online
-                  selfId={user?.id ?? null}
-                  roleFlashMap={roleFlashMap}
-                />
-              ))}
-            </div>
-          </section>
-        ))}
 
-        {groups.offline.length > 0 && (
-          <section>
-            <h3 className="px-1 pb-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-              Offline
-            </h3>
-            <div className="space-y-0.5">
-              {groups.offline.map((m) => (
-                <MemberRow
-                  key={m.user_id}
-                  row={m}
-                  online={false}
-                  selfId={user?.id ?? null}
-                  roleFlashMap={roleFlashMap}
-                />
-              ))}
-            </div>
-          </section>
+      <div className="shrink-0 grid grid-cols-2 border-b border-border">
+        <button
+          type="button"
+          onClick={() => setActiveTab("online")}
+          className={cn(
+            "px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider transition-colors",
+            activeTab === "online"
+              ? "bg-surface text-emerald-300"
+              : "text-muted-foreground hover:text-foreground hover:bg-surface-2/50",
+          )}
+        >
+          Online
+        </button>
+        <button
+          type="button"
+          onClick={() => setActiveTab("offline")}
+          className={cn(
+            "px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider transition-colors",
+            activeTab === "offline"
+              ? "bg-surface text-foreground"
+              : "text-muted-foreground hover:text-foreground hover:bg-surface-2/50",
+          )}
+        >
+          Offline
+        </button>
+      </div>
+
+      <div className="flex-1 min-h-0 overflow-y-auto px-2 py-2 space-y-3">
+        {activeTab === "online" && (
+          <>
+            {groups.ordered.map(({ role, list }) => (
+              <section key={role}>
+                <h3
+                  className={cn(
+                    "px-1 pb-1 text-[10px] font-bold uppercase tracking-wider",
+                    ROLE_TEXT[role] ?? "text-muted-foreground",
+                  )}
+                >
+                  {formatRoleLabel(role)}
+                </h3>
+                <div className="space-y-0.5">
+                  {list.map((m) => (
+                    <MemberRow
+                      key={m.user_id}
+                      row={m}
+                      online
+                      selfId={user?.id ?? null}
+                      roleFlashMap={roleFlashMap}
+                    />
+                  ))}
+                </div>
+              </section>
+            ))}
+            {groups.ordered.length === 0 && (
+              <p className="px-2 py-6 text-center text-xs text-muted-foreground">No members online.</p>
+            )}
+          </>
         )}
 
-        {members.length === 0 && (
-          <p className="px-2 py-6 text-center text-xs text-muted-foreground">No members yet.</p>
+        {activeTab === "offline" && (
+          <>
+            {groups.offline.length > 0 ? (
+              <section>
+                <h3 className="px-1 pb-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  Offline
+                </h3>
+                <div className="space-y-0.5">
+                  {groups.offline.map((m) => (
+                    <MemberRow
+                      key={m.user_id}
+                      row={m}
+                      online={false}
+                      selfId={user?.id ?? null}
+                      roleFlashMap={roleFlashMap}
+                    />
+                  ))}
+                </div>
+              </section>
+            ) : (
+              <p className="px-2 py-6 text-center text-xs text-muted-foreground">No members offline.</p>
+            )}
+          </>
         )}
       </div>
     </div>
