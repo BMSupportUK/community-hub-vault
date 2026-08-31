@@ -1882,6 +1882,18 @@ function EditProfileModal({ profile, onClose, onSaved }: { profile: ProfileRow; 
           <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} maxLength={64}
             className="w-full px-3 py-2 rounded-lg bg-surface-2 border border-border text-sm" />
         </Field>
+        <Field label="Custom status">
+          <input
+            value={customStatus}
+            onChange={(e) => setCustomStatus(e.target.value)}
+            maxLength={80}
+            placeholder="Travelling home, On a call, AFK…"
+            className="w-full px-3 py-2 rounded-lg bg-surface-2 border border-border text-sm"
+          />
+          <span className="block text-[11px] text-muted-foreground mt-1">
+            Shown under your nameplate in Talk channels.
+          </span>
+        </Field>
         <Field label="Bio">
           <HtmlEditor value={bio} onChange={setBio} placeholder="Tell us about yourself…" />
         </Field>
