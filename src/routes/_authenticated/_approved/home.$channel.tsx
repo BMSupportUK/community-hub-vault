@@ -59,10 +59,7 @@ import { cn } from "@/lib/utils";
 import { DEFAULT_AVATAR_URL } from "@/lib/default-avatar";
 import { Nameplate } from "@/components/app/Nameplate";
 import { useOnlineUsers } from "@/hooks/use-online-users";
-import {
-  useTalkChannelMemberCount,
-  useTalkChannelPresence,
-} from "@/hooks/use-talk-channel-presence";
+import { useTalkChannelPresence } from "@/hooks/use-talk-channel-presence";
 import { PresenceMiniDot, PresenceMiniLabel } from "@/components/app/PresenceIndicators";
 import { formatLastSeen } from "@/lib/relative-time";
 import { useRoleFlashMap, roleFlashClass, resolveAvatarUrl } from "@/lib/role-flash";
@@ -134,7 +131,6 @@ function ChannelPage() {
   const canMute = hasAny(["admin", "management", "moderator", "staff"]);
   const [muteSubmenuId, setMuteSubmenuId] = useState<string | null>(null);
   const [sideTab, setSideTab] = useState<"staff" | "members">("staff");
-  const membersInChat = useTalkChannelMemberCount();
 
   const [myMuteExpires, setMyMuteExpires] = useState<Date | null>(null);
   const [muteTick, setMuteTick] = useState(0);
@@ -2198,16 +2194,7 @@ function ChannelPage() {
                     : "text-muted-foreground hover:bg-surface-2"
                 }`}
               >
-                {t === "staff" ? (
-                  "Staff"
-                ) : (
-                  <span className="inline-flex items-center justify-center gap-1.5">
-                    Members
-                    <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-bold leading-none text-emerald-300">
-                      {membersInChat}
-                    </span>
-                  </span>
-                )}
+                {t === "staff" ? "Staff" : "Members"}
               </button>
             ))}
           </div>
