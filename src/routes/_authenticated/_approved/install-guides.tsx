@@ -438,7 +438,7 @@ function InstallGuidesPage() {
 
       <div className="px-8 py-6">
         <Tabs value={tab} onValueChange={setTab} className="w-full">
-          <TabsList className={`grid ${canManagePasscodes ? "grid-cols-5" : canManageCategories ? "grid-cols-4" : "grid-cols-3"} max-w-3xl bg-surface/70 border border-border`}>
+          <TabsList className={`grid ${canManagePasscodes ? "grid-cols-6" : canManageCategories ? "grid-cols-4" : "grid-cols-3"} max-w-4xl bg-surface/70 border border-border`}>
             <TabsTrigger value="welcome" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Welcome</TabsTrigger>
             <TabsTrigger value="guides" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Guides</TabsTrigger>
             <TabsTrigger value="get-app" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Get the App</TabsTrigger>
@@ -448,11 +448,14 @@ function InstallGuidesPage() {
             {canManagePasscodes && (
               <TabsTrigger value="passcodes" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Passcodes</TabsTrigger>
             )}
+            {canManagePasscodes && (
+              <TabsTrigger value="app-apk" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">App APK</TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="get-app" className="mt-6">
             <div className="max-w-4xl">
-              <AppTransferPanel />
+              <AppTransferPanel onUploadClick={canManagePasscodes ? () => setTab("app-apk") : undefined} />
             </div>
           </TabsContent>
 
@@ -460,10 +463,18 @@ function InstallGuidesPage() {
             <TabsContent value="passcodes" className="mt-6">
               <div className="space-y-8">
                 <GuidePasscodeAdmin />
+              </div>
+            </TabsContent>
+          )}
+
+          {canManagePasscodes && (
+            <TabsContent value="app-apk" className="mt-6">
+              <div className="max-w-5xl">
                 <AppBuildAdmin />
               </div>
             </TabsContent>
           )}
+
 
 
           <TabsContent value="welcome" className="mt-6">
