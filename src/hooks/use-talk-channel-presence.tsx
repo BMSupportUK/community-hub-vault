@@ -535,6 +535,45 @@ function ensureSharedChannel() {
     }, HEARTBEAT_MS);
   }
 
+  // Anti-stale watchdog. The heartbeat only runs every 45s and publishes on
+  // change, so a missed realtime event could leave a counter frozen until a
+  // hard refresh. This cheap tick re-reads presence far more often and, every
+  // WATCHDOG_RESYNC_MS, re-emits the current value even when unchanged so any
+  // component whose local state drifted is snapped back into line.
+  if (!watchdogTimer) {
+    watchdogTimer = setInterval(() => {
+      const live = sharedChannel;
+      if (!live) {
+        ensureSharedChannel();
+        return;
+      }
+      if (live.state !== "joined") {
+        subscribed = false;
+        resubscribe();
+        return;
+      }
+      flushCount();
+      const now = Date.now();
+      if (now - lastForcedResyncAt >= WATCHDOG_RESYNC_MS) {
+        lastForcedResyncAt = now;
+        for (const listener of Array.from(listeners)) {
+          try {
+            listener(currentCount);
+          } catch {
+            /* ignore */
+          }
+        }
+        for (const listener of Array.from(userListeners)) {
+          try {
+            listener(new Set(currentUserIds));
+          } catch {
+            /* ignore */
+          }
+        }
+      }
+    }, WATCHDOG_MS);
+  }
+
   if (typeof window !== "undefined" && !windowListenersBound) {
     windowListenersBound = true;
     // Leaving the page: untrack immediately so every other screen drops the
