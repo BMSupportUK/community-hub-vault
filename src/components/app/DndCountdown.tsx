@@ -40,7 +40,6 @@ export function DndCountdown({
     return () => clearInterval(id);
   }, []);
 
-  console.log("[dndc]", userId, JSON.stringify(info), endsAtTime, now);
   if (!info?.active) return null;
 
   const remaining = endsAtTime !== null ? endsAtTime - now : null;
