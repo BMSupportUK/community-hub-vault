@@ -107,7 +107,7 @@ interface RailItem {
 }
 
 export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
-  const { user, isStaff, isPending, signOut, hasAny, roles, hasRole } = useAuth();
+  const { user, isStaff, isPending, signOut, hasAny, roles, hasRole, isFanZoneOnly } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
   const path = useRouterState({ select: (r) => r.location.pathname });
   const [unreadNewContent, setUnreadNewContent] = useState(cachedUnreadNewContent);
