@@ -100,6 +100,7 @@ import { Route as AuthenticatedApprovedHomeIndexRouteImport } from './routes/_au
 import { Route as AuthenticatedApprovedHomeChannelRouteImport } from './routes/_authenticated/_approved/home.$channel'
 import { Route as AuthenticatedApprovedSportsGuidesNewRouteImport } from './routes/_authenticated/_approved/sports-guides.new'
 import { Route as AuthenticatedApprovedUUsernameRouteImport } from './routes/_authenticated/_approved/u.$username'
+import { Route as ApiPublicATokenRouteImport } from './routes/api/public/a/$token'
 import { Route as ApiPublicHooksBackupCredentialsRouteImport } from './routes/api/public/hooks/backup-credentials'
 import { Route as ApiPublicHooksBackupOrdersRouteImport } from './routes/api/public/hooks/backup-orders'
 import { Route as ApiPublicHooksBoroFetchFixturesRouteImport } from './routes/api/public/hooks/boro-fetch-fixtures'
@@ -660,6 +661,11 @@ const AuthenticatedApprovedUUsernameRoute =
     path: '/u/$username',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
+const ApiPublicATokenRoute = ApiPublicATokenRouteImport.update({
+  id: '/api/public/a/$token',
+  path: '/api/public/a/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHooksBackupCredentialsRoute =
   ApiPublicHooksBackupCredentialsRouteImport.update({
     id: '/api/public/hooks/backup-credentials',
@@ -968,6 +974,7 @@ export interface FileRoutesByFullPath {
   '/home/$channel': typeof AuthenticatedApprovedHomeChannelRoute
   '/sports-guides/new': typeof AuthenticatedApprovedSportsGuidesNewRoute
   '/u/$username': typeof AuthenticatedApprovedUUsernameRoute
+  '/api/public/a/$token': typeof ApiPublicATokenRoute
   '/api/public/hooks/backup-credentials': typeof ApiPublicHooksBackupCredentialsRoute
   '/api/public/hooks/backup-orders': typeof ApiPublicHooksBackupOrdersRoute
   '/api/public/hooks/boro-fetch-fixtures': typeof ApiPublicHooksBoroFetchFixturesRoute
@@ -1093,6 +1100,7 @@ export interface FileRoutesByTo {
   '/home/$channel': typeof AuthenticatedApprovedHomeChannelRoute
   '/sports-guides/new': typeof AuthenticatedApprovedSportsGuidesNewRoute
   '/u/$username': typeof AuthenticatedApprovedUUsernameRoute
+  '/api/public/a/$token': typeof ApiPublicATokenRoute
   '/api/public/hooks/backup-credentials': typeof ApiPublicHooksBackupCredentialsRoute
   '/api/public/hooks/backup-orders': typeof ApiPublicHooksBackupOrdersRoute
   '/api/public/hooks/boro-fetch-fixtures': typeof ApiPublicHooksBoroFetchFixturesRoute
@@ -1224,6 +1232,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/home/$channel': typeof AuthenticatedApprovedHomeChannelRoute
   '/_authenticated/_approved/sports-guides/new': typeof AuthenticatedApprovedSportsGuidesNewRoute
   '/_authenticated/_approved/u/$username': typeof AuthenticatedApprovedUUsernameRoute
+  '/api/public/a/$token': typeof ApiPublicATokenRoute
   '/api/public/hooks/backup-credentials': typeof ApiPublicHooksBackupCredentialsRoute
   '/api/public/hooks/backup-orders': typeof ApiPublicHooksBackupOrdersRoute
   '/api/public/hooks/boro-fetch-fixtures': typeof ApiPublicHooksBoroFetchFixturesRoute
@@ -1354,6 +1363,7 @@ export interface FileRouteTypes {
     | '/home/$channel'
     | '/sports-guides/new'
     | '/u/$username'
+    | '/api/public/a/$token'
     | '/api/public/hooks/backup-credentials'
     | '/api/public/hooks/backup-orders'
     | '/api/public/hooks/boro-fetch-fixtures'
@@ -1479,6 +1489,7 @@ export interface FileRouteTypes {
     | '/home/$channel'
     | '/sports-guides/new'
     | '/u/$username'
+    | '/api/public/a/$token'
     | '/api/public/hooks/backup-credentials'
     | '/api/public/hooks/backup-orders'
     | '/api/public/hooks/boro-fetch-fixtures'
@@ -1609,6 +1620,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/home/$channel'
     | '/_authenticated/_approved/sports-guides/new'
     | '/_authenticated/_approved/u/$username'
+    | '/api/public/a/$token'
     | '/api/public/hooks/backup-credentials'
     | '/api/public/hooks/backup-orders'
     | '/api/public/hooks/boro-fetch-fixtures'
@@ -1673,6 +1685,7 @@ export interface RootRouteChildren {
   ApiPublicTweetRoute: typeof ApiPublicTweetRoute
   ApiPublicTweetImageRoute: typeof ApiPublicTweetImageRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
+  ApiPublicATokenRoute: typeof ApiPublicATokenRoute
   ApiPublicHooksBackupCredentialsRoute: typeof ApiPublicHooksBackupCredentialsRoute
   ApiPublicHooksBackupOrdersRoute: typeof ApiPublicHooksBackupOrdersRoute
   ApiPublicHooksBoroFetchFixturesRoute: typeof ApiPublicHooksBoroFetchFixturesRoute
@@ -2346,6 +2359,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedUUsernameRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
+    '/api/public/a/$token': {
+      id: '/api/public/a/$token'
+      path: '/api/public/a/$token'
+      fullPath: '/api/public/a/$token'
+      preLoaderRoute: typeof ApiPublicATokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/backup-credentials': {
       id: '/api/public/hooks/backup-credentials'
       path: '/api/public/hooks/backup-credentials'
@@ -2919,6 +2939,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicTweetRoute: ApiPublicTweetRoute,
   ApiPublicTweetImageRoute: ApiPublicTweetImageRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
+  ApiPublicATokenRoute: ApiPublicATokenRoute,
   ApiPublicHooksBackupCredentialsRoute: ApiPublicHooksBackupCredentialsRoute,
   ApiPublicHooksBackupOrdersRoute: ApiPublicHooksBackupOrdersRoute,
   ApiPublicHooksBoroFetchFixturesRoute: ApiPublicHooksBoroFetchFixturesRoute,
