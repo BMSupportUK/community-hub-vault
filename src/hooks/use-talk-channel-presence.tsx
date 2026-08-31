@@ -59,13 +59,30 @@ function sameIds(a: Set<string>, b: Set<string>): boolean {
 
 function publishCount() {
   if (!sharedChannel) return;
-  const nextIds = collectUniqueUsers(sharedChannel);
+  let nextIds: Set<string>;
+  try {
+    nextIds = collectUniqueUsers(sharedChannel);
+  } catch {
+    return;
+  }
   const changed = !sameIds(nextIds, currentUserIds);
   currentUserIds = nextIds;
   currentCount = nextIds.size;
   if (!changed) return;
-  for (const listener of listeners) listener(currentCount);
-  for (const listener of userListeners) listener(currentUserIds);
+  for (const listener of Array.from(listeners)) {
+    try {
+      listener(currentCount);
+    } catch {
+      /* one bad subscriber must not break the others */
+    }
+  }
+  for (const listener of Array.from(userListeners)) {
+    try {
+      listener(currentUserIds);
+    } catch {
+      /* ignore */
+    }
+  }
 }
 
 async function syncTracking() {
@@ -84,11 +101,55 @@ async function syncTracking() {
   }
 
   trackedSignature = nextSignature;
-  await channel.track({
-    user_id: active.userId,
-    channel_id: active.channelId,
-    online_at: new Date().toISOString(),
-  });
+  await channel
+    .track({
+      user_id: active.userId,
+      channel_id: active.channelId,
+      online_at: new Date().toISOString(),
+    })
+    .catch(() => undefined);
+  publishCount();
+}
+
+let retryTimer: ReturnType<typeof setTimeout> | null = null;
+let retryDelay = 1000;
+let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+let windowListenersBound = false;
+
+/** Drop the socket and build a fresh one — used whenever realtime dies. */
+function resubscribe() {
+  if (retryTimer) return;
+  const delay = retryDelay;
+  retryDelay = Math.min(retryDelay * 2, 15_000);
+  retryTimer = setTimeout(() => {
+    retryTimer = null;
+    const old = sharedChannel;
+    sharedChannel = null;
+    subscribed = false;
+    trackedSignature = "";
+    if (old) {
+      try {
+        supabase.removeChannel(old);
+      } catch {
+        /* ignore */
+      }
+    }
+    ensureSharedChannel();
+  }, delay);
+}
+
+/** Re-assert presence, rebuilding the channel if the socket is not joined. */
+function revive() {
+  if (!sharedChannel) {
+    ensureSharedChannel();
+    return;
+  }
+  if (sharedChannel.state !== "joined") {
+    resubscribe();
+    return;
+  }
+  trackedSignature = "";
+  void syncTracking();
   publishCount();
 }
 
@@ -105,47 +166,70 @@ function ensureSharedChannel() {
     .on("presence", { event: "join" }, sync)
     .on("presence", { event: "leave" }, sync)
     .subscribe((status) => {
-      if (status !== "SUBSCRIBED") return;
-      subscribed = true;
-      void syncTracking();
-      publishCount();
+      if (status === "SUBSCRIBED") {
+        subscribed = true;
+        retryDelay = 1000;
+        trackedSignature = "";
+        void syncTracking();
+        publishCount();
+        return;
+      }
+      if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+        subscribed = false;
+        resubscribe();
+      }
     });
 
   sharedChannel = channel;
 
   // Refresh our own presence timestamp so other devices can tell a live
   // session from an abandoned one, and re-check everyone else for staleness.
-  setInterval(() => {
-    if (!subscribed) return;
-    const active = Array.from(trackers.values()).at(-1);
-    if (active) {
-      void channel.track({
-        user_id: active.userId,
-        channel_id: active.channelId,
-        online_at: new Date().toISOString(),
-      });
-    }
-    publishCount();
-  }, HEARTBEAT_MS);
+  if (!heartbeatTimer) {
+    heartbeatTimer = setInterval(() => {
+      const live = sharedChannel;
+      if (!live) {
+        ensureSharedChannel();
+        return;
+      }
+      if (live.state !== "joined") {
+        subscribed = false;
+        resubscribe();
+        return;
+      }
+      const active = Array.from(trackers.values()).at(-1);
+      if (active) {
+        void live
+          .track({
+            user_id: active.userId,
+            channel_id: active.channelId,
+            online_at: new Date().toISOString(),
+          })
+          .catch(() => undefined);
+      }
+      publishCount();
+    }, HEARTBEAT_MS);
+  }
 
-  if (typeof window !== "undefined") {
+  if (typeof window !== "undefined" && !windowListenersBound) {
+    windowListenersBound = true;
     // Leaving the page: untrack immediately so every other screen drops the
     // card right away instead of waiting for the socket to time out.
     const leave = () => {
       trackedSignature = "";
-      void channel.untrack().catch(() => undefined);
+      void sharedChannel?.untrack().catch(() => undefined);
     };
     window.addEventListener("pagehide", leave);
     window.addEventListener("beforeunload", leave);
+    window.addEventListener("focus", revive);
+    window.addEventListener("online", revive);
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState !== "visible") return;
       // Coming back from a backgrounded tab: re-assert presence and resync.
-      trackedSignature = "";
-      void syncTracking();
-      publishCount();
+      revive();
     });
   }
 }
+
 
 export function useTalkChannelPresence(options: {
   userId?: string;

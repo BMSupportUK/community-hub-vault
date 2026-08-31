@@ -1,24 +1,154 @@
-import { useEffect, useState } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
-// Singleton presence channel — multiple hook instances must share ONE channel,
-// otherwise Supabase throws "cannot add `presence` callbacks ... after `subscribe()`".
+/**
+ * Shared presence store for "who is online".
+ *
+ * One singleton Supabase presence channel is shared by every consumer
+ * (Supabase throws if presence callbacks are added after `subscribe()`), and
+ * the state is published through `useSyncExternalStore` so every subscriber
+ * re-renders the moment presence changes.
+ *
+ * Hardening (this kept silently breaking before):
+ *  - the channel is re-subscribed when realtime errors, closes or times out,
+ *  - presence is re-tracked on tab focus / visibility / network recovery,
+ *  - a heartbeat re-tracks periodically so a dropped socket self-heals.
+ */
 let channel: RealtimeChannel | null = null;
 let channelUid: string | null = null;
 let refCount = 0;
 let pingInterval: ReturnType<typeof setInterval> | null = null;
-let currentState = new Set<string>();
-const listeners = new Set<(s: Set<string>) => void>();
+let heartbeat: ReturnType<typeof setInterval> | null = null;
+let retryTimer: ReturnType<typeof setTimeout> | null = null;
+let retryDelay = 1000;
+let listenersBound = false;
+let currentState: Set<string> = new Set();
+const listeners = new Set<() => void>();
 const LAST_SEEN_PING_MS = 5 * 60_000;
+const HEARTBEAT_MS = 25_000;
+
+function getSnapshot() {
+  return currentState;
+}
+
+function subscribeStore(cb: () => void) {
+  listeners.add(cb);
+  return () => listeners.delete(cb);
+}
 
 function notify() {
-  for (const fn of listeners) fn(currentState);
+  for (const fn of Array.from(listeners)) {
+    try {
+      fn();
+    } catch {
+      /* never let one subscriber break the rest */
+    }
+  }
+}
+
+function setState(next: Set<string>) {
+  // Skip no-op updates so we don't thrash renders.
+  if (next.size === currentState.size) {
+    let same = true;
+    for (const id of next) {
+      if (!currentState.has(id)) {
+        same = false;
+        break;
+      }
+    }
+    if (same) return;
+  }
+  currentState = next;
+  notify();
 }
 
 function pingLastSeen(uid: string) {
-  supabase.from("profiles").update({ last_seen_at: new Date().toISOString() }).eq("id", uid).then(() => {});
+  try {
+    supabase
+      .from("profiles")
+      .update({ last_seen_at: new Date().toISOString() })
+      .eq("id", uid)
+      .then(() => {}, () => {});
+  } catch {
+    /* ignore */
+  }
+}
+
+async function track(uid: string) {
+  if (!channel) return;
+  try {
+    await channel.track({ user_id: uid, online_at: new Date().toISOString() });
+  } catch {
+    /* ignore — heartbeat/retry will try again */
+  }
+}
+
+function scheduleRetry(uid: string) {
+  if (retryTimer) return;
+  const delay = retryDelay;
+  retryDelay = Math.min(retryDelay * 2, 15_000);
+  retryTimer = setTimeout(() => {
+    retryTimer = null;
+    if (channelUid !== uid || refCount <= 0) return;
+    openChannel(uid);
+  }, delay);
+}
+
+function openChannel(uid: string) {
+  // Drop any previous socket for this user before opening a fresh one.
+  if (channel) {
+    try {
+      supabase.removeChannel(channel);
+    } catch {
+      /* ignore */
+    }
+    channel = null;
+  }
+
+  const ch = supabase.channel("presence:online", { config: { presence: { key: uid } } });
+  const sync = () => {
+    try {
+      setState(new Set(Object.keys(ch.presenceState())));
+    } catch {
+      /* ignore */
+    }
+  };
+  ch.on("presence", { event: "sync" }, sync)
+    .on("presence", { event: "join" }, sync)
+    .on("presence", { event: "leave" }, sync)
+    .subscribe((status) => {
+      if (status === "SUBSCRIBED") {
+        retryDelay = 1000;
+        void track(uid);
+        sync();
+      } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+        scheduleRetry(uid);
+      }
+    });
+  channel = ch;
+}
+
+function revive() {
+  const uid = channelUid;
+  if (!uid || refCount <= 0) return;
+  const state = channel?.state;
+  if (state !== "joined") {
+    openChannel(uid);
+  } else {
+    void track(uid);
+  }
+}
+
+function bindWindowListeners() {
+  if (listenersBound || typeof window === "undefined") return;
+  listenersBound = true;
+  window.addEventListener("focus", revive);
+  window.addEventListener("online", revive);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") revive();
+  });
 }
 
 function ensureChannel(uid: string) {
@@ -27,48 +157,47 @@ function ensureChannel(uid: string) {
   channelUid = uid;
   pingLastSeen(uid);
   pingInterval = setInterval(() => pingLastSeen(uid), LAST_SEEN_PING_MS);
-
-  const ch = supabase.channel("presence:online", { config: { presence: { key: uid } } });
-  const sync = () => {
-    currentState = new Set(Object.keys(ch.presenceState()));
-    notify();
-  };
-  ch.on("presence", { event: "sync" }, sync)
-    .on("presence", { event: "join" }, sync)
-    .on("presence", { event: "leave" }, sync)
-    .subscribe(async (status) => {
-      if (status === "SUBSCRIBED") {
-        await ch.track({ user_id: uid, online_at: new Date().toISOString() });
-      }
-    });
-  channel = ch;
+  heartbeat = setInterval(revive, HEARTBEAT_MS);
+  bindWindowListeners();
+  openChannel(uid);
 }
 
 function teardown() {
-  if (pingInterval) { clearInterval(pingInterval); pingInterval = null; }
+  if (pingInterval) {
+    clearInterval(pingInterval);
+    pingInterval = null;
+  }
+  if (heartbeat) {
+    clearInterval(heartbeat);
+    heartbeat = null;
+  }
+  if (retryTimer) {
+    clearTimeout(retryTimer);
+    retryTimer = null;
+  }
   if (channel) {
     if (channelUid) pingLastSeen(channelUid);
-    channel.untrack().catch(() => {});
-    supabase.removeChannel(channel);
+    try {
+      channel.untrack().catch(() => {});
+      supabase.removeChannel(channel);
+    } catch {
+      /* ignore */
+    }
     channel = null;
   }
   channelUid = null;
-  currentState = new Set();
+  setState(new Set());
 }
 
 export function useOnlineUsers(): Set<string> {
   const { user } = useAuth();
-  const [online, setOnline] = useState<Set<string>>(() => currentState);
+  const online = useSyncExternalStore(subscribeStore, getSnapshot, getSnapshot);
 
   useEffect(() => {
     if (!user?.id) return;
     refCount++;
     ensureChannel(user.id);
-    const listener = (s: Set<string>) => setOnline(s);
-    listeners.add(listener);
-    setOnline(currentState);
     return () => {
-      listeners.delete(listener);
       refCount--;
       if (refCount <= 0) {
         refCount = 0;
