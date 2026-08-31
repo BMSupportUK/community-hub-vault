@@ -11,6 +11,7 @@ import { ChatMiniProfile, type ChatMiniProfileData } from "@/components/app/Chat
 import { type BreakKind, BREAK_LIMITS as STAFF_BREAK_LIMITS, breakLabel, breakIcon } from "@/lib/breaks";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useTalkChannelPresentUsers } from "@/hooks/use-talk-channel-presence";
+import { OnlineMembersDialog } from "@/components/app/OnlineMembersDialog";
 
 type StaffShift = { id: string; user_id: string; clock_in: string };
 type StaffBreak = { id: string; shift_id: string; user_id: string; kind: BreakKind; started_at: string };
@@ -413,6 +414,8 @@ export function StaffOnDutyStrip({
               )}
             </TabsContent>
           </Tabs>
+
+          <OnlineMembersDialog className="mt-3" />
 
           <div className="flex items-center justify-end gap-1 text-[10px] text-white/80 mt-2">
             <span className="size-2 rounded-full bg-emerald-400 animate-pulse" /> live
