@@ -101,6 +101,9 @@ export function TalkChannelMembersPanel() {
     return { ordered, offline: offline.sort(sortByName) };
   }, [members, onlineIds]);
 
+  /** Live count of everyone currently present in Talk Channels. */
+  const onlineCount = onlineIds.size;
+
   if (rows === null) {
     return (
       <div className="flex h-full items-center justify-center py-8 text-muted-foreground">
