@@ -21,6 +21,7 @@ type MemberProfile = {
   avatar_url: string | null;
   equipped_nameplate_id: string | null;
   created_at: string | null;
+  last_seen_at: string | null;
 };
 
 type DirectoryRow = Omit<MemberProfile, "id"> & {
@@ -45,6 +46,20 @@ function relativeSince(iso: string | null): string {
   if (months < 12) return `${months} month${months === 1 ? "" : "s"} ago`;
   const years = Math.floor(days / 365);
   return `${years} year${years === 1 ? "" : "s"} ago`;
+}
+
+/** Absolute last-active stamp, e.g. "31 Aug 2026, 15:18". */
+function lastActiveStamp(iso: string | null): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 }
 
 /**
@@ -82,6 +97,7 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
       avatar_url: row.avatar_url,
       equipped_nameplate_id: row.equipped_nameplate_id,
       created_at: (row as unknown as { created_at?: string | null }).created_at ?? null,
+      last_seen_at: (row as unknown as { last_seen_at?: string | null }).last_seen_at ?? null,
     })));
     const map: Record<string, string[]> = {};
     for (const row of rows) {
@@ -282,12 +298,13 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
         </DialogHeader>
 
         <div className="flex-1 overflow-auto">
-          <table className="w-full min-w-[720px] border-collapse text-sm">
+          <table className="w-full min-w-[900px] border-collapse text-sm">
             <thead className="sticky top-0 z-10 bg-neutral-900/95 backdrop-blur">
               <tr className="text-[10px] uppercase tracking-wider text-white/50">
                 <th className="px-5 py-3 text-left font-bold">Name</th>
                 <th className="px-4 py-3 text-left font-bold">Member since</th>
                 <th className="px-4 py-3 text-left font-bold">Status</th>
+                <th className="px-4 py-3 text-left font-bold">Last active</th>
                 <th className="px-4 py-3 text-left font-bold">Roles</th>
                 <th className="px-5 py-3 text-right font-bold">Actions</th>
               </tr>
@@ -295,7 +312,7 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
             <tbody>
               {visible.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-5 py-10 text-center text-white/60">
+                  <td colSpan={6} className="px-5 py-10 text-center text-white/60">
                     No members match your filters.
                   </td>
                 </tr>
@@ -345,18 +362,18 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
                             <span className="min-w-0">
                               <Nameplate
                                 id={p.equipped_nameplate_id}
-                                className="flex flex-col rounded-md px-2 py-0.5 isolate"
+                                className="flex h-16 w-64 max-w-full flex-col justify-center rounded-lg px-3 isolate ring-1 ring-white/10"
                               >
                                 <span
                                   className={cn(
-                                    "truncate text-sm font-semibold text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]",
+                                    "relative z-10 truncate text-base font-bold leading-tight text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]",
                                     roleFlashClass(role),
                                   )}
                                 >
                                   {name}
                                 </span>
                                 {p.username && (
-                                  <span className="truncate text-[11px] text-white/60 drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]">
+                                  <span className="relative z-10 truncate text-xs text-white/75 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
                                     @{p.username}
                                   </span>
                                 )}
@@ -385,6 +402,9 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
                           />
                           {isOnline ? "Online" : "Offline"}
                         </span>
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-xs font-medium text-white/70">
+                        {isOnline ? "Now" : lastActiveStamp(p.last_seen_at)}
                       </td>
                       <td className="px-4 py-3">
                         <span className="flex flex-wrap gap-1">
