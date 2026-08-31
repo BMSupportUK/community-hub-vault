@@ -138,8 +138,8 @@ function AdminSounds() {
 
   const play = async (s: SoundDef) => {
     const prefs = getSoundPrefs();
-    if (prefs.muted) {
-      toast.error("Sounds are muted on this device — unmute below to test.");
+    if (prefs.muted || prefs.volume <= 0) {
+      toast.error("Sounds are muted or set to 0% — adjust Sound notifications below.");
       return;
     }
     setNowPlaying(s.key);
@@ -154,6 +154,11 @@ function AdminSounds() {
       setRunning(false);
       if (sequenceRef.current) window.clearTimeout(sequenceRef.current);
       setNowPlaying(null);
+      return;
+    }
+    const prefs = getSoundPrefs();
+    if (prefs.muted || prefs.volume <= 0) {
+      toast.error("Sounds are muted or set to 0% — adjust Sound notifications below.");
       return;
     }
     setRunning(true);
