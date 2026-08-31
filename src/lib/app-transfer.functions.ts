@@ -1,0 +1,236 @@
+import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { randomInt } from "node:crypto";
+
+const TRANSFER_TTL_MS = 24 * 60 * 60 * 1000;
+// Unambiguous on a TV remote keypad: no O/0, I/1, L.
+const ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
+
+function makeToken(len = 8) {
+  let out = "";
+  for (let i = 0; i < len; i++) out += ALPHABET[randomInt(ALPHABET.length)];
+  return out;
+}
+
+async function requireStaff(context: { supabase: any; userId: string }) {
+  const { data } = await context.supabase.rpc("has_any_role", {
+    _user_id: context.userId,
+    _roles: ["admin", "management"],
+  });
+  if (!data) throw new Error("Forbidden");
+}
+
+/** Metadata for the current downloadable app build (no storage path exposed). */
+export const getCurrentAppBuild = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data } = await context.supabase
+      .from("app_builds")
+      .select("id, file_name, file_size, version_name, release_notes, is_available, created_at")
+      .eq("is_current", true)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (!data) return null;
+    return {
+      id: data.id as string,
+      fileName: data.file_name as string,
+      fileSize: (data.file_size as number | null) ?? null,
+      versionName: (data.version_name as string | null) ?? null,
+      releaseNotes: (data.release_notes as string | null) ?? null,
+      isAvailable: !!data.is_available,
+      createdAt: data.created_at as string,
+    };
+  });
+
+/** The caller's live transfer, if any. */
+export const getMyAppTransfer = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const nowIso = new Date().toISOString();
+    const { data } = await context.supabase
+      .from("app_transfers")
+      .select("id, token, issued_at, expires_at, download_count")
+      .eq("user_id", context.userId)
+      .gt("expires_at", nowIso)
+      .order("issued_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (!data) return null;
+    return {
+      id: data.id as string,
+      token: data.token as string,
+      issuedAt: data.issued_at as string,
+      expiresAt: data.expires_at as string,
+      downloads: (data.download_count as number) ?? 0,
+    };
+  });
+
+/** Issues a fresh 24-hour transfer, replacing any existing one for the caller. */
+export const requestAppTransfer = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const userId = context.userId;
+
+    const { data: build } = await supabaseAdmin
+      .from("app_builds")
+      .select("id, is_available")
+      .eq("is_current", true)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (!build || !build.is_available) throw new Error("The app download isn't available right now.");
+
+    // Nothing is retained: the previous transfer is hard-deleted.
+    await supabaseAdmin.from("app_transfers").delete().eq("user_id", userId);
+
+    const expiresAt = new Date(Date.now() + TRANSFER_TTL_MS);
+    let token = makeToken();
+    for (let attempt = 0; attempt < 5; attempt++) {
+      const { error } = await supabaseAdmin.from("app_transfers").insert({
+        user_id: userId,
+        build_id: build.id,
+        token,
+        expires_at: expiresAt.toISOString(),
+      });
+      if (!error) return { token, expiresAt: expiresAt.toISOString() };
+      if (!`${error.message}`.toLowerCase().includes("duplicate")) throw new Error(error.message);
+      token = makeToken();
+    }
+    throw new Error("Couldn't create a transfer, please try again.");
+  });
+
+/** Hard-deletes the caller's transfer so the link stops working and no record remains. */
+export const deleteMyAppTransfer = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { error } = await context.supabase
+      .from("app_transfers")
+      .delete()
+      .eq("user_id", context.userId);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
+/** Admin: records a newly uploaded APK as the current build. */
+export const saveAppBuild = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (data: {
+      filePath: string;
+      fileName: string;
+      fileSize?: number | null;
+      versionName?: string | null;
+      releaseNotes?: string | null;
+      isAvailable?: boolean;
+    }) => data,
+  )
+  .handler(async ({ data, context }) => {
+    await requireStaff(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Only one current build: retire the rest (and their transfers cascade away).
+    const { data: previous } = await supabaseAdmin
+      .from("app_builds")
+      .select("id, file_path")
+      .eq("is_current", true);
+
+    const { data: inserted, error } = await supabaseAdmin
+      .from("app_builds")
+      .insert({
+        file_path: data.filePath,
+        file_name: data.fileName,
+        file_size: data.fileSize ?? null,
+        version_name: data.versionName ?? null,
+        release_notes: data.releaseNotes ?? null,
+        is_current: true,
+        is_available: data.isAvailable ?? true,
+        created_by: context.userId,
+      })
+      .select("id")
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+
+    for (const row of previous ?? []) {
+      await supabaseAdmin.from("app_builds").delete().eq("id", row.id);
+      if (row.file_path && row.file_path !== data.filePath) {
+        await supabaseAdmin.storage.from("app-builds").remove([row.file_path]);
+      }
+    }
+
+    return { id: inserted?.id as string };
+  });
+
+/** Admin: toggles whether members can request a transfer, or edits build details. */
+export const updateAppBuild = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (data: {
+      id: string;
+      versionName?: string | null;
+      releaseNotes?: string | null;
+      isAvailable?: boolean;
+    }) => data,
+  )
+  .handler(async ({ data, context }) => {
+    await requireStaff(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const patch: {
+      version_name?: string | null;
+      release_notes?: string | null;
+      is_available?: boolean;
+    } = {};
+    if (data.versionName !== undefined) patch.version_name = data.versionName;
+    if (data.releaseNotes !== undefined) patch.release_notes = data.releaseNotes;
+    if (data.isAvailable !== undefined) patch.is_available = data.isAvailable;
+    const { error } = await supabaseAdmin.from("app_builds").update(patch).eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
+/** Admin: live transfers with the member they belong to. */
+export const listAppTransfers = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await requireStaff(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const nowIso = new Date().toISOString();
+    const { data } = await supabaseAdmin
+      .from("app_transfers")
+      .select("id, user_id, issued_at, expires_at, download_count")
+      .gt("expires_at", nowIso)
+      .order("issued_at", { ascending: false })
+      .limit(200);
+    const rows = data ?? [];
+    const ids = [...new Set(rows.map((r) => r.user_id))];
+    const names = new Map<string, string>();
+    if (ids.length) {
+      const { data: profiles } = await supabaseAdmin
+        .from("profiles")
+        .select("id, display_name, username")
+        .in("id", ids);
+      for (const p of profiles ?? []) {
+        names.set(p.id, (p.display_name as string) || (p.username as string) || "Member");
+      }
+    }
+    return rows.map((r) => ({
+      id: r.id as string,
+      member: names.get(r.user_id) ?? "Member",
+      issuedAt: r.issued_at as string,
+      expiresAt: r.expires_at as string,
+      downloads: (r.download_count as number) ?? 0,
+    }));
+  });
+
+/** Admin: kills a member's transfer immediately. */
+export const deleteAppTransferAdmin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { id: string }) => data)
+  .handler(async ({ data, context }) => {
+    await requireStaff(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("app_transfers").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
