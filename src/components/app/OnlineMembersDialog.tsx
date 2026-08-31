@@ -212,20 +212,16 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
     void loadRelations();
   };
 
-  /**
-   * Only members who are currently present in Talk Channels are listed. Staff
-   * can open the control but are shown in the staff strip instead.
-   */
+  /** All non-staff members are listed; the green dot marks who is online. */
   const memberProfiles = useMemo(
     () =>
       profiles.filter((p) => {
-        if (!onlineIds.has(p.id)) return false;
         const roles = rolesByUser[p.id] ?? [];
         if (roles.some((r) => HIDDEN_ROLES.has(r))) return false;
         if (roles.some((r) => STAFF_ROLES.has(r))) return false;
         return true;
       }),
-    [profiles, rolesByUser, onlineIds],
+    [profiles, rolesByUser],
   );
 
   // A member can join Talk Channels before their profile row is cached here,
@@ -260,12 +256,17 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
           (p.username ?? "").toLowerCase().includes(term)
         );
       })
-      .sort((a, b) =>
-        (a.display_name || a.username || "").localeCompare(
+      .sort((a, b) => {
+        // Online members float to the top, everyone else stays listed below.
+        const oa = onlineIds.has(a.id) ? 0 : 1;
+        const ob = onlineIds.has(b.id) ? 0 : 1;
+        if (oa !== ob) return oa - ob;
+        return (a.display_name || a.username || "").localeCompare(
           b.display_name || b.username || "",
-        ),
-      );
-  }, [memberProfiles, rolesByUser, q, roleFilter]);
+        );
+      });
+  }, [memberProfiles, rolesByUser, q, roleFilter, onlineIds]);
+
 
 
 
