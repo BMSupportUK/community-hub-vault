@@ -342,7 +342,7 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
               {visible.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-5 py-10 text-center text-white/60">
-                    No members match your filters.
+                    No members are in Talk Channels right now.
                   </td>
                 </tr>
               ) : (
