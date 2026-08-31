@@ -3987,8 +3987,14 @@ function OrderDetailImpl({
               {order.user_id === user?.id && order.status !== "cancelled" && !order.completed_at && (
                   <button
                     onClick={cancelOrder}
-                    disabled={busy || isOrderPaid}
-                    title={isOrderPaid ? "Paid orders cannot be cancelled" : "Cancel order"}
+                    disabled={busy || isOrderPaid || bankAwaiting}
+                    title={
+                      isOrderPaid
+                        ? "Paid orders cannot be cancelled"
+                        : bankAwaiting
+                          ? "Bank transfer reported — cannot cancel while we verify your payment"
+                          : "Cancel order"
+                    }
                     className="px-2.5 py-1 rounded-md bg-destructive/15 text-destructive text-xs font-medium flex items-center gap-1 hover:bg-destructive/25 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground disabled:opacity-60"
                   >
                     <Ban className="size-3.5" /> Cancel Order
