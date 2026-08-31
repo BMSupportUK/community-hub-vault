@@ -26,6 +26,7 @@ import { Button } from "@/components/ui/button";
 import { useRoleFlashMap, resolveAvatarUrl, roleFlashClass } from "@/lib/role-flash";
 import { ActiveOutagesBox } from "@/components/app/ActiveOutagesBox";
 import { PayOrderDialog, OrderProgressStrip } from "@/components/app/OrderPaymentDialog";
+import { getOrderBankTransferAccess } from "@/lib/bank-transfer.functions";
 import { PaymentStatusTimeline, type PayCheckPhase } from "@/components/app/PaymentStatusTimeline";
 import { isSettledPaymentStatus } from "@/lib/payment-status";
 
@@ -1486,7 +1487,7 @@ function TicketDetail({
                 ? "awaiting_verification"
                 : (payCheckPhase ?? "awaiting")
         }
-        method={payProvider}
+        method={payProvider ?? (bankOnlyOrder ? "bank_transfer" : null)}
         started
       />
 
