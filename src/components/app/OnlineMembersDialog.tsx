@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link } from "@tanstack/react-router";
 import { Users, User, UserPlus, Check, Clock, EyeOff, Eye, Search } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,9 +8,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Nameplate } from "@/components/app/Nameplate";
+import { ChatMiniProfile } from "@/components/app/ChatMiniProfile";
 import { useRoleFlashMap, roleFlashClass, resolveAvatarUrl } from "@/lib/role-flash";
 import { formatRoleLabel } from "@/lib/role-label";
 import { cn } from "@/lib/utils";
+
 
 type MemberProfile = {
   id: string;
