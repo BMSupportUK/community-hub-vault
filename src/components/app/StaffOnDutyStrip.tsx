@@ -8,6 +8,10 @@ import { DndCountdown } from "@/components/app/DndCountdown";
 import { useDndStatus } from "@/hooks/use-dnd";
 import { Nameplate } from "@/components/app/Nameplate";
 import { ChatMiniProfile, type ChatMiniProfileData } from "@/components/app/ChatMiniProfile";
+import {
+  TalkMemberMiniProfile,
+  type TalkMemberProfileRow,
+} from "@/components/app/TalkMemberProfileCard";
 import { type BreakKind, BREAK_LIMITS as STAFF_BREAK_LIMITS, breakLabel, breakIcon } from "@/lib/breaks";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useTalkChannelPresentUsers } from "@/hooks/use-talk-channel-presence";
@@ -225,6 +229,22 @@ export function StaffOnDutyStrip({
     };
   };
 
+
+  /** Seed row for the shared Talk member card; the card refetches full details. */
+  const talkFallbackRow = (userId: string): Omit<TalkMemberProfileRow, "user_id"> => {
+    const p = profiles[userId];
+    return {
+      display_name: p?.display_name ?? null,
+      username: p?.username ?? null,
+      avatar_url: p?.avatar_url ?? null,
+      equipped_nameplate_id: p?.equipped_nameplate_id ?? null,
+      roles: null,
+      created_at: null,
+      last_seen_at: p?.last_seen_at ?? null,
+    };
+  };
+
+
   const renderOnDutyCard = (s: StaffShift) => {
     const p = profiles[s.user_id];
     const name = p?.display_name || p?.username || "Staff";
@@ -288,9 +308,16 @@ export function StaffOnDutyStrip({
       </div>
     );
     return mp ? (
-      <ChatMiniProfile key={s.id} profile={mp} className="block w-full">
+      <TalkMemberMiniProfile
+        key={s.id}
+        userId={s.user_id}
+        online={mp.isOnline}
+        fallback={talkFallbackRow(s.user_id)}
+        className="block w-full"
+      >
         {card}
-      </ChatMiniProfile>
+      </TalkMemberMiniProfile>
+
     ) : (
       <div key={s.id}>{card}</div>
     );
@@ -361,9 +388,16 @@ export function StaffOnDutyStrip({
       </div>
     );
     return mp ? (
-      <ChatMiniProfile key={p.id} profile={mp} className="block w-full">
+      <TalkMemberMiniProfile
+        key={p.id}
+        userId={p.id}
+        online={mp.isOnline}
+        fallback={talkFallbackRow(p.id)}
+        className="block w-full"
+      >
         {card}
-      </ChatMiniProfile>
+      </TalkMemberMiniProfile>
+
     ) : (
       <div key={p.id}>{card}</div>
     );
