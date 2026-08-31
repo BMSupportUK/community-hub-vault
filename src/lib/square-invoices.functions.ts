@@ -343,12 +343,21 @@ export const cancelOrderAndSquareInvoice = createServerFn({ method: "POST" })
 
     const { data: payment, error: paymentError } = await supabaseAdmin
       .from("order_payments")
-      .select("status")
+      .select("status,provider")
       .eq("order_id", data.orderId)
       .maybeSingle();
     if (paymentError) throw new Error(paymentError.message);
     if (isSettledPaymentStatus(payment?.status)) {
       throw new Error("This paid order cannot be cancelled.");
+    }
+    if (
+      order.user_id === userId &&
+      payment?.provider === "bank_transfer" &&
+      String(payment?.status ?? "").toLowerCase() === "awaiting_verification"
+    ) {
+      throw new Error(
+        "You've reported a bank transfer for this order — it can't be cancelled while we verify the payment.",
+      );
     }
 
     if (order.status !== "cancelled") {
