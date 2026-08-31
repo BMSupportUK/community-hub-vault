@@ -164,7 +164,25 @@ export function PayOrderDialog({
   onChange?: () => void | Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
+  const [bankOnly, setBankOnly] = useState<boolean | null>(null);
   const { format = fallbackFormat } = useCurrency();
+  const checkBankAccess = useServerFn(getMyBankTransferAccess);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res: any = await checkBankAccess({});
+        if (!cancelled) setBankOnly(Boolean(res?.allowed));
+      } catch {
+        if (!cancelled) setBankOnly(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleChange = async () => {
     await onChange?.();
@@ -183,36 +201,44 @@ export function PayOrderDialog({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Choose how to pay</DialogTitle>
+            <DialogTitle>{bankOnly ? "Pay by bank transfer" : "Choose how to pay"}</DialogTitle>
             <div className="text-sm text-muted-foreground">Total {format(amountCents)}</div>
           </DialogHeader>
-          <Tabs defaultValue="square" className="pt-2">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="square">Square</TabsTrigger>
-              <TabsTrigger value="stripe">Stripe</TabsTrigger>
-              <TabsTrigger value="usdt">USDT</TabsTrigger>
-            </TabsList>
-            <TabsContent value="square" className="mt-3">
-              <SquareInvoicePanel orderId={orderId} amountCents={amountCents} onChange={handleChange} />
-            </TabsContent>
-            <TabsContent value="stripe" className="mt-3">
-              <StripeOrderPanel
-                orderId={orderId}
-                amountCents={amountCents}
-                canPay
-                onChange={handleChange}
-              />
-            </TabsContent>
-            <TabsContent value="usdt" className="mt-3">
-              <CryptoPanel orderId={orderId} amountCents={amountCents} canPay onChange={handleChange} />
-            </TabsContent>
-          </Tabs>
-
+          {bankOnly === null ? (
+            <div className="text-xs text-muted-foreground py-3">Loading payment options…</div>
+          ) : bankOnly ? (
+            <div className="pt-2">
+              <BankTransferPanel orderId={orderId} amountCents={amountCents} onChange={handleChange} />
+            </div>
+          ) : (
+            <Tabs defaultValue="square" className="pt-2">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="square">Square</TabsTrigger>
+                <TabsTrigger value="stripe">Stripe</TabsTrigger>
+                <TabsTrigger value="usdt">USDT</TabsTrigger>
+              </TabsList>
+              <TabsContent value="square" className="mt-3">
+                <SquareInvoicePanel orderId={orderId} amountCents={amountCents} onChange={handleChange} />
+              </TabsContent>
+              <TabsContent value="stripe" className="mt-3">
+                <StripeOrderPanel
+                  orderId={orderId}
+                  amountCents={amountCents}
+                  canPay
+                  onChange={handleChange}
+                />
+              </TabsContent>
+              <TabsContent value="usdt" className="mt-3">
+                <CryptoPanel orderId={orderId} amountCents={amountCents} canPay onChange={handleChange} />
+              </TabsContent>
+            </Tabs>
+          )}
         </DialogContent>
       </Dialog>
     </>
   );
 }
+
 
 function SquareInvoicePanel({
   orderId,
