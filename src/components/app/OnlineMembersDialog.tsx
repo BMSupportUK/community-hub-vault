@@ -404,12 +404,12 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
                           online={isOnline}
                           asDialog
                         >
-                          <span className="flex items-center gap-3 min-w-0 text-left cursor-pointer">
+                          <span className="flex items-center gap-3 min-w-0 text-left cursor-pointer group/name">
                             <span className="relative shrink-0">
                               <img
                                 src={resolveAvatarUrl(p.id, p.avatar_url, roleFlashMap)}
                                 alt={name}
-                                className="size-9 rounded-full object-cover ring-2 ring-white/15"
+                                className="size-9 rounded-full object-cover ring-2 ring-white/15 transition-all group-hover/name:ring-primary/50"
                               />
                               <span
                                 className={cn(
@@ -418,26 +418,21 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
                                 )}
                               />
                             </span>
-                            <span className="min-w-0">
-                              <Nameplate
-                                id={p.equipped_nameplate_id}
-                                className="flex h-16 w-64 max-w-full flex-col justify-center rounded-lg px-3 isolate ring-1 ring-white/10"
-                              >
-                                <span
-                                  className={cn(
-                                    "relative z-10 truncate text-base font-bold leading-tight text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]",
-                                    roleFlashClass(role),
-                                  )}
-                                >
-                                  {name}
-                                </span>
-                                {p.username && (
-                                  <span className="relative z-10 truncate text-xs text-white/75 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
-                                    @{p.username}
-                                  </span>
+                            <div className="flex flex-col min-w-0">
+                              <span
+                                className={cn(
+                                  "truncate text-sm font-bold text-white transition-colors group-hover/name:text-primary",
+                                  roleFlashClass(role),
                                 )}
-                              </Nameplate>
-                            </span>
+                              >
+                                {name}
+                              </span>
+                              {p.username && (
+                                <span className="truncate text-xs text-white/60">
+                                  @{p.username}
+                                </span>
+                              )}
+                            </div>
                           </span>
                         </TalkMemberMiniProfile>
                       </td>
