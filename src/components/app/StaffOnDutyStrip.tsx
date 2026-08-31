@@ -485,6 +485,9 @@ export function StaffOnDutyStrip({
             </div>
           );
         })()}
+        <div className="relative mt-3 pt-3 border-t border-white/15">
+          <OnlineMembersDialog />
+        </div>
       </div>
     </div>
   );
