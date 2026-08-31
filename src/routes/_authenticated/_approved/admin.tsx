@@ -517,11 +517,17 @@ function DashboardBody() {
         <ThemePickerCard />
         <RecoveryCodes />
         <VpnBackfillCard />
-        <BankTransferAdminCard />
       </aside>
+    </div>
+
+      <section className="min-w-0">
+        <h2 className="font-display text-sm uppercase tracking-wide text-muted-foreground mb-3">Bank transfer</h2>
+        <BankTransferAdminCard />
+      </section>
     </div>
   );
 }
+
 
 
 interface BackupCodeRow {
