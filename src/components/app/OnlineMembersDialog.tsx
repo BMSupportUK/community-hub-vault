@@ -161,13 +161,12 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
   const memberProfiles = useMemo(
     () =>
       profiles.filter((p) => {
-        if (!onlineIds.has(p.id)) return false;
         const roles = rolesByUser[p.id] ?? [];
         if (roles.some((r) => HIDDEN_ROLES.has(r))) return false;
         if (roles.some((r) => STAFF_ROLES.has(r))) return false;
         return true;
       }),
-    [onlineIds, profiles, rolesByUser],
+    [profiles, rolesByUser],
   );
 
   /** Distinct member roles present for the Talk Channel filter. */
@@ -189,13 +188,19 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
           (p.username ?? "").toLowerCase().includes(term)
         );
       })
-      .sort((a, b) =>
-        (a.display_name || a.username || "").localeCompare(b.display_name || b.username || ""),
-      );
-  }, [memberProfiles, rolesByUser, q, roleFilter]);
+      .sort((a, b) => {
+        const oa = onlineIds.has(a.id) ? 0 : 1;
+        const ob = onlineIds.has(b.id) ? 0 : 1;
+        if (oa !== ob) return oa - ob;
+        return (a.display_name || a.username || "").localeCompare(
+          b.display_name || b.username || "",
+        );
+      });
+  }, [memberProfiles, rolesByUser, q, roleFilter, onlineIds]);
 
 
-  const count = memberProfiles.length;
+  const count = memberProfiles.filter((p) => onlineIds.has(p.id)).length;
+
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
