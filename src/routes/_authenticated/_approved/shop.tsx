@@ -2701,13 +2701,34 @@ function Checkout({
                   </div>
                 </div>
                 {customerType === "existing" && (
-                  <input
-                    value={existingUsername}
-                    onChange={(e) => setExistingUsername(e.target.value)}
-                    placeholder="Username you're extending *"
-                    required
-                    className="w-full px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border focus:border-primary outline-none"
-                  />
+                  <div className="space-y-1">
+                    <input
+                      value={existingUsername}
+                      onChange={(e) => setExistingUsername(e.target.value)}
+                      placeholder="Username you're extending *"
+                      required
+                      className={cn(
+                        "w-full px-3 py-2 rounded-lg bg-surface-2 text-sm border outline-none",
+                        usernameState === "invalid"
+                          ? "border-destructive focus:border-destructive"
+                          : usernameState === "valid"
+                            ? "border-success focus:border-success"
+                            : "border-border focus:border-primary",
+                      )}
+                    />
+                    {usernameState === "checking" && (
+                      <p className="text-[11px] text-muted-foreground">Checking username…</p>
+                    )}
+                    {usernameState === "valid" && (
+                      <p className="text-[11px] text-success">Username found ✓</p>
+                    )}
+                    {usernameState === "invalid" && (
+                      <p className="text-[11px] text-destructive">
+                        We can't find that username — please check the spelling, or choose "New
+                        customer" if this is your first account.
+                      </p>
+                    )}
+                  </div>
                 )}
               </>
             )}
