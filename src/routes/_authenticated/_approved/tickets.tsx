@@ -1381,6 +1381,7 @@ function TicketDetail({
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
   }, [messages.length]);
 
+  const notifyStaffOfCustomerReplyFn = useServerFn(notifyStaffOfCustomerReply);
   const send = async () => {
     const content = draft.trim();
     if ((content.length < 1 && replyFiles.length === 0) || content.length > 2000) return;
