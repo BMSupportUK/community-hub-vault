@@ -256,21 +256,21 @@ export function StaffOnDutyStrip({
                   {formatRoleLabel(roleFlashMap.get(s.user_id))}
                 </span>
               )}
-              <div className="text-[10px] text-white/90 drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]">
-                {onBreak ? (
-                  <span className="flex items-center gap-1">
-                    {(() => { const Icon = breakIcon(br!.kind); return <Icon className="size-3 shrink-0" />; })()}
-                    <span className="truncate">{breakLabel(br!.kind)} {over ? `+${fmtMinSec(-brRemain)}` : fmtMinSec(brRemain)}</span>
-                  </span>
-                ) : daneOverride && isDaneJProfile(p) ? (
-                  <DaneStatusLine userId={s.user_id} />
-                ) : (
-                  <span>{fmtHMS(shiftElapsed)}</span>
-                )}
-              </div>
-
             </Nameplate>
+            <div className="mt-1 text-[10px] text-muted-foreground">
+              {onBreak ? (
+                <span className="flex items-center gap-1">
+                  {(() => { const Icon = breakIcon(br!.kind); return <Icon className="size-3 shrink-0" />; })()}
+                  <span className="truncate">{breakLabel(br!.kind)} {over ? `+${fmtMinSec(-brRemain)}` : fmtMinSec(brRemain)}</span>
+                </span>
+              ) : daneOverride && isDaneJProfile(p) ? (
+                <DaneStatusLine userId={s.user_id} />
+              ) : (
+                <span>{fmtHMS(shiftElapsed)}</span>
+              )}
+            </div>
             <DndCountdown userId={s.user_id} compact className="mt-1" />
+
           </div>
         </div>
       </div>
