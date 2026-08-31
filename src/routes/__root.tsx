@@ -138,6 +138,7 @@ function RootComponent() {
         <MentionSoundAlert />
         <TicketReplyAlert />
         <PushSoundBridge />
+        <ToastNotificationBridge />
         <Outlet />
         {/* z-index keeps toasts visible above the inactivity lock overlay (z-200) */}
         <Toaster theme="dark" position="bottom-right" style={{ zIndex: 2147483000 }} />
