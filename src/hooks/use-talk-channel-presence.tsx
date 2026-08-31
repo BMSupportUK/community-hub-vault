@@ -69,7 +69,11 @@ let subscribed = false;
 let trackedSignature = "";
 let currentCount = 0;
 let currentUserIds: Set<string> = new Set();
-const connectionId = crypto.randomUUID();
+let _connectionId: string | null = null;
+function getConnectionId(): string {
+  if (!_connectionId) _connectionId = crypto.randomUUID();
+  return _connectionId;
+}
 const listeners = new Set<(count: number) => void>();
 const userListeners = new Set<(ids: Set<string>) => void>();
 const trackers = new Map<symbol, Tracker>();
@@ -161,7 +165,7 @@ function collectUniqueUsers(channel: RealtimeChannel): Set<string> {
       // The realtime client can retain this connection's last tracked payload
       // in presenceState() after untrack resolves. Never let that stale local
       // payload keep the rail count high once the channel route has unmounted.
-      if (key === connectionId && !activeTracker) continue;
+      if (key === getConnectionId() && !activeTracker) continue;
       const seenKey = `${key}:${presence.user_id}`;
       liveKeys.add(seenKey);
       if (explicitlyDepartedKeys.has(seenKey)) continue;
@@ -291,7 +295,7 @@ function flushCount() {
  */
 export async function leaveTalkChannelsOnSignOut(userId: string): Promise<void> {
   const channel = sharedChannel;
-  const departingKey = `${connectionId}:${userId}`;
+  const departingKey = `${getConnectionId()}:${userId}`;
 
   cancelPendingLeave();
   trackers.clear();
@@ -319,7 +323,7 @@ export async function leaveTalkChannelsOnSignOut(userId: string): Promise<void> 
       event: "talk-presence-change",
       payload: {
         action: "leave",
-        connection_id: connectionId,
+        connection_id: getConnectionId(),
         user_id: userId,
       } satisfies TalkPresenceSignal,
     }),
@@ -377,7 +381,7 @@ function scheduleConfirmedLeave(channel: RealtimeChannel, departingUserId: strin
       void syncTracking();
       return;
     }
-    const departingKey = `${connectionId}:${departingUserId}`;
+    const departingKey = `${getConnectionId()}:${departingUserId}`;
     explicitlyDepartedKeys.add(departingKey);
     cleanlyDepartedUserIds.add(departingUserId);
     void channel.send({
@@ -385,7 +389,7 @@ function scheduleConfirmedLeave(channel: RealtimeChannel, departingUserId: strin
       event: "talk-presence-change",
       payload: {
         action: "leave",
-        connection_id: connectionId,
+        connection_id: getConnectionId(),
         user_id: departingUserId,
       } satisfies TalkPresenceSignal,
     }).catch(() => undefined);
@@ -417,7 +421,7 @@ async function reconcileTracking() {
   cancelPendingLeave();
   trackedSignature = nextSignature;
   trackedUserId = active.userId;
-  explicitlyDepartedKeys.delete(`${connectionId}:${active.userId}`);
+  explicitlyDepartedKeys.delete(`${getConnectionId()}:${active.userId}`);
   await channel
     .track({
       user_id: active.userId,
@@ -430,7 +434,7 @@ async function reconcileTracking() {
     event: "talk-presence-change",
     payload: {
       action: "join",
-      connection_id: connectionId,
+      connection_id: getConnectionId(),
       user_id: active.userId,
     } satisfies TalkPresenceSignal,
   }).catch(() => undefined);
@@ -495,7 +499,7 @@ function ensureSharedChannel() {
 
   const channel = supabase.channel(TALK_PRESENCE_TOPIC, {
     config: {
-      presence: { key: connectionId },
+      presence: { key: getConnectionId() },
       broadcast: { self: true },
     },
   });
