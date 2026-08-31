@@ -826,25 +826,28 @@ function RecoveryCodes() {
         <div>
           <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Current batch ({rows.length})</div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 font-mono text-sm">
-            {rows.map((r, i) => (
-              <div
-                key={r.id}
-                role={!r.used_at && r.code ? "button" : undefined}
-                tabIndex={!r.used_at && r.code ? 0 : undefined}
-                onClick={() => { if (!r.used_at && r.code) copySingle(r.code); }}
-                onKeyDown={(e) => { if ((e.key === "Enter" || e.key === " ") && !r.used_at && r.code) { e.preventDefault(); copySingle(r.code); } }}
-                className={`flex items-center justify-between gap-2 px-2 py-1.5 rounded-md border ${r.used_at ? "bg-surface-2 border-border text-muted-foreground" : "bg-background border-border hover:bg-surface-2 cursor-pointer"}`}
-                title={r.used_at ? `Used ${new Date(r.used_at).toLocaleString("en-GB")}` : "Click to copy"}
-              >
-                <span className={`tracking-wider select-all ${r.used_at ? "line-through" : ""}`}>
-                  {r.code ?? `Code #${String(i + 1).padStart(2, "0")}`}
-                </span>
-                {!r.used_at && r.code && (
-                  <Copy className="size-3.5 text-muted-foreground shrink-0" />
-                )}
-              </div>
-
-            ))}
+            {rows.map((r, i) => {
+              const displayCode = r.code ?? `Code #${String(i + 1).padStart(2, "0")}`;
+              const maskedCode = displayCode.replace(/[A-Z0-9]/g, "•");
+              return (
+                <div
+                  key={r.id}
+                  role={!r.used_at && r.code ? "button" : undefined}
+                  tabIndex={!r.used_at && r.code ? 0 : undefined}
+                  onClick={() => { if (!r.used_at && r.code) copySingle(r.code); }}
+                  onKeyDown={(e) => { if ((e.key === "Enter" || e.key === " ") && !r.used_at && r.code) { e.preventDefault(); copySingle(r.code); } }}
+                  className={`flex items-center justify-between gap-2 px-2 py-1.5 rounded-md border ${r.used_at ? "bg-surface-2 border-border text-muted-foreground" : "bg-background border-border hover:bg-surface-2 cursor-pointer"}`}
+                  title={r.used_at ? `Used ${new Date(r.used_at).toLocaleString("en-GB")}` : revealed ? "Click to copy" : "Reveal to view code"}
+                >
+                  <span className={`tracking-wider select-all ${r.used_at ? "line-through" : ""}`}>
+                    {revealed ? displayCode : maskedCode}
+                  </span>
+                  {!r.used_at && r.code && (
+                    <Copy className="size-3.5 text-muted-foreground shrink-0" />
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
