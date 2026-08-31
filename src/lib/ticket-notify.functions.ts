@@ -154,3 +154,59 @@ export const notifyTicketReply = createServerFn({ method: "POST" })
 
     return { ok: true };
   });
+/**
+ * Alerts the assigned staff member (in-app notification + chime) when the
+ * customer replies on their ticket. Called by the customer's own client after
+ * the reply is inserted; uses admin access because a customer cannot write a
+ * notification row for another user.
+ */
+export const notifyStaffOfCustomerReply = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z.object({ ticketId: z.string().uuid(), messageId: z.string().uuid() }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const callerId = context.userId;
+
+    const { data: msg } = await supabaseAdmin
+      .from("ticket_messages")
+      .select("id, ticket_id, sender_id, is_internal, content")
+      .eq("id", data.messageId)
+      .maybeSingle();
+    if (!msg || (msg as any).ticket_id !== data.ticketId) return { ok: false, reason: "no_message" };
+    if ((msg as any).is_internal) return { ok: false, reason: "internal" };
+    if ((msg as any).sender_id !== callerId) return { ok: false, reason: "not_author" };
+
+    const { data: ticket } = await supabaseAdmin
+      .from("tickets")
+      .select("id, user_id, subject, assigned_to")
+      .eq("id", data.ticketId)
+      .maybeSingle();
+    if (!ticket) return { ok: false, reason: "no_ticket" };
+    if ((ticket as any).user_id !== callerId) return { ok: false, reason: "not_owner" };
+
+    const assignee = (ticket as any).assigned_to as string | null;
+    if (!assignee || assignee === callerId) return { ok: false, reason: "no_assignee" };
+
+    const { data: prof } = await supabaseAdmin
+      .from("profiles")
+      .select("display_name, username")
+      .eq("id", callerId)
+      .maybeSingle();
+    const who = (prof as any)?.display_name || (prof as any)?.username || "The customer";
+    const subject = ((ticket as any).subject as string | null) ?? "your ticket";
+    const preview = String((msg as any).content ?? "").slice(0, 140);
+
+    const { error } = await supabaseAdmin.from("user_notifications").insert({
+      user_id: assignee,
+      kind: "ticket_reply",
+      title: `${who} replied to a ticket`,
+      body: preview ? `${subject} — ${preview}` : subject,
+      link_path: `/tickets?ticket=${data.ticketId}`,
+      source_type: "ticket",
+      source_id: data.ticketId,
+    } as never);
+    if (error) return { ok: false, reason: error.message };
+    return { ok: true };
+  });
