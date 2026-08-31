@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { User } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Nameplate } from "@/components/app/Nameplate";
 import { PresenceMiniDot } from "@/components/app/PresenceIndicators";
 import { formatLastSeen } from "@/lib/relative-time";
