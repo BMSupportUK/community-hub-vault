@@ -1495,7 +1495,11 @@ function TicketDetail({
           {(linkedOrder.total_cents / 100).toLocaleString("en-GB", { style: "currency", currency: "GBP" })}
         </div>
       </div>
-      <OrderProgressStrip order={linkedOrder} />
+      <OrderProgressStrip
+        order={linkedOrder}
+        bankTransfer={payProvider === "bank_transfer" || bankOnlyOrder}
+        transferReported={bankAwaiting}
+      />
       <PaymentStatusTimeline
         phase={
           linkedOrder.status === "cancelled"
