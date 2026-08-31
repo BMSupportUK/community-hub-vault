@@ -761,6 +761,7 @@ type OrderProgress = {
   paid_at: string | null;
   completed_at: string | null;
   created_at: string;
+  ticket_id?: string | null;
 } | null;
 
 function SidebarOrderProgress({ orderId }: { orderId: string }) {
@@ -971,15 +972,18 @@ function BuySteps({
   latestOrder,
   onBrowse,
   onViewOrder,
+  onViewTicket,
 }: {
   latestOrder: OrderProgress;
   onBrowse: () => void;
   onViewOrder: (id: string) => void;
+  onViewTicket: (ticketId: string) => void;
 }) {
   const placed = !!latestOrder;
   const paid = !!latestOrder?.paid_at;
   const setup = latestOrder?.status === "completed" || !!latestOrder?.completed_at;
   const cancelled = latestOrder?.status === "cancelled";
+  const ticketId = latestOrder?.ticket_id;
 
   const steps = [
     {
@@ -1007,10 +1011,16 @@ function BuySteps({
         : paid
           ? `Invoice paid on ${new Date(latestOrder!.paid_at!).toLocaleDateString("en-GB")}.`
           : placed
-            ? "Awaiting your payment — open the order to view the invoice."
+            ? "Awaiting your payment — open the support ticket for this order."
             : "We'll send your invoice — pay it securely and we'll confirm receipt.",
-      cta: cancelled ? "Browse products" : placed ? "Open order" : undefined,
-      action: cancelled ? onBrowse : placed ? () => onViewOrder(latestOrder!.id) : undefined,
+      cta: cancelled ? "Browse products" : placed ? (ticketId ? "Open ticket" : "Open order") : undefined,
+      action: cancelled
+        ? onBrowse
+        : placed
+          ? ticketId
+            ? () => onViewTicket(ticketId)
+            : () => onViewOrder(latestOrder!.id)
+          : undefined,
     },
     {
       n: 3,
@@ -1156,6 +1166,7 @@ function Storefront() {
     paid_at: string | null;
     completed_at: string | null;
     created_at: string;
+    ticket_id?: string | null;
   } | null>(null);
 
   const reloadLatestOrder = async () => {
@@ -1165,12 +1176,24 @@ function Storefront() {
     }
     const { data } = await supabase
       .from("orders")
-      .select("id,status,paid_at,completed_at,created_at")
+      .select("id,status,paid_at,completed_at,created_at,tickets!left(id)")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
-    setLatestOrder((data as typeof latestOrder) ?? null);
+    const raw = data as { id: string; status: string; paid_at: string | null; completed_at: string | null; created_at: string; tickets?: { id: string }[] | null } | null;
+    setLatestOrder(
+      raw
+        ? {
+            id: raw.id,
+            status: raw.status,
+            paid_at: raw.paid_at,
+            completed_at: raw.completed_at,
+            created_at: raw.created_at,
+            ticket_id: raw.tickets?.[0]?.id ?? null,
+          }
+        : null,
+    );
   };
 
   const reloadRatings = async () => {
@@ -1625,6 +1648,7 @@ function Storefront() {
                 latestOrder={latestOrder}
                 onBrowse={() => setShopTab("shop")}
                 onViewOrder={(id) => navigate({ to: "/shop", search: { view: "orders", id } })}
+                onViewTicket={(ticketId) => navigate({ to: "/tickets", search: { id: ticketId } })}
               />
             </TabsContent>
 
