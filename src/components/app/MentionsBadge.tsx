@@ -3,7 +3,7 @@ import { AtSign, Check, CornerUpRight } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { formatDistanceToNow } from "date-fns";
 
 type MentionRow = {
@@ -120,8 +120,8 @@ export function MentionsBadge() {
 
 
   return (
-    <Popover open={open} onOpenChange={(v) => { setOpen(v); if (v) loadList(user.id); }}>
-      <PopoverTrigger asChild>
+    <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (v) loadList(user.id); }}>
+      <DialogTrigger asChild>
         <button
           title={count > 0 ? `${count} unread mention${count === 1 ? "" : "s"}` : "Mentions"}
           className={`relative size-9 rounded-xl flex items-center justify-center transition-all ${
@@ -137,17 +137,17 @@ export function MentionsBadge() {
             </span>
           )}
         </button>
-      </PopoverTrigger>
-      <PopoverContent side="right" align="start" className="w-80 p-0">
+      </DialogTrigger>
+      <DialogContent className="w-[min(30rem,calc(100vw-2rem))] p-0 overflow-hidden gap-0">
         <div className="flex items-center justify-between px-3 py-2 border-b">
-          <div className="text-sm font-semibold">Mentions</div>
+          <DialogTitle className="text-sm font-semibold">Mentions</DialogTitle>
           {count > 0 && (
-            <button onClick={markAllRead} className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
+            <button onClick={markAllRead} className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1 mr-6">
               <Check className="size-3" /> Mark all read
             </button>
           )}
         </div>
-        <div className="max-h-96 overflow-y-auto">
+        <div className="max-h-[min(70vh,32rem)] overflow-y-auto">
           {items.length === 0 ? (
             <div className="px-3 py-6 text-sm text-muted-foreground text-center">No mentions yet</div>
           ) : (
@@ -177,7 +177,7 @@ export function MentionsBadge() {
             ))
           )}
         </div>
-      </PopoverContent>
-    </Popover>
+      </DialogContent>
+    </Dialog>
   );
 }
