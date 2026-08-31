@@ -2126,13 +2126,30 @@ function ChannelPage() {
           </div>
         </div>
         <aside className="relative z-0 hidden md:flex md:flex-col w-56 xl:w-64 shrink-0 min-h-0 border-l border-border bg-surface/40">
+          <div className="shrink-0 grid grid-cols-2 gap-1 border-b border-border p-1.5">
+            {(["staff", "members"] as const).map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setSideTab(t)}
+                className={`rounded-md px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider transition-colors ${
+                  sideTab === t
+                    ? "bg-primary/20 text-primary ring-1 ring-primary/40"
+                    : "text-muted-foreground hover:bg-surface-2"
+                }`}
+              >
+                {t === "staff" ? "Staff" : "Members"}
+              </button>
+            ))}
+          </div>
           <div className="flex-1 min-h-0 overflow-hidden">
-            <StaffOnDutySidebar />
+            {sideTab === "staff" ? <StaffOnDutySidebar /> : <TalkChannelMembersPanel />}
           </div>
           <div className="shrink-0 border-t border-border bg-surface/95 px-3 py-3">
             <OnlineMembersDialog />
           </div>
         </aside>
+
       </div>
 
       {isMuted && (
