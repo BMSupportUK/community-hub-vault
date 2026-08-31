@@ -395,7 +395,7 @@ export function StaffOnDutyStrip({
             : inChat
               ? "bg-emerald-400/10 border-emerald-200/30"
               : "border-white/15 bg-white/5",
-          isTickets ? "w-full sm:w-[220px]" : "w-full",
+          isTickets ? "w-full sm:w-[260px]" : "w-full",
         )}
       >
         <div className="flex items-center gap-2 min-w-0">
