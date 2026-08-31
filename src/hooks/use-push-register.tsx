@@ -44,6 +44,20 @@ export function usePushRegister() {
           // lets Android use the system default notification ringtone.
         });
 
+        // Ticket replies use the exact spoken MP3 bundled in res/raw. Android
+        // notification-channel sounds only work from native resources; a web
+        // asset URL cannot be used while the app is backgrounded or closed.
+        await PushNotifications.createChannel({
+          id: "bm_support_ticket_replies_v1",
+          name: "Support ticket replies",
+          description: "Spoken alert when a customer replies to an assigned ticket",
+          importance: 4,
+          visibility: 1,
+          lights: true,
+          vibration: true,
+          sound: "ticket_reply_notify.mp3",
+        });
+
         const reg = await PushNotifications.addListener("registration", async (t) => {
           try {
             await register({ data: { token: t.value, platform: "android" } });

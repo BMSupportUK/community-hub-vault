@@ -168,6 +168,7 @@ async function sendFcmToTokens(
   let sent = 0;
   let failed = 0;
   const stale: string[] = [];
+  const isTicketReply = args.data?.kind === "ticket_reply";
   for (const token of tokens) {
     const res = await fetch(url, {
       method: "POST",
@@ -183,12 +184,14 @@ async function sendFcmToTokens(
           android: {
             priority: "HIGH",
             notification: {
-            // Keep in sync with strings.xml and use-push-register.tsx.
-            // Channels are immutable once created on a device, so when the
-            // sound or importance changes we bump the id to force
-            // recreation on existing installs.
-            channel_id: "bm_support_alerts_v4",
-              default_sound: true,
+              // Ticket replies have their own native channel so Android can
+              // play the uploaded spoken MP3 while the app is backgrounded
+              // or closed. All other alerts retain the system sound channel.
+              channel_id: isTicketReply
+                ? "bm_support_ticket_replies_v1"
+                : "bm_support_alerts_v4",
+              sound: isTicketReply ? "ticket_reply_notify" : undefined,
+              default_sound: !isTicketReply,
               default_vibrate_timings: true,
               notification_priority: "PRIORITY_HIGH",
             },
