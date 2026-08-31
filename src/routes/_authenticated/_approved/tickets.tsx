@@ -1674,6 +1674,16 @@ function TicketDetail({
             <span className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-white/25 text-xs text-white">
               <StatusIcon className="size-3" /> {STATUS_META[ticket.status].label}
             </span>
+            {ticket.status !== "closed" && (isStaff || ticket.user_id === currentUserId) && (
+              <button
+                onClick={closeTicket}
+                title="Close ticket"
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-white/90 text-rose-600 hover:bg-white text-xs font-semibold shadow"
+              >
+                <XCircle className="size-3" /> Close ticket
+              </button>
+            )}
+
             {isAdmin && (
               <button
                 onClick={deleteTicket}
