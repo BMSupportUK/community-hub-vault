@@ -135,10 +135,10 @@ export function DndDialogButton({
     );
     setSaving(false);
     if (error) {
-      toast.error("Couldn't update Do Not Disturb", { description: error.message });
+      toast.error("Couldn't update Away", { description: error.message });
       return;
     }
-    toast.success("Do Not Disturb scheduled");
+    toast.success("Away scheduled");
     setOpen(false);
   };
 
@@ -158,10 +158,10 @@ export function DndDialogButton({
           type="button"
           title={
             icon === "pencil"
-              ? "Edit Do Not Disturb"
+              ? "Edit Away"
               : active
-                ? `Do Not Disturb · ${remainingLabel ?? "on"}`
-                : "Do Not Disturb"
+                ? `Away · ${remainingLabel ?? "on"}`
+                : "Away"
           }
           className={cn(
             "relative p-2 rounded-lg hover:bg-surface-2 transition-colors",
@@ -178,7 +178,7 @@ export function DndDialogButton({
       <DialogContent className="max-w-md p-0 overflow-hidden">
         <DialogHeader className="px-6 pt-5 pb-3 border-b border-border bg-gradient-to-r from-violet-600/15 via-fuchsia-600/10 to-violet-600/15">
           <DialogTitle className="flex items-center gap-2 text-base">
-            <Moon className="size-5 text-violet-300" /> Do Not Disturb
+            <Moon className="size-5 text-violet-300" /> Away
           </DialogTitle>
           <DialogDescription className="text-sm">
             Choose when it starts and finishes — it turns on and off automatically.

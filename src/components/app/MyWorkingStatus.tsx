@@ -51,7 +51,7 @@ export function MyWorkingStatus() {
 
   if (!user) return null;
   // DND overrides every other status — the pill is rendered next to the
-  // "Do Not Disturb" label in WorkingStatusBox, so hide here.
+  // "Away" label in WorkingStatusBox, so hide here.
   if (dnd?.active) {
     return null;
   }

@@ -1923,7 +1923,7 @@ function EditProfileModal({ profile, onClose, onSaved }: { profile: ProfileRow; 
             ))}
           </select>
           <span className="block text-[11px] text-muted-foreground mt-1">
-            Detected from your browser and used for expiry dates, DND, and local times.
+            Detected from your browser and used for expiry dates, Away status, and local times.
           </span>
         </Field>
         <label className="flex items-start gap-3 mb-3 p-3 rounded-lg bg-surface-2 border border-border cursor-pointer">

@@ -55,8 +55,8 @@ export function DndCountdown({
       })}`
     : "";
   const title = info.note
-    ? `Do Not Disturb — ${info.note}${endsLabel ? ` (${endsLabel})` : ""}`
-    : `Do Not Disturb${endsLabel ? ` ${endsLabel}` : ""}`;
+    ? `Away — ${info.note}${endsLabel ? ` (${endsLabel})` : ""}`
+    : `Away${endsLabel ? ` ${endsLabel}` : ""}`;
 
   return (
     <span
@@ -68,7 +68,7 @@ export function DndCountdown({
       title={title}
     >
       <Moon className={compact ? "size-3" : "size-3.5"} />
-      <span>DND{remaining !== null ? ` • ${formatRemaining(remaining)}` : ""}</span>
+      <span>Away{remaining !== null ? ` • ${formatRemaining(remaining)}` : ""}</span>
     </span>
   );
 }
