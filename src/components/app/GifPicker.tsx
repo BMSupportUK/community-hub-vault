@@ -135,3 +135,21 @@ export function extractStandaloneGif(content: string): string | null {
   }
   return null;
 }
+
+const IMAGE_URL_ANYWHERE =
+  /https?:\/\/[^\s<>"')]+?(?:\.(?:gif|png|jpe?g|webp|avif)|\/storage\/v1\/object\/[^\s<>"')]+)[^\s<>"')]*/i;
+
+/**
+ * Looser than extractStandaloneGif: finds the first image URL anywhere in the
+ * message, including storage links with query tokens or surrounding text.
+ * Returns the url plus the message text with that url removed.
+ */
+export function extractImageUrl(content: string): { url: string; rest: string } | null {
+  const standalone = extractStandaloneGif(content);
+  if (standalone) return { url: standalone, rest: "" };
+  const m = content.match(IMAGE_URL_ANYWHERE);
+  if (!m) return null;
+  const url = m[0];
+  if (!/\.(gif|png|jpe?g|webp|avif)(\?|$)/i.test(url) && !/\/storage\/v1\/object\//i.test(url)) return null;
+  return { url, rest: content.replace(url, "").trim() };
+}
