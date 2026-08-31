@@ -203,7 +203,7 @@ export const notifyStaffOfCustomerReply = createServerFn({ method: "POST" })
       kind: "ticket_reply",
       title: `${who} replied to a ticket`,
       body: preview ? `${subject} — ${preview}` : subject,
-      link_path: `/tickets?ticket=${data.ticketId}`,
+      link_path: `/tickets?id=${data.ticketId}&view=assigned`,
       source_type: "ticket",
       source_id: data.ticketId,
     } as never);
