@@ -1448,6 +1448,7 @@ function ChannelPage() {
                       role: senderRole,
                       isOnline: p?.id ? onlineUsers.has(p.id) : false,
                       lastSeenAt: p?.last_seen_at ?? null,
+                      customStatus: p?.custom_status ?? null,
                       isSelf,
                     };
 
