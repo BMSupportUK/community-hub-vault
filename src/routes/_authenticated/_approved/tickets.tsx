@@ -1070,6 +1070,22 @@ function TicketDetail({
     }
   };
 
+  const confirmBankTransferFn = useServerFn(confirmBankTransferReceived);
+  const orderConfirmBankTransfer = async () => {
+    if (!linkedOrder || orderBusy) return;
+    setOrderBusy(true);
+    try {
+      await confirmBankTransferFn({ data: { orderId: linkedOrder.id } });
+      await postTicketSystem(
+        `✅ Bank transfer received — your payment of ${(linkedOrder.total_cents / 100).toLocaleString("en-GB", { style: "currency", currency: "GBP" })} has landed in our account and your order is now marked as paid.\n\n🙏 Thank you for the transfer — we really appreciate it. We'll get your account sorted and keep you updated here.`,
+      );
+      await loadLinkedOrder();
+      toast.success("Bank transfer confirmed");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not confirm payment");
+    } finally { setOrderBusy(false); }
+  };
+
   const orderSettingUpAccount = async () => {
     if (!linkedOrder || orderBusy) return;
     if (linkedOrder.status === "completed" || linkedOrder.completed_at) {
