@@ -30,7 +30,8 @@ import { getOrderBankTransferAccess } from "@/lib/bank-transfer.functions";
 import { PaymentStatusTimeline, type PayCheckPhase } from "@/components/app/PaymentStatusTimeline";
 import { isSettledPaymentStatus } from "@/lib/payment-status";
 
-import { refreshSquareInvoiceStatus, cancelOrderAndSquareInvoice } from "@/lib/square-invoices.functions";
+import { cancelOrderAndSquareInvoice } from "@/lib/square-invoices.functions";
+import { checkOrderPaymentAcrossProviders } from "@/lib/order-payment-check.functions";
 import { getOrderPaymentState } from "@/lib/order-payment-state.functions";
 import { formatRoleLabel } from "@/lib/role-label";
 import { notifyTicketReply } from "@/lib/ticket-notify.functions";
@@ -991,7 +992,7 @@ function TicketDetail({
     return () => { alive = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticket.order_id]);
-  const refreshSquareInvoice = useServerFn(refreshSquareInvoiceStatus);
+  const checkPaymentAcrossProviders = useServerFn(checkOrderPaymentAcrossProviders);
   const confirmStripe = useServerFn(confirmStripePayment);
   const cancelOrderAndSquareInvoiceRpc = useServerFn(cancelOrderAndSquareInvoice);
   const getPaymentState = useServerFn(getOrderPaymentState);
