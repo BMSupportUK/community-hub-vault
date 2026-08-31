@@ -487,6 +487,8 @@ function DashboardBody() {
     .sort((a, b) => a.label.localeCompare(b.label, "en-GB", { sensitivity: "base" }));
 
   return (
+    <div className="space-y-6">
+
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px] items-start">
       <section className="min-w-0">
         <h2 className="font-display text-sm uppercase tracking-wide text-muted-foreground mb-3">Owner tools</h2>
@@ -515,11 +517,17 @@ function DashboardBody() {
         <ThemePickerCard />
         <RecoveryCodes />
         <VpnBackfillCard />
-        <BankTransferAdminCard />
       </aside>
+    </div>
+
+      <section className="min-w-0">
+        <h2 className="font-display text-sm uppercase tracking-wide text-muted-foreground mb-3">Bank transfer</h2>
+        <BankTransferAdminCard />
+      </section>
     </div>
   );
 }
+
 
 
 interface BackupCodeRow {
