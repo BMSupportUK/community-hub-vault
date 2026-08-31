@@ -32,7 +32,7 @@ import { cancelOrderAndSquareInvoice } from "@/lib/square-invoices.functions";
 import { checkOrderPaymentAcrossProviders } from "@/lib/order-payment-check.functions";
 import { getOrderPaymentState } from "@/lib/order-payment-state.functions";
 import { formatRoleLabel } from "@/lib/role-label";
-import { notifyTicketReply } from "@/lib/ticket-notify.functions";
+import { notifyTicketReply, notifyStaffOfCustomerReply } from "@/lib/ticket-notify.functions";
 import { sendNewTicketPush } from "@/lib/push.functions";
 import { StaffOnDutyStrip } from "@/components/app/StaffOnDutyStrip";
 import { Nameplate } from "@/components/app/Nameplate";
@@ -1381,6 +1381,7 @@ function TicketDetail({
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight });
   }, [messages.length]);
 
+  const notifyStaffOfCustomerReplyFn = useServerFn(notifyStaffOfCustomerReply);
   const send = async () => {
     const content = draft.trim();
     if ((content.length < 1 && replyFiles.length === 0) || content.length > 2000) return;
@@ -1415,6 +1416,14 @@ function TicketDetail({
         await notifyTicketReply({ data: { ticketId: ticket.id, messageId: inserted.id } });
       } catch (e) {
         console.warn("[tickets] notifyTicketReply failed", e);
+      }
+    }
+    // Customer replied — alert the assigned staff member (chime + popup).
+    if (!isStaff && ticket.user_id === currentUserId && inserted?.id) {
+      try {
+        await notifyStaffOfCustomerReplyFn({ data: { ticketId: ticket.id, messageId: inserted.id } });
+      } catch (e) {
+        console.warn("[tickets] notifyStaffOfCustomerReply failed", e);
       }
     }
     // Bump updated_at via status touch (only staff allowed) — skip for users
