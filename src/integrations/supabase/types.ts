@@ -5703,6 +5703,13 @@ export type Database = {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
       }
+      directory_member_roles: {
+        Args: never
+        Returns: {
+          role: string
+          user_id: string
+        }[]
+      }
       email_is_account_holder: { Args: { _email: string }; Returns: boolean }
       email_queue_dispatch: { Args: never; Returns: undefined }
       enqueue_email: {
