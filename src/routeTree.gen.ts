@@ -61,6 +61,7 @@ import { Route as AuthenticatedApprovedAdminProfanityRouteImport } from './route
 import { Route as AuthenticatedApprovedAdminReportsRouteImport } from './routes/_authenticated/_approved/admin-reports'
 import { Route as AuthenticatedApprovedAdminReviewsRouteImport } from './routes/_authenticated/_approved/admin-reviews'
 import { Route as AuthenticatedApprovedAdminRolesRouteImport } from './routes/_authenticated/_approved/admin-roles'
+import { Route as AuthenticatedApprovedAdminSoundsRouteImport } from './routes/_authenticated/_approved/admin-sounds'
 import { Route as AuthenticatedApprovedAdminSportsImportRouteImport } from './routes/_authenticated/_approved/admin-sports-import'
 import { Route as AuthenticatedApprovedAdminStreamingDevicesRouteImport } from './routes/_authenticated/_approved/admin-streaming-devices'
 import { Route as AuthenticatedApprovedAdminTicketCategoriesRouteImport } from './routes/_authenticated/_approved/admin-ticket-categories'
@@ -425,6 +426,12 @@ const AuthenticatedApprovedAdminRolesRoute =
   AuthenticatedApprovedAdminRolesRouteImport.update({
     id: '/admin-roles',
     path: '/admin-roles',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedAdminSoundsRoute =
+  AuthenticatedApprovedAdminSoundsRouteImport.update({
+    id: '/admin-sounds',
+    path: '/admin-sounds',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
 const AuthenticatedApprovedAdminSportsImportRoute =
@@ -949,6 +956,7 @@ export interface FileRoutesByFullPath {
   '/admin-reports': typeof AuthenticatedApprovedAdminReportsRoute
   '/admin-reviews': typeof AuthenticatedApprovedAdminReviewsRoute
   '/admin-roles': typeof AuthenticatedApprovedAdminRolesRoute
+  '/admin-sounds': typeof AuthenticatedApprovedAdminSoundsRoute
   '/admin-sports-import': typeof AuthenticatedApprovedAdminSportsImportRoute
   '/admin-streaming-devices': typeof AuthenticatedApprovedAdminStreamingDevicesRoute
   '/admin-ticket-categories': typeof AuthenticatedApprovedAdminTicketCategoriesRoute
@@ -1078,6 +1086,7 @@ export interface FileRoutesByTo {
   '/admin-reports': typeof AuthenticatedApprovedAdminReportsRoute
   '/admin-reviews': typeof AuthenticatedApprovedAdminReviewsRoute
   '/admin-roles': typeof AuthenticatedApprovedAdminRolesRoute
+  '/admin-sounds': typeof AuthenticatedApprovedAdminSoundsRoute
   '/admin-sports-import': typeof AuthenticatedApprovedAdminSportsImportRoute
   '/admin-streaming-devices': typeof AuthenticatedApprovedAdminStreamingDevicesRoute
   '/admin-ticket-categories': typeof AuthenticatedApprovedAdminTicketCategoriesRoute
@@ -1211,6 +1220,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/admin-reports': typeof AuthenticatedApprovedAdminReportsRoute
   '/_authenticated/_approved/admin-reviews': typeof AuthenticatedApprovedAdminReviewsRoute
   '/_authenticated/_approved/admin-roles': typeof AuthenticatedApprovedAdminRolesRoute
+  '/_authenticated/_approved/admin-sounds': typeof AuthenticatedApprovedAdminSoundsRoute
   '/_authenticated/_approved/admin-sports-import': typeof AuthenticatedApprovedAdminSportsImportRoute
   '/_authenticated/_approved/admin-streaming-devices': typeof AuthenticatedApprovedAdminStreamingDevicesRoute
   '/_authenticated/_approved/admin-ticket-categories': typeof AuthenticatedApprovedAdminTicketCategoriesRoute
@@ -1344,6 +1354,7 @@ export interface FileRouteTypes {
     | '/admin-reports'
     | '/admin-reviews'
     | '/admin-roles'
+    | '/admin-sounds'
     | '/admin-sports-import'
     | '/admin-streaming-devices'
     | '/admin-ticket-categories'
@@ -1473,6 +1484,7 @@ export interface FileRouteTypes {
     | '/admin-reports'
     | '/admin-reviews'
     | '/admin-roles'
+    | '/admin-sounds'
     | '/admin-sports-import'
     | '/admin-streaming-devices'
     | '/admin-ticket-categories'
@@ -1605,6 +1617,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/admin-reports'
     | '/_authenticated/_approved/admin-reviews'
     | '/_authenticated/_approved/admin-roles'
+    | '/_authenticated/_approved/admin-sounds'
     | '/_authenticated/_approved/admin-sports-import'
     | '/_authenticated/_approved/admin-streaming-devices'
     | '/_authenticated/_approved/admin-ticket-categories'
@@ -2110,6 +2123,13 @@ declare module '@tanstack/react-router' {
       path: '/admin-roles'
       fullPath: '/admin-roles'
       preLoaderRoute: typeof AuthenticatedApprovedAdminRolesRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/admin-sounds': {
+      id: '/_authenticated/_approved/admin-sounds'
+      path: '/admin-sounds'
+      fullPath: '/admin-sounds'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminSoundsRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
     '/_authenticated/_approved/admin-sports-import': {
@@ -2781,6 +2801,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedAdminReportsRoute: typeof AuthenticatedApprovedAdminReportsRoute
   AuthenticatedApprovedAdminReviewsRoute: typeof AuthenticatedApprovedAdminReviewsRoute
   AuthenticatedApprovedAdminRolesRoute: typeof AuthenticatedApprovedAdminRolesRoute
+  AuthenticatedApprovedAdminSoundsRoute: typeof AuthenticatedApprovedAdminSoundsRoute
   AuthenticatedApprovedAdminSportsImportRoute: typeof AuthenticatedApprovedAdminSportsImportRoute
   AuthenticatedApprovedAdminStreamingDevicesRoute: typeof AuthenticatedApprovedAdminStreamingDevicesRoute
   AuthenticatedApprovedAdminTicketCategoriesRoute: typeof AuthenticatedApprovedAdminTicketCategoriesRoute
@@ -2861,6 +2882,7 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
   AuthenticatedApprovedAdminReviewsRoute:
     AuthenticatedApprovedAdminReviewsRoute,
   AuthenticatedApprovedAdminRolesRoute: AuthenticatedApprovedAdminRolesRoute,
+  AuthenticatedApprovedAdminSoundsRoute: AuthenticatedApprovedAdminSoundsRoute,
   AuthenticatedApprovedAdminSportsImportRoute:
     AuthenticatedApprovedAdminSportsImportRoute,
   AuthenticatedApprovedAdminStreamingDevicesRoute:

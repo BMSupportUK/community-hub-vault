@@ -481,6 +481,7 @@ function DashboardBody() {
     { to: "/shop", search: { view: "discounts" }, label: "Discount codes", desc: "Create and manage promotional discount codes.", icon: Tag, adminOnly: true },
     { to: "/admin-bank-transfer", label: "Bank transfer", desc: "Set the bank details customers see and grant bank-transfer payment access.", icon: Landmark, adminOnly: true },
     { to: "/install-guides", search: { tab: "app-apk" }, label: "App APK & transfers", desc: "Upload the Android APK and monitor the live 24-hour install links members have requested.", icon: Package },
+    { to: "/admin-sounds", label: "Notification sounds", desc: "Play and verify every notification MP3 used across the app, and set volume for this device.", icon: Bell },
   ];
   const tools = allTools
     .filter((t) => !t.adminOnly || isAdminOnly)
