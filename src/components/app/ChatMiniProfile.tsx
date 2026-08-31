@@ -154,7 +154,6 @@ function MiniProfileCard({ profile }: { profile: ChatMiniProfileData }) {
             </div>
           )}
         </div>
-      </PopoverContent>
-    </Popover>
+    </>
   );
 }
