@@ -50,6 +50,7 @@ interface ProfileRow {
   is_private: boolean | null;
   timezone: string | null;
   equipped_nameplate_id: string | null;
+  custom_status: string | null;
 }
 
 interface ShiftRow { id: string; user_id: string; clock_in: string; clock_out: string | null; }
