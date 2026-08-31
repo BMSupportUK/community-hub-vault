@@ -222,7 +222,9 @@ export function StaffOnDutyStrip({
       isOnline: isWorking || recentlyActive,
       lastSeenAt: lastSeen,
       isSelf: userId === selfId,
+    };
   };
+
 
   /** Seed row for the shared Talk member card; the card refetches full details. */
   const talkFallbackRow = (userId: string): Omit<TalkMemberProfileRow, "user_id"> => {
