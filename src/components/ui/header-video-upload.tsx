@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import { useGuideVideoUrl } from "@/hooks/use-guide-video-url";
 import { Upload, Loader2, X, Film } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -11,9 +12,12 @@ type Props = {
   onChange: (url: string | null) => void;
   bucket?: string;
   folder?: string;
+  /** Store in the private guide-videos bucket and play via signed URLs only. */
+  secure?: boolean;
 };
 
-export function HeaderVideoUpload({ value, onChange, bucket = "kb-videos", folder }: Props) {
+export function HeaderVideoUpload({ value, onChange, bucket = "kb-videos", folder, secure = false }: Props) {
+  const effectiveBucket = secure ? "guide-videos" : bucket;
   const { user } = useAuth();
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
@@ -25,10 +29,14 @@ export function HeaderVideoUpload({ value, onChange, bucket = "kb-videos", folde
     const ext = file.name.split(".").pop()?.toLowerCase() || "mp4";
     const prefix = folder ? `${folder}/` : "";
     const path = `${prefix}${user?.id ?? "anon"}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-    const { error } = await supabase.storage.from(bucket).upload(path, file, { cacheControl: "3600", upsert: false, contentType: file.type });
+    const { error } = await supabase.storage.from(effectiveBucket).upload(path, file, { cacheControl: "3600", upsert: false, contentType: file.type });
     if (error) { setUploading(false); toast.error(error.message); return; }
-    const { data } = supabase.storage.from(bucket).getPublicUrl(path);
-    onChange(data.publicUrl);
+    if (secure) {
+      onChange(`guide-videos:${path}`);
+    } else {
+      const { data } = supabase.storage.from(effectiveBucket).getPublicUrl(path);
+      onChange(data.publicUrl);
+    }
     setUploading(false);
     toast.success("Video uploaded");
   };
@@ -37,7 +45,7 @@ export function HeaderVideoUpload({ value, onChange, bucket = "kb-videos", folde
     <div className="space-y-2">
       {value ? (
         <div className="relative w-full rounded-lg overflow-hidden border border-border bg-black">
-          <video src={value} controls className="w-full max-h-56 bg-black" preload="metadata" />
+          <SecurePreview value={value} secure={secure} />
           <button
             type="button"
             onClick={() => onChange(null)}
@@ -72,5 +80,20 @@ export function HeaderVideoUpload({ value, onChange, bucket = "kb-videos", folde
         />
       </div>
     </div>
+  );
+}
+function SecurePreview({ value, secure }: { value: string; secure: boolean }) {
+  const signed = useGuideVideoUrl(secure ? value : null);
+  const src = secure ? signed : value;
+  return (
+    <video
+      src={src ?? undefined}
+      controls
+      controlsList="nodownload noremoteplayback noplaybackrate"
+      disablePictureInPicture
+      onContextMenu={(e) => e.preventDefault()}
+      className="w-full max-h-56 bg-black"
+      preload="metadata"
+    />
   );
 }
