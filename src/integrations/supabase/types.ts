@@ -6083,6 +6083,7 @@ export type Database = {
         Args: { _kind: string; _reason: string; _target: string }
         Returns: string
       }
+      sync_subscriber_roles_from_credentials: { Args: never; Returns: number }
       unmute_user: { Args: { _user_id: string }; Returns: boolean }
       upsert_my_signup_vpn: {
         Args: {
