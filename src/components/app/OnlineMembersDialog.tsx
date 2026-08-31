@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link } from "@tanstack/react-router";
 import { Users, User, UserPlus, Check, Clock, EyeOff, Eye, Search } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,9 +8,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Nameplate } from "@/components/app/Nameplate";
+import { ChatMiniProfile } from "@/components/app/ChatMiniProfile";
 import { useRoleFlashMap, roleFlashClass, resolveAvatarUrl } from "@/lib/role-flash";
 import { formatRoleLabel } from "@/lib/role-label";
 import { cn } from "@/lib/utils";
+
 
 type MemberProfile = {
   id: string;
@@ -41,6 +42,8 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
   const [ignored, setIgnored] = useState<Set<string>>(new Set());
   const [busyId, setBusyId] = useState<string | null>(null);
   const [q, setQ] = useState("");
+  const [roleFilter, setRoleFilter] = useState<string>("all");
+
 
   const ids = useMemo(() => Array.from(onlineIds), [onlineIds]);
   const idKey = ids.slice().sort().join(",");
@@ -140,12 +143,31 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
     void loadRelations();
   };
 
-  const visible = useMemo(() => {
-    const term = q.trim().toLowerCase();
-    return profiles
-      .filter((p) => {
+  /** Online users that are members (no BM Support staff roles). */
+  const memberProfiles = useMemo(
+    () =>
+      profiles.filter((p) => {
         const roles = rolesByUser[p.id] ?? [];
         if (roles.some((r) => HIDDEN_ROLES.has(r))) return false;
+        if (roles.some((r) => STAFF_ROLES.has(r))) return false;
+        return true;
+      }),
+    [profiles, rolesByUser],
+  );
+
+  /** Distinct member roles present, for the role filter. */
+  const roleOptions = useMemo(() => {
+    const set = new Set<string>();
+    for (const p of memberProfiles) for (const r of rolesByUser[p.id] ?? []) set.add(r);
+    return Array.from(set).sort();
+  }, [memberProfiles, rolesByUser]);
+
+  const visible = useMemo(() => {
+    const term = q.trim().toLowerCase();
+    return memberProfiles
+      .filter((p) => {
+        const roles = rolesByUser[p.id] ?? [];
+        if (roleFilter !== "all" && !roles.includes(roleFilter)) return false;
         if (!term) return true;
         return (
           (p.display_name ?? "").toLowerCase().includes(term) ||
@@ -155,7 +177,8 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
       .sort((a, b) =>
         (a.display_name || a.username || "").localeCompare(b.display_name || b.username || ""),
       );
-  }, [profiles, rolesByUser, q]);
+  }, [memberProfiles, rolesByUser, q, roleFilter]);
+
 
   const count = onlineIds.size;
 
@@ -198,6 +221,27 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
               className="pl-8 bg-white/10 border-white/20 text-white placeholder:text-white/50"
             />
           </div>
+          {roleOptions.length > 0 && (
+            <div className="mt-3 flex flex-wrap items-center gap-1.5">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-white/60">Filter by role</span>
+              {["all", ...roleOptions].map((r) => (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => setRoleFilter(r)}
+                  className={cn(
+                    "rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider transition-colors",
+                    roleFilter === r
+                      ? "border-emerald-300/50 bg-emerald-500/30 text-emerald-100"
+                      : "border-white/20 bg-white/10 text-white/70 hover:bg-white/20",
+                  )}
+                >
+                  {r === "all" ? "All" : formatRoleLabel(r)}
+                </button>
+              ))}
+            </div>
+          )}
+
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto p-5">
@@ -254,19 +298,26 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
                     </div>
 
                     <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-                      {p.username && (
-                        <Button
-                          asChild
-                          size="sm"
-                          variant="secondary"
-                          className="h-8 flex-1 min-w-[7rem] bg-white/15 text-white hover:bg-white/25 border border-white/20"
-                        >
-                          <Link to="/u/$username" params={{ username: p.username }} onClick={() => setOpen(false)}>
-                            <User className="size-3.5" />
-                            View profile
-                          </Link>
-                        </Button>
-                      )}
+                      <ChatMiniProfile
+                        className="h-8 flex-1 min-w-[7rem]"
+                        profile={{
+                          userId: p.id,
+                          name,
+                          username: p.username,
+                          avatarUrl: resolveAvatarUrl(p.id, p.avatar_url, roleFlashMap),
+                          hasAvatar: true,
+                          nameplateId: p.equipped_nameplate_id,
+                          role: role ?? null,
+                          isOnline: true,
+                          isSelf,
+                        }}
+                      >
+                        <span className="flex h-8 w-full items-center justify-center gap-1.5 rounded-md border border-white/20 bg-white/15 px-2 text-xs font-medium text-white hover:bg-white/25">
+                          <User className="size-3.5" />
+                          View profile
+                        </span>
+                      </ChatMiniProfile>
+
                       {!isSelf && (
                         <>
                           {rel?.kind === "friends" ? (
