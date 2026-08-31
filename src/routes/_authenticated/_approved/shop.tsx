@@ -974,7 +974,7 @@ function BuySteps({
   onViewOrder,
   onViewTicket,
 }: {
-  latestOrder: OrderProgress & { ticket_id?: string | null };
+  latestOrder: OrderProgress;
   onBrowse: () => void;
   onViewOrder: (id: string) => void;
   onViewTicket: (ticketId: string) => void;
