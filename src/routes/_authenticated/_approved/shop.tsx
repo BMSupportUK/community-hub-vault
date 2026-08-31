@@ -1467,10 +1467,14 @@ function Storefront() {
             sender_id: user.id,
             content: ticketBody,
           } as never);
+          const bankAccess: any = await getMyBankTransferAccess({}).catch(() => null);
+          const payMsg = bankAccess?.allowed
+            ? `🏦 How would you like to pay for this order (${fmt(finalTotal)})?\n\nYour account is set up for bank transfer.\n\nStep 1 — Click the "Pay" button in the order panel on the right-hand sidebar at the top of this ticket, then press "Show bank details" and send the payment quoting the reference shown.\n\nStep 2 — Once you've sent the transfer, press "I've paid by bank transfer" so our team can check the account and confirm your order.`
+            : `💳 How would you like to pay for this order (${fmt(finalTotal)})?\n\nStep 1 — Click the "Pay" button in the order panel on the right-hand sidebar at the top of this ticket, then choose your payment method: Square (card / Apple Pay / Google Pay), Stripe (card), or USDT (crypto).\n\nStep 2 — Once you've sent payment, press the "I've paid" button so we can check Stripe and Square and confirm your order. If paying by Crypto please post a screenshot of the crypto transaction so our team can match it against our payment records and mark the order as paid.`;
           await supabase.from("ticket_messages").insert({
             ticket_id: ticket.id,
             sender_id: user.id,
-            content: `💳 How would you like to pay for this order (${fmt(finalTotal)})?\n\nStep 1 — Click the "Pay" button in the order panel on the right-hand sidebar at the top of this ticket, then choose your payment method: Square (card / Apple Pay / Google Pay), Stripe (card), or USDT (crypto).\n\nStep 2 — Once you've sent payment, press the "I've paid" button so we can check Stripe and Square and confirm your order. If paying by Crypto please post a screenshot of the crypto transaction so our team can match it against our payment records and mark the order as paid.`,
+            content: payMsg,
           } as never);
           const oohMsg = await getOutOfHoursMessage();
           if (oohMsg) {
