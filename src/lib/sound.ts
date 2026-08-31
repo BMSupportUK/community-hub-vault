@@ -202,15 +202,24 @@ export function playSound(
   opts: { volume?: number; gain?: number; label?: string } = {},
 ): Promise<boolean> {
   if (typeof window === "undefined") return Promise.resolve(false);
-  ensureUnlockListeners();
-  registeredSources.add(src);
+  if (typeof src !== "string" || !src) {
+    console.warn("[sound] ignored playback with no source", opts.label ?? "");
+    return Promise.resolve(false);
+  }
+  try {
+    ensureUnlockListeners();
+    registeredSources.add(src);
+  } catch { /* noop */ }
 
   const prefs = getSoundPrefs();
   if (prefs.muted) return Promise.resolve(false);
 
   const { volume = 1.0, gain = 1.0, label } = opts;
   const name = label ?? src;
-  const level = Math.max(0, Math.min(MAX_LEVEL, volume * gain * GAIN_SCALE * prefs.volume));
+  const rawLevel = volume * gain * GAIN_SCALE * prefs.volume;
+  const level = Number.isFinite(rawLevel)
+    ? Math.max(0, Math.min(MAX_LEVEL, rawLevel))
+    : MAX_LEVEL * 0.5;
 
   return (async () => {
     // --- 1. Web Audio buffer path ---
