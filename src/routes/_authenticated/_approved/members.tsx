@@ -207,8 +207,8 @@ function MembersPage() {
       </section>
 
       {/* Search */}
-      <div className="sticky top-0 z-10 bg-background/80 backdrop-blur border-b border-border px-6 py-3">
-        <div className="relative max-w-md">
+      <div className="sticky top-0 z-10 bg-background/80 backdrop-blur border-b border-border px-6 py-3 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
+        <div className="relative max-w-md w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
           <input
             value={q}
@@ -217,16 +217,40 @@ function MembersPage() {
             className="w-full pl-9 pr-3 py-2 rounded-lg bg-surface-2 text-sm border border-border focus:border-fuchsia-400 outline-none"
           />
         </div>
+        <div className="inline-flex rounded-lg bg-surface-2 border border-border p-1 self-start">
+          {([
+            { key: "online" as const, label: "Online", count: onlineList.length },
+            { key: "offline" as const, label: "Offline", count: offlineList.length },
+          ]).map((t) => (
+            <button
+              key={t.key}
+              onClick={() => setTab(t.key)}
+              className={`px-3 py-1.5 rounded-md text-xs font-medium transition inline-flex items-center gap-1.5 ${
+                tab === t.key
+                  ? "bg-fuchsia-500/20 text-fuchsia-200 ring-1 ring-fuchsia-400/40"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <span
+                className={`size-1.5 rounded-full ${t.key === "online" ? "bg-emerald-400" : "bg-zinc-500"}`}
+                aria-hidden
+              />
+              {t.label}
+              <span className="text-[10px] opacity-70">{t.count}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Grid */}
       <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {filtered.length === 0 && (
+        {visible.length === 0 && (
           <div className="col-span-full text-center text-muted-foreground py-20 text-sm">
-            No members found.
+            {tab === "online" ? "No members online right now." : "No offline members found."}
           </div>
         )}
-        {filtered.map((p) => {
+        {visible.map((p) => {
+
           const userRoles = sortRolesByPriority(rolesByUser[p.id] ?? ["member"]);
           const name = p.display_name ?? p.username ?? "Unknown";
           const initial = name.slice(0, 1).toUpperCase();
