@@ -311,7 +311,10 @@ export function useTalkChannelPresentUsers(): Set<string> {
   return ids;
 }
 
-/** Live count of non-staff members currently inside any Talk Channel. */
+/**
+ * Live count of everyone currently inside any Talk Channel (staff included) —
+ * kept in sync with the Members button so the two never disagree.
+ */
 export function useTalkChannelMemberCount(): number {
   const onlineIds = useTalkChannelPresentUsers();
   const [, refresh] = useState(0);
@@ -328,7 +331,6 @@ export function useTalkChannelMemberCount(): number {
     };
   }, []);
 
-  let count = 0;
-  for (const id of onlineIds) if (memberIds.has(id)) count += 1;
-  return count;
+  void memberIds;
+  return onlineIds.size;
 }
