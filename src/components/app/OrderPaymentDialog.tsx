@@ -228,10 +228,12 @@ export function PayOrderDialog({
         type="button"
         onClick={() => setOpen(true)}
         disabled={bankReported}
-        className="w-full h-auto px-4 py-2.5 rounded-lg font-medium disabled:opacity-50"
+        className="w-full h-auto min-h-11 px-4 py-2.5 rounded-lg font-medium disabled:opacity-50 whitespace-normal text-center leading-snug [&_svg]:shrink-0"
       >
         <CreditCard className="size-4" />
-        {bankReported ? "Bank transfer reported — awaiting verification" : `Pay ${format(amountCents)}`}
+        <span className="whitespace-normal break-words">
+          {bankReported ? "Bank transfer reported — awaiting verification" : `Pay ${format(amountCents)}`}
+        </span>
       </Button>
 
       <Dialog open={open} onOpenChange={setOpen}>
