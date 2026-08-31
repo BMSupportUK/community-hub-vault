@@ -93,11 +93,17 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
     setIgnored(new Set(((igs as Array<{ ignored_id: string }> | null) ?? []).map((r) => r.ignored_id)));
   }, [user?.id]);
 
+  // Load whenever presence changes (not only when the dialog opens) so the
+  // trigger's counter stays live and the list is already warm.
+  useEffect(() => {
+    void load();
+  }, [load]);
+
   useEffect(() => {
     if (!open) return;
-    void load();
     void loadRelations();
-  }, [open, load, loadRelations]);
+  }, [open, loadRelations]);
+
 
   const sendRequest = async (toId: string) => {
     if (!user) return;
