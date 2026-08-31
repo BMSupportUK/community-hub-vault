@@ -24,7 +24,7 @@ import { Button } from "@/components/ui/button";
 import { useRoleFlashMap, resolveAvatarUrl, roleFlashClass } from "@/lib/role-flash";
 import { ActiveOutagesBox } from "@/components/app/ActiveOutagesBox";
 import { PayOrderDialog, OrderProgressStrip } from "@/components/app/OrderPaymentDialog";
-import { getOrderBankTransferAccess } from "@/lib/bank-transfer.functions";
+import { getOrderBankTransferAccess, confirmBankTransferReceived } from "@/lib/bank-transfer.functions";
 import { PaymentStatusTimeline, type PayCheckPhase } from "@/components/app/PaymentStatusTimeline";
 import { isSettledPaymentStatus } from "@/lib/payment-status";
 
