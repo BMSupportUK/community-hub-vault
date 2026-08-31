@@ -33,7 +33,7 @@ function useCountdown(expiresAt: string | undefined) {
   return `${h}h ${String(m).padStart(2, "0")}m ${String(s).padStart(2, "0")}s`;
 }
 
-export function AppTransferPanel() {
+export function AppTransferPanel({ onUploadClick }: { onUploadClick?: () => void } = {}) {
   const queryClient = useQueryClient();
   const fetchBuild = useServerFn(getCurrentAppBuild);
   const fetchTransfer = useServerFn(getMyAppTransfer);
