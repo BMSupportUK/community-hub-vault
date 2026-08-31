@@ -30,6 +30,8 @@ interface AuthCtx {
   isMod: boolean;
   isBanned: boolean;
   isRejected: boolean;
+  /** Account signed up for the Boro Fan Zone only — no BM Support access. */
+  isFanZoneOnly: boolean;
   signOut: () => Promise<void>;
   refreshRoles: () => Promise<void>;
 }
