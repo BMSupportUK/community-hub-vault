@@ -13,15 +13,11 @@ const Input = z.object({
 export const checkExistingUsername = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => Input.parse(data))
-  .handler(async ({ data }): Promise<{ exists: boolean }> => {
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const name = data.username.trim();
-    const { data: rows, error } = await supabaseAdmin
-      .schema("private")
-      .from("app_credentials")
-      .select("id")
-      .ilike("app_login_name", name)
-      .limit(1);
+  .handler(async ({ data, context }): Promise<{ exists: boolean }> => {
+    const { data: exists, error } = await context.supabase.rpc(
+      "app_login_name_exists" as never,
+      { _name: data.username.trim() } as never,
+    );
     if (error) throw new Error(error.message);
-    return { exists: (rows ?? []).length > 0 };
+    return { exists: exists === true };
   });
