@@ -3,6 +3,7 @@ import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { checkMyVpnOnLogin } from "@/lib/vpn-login-check.functions";
 import { sendShiftEventPush, sendBreakEventPush } from "@/lib/push.functions";
+import { isFanZoneOnlyRoles } from "@/lib/fan-zone-nav";
 
 export type AppRole =
   | "admin"
@@ -188,6 +189,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isMod,
         isBanned,
         isRejected,
+        isFanZoneOnly,
         signOut: async () => {
           const signingOutUser = user;
           // Invalidate any in-flight role lookup immediately. Without this, a
