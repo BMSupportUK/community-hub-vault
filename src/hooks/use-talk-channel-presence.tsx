@@ -285,6 +285,51 @@ function flushCount() {
 }
 
 /**
+ * Explicit account sign-out must not wait for route cleanup or the realtime
+ * socket timeout. Announce this connection's departure first so every open
+ * Talk counter and member list removes it immediately.
+ */
+export async function leaveTalkChannelsOnSignOut(userId: string): Promise<void> {
+  const channel = sharedChannel;
+  const departingKey = `${connectionId}:${userId}`;
+
+  cancelPendingLeave();
+  trackers.clear();
+  trackedSignature = "";
+  explicitlyDepartedKeys.add(departingKey);
+  cleanlyDepartedUserIds.add(userId);
+
+  if (currentUserIds.has(userId)) {
+    const nextIds = new Set(currentUserIds);
+    nextIds.delete(userId);
+    currentUserIds = nextIds;
+    currentCount = nextIds.size;
+    for (const listener of Array.from(listeners)) listener(currentCount);
+    for (const listener of Array.from(userListeners)) listener(new Set(currentUserIds));
+  }
+
+  if (!channel || channel.state !== "joined") {
+    trackedUserId = null;
+    return;
+  }
+
+  await Promise.allSettled([
+    channel.send({
+      type: "broadcast",
+      event: "talk-presence-change",
+      payload: {
+        action: "leave",
+        connection_id: connectionId,
+        user_id: userId,
+      } satisfies TalkPresenceSignal,
+    }),
+    channel.untrack(),
+  ]);
+  trackedUserId = null;
+  flushCount();
+}
+
+/**
  * A broadcast join can arrive before the realtime presence snapshot contains
  * that connection. Publish the user immediately so open member directories
  * update without an F5; the next presence sync remains authoritative.
