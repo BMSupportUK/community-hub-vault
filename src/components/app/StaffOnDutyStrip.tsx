@@ -69,6 +69,7 @@ export function StaffOnDutyStrip({
   const [breaks, setBreaks] = useState<StaffBreak[]>([]);
   const [profiles, setProfiles] = useState<Record<string, StaffProfile>>({});
   const [offDuty, setOffDuty] = useState<Array<StaffProfile & { role: string }>>([]);
+  const [nextShifts, setNextShifts] = useState<Record<string, { shift_date: string; start_time: string; end_time: string }>>({});
   const [now, setNow] = useState(() => Date.now());
   const [selfId, setSelfId] = useState<string | null>(null);
   const [dutyTab, setDutyTab] = useState<"on" | "off">("on");
