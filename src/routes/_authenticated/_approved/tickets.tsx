@@ -24,7 +24,7 @@ import { Button } from "@/components/ui/button";
 import { useRoleFlashMap, resolveAvatarUrl, roleFlashClass } from "@/lib/role-flash";
 import { ActiveOutagesBox } from "@/components/app/ActiveOutagesBox";
 import { PayOrderDialog, OrderProgressStrip } from "@/components/app/OrderPaymentDialog";
-import { getOrderBankTransferAccess } from "@/lib/bank-transfer.functions";
+import { getOrderBankTransferAccess, confirmBankTransferReceived } from "@/lib/bank-transfer.functions";
 import { PaymentStatusTimeline, type PayCheckPhase } from "@/components/app/PaymentStatusTimeline";
 import { isSettledPaymentStatus } from "@/lib/payment-status";
 
@@ -1070,6 +1070,22 @@ function TicketDetail({
     }
   };
 
+  const confirmBankTransferFn = useServerFn(confirmBankTransferReceived);
+  const orderConfirmBankTransfer = async () => {
+    if (!linkedOrder || orderBusy) return;
+    setOrderBusy(true);
+    try {
+      await confirmBankTransferFn({ data: { orderId: linkedOrder.id } });
+      await postTicketSystem(
+        `✅ Bank transfer received — your payment of ${(linkedOrder.total_cents / 100).toLocaleString("en-GB", { style: "currency", currency: "GBP" })} has landed in our account and your order is now marked as paid.\n\n🙏 Thank you for the transfer — we really appreciate it. We'll get your account sorted and keep you updated here.`,
+      );
+      await loadLinkedOrder();
+      toast.success("Bank transfer confirmed");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not confirm payment");
+    } finally { setOrderBusy(false); }
+  };
+
   const orderSettingUpAccount = async () => {
     if (!linkedOrder || orderBusy) return;
     if (linkedOrder.status === "completed" || linkedOrder.completed_at) {
@@ -1521,6 +1537,17 @@ function TicketDetail({
           )}
           {isAdmin && (
             <>
+              {!linkedOrder.paid_at && (bankOnlyOrder || payProvider === "bank_transfer") && (
+                <button
+                  onClick={orderConfirmBankTransfer}
+                  disabled={orderBusy}
+                  title="Tick once the money has landed in the bank — confirms payment and thanks the customer"
+                  className="px-2.5 py-1 rounded-md bg-emerald-500/25 border border-emerald-300/50 text-emerald-50 text-xs font-semibold inline-flex items-center gap-1 hover:bg-emerald-500/40 disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  <CheckCircle2 className="size-3.5 text-emerald-300" />
+                  {orderBusy ? "Confirming…" : "Confirm Bank Transfer Received"}
+                </button>
+              )}
               {linkedOrder.customer_type === "existing" &&
               Boolean((linkedOrder as { existing_username?: string | null }).existing_username) ? (
                 <button
