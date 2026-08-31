@@ -361,6 +361,12 @@ export const Route = createFileRoute("/api/public/hooks/scheduled-reminders")({
             new Date(now - 7 * 24 * 60 * 60 * 1000).toISOString(),
           );
 
+        // Expired app transfers are hard-deleted so no record is retained.
+        await adminAny
+          .from("app_transfers")
+          .delete()
+          .lt("expires_at", new Date(now).toISOString());
+
         return Response.json({
           ok: true,
           evaluated: jobs.length,
