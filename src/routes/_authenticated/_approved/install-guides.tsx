@@ -20,6 +20,8 @@ import {
   GuideAccessTimer,
   useGuideAccess,
 } from "@/components/app/GuideVaultCardActions";
+import { AppTransferPanel } from "@/components/app/AppTransferPanel";
+import { AppBuildAdmin } from "@/components/app/AppBuildAdmin";
 
 import { toast } from "sonner";
 import installHero from "@/assets/install-guides-bg.jpg";
@@ -428,9 +430,10 @@ function InstallGuidesPage() {
 
       <div className="px-8 py-6">
         <Tabs value={tab} onValueChange={setTab} className="w-full">
-          <TabsList className={`grid ${canManagePasscodes ? "grid-cols-4" : canManageCategories ? "grid-cols-3" : "grid-cols-2"} max-w-2xl bg-surface/70 border border-border`}>
+          <TabsList className={`grid ${canManagePasscodes ? "grid-cols-5" : canManageCategories ? "grid-cols-4" : "grid-cols-3"} max-w-3xl bg-surface/70 border border-border`}>
             <TabsTrigger value="welcome" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Welcome</TabsTrigger>
             <TabsTrigger value="guides" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Guides</TabsTrigger>
+            <TabsTrigger value="get-app" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Get the App</TabsTrigger>
             {canManageCategories && (
               <TabsTrigger value="categories" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Categories</TabsTrigger>
             )}
@@ -439,9 +442,18 @@ function InstallGuidesPage() {
             )}
           </TabsList>
 
+          <TabsContent value="get-app" className="mt-6">
+            <div className="max-w-4xl">
+              <AppTransferPanel />
+            </div>
+          </TabsContent>
+
           {canManagePasscodes && (
             <TabsContent value="passcodes" className="mt-6">
-              <GuidePasscodeAdmin />
+              <div className="space-y-8">
+                <GuidePasscodeAdmin />
+                <AppBuildAdmin />
+              </div>
             </TabsContent>
           )}
 
