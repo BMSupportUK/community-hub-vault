@@ -70,26 +70,54 @@ async function loadMemberDirectory() {
   return memberDirectoryRequest;
 }
 
+/**
+ * Last time we saw a heartbeat for a presence key, measured on *this* device's
+ * clock. Remote `online_at` stamps come from other machines, whose clocks can
+ * be minutes out — comparing them to our clock made healthy sessions look
+ * stale (or immortal), which is a classic count-flicker cause.
+ */
+const lastSeenLocal = new Map<string, number>();
+
 function collectUniqueUsers(channel: RealtimeChannel): Set<string> {
   const state = channel.presenceState<TalkPresence>();
   const userIds = new Set<string>();
-  const cutoff = Date.now() - STALE_MS;
+  const now = Date.now();
+  const cutoff = now - STALE_MS;
+  const liveKeys = new Set<string>();
 
-  for (const presences of Object.values(state)) {
+  for (const [key, presences] of Object.entries(state)) {
     for (const presence of presences) {
       if (!presence.user_id) continue;
+      const seenKey = `${key}:${presence.user_id}`;
+      liveKeys.add(seenKey);
+      const previous = lastSeenLocal.get(seenKey);
+      const stamp = presence.online_at ?? "";
+      const prevStamp = presenceStamps.get(seenKey);
+      if (previous === undefined || stamp !== prevStamp) {
+        // First sighting, or a fresh heartbeat arrived — reset our local clock.
+        lastSeenLocal.set(seenKey, now);
+        presenceStamps.set(seenKey, stamp);
+        userIds.add(presence.user_id);
+        continue;
+      }
       // Ignore heartbeats that stopped arriving — the device left without a
       // clean untrack (closed tab, sleeping laptop, dropped connection).
-      if (presence.online_at) {
-        const seen = new Date(presence.online_at).getTime();
-        if (Number.isFinite(seen) && seen < cutoff) continue;
-      }
+      if (previous < cutoff) continue;
       userIds.add(presence.user_id);
+    }
+  }
+
+  for (const key of Array.from(lastSeenLocal.keys())) {
+    if (!liveKeys.has(key)) {
+      lastSeenLocal.delete(key);
+      presenceStamps.delete(key);
     }
   }
 
   return userIds;
 }
+
+const presenceStamps = new Map<string, string>();
 
 function sameIds(a: Set<string>, b: Set<string>): boolean {
   if (a.size !== b.size) return false;
@@ -97,8 +125,23 @@ function sameIds(a: Set<string>, b: Set<string>): boolean {
   return true;
 }
 
+let publishTimer: ReturnType<typeof setTimeout> | null = null;
+
+/** Coalesce bursts of sync/join/leave events into a single UI update. */
 function publishCount() {
+  if (publishTimer) return;
+  publishTimer = setTimeout(() => {
+    publishTimer = null;
+    flushCount();
+  }, PUBLISH_DEBOUNCE_MS);
+}
+
+function flushCount() {
   if (!sharedChannel) return;
+  // While the socket is rebuilding, presence state is empty. Publishing that
+  // would blank every counter for a second and then refill it — hold the last
+  // known list instead.
+  if (!subscribed || sharedChannel.state !== "joined") return;
   let nextIds: Set<string>;
   try {
     nextIds = collectUniqueUsers(sharedChannel);
