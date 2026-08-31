@@ -974,7 +974,10 @@ function TicketDetail({
   const [linkedOrderUsername, setLinkedOrderUsername] = useState<string | null>(null);
   const [orderBusy, setOrderBusy] = useState(false);
   const [payCheckPhase, setPayCheckPhase] = useState<PayCheckPhase | null>(null);
-  const [payProvider, setPayProvider] = useState<"stripe" | "square" | "nowpayments" | null>(null);
+  const [payProvider, setPayProvider] = useState<
+    "stripe" | "square" | "nowpayments" | "bank_transfer" | null
+  >(null);
+  const [bankAwaiting, setBankAwaiting] = useState(false);
   const refreshSquareInvoice = useServerFn(refreshSquareInvoiceStatus);
   const confirmStripe = useServerFn(confirmStripePayment);
   const cancelOrderAndSquareInvoiceRpc = useServerFn(cancelOrderAndSquareInvoice);
@@ -1011,7 +1014,16 @@ function TicketDetail({
       if (settled && !ord.paid_at) {
         ord = { ...ord, paid_at: settledAt ?? new Date().toISOString(), status: "paid" };
       }
-      setPayProvider(prov === "stripe" || prov === "square" || prov === "nowpayments" ? prov : null);
+      setPayProvider(
+        prov === "stripe" || prov === "square" || prov === "nowpayments" || prov === "bank_transfer"
+          ? prov
+          : null,
+      );
+      setBankAwaiting(
+        prov === "bank_transfer" &&
+          String(paymentState?.paymentStatus ?? "").toLowerCase() === "awaiting_verification" &&
+          !settled,
+      );
     }
 
     setLinkedOrder(ord);
@@ -1458,7 +1470,9 @@ function TicketDetail({
             ? "cancelled"
             : linkedOrder.paid_at || linkedOrder.status === "paid" || linkedOrder.status === "processing" || linkedOrder.status === "completed"
               ? "confirmed"
-              : (payCheckPhase ?? "awaiting")
+              : bankAwaiting
+                ? "awaiting_verification"
+                : (payCheckPhase ?? "awaiting")
         }
         method={payProvider}
         started
