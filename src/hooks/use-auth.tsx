@@ -5,6 +5,7 @@ import { checkMyVpnOnLogin } from "@/lib/vpn-login-check.functions";
 import { sendShiftEventPush, sendBreakEventPush } from "@/lib/push.functions";
 import { isFanZoneOnlyRoles } from "@/lib/fan-zone-nav";
 import { sortRolesByPriority } from "@/lib/role-rank";
+import { leaveTalkChannelsOnSignOut } from "@/hooks/use-talk-channel-presence";
 
 export type AppRole =
   | "admin"
@@ -196,6 +197,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Invalidate any in-flight role lookup immediately. Without this, a
           // late response can briefly restore the old user's route state.
           activeUidRef.current = null;
+          // Tell every Talk client this connection has left before the account
+          // session is revoked. Route cleanup alone can miss a fast hard
+          // redirect and leave the visible member number stale.
+          if (signingOutUser) {
+            await Promise.race([
+              leaveTalkChannelsOnSignOut(signingOutUser.id),
+              new Promise((resolve) => window.setTimeout(resolve, 750)),
+            ]);
+          }
           // Auto-clock-out any active shift (and end any active break) so the
           // staff member doesn't stay "on shift" after leaving. This is
           // best-effort only: it must never be able to block or delay the
