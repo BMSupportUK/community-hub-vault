@@ -42,7 +42,7 @@ function DaneStatusLine({ userId }: { userId: string }) {
   const dnd = useDndStatus(userId);
   if (dnd?.active) return null;
   return (
-    <div className="text-[10px] font-semibold text-emerald-200 drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]">Online</div>
+    <div className="text-[10px] font-semibold text-emerald-500">Online</div>
   );
 }
 
@@ -256,21 +256,21 @@ export function StaffOnDutyStrip({
                   {formatRoleLabel(roleFlashMap.get(s.user_id))}
                 </span>
               )}
-              <div className="text-[10px] text-white/90 drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]">
-                {onBreak ? (
-                  <span className="flex items-center gap-1">
-                    {(() => { const Icon = breakIcon(br!.kind); return <Icon className="size-3 shrink-0" />; })()}
-                    <span className="truncate">{breakLabel(br!.kind)} {over ? `+${fmtMinSec(-brRemain)}` : fmtMinSec(brRemain)}</span>
-                  </span>
-                ) : daneOverride && isDaneJProfile(p) ? (
-                  <DaneStatusLine userId={s.user_id} />
-                ) : (
-                  <span>{fmtHMS(shiftElapsed)}</span>
-                )}
-              </div>
-
             </Nameplate>
+            <div className="mt-1 text-[10px] text-muted-foreground">
+              {onBreak ? (
+                <span className="flex items-center gap-1">
+                  {(() => { const Icon = breakIcon(br!.kind); return <Icon className="size-3 shrink-0" />; })()}
+                  <span className="truncate">{breakLabel(br!.kind)} {over ? `+${fmtMinSec(-brRemain)}` : fmtMinSec(brRemain)}</span>
+                </span>
+              ) : daneOverride && isDaneJProfile(p) ? (
+                <DaneStatusLine userId={s.user_id} />
+              ) : (
+                <span>{fmtHMS(shiftElapsed)}</span>
+              )}
+            </div>
             <DndCountdown userId={s.user_id} compact className="mt-1" />
+
           </div>
         </div>
       </div>
@@ -332,14 +332,17 @@ export function StaffOnDutyStrip({
                   {formatRoleLabel(roleFlashMap.get(p.id))}
                 </span>
               )}
+            </Nameplate>
+            <div className="mt-1">
               {dane ? (
                 <DaneStatusLine userId={p.id} />
               ) : inChat ? (
-                <div className="text-[10px] font-semibold text-emerald-200 drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]">Off duty but chatting</div>
+                <div className="text-[10px] font-semibold text-emerald-500">Off duty but chatting</div>
               ) : (
-                <div className="text-[10px] text-white/70 drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]">Off duty</div>
+                <div className="text-[10px] text-muted-foreground">Off duty</div>
               )}
-            </Nameplate>
+            </div>
+
             <DndCountdown userId={p.id} compact className="mt-1" />
           </div>
         </div>
