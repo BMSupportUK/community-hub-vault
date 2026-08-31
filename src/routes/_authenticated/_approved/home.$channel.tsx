@@ -44,7 +44,7 @@ import {
   STAFF_ROLE_TAGS,
   MEMBER_ROLE_TAGS,
 } from "@/components/app/mentions";
-import { GifPicker, extractStandaloneGif } from "@/components/app/GifPicker";
+import { GifPicker, extractStandaloneGif, extractImageUrl } from "@/components/app/GifPicker";
 import { ChatMessageBody, isRichChatContent } from "@/components/app/ChatMessageBody";
 import { ChatFormatToolbar } from "@/components/app/ChatFormatToolbar";
 import { ChatMiniProfile } from "@/components/app/ChatMiniProfile";
