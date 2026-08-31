@@ -269,8 +269,8 @@ export function playSoundFromGesture(
   const prefs = getSoundPrefs();
   if (prefs.muted && !opts.ignoreMute) return Promise.resolve(false);
 
-  const { volume = 1, gain = 1.8, label } = opts;
-  const level = Math.max(0, Math.min(1, volume * gain * prefs.volume));
+  const { volume = 1, gain = 1.0, label } = opts;
+  const level = Math.max(0, Math.min(MAX_LEVEL, volume * gain * GAIN_SCALE * prefs.volume));
   const el = new Audio();
   el.preload = "auto";
   el.src = src;
