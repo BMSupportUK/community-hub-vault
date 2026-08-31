@@ -90,6 +90,12 @@ async function loadMemberDirectory(force = false) {
  * stale (or immortal), which is a classic count-flicker cause.
  */
 const lastSeenLocal = new Map<string, number>();
+/**
+ * Some realtime clients emit a leave diff before their local presenceState()
+ * snapshot has removed that connection. Remember the exact departed payload
+ * so a stale snapshot cannot keep another browser's rail badge at 1.
+ */
+const departedPresenceStamps = new Map<string, string>();
 /** First moment a previously visible user vanished from presence state. */
 const missingSince = new Map<string, number>();
 let lingerTimer: ReturnType<typeof setTimeout> | null = null;
@@ -121,6 +127,13 @@ function collectUniqueUsers(channel: RealtimeChannel): Set<string> {
       liveKeys.add(seenKey);
       const previous = lastSeenLocal.get(seenKey);
       const stamp = presence.online_at ?? "";
+      const departedStamp = departedPresenceStamps.get(seenKey);
+      if (departedStamp !== undefined) {
+        // Ignore the old snapshot after a leave. A genuinely new track has a
+        // new heartbeat stamp and is safe to count immediately.
+        if (!stamp || stamp === departedStamp) continue;
+        departedPresenceStamps.delete(seenKey);
+      }
       const prevStamp = presenceStamps.get(seenKey);
       if (previous === undefined || stamp !== prevStamp) {
         // First sighting, or a fresh heartbeat arrived — reset our local clock.
@@ -318,8 +331,20 @@ function ensureSharedChannel() {
   const sync = () => publishCount();
   channel
     .on("presence", { event: "sync" }, sync)
-    .on("presence", { event: "join" }, sync)
-    .on("presence", { event: "leave" }, sync)
+    .on("presence", { event: "join" }, ({ key, newPresences }) => {
+      for (const presence of newPresences as TalkPresence[]) {
+        if (!presence.user_id) continue;
+        departedPresenceStamps.delete(`${key}:${presence.user_id}`);
+      }
+      publishCount();
+    })
+    .on("presence", { event: "leave" }, ({ key, leftPresences }) => {
+      for (const presence of leftPresences as TalkPresence[]) {
+        if (!presence.user_id) continue;
+        departedPresenceStamps.set(`${key}:${presence.user_id}`, presence.online_at ?? "");
+      }
+      publishCount();
+    })
     .subscribe((status) => {
       if (status === "SUBSCRIBED") {
         subscribed = true;
