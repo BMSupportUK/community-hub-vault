@@ -1198,25 +1198,21 @@ function TicketDetail({
     setOrderBusy(true);
     setPayCheckPhase("checking_stripe");
     try {
-      // A card payment may have completed through Stripe — check that first.
-      const stripeRes = await verifyStripePaymentForOrder(confirmStripe, linkedOrder.id);
-      if (stripeRes && !("error" in stripeRes)) {
-        setPayCheckPhase("confirmed");
-        await loadLinkedOrder();
-        await postTicketSystem(`✅ Card payment received — thank you! Your order is now marked as paid.`);
-        toast.success("Card payment confirmed — order marked paid");
-        return;
-      }
+      // One check that interrogates both providers the customer can pay with.
       setPayCheckPhase("checking_square");
-      const res = (await refreshSquareInvoice({ data: { orderId: linkedOrder.id } })) as { status?: string };
+      const res = await checkPaymentAcrossProviders({ data: { orderId: linkedOrder.id } });
       await loadLinkedOrder();
-      if (res.status === "PAID") {
+      if (res.paid) {
         setPayCheckPhase("confirmed");
-        await postTicketSystem(`✅ Payment received — thank you! Your order is now marked as paid.`);
-        toast.success("Payment confirmed — order marked paid");
+        if (res.status === "paid") {
+          await postTicketSystem(
+            `✅ Payment received${res.provider ? ` via ${res.provider}` : ""} — thank you! Your order is now marked as paid.`,
+          );
+        }
+        toast.success(res.detail || "Payment confirmed — order marked paid");
       } else {
         setPayCheckPhase("failed");
-        toast.message(`Square still shows this invoice as ${res.status ?? "unpaid"}`);
+        toast.message(res.detail);
       }
     } catch (e) {
       setPayCheckPhase("failed");
