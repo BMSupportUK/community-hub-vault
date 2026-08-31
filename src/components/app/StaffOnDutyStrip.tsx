@@ -129,9 +129,40 @@ export function StaffOnDutyStrip({
           return an.localeCompare(bn);
         });
       setOffDuty(off);
+
+      // Next claimed rota slot per staff member (today onwards).
+      const d = new Date();
+      const pad = (n: number) => String(n).padStart(2, "0");
+      const todayStr = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+      const nowTime = `${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
+      const { data: slots } = await supabase
+        .from("shift_slots")
+        .select("assigned_to,shift_date,start_time,end_time")
+        .in("assigned_to", ids)
+        .gte("shift_date", todayStr)
+        .order("shift_date")
+        .order("start_time");
+      const nextMap: Record<string, { shift_date: string; start_time: string; end_time: string }> = {};
+      for (const sl of (slots ?? []) as Array<{
+        assigned_to: string | null;
+        shift_date: string;
+        start_time: string;
+        end_time: string;
+      }>) {
+        if (!sl.assigned_to || nextMap[sl.assigned_to]) continue;
+        const upcoming = sl.shift_date > todayStr || sl.start_time > nowTime;
+        if (!upcoming) continue;
+        nextMap[sl.assigned_to] = {
+          shift_date: sl.shift_date,
+          start_time: sl.start_time,
+          end_time: sl.end_time,
+        };
+      }
+      setNextShifts(nextMap);
     } else {
       setProfiles({});
       setOffDuty([]);
+      setNextShifts({});
     }
   };
 
