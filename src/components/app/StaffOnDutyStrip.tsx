@@ -335,6 +335,7 @@ export function StaffOnDutyStrip({
               )}
             </div>
             <DndCountdown userId={s.user_id} compact className="mt-1" />
+            {renderNextShift(s.user_id)}
 
           </div>
         </div>
