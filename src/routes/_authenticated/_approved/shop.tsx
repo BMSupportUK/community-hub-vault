@@ -61,6 +61,8 @@ import {
 } from "@/lib/stripe-payments.functions";
 import { verifyStripePaymentForOrder } from "@/components/app/StripeOrderPanel";
 import { PaymentStatusTimeline, type PayCheckPhase } from "@/components/app/PaymentStatusTimeline";
+import { BankTransferPanel } from "@/components/app/BankTransferPanel";
+import { getMyBankTransferAccess } from "@/lib/bank-transfer.functions";
 import {
   createCryptoInvoice,
   getCryptoConfig,
@@ -3317,7 +3319,10 @@ function OrderDetailImpl({
   // while the customer's USDT payment is on its way.
   const [pendingCrypto, setPendingCrypto] = useState<{ status: string } | null>(null);
   const [paidMethodLabel, setPaidMethodLabel] = useState<string | null>(null);
-  const [payProvider, setPayProvider] = useState<"stripe" | "square" | "nowpayments" | null>(null);
+  const [payProvider, setPayProvider] = useState<
+    "stripe" | "square" | "nowpayments" | "bank_transfer" | null
+  >(null);
+  const [bankAwaiting, setBankAwaiting] = useState(false);
   const [settledPayment, setSettledPayment] = useState<{
     provider: string;
     providerPaymentId: string | null;
@@ -3337,7 +3342,14 @@ function OrderDetailImpl({
       setPendingCrypto(pending ? { status: data?.paymentStatus as string } : null);
       const prov = data?.provider;
       setPayProvider(
-        prov === "stripe" || prov === "square" || prov === "nowpayments" ? prov : null,
+        prov === "stripe" || prov === "square" || prov === "nowpayments" || prov === "bank_transfer"
+          ? prov
+          : null,
+      );
+      setBankAwaiting(
+        prov === "bank_transfer" &&
+          String(data?.paymentStatus ?? "").toLowerCase() === "awaiting_verification" &&
+          !Boolean(data?.settled),
       );
       const paymentIsSettled = Boolean(data?.settled);
       setRecordedStripeSessionId(
@@ -4029,7 +4041,15 @@ function OrderDetailImpl({
             </div>
           )}
           <PaymentStatusTimeline
-            phase={order.status === "cancelled" ? "cancelled" : isOrderPaid ? "confirmed" : (checkPhase ?? "awaiting")}
+            phase={
+              order.status === "cancelled"
+                ? "cancelled"
+                : isOrderPaid
+                  ? "confirmed"
+                  : bankAwaiting
+                    ? "awaiting_verification"
+                    : (checkPhase ?? "awaiting")
+            }
             method={payProvider}
           />
 
@@ -4250,9 +4270,26 @@ function PayOrderDialog({
   onChange?: () => void | Promise<void>;
 }) {
   const [open, setOpen] = useState(false);
+  const [bankOnly, setBankOnly] = useState<boolean | null>(null);
+  const checkBankAccess = useServerFn(getMyBankTransferAccess);
   const handleChange = async () => {
     await onChange?.();
   };
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res: any = await checkBankAccess({});
+        if (!cancelled) setBankOnly(Boolean(res?.allowed));
+      } catch {
+        if (!cancelled) setBankOnly(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   // Prewarm Stripe SDK as soon as the Pay button mounts,
   // so by the time the user clicks the Stripe tab the SDK is already cached.
   useEffect(() => {
@@ -4276,9 +4313,16 @@ function PayOrderDialog({
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Choose how to pay</DialogTitle>
+            <DialogTitle>{bankOnly ? "Pay by bank transfer" : "Choose how to pay"}</DialogTitle>
             <div className="text-sm text-muted-foreground">Total {fmt(amountCents)}</div>
           </DialogHeader>
+          {bankOnly === null ? (
+            <div className="text-xs text-muted-foreground py-3">Loading payment options…</div>
+          ) : bankOnly ? (
+            <div className="pt-2">
+              <BankTransferPanel orderId={orderId} amountCents={amountCents} onChange={handleChange} />
+            </div>
+          ) : (
           <Tabs defaultValue="square" className="pt-2">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="square">Square</TabsTrigger>
@@ -4309,6 +4353,7 @@ function PayOrderDialog({
               />
             </TabsContent>
           </Tabs>
+          )}
         </DialogContent>
       </Dialog>
     </>

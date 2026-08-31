@@ -1,3 +1,4 @@
+import { BankTransferAdminCard } from "@/components/app/BankTransferAdminCard";
 import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ShieldCheck, Lock, KeyRound, ShieldAlert, KeySquare, Globe, Clock, FileText, Loader2, Shield, Star, Filter, Sparkles, LifeBuoy, RefreshCw, Copy, Download, Ban, Tag, Package, Bell, Trophy, MessageSquare, Image as ImageIcon, MonitorPlay } from "lucide-react";
@@ -514,6 +515,7 @@ function DashboardBody() {
         <ThemePickerCard />
         <RecoveryCodes />
         <VpnBackfillCard />
+        <BankTransferAdminCard />
       </aside>
     </div>
   );

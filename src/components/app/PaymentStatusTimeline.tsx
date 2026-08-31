@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   Clock,
   CreditCard,
+  Landmark,
   Loader2,
   XCircle,
 } from "lucide-react";
@@ -14,11 +15,13 @@ export type PayCheckPhase =
   | "awaiting"
   | "checking_stripe"
   | "checking_square"
+  | "awaiting_verification"
   | "confirmed"
   | "failed"
   | "cancelled";
 
-export type PayMethod = "stripe" | "square" | "nowpayments" | null;
+export type PayMethod = "stripe" | "square" | "nowpayments" | "bank_transfer" | null;
+
 
 type StepDef = {
   key: string;
@@ -40,11 +43,28 @@ export function PaymentStatusTimeline({
   const failed = phase === "failed";
   const confirmed = phase === "confirmed";
   const cancelled = phase === "cancelled";
-  const checking = !cancelled && (phase === "checking_stripe" || phase === "checking_square");
+  const checking =
+    !cancelled &&
+    (phase === "checking_stripe" || phase === "checking_square" || phase === "awaiting_verification");
 
   // Only surface the check step for the provider actually used on this order.
   const checkSteps: { key: string; title: string; desc: string; icon: typeof Clock }[] =
-    method === "stripe"
+    method === "bank_transfer"
+      ? [
+          {
+            key: "transfer_reported",
+            title: "Transfer reported",
+            desc: "You've told us the bank transfer has been sent.",
+            icon: Landmark,
+          },
+          {
+            key: "awaiting_verification",
+            title: "Staff verification",
+            desc: "We're checking the bank account for your reference.",
+            icon: BadgeCheck,
+          },
+        ]
+      : method === "stripe"
       ? [
           {
             key: "checking_stripe",
@@ -71,6 +91,7 @@ export function PaymentStatusTimeline({
                 icon: Bitcoin,
               },
             ]
+
           : [
               {
                 key: "checking_stripe",
@@ -94,7 +115,9 @@ export function PaymentStatusTimeline({
       title: cancelled ? "Order cancelled" : "Awaiting payment",
       desc: cancelled
         ? "This order was cancelled — no payment is required."
-        : "Order placed — pay via Square, Stripe or USDT.",
+        : method === "bank_transfer"
+          ? "Order placed — send the bank transfer quoting your reference."
+          : "Order placed — pay via Square, Stripe or USDT.",
       icon: cancelled ? XCircle : Clock,
       state: cancelled ? "failed" : phase === "awaiting" ? "active" : "done",
     },
@@ -155,7 +178,9 @@ export function PaymentStatusTimeline({
                 ? "Paid"
                 : phase === "awaiting"
                   ? "Awaiting payment"
-                  : "Checking…"}
+                  : phase === "awaiting_verification"
+                    ? "Awaiting verification"
+                    : "Checking…"}
         </span>
       </div>
       <ol className="relative space-y-1.5">
