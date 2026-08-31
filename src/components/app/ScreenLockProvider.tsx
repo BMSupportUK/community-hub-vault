@@ -87,7 +87,9 @@ export function ScreenLockProvider() {
       // Restore a lock that was active before a reload.
       if (typeof window !== "undefined" && localStorage.getItem(`screenlock:locked:${user.id}`) === "1") {
         setLocked(true);
+        void suspendTalkPresence(user.id);
       }
+
     })();
     return () => {
       cancelled = true;
