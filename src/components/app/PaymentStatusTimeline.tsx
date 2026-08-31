@@ -282,7 +282,7 @@ export function PaymentStatusTimeline({
                     <span className="size-1.5 rounded-full bg-fuchsia-400 animate-pulse" />
                   )}
                 </div>
-                <div className="text-[10px] text-muted-foreground truncate">{s.desc}</div>
+                <div className="text-[10px] leading-snug text-muted-foreground break-words">{s.desc}</div>
               </div>
               {s.state === "active" && (
                 <span className="text-[9px] font-bold uppercase tracking-wider text-fuchsia-300 shrink-0">
