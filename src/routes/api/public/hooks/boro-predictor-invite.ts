@@ -1,43 +1,12 @@
-import * as React from 'react'
-import { render } from '@react-email/render'
 import { createClient } from '@supabase/supabase-js'
 import { createFileRoute } from '@tanstack/react-router'
 import { TEMPLATES } from '@/lib/email-templates/registry'
+import { sendAndLogEmail } from '@/lib/email-templates/send-and-log'
 import { canEmailList, EMAIL_LIST_COMPETITIONS } from '@/lib/email-lists'
 
-const SITE_NAME = 'BM Support'
-const SENDER_DOMAIN = 'notify.bmsupport.uk'
-const FROM_DOMAIN = 'bmsupport.uk'
 const PREDICTIONS_URL = 'https://bmsupport.uk/boro-predictions'
 const TEMPLATE_NAME = 'boro-predictor-invite'
 const EXCLUDED_NAMES = ['rodders', 'tvzone']
-
-function generateToken(): string {
-  const bytes = new Uint8Array(32)
-  crypto.getRandomValues(bytes)
-  return Array.from(bytes).map((b) => b.toString(16).padStart(2, '0')).join('')
-}
-
-async function ensureUnsubscribeToken(supabase: any, email: string): Promise<string | null> {
-  const normalized = email.toLowerCase()
-  const { data: existing } = await supabase
-    .from('email_unsubscribe_tokens')
-    .select('token, used_at')
-    .eq('email', normalized)
-    .maybeSingle()
-  if (existing && !existing.used_at) return existing.token as string
-  if (existing && existing.used_at) return null
-  const token = generateToken()
-  await supabase
-    .from('email_unsubscribe_tokens')
-    .upsert({ token, email: normalized }, { onConflict: 'email', ignoreDuplicates: true })
-  const { data: stored } = await supabase
-    .from('email_unsubscribe_tokens')
-    .select('token')
-    .eq('email', normalized)
-    .maybeSingle()
-  return stored?.token ?? null
-}
 
 export const Route = createFileRoute('/api/public/hooks/boro-predictor-invite')({
   server: {
@@ -132,56 +101,17 @@ export const Route = createFileRoute('/api/public/hooks/boro-predictor-invite')(
             const allowed = await canEmailList(supabase, r.email, EMAIL_LIST_COMPETITIONS)
             if (!allowed) { stats.skipped++; continue }
 
-            const unsubscribeToken = await ensureUnsubscribeToken(supabase, r.email)
-            if (!unsubscribeToken) { stats.skipped++; continue }
-
             const props = {
               displayName: r.displayName ?? undefined,
               predictionsUrl: PREDICTIONS_URL,
             }
-            const element = React.createElement(template.component, props)
-            const html = await render(element)
-            const text = await render(element, { plainText: true })
-            const subject =
-              typeof template.subject === 'function' ? template.subject(props) : template.subject
-            const messageId = crypto.randomUUID()
 
-            await supabase.from('email_send_log').insert({
-              message_id: messageId,
-              template_name: TEMPLATE_NAME,
-              recipient_email: r.email,
-              status: 'pending',
+            const result = await sendAndLogEmail(supabase, TEMPLATE_NAME, r.email, {
+              templateData: props,
+              idempotencyKey: `boro-predictor-invite-${r.key}`,
             })
-
-            const { error: enqueueErr } = await supabase.rpc('enqueue_email', {
-              queue_name: 'transactional_emails',
-              payload: {
-                message_id: messageId,
-                to: r.email,
-                from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
-                sender_domain: SENDER_DOMAIN,
-                subject,
-                html,
-                text,
-                purpose: 'transactional',
-                label: TEMPLATE_NAME,
-                idempotency_key: `boro-predictor-invite-${r.key}`,
-                unsubscribe_token: unsubscribeToken,
-                queued_at: new Date().toISOString(),
-              },
-            })
-            if (enqueueErr) {
-              await supabase.from('email_send_log').insert({
-                message_id: messageId,
-                template_name: TEMPLATE_NAME,
-                recipient_email: r.email,
-                status: 'failed',
-                error_message: 'Failed to enqueue email',
-              })
-              stats.failed++
-            } else {
-              stats.sent++
-            }
+            if (result.sent) stats.sent++
+            else stats.skipped++
           } catch (e) {
             console.error('boro invite send failed', e)
             stats.failed++
