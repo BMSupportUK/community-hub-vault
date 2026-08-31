@@ -55,6 +55,7 @@ import {
   reconcileSquareOrder,
 } from "@/lib/square-payments.functions";
 import { createSquareInvoiceForOrder, refreshSquareInvoiceStatus, cancelOrderAndSquareInvoice } from "@/lib/square-invoices.functions";
+import { checkOrderPaymentAcrossProviders } from "@/lib/order-payment-check.functions";
 import {
   createStripePaymentIntent,
   confirmStripePayment,
@@ -3693,7 +3694,7 @@ function OrderDetailImpl({
   };
 
   const reconcileSquare = useServerFn(reconcileSquareOrder);
-  const refreshSquareInvoice = useServerFn(refreshSquareInvoiceStatus);
+  const checkPaymentBothProviders = useServerFn(checkOrderPaymentAcrossProviders);
   const cancelOrderAndSquareInvoiceRpc = useServerFn(cancelOrderAndSquareInvoice);
   const reconcileWithSquare = async () => {
     if (!order || order.paid_at) return;
@@ -4393,7 +4394,7 @@ function SquareInvoicePanel({
   const [err, setErr] = useState<string | null>(null);
   const createInvoice = useServerFn(createSquareInvoiceForOrder);
   const refreshInvoice = useServerFn(refreshSquareInvoiceStatus);
-  const confirmStripeFn = useServerFn(confirmStripePayment);
+  const checkBothProviders = useServerFn(checkOrderPaymentAcrossProviders);
 
 
   useEffect(() => {
@@ -4440,8 +4441,8 @@ function SquareInvoicePanel({
     setBusy(true);
     setErr(null);
     try {
-      const stripeRes: any = await verifyStripePaymentForOrder(confirmStripeFn, orderId);
-      if (stripeRes && !("error" in stripeRes)) {
+      const checkRes: any = await checkBothProviders({ data: { orderId } });
+      if (checkRes?.paid) {
         setStatus("PAID");
         await onChange?.();
         return;
