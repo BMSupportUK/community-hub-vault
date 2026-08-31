@@ -148,6 +148,16 @@ function InstallGuidesPage() {
     () => new Map((accessQuery.data ?? []).map((a) => [a.blogId, a.expiresAt])),
     [accessQuery.data],
   );
+  // The download-link tab only appears once the member holds a live guide
+  // passcode (staff who manage passcodes always see it).
+  const hasLivePasscode = (accessQuery.data?.length ?? 0) > 0;
+  const canSeeAppTab = hasLivePasscode || canManagePasscodes;
+  const tabCount = 2 + (canSeeAppTab ? 1 : 0) + (canManageCategories ? 1 : 0) + (canManagePasscodes ? 2 : 0);
+  const gridColsClass =
+    tabCount >= 6 ? "grid-cols-6" : tabCount === 5 ? "grid-cols-5" : tabCount === 4 ? "grid-cols-4" : tabCount === 3 ? "grid-cols-3" : "grid-cols-2";
+  useEffect(() => {
+    if (tab === "get-app" && !canSeeAppTab) setTab("welcome");
+  }, [tab, canSeeAppTab]);
   const [unlocked, setUnlocked] = useState<UnlockedGuide | null>(null);
   const [uploadingFile, setUploadingFile] = useState(false);
 
