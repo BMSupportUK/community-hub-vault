@@ -239,7 +239,7 @@ export function StaffOnDutyStrip({
       last_seen_at: p?.last_seen_at ?? null,
     };
   };
-  };
+
 
   const renderOnDutyCard = (s: StaffShift) => {
     const p = profiles[s.user_id];
