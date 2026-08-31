@@ -280,8 +280,9 @@ export function NotificationBell() {
         .in("id", userIds);
     }
     if (staffIds.length) {
-      await supabase.from("staff_notification_reads").insert(
+      await supabase.from("staff_notification_reads").upsert(
         staffIds.map((id) => ({ notification_id: id, user_id: user.id })),
+        { onConflict: "notification_id,user_id", ignoreDuplicates: true },
       );
     }
   };
