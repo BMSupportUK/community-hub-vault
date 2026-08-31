@@ -215,7 +215,8 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     );
   }
 
-  const inFanZone = isFanZonePath(path);
+  // Fan-Zone-only accounts never see the BM Support rail, wherever they are.
+  const inFanZone = isFanZonePath(path) || isFanZoneOnly;
 
 
   const supportItems: RailItem[] = [
