@@ -47,7 +47,7 @@ import {
 import { GifPicker, extractStandaloneGif, extractImageUrl } from "@/components/app/GifPicker";
 import { ChatMessageBody, isRichChatContent } from "@/components/app/ChatMessageBody";
 import { ChatFormatToolbar } from "@/components/app/ChatFormatToolbar";
-import { ChatMiniProfile } from "@/components/app/ChatMiniProfile";
+import { TalkMemberMiniProfile } from "@/components/app/TalkMemberProfileCard";
 import { EmojiPicker } from "@/components/app/EmojiPicker";
 import { resolveGifLink } from "@/lib/giphy.functions";
 
@@ -1485,6 +1485,15 @@ function ChannelPage() {
                       customStatus: p?.custom_status ?? null,
                       isSelf,
                     };
+                    const senderFallbackRow = {
+                      display_name: p?.display_name ?? null,
+                      username: p?.username ?? null,
+                      avatar_url: p?.avatar_url ?? null,
+                      equipped_nameplate_id: p?.equipped_nameplate_id ?? null,
+                      roles: null,
+                      created_at: null,
+                      last_seen_at: p?.last_seen_at ?? null,
+                    };
 
                     return (
                       <div key={m.id} className="[overflow-anchor:auto]">
@@ -1533,9 +1542,13 @@ function ChannelPage() {
                               </div>
                             );
                             const avatarEl = (
-                              <ChatMiniProfile profile={senderMiniProfile}>
+                              <TalkMemberMiniProfile
+                                userId={m.sender_id}
+                                online={senderMiniProfile.isOnline}
+                                fallback={senderFallbackRow}
+                              >
                                 {rawAvatarEl}
-                              </ChatMiniProfile>
+                              </TalkMemberMiniProfile>
                             );
                             return (
                               // Fixed-width column: the presence label text changes over
@@ -1564,7 +1577,12 @@ function ChannelPage() {
                           <div className="min-w-0 flex-1">
                             <div className="flex flex-wrap items-center gap-2 mb-1">
                               <div className="flex flex-col min-w-0">
-                                <ChatMiniProfile profile={senderMiniProfile} className="min-w-0">
+                                <TalkMemberMiniProfile
+                                  userId={m.sender_id}
+                                  online={senderMiniProfile.isOnline}
+                                  fallback={senderFallbackRow}
+                                  className="min-w-0"
+                                >
                                   <Nameplate
                                     id={p?.equipped_nameplate_id}
                                     className="inline-flex items-center rounded-md px-3 py-1 min-w-0 h-7 max-h-7 pr-12 shadow-sm isolate"
@@ -1586,7 +1604,7 @@ function ChannelPage() {
                                       {name}
                                     </span>
                                   </Nameplate>
-                                </ChatMiniProfile>
+                                </TalkMemberMiniProfile>
                                 <span className="block h-3 text-[10px] leading-3 text-muted-foreground truncate px-1 -mt-0.5">
                                   {p?.custom_status ?? ""}
                                 </span>
