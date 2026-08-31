@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { MessageSquareReply } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -33,10 +33,20 @@ export function TicketReplyAlert() {
   const navigate = useNavigate();
   const isStaffRole = hasAny(["admin", "management", "staff", "moderator"]);
   const [queue, setQueue] = useState<ReplyPayload[]>([]);
+  const seenRef = useRef<Set<string>>(new Set());
   const current = queue[0] ?? null;
 
   useEffect(() => {
     if (!user || !isStaffRole) return;
+
+    const announce = (n: ReplyPayload) => {
+      if (seenRef.current.has(n.id)) return;
+      seenRef.current.add(n.id);
+      playSound(ticketReplyAudio, { label: "ticket-reply", gain: 2.0 });
+      setQueue((q) => (q.some((x) => x.id === n.id) ? q : [...q, n]));
+    };
+
+    // Realtime path.
     const ch = supabase
       .channel(`ticket-reply-${user.id}`)
       .on(
@@ -56,19 +66,51 @@ export function TicketReplyAlert() {
             link_path: string | null;
           };
           if (n.kind !== "ticket_reply") return;
-          playSound(ticketReplyAudio, { label: "ticket-reply", gain: 2.0 });
-          setQueue((q) =>
-            q.some((x) => x.id === n.id)
-              ? q
-              : [...q, { id: n.id, title: n.title, body: n.body, link_path: n.link_path }],
-          );
+          announce({ id: n.id, title: n.title, body: n.body, link_path: n.link_path });
         },
       )
       .subscribe();
+
+    // Polling fallback — realtime events can be dropped (sleeping tab, socket
+    // reconnect, mobile app resume), which previously meant no chime at all.
+    let cancelled = false;
+    const poll = async () => {
+      const { data } = await supabase
+        .from("user_notifications")
+        .select("id, title, body, link_path, created_at")
+        .eq("user_id", user.id)
+        .eq("kind", "ticket_reply")
+        .is("read_at", null)
+        .gte("created_at", new Date(Date.now() - 30 * 60 * 1000).toISOString())
+        .order("created_at", { ascending: true })
+        .limit(10);
+      if (cancelled) return;
+      for (const row of (data ?? []) as Array<{
+        id: string;
+        title: string;
+        body: string | null;
+        link_path: string | null;
+      }>) {
+        announce({ id: row.id, title: row.title, body: row.body, link_path: row.link_path });
+      }
+    };
+    void poll();
+    const timer = window.setInterval(() => void poll(), 20000);
+    const onVis = () => {
+      if (document.visibilityState === "visible") void poll();
+    };
+    document.addEventListener("visibilitychange", onVis);
+    window.addEventListener("focus", onVis);
+
     return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVis);
+      window.removeEventListener("focus", onVis);
       supabase.removeChannel(ch);
     };
   }, [user, isStaffRole]);
+
 
   if (!current) return null;
 
