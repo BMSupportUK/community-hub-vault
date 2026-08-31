@@ -20,6 +20,7 @@ type MemberProfile = {
   display_name: string | null;
   avatar_url: string | null;
   equipped_nameplate_id: string | null;
+  created_at: string | null;
 };
 
 type DirectoryRow = Omit<MemberProfile, "id"> & {
@@ -31,6 +32,20 @@ type FriendState = { kind: "friends" | "outgoing" | "incoming"; id?: string };
 
 const HIDDEN_ROLES = new Set(["pending", "banned", "rejected"]);
 const STAFF_ROLES = new Set(["admin", "management", "moderator", "staff"]);
+
+/** Human relative age, e.g. "7 months ago". */
+function relativeSince(iso: string | null): string {
+  if (!iso) return "—";
+  const then = new Date(iso).getTime();
+  if (!Number.isFinite(then)) return "—";
+  const days = Math.floor((Date.now() - then) / 86_400_000);
+  if (days < 1) return "today";
+  if (days < 30) return `${days} day${days === 1 ? "" : "s"} ago`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months} month${months === 1 ? "" : "s"} ago`;
+  const years = Math.floor(days / 365);
+  return `${years} year${years === 1 ? "" : "s"} ago`;
+}
 
 /**
  * "Members online · N" button + full-page dialog listing every member who is
@@ -65,6 +80,7 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
       display_name: row.display_name,
       avatar_url: row.avatar_url,
       equipped_nameplate_id: row.equipped_nameplate_id,
+      created_at: (row as unknown as { created_at?: string | null }).created_at ?? null,
     })));
     const map: Record<string, string[]> = {};
     for (const row of rows) {
