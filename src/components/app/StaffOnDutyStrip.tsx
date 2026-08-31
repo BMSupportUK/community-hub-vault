@@ -42,7 +42,7 @@ function DaneStatusLine({ userId }: { userId: string }) {
   const dnd = useDndStatus(userId);
   if (dnd?.active) return null;
   return (
-    <div className="text-[10px] font-semibold text-emerald-200 drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]">Online</div>
+    <div className="text-[10px] font-semibold text-emerald-500">Online</div>
   );
 }
 
