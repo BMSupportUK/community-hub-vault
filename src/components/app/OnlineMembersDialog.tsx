@@ -42,6 +42,8 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
   const [ignored, setIgnored] = useState<Set<string>>(new Set());
   const [busyId, setBusyId] = useState<string | null>(null);
   const [q, setQ] = useState("");
+  const [roleFilter, setRoleFilter] = useState<string>("all");
+
 
   const ids = useMemo(() => Array.from(onlineIds), [onlineIds]);
   const idKey = ids.slice().sort().join(",");
