@@ -352,6 +352,7 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
                             isOnline,
                             isSelf,
                           }}
+                          asDialog
                         >
                           <span className="flex items-center gap-3 min-w-0 text-left cursor-pointer">
                             <span className="relative shrink-0">
@@ -444,6 +445,7 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
                               isOnline,
                               isSelf,
                             }}
+                            asDialog
                           >
                             <span className="flex h-8 items-center gap-1.5 rounded-md border border-white/15 bg-white/10 px-2.5 text-xs font-medium text-white hover:bg-white/20 cursor-pointer">
                               <User className="size-3.5" />

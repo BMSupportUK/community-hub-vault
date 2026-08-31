@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { User } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Nameplate } from "@/components/app/Nameplate";
 import { PresenceMiniDot } from "@/components/app/PresenceIndicators";
 import { formatLastSeen } from "@/lib/relative-time";
@@ -38,29 +39,60 @@ export function ChatMiniProfile({
   profile,
   children,
   className,
+  /**
+   * Render the card in a modal Dialog instead of a Popover. Required when the
+   * trigger already sits inside a modal dialog, where a portalled popover is
+   * not interactive.
+   */
+  asDialog,
 }: {
   profile: ChatMiniProfileData;
   children: ReactNode;
   className?: string;
+  asDialog?: boolean;
 }) {
-  const { name, username, avatarUrl, hasAvatar, role, isOnline, lastSeenAt, isSelf } = profile;
-  const initial = (name || "?").slice(0, 1).toUpperCase();
+  const { name } = profile;
+  const triggerClass = cn(
+    "cursor-pointer rounded-md text-left transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+    className,
+  );
+
+  if (asDialog) {
+    return (
+      <Dialog>
+        <DialogTrigger asChild>
+          <button type="button" aria-label={`View ${name}'s profile`} className={triggerClass}>
+            {children}
+          </button>
+        </DialogTrigger>
+        <DialogContent className="w-80 max-w-[calc(100vw-2rem)] p-0 overflow-hidden gap-0">
+          <DialogTitle className="sr-only">{name}</DialogTitle>
+          <MiniProfileCard profile={profile} />
+        </DialogContent>
+      </Dialog>
+    );
+  }
 
   return (
     <Popover>
       <PopoverTrigger asChild>
-        <button
-          type="button"
-          aria-label={`View ${name}'s profile`}
-          className={cn(
-            "cursor-pointer rounded-md text-left transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-            className,
-          )}
-        >
+        <button type="button" aria-label={`View ${name}'s profile`} className={triggerClass}>
           {children}
         </button>
       </PopoverTrigger>
       <PopoverContent align="start" className="w-80 max-w-[calc(100vw-2rem)] p-0 overflow-hidden">
+        <MiniProfileCard profile={profile} />
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+function MiniProfileCard({ profile }: { profile: ChatMiniProfileData }) {
+  const { name, username, avatarUrl, hasAvatar, role, isOnline, lastSeenAt, isSelf } = profile;
+  const initial = (name || "?").slice(0, 1).toUpperCase();
+
+  return (
+    <>
         <div className="relative">
           <Nameplate
             id={profile.nameplateId}
@@ -123,7 +155,6 @@ export function ChatMiniProfile({
             </div>
           )}
         </div>
-      </PopoverContent>
-    </Popover>
+    </>
   );
 }
