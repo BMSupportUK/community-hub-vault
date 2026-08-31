@@ -94,6 +94,8 @@ export function GuideVaultCardActions({
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [entering, setEntering] = useState(false);
+  const [ready, setReady] = useState<UnlockResult | null>(null);
+
 
   const askForCode = async () => {
     setBusy(true);
