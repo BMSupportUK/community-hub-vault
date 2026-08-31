@@ -221,6 +221,27 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
               className="pl-8 bg-white/10 border-white/20 text-white placeholder:text-white/50"
             />
           </div>
+          {roleOptions.length > 0 && (
+            <div className="mt-3 flex flex-wrap items-center gap-1.5">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-white/60">Filter by role</span>
+              {["all", ...roleOptions].map((r) => (
+                <button
+                  key={r}
+                  type="button"
+                  onClick={() => setRoleFilter(r)}
+                  className={cn(
+                    "rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider transition-colors",
+                    roleFilter === r
+                      ? "border-emerald-300/50 bg-emerald-500/30 text-emerald-100"
+                      : "border-white/20 bg-white/10 text-white/70 hover:bg-white/20",
+                  )}
+                >
+                  {r === "all" ? "All" : formatRoleLabel(r)}
+                </button>
+              ))}
+            </div>
+          )}
+
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto p-5">
