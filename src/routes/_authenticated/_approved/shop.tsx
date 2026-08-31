@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
+import { checkExistingUsername } from "@/lib/credential-username-check.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { type ChannelGroup } from "@/components/app/ChannelColumn";
 import {
@@ -2401,6 +2402,37 @@ function Checkout({
     };
   }, [user?.id]);
 
+  // Validate a manually typed "username you're extending" against real credentials
+  const checkUsername = useServerFn(checkExistingUsername);
+  const [usernameState, setUsernameState] = useState<
+    "idle" | "checking" | "valid" | "invalid"
+  >("idle");
+  const needsUsernameCheck = myCreds.length === 0 && customerType === "existing";
+  useEffect(() => {
+    const value = existingUsername.trim();
+    if (!needsUsernameCheck || value.length < 2) {
+      setUsernameState("idle");
+      return;
+    }
+    let active = true;
+    setUsernameState("checking");
+    const t = setTimeout(() => {
+      checkUsername({ data: { username: value } })
+        .then((r) => {
+          if (active) setUsernameState(r.exists ? "valid" : "invalid");
+        })
+        .catch(() => {
+          if (active) setUsernameState("idle");
+        });
+    }, 450);
+    return () => {
+      active = false;
+      clearTimeout(t);
+    };
+  }, [existingUsername, needsUsernameCheck, checkUsername]);
+
+
+
 
   const requiresMulti = useMemo(
     () => items.some((i) => (i.category ?? "").toLowerCase().includes("multi")),
@@ -2499,6 +2531,7 @@ function Checkout({
     !!email &&
     (hasCreds ? !!credChoice : customerType === "new" || !!existingUsername.trim()) &&
     (purchaseKind !== "renewal" || !!existingUsername.trim()) &&
+    (!needsUsernameCheck || usernameState === "valid") &&
 
     adultContent !== "" &&
     (!requiresMulti || agreedMulti) &&
@@ -2669,13 +2702,34 @@ function Checkout({
                   </div>
                 </div>
                 {customerType === "existing" && (
-                  <input
-                    value={existingUsername}
-                    onChange={(e) => setExistingUsername(e.target.value)}
-                    placeholder="Username you're extending *"
-                    required
-                    className="w-full px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border focus:border-primary outline-none"
-                  />
+                  <div className="space-y-1">
+                    <input
+                      value={existingUsername}
+                      onChange={(e) => setExistingUsername(e.target.value)}
+                      placeholder="Username you're extending *"
+                      required
+                      className={cn(
+                        "w-full px-3 py-2 rounded-lg bg-surface-2 text-sm border outline-none",
+                        usernameState === "invalid"
+                          ? "border-destructive focus:border-destructive"
+                          : usernameState === "valid"
+                            ? "border-success focus:border-success"
+                            : "border-border focus:border-primary",
+                      )}
+                    />
+                    {usernameState === "checking" && (
+                      <p className="text-[11px] text-muted-foreground">Checking username…</p>
+                    )}
+                    {usernameState === "valid" && (
+                      <p className="text-[11px] text-success">Username found ✓</p>
+                    )}
+                    {usernameState === "invalid" && (
+                      <p className="text-[11px] text-destructive">
+                        We can't find that username — please check the spelling, or choose "New
+                        customer" if this is your first account.
+                      </p>
+                    )}
+                  </div>
                 )}
               </>
             )}
