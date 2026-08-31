@@ -1009,10 +1009,10 @@ function BuySteps({
       desc: cancelled
         ? "This order was cancelled. Browse the shop to place a new order."
         : paid
-          ? `Invoice paid on ${new Date(latestOrder!.paid_at!).toLocaleDateString("en-GB")}.`
+          ? `Payment confirmed on ${new Date(latestOrder!.paid_at!).toLocaleDateString("en-GB")}.`
           : placed
             ? "Awaiting your payment — open the support ticket for this order."
-            : "We'll send your invoice — pay it securely and we'll confirm receipt.",
+            : "We'll create a support ticket for your order — pay securely by card or bank transfer.",
       cta: cancelled ? "Browse products" : placed ? (ticketId ? "Open ticket" : "Open order") : undefined,
       action: cancelled
         ? onBrowse
@@ -1035,7 +1035,7 @@ function BuySteps({
           ? `All set! Account completed on ${new Date(latestOrder!.completed_at ?? latestOrder!.created_at).toLocaleDateString("en-GB")}.`
           : paid
             ? "We're setting up your account and will share your login details shortly."
-            : "We set up your account and share your login details to get you started.",
+            : "Once payment is confirmed, we set up your account and send your login details.",
       cta: cancelled ? undefined : placed ? "View order" : undefined,
       action: cancelled ? undefined : placed ? () => onViewOrder(latestOrder!.id) : undefined,
     },
