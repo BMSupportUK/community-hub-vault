@@ -1441,6 +1441,15 @@ function TicketDetail({
     if (error) toast.error(error.message);
   };
 
+  const closeTicket = async () => {
+    if (ticket.status === "closed") return;
+    if (!confirm("Close this ticket?")) return;
+    const { error } = await supabase.rpc("close_ticket", { _ticket_id: ticket.id });
+    if (error) return toast.error(error.message);
+    toast.success("Ticket closed");
+  };
+
+
   const deleteTicket = async () => {
     if (!confirm("Delete this ticket and all its messages? This cannot be undone.")) return;
     await supabase.from("ticket_messages").delete().eq("ticket_id", ticket.id);
