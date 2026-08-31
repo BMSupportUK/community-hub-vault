@@ -28,6 +28,9 @@ import installHero from "@/assets/install-guides-bg.jpg";
 
 
 export const Route = createFileRoute("/_authenticated/_approved/install-guides")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    tab: typeof search.tab === "string" ? search.tab : undefined,
+  }),
   component: InstallGuidesPage,
 });
 
