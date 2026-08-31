@@ -20,6 +20,7 @@ import {
   GuideAccessTimer,
   useGuideAccess,
 } from "@/components/app/GuideVaultCardActions";
+import { useGuideVideoUrl } from "@/hooks/use-guide-video-url";
 import { AppTransferPanel } from "@/components/app/AppTransferPanel";
 import { AppBuildAdmin } from "@/components/app/AppBuildAdmin";
 
@@ -611,7 +612,9 @@ function InstallGuidesPage() {
                           {b.image_url ? (
                             <img src={b.image_url} alt={b.title} className="w-full h-full object-contain group-hover:scale-105 transition-transform" />
                           ) : b.video_url ? (
-                            <video src={b.video_url} className="w-full h-full object-cover" preload="metadata" muted playsInline />
+                            <div className="w-full h-full grid place-items-center bg-gradient-to-br from-violet-900/60 to-black text-white/70">
+                              <Film className="size-10" />
+                            </div>
                           ) : (
                             <div className="w-full h-full grid place-items-center text-muted-foreground">
                               {b.pdf_url ? <FileText className="size-10" /> : <ImageIcon className="size-10" />}
@@ -855,7 +858,7 @@ function InstallGuidesPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Fullscreen video player */}
+      {/* Fullscreen video player (view-only, short-lived signed link) */}
       <Dialog open={!!playingVideo} onOpenChange={(o) => { if (!o) setPlayingVideo(null); }}>
         <DialogContent className="max-w-6xl p-0 bg-black border-violet-500/30">
           {playingVideo?.video_url && (
@@ -863,23 +866,10 @@ function InstallGuidesPage() {
               <DialogHeader className="px-4 pt-3 pb-2">
                 <DialogTitle className="text-white font-display text-lg">{playingVideo.title}</DialogTitle>
               </DialogHeader>
-              <video
-                ref={(el) => {
-                  videoElRef.current = el;
-                  if (el) {
-                    el.play().catch(() => { /* autoplay may be blocked */ });
-                    const req = (el as any).requestFullscreen
-                      || (el as any).webkitRequestFullscreen
-                      || (el as any).webkitEnterFullscreen;
-                    if (req) {
-                      try { req.call(el); } catch { /* user gesture required on some browsers */ }
-                    }
-                  }
-                }}
-                src={playingVideo.video_url}
-                controls
-                playsInline
-                className="w-full max-h-[80vh] bg-black"
+              <SecureGuideVideo
+                blogId={playingVideo.id}
+                ref_={playingVideo.video_url}
+                onEl={(el) => { videoElRef.current = el; }}
               />
             </>
           )}
@@ -968,6 +958,7 @@ function InstallGuidesPage() {
                   value={editing.video_url}
                   onChange={(url) => setEditing({ ...editing, video_url: url })}
                   folder="install-guides"
+                  secure
                 />
               </div>
               <div>
@@ -1009,5 +1000,50 @@ function InstallGuidesPage() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+/** Plays a guide video from a short-lived signed URL; downloads are disabled. */
+function SecureGuideVideo({
+  blogId,
+  ref_,
+  onEl,
+}: {
+  blogId: string;
+  ref_: string;
+  onEl?: (el: HTMLVideoElement | null) => void;
+}) {
+  const src = useGuideVideoUrl(ref_, blogId);
+
+  if (!src) {
+    return (
+      <div className="w-full aspect-video grid place-items-center bg-black text-white/70">
+        <Loader2 className="size-6 animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <video
+      ref={(el) => {
+        onEl?.(el);
+        if (el) {
+          el.play().catch(() => { /* autoplay may be blocked */ });
+          const req = (el as any).requestFullscreen
+            || (el as any).webkitRequestFullscreen
+            || (el as any).webkitEnterFullscreen;
+          if (req) {
+            try { req.call(el); } catch { /* user gesture required on some browsers */ }
+          }
+        }
+      }}
+      src={src}
+      controls
+      controlsList="nodownload noremoteplayback noplaybackrate"
+      disablePictureInPicture
+      onContextMenu={(e) => e.preventDefault()}
+      playsInline
+      className="w-full max-h-[80vh] bg-black"
+    />
   );
 }
