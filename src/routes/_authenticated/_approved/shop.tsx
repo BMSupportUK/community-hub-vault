@@ -971,15 +971,18 @@ function BuySteps({
   latestOrder,
   onBrowse,
   onViewOrder,
+  onViewTicket,
 }: {
-  latestOrder: OrderProgress;
+  latestOrder: OrderProgress & { ticket_id?: string | null };
   onBrowse: () => void;
   onViewOrder: (id: string) => void;
+  onViewTicket: (ticketId: string) => void;
 }) {
   const placed = !!latestOrder;
   const paid = !!latestOrder?.paid_at;
   const setup = latestOrder?.status === "completed" || !!latestOrder?.completed_at;
   const cancelled = latestOrder?.status === "cancelled";
+  const ticketId = latestOrder?.ticket_id;
 
   const steps = [
     {
@@ -1007,10 +1010,16 @@ function BuySteps({
         : paid
           ? `Invoice paid on ${new Date(latestOrder!.paid_at!).toLocaleDateString("en-GB")}.`
           : placed
-            ? "Awaiting your payment — open the order to view the invoice."
+            ? "Awaiting your payment — open the support ticket for this order."
             : "We'll send your invoice — pay it securely and we'll confirm receipt.",
-      cta: cancelled ? "Browse products" : placed ? "Open order" : undefined,
-      action: cancelled ? onBrowse : placed ? () => onViewOrder(latestOrder!.id) : undefined,
+      cta: cancelled ? "Browse products" : placed ? (ticketId ? "Open ticket" : "Open order") : undefined,
+      action: cancelled
+        ? onBrowse
+        : placed
+          ? ticketId
+            ? () => onViewTicket(ticketId)
+            : () => onViewOrder(latestOrder!.id)
+          : undefined,
     },
     {
       n: 3,
