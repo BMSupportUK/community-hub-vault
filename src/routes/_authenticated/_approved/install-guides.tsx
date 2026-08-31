@@ -449,20 +449,20 @@ function InstallGuidesPage() {
 
        <div className="px-8 py-6">
         <Tabs value={tab} onValueChange={setTab} className="w-full">
-          <TabsList className="flex flex-wrap h-auto max-w-4xl bg-surface/70 border border-border p-1 gap-1">
-            <TabsTrigger value="welcome" className="shrink-0 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Welcome</TabsTrigger>
-            <TabsTrigger value="guides" className="shrink-0 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Guides</TabsTrigger>
+          <TabsList className="flex flex-nowrap w-full bg-surface/70 border border-border p-1 gap-1 overflow-x-auto">
+            <TabsTrigger value="welcome" className="shrink-0 flex-1 min-w-0 whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Welcome</TabsTrigger>
+            <TabsTrigger value="guides" className="shrink-0 flex-1 min-w-0 whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Guides</TabsTrigger>
             {canSeeAppTab && (
-              <TabsTrigger value="get-app" className="shrink-0 text-left leading-tight whitespace-normal data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Request BM Store<br className="hidden sm:block" /> Download Link</TabsTrigger>
+              <TabsTrigger value="get-app" className="shrink-0 flex-1 min-w-0 whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Request BM Store Download Link</TabsTrigger>
             )}
             {canManageCategories && (
-              <TabsTrigger value="categories" className="shrink-0 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Categories</TabsTrigger>
+              <TabsTrigger value="categories" className="shrink-0 flex-1 min-w-0 whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Categories</TabsTrigger>
             )}
             {canManagePasscodes && (
-              <TabsTrigger value="passcodes" className="shrink-0 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Passcodes</TabsTrigger>
+              <TabsTrigger value="passcodes" className="shrink-0 flex-1 min-w-0 whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">Passcodes</TabsTrigger>
             )}
             {canManagePasscodes && (
-              <TabsTrigger value="app-apk" className="shrink-0 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">App APK</TabsTrigger>
+              <TabsTrigger value="app-apk" className="shrink-0 flex-1 min-w-0 whitespace-nowrap data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">App APK</TabsTrigger>
             )}
           </TabsList>
 
