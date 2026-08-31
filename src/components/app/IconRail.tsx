@@ -236,6 +236,8 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
   ];
 
   const fanZoneItems: RailItem[] = [
+    // Dual-role accounts (BM Support + Fan Zone) keep a way back to BM Support.
+    { to: "/home", label: "BM Support", icon: Home, show: !isFanZoneOnly },
     { to: "/forum", label: "Boro Fan Zone", icon: BoroBadgeIcon, show: true },
     { to: "/fanzone/messages", label: "Fan Zone Messages", icon: MessagesSquare, show: true },
     { to: "/fanzone/profile", label: "Fan Zone Profile", icon: UserCircle2, show: true },
@@ -248,6 +250,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     })),
     { to: "/competition-winners", label: "Competition Winners", icon: Crown, show: true },
   ];
+
 
   const items = inFanZone ? fanZoneItems : supportItems;
 
