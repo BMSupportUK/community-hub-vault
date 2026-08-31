@@ -123,19 +123,24 @@ export function ScreenLockProvider() {
     (broadcast = true) => {
       setLocked(true);
       if (storageKey) localStorage.setItem(storageKey, "1");
+      // A locked screen means the person is away from the PC: drop them out of
+      // the Talk channel presence so member counters/lists don't count them.
+      if (user) void suspendTalkPresence(user.id);
       if (broadcast) channelRef.current?.postMessage({ type: "lock" });
     },
-    [storageKey],
+    [storageKey, user?.id],
   );
 
   const doUnlock = useCallback(
     (broadcast = true) => {
       setLocked(false);
       if (storageKey) localStorage.removeItem(storageKey);
+      resumeTalkPresence();
       if (broadcast) channelRef.current?.postMessage({ type: "unlock" });
     },
     [storageKey],
   );
+
 
   // Cross-tab sync
   useEffect(() => {
