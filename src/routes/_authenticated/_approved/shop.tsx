@@ -1647,6 +1647,7 @@ function Storefront() {
                 latestOrder={latestOrder}
                 onBrowse={() => setShopTab("shop")}
                 onViewOrder={(id) => navigate({ to: "/shop", search: { view: "orders", id } })}
+                onViewTicket={(ticketId) => navigate({ to: "/tickets", search: { id: ticketId } })}
               />
             </TabsContent>
 
