@@ -20,6 +20,7 @@ export type ChatMiniProfileData = {
   role?: FlashRole | null;
   isOnline: boolean;
   lastSeenAt?: string | null;
+  customStatus?: string | null;
   isSelf?: boolean;
 };
 
