@@ -263,7 +263,7 @@ export function StaffOnDutyStrip({
   };
 
 
-  /** Next rota slot line — always the last item on a staff card, on its own row. */
+  /** Next rota slot — prominent badge on its own row, never truncated. */
   const renderNextShift = (userId: string) => {
     const slot = nextShifts[userId];
     if (!slot) return null;
@@ -273,11 +273,16 @@ export function StaffOnDutyStrip({
       month: "short",
     });
     return (
-      <div className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground tabular-nums">
-        <CalendarClock className="size-3 shrink-0 opacity-70" />
-        <span className="truncate">
-          Next: {label} · {slot.start_time.slice(0, 5)}–{slot.end_time.slice(0, 5)}
-        </span>
+      <div className="mt-2 rounded-md border border-amber-300/30 bg-amber-500/15 px-2 py-1.5 shadow-[0_0_10px_rgba(245,158,11,0.15)]">
+        <div className="flex items-start gap-1.5">
+          <CalendarClock className="mt-0.5 size-3.5 shrink-0 text-amber-300" />
+          <div className="min-w-0">
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-amber-200">Next shift</div>
+            <div className="text-[11px] font-semibold leading-tight text-white">
+              {label} · {slot.start_time.slice(0, 5)}–{slot.end_time.slice(0, 5)}
+            </div>
+          </div>
+        </div>
       </div>
     );
   };
