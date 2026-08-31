@@ -105,6 +105,9 @@ function MiniProfileCard({ profile }: { profile: ChatMiniProfileData }) {
             <div className="relative z-10 min-w-0 pr-2">
               <div className="truncate text-xl font-bold leading-tight text-foreground drop-shadow-sm">{name}</div>
               {username && <div className="mt-1 truncate text-xs font-medium text-foreground/80">@{username}</div>}
+              {customStatus && (
+                <div className="mt-1 truncate text-xs text-foreground/70">{customStatus}</div>
+              )}
             </div>
           </Nameplate>
           <div className="absolute left-4 top-4">
