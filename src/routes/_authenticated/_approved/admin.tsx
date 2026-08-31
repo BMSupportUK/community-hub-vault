@@ -720,6 +720,16 @@ function RecoveryCodes() {
           </span>
           {rows && rows.length > 0 && (
             <button
+              onClick={() => setRevealed((v) => !v)}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-2 border border-border text-sm font-medium hover:bg-surface-3"
+              aria-label={revealed ? "Hide backup codes" : "Reveal backup codes"}
+            >
+              {revealed ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+              {revealed ? "Hide" : "Reveal"}
+            </button>
+          )}
+          {rows && rows.length > 0 && (
+            <button
               onClick={copyAll}
               className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-2 border border-border text-sm font-medium hover:bg-surface-3"
             >
