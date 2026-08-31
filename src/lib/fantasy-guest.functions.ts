@@ -212,45 +212,17 @@ export const requestFantasyGuestPinReset = createServerFn({ method: "POST" })
     if (updErr) throw new Error(updErr.message);
 
     try {
-      const React = await import("react");
-      const { render } = await import("@react-email/render");
-      const { template } = await import("@/lib/email-templates/wc-guest-pin-reset");
-      const element = React.createElement(template.component, {
-        displayName: (entrant as any).display_name,
-        code,
-        expiresMinutes: 30,
-      });
-      const html = await render(element);
-      const text = await render(element, { plainText: true });
-      const subject =
-        typeof template.subject === "function"
-          ? (template.subject as (d: any) => string)({ code })
-          : template.subject;
-      const messageId = crypto.randomUUID();
-      await admin.from("email_send_log").insert({
-        message_id: messageId,
-        template_name: "wc-guest-pin-reset",
-        recipient_email: (entrant as any).email,
-        status: "pending",
-      });
-      await admin.rpc("enqueue_email" as never, {
-        queue_name: "transactional_emails",
-        payload: {
-          message_id: messageId,
-          to: (entrant as any).email,
-          from: "BM Support <noreply@bmsupport.uk>",
-          sender_domain: "notify.bmsupport.uk",
-          subject,
-          html,
-          text,
-          purpose: "transactional",
-          label: "fantasy-guest-pin-reset",
-          idempotency_key: messageId,
-          queued_at: new Date().toISOString(),
+      const { sendAndLogEmail } = await import("@/lib/email-templates/send-and-log");
+      await sendAndLogEmail(admin, "wc-guest-pin-reset", (entrant as any).email, {
+        templateData: {
+          displayName: (entrant as any).display_name,
+          code,
+          expiresMinutes: 30,
         },
-      } as never);
+        idempotencyKey: `fantasy-guest-pin-reset-${(entrant as any).id}-${Date.now()}`,
+      });
     } catch (e) {
-      console.error("Failed to enqueue fantasy PIN reset email", e);
+      console.error("Failed to send fantasy PIN reset email", e);
       throw new Error("Failed to send reset email — please try again.");
     }
     return { ok: true };
