@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   Clock,
   CreditCard,
+  Landmark,
   Loader2,
   XCircle,
 } from "lucide-react";
@@ -114,7 +115,9 @@ export function PaymentStatusTimeline({
       title: cancelled ? "Order cancelled" : "Awaiting payment",
       desc: cancelled
         ? "This order was cancelled — no payment is required."
-        : "Order placed — pay via Square, Stripe or USDT.",
+        : method === "bank_transfer"
+          ? "Order placed — send the bank transfer quoting your reference."
+          : "Order placed — pay via Square, Stripe or USDT.",
       icon: cancelled ? XCircle : Clock,
       state: cancelled ? "failed" : phase === "awaiting" ? "active" : "done",
     },
@@ -175,7 +178,9 @@ export function PaymentStatusTimeline({
                 ? "Paid"
                 : phase === "awaiting"
                   ? "Awaiting payment"
-                  : "Checking…"}
+                  : phase === "awaiting_verification"
+                    ? "Awaiting verification"
+                    : "Checking…"}
         </span>
       </div>
       <ol className="relative space-y-1.5">
