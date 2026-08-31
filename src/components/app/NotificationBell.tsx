@@ -280,8 +280,9 @@ export function NotificationBell() {
         .in("id", userIds);
     }
     if (staffIds.length) {
-      await supabase.from("staff_notification_reads").insert(
+      await supabase.from("staff_notification_reads").upsert(
         staffIds.map((id) => ({ notification_id: id, user_id: user.id })),
+        { onConflict: "notification_id,user_id", ignoreDuplicates: true },
       );
     }
   };
@@ -346,19 +347,20 @@ export function NotificationBell() {
       <PopoverContent
         side="bottom"
         align="end"
-        collisionPadding={8}
-        className="w-[min(24rem,calc(100vw-1rem))] p-0"
+        collisionPadding={12}
+        avoidCollisions
+        className="w-[min(24rem,calc(100vw-1rem))] p-0 overflow-hidden flex flex-col max-h-[min(70vh,32rem)]"
         sideOffset={8}
       >
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border">
+        <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-border shrink-0">
           <div className="font-display font-semibold">Notifications</div>
           {unread.length > 0 && (
-            <Button variant="ghost" size="sm" onClick={markAll} className="h-7 text-xs">
+            <Button variant="ghost" size="sm" onClick={markAll} className="h-7 text-xs shrink-0">
               <Check className="size-3.5 mr-1" /> Mark all read
             </Button>
           )}
         </div>
-        <ScrollArea className="max-h-[480px]">
+        <ScrollArea className="flex-1 min-h-0">
           {items.length === 0 && (
             <div className="px-4 py-12 text-center text-sm text-muted-foreground">You're all caught up.</div>
           )}
@@ -367,7 +369,14 @@ export function NotificationBell() {
               const Icon = iconFor(n.kind);
               const isUnread = !readIds.has(n.id);
               return (
-                <li key={n.id} className={cn("px-4 py-3 transition-colors", isUnread && "bg-primary/5")}>
+                <li
+                  key={n.id}
+                  onClick={() => { if (isUnread) void markRead(n.id); }}
+                  className={cn(
+                    "px-4 py-3 transition-colors cursor-pointer hover:bg-muted/40",
+                    isUnread && "bg-primary/5",
+                  )}
+                >
                   <div className="flex gap-3">
                     <div
                       className={cn(
