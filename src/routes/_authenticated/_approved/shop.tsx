@@ -1156,6 +1156,7 @@ function Storefront() {
     paid_at: string | null;
     completed_at: string | null;
     created_at: string;
+    ticket_id?: string | null;
   } | null>(null);
 
   const reloadLatestOrder = async () => {
@@ -1165,12 +1166,24 @@ function Storefront() {
     }
     const { data } = await supabase
       .from("orders")
-      .select("id,status,paid_at,completed_at,created_at")
+      .select("id,status,paid_at,completed_at,created_at,tickets!left(id)")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
-    setLatestOrder((data as typeof latestOrder) ?? null);
+    const raw = data as { id: string; status: string; paid_at: string | null; completed_at: string | null; created_at: string; tickets?: { id: string }[] | null } | null;
+    setLatestOrder(
+      raw
+        ? {
+            id: raw.id,
+            status: raw.status,
+            paid_at: raw.paid_at,
+            completed_at: raw.completed_at,
+            created_at: raw.created_at,
+            ticket_id: raw.tickets?.[0]?.id ?? null,
+          }
+        : null,
+    );
   };
 
   const reloadRatings = async () => {
