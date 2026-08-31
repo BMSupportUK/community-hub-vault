@@ -16,6 +16,8 @@ export const Route = createFileRoute("/_authenticated/_approved/home/")({
 
 function WelcomePage() {
   const { user, hasRole } = useAuth();
+  // LOCKED: "N in chat" counter on the chatroom link. Do not change, restyle, or remove
+  // without explicit authorisation. See mem://constraints/chat-counters-locked
   const chatroomCount = useTalkChannelTotalCount();
   const canManage = hasRole("admin") || hasRole("management");
   const fallbackName = (user?.email ?? "there").split("@")[0];

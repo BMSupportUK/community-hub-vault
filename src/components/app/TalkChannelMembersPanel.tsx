@@ -101,6 +101,8 @@ export function TalkChannelMembersPanel() {
     return { ordered, offline: offline.sort(sortByName) };
   }, [members, onlineIds]);
 
+  // LOCKED: Members panel header counter — online non-staff members only.
+  // Do not change, restyle, or remove without explicit authorisation. See mem://constraints/chat-counters-locked
   const membersInChat = groups.ordered.reduce((total, group) => total + group.list.length, 0);
 
   if (rows === null) {

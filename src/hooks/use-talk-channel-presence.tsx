@@ -1,3 +1,19 @@
+/**
+ * ┌───────────────────────────────────────────────────────────────────────────┐
+ * │ LOCKED FILE — CHAT COUNTER ENGINE. DO NOT MODIFY WITHOUT AUTHORISATION.   │
+ * │                                                                           │
+ * │ This presence engine powers every chat counter in the app:                │
+ * │   • side rail Customer Chatroom badge  (useTalkChannelTotalCount)         │
+ * │   • "Jump back in" / hub "N in chat" pill                                 │
+ * │   • Talk Channels Members panel count + green online dots                 │
+ * │                                                                           │
+ * │ It took many iterations to stop the counters flickering, ghosting, and    │
+ * │ needing hard refreshes. Do NOT refactor, tidy, retime, or "simplify"      │
+ * │ any of the constants or the track/untrack/linger/broadcast logic as a     │
+ * │ side effect of unrelated work. Change it ONLY when the user explicitly    │
+ * │ asks for a counter change in that request.                                │
+ * └───────────────────────────────────────────────────────────────────────────┘
+ */
 import { useEffect, useRef, useState } from "react";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
