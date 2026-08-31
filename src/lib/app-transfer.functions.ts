@@ -204,10 +204,10 @@ export const listAppTransfers = createServerFn({ method: "GET" })
     if (ids.length) {
       const { data: profiles } = await supabaseAdmin
         .from("profiles")
-        .select("id, display_name, app_login_name")
+        .select("id, display_name, username")
         .in("id", ids);
       for (const p of profiles ?? []) {
-        names.set(p.id, (p.display_name as string) || (p.app_login_name as string) || "Member");
+        names.set(p.id, (p.display_name as string) || (p.username as string) || "Member");
       }
     }
     return rows.map((r) => ({
