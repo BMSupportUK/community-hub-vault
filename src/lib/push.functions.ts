@@ -116,6 +116,7 @@ export async function broadcastToUser(
   body: string,
   url: string,
   tag: string,
+  sound?: string,
 ) {
   const webpush = await getWebPush();
   const { data: subs } = await supabaseAdmin
@@ -124,7 +125,7 @@ export async function broadcastToUser(
     .eq("user_id", userId);
   if (!subs?.length) return { sent: 0 };
 
-  const payload = JSON.stringify({ title, body, url, tag });
+  const payload = JSON.stringify({ title, body, url, tag, sound });
   const stale: string[] = [];
   let sent = 0;
   await Promise.all(
