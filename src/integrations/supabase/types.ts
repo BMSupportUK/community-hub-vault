@@ -6090,8 +6090,10 @@ export type Database = {
         Args: never
         Returns: {
           avatar_url: string
+          created_at: string
           display_name: string
           equipped_nameplate_id: string
+          last_seen_at: string
           roles: Database["public"]["Enums"]["app_role"][]
           user_id: string
           username: string
