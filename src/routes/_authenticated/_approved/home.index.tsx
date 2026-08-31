@@ -199,6 +199,10 @@ function WelcomePage() {
             className="text-sm text-sky-300 hover:text-sky-200 inline-flex items-center gap-2"
           >
             Open BM Support Customer Chat-room →
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-bold text-emerald-300">
+              <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              {chatroomCount} in chat
+            </span>
           </Link>
         </div>
         <div className="grid min-w-0 sm:grid-cols-2 gap-2">
