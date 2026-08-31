@@ -7,6 +7,8 @@ import {
   STAFF_MAX_TIMEOUT_MINUTES,
 } from "@/lib/screen-lock-hash";
 import { ScreenLockOverlay } from "@/components/app/ScreenLockOverlay";
+import { resumeTalkPresence, suspendTalkPresence } from "@/hooks/use-talk-channel-presence";
+
 
 export interface ScreenLockSettings {
   enabled: boolean;
