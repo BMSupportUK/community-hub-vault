@@ -2531,6 +2531,7 @@ function Checkout({
     !!email &&
     (hasCreds ? !!credChoice : customerType === "new" || !!existingUsername.trim()) &&
     (purchaseKind !== "renewal" || !!existingUsername.trim()) &&
+    (!needsUsernameCheck || usernameState === "valid") &&
 
     adultContent !== "" &&
     (!requiresMulti || agreedMulti) &&
