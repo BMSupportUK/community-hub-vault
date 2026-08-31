@@ -1,4 +1,3 @@
-import { BankTransferAdminCard } from "@/components/app/BankTransferAdminCard";
 import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ShieldCheck, Lock, KeyRound, ShieldAlert, KeySquare, Globe, Clock, FileText, Loader2, Shield, Star, Filter, Sparkles, LifeBuoy, RefreshCw, Copy, Download, Ban, Tag, Package, Bell, Trophy, MessageSquare, Image as ImageIcon, MonitorPlay, Eye, EyeOff } from "lucide-react";
@@ -480,6 +479,7 @@ function DashboardBody() {
     { to: "/admin-streaming-devices", label: "Streaming devices", desc: "Manage the streaming device catalogue and refresh UK retailer prices.", icon: MonitorPlay },
     { to: "/shop", search: { view: "admin" }, label: "Shop products", desc: "Add, edit and reorder shop products and categories.", icon: Package, adminOnly: true },
     { to: "/shop", search: { view: "discounts" }, label: "Discount codes", desc: "Create and manage promotional discount codes.", icon: Tag, adminOnly: true },
+    { to: "/admin-bank-transfer", label: "Bank transfer", desc: "Set the bank details customers see and grant bank-transfer payment access.", icon: Landmark, adminOnly: true },
     { to: "/install-guides", search: { tab: "app-apk" }, label: "App APK & transfers", desc: "Upload the Android APK and monitor the live 24-hour install links members have requested.", icon: Package },
   ];
   const tools = allTools
@@ -519,11 +519,6 @@ function DashboardBody() {
         <VpnBackfillCard />
       </aside>
     </div>
-
-      <section className="min-w-0">
-        <h2 className="font-display text-sm uppercase tracking-wide text-muted-foreground mb-3">Bank transfer</h2>
-        <BankTransferAdminCard />
-      </section>
     </div>
   );
 }

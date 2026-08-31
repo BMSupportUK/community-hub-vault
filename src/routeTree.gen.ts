@@ -39,6 +39,7 @@ import { Route as AuthenticatedApprovedAccountSecurityRouteImport } from './rout
 import { Route as AuthenticatedApprovedAdminRouteImport } from './routes/_authenticated/_approved/admin'
 import { Route as AuthenticatedApprovedAdminAffiliateBannersRouteImport } from './routes/_authenticated/_approved/admin-affiliate-banners'
 import { Route as AuthenticatedApprovedAdminArchivedTicketsRouteImport } from './routes/_authenticated/_approved/admin-archived-tickets'
+import { Route as AuthenticatedApprovedAdminBankTransferRouteImport } from './routes/_authenticated/_approved/admin-bank-transfer'
 import { Route as AuthenticatedApprovedAdminBlacklistRouteImport } from './routes/_authenticated/_approved/admin-blacklist'
 import { Route as AuthenticatedApprovedAdminBoroTeamSheetRouteImport } from './routes/_authenticated/_approved/admin-boro-team-sheet'
 import { Route as AuthenticatedApprovedAdminBusinessHoursRouteImport } from './routes/_authenticated/_approved/admin-business-hours'
@@ -292,6 +293,12 @@ const AuthenticatedApprovedAdminArchivedTicketsRoute =
   AuthenticatedApprovedAdminArchivedTicketsRouteImport.update({
     id: '/admin-archived-tickets',
     path: '/admin-archived-tickets',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedAdminBankTransferRoute =
+  AuthenticatedApprovedAdminBankTransferRouteImport.update({
+    id: '/admin-bank-transfer',
+    path: '/admin-bank-transfer',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
 const AuthenticatedApprovedAdminBlacklistRoute =
@@ -920,6 +927,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedApprovedAdminRoute
   '/admin-affiliate-banners': typeof AuthenticatedApprovedAdminAffiliateBannersRoute
   '/admin-archived-tickets': typeof AuthenticatedApprovedAdminArchivedTicketsRoute
+  '/admin-bank-transfer': typeof AuthenticatedApprovedAdminBankTransferRoute
   '/admin-blacklist': typeof AuthenticatedApprovedAdminBlacklistRoute
   '/admin-boro-team-sheet': typeof AuthenticatedApprovedAdminBoroTeamSheetRoute
   '/admin-business-hours': typeof AuthenticatedApprovedAdminBusinessHoursRoute
@@ -1048,6 +1056,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AuthenticatedApprovedAdminRoute
   '/admin-affiliate-banners': typeof AuthenticatedApprovedAdminAffiliateBannersRoute
   '/admin-archived-tickets': typeof AuthenticatedApprovedAdminArchivedTicketsRoute
+  '/admin-bank-transfer': typeof AuthenticatedApprovedAdminBankTransferRoute
   '/admin-blacklist': typeof AuthenticatedApprovedAdminBlacklistRoute
   '/admin-boro-team-sheet': typeof AuthenticatedApprovedAdminBoroTeamSheetRoute
   '/admin-business-hours': typeof AuthenticatedApprovedAdminBusinessHoursRoute
@@ -1180,6 +1189,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/admin': typeof AuthenticatedApprovedAdminRoute
   '/_authenticated/_approved/admin-affiliate-banners': typeof AuthenticatedApprovedAdminAffiliateBannersRoute
   '/_authenticated/_approved/admin-archived-tickets': typeof AuthenticatedApprovedAdminArchivedTicketsRoute
+  '/_authenticated/_approved/admin-bank-transfer': typeof AuthenticatedApprovedAdminBankTransferRoute
   '/_authenticated/_approved/admin-blacklist': typeof AuthenticatedApprovedAdminBlacklistRoute
   '/_authenticated/_approved/admin-boro-team-sheet': typeof AuthenticatedApprovedAdminBoroTeamSheetRoute
   '/_authenticated/_approved/admin-business-hours': typeof AuthenticatedApprovedAdminBusinessHoursRoute
@@ -1312,6 +1322,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin-affiliate-banners'
     | '/admin-archived-tickets'
+    | '/admin-bank-transfer'
     | '/admin-blacklist'
     | '/admin-boro-team-sheet'
     | '/admin-business-hours'
@@ -1440,6 +1451,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/admin-affiliate-banners'
     | '/admin-archived-tickets'
+    | '/admin-bank-transfer'
     | '/admin-blacklist'
     | '/admin-boro-team-sheet'
     | '/admin-business-hours'
@@ -1571,6 +1583,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/admin'
     | '/_authenticated/_approved/admin-affiliate-banners'
     | '/_authenticated/_approved/admin-archived-tickets'
+    | '/_authenticated/_approved/admin-bank-transfer'
     | '/_authenticated/_approved/admin-blacklist'
     | '/_authenticated/_approved/admin-boro-team-sheet'
     | '/_authenticated/_approved/admin-business-hours'
@@ -1943,6 +1956,13 @@ declare module '@tanstack/react-router' {
       path: '/admin-archived-tickets'
       fullPath: '/admin-archived-tickets'
       preLoaderRoute: typeof AuthenticatedApprovedAdminArchivedTicketsRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/admin-bank-transfer': {
+      id: '/_authenticated/_approved/admin-bank-transfer'
+      path: '/admin-bank-transfer'
+      fullPath: '/admin-bank-transfer'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminBankTransferRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
     '/_authenticated/_approved/admin-blacklist': {
@@ -2739,6 +2759,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedAdminRoute: typeof AuthenticatedApprovedAdminRoute
   AuthenticatedApprovedAdminAffiliateBannersRoute: typeof AuthenticatedApprovedAdminAffiliateBannersRoute
   AuthenticatedApprovedAdminArchivedTicketsRoute: typeof AuthenticatedApprovedAdminArchivedTicketsRoute
+  AuthenticatedApprovedAdminBankTransferRoute: typeof AuthenticatedApprovedAdminBankTransferRoute
   AuthenticatedApprovedAdminBlacklistRoute: typeof AuthenticatedApprovedAdminBlacklistRoute
   AuthenticatedApprovedAdminBoroTeamSheetRoute: typeof AuthenticatedApprovedAdminBoroTeamSheetRoute
   AuthenticatedApprovedAdminBusinessHoursRoute: typeof AuthenticatedApprovedAdminBusinessHoursRoute
@@ -2799,6 +2820,8 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
     AuthenticatedApprovedAdminAffiliateBannersRoute,
   AuthenticatedApprovedAdminArchivedTicketsRoute:
     AuthenticatedApprovedAdminArchivedTicketsRoute,
+  AuthenticatedApprovedAdminBankTransferRoute:
+    AuthenticatedApprovedAdminBankTransferRoute,
   AuthenticatedApprovedAdminBlacklistRoute:
     AuthenticatedApprovedAdminBlacklistRoute,
   AuthenticatedApprovedAdminBoroTeamSheetRoute:
