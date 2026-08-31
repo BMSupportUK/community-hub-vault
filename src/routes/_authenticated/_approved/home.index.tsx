@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { ServiceStatusPill } from "@/components/app/ServiceStatusPill";
 import { SubscriptionDetailsCard } from "@/components/app/SubscriptionDetailsCard";
 import { WorkingStatusBox } from "@/components/app/WorkingStatusBox";
+import { useTalkChannelTotalCount } from "@/hooks/use-talk-channel-presence";
 
 export const Route = createFileRoute("/_authenticated/_approved/home/")({
   component: WelcomePage,
@@ -15,6 +16,7 @@ export const Route = createFileRoute("/_authenticated/_approved/home/")({
 
 function WelcomePage() {
   const { user, hasRole } = useAuth();
+  const chatroomCount = useTalkChannelTotalCount();
   const canManage = hasRole("admin") || hasRole("management");
   const fallbackName = (user?.email ?? "there").split("@")[0];
   const [displayName, setDisplayName] = useState<string>(fallbackName);
