@@ -186,7 +186,7 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
   }, [memberProfiles, rolesByUser, q, roleFilter]);
 
 
-  const count = onlineIds.size;
+  const count = memberProfiles.length;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
