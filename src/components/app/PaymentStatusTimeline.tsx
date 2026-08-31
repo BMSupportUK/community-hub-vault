@@ -42,11 +42,28 @@ export function PaymentStatusTimeline({
   const failed = phase === "failed";
   const confirmed = phase === "confirmed";
   const cancelled = phase === "cancelled";
-  const checking = !cancelled && (phase === "checking_stripe" || phase === "checking_square");
+  const checking =
+    !cancelled &&
+    (phase === "checking_stripe" || phase === "checking_square" || phase === "awaiting_verification");
 
   // Only surface the check step for the provider actually used on this order.
   const checkSteps: { key: string; title: string; desc: string; icon: typeof Clock }[] =
-    method === "stripe"
+    method === "bank_transfer"
+      ? [
+          {
+            key: "transfer_reported",
+            title: "Transfer reported",
+            desc: "You've told us the bank transfer has been sent.",
+            icon: Landmark,
+          },
+          {
+            key: "awaiting_verification",
+            title: "Staff verification",
+            desc: "We're checking the bank account for your reference.",
+            icon: BadgeCheck,
+          },
+        ]
+      : method === "stripe"
       ? [
           {
             key: "checking_stripe",
@@ -73,6 +90,7 @@ export function PaymentStatusTimeline({
                 icon: Bitcoin,
               },
             ]
+
           : [
               {
                 key: "checking_stripe",
