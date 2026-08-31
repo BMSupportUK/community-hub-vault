@@ -3783,20 +3783,12 @@ function OrderDetailImpl({
     if (busy) return;
     setBusy(true);
     try {
-      let profileLink = "";
-      if (order.user_id) {
-        const { data: prof } = await supabase
-          .from("profiles")
-          .select("username")
-          .eq("id", order.user_id)
-          .maybeSingle();
-        const uname = (prof as { username?: string | null } | null)?.username;
-        if (uname)
-          profileLink = `\n\n🔗 [Click here to view your Credentials](${window.location.origin}/u/${uname}?tab=creds)`;
-      }
       await sendSystem(
-        `🛠️ We are currently setting up your account. Your login details will appear in the Credentials section of your profile soon.${profileLink}`,
+        `🛠️ We are currently setting up your account. Your login details will appear in the Credentials section of your profile soon.`,
       );
+
+
+
       toast.success("Customer notified");
       if (isAdmin && order.user_id) setCredsOpen(true);
     } finally {
