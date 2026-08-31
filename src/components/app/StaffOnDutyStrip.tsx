@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { CircleDot } from "lucide-react";
+import { CircleDot, CalendarClock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { useRoleFlashMap, roleFlashClass, resolveAvatarUrl, type FlashRole } from "@/lib/role-flash";
