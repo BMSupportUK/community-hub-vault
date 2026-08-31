@@ -89,7 +89,7 @@ export function ChatMiniProfile({
 }
 
 function MiniProfileCard({ profile }: { profile: ChatMiniProfileData }) {
-  const { name, username, avatarUrl, hasAvatar, role, isOnline, lastSeenAt, isSelf } = profile;
+  const { name, username, avatarUrl, hasAvatar, role, isOnline, lastSeenAt, customStatus, isSelf } = profile;
   const initial = (name || "?").slice(0, 1).toUpperCase();
 
   return (
