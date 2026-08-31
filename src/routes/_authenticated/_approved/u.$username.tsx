@@ -50,6 +50,7 @@ interface ProfileRow {
   is_private: boolean | null;
   timezone: string | null;
   equipped_nameplate_id: string | null;
+  custom_status: string | null;
 }
 
 interface ShiftRow { id: string; user_id: string; clock_in: string; clock_out: string | null; }
@@ -1806,6 +1807,7 @@ function EditProfileModal({ profile, onClose, onSaved }: { profile: ProfileRow; 
   const [displayName, setDisplayName] = useState(profile.display_name ?? "");
   const [username, setUsername] = useState(profile.username ?? "");
   const [bio, setBio] = useState(profile.bio ?? "");
+  const [customStatus, setCustomStatus] = useState(profile.custom_status ?? "");
   const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url);
   const [isPrivate, setIsPrivate] = useState<boolean>(!!profile.is_private);
   const detectedTimezone = browserTimezone();
@@ -1837,11 +1839,13 @@ function EditProfileModal({ profile, onClose, onSaved }: { profile: ProfileRow; 
     if (!u || !/^[a-zA-Z0-9_-]{2,32}$/.test(u)) return toast.error("Username: 2–32 letters, numbers, _ or -");
     if (displayName.length > 64) return toast.error("Display name too long");
     if (bio.length > 5000) return toast.error("Bio too long (5000 characters max)");
+    if (customStatus.length > 80) return toast.error("Status too long (80 characters max)");
     setSaving(true);
     const { error } = await supabase.from("profiles").update({
       display_name: displayName.trim() || null,
       username: u,
       bio: bio.trim() || null,
+      custom_status: customStatus.trim() || null,
       avatar_url: avatarUrl,
       is_private: isPrivate,
       timezone: timezone || null,
@@ -1877,6 +1881,18 @@ function EditProfileModal({ profile, onClose, onSaved }: { profile: ProfileRow; 
         <Field label="Display name">
           <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} maxLength={64}
             className="w-full px-3 py-2 rounded-lg bg-surface-2 border border-border text-sm" />
+        </Field>
+        <Field label="Custom status">
+          <input
+            value={customStatus}
+            onChange={(e) => setCustomStatus(e.target.value)}
+            maxLength={80}
+            placeholder="Travelling home, On a call, AFK…"
+            className="w-full px-3 py-2 rounded-lg bg-surface-2 border border-border text-sm"
+          />
+          <span className="block text-[11px] text-muted-foreground mt-1">
+            Shown under your nameplate in Talk channels.
+          </span>
         </Field>
         <Field label="Bio">
           <HtmlEditor value={bio} onChange={setBio} placeholder="Tell us about yourself…" />

@@ -45,6 +45,7 @@ interface MiniProfile {
   display_name: string | null;
   avatar_url: string | null;
   equipped_nameplate_id: string | null;
+  custom_status: string | null;
 }
 
 export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "bar" } = {}) {
@@ -64,7 +65,7 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
     const load = async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("id, username, display_name, avatar_url, equipped_nameplate_id")
+        .select("id, username, display_name, avatar_url, equipped_nameplate_id, custom_status")
         .eq("id", user.id)
         .maybeSingle();
       if (data) setProfile(data as MiniProfile);
