@@ -369,6 +369,7 @@ function ChannelPage() {
   const [baselineReadAt, setBaselineReadAt] = useState<string | null>(null);
 
   const initialScrollDoneRef = useRef(false);
+  const keepScrollPinnedRef = useRef(true);
   const lastReadAtRef = useRef<string | null>(null);
   const firstUnreadRef = useRef<HTMLDivElement | null>(null);
   const latestMessageRef = useRef<Message | null>(null);
@@ -401,6 +402,39 @@ function ChannelPage() {
     if (!el) return true;
     return el.scrollHeight - el.scrollTop - el.clientHeight < 80;
   };
+
+  // Message rows finish rendering in stages (profiles, reactions and media).
+  // Keep a reader who is already at the bottom anchored there when any of
+  // those late updates change the list height, rather than letting the rows
+  // visibly jump up the screen.
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el || typeof ResizeObserver === "undefined") return;
+
+    const rememberPosition = () => {
+      keepScrollPinnedRef.current = isAtBottom();
+    };
+    const observer = new ResizeObserver(() => {
+      if (!initialScrollDoneRef.current || !keepScrollPinnedRef.current) return;
+      requestAnimationFrame(() => el.scrollTo({ top: el.scrollHeight }));
+    });
+
+    const observeRows = () => {
+      for (const child of Array.from(el.children)) observer.observe(child);
+    };
+    const mutations = new MutationObserver(observeRows);
+
+    el.addEventListener("scroll", rememberPosition, { passive: true });
+    observer.observe(el);
+    observeRows();
+    mutations.observe(el, { childList: true });
+
+    return () => {
+      el.removeEventListener("scroll", rememberPosition);
+      mutations.disconnect();
+      observer.disconnect();
+    };
+  }, [channel?.id]);
 
   const persistLastRead = (iso: string) => {
     if (!channel || !user) return;
@@ -1388,7 +1422,7 @@ function ChannelPage() {
       </header>
       <div className="flex-1 flex min-w-0 min-h-0">
         <div className="flex-1 flex flex-col min-w-0 min-h-0">
-          <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
+          <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-4 space-y-3 [overflow-anchor:auto]">
             {channel.slug !== "welcome" && channel.slug !== "rules" && (
               <div className="flex items-center gap-2 rounded-lg border border-border bg-surface-2/60 px-3 py-2 text-xs text-muted-foreground">
                 <Trash2 className="size-3.5 text-primary shrink-0" />
@@ -1453,7 +1487,7 @@ function ChannelPage() {
                     };
 
                     return (
-                      <div key={m.id}>
+                      <div key={m.id} className="[overflow-anchor:auto]">
                         {showUnreadDivider && (
                           <div
                             ref={firstUnreadRef}
@@ -1509,8 +1543,9 @@ function ChannelPage() {
                               // width would shift the whole message row sideways.
                               <div className="flex w-16 flex-col items-center gap-0.5 shrink-0 mt-0.5">
                                 {avatarEl}
-                                {profileId && (
-                                  <div className="flex w-16 items-center justify-center gap-1 text-[10px] text-muted-foreground">
+                                <div className="flex h-4 w-16 items-center justify-center gap-1 text-[10px] text-muted-foreground">
+                                  {profileId && (
+                                    <>
                                     <PresenceMiniDot userId={profileId} isOnline={isOnline} />
                                     <span className="min-w-0 truncate">
                                       <PresenceMiniLabel
@@ -1519,8 +1554,9 @@ function ChannelPage() {
                                         offlineText={`Active ${formatLastSeen(p?.last_seen_at)}`}
                                       />
                                     </span>
-                                  </div>
-                                )}
+                                    </>
+                                  )}
+                                </div>
                               </div>
                             );
                           })()}
@@ -1551,11 +1587,9 @@ function ChannelPage() {
                                     </span>
                                   </Nameplate>
                                 </ChatMiniProfile>
-                                {p?.custom_status && (
-                                  <span className="text-[10px] text-muted-foreground truncate px-1 -mt-0.5">
-                                    {p.custom_status}
-                                  </span>
-                                )}
+                                <span className="block h-3 text-[10px] leading-3 text-muted-foreground truncate px-1 -mt-0.5">
+                                  {p?.custom_status ?? ""}
+                                </span>
                               </div>
                               <span className="text-[10px] text-muted-foreground shrink-0">
                                 {new Date(m.created_at).toLocaleTimeString("en-GB", {
@@ -1685,12 +1719,16 @@ function ChannelPage() {
                                     const gif = extractStandaloneGif(m.content);
                                     if (gif) {
                                       return (
-                                        <img
-                                          src={gif}
-                                          alt="GIF"
-                                          loading="lazy"
-                                          className="max-w-[320px] max-h-[280px] w-auto h-auto rounded-lg border border-border"
-                                        />
+                                        <span className="block h-[240px] w-[320px] max-w-full overflow-hidden rounded-lg border border-border bg-surface-1">
+                                          <img
+                                            src={gif}
+                                            alt="GIF"
+                                            loading="lazy"
+                                            width={320}
+                                            height={240}
+                                            className="size-full object-contain"
+                                          />
+                                        </span>
                                       );
                                     }
                                     return (
