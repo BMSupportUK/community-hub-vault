@@ -86,14 +86,21 @@ function MembersPage() {
   };
 
   const load = async () => {
-    const [{ data: ps }, { data: rs }] = await Promise.all([
+    const [{ data: ps }, { data: rs }, { data: dirRoles }] = await Promise.all([
       supabase.from("profiles").select("*").order("created_at", { ascending: false }),
       supabase.from("user_roles").select("user_id, role"),
+      // Non-staff member roles are hidden from ordinary users by access rules,
+      // so the directory reads them through a dedicated safe lookup.
+      supabase.rpc("directory_member_roles" as never),
     ]);
     setProfiles((ps as Profile[] | null) ?? []);
     const map: Record<string, string[]> = {};
-    for (const r of (rs as RoleRow[] | null) ?? []) {
-      (map[r.user_id] ||= []).push(r.role);
+    for (const r of [
+      ...(((rs as RoleRow[] | null) ?? [])),
+      ...(((dirRoles as RoleRow[] | null) ?? [])),
+    ]) {
+      const list = (map[r.user_id] ||= []);
+      if (!list.includes(r.role)) list.push(r.role);
     }
     setRolesByUser(map);
 
