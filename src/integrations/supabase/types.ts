@@ -5699,10 +5699,6 @@ export type Database = {
         Returns: undefined
       }
       delete_app_role: { Args: { _name: string }; Returns: undefined }
-      delete_email: {
-        Args: { message_id: number; queue_name: string }
-        Returns: boolean
-      }
       directory_member_roles: {
         Args: never
         Returns: {
@@ -5711,11 +5707,6 @@ export type Database = {
         }[]
       }
       email_is_account_holder: { Args: { _email: string }; Returns: boolean }
-      email_queue_dispatch: { Args: never; Returns: undefined }
-      enqueue_email: {
-        Args: { payload: Json; queue_name: string }
-        Returns: number
-      }
       export_app_credentials_for_backup: {
         Args: never
         Returns: {
@@ -6044,26 +6035,9 @@ export type Database = {
           id: string
         }[]
       }
-      move_to_dlq: {
-        Args: {
-          dlq_name: string
-          message_id: number
-          payload: Json
-          source_queue: string
-        }
-        Returns: number
-      }
       mute_user: {
         Args: { _duration_seconds: number; _reason?: string; _user_id: string }
         Returns: string
-      }
-      read_email_batch: {
-        Args: { batch_size: number; queue_name: string; vt: number }
-        Returns: {
-          message: Json
-          msg_id: number
-          read_ct: number
-        }[]
       }
       record_admin_unlock_failure: { Args: never; Returns: Json }
       redeem_invite: { Args: { p_code: string }; Returns: Json }
