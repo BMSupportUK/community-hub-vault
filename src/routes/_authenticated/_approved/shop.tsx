@@ -1047,8 +1047,8 @@ function BuySteps({
   return (
     <section className="-mt-12 md:-mt-16 relative z-10 px-2 md:px-0 pb-6">
       <div className="mb-4 text-center">
-        <div className="text-[11px] uppercase tracking-[0.25em] text-sky-300/80">How to buy</div>
-        <h2 className="font-display text-2xl md:text-3xl font-bold mt-1">Three simple steps</h2>
+        <div className="text-[11px] uppercase tracking-[0.25em] text-sky-300/80">How it works</div>
+        <h2 className="font-display text-2xl md:text-3xl font-bold mt-1">Your order journey</h2>
         <div className="mt-3 max-w-md mx-auto">
           <div className="flex items-center justify-between text-[11px] text-muted-foreground mb-1">
             <span>{placed ? `${completed} of ${steps.length} complete` : "Not started yet"}</span>
