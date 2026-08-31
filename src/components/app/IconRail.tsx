@@ -111,6 +111,8 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
   const isAdmin = hasAny(["admin", "management"]);
   const path = useRouterState({ select: (r) => r.location.pathname });
   const [unreadNewContent, setUnreadNewContent] = useState(cachedUnreadNewContent);
+  // LOCKED: side rail chat counter — total people in Talk Channels (staff included).
+  // Do not change, restyle, or remove without explicit authorisation. See mem://constraints/chat-counters-locked
   const chatroomCount = useTalkChannelTotalCount();
   const [order, setOrder] = useState<NavOrderMap>(cachedNavOrder);
   const [pagePerms, setPagePerms] = useState<PagePermMap>(cachedPagePerms);
