@@ -275,7 +275,15 @@ export async function syncFantasyPlayersFromClub(admin: Admin): Promise<FantasyS
     const changes: Record<string, unknown> = { last_seen_at: nowIso };
     if ((row.loan_from ?? null) !== (p.onLoanFrom ?? null)) changes.loan_from = p.onLoanFrom ?? null;
     if (row.mfc_player_id !== p.mfcPlayerId) changes.mfc_player_id = p.mfcPlayerId;
-    if (row.name !== p.name) changes.name = p.name;
+    if (row.name !== p.name) {
+      changes.name = p.name;
+      // Keep already-logged transfer rows in step with the club's full name so a
+      // partial name captured from an announcement doesn't linger in the list.
+      await admin
+        .from("fantasy_club_transfers")
+        .update({ player_name: p.name })
+        .eq("player_id", row.id);
+    }
     if (row.position !== p.position) changes.position = p.position;
     if ((row.squad_level ?? "first") !== p.squadLevel) changes.squad_level = p.squadLevel;
     // The academy feeds carry no shirt numbers, so never let a null from the feed
