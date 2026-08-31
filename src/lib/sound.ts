@@ -280,19 +280,33 @@ export function playSoundFromGesture(
   opts: { volume?: number; gain?: number; label?: string; ignoreMute?: boolean } = {},
 ): Promise<boolean> {
   if (typeof window === "undefined") return Promise.resolve(false);
+  if (typeof src !== "string" || !src) {
+    console.warn("[sound] ignored gesture playback with no source", opts.label ?? "");
+    return Promise.resolve(false);
+  }
 
   const prefs = getSoundPrefs();
   if (prefs.muted && !opts.ignoreMute) return Promise.resolve(false);
 
   const { volume = 1, gain = 1.0, label } = opts;
-  const level = Math.max(0, Math.min(MAX_LEVEL, volume * gain * GAIN_SCALE * prefs.volume));
-  const el = new Audio();
-  el.preload = "auto";
-  el.src = src;
-  el.muted = false;
-  el.volume = level;
-  (el as HTMLAudioElement & { playsInline?: boolean }).playsInline = true;
-  activeGestureElements.add(el);
+  const rawLevel = volume * gain * GAIN_SCALE * prefs.volume;
+  const level = Number.isFinite(rawLevel)
+    ? Math.max(0, Math.min(MAX_LEVEL, rawLevel))
+    : MAX_LEVEL * 0.5;
+
+  let el: HTMLAudioElement;
+  try {
+    el = new Audio();
+    el.preload = "auto";
+    el.src = src;
+    el.muted = false;
+    el.volume = level;
+    (el as HTMLAudioElement & { playsInline?: boolean }).playsInline = true;
+    activeGestureElements.add(el);
+  } catch (err) {
+    console.warn(`[sound] could not create audio (${label ?? src}):`, (err as Error)?.message ?? err);
+    return Promise.resolve(false);
+  }
 
   return new Promise<boolean>((resolve) => {
     let settled = false;
