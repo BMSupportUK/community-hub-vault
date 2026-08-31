@@ -68,15 +68,18 @@ export const unlockGuide = createServerFn({ method: "POST" })
     const code = (data.code ?? "").trim();
     let row;
 
+    // A live passcode belongs to the member, not to a single guide: any
+    // unexpired code unlocks any guide for its 24-hour window.
     if (code) {
       const { data: matched } = await supabaseAdmin
         .from("guide_passcodes")
         .select("id, expires_at")
-        .eq("blog_id", data.blogId)
         .eq("user_id", userId)
         .eq("code_hash", hashCode(userId, code))
         .is("revoked_at", null)
         .gt("expires_at", nowIso)
+        .order("issued_at", { ascending: false })
+        .limit(1)
         .maybeSingle();
       row = matched;
     } else {
@@ -84,7 +87,6 @@ export const unlockGuide = createServerFn({ method: "POST" })
       const { data: matched } = await supabaseAdmin
         .from("guide_passcodes")
         .select("id, expires_at")
-        .eq("blog_id", data.blogId)
         .eq("user_id", userId)
         .is("revoked_at", null)
         .gt("expires_at", nowIso)
