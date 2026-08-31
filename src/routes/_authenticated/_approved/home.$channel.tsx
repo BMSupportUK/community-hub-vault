@@ -44,7 +44,7 @@ import {
   STAFF_ROLE_TAGS,
   MEMBER_ROLE_TAGS,
 } from "@/components/app/mentions";
-import { GifPicker, extractStandaloneGif } from "@/components/app/GifPicker";
+import { GifPicker, extractStandaloneGif, extractImageUrl } from "@/components/app/GifPicker";
 import { ChatMessageBody, isRichChatContent } from "@/components/app/ChatMessageBody";
 import { ChatFormatToolbar } from "@/components/app/ChatFormatToolbar";
 import { ChatMiniProfile } from "@/components/app/ChatMiniProfile";
@@ -1215,15 +1215,24 @@ function ChannelPage() {
                             </span>
                           </div>
                           {(() => {
-                            const img = extractStandaloneGif(m.content);
+                            const img = extractImageUrl(m.content);
                             if (img) {
                               return (
-                                <img
-                                  src={img}
-                                  alt="Pinned image"
-                                  loading="lazy"
-                                  className="max-w-full max-h-[240px] w-auto h-auto rounded-lg border border-border"
-                                />
+                                <div className="space-y-2">
+                                  <img
+                                    src={img.url}
+                                    alt="Pinned image"
+                                    loading="lazy"
+                                    className="max-w-full max-h-[240px] w-auto h-auto rounded-lg border border-border"
+                                  />
+                                  {img.rest && (
+                                    <MentionText
+                                      content={img.rest}
+                                      currentUsername={myUsername}
+                                      className="text-sm leading-relaxed text-foreground break-words [overflow-wrap:anywhere]"
+                                    />
+                                  )}
+                                </div>
                               );
                             }
                             return (
