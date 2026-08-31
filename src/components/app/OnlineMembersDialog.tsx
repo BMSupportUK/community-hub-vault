@@ -410,23 +410,30 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
                       <td className="px-4 py-3 whitespace-nowrap text-xs font-semibold text-white/80">
                         {relativeSince(p.created_at)}
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <span
-                          className={cn(
-                            "inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
-                            isOnline
-                              ? "border-emerald-400/40 bg-emerald-500/20 text-emerald-300"
-                              : "border-white/15 bg-white/5 text-white/50",
-                          )}
-                        >
+                      <td className="px-4 py-3 whitespace-nowrap align-top">
+                        <div className="flex flex-col gap-1">
                           <span
                             className={cn(
-                              "size-1.5 rounded-full",
-                              isOnline ? "bg-emerald-400" : "bg-neutral-500",
+                              "inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider w-fit",
+                              isOnline
+                                ? "border-emerald-400/40 bg-emerald-500/20 text-emerald-300"
+                                : "border-white/15 bg-white/5 text-white/50",
                             )}
-                          />
-                          {isOnline ? "Online" : "Offline"}
-                        </span>
+                          >
+                            <span
+                              className={cn(
+                                "size-1.5 rounded-full",
+                                isOnline ? "bg-emerald-400" : "bg-neutral-500",
+                              )}
+                            />
+                            {isOnline ? "Online" : "Offline"}
+                          </span>
+                          {p.custom_status && (
+                            <span className="text-[11px] text-white/70 truncate max-w-[160px]">
+                              {p.custom_status}
+                            </span>
+                          )}
+                        </div>
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap text-xs font-medium text-white/70">
                         {isOnline ? "Now" : lastActiveStamp(p.last_seen_at)}
