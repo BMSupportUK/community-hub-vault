@@ -226,7 +226,7 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
   /** Distinct member roles present for the Talk Channel filter. */
   const roleOptions = useMemo(() => {
     const set = new Set<string>();
-    for (const p of memberProfiles) for (const r of bmSupportRoles(rolesByUser[p.id] ?? [])) set.add(r);
+    for (const p of memberProfiles) for (const r of displayRoles(rolesByUser[p.id] ?? [])) set.add(r);
     return Array.from(set).sort();
   }, [memberProfiles, rolesByUser]);
 
@@ -234,7 +234,7 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
     const term = q.trim().toLowerCase();
     return memberProfiles
       .filter((p) => {
-        const roles = rolesByUser[p.id] ?? [];
+        const roles = displayRoles(rolesByUser[p.id] ?? []);
         if (roleFilter !== "all" && !roles.includes(roleFilter)) return false;
         if (!term) return true;
         return (
@@ -346,7 +346,7 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
                   const isIgnored = ignored.has(p.id);
                   const isOnline = onlineIds.has(p.id);
                   const busy = busyId === p.id || (rel?.id && busyId === rel.id);
-                  const roles = bmSupportRoles(rolesByUser[p.id] ?? []);
+                  const roles = displayRoles(rolesByUser[p.id] ?? []);
                   return (
                     <tr
                       key={p.id}
