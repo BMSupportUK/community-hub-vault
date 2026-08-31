@@ -24,6 +24,7 @@ type DirectoryRow = {
 };
 
 const HIDDEN_ROLES = new Set(["pending", "banned", "rejected"]);
+const STAFF_ROLES = new Set(["admin", "management", "moderator", "staff"]);
 
 /** Role colour for the Discord-style grouped list headings and names. */
 const ROLE_TEXT: Record<string, string> = {
@@ -37,8 +38,8 @@ const ROLE_TEXT: Record<string, string> = {
 };
 
 /**
- * Discord-style Members panel for Talk Channels: online members grouped by
- * their highest role, then an Offline group, with a member profile popout.
+ * Members tab inside Talk Channels. It lists every non-staff member and marks
+ * members currently present in Talk Channels with a live green status dot.
  */
 export function TalkChannelMembersPanel() {
   const { user } = useAuth();
@@ -68,7 +69,13 @@ export function TalkChannelMembersPanel() {
   }, [load]);
 
   const members = useMemo(
-    () => (rows ?? []).filter((r) => !(r.roles ?? []).some((x) => HIDDEN_ROLES.has(x))),
+    () =>
+      (rows ?? []).filter((r) => {
+        const roles = r.roles ?? [];
+        if (roles.some((role) => HIDDEN_ROLES.has(role))) return false;
+        if (roles.some((role) => STAFF_ROLES.has(role))) return false;
+        return true;
+      }),
     [rows],
   );
 
@@ -91,7 +98,7 @@ export function TalkChannelMembersPanel() {
         const order = sortRolesByPriority([a.role, b.role]);
         return order[0] === a.role ? -1 : 1;
       });
-    return { ordered, offline: offline.sort(sortByName), onlineCount: online.length };
+    return { ordered, offline: offline.sort(sortByName) };
   }, [members, onlineIds]);
 
   if (rows === null) {
@@ -107,9 +114,6 @@ export function TalkChannelMembersPanel() {
       <div className="shrink-0 border-b border-border px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
         <Users className="size-3.5" />
         Members
-        <span className="rounded-full bg-emerald-500/20 px-1.5 py-0.5 text-[10px] font-bold text-emerald-300">
-          {groups.onlineCount}
-        </span>
       </div>
       <div className="flex-1 min-h-0 overflow-y-auto px-2 py-2 space-y-3">
         {groups.ordered.map(({ role, list }) => (
@@ -120,7 +124,7 @@ export function TalkChannelMembersPanel() {
                 ROLE_TEXT[role] ?? "text-muted-foreground",
               )}
             >
-              {formatRoleLabel(role)} — {list.length}
+              {formatRoleLabel(role)}
             </h3>
             <div className="space-y-0.5">
               {list.map((m) => (
@@ -139,7 +143,7 @@ export function TalkChannelMembersPanel() {
         {groups.offline.length > 0 && (
           <section>
             <h3 className="px-1 pb-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-              Offline — {groups.offline.length}
+              Offline
             </h3>
             <div className="space-y-0.5">
               {groups.offline.map((m) => (
