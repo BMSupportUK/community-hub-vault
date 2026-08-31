@@ -42,6 +42,19 @@ function bmSupportRoles(roles: string[]): string[] {
   return roles.filter((r) => !isFanZoneRole(r));
 }
 
+/**
+ * Roles shown in the members list. Members without an explicit subscriber
+ * role are surfaced as "Non Subscriber" so the filter always covers them.
+ */
+function displayRoles(roles: string[]): string[] {
+  const base = bmSupportRoles(roles);
+  const hasSub = base.some((r) => r === "subscriber");
+  const hasNon = base.some((r) => r === "nonsubscriber");
+  if (!hasSub && !hasNon) return [...base, "nonsubscriber"];
+  return base;
+}
+
+
 /** Human relative age, e.g. "7 months ago". */
 function relativeSince(iso: string | null): string {
   if (!iso) return "—";
@@ -213,7 +226,7 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
   /** Distinct member roles present for the Talk Channel filter. */
   const roleOptions = useMemo(() => {
     const set = new Set<string>();
-    for (const p of memberProfiles) for (const r of bmSupportRoles(rolesByUser[p.id] ?? [])) set.add(r);
+    for (const p of memberProfiles) for (const r of displayRoles(rolesByUser[p.id] ?? [])) set.add(r);
     return Array.from(set).sort();
   }, [memberProfiles, rolesByUser]);
 
@@ -221,7 +234,7 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
     const term = q.trim().toLowerCase();
     return memberProfiles
       .filter((p) => {
-        const roles = rolesByUser[p.id] ?? [];
+        const roles = displayRoles(rolesByUser[p.id] ?? []);
         if (roleFilter !== "all" && !roles.includes(roleFilter)) return false;
         if (!term) return true;
         return (
@@ -333,7 +346,7 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
                   const isIgnored = ignored.has(p.id);
                   const isOnline = onlineIds.has(p.id);
                   const busy = busyId === p.id || (rel?.id && busyId === rel.id);
-                  const roles = bmSupportRoles(rolesByUser[p.id] ?? []);
+                  const roles = displayRoles(rolesByUser[p.id] ?? []);
                   return (
                     <tr
                       key={p.id}
