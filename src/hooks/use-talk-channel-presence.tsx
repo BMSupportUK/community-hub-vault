@@ -157,7 +157,6 @@ function collectUniqueUsers(channel: RealtimeChannel): Set<string> {
       const seenKey = `${key}:${presence.user_id}`;
       liveKeys.add(seenKey);
       if (explicitlyDepartedKeys.has(seenKey)) continue;
-      const previous = lastSeenLocal.get(seenKey);
       const stamp = presence.online_at ?? "";
       const departedStamp = departedPresenceStamps.get(seenKey);
       if (departedStamp !== undefined) {
@@ -166,17 +165,12 @@ function collectUniqueUsers(channel: RealtimeChannel): Set<string> {
         if (!stamp || stamp === departedStamp) continue;
         departedPresenceStamps.delete(seenKey);
       }
-      const prevStamp = presenceStamps.get(seenKey);
-      if (previous === undefined || stamp !== prevStamp) {
-        // First sighting, or a fresh heartbeat arrived — reset our local clock.
-        lastSeenLocal.set(seenKey, now);
-        presenceStamps.set(seenKey, stamp);
-        userIds.add(presence.user_id);
-        continue;
-      }
-      // Ignore heartbeats that stopped arriving — the device left without a
-      // clean untrack (closed tab, sleeping laptop, dropped connection).
-      if (previous < cutoff) continue;
+      // A key still present in the server-owned presence snapshot is online.
+      // Refreshing our local observation time here avoids re-tracking solely
+      // to update a timestamp; re-track emits a false leave+join pair that made
+      // members look as though they were being booted from the room.
+      lastSeenLocal.set(seenKey, now);
+      presenceStamps.set(seenKey, stamp);
       userIds.add(presence.user_id);
     }
   }
@@ -534,16 +528,9 @@ function ensureSharedChannel() {
         resubscribe();
         return;
       }
-      const active = Array.from(trackers.values()).at(-1);
-      if (active) {
-        void live
-          .track({
-            user_id: active.userId,
-            channel_id: active.channelId,
-            online_at: new Date().toISOString(),
-          })
-          .catch(() => undefined);
-      }
+      // Do not call track() as a heartbeat. The realtime connection already
+      // maintains presence, while re-tracking generates a synthetic leave/join
+      // cycle on every other client and makes member rows flicker offline.
       publishCount();
     }, HEARTBEAT_MS);
   }
