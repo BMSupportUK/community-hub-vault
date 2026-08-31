@@ -172,6 +172,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isRejected = roles.includes("rejected");
   const isStaff = hasAny(["admin", "management", "staff", "moderator"]);
   const isMod = hasAny(["admin", "management", "moderator"]);
+  const isFanZoneOnly = rolesLoaded && isFanZoneOnlyRoles(roles);
 
   return (
     <Ctx.Provider
