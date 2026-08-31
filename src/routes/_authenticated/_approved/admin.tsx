@@ -479,6 +479,7 @@ function DashboardBody() {
     { to: "/admin-streaming-devices", label: "Streaming devices", desc: "Manage the streaming device catalogue and refresh UK retailer prices.", icon: MonitorPlay },
     { to: "/shop", search: { view: "admin" }, label: "Shop products", desc: "Add, edit and reorder shop products and categories.", icon: Package, adminOnly: true },
     { to: "/shop", search: { view: "discounts" }, label: "Discount codes", desc: "Create and manage promotional discount codes.", icon: Tag, adminOnly: true },
+    { to: "/install-guides", search: { tab: "app-apk" }, label: "App APK & transfers", desc: "Upload the Android APK and monitor the live 24-hour install links members have requested.", icon: Package },
   ];
   const tools = allTools
     .filter((t) => !t.adminOnly || isAdminOnly)
