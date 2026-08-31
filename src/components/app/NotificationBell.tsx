@@ -369,7 +369,14 @@ export function NotificationBell() {
               const Icon = iconFor(n.kind);
               const isUnread = !readIds.has(n.id);
               return (
-                <li key={n.id} className={cn("px-4 py-3 transition-colors", isUnread && "bg-primary/5")}>
+                <li
+                  key={n.id}
+                  onClick={() => { if (isUnread) void markRead(n.id); }}
+                  className={cn(
+                    "px-4 py-3 transition-colors cursor-pointer hover:bg-muted/40",
+                    isUnread && "bg-primary/5",
+                  )}
+                >
                   <div className="flex gap-3">
                     <div
                       className={cn(
