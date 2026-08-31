@@ -65,15 +65,34 @@ export const unlockGuide = createServerFn({ method: "POST" })
     const userId = context.userId;
     const nowIso = new Date().toISOString();
 
-    const { data: row } = await supabaseAdmin
-      .from("guide_passcodes")
-      .select("id, expires_at")
-      .eq("blog_id", data.blogId)
-      .eq("user_id", userId)
-      .eq("code_hash", hashCode(userId, (data.code ?? "").trim()))
-      .is("revoked_at", null)
-      .gt("expires_at", nowIso)
-      .maybeSingle();
+    const code = (data.code ?? "").trim();
+    let row;
+
+    if (code) {
+      const { data: matched } = await supabaseAdmin
+        .from("guide_passcodes")
+        .select("id, expires_at")
+        .eq("blog_id", data.blogId)
+        .eq("user_id", userId)
+        .eq("code_hash", hashCode(userId, code))
+        .is("revoked_at", null)
+        .gt("expires_at", nowIso)
+        .maybeSingle();
+      row = matched;
+    } else {
+      // Re-open for a user who already holds a live passcode: no need to retype.
+      const { data: matched } = await supabaseAdmin
+        .from("guide_passcodes")
+        .select("id, expires_at")
+        .eq("blog_id", data.blogId)
+        .eq("user_id", userId)
+        .is("revoked_at", null)
+        .gt("expires_at", nowIso)
+        .order("issued_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      row = matched;
+    }
 
     if (!row) return { ok: false as const };
 
