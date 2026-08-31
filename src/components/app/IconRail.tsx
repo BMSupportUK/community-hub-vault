@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { UserAvatarMenu } from "@/components/app/UserAvatarMenu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import mfcBadge from "@/assets/mfc-badge.png.asset.json";
+import { useTalkChannelTotalCount } from "@/hooks/use-talk-channel-presence";
 import fantasyBench from "@/assets/boro-fantasy-bench.png.asset.json";
 import sportsGuideIcon from "@/assets/sports-guide-rail.png.asset.json";
 import boroPredictionsGoal from "@/assets/boro-predictions-goal.png.asset.json";
@@ -220,7 +221,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
 
   const supportItems: RailItem[] = [
     { to: "/home", label: "Home", icon: Home, show: true },
-    { to: "/home/$channel", label: "Customer Chatroom", icon: MessageSquare, show: true, params: { channel: "welcome" } },
+    { to: "/home/$channel", label: "Customer Chatroom", icon: MessageSquare, show: true, params: { channel: "welcome" }, badge: chatroomCount, badgeVariant: "online" },
     { to: "/tickets", label: "Tickets", icon: Ticket, show: !hasRole("moderator") },
     { to: "/shop", label: "Shop", icon: ShoppingCart, show: true },
     { to: "/install-guides", label: "Install guides", icon: Wrench, show: true },
