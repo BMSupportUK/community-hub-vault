@@ -1,0 +1,343 @@
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Link } from "@tanstack/react-router";
+import { Users, User, UserPlus, Check, Clock, EyeOff, Eye, Search } from "lucide-react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
+import { useOnlineUsers } from "@/hooks/use-online-users";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Nameplate } from "@/components/app/Nameplate";
+import { useRoleFlashMap, roleFlashClass, resolveAvatarUrl } from "@/lib/role-flash";
+import { formatRoleLabel } from "@/lib/role-label";
+import { cn } from "@/lib/utils";
+
+type MemberProfile = {
+  id: string;
+  username: string | null;
+  display_name: string | null;
+  avatar_url: string | null;
+  equipped_nameplate_id: string | null;
+};
+
+type FriendState = { kind: "friends" | "outgoing" | "incoming"; id?: string };
+
+const HIDDEN_ROLES = new Set(["pending", "banned", "rejected"]);
+const STAFF_ROLES = new Set(["admin", "management", "moderator", "staff"]);
+
+/**
+ * "Members online · N" button + full-page dialog listing every member who is
+ * currently online, with view profile / add friend / ignore actions.
+ */
+export function OnlineMembersDialog({ className }: { className?: string }) {
+  const { user } = useAuth();
+  const onlineIds = useOnlineUsers();
+  const roleFlashMap = useRoleFlashMap();
+  const [open, setOpen] = useState(false);
+  const [profiles, setProfiles] = useState<MemberProfile[]>([]);
+  const [rolesByUser, setRolesByUser] = useState<Record<string, string[]>>({});
+  const [friendByUser, setFriendByUser] = useState<Record<string, FriendState>>({});
+  const [ignored, setIgnored] = useState<Set<string>>(new Set());
+  const [busyId, setBusyId] = useState<string | null>(null);
+  const [q, setQ] = useState("");
+
+  const ids = useMemo(() => Array.from(onlineIds), [onlineIds]);
+  const idKey = ids.slice().sort().join(",");
+
+  const load = useCallback(async () => {
+    if (!ids.length) {
+      setProfiles([]);
+      setRolesByUser({});
+      return;
+    }
+    const [{ data: ps }, { data: rs }] = await Promise.all([
+      supabase
+        .from("profiles")
+        .select("id,username,display_name,avatar_url,equipped_nameplate_id")
+        .in("id", ids),
+      supabase.from("user_roles").select("user_id,role").in("user_id", ids),
+    ]);
+    setProfiles(((ps as MemberProfile[] | null) ?? []).filter((p) => p.id));
+    const map: Record<string, string[]> = {};
+    for (const r of ((rs as Array<{ user_id: string; role: string }> | null) ?? [])) {
+      (map[r.user_id] ||= []).push(r.role);
+    }
+    setRolesByUser(map);
+  }, [idKey]);
+
+  const loadRelations = useCallback(async () => {
+    if (!user) return;
+    const [{ data: fs }, { data: igs }] = await Promise.all([
+      supabase
+        .from("friendships")
+        .select("id, requester_id, addressee_id, status")
+        .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`),
+      supabase.from("user_ignores").select("ignored_id").eq("ignorer_id", user.id),
+    ]);
+    const fmap: Record<string, FriendState> = {};
+    for (const f of ((fs as Array<{ id: string; requester_id: string; addressee_id: string; status: string }> | null) ?? [])) {
+      const otherId = f.requester_id === user.id ? f.addressee_id : f.requester_id;
+      if (f.status === "accepted") {
+        if (f.requester_id === user.id) fmap[otherId] = { kind: "friends", id: f.id };
+      } else if (f.requester_id === user.id) {
+        fmap[otherId] = { kind: "outgoing" };
+      } else {
+        fmap[otherId] = { kind: "incoming", id: f.id };
+      }
+    }
+    setFriendByUser(fmap);
+    setIgnored(new Set(((igs as Array<{ ignored_id: string }> | null) ?? []).map((r) => r.ignored_id)));
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!open) return;
+    void load();
+    void loadRelations();
+  }, [open, load, loadRelations]);
+
+  const sendRequest = async (toId: string) => {
+    if (!user) return;
+    setBusyId(toId);
+    const { error } = await supabase.from("friendships").insert({ requester_id: user.id, addressee_id: toId });
+    setBusyId(null);
+    if (error) return toast.error(error.message);
+    toast.success("Friend request sent");
+    void loadRelations();
+  };
+
+  const acceptRequest = async (id: string) => {
+    setBusyId(id);
+    const { error } = await supabase.from("friendships").update({ status: "accepted" }).eq("id", id);
+    setBusyId(null);
+    if (error) return toast.error(error.message);
+    toast.success("Friends");
+    void loadRelations();
+  };
+
+  const toggleIgnore = async (targetId: string) => {
+    if (!user) return;
+    const roles = rolesByUser[targetId] ?? [];
+    if (roles.some((r) => STAFF_ROLES.has(r))) return toast.error("Staff members cannot be ignored.");
+    setBusyId(targetId);
+    if (ignored.has(targetId)) {
+      const { error } = await supabase
+        .from("user_ignores")
+        .delete()
+        .eq("ignorer_id", user.id)
+        .eq("ignored_id", targetId);
+      setBusyId(null);
+      if (error) return toast.error(error.message);
+      toast.success("User unignored");
+    } else {
+      const { error } = await supabase
+        .from("user_ignores")
+        .insert({ ignorer_id: user.id, ignored_id: targetId });
+      setBusyId(null);
+      if (error) return toast.error(error.message);
+      toast.success("User ignored — their messages are hidden");
+    }
+    void loadRelations();
+  };
+
+  const visible = useMemo(() => {
+    const term = q.trim().toLowerCase();
+    return profiles
+      .filter((p) => {
+        const roles = rolesByUser[p.id] ?? [];
+        if (roles.some((r) => HIDDEN_ROLES.has(r))) return false;
+        if (!term) return true;
+        return (
+          (p.display_name ?? "").toLowerCase().includes(term) ||
+          (p.username ?? "").toLowerCase().includes(term)
+        );
+      })
+      .sort((a, b) =>
+        (a.display_name || a.username || "").localeCompare(b.display_name || b.username || ""),
+      );
+  }, [profiles, rolesByUser, q]);
+
+  const count = onlineIds.size;
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <button
+          type="button"
+          className={cn(
+            "w-full flex items-center justify-between gap-2 rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-left text-white/90 transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40",
+            className,
+          )}
+        >
+          <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider">
+            <Users className="size-3.5" />
+            Members online
+            <span className="rounded-full bg-emerald-500/30 px-1.5 py-0.5 text-[10px] text-emerald-100">{count}</span>
+          </span>
+          <span className="text-[10px] font-medium uppercase tracking-wider text-white/70">View members</span>
+        </button>
+      </DialogTrigger>
+
+      <DialogContent
+        className="max-w-none w-screen h-screen sm:h-screen rounded-none border-0 p-0 gap-0 flex flex-col overflow-hidden bg-gradient-to-br from-violet-950 via-fuchsia-950 to-blue-950"
+        showCloseButton
+      >
+        <DialogHeader className="border-b border-white/15 px-5 py-4 text-left">
+          <DialogTitle className="flex items-center gap-2 text-white">
+            <Users className="size-5" />
+            Members online
+            <span className="rounded-full bg-emerald-500/25 px-2 py-0.5 text-xs font-semibold text-emerald-200">
+              {visible.length}
+            </span>
+          </DialogTitle>
+          <div className="relative mt-3 max-w-sm">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-white/50" />
+            <Input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Search members…"
+              className="pl-8 bg-white/10 border-white/20 text-white placeholder:text-white/50"
+            />
+          </div>
+        </DialogHeader>
+
+        <div className="flex-1 overflow-y-auto p-5">
+          {visible.length === 0 ? (
+            <div className="rounded-xl border border-white/15 bg-white/5 p-6 text-center text-sm text-white/70">
+              Nobody else is online right now.
+            </div>
+          ) : (
+            <div className="grid gap-3 grid-cols-[repeat(auto-fill,minmax(240px,1fr))]">
+              {visible.map((p) => {
+                const name = p.display_name || p.username || "Member";
+                const role = roleFlashMap.get(p.id);
+                const rel = friendByUser[p.id];
+                const isSelf = p.id === user?.id;
+                const isIgnored = ignored.has(p.id);
+                const busy = busyId === p.id || (rel?.id && busyId === rel.id);
+                return (
+                  <div
+                    key={p.id}
+                    className="rounded-xl border border-white/15 bg-white/5 p-3 backdrop-blur min-w-0"
+                  >
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className="relative shrink-0">
+                        <img
+                          src={resolveAvatarUrl(p.id, p.avatar_url, roleFlashMap)}
+                          alt={name}
+                          className="size-10 rounded-full object-cover ring-2 ring-white/30"
+                        />
+                        <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full bg-emerald-500 ring-2 ring-violet-950" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <Nameplate
+                          id={p.equipped_nameplate_id}
+                          className="flex w-full flex-col justify-center rounded-md px-2 py-1 shadow-sm isolate"
+                        >
+                          <span
+                            className={cn(
+                              "truncate text-xs font-semibold text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]",
+                              roleFlashClass(role),
+                            )}
+                          >
+                            {name}
+                          </span>
+                          {role && (
+                            <span className="text-[9px] font-medium uppercase tracking-wider text-white/90 drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]">
+                              {formatRoleLabel(role)}
+                            </span>
+                          )}
+                          <span className="text-[10px] font-semibold text-emerald-200 drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]">
+                            Online
+                          </span>
+                        </Nameplate>
+                      </div>
+                    </div>
+
+                    <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
+                      {p.username && (
+                        <Button
+                          asChild
+                          size="sm"
+                          variant="secondary"
+                          className="h-8 flex-1 min-w-[7rem] bg-white/15 text-white hover:bg-white/25 border border-white/20"
+                        >
+                          <Link to="/u/$username" params={{ username: p.username }} onClick={() => setOpen(false)}>
+                            <User className="size-3.5" />
+                            View profile
+                          </Link>
+                        </Button>
+                      )}
+                      {!isSelf && (
+                        <>
+                          {rel?.kind === "friends" ? (
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              disabled
+                              className="h-8 bg-emerald-500/25 text-emerald-100 border border-emerald-300/30"
+                              aria-label="Already friends"
+                            >
+                              <Check className="size-3.5" />
+                            </Button>
+                          ) : rel?.kind === "outgoing" ? (
+                            <Button
+                              size="sm"
+                              variant="secondary"
+                              disabled
+                              className="h-8 bg-white/10 text-white/70 border border-white/20"
+                              aria-label="Friend request pending"
+                            >
+                              <Clock className="size-3.5" />
+                            </Button>
+                          ) : rel?.kind === "incoming" ? (
+                            <Button
+                              size="sm"
+                              disabled={!!busy}
+                              onClick={() => rel.id && acceptRequest(rel.id)}
+                              className="h-8"
+                              aria-label="Accept friend request"
+                            >
+                              <Check className="size-3.5" />
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              disabled={!!busy}
+                              onClick={() => sendRequest(p.id)}
+                              className="h-8"
+                              aria-label={`Add ${name} as a friend`}
+                              title="Add friend"
+                            >
+                              <UserPlus className="size-3.5" />
+                            </Button>
+                          )}
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            disabled={!!busy}
+                            onClick={() => toggleIgnore(p.id)}
+                            className={cn(
+                              "h-8 border",
+                              isIgnored
+                                ? "bg-rose-500/25 text-rose-100 border-rose-300/30 hover:bg-rose-500/35"
+                                : "bg-white/15 text-white border-white/20 hover:bg-white/25",
+                            )}
+                            aria-label={isIgnored ? `Unignore ${name}` : `Ignore ${name}`}
+                            title={isIgnored ? "Unignore" : "Ignore"}
+                          >
+                            {isIgnored ? <Eye className="size-3.5" /> : <EyeOff className="size-3.5" />}
+                          </Button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
