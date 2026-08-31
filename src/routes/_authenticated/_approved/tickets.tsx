@@ -978,6 +978,18 @@ function TicketDetail({
     "stripe" | "square" | "nowpayments" | "bank_transfer" | null
   >(null);
   const [bankAwaiting, setBankAwaiting] = useState(false);
+  const [bankOnlyOrder, setBankOnlyOrder] = useState(false);
+  const checkOrderBankAccess = useServerFn(getOrderBankTransferAccess);
+  useEffect(() => {
+    let alive = true;
+    if (!ticket.order_id) { setBankOnlyOrder(false); return; }
+    (async () => {
+      const res: any = await checkOrderBankAccess({ data: { orderId: ticket.order_id as string } }).catch(() => null);
+      if (alive) setBankOnlyOrder(Boolean(res?.allowed));
+    })();
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ticket.order_id]);
   const refreshSquareInvoice = useServerFn(refreshSquareInvoiceStatus);
   const confirmStripe = useServerFn(confirmStripePayment);
   const cancelOrderAndSquareInvoiceRpc = useServerFn(cancelOrderAndSquareInvoice);
