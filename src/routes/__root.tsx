@@ -17,6 +17,7 @@ import { SoundUnlocker } from "@/components/app/SoundUnlocker";
 import { TicketReplyAlert } from "@/components/app/TicketReplyAlert";
 import { PushSoundBridge } from "@/components/app/PushSoundBridge";
 import { MentionSoundAlert } from "@/components/app/MentionSoundAlert";
+import { ToastNotificationBridge } from "@/components/app/ToastNotificationBridge";
 
 function NotFoundComponent() {
   return (
@@ -137,6 +138,7 @@ function RootComponent() {
         <MentionSoundAlert />
         <TicketReplyAlert />
         <PushSoundBridge />
+        <ToastNotificationBridge />
         <Outlet />
         {/* z-index keeps toasts visible above the inactivity lock overlay (z-200) */}
         <Toaster theme="dark" position="bottom-right" style={{ zIndex: 2147483000 }} />
