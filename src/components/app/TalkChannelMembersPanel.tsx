@@ -91,15 +91,18 @@ export function TalkChannelMembersPanel() {
       list.push(m);
       byRole.set(top, list);
     }
-    const sortByName = (a: DirectoryRow, b: DirectoryRow) =>
-      (a.display_name || a.username || "").localeCompare(b.display_name || b.username || "");
+    const sortByLatest = (a: DirectoryRow, b: DirectoryRow) => {
+      const aDate = a.last_seen_at ? new Date(a.last_seen_at).getTime() : 0;
+      const bDate = b.last_seen_at ? new Date(b.last_seen_at).getTime() : 0;
+      return bDate - aDate;
+    };
     const ordered = Array.from(byRole.entries())
-      .map(([role, list]) => ({ role, list: list.sort(sortByName) }))
+      .map(([role, list]) => ({ role, list: list.sort(sortByLatest) }))
       .sort((a, b) => {
         const order = sortRolesByPriority([a.role, b.role]);
         return order[0] === a.role ? -1 : 1;
       });
-    return { ordered, offline: offline.sort(sortByName) };
+    return { ordered, offline: offline.sort(sortByLatest) };
   }, [members, onlineIds]);
 
   // LOCKED: Members panel header counter — online non-staff members only.
