@@ -1,13 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import * as React from "react";
-import { render } from "@react-email/components";
 import { template as ticketReplyTpl } from "@/lib/email-templates/ticket-reply";
 
-const SITE_NAME = "BM Support";
-const SENDER_DOMAIN = "notify.bmsupport.uk";
-const FROM_DOMAIN = "bmsupport.uk";
 const TICKETS_URL = "https://bmsupport.uk/tickets";
 
 const STAFF_ROLES = ["admin", "management", "staff", "moderator"] as const;

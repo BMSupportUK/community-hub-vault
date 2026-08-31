@@ -1,13 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import * as React from "react";
-import { render } from "@react-email/components";
 import { template as vaultPinResetTpl } from "@/lib/email-templates/vault-pin-reset";
 
-const SITE_NAME = "BM Support";
-const SENDER_DOMAIN = "notify.bmsupport.uk";
-const FROM_DOMAIN = "bmsupport.uk";
 const LOGIN_URL = "https://bmsupport.uk";
 
 export const resetUserVaultPin = createServerFn({ method: "POST" })
