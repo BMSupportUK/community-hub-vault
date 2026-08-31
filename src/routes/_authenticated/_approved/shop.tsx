@@ -3783,16 +3783,8 @@ function OrderDetailImpl({
     if (busy) return;
     setBusy(true);
     try {
-      let profileLink = "";
-      if (order.user_id) {
-        const { data: prof } = await supabase
-          .from("profiles")
-          .select("username")
-          .eq("id", order.user_id)
-          .maybeSingle();
-        const uname = (prof as { username?: string | null } | null)?.username;
-        if (uname) profileLink = "";
-      }
+      await sendSystem(
+
       await sendSystem(
         `🛠️ We are currently setting up your account. Your login details will appear in the Credentials section of your profile soon.`,
       );
