@@ -283,6 +283,84 @@ export type Database = {
           },
         ]
       }
+      bank_transfer_details: {
+        Row: {
+          account_name: string
+          account_number: string
+          bic: string | null
+          created_at: string
+          iban: string | null
+          id: string
+          instructions: string | null
+          reference_prefix: string
+          singleton: boolean
+          sort_code: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          account_name?: string
+          account_number?: string
+          bic?: string | null
+          created_at?: string
+          iban?: string | null
+          id?: string
+          instructions?: string | null
+          reference_prefix?: string
+          singleton?: boolean
+          sort_code?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          account_name?: string
+          account_number?: string
+          bic?: string | null
+          created_at?: string
+          iban?: string | null
+          id?: string
+          instructions?: string | null
+          reference_prefix?: string
+          singleton?: boolean
+          sort_code?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      bank_transfer_permissions: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          granted_by: string | null
+          id: string
+          note: string | null
+          revoked_at: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          granted_by?: string | null
+          id?: string
+          note?: string | null
+          revoked_at?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          granted_by?: string | null
+          id?: string
+          note?: string | null
+          revoked_at?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       blacklist_entries: {
         Row: {
           created_at: string
@@ -5607,6 +5685,7 @@ export type Database = {
         Args: { _action: string; _channel: string; _user: string }
         Returns: boolean
       }
+      can_pay_by_bank_transfer: { Args: { _user_id: string }; Returns: boolean }
       check_admin_unlock_lockout: { Args: never; Returns: Json }
       cleanup_old_chat_messages: { Args: never; Returns: number }
       clear_admin_unlock_failures: { Args: never; Returns: undefined }
