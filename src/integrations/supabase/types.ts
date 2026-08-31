@@ -134,6 +134,48 @@ export type Database = {
         }
         Relationships: []
       }
+      app_builds: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          file_name: string
+          file_path: string
+          file_size: number | null
+          id: string
+          is_available: boolean
+          is_current: boolean
+          release_notes: string | null
+          updated_at: string
+          version_name: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          id?: string
+          is_available?: boolean
+          is_current?: boolean
+          release_notes?: string | null
+          updated_at?: string
+          version_name?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          id?: string
+          is_available?: boolean
+          is_current?: boolean
+          release_notes?: string | null
+          updated_at?: string
+          version_name?: string | null
+        }
+        Relationships: []
+      }
       app_demos: {
         Row: {
           app_name: string | null
@@ -199,6 +241,47 @@ export type Database = {
           value?: Json
         }
         Relationships: []
+      }
+      app_transfers: {
+        Row: {
+          build_id: string
+          download_count: number
+          expires_at: string
+          id: string
+          issued_at: string
+          last_download_at: string | null
+          token: string
+          user_id: string
+        }
+        Insert: {
+          build_id: string
+          download_count?: number
+          expires_at: string
+          id?: string
+          issued_at?: string
+          last_download_at?: string | null
+          token: string
+          user_id: string
+        }
+        Update: {
+          build_id?: string
+          download_count?: number
+          expires_at?: string
+          id?: string
+          issued_at?: string
+          last_download_at?: string | null
+          token?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "app_transfers_build_id_fkey"
+            columns: ["build_id"]
+            isOneToOne: false
+            referencedRelation: "app_builds"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       blacklist_entries: {
         Row: {
