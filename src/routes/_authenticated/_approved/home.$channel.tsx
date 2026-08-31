@@ -98,6 +98,7 @@ interface Profile {
   username: string | null;
   avatar_url: string | null;
   equipped_nameplate_id: string | null;
+  custom_status: string | null;
   last_seen_at?: string | null;
 }
 
