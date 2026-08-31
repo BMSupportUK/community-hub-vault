@@ -2,7 +2,7 @@ import { Moon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDndStatus } from "@/hooks/use-dnd";
 
-/** Renders a small "DND" pill if the given user is currently in Do Not Disturb mode. */
+/** Renders a small "DND" pill if the given user is currently in Away mode. */
 export function DndBadge({
   userId,
   className,
@@ -16,10 +16,10 @@ export function DndBadge({
   if (!info?.active) return null;
 
   const title = info.note
-    ? `Do Not Disturb — ${info.note}`
+    ? `Away — ${info.note}`
     : info.endsAt
-      ? `Do Not Disturb until ${info.endsAt.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`
-      : "Do Not Disturb";
+      ? `Away until ${info.endsAt.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`
+      : "Away";
 
   return (
     <span
@@ -31,7 +31,7 @@ export function DndBadge({
       title={title}
     >
       <Moon className={compact ? "size-2.5" : "size-3"} />
-      {!compact && "DND"}
+      {!compact && "Away"}
     </span>
   );
 }

@@ -14,11 +14,11 @@ export function usePresence(
       ? dnd.endsAt.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })
       : null;
     const label = dnd.note
-      ? `Do Not Disturb — ${dnd.note}`
+      ? `Away — ${dnd.note}`
       : until
-        ? `Do Not Disturb until ${until}`
-        : "Do Not Disturb";
-    return { kind: "dnd", label, shortLabel: "Do Not Disturb" };
+        ? `Away until ${until}`
+        : "Away";
+    return { kind: "dnd", label, shortLabel: "Away" };
   }
   if (isOnline) return { kind: "online", label: "Online", shortLabel: "Online" };
   return { kind: "offline", label: "Offline", shortLabel: "Offline" };

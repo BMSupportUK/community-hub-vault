@@ -195,7 +195,7 @@ export function WorkingStatusBox({ stackActions = false }: { stackActions?: bool
             <div className="flex items-center gap-2">
               <Moon className="size-3.5 text-violet-300" />
               <h2 className="font-display text-[11px] font-bold tracking-wider uppercase text-violet-200">
-                Do Not Disturb
+                Away
               </h2>
               <DndCountdown userId={user.id} compact />
             </div>
