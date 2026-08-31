@@ -4111,15 +4111,17 @@ function OrderDetailImpl({
                     amountCents={order.total_cents ?? 0}
                     onChange={load}
                   />
-                  <button
-                    type="button"
-                    onClick={refreshCustomerSquareInvoice}
-                    disabled={busy}
-                    className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-border bg-surface-2 text-sm font-medium hover:bg-surface-2/80 transition disabled:opacity-50"
-                  >
-                    <BadgeCheck className="size-4" />
-                    {busy ? "Checking payment…" : "I've paid — refresh status"}
-                  </button>
+                  {!bankOnlyCustomer && (
+                    <button
+                      type="button"
+                      onClick={refreshCustomerSquareInvoice}
+                      disabled={busy}
+                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-border bg-surface-2 text-sm font-medium hover:bg-surface-2/80 transition disabled:opacity-50"
+                    >
+                      <BadgeCheck className="size-4" />
+                      {busy ? "Checking payment…" : "I've paid — refresh status"}
+                    </button>
+                  )}
                 </>
               )}
             </div>
