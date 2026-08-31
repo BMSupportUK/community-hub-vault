@@ -187,9 +187,15 @@ function retryOnNextGesture(key: string, replay: () => void) {
 }
 
 /**
+ * Comfortable listening ceiling. Per-call `gain` values are treated as a
+ * relative loudness hint, then clamped so no alert can deafen anyone.
+ */
+const MAX_LEVEL = 0.6;
+const GAIN_SCALE = 0.35;
+
+/**
  * Play a notification sound. Safe to call from realtime handlers / timers.
- * `gain` boosts above 1.0 via Web Audio (default 1.8); the HTMLAudio fallback
- * is clamped to 1.0.
+ * `gain` is a relative loudness hint; the final level is clamped to MAX_LEVEL.
  */
 export function playSound(
   src: string,
@@ -202,9 +208,9 @@ export function playSound(
   const prefs = getSoundPrefs();
   if (prefs.muted) return Promise.resolve(false);
 
-  const { volume = 1.0, gain = 1.8, label } = opts;
+  const { volume = 1.0, gain = 1.0, label } = opts;
   const name = label ?? src;
-  const level = Math.max(0, volume * gain * prefs.volume);
+  const level = Math.max(0, Math.min(MAX_LEVEL, volume * gain * GAIN_SCALE * prefs.volume));
 
   return (async () => {
     // --- 1. Web Audio buffer path ---
@@ -263,8 +269,8 @@ export function playSoundFromGesture(
   const prefs = getSoundPrefs();
   if (prefs.muted && !opts.ignoreMute) return Promise.resolve(false);
 
-  const { volume = 1, gain = 1.8, label } = opts;
-  const level = Math.max(0, Math.min(1, volume * gain * prefs.volume));
+  const { volume = 1, gain = 1.0, label } = opts;
+  const level = Math.max(0, Math.min(MAX_LEVEL, volume * gain * GAIN_SCALE * prefs.volume));
   const el = new Audio();
   el.preload = "auto";
   el.src = src;
