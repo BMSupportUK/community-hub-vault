@@ -709,14 +709,14 @@ function RecoveryCodes() {
             <p className="text-xs text-muted-foreground">One-time codes to unlock the owner dashboard if you lose your password, PIN, or 2FA device.</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <span className={`text-xs px-2 py-1 rounded-md border ${low ? "border-amber-500/40 text-amber-400 bg-amber-500/10" : "border-border text-muted-foreground bg-surface-2"}`}>
+        <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:justify-end">
+          <span className={`col-span-2 flex min-h-10 items-center justify-center rounded-md border px-2 py-1 text-center text-xs sm:col-span-1 sm:min-h-0 ${low ? "border-amber-500/40 text-amber-400 bg-amber-500/10" : "border-border text-muted-foreground bg-surface-2"}`}>
             {remaining} / {total} unused
           </span>
           {rows && rows.length > 0 && (
             <button
               onClick={() => setRevealed((v) => !v)}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-2 border border-border text-sm font-medium hover:bg-surface-3"
+              className="flex min-w-0 items-center justify-center gap-2 rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm font-medium hover:bg-surface-3"
               aria-label={revealed ? "Hide backup codes" : "Reveal backup codes"}
             >
               {revealed ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
@@ -726,19 +726,19 @@ function RecoveryCodes() {
           {rows && rows.length > 0 && (
             <button
               onClick={copyAll}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-2 border border-border text-sm font-medium hover:bg-surface-3"
+              className="flex min-w-0 items-center justify-center gap-2 rounded-lg border border-border bg-surface-2 px-3 py-2 text-sm font-medium hover:bg-surface-3"
             >
               <Copy className="size-4" /> Copy all
             </button>
           )}
           {total > 0 && confirmRegenerate ? (
-            <div className="flex items-center gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-1">
-              <span className="px-2 text-xs text-destructive">Replace all codes?</span>
+            <div className="col-span-2 flex min-w-0 flex-wrap items-center gap-2 rounded-lg border border-destructive/40 bg-destructive/10 p-1 sm:col-span-1">
+              <span className="grow px-2 text-xs text-destructive">Replace all codes?</span>
               <button
                 type="button"
                 onClick={generate}
                 disabled={busy}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-destructive text-destructive-foreground text-sm font-medium disabled:opacity-60"
+                className="flex min-w-0 items-center justify-center gap-2 rounded-md bg-destructive px-3 py-1.5 text-sm font-medium text-destructive-foreground disabled:opacity-60"
               >
                 {busy ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
                 {busy ? "Regenerating…" : "Yes, regenerate all"}
@@ -757,7 +757,7 @@ function RecoveryCodes() {
               type="button"
               onClick={() => total === 0 ? generate() : setConfirmRegenerate(true)}
               disabled={busy}
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-60"
+              className="col-span-2 flex min-w-0 items-center justify-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground disabled:opacity-60 sm:col-span-1"
             >
               {busy ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
               {busy ? "Generating…" : total === 0 ? "Generate codes" : "Regenerate all"}
