@@ -1173,7 +1173,7 @@ function TicketDetail({
         }
       }
       await postTicketSystem(
-        `🎉 Your account has been upgraded to **Subscriber** — thank you for your business! We really appreciate it.`,
+        `🎉 Your account has been upgraded — thank you for your business! We really appreciate it.`,
       );
       toast.success("Sale completed");
       await loadLinkedOrder();
