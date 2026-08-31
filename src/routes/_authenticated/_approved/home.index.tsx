@@ -8,7 +8,7 @@ import { useEffect, useState } from "react";
 import { ServiceStatusPill } from "@/components/app/ServiceStatusPill";
 import { SubscriptionDetailsCard } from "@/components/app/SubscriptionDetailsCard";
 import { WorkingStatusBox } from "@/components/app/WorkingStatusBox";
-import { useTalkChannelMemberCount } from "@/hooks/use-talk-channel-presence";
+import { useTalkChannelTotalCount } from "@/hooks/use-talk-channel-presence";
 
 export const Route = createFileRoute("/_authenticated/_approved/home/")({
   component: WelcomePage,
@@ -86,7 +86,7 @@ function WelcomePage() {
 
   const [order, setOrder] = useState<string[]>(Object.keys(CARDS));
   const [saving, setSaving] = useState(false);
-  const welcomeOnlineCount = useTalkChannelMemberCount();
+  const welcomeOnlineCount = useTalkChannelTotalCount();
 
   useEffect(() => {
     let cancelled = false;
