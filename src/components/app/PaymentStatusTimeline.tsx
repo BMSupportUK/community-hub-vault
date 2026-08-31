@@ -46,6 +46,7 @@ export function PaymentStatusTimeline({
   const checking =
     !cancelled &&
     (phase === "checking_stripe" || phase === "checking_square" || phase === "awaiting_verification");
+  const isBankTransfer = method === "bank_transfer";
 
   // Only surface the check step for the provider actually used on this order.
   const checkSteps: { key: string; title: string; desc: string; icon: typeof Clock }[] =
@@ -109,7 +110,52 @@ export function PaymentStatusTimeline({
 
   const showChecks = started || phase !== "awaiting";
 
-  const steps: StepDef[] = [
+  const bankTransferSteps: StepDef[] = [
+    {
+      key: "awaiting",
+      title: cancelled ? "Order cancelled" : "Awaiting bank transfer",
+      desc: cancelled
+        ? "This order was cancelled — no payment is required."
+        : "Use the bank details and quote your unique payment reference.",
+      icon: cancelled ? XCircle : Landmark,
+      state: cancelled ? "failed" : phase === "awaiting" ? "active" : "done",
+    },
+    ...(!cancelled
+      ? [
+          {
+            key: "transfer_reported",
+            title: "Transfer reported",
+            desc: "The customer has confirmed the bank transfer was sent.",
+            icon: CheckCircle2,
+            state: (phase === "awaiting_verification" || confirmed || failed ? "done" : "upcoming") as StepDef["state"],
+          },
+          {
+            key: "awaiting_verification",
+            title: "Staff verification",
+            desc: "Staff will check the bank account using the payment reference.",
+            icon: BadgeCheck,
+            state: (phase === "awaiting_verification"
+              ? "active"
+              : confirmed || failed
+                ? "done"
+                : "upcoming") as StepDef["state"],
+          },
+        ]
+      : []),
+    {
+      key: "result",
+      title: cancelled ? "Cancelled" : failed ? "Not verified" : "Payment confirmed",
+      desc: cancelled
+        ? "Order cancelled — no payment is required."
+        : failed
+          ? "The transfer has not been verified yet."
+          : "Bank transfer verified — order marked as paid.",
+      icon: cancelled || failed ? XCircle : CheckCircle2,
+      state: cancelled || failed ? "failed" : confirmed ? "done" : "upcoming",
+    },
+  ];
+
+  const standardSteps: StepDef[] = [
     {
       key: "awaiting",
       title: cancelled ? "Order cancelled" : "Awaiting payment",
@@ -153,6 +199,7 @@ export function PaymentStatusTimeline({
       state: cancelled ? "failed" : failed ? "failed" : confirmed ? "done" : "upcoming",
     },
   ];
+  const steps = isBankTransfer ? bankTransferSteps : standardSteps;
 
   return (
     <div className="rounded-xl border border-border bg-surface-2/40 p-3 space-y-2">
@@ -176,8 +223,10 @@ export function PaymentStatusTimeline({
               ? "Not found"
               : confirmed
                 ? "Paid"
-                : phase === "awaiting"
-                  ? "Awaiting payment"
+                  : phase === "awaiting"
+                   ? isBankTransfer
+                     ? "Awaiting transfer"
+                     : "Awaiting payment"
                   : phase === "awaiting_verification"
                     ? "Awaiting verification"
                     : "Checking…"}

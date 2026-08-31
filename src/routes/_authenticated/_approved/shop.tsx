@@ -4067,7 +4067,7 @@ function OrderDetailImpl({
                     ? "awaiting_verification"
                     : (checkPhase ?? "awaiting")
             }
-            method={payProvider}
+            method={payProvider ?? (bankOnlyCustomer ? "bank_transfer" : null)}
           />
 
           {order.user_id === user?.id && (
