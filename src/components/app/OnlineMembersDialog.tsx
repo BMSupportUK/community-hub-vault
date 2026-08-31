@@ -22,6 +22,11 @@ type MemberProfile = {
   equipped_nameplate_id: string | null;
 };
 
+type DirectoryRow = MemberProfile & {
+  user_id: string;
+  roles: string[] | null;
+};
+
 type FriendState = { kind: "friends" | "outgoing" | "incoming"; id?: string };
 
 const HIDDEN_ROLES = new Set(["pending", "banned", "rejected"]);
@@ -56,17 +61,23 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
       setRolesByUser({});
       return;
     }
-    const [{ data: ps }, { data: rs }] = await Promise.all([
-      supabase
-        .from("profiles")
-        .select("id,username,display_name,avatar_url,equipped_nameplate_id")
-        .in("id", ids),
-      supabase.from("user_roles").select("user_id,role").in("user_id", ids),
-    ]);
-    setProfiles(((ps as MemberProfile[] | null) ?? []).filter((p) => p.id));
+    const { data, error } = await supabase.rpc("talk_channel_member_directory");
+    if (error) {
+      console.error("Could not load Talk Channel member directory", error);
+      return;
+    }
+    const onlineSet = new Set(ids);
+    const rows = ((data as DirectoryRow[] | null) ?? []).filter((row) => onlineSet.has(row.user_id));
+    setProfiles(rows.map((row) => ({
+      id: row.user_id,
+      username: row.username,
+      display_name: row.display_name,
+      avatar_url: row.avatar_url,
+      equipped_nameplate_id: row.equipped_nameplate_id,
+    })));
     const map: Record<string, string[]> = {};
-    for (const r of ((rs as Array<{ user_id: string; role: string }> | null) ?? [])) {
-      (map[r.user_id] ||= []).push(r.role);
+    for (const row of rows) {
+      map[row.user_id] = row.roles ?? [];
     }
     setRolesByUser(map);
   }, [idKey]);
