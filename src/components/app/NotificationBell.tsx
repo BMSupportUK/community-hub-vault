@@ -330,8 +330,8 @@ export function NotificationBell() {
       : Bell;
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
         <button
           className="relative size-9 rounded-xl flex items-center justify-center bg-surface-2 text-muted-foreground hover:bg-primary hover:text-primary-foreground hover:rounded-xl transition-all"
           title="Notifications"
@@ -343,23 +343,17 @@ export function NotificationBell() {
             </span>
           )}
         </button>
-      </PopoverTrigger>
-      <PopoverContent
-        side="bottom"
-        align="end"
-        collisionPadding={12}
-        avoidCollisions
-        className="w-[min(24rem,calc(100vw-1rem))] p-0 overflow-hidden flex flex-col max-h-[min(70vh,32rem)]"
-        sideOffset={8}
-      >
+      </DialogTrigger>
+      <DialogContent className="w-[min(30rem,calc(100vw-2rem))] p-0 overflow-hidden flex flex-col max-h-[min(80vh,40rem)] gap-0">
         <div className="flex items-center justify-between gap-2 px-4 py-3 border-b border-border shrink-0">
-          <div className="font-display font-semibold">Notifications</div>
+          <DialogTitle className="font-display font-semibold text-base">Notifications</DialogTitle>
           {unread.length > 0 && (
-            <Button variant="ghost" size="sm" onClick={markAll} className="h-7 text-xs shrink-0">
+            <Button variant="ghost" size="sm" onClick={markAll} className="h-7 text-xs shrink-0 mr-6">
               <Check className="size-3.5 mr-1" /> Mark all read
             </Button>
           )}
         </div>
+
         <ScrollArea className="flex-1 min-h-0">
           {items.length === 0 && (
             <div className="px-4 py-12 text-center text-sm text-muted-foreground">You're all caught up.</div>
