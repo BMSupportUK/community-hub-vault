@@ -29,12 +29,14 @@ const SOUNDS: Record<string, string> = {
 export function PushSoundBridge() {
   useEffect(() => {
     if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return;
-    const onMessage = (event: MessageEvent) => {
+    const onMessage = async (event: MessageEvent) => {
       const data = event.data as { type?: string; sound?: string } | null;
       if (!data || data.type !== "bm-play-sound") return;
       const src = data.sound ? SOUNDS[data.sound] : undefined;
-      if (!src) return;
-      playSound(src, { label: `push-${data.sound}`, gain: 2.0 });
+      const played = src
+        ? await playSound(src, { label: `push-${data.sound}`, gain: 2.0 })
+        : false;
+      event.ports[0]?.postMessage({ played });
     };
     navigator.serviceWorker.addEventListener("message", onMessage);
     return () => navigator.serviceWorker.removeEventListener("message", onMessage);

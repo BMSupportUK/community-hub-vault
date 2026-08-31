@@ -17,8 +17,22 @@ self.addEventListener("push", (event) => {
       const clients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
       for (const c of clients) {
         try {
-          c.postMessage({ type: "bm-play-sound", sound: payload.sound });
-          playedInApp = true;
+          const channel = new MessageChannel();
+          const acknowledged = new Promise((resolve) => {
+            const timeout = setTimeout(() => resolve(false), 1200);
+            channel.port1.onmessage = (message) => {
+              clearTimeout(timeout);
+              resolve(message.data?.played === true);
+            };
+          });
+          c.postMessage(
+            { type: "bm-play-sound", sound: payload.sound },
+            [channel.port2],
+          );
+          if (await acknowledged) {
+            playedInApp = true;
+            break;
+          }
         } catch (_) { /* noop */ }
       }
     }

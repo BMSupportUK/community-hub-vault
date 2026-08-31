@@ -182,13 +182,13 @@ function getEntry(src: string, volume: number, gain: number): Entry {
 export function playSound(
   src: string,
   opts: { volume?: number; gain?: number; label?: string } = {},
-) {
-  if (typeof window === "undefined") return;
+): Promise<boolean> {
+  if (typeof window === "undefined") return Promise.resolve(false);
   ensureUnlockListeners();
   const prefs = getSoundPrefs();
-  if (prefs.muted) return;
+  if (prefs.muted) return Promise.resolve(false);
   const { volume = 1.0, gain = 1.8, label } = opts;
-  void (async () => {
+  return (async () => {
     const tryPlay = async (el: HTMLAudioElement) => {
       try { el.currentTime = 0; } catch { /* noop */ }
       const p = el.play();
@@ -218,7 +218,7 @@ export function playSound(
     if (useFallbackFirst) {
       try {
         await playDirect();
-        return;
+        return true;
       } catch (err) {
         console.warn(`[sound] background play failed${label ? ` (${label})` : ""}:`, (err as Error)?.message ?? err);
       }
@@ -227,15 +227,17 @@ export function playSound(
     const e = getEntry(src, volume, gain * prefs.volume);
     try {
       await tryPlay(e.el);
-      return;
+      return true;
     } catch (err) {
       console.warn(`[sound] primary play failed${label ? ` (${label})` : ""}:`, (err as Error)?.message ?? err);
     }
     // Final fallback: plain HTMLAudio with no WebAudio routing.
     try {
       await playDirect();
+      return true;
     } catch (err) {
       console.warn(`[sound] fallback play failed${label ? ` (${label})` : ""}:`, (err as Error)?.message ?? err);
+      return false;
     }
   })();
 }
