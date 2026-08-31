@@ -48,7 +48,7 @@ export function usePushRegister() {
         // notification-channel sounds only work from native resources; a web
         // asset URL cannot be used while the app is backgrounded or closed.
         await PushNotifications.createChannel({
-          id: "bm_support_ticket_replies_v1",
+          id: "bm_support_ticket_replies_v2",
           name: "Support ticket replies",
           description: "Spoken alert when a customer replies to an assigned ticket",
           importance: 4,

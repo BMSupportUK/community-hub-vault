@@ -16,7 +16,6 @@ import broadcastAudio from "@/assets/broadcast-notify.mp3";
 import staffMentionAudio from "@/assets/staff-mention.mp3";
 import orderAudio from "@/assets/order-notify.mp3";
 import ticketAudio from "@/assets/ticket-notify.mp3";
-import ticketReplyAudio from "@/assets/ticket-reply-notify.mp3";
 import paymentReceivedAudio from "@/assets/payment-received.mp3";
 import newSignupAudio from "@/assets/new-signup-notify.mp3";
 import { playSound } from "@/lib/sound";
@@ -122,7 +121,8 @@ export function NotificationBell() {
                 : undefined,
             });
           } else if (n.kind === "ticket_reply") {
-            playSound(ticketReplyAudio, { label: "ticket-reply", gain: 2.0 });
+            // TicketReplyAlert owns the MP3 globally. A second playback here
+            // restarted the same clip when both realtime listeners fired.
             toast(`💬 ${n.title}`, {
               description: n.body ?? "There is a new reply on your ticket.",
               duration: 10000,

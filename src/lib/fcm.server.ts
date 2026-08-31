@@ -188,7 +188,7 @@ async function sendFcmToTokens(
               // play the uploaded spoken MP3 while the app is backgrounded
               // or closed. All other alerts retain the system sound channel.
               channel_id: isTicketReply
-                ? "bm_support_ticket_replies_v1"
+                ? "bm_support_ticket_replies_v2"
                 : "bm_support_alerts_v4",
               sound: isTicketReply ? "ticket_reply_notify" : undefined,
               default_sound: !isTicketReply,

@@ -13,6 +13,9 @@ import { useEffect, useState } from "react";
 import appCss from "../styles.css?url";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
 import { useAppTheme } from "@/hooks/use-app-theme";
+import { SoundUnlocker } from "@/components/app/SoundUnlocker";
+import { TicketReplyAlert } from "@/components/app/TicketReplyAlert";
+import { PushSoundBridge } from "@/components/app/PushSoundBridge";
 
 function NotFoundComponent() {
   return (
@@ -129,6 +132,9 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <RightClickGuard />
+        <SoundUnlocker />
+        <TicketReplyAlert />
+        <PushSoundBridge />
         <Outlet />
         {/* z-index keeps toasts visible above the inactivity lock overlay (z-200) */}
         <Toaster theme="dark" position="bottom-right" style={{ zIndex: 2147483000 }} />
