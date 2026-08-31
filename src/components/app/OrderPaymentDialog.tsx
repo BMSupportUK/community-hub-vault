@@ -21,7 +21,7 @@ import {
 import { StripeOrderPanel, verifyStripePaymentForOrder } from "@/components/app/StripeOrderPanel";
 import { confirmStripePayment } from "@/lib/stripe-payments.functions";
 import { BankTransferPanel } from "@/components/app/BankTransferPanel";
-import { getMyBankTransferAccess } from "@/lib/bank-transfer.functions";
+import { getMyBankTransferAccess, getBankDetailsForOrder } from "@/lib/bank-transfer.functions";
 
 
 const fallbackFormat = (cents: number) =>
