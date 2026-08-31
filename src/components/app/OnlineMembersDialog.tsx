@@ -141,12 +141,31 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
     void loadRelations();
   };
 
-  const visible = useMemo(() => {
-    const term = q.trim().toLowerCase();
-    return profiles
-      .filter((p) => {
+  /** Online users that are members (no BM Support staff roles). */
+  const memberProfiles = useMemo(
+    () =>
+      profiles.filter((p) => {
         const roles = rolesByUser[p.id] ?? [];
         if (roles.some((r) => HIDDEN_ROLES.has(r))) return false;
+        if (roles.some((r) => STAFF_ROLES.has(r))) return false;
+        return true;
+      }),
+    [profiles, rolesByUser],
+  );
+
+  /** Distinct member roles present, for the role filter. */
+  const roleOptions = useMemo(() => {
+    const set = new Set<string>();
+    for (const p of memberProfiles) for (const r of rolesByUser[p.id] ?? []) set.add(r);
+    return Array.from(set).sort();
+  }, [memberProfiles, rolesByUser]);
+
+  const visible = useMemo(() => {
+    const term = q.trim().toLowerCase();
+    return memberProfiles
+      .filter((p) => {
+        const roles = rolesByUser[p.id] ?? [];
+        if (roleFilter !== "all" && !roles.includes(roleFilter)) return false;
         if (!term) return true;
         return (
           (p.display_name ?? "").toLowerCase().includes(term) ||
@@ -156,7 +175,8 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
       .sort((a, b) =>
         (a.display_name || a.username || "").localeCompare(b.display_name || b.username || ""),
       );
-  }, [profiles, rolesByUser, q]);
+  }, [memberProfiles, rolesByUser, q, roleFilter]);
+
 
   const count = onlineIds.size;
 
