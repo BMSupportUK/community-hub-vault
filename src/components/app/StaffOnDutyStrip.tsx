@@ -138,7 +138,19 @@ export function StaffOnDutyStrip({
       .on("postgres_changes", { event: "*", schema: "public", table: "breaks" }, () => refresh())
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "profiles" }, () => refresh())
       .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    // Safety net: realtime can drop events (socket blips, backgrounded tabs), so
+    // poll periodically and whenever the tab regains focus/visibility. Keeps the
+    // shift/break timers correct without the user hitting refresh.
+    const poll = setInterval(() => { void refresh(); }, 20_000);
+    const onWake = () => { if (document.visibilityState === "visible") void refresh(); };
+    window.addEventListener("focus", onWake);
+    document.addEventListener("visibilitychange", onWake);
+    return () => {
+      supabase.removeChannel(ch);
+      clearInterval(poll);
+      window.removeEventListener("focus", onWake);
+      document.removeEventListener("visibilitychange", onWake);
+    };
   }, []);
 
   const breakByUser = useMemo(() => {
