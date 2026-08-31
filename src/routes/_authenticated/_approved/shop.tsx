@@ -3727,22 +3727,15 @@ function OrderDetailImpl({
     setBusy(true);
     setCheckPhase("checking_stripe");
     try {
-      const stripeRes = await verifyStripePaymentForOrder(confirmStripe, orderId);
-      if (stripeRes && !("error" in stripeRes)) {
-        setCheckPhase("confirmed");
-        await load();
-        toast.success("Card payment confirmed — your order is now marked paid");
-        return;
-      }
       setCheckPhase("checking_square");
-      const res = (await refreshSquareInvoice({ data: { orderId } })) as { status?: string };
+      const res = await checkPaymentBothProviders({ data: { orderId } });
       await load();
-      if (res.status === "PAID") {
+      if (res.paid) {
         setCheckPhase("confirmed");
-        toast.success("Payment confirmed — your order is now marked paid");
+        toast.success(res.detail || "Payment confirmed — your order is now marked paid");
       } else {
         setCheckPhase("failed");
-        toast.message(`Square still shows this invoice as ${res.status ?? "unpaid"}`);
+        toast.message(res.detail);
       }
     } catch (e) {
       setCheckPhase("failed");
