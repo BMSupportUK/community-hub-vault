@@ -3327,6 +3327,19 @@ function OrderDetailImpl({
     "stripe" | "square" | "nowpayments" | "bank_transfer" | null
   >(null);
   const [bankAwaiting, setBankAwaiting] = useState(false);
+  const [bankOnlyCustomer, setBankOnlyCustomer] = useState(false);
+  const checkMyBankAccess = useServerFn(getMyBankTransferAccess);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const res: any = await checkMyBankAccess({}).catch(() => null);
+      if (!cancelled) setBankOnlyCustomer(Boolean(res?.allowed));
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [settledPayment, setSettledPayment] = useState<{
     provider: string;
     providerPaymentId: string | null;
