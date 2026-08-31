@@ -20,6 +20,13 @@ const STALE_MS = 120_000;
 const HEARTBEAT_MS = 20_000;
 /** Counts settle for this long before publishing, so bursts land as one update. */
 const PUBLISH_DEBOUNCE_MS = 250;
+/**
+ * A user keeps their online badge for this long after vanishing from presence
+ * state. Every heartbeat re-`track()` emits leave+join on other clients, and a
+ * socket re-join momentarily empties one key — without this grace window those
+ * blips made people appear to go offline and come straight back.
+ */
+const LINGER_MS = 30_000;
 
 type Tracker = {
   userId: string;
@@ -83,6 +90,8 @@ async function loadMemberDirectory(force = false) {
  * stale (or immortal), which is a classic count-flicker cause.
  */
 const lastSeenLocal = new Map<string, number>();
+/** Last moment each user_id was present at all (used for the linger grace). */
+const lastPresentAt = new Map<string, number>();
 
 function collectUniqueUsers(channel: RealtimeChannel): Set<string> {
   const state = channel.presenceState<TalkPresence>();
@@ -118,6 +127,17 @@ function collectUniqueUsers(channel: RealtimeChannel): Set<string> {
       lastSeenLocal.delete(key);
       presenceStamps.delete(key);
     }
+  }
+
+  for (const id of userIds) lastPresentAt.set(id, now);
+  // Keep recently-seen users listed so a heartbeat re-track or a socket
+  // re-join never flashes them offline.
+  for (const [id, at] of Array.from(lastPresentAt.entries())) {
+    if (now - at > LINGER_MS) {
+      lastPresentAt.delete(id);
+      continue;
+    }
+    userIds.add(id);
   }
 
   return userIds;
@@ -203,6 +223,7 @@ async function syncTracking() {
 let retryTimer: ReturnType<typeof setTimeout> | null = null;
 let retryDelay = 1000;
 let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+let lastHeartbeatAt = 0;
 let windowListenersBound = false;
 
 /** Drop the socket and build a fresh one — used whenever realtime dies. */
@@ -275,6 +296,15 @@ function ensureSharedChannel() {
   // session from an abandoned one, and re-check everyone else for staleness.
   if (!heartbeatTimer) {
     heartbeatTimer = setInterval(() => {
+      // Background tabs get their timers throttled and sleeping machines stop
+      // them entirely. When we detect a gap, everyone's "last seen" is stale
+      // through no fault of theirs — reset the clocks instead of evicting them.
+      const now = Date.now();
+      if (lastHeartbeatAt && now - lastHeartbeatAt > HEARTBEAT_MS * 3) {
+        for (const key of Array.from(lastSeenLocal.keys())) lastSeenLocal.set(key, now);
+        for (const id of Array.from(lastPresentAt.keys())) lastPresentAt.set(id, now);
+      }
+      lastHeartbeatAt = now;
       const live = sharedChannel;
       if (!live) {
         ensureSharedChannel();
