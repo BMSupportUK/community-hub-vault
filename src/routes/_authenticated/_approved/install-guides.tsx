@@ -455,11 +455,13 @@ function InstallGuidesPage() {
             )}
           </TabsList>
 
-          <TabsContent value="get-app" className="mt-6">
-            <div className="max-w-4xl">
-              <AppTransferPanel onUploadClick={canManagePasscodes ? () => setTab("app-apk") : undefined} />
-            </div>
-          </TabsContent>
+          {canSeeAppTab && (
+            <TabsContent value="get-app" className="mt-6">
+              <div className="max-w-4xl">
+                <AppTransferPanel onUploadClick={canManagePasscodes ? () => setTab("app-apk") : undefined} />
+              </div>
+            </TabsContent>
+          )}
 
           {canManagePasscodes && (
             <TabsContent value="passcodes" className="mt-6">
