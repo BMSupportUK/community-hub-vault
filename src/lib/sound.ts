@@ -1,21 +1,28 @@
-// Shared audio playback helper. Preloads sounds, unlocks playback on the
-// first user gesture, and routes through the Web Audio API with a GainNode
-// so we can boost output above the HTMLAudio 1.0 ceiling. Plays reliably
-// while the tab is backgrounded once it has been unlocked.
+// Shared audio playback helper.
+//
+// Playback strategy (in order):
+//   1. Web Audio AudioBufferSourceNode — the file is fetched once and decoded
+//      into an AudioBuffer. This is the only reliable way to play a sound from
+//      a timer / realtime handler, and it allows gain above the HTMLAudio 1.0
+//      ceiling.
+//   2. Plain HTMLAudioElement — used when the AudioContext is unavailable or
+//      still suspended (no user gesture yet), and as a hard fallback.
+//
+// IMPORTANT: we deliberately do NOT use createMediaElementSource(). Routing an
+// <audio> element into the AudioContext permanently redirects its output into
+// the graph, so if the context is suspended (autoplay policy) play() resolves
+// successfully but nothing is ever audible — the exact "no sound, no error"
+// failure this helper used to hit.
 
-type Entry = {
-  el: HTMLAudioElement;
-  direct: HTMLAudioElement;
-  source?: MediaElementAudioSourceNode;
-  gainNode?: GainNode;
-};
-
-const cache = new Map<string, Entry>();
-let unlocked = false;
-let listenersAttached = false;
-let ctx: AudioContext | null = null;
+const buffers = new Map<string, AudioBuffer>();
+const loading = new Map<string, Promise<AudioBuffer | null>>();
+const elements = new Map<string, HTMLAudioElement>();
 const registeredSources = new Set<string>();
 const pendingPlayback = new Map<string, () => void>();
+
+let ctx: AudioContext | null = null;
+let unlocked = false;
+let listenersAttached = false;
 let retryListenersAttached = false;
 
 // ---------- User preferences (per-device, localStorage) ----------
@@ -68,52 +75,117 @@ export function onSoundPrefsChange(cb: () => void): () => void {
   };
 }
 
+// ---------- Audio graph ----------
+
 function getCtx(): AudioContext | null {
   if (typeof window === "undefined") return null;
   if (ctx) return ctx;
-  const AC: typeof AudioContext | undefined =
-    (window as unknown as { AudioContext?: typeof AudioContext; webkitAudioContext?: typeof AudioContext }).AudioContext ||
-    (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+  const w = window as unknown as {
+    AudioContext?: typeof AudioContext;
+    webkitAudioContext?: typeof AudioContext;
+  };
+  const AC = w.AudioContext || w.webkitAudioContext;
   if (!AC) return null;
   try { ctx = new AC(); } catch { ctx = null; }
   return ctx;
 }
 
+function getElement(src: string): HTMLAudioElement {
+  let el = elements.get(src);
+  if (!el) {
+    el = new Audio(src);
+    el.preload = "auto";
+    (el as HTMLAudioElement & { playsInline?: boolean }).playsInline = true;
+    elements.set(src, el);
+  }
+  return el;
+}
+
+function loadBuffer(src: string): Promise<AudioBuffer | null> {
+  const cached = buffers.get(src);
+  if (cached) return Promise.resolve(cached);
+  const inflight = loading.get(src);
+  if (inflight) return inflight;
+  const c = getCtx();
+  if (!c) return Promise.resolve(null);
+  const p = (async () => {
+    try {
+      const res = await fetch(src);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const bytes = await res.arrayBuffer();
+      const buf = await c.decodeAudioData(bytes.slice(0));
+      buffers.set(src, buf);
+      return buf;
+    } catch (err) {
+      console.warn("[sound] decode failed:", src, (err as Error)?.message ?? err);
+      return null;
+    } finally {
+      loading.delete(src);
+    }
+  })();
+  loading.set(src, p);
+  return p;
+}
+
+/** Preload + register sounds and wire the first-gesture unlock. */
 export function ensureSoundUnlocked(sources: string[] = []) {
   if (typeof window === "undefined") return;
   sources.forEach((src) => {
     registeredSources.add(src);
-    getEntry(src, 1, 1);
+    getElement(src);
+    void loadBuffer(src);
   });
   ensureUnlockListeners();
+}
+
+function resumeCtx() {
+  const c = getCtx();
+  if (c && c.state !== "running") c.resume().catch(() => {});
 }
 
 function ensureUnlockListeners() {
   if (listenersAttached || typeof window === "undefined") return;
   listenersAttached = true;
+
   const unlock = () => {
     if (unlocked) return;
     unlocked = true;
-    const c = getCtx();
-    if (c && c.state === "suspended") c.resume().catch(() => {});
-    registeredSources.forEach((src) => getEntry(src, 1, 1));
-    cache.forEach((e) => {
-      primeAudio(e.el);
-      primeAudio(e.direct);
-    });
-    window.removeEventListener("pointerdown", unlock, { capture: true });
-    window.removeEventListener("keydown", unlock, { capture: true });
-    window.removeEventListener("touchstart", unlock, { capture: true });
+    resumeCtx();
+    registeredSources.forEach((src) => void loadBuffer(src));
+    elements.forEach((el) => primeElement(el));
+    window.removeEventListener("pointerdown", unlock, true);
+    window.removeEventListener("keydown", unlock, true);
+    window.removeEventListener("touchstart", unlock, true);
   };
+
   window.addEventListener("pointerdown", unlock, { capture: true, passive: true });
   window.addEventListener("keydown", unlock, { capture: true });
   window.addEventListener("touchstart", unlock, { capture: true, passive: true });
 
   document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState !== "visible") return;
-    const c = getCtx();
-    if (c && c.state === "suspended") c.resume().catch(() => {});
+    if (document.visibilityState === "visible") resumeCtx();
   });
+}
+
+function primeElement(el: HTMLAudioElement) {
+  const previous = el.volume;
+  try {
+    el.muted = false;
+    el.volume = 0;
+    const p = el.play();
+    if (p && typeof p.then === "function") {
+      p.then(() => {
+        el.pause();
+        try { el.currentTime = 0; } catch { /* noop */ }
+        el.volume = previous;
+      }).catch(() => { el.volume = previous; });
+    } else {
+      el.pause();
+      el.volume = previous;
+    }
+  } catch {
+    el.volume = previous;
+  }
 }
 
 function retryOnNextGesture(key: string, replay: () => void) {
@@ -135,70 +207,10 @@ function retryOnNextGesture(key: string, replay: () => void) {
   window.addEventListener("touchstart", retry, { capture: true, once: true });
 }
 
-function primeAudio(a: HTMLAudioElement) {
-  const previousVolume = a.volume;
-  try {
-    a.muted = false;
-    a.volume = 0;
-    const p = a.play();
-    if (p && typeof p.then === "function") {
-      p.then(() => {
-        a.pause();
-        a.currentTime = 0;
-        a.volume = previousVolume;
-      }).catch(() => { a.volume = previousVolume; });
-    } else {
-      a.pause();
-      a.currentTime = 0;
-      a.volume = previousVolume;
-    }
-  } catch {
-    a.muted = false;
-    a.volume = previousVolume;
-  }
-}
-
-function getEntry(src: string, volume: number, gain: number): Entry {
-  let e = cache.get(src);
-  if (!e) {
-    const el = new Audio(src);
-    el.preload = "auto";
-    el.crossOrigin = "anonymous";
-    (el as HTMLAudioElement & { playsInline?: boolean }).playsInline = true;
-    const direct = new Audio(src);
-    direct.preload = "auto";
-    (direct as HTMLAudioElement & { playsInline?: boolean }).playsInline = true;
-    e = { el, direct };
-    const c = getCtx();
-    if (c) {
-      try {
-        const source = c.createMediaElementSource(el);
-        const gainNode = c.createGain();
-        source.connect(gainNode).connect(c.destination);
-        e.source = source;
-        e.gainNode = gainNode;
-      } catch {
-        // ignore — fall back to plain element volume
-      }
-    }
-    cache.set(src, e);
-    if (unlocked) {
-      primeAudio(el);
-      primeAudio(direct);
-    }
-  }
-  e.el.volume = Math.max(0, Math.min(1, volume));
-  e.direct.volume = Math.max(0, Math.min(1, volume * Math.min(1, gain)));
-  if (e.gainNode) {
-    try { e.gainNode.gain.value = Math.max(0, gain); } catch { /* noop */ }
-  }
-  return e;
-}
-
 /**
- * Play a notification sound. Safe to call from realtime handlers / timers —
- * sound will play once the user has interacted with the page at least once.
- * `gain` boosts above 1.0 via Web Audio (default 1.8).
+ * Play a notification sound. Safe to call from realtime handlers / timers.
+ * `gain` boosts above 1.0 via Web Audio (default 1.8); the HTMLAudio fallback
+ * is clamped to 1.0.
  */
 export function playSound(
   src: string,
@@ -206,63 +218,58 @@ export function playSound(
 ): Promise<boolean> {
   if (typeof window === "undefined") return Promise.resolve(false);
   ensureUnlockListeners();
+  registeredSources.add(src);
+
   const prefs = getSoundPrefs();
   if (prefs.muted) return Promise.resolve(false);
+
   const { volume = 1.0, gain = 1.8, label } = opts;
+  const name = label ?? src;
+  const level = Math.max(0, volume * gain * prefs.volume);
+
   return (async () => {
-    const tryPlay = async (el: HTMLAudioElement) => {
-      try { el.currentTime = 0; } catch { /* noop */ }
-      const p = el.play();
-      if (p && typeof p.then === "function") await p;
-    };
-
-    // Backgrounded tabs: Chrome suspends AudioContext and won't resume it
-    // until the tab is visible again — resume() resolves but the graph stays
-    // silent. Plain HTMLAudio keeps playing in the background once unlocked,
-    // so skip the WebAudio path entirely while hidden.
-    const isHidden =
-      typeof document !== "undefined" && document.visibilityState === "hidden";
-
+    // --- 1. Web Audio buffer path ---
     const c = getCtx();
-    if (!isHidden && c && c.state === "suspended") {
-      try { await c.resume(); } catch { /* noop */ }
-    }
-
-    const useFallbackFirst = isHidden || (c ? c.state !== "running" : false);
-
-    const playDirect = async () => {
-      const e = getEntry(src, volume, gain * prefs.volume);
-      e.direct.volume = Math.max(0, Math.min(1, volume * Math.min(1, gain * prefs.volume)));
-      await tryPlay(e.direct);
-    };
-
-    if (useFallbackFirst) {
-      try {
-        await playDirect();
-        return true;
-      } catch (err) {
-        console.warn(`[sound] background play failed${label ? ` (${label})` : ""}:`, (err as Error)?.message ?? err);
+    if (c) {
+      if (c.state !== "running") {
+        try { await c.resume(); } catch { /* noop */ }
+      }
+      if (c.state === "running") {
+        const buf = await loadBuffer(src);
+        if (buf) {
+          try {
+            const source = c.createBufferSource();
+            source.buffer = buf;
+            const gainNode = c.createGain();
+            gainNode.gain.value = level;
+            source.connect(gainNode).connect(c.destination);
+            source.start(0);
+            return true;
+          } catch (err) {
+            console.warn(`[sound] webaudio play failed (${name}):`, (err as Error)?.message ?? err);
+          }
+        }
       }
     }
 
-    const e = getEntry(src, volume, gain * prefs.volume);
+    // --- 2. Plain HTMLAudio fallback ---
+    const el = getElement(src);
+    el.muted = false;
+    el.volume = Math.max(0, Math.min(1, level));
     try {
-      await tryPlay(e.el);
+      try { el.currentTime = 0; } catch { /* noop */ }
+      const p = el.play();
+      if (p && typeof p.then === "function") await p;
       return true;
     } catch (err) {
-      console.warn(`[sound] primary play failed${label ? ` (${label})` : ""}:`, (err as Error)?.message ?? err);
-    }
-    // Final fallback: plain HTMLAudio with no WebAudio routing.
-    try {
-      await playDirect();
-      return true;
-    } catch (err) {
-      console.warn(`[sound] fallback play failed${label ? ` (${label})` : ""}:`, (err as Error)?.message ?? err);
-      const name = label ?? src;
-      retryOnNextGesture(name, () => {
-        void playSound(src, opts);
-      });
+      console.warn(`[sound] element play failed (${name}):`, (err as Error)?.message ?? err);
+      retryOnNextGesture(name, () => { void playSound(src, opts); });
       return false;
     }
   })();
+}
+
+// Exposed for diagnostics: window.__bmPlaySound("/src/assets/…mp3")
+if (typeof window !== "undefined") {
+  (window as unknown as { __bmPlaySound?: typeof playSound }).__bmPlaySound = playSound;
 }
