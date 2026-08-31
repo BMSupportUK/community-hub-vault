@@ -34,6 +34,14 @@ type FriendState = { kind: "friends" | "outgoing" | "incoming"; id?: string };
 const HIDDEN_ROLES = new Set(["pending", "banned", "rejected"]);
 const STAFF_ROLES = new Set(["admin", "management", "moderator", "staff"]);
 
+/** Boro Fan Zone roles are hidden here — this list only shows BM Support roles. */
+function isFanZoneRole(role: string): boolean {
+  return role.toLowerCase().includes("fan_zone") || role.toLowerCase().includes("an__one");
+}
+function bmSupportRoles(roles: string[]): string[] {
+  return roles.filter((r) => !isFanZoneRole(r));
+}
+
 /** Human relative age, e.g. "7 months ago". */
 function relativeSince(iso: string | null): string {
   if (!iso) return "—";
@@ -205,7 +213,7 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
   /** Distinct member roles present for the Talk Channel filter. */
   const roleOptions = useMemo(() => {
     const set = new Set<string>();
-    for (const p of memberProfiles) for (const r of rolesByUser[p.id] ?? []) set.add(r);
+    for (const p of memberProfiles) for (const r of bmSupportRoles(rolesByUser[p.id] ?? [])) set.add(r);
     return Array.from(set).sort();
   }, [memberProfiles, rolesByUser]);
 
@@ -325,7 +333,7 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
                   const isIgnored = ignored.has(p.id);
                   const isOnline = onlineIds.has(p.id);
                   const busy = busyId === p.id || (rel?.id && busyId === rel.id);
-                  const roles = rolesByUser[p.id] ?? [];
+                  const roles = bmSupportRoles(rolesByUser[p.id] ?? []);
                   return (
                     <tr
                       key={p.id}
