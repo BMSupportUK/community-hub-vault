@@ -105,10 +105,11 @@ type UnlockedGuide = {
 
 
 function InstallGuidesPage() {
-  const { isMod, user, hasAny } = useAuth();
+  const { user, hasAny } = useAuth();
   const queryClient = useQueryClient();
-  const canManageCategories = hasAny(["admin", "management", "staff"]);
-  const canManagePasscodes = hasAny(["admin", "management"]);
+  const canManageGuides = hasAny(["admin", "management"]);
+  const canManageCategories = canManageGuides;
+  const canManagePasscodes = canManageGuides;
 
   const { tab: tabParam } = Route.useSearch();
   const [tab, setTab] = useState<string>(() => {
@@ -153,8 +154,11 @@ function InstallGuidesPage() {
   const hasLivePasscode = (accessQuery.data?.length ?? 0) > 0;
   const canSeeAppTab = hasLivePasscode || canManagePasscodes;
   useEffect(() => {
-    if (tab === "get-app" && !canSeeAppTab) setTab("welcome");
-  }, [tab, canSeeAppTab]);
+    const isRestrictedAdminTab = tab === "categories" || tab === "passcodes" || tab === "app-apk";
+    if ((tab === "get-app" && !canSeeAppTab) || (isRestrictedAdminTab && !canManageGuides)) {
+      setTab("welcome");
+    }
+  }, [tab, canSeeAppTab, canManageGuides]);
   const [unlocked, setUnlocked] = useState<UnlockedGuide | null>(null);
   const [uploadingFile, setUploadingFile] = useState(false);
 
@@ -530,18 +534,18 @@ function InstallGuidesPage() {
                     return (
                       <div
                         key={c.id}
-                        draggable={isMod}
+                        draggable={canManageGuides}
                         onDragStart={() => { dragCatId.current = c.id; }}
-                        onDragOver={(e) => { if (isMod) e.preventDefault(); }}
+                        onDragOver={(e) => { if (canManageGuides) e.preventDefault(); }}
                         onDrop={(e) => {
-                          if (!isMod) return;
+                          if (!canManageGuides) return;
                           e.preventDefault();
                           if (dragCatId.current) reorderCategories(dragCatId.current, c.id);
                           dragCatId.current = null;
                         }}
                         className={`group flex items-center gap-1 px-1 rounded-lg ${active ? "bg-gradient-primary text-primary-foreground" : "text-foreground/85 hover:bg-surface-2/70"}`}
                       >
-                        {isMod && (
+                        {canManageGuides && (
                           <GripVertical className="size-3.5 opacity-40 group-hover:opacity-80 cursor-grab shrink-0" />
                         )}
                         <button
@@ -571,7 +575,7 @@ function InstallGuidesPage() {
                       className="pl-9 bg-violet-950/50 border-violet-500/30 text-foreground placeholder:text-violet-300/50"
                     />
                   </div>
-                  {isMod && (
+                  {canManageGuides && (
                     <Button onClick={openNew} className="bg-gradient-primary text-primary-foreground hover:opacity-90">
                       <Plus className="size-4 mr-1" /> Add Guide
                     </Button>
@@ -592,11 +596,11 @@ function InstallGuidesPage() {
                       <article
                         key={b.id}
                         data-guide-id={b.id}
-                        draggable={isMod}
+                        draggable={canManageGuides}
                         onDragStart={() => { dragBlogId.current = b.id; }}
-                        onDragOver={(e) => { if (isMod) e.preventDefault(); }}
+                        onDragOver={(e) => { if (canManageGuides) e.preventDefault(); }}
                         onDrop={(e) => {
-                          if (!isMod) return;
+                          if (!canManageGuides) return;
                           e.preventDefault();
                           if (dragBlogId.current) reorderBlogs(dragBlogId.current, b.id);
                           dragBlogId.current = null;
@@ -634,7 +638,7 @@ function InstallGuidesPage() {
                             <GuideLockBadge unlocked={unlockedIds.has(b.id)} />
                           )}
 
-                          {isMod && (
+                          {canManageGuides && (
                             <div className="absolute bottom-2 left-2 size-8 rounded-md bg-background/70 backdrop-blur grid place-items-center text-foreground cursor-grab">
                               <GripVertical className="size-4" />
                             </div>
@@ -680,7 +684,7 @@ function InstallGuidesPage() {
                               </Button>
                             )}
 
-                            {isMod && (
+                            {canManageGuides && (
                               <>
                                 <Button size="icon" variant="ghost" className="text-violet-200 hover:bg-surface-2/80 hover:text-foreground" onClick={() => { focusGuideId.current = b.id; setEditing(b); setShowEditor(true); }}>
                                   <Pencil className="size-4" />
@@ -701,14 +705,14 @@ function InstallGuidesPage() {
             </div>
           </TabsContent>
 
-          <TabsContent value="categories" className="mt-6">
+          {canManageCategories && <TabsContent value="categories" className="mt-6">
             <div
               className="relative rounded-2xl border border-border overflow-hidden p-4 sm:p-6 shadow-glow bg-cover bg-center"
               style={{ backgroundImage: `url(${installHero})` }}
             >
               <div className="absolute inset-0 bg-gradient-to-br from-background/70 via-background/50 to-surface/70 pointer-events-none" />
               <div className="relative">
-            {isMod && (
+            {canManageGuides && (
               <div className="mb-4 flex items-center gap-2">
                 {addingCat ? (
                   <>
@@ -735,18 +739,18 @@ function InstallGuidesPage() {
               {categories.map((c) => (
                 <div
                   key={c.id}
-                  draggable={isMod}
+                  draggable={canManageGuides}
                   onDragStart={() => { dragCatId.current = c.id; }}
-                  onDragOver={(e) => { if (isMod) e.preventDefault(); }}
+                  onDragOver={(e) => { if (canManageGuides) e.preventDefault(); }}
                   onDrop={(e) => {
-                    if (!isMod) return;
+                    if (!canManageGuides) return;
                     e.preventDefault();
                     if (dragCatId.current) reorderCategories(dragCatId.current, c.id);
                     dragCatId.current = null;
                   }}
                   className="rounded-2xl bg-surface/70 border border-border p-5 hover:border-violet-400 transition relative"
                 >
-                  {isMod && (
+                  {canManageGuides && (
                     <div className="absolute top-2 right-2 flex items-center gap-1">
                       <GripVertical className="size-4 text-muted-foreground cursor-grab" />
                       <button
@@ -774,7 +778,7 @@ function InstallGuidesPage() {
             </div>
               </div>
             </div>
-          </TabsContent>
+          </TabsContent>}
         </Tabs>
       </div>
 
