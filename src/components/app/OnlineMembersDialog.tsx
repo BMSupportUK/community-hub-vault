@@ -277,19 +277,26 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
                     </div>
 
                     <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-                      {p.username && (
-                        <Button
-                          asChild
-                          size="sm"
-                          variant="secondary"
-                          className="h-8 flex-1 min-w-[7rem] bg-white/15 text-white hover:bg-white/25 border border-white/20"
-                        >
-                          <Link to="/u/$username" params={{ username: p.username }} onClick={() => setOpen(false)}>
-                            <User className="size-3.5" />
-                            View profile
-                          </Link>
-                        </Button>
-                      )}
+                      <ChatMiniProfile
+                        className="h-8 flex-1 min-w-[7rem]"
+                        profile={{
+                          userId: p.id,
+                          name,
+                          username: p.username,
+                          avatarUrl: resolveAvatarUrl(p.id, p.avatar_url, roleFlashMap),
+                          hasAvatar: true,
+                          nameplateId: p.equipped_nameplate_id,
+                          role: role ?? null,
+                          isOnline: true,
+                          isSelf,
+                        }}
+                      >
+                        <span className="flex h-8 w-full items-center justify-center gap-1.5 rounded-md border border-white/20 bg-white/15 px-2 text-xs font-medium text-white hover:bg-white/25">
+                          <User className="size-3.5" />
+                          View profile
+                        </span>
+                      </ChatMiniProfile>
+
                       {!isSelf && (
                         <>
                           {rel?.kind === "friends" ? (
