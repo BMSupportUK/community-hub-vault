@@ -66,7 +66,9 @@ async function loadMemberDirectory(force = false) {
         .filter((row) => !(row.roles ?? []).some((role) => excludedRoles.has(role)))
         .map((row) => row.user_id),
     );
+    knownDirectoryIds = new Set((data ?? []).map((row) => row.user_id));
     memberDirectoryLoaded = true;
+    memberDirectoryLoadedAt = Date.now();
     for (const listener of Array.from(memberListeners)) listener();
   })().finally(() => {
     memberDirectoryRequest = null;
