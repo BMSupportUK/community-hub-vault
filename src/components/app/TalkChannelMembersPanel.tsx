@@ -46,6 +46,7 @@ export function TalkChannelMembersPanel() {
   const onlineIds = useTalkChannelPresentUsers();
   const roleFlashMap = useRoleFlashMap();
   const [rows, setRows] = useState<DirectoryRow[] | null>(null);
+  const [activeTab, setActiveTab] = useState<"online" | "offline">("online");
 
   const load = useCallback(async () => {
     const { data, error } = await supabase.rpc("talk_channel_member_directory");
