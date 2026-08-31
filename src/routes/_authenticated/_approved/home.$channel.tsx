@@ -657,7 +657,7 @@ function ChannelPage() {
     if (need.length === 0) return;
     const { data } = await supabase
       .from("profiles")
-      .select("id, display_name, username, avatar_url, equipped_nameplate_id, last_seen_at")
+      .select("id, display_name, username, avatar_url, equipped_nameplate_id, custom_status, last_seen_at")
       .in("id", need);
     if (!data) return;
     setProfiles((prev) => {
