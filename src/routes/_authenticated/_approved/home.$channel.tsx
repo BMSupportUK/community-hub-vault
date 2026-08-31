@@ -1380,6 +1380,9 @@ function ChannelPage() {
           </div>
         </div>
       </header>
+      <div className="shrink-0 border-b border-border bg-surface/95 px-3 py-2 md:hidden">
+        <OnlineMembersDialog />
+      </div>
 
       <div className="flex-1 flex min-w-0 min-h-0">
         <div className="flex-1 flex flex-col min-w-0 min-h-0">
@@ -2122,9 +2125,11 @@ function ChannelPage() {
             </div>
           </div>
         </div>
-        <aside className="relative z-0 hidden md:block w-56 xl:w-64 shrink-0 border-l border-border overflow-y-auto bg-surface/40">
-          <StaffOnDutySidebar />
-          <div className="px-3 pb-4">
+        <aside className="relative z-0 hidden md:flex md:flex-col w-56 xl:w-64 shrink-0 min-h-0 border-l border-border bg-surface/40">
+          <div className="flex-1 min-h-0 overflow-hidden">
+            <StaffOnDutySidebar />
+          </div>
+          <div className="shrink-0 border-t border-border bg-surface/95 px-3 py-3">
             <OnlineMembersDialog />
           </div>
         </aside>

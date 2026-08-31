@@ -151,7 +151,7 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
     void loadRelations();
   };
 
-  /** Online users that are members (no BM Support staff roles). */
+  /** Talk Channel members only; staff can open the control but are not listed. */
   const memberProfiles = useMemo(
     () =>
       profiles.filter((p) => {
@@ -163,7 +163,7 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
     [profiles, rolesByUser],
   );
 
-  /** Distinct member roles present, for the role filter. */
+  /** Distinct member roles present for the Talk Channel filter. */
   const roleOptions = useMemo(() => {
     const set = new Set<string>();
     for (const p of memberProfiles) for (const r of rolesByUser[p.id] ?? []) set.add(r);
