@@ -36,12 +36,16 @@ const listeners = new Set<(count: number) => void>();
 const userListeners = new Set<(ids: Set<string>) => void>();
 const trackers = new Map<symbol, Tracker>();
 let memberIds: Set<string> = new Set();
+let knownDirectoryIds: Set<string> = new Set();
 let memberDirectoryLoaded = false;
 let memberDirectoryRequest: Promise<void> | null = null;
+let memberDirectoryLoadedAt = 0;
+const DIRECTORY_MIN_INTERVAL_MS = 30_000;
 const memberListeners = new Set<() => void>();
 
-async function loadMemberDirectory() {
+async function loadMemberDirectory(force = false) {
   if (memberDirectoryRequest) return memberDirectoryRequest;
+  if (!force && Date.now() - memberDirectoryLoadedAt < DIRECTORY_MIN_INTERVAL_MS) return;
   memberDirectoryRequest = (async () => {
     const { data, error } = await supabase.rpc("talk_channel_member_directory");
     if (error) {
