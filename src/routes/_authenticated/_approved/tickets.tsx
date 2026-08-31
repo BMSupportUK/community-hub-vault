@@ -1417,6 +1417,14 @@ function TicketDetail({
         console.warn("[tickets] notifyTicketReply failed", e);
       }
     }
+    // Customer replied — alert the assigned staff member (chime + popup).
+    if (!isStaff && ticket.user_id === currentUserId && inserted?.id) {
+      try {
+        await notifyStaffOfCustomerReplyFn({ data: { ticketId: ticket.id, messageId: inserted.id } });
+      } catch (e) {
+        console.warn("[tickets] notifyStaffOfCustomerReply failed", e);
+      }
+    }
     // Bump updated_at via status touch (only staff allowed) — skip for users
     if (isStaff && ticket.status === "open") {
       await supabase.from("tickets").update({ status: "in_progress" }).eq("id", ticket.id);
