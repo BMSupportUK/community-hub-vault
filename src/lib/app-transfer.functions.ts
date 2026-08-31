@@ -176,10 +176,14 @@ export const updateAppBuild = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     await requireStaff(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const patch: Record<string, unknown> = {};
-    if (data.versionName !== undefined) patch['version_name'] = data.versionName;
-    if (data.releaseNotes !== undefined) patch['release_notes'] = data.releaseNotes;
-    if (data.isAvailable !== undefined) patch['is_available'] = data.isAvailable;
+    const patch: {
+      version_name?: string | null;
+      release_notes?: string | null;
+      is_available?: boolean;
+    } = {};
+    if (data.versionName !== undefined) patch.version_name = data.versionName;
+    if (data.releaseNotes !== undefined) patch.release_notes = data.releaseNotes;
+    if (data.isAvailable !== undefined) patch.is_available = data.isAvailable;
     const { error } = await supabaseAdmin.from("app_builds").update(patch).eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true as const };
