@@ -1,7 +1,7 @@
 import { BankTransferAdminCard } from "@/components/app/BankTransferAdminCard";
 import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ShieldCheck, Lock, KeyRound, ShieldAlert, KeySquare, Globe, Clock, FileText, Loader2, Shield, Star, Filter, Sparkles, LifeBuoy, RefreshCw, Copy, Download, Ban, Tag, Package, Bell, Trophy, MessageSquare, Image as ImageIcon, MonitorPlay } from "lucide-react";
+import { ShieldCheck, Lock, KeyRound, ShieldAlert, KeySquare, Globe, Clock, FileText, Loader2, Shield, Star, Filter, Sparkles, LifeBuoy, RefreshCw, Copy, Download, Ban, Tag, Package, Bell, Trophy, MessageSquare, Image as ImageIcon, MonitorPlay, Eye, EyeOff } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -600,6 +600,7 @@ function RecoveryCodes() {
   const [fresh, setFresh] = useState<string[] | null>(null);
   const [busy, setBusy] = useState(false);
   const [confirmRegenerate, setConfirmRegenerate] = useState(false);
+  const [revealed, setRevealed] = useState(false);
 
   const load = async () => {
     if (!user) return;
@@ -719,6 +720,16 @@ function RecoveryCodes() {
           </span>
           {rows && rows.length > 0 && (
             <button
+              onClick={() => setRevealed((v) => !v)}
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-2 border border-border text-sm font-medium hover:bg-surface-3"
+              aria-label={revealed ? "Hide backup codes" : "Reveal backup codes"}
+            >
+              {revealed ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+              {revealed ? "Hide" : "Reveal"}
+            </button>
+          )}
+          {rows && rows.length > 0 && (
+            <button
               onClick={copyAll}
               className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-2 border border-border text-sm font-medium hover:bg-surface-3"
             >
@@ -815,25 +826,28 @@ function RecoveryCodes() {
         <div>
           <div className="text-xs uppercase tracking-wide text-muted-foreground mb-2">Current batch ({rows.length})</div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 font-mono text-sm">
-            {rows.map((r, i) => (
-              <div
-                key={r.id}
-                role={!r.used_at && r.code ? "button" : undefined}
-                tabIndex={!r.used_at && r.code ? 0 : undefined}
-                onClick={() => { if (!r.used_at && r.code) copySingle(r.code); }}
-                onKeyDown={(e) => { if ((e.key === "Enter" || e.key === " ") && !r.used_at && r.code) { e.preventDefault(); copySingle(r.code); } }}
-                className={`flex items-center justify-between gap-2 px-2 py-1.5 rounded-md border ${r.used_at ? "bg-surface-2 border-border text-muted-foreground" : "bg-background border-border hover:bg-surface-2 cursor-pointer"}`}
-                title={r.used_at ? `Used ${new Date(r.used_at).toLocaleString("en-GB")}` : "Click to copy"}
-              >
-                <span className={`tracking-wider select-all ${r.used_at ? "line-through" : ""}`}>
-                  {r.code ?? `Code #${String(i + 1).padStart(2, "0")}`}
-                </span>
-                {!r.used_at && r.code && (
-                  <Copy className="size-3.5 text-muted-foreground shrink-0" />
-                )}
-              </div>
-
-            ))}
+            {rows.map((r, i) => {
+              const displayCode = r.code ?? `Code #${String(i + 1).padStart(2, "0")}`;
+              const maskedCode = displayCode.replace(/[A-Z0-9]/g, "•");
+              return (
+                <div
+                  key={r.id}
+                  role={!r.used_at && r.code ? "button" : undefined}
+                  tabIndex={!r.used_at && r.code ? 0 : undefined}
+                  onClick={() => { if (!r.used_at && r.code) copySingle(r.code); }}
+                  onKeyDown={(e) => { if ((e.key === "Enter" || e.key === " ") && !r.used_at && r.code) { e.preventDefault(); copySingle(r.code); } }}
+                  className={`flex items-center justify-between gap-2 px-2 py-1.5 rounded-md border ${r.used_at ? "bg-surface-2 border-border text-muted-foreground" : "bg-background border-border hover:bg-surface-2 cursor-pointer"}`}
+                  title={r.used_at ? `Used ${new Date(r.used_at).toLocaleString("en-GB")}` : revealed ? "Click to copy" : "Reveal to view code"}
+                >
+                  <span className={`tracking-wider select-all ${r.used_at ? "line-through" : ""}`}>
+                    {revealed ? displayCode : maskedCode}
+                  </span>
+                  {!r.used_at && r.code && (
+                    <Copy className="size-3.5 text-muted-foreground shrink-0" />
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
