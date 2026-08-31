@@ -129,6 +129,8 @@ function ChannelPage() {
   const isModOrAdmin = hasAny(["admin", "management", "moderator", "staff"]);
   const canMute = hasAny(["admin", "management", "moderator", "staff"]);
   const [muteSubmenuId, setMuteSubmenuId] = useState<string | null>(null);
+  const [sideTab, setSideTab] = useState<"staff" | "members">("staff");
+
   const [myMuteExpires, setMyMuteExpires] = useState<Date | null>(null);
   const [muteTick, setMuteTick] = useState(0);
   const [mutedUserIds, setMutedUserIds] = useState<Set<string>>(new Set());
