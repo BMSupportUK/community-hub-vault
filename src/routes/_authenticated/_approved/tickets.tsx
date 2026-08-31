@@ -32,7 +32,7 @@ import { cancelOrderAndSquareInvoice } from "@/lib/square-invoices.functions";
 import { checkOrderPaymentAcrossProviders } from "@/lib/order-payment-check.functions";
 import { getOrderPaymentState } from "@/lib/order-payment-state.functions";
 import { formatRoleLabel } from "@/lib/role-label";
-import { notifyTicketReply } from "@/lib/ticket-notify.functions";
+import { notifyTicketReply, notifyStaffOfCustomerReply } from "@/lib/ticket-notify.functions";
 import { sendNewTicketPush } from "@/lib/push.functions";
 import { StaffOnDutyStrip } from "@/components/app/StaffOnDutyStrip";
 import { Nameplate } from "@/components/app/Nameplate";
