@@ -55,11 +55,11 @@ import {
   reconcileSquareOrder,
 } from "@/lib/square-payments.functions";
 import { createSquareInvoiceForOrder, refreshSquareInvoiceStatus, cancelOrderAndSquareInvoice } from "@/lib/square-invoices.functions";
+import { checkOrderPaymentAcrossProviders } from "@/lib/order-payment-check.functions";
 import {
   createStripePaymentIntent,
   confirmStripePayment,
 } from "@/lib/stripe-payments.functions";
-import { verifyStripePaymentForOrder } from "@/components/app/StripeOrderPanel";
 import { PaymentStatusTimeline, type PayCheckPhase } from "@/components/app/PaymentStatusTimeline";
 import { BankTransferPanel } from "@/components/app/BankTransferPanel";
 import { getMyBankTransferAccess } from "@/lib/bank-transfer.functions";
@@ -3412,7 +3412,6 @@ function OrderDetailImpl({
 
   // Payments are never auto-confirmed. The customer must press "I've paid",
   // which checks Stripe first and then Square.
-  const confirmStripe = useServerFn(confirmStripePayment);
   const orderMarkedPaid = Boolean(order?.paid_at || order?.status === "paid");
   const isOrderPaid = Boolean(orderMarkedPaid || settledPayment);
 
@@ -3693,7 +3692,7 @@ function OrderDetailImpl({
   };
 
   const reconcileSquare = useServerFn(reconcileSquareOrder);
-  const refreshSquareInvoice = useServerFn(refreshSquareInvoiceStatus);
+  const checkPaymentBothProviders = useServerFn(checkOrderPaymentAcrossProviders);
   const cancelOrderAndSquareInvoiceRpc = useServerFn(cancelOrderAndSquareInvoice);
   const reconcileWithSquare = async () => {
     if (!order || order.paid_at) return;
@@ -3727,22 +3726,15 @@ function OrderDetailImpl({
     setBusy(true);
     setCheckPhase("checking_stripe");
     try {
-      const stripeRes = await verifyStripePaymentForOrder(confirmStripe, orderId);
-      if (stripeRes && !("error" in stripeRes)) {
-        setCheckPhase("confirmed");
-        await load();
-        toast.success("Card payment confirmed — your order is now marked paid");
-        return;
-      }
       setCheckPhase("checking_square");
-      const res = (await refreshSquareInvoice({ data: { orderId } })) as { status?: string };
+      const res = await checkPaymentBothProviders({ data: { orderId } });
       await load();
-      if (res.status === "PAID") {
+      if (res.paid) {
         setCheckPhase("confirmed");
-        toast.success("Payment confirmed — your order is now marked paid");
+        toast.success(res.detail || "Payment confirmed — your order is now marked paid");
       } else {
         setCheckPhase("failed");
-        toast.message(`Square still shows this invoice as ${res.status ?? "unpaid"}`);
+        toast.message(res.detail);
       }
     } catch (e) {
       setCheckPhase("failed");
@@ -4400,7 +4392,7 @@ function SquareInvoicePanel({
   const [err, setErr] = useState<string | null>(null);
   const createInvoice = useServerFn(createSquareInvoiceForOrder);
   const refreshInvoice = useServerFn(refreshSquareInvoiceStatus);
-  const confirmStripeFn = useServerFn(confirmStripePayment);
+  const checkBothProviders = useServerFn(checkOrderPaymentAcrossProviders);
 
 
   useEffect(() => {
@@ -4447,8 +4439,8 @@ function SquareInvoicePanel({
     setBusy(true);
     setErr(null);
     try {
-      const stripeRes: any = await verifyStripePaymentForOrder(confirmStripeFn, orderId);
-      if (stripeRes && !("error" in stripeRes)) {
+      const checkRes: any = await checkBothProviders({ data: { orderId } });
+      if (checkRes?.paid) {
         setStatus("PAID");
         await onChange?.();
         return;

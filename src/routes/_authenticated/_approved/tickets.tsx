@@ -17,8 +17,6 @@ import { MentionText, useMentionAutocomplete } from "@/components/app/mentions";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
 import { useServerFn } from "@tanstack/react-start";
 import { verifyTurnstile } from "@/lib/turnstile.functions";
-import { confirmStripePayment } from "@/lib/stripe-payments.functions";
-import { verifyStripePaymentForOrder } from "@/components/app/StripeOrderPanel";
 import { TurnstileWidget } from "@/components/app/TurnstileWidget";
 import { getOutOfHoursMessage } from "@/lib/business-hours";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -30,7 +28,8 @@ import { getOrderBankTransferAccess } from "@/lib/bank-transfer.functions";
 import { PaymentStatusTimeline, type PayCheckPhase } from "@/components/app/PaymentStatusTimeline";
 import { isSettledPaymentStatus } from "@/lib/payment-status";
 
-import { refreshSquareInvoiceStatus, cancelOrderAndSquareInvoice } from "@/lib/square-invoices.functions";
+import { cancelOrderAndSquareInvoice } from "@/lib/square-invoices.functions";
+import { checkOrderPaymentAcrossProviders } from "@/lib/order-payment-check.functions";
 import { getOrderPaymentState } from "@/lib/order-payment-state.functions";
 import { formatRoleLabel } from "@/lib/role-label";
 import { notifyTicketReply } from "@/lib/ticket-notify.functions";
@@ -991,8 +990,7 @@ function TicketDetail({
     return () => { alive = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticket.order_id]);
-  const refreshSquareInvoice = useServerFn(refreshSquareInvoiceStatus);
-  const confirmStripe = useServerFn(confirmStripePayment);
+  const checkPaymentAcrossProviders = useServerFn(checkOrderPaymentAcrossProviders);
   const cancelOrderAndSquareInvoiceRpc = useServerFn(cancelOrderAndSquareInvoice);
   const getPaymentState = useServerFn(getOrderPaymentState);
   const loadLinkedOrder = async () => {
@@ -1198,25 +1196,21 @@ function TicketDetail({
     setOrderBusy(true);
     setPayCheckPhase("checking_stripe");
     try {
-      // A card payment may have completed through Stripe — check that first.
-      const stripeRes = await verifyStripePaymentForOrder(confirmStripe, linkedOrder.id);
-      if (stripeRes && !("error" in stripeRes)) {
-        setPayCheckPhase("confirmed");
-        await loadLinkedOrder();
-        await postTicketSystem(`✅ Card payment received — thank you! Your order is now marked as paid.`);
-        toast.success("Card payment confirmed — order marked paid");
-        return;
-      }
+      // One check that interrogates both providers the customer can pay with.
       setPayCheckPhase("checking_square");
-      const res = (await refreshSquareInvoice({ data: { orderId: linkedOrder.id } })) as { status?: string };
+      const res = await checkPaymentAcrossProviders({ data: { orderId: linkedOrder.id } });
       await loadLinkedOrder();
-      if (res.status === "PAID") {
+      if (res.paid) {
         setPayCheckPhase("confirmed");
-        await postTicketSystem(`✅ Payment received — thank you! Your order is now marked as paid.`);
-        toast.success("Payment confirmed — order marked paid");
+        if (res.status === "paid") {
+          await postTicketSystem(
+            `✅ Payment received${res.provider ? ` via ${res.provider}` : ""} — thank you! Your order is now marked as paid.`,
+          );
+        }
+        toast.success(res.detail || "Payment confirmed — order marked paid");
       } else {
         setPayCheckPhase("failed");
-        toast.message(`Square still shows this invoice as ${res.status ?? "unpaid"}`);
+        toast.message(res.detail);
       }
     } catch (e) {
       setPayCheckPhase("failed");
