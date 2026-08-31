@@ -101,6 +101,9 @@ export function TalkChannelMembersPanel() {
     return { ordered, offline: offline.sort(sortByName) };
   }, [members, onlineIds]);
 
+  /** Live count of everyone currently present in Talk Channels. */
+  const onlineCount = onlineIds.size;
+
   if (rows === null) {
     return (
       <div className="flex h-full items-center justify-center py-8 text-muted-foreground">
@@ -114,6 +117,10 @@ export function TalkChannelMembersPanel() {
       <div className="shrink-0 border-b border-border px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
         <Users className="size-3.5" />
         Members
+        <span className="ml-auto inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold normal-case tracking-normal text-emerald-300">
+          <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          {onlineCount} in chat
+        </span>
       </div>
       <div className="flex-1 min-h-0 overflow-y-auto px-2 py-2 space-y-3">
         {groups.ordered.map(({ role, list }) => (
