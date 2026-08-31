@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { CircleDot } from "lucide-react";
+import { CircleDot, CalendarClock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { useRoleFlashMap, roleFlashClass, resolveAvatarUrl, type FlashRole } from "@/lib/role-flash";
@@ -69,6 +69,7 @@ export function StaffOnDutyStrip({
   const [breaks, setBreaks] = useState<StaffBreak[]>([]);
   const [profiles, setProfiles] = useState<Record<string, StaffProfile>>({});
   const [offDuty, setOffDuty] = useState<Array<StaffProfile & { role: string }>>([]);
+  const [nextShifts, setNextShifts] = useState<Record<string, { shift_date: string; start_time: string; end_time: string }>>({});
   const [now, setNow] = useState(() => Date.now());
   const [selfId, setSelfId] = useState<string | null>(null);
   const [dutyTab, setDutyTab] = useState<"on" | "off">("on");
@@ -128,9 +129,40 @@ export function StaffOnDutyStrip({
           return an.localeCompare(bn);
         });
       setOffDuty(off);
+
+      // Next claimed rota slot per staff member (today onwards).
+      const d = new Date();
+      const pad = (n: number) => String(n).padStart(2, "0");
+      const todayStr = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+      const nowTime = `${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
+      const { data: slots } = await supabase
+        .from("shift_slots")
+        .select("assigned_to,shift_date,start_time,end_time")
+        .in("assigned_to", ids)
+        .gte("shift_date", todayStr)
+        .order("shift_date")
+        .order("start_time");
+      const nextMap: Record<string, { shift_date: string; start_time: string; end_time: string }> = {};
+      for (const sl of (slots ?? []) as Array<{
+        assigned_to: string | null;
+        shift_date: string;
+        start_time: string;
+        end_time: string;
+      }>) {
+        if (!sl.assigned_to || nextMap[sl.assigned_to]) continue;
+        const upcoming = sl.shift_date > todayStr || sl.start_time > nowTime;
+        if (!upcoming) continue;
+        nextMap[sl.assigned_to] = {
+          shift_date: sl.shift_date,
+          start_time: sl.start_time,
+          end_time: sl.end_time,
+        };
+      }
+      setNextShifts(nextMap);
     } else {
       setProfiles({});
       setOffDuty([]);
+      setNextShifts({});
     }
   };
 
@@ -141,6 +173,7 @@ export function StaffOnDutyStrip({
       .on("postgres_changes", { event: "*", schema: "public", table: "shifts" }, () => refresh())
       .on("postgres_changes", { event: "*", schema: "public", table: "breaks" }, () => refresh())
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "profiles" }, () => refresh())
+      .on("postgres_changes", { event: "*", schema: "public", table: "shift_slots" }, () => refresh())
       .subscribe();
     // Safety net: realtime can drop events (socket blips, backgrounded tabs), so
     // poll periodically and whenever the tab regains focus/visibility. Keeps the
@@ -230,6 +263,25 @@ export function StaffOnDutyStrip({
   };
 
 
+  /** Next rota slot line — always the last item on a staff card, on its own row. */
+  const renderNextShift = (userId: string) => {
+    const slot = nextShifts[userId];
+    if (!slot) return null;
+    const label = new Date(`${slot.shift_date}T00:00:00`).toLocaleDateString("en-GB", {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+    });
+    return (
+      <div className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground tabular-nums">
+        <CalendarClock className="size-3 shrink-0 opacity-70" />
+        <span className="truncate">
+          Next: {label} · {slot.start_time.slice(0, 5)}–{slot.end_time.slice(0, 5)}
+        </span>
+      </div>
+    );
+  };
+
   /** Seed row for the shared Talk member card; the card refetches full details. */
   const talkFallbackRow = (userId: string): Omit<TalkMemberProfileRow, "user_id"> => {
     const p = profiles[userId];
@@ -302,6 +354,7 @@ export function StaffOnDutyStrip({
               )}
             </div>
             <DndCountdown userId={s.user_id} compact className="mt-1" />
+            {renderNextShift(s.user_id)}
 
           </div>
         </div>
@@ -383,6 +436,7 @@ export function StaffOnDutyStrip({
             </div>
 
             <DndCountdown userId={p.id} compact className="mt-1" />
+            {renderNextShift(p.id)}
           </div>
         </div>
       </div>
