@@ -108,10 +108,15 @@ function collectUniqueUsers(channel: RealtimeChannel): Set<string> {
   const now = Date.now();
   const cutoff = now - STALE_MS;
   const liveKeys = new Set<string>();
+  const activeTracker = Array.from(trackers.values()).at(-1);
 
   for (const [key, presences] of Object.entries(state)) {
     for (const presence of presences) {
       if (!presence.user_id) continue;
+      // The realtime client can retain this connection's last tracked payload
+      // in presenceState() after untrack resolves. Never let that stale local
+      // payload keep the rail count high once the channel route has unmounted.
+      if (key === connectionId && !activeTracker) continue;
       const seenKey = `${key}:${presence.user_id}`;
       liveKeys.add(seenKey);
       const previous = lastSeenLocal.get(seenKey);
@@ -145,6 +150,12 @@ function collectUniqueUsers(channel: RealtimeChannel): Set<string> {
   for (const id of userIds) missingSince.delete(id);
   for (const id of currentUserIds) {
     if (userIds.has(id)) continue;
+    // Route exit is deliberate, not a network blip. Remove this browser's user
+    // immediately instead of applying the remote-user disconnect grace.
+    if (!activeTracker && id === trackedUserId) {
+      missingSince.delete(id);
+      continue;
+    }
     const missingAt = missingSince.get(id) ?? now;
     missingSince.set(id, missingAt);
     const remaining = LINGER_MS - (now - missingAt);
@@ -161,6 +172,7 @@ function collectUniqueUsers(channel: RealtimeChannel): Set<string> {
 }
 
 const presenceStamps = new Map<string, string>();
+let trackedUserId: string | null = null;
 
 function sameIds(a: Set<string>, b: Set<string>): boolean {
   if (a.size !== b.size) return false;
@@ -211,7 +223,9 @@ function flushCount() {
   }
 }
 
-async function syncTracking() {
+let trackingSync = Promise.resolve();
+
+async function reconcileTracking() {
   const channel = sharedChannel;
   if (!channel || !subscribed) return;
 
@@ -220,13 +234,17 @@ async function syncTracking() {
   if (nextSignature === trackedSignature) return;
 
   if (!active) {
+    const departingUserId = trackedUserId;
     trackedSignature = "";
     await channel.untrack().catch(() => undefined);
-    publishCount();
+    trackedUserId = departingUserId;
+    flushCount();
+    trackedUserId = null;
     return;
   }
 
   trackedSignature = nextSignature;
+  trackedUserId = active.userId;
   await channel
     .track({
       user_id: active.userId,
@@ -235,6 +253,16 @@ async function syncTracking() {
     })
     .catch(() => undefined);
   publishCount();
+}
+
+/**
+ * React route effects can mount/clean up back-to-back, especially in Strict
+ * Mode. Serialize track/untrack calls so an older async untrack can never land
+ * after a newer track and leave the counters stuck until a page refresh.
+ */
+function syncTracking(): Promise<void> {
+  trackingSync = trackingSync.then(reconcileTracking, reconcileTracking);
+  return trackingSync;
 }
 
 let retryTimer: ReturnType<typeof setTimeout> | null = null;
