@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Play, Loader2, CheckCircle2, XCircle, Volume2, Square } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { SoundSettings } from "@/components/app/SoundSettings";
-import { playSound, getSoundPrefs } from "@/lib/sound";
+import { playSoundFromGesture, getSoundPrefs } from "@/lib/sound";
 import { toast } from "sonner";
 
 import mentionAudio from "@/assets/mention-notify.mp3";
@@ -143,8 +143,8 @@ function AdminSounds() {
       return;
     }
     setNowPlaying(s.key);
-    const ok = await playSound(s.src, { gain: s.gain, label: `admin-test-${s.key}` });
-    if (!ok) toast.error(`${s.label} could not play — click the page once, then retry.`);
+    const ok = await playSoundFromGesture(s.src, { gain: s.gain, label: `admin-test-${s.key}` });
+    if (!ok) toast.error(`${s.label} could not start on this device.`);
     const ms = Math.round(((checks[s.key]?.duration ?? 3) + 0.2) * 1000);
     window.setTimeout(() => setNowPlaying((cur) => (cur === s.key ? null : cur)), ms);
   };
@@ -168,7 +168,7 @@ function AdminSounds() {
       const s = SOUNDS[i];
       i += 1;
       setNowPlaying(s.key);
-      await playSound(s.src, { gain: s.gain, label: `admin-testall-${s.key}` });
+      await playSoundFromGesture(s.src, { gain: s.gain, label: `admin-testall-${s.key}` });
       const ms = Math.round(((checks[s.key]?.duration ?? 3) + 0.4) * 1000);
       sequenceRef.current = window.setTimeout(() => { void step(); }, ms);
     };

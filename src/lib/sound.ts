@@ -269,6 +269,63 @@ export function playSound(
   })();
 }
 
+/**
+ * Play directly from a user click/tap. This deliberately creates a fresh
+ * element and calls play() before yielding, preserving the browser/WebView's
+ * user-activation token. Use this for Test/Preview controls; realtime alerts
+ * should continue to use playSound().
+ */
+export function playSoundFromGesture(
+  src: string,
+  opts: { volume?: number; gain?: number; label?: string; ignoreMute?: boolean } = {},
+): Promise<boolean> {
+  if (typeof window === "undefined") return Promise.resolve(false);
+
+  const prefs = getSoundPrefs();
+  if (prefs.muted && !opts.ignoreMute) return Promise.resolve(false);
+
+  const { volume = 1, gain = 1.8, label } = opts;
+  const level = Math.max(0, Math.min(1, volume * gain * prefs.volume));
+  const el = new Audio();
+  el.preload = "auto";
+  el.src = src;
+  el.muted = false;
+  el.volume = level;
+  (el as HTMLAudioElement & { playsInline?: boolean }).playsInline = true;
+
+  return new Promise<boolean>((resolve) => {
+    let settled = false;
+    const finish = (ok: boolean) => {
+      if (settled) return;
+      settled = true;
+      el.removeEventListener("playing", onPlaying);
+      el.removeEventListener("error", onError);
+      resolve(ok);
+    };
+    const onPlaying = () => finish(true);
+    const onError = () => {
+      const detail = el.error?.message || `media error ${el.error?.code ?? "unknown"}`;
+      console.warn(`[sound] direct play failed (${label ?? src}):`, detail);
+      finish(false);
+    };
+    el.addEventListener("playing", onPlaying, { once: true });
+    el.addEventListener("error", onError, { once: true });
+
+    try {
+      const started = el.play();
+      if (started && typeof started.catch === "function") {
+        started.catch((err) => {
+          console.warn(`[sound] direct play blocked (${label ?? src}):`, (err as Error)?.message ?? err);
+          finish(false);
+        });
+      }
+    } catch (err) {
+      console.warn(`[sound] direct play threw (${label ?? src}):`, (err as Error)?.message ?? err);
+      finish(false);
+    }
+  });
+}
+
 // Exposed for diagnostics: window.__bmPlaySound("/src/assets/…mp3")
 if (typeof window !== "undefined") {
   (window as unknown as { __bmPlaySound?: typeof playSound }).__bmPlaySound = playSound;

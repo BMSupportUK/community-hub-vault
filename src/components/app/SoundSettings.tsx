@@ -8,7 +8,7 @@ import {
   getSoundPrefs,
   setSoundPrefs,
   onSoundPrefsChange,
-  playSound,
+  playSoundFromGesture,
 } from "@/lib/sound";
 import mentionAudio from "@/assets/mention-notify.mp3";
 import ticketAudio from "@/assets/ticket-notify.mp3";
@@ -116,7 +116,7 @@ export function SoundSettings() {
               variant="secondary"
               size="sm"
               disabled={prefs.muted}
-              onClick={() => playSound(s.src, { gain: s.gain, label: `test-${s.label}` })}
+              onClick={() => playSoundFromGesture(s.src, { gain: s.gain, label: `test-${s.label}` })}
               className="bg-purple-800/60 hover:bg-purple-700/80 border border-purple-500/40"
             >
               <Play className="size-3.5 mr-1.5" />
