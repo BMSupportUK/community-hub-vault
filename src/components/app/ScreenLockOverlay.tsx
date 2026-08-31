@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { hashLockCode } from "@/lib/screen-lock-hash";
 import { requestLockReset } from "@/lib/screen-lock.functions";
-import lockArt from "@/assets/screen-lock-illustration.jpg";
+import lockBg from "@/assets/screen-lock-bg.jpg";
 import type { ScreenLockSettings } from "@/components/app/ScreenLockProvider";
 
 const MAX_ATTEMPTS = 5;
