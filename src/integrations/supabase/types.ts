@@ -6027,6 +6027,16 @@ export type Database = {
             Args: { p_order_id: string; p_transaction_id?: string }
             Returns: Json
           }
+      member_app_logins: {
+        Args: { _user_id: string }
+        Returns: {
+          account_number: number
+          account_type: string
+          app_login_name: string
+          expiry_at: string
+          id: string
+        }[]
+      }
       move_to_dlq: {
         Args: {
           dlq_name: string

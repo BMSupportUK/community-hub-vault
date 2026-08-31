@@ -140,12 +140,7 @@ export function TalkMemberProfileCard({
             </p>
           </div>
 
-          <div>
-            <h4 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-              Note
-            </h4>
-            <MemberNote userId={row.user_id} />
-          </div>
+          <MemberAppLogins userId={row.user_id} selfId={selfId} />
         </div>
 
         {row.user_id !== selfId && (
@@ -167,6 +162,67 @@ export function TalkMemberProfileCard({
         )}
       </div>
     </>
+  );
+}
+
+type AppLoginRow = {
+  id: string;
+  app_login_name: string | null;
+  account_type: string | null;
+  account_number: number | null;
+  expiry_at: string | null;
+};
+
+/**
+ * App login names on the member's account. The database only returns rows to
+ * the member themselves and to admin/management/staff, so nothing extra is
+ * exposed here. Passwords are never fetched.
+ */
+export function MemberAppLogins({ userId, selfId }: { userId: string; selfId: string | null }) {
+  const { hasAny } = useAuth();
+  const allowed = userId === selfId || hasAny(["admin", "management", "staff"]);
+  const [rows, setRows] = useState<AppLoginRow[] | null>(null);
+
+  useEffect(() => {
+    if (!allowed) return;
+    let cancelled = false;
+    void supabase
+      .rpc("member_app_logins", { _user_id: userId })
+      .then(({ data }) => {
+        if (!cancelled) setRows((data as AppLoginRow[] | null) ?? []);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [allowed, userId]);
+
+  if (!allowed) return null;
+
+  return (
+    <div>
+      <h4 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+        App logins
+      </h4>
+      {rows === null ? (
+        <p className="mt-0.5 text-xs text-muted-foreground">Loading…</p>
+      ) : rows.length === 0 ? (
+        <p className="mt-0.5 text-xs text-muted-foreground">No accounts</p>
+      ) : (
+        <ul className="mt-1 space-y-1">
+          {rows.map((r) => (
+            <li
+              key={r.id}
+              className="flex items-center justify-between gap-2 rounded-md border border-border bg-surface px-2 py-1"
+            >
+              <span className="truncate font-mono text-xs">{r.app_login_name ?? "—"}</span>
+              <span className="shrink-0 text-[10px] uppercase tracking-wider text-muted-foreground">
+                {r.account_type ?? `#${r.account_number ?? "?"}`}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 
