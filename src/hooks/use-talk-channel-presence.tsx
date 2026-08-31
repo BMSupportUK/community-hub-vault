@@ -26,7 +26,7 @@ const PUBLISH_DEBOUNCE_MS = 250;
  * socket re-join momentarily empties one key — without this grace window those
  * blips made people appear to go offline and come straight back.
  */
-const LINGER_MS = 30_000;
+const LINGER_MS = 5_000;
 
 type Tracker = {
   userId: string;
@@ -90,8 +90,17 @@ async function loadMemberDirectory(force = false) {
  * stale (or immortal), which is a classic count-flicker cause.
  */
 const lastSeenLocal = new Map<string, number>();
-/** Last moment each user_id was present at all (used for the linger grace). */
-const lastPresentAt = new Map<string, number>();
+/** First moment a previously visible user vanished from presence state. */
+const missingSince = new Map<string, number>();
+let lingerTimer: ReturnType<typeof setTimeout> | null = null;
+
+function scheduleLingerFlush(delay: number) {
+  if (lingerTimer) clearTimeout(lingerTimer);
+  lingerTimer = setTimeout(() => {
+    lingerTimer = null;
+    flushCount();
+  }, Math.max(0, delay) + 25);
+}
 
 function collectUniqueUsers(channel: RealtimeChannel): Set<string> {
   const state = channel.presenceState<TalkPresence>();
@@ -129,16 +138,24 @@ function collectUniqueUsers(channel: RealtimeChannel): Set<string> {
     }
   }
 
-  for (const id of userIds) lastPresentAt.set(id, now);
-  // Keep recently-seen users listed so a heartbeat re-track or a socket
-  // re-join never flashes them offline.
-  for (const [id, at] of Array.from(lastPresentAt.entries())) {
-    if (now - at > LINGER_MS) {
-      lastPresentAt.delete(id);
-      continue;
+  // Keep a user briefly while a heartbeat re-track settles, but schedule an
+  // exact follow-up publish. Previously this cache was only reconsidered by a
+  // later heartbeat, leaving the visible number wrong until refresh.
+  let nextExpiry = Number.POSITIVE_INFINITY;
+  for (const id of userIds) missingSince.delete(id);
+  for (const id of currentUserIds) {
+    if (userIds.has(id)) continue;
+    const missingAt = missingSince.get(id) ?? now;
+    missingSince.set(id, missingAt);
+    const remaining = LINGER_MS - (now - missingAt);
+    if (remaining > 0) {
+      userIds.add(id);
+      nextExpiry = Math.min(nextExpiry, remaining);
+    } else {
+      missingSince.delete(id);
     }
-    userIds.add(id);
   }
+  if (Number.isFinite(nextExpiry)) scheduleLingerFlush(nextExpiry);
 
   return userIds;
 }
@@ -302,7 +319,7 @@ function ensureSharedChannel() {
       const now = Date.now();
       if (lastHeartbeatAt && now - lastHeartbeatAt > HEARTBEAT_MS * 3) {
         for (const key of Array.from(lastSeenLocal.keys())) lastSeenLocal.set(key, now);
-        for (const id of Array.from(lastPresentAt.keys())) lastPresentAt.set(id, now);
+        missingSince.clear();
       }
       lastHeartbeatAt = now;
       const live = sharedChannel;
