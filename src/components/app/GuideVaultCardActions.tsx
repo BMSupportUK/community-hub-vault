@@ -182,6 +182,21 @@ export function GuideVaultCardActions({
     );
   }
 
+  if (ready) {
+    return (
+      <div className="flex-1 flex items-center gap-2">
+        <Button
+          size="sm"
+          onClick={() => onOpen(ready)}
+          className="flex-1 bg-emerald-500 text-white hover:bg-emerald-400 shadow-[0_0_14px_rgba(16,185,129,0.5)]"
+        >
+          <BookOpen className="size-4 mr-1" />
+          Read guide
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 flex items-center gap-2">
       {hasAccess ? (
@@ -191,10 +206,11 @@ export function GuideVaultCardActions({
           disabled={busy}
           className="flex-1 bg-gradient-primary text-primary-foreground hover:opacity-90"
         >
-          {busy ? <Loader2 className="size-4 mr-1 animate-spin" /> : <LockOpen className="size-4 mr-1" />}
-          Open guide
+          {busy ? <Loader2 className="size-4 mr-1 animate-spin" /> : <BookOpen className="size-4 mr-1" />}
+          Read guide
         </Button>
       ) : (
+
         <>
           <Button
             size="sm"
