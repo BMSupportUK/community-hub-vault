@@ -288,9 +288,16 @@ export function StaffOnDutyStrip({
       </div>
     );
     return mp ? (
-      <ChatMiniProfile key={s.id} profile={mp} className="block w-full">
+      <TalkMemberMiniProfile
+        key={s.id}
+        userId={s.user_id}
+        online={mp.isOnline}
+        fallback={talkFallbackRow(s.user_id)}
+        className="block w-full"
+      >
         {card}
-      </ChatMiniProfile>
+      </TalkMemberMiniProfile>
+
     ) : (
       <div key={s.id}>{card}</div>
     );
