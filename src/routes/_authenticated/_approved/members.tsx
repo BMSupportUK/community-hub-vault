@@ -171,6 +171,11 @@ function MembersPage() {
     );
   });
 
+  const onlineList = filtered.filter((p) => onlineUsers.has(p.id));
+  const offlineList = filtered.filter((p) => !onlineUsers.has(p.id));
+  const visible = tab === "online" ? onlineList : offlineList;
+
+
   return (
     <main className="flex-1 overflow-y-auto">
       {/* Hero */}
