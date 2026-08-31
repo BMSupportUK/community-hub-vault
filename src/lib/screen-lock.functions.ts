@@ -1,13 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import * as React from "react";
-import { render } from "@react-email/components";
-import { template as screenLockResetTpl } from "@/lib/email-templates/screen-lock-reset";
 
-const SITE_NAME = "BM Support";
-const SENDER_DOMAIN = "notify.bmsupport.uk";
-const FROM_DOMAIN = "bmsupport.uk";
 const LOGIN_URL = "https://bmsupport.uk";
 
 /** A signed-in user asks Owner/Management to reset their forgotten lock code. */
@@ -104,47 +98,11 @@ export const approveLockReset = createServerFn({ method: "POST" })
           (adminProf as { display_name?: string; username?: string } | null)?.username ||
           undefined;
 
-        const el = React.createElement(screenLockResetTpl.component, {
-          userName,
-          tempCode,
-          resetByName,
-          loginUrl: LOGIN_URL,
+        const { sendAndLogEmail } = await import("@/lib/email-templates/send-and-log");
+        await sendAndLogEmail(supabaseAdmin, "screen-lock-reset", toEmail, {
+          templateData: { userName, tempCode, resetByName, loginUrl: LOGIN_URL },
+          idempotencyKey: `screen-lock-reset-${targetUserId}-${Date.now()}`,
         });
-        const html = await render(el);
-        const text = await render(el, { plainText: true });
-        const subject =
-          typeof screenLockResetTpl.subject === "function"
-            ? (screenLockResetTpl.subject as (d: Record<string, unknown>) => string)({})
-            : screenLockResetTpl.subject;
-
-        const messageId = crypto.randomUUID();
-        await supabaseAdmin.from("email_send_log").insert({
-          message_id: messageId,
-          template_name: "screen-lock-reset",
-          recipient_email: toEmail,
-          status: "pending",
-        } as never);
-        const unsubToken = Array.from(crypto.getRandomValues(new Uint8Array(16)))
-          .map((x) => x.toString(16).padStart(2, "0"))
-          .join("");
-        const { error: qErr } = await supabaseAdmin.rpc("enqueue_email" as never, {
-          queue_name: "transactional_emails",
-          payload: {
-            message_id: messageId,
-            to: toEmail,
-            from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
-            sender_domain: SENDER_DOMAIN,
-            subject,
-            html,
-            text,
-            purpose: "transactional",
-            label: "screen-lock-reset",
-            idempotency_key: `screen-lock-reset-${targetUserId}-${Date.now()}`,
-            unsubscribe_token: unsubToken,
-            queued_at: new Date().toISOString(),
-          },
-        } as never);
-        if (qErr) console.error("screen-lock-reset enqueue failed", qErr);
       }
     } catch (e) {
       console.error("screen-lock-reset notification failed", e);

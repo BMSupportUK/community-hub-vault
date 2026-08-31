@@ -1,23 +1,13 @@
-import * as React from 'react'
-import { render } from '@react-email/render'
 import { createClient } from '@supabase/supabase-js'
 import { createFileRoute } from '@tanstack/react-router'
 import { TEMPLATES } from '@/lib/email-templates/registry'
+import { sendAndLogEmail } from '@/lib/email-templates/send-and-log'
 import { canEmailList, EMAIL_LIST_SUPPORT } from '@/lib/email-lists'
 
-const SITE_NAME = 'community-hub-vault'
-const SENDER_DOMAIN = 'notify.bmsupport.uk'
-const FROM_DOMAIN = 'bmsupport.uk'
 const PROFILE_URL = 'https://bmsupport.uk/profile'
 const TEMPLATE_NAME = 'subscription-expiry-reminder'
 
 type Kind = '7d' | '24h'
-
-function generateToken(): string {
-  const bytes = new Uint8Array(32)
-  crypto.getRandomValues(bytes)
-  return Array.from(bytes).map((b) => b.toString(16).padStart(2, '0')).join('')
-}
 
 function fmtDate(iso: string): string {
   try {
@@ -26,27 +16,6 @@ function fmtDate(iso: string): string {
       hour: '2-digit', minute: '2-digit', timeZone: 'Europe/London', timeZoneName: 'short',
     })
   } catch { return iso }
-}
-
-async function ensureUnsubscribeToken(supabase: any, email: string): Promise<string | null> {
-  const normalized = email.toLowerCase()
-  const { data: existing } = await supabase
-    .from('email_unsubscribe_tokens')
-    .select('token, used_at')
-    .eq('email', normalized)
-    .maybeSingle()
-  if (existing && !existing.used_at) return existing.token as string
-  if (existing && existing.used_at) return null // suppressed/used
-  const token = generateToken()
-  await supabase
-    .from('email_unsubscribe_tokens')
-    .upsert({ token, email: normalized }, { onConflict: 'email', ignoreDuplicates: true })
-  const { data: stored } = await supabase
-    .from('email_unsubscribe_tokens')
-    .select('token')
-    .eq('email', normalized)
-    .maybeSingle()
-  return stored?.token ?? null
 }
 
 async function processKind(supabase: any, kind: Kind): Promise<{ sent: number; skipped: number; failed: number }> {
@@ -76,9 +45,6 @@ async function processKind(supabase: any, kind: Kind): Promise<{ sent: number; s
         stats.skipped++
         continue
       }
-      const unsubscribeToken = await ensureUnsubscribeToken(supabase, recipient)
-      if (!unsubscribeToken) { stats.skipped++; continue }
-
       const daysRemaining = kind === '24h' ? 1 : 7
       const props = {
         appLoginName: row.app_login_name,
@@ -86,11 +52,6 @@ async function processKind(supabase: any, kind: Kind): Promise<{ sent: number; s
         daysRemaining,
         profileUrl: PROFILE_URL,
       }
-      const element = React.createElement(template.component, props)
-      const html = await render(element)
-      const text = await render(element, { plainText: true })
-      const subject = typeof template.subject === 'function' ? template.subject(props) : template.subject
-      const messageId = crypto.randomUUID()
       const idempotencyKey = `subscription-expiry-${kind}-${row.credential_id}-${new Date(row.expiry_at).getTime()}`
 
       // Try to claim this reminder slot first (unique constraint prevents dupes)
@@ -99,36 +60,12 @@ async function processKind(supabase: any, kind: Kind): Promise<{ sent: number; s
       })
       if (claimErr) { stats.skipped++; continue }
 
-      await supabase.from('email_send_log').insert({
-        message_id: messageId, template_name: TEMPLATE_NAME, recipient_email: recipient, status: 'pending',
+      const result = await sendAndLogEmail(supabase, TEMPLATE_NAME, recipient, {
+        templateData: props,
+        idempotencyKey,
       })
-
-      const { error: enqueueErr } = await supabase.rpc('enqueue_email', {
-        queue_name: 'transactional_emails',
-        payload: {
-          message_id: messageId,
-          to: recipient,
-          from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
-          sender_domain: SENDER_DOMAIN,
-          subject,
-          html,
-          text,
-          purpose: 'transactional',
-          label: TEMPLATE_NAME,
-          idempotency_key: idempotencyKey,
-          unsubscribe_token: unsubscribeToken,
-          queued_at: new Date().toISOString(),
-        },
-      })
-      if (enqueueErr) {
-        await supabase.from('email_send_log').insert({
-          message_id: messageId, template_name: TEMPLATE_NAME, recipient_email: recipient,
-          status: 'failed', error_message: 'Failed to enqueue email',
-        })
-        stats.failed++
-      } else {
-        stats.sent++
-      }
+      if (result.sent) stats.sent++
+      else stats.skipped++
     } catch (e) {
       console.error('reminder send failed', e)
       stats.failed++

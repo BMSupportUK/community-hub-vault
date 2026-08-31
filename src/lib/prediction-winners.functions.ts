@@ -1,13 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import * as React from "react";
-import { render } from "@react-email/components";
-import { template as winnerTpl } from "@/lib/email-templates/winner-notification";
 
-const SITE_NAME = "BM Support";
-const SENDER_DOMAIN = "notify.bmsupport.uk";
-const FROM_DOMAIN = "bmsupport.uk";
 
 const CompSchema = z.enum(["wc2026", "boro2026"]);
 
@@ -170,42 +164,14 @@ export const announcePredictionWinners = createServerFn({ method: "POST" })
         }
 
         const props = { displayName, place: row.place, competitionTitle: meta.title, winnersUrl: meta.winnersUrl };
-        const el = React.createElement(winnerTpl.component, props);
-        const html = await render(el);
-        const text = await render(el, { plainText: true });
-        const subject = typeof winnerTpl.subject === "function"
-          ? (winnerTpl.subject as (d: Record<string, any>) => string)(props)
-          : winnerTpl.subject;
-
-        const messageId = crypto.randomUUID();
-        await supabaseAdmin.from("email_send_log").insert({
-          message_id: messageId, template_name: "winner-notification", recipient_email: email, status: "pending",
-        } as never);
-
-        const { error: qErr } = await supabaseAdmin.rpc("enqueue_email" as never, {
-          queue_name: "transactional_emails",
-          payload: {
-            message_id: messageId,
-            to: email,
-            from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
-            sender_domain: SENDER_DOMAIN,
-            subject,
-            html,
-            text,
-            purpose: "transactional",
-            label: "winner-notification",
-            idempotency_key: `winner-${data.competition}-${row.user_id}`,
-            unsubscribe_token: newId(),
-            queued_at: new Date().toISOString(),
-          },
-        } as never);
-        if (!qErr) {
-          await supabaseAdmin.from("prediction_winners")
-            .update({ notified_at: new Date().toISOString() }).eq("id", row.id);
-          sent += 1;
-        } else {
-          console.error("winner enqueue failed", qErr);
-        }
+        const { sendAndLogEmail } = await import("@/lib/email-templates/send-and-log");
+        await sendAndLogEmail(supabaseAdmin, "winner-notification", email, {
+          templateData: props,
+          idempotencyKey: `winner-${data.competition}-${row.user_id}`,
+        });
+        await supabaseAdmin.from("prediction_winners")
+          .update({ notified_at: new Date().toISOString() }).eq("id", row.id);
+        sent += 1;
       } catch (e) {
         console.error("winner notification failed", e);
       }
