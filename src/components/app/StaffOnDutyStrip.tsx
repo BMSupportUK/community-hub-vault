@@ -8,6 +8,10 @@ import { DndCountdown } from "@/components/app/DndCountdown";
 import { useDndStatus } from "@/hooks/use-dnd";
 import { Nameplate } from "@/components/app/Nameplate";
 import { ChatMiniProfile, type ChatMiniProfileData } from "@/components/app/ChatMiniProfile";
+import {
+  TalkMemberMiniProfile,
+  type TalkMemberProfileRow,
+} from "@/components/app/TalkMemberProfileCard";
 import { type BreakKind, BREAK_LIMITS as STAFF_BREAK_LIMITS, breakLabel, breakIcon } from "@/lib/breaks";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useTalkChannelPresentUsers } from "@/hooks/use-talk-channel-presence";
