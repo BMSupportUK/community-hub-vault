@@ -2407,7 +2407,7 @@ function Checkout({
   const [usernameState, setUsernameState] = useState<
     "idle" | "checking" | "valid" | "invalid"
   >("idle");
-  const needsUsernameCheck = !hasCredsRef.current && customerType === "existing";
+  const needsUsernameCheck = myCreds.length === 0 && customerType === "existing";
   useEffect(() => {
     const value = existingUsername.trim();
     if (!needsUsernameCheck || value.length < 2) {
