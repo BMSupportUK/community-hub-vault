@@ -5689,6 +5689,7 @@ export type Database = {
       check_admin_unlock_lockout: { Args: never; Returns: Json }
       cleanup_old_chat_messages: { Args: never; Returns: number }
       clear_admin_unlock_failures: { Args: never; Returns: undefined }
+      close_ticket: { Args: { _ticket_id: string }; Returns: undefined }
       create_app_role: {
         Args: { _label: string; _name: string }
         Returns: undefined
