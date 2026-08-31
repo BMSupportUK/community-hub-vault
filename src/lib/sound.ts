@@ -15,6 +15,8 @@ let unlocked = false;
 let listenersAttached = false;
 let ctx: AudioContext | null = null;
 const registeredSources = new Set<string>();
+const pendingPlayback = new Map<string, () => void>();
+let retryListenersAttached = false;
 
 // ---------- User preferences (per-device, localStorage) ----------
 
@@ -112,6 +114,25 @@ function ensureUnlockListeners() {
     const c = getCtx();
     if (c && c.state === "suspended") c.resume().catch(() => {});
   });
+}
+
+function retryOnNextGesture(key: string, replay: () => void) {
+  if (typeof window === "undefined") return;
+  pendingPlayback.set(key, replay);
+  if (retryListenersAttached) return;
+  retryListenersAttached = true;
+  const retry = () => {
+    retryListenersAttached = false;
+    const queued = [...pendingPlayback.values()];
+    pendingPlayback.clear();
+    window.removeEventListener("pointerdown", retry, true);
+    window.removeEventListener("keydown", retry, true);
+    window.removeEventListener("touchstart", retry, true);
+    queued.forEach((run) => run());
+  };
+  window.addEventListener("pointerdown", retry, { capture: true, once: true });
+  window.addEventListener("keydown", retry, { capture: true, once: true });
+  window.addEventListener("touchstart", retry, { capture: true, once: true });
 }
 
 function primeAudio(a: HTMLAudioElement) {
@@ -237,6 +258,10 @@ export function playSound(
       return true;
     } catch (err) {
       console.warn(`[sound] fallback play failed${label ? ` (${label})` : ""}:`, (err as Error)?.message ?? err);
+      const name = label ?? src;
+      retryOnNextGesture(name, () => {
+        void playSound(src, opts);
+      });
       return false;
     }
   })();

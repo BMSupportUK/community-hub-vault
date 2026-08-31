@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { Capacitor } from "@capacitor/core";
 import { MessageSquareReply } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -42,7 +43,11 @@ export function TicketReplyAlert() {
     const announce = (n: ReplyPayload) => {
       if (seenRef.current.has(n.id)) return;
       seenRef.current.add(n.id);
-      playSound(ticketReplyAudio, { label: "ticket-reply", gain: 2.0 });
+      // The native shell handles foreground replies with a local notification
+      // bound to the custom MP3 channel. Browser/PWA sessions use web audio.
+      if (!Capacitor.isNativePlatform()) {
+        void playSound(ticketReplyAudio, { label: "ticket-reply", gain: 2.0 });
+      }
       setQueue((q) => (q.some((x) => x.id === n.id) ? q : [...q, n]));
     };
 

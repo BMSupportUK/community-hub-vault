@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Capacitor } from "@capacitor/core";
 import { PushNotifications } from "@capacitor/push-notifications";
+import { LocalNotifications } from "@capacitor/local-notifications";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
 import { registerDeviceToken } from "@/lib/push.functions";
@@ -58,6 +59,38 @@ export function usePushRegister() {
           sound: "ticket_reply_notify.mp3",
         });
 
+        // Android does not display an FCM notification (and therefore does not
+        // play its channel sound) while the app is in the foreground. Mirror a
+        // received ticket reply into a native local notification so the exact
+        // bundled MP3 is used whether the app is open, backgrounded or closed.
+        await LocalNotifications.createChannel({
+          id: "bm_support_ticket_replies_v2",
+          name: "Support ticket replies",
+          description: "Spoken alert when a customer replies to an assigned ticket",
+          importance: 5,
+          visibility: 1,
+          vibration: true,
+          sound: "ticket_reply_notify.mp3",
+        });
+
+        const received = await PushNotifications.addListener("pushNotificationReceived", async (notification) => {
+          if (notification.data?.kind !== "ticket_reply") return;
+          try {
+            await LocalNotifications.schedule({
+              notifications: [{
+                id: Math.floor(Date.now() % 2_000_000_000),
+                title: notification.title || "Support ticket reply",
+                body: notification.body || "A customer replied to an assigned ticket.",
+                channelId: "bm_support_ticket_replies_v2",
+                sound: "ticket_reply_notify.mp3",
+                extra: notification.data,
+              }],
+            });
+          } catch (e) {
+            console.error("[push] foreground ticket reply sound failed", e);
+          }
+        });
+
         const reg = await PushNotifications.addListener("registration", async (t) => {
           try {
             await register({ data: { token: t.value, platform: "android" } });
@@ -68,7 +101,7 @@ export function usePushRegister() {
         const err = await PushNotifications.addListener("registrationError", (e) => {
           console.error("[push] registration error", e);
         });
-        listeners.push(reg, err);
+        listeners.push(reg, err, received);
 
         await PushNotifications.register();
       } catch (e) {
