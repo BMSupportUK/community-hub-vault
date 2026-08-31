@@ -198,6 +198,17 @@ export const notifyStaffOfCustomerReply = createServerFn({ method: "POST" })
     const subject = ((ticket as any).subject as string | null) ?? "your ticket";
     const preview = String((msg as any).content ?? "").slice(0, 140);
 
+    // Guard against duplicate alerts if the client retries the send.
+    const { data: recent } = await supabaseAdmin
+      .from("user_notifications")
+      .select("id")
+      .eq("user_id", assignee)
+      .eq("kind", "ticket_reply")
+      .eq("source_id", data.ticketId)
+      .gte("created_at", new Date(Date.now() - 20000).toISOString())
+      .limit(1);
+    if ((recent ?? []).length > 0) return { ok: true, deduped: true };
+
     const { error } = await supabaseAdmin.from("user_notifications").insert({
       user_id: assignee,
       kind: "ticket_reply",
