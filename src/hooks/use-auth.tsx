@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { checkMyVpnOnLogin } from "@/lib/vpn-login-check.functions";
 import { sendShiftEventPush, sendBreakEventPush } from "@/lib/push.functions";
 import { isFanZoneOnlyRoles } from "@/lib/fan-zone-nav";
+import { sortRolesByPriority } from "@/lib/role-rank";
 
 export type AppRole =
   | "admin"
@@ -64,7 +65,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // A role request may finish after sign-out. Never let that stale response
     // restore an authenticated role state for a user whose session is gone.
     if (activeUidRef.current !== uid) return;
-    setRoles((data ?? []).map((r) => r.role as AppRole));
+    // The database does not guarantee row order. Keep BM Support roles first
+    // so dual-role accounts are consistently represented by their highest
+    // support role throughout the UI.
+    setRoles(sortRolesByPriority((data ?? []).map((r) => r.role as AppRole)));
     setRolesLoaded(true);
   };
 
@@ -103,24 +107,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => sub.subscription.unsubscribe();
   }, []);
 
-  // Refresh roles without a full page reload, but keep it light. This used to
-  // poll every 30s and became one of the highest-volume backend reads.
-  // (user_roles is no longer broadcast via Realtime for security reasons.)
+  // user_roles is intentionally not broadcast through Realtime. Refresh the
+  // current user's tiny role set while the page is visible, and immediately
+  // on focus/visibility, so an admin-granted BM Support role cannot leave a
+  // dual-role account trapped behind the Fan-Zone-only route guard.
   useEffect(() => {
     if (!user?.id) return;
     const uid = user.id;
-    let lastRun = Date.now();
-    const MIN_INTERVAL_MS = 5 * 60_000;
-    const tick = () => {
-      const now = Date.now();
-      if (now - lastRun < MIN_INTERVAL_MS) return;
-      lastRun = now;
-      loadRoles(uid);
+    const REFRESH_INTERVAL_MS = 15_000;
+    const refresh = () => {
+      if (document.visibilityState === "visible") void loadRoles(uid);
     };
-    const interval = window.setInterval(tick, MIN_INTERVAL_MS);
-    const onFocus = () => tick();
+    const interval = window.setInterval(refresh, REFRESH_INTERVAL_MS);
+    const onFocus = () => void loadRoles(uid);
     const onVis = () => {
-      if (document.visibilityState === "visible") tick();
+      if (document.visibilityState === "visible") void loadRoles(uid);
     };
     window.addEventListener("focus", onFocus);
     document.addEventListener("visibilitychange", onVis);
