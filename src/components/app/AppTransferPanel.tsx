@@ -33,7 +33,7 @@ function useCountdown(expiresAt: string | undefined) {
   return `${h}h ${String(m).padStart(2, "0")}m ${String(s).padStart(2, "0")}s`;
 }
 
-export function AppTransferPanel() {
+export function AppTransferPanel({ onUploadClick }: { onUploadClick?: () => void } = {}) {
   const queryClient = useQueryClient();
   const fetchBuild = useServerFn(getCurrentAppBuild);
   const fetchTransfer = useServerFn(getMyAppTransfer);
@@ -77,7 +77,28 @@ export function AppTransferPanel() {
     }
   }, [remaining, queryClient]);
 
-  if (!build || !build.isAvailable) return null;
+  if (!build || !build.isAvailable) {
+    return (
+      <section className="rounded-2xl border border-violet-500/30 bg-violet-950/40 p-6">
+        <h3 className="font-display text-lg font-semibold text-foreground flex items-center gap-2">
+          <Smartphone className="size-5 text-violet-300" /> Get the App
+        </h3>
+        <p className="text-sm text-muted-foreground mt-2 max-w-prose">
+          {build && !build.isAvailable
+            ? "The app is temporarily unavailable while we prepare a new version. Check back shortly."
+            : "The app isn't published yet. Once it's available you'll be able to request a secure 24-hour install link for your Amazon Fire Stick or Android device right here."}
+        </p>
+        {onUploadClick && (
+          <Button
+            onClick={onUploadClick}
+            className="mt-4 bg-gradient-primary text-primary-foreground shadow-glow hover:opacity-90"
+          >
+            <ShieldCheck className="size-4 mr-1" /> Upload the APK
+          </Button>
+        )}
+      </section>
+    );
+  }
 
   const onRequest = async () => {
     setBusy("request");

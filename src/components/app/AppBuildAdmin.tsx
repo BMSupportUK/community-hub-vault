@@ -166,6 +166,11 @@ export function AppBuildAdmin() {
             </Button>
           )}
         </div>
+        <p className="text-xs text-muted-foreground">
+          {uploading
+            ? "Uploading — keep this tab open until it finishes."
+            : "Choose a .apk file (up to 200 MB). Once uploaded it becomes the current build and members can request a secure 24-hour install link."}
+        </p>
       </section>
 
       <section className="space-y-3">
