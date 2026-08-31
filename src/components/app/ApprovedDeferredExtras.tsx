@@ -23,6 +23,7 @@ export function ApprovedDeferredExtras() {
       <OutstandingTicketsAlert />
       <TicketAssignedAlert />
       <TicketReplyAlert />
+      <PushSoundBridge />
       <PaymentConfirmedAlert />
       <TicketHelpRequestedAlert />
       <FanZoneAccessCard />
