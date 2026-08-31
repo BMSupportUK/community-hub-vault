@@ -6086,6 +6086,17 @@ export type Database = {
         Returns: string
       }
       sync_subscriber_roles_from_credentials: { Args: never; Returns: number }
+      talk_channel_member_directory: {
+        Args: never
+        Returns: {
+          avatar_url: string
+          display_name: string
+          equipped_nameplate_id: string
+          roles: Database["public"]["Enums"]["app_role"][]
+          user_id: string
+          username: string
+        }[]
+      }
       unmute_user: { Args: { _user_id: string }; Returns: boolean }
       upsert_my_signup_vpn: {
         Args: {

@@ -22,6 +22,11 @@ type MemberProfile = {
   equipped_nameplate_id: string | null;
 };
 
+type DirectoryRow = Omit<MemberProfile, "id"> & {
+  user_id: string;
+  roles: string[] | null;
+};
+
 type FriendState = { kind: "friends" | "outgoing" | "incoming"; id?: string };
 
 const HIDDEN_ROLES = new Set(["pending", "banned", "rejected"]);
@@ -47,29 +52,26 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
   const [roleFilter, setRoleFilter] = useState<string>("all");
 
 
-  const ids = useMemo(() => Array.from(onlineIds), [onlineIds]);
-  const idKey = ids.slice().sort().join(",");
-
-  const load = useCallback(async () => {
-    if (!ids.length) {
-      setProfiles([]);
-      setRolesByUser({});
+  const loadDirectory = useCallback(async () => {
+    const { data, error } = await supabase.rpc("talk_channel_member_directory");
+    if (error) {
+      console.error("Could not load Talk Channel member directory", error);
       return;
     }
-    const [{ data: ps }, { data: rs }] = await Promise.all([
-      supabase
-        .from("profiles")
-        .select("id,username,display_name,avatar_url,equipped_nameplate_id")
-        .in("id", ids),
-      supabase.from("user_roles").select("user_id,role").in("user_id", ids),
-    ]);
-    setProfiles(((ps as MemberProfile[] | null) ?? []).filter((p) => p.id));
+    const rows = (data as DirectoryRow[] | null) ?? [];
+    setProfiles(rows.map((row) => ({
+      id: row.user_id,
+      username: row.username,
+      display_name: row.display_name,
+      avatar_url: row.avatar_url,
+      equipped_nameplate_id: row.equipped_nameplate_id,
+    })));
     const map: Record<string, string[]> = {};
-    for (const r of ((rs as Array<{ user_id: string; role: string }> | null) ?? [])) {
-      (map[r.user_id] ||= []).push(r.role);
+    for (const row of rows) {
+      map[row.user_id] = row.roles ?? [];
     }
     setRolesByUser(map);
-  }, [idKey]);
+  }, []);
 
   const loadRelations = useCallback(async () => {
     if (!user) return;
@@ -95,11 +97,15 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
     setIgnored(new Set(((igs as Array<{ ignored_id: string }> | null) ?? []).map((r) => r.ignored_id)));
   }, [user?.id]);
 
-  // Load whenever presence changes (not only when the dialog opens) so the
-  // trigger's counter stays live and the list is already warm.
+  // Load the safe member directory independently from Presence. Enter/leave
+  // events must never wait for a database request or be overwritten by an
+  // older response that finishes late.
   useEffect(() => {
-    void load();
-  }, [load]);
+    void loadDirectory();
+    const refresh = () => void loadDirectory();
+    window.addEventListener("focus", refresh);
+    return () => window.removeEventListener("focus", refresh);
+  }, [loadDirectory]);
 
   useEffect(() => {
     if (!open) return;
@@ -155,12 +161,13 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
   const memberProfiles = useMemo(
     () =>
       profiles.filter((p) => {
+        if (!onlineIds.has(p.id)) return false;
         const roles = rolesByUser[p.id] ?? [];
         if (roles.some((r) => HIDDEN_ROLES.has(r))) return false;
         if (roles.some((r) => STAFF_ROLES.has(r))) return false;
         return true;
       }),
-    [profiles, rolesByUser],
+    [onlineIds, profiles, rolesByUser],
   );
 
   /** Distinct member roles present for the Talk Channel filter. */
