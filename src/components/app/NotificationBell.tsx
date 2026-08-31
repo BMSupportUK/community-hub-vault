@@ -12,8 +12,6 @@ import { cn } from "@/lib/utils";
 import mentionAudio from "@/assets/mention-notify.mp3";
 import outageAudio from "@/assets/outage-notify.mp3";
 import outageResolvedAudio from "@/assets/outage-resolved.mp3";
-import broadcastAudio from "@/assets/broadcast-notify.mp3";
-import staffMentionAudio from "@/assets/staff-mention.mp3";
 import orderAudio from "@/assets/order-notify.mp3";
 import ticketAudio from "@/assets/ticket-notify.mp3";
 import paymentReceivedAudio from "@/assets/payment-received.mp3";
@@ -106,13 +104,6 @@ export function NotificationBell() {
           };
           setItems((prev) => [n, ...prev].slice(0, 80));
           if (n.kind === "mention") {
-            const staffRoles = ["admin", "management", "moderator", "staff"];
-            const broadcastMatch = /mentioned @([a-zA-Z0-9_.-]+)/.exec(n.title);
-            const token = broadcastMatch?.[1]?.toLowerCase();
-            const isStaffRole = !!token && staffRoles.includes(token);
-            const isBroadcast =
-              !!token && !isStaffRole && (token === "all" || token === "here" || !staffRoles.includes(token));
-            playSound(isStaffRole ? staffMentionAudio : isBroadcast ? broadcastAudio : mentionAudio, { label: "mention", gain: 1.5 });
             toast(`📣 ${n.title}`, {
               description: n.body ?? undefined,
               duration: 6000,

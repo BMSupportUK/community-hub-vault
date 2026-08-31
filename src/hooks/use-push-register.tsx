@@ -73,16 +73,39 @@ export function usePushRegister() {
           sound: "ticket_reply_notify.mp3",
         });
 
+        await PushNotifications.createChannel({
+          id: "bm_support_mentions_v1",
+          name: "Mentions",
+          description: "Spoken alert when somebody mentions you",
+          importance: 4,
+          visibility: 1,
+          lights: true,
+          vibration: true,
+          sound: "mention_notify.mp3",
+        });
+
+        await LocalNotifications.createChannel({
+          id: "bm_support_mentions_v1",
+          name: "Mentions",
+          description: "Spoken alert when somebody mentions you",
+          importance: 5,
+          visibility: 1,
+          vibration: true,
+          sound: "mention_notify.mp3",
+        });
+
         const received = await PushNotifications.addListener("pushNotificationReceived", async (notification) => {
-          if (notification.data?.kind !== "ticket_reply") return;
+          const kind = notification.data?.kind;
+          if (kind !== "ticket_reply" && kind !== "mention") return;
+          const isMention = kind === "mention";
           try {
             await LocalNotifications.schedule({
               notifications: [{
                 id: Math.floor(Date.now() % 2_000_000_000),
-                title: notification.title || "Support ticket reply",
-                body: notification.body || "A customer replied to an assigned ticket.",
-                channelId: "bm_support_ticket_replies_v2",
-                sound: "ticket_reply_notify.mp3",
+                title: notification.title || (isMention ? "New mention" : "Support ticket reply"),
+                body: notification.body || (isMention ? "Somebody mentioned you." : "A customer replied to an assigned ticket."),
+                channelId: isMention ? "bm_support_mentions_v1" : "bm_support_ticket_replies_v2",
+                sound: isMention ? "mention_notify.mp3" : "ticket_reply_notify.mp3",
                 extra: notification.data,
               }],
             });
