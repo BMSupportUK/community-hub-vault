@@ -10,6 +10,9 @@ import { toast } from "sonner";
 import bgAsset from "@/assets/boro-fan-zone-profile-bg.jpg.asset.json";
 import { FanStatsBox, FanReputationBox } from "@/components/app/FanZoneStatsBoxes";
 import { FanRoleBadge, type FanStaffRole } from "@/components/app/FanRoleBadge";
+
+/** Badge roles in rank order: BM Support first, then Boro Fan Zone. */
+const BADGE_ROLES = ["admin", "management", "moderator", "staff", "boro_fan_zone_moderator"] as const;
 import { RelativeTime } from "@/components/app/RelativeTime";
 
 export const Route = createFileRoute("/_authenticated/_approved/fanzone/u/$userId")({
@@ -64,15 +67,10 @@ function FanProfilePage() {
         .from("user_roles")
         .select("role")
         .eq("user_id", userId)
-        .in("role", ["admin", "boro_fan_zone_moderator"]);
+        .in("role", BADGE_ROLES as unknown as string[]);
       const roles = (data ?? []).map((r) => r.role as string);
-      setStaffRole(
-        roles.includes("admin")
-          ? "admin"
-          : roles.includes("boro_fan_zone_moderator")
-            ? "boro_fan_zone_moderator"
-            : null,
-      );
+      // BM Support roles rank above Boro Fan Zone roles.
+      setStaffRole((BADGE_ROLES.find((r) => roles.includes(r)) as FanStaffRole) ?? null);
     })();
   }, [userId]);
 

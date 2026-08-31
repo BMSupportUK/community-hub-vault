@@ -117,6 +117,7 @@ const ROLE_STYLES: Record<AppRole, string> = {
 };
 
 import { formatRoleLabel } from "@/lib/role-label";
+import { sortRolesByPriority } from "@/lib/role-rank";
 
 async function sha256Hex(input: string) {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(input));
@@ -412,30 +413,7 @@ function ProfilePage() {
     load();
   };
 
-  const sortedRoles = useMemo(() => {
-    const order: AppRole[] = [
-      "admin",
-      "management",
-      "moderator",
-      "staff",
-      "subscriber",
-      "nonsubscriber",
-      "member",
-      "boro_fan_zone_moderator",
-      "boro_fan_zone_member",
-      "pending",
-      "rejected",
-      "banned",
-    ];
-    return [...roles].sort((a, b) => {
-      const ai = order.indexOf(a);
-      const bi = order.indexOf(b);
-      // Unknown roles go to the end, not the front (indexOf returns -1).
-      const an = ai === -1 ? Number.MAX_SAFE_INTEGER : ai;
-      const bn = bi === -1 ? Number.MAX_SAFE_INTEGER : bi;
-      return an - bn;
-    });
-  }, [roles]);
+  const sortedRoles = useMemo(() => sortRolesByPriority(roles), [roles]);
 
   if (loading) {
     return (
