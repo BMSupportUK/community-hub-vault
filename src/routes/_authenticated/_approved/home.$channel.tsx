@@ -52,6 +52,7 @@ import { EmojiPicker } from "@/components/app/EmojiPicker";
 import { resolveGifLink } from "@/lib/giphy.functions";
 
 import { StaffOnDutySidebar } from "@/components/app/StaffOnDutyStrip";
+import { OnlineMembersDialog } from "@/components/app/OnlineMembersDialog";
 import { cn } from "@/lib/utils";
 import { DEFAULT_AVATAR_URL } from "@/lib/default-avatar";
 import { Nameplate } from "@/components/app/Nameplate";
@@ -2123,6 +2124,9 @@ function ChannelPage() {
         </div>
         <aside className="relative z-0 hidden md:block w-56 xl:w-64 shrink-0 border-l border-border overflow-y-auto bg-surface/40">
           <StaffOnDutySidebar />
+          <div className="px-3 pb-4">
+            <OnlineMembersDialog />
+          </div>
         </aside>
       </div>
 
