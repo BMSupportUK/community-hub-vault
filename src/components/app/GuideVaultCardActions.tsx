@@ -124,18 +124,20 @@ export function GuideVaultCardActions({
       }
       queryClient.invalidateQueries({ queryKey: ["guide-access"] });
       setEntering(false);
-      onOpen({
+      setReady({
         url: res.url ?? null,
         viewUrl: res.viewUrl ?? null,
         fileName: res.fileName ?? null,
         body: res.body ?? null,
       });
+      toast.success("Guide unlocked — tap “Read guide” to open it.");
     } catch {
       toast.error("Couldn't unlock this guide — please try again.");
     } finally {
       setBusy(false);
     }
   };
+
 
   const openUnlocked = async () => {
     setBusy(true);
