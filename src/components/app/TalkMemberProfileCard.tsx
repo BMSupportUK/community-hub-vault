@@ -140,12 +140,7 @@ export function TalkMemberProfileCard({
             </p>
           </div>
 
-          <div>
-            <h4 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-              Note
-            </h4>
-            <MemberNote userId={row.user_id} />
-          </div>
+          <MemberAppLogins userId={row.user_id} selfId={selfId} />
         </div>
 
         {row.user_id !== selfId && (
