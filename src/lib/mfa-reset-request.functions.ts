@@ -2,54 +2,18 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import * as React from "react";
-import { render } from "@react-email/components";
-import { template as adminTpl } from "@/lib/email-templates/twofa-reset-admin";
-import { template as userTpl } from "@/lib/email-templates/twofa-reset-user";
+import { sendAndLogEmail } from "@/lib/email-templates/send-and-log";
 
-const SITE_NAME = "BM Support";
-const SENDER_DOMAIN = "notify.bmsupport.uk";
-const FROM_DOMAIN = "bmsupport.uk";
-
-function newId() {
-  const b = new Uint8Array(16);
-  crypto.getRandomValues(b);
-  return Array.from(b).map((x) => x.toString(16).padStart(2, "0")).join("");
-}
-
-async function enqueue(opts: {
+async function sendMail(opts: {
   to: string;
-  subject: string;
-  html: string;
-  text: string;
-  label: string;
+  templateName: string;
+  templateData: Record<string, any>;
   idempotencyKey: string;
 }) {
-  const messageId = crypto.randomUUID();
-  await supabaseAdmin.from("email_send_log").insert({
-    message_id: messageId,
-    template_name: opts.label,
-    recipient_email: opts.to,
-    status: "pending",
-  } as never);
-  const { error } = await supabaseAdmin.rpc("enqueue_email" as never, {
-    queue_name: "transactional_emails",
-    payload: {
-      message_id: messageId,
-      to: opts.to,
-      from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
-      sender_domain: SENDER_DOMAIN,
-      subject: opts.subject,
-      html: opts.html,
-      text: opts.text,
-      purpose: "transactional",
-      label: opts.label,
-      idempotency_key: opts.idempotencyKey,
-      unsubscribe_token: newId(),
-      queued_at: new Date().toISOString(),
-    },
-  } as never);
-  if (error) throw new Error(error.message);
+  await sendAndLogEmail(supabaseAdmin, opts.templateName, opts.to, {
+    templateData: opts.templateData,
+    idempotencyKey: opts.idempotencyKey,
+  });
 }
 
 export const requestMfaReset = createServerFn({ method: "POST" })
@@ -89,57 +53,34 @@ export const requestMfaReset = createServerFn({ method: "POST" })
     const requestedAt = new Date().toISOString();
     const resetUrl = "https://bmsupport.uk/admin-roles";
 
-    // Render once per template
-    const adminEl = React.createElement(adminTpl.component, {
-      userEmail, userName, reason: data.reason, resetUrl, requestedAt,
-    });
-    const adminHtml = await render(adminEl);
-    const adminText = await render(adminEl, { plainText: true });
-    const adminSubject =
-      typeof adminTpl.subject === "function"
-        ? adminTpl.subject({ userEmail })
-        : adminTpl.subject;
-
-    const userEl = React.createElement(userTpl.component, { userName });
-    const userHtml = await render(userEl);
-    const userText = await render(userEl, { plainText: true });
-    const userSubject =
-      typeof userTpl.subject === "function"
-        ? (userTpl.subject as (d: Record<string, any>) => string)({})
-        : userTpl.subject;
-
     const idem = `mfa-reset-${userId}-${Date.now()}`;
 
     // Send to admins
     let sentAdmins = 0;
     for (const to of adminEmails) {
       try {
-        await enqueue({
+        await sendMail({
           to,
-          subject: adminSubject,
-          html: adminHtml,
-          text: adminText,
-          label: "twofa-reset-admin",
+          templateName: "twofa-reset-admin",
+          templateData: { userEmail, userName, reason: data.reason, resetUrl, requestedAt },
           idempotencyKey: `${idem}-admin-${to}`,
         });
         sentAdmins += 1;
       } catch (e) {
-        console.error("enqueue admin failed", e);
+        console.error("2FA reset admin email failed", e);
       }
     }
 
     // Confirmation to user
     try {
-      await enqueue({
+      await sendMail({
         to: userEmail,
-        subject: userSubject,
-        html: userHtml,
-        text: userText,
-        label: "twofa-reset-user",
+        templateName: "twofa-reset-user",
+        templateData: { userName },
         idempotencyKey: `${idem}-user`,
       });
     } catch (e) {
-      console.error("enqueue user failed", e);
+      console.error("2FA reset user email failed", e);
     }
 
     return { ok: true, notifiedAdmins: sentAdmins };
