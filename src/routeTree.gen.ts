@@ -93,6 +93,7 @@ import { Route as ApiPublicTweetImageRouteImport } from './routes/api/public/twe
 import { Route as FanZoneBoardIndexRouteImport } from './routes/fan-zone.$board.index'
 import { Route as FanZoneBoardTopicRouteImport } from './routes/fan-zone.$board.$topic'
 import { Route as FanZoneUUserIdRouteImport } from './routes/fan-zone.u.$userId'
+import { Route as LovableEmailEventsRouteImport } from './routes/lovable/email/events'
 import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as AuthenticatedApprovedFanzoneBlocksRouteImport } from './routes/_authenticated/_approved/fanzone.blocks'
 import { Route as AuthenticatedApprovedFanzoneMessagesRouteImport } from './routes/_authenticated/_approved/fanzone.messages'
@@ -622,6 +623,11 @@ const FanZoneUUserIdRoute = FanZoneUUserIdRouteImport.update({
   path: '/u/$userId',
   getParentRoute: () => FanZoneRoute,
 } as any)
+const LovableEmailEventsRoute = LovableEmailEventsRouteImport.update({
+  id: '/lovable/email/events',
+  path: '/lovable/email/events',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
   id: '/lovable/email/suppression',
   path: '/lovable/email/suppression',
@@ -987,6 +993,7 @@ export interface FileRoutesByFullPath {
   '/api/public/tweet-image': typeof ApiPublicTweetImageRoute
   '/fan-zone/$board/$topic': typeof FanZoneBoardTopicRoute
   '/fan-zone/u/$userId': typeof FanZoneUUserIdRoute
+  '/lovable/email/events': typeof LovableEmailEventsRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/fan-zone/$board/': typeof FanZoneBoardIndexRoute
   '/fanzone/blocks': typeof AuthenticatedApprovedFanzoneBlocksRoute
@@ -1116,6 +1123,7 @@ export interface FileRoutesByTo {
   '/api/public/tweet-image': typeof ApiPublicTweetImageRoute
   '/fan-zone/$board/$topic': typeof FanZoneBoardTopicRoute
   '/fan-zone/u/$userId': typeof FanZoneUUserIdRoute
+  '/lovable/email/events': typeof LovableEmailEventsRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/fan-zone/$board': typeof FanZoneBoardIndexRoute
   '/fanzone/blocks': typeof AuthenticatedApprovedFanzoneBlocksRoute
@@ -1251,6 +1259,7 @@ export interface FileRoutesById {
   '/api/public/tweet-image': typeof ApiPublicTweetImageRoute
   '/fan-zone/$board/$topic': typeof FanZoneBoardTopicRoute
   '/fan-zone/u/$userId': typeof FanZoneUUserIdRoute
+  '/lovable/email/events': typeof LovableEmailEventsRoute
   '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/fan-zone/$board/': typeof FanZoneBoardIndexRoute
   '/_authenticated/_approved/fanzone/blocks': typeof AuthenticatedApprovedFanzoneBlocksRoute
@@ -1385,6 +1394,7 @@ export interface FileRouteTypes {
     | '/api/public/tweet-image'
     | '/fan-zone/$board/$topic'
     | '/fan-zone/u/$userId'
+    | '/lovable/email/events'
     | '/lovable/email/suppression'
     | '/fan-zone/$board/'
     | '/fanzone/blocks'
@@ -1514,6 +1524,7 @@ export interface FileRouteTypes {
     | '/api/public/tweet-image'
     | '/fan-zone/$board/$topic'
     | '/fan-zone/u/$userId'
+    | '/lovable/email/events'
     | '/lovable/email/suppression'
     | '/fan-zone/$board'
     | '/fanzone/blocks'
@@ -1648,6 +1659,7 @@ export interface FileRouteTypes {
     | '/api/public/tweet-image'
     | '/fan-zone/$board/$topic'
     | '/fan-zone/u/$userId'
+    | '/lovable/email/events'
     | '/lovable/email/suppression'
     | '/fan-zone/$board/'
     | '/_authenticated/_approved/fanzone/blocks'
@@ -1723,6 +1735,7 @@ export interface RootRouteChildren {
   ApiPublicLinkPreviewRoute: typeof ApiPublicLinkPreviewRoute
   ApiPublicTweetRoute: typeof ApiPublicTweetRoute
   ApiPublicTweetImageRoute: typeof ApiPublicTweetImageRoute
+  LovableEmailEventsRoute: typeof LovableEmailEventsRoute
   LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   ApiPublicATokenRoute: typeof ApiPublicATokenRoute
   ApiPublicHooksBackupCredentialsRoute: typeof ApiPublicHooksBackupCredentialsRoute
@@ -2348,6 +2361,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/fan-zone/u/$userId'
       preLoaderRoute: typeof FanZoneUUserIdRouteImport
       parentRoute: typeof FanZoneRoute
+    }
+    '/lovable/email/events': {
+      id: '/lovable/email/events'
+      path: '/lovable/email/events'
+      fullPath: '/lovable/email/events'
+      preLoaderRoute: typeof LovableEmailEventsRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/lovable/email/suppression': {
       id: '/lovable/email/suppression'
@@ -3004,6 +3024,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicLinkPreviewRoute: ApiPublicLinkPreviewRoute,
   ApiPublicTweetRoute: ApiPublicTweetRoute,
   ApiPublicTweetImageRoute: ApiPublicTweetImageRoute,
+  LovableEmailEventsRoute: LovableEmailEventsRoute,
   LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   ApiPublicATokenRoute: ApiPublicATokenRoute,
   ApiPublicHooksBackupCredentialsRoute: ApiPublicHooksBackupCredentialsRoute,
