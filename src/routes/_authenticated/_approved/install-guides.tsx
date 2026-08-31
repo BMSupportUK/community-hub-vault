@@ -626,7 +626,7 @@ function InstallGuidesPage() {
                               <GuideVaultCardActions
                                 blogId={b.id}
                                 title={b.title}
-                                hasAccess={unlockedIds.has(b.id)}
+                                hasAccess={unlockedIds.has(b.id) || (accessQuery.data?.length ?? 0) > 0}
                                 onOpen={(res) => {
                                   focusGuideId.current = b.id;
                                   setUnlocked({ blog: b, ...res });
