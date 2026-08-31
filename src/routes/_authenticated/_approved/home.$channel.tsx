@@ -1119,6 +1119,7 @@ function ChannelPage() {
           )}
         </div>
         <div className="ml-auto flex items-center gap-2 px-3 py-2 rounded-2xl bg-card/50 border border-primary/30 shadow-[0_0_24px_-4px_color-mix(in_oklab,var(--primary)_40%,transparent),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-xl">
+          <OnlineMembersDialog />
           {canManageSlow && (
             <button
               onClick={() => setSlowMode(channel.slow_mode_seconds > 0 ? 0 : 30)}
@@ -1384,10 +1385,6 @@ function ChannelPage() {
           </div>
         </div>
       </header>
-      <div className="shrink-0 border-b border-border bg-surface/95 px-3 py-2 md:hidden">
-        <OnlineMembersDialog />
-      </div>
-
       <div className="flex-1 flex min-w-0 min-h-0">
         <div className="flex-1 flex flex-col min-w-0 min-h-0">
           <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-4 space-y-3">
@@ -2148,9 +2145,6 @@ function ChannelPage() {
           </div>
           <div className="flex-1 min-h-0 overflow-hidden">
             {sideTab === "staff" ? <StaffOnDutySidebar /> : <TalkChannelMembersPanel />}
-          </div>
-          <div className="shrink-0 border-t border-border bg-surface/95 px-3 py-3">
-            <OnlineMembersDialog />
           </div>
         </aside>
 

@@ -20,6 +20,7 @@ type MemberProfile = {
   display_name: string | null;
   avatar_url: string | null;
   equipped_nameplate_id: string | null;
+  created_at: string | null;
 };
 
 type DirectoryRow = Omit<MemberProfile, "id"> & {
@@ -31,6 +32,20 @@ type FriendState = { kind: "friends" | "outgoing" | "incoming"; id?: string };
 
 const HIDDEN_ROLES = new Set(["pending", "banned", "rejected"]);
 const STAFF_ROLES = new Set(["admin", "management", "moderator", "staff"]);
+
+/** Human relative age, e.g. "7 months ago". */
+function relativeSince(iso: string | null): string {
+  if (!iso) return "—";
+  const then = new Date(iso).getTime();
+  if (!Number.isFinite(then)) return "—";
+  const days = Math.floor((Date.now() - then) / 86_400_000);
+  if (days < 1) return "today";
+  if (days < 30) return `${days} day${days === 1 ? "" : "s"} ago`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months} month${months === 1 ? "" : "s"} ago`;
+  const years = Math.floor(days / 365);
+  return `${years} year${years === 1 ? "" : "s"} ago`;
+}
 
 /**
  * "Members online · N" button + full-page dialog listing every member who is
@@ -65,6 +80,7 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
       display_name: row.display_name,
       avatar_url: row.avatar_url,
       equipped_nameplate_id: row.equipped_nameplate_id,
+      created_at: (row as unknown as { created_at?: string | null }).created_at ?? null,
     })));
     const map: Record<string, string[]> = {};
     for (const row of rows) {
@@ -161,13 +177,12 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
   const memberProfiles = useMemo(
     () =>
       profiles.filter((p) => {
-        if (!onlineIds.has(p.id)) return false;
         const roles = rolesByUser[p.id] ?? [];
         if (roles.some((r) => HIDDEN_ROLES.has(r))) return false;
         if (roles.some((r) => STAFF_ROLES.has(r))) return false;
         return true;
       }),
-    [onlineIds, profiles, rolesByUser],
+    [profiles, rolesByUser],
   );
 
   /** Distinct member roles present for the Talk Channel filter. */
@@ -189,56 +204,61 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
           (p.username ?? "").toLowerCase().includes(term)
         );
       })
-      .sort((a, b) =>
-        (a.display_name || a.username || "").localeCompare(b.display_name || b.username || ""),
-      );
-  }, [memberProfiles, rolesByUser, q, roleFilter]);
+      .sort((a, b) => {
+        const oa = onlineIds.has(a.id) ? 0 : 1;
+        const ob = onlineIds.has(b.id) ? 0 : 1;
+        if (oa !== ob) return oa - ob;
+        return (a.display_name || a.username || "").localeCompare(
+          b.display_name || b.username || "",
+        );
+      });
+  }, [memberProfiles, rolesByUser, q, roleFilter, onlineIds]);
 
 
-  const count = memberProfiles.length;
+  const count = memberProfiles.filter((p) => onlineIds.has(p.id)).length;
+
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <button
           type="button"
+          title="View members"
           className={cn(
-            "w-full flex items-center justify-between gap-2 rounded-lg border border-white/20 bg-white/10 px-3 py-2 text-left text-white/90 transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40",
+            "flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-surface-2/60 hover:bg-surface-2 border border-white/10 hover:border-white/20 transition-all cursor-pointer shadow-lg shadow-black/20",
             className,
           )}
         >
-          <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider">
-            <Users className="size-3.5" />
-            Members online
-            <span className="rounded-full bg-emerald-500/30 px-1.5 py-0.5 text-[10px] text-emerald-100">{count}</span>
+          <Users className="size-4 text-primary" />
+          <span className="text-xs font-semibold tracking-wide text-foreground/90">Members</span>
+          <span className="rounded-full bg-emerald-500/25 px-1.5 py-0.5 text-[10px] font-bold text-emerald-300">
+            {count}
           </span>
-          <span className="text-[10px] font-medium uppercase tracking-wider text-white/70">View members</span>
         </button>
       </DialogTrigger>
 
       <DialogContent
-        className="max-w-none w-screen h-screen sm:h-screen rounded-none border-0 p-0 gap-0 flex flex-col overflow-hidden bg-gradient-to-br from-violet-950 via-fuchsia-950 to-blue-950"
+        className="max-w-none w-screen h-screen sm:h-screen rounded-none border-0 p-0 gap-0 flex flex-col overflow-hidden bg-neutral-950"
       >
-        <DialogHeader className="border-b border-white/15 px-5 py-4 text-left">
-          <DialogTitle className="flex items-center gap-2 text-white">
-            <Users className="size-5" />
-            Members online
-            <span className="rounded-full bg-emerald-500/25 px-2 py-0.5 text-xs font-semibold text-emerald-200">
-              {visible.length}
-            </span>
-          </DialogTitle>
-          <div className="relative mt-3 max-w-sm">
-            <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-white/50" />
-            <Input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Search members…"
-              className="pl-8 bg-white/10 border-white/20 text-white placeholder:text-white/50"
-            />
+        <DialogHeader className="border-b border-white/10 px-5 py-4 text-left">
+          <div className="flex flex-wrap items-center gap-3">
+            <DialogTitle className="flex items-center gap-2 text-white">
+              <Users className="size-5" />
+              Members
+            </DialogTitle>
+            <div className="relative ml-auto w-full max-w-xs">
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-white/50" />
+              <Input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder="Search by username"
+                className="pl-8 bg-white/5 border-white/15 text-white placeholder:text-white/40"
+              />
+            </div>
           </div>
           {roleOptions.length > 0 && (
             <div className="mt-3 flex flex-wrap items-center gap-1.5">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-white/60">Filter by role</span>
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-white/50">Filter by role</span>
               {["all", ...roleOptions].map((r) => (
                 <button
                   key={r}
@@ -247,8 +267,8 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
                   className={cn(
                     "rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider transition-colors",
                     roleFilter === r
-                      ? "border-emerald-300/50 bg-emerald-500/30 text-emerald-100"
-                      : "border-white/20 bg-white/10 text-white/70 hover:bg-white/20",
+                      ? "border-emerald-400/50 bg-emerald-500/25 text-emerald-200"
+                      : "border-white/15 bg-white/5 text-white/60 hover:bg-white/10",
                   )}
                 >
                   {r === "all" ? "All" : formatRoleLabel(r)}
@@ -256,153 +276,201 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
               ))}
             </div>
           )}
-
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto p-5">
-          {visible.length === 0 ? (
-            <div className="rounded-xl border border-white/15 bg-white/5 p-6 text-center text-sm text-white/70">
-              Nobody else is online right now.
-            </div>
-          ) : (
-            <div className="grid gap-3 grid-cols-[repeat(auto-fill,minmax(240px,1fr))]">
-              {visible.map((p) => {
-                const name = p.display_name || p.username || "Member";
-                const role = roleFlashMap.get(p.id);
-                const rel = friendByUser[p.id];
-                const isSelf = p.id === user?.id;
-                const isIgnored = ignored.has(p.id);
-                const busy = busyId === p.id || (rel?.id && busyId === rel.id);
-                return (
-                  <div
-                    key={p.id}
-                    className="rounded-xl border border-white/15 bg-white/5 p-3 backdrop-blur min-w-0"
-                  >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div className="relative shrink-0">
-                        <img
-                          src={resolveAvatarUrl(p.id, p.avatar_url, roleFlashMap)}
-                          alt={name}
-                          className="size-10 rounded-full object-cover ring-2 ring-white/30"
-                        />
-                        <span className="absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full bg-emerald-500 ring-2 ring-violet-950" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <Nameplate
-                          id={p.equipped_nameplate_id}
-                          className="flex w-full flex-col justify-center rounded-md px-2 py-1 shadow-sm isolate"
+        <div className="flex-1 overflow-auto">
+          <table className="w-full min-w-[720px] border-collapse text-sm">
+            <thead className="sticky top-0 z-10 bg-neutral-900/95 backdrop-blur">
+              <tr className="text-[10px] uppercase tracking-wider text-white/50">
+                <th className="px-5 py-3 text-left font-bold">Name</th>
+                <th className="px-4 py-3 text-left font-bold">Member since</th>
+                <th className="px-4 py-3 text-left font-bold">Status</th>
+                <th className="px-4 py-3 text-left font-bold">Roles</th>
+                <th className="px-5 py-3 text-right font-bold">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {visible.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-5 py-10 text-center text-white/60">
+                    No members match your filters.
+                  </td>
+                </tr>
+              ) : (
+                visible.map((p) => {
+                  const name = p.display_name || p.username || "Member";
+                  const role = roleFlashMap.get(p.id);
+                  const rel = friendByUser[p.id];
+                  const isSelf = p.id === user?.id;
+                  const isIgnored = ignored.has(p.id);
+                  const isOnline = onlineIds.has(p.id);
+                  const busy = busyId === p.id || (rel?.id && busyId === rel.id);
+                  const roles = rolesByUser[p.id] ?? [];
+                  return (
+                    <tr
+                      key={p.id}
+                      className="border-t border-white/5 hover:bg-white/[0.04] transition-colors"
+                    >
+                      <td className="px-5 py-3">
+                        <ChatMiniProfile
+                          profile={{
+                            userId: p.id,
+                            name,
+                            username: p.username,
+                            avatarUrl: resolveAvatarUrl(p.id, p.avatar_url, roleFlashMap),
+                            hasAvatar: true,
+                            nameplateId: p.equipped_nameplate_id,
+                            role: role ?? null,
+                            isOnline,
+                            isSelf,
+                          }}
+                        >
+                          <span className="flex items-center gap-3 min-w-0 text-left cursor-pointer">
+                            <span className="relative shrink-0">
+                              <img
+                                src={resolveAvatarUrl(p.id, p.avatar_url, roleFlashMap)}
+                                alt={name}
+                                className="size-9 rounded-full object-cover ring-2 ring-white/15"
+                              />
+                              <span
+                                className={cn(
+                                  "absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-2 ring-neutral-950",
+                                  isOnline ? "bg-emerald-500" : "bg-neutral-500",
+                                )}
+                              />
+                            </span>
+                            <span className="min-w-0">
+                              <Nameplate
+                                id={p.equipped_nameplate_id}
+                                className="flex flex-col rounded-md px-2 py-0.5 isolate"
+                              >
+                                <span
+                                  className={cn(
+                                    "truncate text-sm font-semibold text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]",
+                                    roleFlashClass(role),
+                                  )}
+                                >
+                                  {name}
+                                </span>
+                                {p.username && (
+                                  <span className="truncate text-[11px] text-white/60 drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]">
+                                    @{p.username}
+                                  </span>
+                                )}
+                              </Nameplate>
+                            </span>
+                          </span>
+                        </ChatMiniProfile>
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap text-xs font-semibold text-white/80">
+                        {relativeSince(p.created_at)}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <span
+                          className={cn(
+                            "inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
+                            isOnline
+                              ? "border-emerald-400/40 bg-emerald-500/20 text-emerald-300"
+                              : "border-white/15 bg-white/5 text-white/50",
+                          )}
                         >
                           <span
                             className={cn(
-                              "truncate text-xs font-semibold text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]",
-                              roleFlashClass(role),
+                              "size-1.5 rounded-full",
+                              isOnline ? "bg-emerald-400" : "bg-neutral-500",
                             )}
-                          >
-                            {name}
-                          </span>
-                          {role && (
-                            <span className="text-[9px] font-medium uppercase tracking-wider text-white/90 drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]">
-                              {formatRoleLabel(role)}
-                            </span>
-                          )}
-                          <span className="text-[10px] font-semibold text-emerald-200 drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]">
-                            Online
-                          </span>
-                        </Nameplate>
-                      </div>
-                    </div>
-
-                    <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-                      <ChatMiniProfile
-                        className="h-8 flex-1 min-w-[7rem]"
-                        profile={{
-                          userId: p.id,
-                          name,
-                          username: p.username,
-                          avatarUrl: resolveAvatarUrl(p.id, p.avatar_url, roleFlashMap),
-                          hasAvatar: true,
-                          nameplateId: p.equipped_nameplate_id,
-                          role: role ?? null,
-                          isOnline: true,
-                          isSelf,
-                        }}
-                      >
-                        <span className="flex h-8 w-full items-center justify-center gap-1.5 rounded-md border border-white/20 bg-white/15 px-2 text-xs font-medium text-white hover:bg-white/25">
-                          <User className="size-3.5" />
-                          View profile
+                          />
+                          {isOnline ? "Online" : "Offline"}
                         </span>
-                      </ChatMiniProfile>
-
-                      {!isSelf && (
-                        <>
-                          {rel?.kind === "friends" ? (
-                            <Button
-                              size="sm"
-                              variant="secondary"
-                              disabled
-                              className="h-8 bg-emerald-500/25 text-emerald-100 border border-emerald-300/30"
-                              aria-label="Already friends"
-                            >
-                              <Check className="size-3.5" />
-                            </Button>
-                          ) : rel?.kind === "outgoing" ? (
-                            <Button
-                              size="sm"
-                              variant="secondary"
-                              disabled
-                              className="h-8 bg-white/10 text-white/70 border border-white/20"
-                              aria-label="Friend request pending"
-                            >
-                              <Clock className="size-3.5" />
-                            </Button>
-                          ) : rel?.kind === "incoming" ? (
-                            <Button
-                              size="sm"
-                              disabled={!!busy}
-                              onClick={() => rel.id && acceptRequest(rel.id)}
-                              className="h-8"
-                              aria-label="Accept friend request"
-                            >
-                              <Check className="size-3.5" />
-                            </Button>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="flex flex-wrap gap-1">
+                          {roles.length === 0 ? (
+                            <span className="text-xs text-white/40">—</span>
                           ) : (
-                            <Button
-                              size="sm"
-                              disabled={!!busy}
-                              onClick={() => sendRequest(p.id)}
-                              className="h-8"
-                              aria-label={`Add ${name} as a friend`}
-                              title="Add friend"
-                            >
-                              <UserPlus className="size-3.5" />
-                            </Button>
+                            roles.map((r) => (
+                              <span
+                                key={r}
+                                className="rounded-full border border-white/15 bg-white/10 px-2 py-0.5 text-[10px] font-semibold text-white/80"
+                              >
+                                {formatRoleLabel(r)}
+                              </span>
+                            ))
                           )}
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            disabled={!!busy}
-                            onClick={() => toggleIgnore(p.id)}
-                            className={cn(
-                              "h-8 border",
-                              isIgnored
-                                ? "bg-rose-500/25 text-rose-100 border-rose-300/30 hover:bg-rose-500/35"
-                                : "bg-white/15 text-white border-white/20 hover:bg-white/25",
-                            )}
-                            aria-label={isIgnored ? `Unignore ${name}` : `Ignore ${name}`}
-                            title={isIgnored ? "Unignore" : "Ignore"}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <ChatMiniProfile
+                            profile={{
+                              userId: p.id,
+                              name,
+                              username: p.username,
+                              avatarUrl: resolveAvatarUrl(p.id, p.avatar_url, roleFlashMap),
+                              hasAvatar: true,
+                              nameplateId: p.equipped_nameplate_id,
+                              role: role ?? null,
+                              isOnline,
+                              isSelf,
+                            }}
                           >
-                            {isIgnored ? <Eye className="size-3.5" /> : <EyeOff className="size-3.5" />}
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+                            <span className="flex h-8 items-center gap-1.5 rounded-md border border-white/15 bg-white/10 px-2.5 text-xs font-medium text-white hover:bg-white/20 cursor-pointer">
+                              <User className="size-3.5" />
+                              Profile
+                            </span>
+                          </ChatMiniProfile>
+                          {!isSelf && (
+                            <>
+                              {rel?.kind === "friends" ? (
+                                <Button size="sm" variant="secondary" disabled className="h-8 bg-emerald-500/25 text-emerald-100 border border-emerald-300/30" aria-label="Already friends">
+                                  <Check className="size-3.5" />
+                                </Button>
+                              ) : rel?.kind === "outgoing" ? (
+                                <Button size="sm" variant="secondary" disabled className="h-8 bg-white/10 text-white/70 border border-white/20" aria-label="Friend request pending">
+                                  <Clock className="size-3.5" />
+                                </Button>
+                              ) : rel?.kind === "incoming" ? (
+                                <Button size="sm" disabled={!!busy} onClick={() => rel.id && acceptRequest(rel.id)} className="h-8" aria-label="Accept friend request">
+                                  <Check className="size-3.5" />
+                                </Button>
+                              ) : (
+                                <Button size="sm" disabled={!!busy} onClick={() => sendRequest(p.id)} className="h-8" aria-label={`Add ${name} as a friend`} title="Add friend">
+                                  <UserPlus className="size-3.5" />
+                                </Button>
+                              )}
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                disabled={!!busy}
+                                onClick={() => toggleIgnore(p.id)}
+                                className={cn(
+                                  "h-8 border",
+                                  isIgnored
+                                    ? "bg-rose-500/25 text-rose-100 border-rose-300/30 hover:bg-rose-500/35"
+                                    : "bg-white/10 text-white border-white/20 hover:bg-white/20",
+                                )}
+                                aria-label={isIgnored ? `Unignore ${name}` : `Ignore ${name}`}
+                                title={isIgnored ? "Unignore" : "Ignore"}
+                              >
+                                {isIgnored ? <Eye className="size-3.5" /> : <EyeOff className="size-3.5" />}
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+        <div className="shrink-0 border-t border-white/10 px-5 py-3 text-xs text-white/60">
+          Showing <span className="font-semibold text-white">{visible.length}</span> members ·{" "}
+          <span className="font-semibold text-emerald-300">{count}</span> online
         </div>
       </DialogContent>
     </Dialog>
   );
 }
+
