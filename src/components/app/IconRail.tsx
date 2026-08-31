@@ -110,6 +110,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
   const isAdmin = hasAny(["admin", "management"]);
   const path = useRouterState({ select: (r) => r.location.pathname });
   const [unreadNewContent, setUnreadNewContent] = useState(cachedUnreadNewContent);
+  const chatroomCount = useTalkChannelTotalCount();
   const [order, setOrder] = useState<NavOrderMap>(cachedNavOrder);
   const [pagePerms, setPagePerms] = useState<PagePermMap>(cachedPagePerms);
   const dragKey = useRef<string | null>(null);
