@@ -1519,30 +1519,37 @@ function ChannelPage() {
                             );
                           })()}
                           <div className="min-w-0 flex-1">
-                            <div className="flex flex-wrap items-center gap-2 mb-2">
-                              <ChatMiniProfile profile={senderMiniProfile} className="min-w-0">
-                                <Nameplate
-                                  id={p?.equipped_nameplate_id}
-                                  className="inline-flex items-center rounded-md px-3 py-1 min-w-0 h-7 max-h-7 pr-12 shadow-sm isolate"
-                                  fallbackStyle={{
-                                    background:
-                                      "linear-gradient(135deg, #1a4a2a 0%, #2d6a3f 50%, #1a4a2a 100%)",
-                                  }}
-                                >
-                                  <span
-                                    className={cn(
-                                      "relative z-10 font-semibold text-sm truncate px-2 -mx-2 rounded",
-                                      roleFlashClass(roleFlashMap.get(m.sender_id)),
-                                    )}
-                                    style={{
+                            <div className="flex flex-wrap items-center gap-2 mb-1">
+                              <div className="flex flex-col min-w-0">
+                                <ChatMiniProfile profile={senderMiniProfile} className="min-w-0">
+                                  <Nameplate
+                                    id={p?.equipped_nameplate_id}
+                                    className="inline-flex items-center rounded-md px-3 py-1 min-w-0 h-7 max-h-7 pr-12 shadow-sm isolate"
+                                    fallbackStyle={{
                                       background:
-                                        "linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.35) 12%, rgba(0,0,0,0.35) 88%, transparent 100%)",
+                                        "linear-gradient(135deg, #1a4a2a 0%, #2d6a3f 50%, #1a4a2a 100%)",
                                     }}
                                   >
-                                    {name}
+                                    <span
+                                      className={cn(
+                                        "relative z-10 font-semibold text-sm truncate px-2 -mx-2 rounded",
+                                        roleFlashClass(roleFlashMap.get(m.sender_id)),
+                                      )}
+                                      style={{
+                                        background:
+                                          "linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.35) 12%, rgba(0,0,0,0.35) 88%, transparent 100%)",
+                                      }}
+                                    >
+                                      {name}
+                                    </span>
+                                  </Nameplate>
+                                </ChatMiniProfile>
+                                {p?.custom_status && (
+                                  <span className="text-[10px] text-muted-foreground truncate px-1 -mt-0.5">
+                                    {p.custom_status}
                                   </span>
-                                </Nameplate>
-                              </ChatMiniProfile>
+                                )}
+                              </div>
                               <span className="text-[10px] text-muted-foreground shrink-0">
                                 {new Date(m.created_at).toLocaleTimeString("en-GB", {
                                   hour: "2-digit",
