@@ -312,6 +312,43 @@ function publishJoinedUser(userId: string) {
 }
 
 let trackingSync = Promise.resolve();
+let pendingLeaveTimer: ReturnType<typeof setTimeout> | null = null;
+
+function cancelPendingLeave() {
+  if (!pendingLeaveTimer) return;
+  clearTimeout(pendingLeaveTimer);
+  pendingLeaveTimer = null;
+}
+
+function scheduleConfirmedLeave(channel: RealtimeChannel, departingUserId: string) {
+  cancelPendingLeave();
+  pendingLeaveTimer = setTimeout(() => {
+    pendingLeaveTimer = null;
+    // Effect cleanup/re-run and fast channel navigation briefly empty the
+    // tracker map. Only announce an exit if it is still empty after settling.
+    if (trackers.size > 0 || sharedChannel !== channel) {
+      void syncTracking();
+      return;
+    }
+    const departingKey = `${connectionId}:${departingUserId}`;
+    explicitlyDepartedKeys.add(departingKey);
+    cleanlyDepartedUserIds.add(departingUserId);
+    void channel.send({
+      type: "broadcast",
+      event: "talk-presence-change",
+      payload: {
+        action: "leave",
+        connection_id: connectionId,
+        user_id: departingUserId,
+      } satisfies TalkPresenceSignal,
+    }).catch(() => undefined);
+    void channel.untrack().catch(() => undefined).finally(() => {
+      trackedUserId = departingUserId;
+      flushCount();
+      trackedUserId = null;
+    });
+  }, 750);
+}
 
 async function reconcileTracking() {
   const channel = sharedChannel;
@@ -325,26 +362,12 @@ async function reconcileTracking() {
     const departingUserId = trackedUserId;
     trackedSignature = "";
     if (departingUserId) {
-      const departingKey = `${connectionId}:${departingUserId}`;
-      explicitlyDepartedKeys.add(departingKey);
-      cleanlyDepartedUserIds.add(departingUserId);
-      void channel.send({
-        type: "broadcast",
-        event: "talk-presence-change",
-        payload: {
-          action: "leave",
-          connection_id: connectionId,
-          user_id: departingUserId,
-        } satisfies TalkPresenceSignal,
-      }).catch(() => undefined);
+      scheduleConfirmedLeave(channel, departingUserId);
     }
-    await channel.untrack().catch(() => undefined);
-    trackedUserId = departingUserId;
-    flushCount();
-    trackedUserId = null;
     return;
   }
 
+  cancelPendingLeave();
   trackedSignature = nextSignature;
   trackedUserId = active.userId;
   explicitlyDepartedKeys.delete(`${connectionId}:${active.userId}`);
