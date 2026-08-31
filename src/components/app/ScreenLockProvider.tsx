@@ -7,6 +7,8 @@ import {
   STAFF_MAX_TIMEOUT_MINUTES,
 } from "@/lib/screen-lock-hash";
 import { ScreenLockOverlay } from "@/components/app/ScreenLockOverlay";
+import { resumeTalkPresence, suspendTalkPresence } from "@/hooks/use-talk-channel-presence";
+
 
 export interface ScreenLockSettings {
   enabled: boolean;
@@ -85,7 +87,9 @@ export function ScreenLockProvider() {
       // Restore a lock that was active before a reload.
       if (typeof window !== "undefined" && localStorage.getItem(`screenlock:locked:${user.id}`) === "1") {
         setLocked(true);
+        void suspendTalkPresence(user.id);
       }
+
     })();
     return () => {
       cancelled = true;
@@ -123,19 +127,24 @@ export function ScreenLockProvider() {
     (broadcast = true) => {
       setLocked(true);
       if (storageKey) localStorage.setItem(storageKey, "1");
+      // A locked screen means the person is away from the PC: drop them out of
+      // the Talk channel presence so member counters/lists don't count them.
+      if (user) void suspendTalkPresence(user.id);
       if (broadcast) channelRef.current?.postMessage({ type: "lock" });
     },
-    [storageKey],
+    [storageKey, user?.id],
   );
 
   const doUnlock = useCallback(
     (broadcast = true) => {
       setLocked(false);
       if (storageKey) localStorage.removeItem(storageKey);
+      resumeTalkPresence();
       if (broadcast) channelRef.current?.postMessage({ type: "unlock" });
     },
     [storageKey],
   );
+
 
   // Cross-tab sync
   useEffect(() => {
