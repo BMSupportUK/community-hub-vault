@@ -116,7 +116,7 @@ export function MentionText({
         <a
           key={key++}
           href={href}
-          className="font-semibold underline decoration-2 underline-offset-2 text-sky-200 hover:text-sky-100 [.bg-amber-200\\/90_&]:text-sky-800"
+          className="font-semibold underline decoration-2 underline-offset-2 decoration-sky-500 text-sky-600 dark:text-sky-300 hover:opacity-80 break-all"
         >
           {bareUrl}
         </a>,
