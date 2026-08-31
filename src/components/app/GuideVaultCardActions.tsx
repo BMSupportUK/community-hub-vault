@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Lock, LockOpen, KeyRound, FileText, Loader2, Copy, Timer } from "lucide-react";
+import { Lock, LockOpen, KeyRound, FileText, Loader2, Copy, Timer, BookOpen } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -94,6 +94,8 @@ export function GuideVaultCardActions({
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [entering, setEntering] = useState(false);
+  const [ready, setReady] = useState<UnlockResult | null>(null);
+
 
   const askForCode = async () => {
     setBusy(true);
@@ -124,18 +126,20 @@ export function GuideVaultCardActions({
       }
       queryClient.invalidateQueries({ queryKey: ["guide-access"] });
       setEntering(false);
-      onOpen({
+      setReady({
         url: res.url ?? null,
         viewUrl: res.viewUrl ?? null,
         fileName: res.fileName ?? null,
         body: res.body ?? null,
       });
+      toast.success("Guide unlocked — tap “Read guide” to open it.");
     } catch {
       toast.error("Couldn't unlock this guide — please try again.");
     } finally {
       setBusy(false);
     }
   };
+
 
   const openUnlocked = async () => {
     setBusy(true);
@@ -178,6 +182,21 @@ export function GuideVaultCardActions({
     );
   }
 
+  if (ready) {
+    return (
+      <div className="flex-1 flex items-center gap-2">
+        <Button
+          size="sm"
+          onClick={() => onOpen(ready)}
+          className="flex-1 bg-emerald-500 text-white hover:bg-emerald-400 shadow-[0_0_14px_rgba(16,185,129,0.5)]"
+        >
+          <BookOpen className="size-4 mr-1" />
+          Read guide
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 flex items-center gap-2">
       {hasAccess ? (
@@ -187,10 +206,11 @@ export function GuideVaultCardActions({
           disabled={busy}
           className="flex-1 bg-gradient-primary text-primary-foreground hover:opacity-90"
         >
-          {busy ? <Loader2 className="size-4 mr-1 animate-spin" /> : <LockOpen className="size-4 mr-1" />}
-          Open guide
+          {busy ? <Loader2 className="size-4 mr-1 animate-spin" /> : <BookOpen className="size-4 mr-1" />}
+          Read guide
         </Button>
       ) : (
+
         <>
           <Button
             size="sm"
