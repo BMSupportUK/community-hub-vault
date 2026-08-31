@@ -141,15 +141,16 @@ export function ScreenLockOverlay({ settings, onUnlock }: Props) {
   const settingMode = needsSetup || forceChange;
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-background/80 backdrop-blur-xl">
-      <div className="w-full max-w-md rounded-2xl border border-border bg-surface shadow-2xl overflow-hidden">
-        <img
-          src={lockArt}
-          alt="Illustration of a person at a computer with a locked screen"
-          width={1024}
-          height={640}
-          className="w-full h-40 object-cover"
-        />
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+      <img
+        src={lockBg}
+        alt="Illustration of a person at a computer with a locked screen"
+        width={1920}
+        height={1088}
+        className="absolute inset-0 h-full w-full object-cover"
+      />
+      <div className="absolute inset-0 bg-background/55 backdrop-blur-[2px]" />
+      <div className="relative w-full max-w-md rounded-2xl border border-primary/40 bg-background/70 backdrop-blur-2xl shadow-[0_0_60px_-10px_hsl(var(--primary)/0.7)] overflow-hidden">
         <div className="p-6 space-y-4">
           <div className="flex items-center gap-3">
             <Avatar className="size-10">
