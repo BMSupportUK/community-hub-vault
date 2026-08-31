@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Nameplate } from "@/components/app/Nameplate";
-import { ChatMiniProfile } from "@/components/app/ChatMiniProfile";
+import { TalkMemberMiniProfile } from "@/components/app/TalkMemberProfileCard";
 import { useRoleFlashMap, roleFlashClass, resolveAvatarUrl } from "@/lib/role-flash";
 import { formatRoleLabel } from "@/lib/role-label";
 import { cn } from "@/lib/utils";
@@ -102,6 +102,7 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
   const [busyId, setBusyId] = useState<string | null>(null);
   const [q, setQ] = useState("");
   const [roleFilter, setRoleFilter] = useState<string>("all");
+  const [statusTab, setStatusTab] = useState<"online" | "offline">("online");
 
 
   const loadDirectory = useCallback(async () => {
@@ -249,6 +250,7 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
     return memberProfiles
       .filter((p) => {
         const roles = displayRoles(rolesByUser[p.id] ?? []);
+        if (onlineIds.has(p.id) !== (statusTab === "online")) return false;
         if (roleFilter !== "all" && !roles.includes(roleFilter)) return false;
         if (!term) return true;
         return (
@@ -257,15 +259,12 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
         );
       })
       .sort((a, b) => {
-        // Online members float to the top, everyone else stays listed below.
-        const oa = onlineIds.has(a.id) ? 0 : 1;
-        const ob = onlineIds.has(b.id) ? 0 : 1;
-        if (oa !== ob) return oa - ob;
-        return (a.display_name || a.username || "").localeCompare(
-          b.display_name || b.username || "",
-        );
+        const aTime = a.last_seen_at ? new Date(a.last_seen_at).getTime() : 0;
+        const bTime = b.last_seen_at ? new Date(b.last_seen_at).getTime() : 0;
+        if (aTime !== bTime) return bTime - aTime;
+        return (a.display_name || a.username || "").localeCompare(b.display_name || b.username || "");
       });
-  }, [memberProfiles, rolesByUser, q, roleFilter, onlineIds]);
+  }, [memberProfiles, rolesByUser, q, roleFilter, onlineIds, statusTab]);
 
 
 
@@ -327,6 +326,35 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
           )}
         </DialogHeader>
 
+        <div className="grid shrink-0 grid-cols-2 border-b border-white/10 bg-neutral-950 px-5 pt-2">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => setStatusTab("online")}
+            className={cn(
+              "h-10 rounded-none border-b-2 text-xs font-bold uppercase",
+              statusTab === "online"
+                ? "border-emerald-400 text-emerald-300"
+                : "border-transparent text-white/50 hover:text-white",
+            )}
+          >
+            Online
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => setStatusTab("offline")}
+            className={cn(
+              "h-10 rounded-none border-b-2 text-xs font-bold uppercase",
+              statusTab === "offline"
+                ? "border-white text-white"
+                : "border-transparent text-white/50 hover:text-white",
+            )}
+          >
+            Offline
+          </Button>
+        </div>
+
         <div className="flex-1 overflow-auto">
           <table className="w-full min-w-[900px] border-collapse text-sm">
             <thead className="sticky top-0 z-10 bg-neutral-900/95 backdrop-blur">
@@ -362,27 +390,26 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
                       className="border-t border-white/5 hover:bg-white/[0.04] transition-colors"
                     >
                       <td className="px-5 py-3">
-                        <ChatMiniProfile
-                          profile={{
-                            userId: p.id,
-                            name,
+                        <TalkMemberMiniProfile
+                          userId={p.id}
+                          fallback={{
+                            display_name: p.display_name,
                             username: p.username,
-                            avatarUrl: resolveAvatarUrl(p.id, p.avatar_url, roleFlashMap),
-                            hasAvatar: true,
-                            nameplateId: p.equipped_nameplate_id,
-                            role: role ?? null,
-                            isOnline,
-                            customStatus: p.custom_status,
-                            isSelf,
+                            avatar_url: p.avatar_url,
+                            equipped_nameplate_id: p.equipped_nameplate_id,
+                            roles: rolesByUser[p.id] ?? [],
+                            created_at: p.created_at,
+                            last_seen_at: p.last_seen_at,
                           }}
+                          online={isOnline}
                           asDialog
                         >
-                          <span className="flex items-center gap-3 min-w-0 text-left cursor-pointer">
+                          <span className="flex items-center gap-3 min-w-0 text-left cursor-pointer group/name">
                             <span className="relative shrink-0">
                               <img
                                 src={resolveAvatarUrl(p.id, p.avatar_url, roleFlashMap)}
                                 alt={name}
-                                className="size-9 rounded-full object-cover ring-2 ring-white/15"
+                                className="size-9 rounded-full object-cover ring-2 ring-white/15 transition-all group-hover/name:ring-primary/50"
                               />
                               <span
                                 className={cn(
@@ -391,28 +418,23 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
                                 )}
                               />
                             </span>
-                            <span className="min-w-0">
-                              <Nameplate
-                                id={p.equipped_nameplate_id}
-                                className="flex h-16 w-64 max-w-full flex-col justify-center rounded-lg px-3 isolate ring-1 ring-white/10"
-                              >
-                                <span
-                                  className={cn(
-                                    "relative z-10 truncate text-base font-bold leading-tight text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]",
-                                    roleFlashClass(role),
-                                  )}
-                                >
-                                  {name}
-                                </span>
-                                {p.username && (
-                                  <span className="relative z-10 truncate text-xs text-white/75 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">
-                                    @{p.username}
-                                  </span>
+                            <div className="flex flex-col min-w-0">
+                              <span
+                                className={cn(
+                                  "truncate text-sm font-bold text-white transition-colors group-hover/name:text-primary",
+                                  roleFlashClass(role),
                                 )}
-                              </Nameplate>
-                            </span>
+                              >
+                                {name}
+                              </span>
+                              {p.username && (
+                                <span className="truncate text-xs text-white/60">
+                                  @{p.username}
+                                </span>
+                              )}
+                            </div>
                           </span>
-                        </ChatMiniProfile>
+                        </TalkMemberMiniProfile>
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap text-xs font-semibold text-white/80">
                         {relativeSince(p.created_at)}
@@ -463,26 +485,25 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
                       </td>
                       <td className="px-5 py-3">
                         <div className="flex items-center justify-end gap-1.5">
-                          <ChatMiniProfile
-                            profile={{
-                              userId: p.id,
-                              name,
+                          <TalkMemberMiniProfile
+                            userId={p.id}
+                            fallback={{
+                              display_name: p.display_name,
                               username: p.username,
-                              avatarUrl: resolveAvatarUrl(p.id, p.avatar_url, roleFlashMap),
-                              hasAvatar: true,
-                              nameplateId: p.equipped_nameplate_id,
-                              role: role ?? null,
-                              isOnline,
-                              customStatus: p.custom_status,
-                              isSelf,
+                              avatar_url: p.avatar_url,
+                              equipped_nameplate_id: p.equipped_nameplate_id,
+                              roles: rolesByUser[p.id] ?? [],
+                              created_at: p.created_at,
+                              last_seen_at: p.last_seen_at,
                             }}
+                            online={isOnline}
                             asDialog
                           >
                             <span className="flex h-8 items-center gap-1.5 rounded-md border border-white/15 bg-white/10 px-2.5 text-xs font-medium text-white hover:bg-white/20 cursor-pointer">
                               <User className="size-3.5" />
                               Profile
                             </span>
-                          </ChatMiniProfile>
+                          </TalkMemberMiniProfile>
                           {!isSelf && (
                             <>
                               {rel?.kind === "friends" ? (

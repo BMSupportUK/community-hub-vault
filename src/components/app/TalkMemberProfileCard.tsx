@@ -53,28 +53,15 @@ export function TalkMemberProfileCard({
 
   return (
     <>
-      {/* Banner + avatar */}
-      <div className="relative">
-        <Nameplate
-          id={row.equipped_nameplate_id}
-          className="flex min-h-28 w-full flex-col justify-end rounded-none px-4 pb-3 pt-14 isolate"
-          fallbackStyle={{
-            background:
-              "linear-gradient(135deg, hsl(var(--primary) / 0.45), hsl(var(--accent) / 0.35), hsl(var(--primary) / 0.55))",
-          }}
-        >
-          <div className="relative z-10 min-w-0">
-            <div className="truncate text-xl font-bold leading-tight text-foreground drop-shadow-sm">
-              {name}
-            </div>
-            {row.username && (
-              <div className="mt-0.5 truncate text-xs font-medium text-foreground/80">
-                @{row.username}
-              </div>
-            )}
-          </div>
-        </Nameplate>
-        <div className="absolute left-4 top-3">
+      <Nameplate
+        id={row.equipped_nameplate_id}
+        className="flex min-h-28 w-full items-center rounded-none px-4 py-4 isolate"
+        fallbackStyle={{
+          background:
+            "linear-gradient(135deg, hsl(var(--primary) / 0.45), hsl(var(--accent) / 0.35), hsl(var(--primary) / 0.55))",
+        }}
+      >
+        <div className="relative z-10 flex min-w-0 items-center gap-3">
           <span className="relative inline-block">
             <img
               src={resolveAvatarUrl(row.user_id, row.avatar_url, roleFlashMap)}
@@ -88,8 +75,18 @@ export function TalkMemberProfileCard({
               )}
             />
           </span>
+          <span className="min-w-0">
+            <span className="block truncate text-xl font-bold leading-tight text-foreground drop-shadow-sm">
+              {name}
+            </span>
+            {row.username && (
+              <span className="mt-0.5 block truncate text-xs font-medium text-foreground/80">
+                @{row.username}
+              </span>
+            )}
+          </span>
         </div>
-      </div>
+      </Nameplate>
 
       <div className="space-y-3 p-4">
         <div className="rounded-lg border border-border bg-surface-2/60 p-3 space-y-3">
