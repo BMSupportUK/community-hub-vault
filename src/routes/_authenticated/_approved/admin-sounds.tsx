@@ -236,6 +236,16 @@ function AdminSounds() {
 
               <p className="text-xs text-muted-foreground mt-2">{s.trigger}</p>
 
+              <audio
+                controls
+                preload="metadata"
+                src={s.src}
+                className="mt-3 h-10 w-full"
+                aria-label={`Native player for ${s.label}`}
+              >
+                Your device cannot play this MP3.
+              </audio>
+
               <dl className="mt-3 grid grid-cols-3 gap-2 text-[11px]">
                 <div>
                   <dt className="text-muted-foreground">Length</dt>
