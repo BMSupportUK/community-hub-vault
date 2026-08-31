@@ -8,16 +8,34 @@ self.addEventListener("push", (event) => {
     payload = { title: "BM Support", body: event.data ? event.data.text() : "" };
   }
   const title = payload.title || "BM Support";
-  const options = {
-    body: payload.body || "",
-    icon: payload.icon || "/favicon.ico",
-    badge: payload.badge || "/favicon.ico",
-    tag: payload.tag || "bm-support",
-    data: { url: payload.url || "/status" },
-    vibrate: [120, 60, 120],
-    renotify: true,
-  };
-  event.waitUntil(self.registration.showNotification(title, options));
+
+  event.waitUntil((async () => {
+    // Ask any open app window to play the uploaded voice clip instead of the
+    // generic OS notification chime.
+    let playedInApp = false;
+    if (payload.sound) {
+      const clients = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      for (const c of clients) {
+        try {
+          c.postMessage({ type: "bm-play-sound", sound: payload.sound });
+          playedInApp = true;
+        } catch (_) { /* noop */ }
+      }
+    }
+
+    const options = {
+      body: payload.body || "",
+      icon: payload.icon || "/favicon.ico",
+      badge: payload.badge || "/favicon.ico",
+      tag: payload.tag || "bm-support",
+      data: { url: payload.url || "/status" },
+      vibrate: [120, 60, 120],
+      renotify: true,
+      // Suppress the default chime when the app itself is playing the clip.
+      silent: playedInApp,
+    };
+    await self.registration.showNotification(title, options);
+  })());
 });
 
 self.addEventListener("notificationclick", (event) => {

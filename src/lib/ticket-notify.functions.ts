@@ -219,5 +219,21 @@ export const notifyStaffOfCustomerReply = createServerFn({ method: "POST" })
       source_id: data.ticketId,
     } as never);
     if (error) return { ok: false, reason: error.message };
+
+    // Push the alert so the assignee hears the recorded reply clip even when
+    // the app tab is in the background.
+    try {
+      const { broadcastToUser } = await import("@/lib/push.functions");
+      await broadcastToUser(
+        assignee,
+        `${who} replied to a ticket`,
+        preview ? `${subject} — ${preview}` : subject,
+        `/tickets?id=${data.ticketId}&view=assigned`,
+        `ticket-reply-${data.ticketId}`,
+        "ticket-reply",
+      );
+    } catch (e) {
+      console.warn("[ticket-notify] reply push failed", e);
+    }
     return { ok: true };
   });
