@@ -60,42 +60,11 @@ export const resetUserVaultPin = createServerFn({ method: "POST" })
           .maybeSingle();
         resetByName = (adminProf as any)?.display_name || (adminProf as any)?.username || undefined;
 
-        const el = React.createElement(vaultPinResetTpl.component, {
-          userName, tempPin: "0000", resetByName, loginUrl: LOGIN_URL,
+        const { sendAndLogEmail } = await import("@/lib/email-templates/send-and-log");
+        await sendAndLogEmail(supabaseAdmin, "vault-pin-reset", toEmail, {
+          templateData: { userName, tempPin: "0000", resetByName, loginUrl: LOGIN_URL },
+          idempotencyKey: `vault-pin-reset-${data.userId}-${Date.now()}`,
         });
-        const html = await render(el);
-        const text = await render(el, { plainText: true });
-        const subject = typeof vaultPinResetTpl.subject === "function"
-          ? (vaultPinResetTpl.subject as (d: Record<string, any>) => string)({})
-          : vaultPinResetTpl.subject;
-
-        const messageId = crypto.randomUUID();
-        await supabaseAdmin.from("email_send_log").insert({
-          message_id: messageId,
-          template_name: "vault-pin-reset",
-          recipient_email: toEmail,
-          status: "pending",
-        } as never);
-        const unsubToken = Array.from(crypto.getRandomValues(new Uint8Array(16)))
-          .map((x) => x.toString(16).padStart(2, "0")).join("");
-        const { error: qErr } = await supabaseAdmin.rpc("enqueue_email" as never, {
-          queue_name: "transactional_emails",
-          payload: {
-            message_id: messageId,
-            to: toEmail,
-            from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
-            sender_domain: SENDER_DOMAIN,
-            subject,
-            html,
-            text,
-            purpose: "transactional",
-            label: "vault-pin-reset",
-            idempotency_key: `vault-pin-reset-${data.userId}-${Date.now()}`,
-            unsubscribe_token: unsubToken,
-            queued_at: new Date().toISOString(),
-          },
-        } as never);
-        if (qErr) console.error("vault-pin-reset enqueue failed", qErr);
       }
     } catch (e) {
       console.error("vault-pin-reset notification failed", e);

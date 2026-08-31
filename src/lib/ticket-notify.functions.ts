@@ -72,84 +72,15 @@ export const notifyTicketReply = createServerFn({ method: "POST" })
       (staffProf as any)?.display_name || (staffProf as any)?.username || undefined;
     const ticketSubject = (ticket as any).subject as string | undefined;
 
-    // Render
-    const el = React.createElement(ticketReplyTpl.component, {
-      displayName,
-      staffName,
-      ticketSubject,
-      ticketsUrl: TICKETS_URL,
-    });
-    const html = await render(el);
-    const text = await render(el, { plainText: true });
-    const subject =
-      typeof ticketReplyTpl.subject === "function"
-        ? ticketReplyTpl.subject({ ticketSubject })
-        : ticketReplyTpl.subject;
-
-    // Unsubscribe token (reuse or create)
-    const normalized = ownerEmail.toLowerCase();
-    let unsubscribeToken: string;
-    const { data: existingTok } = await supabaseAdmin
-      .from("email_unsubscribe_tokens")
-      .select("token, used_at")
-      .eq("email", normalized)
-      .maybeSingle();
-    if (existingTok && !(existingTok as any).used_at) {
-      unsubscribeToken = (existingTok as any).token as string;
-    } else {
-      const b = new Uint8Array(32);
-      crypto.getRandomValues(b);
-      unsubscribeToken = Array.from(b).map((x) => x.toString(16).padStart(2, "0")).join("");
-      await supabaseAdmin
-        .from("email_unsubscribe_tokens")
-        .upsert(
-          { token: unsubscribeToken, email: normalized } as never,
-          { onConflict: "email", ignoreDuplicates: true },
-        );
-      const { data: stored } = await supabaseAdmin
-        .from("email_unsubscribe_tokens")
-        .select("token")
-        .eq("email", normalized)
-        .maybeSingle();
-      if (stored) unsubscribeToken = (stored as any).token;
-    }
-
-    const messageId = crypto.randomUUID();
-    const idempotencyKey = `ticket-reply-${data.messageId}`;
-
-    await supabaseAdmin.from("email_send_log").insert({
-      message_id: messageId,
-      template_name: "ticket-reply",
-      recipient_email: ownerEmail,
-      status: "pending",
-    } as never);
-
-    const { error: enqErr } = await supabaseAdmin.rpc("enqueue_email" as never, {
-      queue_name: "transactional_emails",
-      payload: {
-        message_id: messageId,
-        to: ownerEmail,
-        from: `${SITE_NAME} <noreply@${FROM_DOMAIN}>`,
-        sender_domain: SENDER_DOMAIN,
-        subject,
-        html,
-        text,
-        purpose: "transactional",
-        label: "ticket-reply",
-        idempotency_key: idempotencyKey,
-        unsubscribe_token: unsubscribeToken,
-        queued_at: new Date().toISOString(),
-      },
-    } as never);
-    if (enqErr) {
-      await supabaseAdmin.from("email_send_log").insert({
-        message_id: messageId,
-        template_name: "ticket-reply",
-        recipient_email: ownerEmail,
-        status: "failed",
-        error_message: enqErr.message,
-      } as never);
-      return { ok: false, reason: "enqueue_failed" };
+    const { sendAndLogEmail } = await import("@/lib/email-templates/send-and-log");
+    try {
+      await sendAndLogEmail(supabaseAdmin, "ticket-reply", ownerEmail, {
+        templateData: { displayName, staffName, ticketSubject, ticketsUrl: TICKETS_URL },
+        idempotencyKey: `ticket-reply-${data.messageId}`,
+      });
+    } catch (e) {
+      console.error("ticket-reply email failed", e);
+      return { ok: false, reason: "send_failed" };
     }
 
     return { ok: true };
