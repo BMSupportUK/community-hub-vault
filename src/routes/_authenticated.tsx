@@ -10,6 +10,7 @@ import { IconRail } from "@/components/app/IconRail";
 import { logMyIp } from "@/lib/ip-log.functions";
 import { useOnlineUsers } from "@/hooks/use-online-users";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { isAllowedForFanZoneOnly } from "@/lib/fan-zone-nav";
 
 // Defer non-critical header widgets & alerts so the shell paints immediately.
 const Clocks = lazy(() => import("@/components/app/Clocks").then((m) => ({ default: m.Clocks })));
@@ -53,7 +54,7 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 function AuthLayout() {
-  const { loading, isPending, isBanned, isRejected, isMod, isStaff, hasAny, user } = useAuth();
+  const { loading, isPending, isBanned, isRejected, isMod, isStaff, hasAny, user, isFanZoneOnly } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
   const navigate = useNavigate();
   const path = useRouterState({ select: (r) => r.location.pathname });
@@ -128,6 +129,11 @@ function AuthLayout() {
   // Pending users are locked to /gate
   if (isPending && !path.startsWith("/gate")) {
     return <Navigate to="/gate" />;
+  }
+
+  // Fan-Zone-only accounts never see BM Support pages.
+  if (isFanZoneOnly && !isAllowedForFanZoneOnly(path)) {
+    return <Navigate to="/forum" />;
   }
 
   return (
