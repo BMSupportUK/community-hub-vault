@@ -3815,6 +3815,7 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           created_at: string
+          custom_status: string | null
           display_name: string | null
           equipped_nameplate_id: string | null
           id: string
@@ -3830,6 +3831,7 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
+          custom_status?: string | null
           display_name?: string | null
           equipped_nameplate_id?: string | null
           id: string
@@ -3845,6 +3847,7 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           created_at?: string
+          custom_status?: string | null
           display_name?: string | null
           equipped_nameplate_id?: string | null
           id?: string
@@ -6091,6 +6094,7 @@ export type Database = {
         Returns: {
           avatar_url: string
           created_at: string
+          custom_status: string
           display_name: string
           equipped_nameplate_id: string
           last_seen_at: string
