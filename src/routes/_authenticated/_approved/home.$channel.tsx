@@ -1214,11 +1214,26 @@ function ChannelPage() {
                               {new Date(m.created_at).toLocaleDateString("en-GB")}
                             </span>
                           </div>
-                          <MentionText
-                            content={m.content}
-                            currentUsername={myUsername}
-                            className="text-sm leading-relaxed text-foreground break-words [overflow-wrap:anywhere]"
-                          />
+                          {(() => {
+                            const img = extractStandaloneGif(m.content);
+                            if (img) {
+                              return (
+                                <img
+                                  src={img}
+                                  alt="Pinned image"
+                                  loading="lazy"
+                                  className="max-w-full max-h-[240px] w-auto h-auto rounded-lg border border-border"
+                                />
+                              );
+                            }
+                            return (
+                              <MentionText
+                                content={m.content}
+                                currentUsername={myUsername}
+                                className="text-sm leading-relaxed text-foreground break-words [overflow-wrap:anywhere]"
+                              />
+                            );
+                          })()}
 
                           {canPin && (
                             <button
