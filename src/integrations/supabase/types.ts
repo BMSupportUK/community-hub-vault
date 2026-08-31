@@ -5676,6 +5676,7 @@ export type Database = {
         }[]
       }
       app_encrypt: { Args: { p: string }; Returns: string }
+      app_login_name_exists: { Args: { _name: string }; Returns: boolean }
       apply_blacklist_ban: { Args: { _user_id: string }; Returns: undefined }
       archive_old_closed_tickets: { Args: never; Returns: number }
       assign_pending_tickets: { Args: never; Returns: number }
