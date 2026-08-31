@@ -25,14 +25,12 @@ import { Route as PackagesRouteImport } from './routes/packages'
 import { Route as PredictionsRouteImport } from './routes/predictions'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SignupRouteImport } from './routes/signup'
-import { Route as UnsubscribeRouteImport } from './routes/unsubscribe'
 import { Route as AuthenticatedApprovedRouteImport } from './routes/_authenticated/_approved'
 import { Route as AuthenticatedAccountRejectedRouteImport } from './routes/_authenticated/account-rejected'
 import { Route as AuthenticatedBannedRouteImport } from './routes/_authenticated/banned'
 import { Route as AuthenticatedFanZonePendingRouteImport } from './routes/_authenticated/fan-zone-pending'
 import { Route as AuthenticatedGateRouteImport } from './routes/_authenticated/gate'
 import { Route as ATokenRouteImport } from './routes/a.$token'
-import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as FanZoneIndexRouteImport } from './routes/fan-zone.index'
 import { Route as FanZoneBoardRouteImport } from './routes/fan-zone.$board'
 import { Route as AuthenticatedApprovedAccountSecurityRouteImport } from './routes/_authenticated/_approved/account-security'
@@ -94,7 +92,6 @@ import { Route as FanZoneBoardIndexRouteImport } from './routes/fan-zone.$board.
 import { Route as FanZoneBoardTopicRouteImport } from './routes/fan-zone.$board.$topic'
 import { Route as FanZoneUUserIdRouteImport } from './routes/fan-zone.u.$userId'
 import { Route as LovableEmailEventsRouteImport } from './routes/lovable/email/events'
-import { Route as LovableEmailSuppressionRouteImport } from './routes/lovable/email/suppression'
 import { Route as AuthenticatedApprovedFanzoneBlocksRouteImport } from './routes/_authenticated/_approved/fanzone.blocks'
 import { Route as AuthenticatedApprovedFanzoneMessagesRouteImport } from './routes/_authenticated/_approved/fanzone.messages'
 import { Route as AuthenticatedApprovedFanzoneProfileRouteImport } from './routes/_authenticated/_approved/fanzone.profile'
@@ -134,9 +131,7 @@ import { Route as ApiPublicHooksUserNotificationPushRouteImport } from './routes
 import { Route as ApiPublicHooksWcPredictionRemindersRouteImport } from './routes/api/public/hooks/wc-prediction-reminders'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
-import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
-import { Route as LovableEmailTransactionalSendRouteImport } from './routes/lovable/email/transactional/send'
 import { Route as AuthenticatedApprovedFanzoneMessagesThreadRouteImport } from './routes/_authenticated/_approved/fanzone.messages.$thread'
 import { Route as AuthenticatedApprovedFanzoneUUserIdRouteImport } from './routes/_authenticated/_approved/fanzone.u.$userId'
 import { Route as AuthenticatedApprovedForumBoardTopicRouteImport } from './routes/_authenticated/_approved/forum.$board.$topic'
@@ -222,11 +217,6 @@ const SignupRoute = SignupRouteImport.update({
   path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
-const UnsubscribeRoute = UnsubscribeRouteImport.update({
-  id: '/unsubscribe',
-  path: '/unsubscribe',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthenticatedApprovedRoute = AuthenticatedApprovedRouteImport.update({
   id: '/_approved',
   getParentRoute: () => AuthenticatedRoute,
@@ -256,11 +246,6 @@ const AuthenticatedGateRoute = AuthenticatedGateRouteImport.update({
 const ATokenRoute = ATokenRouteImport.update({
   id: '/a/$token',
   path: '/a/$token',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
-  id: '/email/unsubscribe',
-  path: '/email/unsubscribe',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FanZoneIndexRoute = FanZoneIndexRouteImport.update({
@@ -628,11 +613,6 @@ const LovableEmailEventsRoute = LovableEmailEventsRouteImport.update({
   path: '/lovable/email/events',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LovableEmailSuppressionRoute = LovableEmailSuppressionRouteImport.update({
-  id: '/lovable/email/suppression',
-  path: '/lovable/email/suppression',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const AuthenticatedApprovedFanzoneBlocksRoute =
   AuthenticatedApprovedFanzoneBlocksRouteImport.update({
     id: '/fanzone/blocks',
@@ -862,22 +842,10 @@ const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
   path: '/lovable/email/auth/webhook',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LovableEmailQueueProcessRoute =
-  LovableEmailQueueProcessRouteImport.update({
-    id: '/lovable/email/queue/process',
-    path: '/lovable/email/queue/process',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 const LovableEmailTransactionalPreviewRoute =
   LovableEmailTransactionalPreviewRouteImport.update({
     id: '/lovable/email/transactional/preview',
     path: '/lovable/email/transactional/preview',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const LovableEmailTransactionalSendRoute =
-  LovableEmailTransactionalSendRouteImport.update({
-    id: '/lovable/email/transactional/send',
-    path: '/lovable/email/transactional/send',
     getParentRoute: () => rootRouteImport,
   } as any)
 const AuthenticatedApprovedFanzoneMessagesThreadRoute =
@@ -927,13 +895,11 @@ export interface FileRoutesByFullPath {
   '/predictions': typeof PredictionsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
-  '/unsubscribe': typeof UnsubscribeRoute
   '/account-rejected': typeof AuthenticatedAccountRejectedRoute
   '/banned': typeof AuthenticatedBannedRoute
   '/fan-zone-pending': typeof AuthenticatedFanZonePendingRoute
   '/gate': typeof AuthenticatedGateRoute
   '/a/$token': typeof ATokenRoute
-  '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/fan-zone/$board': typeof FanZoneBoardRouteWithChildren
   '/fan-zone/': typeof FanZoneIndexRoute
   '/account-security': typeof AuthenticatedApprovedAccountSecurityRoute
@@ -994,7 +960,6 @@ export interface FileRoutesByFullPath {
   '/fan-zone/$board/$topic': typeof FanZoneBoardTopicRoute
   '/fan-zone/u/$userId': typeof FanZoneUUserIdRoute
   '/lovable/email/events': typeof LovableEmailEventsRoute
-  '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/fan-zone/$board/': typeof FanZoneBoardIndexRoute
   '/fanzone/blocks': typeof AuthenticatedApprovedFanzoneBlocksRoute
   '/fanzone/messages': typeof AuthenticatedApprovedFanzoneMessagesRouteWithChildren
@@ -1034,9 +999,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/wc-prediction-reminders': typeof ApiPublicHooksWcPredictionRemindersRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
-  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
-  '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
   '/home/': typeof AuthenticatedApprovedHomeIndexRoute
   '/fanzone/messages/$thread': typeof AuthenticatedApprovedFanzoneMessagesThreadRoute
   '/fanzone/u/$userId': typeof AuthenticatedApprovedFanzoneUUserIdRoute
@@ -1059,13 +1022,11 @@ export interface FileRoutesByTo {
   '/predictions': typeof PredictionsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
-  '/unsubscribe': typeof UnsubscribeRoute
   '/account-rejected': typeof AuthenticatedAccountRejectedRoute
   '/banned': typeof AuthenticatedBannedRoute
   '/fan-zone-pending': typeof AuthenticatedFanZonePendingRoute
   '/gate': typeof AuthenticatedGateRoute
   '/a/$token': typeof ATokenRoute
-  '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/fan-zone': typeof FanZoneIndexRoute
   '/account-security': typeof AuthenticatedApprovedAccountSecurityRoute
   '/admin': typeof AuthenticatedApprovedAdminRoute
@@ -1124,7 +1085,6 @@ export interface FileRoutesByTo {
   '/fan-zone/$board/$topic': typeof FanZoneBoardTopicRoute
   '/fan-zone/u/$userId': typeof FanZoneUUserIdRoute
   '/lovable/email/events': typeof LovableEmailEventsRoute
-  '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/fan-zone/$board': typeof FanZoneBoardIndexRoute
   '/fanzone/blocks': typeof AuthenticatedApprovedFanzoneBlocksRoute
   '/fanzone/messages': typeof AuthenticatedApprovedFanzoneMessagesRouteWithChildren
@@ -1164,9 +1124,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/wc-prediction-reminders': typeof ApiPublicHooksWcPredictionRemindersRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
-  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
-  '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
   '/home': typeof AuthenticatedApprovedHomeIndexRoute
   '/fanzone/messages/$thread': typeof AuthenticatedApprovedFanzoneMessagesThreadRoute
   '/fanzone/u/$userId': typeof AuthenticatedApprovedFanzoneUUserIdRoute
@@ -1192,14 +1150,12 @@ export interface FileRoutesById {
   '/predictions': typeof PredictionsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
-  '/unsubscribe': typeof UnsubscribeRoute
   '/_authenticated/_approved': typeof AuthenticatedApprovedRouteWithChildren
   '/_authenticated/account-rejected': typeof AuthenticatedAccountRejectedRoute
   '/_authenticated/banned': typeof AuthenticatedBannedRoute
   '/_authenticated/fan-zone-pending': typeof AuthenticatedFanZonePendingRoute
   '/_authenticated/gate': typeof AuthenticatedGateRoute
   '/a/$token': typeof ATokenRoute
-  '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/fan-zone/$board': typeof FanZoneBoardRouteWithChildren
   '/fan-zone/': typeof FanZoneIndexRoute
   '/_authenticated/_approved/account-security': typeof AuthenticatedApprovedAccountSecurityRoute
@@ -1260,7 +1216,6 @@ export interface FileRoutesById {
   '/fan-zone/$board/$topic': typeof FanZoneBoardTopicRoute
   '/fan-zone/u/$userId': typeof FanZoneUUserIdRoute
   '/lovable/email/events': typeof LovableEmailEventsRoute
-  '/lovable/email/suppression': typeof LovableEmailSuppressionRoute
   '/fan-zone/$board/': typeof FanZoneBoardIndexRoute
   '/_authenticated/_approved/fanzone/blocks': typeof AuthenticatedApprovedFanzoneBlocksRoute
   '/_authenticated/_approved/fanzone/messages': typeof AuthenticatedApprovedFanzoneMessagesRouteWithChildren
@@ -1300,9 +1255,7 @@ export interface FileRoutesById {
   '/api/public/hooks/wc-prediction-reminders': typeof ApiPublicHooksWcPredictionRemindersRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
-  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
-  '/lovable/email/transactional/send': typeof LovableEmailTransactionalSendRoute
   '/_authenticated/_approved/home/': typeof AuthenticatedApprovedHomeIndexRoute
   '/_authenticated/_approved/fanzone/messages/$thread': typeof AuthenticatedApprovedFanzoneMessagesThreadRoute
   '/_authenticated/_approved/fanzone/u/$userId': typeof AuthenticatedApprovedFanzoneUUserIdRoute
@@ -1328,13 +1281,11 @@ export interface FileRouteTypes {
     | '/predictions'
     | '/reset-password'
     | '/signup'
-    | '/unsubscribe'
     | '/account-rejected'
     | '/banned'
     | '/fan-zone-pending'
     | '/gate'
     | '/a/$token'
-    | '/email/unsubscribe'
     | '/fan-zone/$board'
     | '/fan-zone/'
     | '/account-security'
@@ -1395,7 +1346,6 @@ export interface FileRouteTypes {
     | '/fan-zone/$board/$topic'
     | '/fan-zone/u/$userId'
     | '/lovable/email/events'
-    | '/lovable/email/suppression'
     | '/fan-zone/$board/'
     | '/fanzone/blocks'
     | '/fanzone/messages'
@@ -1435,9 +1385,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/wc-prediction-reminders'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
-    | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
-    | '/lovable/email/transactional/send'
     | '/home/'
     | '/fanzone/messages/$thread'
     | '/fanzone/u/$userId'
@@ -1460,13 +1408,11 @@ export interface FileRouteTypes {
     | '/predictions'
     | '/reset-password'
     | '/signup'
-    | '/unsubscribe'
     | '/account-rejected'
     | '/banned'
     | '/fan-zone-pending'
     | '/gate'
     | '/a/$token'
-    | '/email/unsubscribe'
     | '/fan-zone'
     | '/account-security'
     | '/admin'
@@ -1525,7 +1471,6 @@ export interface FileRouteTypes {
     | '/fan-zone/$board/$topic'
     | '/fan-zone/u/$userId'
     | '/lovable/email/events'
-    | '/lovable/email/suppression'
     | '/fan-zone/$board'
     | '/fanzone/blocks'
     | '/fanzone/messages'
@@ -1565,9 +1510,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/wc-prediction-reminders'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
-    | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
-    | '/lovable/email/transactional/send'
     | '/home'
     | '/fanzone/messages/$thread'
     | '/fanzone/u/$userId'
@@ -1592,14 +1535,12 @@ export interface FileRouteTypes {
     | '/predictions'
     | '/reset-password'
     | '/signup'
-    | '/unsubscribe'
     | '/_authenticated/_approved'
     | '/_authenticated/account-rejected'
     | '/_authenticated/banned'
     | '/_authenticated/fan-zone-pending'
     | '/_authenticated/gate'
     | '/a/$token'
-    | '/email/unsubscribe'
     | '/fan-zone/$board'
     | '/fan-zone/'
     | '/_authenticated/_approved/account-security'
@@ -1660,7 +1601,6 @@ export interface FileRouteTypes {
     | '/fan-zone/$board/$topic'
     | '/fan-zone/u/$userId'
     | '/lovable/email/events'
-    | '/lovable/email/suppression'
     | '/fan-zone/$board/'
     | '/_authenticated/_approved/fanzone/blocks'
     | '/_authenticated/_approved/fanzone/messages'
@@ -1700,9 +1640,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/wc-prediction-reminders'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
-    | '/lovable/email/queue/process'
     | '/lovable/email/transactional/preview'
-    | '/lovable/email/transactional/send'
     | '/_authenticated/_approved/home/'
     | '/_authenticated/_approved/fanzone/messages/$thread'
     | '/_authenticated/_approved/fanzone/u/$userId'
@@ -1728,15 +1666,12 @@ export interface RootRouteChildren {
   PredictionsRoute: typeof PredictionsRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
-  UnsubscribeRoute: typeof UnsubscribeRoute
   ATokenRoute: typeof ATokenRoute
-  EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   ApiPublicBoroMatchDetailRoute: typeof ApiPublicBoroMatchDetailRoute
   ApiPublicLinkPreviewRoute: typeof ApiPublicLinkPreviewRoute
   ApiPublicTweetRoute: typeof ApiPublicTweetRoute
   ApiPublicTweetImageRoute: typeof ApiPublicTweetImageRoute
   LovableEmailEventsRoute: typeof LovableEmailEventsRoute
-  LovableEmailSuppressionRoute: typeof LovableEmailSuppressionRoute
   ApiPublicATokenRoute: typeof ApiPublicATokenRoute
   ApiPublicHooksBackupCredentialsRoute: typeof ApiPublicHooksBackupCredentialsRoute
   ApiPublicHooksBackupOrdersRoute: typeof ApiPublicHooksBackupOrdersRoute
@@ -1767,9 +1702,7 @@ export interface RootRouteChildren {
   ApiPublicHooksWcPredictionRemindersRoute: typeof ApiPublicHooksWcPredictionRemindersRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
-  LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
-  LovableEmailTransactionalSendRoute: typeof LovableEmailTransactionalSendRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -1886,13 +1819,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/unsubscribe': {
-      id: '/unsubscribe'
-      path: '/unsubscribe'
-      fullPath: '/unsubscribe'
-      preLoaderRoute: typeof UnsubscribeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_authenticated/_approved': {
       id: '/_authenticated/_approved'
       path: ''
@@ -1933,13 +1859,6 @@ declare module '@tanstack/react-router' {
       path: '/a/$token'
       fullPath: '/a/$token'
       preLoaderRoute: typeof ATokenRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/email/unsubscribe': {
-      id: '/email/unsubscribe'
-      path: '/email/unsubscribe'
-      fullPath: '/email/unsubscribe'
-      preLoaderRoute: typeof EmailUnsubscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/fan-zone/': {
@@ -2369,13 +2288,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailEventsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/lovable/email/suppression': {
-      id: '/lovable/email/suppression'
-      path: '/lovable/email/suppression'
-      fullPath: '/lovable/email/suppression'
-      preLoaderRoute: typeof LovableEmailSuppressionRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/_authenticated/_approved/fanzone/blocks': {
       id: '/_authenticated/_approved/fanzone/blocks'
       path: '/fanzone/blocks'
@@ -2649,25 +2561,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/lovable/email/queue/process': {
-      id: '/lovable/email/queue/process'
-      path: '/lovable/email/queue/process'
-      fullPath: '/lovable/email/queue/process'
-      preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/lovable/email/transactional/preview': {
       id: '/lovable/email/transactional/preview'
       path: '/lovable/email/transactional/preview'
       fullPath: '/lovable/email/transactional/preview'
       preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/lovable/email/transactional/send': {
-      id: '/lovable/email/transactional/send'
-      path: '/lovable/email/transactional/send'
-      fullPath: '/lovable/email/transactional/send'
-      preLoaderRoute: typeof LovableEmailTransactionalSendRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/_approved/fanzone/messages/$thread': {
@@ -3017,15 +2915,12 @@ const rootRouteChildren: RootRouteChildren = {
   PredictionsRoute: PredictionsRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
-  UnsubscribeRoute: UnsubscribeRoute,
   ATokenRoute: ATokenRoute,
-  EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   ApiPublicBoroMatchDetailRoute: ApiPublicBoroMatchDetailRoute,
   ApiPublicLinkPreviewRoute: ApiPublicLinkPreviewRoute,
   ApiPublicTweetRoute: ApiPublicTweetRoute,
   ApiPublicTweetImageRoute: ApiPublicTweetImageRoute,
   LovableEmailEventsRoute: LovableEmailEventsRoute,
-  LovableEmailSuppressionRoute: LovableEmailSuppressionRoute,
   ApiPublicATokenRoute: ApiPublicATokenRoute,
   ApiPublicHooksBackupCredentialsRoute: ApiPublicHooksBackupCredentialsRoute,
   ApiPublicHooksBackupOrdersRoute: ApiPublicHooksBackupOrdersRoute,
@@ -3065,9 +2960,7 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicHooksWcPredictionRemindersRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
-  LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
-  LovableEmailTransactionalSendRoute: LovableEmailTransactionalSendRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
