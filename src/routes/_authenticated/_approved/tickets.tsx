@@ -1541,8 +1541,12 @@ function TicketDetail({
           {!linkedOrder.paid_at && linkedOrder.user_id === currentUserId && (
             <button
               onClick={orderCancel}
-              disabled={orderBusy}
-              title="Cancel your order"
+              disabled={orderBusy || bankAwaiting}
+              title={
+                bankAwaiting
+                  ? "Bank transfer reported — cannot cancel while we verify your payment"
+                  : "Cancel your order"
+              }
               className="px-2.5 py-1 rounded-md bg-red-500/20 text-red-50 text-xs font-medium flex items-center gap-1 hover:bg-red-500/30 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <Ban className="size-3.5" /> Cancel Order
