@@ -17,6 +17,7 @@ import { SoundUnlocker } from "@/components/app/SoundUnlocker";
 import { TicketReplyAlert } from "@/components/app/TicketReplyAlert";
 import { PushSoundBridge } from "@/components/app/PushSoundBridge";
 import { MentionSoundAlert } from "@/components/app/MentionSoundAlert";
+import { ToastNotificationBridge } from "@/components/app/ToastNotificationBridge";
 
 function NotFoundComponent() {
   return (
