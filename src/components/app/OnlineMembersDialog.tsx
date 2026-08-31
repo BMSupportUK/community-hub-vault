@@ -459,6 +459,7 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
                               nameplateId: p.equipped_nameplate_id,
                               role: role ?? null,
                               isOnline,
+                              customStatus: p.custom_status,
                               isSelf,
                             }}
                             asDialog
