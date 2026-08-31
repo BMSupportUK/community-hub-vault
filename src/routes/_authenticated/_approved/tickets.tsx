@@ -1498,15 +1498,17 @@ function TicketDetail({
             amountCents={linkedOrder.total_cents}
             onChange={loadLinkedOrder}
           />
-          <button
-            type="button"
-            onClick={orderRefreshSquareStatus}
-            disabled={orderBusy}
-            className="mt-2 w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white/15 border border-white/25 text-white text-sm font-bold hover:bg-white/25 disabled:opacity-50 disabled:cursor-not-allowed transition"
-          >
-            <CheckCircle2 className="size-4" />
-            {orderBusy ? "Checking payment…" : "I've paid — refresh status"}
-          </button>
+          {!bankOnlyOrder && (
+            <button
+              type="button"
+              onClick={orderRefreshSquareStatus}
+              disabled={orderBusy}
+              className="mt-2 w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-white/15 border border-white/25 text-white text-sm font-bold hover:bg-white/25 disabled:opacity-50 disabled:cursor-not-allowed transition"
+            >
+              <CheckCircle2 className="size-4" />
+              {orderBusy ? "Checking payment…" : "I've paid — refresh status"}
+            </button>
+          )}
         </div>
       ) : linkedOrder.paid_at ? (
         <div className="text-emerald-200">✓ Payment received — thank you!</div>
