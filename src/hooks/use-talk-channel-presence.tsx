@@ -96,6 +96,8 @@ const lastSeenLocal = new Map<string, number>();
  * so a stale snapshot cannot keep another browser's rail badge at 1.
  */
 const departedPresenceStamps = new Map<string, string>();
+/** Users seen in an explicit leave diff must not be restored by reconnect linger. */
+const cleanlyDepartedUserIds = new Set<string>();
 /** First moment a previously visible user vanished from presence state. */
 const missingSince = new Map<string, number>();
 let lingerTimer: ReturnType<typeof setTimeout> | null = null;
@@ -160,9 +162,19 @@ function collectUniqueUsers(channel: RealtimeChannel): Set<string> {
   // exact follow-up publish. Previously this cache was only reconsidered by a
   // later heartbeat, leaving the visible number wrong until refresh.
   let nextExpiry = Number.POSITIVE_INFINITY;
-  for (const id of userIds) missingSince.delete(id);
+  for (const id of userIds) {
+    missingSince.delete(id);
+    cleanlyDepartedUserIds.delete(id);
+  }
   for (const id of currentUserIds) {
     if (userIds.has(id)) continue;
+    // A presence leave is authoritative. The stale presenceState snapshot is
+    // already ignored above, so remove the user now rather than applying the
+    // reconnect-only grace period and showing a false green member status.
+    if (cleanlyDepartedUserIds.delete(id)) {
+      missingSince.delete(id);
+      continue;
+    }
     // Route exit is deliberate, not a network blip. Remove this browser's user
     // immediately instead of applying the remote-user disconnect grace.
     if (!activeTracker && id === trackedUserId) {
@@ -339,6 +351,7 @@ function ensureSharedChannel() {
       for (const presence of newPresences as TalkPresence[]) {
         if (!presence.user_id) continue;
         departedPresenceStamps.delete(`${key}:${presence.user_id}`);
+        cleanlyDepartedUserIds.delete(presence.user_id);
       }
       publishCount();
     })
@@ -346,6 +359,7 @@ function ensureSharedChannel() {
       for (const presence of leftPresences as TalkPresence[]) {
         if (!presence.user_id) continue;
         departedPresenceStamps.set(`${key}:${presence.user_id}`, presence.online_at ?? "");
+        cleanlyDepartedUserIds.add(presence.user_id);
       }
       publishCount();
     })
