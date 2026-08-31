@@ -42,6 +42,19 @@ function bmSupportRoles(roles: string[]): string[] {
   return roles.filter((r) => !isFanZoneRole(r));
 }
 
+/**
+ * Roles shown in the members list. Members without an explicit subscriber
+ * role are surfaced as "Non Subscriber" so the filter always covers them.
+ */
+function displayRoles(roles: string[]): string[] {
+  const base = bmSupportRoles(roles);
+  const hasSub = base.some((r) => r === "subscriber");
+  const hasNon = base.some((r) => r === "nonsubscriber");
+  if (!hasSub && !hasNon) return [...base, "nonsubscriber"];
+  return base;
+}
+
+
 /** Human relative age, e.g. "7 months ago". */
 function relativeSince(iso: string | null): string {
   if (!iso) return "—";
