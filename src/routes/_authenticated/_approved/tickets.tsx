@@ -17,8 +17,6 @@ import { MentionText, useMentionAutocomplete } from "@/components/app/mentions";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
 import { useServerFn } from "@tanstack/react-start";
 import { verifyTurnstile } from "@/lib/turnstile.functions";
-import { confirmStripePayment } from "@/lib/stripe-payments.functions";
-import { verifyStripePaymentForOrder } from "@/components/app/StripeOrderPanel";
 import { TurnstileWidget } from "@/components/app/TurnstileWidget";
 import { getOutOfHoursMessage } from "@/lib/business-hours";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -993,7 +991,6 @@ function TicketDetail({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ticket.order_id]);
   const checkPaymentAcrossProviders = useServerFn(checkOrderPaymentAcrossProviders);
-  const confirmStripe = useServerFn(confirmStripePayment);
   const cancelOrderAndSquareInvoiceRpc = useServerFn(cancelOrderAndSquareInvoice);
   const getPaymentState = useServerFn(getOrderPaymentState);
   const loadLinkedOrder = async () => {
