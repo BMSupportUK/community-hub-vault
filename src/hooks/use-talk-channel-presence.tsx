@@ -207,9 +207,13 @@ function publishCount() {
 function flushCount() {
   if (!sharedChannel) return;
   // While the socket is rebuilding, presence state is empty. Publishing that
-  // would blank every counter for a second and then refill it — hold the last
-  // known list instead.
-  if (!subscribed || sharedChannel.state !== "joined") return;
+  // would blank every counter for a second and then refill it. Hold the last
+  // known list, but retry so a pending remote-user eviction is not lost if its
+  // one-shot linger timer happens to fire during the reconnect.
+  if (!subscribed || sharedChannel.state !== "joined") {
+    scheduleLingerFlush(250);
+    return;
+  }
   let nextIds: Set<string>;
   try {
     nextIds = collectUniqueUsers(sharedChannel);
@@ -351,7 +355,7 @@ function ensureSharedChannel() {
         retryDelay = 1000;
         trackedSignature = "";
         void syncTracking();
-        publishCount();
+        flushCount();
         return;
       }
       if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
