@@ -1565,7 +1565,8 @@ function ChannelPage() {
                               </span>
                               <span
                                 className={cn(
-                                  "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase shrink-0",
+                                  // Fixed width so flipping Unread -> Read never nudges the row.
+                                  "inline-flex w-[62px] justify-center items-center rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase shrink-0",
                                   isUnread
                                     ? "border-destructive text-destructive bg-destructive/15"
                                     : "border-border bg-surface-2 text-muted-foreground",
@@ -1573,6 +1574,7 @@ function ChannelPage() {
                               >
                                 {isUnread ? "Unread" : "Read"}
                               </span>
+
 
                               {isPinned && (
                                 <span className="inline-flex items-center gap-1 text-[10px] text-primary">
