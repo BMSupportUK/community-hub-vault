@@ -3,6 +3,7 @@ import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { checkMyVpnOnLogin } from "@/lib/vpn-login-check.functions";
 import { sendShiftEventPush, sendBreakEventPush } from "@/lib/push.functions";
+import { isFanZoneOnlyRoles } from "@/lib/fan-zone-nav";
 
 export type AppRole =
   | "admin"
@@ -30,6 +31,8 @@ interface AuthCtx {
   isMod: boolean;
   isBanned: boolean;
   isRejected: boolean;
+  /** Account signed up for the Boro Fan Zone only — no BM Support access. */
+  isFanZoneOnly: boolean;
   signOut: () => Promise<void>;
   refreshRoles: () => Promise<void>;
 }
@@ -170,6 +173,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isRejected = roles.includes("rejected");
   const isStaff = hasAny(["admin", "management", "staff", "moderator"]);
   const isMod = hasAny(["admin", "management", "moderator"]);
+  const isFanZoneOnly = rolesLoaded && isFanZoneOnlyRoles(roles);
 
   return (
     <Ctx.Provider
@@ -185,6 +189,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isMod,
         isBanned,
         isRejected,
+        isFanZoneOnly,
         signOut: async () => {
           const signingOutUser = user;
           // Invalidate any in-flight role lookup immediately. Without this, a

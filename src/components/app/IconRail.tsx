@@ -107,7 +107,7 @@ interface RailItem {
 }
 
 export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
-  const { user, isStaff, isPending, signOut, hasAny, roles, hasRole } = useAuth();
+  const { user, isStaff, isPending, signOut, hasAny, roles, hasRole, isFanZoneOnly } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
   const path = useRouterState({ select: (r) => r.location.pathname });
   const [unreadNewContent, setUnreadNewContent] = useState(cachedUnreadNewContent);
@@ -215,7 +215,8 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     );
   }
 
-  const inFanZone = isFanZonePath(path);
+  // Fan-Zone-only accounts never see the BM Support rail, wherever they are.
+  const inFanZone = isFanZonePath(path) || isFanZoneOnly;
 
 
   const supportItems: RailItem[] = [
@@ -293,8 +294,13 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
         ? "flex h-full"
         : "shrink-0 hidden md:flex border-r border-primary-glow/40 sticky top-0 h-dvh",
     )}>
-      <Link to="/home" className="relative z-10 shrink-0 size-12 rounded-2xl bg-gradient-primary flex items-center justify-center font-display font-bold text-sm text-primary-foreground shadow-glow mb-1 ring-2 ring-primary-glow/70 hover:ring-primary-glow hover:scale-110 transition-all duration-200">
-        BM
+      <Link
+        to={inFanZone ? "/forum" : "/home"}
+        aria-label={inFanZone ? "Boro Fan Zone" : "BM Support"}
+        title={inFanZone ? "Boro Fan Zone" : "BM Support"}
+        className="relative z-10 shrink-0 size-12 rounded-2xl bg-gradient-primary flex items-center justify-center font-display font-bold text-sm text-primary-foreground shadow-glow mb-1 ring-2 ring-primary-glow/70 hover:ring-primary-glow hover:scale-110 transition-all duration-200"
+      >
+        {inFanZone ? "FZ" : "BM"}
       </Link>
       <div className="relative z-10 shrink-0 h-px w-12 bg-gradient-to-r from-transparent via-primary-glow to-transparent" />
       <div className="relative z-10 flex-1 min-h-0 w-full overflow-y-auto overflow-x-hidden flex flex-col items-center gap-2 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">

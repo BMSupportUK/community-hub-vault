@@ -48,7 +48,7 @@ interface MiniProfile {
 }
 
 export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "bar" } = {}) {
-  const { user, roles, signOut, hasAny } = useAuth();
+  const { user, roles, signOut, hasAny, isFanZoneOnly } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<MiniProfile | null>(null);
   const [copied, setCopied] = useState(false);
@@ -57,7 +57,7 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
   const instanceId = useRef(Math.random().toString(36).slice(2)).current;
   const presence = usePresence(user?.id, Boolean(user));
   const path = useRouterState({ select: (s) => s.location.pathname });
-  const inFanZone = isFanZonePath(path);
+  const inFanZone = isFanZonePath(path) || isFanZoneOnly;
 
   useEffect(() => {
     if (!user) return;
