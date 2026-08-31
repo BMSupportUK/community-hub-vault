@@ -169,6 +169,7 @@ async function sendFcmToTokens(
   let failed = 0;
   const stale: string[] = [];
   const isTicketReply = args.data?.kind === "ticket_reply";
+  const isMention = args.data?.kind === "mention";
   for (const token of tokens) {
     const res = await fetch(url, {
       method: "POST",
@@ -184,14 +185,19 @@ async function sendFcmToTokens(
           android: {
             priority: "HIGH",
             notification: {
-              // Ticket replies have their own native channel so Android can
-              // play the uploaded spoken MP3 while the app is backgrounded
-              // or closed. All other alerts retain the system sound channel.
+              // Spoken alerts have dedicated native channels so Android uses
+              // the bundled uploaded MP3 while the app is backgrounded/closed.
               channel_id: isTicketReply
                 ? "bm_support_ticket_replies_v2"
-                : "bm_support_alerts_v4",
-              sound: isTicketReply ? "ticket_reply_notify" : undefined,
-              default_sound: !isTicketReply,
+                : isMention
+                  ? "bm_support_mentions_v1"
+                  : "bm_support_alerts_v4",
+              sound: isTicketReply
+                ? "ticket_reply_notify"
+                : isMention
+                  ? "mention_notify"
+                  : undefined,
+              default_sound: !isTicketReply && !isMention,
               default_vibrate_timings: true,
               notification_priority: "PRIORITY_HIGH",
             },
