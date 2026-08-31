@@ -215,7 +215,11 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
   }, [memberProfiles, rolesByUser, q, roleFilter, onlineIds]);
 
 
-  const count = memberProfiles.filter((p) => onlineIds.has(p.id)).length;
+  // Badge mirrors the side rail: everyone currently inside a Talk Channel,
+  // staff included. Filtering staff out here made it read 0 while staff were
+  // clearly online.
+  const count = onlineIds.size;
+  const membersOnline = memberProfiles.filter((p) => onlineIds.has(p.id)).length;
 
 
   return (
@@ -467,7 +471,8 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
         </div>
         <div className="shrink-0 border-t border-white/10 px-5 py-3 text-xs text-white/60">
           Showing <span className="font-semibold text-white">{visible.length}</span> members ·{" "}
-          <span className="font-semibold text-emerald-300">{count}</span> online
+          <span className="font-semibold text-emerald-300">{membersOnline}</span> members online ·{" "}
+          <span className="font-semibold text-white">{count}</span> in chat (incl. staff)
         </div>
       </DialogContent>
     </Dialog>
