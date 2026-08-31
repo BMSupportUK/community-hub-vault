@@ -173,6 +173,7 @@ export function StaffOnDutyStrip({
       .on("postgres_changes", { event: "*", schema: "public", table: "shifts" }, () => refresh())
       .on("postgres_changes", { event: "*", schema: "public", table: "breaks" }, () => refresh())
       .on("postgres_changes", { event: "UPDATE", schema: "public", table: "profiles" }, () => refresh())
+      .on("postgres_changes", { event: "*", schema: "public", table: "shift_slots" }, () => refresh())
       .subscribe();
     // Safety net: realtime can drop events (socket blips, backgrounded tabs), so
     // poll periodically and whenever the tab regains focus/visibility. Keeps the
