@@ -600,6 +600,7 @@ function RecoveryCodes() {
   const [fresh, setFresh] = useState<string[] | null>(null);
   const [busy, setBusy] = useState(false);
   const [confirmRegenerate, setConfirmRegenerate] = useState(false);
+  const [revealed, setRevealed] = useState(false);
 
   const load = async () => {
     if (!user) return;
