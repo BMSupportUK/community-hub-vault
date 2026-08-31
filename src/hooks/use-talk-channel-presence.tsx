@@ -10,10 +10,16 @@ type TalkPresence = {
   online_at?: string;
 };
 
-/** Presences older than this are treated as gone (dropped tab / dead socket). */
-const STALE_MS = 45_000;
+/**
+ * Presences older than this are treated as gone (dropped tab / dead socket).
+ * Generous vs. the heartbeat so a throttled background tab or a slow phone
+ * never gets dropped and re-added — that churn is what made counts flicker.
+ */
+const STALE_MS = 120_000;
 /** How often the local presence timestamp is refreshed while in a channel. */
-const HEARTBEAT_MS = 15_000;
+const HEARTBEAT_MS = 20_000;
+/** Counts settle for this long before publishing, so bursts land as one update. */
+const PUBLISH_DEBOUNCE_MS = 250;
 
 type Tracker = {
   userId: string;
