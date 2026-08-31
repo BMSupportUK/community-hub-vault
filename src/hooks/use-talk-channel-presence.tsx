@@ -10,6 +10,12 @@ type TalkPresence = {
   online_at?: string;
 };
 
+type TalkPresenceSignal = {
+  action?: "join" | "leave";
+  connection_id?: string;
+  user_id?: string;
+};
+
 /**
  * Presences older than this are treated as gone (dropped tab / dead socket).
  * Generous vs. the heartbeat so a throttled background tab or a slow phone
@@ -96,6 +102,12 @@ const lastSeenLocal = new Map<string, number>();
  * so a stale snapshot cannot keep another browser's rail badge at 1.
  */
 const departedPresenceStamps = new Map<string, string>();
+/**
+ * Explicit route-exit signals are faster and more reliable than waiting for
+ * the presence state snapshot to settle. The next join from that connection
+ * clears its tombstone.
+ */
+const explicitlyDepartedKeys = new Set<string>();
 /** Users seen in an explicit leave diff must not be restored by reconnect linger. */
 const cleanlyDepartedUserIds = new Set<string>();
 /** First moment a previously visible user vanished from presence state. */
@@ -127,6 +139,7 @@ function collectUniqueUsers(channel: RealtimeChannel): Set<string> {
       if (key === connectionId && !activeTracker) continue;
       const seenKey = `${key}:${presence.user_id}`;
       liveKeys.add(seenKey);
+      if (explicitlyDepartedKeys.has(seenKey)) continue;
       const previous = lastSeenLocal.get(seenKey);
       const stamp = presence.online_at ?? "";
       const departedStamp = departedPresenceStamps.get(seenKey);
@@ -265,6 +278,20 @@ async function reconcileTracking() {
   if (!active) {
     const departingUserId = trackedUserId;
     trackedSignature = "";
+    if (departingUserId) {
+      const departingKey = `${connectionId}:${departingUserId}`;
+      explicitlyDepartedKeys.add(departingKey);
+      cleanlyDepartedUserIds.add(departingUserId);
+      void channel.send({
+        type: "broadcast",
+        event: "talk-presence-change",
+        payload: {
+          action: "leave",
+          connection_id: connectionId,
+          user_id: departingUserId,
+        } satisfies TalkPresenceSignal,
+      }).catch(() => undefined);
+    }
     await channel.untrack().catch(() => undefined);
     trackedUserId = departingUserId;
     flushCount();
@@ -274,6 +301,7 @@ async function reconcileTracking() {
 
   trackedSignature = nextSignature;
   trackedUserId = active.userId;
+  explicitlyDepartedKeys.delete(`${connectionId}:${active.userId}`);
   await channel
     .track({
       user_id: active.userId,
@@ -281,6 +309,15 @@ async function reconcileTracking() {
       online_at: new Date().toISOString(),
     })
     .catch(() => undefined);
+  void channel.send({
+    type: "broadcast",
+    event: "talk-presence-change",
+    payload: {
+      action: "join",
+      connection_id: connectionId,
+      user_id: active.userId,
+    } satisfies TalkPresenceSignal,
+  }).catch(() => undefined);
   publishCount();
 }
 
@@ -341,15 +378,33 @@ function ensureSharedChannel() {
   if (sharedChannel) return;
 
   const channel = supabase.channel(TALK_PRESENCE_TOPIC, {
-    config: { presence: { key: connectionId } },
+    config: {
+      presence: { key: connectionId },
+      broadcast: { self: true },
+    },
   });
 
   const sync = () => publishCount();
   channel
+    .on("broadcast", { event: "talk-presence-change" }, ({ payload }) => {
+      const signal = payload as TalkPresenceSignal;
+      if (!signal.connection_id || !signal.user_id) return;
+      const presenceKey = `${signal.connection_id}:${signal.user_id}`;
+      if (signal.action === "leave") {
+        explicitlyDepartedKeys.add(presenceKey);
+        cleanlyDepartedUserIds.add(signal.user_id);
+      } else if (signal.action === "join") {
+        explicitlyDepartedKeys.delete(presenceKey);
+        departedPresenceStamps.delete(presenceKey);
+        cleanlyDepartedUserIds.delete(signal.user_id);
+      }
+      flushCount();
+    })
     .on("presence", { event: "sync" }, sync)
     .on("presence", { event: "join" }, ({ key, newPresences }) => {
       for (const presence of newPresences as TalkPresence[]) {
         if (!presence.user_id) continue;
+        explicitlyDepartedKeys.delete(`${key}:${presence.user_id}`);
         departedPresenceStamps.delete(`${key}:${presence.user_id}`);
         cleanlyDepartedUserIds.delete(presence.user_id);
       }
@@ -358,6 +413,7 @@ function ensureSharedChannel() {
     .on("presence", { event: "leave" }, ({ key, leftPresences }) => {
       for (const presence of leftPresences as TalkPresence[]) {
         if (!presence.user_id) continue;
+        explicitlyDepartedKeys.add(`${key}:${presence.user_id}`);
         departedPresenceStamps.set(`${key}:${presence.user_id}`, presence.online_at ?? "");
         cleanlyDepartedUserIds.add(presence.user_id);
       }
