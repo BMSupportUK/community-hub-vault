@@ -281,6 +281,35 @@ function flushCount() {
   }
 }
 
+/**
+ * A broadcast join can arrive before the realtime presence snapshot contains
+ * that connection. Publish the user immediately so open member directories
+ * update without an F5; the next presence sync remains authoritative.
+ */
+function publishJoinedUser(userId: string) {
+  if (currentUserIds.has(userId)) return;
+  const nextIds = new Set(currentUserIds);
+  nextIds.add(userId);
+  currentUserIds = nextIds;
+  currentCount = nextIds.size;
+  missingSince.delete(userId);
+  cleanlyDepartedUserIds.delete(userId);
+  for (const listener of Array.from(listeners)) {
+    try {
+      listener(currentCount);
+    } catch {
+      /* one bad subscriber must not break the others */
+    }
+  }
+  for (const listener of Array.from(userListeners)) {
+    try {
+      listener(currentUserIds);
+    } catch {
+      /* ignore */
+    }
+  }
+}
+
 let trackingSync = Promise.resolve();
 
 async function reconcileTracking() {
@@ -413,6 +442,7 @@ function ensureSharedChannel() {
         explicitlyDepartedKeys.delete(presenceKey);
         departedPresenceStamps.delete(presenceKey);
         cleanlyDepartedUserIds.delete(signal.user_id);
+        publishJoinedUser(signal.user_id);
       }
       flushCount();
     })
@@ -423,6 +453,7 @@ function ensureSharedChannel() {
         explicitlyDepartedKeys.delete(`${key}:${presence.user_id}`);
         departedPresenceStamps.delete(`${key}:${presence.user_id}`);
         cleanlyDepartedUserIds.delete(presence.user_id);
+        publishJoinedUser(presence.user_id);
       }
       publishCount();
     })
