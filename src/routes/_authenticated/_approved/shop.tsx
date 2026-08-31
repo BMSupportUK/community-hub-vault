@@ -852,7 +852,7 @@ function OrderProgressStrip({
     },
     {
       n: 2,
-      title: cancelled ? "Cancelled" : "Pay Invoice",
+      title: cancelled ? "Cancelled" : "Pay For Order",
       icon: cancelled ? X : Receipt,
       done: paid && !cancelled,
       active: !cancelled && placed && !paid,
@@ -997,7 +997,7 @@ function BuySteps({
     },
     {
       n: 2,
-      title: cancelled ? "Order Cancelled" : "Pay Invoice",
+      title: cancelled ? "Order Cancelled" : "Pay For Order",
       icon: cancelled ? X : Receipt,
       done: paid && !cancelled,
       active: placed && !paid && !cancelled,

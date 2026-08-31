@@ -48,7 +48,7 @@ export function OrderProgressStrip({
     },
     {
       n: 2,
-      title: cancelled ? "Cancelled" : "Pay Invoice",
+      title: cancelled ? "Cancelled" : "Pay For Order",
       icon: cancelled ? X : Receipt,
       done: paid && !cancelled,
       active: !cancelled && placed && !paid,
