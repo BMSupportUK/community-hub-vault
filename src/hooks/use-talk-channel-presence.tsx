@@ -29,6 +29,32 @@ const connectionId = crypto.randomUUID();
 const listeners = new Set<(count: number) => void>();
 const userListeners = new Set<(ids: Set<string>) => void>();
 const trackers = new Map<symbol, Tracker>();
+let memberIds: Set<string> = new Set();
+let memberDirectoryLoaded = false;
+let memberDirectoryRequest: Promise<void> | null = null;
+const memberListeners = new Set<() => void>();
+
+async function loadMemberDirectory() {
+  if (memberDirectoryRequest) return memberDirectoryRequest;
+  memberDirectoryRequest = (async () => {
+    const { data, error } = await supabase.rpc("talk_channel_member_directory");
+    if (error) {
+      console.error("Could not load Talk Channel member directory", error);
+      return;
+    }
+    const staffRoles = new Set(["admin", "management", "moderator", "staff"]);
+    memberIds = new Set(
+      (data ?? [])
+        .filter((row) => !(row.roles ?? []).some((role) => staffRoles.has(role)))
+        .map((row) => row.user_id),
+    );
+    memberDirectoryLoaded = true;
+    for (const listener of Array.from(memberListeners)) listener();
+  })().finally(() => {
+    memberDirectoryRequest = null;
+  });
+  return memberDirectoryRequest;
+}
 
 function collectUniqueUsers(channel: RealtimeChannel): Set<string> {
   const state = channel.presenceState<TalkPresence>();
@@ -283,4 +309,26 @@ export function useTalkChannelPresentUsers(): Set<string> {
   }, []);
 
   return ids;
+}
+
+/** Live count of non-staff members currently inside any Talk Channel. */
+export function useTalkChannelMemberCount(): number {
+  const onlineIds = useTalkChannelPresentUsers();
+  const [, refresh] = useState(0);
+
+  useEffect(() => {
+    const listener = () => refresh((value) => value + 1);
+    memberListeners.add(listener);
+    if (!memberDirectoryLoaded) void loadMemberDirectory();
+    const onFocus = () => void loadMemberDirectory();
+    window.addEventListener("focus", onFocus);
+    return () => {
+      memberListeners.delete(listener);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, []);
+
+  let count = 0;
+  for (const id of onlineIds) if (memberIds.has(id)) count += 1;
+  return count;
 }
