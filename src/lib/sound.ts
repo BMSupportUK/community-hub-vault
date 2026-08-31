@@ -247,20 +247,26 @@ export function playSound(
     }
 
     // --- 2. Plain HTMLAudio fallback ---
-    const el = getElement(src);
-    el.muted = false;
-    el.volume = Math.max(0, Math.min(1, level));
     try {
+      const el = getElement(src);
+      el.muted = false;
+      el.volume = Math.max(0, Math.min(1, level));
       try { el.currentTime = 0; } catch { /* noop */ }
       const p = el.play();
       if (p && typeof p.then === "function") await p;
       return true;
     } catch (err) {
       console.warn(`[sound] element play failed (${name}):`, (err as Error)?.message ?? err);
-      retryOnNextGesture(name, () => { void playSound(src, opts); });
+      try {
+        retryOnNextGesture(name, () => { void playSound(src, opts); });
+      } catch { /* noop */ }
       return false;
     }
-  })();
+  })().catch((err) => {
+    // Never let audio problems escape into React / realtime handlers.
+    console.warn(`[sound] playback error (${name}):`, (err as Error)?.message ?? err);
+    return false;
+  });
 }
 
 /**
