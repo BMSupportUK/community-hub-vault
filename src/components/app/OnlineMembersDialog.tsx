@@ -180,7 +180,6 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
 
       <DialogContent
         className="max-w-none w-screen h-screen sm:h-screen rounded-none border-0 p-0 gap-0 flex flex-col overflow-hidden bg-gradient-to-br from-violet-950 via-fuchsia-950 to-blue-950"
-        showCloseButton
       >
         <DialogHeader className="border-b border-white/15 px-5 py-4 text-left">
           <DialogTitle className="flex items-center gap-2 text-white">
