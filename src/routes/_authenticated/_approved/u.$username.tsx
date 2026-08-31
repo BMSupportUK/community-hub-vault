@@ -1807,6 +1807,7 @@ function EditProfileModal({ profile, onClose, onSaved }: { profile: ProfileRow; 
   const [displayName, setDisplayName] = useState(profile.display_name ?? "");
   const [username, setUsername] = useState(profile.username ?? "");
   const [bio, setBio] = useState(profile.bio ?? "");
+  const [customStatus, setCustomStatus] = useState(profile.custom_status ?? "");
   const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url);
   const [isPrivate, setIsPrivate] = useState<boolean>(!!profile.is_private);
   const detectedTimezone = browserTimezone();
