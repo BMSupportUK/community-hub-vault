@@ -2402,6 +2402,37 @@ function Checkout({
     };
   }, [user?.id]);
 
+  // Validate a manually typed "username you're extending" against real credentials
+  const checkUsername = useServerFn(checkExistingUsername);
+  const [usernameState, setUsernameState] = useState<
+    "idle" | "checking" | "valid" | "invalid"
+  >("idle");
+  const needsUsernameCheck = !hasCredsRef.current && customerType === "existing";
+  useEffect(() => {
+    const value = existingUsername.trim();
+    if (!needsUsernameCheck || value.length < 2) {
+      setUsernameState("idle");
+      return;
+    }
+    let active = true;
+    setUsernameState("checking");
+    const t = setTimeout(() => {
+      checkUsername({ data: { username: value } })
+        .then((r) => {
+          if (active) setUsernameState(r.exists ? "valid" : "invalid");
+        })
+        .catch(() => {
+          if (active) setUsernameState("idle");
+        });
+    }, 450);
+    return () => {
+      active = false;
+      clearTimeout(t);
+    };
+  }, [existingUsername, needsUsernameCheck, checkUsername]);
+
+
+
 
   const requiresMulti = useMemo(
     () => items.some((i) => (i.category ?? "").toLowerCase().includes("multi")),
