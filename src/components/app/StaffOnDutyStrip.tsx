@@ -276,11 +276,20 @@ export function StaffOnDutyStrip({
       <div className="mt-2 rounded-md border border-amber-300/30 bg-amber-500/15 px-2 py-1.5 shadow-[0_0_10px_rgba(245,158,11,0.15)]">
         <div className="flex items-start gap-1.5">
           <CalendarClock className="mt-0.5 size-3.5 shrink-0 text-amber-300" />
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <div className="text-[10px] font-semibold uppercase tracking-wider text-amber-200">Next shift</div>
-            <div className="text-[11px] font-semibold leading-tight text-white">
-              {label} · {slot.start_time.slice(0, 5)}–{slot.end_time.slice(0, 5)}
-            </div>
+            {isSidebar ? (
+              <>
+                <div className="text-[11px] font-semibold leading-tight text-white">{label}</div>
+                <div className="text-[13px] font-bold leading-tight text-white mt-0.5">
+                  {slot.start_time.slice(0, 5)} – {slot.end_time.slice(0, 5)}
+                </div>
+              </>
+            ) : (
+              <div className="text-[11px] font-semibold leading-tight text-white">
+                {label} · {slot.start_time.slice(0, 5)}–{slot.end_time.slice(0, 5)}
+              </div>
+            )}
           </div>
         </div>
       </div>
