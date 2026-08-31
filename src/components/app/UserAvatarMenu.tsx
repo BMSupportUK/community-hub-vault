@@ -45,6 +45,7 @@ interface MiniProfile {
   display_name: string | null;
   avatar_url: string | null;
   equipped_nameplate_id: string | null;
+  custom_status: string | null;
 }
 
 export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "bar" } = {}) {
