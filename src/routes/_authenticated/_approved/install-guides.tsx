@@ -110,9 +110,14 @@ function InstallGuidesPage() {
   const canManageCategories = hasAny(["admin", "management", "staff"]);
   const canManagePasscodes = hasAny(["admin", "management"]);
 
+  const { tab: tabParam } = Route.useSearch();
   const [tab, setTab] = useState<string>(() => {
+    if (tabParam) return tabParam;
     try { return sessionStorage.getItem(IG_TAB_KEY) || "welcome"; } catch { return "welcome"; }
   });
+  useEffect(() => {
+    if (tabParam) setTab(tabParam);
+  }, [tabParam]);
   const [activeCat, setActiveCat] = useState<string | null>(() => {
     try { return sessionStorage.getItem(IG_CAT_KEY); } catch { return null; }
   });
