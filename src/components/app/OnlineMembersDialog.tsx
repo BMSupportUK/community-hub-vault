@@ -20,6 +20,7 @@ type MemberProfile = {
   display_name: string | null;
   avatar_url: string | null;
   equipped_nameplate_id: string | null;
+  custom_status: string | null;
   created_at: string | null;
   last_seen_at: string | null;
 };
