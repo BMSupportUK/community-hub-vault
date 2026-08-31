@@ -263,6 +263,25 @@ export function StaffOnDutyStrip({
   };
 
 
+  /** Next rota slot line — always the last item on a staff card, on its own row. */
+  const renderNextShift = (userId: string) => {
+    const slot = nextShifts[userId];
+    if (!slot) return null;
+    const label = new Date(`${slot.shift_date}T00:00:00`).toLocaleDateString("en-GB", {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+    });
+    return (
+      <div className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground tabular-nums">
+        <CalendarClock className="size-3 shrink-0 opacity-70" />
+        <span className="truncate">
+          Next: {label} · {slot.start_time.slice(0, 5)}–{slot.end_time.slice(0, 5)}
+        </span>
+      </div>
+    );
+  };
+
   /** Seed row for the shared Talk member card; the card refetches full details. */
   const talkFallbackRow = (userId: string): Omit<TalkMemberProfileRow, "user_id"> => {
     const p = profiles[userId];
