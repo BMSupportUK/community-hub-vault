@@ -190,6 +190,26 @@ export const getMyBankTransferAccess = createServerFn({ method: "POST" })
     return { allowed: Boolean(allowed), expiresAt: grant?.expires_at ?? null };
   });
 
+/** Does the OWNER of this order have bank transfer permission? (owner or staff may ask) */
+export const getOrderBankTransferAccess = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ orderId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: order } = await context.supabase
+      .from("orders")
+      .select("id,user_id")
+      .eq("id", data.orderId)
+      .maybeSingle();
+    if (!order) return { allowed: false };
+    if (order.user_id !== context.userId && !(await isStaff(context.supabase, context.userId))) {
+      return { allowed: false };
+    }
+    const { data: allowed } = await context.supabase.rpc("can_pay_by_bank_transfer", {
+      _user_id: String(order.user_id),
+    });
+    return { allowed: Boolean(allowed) };
+  });
+
 /**
  * Bank details + this order's payment reference. Only returned for a user who
  * currently holds a bank transfer grant and owns the order (or is staff).
