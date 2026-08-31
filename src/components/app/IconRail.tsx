@@ -236,6 +236,8 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
   ];
 
   const fanZoneItems: RailItem[] = [
+    // Dual-role accounts (BM Support + Fan Zone) keep a way back to BM Support.
+    { to: "/home", label: "BM Support", icon: Home, show: !isFanZoneOnly },
     { to: "/forum", label: "Boro Fan Zone", icon: BoroBadgeIcon, show: true },
     { to: "/fanzone/messages", label: "Fan Zone Messages", icon: MessagesSquare, show: true },
     { to: "/fanzone/profile", label: "Fan Zone Profile", icon: UserCircle2, show: true },
@@ -248,6 +250,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     })),
     { to: "/competition-winners", label: "Competition Winners", icon: Crown, show: true },
   ];
+
 
   const items = inFanZone ? fanZoneItems : supportItems;
 
@@ -295,13 +298,14 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
         : "shrink-0 hidden md:flex border-r border-primary-glow/40 sticky top-0 h-dvh",
     )}>
       <Link
-        to={inFanZone ? "/forum" : "/home"}
-        aria-label={inFanZone ? "Boro Fan Zone" : "BM Support"}
-        title={inFanZone ? "Boro Fan Zone" : "BM Support"}
+        to={isFanZoneOnly ? "/forum" : inFanZone ? "/home" : "/home"}
+        aria-label={isFanZoneOnly ? "Boro Fan Zone" : inFanZone ? "Back to BM Support" : "BM Support"}
+        title={isFanZoneOnly ? "Boro Fan Zone" : inFanZone ? "Back to BM Support" : "BM Support"}
         className="relative z-10 shrink-0 size-12 rounded-2xl bg-gradient-primary flex items-center justify-center font-display font-bold text-sm text-primary-foreground shadow-glow mb-1 ring-2 ring-primary-glow/70 hover:ring-primary-glow hover:scale-110 transition-all duration-200"
       >
-        {inFanZone ? "FZ" : "BM"}
+        {isFanZoneOnly ? "FZ" : "BM"}
       </Link>
+
       <div className="relative z-10 shrink-0 h-px w-12 bg-gradient-to-r from-transparent via-primary-glow to-transparent" />
       <div className="relative z-10 flex-1 min-h-0 w-full overflow-y-auto overflow-x-hidden flex flex-col items-center gap-2 py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {sorted.map((i) => {
