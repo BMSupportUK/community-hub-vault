@@ -1094,12 +1094,10 @@ function TicketDetail({
     }
     setOrderBusy(true);
     try {
-      const profileLink = linkedOrderUsername
-        ? `\n\n🔗 [Click here to view your Credentials](${window.location.origin}/u/${linkedOrderUsername}?tab=creds)`
-        : "";
       await postTicketSystem(
-        `🛠️ We are currently setting up your account. Your login details will appear in the Credentials section of your profile soon.${profileLink}`,
+        `🛠️ We are currently setting up your account. Your login details will appear in the Credentials section of your profile soon.`,
       );
+
       toast.success("Customer notified");
     } finally { setOrderBusy(false); }
   };
