@@ -8,15 +8,18 @@ import { FanZoneAccessCard } from "@/components/app/FanZoneAccessCard";
 import { ScreenLockProvider } from "@/components/app/ScreenLockProvider";
 import { ScreenLockResetAlerts } from "@/components/app/ScreenLockResetAlerts";
 import { usePushRegister } from "@/hooks/use-push-register";
+import { useLocation } from "@tanstack/react-router";
 
 export function ApprovedDeferredExtras() {
   usePushRegister();
+  const pathname = useLocation({ select: (location) => location.pathname });
+  const isSoundTestPage = pathname === "/admin-sounds";
 
   return (
     <>
       <TwoFactorBanner />
       <FriendRequestsListener />
-      <OutstandingTicketsAlert />
+      {!isSoundTestPage && <OutstandingTicketsAlert />}
       <TicketAssignedAlert />
       <PaymentConfirmedAlert />
       <TicketHelpRequestedAlert />

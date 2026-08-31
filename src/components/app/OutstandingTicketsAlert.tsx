@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { useLocation, useNavigate } from "@tanstack/react-router";
 import { LifeBuoy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -22,12 +22,17 @@ const SESSION_KEY = "outstanding-tickets-alert-shown";
 export function OutstandingTicketsAlert() {
   const { user, hasAny } = useAuth();
   const navigate = useNavigate();
+  const pathname = useLocation({ select: (location) => location.pathname });
+  const isSoundTestPage = pathname === "/admin-sounds";
   const isStaffRole = hasAny(["admin", "management", "staff"]);
   const [open, setOpen] = useState(false);
   const [counts, setCounts] = useState({ open: 0, in_progress: 0, unassigned: 0 });
 
   useEffect(() => {
-    if (!user || !isStaffRole) return;
+    if (!user || !isStaffRole || isSoundTestPage) {
+      setOpen(false);
+      return;
+    }
     let cancelled = false;
     let bootstrapped = false;
 
@@ -83,9 +88,9 @@ export function OutstandingTicketsAlert() {
       cancelled = true;
       supabase.removeChannel(ch);
     };
-  }, [user, isStaffRole]);
+  }, [user, isStaffRole, isSoundTestPage]);
 
-  if (!isStaffRole) return null;
+  if (!isStaffRole || isSoundTestPage) return null;
 
   const total = counts.open + counts.in_progress;
 
