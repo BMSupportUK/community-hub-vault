@@ -31,6 +31,7 @@ import { Route as AuthenticatedAccountRejectedRouteImport } from './routes/_auth
 import { Route as AuthenticatedBannedRouteImport } from './routes/_authenticated/banned'
 import { Route as AuthenticatedFanZonePendingRouteImport } from './routes/_authenticated/fan-zone-pending'
 import { Route as AuthenticatedGateRouteImport } from './routes/_authenticated/gate'
+import { Route as ATokenRouteImport } from './routes/a.$token'
 import { Route as EmailUnsubscribeRouteImport } from './routes/email/unsubscribe'
 import { Route as FanZoneIndexRouteImport } from './routes/fan-zone.index'
 import { Route as FanZoneBoardRouteImport } from './routes/fan-zone.$board'
@@ -248,6 +249,11 @@ const AuthenticatedGateRoute = AuthenticatedGateRouteImport.update({
   id: '/gate',
   path: '/gate',
   getParentRoute: () => AuthenticatedRoute,
+} as any)
+const ATokenRoute = ATokenRouteImport.update({
+  id: '/a/$token',
+  path: '/a/$token',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const EmailUnsubscribeRoute = EmailUnsubscribeRouteImport.update({
   id: '/email/unsubscribe',
@@ -906,6 +912,7 @@ export interface FileRoutesByFullPath {
   '/banned': typeof AuthenticatedBannedRoute
   '/fan-zone-pending': typeof AuthenticatedFanZonePendingRoute
   '/gate': typeof AuthenticatedGateRoute
+  '/a/$token': typeof ATokenRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/fan-zone/$board': typeof FanZoneBoardRouteWithChildren
   '/fan-zone/': typeof FanZoneIndexRoute
@@ -1034,6 +1041,7 @@ export interface FileRoutesByTo {
   '/banned': typeof AuthenticatedBannedRoute
   '/fan-zone-pending': typeof AuthenticatedFanZonePendingRoute
   '/gate': typeof AuthenticatedGateRoute
+  '/a/$token': typeof ATokenRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/fan-zone': typeof FanZoneIndexRoute
   '/account-security': typeof AuthenticatedApprovedAccountSecurityRoute
@@ -1164,6 +1172,7 @@ export interface FileRoutesById {
   '/_authenticated/banned': typeof AuthenticatedBannedRoute
   '/_authenticated/fan-zone-pending': typeof AuthenticatedFanZonePendingRoute
   '/_authenticated/gate': typeof AuthenticatedGateRoute
+  '/a/$token': typeof ATokenRoute
   '/email/unsubscribe': typeof EmailUnsubscribeRoute
   '/fan-zone/$board': typeof FanZoneBoardRouteWithChildren
   '/fan-zone/': typeof FanZoneIndexRoute
@@ -1295,6 +1304,7 @@ export interface FileRouteTypes {
     | '/banned'
     | '/fan-zone-pending'
     | '/gate'
+    | '/a/$token'
     | '/email/unsubscribe'
     | '/fan-zone/$board'
     | '/fan-zone/'
@@ -1423,6 +1433,7 @@ export interface FileRouteTypes {
     | '/banned'
     | '/fan-zone-pending'
     | '/gate'
+    | '/a/$token'
     | '/email/unsubscribe'
     | '/fan-zone'
     | '/account-security'
@@ -1552,6 +1563,7 @@ export interface FileRouteTypes {
     | '/_authenticated/banned'
     | '/_authenticated/fan-zone-pending'
     | '/_authenticated/gate'
+    | '/a/$token'
     | '/email/unsubscribe'
     | '/fan-zone/$board'
     | '/fan-zone/'
@@ -1679,6 +1691,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
   UnsubscribeRoute: typeof UnsubscribeRoute
+  ATokenRoute: typeof ATokenRoute
   EmailUnsubscribeRoute: typeof EmailUnsubscribeRoute
   ApiPublicBoroMatchDetailRoute: typeof ApiPublicBoroMatchDetailRoute
   ApiPublicLinkPreviewRoute: typeof ApiPublicLinkPreviewRoute
@@ -1875,6 +1888,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/gate'
       preLoaderRoute: typeof AuthenticatedGateRouteImport
       parentRoute: typeof AuthenticatedRoute
+    }
+    '/a/$token': {
+      id: '/a/$token'
+      path: '/a/$token'
+      fullPath: '/a/$token'
+      preLoaderRoute: typeof ATokenRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/email/unsubscribe': {
       id: '/email/unsubscribe'
@@ -2933,6 +2953,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
   UnsubscribeRoute: UnsubscribeRoute,
+  ATokenRoute: ATokenRoute,
   EmailUnsubscribeRoute: EmailUnsubscribeRoute,
   ApiPublicBoroMatchDetailRoute: ApiPublicBoroMatchDetailRoute,
   ApiPublicLinkPreviewRoute: ApiPublicLinkPreviewRoute,
