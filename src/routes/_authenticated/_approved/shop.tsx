@@ -1176,24 +1176,31 @@ function Storefront() {
     }
     const { data } = await supabase
       .from("orders")
-      .select("id,status,paid_at,completed_at,created_at,tickets!left(id)")
+      .select("id,status,paid_at,completed_at,created_at")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
-    const raw = data as { id: string; status: string; paid_at: string | null; completed_at: string | null; created_at: string; tickets?: { id: string }[] | null } | null;
-    setLatestOrder(
-      raw
-        ? {
-            id: raw.id,
-            status: raw.status,
-            paid_at: raw.paid_at,
-            completed_at: raw.completed_at,
-            created_at: raw.created_at,
-            ticket_id: raw.tickets?.[0]?.id ?? null,
-          }
-        : null,
-    );
+    const raw = data as { id: string; status: string; paid_at: string | null; completed_at: string | null; created_at: string } | null;
+    if (!raw) {
+      setLatestOrder(null);
+      return;
+    }
+    const { data: t } = await supabase
+      .from("tickets")
+      .select("id")
+      .eq("order_id", raw.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    setLatestOrder({
+      id: raw.id,
+      status: raw.status,
+      paid_at: raw.paid_at,
+      completed_at: raw.completed_at,
+      created_at: raw.created_at,
+      ticket_id: (t as { id: string } | null)?.id ?? null,
+    });
   };
 
   const reloadRatings = async () => {
