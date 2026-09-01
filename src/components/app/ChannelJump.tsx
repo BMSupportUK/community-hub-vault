@@ -140,7 +140,7 @@ export function useChannelJump({
     return (
       <div className="absolute bottom-full left-0 mb-2 w-80 max-w-[90vw] rounded-lg border border-border bg-popover text-popover-foreground shadow-xl overflow-hidden z-50">
         <div className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border bg-muted/40">
-          Jump to or share channel #{query || "…"}
+          Share channel #{query || "…"}
         </div>
         <ul className="max-h-60 overflow-y-auto">
           {results.map((c, i) => (
