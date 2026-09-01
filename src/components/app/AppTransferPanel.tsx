@@ -68,7 +68,9 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
   const request = useServerFn(requestAppTransfer);
   const remove = useServerFn(deleteMyAppTransfer);
   const [busy, setBusy] = useState<"request" | "delete" | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [open, setOpen] = useState(false);
+  const cardCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const dialogCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const videoUrl = useDemoVideoUrl(build.videoPath);
 
   const shortUrl = useMemo(() => {
@@ -80,20 +82,30 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
   const remaining = countdown(transfer?.expiresAt, now);
 
   useEffect(() => {
-    if (!shortUrl || !canvasRef.current) return;
-    QRCode.toCanvas(canvasRef.current, `https://${shortUrl}`, {
-      width: 88,
+    if (!shortUrl || !cardCanvasRef.current) return;
+    QRCode.toCanvas(cardCanvasRef.current, `https://${shortUrl}`, {
+      width: 80,
       margin: 1,
       color: { dark: "#0b0616", light: "#ffffff" },
     }).catch(() => {});
   }, [shortUrl]);
 
   useEffect(() => {
+    if (!open || !shortUrl || !dialogCanvasRef.current) return;
+    QRCode.toCanvas(dialogCanvasRef.current, `https://${shortUrl}`, {
+      width: 192,
+      margin: 2,
+      color: { dark: "#0b0616", light: "#ffffff" },
+    }).catch(() => {});
+  }, [open, shortUrl]);
+
+  useEffect(() => {
     if (remaining === "expired") {
       queryClient.invalidateQueries({ queryKey: ["app-transfers"] });
       queryClient.invalidateQueries({ queryKey: ["app-transfer"] });
+      if (open) setOpen(false);
     }
-  }, [remaining, queryClient]);
+  }, [remaining, open, queryClient]);
 
   const onRequest = async () => {
     setBusy("request");
@@ -116,6 +128,7 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
       await queryClient.invalidateQueries({ queryKey: ["app-transfers"] });
       await queryClient.invalidateQueries({ queryKey: ["app-transfer"] });
       toast.success("Link deleted — no record kept");
+      setOpen(false);
     } catch {
       toast.error("Couldn't delete the link");
     } finally {
@@ -124,122 +137,143 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
   };
 
   const size = formatSize(build.fileSize);
+  const hasLiveLink = transfer && remaining !== "expired";
 
   return (
-    <article className="rounded-xl border border-violet-500/30 bg-violet-950/40 p-4">
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <h4 className="font-display text-sm font-semibold text-foreground flex items-center gap-1.5 truncate">
-            <Smartphone className="size-3.5 text-violet-300 shrink-0" />
-            {build.appName || build.fileName}
-          </h4>
-          {build.versionName && (
-            <p className="text-[11px] text-violet-200 mt-0.5 truncate">{build.versionName}</p>
-          )}
+    <>
+      <article className="rounded-xl border border-violet-500/30 bg-violet-950/40 p-3 flex flex-col gap-2">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <h4 className="font-display text-sm font-semibold text-foreground flex items-center gap-1.5 truncate">
+              <Smartphone className="size-3.5 text-violet-300 shrink-0" />
+              {build.appName || build.fileName}
+            </h4>
+            {build.versionName && (
+              <p className="text-[11px] text-violet-200 mt-0.5 truncate">{build.versionName}</p>
+            )}
+          </div>
+          <div className="text-[11px] text-muted-foreground text-right shrink-0">
+            {build.fileName}
+            {size ? ` · ${size}` : ""}
+          </div>
         </div>
-        <div className="text-[11px] text-muted-foreground text-right shrink-0">
-          {build.fileName}
-          {size ? ` · ${size}` : ""}
-        </div>
-      </div>
 
-      {build.releaseNotes && (
-        <p className="mt-2 text-xs text-foreground/80 whitespace-pre-wrap line-clamp-3">{build.releaseNotes}</p>
-      )}
+        {build.releaseNotes && (
+          <p className="text-xs text-foreground/80 whitespace-pre-wrap line-clamp-2">{build.releaseNotes}</p>
+        )}
 
-      {build.installInstructions && (
-        <div className="mt-2 rounded-lg border border-violet-500/30 bg-violet-500/10 p-2">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-violet-200">Install instructions</p>
-          <p className="mt-1 text-xs text-foreground/85 whitespace-pre-wrap line-clamp-3">{build.installInstructions}</p>
-        </div>
-      )}
+        {build.installInstructions && (
+          <div className="rounded-lg border border-violet-500/30 bg-violet-500/10 p-2">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-violet-200">Install instructions</p>
+            <p className="mt-1 text-xs text-foreground/85 whitespace-pre-wrap line-clamp-3">{build.installInstructions}</p>
+          </div>
+        )}
 
-      {build.videoPath && (
-        <div className="mt-2 overflow-hidden rounded-lg border border-violet-500/30 bg-black/50">
-          {videoUrl ? (
-            <video
-              src={videoUrl}
-              controls
-              controlsList="nodownload noplaybackrate"
-              disablePictureInPicture
-              onContextMenu={(e) => e.preventDefault()}
-              className="w-full max-h-[160px] bg-black"
-            />
+        {build.videoPath && (
+          <div className="overflow-hidden rounded-lg border border-violet-500/30 bg-black/50">
+            {videoUrl ? (
+              <video
+                src={videoUrl}
+                controls
+                controlsList="nodownload noplaybackrate"
+                disablePictureInPicture
+                onContextMenu={(e) => e.preventDefault()}
+                className="w-full max-h-[120px] bg-black"
+              />
+            ) : (
+              <div className="flex items-center gap-2 p-3 text-xs text-muted-foreground">
+                <Film className="size-3.5" /> Loading walkthrough…
+              </div>
+            )}
+          </div>
+        )}
+
+        <div className="mt-auto pt-1">
+          {!hasLiveLink ? (
+            <Button
+              size="sm"
+              onClick={onRequest}
+              disabled={busy === "request"}
+              className="bg-gradient-primary text-primary-foreground shadow-glow hover:opacity-90 w-full h-8"
+            >
+              {busy === "request" ? <Loader2 className="size-3.5 mr-1 animate-spin" /> : <ShieldCheck className="size-3.5 mr-1" />}
+              Request transfer
+            </Button>
           ) : (
-            <div className="flex items-center gap-2 p-3 text-xs text-muted-foreground">
-              <Film className="size-3.5" /> Loading walkthrough…
-            </div>
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => setOpen(true)}
+              className="w-full h-8"
+            >
+              <Eye className="size-3.5 mr-1" /> View download link
+            </Button>
           )}
         </div>
-      )}
+      </article>
 
-      {!transfer || remaining === "expired" ? (
-        <div className="mt-3 flex flex-col gap-2">
-          <Button
-            size="sm"
-            onClick={onRequest}
-            disabled={busy === "request"}
-            className="bg-gradient-primary text-primary-foreground shadow-glow hover:opacity-90 w-full"
-          >
-            {busy === "request" ? <Loader2 className="size-3.5 mr-1 animate-spin" /> : <ShieldCheck className="size-3.5 mr-1" />}
-            Request transfer
-          </Button>
-          <span className="text-[11px] text-muted-foreground leading-tight">
-            Get a short code + QR code for your Amazon Fire Stick or Android device.
-          </span>
-        </div>
-      ) : (
-        <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_auto] items-start">
-          <div className="space-y-2">
-            <div className="rounded-lg border border-emerald-400/40 bg-emerald-950/40 p-2">
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-sm sm:max-w-md border-violet-500/30 bg-violet-950/95 backdrop-blur-sm">
+          <DialogHeader>
+            <DialogTitle className="font-display text-base flex items-center gap-2">
+              <Smartphone className="size-4 text-violet-300" /> {build.appName || build.fileName}
+            </DialogTitle>
+            <DialogDescription>
+              24-hour secure install link. Scan the QR code or type the URL into Downloader on your device.
+            </DialogDescription>
+          </DialogHeader>
+
+          {shortUrl && (
+            <div className="rounded-lg border border-emerald-400/40 bg-emerald-950/40 p-3">
               <p className="text-[10px] uppercase tracking-wider text-emerald-300/90 font-semibold">
                 Type into Downloader on your device
               </p>
-              <div className="mt-1 flex items-center justify-between gap-2">
-                <span className="font-mono text-xs sm:text-sm tracking-wide text-foreground break-all">
-                  {shortUrl}
-                </span>
+              <div className="mt-1.5 flex items-center justify-between gap-2">
+                <span className="font-mono text-sm tracking-wide text-foreground break-all">{shortUrl}</span>
                 <Button
                   size="icon"
                   variant="ghost"
-                  className="size-7 shrink-0 text-emerald-200 hover:text-foreground hover:bg-surface-2/80"
+                  className="size-8 shrink-0 text-emerald-200 hover:text-foreground hover:bg-surface-2/80"
                   title="Copy link"
                   onClick={() => {
                     navigator.clipboard.writeText(`https://${shortUrl}`);
                     toast.success("Link copied");
                   }}
                 >
-                  <Copy className="size-3.5" />
+                  <Copy className="size-4" />
                 </Button>
               </div>
-              <p className="mt-1 text-[10px] text-muted-foreground">
-                Code: <span className="font-mono tracking-[0.2em] text-foreground">{transfer.token}</span>
+              <p className="mt-1.5 text-[11px] text-muted-foreground">
+                Code: <span className="font-mono tracking-[0.2em] text-foreground">{transfer?.token}</span>
               </p>
             </div>
+          )}
 
-            <p className="text-[11px] text-violet-200 flex items-center gap-1.5">
-              <Clock className="size-3" /> Expires in {remaining} · downloads: {transfer.downloads}
-            </p>
-
-            <div className="flex flex-wrap gap-2">
-              <Button size="sm" asChild className="bg-gradient-primary text-primary-foreground hover:opacity-90 h-8">
-                <a href={`/api/public/a/${transfer.token}`}>
-                  <Download className="size-3.5 mr-1" /> Download
-                </a>
-              </Button>
-              <Button size="sm" variant="secondary" className="h-8" disabled={busy === "delete"} onClick={onDelete}>
-                {busy === "delete" ? <Loader2 className="size-3.5 mr-1 animate-spin" /> : <Trash2 className="size-3.5 mr-1" />}
-                Delete
-              </Button>
+          <div className="flex flex-col items-center gap-3">
+            <div className="rounded-xl bg-white p-2">
+              <canvas ref={dialogCanvasRef} className="block size-[192px]" />
             </div>
+            <p className="text-xs text-center text-muted-foreground">Scan with your phone camera</p>
           </div>
 
-          <div className="rounded-lg bg-white p-1.5 justify-self-start">
-            <canvas ref={canvasRef} className="block size-[88px]" />
+          <p className="text-xs text-violet-200 flex items-center justify-center gap-1.5">
+            <Clock className="size-3.5" /> Expires in {remaining} · downloads: {transfer?.downloads ?? 0}
+          </p>
+
+          <div className="flex flex-wrap gap-2 justify-center">
+            <Button size="sm" asChild className="bg-gradient-primary text-primary-foreground hover:opacity-90 h-9">
+              <a href={`/api/public/a/${transfer?.token}`}>
+                <Download className="size-4 mr-1" /> Download to this device
+              </a>
+            </Button>
+            <Button size="sm" variant="secondary" className="h-9" disabled={busy === "delete"} onClick={onDelete}>
+              {busy === "delete" ? <Loader2 className="size-4 mr-1 animate-spin" /> : <Trash2 className="size-4 mr-1" />}
+              Delete link
+            </Button>
           </div>
-        </div>
-      )}
-    </article>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
