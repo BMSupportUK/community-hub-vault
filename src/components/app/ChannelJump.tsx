@@ -90,14 +90,7 @@ export function useChannelJump({
     if (el && !(el instanceof HTMLTextAreaElement)) el.textContent = next;
   };
 
-  const apply = (ch: JumpChannel) => {
-    // Strip the "#query" token from the draft, then jump to the channel.
-    replaceToken("");
-    setQuery(null);
-    void navigate({ to: "/home/$channel", params: { channel: ch.slug } });
-  };
-
-  /** Drop a shareable channel link into the draft instead of navigating away. */
+  /** Drop a shareable channel link into the draft. */
   const insertLink = (ch: JumpChannel) => {
     replaceToken(`[#${ch.slug}](/home/${ch.slug}) `);
     setQuery(null);
