@@ -158,10 +158,11 @@ function InstallGuidesPage() {
     () => new Map((accessQuery.data ?? []).map((a) => [a.blogId, a.expiresAt])),
     [accessQuery.data],
   );
-  // The download-link tab only appears once the member holds a live guide
-  // passcode (staff who manage passcodes always see it).
+  // The download tab is always visible; non-subscribers see a request-access
+  // panel inside it, which admins/management approve on the Approvals tab.
   const hasLivePasscode = (accessQuery.data?.length ?? 0) > 0;
-  const canSeeAppTab = hasLivePasscode || canManagePasscodes;
+  const canSeeAppTab = true;
+
 
   // Live transfer state drives the tab label, flipping back on expiry.
   const fetchMyTransfer = useServerFn(getMyAppTransfer);
