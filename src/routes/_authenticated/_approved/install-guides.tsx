@@ -13,14 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { HeaderImageUpload } from "@/components/ui/header-image-upload";
 import { HeaderVideoUpload } from "@/components/ui/header-video-upload";
-import {
-  GuideVaultCardActions,
-  GuideLockBadge,
-  GuideAccessCodeBox,
-  GuidePasscodeAdmin,
-  GuideAccessTimer,
-  useGuideAccess,
-} from "@/components/app/GuideVaultCardActions";
+import { GuideVaultCardActions } from "@/components/app/GuideVaultCardActions";
 import { useGuideVideoUrl } from "@/hooks/use-guide-video-url";
 import { AppTransferPanel } from "@/components/app/AppTransferPanel";
 import { AppBuildAdmin } from "@/components/app/AppBuildAdmin";
@@ -101,7 +94,7 @@ type Blog = {
   file_size?: number | null;
 };
 
-/** Unlocked view of a stored guide, returned after a valid passcode. */
+/** Opened view of a stored guide. */
 type UnlockedGuide = {
   blog: Blog;
   url: string | null;
@@ -117,7 +110,7 @@ function InstallGuidesPage() {
   const canManageGuides = hasAny(["admin", "management"]);
   const canViewGuides = hasAny(["subscriber", "admin", "management", "staff"]);
   const canManageCategories = canManageGuides;
-  const canManagePasscodes = canManageGuides;
+  const canManageApps = canManageGuides;
   const canSeeTransfers = hasAny(["admin", "management", "staff"]);
 
   const { tab: tabParam } = Route.useSearch();
@@ -147,20 +140,8 @@ function InstallGuidesPage() {
   const dragBlogId = useRef<string | null>(null);
   const [playingVideo, setPlayingVideo] = useState<Blog | null>(null);
   const videoElRef = useRef<HTMLVideoElement | null>(null);
-  // Guide vault: which stored guides this member currently holds a live
-  // passcode for, plus the guide they just unlocked for viewing.
-  const accessQuery = useGuideAccess();
-  const unlockedIds = useMemo(
-    () => new Set((accessQuery.data ?? []).map((a) => a.blogId)),
-    [accessQuery.data],
-  );
-  const accessExpiry = useMemo(
-    () => new Map((accessQuery.data ?? []).map((a) => [a.blogId, a.expiresAt])),
-    [accessQuery.data],
-  );
   // The download tab is always visible; non-subscribers see a request-access
   // panel inside it, which admins/management approve on the Approvals tab.
-  void accessQuery.data;
   const canSeeAppTab = true;
 
 
@@ -183,7 +164,7 @@ function InstallGuidesPage() {
     new Date(myTransferQuery.data.expiresAt).getTime() > nowTick;
 
   useEffect(() => {
-    const isRestrictedAdminTab = tab === "categories" || tab === "passcodes" || tab === "app-apk";
+    const isRestrictedAdminTab = tab === "categories" || tab === "app-apk";
     if (
       (tab === "get-app" && !canSeeAppTab) ||
       (tab === "transfers" && !canSeeTransfers) ||
@@ -491,13 +472,10 @@ function InstallGuidesPage() {
             {canManageCategories && (
                <TabsTrigger value="categories" className="min-w-0 flex-1 px-2 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">Categories</TabsTrigger>
             )}
-            {canManagePasscodes && (
-               <TabsTrigger value="passcodes" className="min-w-0 flex-1 px-2 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">Passcodes</TabsTrigger>
-            )}
             {canSeeTransfers && (
                <TabsTrigger value="transfers" className="min-w-0 flex-1 px-2 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">Transfers</TabsTrigger>
             )}
-            {canManagePasscodes && (
+            {canManageApps && (
                <TabsTrigger value="app-apk" className="min-w-0 flex-1 px-2 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">App APK</TabsTrigger>
             )}
             {canManageGuides && (
@@ -523,18 +501,11 @@ function InstallGuidesPage() {
           {canSeeAppTab && (
             <TabsContent value="get-app" className="mt-6">
               <div className="max-w-4xl">
-                <AppTransferPanel onUploadClick={canManagePasscodes ? () => setTab("app-apk") : undefined} />
+                <AppTransferPanel onUploadClick={canManageApps ? () => setTab("app-apk") : undefined} />
               </div>
             </TabsContent>
           )}
 
-          {canManagePasscodes && (
-            <TabsContent value="passcodes" className="mt-6">
-              <div className="space-y-8">
-                <GuidePasscodeAdmin />
-              </div>
-            </TabsContent>
-          )}
 
           {canSeeTransfers && (
             <TabsContent value="transfers" className="mt-6">
@@ -544,7 +515,7 @@ function InstallGuidesPage() {
             </TabsContent>
           )}
 
-          {canManagePasscodes && (
+          {canManageApps && (
             <TabsContent value="app-apk" className="mt-6">
               <div className="max-w-5xl">
                 <AppBuildAdmin />
@@ -630,7 +601,6 @@ function InstallGuidesPage() {
                     );
                   })}
                 </div>
-                <GuideAccessCodeBox />
               </aside>
 
               <section>
@@ -705,9 +675,6 @@ function InstallGuidesPage() {
                               <Film className="size-3" /> Video
                             </span>
                           )}
-                          {(b.file_path || b.pdf_url) && (
-                            <GuideLockBadge unlocked={unlockedIds.has(b.id)} />
-                          )}
 
                           {canManageGuides && (
                             <div className="absolute bottom-2 left-2 size-8 rounded-md bg-background/70 backdrop-blur grid place-items-center text-foreground cursor-grab">
@@ -726,9 +693,6 @@ function InstallGuidesPage() {
                           </div>
                           <div className="flex flex-wrap items-center gap-2">
                             <h3 className="font-display font-semibold text-lg leading-snug text-foreground">{b.title}</h3>
-                            {unlockedIds.has(b.id) && (
-                              <GuideAccessTimer blogId={b.id} expiresAt={accessExpiry.get(b.id)} />
-                            )}
                           </div>
                           {b.excerpt && (
                             <div className="flex flex-wrap items-center gap-2">
@@ -743,7 +707,6 @@ function InstallGuidesPage() {
                               <GuideVaultCardActions
                                 blogId={b.id}
                                 title={b.title}
-                                hasAccess={unlockedIds.has(b.id) || (accessQuery.data?.length ?? 0) > 0}
                                 onOpen={(res) => {
                                   focusGuideId.current = b.id;
                                   setUnlocked({ blog: b, ...res });
@@ -854,7 +817,7 @@ function InstallGuidesPage() {
         </Tabs>
       </div>
 
-      {/* Unlocked guide viewer — link is short-lived and only issued after a valid passcode */}
+      {/* Guide viewer — the link is short-lived and view-only */}
       <Dialog open={!!unlocked} onOpenChange={(o) => { if (!o) { setUnlocked(null); scrollBackToGuide(); } }}>
         <DialogContent className="max-w-5xl h-[90vh] flex flex-col">
           {unlocked && (
@@ -862,7 +825,6 @@ function InstallGuidesPage() {
               <DialogHeader>
                 <DialogTitle className="font-display text-2xl flex flex-wrap items-center gap-3 text-white">
                   <span className="flex-1">{unlocked.blog.title}</span>
-                  <GuideAccessTimer blogId={unlocked.blog.id} expiresAt={accessExpiry.get(unlocked.blog.id)} />
                 </DialogTitle>
               </DialogHeader>
               {unlocked.viewUrl ? (
@@ -970,7 +932,7 @@ function InstallGuidesPage() {
                 <Input value={editing.title} onChange={(e) => setEditing({ ...editing, title: e.target.value })} />
               </div>
               <div>
-                <Label>Guide file (stored in the app — members need a passcode)</Label>
+                <Label>Guide file (stored in the app — view-only)</Label>
                 <div className="mt-1 flex items-center gap-2">
                   <input
                     id="guide-file-input"
@@ -1013,7 +975,7 @@ function InstallGuidesPage() {
                 </div>
               </div>
               <div>
-                <Label>Legacy PDF URL (optional — also passcode protected)</Label>
+                <Label>Legacy PDF URL (optional)</Label>
                 <Input
                   value={editing.pdf_url ?? ""}
                   onChange={(e) => setEditing({ ...editing, pdf_url: e.target.value })}
