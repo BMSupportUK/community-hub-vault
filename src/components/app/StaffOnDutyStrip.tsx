@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { CircleDot, CalendarClock } from "lucide-react";
+import { CircleDot, CalendarClock, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { useRoleFlashMap, roleFlashClass, resolveAvatarUrl, type FlashRole } from "@/lib/role-flash";
@@ -263,10 +263,15 @@ export function StaffOnDutyStrip({
   };
 
 
-  /** Next rota slot — prominent badge on its own row, never truncated. */
+  const clockedInIds = useMemo(() => new Set(shifts.map((s) => s.user_id)), [shifts]);
+
+  /** Next rota slot — only once the current shift has ended. */
   const renderNextShift = (userId: string) => {
+    // While the member is clocked in / mid-shift, the next slot is noise.
+    if (clockedInIds.has(userId)) return null;
     const slot = nextShifts[userId];
     if (!slot) return null;
+
     const label = new Date(`${slot.shift_date}T00:00:00`).toLocaleDateString("en-GB", {
       weekday: "short",
       day: "numeric",
@@ -363,10 +368,13 @@ export function StaffOnDutyStrip({
                 </span>
               ) : daneOverride && isDaneJProfile(p) ? (
                 <DaneStatusLine userId={s.user_id} />
-              ) : (
-                <span>{fmtHMS(shiftElapsed)}</span>
-              )}
+              ) : null}
             </div>
+            <div className="mt-1 flex items-center gap-1 text-[10px] font-semibold text-emerald-300">
+              <Clock className="size-3 shrink-0" />
+              <span>Working {fmtHMS(shiftElapsed)}</span>
+            </div>
+
             <DndCountdown userId={s.user_id} compact className="mt-1" />
             {renderNextShift(s.user_id)}
 
