@@ -11,14 +11,14 @@ const SAFE_TOKEN = /^[A-Za-z0-9]{6,16}$/;
 export const Route = createFileRoute("/api/public/a/$token")({
   server: {
     handlers: {
-      GET: async ({ params }) => {
+      GET: async ({ params, request }) => {
         const token = (params.token ?? "").toUpperCase();
         if (!SAFE_TOKEN.test(token)) return new Response("Not found", { status: 404 });
 
         const nowIso = new Date().toISOString();
         const { data: transfer } = await supabaseAdmin
           .from("app_transfers")
-          .select("id, build_id, expires_at, download_count")
+          .select("id, build_id, expires_at, download_count, last_download_started_at")
           .eq("token", token)
           .gt("expires_at", nowIso)
           .maybeSingle();
@@ -38,10 +38,23 @@ export const Route = createFileRoute("/api/public/a/$token")({
 
         const totalBytes = file.size ?? null;
 
+        // A single real download can hit this endpoint several times (the
+        // Downloader app probes the URL, then resumes/retries with Range
+        // headers). Only count a new download when this is a fresh, from-the-
+        // start request and the previous start was more than 30s ago.
+        const rangeHeader = request.headers.get("range");
+        const isRangeContinuation = !!rangeHeader && !/^bytes=0-/.test(rangeHeader);
+        const lastStarted = transfer.last_download_started_at
+          ? new Date(transfer.last_download_started_at).getTime()
+          : 0;
+        const withinDebounce = Date.now() - lastStarted < 30_000;
+        const countsAsNewDownload = !isRangeContinuation && !withinDebounce;
+
         await supabaseAdmin
           .from("app_transfers")
           .update({
-            download_count: (transfer.download_count ?? 0) + 1,
+            download_count:
+              (transfer.download_count ?? 0) + (countsAsNewDownload ? 1 : 0),
             last_download_at: nowIso,
             last_download_started_at: nowIso,
             last_download_status: "downloading",
@@ -49,6 +62,7 @@ export const Route = createFileRoute("/api/public/a/$token")({
             last_download_total_bytes: totalBytes,
           })
           .eq("id", transfer.id);
+
 
         // Count bytes as they stream so staff can watch live progress.
         let sent = 0;
