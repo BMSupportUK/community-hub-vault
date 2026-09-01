@@ -337,7 +337,7 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
           )}
         </DialogHeader>
 
-        <div className="grid shrink-0 grid-cols-2 border-b border-white/10 bg-neutral-950 px-5 pt-2">
+        <div className="grid shrink-0 grid-cols-2 border-b border-border bg-surface/60 backdrop-blur px-5 pt-2">
           <Button
             type="button"
             variant="ghost"
@@ -345,8 +345,8 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
             className={cn(
               "h-10 rounded-none border-b-2 text-xs font-bold uppercase",
               statusTab === "online"
-                ? "border-emerald-400 text-emerald-300"
-                : "border-transparent text-white/50 hover:text-white",
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground",
             )}
           >
             Online
@@ -358,8 +358,8 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
             className={cn(
               "h-10 rounded-none border-b-2 text-xs font-bold uppercase",
               statusTab === "offline"
-                ? "border-white text-white"
-                : "border-transparent text-white/50 hover:text-white",
+                ? "border-foreground/70 text-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground",
             )}
           >
             Offline
