@@ -102,13 +102,33 @@ export function useChannelJump({
     setHighlight(0);
   }, [value, editorRef]);
 
-  const results = useMemo(() => {
+  const channelResults = useMemo(() => {
     if (query === null) return [];
     const q = query.trim().toLowerCase();
     return channels
       .filter((c) => !q || c.slug.toLowerCase().includes(q) || c.name.toLowerCase().includes(q))
       .slice(0, 8);
   }, [channels, query]);
+
+  const siteResults = useMemo(() => {
+    if (query === null) return [];
+    const q = query.trim().toLowerCase();
+    return SITE_LINKS.filter(
+      (l) => !q || l.label.toLowerCase().includes(q) || l.path.toLowerCase().includes(q),
+    ).slice(0, 8);
+  }, [query]);
+
+  type JumpItem =
+    | { kind: "channel"; channel: JumpChannel }
+    | { kind: "site"; link: (typeof SITE_LINKS)[number] };
+
+  const results = useMemo<JumpItem[]>(
+    () => [
+      ...channelResults.map((channel) => ({ kind: "channel" as const, channel })),
+      ...siteResults.map((link) => ({ kind: "site" as const, link })),
+    ],
+    [channelResults, siteResults],
+  );
 
   /** Replace the "#query" token with `replacement` (empty string removes it). */
   const replaceToken = (replacement: string) => {
