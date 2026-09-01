@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Hash } from "lucide-react";
+import { Hash, Link2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -10,6 +10,36 @@ export interface JumpChannel {
   group_label: string | null;
   staff_only: boolean;
 }
+
+/** Shareable app pages offered under the "Site links" heading of the `#` menu. */
+const SITE_LINKS: { path: string; label: string; group: string }[] = [
+  { path: "/home", label: "Home", group: "Site" },
+  { path: "/tickets", label: "Support tickets", group: "Support" },
+  { path: "/knowledge-base", label: "Knowledge base", group: "Support" },
+  { path: "/install-guides", label: "Install guides & BM App Store", group: "Support" },
+  { path: "/sports-guides", label: "Sports guides", group: "Guides" },
+  { path: "/what-to-watch", label: "What to watch", group: "Guides" },
+  { path: "/streaming-devices", label: "Streaming devices", group: "Guides" },
+  { path: "/vpn", label: "VPN", group: "Guides" },
+  { path: "/status", label: "Service status", group: "Support" },
+  { path: "/shop", label: "Shop", group: "Shop" },
+  { path: "/packages", label: "Packages", group: "Shop" },
+  { path: "/reviews", label: "Reviews", group: "Community" },
+  { path: "/forum", label: "Forum", group: "Community" },
+  { path: "/fan-zone", label: "Boro Fan Zone", group: "Community" },
+  { path: "/members", label: "Members directory", group: "Community" },
+  { path: "/leaderboard", label: "Leaderboard", group: "Community" },
+  { path: "/new-content", label: "New content", group: "Community" },
+  { path: "/predictions", label: "World Cup predictions", group: "Games" },
+  { path: "/boro-predictions", label: "Boro predictions", group: "Games" },
+  { path: "/boro-fantasy", label: "MFC Fantasy Manager", group: "Games" },
+  { path: "/competition-winners", label: "Competition winners", group: "Games" },
+  { path: "/profile", label: "My profile", group: "Account" },
+  { path: "/account-security", label: "Account security", group: "Account" },
+  { path: "/about", label: "About us", group: "Site" },
+  { path: "/contact", label: "Contact us", group: "Site" },
+  { path: "/faq", label: "FAQ", group: "Site" },
+];
 
 /**
  * `#` command for the chat composer: type `#` then part of a channel name to
@@ -72,13 +102,33 @@ export function useChannelJump({
     setHighlight(0);
   }, [value, editorRef]);
 
-  const results = useMemo(() => {
+  const channelResults = useMemo(() => {
     if (query === null) return [];
     const q = query.trim().toLowerCase();
     return channels
       .filter((c) => !q || c.slug.toLowerCase().includes(q) || c.name.toLowerCase().includes(q))
       .slice(0, 8);
   }, [channels, query]);
+
+  const siteResults = useMemo(() => {
+    if (query === null) return [];
+    const q = query.trim().toLowerCase();
+    return SITE_LINKS.filter(
+      (l) => !q || l.label.toLowerCase().includes(q) || l.path.toLowerCase().includes(q),
+    ).slice(0, 8);
+  }, [query]);
+
+  type JumpItem =
+    | { kind: "channel"; channel: JumpChannel }
+    | { kind: "site"; link: (typeof SITE_LINKS)[number] };
+
+  const results = useMemo<JumpItem[]>(
+    () => [
+      ...channelResults.map((channel) => ({ kind: "channel" as const, channel })),
+      ...siteResults.map((link) => ({ kind: "site" as const, link })),
+    ],
+    [channelResults, siteResults],
+  );
 
   /** Replace the "#query" token with `replacement` (empty string removes it). */
   const replaceToken = (replacement: string) => {
@@ -90,9 +140,13 @@ export function useChannelJump({
     if (el && !(el instanceof HTMLTextAreaElement)) el.textContent = next;
   };
 
-  /** Drop a shareable channel link into the draft. */
-  const insertLink = (ch: JumpChannel) => {
-    replaceToken(`[#${ch.slug}](/home/${ch.slug}) `);
+  /** Drop a shareable channel or site-page link into the draft. */
+  const insertLink = (item: JumpItem) => {
+    const markdown =
+      item.kind === "channel"
+        ? `[#${item.channel.slug}](/home/${item.channel.slug}) `
+        : `[${item.link.label}](${item.link.path}) `;
+    replaceToken(markdown);
     setQuery(null);
     requestAnimationFrame(() => {
       const el = editorRef.current;
@@ -142,40 +196,62 @@ export function useChannelJump({
         <div className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border bg-muted/40">
           Share channel #{query || "…"}
         </div>
-        <ul className="max-h-60 overflow-y-auto">
-          {results.map((c, i) => (
-            <li
-              key={c.id}
-              onMouseEnter={() => setHighlight(i)}
-              className={cn(
-                "flex items-center gap-1 pr-2",
-                i === highlight ? "bg-accent text-accent-foreground" : "hover:bg-accent/60",
-              )}
-            >
-              <button
-                type="button"
-                title="Insert a link to this channel in your message"
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  insertLink(c);
-                }}
-                className="min-w-0 flex-1 flex items-center gap-2 px-3 py-2 text-left text-sm"
-              >
-                <Hash className="size-3.5 shrink-0 text-sky-400" />
-                <span className="font-semibold truncate">{c.name}</span>
-                {c.staff_only && (
-                  <span className="rounded bg-amber-500/20 px-1 text-[9px] uppercase text-amber-400">
-                    staff
-                  </span>
+        <ul className="max-h-72 overflow-y-auto">
+          {results.map((item, i) => {
+            const showSiteHeading =
+              item.kind === "site" && (i === 0 || results[i - 1]?.kind !== "site");
+            return (
+              <li key={item.kind === "channel" ? item.channel.id : item.link.path}>
+                {showSiteHeading && (
+                  <div className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground border-y border-border bg-muted/40">
+                    Site links
+                  </div>
                 )}
-                {c.group_label && (
-                  <span className="ml-auto text-[10px] text-muted-foreground truncate">
-                    {c.group_label}
-                  </span>
-                )}
-              </button>
-            </li>
-          ))}
+                <div
+                  onMouseEnter={() => setHighlight(i)}
+                  className={cn(
+                    "flex items-center gap-1 pr-2",
+                    i === highlight ? "bg-accent text-accent-foreground" : "hover:bg-accent/60",
+                  )}
+                >
+                  <button
+                    type="button"
+                    title="Insert this link in your message"
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      insertLink(item);
+                    }}
+                    className="min-w-0 flex-1 flex items-center gap-2 px-3 py-2 text-left text-sm"
+                  >
+                    {item.kind === "channel" ? (
+                      <>
+                        <Hash className="size-3.5 shrink-0 text-sky-400" />
+                        <span className="font-semibold truncate">{item.channel.name}</span>
+                        {item.channel.staff_only && (
+                          <span className="rounded bg-amber-500/20 px-1 text-[9px] uppercase text-amber-400">
+                            staff
+                          </span>
+                        )}
+                        {item.channel.group_label && (
+                          <span className="ml-auto text-[10px] text-muted-foreground truncate">
+                            {item.channel.group_label}
+                          </span>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <Link2 className="size-3.5 shrink-0 text-emerald-400" />
+                        <span className="font-semibold truncate">{item.link.label}</span>
+                        <span className="ml-auto text-[10px] text-muted-foreground truncate">
+                          {item.link.group}
+                        </span>
+                      </>
+                    )}
+                  </button>
+                </div>
+              </li>
+            );
+          })}
         </ul>
         <div className="px-3 py-1.5 text-[10px] text-muted-foreground border-t border-border bg-muted/40">
           ↑↓ navigate · Enter or Tab to insert link · Esc close
