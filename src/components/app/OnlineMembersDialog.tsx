@@ -311,7 +311,7 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="Search by username"
-                className="pl-8 bg-white/5 border-white/15 text-white placeholder:text-white/40"
+                className="pl-8 bg-surface-2/70 border-border text-foreground placeholder:text-muted-foreground focus-visible:border-primary"
               />
             </div>
           </div>
