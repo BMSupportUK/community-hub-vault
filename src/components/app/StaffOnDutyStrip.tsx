@@ -263,10 +263,15 @@ export function StaffOnDutyStrip({
   };
 
 
-  /** Next rota slot — prominent badge on its own row, never truncated. */
+  const clockedInIds = useMemo(() => new Set(shifts.map((s) => s.user_id)), [shifts]);
+
+  /** Next rota slot — only once the current shift has ended. */
   const renderNextShift = (userId: string) => {
+    // While the member is clocked in / mid-shift, the next slot is noise.
+    if (clockedInIds.has(userId)) return null;
     const slot = nextShifts[userId];
     if (!slot) return null;
+
     const label = new Date(`${slot.shift_date}T00:00:00`).toLocaleDateString("en-GB", {
       weekday: "short",
       day: "numeric",
