@@ -150,24 +150,27 @@ export function useChannelJump({
   const dropdown = useMemo(() => {
     if (query === null || results.length === 0) return null;
     return (
-      <div className="absolute bottom-full left-0 mb-2 w-72 max-w-[90vw] rounded-lg border border-border bg-popover text-popover-foreground shadow-xl overflow-hidden z-50">
+      <div className="absolute bottom-full left-0 mb-2 w-80 max-w-[90vw] rounded-lg border border-border bg-popover text-popover-foreground shadow-xl overflow-hidden z-50">
         <div className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border bg-muted/40">
-          Jump to channel #{query || "…"}
+          Jump to or share channel #{query || "…"}
         </div>
         <ul className="max-h-60 overflow-y-auto">
           {results.map((c, i) => (
-            <li key={c.id}>
+            <li
+              key={c.id}
+              onMouseEnter={() => setHighlight(i)}
+              className={cn(
+                "flex items-center gap-1 pr-2",
+                i === highlight ? "bg-accent text-accent-foreground" : "hover:bg-accent/60",
+              )}
+            >
               <button
                 type="button"
                 onMouseDown={(e) => {
                   e.preventDefault();
                   apply(c);
                 }}
-                onMouseEnter={() => setHighlight(i)}
-                className={cn(
-                  "w-full flex items-center gap-2 px-3 py-2 text-left text-sm",
-                  i === highlight ? "bg-accent text-accent-foreground" : "hover:bg-accent/60",
-                )}
+                className="min-w-0 flex-1 flex items-center gap-2 px-3 py-2 text-left text-sm"
               >
                 <Hash className="size-3.5 shrink-0 text-sky-400" />
                 <span className="font-semibold truncate">{c.name}</span>
@@ -182,13 +185,26 @@ export function useChannelJump({
                   </span>
                 )}
               </button>
+              <button
+                type="button"
+                title="Insert a link to this channel in your message"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  insertLink(c);
+                }}
+                className="shrink-0 inline-flex items-center gap-1 rounded-full border border-sky-500/50 bg-sky-500/15 px-2 py-0.5 text-[10px] font-semibold text-sky-300 hover:bg-sky-500/30"
+              >
+                <Link2 className="size-3" />
+                Share
+              </button>
             </li>
           ))}
         </ul>
         <div className="px-3 py-1.5 text-[10px] text-muted-foreground border-t border-border bg-muted/40">
-          ↑↓ to navigate · Enter or Tab to jump · Esc to close
+          ↑↓ navigate · Enter jump · Shift+Enter share link · Esc close
         </div>
       </div>
+
     );
   }, [query, results, highlight]);
 
