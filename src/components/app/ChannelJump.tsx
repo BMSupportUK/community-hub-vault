@@ -81,17 +81,40 @@ export function useChannelJump({
       .slice(0, 8);
   }, [channels, query]);
 
+  /** Replace the "#query" token with `replacement` (empty string removes it). */
+  const replaceToken = (replacement: string) => {
+    if (queryStart.current < 0) return;
+    const caret = caretOffset();
+    const next = value.slice(0, queryStart.current) + replacement + value.slice(caret);
+    onChange(next);
+    const el = editorRef.current;
+    if (el && !(el instanceof HTMLTextAreaElement)) el.textContent = next;
+  };
+
   const apply = (ch: JumpChannel) => {
     // Strip the "#query" token from the draft, then jump to the channel.
-    if (queryStart.current >= 0) {
-      const caret = caretOffset();
-      const next = value.slice(0, queryStart.current) + value.slice(caret);
-      onChange(next);
-      const el = editorRef.current;
-      if (el && !(el instanceof HTMLTextAreaElement)) el.textContent = next;
-    }
+    replaceToken("");
     setQuery(null);
     void navigate({ to: "/home/$channel", params: { channel: ch.slug } });
+  };
+
+  /** Drop a shareable channel link into the draft instead of navigating away. */
+  const insertLink = (ch: JumpChannel) => {
+    replaceToken(`[#${ch.slug}](/home/${ch.slug}) `);
+    setQuery(null);
+    requestAnimationFrame(() => {
+      const el = editorRef.current;
+      if (!el) return;
+      el.focus();
+      if (!(el instanceof HTMLTextAreaElement)) {
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        range.collapse(false);
+        const sel = window.getSelection();
+        sel?.removeAllRanges();
+        sel?.addRange(range);
+      }
+    });
   };
 
   const onKeyDown = (e: React.KeyboardEvent<HTMLElement>): boolean => {
@@ -109,7 +132,11 @@ export function useChannelJump({
     if (e.key === "Enter" || e.key === "Tab") {
       e.preventDefault();
       const pick = results[highlight];
-      if (pick) apply(pick);
+      if (pick) {
+        // Shift+Enter / Shift+Tab shares a link to the channel instead of jumping.
+        if (e.shiftKey) insertLink(pick);
+        else apply(pick);
+      }
       return true;
     }
     if (e.key === "Escape") {
@@ -118,6 +145,7 @@ export function useChannelJump({
     }
     return false;
   };
+
 
   const dropdown = useMemo(() => {
     if (query === null || results.length === 0) return null;
