@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
-import { Hash, Link2 } from "lucide-react";
+import { Hash } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -14,7 +13,7 @@ export interface JumpChannel {
 
 /**
  * `#` command for the chat composer: type `#` then part of a channel name to
- * jump straight to another Talk channel. Mirrors the @-mention dropdown UX.
+ * drop a shareable channel link into the message. Mirrors the @-mention UX.
  */
 export function useChannelJump({
   value,
@@ -25,7 +24,7 @@ export function useChannelJump({
   onChange: (next: string) => void;
   editorRef: React.RefObject<HTMLTextAreaElement | HTMLDivElement | null>;
 }) {
-  const navigate = useNavigate();
+  
   const [channels, setChannels] = useState<JumpChannel[]>([]);
   const [query, setQuery] = useState<string | null>(null);
   const [highlight, setHighlight] = useState(0);
@@ -91,14 +90,7 @@ export function useChannelJump({
     if (el && !(el instanceof HTMLTextAreaElement)) el.textContent = next;
   };
 
-  const apply = (ch: JumpChannel) => {
-    // Strip the "#query" token from the draft, then jump to the channel.
-    replaceToken("");
-    setQuery(null);
-    void navigate({ to: "/home/$channel", params: { channel: ch.slug } });
-  };
-
-  /** Drop a shareable channel link into the draft instead of navigating away. */
+  /** Drop a shareable channel link into the draft. */
   const insertLink = (ch: JumpChannel) => {
     replaceToken(`[#${ch.slug}](/home/${ch.slug}) `);
     setQuery(null);
@@ -132,11 +124,7 @@ export function useChannelJump({
     if (e.key === "Enter" || e.key === "Tab") {
       e.preventDefault();
       const pick = results[highlight];
-      if (pick) {
-        // Shift+Enter / Shift+Tab shares a link to the channel instead of jumping.
-        if (e.shiftKey) insertLink(pick);
-        else apply(pick);
-      }
+      if (pick) insertLink(pick);
       return true;
     }
     if (e.key === "Escape") {
@@ -152,7 +140,7 @@ export function useChannelJump({
     return (
       <div className="absolute bottom-full left-0 mb-2 w-80 max-w-[90vw] rounded-lg border border-border bg-popover text-popover-foreground shadow-xl overflow-hidden z-50">
         <div className="px-3 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border bg-muted/40">
-          Jump to or share channel #{query || "…"}
+          Share channel #{query || "…"}
         </div>
         <ul className="max-h-60 overflow-y-auto">
           {results.map((c, i) => (
@@ -166,9 +154,10 @@ export function useChannelJump({
             >
               <button
                 type="button"
+                title="Insert a link to this channel in your message"
                 onMouseDown={(e) => {
                   e.preventDefault();
-                  apply(c);
+                  insertLink(c);
                 }}
                 className="min-w-0 flex-1 flex items-center gap-2 px-3 py-2 text-left text-sm"
               >
@@ -185,23 +174,11 @@ export function useChannelJump({
                   </span>
                 )}
               </button>
-              <button
-                type="button"
-                title="Insert a link to this channel in your message"
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  insertLink(c);
-                }}
-                className="shrink-0 inline-flex items-center gap-1 rounded-full border border-sky-500/50 bg-sky-500/15 px-2 py-0.5 text-[10px] font-semibold text-sky-300 hover:bg-sky-500/30"
-              >
-                <Link2 className="size-3" />
-                Share
-              </button>
             </li>
           ))}
         </ul>
         <div className="px-3 py-1.5 text-[10px] text-muted-foreground border-t border-border bg-muted/40">
-          ↑↓ navigate · Enter jump · Shift+Enter share link · Esc close
+          ↑↓ navigate · Enter or Tab to insert link · Esc close
         </div>
       </div>
 
