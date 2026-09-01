@@ -54,6 +54,7 @@ import { resolveGifLink } from "@/lib/giphy.functions";
 import { StaffOnDutySidebar } from "@/components/app/StaffOnDutyStrip";
 import { OnlineMembersDialog } from "@/components/app/OnlineMembersDialog";
 import { TalkChannelMembersPanel } from "@/components/app/TalkChannelMembersPanel";
+import { QuickRepliesPill, useQuickReplies } from "@/components/app/QuickRepliesDialog";
 
 import { cn } from "@/lib/utils";
 import { DEFAULT_AVATAR_URL } from "@/lib/default-avatar";
