@@ -11,7 +11,7 @@ async function assertAdmin(context: { supabase: any; userId: string }) {
     .eq("user_id", context.userId);
   if (error) throw new Error(error.message);
   const roles = (data ?? []).map((r: { role: string }) => String(r.role));
-  if (!roles.some((r) => r === "admin" || r === "management")) {
+  if (!roles.some((r: string) => r === "admin" || r === "management")) {
     throw new Error("Forbidden: admin or management only");
   }
 }
