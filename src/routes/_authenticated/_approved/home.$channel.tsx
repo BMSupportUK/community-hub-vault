@@ -55,6 +55,7 @@ import { StaffOnDutySidebar } from "@/components/app/StaffOnDutyStrip";
 import { OnlineMembersDialog } from "@/components/app/OnlineMembersDialog";
 import { TalkChannelMembersPanel } from "@/components/app/TalkChannelMembersPanel";
 import { QuickRepliesPill, useQuickReplies } from "@/components/app/QuickRepliesDialog";
+import { useChannelJump } from "@/components/app/ChannelJump";
 
 import { cn } from "@/lib/utils";
 import { DEFAULT_AVATAR_URL } from "@/lib/default-avatar";
@@ -470,6 +471,13 @@ function ChannelPage() {
     canBroadcast: isAdmin,
     // Staff roles can tag any staff role; everyone else can tag management/moderator/staff only.
     roleMentions: isModOrAdmin ? [...STAFF_ROLE_TAGS] : [...MEMBER_ROLE_TAGS],
+  });
+
+  // `#` command — jump to another Talk channel from the composer.
+  const channelJump = useChannelJump({
+    value: draft,
+    onChange: setDraft,
+    editorRef: taRef,
   });
 
   useEffect(() => {
@@ -2071,6 +2079,7 @@ function ChannelPage() {
             )}
             <div className="relative flex items-end gap-2 rounded-xl bg-surface-2 border border-border focus-within:border-primary px-3 py-2">
               {mention.dropdown}
+              {channelJump.dropdown}
               <div
                 ref={taRef}
                 contentEditable={canSend && slowRemaining <= 0 && !isMuted}
@@ -2087,7 +2096,7 @@ function ChannelPage() {
                         ? `Slow mode: wait ${slowRemaining}s before sending another message`
                         : pendingGif
                           ? "GIF attached — press Enter or Send"
-                          : `Message #${channel.name} — @ to mention · paste or Win + . for emotes & GIFs`
+                          : `Message #${channel.name} — @ to mention · # to jump to a channel · paste or Win + . for emotes & GIFs`
                 }
                 onBeforeInput={(e) => {
                   const inputEvent = e.nativeEvent as InputEvent;
@@ -2124,6 +2133,7 @@ function ChannelPage() {
                 }}
                 onKeyDown={(e) => {
                   if (mention.onKeyDown(e)) return;
+                  if (channelJump.onKeyDown(e)) return;
                   if (e.key === " " || e.key === "Tab") {
                     const current = e.currentTarget.innerText.replace(/\n$/, "");
                     const expanded = expandQuickReply(current);
