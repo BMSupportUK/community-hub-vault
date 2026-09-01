@@ -200,7 +200,7 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
               className="bg-gradient-primary text-primary-foreground shadow-glow hover:opacity-90 w-full h-8"
             >
               {busy === "request" ? <Loader2 className="size-3.5 mr-1 animate-spin" /> : <ShieldCheck className="size-3.5 mr-1" />}
-              Request transfer
+              Request Your App Download Link
             </Button>
           ) : (
             <Button

@@ -483,7 +483,7 @@ function InstallGuidesPage() {
              <TabsTrigger value="welcome" className="min-w-0 flex-1 px-2 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">Welcome</TabsTrigger>
              <TabsTrigger value="guides" className="min-w-0 flex-1 px-2 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">Guides</TabsTrigger>
             {canSeeAppTab && (
-               <TabsTrigger value="get-app" className="min-w-fit flex-[2.35] px-2 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">{hasLiveTransfer ? "View Your Download URL" : "Download Link"}</TabsTrigger>
+               <TabsTrigger value="get-app" className="min-w-fit flex-[2.35] px-2 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">{hasLiveTransfer ? "View Your Download URL" : "Download BM Support Apps"}</TabsTrigger>
             )}
             {canManageCategories && (
                <TabsTrigger value="categories" className="min-w-0 flex-1 px-2 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">Categories</TabsTrigger>
