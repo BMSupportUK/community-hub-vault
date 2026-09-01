@@ -2129,7 +2129,6 @@ function ChannelPage() {
                     const expanded = expandQuickReply(current);
                     if (expanded) {
                       e.preventDefault();
-                      insertQuickReply("");
                       setDraft(expanded);
                       requestAnimationFrame(() => {
                         const editor = taRef.current;
