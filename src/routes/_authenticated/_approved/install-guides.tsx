@@ -158,6 +158,25 @@ function InstallGuidesPage() {
   // passcode (staff who manage passcodes always see it).
   const hasLivePasscode = (accessQuery.data?.length ?? 0) > 0;
   const canSeeAppTab = hasLivePasscode || canManagePasscodes;
+
+  // Live transfer state drives the tab label, flipping back on expiry.
+  const fetchMyTransfer = useServerFn(getMyAppTransfer);
+  const myTransferQuery = useQuery({
+    queryKey: ["app-transfer"],
+    queryFn: () => fetchMyTransfer(),
+    enabled: canSeeAppTab,
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  });
+  const [nowTick, setNowTick] = useState(() => Date.now());
+  useEffect(() => {
+    const id = window.setInterval(() => setNowTick(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, []);
+  const hasLiveTransfer =
+    !!myTransferQuery.data?.expiresAt &&
+    new Date(myTransferQuery.data.expiresAt).getTime() > nowTick;
+
   useEffect(() => {
     const isRestrictedAdminTab = tab === "categories" || tab === "passcodes" || tab === "app-apk";
     if (
