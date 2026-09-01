@@ -154,9 +154,10 @@ export function useChannelJump({
             >
               <button
                 type="button"
+                title="Insert a link to this channel in your message"
                 onMouseDown={(e) => {
                   e.preventDefault();
-                  apply(c);
+                  insertLink(c);
                 }}
                 className="min-w-0 flex-1 flex items-center gap-2 px-3 py-2 text-left text-sm"
               >
@@ -173,23 +174,11 @@ export function useChannelJump({
                   </span>
                 )}
               </button>
-              <button
-                type="button"
-                title="Insert a link to this channel in your message"
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  insertLink(c);
-                }}
-                className="shrink-0 inline-flex items-center gap-1 rounded-full border border-sky-500/50 bg-sky-500/15 px-2 py-0.5 text-[10px] font-semibold text-sky-300 hover:bg-sky-500/30"
-              >
-                <Link2 className="size-3" />
-                Share
-              </button>
             </li>
           ))}
         </ul>
         <div className="px-3 py-1.5 text-[10px] text-muted-foreground border-t border-border bg-muted/40">
-          ↑↓ navigate · Enter jump · Shift+Enter share link · Esc close
+          ↑↓ navigate · Enter or Tab to insert link · Esc close
         </div>
       </div>
 
