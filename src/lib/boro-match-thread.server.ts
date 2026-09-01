@@ -573,7 +573,7 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
       const legacy =
         /XI<\/strong>/.test(existing.body) ||
         /TV \/ stream/.test(existing.body) ||
-        !/Our score prediction/.test(existing.body) ||
+        /Our score prediction/.test(existing.body) ||
         !/The preview<\/strong>/.test(existing.body);
       // A fixture-only preview gets upgraded in place as soon as FotMob lists the game.
       // Detect it from the body too, so a mis-stamped fingerprint can't lock the
