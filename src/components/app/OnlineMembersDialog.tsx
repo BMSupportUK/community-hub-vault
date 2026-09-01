@@ -12,6 +12,7 @@ import { TalkMemberMiniProfile } from "@/components/app/TalkMemberProfileCard";
 import { useRoleFlashMap, roleFlashClass, resolveAvatarUrl } from "@/lib/role-flash";
 import { formatRoleLabel } from "@/lib/role-label";
 import { cn } from "@/lib/utils";
+import pubBg from "@/assets/members-pub-bg.jpg.asset.json";
 
 
 type MemberProfile = {
