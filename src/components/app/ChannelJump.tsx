@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Hash } from "lucide-react";
+import { Hash, Link2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 
@@ -10,6 +10,36 @@ export interface JumpChannel {
   group_label: string | null;
   staff_only: boolean;
 }
+
+/** Shareable app pages offered under the "Site links" heading of the `#` menu. */
+const SITE_LINKS: { path: string; label: string; group: string }[] = [
+  { path: "/home", label: "Home", group: "Site" },
+  { path: "/tickets", label: "Support tickets", group: "Support" },
+  { path: "/knowledge-base", label: "Knowledge base", group: "Support" },
+  { path: "/install-guides", label: "Install guides & BM App Store", group: "Support" },
+  { path: "/sports-guides", label: "Sports guides", group: "Guides" },
+  { path: "/what-to-watch", label: "What to watch", group: "Guides" },
+  { path: "/streaming-devices", label: "Streaming devices", group: "Guides" },
+  { path: "/vpn", label: "VPN", group: "Guides" },
+  { path: "/status", label: "Service status", group: "Support" },
+  { path: "/shop", label: "Shop", group: "Shop" },
+  { path: "/packages", label: "Packages", group: "Shop" },
+  { path: "/reviews", label: "Reviews", group: "Community" },
+  { path: "/forum", label: "Forum", group: "Community" },
+  { path: "/fan-zone", label: "Boro Fan Zone", group: "Community" },
+  { path: "/members", label: "Members directory", group: "Community" },
+  { path: "/leaderboard", label: "Leaderboard", group: "Community" },
+  { path: "/new-content", label: "New content", group: "Community" },
+  { path: "/predictions", label: "World Cup predictions", group: "Games" },
+  { path: "/boro-predictions", label: "Boro predictions", group: "Games" },
+  { path: "/boro-fantasy", label: "MFC Fantasy Manager", group: "Games" },
+  { path: "/competition-winners", label: "Competition winners", group: "Games" },
+  { path: "/profile", label: "My profile", group: "Account" },
+  { path: "/account-security", label: "Account security", group: "Account" },
+  { path: "/about", label: "About us", group: "Site" },
+  { path: "/contact", label: "Contact us", group: "Site" },
+  { path: "/faq", label: "FAQ", group: "Site" },
+];
 
 /**
  * `#` command for the chat composer: type `#` then part of a channel name to
