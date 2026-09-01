@@ -326,8 +326,8 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
                   className={cn(
                     "rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider transition-colors",
                     roleFilter === r
-                      ? "border-emerald-400/50 bg-emerald-500/25 text-emerald-200"
-                      : "border-white/15 bg-white/5 text-white/60 hover:bg-white/10",
+                      ? "border-primary/60 bg-primary/20 text-primary"
+                      : "border-border bg-surface-2/60 text-muted-foreground hover:bg-surface-2",
                   )}
                 >
                   {r === "all" ? "All" : formatRoleLabel(r)}
