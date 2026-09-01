@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Users, User, UserPlus, Check, Clock, EyeOff, Eye, Search } from "lucide-react";
+import { Users, User, UserPlus, Check, Clock, EyeOff, Eye, Search, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
