@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useChannelJump } from "@/components/app/ChannelJump";
 
 export interface QuickReply {
   id: string;
