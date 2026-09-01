@@ -13,7 +13,7 @@ export interface JumpChannel {
 
 /**
  * `#` command for the chat composer: type `#` then part of a channel name to
- * jump straight to another Talk channel. Mirrors the @-mention dropdown UX.
+ * drop a shareable channel link into the message. Mirrors the @-mention UX.
  */
 export function useChannelJump({
   value,
