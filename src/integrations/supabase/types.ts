@@ -136,6 +136,7 @@ export type Database = {
       }
       app_builds: {
         Row: {
+          app_name: string | null
           created_at: string
           created_by: string | null
           file_name: string
@@ -145,10 +146,13 @@ export type Database = {
           is_available: boolean
           is_current: boolean
           release_notes: string | null
+          sort_order: number
           updated_at: string
           version_name: string | null
+          video_path: string | null
         }
         Insert: {
+          app_name?: string | null
           created_at?: string
           created_by?: string | null
           file_name: string
@@ -158,10 +162,13 @@ export type Database = {
           is_available?: boolean
           is_current?: boolean
           release_notes?: string | null
+          sort_order?: number
           updated_at?: string
           version_name?: string | null
+          video_path?: string | null
         }
         Update: {
+          app_name?: string | null
           created_at?: string
           created_by?: string | null
           file_name?: string
@@ -171,8 +178,10 @@ export type Database = {
           is_available?: boolean
           is_current?: boolean
           release_notes?: string | null
+          sort_order?: number
           updated_at?: string
           version_name?: string | null
+          video_path?: string | null
         }
         Relationships: []
       }
