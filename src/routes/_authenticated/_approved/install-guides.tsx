@@ -497,7 +497,25 @@ function InstallGuidesPage() {
             {canManagePasscodes && (
                <TabsTrigger value="app-apk" className="min-w-0 flex-1 px-2 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">App APK</TabsTrigger>
             )}
+            {canManageGuides && (
+               <TabsTrigger value="approvals" className="min-w-0 flex-1 px-2 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">Approvals</TabsTrigger>
+            )}
           </TabsList>
+
+          {canManageGuides && (
+            <TabsContent value="approvals" className="mt-6">
+              <div className="max-w-5xl space-y-4">
+                <div>
+                  <h2 className="font-display text-xl font-semibold text-foreground">Access approvals</h2>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Grant members access to the install guides and app downloads.
+                  </p>
+                </div>
+                <GuideAccessApprovals />
+              </div>
+            </TabsContent>
+          )}
+
 
           {canSeeAppTab && (
             <TabsContent value="get-app" className="mt-6">
