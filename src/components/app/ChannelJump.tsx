@@ -24,7 +24,7 @@ export function useChannelJump({
   onChange: (next: string) => void;
   editorRef: React.RefObject<HTMLTextAreaElement | HTMLDivElement | null>;
 }) {
-  const navigate = useNavigate();
+  
   const [channels, setChannels] = useState<JumpChannel[]>([]);
   const [query, setQuery] = useState<string | null>(null);
   const [highlight, setHighlight] = useState(0);
