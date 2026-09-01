@@ -143,19 +143,18 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
       </div>
 
       {build.releaseNotes && (
-        <p className="mt-3 text-sm text-foreground/80 whitespace-pre-wrap">{build.releaseNotes}</p>
+        <p className="mt-2 text-xs text-foreground/80 whitespace-pre-wrap line-clamp-3">{build.releaseNotes}</p>
       )}
 
       {build.installInstructions && (
-        <div className="mt-3 rounded-xl border border-violet-500/30 bg-violet-500/10 p-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-violet-200">Install instructions</p>
-          <p className="mt-1 text-sm text-foreground/85 whitespace-pre-wrap">{build.installInstructions}</p>
+        <div className="mt-2 rounded-lg border border-violet-500/30 bg-violet-500/10 p-2">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-violet-200">Install instructions</p>
+          <p className="mt-1 text-xs text-foreground/85 whitespace-pre-wrap line-clamp-3">{build.installInstructions}</p>
         </div>
       )}
 
-
       {build.videoPath && (
-        <div className="mt-3 overflow-hidden rounded-xl border border-violet-500/30 bg-black/50">
+        <div className="mt-2 overflow-hidden rounded-lg border border-violet-500/30 bg-black/50">
           {videoUrl ? (
             <video
               src={videoUrl}
@@ -163,11 +162,11 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
               controlsList="nodownload noplaybackrate"
               disablePictureInPicture
               onContextMenu={(e) => e.preventDefault()}
-              className="w-full max-h-[300px] bg-black"
+              className="w-full max-h-[160px] bg-black"
             />
           ) : (
-            <div className="flex items-center gap-2 p-4 text-xs text-muted-foreground">
-              <Film className="size-4" /> Loading walkthrough…
+            <div className="flex items-center gap-2 p-3 text-xs text-muted-foreground">
+              <Film className="size-3.5" /> Loading walkthrough…
             </div>
           )}
         </div>
