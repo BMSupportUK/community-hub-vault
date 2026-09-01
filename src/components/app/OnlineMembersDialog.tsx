@@ -12,6 +12,7 @@ import { TalkMemberMiniProfile } from "@/components/app/TalkMemberProfileCard";
 import { useRoleFlashMap, roleFlashClass, resolveAvatarUrl } from "@/lib/role-flash";
 import { formatRoleLabel } from "@/lib/role-label";
 import { cn } from "@/lib/utils";
+import pubBg from "@/assets/members-pub-bg.jpg.asset.json";
 
 
 type MemberProfile = {
@@ -276,7 +277,7 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
           type="button"
           title="View members"
           className={cn(
-            "flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-surface-2/60 hover:bg-surface-2 border border-white/10 hover:border-white/20 transition-all cursor-pointer shadow-lg shadow-black/20",
+            "flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-surface-2/60 hover:bg-surface-2 border border-border hover:border-primary/40 transition-all cursor-pointer shadow-lg shadow-black/20",
             className,
           )}
         >
@@ -286,27 +287,37 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
       </DialogTrigger>
 
       <DialogContent
-        className="max-w-none w-screen h-screen sm:h-screen rounded-none border-0 p-0 gap-0 flex flex-col overflow-hidden bg-neutral-950"
+        className="max-w-none w-screen h-screen sm:h-screen rounded-none border-0 p-0 gap-0 flex flex-col overflow-hidden bg-background"
       >
-        <DialogHeader className="border-b border-white/10 px-5 py-4 text-left">
+        {/* Pub illustration backdrop, blended behind the whole directory */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 -z-10 bg-cover bg-center opacity-25"
+          style={{ backgroundImage: `url(${pubBg.url})` }}
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-background/90 via-background/80 to-background"
+        />
+        <DialogHeader className="border-b border-border px-5 py-4 text-left">
           <div className="flex flex-wrap items-center gap-3">
-            <DialogTitle className="flex items-center gap-2 text-white">
-              <Users className="size-5" />
+            <DialogTitle className="flex items-center gap-2 text-foreground">
+              <Users className="size-5 text-primary" />
               Members
             </DialogTitle>
             <div className="relative ml-auto w-full max-w-xs">
-              <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-white/50" />
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="Search by username"
-                className="pl-8 bg-white/5 border-white/15 text-white placeholder:text-white/40"
+                className="pl-8 bg-surface-2/70 border-border text-foreground placeholder:text-muted-foreground focus-visible:border-primary"
               />
             </div>
           </div>
           {roleOptions.length > 0 && (
             <div className="mt-3 flex flex-wrap items-center gap-1.5">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-white/50">Filter by role</span>
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Filter by role</span>
               {["all", ...roleOptions].map((r) => (
                 <button
                   key={r}
@@ -315,8 +326,8 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
                   className={cn(
                     "rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider transition-colors",
                     roleFilter === r
-                      ? "border-emerald-400/50 bg-emerald-500/25 text-emerald-200"
-                      : "border-white/15 bg-white/5 text-white/60 hover:bg-white/10",
+                      ? "border-primary/60 bg-primary/20 text-primary"
+                      : "border-border bg-surface-2/60 text-muted-foreground hover:bg-surface-2",
                   )}
                 >
                   {r === "all" ? "All" : formatRoleLabel(r)}
@@ -326,7 +337,7 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
           )}
         </DialogHeader>
 
-        <div className="grid shrink-0 grid-cols-2 border-b border-white/10 bg-neutral-950 px-5 pt-2">
+        <div className="grid shrink-0 grid-cols-2 border-b border-border bg-surface/60 backdrop-blur px-5 pt-2">
           <Button
             type="button"
             variant="ghost"
@@ -334,8 +345,8 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
             className={cn(
               "h-10 rounded-none border-b-2 text-xs font-bold uppercase",
               statusTab === "online"
-                ? "border-emerald-400 text-emerald-300"
-                : "border-transparent text-white/50 hover:text-white",
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground",
             )}
           >
             Online
@@ -347,8 +358,8 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
             className={cn(
               "h-10 rounded-none border-b-2 text-xs font-bold uppercase",
               statusTab === "offline"
-                ? "border-white text-white"
-                : "border-transparent text-white/50 hover:text-white",
+                ? "border-foreground/70 text-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground",
             )}
           >
             Offline
@@ -357,8 +368,8 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
 
         <div className="flex-1 overflow-auto">
           <table className="w-full min-w-[900px] border-collapse text-sm">
-            <thead className="sticky top-0 z-10 bg-neutral-900/95 backdrop-blur">
-              <tr className="text-[10px] uppercase tracking-wider text-white/50">
+            <thead className="sticky top-0 z-10 bg-surface/90 backdrop-blur">
+              <tr className="text-[10px] uppercase tracking-wider text-muted-foreground">
                 <th className="px-5 py-3 text-left font-bold">Name</th>
                 <th className="px-4 py-3 text-left font-bold">Member since</th>
                 <th className="px-4 py-3 text-left font-bold">Status</th>
@@ -370,7 +381,7 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
             <tbody>
               {visible.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-5 py-10 text-center text-white/60">
+                  <td colSpan={6} className="px-5 py-10 text-center text-muted-foreground">
                     No members match your filters.
                   </td>
                 </tr>
@@ -387,7 +398,7 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
                   return (
                     <tr
                       key={p.id}
-                      className="border-t border-white/5 hover:bg-white/[0.04] transition-colors"
+                      className="border-t border-border/60 hover:bg-surface-2/50 transition-colors"
                     >
                       <td className="px-5 py-3">
                         <TalkMemberMiniProfile
@@ -409,26 +420,26 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
                               <img
                                 src={resolveAvatarUrl(p.id, p.avatar_url, roleFlashMap)}
                                 alt={name}
-                                className="size-9 rounded-full object-cover ring-2 ring-white/15 transition-all group-hover/name:ring-primary/50"
+                                className="size-9 rounded-full object-cover ring-2 ring-border transition-all group-hover/name:ring-primary/50"
                               />
                               <span
                                 className={cn(
-                                  "absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-2 ring-neutral-950",
-                                  isOnline ? "bg-emerald-500" : "bg-neutral-500",
+                                  "absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-2 ring-background",
+                                  isOnline ? "bg-emerald-500" : "bg-muted-foreground/60",
                                 )}
                               />
                             </span>
                             <div className="flex flex-col min-w-0">
                               <span
                                 className={cn(
-                                  "truncate text-sm font-bold text-white transition-colors group-hover/name:text-primary",
+                                  "truncate text-sm font-bold text-foreground transition-colors group-hover/name:text-primary",
                                   roleFlashClass(role),
                                 )}
                               >
                                 {name}
                               </span>
                               {p.username && (
-                                <span className="truncate text-xs text-white/60">
+                                <span className="truncate text-xs text-muted-foreground">
                                   @{p.username}
                                 </span>
                               )}
@@ -436,7 +447,7 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
                           </span>
                         </TalkMemberMiniProfile>
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-xs font-semibold text-white/80">
+                      <td className="px-4 py-3 whitespace-nowrap text-xs font-semibold text-foreground/80">
                         {relativeSince(p.created_at)}
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap align-top">
@@ -446,36 +457,36 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
                               "inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider w-fit",
                               isOnline
                                 ? "border-emerald-400/40 bg-emerald-500/20 text-emerald-300"
-                                : "border-white/15 bg-white/5 text-white/50",
+                                : "border-border bg-surface-2/60 text-muted-foreground",
                             )}
                           >
                             <span
                               className={cn(
                                 "size-1.5 rounded-full",
-                                isOnline ? "bg-emerald-400" : "bg-neutral-500",
+                                isOnline ? "bg-emerald-400" : "bg-muted-foreground/60",
                               )}
                             />
                             {isOnline ? "Online" : "Offline"}
                           </span>
                           {p.custom_status && (
-                            <span className="text-[11px] text-white/70 truncate max-w-[160px]">
+                            <span className="text-[11px] text-muted-foreground truncate max-w-[160px]">
                               {p.custom_status}
                             </span>
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-xs font-medium text-white/70">
+                      <td className="px-4 py-3 whitespace-nowrap text-xs font-medium text-muted-foreground">
                         {isOnline ? "Now" : lastActiveStamp(p.last_seen_at)}
                       </td>
                       <td className="px-4 py-3">
                         <span className="flex flex-wrap gap-1">
                           {roles.length === 0 ? (
-                            <span className="text-xs text-white/40">—</span>
+                            <span className="text-xs text-muted-foreground/70">—</span>
                           ) : (
                             roles.map((r) => (
                               <span
                                 key={r}
-                                className="rounded-full border border-white/15 bg-white/10 px-2 py-0.5 text-[10px] font-semibold text-white/80"
+                                className="rounded-full border border-border bg-surface-2 px-2 py-0.5 text-[10px] font-semibold text-foreground/80"
                               >
                                 {formatRoleLabel(r)}
                               </span>
@@ -499,7 +510,7 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
                             online={isOnline}
                             asDialog
                           >
-                            <span className="flex h-8 items-center gap-1.5 rounded-md border border-white/15 bg-white/10 px-2.5 text-xs font-medium text-white hover:bg-white/20 cursor-pointer">
+                            <span className="flex h-8 items-center gap-1.5 rounded-md border border-border bg-surface-2 px-2.5 text-xs font-medium text-foreground hover:border-primary/60 hover:text-primary cursor-pointer">
                               <User className="size-3.5" />
                               Profile
                             </span>
@@ -511,7 +522,7 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
                                   <Check className="size-3.5" />
                                 </Button>
                               ) : rel?.kind === "outgoing" ? (
-                                <Button size="sm" variant="secondary" disabled className="h-8 bg-white/10 text-white/70 border border-white/20" aria-label="Friend request pending">
+                                <Button size="sm" variant="secondary" disabled className="h-8 bg-surface-2 text-muted-foreground border border-border" aria-label="Friend request pending">
                                   <Clock className="size-3.5" />
                                 </Button>
                               ) : rel?.kind === "incoming" ? (
@@ -532,7 +543,7 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
                                   "h-8 border",
                                   isIgnored
                                     ? "bg-rose-500/25 text-rose-100 border-rose-300/30 hover:bg-rose-500/35"
-                                    : "bg-white/10 text-white border-white/20 hover:bg-white/20",
+                                    : "bg-surface-2 text-foreground border-border hover:bg-surface-2/70",
                                 )}
                                 aria-label={isIgnored ? `Unignore ${name}` : `Ignore ${name}`}
                                 title={isIgnored ? "Unignore" : "Ignore"}
