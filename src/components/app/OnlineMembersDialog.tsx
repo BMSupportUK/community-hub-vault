@@ -368,8 +368,8 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
 
         <div className="flex-1 overflow-auto">
           <table className="w-full min-w-[900px] border-collapse text-sm">
-            <thead className="sticky top-0 z-10 bg-neutral-900/95 backdrop-blur">
-              <tr className="text-[10px] uppercase tracking-wider text-white/50">
+            <thead className="sticky top-0 z-10 bg-surface/90 backdrop-blur">
+              <tr className="text-[10px] uppercase tracking-wider text-muted-foreground">
                 <th className="px-5 py-3 text-left font-bold">Name</th>
                 <th className="px-4 py-3 text-left font-bold">Member since</th>
                 <th className="px-4 py-3 text-left font-bold">Status</th>
