@@ -2124,6 +2124,26 @@ function ChannelPage() {
                 }}
                 onKeyDown={(e) => {
                   if (mention.onKeyDown(e)) return;
+                  if (e.key === " " || e.key === "Tab") {
+                    const current = e.currentTarget.innerText.replace(/\n$/, "");
+                    const expanded = expandQuickReply(current);
+                    if (expanded) {
+                      e.preventDefault();
+                      insertQuickReply("");
+                      setDraft(expanded);
+                      requestAnimationFrame(() => {
+                        const editor = taRef.current;
+                        if (!editor) return;
+                        const range = document.createRange();
+                        range.selectNodeContents(editor);
+                        range.collapse(false);
+                        const sel = window.getSelection();
+                        sel?.removeAllRanges();
+                        sel?.addRange(range);
+                      });
+                      return;
+                    }
+                  }
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
                     send();
