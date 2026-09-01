@@ -83,6 +83,10 @@ export function QuickRepliesPill({
   const [body, setBody] = useState("");
   const [shared, setShared] = useState(false);
   const [saving, setSaving] = useState(false);
+  const bodyRef = useRef<HTMLTextAreaElement | null>(null);
+
+  // `#` command inside the shortcut text so saved replies can share channel/page links.
+  const bodyJump = useChannelJump({ value: body, onChange: setBody, editorRef: bodyRef });
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
