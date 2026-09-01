@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import QRCode from "qrcode";
-import { Smartphone, Copy, Download, Trash2, Loader2, ShieldCheck, Clock, Film, Eye } from "lucide-react";
+import { Smartphone, Copy, Download, Trash2, Loader2, ShieldCheck, Clock, Film, Eye, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,7 +12,9 @@ import {
   listMyAppTransfers,
   requestAppTransfer,
   deleteMyAppTransfer,
+  requestAppDownloadAccess,
 } from "@/lib/app-transfer.functions";
+import { useAuth } from "@/hooks/use-auth";
 
 type Build = Awaited<ReturnType<typeof listAppBuilds>>[number];
 type Transfer = Awaited<ReturnType<typeof listMyAppTransfers>>[number];
@@ -344,6 +346,7 @@ export function AppTransferPanel({ onUploadClick }: { onUploadClick?: () => void
   const { data: transfers } = useQuery({
     queryKey: ["app-transfers"],
     queryFn: () => fetchTransfers(),
+    enabled: canDownload,
     refetchInterval: 60_000,
     staleTime: 30_000,
   });
@@ -353,6 +356,8 @@ export function AppTransferPanel({ onUploadClick }: { onUploadClick?: () => void
     for (const t of transfers ?? []) if (!map.has(t.buildId)) map.set(t.buildId, t);
     return map;
   }, [transfers]);
+
+  if (!canDownload) return <RequestAccessPanel />;
 
   if (!builds || builds.length === 0) {
     return (
