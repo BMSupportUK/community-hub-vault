@@ -53,7 +53,8 @@ async function probeIpwhois(ip: string): Promise<{ is_vpn: boolean; is_proxy: bo
     clearTimeout(t);
     if (!res.ok) return null;
     const entry = (await res.json()) as Record<string, unknown>;
-    const security = (entry.security ?? {}) as Record<string, unknown>;
+    if (!entry.security || typeof entry.security !== "object") return null;
+    const security = entry.security as Record<string, unknown>;
     const isVpn = security.vpn === true;
     const isProxy = security.proxy === true || security.tor === true || isVpn;
     return { is_vpn: isVpn, is_proxy: isProxy };
@@ -76,6 +77,9 @@ async function probeIpapi(ip: string): Promise<{ is_vpn: boolean; is_proxy: bool
     const vpn = (entry.vpn ?? {}) as Record<string, unknown>;
     const isVpn = entry.is_vpn === true || vpn.is_vpn === true;
     const isProxy = entry.is_proxy === true || entry.is_datacenter === true || isVpn;
+    const hasSecurityData =
+      "is_vpn" in entry || "is_proxy" in entry || "is_datacenter" in entry || "is_vpn" in vpn;
+    if (!hasSecurityData) return null;
     return { is_vpn: isVpn, is_proxy: isProxy };
   } catch {
     return null;
@@ -96,12 +100,20 @@ export const checkVisitorVpn = createServerFn({ method: "GET" })
   const clientIp = normalizeIp(data.ip);
   const ip = clientIp ?? normalizeIp(headerCandidate) ?? "unknown";
   if (isPrivateIp(ip)) return { is_vpn: false, is_proxy: false, skipped: true };
-  const primary = await probe(ip);
-  if (primary && (primary.is_vpn || primary.is_proxy)) return { ...primary, skipped: false };
-  const fallback = await probeIpapi(ip);
-  if (fallback) return { ...fallback, skipped: false };
-  const secondary = await probeIpwhois(ip);
-  if (secondary) return { ...secondary, skipped: false };
-  if (primary) return { ...primary, skipped: false };
-  return { is_vpn: false, is_proxy: false, skipped: true };
+
+  // Query every provider and trust ANY positive detection. Free tiers of the
+  // fallback APIs now omit their security block entirely, so a response full of
+  // `false` values must never be allowed to override a positive verdict.
+  const [primary, ipapi, ipwhois] = await Promise.all([
+    probe(ip),
+    probeIpapi(ip),
+    probeIpwhois(ip),
+  ]);
+  const results = [primary, ipapi, ipwhois].filter(
+    (r): r is { is_vpn: boolean; is_proxy: boolean } => r !== null,
+  );
+  if (results.length === 0) return { is_vpn: false, is_proxy: false, skipped: true };
+  const is_vpn = results.some((r) => r.is_vpn);
+  const is_proxy = results.some((r) => r.is_proxy) || is_vpn;
+  return { is_vpn, is_proxy, skipped: false };
 });
