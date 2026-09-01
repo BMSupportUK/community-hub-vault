@@ -254,33 +254,9 @@ export function buildPreviewBody(fx: FixtureLite, json: any): string {
       : `<p><em>Auto-filled from the fixture list — form, standings and odds will be added automatically once the match data is published.</em></p>`,
   );
 
-  const pred = predictScore(sides, odds);
-  parts.push(
-    `<p><strong>Our score prediction</strong><br />${esc(home)} ${pred.home} - ${pred.away} ${esc(away)}</p>`,
-  );
-
   return parts.join("\n");
 }
 
-/** Simple, deterministic score model: form + league position + home advantage (+ odds nudge). */
-function predictScore(sides: SideInfo[], odds: string | null): { home: number; away: number } {
-  const strength = (s: SideInfo | undefined, homeAdv: number) => {
-    if (!s) return 1.2 + homeAdv;
-    const formPts = s.form.reduce((n, r) => n + (r === "W" ? 3 : r === "D" ? 1 : 0), 0);
-    const rankNum = Number(String(s.rank ?? "").replace(/\D+/g, "")) || 12;
-    // 0..1 quality score
-    const q = (formPts / 15) * 0.6 + (1 - Math.min(rankNum, 24) / 24) * 0.4;
-    return 0.6 + q * 1.9 + homeAdv;
-  };
-  let h = strength(sides[0], 0.35);
-  let a = strength(sides[1], 0);
-  if (odds) {
-    const low = odds.toLowerCase();
-    if (sides[0]?.name && low.includes(sides[0].name.toLowerCase())) h += 0.3;
-    else if (sides[1]?.name && low.includes(sides[1].name.toLowerCase())) a += 0.3;
-  }
-  return { home: Math.max(0, Math.min(4, Math.round(h))), away: Math.max(0, Math.min(4, Math.round(a))) };
-}
 
 type H2H = { record: string | null; lines: string[]; homeWins: number; draws: number; awayWins: number };
 
@@ -597,7 +573,7 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
       const legacy =
         /XI<\/strong>/.test(existing.body) ||
         /TV \/ stream/.test(existing.body) ||
-        !/Our score prediction/.test(existing.body) ||
+        /Our score prediction/.test(existing.body) ||
         !/The preview<\/strong>/.test(existing.body);
       // A fixture-only preview gets upgraded in place as soon as FotMob lists the game.
       // Detect it from the body too, so a mis-stamped fingerprint can't lock the
