@@ -140,9 +140,13 @@ export function useChannelJump({
     if (el && !(el instanceof HTMLTextAreaElement)) el.textContent = next;
   };
 
-  /** Drop a shareable channel link into the draft. */
-  const insertLink = (ch: JumpChannel) => {
-    replaceToken(`[#${ch.slug}](/home/${ch.slug}) `);
+  /** Drop a shareable channel or site-page link into the draft. */
+  const insertLink = (item: JumpItem) => {
+    const markdown =
+      item.kind === "channel"
+        ? `[#${item.channel.slug}](/home/${item.channel.slug}) `
+        : `[${item.link.label}](${item.link.path}) `;
+    replaceToken(markdown);
     setQuery(null);
     requestAnimationFrame(() => {
       const el = editorRef.current;
