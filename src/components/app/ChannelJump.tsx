@@ -124,11 +124,7 @@ export function useChannelJump({
     if (e.key === "Enter" || e.key === "Tab") {
       e.preventDefault();
       const pick = results[highlight];
-      if (pick) {
-        // Shift+Enter / Shift+Tab shares a link to the channel instead of jumping.
-        if (e.shiftKey) insertLink(pick);
-        else apply(pick);
-      }
+      if (pick) insertLink(pick);
       return true;
     }
     if (e.key === "Escape") {
