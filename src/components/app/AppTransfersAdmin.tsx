@@ -38,7 +38,8 @@ export function AppTransfersAdmin() {
   const { data: transfers, isFetching } = useQuery({
     queryKey: ["app-transfers-admin"],
     queryFn: () => listTransfers(),
-    refetchInterval: 5_000,
+    refetchInterval: 2_000,
+    refetchIntervalInBackground: true,
     staleTime: 0,
   });
 
@@ -47,7 +48,8 @@ export function AppTransfersAdmin() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h3 className="font-display text-lg font-semibold text-foreground">Active transfers</h3>
-          <p className="text-sm text-muted-foreground">
+          <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <span className="inline-flex size-2 rounded-full bg-emerald-400 animate-pulse" />
             Live 24-hour install links, who requested them and how far each download has got.
           </p>
         </div>
