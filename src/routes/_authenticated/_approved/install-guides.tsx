@@ -160,7 +160,7 @@ function InstallGuidesPage() {
   );
   // The download tab is always visible; non-subscribers see a request-access
   // panel inside it, which admins/management approve on the Approvals tab.
-  const hasLivePasscode = (accessQuery.data?.length ?? 0) > 0;
+  void accessQuery.data;
   const canSeeAppTab = true;
 
 
