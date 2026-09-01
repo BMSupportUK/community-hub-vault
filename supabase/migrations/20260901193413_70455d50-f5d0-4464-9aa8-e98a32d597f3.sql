@@ -1,0 +1,1 @@
+ALTER TABLE public.app_builds ADD COLUMN IF NOT EXISTS install_instructions TEXT;
