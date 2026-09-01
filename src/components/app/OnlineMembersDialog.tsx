@@ -314,6 +314,15 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
                 className="pl-8 bg-surface-2/70 border-border text-foreground placeholder:text-muted-foreground focus-visible:border-primary"
               />
             </div>
+            <DialogClose asChild>
+              <button
+                type="button"
+                aria-label="Close members"
+                className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <X className="size-5" />
+              </button>
+            </DialogClose>
           </div>
           {roleOptions.length > 0 && (
             <div className="mt-3 flex flex-wrap items-center gap-1.5">
