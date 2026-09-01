@@ -65,9 +65,13 @@ const VPN_TYPE_HINTS = [
 ];
 
 /**
- * Any positive flag counts. Covers proxy=yes for every type proxycheck reports
- * (VPN, residential proxy, business proxy, TOR, compromised server, hosting)
- * plus its risk score when a paid key returns one.
+ * Any positive flag counts: proxy=yes for every type proxycheck reports (VPN,
+ * residential proxy, business proxy, TOR, compromised server, hosting), plus a
+ * high risk score from a paid key.
+ *
+ * NOTE: `type` alone is NOT a proxy signal — proxycheck returns the connection
+ * type ("Business", "Residential", "Wireless") for clean IPs too. It is only
+ * interpreted when `proxy` is "yes".
  */
 export function proxycheckVerdict(entry: ProxycheckEntry | null): {
   is_proxy: boolean;
@@ -84,15 +88,17 @@ export function proxycheckVerdict(entry: ProxycheckEntry | null): {
   const riskRaw = entry.risk;
   const risk = typeof riskRaw === "number" ? riskRaw : Number(riskRaw ?? NaN);
   const riskFlag = Number.isFinite(risk) && risk >= 66;
-  const typeFlag = VPN_TYPE_HINTS.some((hint) => type.includes(hint));
-  const is_proxy = proxy || typeFlag || riskFlag;
+  const proxyTypeFlag = proxy && VPN_TYPE_HINTS.some((hint) => type.includes(hint));
+  const torFlag = String(entry.tor ?? "").toLowerCase() === "yes" || type.includes("tor");
+  const is_proxy = proxy || riskFlag || torFlag;
   const is_vpn =
     is_proxy &&
-    (typeFlag ||
-      providerText.includes("vpn") ||
-      providerText.includes("proxy") ||
-      String(entry.tor ?? "").toLowerCase() === "yes");
+    (proxyTypeFlag ||
+      torFlag ||
+      (proxy && (providerText.includes("vpn") || providerText.includes("proxy"))) ||
+      Boolean(operator.name));
   return { is_proxy, is_vpn };
+
 }
 
 /** Single-IP lookup returning the raw entry, or null when unavailable. */
