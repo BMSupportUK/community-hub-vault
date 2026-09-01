@@ -3,14 +3,18 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import QRCode from "qrcode";
-import { Smartphone, Copy, Download, Trash2, Loader2, ShieldCheck, Clock } from "lucide-react";
+import { Smartphone, Copy, Download, Trash2, Loader2, ShieldCheck, Clock, Film } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 import {
-  getCurrentAppBuild,
-  getMyAppTransfer,
+  listAppBuilds,
+  listMyAppTransfers,
   requestAppTransfer,
   deleteMyAppTransfer,
 } from "@/lib/app-transfer.functions";
+
+type Build = Awaited<ReturnType<typeof listAppBuilds>>[number];
+type Transfer = Awaited<ReturnType<typeof listMyAppTransfers>>[number];
 
 function formatSize(bytes: number | null) {
   if (!bytes) return null;
@@ -18,12 +22,16 @@ function formatSize(bytes: number | null) {
   return `${mb.toFixed(mb < 10 ? 1 : 0)} MB`;
 }
 
-function useCountdown(expiresAt: string | undefined) {
+function useTick() {
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const id = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(id);
   }, []);
+  return now;
+}
+
+function countdown(expiresAt: string | undefined, now: number) {
   if (!expiresAt) return null;
   const ms = new Date(expiresAt).getTime() - now;
   if (ms <= 0) return "expired";
@@ -33,26 +41,34 @@ function useCountdown(expiresAt: string | undefined) {
   return `${h}h ${String(m).padStart(2, "0")}m ${String(s).padStart(2, "0")}s`;
 }
 
-export function AppTransferPanel({ onUploadClick }: { onUploadClick?: () => void } = {}) {
+/** Signs a private app-demos video path for playback. */
+function useDemoVideoUrl(path: string | null) {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    let cancel = false;
+    setUrl(null);
+    if (!path) return;
+    supabase.storage
+      .from("app-demos")
+      .createSignedUrl(path, 3600)
+      .then(({ data }) => {
+        if (!cancel) setUrl(data?.signedUrl ?? null);
+      })
+      .catch(() => {});
+    return () => {
+      cancel = true;
+    };
+  }, [path]);
+  return url;
+}
+
+function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | undefined; now: number }) {
   const queryClient = useQueryClient();
-  const fetchBuild = useServerFn(getCurrentAppBuild);
-  const fetchTransfer = useServerFn(getMyAppTransfer);
   const request = useServerFn(requestAppTransfer);
   const remove = useServerFn(deleteMyAppTransfer);
   const [busy, setBusy] = useState<"request" | "delete" | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-
-  const { data: build } = useQuery({
-    queryKey: ["app-build"],
-    queryFn: () => fetchBuild(),
-    staleTime: 60_000,
-  });
-  const { data: transfer } = useQuery({
-    queryKey: ["app-transfer"],
-    queryFn: () => fetchTransfer(),
-    refetchInterval: 60_000,
-    staleTime: 30_000,
-  });
+  const videoUrl = useDemoVideoUrl(build.videoPath);
 
   const shortUrl = useMemo(() => {
     if (!transfer) return null;
@@ -60,7 +76,7 @@ export function AppTransferPanel({ onUploadClick }: { onUploadClick?: () => void
     return `${host}/a/${transfer.token}`;
   }, [transfer]);
 
-  const remaining = useCountdown(transfer?.expiresAt);
+  const remaining = countdown(transfer?.expiresAt, now);
 
   useEffect(() => {
     if (!shortUrl || !canvasRef.current) return;
@@ -73,37 +89,16 @@ export function AppTransferPanel({ onUploadClick }: { onUploadClick?: () => void
 
   useEffect(() => {
     if (remaining === "expired") {
+      queryClient.invalidateQueries({ queryKey: ["app-transfers"] });
       queryClient.invalidateQueries({ queryKey: ["app-transfer"] });
     }
   }, [remaining, queryClient]);
 
-  if (!build || !build.isAvailable) {
-    return (
-      <section className="rounded-2xl border border-violet-500/30 bg-violet-950/40 p-6">
-        <h3 className="font-display text-lg font-semibold text-foreground flex items-center gap-2">
-          <Smartphone className="size-5 text-violet-300" /> Get the App
-        </h3>
-        <p className="text-sm text-muted-foreground mt-2 max-w-prose">
-          {build && !build.isAvailable
-            ? "The app is temporarily unavailable while we prepare a new version. Check back shortly."
-            : "The app isn't published yet. Once it's available you'll be able to request a secure 24-hour install link for your Amazon Fire Stick or Android device right here."}
-        </p>
-        {onUploadClick && (
-          <Button
-            onClick={onUploadClick}
-            className="mt-4 bg-gradient-primary text-primary-foreground shadow-glow hover:opacity-90"
-          >
-            <ShieldCheck className="size-4 mr-1" /> Upload the APK
-          </Button>
-        )}
-      </section>
-    );
-  }
-
   const onRequest = async () => {
     setBusy("request");
     try {
-      await request();
+      await request({ data: { buildId: build.id } });
+      await queryClient.invalidateQueries({ queryKey: ["app-transfers"] });
       await queryClient.invalidateQueries({ queryKey: ["app-transfer"] });
       toast.success("Secure link created — valid for 24 hours");
     } catch (e) {
@@ -116,7 +111,8 @@ export function AppTransferPanel({ onUploadClick }: { onUploadClick?: () => void
   const onDelete = async () => {
     setBusy("delete");
     try {
-      await remove();
+      await remove({ data: { buildId: build.id } });
+      await queryClient.invalidateQueries({ queryKey: ["app-transfers"] });
       await queryClient.invalidateQueries({ queryKey: ["app-transfer"] });
       toast.success("Link deleted — no record kept");
     } catch {
@@ -129,25 +125,44 @@ export function AppTransferPanel({ onUploadClick }: { onUploadClick?: () => void
   const size = formatSize(build.fileSize);
 
   return (
-    <section className="rounded-2xl border border-violet-500/30 bg-violet-950/40 p-5">
+    <article className="rounded-2xl border border-violet-500/30 bg-violet-950/40 p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h3 className="font-display text-lg font-semibold text-foreground flex items-center gap-2">
-            <Smartphone className="size-5 text-violet-300" /> Get the App
-          </h3>
-          <p className="text-sm text-muted-foreground mt-1">
-            Install the BM Support app on your Amazon Fire Stick or Android device using a secure
-            link that only works for 24 hours.
-          </p>
+          <h4 className="font-display text-base font-semibold text-foreground flex items-center gap-2">
+            <Smartphone className="size-4 text-violet-300" />
+            {build.appName || build.fileName}
+          </h4>
+          {build.versionName && (
+            <p className="text-xs text-violet-200 mt-0.5">{build.versionName}</p>
+          )}
         </div>
         <div className="text-xs text-muted-foreground text-right">
-          {build.versionName && <div className="text-foreground font-medium">{build.versionName}</div>}
-          <div>{build.fileName}{size ? ` · ${size}` : ""}</div>
+          {build.fileName}
+          {size ? ` · ${size}` : ""}
         </div>
       </div>
 
       {build.releaseNotes && (
         <p className="mt-3 text-sm text-foreground/80 whitespace-pre-wrap">{build.releaseNotes}</p>
+      )}
+
+      {build.videoPath && (
+        <div className="mt-3 overflow-hidden rounded-xl border border-violet-500/30 bg-black/50">
+          {videoUrl ? (
+            <video
+              src={videoUrl}
+              controls
+              controlsList="nodownload noplaybackrate"
+              disablePictureInPicture
+              onContextMenu={(e) => e.preventDefault()}
+              className="w-full max-h-[300px] bg-black"
+            />
+          ) : (
+            <div className="flex items-center gap-2 p-4 text-xs text-muted-foreground">
+              <Film className="size-4" /> Loading walkthrough…
+            </div>
+          )}
+        </div>
       )}
 
       {!transfer || remaining === "expired" ? (
@@ -215,6 +230,71 @@ export function AppTransferPanel({ onUploadClick }: { onUploadClick?: () => void
           </div>
         </div>
       )}
+    </article>
+  );
+}
+
+export function AppTransferPanel({ onUploadClick }: { onUploadClick?: () => void } = {}) {
+  const fetchBuilds = useServerFn(listAppBuilds);
+  const fetchTransfers = useServerFn(listMyAppTransfers);
+  const now = useTick();
+
+  const { data: builds } = useQuery({
+    queryKey: ["app-builds"],
+    queryFn: () => fetchBuilds(),
+    staleTime: 60_000,
+  });
+  const { data: transfers } = useQuery({
+    queryKey: ["app-transfers"],
+    queryFn: () => fetchTransfers(),
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  });
+
+  const byBuild = useMemo(() => {
+    const map = new Map<string, Transfer>();
+    for (const t of transfers ?? []) if (!map.has(t.buildId)) map.set(t.buildId, t);
+    return map;
+  }, [transfers]);
+
+  if (!builds || builds.length === 0) {
+    return (
+      <section className="rounded-2xl border border-violet-500/30 bg-violet-950/40 p-6">
+        <h3 className="font-display text-lg font-semibold text-foreground flex items-center gap-2">
+          <Smartphone className="size-5 text-violet-300" /> Get the App
+        </h3>
+        <p className="text-sm text-muted-foreground mt-2 max-w-prose">
+          No apps are published yet. Once they're available you'll be able to request a secure
+          24-hour install link for your Amazon Fire Stick or Android device right here.
+        </p>
+        {onUploadClick && (
+          <Button
+            onClick={onUploadClick}
+            className="mt-4 bg-gradient-primary text-primary-foreground shadow-glow hover:opacity-90"
+          >
+            <ShieldCheck className="size-4 mr-1" /> Upload an APK
+          </Button>
+        )}
+      </section>
+    );
+  }
+
+  return (
+    <section className="space-y-4">
+      <div>
+        <h3 className="font-display text-lg font-semibold text-foreground flex items-center gap-2">
+          <Smartphone className="size-5 text-violet-300" /> Get the App
+        </h3>
+        <p className="text-sm text-muted-foreground mt-1">
+          Install our apps on your Amazon Fire Stick or Android device using a secure link that only
+          works for 24 hours. Each app has its own link.
+        </p>
+      </div>
+      <div className="grid gap-4 xl:grid-cols-2">
+        {builds.map((b) => (
+          <AppCard key={b.id} build={b} transfer={byBuild.get(b.id)} now={now} />
+        ))}
+      </div>
     </section>
   );
 }
