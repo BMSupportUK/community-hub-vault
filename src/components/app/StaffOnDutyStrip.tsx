@@ -368,10 +368,13 @@ export function StaffOnDutyStrip({
                 </span>
               ) : daneOverride && isDaneJProfile(p) ? (
                 <DaneStatusLine userId={s.user_id} />
-              ) : (
-                <span>{fmtHMS(shiftElapsed)}</span>
-              )}
+              ) : null}
             </div>
+            <div className="mt-1 flex items-center gap-1 text-[10px] font-semibold text-emerald-300">
+              <Clock className="size-3 shrink-0" />
+              <span>Working {fmtHMS(shiftElapsed)}</span>
+            </div>
+
             <DndCountdown userId={s.user_id} compact className="mt-1" />
             {renderNextShift(s.user_id)}
 
