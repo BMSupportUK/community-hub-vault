@@ -23,6 +23,7 @@ import {
 import { useGuideVideoUrl } from "@/hooks/use-guide-video-url";
 import { AppTransferPanel } from "@/components/app/AppTransferPanel";
 import { AppBuildAdmin } from "@/components/app/AppBuildAdmin";
+import { AppTransfersAdmin } from "@/components/app/AppTransfersAdmin";
 
 import { toast } from "sonner";
 import installHero from "@/assets/install-guides-bg.jpg";
@@ -111,6 +112,7 @@ function InstallGuidesPage() {
   const canManageGuides = hasAny(["admin", "management"]);
   const canManageCategories = canManageGuides;
   const canManagePasscodes = canManageGuides;
+  const canSeeTransfers = hasAny(["admin", "management", "staff"]);
 
   const { tab: tabParam } = Route.useSearch();
   const [tab, setTab] = useState<string>(() => {
@@ -156,10 +158,14 @@ function InstallGuidesPage() {
   const canSeeAppTab = hasLivePasscode || canManagePasscodes;
   useEffect(() => {
     const isRestrictedAdminTab = tab === "categories" || tab === "passcodes" || tab === "app-apk";
-    if ((tab === "get-app" && !canSeeAppTab) || (isRestrictedAdminTab && !canManageGuides)) {
+    if (
+      (tab === "get-app" && !canSeeAppTab) ||
+      (tab === "transfers" && !canSeeTransfers) ||
+      (isRestrictedAdminTab && !canManageGuides)
+    ) {
       setTab("welcome");
     }
-  }, [tab, canSeeAppTab, canManageGuides]);
+  }, [tab, canSeeAppTab, canManageGuides, canSeeTransfers]);
   const [unlocked, setUnlocked] = useState<UnlockedGuide | null>(null);
   const [uploadingFile, setUploadingFile] = useState(false);
 
@@ -462,6 +468,9 @@ function InstallGuidesPage() {
             {canManagePasscodes && (
                <TabsTrigger value="passcodes" className="min-w-0 flex-1 px-2 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">Passcodes</TabsTrigger>
             )}
+            {canSeeTransfers && (
+               <TabsTrigger value="transfers" className="min-w-0 flex-1 px-2 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">Transfers</TabsTrigger>
+            )}
             {canManagePasscodes && (
                <TabsTrigger value="app-apk" className="min-w-0 flex-1 px-2 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">App APK</TabsTrigger>
             )}
@@ -479,6 +488,14 @@ function InstallGuidesPage() {
             <TabsContent value="passcodes" className="mt-6">
               <div className="space-y-8">
                 <GuidePasscodeAdmin />
+              </div>
+            </TabsContent>
+          )}
+
+          {canSeeTransfers && (
+            <TabsContent value="transfers" className="mt-6">
+              <div className="max-w-5xl">
+                <AppTransfersAdmin />
               </div>
             </TabsContent>
           )}

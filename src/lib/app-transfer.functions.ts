@@ -20,6 +20,15 @@ async function requireStaff(context: { supabase: any; userId: string }) {
   if (!data) throw new Error("Forbidden");
 }
 
+/** Staff, management and admin may watch live transfers. */
+async function requireStaffView(context: { supabase: any; userId: string }) {
+  const { data } = await context.supabase.rpc("has_any_role", {
+    _user_id: context.userId,
+    _roles: ["admin", "management", "staff"],
+  });
+  if (!data) throw new Error("Forbidden");
+}
+
 /** Metadata for the current downloadable app build (no storage path exposed). */
 export const getCurrentAppBuild = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -189,37 +198,48 @@ export const updateAppBuild = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
-/** Admin: live transfers with the member they belong to. */
+/** Staff: live transfers with the member they belong to and download progress. */
 export const listAppTransfers = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    await requireStaff(context);
+    await requireStaffView(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const nowIso = new Date().toISOString();
     const { data } = await supabaseAdmin
       .from("app_transfers")
-      .select("id, user_id, issued_at, expires_at, download_count")
+      .select(
+        "id, user_id, issued_at, expires_at, download_count, last_download_at, last_download_status, last_download_started_at, last_download_bytes, last_download_total_bytes",
+      )
       .gt("expires_at", nowIso)
       .order("issued_at", { ascending: false })
       .limit(200);
     const rows = data ?? [];
     const ids = [...new Set(rows.map((r) => r.user_id))];
-    const names = new Map<string, string>();
+    const names = new Map<string, { member: string; username: string | null }>();
     if (ids.length) {
       const { data: profiles } = await supabaseAdmin
         .from("profiles")
         .select("id, display_name, username")
         .in("id", ids);
       for (const p of profiles ?? []) {
-        names.set(p.id, (p.display_name as string) || (p.username as string) || "Member");
+        names.set(p.id, {
+          member: (p.display_name as string) || (p.username as string) || "Member",
+          username: (p.username as string | null) ?? null,
+        });
       }
     }
     return rows.map((r) => ({
       id: r.id as string,
-      member: names.get(r.user_id) ?? "Member",
+      member: names.get(r.user_id)?.member ?? "Member",
+      username: names.get(r.user_id)?.username ?? null,
       issuedAt: r.issued_at as string,
       expiresAt: r.expires_at as string,
       downloads: (r.download_count as number) ?? 0,
+      lastDownloadAt: (r.last_download_at as string | null) ?? null,
+      status: (r.last_download_status as string | null) ?? null,
+      startedAt: (r.last_download_started_at as string | null) ?? null,
+      bytes: Number(r.last_download_bytes ?? 0),
+      totalBytes: r.last_download_total_bytes == null ? null : Number(r.last_download_total_bytes),
     }));
   });
 

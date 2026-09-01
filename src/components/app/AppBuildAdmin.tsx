@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Upload, Loader2, Trash2, Save } from "lucide-react";
+import { Upload, Loader2, Save } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,8 +13,6 @@ import {
   getCurrentAppBuild,
   saveAppBuild,
   updateAppBuild,
-  listAppTransfers,
-  deleteAppTransferAdmin,
 } from "@/lib/app-transfer.functions";
 
 export function AppBuildAdmin() {
@@ -22,17 +20,10 @@ export function AppBuildAdmin() {
   const fetchBuild = useServerFn(getCurrentAppBuild);
   const save = useServerFn(saveAppBuild);
   const update = useServerFn(updateAppBuild);
-  const listTransfers = useServerFn(listAppTransfers);
-  const killTransfer = useServerFn(deleteAppTransferAdmin);
 
   const { data: build } = useQuery({
     queryKey: ["app-build"],
     queryFn: () => fetchBuild(),
-    staleTime: 30_000,
-  });
-  const { data: transfers } = useQuery({
-    queryKey: ["app-transfers-admin"],
-    queryFn: () => listTransfers(),
     staleTime: 30_000,
   });
 
@@ -40,7 +31,6 @@ export function AppBuildAdmin() {
   const [version, setVersion] = useState<string | null>(null);
   const [notes, setNotes] = useState<string | null>(null);
   const [savingMeta, setSavingMeta] = useState(false);
-  const [busyId, setBusyId] = useState<string | null>(null);
 
   const versionValue = version ?? build?.versionName ?? "";
   const notesValue = notes ?? build?.releaseNotes ?? "";
@@ -173,44 +163,6 @@ export function AppBuildAdmin() {
         </p>
       </section>
 
-      <section className="space-y-3">
-        <h3 className="font-display text-lg font-semibold text-foreground">Active transfers</h3>
-        {!transfers?.length ? (
-          <p className="text-sm text-muted-foreground">No live app transfers right now.</p>
-        ) : (
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-            {transfers.map((t) => (
-              <div key={t.id} className="rounded-2xl border border-border bg-card p-4 flex flex-col gap-1.5">
-                <h4 className="font-semibold text-sm text-foreground">{t.member}</h4>
-                <p className="text-xs text-muted-foreground">Issued {new Date(t.issuedAt).toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">Expires {new Date(t.expiresAt).toLocaleString()}</p>
-                <p className="text-xs text-muted-foreground">Downloads: {t.downloads}</p>
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  className="mt-2 self-start"
-                  disabled={busyId === t.id}
-                  onClick={async () => {
-                    setBusyId(t.id);
-                    try {
-                      await killTransfer({ data: { id: t.id } });
-                      await queryClient.invalidateQueries({ queryKey: ["app-transfers-admin"] });
-                      toast.success("Transfer deleted");
-                    } catch {
-                      toast.error("Couldn't delete that transfer");
-                    } finally {
-                      setBusyId(null);
-                    }
-                  }}
-                >
-                  {busyId === t.id ? <Loader2 className="size-4 mr-1 animate-spin" /> : <Trash2 className="size-4 mr-1" />}
-                  Delete
-                </Button>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
     </div>
   );
 }

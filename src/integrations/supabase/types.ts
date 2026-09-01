@@ -250,6 +250,10 @@ export type Database = {
           id: string
           issued_at: string
           last_download_at: string | null
+          last_download_bytes: number
+          last_download_started_at: string | null
+          last_download_status: string | null
+          last_download_total_bytes: number | null
           token: string
           user_id: string
         }
@@ -260,6 +264,10 @@ export type Database = {
           id?: string
           issued_at?: string
           last_download_at?: string | null
+          last_download_bytes?: number
+          last_download_started_at?: string | null
+          last_download_status?: string | null
+          last_download_total_bytes?: number | null
           token: string
           user_id: string
         }
@@ -270,6 +278,10 @@ export type Database = {
           id?: string
           issued_at?: string
           last_download_at?: string | null
+          last_download_bytes?: number
+          last_download_started_at?: string | null
+          last_download_status?: string | null
+          last_download_total_bytes?: number | null
           token?: string
           user_id?: string
         }
