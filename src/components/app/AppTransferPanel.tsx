@@ -169,7 +169,7 @@ export function AppTransferPanel({ onUploadClick }: { onUploadClick?: () => void
           <div className="space-y-3">
             <div className="rounded-xl border border-emerald-400/40 bg-emerald-950/40 p-3">
               <p className="text-[11px] uppercase tracking-wider text-emerald-300/90 font-semibold">
-                Type this into Downloader on your Fire Stick
+                Type this into Downloader on your compatible streaming device
               </p>
               <div className="mt-1 flex items-center justify-between gap-2">
                 <span className="font-mono text-base sm:text-lg tracking-wide text-foreground break-all">
