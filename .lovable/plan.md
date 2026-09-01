@@ -1,18 +1,41 @@
-# Auto-ban known IPTV agent signups
+# Log the device used for each app download
 
-Today the blacklist only matches an exact email address or an exact IP, and only the IP is checked when someone signs up. A reseller who signs up from a fresh throwaway address on a new IP walks straight through. This adds domain-level blocking, checks the email at signup, and seeds a starter list.
+Right now a transfer record shows who requested the link, when the download started and how far it got — but nothing about the device doing the downloading. This adds device detection to the download endpoint and shows it to staff.
 
-## What changes for you
+## What staff will see
 
-- The blacklist gains a third entry type: **email domain**. Blocking `example.com` blocks every address at that domain, now and in future.
-- New signups are screened on **both** their email (exact address and its domain) and their IP. A match applies the banned role immediately, exactly like the current IP rule — the person sees a normal "awaiting approval" flow but can never get in.
-- Existing accounts that match a newly added domain get banned at the moment you add it, the same way adding an email or IP already back-fills bans.
-- The admin blacklist page gets a domain option in the add form, a type filter, and a **Bulk add** box so you can paste many domains/emails/IPs at once (one per line) and see how many were added, skipped as duplicates, or rejected as invalid.
-- A starter list of throwaway and disposable-mail domains commonly used by IPTV resellers is seeded, marked with the reason "Seeded: known IPTV agent / disposable mail". Nothing is irreversible — any seeded row can be deleted from the admin page. Your own known agent domains and addresses go in on top via bulk add.
+Each transfer card in Active transfers gains a device line, e.g.:
 
-## Technical notes
+```text
+Device: Fire TV Stick (Downloader app) · 92.40.x.x
+Device: Android phone (Chrome)
+Device: Windows PC (Edge)
+```
 
-- Migration: add `email_domain` to the `blacklist_kind` enum; rewrite `public.is_blacklisted(_email, _ip)` to also match `email_domain` against the part after `@` (case-insensitive, plus subdomain-safe suffix match), and add a seed insert for the starter domain list.
-- `src/lib/blacklist.functions.ts`: accept `email_domain` in `addBlacklist` with domain validation, back-fill bans by scanning `auth.users` for addresses at that domain, and add a `bulkAddBlacklist` server fn that reuses the same normalise/validate/insert/back-fill path per line and returns per-line results. Kind is inferred per line: contains `@` → email, all digits/colons/dots → ip, otherwise domain.
-- `src/lib/signup-info.functions.ts`: pass the signed-in user's email into the existing `is_blacklisted` call alongside the IP so email and domain hits ban too.
-- `src/routes/_authenticated/_approved/admin-blacklist.tsx`: domain in the kind selector, kind filter on the list, and the bulk-add dialog.
+Where detection is uncertain it shows "Unknown device" with the raw client string kept underneath for staff to expand.
+
+## Detection approach
+
+The download request carries a user-agent string; that is the only reliable signal from a device that never signs in. Map it to a friendly label:
+
+- Downloader / AFTMM / AFTT / AFTKA / "AFT" codes → Fire TV Stick / Fire TV model name
+- Android TV boxes, NVIDIA SHIELD, Chromecast/Google TV
+- Android phone/tablet (with browser name)
+- iPhone / iPad / Mac
+- Windows PC / Linux, plus curl/wget/other tooling
+
+Also record client IP (from the forwarded header) and country when it is available, so staff can spot a link being shared to another location.
+
+## Technical details
+
+1. Migration on `public.app_transfers`, adding nullable columns:
+   - `last_download_user_agent text`
+   - `last_download_device text` (friendly label)
+   - `last_download_ip text`
+   - No new grants needed; the table is written by the service role and read through the existing staff-only server function.
+2. New helper `src/lib/device-from-user-agent.ts` — pure function mapping a UA string to a friendly device label, unit-testable and reusable.
+3. `src/routes/api/public/a/$token.ts` — on the initial (non-range-continuation) request, read `user-agent` and forwarded IP headers and write all three columns alongside the existing download-start update.
+4. `src/lib/app-transfer.functions.ts` — include `device`, `userAgent` and `ip` in the staff listing payload.
+5. `src/components/app/AppTransfersAdmin.tsx` — render the device line, with the raw user-agent behind a small "details" toggle.
+
+Existing rows keep working: device fields stay null and the card simply omits the line until the next download.
