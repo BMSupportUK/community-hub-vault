@@ -317,7 +317,7 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
           </div>
           {roleOptions.length > 0 && (
             <div className="mt-3 flex flex-wrap items-center gap-1.5">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-white/50">Filter by role</span>
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Filter by role</span>
               {["all", ...roleOptions].map((r) => (
                 <button
                   key={r}
