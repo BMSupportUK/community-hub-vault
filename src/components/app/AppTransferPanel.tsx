@@ -81,7 +81,7 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
   useEffect(() => {
     if (!shortUrl || !canvasRef.current) return;
     QRCode.toCanvas(canvasRef.current, `https://${shortUrl}`, {
-      width: 132,
+      width: 88,
       margin: 1,
       color: { dark: "#0b0616", light: "#ffffff" },
     }).catch(() => {});
