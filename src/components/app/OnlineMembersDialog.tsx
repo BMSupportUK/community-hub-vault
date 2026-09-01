@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Users, User, UserPlus, Check, Clock, EyeOff, Eye, Search } from "lucide-react";
+import { Users, User, UserPlus, Check, Clock, EyeOff, Eye, Search, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useTalkChannelPresentUsers } from "@/hooks/use-talk-channel-presence";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogClose, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Nameplate } from "@/components/app/Nameplate";
@@ -314,6 +314,15 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
                 className="pl-8 bg-surface-2/70 border-border text-foreground placeholder:text-muted-foreground focus-visible:border-primary"
               />
             </div>
+            <DialogClose asChild>
+              <button
+                type="button"
+                aria-label="Close members"
+                className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-surface-2 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <X className="size-5" />
+              </button>
+            </DialogClose>
           </div>
           {roleOptions.length > 0 && (
             <div className="mt-3 flex flex-wrap items-center gap-1.5">
