@@ -301,15 +301,31 @@ export const listAppTransfers = createServerFn({ method: "GET" })
     await requireStaffView(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const nowIso = new Date().toISOString();
+    // Completed downloads are kept for 24 hours, then purged automatically.
+    const cutoff = new Date(Date.now() - 24 * 3_600_000).toISOString();
+    await supabaseAdmin
+      .from("app_transfers")
+      .delete()
+      .eq("last_download_status", "completed")
+      .lt("last_download_at", cutoff);
     const { data } = await supabaseAdmin
       .from("app_transfers")
       .select(
-        "id, user_id, issued_at, expires_at, download_count, last_download_at, last_download_status, last_download_started_at, last_download_bytes, last_download_total_bytes, last_download_device, last_download_user_agent, last_download_ip",
+        "id, user_id, build_id, token, issued_at, expires_at, download_count, last_download_at, last_download_status, last_download_started_at, last_download_bytes, last_download_total_bytes, last_download_device, last_download_user_agent, last_download_ip",
       )
-      .gt("expires_at", nowIso)
       .order("issued_at", { ascending: false })
       .limit(200);
     const rows = data ?? [];
+    const buildIds = [...new Set(rows.map((r) => r.build_id).filter(Boolean) as string[])];
+    const appNames = new Map<string, string>();
+    if (buildIds.length) {
+      const { data: builds } = await supabaseAdmin
+        .from("app_builds")
+        .select("id, app_name, file_name")
+        .in("id", buildIds);
+      for (const b of builds ?? [])
+        appNames.set(b.id as string, ((b.app_name as string | null) || (b.file_name as string)) ?? "App");
+    }
     const ids = [...new Set(rows.map((r) => r.user_id))];
     const names = new Map<string, { member: string; username: string | null }>();
     if (ids.length) {
