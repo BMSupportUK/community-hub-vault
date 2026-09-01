@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import QRCode from "qrcode";
-import { Smartphone, Copy, Download, Trash2, Loader2, ShieldCheck, Clock, Film, Eye } from "lucide-react";
+import { Smartphone, Copy, Download, Trash2, Loader2, ShieldCheck, Clock, Film, Eye, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,7 +12,9 @@ import {
   listMyAppTransfers,
   requestAppTransfer,
   deleteMyAppTransfer,
+  requestAppDownloadAccess,
 } from "@/lib/app-transfer.functions";
+import { useAuth } from "@/hooks/use-auth";
 
 type Build = Awaited<ReturnType<typeof listAppBuilds>>[number];
 type Transfer = Awaited<ReturnType<typeof listMyAppTransfers>>[number];
@@ -284,19 +286,67 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
   );
 }
 
+/** Members without the subscriber role ask staff for access instead of getting a link. */
+function RequestAccessPanel() {
+  const askAccess = useServerFn(requestAppDownloadAccess);
+  const [busy, setBusy] = useState(false);
+  const [sent, setSent] = useState(false);
+
+  const onAsk = async () => {
+    setBusy(true);
+    try {
+      const res = await askAccess();
+      setSent(true);
+      toast.success(
+        res?.alreadySent
+          ? "Your request is already with the admin team"
+          : "Request sent — an admin has been notified",
+      );
+    } catch {
+      toast.error("Couldn't send your request, please try again");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <section className="rounded-2xl border border-violet-500/30 bg-violet-950/40 p-6">
+      <h3 className="font-display text-lg font-semibold text-foreground flex items-center gap-2">
+        <Lock className="size-5 text-violet-300" /> Download Link
+      </h3>
+      <p className="text-sm text-muted-foreground mt-2 max-w-prose">
+        The BM App Store download section is available to subscribers. Request access and an admin
+        will be notified to review your account.
+      </p>
+      <Button
+        onClick={onAsk}
+        disabled={busy || sent}
+        className="mt-4 bg-gradient-primary text-primary-foreground shadow-glow hover:opacity-90"
+      >
+        {busy ? <Loader2 className="size-4 mr-1 animate-spin" /> : <ShieldCheck className="size-4 mr-1" />}
+        {sent ? "Request sent" : "Request access"}
+      </Button>
+    </section>
+  );
+}
+
 export function AppTransferPanel({ onUploadClick }: { onUploadClick?: () => void } = {}) {
   const fetchBuilds = useServerFn(listAppBuilds);
   const fetchTransfers = useServerFn(listMyAppTransfers);
   const now = useTick();
+  const { hasAny } = useAuth();
+  const canDownload = hasAny(["subscriber", "admin", "management", "staff"]);
 
   const { data: builds } = useQuery({
     queryKey: ["app-builds"],
     queryFn: () => fetchBuilds(),
     staleTime: 60_000,
+    enabled: canDownload,
   });
   const { data: transfers } = useQuery({
     queryKey: ["app-transfers"],
     queryFn: () => fetchTransfers(),
+    enabled: canDownload,
     refetchInterval: 60_000,
     staleTime: 30_000,
   });
@@ -306,6 +356,8 @@ export function AppTransferPanel({ onUploadClick }: { onUploadClick?: () => void
     for (const t of transfers ?? []) if (!map.has(t.buildId)) map.set(t.buildId, t);
     return map;
   }, [transfers]);
+
+  if (!canDownload) return <RequestAccessPanel />;
 
   if (!builds || builds.length === 0) {
     return (

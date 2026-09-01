@@ -370,3 +370,40 @@ export const deleteAppTransferAdmin = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true as const };
   });
+
+/**
+ * Non-subscriber members can ask for access to the BM App Store download
+ * section. This notifies staff/admin rather than issuing a link.
+ */
+export const requestAppDownloadAccess = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("display_name, username")
+      .eq("id", context.userId)
+      .maybeSingle();
+    const who = profile?.display_name || profile?.username || "A member";
+
+    // Don't spam: one open request per member per hour.
+    const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const { data: recent } = await supabaseAdmin
+      .from("staff_notifications")
+      .select("id")
+      .eq("kind", "app_download_access_request")
+      .eq("entity_id", context.userId)
+      .gte("created_at", since)
+      .limit(1);
+    if (recent && recent.length) return { ok: true as const, alreadySent: true };
+
+    const { error } = await supabaseAdmin.from("staff_notifications").insert({
+      kind: "app_download_access_request",
+      title: "App download access requested",
+      body: `${who} wants access to the BM App Store download section.`,
+      link_path: "/install-guides?tab=get-app",
+      entity_id: context.userId,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true as const, alreadySent: false };
+  });
