@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { deviceFromUserAgent, clientIpFromHeaders } from "@/lib/device-from-user-agent";
 
 // GET /api/public/a/:token
 // Streams the current APK to a device that presents a live transfer token.
@@ -44,11 +45,20 @@ export const Route = createFileRoute("/api/public/a/$token")({
         const rangeHeader = request.headers.get("range");
         const isRangeContinuation = !!rangeHeader && !/^bytes=0-/.test(rangeHeader);
 
+        // Log which device is pulling the file. The Downloader app never signs
+        // in, so the user-agent + source IP are the only signals we get.
+        const userAgent = request.headers.get("user-agent");
+        const deviceLabel = deviceFromUserAgent(userAgent);
+        const clientIp = clientIpFromHeaders(request.headers);
+
         await supabaseAdmin
           .from("app_transfers")
           .update({
             download_count:
               (transfer.download_count ?? 0) + (isRangeContinuation ? 0 : 1),
+            last_download_user_agent: userAgent,
+            last_download_device: deviceLabel,
+            last_download_ip: clientIp,
 
             last_download_at: nowIso,
             last_download_started_at: nowIso,

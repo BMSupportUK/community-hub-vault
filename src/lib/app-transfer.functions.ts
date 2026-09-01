@@ -208,7 +208,7 @@ export const listAppTransfers = createServerFn({ method: "GET" })
     const { data } = await supabaseAdmin
       .from("app_transfers")
       .select(
-        "id, user_id, issued_at, expires_at, download_count, last_download_at, last_download_status, last_download_started_at, last_download_bytes, last_download_total_bytes",
+        "id, user_id, issued_at, expires_at, download_count, last_download_at, last_download_status, last_download_started_at, last_download_bytes, last_download_total_bytes, last_download_device, last_download_user_agent, last_download_ip",
       )
       .gt("expires_at", nowIso)
       .order("issued_at", { ascending: false })
@@ -240,6 +240,9 @@ export const listAppTransfers = createServerFn({ method: "GET" })
       startedAt: (r.last_download_started_at as string | null) ?? null,
       bytes: Number(r.last_download_bytes ?? 0),
       totalBytes: r.last_download_total_bytes == null ? null : Number(r.last_download_total_bytes),
+      device: (r.last_download_device as string | null) ?? null,
+      userAgent: (r.last_download_user_agent as string | null) ?? null,
+      ip: (r.last_download_ip as string | null) ?? null,
     }));
   });
 
