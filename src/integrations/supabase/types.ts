@@ -2807,53 +2807,6 @@ export type Database = {
         }
         Relationships: []
       }
-      guide_passcodes: {
-        Row: {
-          blog_id: string
-          code: string | null
-          code_hash: string
-          created_at: string
-          expires_at: string
-          id: string
-          issued_at: string
-          revoked_at: string | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          blog_id: string
-          code?: string | null
-          code_hash: string
-          created_at?: string
-          expires_at: string
-          id?: string
-          issued_at?: string
-          revoked_at?: string | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          blog_id?: string
-          code?: string | null
-          code_hash?: string
-          created_at?: string
-          expires_at?: string
-          id?: string
-          issued_at?: string
-          revoked_at?: string | null
-          updated_at?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "guide_passcodes_blog_id_fkey"
-            columns: ["blog_id"]
-            isOneToOne: false
-            referencedRelation: "install_blogs"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       hero_boxes: {
         Row: {
           description: string
