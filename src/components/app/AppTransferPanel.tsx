@@ -69,7 +69,6 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
   const remove = useServerFn(deleteMyAppTransfer);
   const [busy, setBusy] = useState<"request" | "delete" | null>(null);
   const [open, setOpen] = useState(false);
-  const cardCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const dialogCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const videoUrl = useDemoVideoUrl(build.videoPath);
 
@@ -80,15 +79,6 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
   }, [transfer]);
 
   const remaining = countdown(transfer?.expiresAt, now);
-
-  useEffect(() => {
-    if (!shortUrl || !cardCanvasRef.current) return;
-    QRCode.toCanvas(cardCanvasRef.current, `https://${shortUrl}`, {
-      width: 80,
-      margin: 1,
-      color: { dark: "#0b0616", light: "#ffffff" },
-    }).catch(() => {});
-  }, [shortUrl]);
 
   useEffect(() => {
     if (!open || !shortUrl || !dialogCanvasRef.current) return;
