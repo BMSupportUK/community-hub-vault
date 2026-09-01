@@ -287,16 +287,26 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
       </DialogTrigger>
 
       <DialogContent
-        className="max-w-none w-screen h-screen sm:h-screen rounded-none border-0 p-0 gap-0 flex flex-col overflow-hidden bg-neutral-950"
+        className="max-w-none w-screen h-screen sm:h-screen rounded-none border-0 p-0 gap-0 flex flex-col overflow-hidden bg-background"
       >
-        <DialogHeader className="border-b border-white/10 px-5 py-4 text-left">
+        {/* Pub illustration backdrop, blended behind the whole directory */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 -z-10 bg-cover bg-center opacity-25"
+          style={{ backgroundImage: `url(${pubBg.url})` }}
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-background/90 via-background/80 to-background"
+        />
+        <DialogHeader className="border-b border-border px-5 py-4 text-left">
           <div className="flex flex-wrap items-center gap-3">
-            <DialogTitle className="flex items-center gap-2 text-white">
-              <Users className="size-5" />
+            <DialogTitle className="flex items-center gap-2 text-foreground">
+              <Users className="size-5 text-primary" />
               Members
             </DialogTitle>
             <div className="relative ml-auto w-full max-w-xs">
-              <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-white/50" />
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
