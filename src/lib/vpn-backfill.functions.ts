@@ -1,5 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import {
+  proxycheckBatchSize,
+  proxycheckUrl,
+  proxycheckVerdict,
+} from "./proxycheck.server";
 
 interface PcEntry {
   proxy?: string;
@@ -18,10 +23,10 @@ async function proxycheckBatch(ips: string[]): Promise<Record<string, PcEntry>> 
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), 8000);
   try {
-    const res = await fetch(
-      `https://proxycheck.io/v2/${ips.map(encodeURIComponent).join(",")}?vpn=1&asn=1`,
-      { signal: ctrl.signal, headers: { Accept: "application/json" } },
-    );
+    const res = await fetch(proxycheckUrl(ips), {
+      signal: ctrl.signal,
+      headers: { Accept: "application/json" },
+    });
     if (!res.ok) return {};
     const json = (await res.json()) as Record<string, unknown>;
     const out: Record<string, PcEntry> = {};
@@ -64,16 +69,18 @@ export const backfillVpnDetection = createServerFn({ method: "POST" })
     const cleaned = list.filter((r) => r.ip && !isPrivateIp(r.ip));
     const uniqueIps = Array.from(new Set(cleaned.map((r) => r.ip)));
 
-    // proxycheck.io free tier accepts up to ~100 IPs per request
+    // Batch size and throttling depend on whether a paid key is configured.
+    const batchSize = proxycheckBatchSize();
     const chunks: string[][] = [];
-    for (let i = 0; i < uniqueIps.length; i += 50) chunks.push(uniqueIps.slice(i, i + 50));
+    for (let i = 0; i < uniqueIps.length; i += batchSize)
+      chunks.push(uniqueIps.slice(i, i + batchSize));
 
     const lookup: Record<string, PcEntry> = {};
     for (const chunk of chunks) {
       const result = await proxycheckBatch(chunk);
       Object.assign(lookup, result);
       // small delay between chunks to be polite
-      await new Promise((r) => setTimeout(r, 250));
+      await new Promise((r) => setTimeout(r, batchSize > 50 ? 100 : 250));
     }
 
     let updated = 0;
@@ -81,10 +88,9 @@ export const backfillVpnDetection = createServerFn({ method: "POST" })
     for (const row of cleaned) {
       const entry = lookup[row.ip];
       if (!entry) continue;
-      const proxy = String(entry.proxy ?? "no").toLowerCase() === "yes";
-      const type = String(entry.type ?? "").toLowerCase();
-      const is_vpn = proxy && type === "vpn";
-      const is_proxy = proxy;
+      const verdict = proxycheckVerdict(entry as unknown as Record<string, unknown>);
+      if (!verdict) continue;
+      const { is_vpn, is_proxy } = verdict;
       const provider = entry.operator?.name ?? entry.provider ?? entry.organisation ?? null;
       const { error: upErr } = await supabase.rpc(
         "admin_upsert_signup_vpn" as never,
