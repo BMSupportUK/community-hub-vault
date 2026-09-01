@@ -57,7 +57,7 @@ export const Route = createFileRoute("/api/public/a/$token")({
           async transform(chunk, controller) {
             controller.enqueue(chunk);
             sent += chunk.byteLength;
-            if (sent - lastReported >= 512 * 1024) {
+            if (sent - lastReported >= 256 * 1024) {
               lastReported = sent;
               await supabaseAdmin
                 .from("app_transfers")
