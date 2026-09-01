@@ -298,7 +298,7 @@ export function AppTransferPanel({ onUploadClick }: { onUploadClick?: () => void
           works for 24 hours. Each app has its own link.
         </p>
       </div>
-      <div className="grid gap-4 xl:grid-cols-2">
+      <div className="grid gap-4 grid-cols-1">
         {builds.map((b) => (
           <AppCard key={b.id} build={b} transfer={byBuild.get(b.id)} now={now} />
         ))}
