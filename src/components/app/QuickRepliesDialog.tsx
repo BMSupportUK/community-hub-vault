@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Keyboard, Loader2, Pencil, Plus, Search, Trash2, Users2, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useChannelJump } from "@/components/app/ChannelJump";
 
 export interface QuickReply {
   id: string;
@@ -82,6 +83,10 @@ export function QuickRepliesPill({
   const [body, setBody] = useState("");
   const [shared, setShared] = useState(false);
   const [saving, setSaving] = useState(false);
+  const bodyRef = useRef<HTMLTextAreaElement | null>(null);
+
+  // `#` command inside the shortcut text so saved replies can share channel/page links.
+  const bodyJump = useChannelJump({ value: body, onChange: setBody, editorRef: bodyRef });
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -189,13 +194,20 @@ export function QuickRepliesPill({
                   <X className="size-4" />
                 </button>
               </div>
-              <Textarea
-                value={body}
-                onChange={(e) => setBody(e.target.value)}
-                rows={3}
-                placeholder="The sentence this shortcut types for you…"
-                className="resize-none"
-              />
+              <div className="relative">
+                <Textarea
+                  ref={bodyRef}
+                  value={body}
+                  onChange={(e) => setBody(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (bodyJump.onKeyDown(e)) return;
+                  }}
+                  rows={3}
+                  placeholder="The sentence this shortcut types for you… type # to add a channel or page link"
+                  className="resize-none"
+                />
+                {bodyJump.dropdown}
+              </div>
               <label className="flex items-center gap-2 text-xs text-muted-foreground">
                 <input
                   type="checkbox"
