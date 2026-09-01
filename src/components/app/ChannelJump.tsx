@@ -26,7 +26,6 @@ const SITE_LINKS: { path: string; label: string; group: string }[] = [
   { path: "/packages", label: "Packages", group: "Shop" },
   { path: "/reviews", label: "Reviews", group: "Community" },
   { path: "/forum", label: "Forum", group: "Community" },
-  { path: "/fan-zone", label: "Boro Fan Zone", group: "Community" },
   { path: "/members", label: "Members directory", group: "Community" },
   { path: "/leaderboard", label: "Leaderboard", group: "Community" },
   { path: "/new-content", label: "New content", group: "Community" },
