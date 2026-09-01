@@ -101,10 +101,16 @@ export function useChannelJump({
     setHighlight(0);
   }, [value, editorRef]);
 
+  const isBoroFanZoneChannel = (c: JumpChannel) =>
+    c.name.toLowerCase().includes("boro fan zone") ||
+    c.slug.toLowerCase().includes("boro_fan_zone") ||
+    (c.group_label?.toLowerCase().includes("boro fan zone") ?? false);
+
   const channelResults = useMemo(() => {
     if (query === null) return [];
     const q = query.trim().toLowerCase();
     return channels
+      .filter((c) => !isBoroFanZoneChannel(c))
       .filter((c) => !q || c.slug.toLowerCase().includes(q) || c.name.toLowerCase().includes(q))
       .slice(0, 8);
   }, [channels, query]);
