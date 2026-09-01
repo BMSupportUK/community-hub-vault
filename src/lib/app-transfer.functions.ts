@@ -377,7 +377,12 @@ export const deleteAppTransferAdmin = createServerFn({ method: "POST" })
  */
 export const requestAppDownloadAccess = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((data?: { section?: "download" | "guides" }) => ({
+    section: data?.section === "guides" ? ("guides" as const) : ("download" as const),
+  }))
+  .handler(async ({ data, context }) => {
+    const isGuides = data.section === "guides";
+    const kind = isGuides ? "install_guides_access_request" : "app_download_access_request";
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: profile } = await supabaseAdmin
       .from("profiles")
@@ -391,17 +396,19 @@ export const requestAppDownloadAccess = createServerFn({ method: "POST" })
     const { data: recent } = await supabaseAdmin
       .from("staff_notifications")
       .select("id")
-      .eq("kind", "app_download_access_request")
+      .eq("kind", kind)
       .eq("entity_id", context.userId)
       .gte("created_at", since)
       .limit(1);
     if (recent && recent.length) return { ok: true as const, alreadySent: true };
 
     const { error } = await supabaseAdmin.from("staff_notifications").insert({
-      kind: "app_download_access_request",
-      title: "App download access requested",
-      body: `${who} wants access to the BM App Store download section.`,
-      link_path: "/install-guides?tab=get-app",
+      kind,
+      title: isGuides ? "Install guides access requested" : "App download access requested",
+      body: isGuides
+        ? `${who} wants access to the install guides.`
+        : `${who} wants access to the BM App Store download section.`,
+      link_path: isGuides ? "/install-guides?tab=guides" : "/install-guides?tab=get-app",
       entity_id: context.userId,
     });
     if (error) throw new Error(error.message);
