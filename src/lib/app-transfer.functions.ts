@@ -29,6 +29,21 @@ async function requireStaffView(context: { supabase: any; userId: string }) {
   if (!data) throw new Error("Forbidden");
 }
 
+function mapBuild(data: any) {
+  return {
+    id: data.id as string,
+    appName: (data.app_name as string | null) ?? null,
+    fileName: data.file_name as string,
+    fileSize: (data.file_size as number | null) ?? null,
+    versionName: (data.version_name as string | null) ?? null,
+    releaseNotes: (data.release_notes as string | null) ?? null,
+    isAvailable: !!data.is_available,
+    videoPath: (data.video_path as string | null) ?? null,
+    sortOrder: (data.sort_order as number | null) ?? 0,
+    createdAt: data.created_at as string,
+  };
+}
+
 /** Metadata for the current downloadable app build (no storage path exposed). */
 export const getCurrentAppBuild = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -50,6 +65,78 @@ export const getCurrentAppBuild = createServerFn({ method: "GET" })
       isAvailable: !!data.is_available,
       createdAt: data.created_at as string,
     };
+  });
+
+/** All app cards members can install (available builds only). */
+export const listAppBuilds = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data } = await context.supabase
+      .from("app_builds")
+      .select(
+        "id, app_name, file_name, file_size, version_name, release_notes, is_available, video_path, sort_order, created_at",
+      )
+      .eq("is_current", true)
+      .eq("is_available", true)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: false });
+    return (data ?? []).map(mapBuild);
+  });
+
+/** Admin: every app card, including ones hidden from members. */
+export const listAppBuildsAdmin = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await requireStaff(context);
+    const { data } = await context.supabase
+      .from("app_builds")
+      .select(
+        "id, app_name, file_name, file_size, version_name, release_notes, is_available, video_path, sort_order, created_at",
+      )
+      .eq("is_current", true)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: false });
+    return (data ?? []).map(mapBuild);
+  });
+
+/** All of the caller's live transfers, one per app. */
+export const listMyAppTransfers = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const nowIso = new Date().toISOString();
+    const { data } = await context.supabase
+      .from("app_transfers")
+      .select("id, build_id, token, issued_at, expires_at, download_count")
+      .eq("user_id", context.userId)
+      .gt("expires_at", nowIso)
+      .order("issued_at", { ascending: false });
+    return (data ?? []).map((row: any) => ({
+      id: row.id as string,
+      buildId: row.build_id as string,
+      token: row.token as string,
+      issuedAt: row.issued_at as string,
+      expiresAt: row.expires_at as string,
+      downloads: (row.download_count as number) ?? 0,
+    }));
+  });
+
+/** Admin: removes an app card and its stored files. */
+export const deleteAppBuild = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { id: string }) => data)
+  .handler(async ({ data, context }) => {
+    await requireStaff(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: row } = await supabaseAdmin
+      .from("app_builds")
+      .select("file_path, video_path")
+      .eq("id", data.id)
+      .maybeSingle();
+    const { error } = await supabaseAdmin.from("app_builds").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    if (row?.file_path) await supabaseAdmin.storage.from("app-builds").remove([row.file_path]);
+    if (row?.video_path) await supabaseAdmin.storage.from("app-demos").remove([row.video_path]);
+    return { ok: true as const };
   });
 
 /** The caller's live transfer, if any. */
@@ -78,21 +165,25 @@ export const getMyAppTransfer = createServerFn({ method: "GET" })
 /** Issues a fresh 24-hour transfer, replacing any existing one for the caller. */
 export const requestAppTransfer = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
+  .inputValidator((data?: { buildId?: string | null }) => data ?? {})
+  .handler(async ({ data, context }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const userId = context.userId;
 
-    const { data: build } = await supabaseAdmin
-      .from("app_builds")
-      .select("id, is_available")
-      .eq("is_current", true)
+    let query = supabaseAdmin.from("app_builds").select("id, is_available").eq("is_current", true);
+    if (data?.buildId) query = query.eq("id", data.buildId);
+    const { data: build } = await query
       .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle();
     if (!build || !build.is_available) throw new Error("The app download isn't available right now.");
 
-    // Nothing is retained: the previous transfer is hard-deleted.
-    await supabaseAdmin.from("app_transfers").delete().eq("user_id", userId);
+    // Nothing is retained: the previous transfer for this app is hard-deleted.
+    await supabaseAdmin
+      .from("app_transfers")
+      .delete()
+      .eq("user_id", userId)
+      .eq("build_id", build.id);
 
     const expiresAt = new Date(Date.now() + TRANSFER_TTL_MS);
     let token = makeToken();
@@ -103,7 +194,7 @@ export const requestAppTransfer = createServerFn({ method: "POST" })
         token,
         expires_at: expiresAt.toISOString(),
       });
-      if (!error) return { token, expiresAt: expiresAt.toISOString() };
+      if (!error) return { token, expiresAt: expiresAt.toISOString(), buildId: build.id as string };
       if (!`${error.message}`.toLowerCase().includes("duplicate")) throw new Error(error.message);
       token = makeToken();
     }
@@ -113,11 +204,11 @@ export const requestAppTransfer = createServerFn({ method: "POST" })
 /** Hard-deletes the caller's transfer so the link stops working and no record remains. */
 export const deleteMyAppTransfer = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const { error } = await context.supabase
-      .from("app_transfers")
-      .delete()
-      .eq("user_id", context.userId);
+  .inputValidator((data?: { buildId?: string | null }) => data ?? {})
+  .handler(async ({ data, context }) => {
+    let del = context.supabase.from("app_transfers").delete().eq("user_id", context.userId);
+    if (data?.buildId) del = del.eq("build_id", data.buildId);
+    const { error } = await del;
     if (error) throw new Error(error.message);
     return { ok: true as const };
   });
@@ -133,17 +224,14 @@ export const saveAppBuild = createServerFn({ method: "POST" })
       versionName?: string | null;
       releaseNotes?: string | null;
       isAvailable?: boolean;
+      appName?: string | null;
+      videoPath?: string | null;
+      sortOrder?: number | null;
     }) => data,
   )
   .handler(async ({ data, context }) => {
     await requireStaff(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-
-    // Only one current build: retire the rest (and their transfers cascade away).
-    const { data: previous } = await supabaseAdmin
-      .from("app_builds")
-      .select("id, file_path")
-      .eq("is_current", true);
 
     const { data: inserted, error } = await supabaseAdmin
       .from("app_builds")
@@ -153,6 +241,9 @@ export const saveAppBuild = createServerFn({ method: "POST" })
         file_size: data.fileSize ?? null,
         version_name: data.versionName ?? null,
         release_notes: data.releaseNotes ?? null,
+        app_name: data.appName ?? null,
+        video_path: data.videoPath ?? null,
+        sort_order: data.sortOrder ?? 0,
         is_current: true,
         is_available: data.isAvailable ?? true,
         created_by: context.userId,
@@ -160,14 +251,6 @@ export const saveAppBuild = createServerFn({ method: "POST" })
       .select("id")
       .maybeSingle();
     if (error) throw new Error(error.message);
-
-    for (const row of previous ?? []) {
-      await supabaseAdmin.from("app_builds").delete().eq("id", row.id);
-      if (row.file_path && row.file_path !== data.filePath) {
-        await supabaseAdmin.storage.from("app-builds").remove([row.file_path]);
-      }
-    }
-
     return { id: inserted?.id as string };
   });
 
@@ -180,19 +263,27 @@ export const updateAppBuild = createServerFn({ method: "POST" })
       versionName?: string | null;
       releaseNotes?: string | null;
       isAvailable?: boolean;
+      appName?: string | null;
+      videoPath?: string | null;
+      sortOrder?: number | null;
+      filePath?: string | null;
+      fileName?: string | null;
+      fileSize?: number | null;
     }) => data,
   )
   .handler(async ({ data, context }) => {
     await requireStaff(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const patch: {
-      version_name?: string | null;
-      release_notes?: string | null;
-      is_available?: boolean;
-    } = {};
+    const patch: Record<string, unknown> = {};
     if (data.versionName !== undefined) patch.version_name = data.versionName;
     if (data.releaseNotes !== undefined) patch.release_notes = data.releaseNotes;
     if (data.isAvailable !== undefined) patch.is_available = data.isAvailable;
+    if (data.appName !== undefined) patch.app_name = data.appName;
+    if (data.videoPath !== undefined) patch.video_path = data.videoPath;
+    if (data.sortOrder !== undefined && data.sortOrder !== null) patch.sort_order = data.sortOrder;
+    if (data.filePath !== undefined && data.filePath) patch.file_path = data.filePath;
+    if (data.fileName !== undefined && data.fileName) patch.file_name = data.fileName;
+    if (data.fileSize !== undefined) patch.file_size = data.fileSize;
     const { error } = await supabaseAdmin.from("app_builds").update(patch).eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true as const };
