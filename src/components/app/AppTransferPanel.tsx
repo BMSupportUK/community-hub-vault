@@ -146,6 +146,14 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
         <p className="mt-3 text-sm text-foreground/80 whitespace-pre-wrap">{build.releaseNotes}</p>
       )}
 
+      {build.installInstructions && (
+        <div className="mt-3 rounded-xl border border-violet-500/30 bg-violet-500/10 p-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-violet-200">Install instructions</p>
+          <p className="mt-1 text-sm text-foreground/85 whitespace-pre-wrap">{build.installInstructions}</p>
+        </div>
+      )}
+
+
       {build.videoPath && (
         <div className="mt-3 overflow-hidden rounded-xl border border-violet-500/30 bg-black/50">
           {videoUrl ? (

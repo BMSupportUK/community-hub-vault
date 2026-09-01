@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Upload, Loader2, Save, Plus, Trash2, Film, X } from "lucide-react";
+import { Upload, Loader2, Save, Plus, Trash2, Film, X, ArrowUp, ArrowDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -41,13 +41,25 @@ async function uploadVideo(file: File) {
 }
 
 /** Editable card for one app in the store. */
-function BuildCard({ build, onChanged }: { build: Build; onChanged: () => Promise<void> }) {
+function BuildCard({
+  build,
+  onChanged,
+  onMove,
+  canMoveUp,
+  canMoveDown,
+}: {
+  build: Build;
+  onChanged: () => Promise<void>;
+  onMove: (dir: -1 | 1) => Promise<void>;
+  canMoveUp: boolean;
+  canMoveDown: boolean;
+}) {
   const update = useServerFn(updateAppBuild);
   const remove = useServerFn(deleteAppBuild);
   const [appName, setAppName] = useState(build.appName ?? "");
   const [version, setVersion] = useState(build.versionName ?? "");
   const [notes, setNotes] = useState(build.releaseNotes ?? "");
-  const [sortOrder, setSortOrder] = useState(String(build.sortOrder ?? 0));
+  const [instructions, setInstructions] = useState(build.installInstructions ?? "");
   const [busy, setBusy] = useState<null | "save" | "apk" | "video" | "delete">(null);
 
   const patch = async (data: Parameters<typeof update>[0]["data"], msg?: string) => {
@@ -65,7 +77,7 @@ function BuildCard({ build, onChanged }: { build: Build; onChanged: () => Promis
           appName: appName || null,
           versionName: version || null,
           releaseNotes: notes || null,
-          sortOrder: Number(sortOrder) || 0,
+          installInstructions: instructions || null,
         },
         "App details saved",
       );
@@ -138,6 +150,26 @@ function BuildCard({ build, onChanged }: { build: Build; onChanged: () => Promis
             {build.videoPath ? " · video attached" : ""}
           </p>
         </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="secondary"
+            size="icon"
+            aria-label="Move up"
+            disabled={!canMoveUp}
+            onClick={() => onMove(-1).catch(() => toast.error("Couldn't reorder"))}
+          >
+            <ArrowUp className="size-4" />
+          </Button>
+          <Button
+            variant="secondary"
+            size="icon"
+            aria-label="Move down"
+            disabled={!canMoveDown}
+            onClick={() => onMove(1).catch(() => toast.error("Couldn't reorder"))}
+          >
+            <ArrowDown className="size-4" />
+          </Button>
+        </div>
         <label className="flex items-center gap-2 text-sm text-foreground">
           <Switch
             checked={build.isAvailable}
@@ -156,18 +188,18 @@ function BuildCard({ build, onChanged }: { build: Build; onChanged: () => Promis
           <Label>Version name</Label>
           <Input value={version} onChange={(e) => setVersion(e.target.value)} placeholder="e.g. 1.4.0" />
         </div>
-        <div>
-          <Label>Order</Label>
-          <Input
-            type="number"
-            value={sortOrder}
-            onChange={(e) => setSortOrder(e.target.value)}
-            className="max-w-[120px]"
-          />
-        </div>
         <div className="sm:col-span-2">
           <Label>Release notes</Label>
           <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} placeholder="What's new in this build" />
+        </div>
+        <div className="sm:col-span-2">
+          <Label>Install instructions</Label>
+          <Textarea
+            value={instructions}
+            onChange={(e) => setInstructions(e.target.value)}
+            rows={4}
+            placeholder="Step-by-step install steps members will see on this app's card"
+          />
         </div>
       </div>
 
@@ -356,6 +388,18 @@ export function AppBuildAdmin() {
     staleTime: 30_000,
   });
 
+  const update = useServerFn(updateAppBuild);
+
+  const move = async (index: number, dir: -1 | 1) => {
+    const list = [...(builds ?? [])];
+    const target = index + dir;
+    if (target < 0 || target >= list.length) return;
+    const [item] = list.splice(index, 1);
+    list.splice(target, 0, item);
+    await Promise.all(list.map((b, i) => update({ data: { id: b.id, sortOrder: i } })));
+    await refresh();
+  };
+
   const refresh = async () => {
     await queryClient.invalidateQueries({ queryKey: ["app-builds-admin"] });
     await queryClient.invalidateQueries({ queryKey: ["app-builds"] });
@@ -368,7 +412,16 @@ export function AppBuildAdmin() {
       {(builds ?? []).length === 0 ? (
         <p className="text-sm text-muted-foreground">No apps in the store yet.</p>
       ) : (
-        (builds ?? []).map((b) => <BuildCard key={b.id} build={b} onChanged={refresh} />)
+        (builds ?? []).map((b, i, arr) => (
+          <BuildCard
+            key={b.id}
+            build={b}
+            onChanged={refresh}
+            canMoveUp={i > 0}
+            canMoveDown={i < arr.length - 1}
+            onMove={(dir) => move(i, dir)}
+          />
+        ))
       )}
     </div>
   );

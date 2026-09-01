@@ -40,6 +40,7 @@ function mapBuild(data: any) {
     isAvailable: !!data.is_available,
     videoPath: (data.video_path as string | null) ?? null,
     sortOrder: (data.sort_order as number | null) ?? 0,
+    installInstructions: (data.install_instructions as string | null) ?? null,
     createdAt: data.created_at as string,
   };
 }
@@ -74,7 +75,7 @@ export const listAppBuilds = createServerFn({ method: "GET" })
     const { data } = await context.supabase
       .from("app_builds")
       .select(
-        "id, app_name, file_name, file_size, version_name, release_notes, is_available, video_path, sort_order, created_at",
+        "id, app_name, file_name, file_size, version_name, release_notes, is_available, video_path, sort_order, install_instructions, created_at",
       )
       .eq("is_current", true)
       .eq("is_available", true)
@@ -91,7 +92,7 @@ export const listAppBuildsAdmin = createServerFn({ method: "GET" })
     const { data } = await context.supabase
       .from("app_builds")
       .select(
-        "id, app_name, file_name, file_size, version_name, release_notes, is_available, video_path, sort_order, created_at",
+        "id, app_name, file_name, file_size, version_name, release_notes, is_available, video_path, sort_order, install_instructions, created_at",
       )
       .eq("is_current", true)
       .order("sort_order", { ascending: true })
@@ -227,6 +228,7 @@ export const saveAppBuild = createServerFn({ method: "POST" })
       appName?: string | null;
       videoPath?: string | null;
       sortOrder?: number | null;
+      installInstructions?: string | null;
     }) => data,
   )
   .handler(async ({ data, context }) => {
@@ -244,6 +246,7 @@ export const saveAppBuild = createServerFn({ method: "POST" })
         app_name: data.appName ?? null,
         video_path: data.videoPath ?? null,
         sort_order: data.sortOrder ?? 0,
+        install_instructions: data.installInstructions ?? null,
         is_current: true,
         is_available: data.isAvailable ?? true,
         created_by: context.userId,
@@ -266,6 +269,7 @@ export const updateAppBuild = createServerFn({ method: "POST" })
       appName?: string | null;
       videoPath?: string | null;
       sortOrder?: number | null;
+      installInstructions?: string | null;
       filePath?: string | null;
       fileName?: string | null;
       fileSize?: number | null;
@@ -281,6 +285,7 @@ export const updateAppBuild = createServerFn({ method: "POST" })
     if (data.appName !== undefined) patch.app_name = data.appName;
     if (data.videoPath !== undefined) patch.video_path = data.videoPath;
     if (data.sortOrder !== undefined && data.sortOrder !== null) patch.sort_order = data.sortOrder;
+    if (data.installInstructions !== undefined) patch.install_instructions = data.installInstructions;
     if (data.filePath !== undefined && data.filePath) patch.file_path = data.filePath;
     if (data.fileName !== undefined && data.fileName) patch.file_name = data.fileName;
     if (data.fileSize !== undefined) patch.file_size = data.fileSize;

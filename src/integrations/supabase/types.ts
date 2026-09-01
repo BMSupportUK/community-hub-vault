@@ -143,6 +143,7 @@ export type Database = {
           file_path: string
           file_size: number | null
           id: string
+          install_instructions: string | null
           is_available: boolean
           is_current: boolean
           release_notes: string | null
@@ -159,6 +160,7 @@ export type Database = {
           file_path: string
           file_size?: number | null
           id?: string
+          install_instructions?: string | null
           is_available?: boolean
           is_current?: boolean
           release_notes?: string | null
@@ -175,6 +177,7 @@ export type Database = {
           file_path?: string
           file_size?: number | null
           id?: string
+          install_instructions?: string | null
           is_available?: boolean
           is_current?: boolean
           release_notes?: string | null
