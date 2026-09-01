@@ -115,6 +115,26 @@ export function AppTransfersAdmin() {
                 )}
                 <p className="text-xs text-muted-foreground">Downloads started: {t.downloads}</p>
 
+                {(t.device || t.userAgent) && (
+                  <div className="text-xs text-muted-foreground">
+                    <p className="truncate">
+                      <span className="font-medium text-foreground/80">Device:</span>{" "}
+                      {t.device || "Unknown device"}
+                      {t.ip ? ` \u00b7 ${t.ip}` : ""}
+                    </p>
+                    {t.userAgent && (
+                      <details className="mt-0.5">
+                        <summary className="cursor-pointer text-[11px] text-muted-foreground/80 hover:text-foreground">
+                          Details
+                        </summary>
+                        <p className="mt-1 break-all text-[11px] text-muted-foreground/80">
+                          {t.userAgent}
+                        </p>
+                      </details>
+                    )}
+                  </div>
+                )}
+
                 {t.status && (
                   <div className="mt-1 space-y-1">
                     <Progress value={pct} className="h-2" />
