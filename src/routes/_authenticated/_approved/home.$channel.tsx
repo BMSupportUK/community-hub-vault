@@ -461,6 +461,8 @@ function ChannelPage() {
       });
   };
 
+  const { expand: expandQuickReply } = useQuickReplies();
+
   const mention = useMentionAutocomplete({
     value: draft,
     onChange: setDraft,
