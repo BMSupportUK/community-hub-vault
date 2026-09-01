@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { checkVisitorVpn } from "@/lib/vpn-public-check.functions";
 
-let cached: boolean | null = null;
+export type VisitorVpnStatus = "checking" | "protected" | "unprotected" | "unavailable";
+
+let cached: VisitorVpnStatus | null = null;
 let cachedAt = 0;
 let cachedIp: string | null = null;
-let inflight: Promise<boolean> | null = null;
-const listeners = new Set<(v: boolean) => void>();
+let inflight: Promise<VisitorVpnStatus> | null = null;
+const listeners = new Set<(v: VisitorVpnStatus) => void>();
 const TTL_MS = 5 * 60 * 1000;
 const STORAGE_KEY = "bm_visitor_vpn_cache";
 type NavigatorWithConnection = Navigator & {
@@ -30,7 +32,7 @@ async function getPublicIp(): Promise<string | null> {
   return null;
 }
 
-function refresh(force = false): Promise<boolean> {
+function refresh(force = false): Promise<VisitorVpnStatus> {
   hydrateCache();
   if (inflight) return inflight;
   inflight = (async () => {
@@ -43,14 +45,20 @@ function refresh(force = false): Promise<boolean> {
       }
       cachedIp = ip ?? cachedIp;
       const res = await checkVisitorVpn({ data: { ip: cachedIp ?? undefined } });
-      const flag = !!(res?.is_vpn || res?.is_proxy);
-      cached = flag;
+      const status: VisitorVpnStatus = res?.checked === false
+        ? "unavailable"
+        : res?.is_vpn || res?.is_proxy
+          ? "protected"
+          : "unprotected";
+      cached = status;
       cachedAt = Date.now();
       persistCache();
-      listeners.forEach((l) => l(flag));
-      return flag;
+      listeners.forEach((l) => l(status));
+      return status;
     } catch {
-      return cached ?? false;
+      const status = cached ?? "unavailable";
+      listeners.forEach((l) => l(status));
+      return status;
     } finally {
       inflight = null;
     }
@@ -63,9 +71,13 @@ function hydrateCache() {
   try {
     const raw = window.sessionStorage.getItem(STORAGE_KEY);
     if (!raw) return;
-    const parsed = JSON.parse(raw) as { value?: boolean; at?: number; ip?: string | null };
-    if (typeof parsed.value !== "boolean" || typeof parsed.at !== "number") return;
-    cached = parsed.value;
+    const parsed = JSON.parse(raw) as { value?: unknown; at?: number; ip?: string | null };
+    if (typeof parsed.at !== "number") return;
+    if (parsed.value === true) cached = "protected";
+    else if (parsed.value === false) cached = "unprotected";
+    else if (["protected", "unprotected", "unavailable"].includes(String(parsed.value))) {
+      cached = parsed.value as VisitorVpnStatus;
+    } else return;
     cachedAt = parsed.at;
     cachedIp = parsed.ip ?? null;
   } catch {
@@ -83,16 +95,19 @@ function persistCache() {
 }
 
 export function useVisitorVpn() {
-  const [isVpn, setIsVpn] = useState<boolean>(cached ?? false);
+  const status = useVisitorVpnStatus();
+  return status === "protected";
+}
+
+export function useVisitorVpnStatus() {
+  const [status, setStatus] = useState<VisitorVpnStatus>(cached ?? "checking");
 
   useEffect(() => {
     hydrateCache();
-    if (cached !== null) setIsVpn(cached);
-    const l = (v: boolean) => setIsVpn(v);
+    if (cached !== null) setStatus(cached);
+    const l = (v: VisitorVpnStatus) => setStatus(v);
     listeners.add(l);
-    const start = () => void refresh();
-    const idle = (window as unknown as { requestIdleCallback?: (cb: () => void, opts?: { timeout?: number }) => number }).requestIdleCallback;
-    const idleId = idle ? idle(start, { timeout: 3500 }) : window.setTimeout(start, 2000);
+    void refresh();
 
     // refresh() itself re-checks the public IP first and only skips the
     // lookup when both the cache is fresh and the IP hasn't changed.
@@ -112,11 +127,6 @@ export function useVisitorVpn() {
     return () => {
       listeners.delete(l);
       window.clearInterval(poll);
-      if (idle) {
-        (window as unknown as { cancelIdleCallback?: (id: number) => void }).cancelIdleCallback?.(idleId as number);
-      } else {
-        window.clearTimeout(idleId as number);
-      }
       window.removeEventListener("focus", refreshIfStale);
       window.removeEventListener("online", onOnline);
       connection?.removeEventListener?.("change", onOnline);
@@ -124,5 +134,5 @@ export function useVisitorVpn() {
     };
   }, []);
 
-  return isVpn;
+  return status;
 }
