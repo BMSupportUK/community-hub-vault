@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
@@ -69,7 +69,7 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
   const remove = useServerFn(deleteMyAppTransfer);
   const [busy, setBusy] = useState<"request" | "delete" | null>(null);
   const [open, setOpen] = useState(false);
-  const dialogCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const videoUrl = useDemoVideoUrl(build.videoPath);
 
   const shortUrl = useMemo(() => {
@@ -81,13 +81,24 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
   const remaining = countdown(transfer?.expiresAt, now);
 
   useEffect(() => {
-    if (!open || !shortUrl || !dialogCanvasRef.current) return;
-    QRCode.toCanvas(dialogCanvasRef.current, `https://${shortUrl}`, {
+    let cancel = false;
+    if (!shortUrl) {
+      setQrDataUrl(null);
+      return;
+    }
+    QRCode.toDataURL(`https://${shortUrl}`, {
       width: 192,
       margin: 2,
       color: { dark: "#0b0616", light: "#ffffff" },
-    }).catch(() => {});
-  }, [open, shortUrl]);
+    })
+      .then((url) => {
+        if (!cancel) setQrDataUrl(url);
+      })
+      .catch(() => {});
+    return () => {
+      cancel = true;
+    };
+  }, [shortUrl]);
 
   useEffect(() => {
     if (remaining === "expired") {
@@ -241,7 +252,13 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
 
           <div className="flex flex-col items-center gap-3">
             <div className="rounded-xl bg-white p-2">
-              <canvas ref={dialogCanvasRef} className="block size-[192px]" />
+              {qrDataUrl ? (
+                <img src={qrDataUrl} alt="Secure install link QR code" className="block size-[192px]" />
+              ) : (
+                <div className="flex size-[192px] items-center justify-center">
+                  <Loader2 className="size-5 animate-spin text-violet-600" />
+                </div>
+              )}
             </div>
             <p className="text-xs text-center text-muted-foreground">Scan with your phone camera</p>
           </div>
