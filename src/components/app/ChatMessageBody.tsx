@@ -79,7 +79,7 @@ export function ChatMessageBody({
     return <MentionText content={content} currentUsername={currentUsername} className={className} />;
   }
   const me = currentUsername?.toLowerCase() ?? null;
-  const html = sanitizeRichHtml(autolinkHtml(highlightMentions(censorHtml(content), me)));
+  const html = sanitizeRichHtml(autolinkHtml(markdownLinksToHtml(highlightMentions(censorHtml(content), me))));
   return (
     <div
       className={cn(
