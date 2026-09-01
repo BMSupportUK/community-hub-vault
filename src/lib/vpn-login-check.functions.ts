@@ -2,6 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeader, getRequestIP } from "@tanstack/react-start/server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { fetchProxycheckEntry, proxycheckVerdict } from "./proxycheck.server";
+
 
 const InputSchema = z
   .object({
