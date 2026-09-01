@@ -81,7 +81,7 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
   useEffect(() => {
     if (!shortUrl || !canvasRef.current) return;
     QRCode.toCanvas(canvasRef.current, `https://${shortUrl}`, {
-      width: 132,
+      width: 88,
       margin: 1,
       color: { dark: "#0b0616", light: "#ffffff" },
     }).catch(() => {});
@@ -125,37 +125,36 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
   const size = formatSize(build.fileSize);
 
   return (
-    <article className="rounded-2xl border border-violet-500/30 bg-violet-950/40 p-5">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h4 className="font-display text-base font-semibold text-foreground flex items-center gap-2">
-            <Smartphone className="size-4 text-violet-300" />
+    <article className="rounded-xl border border-violet-500/30 bg-violet-950/40 p-4">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <h4 className="font-display text-sm font-semibold text-foreground flex items-center gap-1.5 truncate">
+            <Smartphone className="size-3.5 text-violet-300 shrink-0" />
             {build.appName || build.fileName}
           </h4>
           {build.versionName && (
-            <p className="text-xs text-violet-200 mt-0.5">{build.versionName}</p>
+            <p className="text-[11px] text-violet-200 mt-0.5 truncate">{build.versionName}</p>
           )}
         </div>
-        <div className="text-xs text-muted-foreground text-right">
+        <div className="text-[11px] text-muted-foreground text-right shrink-0">
           {build.fileName}
           {size ? ` · ${size}` : ""}
         </div>
       </div>
 
       {build.releaseNotes && (
-        <p className="mt-3 text-sm text-foreground/80 whitespace-pre-wrap">{build.releaseNotes}</p>
+        <p className="mt-2 text-xs text-foreground/80 whitespace-pre-wrap line-clamp-3">{build.releaseNotes}</p>
       )}
 
       {build.installInstructions && (
-        <div className="mt-3 rounded-xl border border-violet-500/30 bg-violet-500/10 p-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-violet-200">Install instructions</p>
-          <p className="mt-1 text-sm text-foreground/85 whitespace-pre-wrap">{build.installInstructions}</p>
+        <div className="mt-2 rounded-lg border border-violet-500/30 bg-violet-500/10 p-2">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-violet-200">Install instructions</p>
+          <p className="mt-1 text-xs text-foreground/85 whitespace-pre-wrap line-clamp-3">{build.installInstructions}</p>
         </div>
       )}
 
-
       {build.videoPath && (
-        <div className="mt-3 overflow-hidden rounded-xl border border-violet-500/30 bg-black/50">
+        <div className="mt-2 overflow-hidden rounded-lg border border-violet-500/30 bg-black/50">
           {videoUrl ? (
             <video
               src={videoUrl}
@@ -163,78 +162,79 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
               controlsList="nodownload noplaybackrate"
               disablePictureInPicture
               onContextMenu={(e) => e.preventDefault()}
-              className="w-full max-h-[300px] bg-black"
+              className="w-full max-h-[160px] bg-black"
             />
           ) : (
-            <div className="flex items-center gap-2 p-4 text-xs text-muted-foreground">
-              <Film className="size-4" /> Loading walkthrough…
+            <div className="flex items-center gap-2 p-3 text-xs text-muted-foreground">
+              <Film className="size-3.5" /> Loading walkthrough…
             </div>
           )}
         </div>
       )}
 
       {!transfer || remaining === "expired" ? (
-        <div className="mt-4 flex flex-wrap items-center gap-3">
+        <div className="mt-3 flex flex-col gap-2">
           <Button
+            size="sm"
             onClick={onRequest}
             disabled={busy === "request"}
-            className="bg-gradient-primary text-primary-foreground shadow-glow hover:opacity-90"
+            className="bg-gradient-primary text-primary-foreground shadow-glow hover:opacity-90 w-full"
           >
-            {busy === "request" ? <Loader2 className="size-4 mr-1 animate-spin" /> : <ShieldCheck className="size-4 mr-1" />}
+            {busy === "request" ? <Loader2 className="size-3.5 mr-1 animate-spin" /> : <ShieldCheck className="size-3.5 mr-1" />}
             Request transfer
           </Button>
-          <span className="text-xs text-muted-foreground">
-            You'll get a short code to type into the Downloader app, plus a QR code for phones.
+          <span className="text-[11px] text-muted-foreground leading-tight">
+            Get a short code + QR code for your Amazon Fire Stick or Android device.
           </span>
         </div>
       ) : (
-        <div className="mt-4 grid gap-4 sm:grid-cols-[1fr_auto] items-start">
-          <div className="space-y-3">
-            <div className="rounded-xl border border-emerald-400/40 bg-emerald-950/40 p-3">
-              <p className="text-[11px] uppercase tracking-wider text-emerald-300/90 font-semibold">
-                Type this into Downloader on your compatible streaming device
+        <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_auto] items-start">
+          <div className="space-y-2">
+            <div className="rounded-lg border border-emerald-400/40 bg-emerald-950/40 p-2">
+              <p className="text-[10px] uppercase tracking-wider text-emerald-300/90 font-semibold">
+                Type into Downloader on your device
               </p>
               <div className="mt-1 flex items-center justify-between gap-2">
-                <span className="font-mono text-base sm:text-lg tracking-wide text-foreground break-all">
+                <span className="font-mono text-xs sm:text-sm tracking-wide text-foreground break-all">
                   {shortUrl}
                 </span>
                 <Button
                   size="icon"
                   variant="ghost"
-                  className="size-8 shrink-0 text-emerald-200 hover:text-foreground hover:bg-surface-2/80"
+                  className="size-7 shrink-0 text-emerald-200 hover:text-foreground hover:bg-surface-2/80"
                   title="Copy link"
                   onClick={() => {
                     navigator.clipboard.writeText(`https://${shortUrl}`);
                     toast.success("Link copied");
                   }}
                 >
-                  <Copy className="size-4" />
+                  <Copy className="size-3.5" />
                 </Button>
               </div>
-              <p className="mt-1 text-[11px] text-muted-foreground">
-                Transfer code: <span className="font-mono tracking-[0.2em] text-foreground">{transfer.token}</span>
+              <p className="mt-1 text-[10px] text-muted-foreground">
+                Code: <span className="font-mono tracking-[0.2em] text-foreground">{transfer.token}</span>
               </p>
             </div>
 
-            <p className="text-xs text-violet-200 flex items-center gap-1.5">
-              <Clock className="size-3.5" /> Expires in {remaining} · downloads: {transfer.downloads}
+            <p className="text-[11px] text-violet-200 flex items-center gap-1.5">
+              <Clock className="size-3" /> Expires in {remaining} · downloads: {transfer.downloads}
             </p>
 
             <div className="flex flex-wrap gap-2">
-              <Button asChild size="sm" className="bg-gradient-primary text-primary-foreground hover:opacity-90">
+              <Button size="sm" asChild className="bg-gradient-primary text-primary-foreground hover:opacity-90 h-8">
                 <a href={`/api/public/a/${transfer.token}`}>
-                  <Download className="size-4 mr-1" /> Download to this device
+                  <Download className="size-3.5 mr-1" /> Download
                 </a>
               </Button>
-              <Button size="sm" variant="secondary" disabled={busy === "delete"} onClick={onDelete}>
-                {busy === "delete" ? <Loader2 className="size-4 mr-1 animate-spin" /> : <Trash2 className="size-4 mr-1" />}
-                Delete link
+              <Button size="sm" variant="secondary" className="h-8" disabled={busy === "delete"} onClick={onDelete}>
+                {busy === "delete" ? <Loader2 className="size-3.5 mr-1 animate-spin" /> : <Trash2 className="size-3.5 mr-1" />}
+                Delete
               </Button>
             </div>
           </div>
 
-          <div className="rounded-xl bg-white p-2 justify-self-start">
-            <canvas ref={canvasRef} className="block size-[132px]" />
+          <div className="rounded-lg bg-white p-1.5 justify-self-start">
+            <canvas ref={canvasRef} className="block size-[88px]" />
           </div>
         </div>
       )}
@@ -298,7 +298,7 @@ export function AppTransferPanel({ onUploadClick }: { onUploadClick?: () => void
           works for 24 hours. Each app has its own link.
         </p>
       </div>
-      <div className="grid gap-4 grid-cols-1">
+      <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
         {builds.map((b) => (
           <AppCard key={b.id} build={b} transfer={byBuild.get(b.id)} now={now} />
         ))}
