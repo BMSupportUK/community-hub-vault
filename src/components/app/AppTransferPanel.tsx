@@ -3,8 +3,9 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import QRCode from "qrcode";
-import { Smartphone, Copy, Download, Trash2, Loader2, ShieldCheck, Clock, Film } from "lucide-react";
+import { Smartphone, Copy, Download, Trash2, Loader2, ShieldCheck, Clock, Film, Eye } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import {
   listAppBuilds,
