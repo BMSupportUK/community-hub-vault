@@ -932,7 +932,7 @@ function InstallGuidesPage() {
                 <Input value={editing.title} onChange={(e) => setEditing({ ...editing, title: e.target.value })} />
               </div>
               <div>
-                <Label>Guide file (stored in the app — members need a passcode)</Label>
+                <Label>Guide file (stored in the app — view-only)</Label>
                 <div className="mt-1 flex items-center gap-2">
                   <input
                     id="guide-file-input"
@@ -975,7 +975,7 @@ function InstallGuidesPage() {
                 </div>
               </div>
               <div>
-                <Label>Legacy PDF URL (optional — also passcode protected)</Label>
+                <Label>Legacy PDF URL (optional)</Label>
                 <Input
                   value={editing.pdf_url ?? ""}
                   onChange={(e) => setEditing({ ...editing, pdf_url: e.target.value })}
