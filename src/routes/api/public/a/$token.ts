@@ -38,23 +38,18 @@ export const Route = createFileRoute("/api/public/a/$token")({
 
         const totalBytes = file.size ?? null;
 
-        // A single real download can hit this endpoint several times (the
-        // Downloader app probes the URL, then resumes/retries with Range
-        // headers). Only count a new download when this is a fresh, from-the-
-        // start request and the previous start was more than 30s ago.
+        // Count one download every time a file transfer actually starts from
+        // the beginning, whatever client is used. Range resumes/retries of an
+        // in-flight download are continuations, not new downloads.
         const rangeHeader = request.headers.get("range");
         const isRangeContinuation = !!rangeHeader && !/^bytes=0-/.test(rangeHeader);
-        const lastStarted = transfer.last_download_started_at
-          ? new Date(transfer.last_download_started_at).getTime()
-          : 0;
-        const withinDebounce = Date.now() - lastStarted < 30_000;
-        const countsAsNewDownload = !isRangeContinuation && !withinDebounce;
 
         await supabaseAdmin
           .from("app_transfers")
           .update({
             download_count:
-              (transfer.download_count ?? 0) + (countsAsNewDownload ? 1 : 0),
+              (transfer.download_count ?? 0) + (isRangeContinuation ? 0 : 1),
+
             last_download_at: nowIso,
             last_download_started_at: nowIso,
             last_download_status: "downloading",
