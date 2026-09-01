@@ -381,7 +381,7 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
             <tbody>
               {visible.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-5 py-10 text-center text-white/60">
+                  <td colSpan={6} className="px-5 py-10 text-center text-muted-foreground">
                     No members match your filters.
                   </td>
                 </tr>
