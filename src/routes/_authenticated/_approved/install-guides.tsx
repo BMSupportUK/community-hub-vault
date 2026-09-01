@@ -24,6 +24,8 @@ import { useGuideVideoUrl } from "@/hooks/use-guide-video-url";
 import { AppTransferPanel } from "@/components/app/AppTransferPanel";
 import { AppBuildAdmin } from "@/components/app/AppBuildAdmin";
 import { AppTransfersAdmin } from "@/components/app/AppTransfersAdmin";
+import { useServerFn } from "@tanstack/react-start";
+import { getMyAppTransfer } from "@/lib/app-transfer.functions";
 
 import { toast } from "sonner";
 import installHero from "@/assets/install-guides-bg.jpg";
@@ -460,7 +462,7 @@ function InstallGuidesPage() {
              <TabsTrigger value="welcome" className="min-w-0 flex-1 px-2 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">Welcome</TabsTrigger>
              <TabsTrigger value="guides" className="min-w-0 flex-1 px-2 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">Guides</TabsTrigger>
             {canSeeAppTab && (
-               <TabsTrigger value="get-app" className="min-w-fit flex-[2.35] px-2 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">Request BM Store Download Link</TabsTrigger>
+               <TabsTrigger value="get-app" className="min-w-fit flex-[2.35] px-2 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">{hasLiveTransfer ? "View Your Download URL" : "Request BM Store Download Link"}</TabsTrigger>
             )}
             {canManageCategories && (
                <TabsTrigger value="categories" className="min-w-0 flex-1 px-2 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">Categories</TabsTrigger>
