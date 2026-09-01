@@ -4510,6 +4510,36 @@ export type Database = {
         }
         Relationships: []
       }
+      staff_quick_replies: {
+        Row: {
+          body: string
+          code: string
+          created_at: string
+          id: string
+          shared: boolean
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body: string
+          code: string
+          created_at?: string
+          id?: string
+          shared?: boolean
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          code?: string
+          created_at?: string
+          id?: string
+          shared?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       status_incident_updates: {
         Row: {
           attachments: Json

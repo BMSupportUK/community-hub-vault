@@ -54,6 +54,7 @@ import { resolveGifLink } from "@/lib/giphy.functions";
 import { StaffOnDutySidebar } from "@/components/app/StaffOnDutyStrip";
 import { OnlineMembersDialog } from "@/components/app/OnlineMembersDialog";
 import { TalkChannelMembersPanel } from "@/components/app/TalkChannelMembersPanel";
+import { QuickRepliesPill, useQuickReplies } from "@/components/app/QuickRepliesDialog";
 
 import { cn } from "@/lib/utils";
 import { DEFAULT_AVATAR_URL } from "@/lib/default-avatar";
@@ -460,6 +461,8 @@ function ChannelPage() {
       });
   };
 
+  const { expand: expandQuickReply } = useQuickReplies();
+
   const mention = useMentionAutocomplete({
     value: draft,
     onChange: setDraft,
@@ -482,6 +485,22 @@ function ChannelPage() {
     if (!editor) return;
     setDraft(editor.innerText.replace(/\n$/, ""));
     setDraftHtml(editor.innerHTML);
+  };
+
+  /** Drop a staff quick-reply sentence into the message bar and focus the caret. */
+  const insertQuickReply = (text: string) => {
+    setDraft((d) => (d && !d.endsWith(" ") ? `${d} ${text}` : `${d}${text}`));
+    requestAnimationFrame(() => {
+      const editor = taRef.current;
+      if (!editor) return;
+      editor.focus();
+      const range = document.createRange();
+      range.selectNodeContents(editor);
+      range.collapse(false);
+      const sel = window.getSelection();
+      sel?.removeAllRanges();
+      sel?.addRange(range);
+    });
   };
 
   // Load channel
@@ -2105,6 +2124,25 @@ function ChannelPage() {
                 }}
                 onKeyDown={(e) => {
                   if (mention.onKeyDown(e)) return;
+                  if (e.key === " " || e.key === "Tab") {
+                    const current = e.currentTarget.innerText.replace(/\n$/, "");
+                    const expanded = expandQuickReply(current);
+                    if (expanded) {
+                      e.preventDefault();
+                      setDraft(expanded);
+                      requestAnimationFrame(() => {
+                        const editor = taRef.current;
+                        if (!editor) return;
+                        const range = document.createRange();
+                        range.selectNodeContents(editor);
+                        range.collapse(false);
+                        const sel = window.getSelection();
+                        sel?.removeAllRanges();
+                        sel?.addRange(range);
+                      });
+                      return;
+                    }
+                  }
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
                     send();
@@ -2216,6 +2254,11 @@ function ChannelPage() {
               </button>
             ))}
           </div>
+          {isModOrAdmin && (
+            <div className="shrink-0 border-b border-border px-1.5 py-1.5">
+              <QuickRepliesPill onInsert={insertQuickReply} className="w-full justify-center" />
+            </div>
+          )}
           <div className="flex-1 min-h-0 overflow-hidden">
             {sideTab === "staff" ? <StaffOnDutySidebar /> : <TalkChannelMembersPanel />}
           </div>
