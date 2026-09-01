@@ -301,7 +301,6 @@ export const listAppTransfers = createServerFn({ method: "GET" })
     await requireStaffView(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const nowIso = new Date().toISOString();
-    // Completed downloads are kept for 24 hours, then purged automatically.
     const cutoff = new Date(Date.now() - 24 * 3_600_000).toISOString();
     await supabaseAdmin
       .from("app_transfers")
