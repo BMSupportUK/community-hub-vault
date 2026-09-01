@@ -24,6 +24,8 @@ import {
 import { useGuideVideoUrl } from "@/hooks/use-guide-video-url";
 import { AppTransferPanel } from "@/components/app/AppTransferPanel";
 import { AppBuildAdmin } from "@/components/app/AppBuildAdmin";
+import { GuideAccessApprovals } from "@/components/app/GuideAccessApprovals";
+
 import { AppTransfersAdmin } from "@/components/app/AppTransfersAdmin";
 import { useServerFn } from "@tanstack/react-start";
 import { getMyAppTransfer } from "@/lib/app-transfer.functions";
