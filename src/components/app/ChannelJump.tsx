@@ -26,7 +26,6 @@ const SITE_LINKS: { path: string; label: string; group: string }[] = [
   { path: "/packages", label: "Packages", group: "Shop" },
   { path: "/reviews", label: "Reviews", group: "Community" },
   { path: "/forum", label: "Forum", group: "Community" },
-  { path: "/fan-zone", label: "Boro Fan Zone", group: "Community" },
   { path: "/members", label: "Members directory", group: "Community" },
   { path: "/leaderboard", label: "Leaderboard", group: "Community" },
   { path: "/new-content", label: "New content", group: "Community" },
@@ -102,10 +101,16 @@ export function useChannelJump({
     setHighlight(0);
   }, [value, editorRef]);
 
+  const isBoroFanZoneChannel = (c: JumpChannel) =>
+    c.name.toLowerCase().includes("boro fan zone") ||
+    c.slug.toLowerCase().includes("boro_fan_zone") ||
+    (c.group_label?.toLowerCase().includes("boro fan zone") ?? false);
+
   const channelResults = useMemo(() => {
     if (query === null) return [];
     const q = query.trim().toLowerCase();
     return channels
+      .filter((c) => !isBoroFanZoneChannel(c))
       .filter((c) => !q || c.slug.toLowerCase().includes(q) || c.name.toLowerCase().includes(q))
       .slice(0, 8);
   }, [channels, query]);
