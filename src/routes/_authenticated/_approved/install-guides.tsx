@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Search, X, Pencil, Trash2, ImageIcon, GripVertical, FileText, Play, Film, Copy, Check, Upload, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { AccessRequestPanel } from "@/components/app/AccessRequestPanel";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -112,6 +113,7 @@ function InstallGuidesPage() {
   const { user, hasAny } = useAuth();
   const queryClient = useQueryClient();
   const canManageGuides = hasAny(["admin", "management"]);
+  const canViewGuides = hasAny(["subscriber", "admin", "management", "staff"]);
   const canManageCategories = canManageGuides;
   const canManagePasscodes = canManageGuides;
   const canSeeTransfers = hasAny(["admin", "management", "staff"]);
@@ -558,6 +560,13 @@ function InstallGuidesPage() {
           </TabsContent>
 
           <TabsContent value="guides" className="mt-6">
+            {!canViewGuides ? (
+              <AccessRequestPanel
+                section="guides"
+                title="Install guides are for subscribers"
+                description="The install guides are available to subscribers. Request access and an admin will be notified straight away."
+              />
+            ) : (
             <div
               className="relative rounded-2xl border border-border overflow-hidden p-4 sm:p-6 shadow-glow bg-cover bg-center"
               style={{ backgroundImage: `url(${installHero})` }}
@@ -744,6 +753,7 @@ function InstallGuidesPage() {
               </section>
               </div>
             </div>
+            )}
           </TabsContent>
 
           {canManageCategories && <TabsContent value="categories" className="mt-6">
