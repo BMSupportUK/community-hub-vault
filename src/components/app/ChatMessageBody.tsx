@@ -25,6 +25,15 @@ function autolinkHtml(html: string): string {
   });
 }
 
+/** Render markdown links (used by the `#` channel share command) as anchors. */
+function markdownLinksToHtml(html: string): string {
+  return html.replace(/(<[^>]+>)|\[([^\]\n]+)\]\(([^)\s]+)\)/g, (match, tag: string | undefined, text: string, url: string) => {
+    if (tag) return match;
+    const external = /^https?:\/\//i.test(url);
+    return `<a href="${url}"${external ? ' target="_blank" rel="noopener noreferrer nofollow"' : ""}>${text}</a>`;
+  });
+}
+
 const HTML_TAG_RE = /<(\/?)(b|strong|i|em|u|s|strike|del|ul|ol|li|p|div|br|span|blockquote|code)\b/i;
 
 /** True when the stored message content was produced by the rich composer. */
