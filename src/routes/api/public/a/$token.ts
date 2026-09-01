@@ -36,16 +36,50 @@ export const Route = createFileRoute("/api/public/a/$token")({
           .download(build.file_path);
         if (error || !file) return new Response("Not found", { status: 404 });
 
+        const totalBytes = file.size ?? null;
+
         await supabaseAdmin
           .from("app_transfers")
           .update({
             download_count: (transfer.download_count ?? 0) + 1,
             last_download_at: nowIso,
+            last_download_started_at: nowIso,
+            last_download_status: "downloading",
+            last_download_bytes: 0,
+            last_download_total_bytes: totalBytes,
           })
           .eq("id", transfer.id);
 
+        // Count bytes as they stream so staff can watch live progress.
+        let sent = 0;
+        let lastReported = 0;
+        const progress = new TransformStream<Uint8Array, Uint8Array>({
+          async transform(chunk, controller) {
+            controller.enqueue(chunk);
+            sent += chunk.byteLength;
+            if (sent - lastReported >= 512 * 1024) {
+              lastReported = sent;
+              await supabaseAdmin
+                .from("app_transfers")
+                .update({ last_download_bytes: sent, last_download_status: "downloading" })
+                .eq("id", transfer.id);
+            }
+          },
+          async flush() {
+            await supabaseAdmin
+              .from("app_transfers")
+              .update({
+                last_download_bytes: sent,
+                last_download_status:
+                  totalBytes && sent < totalBytes ? "incomplete" : "completed",
+                last_download_at: new Date().toISOString(),
+              })
+              .eq("id", transfer.id);
+          },
+        });
+
         const name = (build.file_name || "BMSupport.apk").replace(/[^\w.\-]/g, "_");
-        return new Response(file.stream(), {
+        return new Response(file.stream().pipeThrough(progress), {
           status: 200,
           headers: {
             "Content-Type": "application/vnd.android.package-archive",
