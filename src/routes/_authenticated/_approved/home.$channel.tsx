@@ -484,6 +484,22 @@ function ChannelPage() {
     setDraftHtml(editor.innerHTML);
   };
 
+  /** Drop a staff quick-reply sentence into the message bar and focus the caret. */
+  const insertQuickReply = (text: string) => {
+    setDraft((d) => (d && !d.endsWith(" ") ? `${d} ${text}` : `${d}${text}`));
+    requestAnimationFrame(() => {
+      const editor = taRef.current;
+      if (!editor) return;
+      editor.focus();
+      const range = document.createRange();
+      range.selectNodeContents(editor);
+      range.collapse(false);
+      const sel = window.getSelection();
+      sel?.removeAllRanges();
+      sel?.addRange(range);
+    });
+  };
+
   // Load channel
   useEffect(() => {
     setChannel(null);
