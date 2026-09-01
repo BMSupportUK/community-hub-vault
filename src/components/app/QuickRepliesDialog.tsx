@@ -194,13 +194,20 @@ export function QuickRepliesPill({
                   <X className="size-4" />
                 </button>
               </div>
-              <Textarea
-                value={body}
-                onChange={(e) => setBody(e.target.value)}
-                rows={3}
-                placeholder="The sentence this shortcut types for you…"
-                className="resize-none"
-              />
+              <div className="relative">
+                <Textarea
+                  ref={bodyRef}
+                  value={body}
+                  onChange={(e) => setBody(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (bodyJump.onKeyDown(e)) return;
+                  }}
+                  rows={3}
+                  placeholder="The sentence this shortcut types for you… type # to add a channel or page link"
+                  className="resize-none"
+                />
+                {bodyJump.dropdown}
+              </div>
               <label className="flex items-center gap-2 text-xs text-muted-foreground">
                 <input
                   type="checkbox"
