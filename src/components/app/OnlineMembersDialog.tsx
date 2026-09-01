@@ -287,19 +287,19 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
       </DialogTrigger>
 
       <DialogContent
-        className="max-w-none w-screen h-screen sm:h-screen rounded-none border-0 p-0 gap-0 flex flex-col overflow-hidden bg-background"
+        className="isolate max-w-none w-screen h-screen sm:h-screen rounded-none border-0 p-0 gap-0 flex flex-col overflow-hidden bg-transparent"
       >
-        {/* Pub illustration backdrop, blended behind the whole directory */}
+        {/* Full-page pub illustration backdrop */}
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 -z-10 bg-cover bg-center opacity-25"
+          className="pointer-events-none absolute inset-0 z-0 bg-cover bg-center opacity-90"
           style={{ backgroundImage: `url(${pubBg.url})` }}
         />
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-background/90 via-background/80 to-background"
+          className="pointer-events-none absolute inset-0 z-0 bg-background/35"
         />
-        <DialogHeader className="border-b border-border px-5 py-4 text-left">
+        <DialogHeader className="relative z-10 border-b border-border bg-background/65 px-5 py-4 text-left backdrop-blur-sm">
           <div className="flex flex-wrap items-center gap-3">
             <DialogTitle className="flex items-center gap-2 text-foreground">
               <Users className="size-5 text-primary" />
@@ -337,7 +337,7 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
           )}
         </DialogHeader>
 
-        <div className="grid shrink-0 grid-cols-2 border-b border-border bg-surface/60 backdrop-blur px-5 pt-2">
+        <div className="relative z-10 grid shrink-0 grid-cols-2 border-b border-border bg-surface/55 backdrop-blur-md px-5 pt-2">
           <Button
             type="button"
             variant="ghost"
@@ -366,7 +366,7 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
           </Button>
         </div>
 
-        <div className="flex-1 overflow-auto">
+        <div className="relative z-10 flex-1 overflow-auto bg-background/15">
           <table className="w-full min-w-[900px] border-collapse text-sm">
             <thead className="sticky top-0 z-10 bg-surface/90 backdrop-blur">
               <tr className="text-[10px] uppercase tracking-wider text-muted-foreground">
