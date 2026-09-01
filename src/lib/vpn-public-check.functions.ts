@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeader, getRequestIP } from "@tanstack/react-start/server";
 
 type VpnCheckInput = { ip?: string };
+type VpnVerdict = { is_vpn: boolean; is_proxy: boolean };
 
 function normalizeIp(value: string | null | undefined): string | null {
   if (!value) return null;
@@ -22,7 +23,7 @@ function isPrivateIp(ip: string): boolean {
   return false;
 }
 
-async function probe(ip: string): Promise<{ is_vpn: boolean; is_proxy: boolean } | null> {
+async function probe(ip: string): Promise<VpnVerdict | null> {
   try {
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), 3500);
@@ -33,7 +34,13 @@ async function probe(ip: string): Promise<{ is_vpn: boolean; is_proxy: boolean }
     clearTimeout(t);
     if (!res.ok) return null;
     const json = (await res.json()) as Record<string, unknown>;
-    const entry = (json[ip] as Record<string, unknown> | undefined) ?? {};
+    const directEntry = json[ip] as Record<string, unknown> | undefined;
+    const fallbackEntry = Object.values(json).find(
+      (value): value is Record<string, unknown> =>
+        value != null && typeof value === "object" && "proxy" in value,
+    );
+    const entry = directEntry ?? fallbackEntry;
+    if (!entry || !("proxy" in entry)) return null;
     const proxy = String(entry.proxy ?? "no").toLowerCase() === "yes";
     const type = String(entry.type ?? "").toLowerCase();
     return { is_proxy: proxy, is_vpn: proxy && (type === "vpn" || type.includes("vpn")) };
@@ -42,7 +49,7 @@ async function probe(ip: string): Promise<{ is_vpn: boolean; is_proxy: boolean }
   }
 }
 
-async function probeIpwhois(ip: string): Promise<{ is_vpn: boolean; is_proxy: boolean } | null> {
+async function probeIpwhois(ip: string): Promise<VpnVerdict | null> {
   try {
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), 3500);
@@ -63,7 +70,7 @@ async function probeIpwhois(ip: string): Promise<{ is_vpn: boolean; is_proxy: bo
   }
 }
 
-async function probeIpapi(ip: string): Promise<{ is_vpn: boolean; is_proxy: boolean } | null> {
+async function probeIpapi(ip: string): Promise<VpnVerdict | null> {
   try {
     const ctrl = new AbortController();
     const t = setTimeout(() => ctrl.abort(), 3500);
@@ -86,7 +93,28 @@ async function probeIpapi(ip: string): Promise<{ is_vpn: boolean; is_proxy: bool
   }
 }
 
-export const checkVisitorVpn = createServerFn({ method: "GET" })
+async function probeIpquery(ip: string): Promise<VpnVerdict | null> {
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 3500);
+    const res = await fetch(`https://api.ipquery.io/${encodeURIComponent(ip)}`, {
+      signal: ctrl.signal,
+      headers: { Accept: "application/json" },
+    });
+    clearTimeout(t);
+    if (!res.ok) return null;
+    const entry = (await res.json()) as Record<string, unknown>;
+    if (!entry.risk || typeof entry.risk !== "object") return null;
+    const risk = entry.risk as Record<string, unknown>;
+    const isVpn = risk.is_vpn === true;
+    const isProxy = risk.is_proxy === true || risk.is_tor === true || risk.is_datacenter === true || isVpn;
+    return { is_vpn: isVpn, is_proxy: isProxy };
+  } catch {
+    return null;
+  }
+}
+
+export const checkVisitorVpn = createServerFn({ method: "POST" })
   .inputValidator((raw: unknown): VpnCheckInput => {
     const input = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
     return { ip: typeof input.ip === "string" ? input.ip : undefined };
@@ -99,21 +127,22 @@ export const checkVisitorVpn = createServerFn({ method: "GET" })
     getRequestIP({ xForwardedFor: true });
   const clientIp = normalizeIp(data.ip);
   const ip = clientIp ?? normalizeIp(headerCandidate) ?? "unknown";
-  if (isPrivateIp(ip)) return { is_vpn: false, is_proxy: false, skipped: true };
+  if (isPrivateIp(ip)) return { is_vpn: false, is_proxy: false, checked: false };
 
   // Query every provider and trust ANY positive detection. Free tiers of the
   // fallback APIs now omit their security block entirely, so a response full of
   // `false` values must never be allowed to override a positive verdict.
-  const [primary, ipapi, ipwhois] = await Promise.all([
+  const [primary, ipapi, ipwhois, ipquery] = await Promise.all([
     probe(ip),
     probeIpapi(ip),
     probeIpwhois(ip),
+    probeIpquery(ip),
   ]);
-  const results = [primary, ipapi, ipwhois].filter(
-    (r): r is { is_vpn: boolean; is_proxy: boolean } => r !== null,
+  const results = [primary, ipapi, ipwhois, ipquery].filter(
+    (r): r is VpnVerdict => r !== null,
   );
-  if (results.length === 0) return { is_vpn: false, is_proxy: false, skipped: true };
+  if (results.length === 0) return { is_vpn: false, is_proxy: false, checked: false };
   const is_vpn = results.some((r) => r.is_vpn);
   const is_proxy = results.some((r) => r.is_proxy) || is_vpn;
-  return { is_vpn, is_proxy, skipped: false };
+  return { is_vpn, is_proxy, checked: true };
 });

@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ShieldCheck, ShieldAlert } from "lucide-react";
+import { LoaderCircle, ShieldCheck, ShieldAlert } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { useVisitorVpn } from "@/hooks/use-visitor-vpn";
+import { useVisitorVpnStatus } from "@/hooks/use-visitor-vpn";
 
 export function TwoFactorBanner() {
   return null;
@@ -60,8 +60,8 @@ export function TwoFactorPill() {
 }
 
 export function VpnPill() {
-  const isVpn = useVisitorVpn();
-  if (isVpn) {
+  const status = useVisitorVpnStatus();
+  if (status === "protected") {
     return (
       <span
         title="VPN or proxy detected on your connection"
@@ -69,6 +69,22 @@ export function VpnPill() {
       >
         <ShieldCheck className="size-3.5" />
         <span className="hidden xl:inline">VPN on</span>
+      </span>
+    );
+  }
+  if (status === "checking") {
+    return (
+      <span title="Checking your connection" className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 bg-muted border border-border text-muted-foreground text-[11px] font-semibold">
+        <LoaderCircle className="size-3.5 animate-spin" />
+        <span className="hidden xl:inline">Checking VPN</span>
+      </span>
+    );
+  }
+  if (status === "unavailable") {
+    return (
+      <span title="VPN check is temporarily unavailable" className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 bg-amber-500/15 border border-amber-500/50 text-amber-400 text-[11px] font-semibold">
+        <ShieldAlert className="size-3.5" />
+        <span className="hidden xl:inline">VPN unknown</span>
       </span>
     );
   }
