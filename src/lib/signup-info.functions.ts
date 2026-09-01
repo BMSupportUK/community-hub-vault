@@ -1,44 +1,34 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeader, getRequestIP } from "@tanstack/react-start/server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { fetchProxycheckEntry, proxycheckVerdict } from "./proxycheck.server";
 
 async function checkVpn(ip: string) {
   if (!ip || ip === "unknown" || ip.startsWith("127.") || ip.startsWith("::1")) {
     return null;
   }
-  try {
-    // proxycheck.io: free tier, no key required, ~1000/day per IP
-    const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), 3500);
-    const res = await fetch(
-      `https://proxycheck.io/v2/${encodeURIComponent(ip)}?vpn=1&asn=1&risk=1`,
-      { signal: ctrl.signal, headers: { Accept: "application/json" } },
-    );
-    clearTimeout(t);
-    if (!res.ok) return null;
-    const json = (await res.json()) as Record<string, unknown>;
-    const entry = (json[ip] ?? {}) as Record<string, unknown>;
-    const operator = (entry.operator ?? {}) as Record<string, unknown>;
-    const proxy = String(entry.proxy ?? "no").toLowerCase() === "yes";
-    const type = String(entry.type ?? "").toLowerCase();
-    return {
-      is_proxy: proxy,
-      is_vpn: proxy && type === "vpn",
-      vpn_provider:
-        (operator.name as string) ??
-        (entry.provider as string) ??
-        (entry.organisation as string) ??
-        null,
-      isp: (entry.isp as string) ?? (entry.provider as string) ?? null,
-      country: (entry.country as string) ?? null,
-      region: (entry.region as string) ?? null,
-      city: (entry.city as string) ?? null,
-      vpn_raw: entry,
-    };
-  } catch {
-    return null;
-  }
+  // proxycheck.io — uses PROXYCHECK_API_KEY when configured (paid tier unlocks
+  // residential/business proxy detection), otherwise the anonymous free tier.
+  const entry = await fetchProxycheckEntry(ip);
+  const verdict = proxycheckVerdict(entry);
+  if (!entry || !verdict) return null;
+  const operator = (entry.operator ?? {}) as Record<string, unknown>;
+  return {
+    is_proxy: verdict.is_proxy,
+    is_vpn: verdict.is_vpn,
+    vpn_provider:
+      (operator.name as string) ??
+      (entry.provider as string) ??
+      (entry.organisation as string) ??
+      null,
+    isp: (entry.isp as string) ?? (entry.provider as string) ?? null,
+    country: (entry.country as string) ?? null,
+    region: (entry.region as string) ?? null,
+    city: (entry.city as string) ?? null,
+    vpn_raw: entry,
+  };
 }
+
 
 export const recordSignupInfo = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

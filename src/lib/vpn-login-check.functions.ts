@@ -2,6 +2,8 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeader, getRequestIP } from "@tanstack/react-start/server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { fetchProxycheckEntry, proxycheckVerdict } from "./proxycheck.server";
+
 
 const InputSchema = z
   .object({
@@ -75,31 +77,13 @@ async function checkVpnWithIpapi(ip: string) {
 
 async function checkVpn(ip: string) {
   try {
-    const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), 3500);
-    const res = await fetch(
-      `https://proxycheck.io/v2/${encodeURIComponent(ip)}?vpn=1&asn=1&risk=1`,
-      { signal: ctrl.signal, headers: { Accept: "application/json" } },
-    );
-    clearTimeout(t);
-    if (!res.ok) return null;
-    const json = (await res.json()) as Record<string, unknown>;
-    const directEntry = json[ip] as Record<string, unknown> | undefined;
-    const fallbackEntry = Object.values(json).find(
-      (value): value is Record<string, unknown> =>
-        value != null && typeof value === "object" && "proxy" in value,
-    );
-    const entry = directEntry ?? fallbackEntry ?? {};
+    const entry = await fetchProxycheckEntry(ip);
+    const verdict = proxycheckVerdict(entry);
+    if (!entry || !verdict) return checkVpnWithIpapi(ip);
     const operator = (entry.operator ?? {}) as Record<string, unknown>;
-    const proxy = String(entry.proxy ?? "no").toLowerCase() === "yes";
-    const type = String(entry.type ?? "").toLowerCase();
-    const providerText = [operator.name, entry.provider, entry.organisation, entry.isp, entry.hostname]
-      .filter(Boolean)
-      .join(" ")
-      .toLowerCase();
     const result = {
-      is_proxy: proxy,
-      is_vpn: proxy && (type === "vpn" || providerText.includes("vpn")),
+      is_proxy: verdict.is_proxy,
+      is_vpn: verdict.is_vpn,
       vpn_provider:
         (operator.name as string) ??
         (entry.provider as string) ??
@@ -117,6 +101,7 @@ async function checkVpn(ip: string) {
     return checkVpnWithIpapi(ip);
   }
 }
+
 
 export const checkMyVpnOnLogin = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

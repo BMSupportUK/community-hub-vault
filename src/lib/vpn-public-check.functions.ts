@@ -1,5 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeader, getRequestIP } from "@tanstack/react-start/server";
+import { fetchProxycheckEntry, proxycheckVerdict } from "./proxycheck.server";
+
 
 type VpnCheckInput = { ip?: string };
 type VpnVerdict = { is_vpn: boolean; is_proxy: boolean };
@@ -24,30 +26,10 @@ function isPrivateIp(ip: string): boolean {
 }
 
 async function probe(ip: string): Promise<VpnVerdict | null> {
-  try {
-    const ctrl = new AbortController();
-    const t = setTimeout(() => ctrl.abort(), 3500);
-    const res = await fetch(`https://proxycheck.io/v2/${encodeURIComponent(ip)}?vpn=1`, {
-      signal: ctrl.signal,
-      headers: { Accept: "application/json" },
-    });
-    clearTimeout(t);
-    if (!res.ok) return null;
-    const json = (await res.json()) as Record<string, unknown>;
-    const directEntry = json[ip] as Record<string, unknown> | undefined;
-    const fallbackEntry = Object.values(json).find(
-      (value): value is Record<string, unknown> =>
-        value != null && typeof value === "object" && "proxy" in value,
-    );
-    const entry = directEntry ?? fallbackEntry;
-    if (!entry || !("proxy" in entry)) return null;
-    const proxy = String(entry.proxy ?? "no").toLowerCase() === "yes";
-    const type = String(entry.type ?? "").toLowerCase();
-    return { is_proxy: proxy, is_vpn: proxy && (type === "vpn" || type.includes("vpn")) };
-  } catch {
-    return null;
-  }
+  const entry = await fetchProxycheckEntry(ip);
+  return proxycheckVerdict(entry);
 }
+
 
 async function probeIpwhois(ip: string): Promise<VpnVerdict | null> {
   try {
