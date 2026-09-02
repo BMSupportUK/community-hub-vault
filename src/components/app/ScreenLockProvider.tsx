@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -119,7 +120,7 @@ export function ScreenLockProvider() {
   useEffect(() => {
     if (!user) return;
     const ch = supabase
-      .channel(`screen-lock-settings-${user.id}`)
+      .channel(`screen-lock-settings-${user.id}-${Math.random().toString(36).slice(2)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "screen_lock_settings", filter: `user_id=eq.${user.id}` },
@@ -279,7 +280,13 @@ export function ScreenLockProvider() {
 
   if (!user || !locked || !settings) return null;
 
-  return <ScreenLockOverlay settings={settings} onUnlock={() => doUnlock()} />;
+  if (typeof document === "undefined") return null;
+  // Portal to <body> so no ancestor transform/overflow/stacking context can
+  // swallow clicks or clip the lock card.
+  return createPortal(
+    <ScreenLockOverlay settings={settings} onUnlock={() => doUnlock()} />,
+    document.body,
+  );
 }
 
 /** Header pill: lock the app immediately before stepping away from the PC. */
