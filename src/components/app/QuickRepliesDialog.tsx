@@ -150,7 +150,7 @@ export function QuickRepliesPill({
         )}
       >
         <Keyboard className="size-3.5" />
-        Shortcuts
+        {label}
         {replies.length > 0 && (
           <span className="rounded-full bg-amber-500/25 px-1.5 tabular-nums">{replies.length}</span>
         )}
