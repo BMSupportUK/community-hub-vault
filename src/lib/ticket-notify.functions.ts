@@ -221,10 +221,12 @@ export const handOverTicket = createServerFn({ method: "POST" })
     const fromName = named(fromProf);
     const toName = named(toProf);
 
-    const { error: upErr } = await supabaseAdmin
-      .from("tickets")
-      .update({ assigned_to: data.toUserId } as never)
-      .eq("id", data.ticketId);
+    // A DB trigger blocks overwriting an existing assignee, so deliberate
+    // handovers go through the reassign_ticket helper.
+    const { error: upErr } = await supabaseAdmin.rpc("reassign_ticket", {
+      _ticket_id: data.ticketId,
+      _to_user: data.toUserId,
+    } as never);
     if (upErr) return { ok: false, reason: upErr.message };
 
     await supabaseAdmin.from("ticket_messages").insert({

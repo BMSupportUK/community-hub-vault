@@ -1,5 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -2100,7 +2101,7 @@ function HandOverTicketButton({
     setBusy(true);
     try {
       const res = await handOver({ data: { ticketId, toUserId: to, note: note.trim() || undefined } });
-      if (!res?.ok) return toast.error("Couldn't pass this ticket over");
+      if (!res?.ok) return toast.error(res?.reason ? `Couldn't pass this ticket over: ${res.reason}` : "Couldn't pass this ticket over");
       toast.success(`Ticket passed to ${res.toName ?? "staff"}`);
       setOpen(false);
       setTo("");
@@ -2122,8 +2123,9 @@ function HandOverTicketButton({
       >
         <Forward className="size-3.5" /> Pass ticket over
       </button>
-      {open && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4" onClick={() => !busy && setOpen(false)}>
+      {open && createPortal(
+        <div className="fixed inset-0 z-[200] grid place-items-center bg-black/70 p-4" onClick={() => !busy && setOpen(false)}>
+
           <div
             className="w-full max-w-sm rounded-2xl border border-white/20 bg-neutral-900 p-4 text-white shadow-2xl"
             onClick={(e) => e.stopPropagation()}
@@ -2158,8 +2160,10 @@ function HandOverTicketButton({
               >{busy ? "Passing…" : "Pass over"}</button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
+
     </>
   );
 }
