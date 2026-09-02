@@ -39,7 +39,14 @@ import { StaffOnDutyStrip } from "@/components/app/StaffOnDutyStrip";
 import { Nameplate } from "@/components/app/Nameplate";
 import { QuickRepliesPill } from "@/components/app/QuickRepliesDialog";
 import { useChannelJump } from "@/components/app/ChannelJump";
-import { applyOrderToCredential, type CredentialCandidate } from "@/lib/order-fulfilment.functions";
+import {
+  applyOrderToCredential,
+  createCredentialForOrder,
+  type CredentialCandidate,
+  type ApplyOrderResult,
+} from "@/lib/order-fulfilment.functions";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 
 export const Route = createFileRoute("/_authenticated/_approved/tickets")({
