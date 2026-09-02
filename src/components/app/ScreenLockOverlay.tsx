@@ -29,6 +29,33 @@ export function ScreenLockOverlay({ settings, onUnlock }: Props) {
   const [hasTotp, setHasTotp] = useState(false);
   const [profile, setProfile] = useState<{ display_name: string | null; username: string | null; avatar_url: string | null } | null>(null);
   const [requested, setRequested] = useState(false);
+  const [usePassword, setUsePassword] = useState(false);
+  const [password, setPassword] = useState("");
+
+  const leaveLock = async () => {
+    if (user) {
+      try {
+        localStorage.removeItem(`screenlock:locked:${user.id}`);
+      } catch {}
+    }
+    await signOut();
+  };
+
+  const unlockWithPassword = async () => {
+    if (!user?.email || password.length < 6) {
+      toast.error("Enter your account password");
+      return;
+    }
+    setBusy(true);
+    const { error } = await supabase.auth.signInWithPassword({ email: user.email, password });
+    setBusy(false);
+    if (error) {
+      toast.error("Incorrect password");
+      return;
+    }
+    setPassword("");
+    onUnlock();
+  };
 
   // Setup mode: no code set yet. Change mode: temp code used, must set new one.
   const needsSetup = !settings.code_hash;
