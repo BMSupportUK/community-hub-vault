@@ -2124,32 +2124,49 @@ function HandOverTicketButton({
         <Forward className="size-3.5" /> Pass ticket over
       </button>
       {open && createPortal(
-        <div className="fixed inset-0 z-[200] grid place-items-center bg-black/70 p-4" onClick={() => !busy && setOpen(false)}>
-
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center overflow-y-auto bg-black/75 p-4 backdrop-blur-sm"
+          onClick={() => !busy && setOpen(false)}
+        >
           <div
-            className="w-full max-w-sm rounded-2xl border border-white/20 bg-neutral-900 p-4 text-white shadow-2xl"
+            className="my-auto w-full max-w-md overflow-hidden rounded-2xl border border-sky-300/30 bg-neutral-950/95 text-white shadow-[0_25px_60px_-15px_rgba(0,0,0,0.9)]"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="mb-3 text-sm font-bold">Pass ticket to another staff member</div>
-            <select
-              value={to}
-              onChange={(e) => setTo(e.target.value)}
-              className="mb-2 w-full rounded-lg border border-white/25 bg-black/40 px-2 py-2 text-sm"
-            >
-              <option value="">Select staff…</option>
-              {options.map((s) => (
-                <option key={s.id} value={s.id}>{s.display_name || s.username || "Staff"}</option>
-              ))}
-            </select>
-            <textarea
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              rows={3}
-              maxLength={500}
-              placeholder="Optional handover note (posted as an internal note)"
-              className="mb-3 w-full rounded-lg border border-white/25 bg-black/40 px-2 py-2 text-sm resize-y"
-            />
-            <div className="flex justify-end gap-2">
+            <div className="flex items-center gap-2 border-b border-white/10 bg-gradient-to-r from-sky-500/25 to-fuchsia-500/20 px-5 py-3">
+              <Forward className="size-4 text-sky-200" />
+              <div className="text-sm font-bold">Pass ticket to another staff member</div>
+            </div>
+            <div className="space-y-4 px-5 py-4">
+              <div className="space-y-1.5">
+                <label className="block text-[11px] font-semibold uppercase tracking-wide text-white/60">
+                  Staff member
+                </label>
+                <select
+                  value={to}
+                  onChange={(e) => setTo(e.target.value)}
+                  className="w-full rounded-lg border border-white/20 bg-black/50 px-3 py-2 text-sm outline-none focus:border-sky-300/60"
+                >
+                  <option value="">Select staff…</option>
+                  {options.map((s) => (
+                    <option key={s.id} value={s.id}>{s.display_name || s.username || "Staff"}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="block text-[11px] font-semibold uppercase tracking-wide text-white/60">
+                  Handover note <span className="font-normal normal-case tracking-normal text-white/40">(optional)</span>
+                </label>
+                <textarea
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  rows={3}
+                  maxLength={500}
+                  placeholder="Posted on the ticket as an internal note"
+                  className="w-full resize-none rounded-lg border border-white/20 bg-black/50 px-3 py-2 text-sm outline-none focus:border-sky-300/60"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 border-t border-white/10 bg-white/5 px-5 py-3">
               <button
                 type="button" disabled={busy} onClick={() => setOpen(false)}
                 className="rounded-md border border-white/25 px-3 py-1.5 text-xs font-semibold hover:bg-white/10"
@@ -2163,6 +2180,7 @@ function HandOverTicketButton({
         </div>,
         document.body,
       )}
+
 
     </>
   );
