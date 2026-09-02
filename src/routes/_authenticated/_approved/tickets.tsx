@@ -944,11 +944,20 @@ function TicketDetail({
   const draftRef = useRef("");
   const internalRef = useRef(false);
   useEffect(() => { internalRef.current = internal; }, [internal]);
+  const participantIds = useMemo(() => {
+    const ids = new Set<string>();
+    ids.add(ticket.user_id);
+    if (ticket.assigned_to) ids.add(ticket.assigned_to);
+    for (const m of messages) if (m.sender_id) ids.add(m.sender_id);
+    ids.delete(currentUserId);
+    return [...ids];
+  }, [ticket.user_id, ticket.assigned_to, messages, currentUserId]);
   const mention = useMentionAutocomplete({
     value: draft,
     onChange: setDraft,
     textareaRef: taRef,
     canBroadcast: false,
+    allowedUserIds: participantIds,
   });
   const channelJump = useChannelJump({ value: draft, onChange: setDraft, editorRef: taRef });
   const [myUsername, setMyUsername] = useState<string | null>(null);
