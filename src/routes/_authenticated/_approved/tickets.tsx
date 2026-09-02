@@ -1974,7 +1974,7 @@ function TicketDetail({
       </div>
       </div>
       {linkedOrder && (
-        <aside className="hidden lg:flex flex-col w-80 shrink-0 border-l border-white/20 bg-white/5 backdrop-blur overflow-y-auto p-4">
+        <aside className="hidden lg:flex flex-col w-80 shrink-0 min-h-0 max-h-full border-l border-white/20 bg-white/5 backdrop-blur overflow-y-auto overscroll-contain p-4 pb-10">
           <div className="text-[10px] uppercase tracking-wider text-white/70 mb-2">Order</div>
           {orderPanelInner}
         </aside>
