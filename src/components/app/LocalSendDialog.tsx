@@ -46,6 +46,31 @@ const LOCALSEND_DOWNLOADS: Record<string, string> = {
   computer: "https://localsend.org/download",
 };
 
+/**
+ * Tries to launch an installed LocalSend desktop app via its URL scheme.
+ * If the app isn't installed nothing happens, so we fall back after a moment.
+ */
+function tryOpenLocalSend(onFallback: () => void) {
+  let opened = false;
+  const markOpened = () => {
+    opened = true;
+  };
+  window.addEventListener("blur", markOpened, { once: true });
+  document.addEventListener("visibilitychange", markOpened, { once: true });
+
+  const frame = document.createElement("iframe");
+  frame.style.display = "none";
+  frame.src = "localsend://";
+  document.body.appendChild(frame);
+
+  window.setTimeout(() => {
+    frame.remove();
+    window.removeEventListener("blur", markOpened);
+    document.removeEventListener("visibilitychange", markOpened);
+    if (!opened && !document.hidden) onFallback();
+  }, 1600);
+}
+
 const PHASE_TEXT: Record<LocalSendProgress["phase"], string> = {
   preparing: "Preparing…",
   waiting: "Waiting for you to accept on the TV…",
@@ -65,6 +90,7 @@ export function LocalSendDialog({ open, onOpenChange, appName, fileName, fileSiz
   const [sendingTo, setSendingTo] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [doneOn, setDoneOn] = useState<string | null>(null);
+  const [launchFailed, setLaunchFailed] = useState(false);
   const listeners = useRef<PluginListenerHandle[]>([]);
 
   const startScan = useCallback(async () => {
@@ -179,25 +205,35 @@ export function LocalSendDialog({ open, onOpenChange, appName, fileName, fileSiz
 
             <ol className="space-y-2 text-xs text-violet-100">
               <li className="rounded-lg border border-violet-500/30 bg-violet-500/10 p-2.5">
-                <p className="font-semibold text-foreground">1. Install LocalSend on your {desktopName}</p>
+                <p className="font-semibold text-foreground">1. Open LocalSend on your {desktopName}</p>
                 <p className="mt-1 text-[11px] text-violet-200">
-                  Free, open source. Install it on your computer and on the Fire Stick / Android box.
+                  Already have it? We'll open it for you. If nothing happens it isn't installed —
+                  grab it below (free, open source), and install it on the Fire Stick / Android box too.
                 </p>
+                <Button
+                  size="sm"
+                  className="mt-2 h-8 bg-gradient-primary text-primary-foreground hover:opacity-90"
+                  onClick={() => {
+                    setLaunchFailed(false);
+                    tryOpenLocalSend(() => setLaunchFailed(true));
+                  }}
+                >
+                  <Wifi className="size-3.5 mr-1" /> Open LocalSend
+                </Button>
+
+                {launchFailed && (
+                  <p className="mt-2 text-[11px] text-amber-200">
+                    Couldn't find LocalSend on this {desktopName} — install it first:
+                  </p>
+                )}
+
                 <div className="mt-2 flex flex-wrap gap-2">
-                  <Button
-                    size="sm"
-                    className="h-8 bg-gradient-primary text-primary-foreground hover:opacity-90"
-                    asChild
-                  >
+                  <Button size="sm" variant="secondary" className="h-8" asChild>
                     <a href={LOCALSEND_DOWNLOADS.Windows} target="_blank" rel="noopener noreferrer">
                       <Monitor className="size-3.5 mr-1" /> LocalSend for Windows
                     </a>
                   </Button>
-                  <Button
-                    size="sm"
-                    className="h-8 bg-gradient-primary text-primary-foreground hover:opacity-90"
-                    asChild
-                  >
+                  <Button size="sm" variant="secondary" className="h-8" asChild>
                     <a href={LOCALSEND_DOWNLOADS.Mac} target="_blank" rel="noopener noreferrer">
                       <Monitor className="size-3.5 mr-1" /> LocalSend for Mac
                     </a>
