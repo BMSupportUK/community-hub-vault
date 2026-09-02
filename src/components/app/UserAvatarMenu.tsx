@@ -13,6 +13,7 @@ import {
   Smartphone,
   Lock,
 } from "lucide-react";
+import QRCode from "qrcode";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { lockScreenNow } from "@/components/app/ScreenLockProvider";
@@ -38,6 +39,17 @@ import {
 import { VpnBadge } from "@/lib/vpn-flags";
 import { cn } from "@/lib/utils";
 import { isFanZonePath } from "@/lib/fan-zone-nav";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+
+const ANDROID_APK_URL =
+  "https://github.com/BMSupportUK/community-hub-vault/releases/latest/download/BMSupport.apk";
 
 interface MiniProfile {
   id: string;
@@ -53,6 +65,8 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
   const navigate = useNavigate();
   const [profile, setProfile] = useState<MiniProfile | null>(null);
   const [copied, setCopied] = useState(false);
+  const [apkOpen, setApkOpen] = useState(false);
+  const [apkQr, setApkQr] = useState<string | null>(null);
   const isAdmin = hasAny(["admin", "management"]);
   const roleFlashMap = useRoleFlashMap();
   const instanceId = useRef(Math.random().toString(36).slice(2)).current;
@@ -83,6 +97,23 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
       supabase.removeChannel(ch);
     };
   }, [user, instanceId]);
+
+  useEffect(() => {
+    if (!apkOpen || apkQr) return;
+    let cancel = false;
+    QRCode.toDataURL(ANDROID_APK_URL, {
+      width: 220,
+      margin: 2,
+      color: { dark: "#0b0616", light: "#ffffff" },
+    })
+      .then((url) => {
+        if (!cancel) setApkQr(url);
+      })
+      .catch(() => {});
+    return () => {
+      cancel = true;
+    };
+  }, [apkOpen, apkQr]);
 
   if (!user) return null;
   const name = profile?.display_name || profile?.username || user.email?.split("@")[0] || "User";
@@ -171,6 +202,33 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
   };
 
   return (
+    <>
+    <Dialog open={apkOpen} onOpenChange={setApkOpen}>
+      <DialogContent className="max-w-xs sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-base">
+            <Smartphone className="size-4 text-primary" /> Get the Android app
+          </DialogTitle>
+          <DialogDescription>
+            Scan this QR code with your phone camera to download the BM Support app.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex flex-col items-center gap-3">
+          <div className="rounded-xl bg-white p-2">
+            {apkQr ? (
+              <img src={apkQr} alt="QR code to download the BM Support Android app" className="block size-[200px]" />
+            ) : (
+              <div className="size-[200px] animate-pulse rounded bg-muted" />
+            )}
+          </div>
+          <Button asChild size="sm" className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90">
+            <a href={ANDROID_APK_URL} target="_blank" rel="noopener noreferrer">
+              Download on this device
+            </a>
+          </Button>
+        </div>
+      </DialogContent>
+    </Dialog>
     <DropdownMenu>
       <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
       <DropdownMenuContent
@@ -272,15 +330,15 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
             </Link>
           </DropdownMenuItem>
           {!inFanZone ? (
-            <DropdownMenuItem asChild className="cursor-pointer">
-              <a
-                href="https://github.com/BMSupportUK/community-hub-vault/releases/latest/download/BMSupport.apk"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Smartphone className="size-4 mr-2" />
-                Get the Android app
-              </a>
+            <DropdownMenuItem
+              onSelect={(e) => {
+                e.preventDefault();
+                setApkOpen(true);
+              }}
+              className="cursor-pointer"
+            >
+              <Smartphone className="size-4 mr-2" />
+              Get the Android app
             </DropdownMenuItem>
           ) : null}
           {!inFanZone && isAdmin ? (
@@ -312,5 +370,6 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
         </div>
       </DropdownMenuContent>
     </DropdownMenu>
+    </>
   );
 }
