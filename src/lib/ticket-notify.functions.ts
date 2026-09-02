@@ -204,11 +204,23 @@ export const handOverTicket = createServerFn({ method: "POST" })
 
     const { data: ticket } = await supabaseAdmin
       .from("tickets")
-      .select("id, subject")
+      .select("id, subject, order_id")
       .eq("id", data.ticketId)
       .maybeSingle();
     if (!ticket) return { ok: false, reason: "no_ticket" };
     const subject = ((ticket as { subject: string | null }).subject) ?? "Ticket";
+
+    // Sales tickets (linked to an order) stay with admin/management only.
+    if ((ticket as { order_id: string | null }).order_id) {
+      const privileged = (rows: { role: string }[] | null) =>
+        (rows ?? []).some((r) => r.role === "admin" || r.role === "management");
+      if (!privileged(callerRoles as { role: string }[] | null)) {
+        return { ok: false, reason: "sales_tickets_are_admin_only" };
+      }
+      if (!privileged(targetRoles as { role: string }[] | null)) {
+        return { ok: false, reason: "target_must_be_admin_or_management" };
+      }
+    }
 
     const [{ data: fromProf }, { data: toProf }] = await Promise.all([
       supabaseAdmin.from("profiles").select("display_name, username").eq("id", callerId).maybeSingle(),
