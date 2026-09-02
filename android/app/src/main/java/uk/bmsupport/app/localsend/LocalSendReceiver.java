@@ -44,6 +44,27 @@ public class LocalSendReceiver {
         void onEvent(String phase, String fileName, int percent, String error);
     }
 
+    /** Peers that announce themselves to us (UDP) or register with us (HTTP). */
+    public interface Peers {
+        void onPeer(String ip, JSONObject info);
+    }
+
+    private volatile Peers peers;
+
+    void setPeers(Peers p) {
+        this.peers = p;
+    }
+
+    private void peer(String ip, JSONObject info) {
+        Peers p = peers;
+        if (p != null && ip != null && info != null) {
+            try {
+                p.onPeer(ip, info);
+            } catch (Exception ignored) {
+            }
+        }
+    }
+
     private static final int PORT = 53317;
     private static final String MULTICAST_GROUP = "224.0.0.167";
 
