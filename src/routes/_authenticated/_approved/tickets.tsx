@@ -1974,7 +1974,7 @@ function TicketDetail({
             />
             <Select
               label="Assignee" value={ticket.assigned_to ?? ""}
-              options={[{ value: "", label: "Unassigned" }, ...staff.map((s) => ({ value: s.id, label: s.display_name || s.username || "Staff" }))]}
+              options={[{ value: "", label: "Unassigned" }, ...assignableStaff.map((s) => ({ value: s.id, label: s.display_name || s.username || "Staff" }))]}
               onChange={(v) => updateField({ assigned_to: v || null })}
             />
             {ticket.assigned_to && (() => {
@@ -1985,9 +1985,10 @@ function TicketDetail({
             <RequestAdminHelpButton ticketId={ticket.id} />
             <HandOverTicketButton
               ticketId={ticket.id}
-              staff={staff}
+              staff={assignableStaff}
               currentUserId={currentUserId}
             />
+
             <QuickRepliesPill
               scope="ticket"
               label="Staff shortcuts"
