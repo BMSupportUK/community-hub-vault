@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { PluginListenerHandle } from "@capacitor/core";
-import { Loader2, Wifi, Tv, RefreshCw, CheckCircle2, AlertTriangle, Smartphone } from "lucide-react";
+import { Loader2, Wifi, Tv, RefreshCw, CheckCircle2, AlertTriangle, Smartphone, Monitor, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -27,6 +27,25 @@ type Props = {
   fileUrl: string;
 };
 
+/** Best-guess desktop platform so we can label the LocalSend download. */
+function useDesktopPlatform() {
+  const [os, setOs] = useState<"Windows" | "Mac" | "Linux" | "computer">("computer");
+  useEffect(() => {
+    const ua = navigator.userAgent;
+    if (/Win/i.test(ua)) setOs("Windows");
+    else if (/Mac/i.test(ua)) setOs("Mac");
+    else if (/Linux|X11/i.test(ua)) setOs("Linux");
+  }, []);
+  return os;
+}
+
+const LOCALSEND_DOWNLOADS: Record<string, string> = {
+  Windows: "https://localsend.org/download?os=windows",
+  Mac: "https://localsend.org/download?os=macos",
+  Linux: "https://localsend.org/download?os=linux",
+  computer: "https://localsend.org/download",
+};
+
 const PHASE_TEXT: Record<LocalSendProgress["phase"], string> = {
   preparing: "Preparing…",
   waiting: "Waiting for you to accept on the TV…",
@@ -36,6 +55,8 @@ const PHASE_TEXT: Record<LocalSendProgress["phase"], string> = {
 
 export function LocalSendDialog({ open, onOpenChange, appName, fileName, fileSize, fileUrl }: Props) {
   const native = isLocalSendAvailable();
+  const desktopName = useDesktopPlatform();
+  const localSendDownloadUrl = LOCALSEND_DOWNLOADS[desktopName] ?? LOCALSEND_DOWNLOADS.computer;
   const [devices, setDevices] = useState<LocalSendDevice[]>([]);
   const [scanning, setScanning] = useState(false);
   const [progress, setProgress] = useState<LocalSendProgress | null>(null);
@@ -135,18 +156,56 @@ export function LocalSendDialog({ open, onOpenChange, appName, fileName, fileSiz
           <DialogDescription>
             {native
               ? `Push ${appName} straight to a Fire Stick or Android box running LocalSend on this Wi-Fi.`
-              : "Wi-Fi sending needs the BM Support Android app."}
+              : `Use LocalSend on your ${desktopName} to send ${appName} to your Fire Stick or Android box.`}
           </DialogDescription>
         </DialogHeader>
 
         {!native ? (
-          <div className="rounded-lg border border-amber-400/40 bg-amber-950/30 p-3 text-xs text-amber-100 flex gap-2">
-            <Smartphone className="size-4 shrink-0 mt-0.5" />
-            <p>
-              A web browser can't talk to devices on your local network. Open this page in the BM
-              Support Android app, or use the QR code / download link to install on your TV.
+          <div className="space-y-3">
+            <ol className="space-y-2 text-xs text-violet-100">
+              <li className="rounded-lg border border-violet-500/30 bg-violet-500/10 p-2.5">
+                <p className="font-semibold text-foreground">1. Install LocalSend on your {desktopName}</p>
+                <p className="mt-1 text-[11px] text-violet-200">
+                  Free, open source. Install it on your computer and on the Fire Stick / Android box.
+                </p>
+                <Button
+                  size="sm"
+                  className="mt-2 h-8 bg-gradient-primary text-primary-foreground hover:opacity-90"
+                  asChild
+                >
+                  <a href={localSendDownloadUrl} target="_blank" rel="noopener noreferrer">
+                    <Monitor className="size-3.5 mr-1" /> Get LocalSend for {desktopName}
+                  </a>
+                </Button>
+              </li>
+              <li className="rounded-lg border border-violet-500/30 bg-violet-500/10 p-2.5">
+                <p className="font-semibold text-foreground">2. Download the app file</p>
+                <p className="mt-1 text-[11px] text-violet-200">
+                  Saves {fileName} to your computer using your own secure link.
+                </p>
+                <Button size="sm" variant="secondary" className="mt-2 h-8" asChild disabled={!fileUrl}>
+                  <a href={fileUrl} download={fileName}>
+                    <Download className="size-3.5 mr-1" /> Download {fileName}
+                  </a>
+                </Button>
+              </li>
+              <li className="rounded-lg border border-violet-500/30 bg-violet-500/10 p-2.5">
+                <p className="font-semibold text-foreground">3. Send it over Wi-Fi</p>
+                <p className="mt-1 text-[11px] text-violet-200">
+                  Open LocalSend on the TV and leave it on the main screen. On your computer, open
+                  LocalSend, pick the file you just downloaded, choose the TV from the device list and
+                  press Send — then press <strong>Accept</strong> on the TV with your remote. Open the
+                  received file in LocalSend on the TV to install it.
+                </p>
+              </li>
+            </ol>
+            <p className="text-[11px] text-muted-foreground flex gap-1.5">
+              <Smartphone className="size-3.5 shrink-0 mt-0.5" />
+              On a phone, the BM Support Android app can send straight to the TV in one tap — no
+              computer needed.
             </p>
           </div>
+
         ) : (
           <div className="space-y-3">
             <div className="rounded-lg border border-violet-500/30 bg-violet-500/10 p-2.5 text-[11px] text-violet-100">
