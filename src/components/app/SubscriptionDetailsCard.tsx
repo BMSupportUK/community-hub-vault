@@ -71,7 +71,7 @@ export function SubscriptionDetailsCard() {
       .channel(`home-subscription-${user.id}`)
       .on(
         "postgres_changes",
-        { event: "*", schema: "private", table: "app_credentials", filter: `owner_id=eq.${user.id}` },
+        { event: "INSERT", schema: "public", table: "credential_change_events", filter: `owner_id=eq.${user.id}` },
         () => load(),
       )
       .subscribe();

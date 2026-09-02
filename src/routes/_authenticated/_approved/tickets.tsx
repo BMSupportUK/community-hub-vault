@@ -39,6 +39,8 @@ import { StaffOnDutyStrip } from "@/components/app/StaffOnDutyStrip";
 import { Nameplate } from "@/components/app/Nameplate";
 import { QuickRepliesPill } from "@/components/app/QuickRepliesDialog";
 import { useChannelJump } from "@/components/app/ChannelJump";
+import { applyOrderToCredential, type CredentialCandidate } from "@/lib/order-fulfilment.functions";
+
 
 export const Route = createFileRoute("/_authenticated/_approved/tickets")({
   validateSearch: (s: Record<string, unknown>): { id?: string; view?: "mine" | "all" | "assigned"; new2fa?: 1 } => ({
@@ -1006,6 +1008,9 @@ function TicketDetail({
   const checkPaymentAcrossProviders = useServerFn(checkOrderPaymentAcrossProviders);
   const cancelOrderAndSquareInvoiceRpc = useServerFn(cancelOrderAndSquareInvoice);
   const getPaymentState = useServerFn(getOrderPaymentState);
+  const applyOrderToCredentialFn = useServerFn(applyOrderToCredential);
+  const [credPicker, setCredPicker] = useState<{ candidates: CredentialCandidate[]; months: number } | null>(null);
+
   const loadLinkedOrder = async () => {
     if (!ticket.order_id) { setLinkedOrder(null); setLinkedOrderUsername(null); return; }
     const { data } = await supabase
@@ -1212,8 +1217,48 @@ function TicketDetail({
       );
       toast.success("Sale completed");
       await loadLinkedOrder();
+      await applyRenewal();
     } finally { setOrderBusy(false); }
   };
+
+  /**
+   * Extends the customer's credential by the months purchased and sets the
+   * account type from the products bought. Called automatically on Sale
+   * Complete; re-called with a chosen account when the customer has several.
+   */
+  const applyRenewal = async (credentialId?: string) => {
+    if (!linkedOrder) return;
+    try {
+      const res = await applyOrderToCredentialFn({
+        data: { orderId: linkedOrder.id, ...(credentialId ? { credentialId } : {}) },
+      });
+      if (res.status === "needs_selection") {
+        setCredPicker({ candidates: res.candidates, months: res.months });
+        toast.warning("Choose which account to extend");
+        return;
+      }
+      if (res.status === "no_credentials") {
+        toast.warning("No account credential found — create one, then the expiry can be set.");
+        return;
+      }
+      if (res.status === "no_term") {
+        toast.warning("Couldn't work out the subscription length from this order — set the expiry manually.");
+        return;
+      }
+      setCredPicker(null);
+      const expiry = new Date(res.newExpiry).toLocaleDateString("en-GB", {
+        day: "numeric", month: "short", year: "numeric",
+      });
+      toast.success(`${res.accountLabel}: +${res.months} month${res.months === 1 ? "" : "s"} → expires ${expiry}`);
+      await postTicketSystem(
+        `📅 Subscription updated — ${res.accountLabel} (${res.accountTypeLabel}) now runs for a further ${res.months} month${res.months === 1 ? "" : "s"} and expires on ${expiry}.`,
+      );
+    } catch (e: any) {
+      toast.error(e?.message ?? "Couldn't update the account expiry");
+    }
+  };
+
+
 
   const orderCancel = async () => {
     if (!linkedOrder || orderBusy) return;
@@ -1702,8 +1747,44 @@ function TicketDetail({
           )}
         </div>
       )}
+
+      <Dialog open={!!credPicker} onOpenChange={(o) => { if (!o) setCredPicker(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Which account should be extended?</DialogTitle>
+            <DialogDescription>
+              This customer has more than one account. Pick the one to extend by{" "}
+              {credPicker?.months ?? 0} month{(credPicker?.months ?? 0) === 1 ? "" : "s"}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            {(credPicker?.candidates ?? []).map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => applyRenewal(c.id)}
+                className="w-full text-left px-3 py-2.5 rounded-lg border border-border hover:bg-accent transition"
+              >
+                <div className="font-semibold text-sm">
+                  {c.app_login_name?.trim() || `Account ${c.account_number ?? "?"}`}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {c.account_type ? `${c.account_type} · ` : ""}
+                  {c.expiry_at
+                    ? `expires ${new Date(c.expiry_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}`
+                    : "no expiry set"}
+                </div>
+              </button>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setCredPicker(null)}>Skip for now</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   ) : null;
+
 
   return (
     <div className="flex-1 flex flex-col lg:flex-row min-h-0">

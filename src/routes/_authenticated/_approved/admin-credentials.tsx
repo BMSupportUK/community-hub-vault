@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useCredentialChanges } from "@/hooks/use-credential-changes";
 import { useServerFn } from "@tanstack/react-start";
 import {
   listCredentialBackups,
@@ -72,6 +73,9 @@ function AdminCredentialsPage() {
   };
 
   useEffect(() => { if (isAdmin) load(); }, [isAdmin]);
+  // Live-refresh when a sale completion (or another admin) changes a credential.
+  useCredentialChanges(() => { if (isAdmin) load(); });
+
 
   const grouped = useMemo(() => {
     const map = new Map<string, CredentialRow[]>();
