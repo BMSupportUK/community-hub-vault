@@ -294,6 +294,7 @@ export const updateAppBuild = createServerFn({ method: "POST" })
       filePath?: string | null;
       fileName?: string | null;
       fileSize?: number | null;
+      announceUpdates?: boolean;
     }) => data,
   )
   .handler(async ({ data, context }) => {
