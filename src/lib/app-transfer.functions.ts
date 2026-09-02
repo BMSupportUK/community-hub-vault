@@ -249,17 +249,18 @@ export const saveAppBuild = createServerFn({ method: "POST" })
         video_path: data.videoPath ?? null,
         sort_order: data.sortOrder ?? 0,
         install_instructions: data.installInstructions ?? null,
+        announce_updates: data.announceUpdates ?? false,
         is_current: true,
         is_available: data.isAvailable ?? true,
         created_by: context.userId,
-      })
+      } as never)
       .select("id")
       .maybeSingle();
     if (error) throw new Error(error.message);
 
-    // Tell every member who can install it that a new release is live — once.
+    // Only our own BM Support Android app announces releases to members — once.
     try {
-      if ((data.isAvailable ?? true) && inserted?.id) {
+      if (data.announceUpdates && (data.isAvailable ?? true) && inserted?.id) {
         const { announceAppUpdate } = await import("@/lib/app-update-announce.server");
         await announceAppUpdate({
           buildId: inserted.id as string,
