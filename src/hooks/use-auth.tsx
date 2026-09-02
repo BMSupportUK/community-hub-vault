@@ -108,10 +108,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => sub.subscription.unsubscribe();
   }, []);
 
-  // user_roles is intentionally not broadcast through Realtime. Refresh the
-  // current user's tiny role set while the page is visible, and immediately
-  // on focus/visibility, so an admin-granted BM Support role cannot leave a
-  // dual-role account trapped behind the Fan-Zone-only route guard.
+  // Keep the signed-in user's role set fresh: Realtime on user_roles gives an
+  // instant update when an admin (or the subscription sync) grants/removes a
+  // role, with a polling + focus fallback in case the socket drops.
   useEffect(() => {
     if (!user?.id) return;
     const uid = user.id;
@@ -126,12 +125,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
     window.addEventListener("focus", onFocus);
     document.addEventListener("visibilitychange", onVis);
+    const channel = supabase
+      .channel(`user-roles-${uid}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "user_roles", filter: `user_id=eq.${uid}` },
+        () => {
+          void loadRoles(uid);
+        },
+      )
+      .subscribe();
     return () => {
       window.clearInterval(interval);
       window.removeEventListener("focus", onFocus);
       document.removeEventListener("visibilitychange", onVis);
+      void supabase.removeChannel(channel);
     };
   }, [user?.id]);
+
 
   // Re-check the signed-in user's VPN/proxy status periodically so the
   // `signup_info` row reflects their *current* network state — not just the
