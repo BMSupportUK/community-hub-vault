@@ -47,9 +47,10 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import androidApkAsset from "@/assets/BMSupport.apk.asset.json";
 
-const ANDROID_APK_URL =
-  "https://github.com/BMSupportUK/community-hub-vault/releases/latest/download/BMSupport.apk";
+const ANDROID_APK_URL = androidApkAsset.url;
+const ANDROID_APK_ABSOLUTE_URL = `https://bmsupport.uk${androidApkAsset.url}`;
 
 interface MiniProfile {
   id: string;
@@ -101,7 +102,7 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
   useEffect(() => {
     if (!apkOpen || apkQr) return;
     let cancel = false;
-    QRCode.toDataURL(ANDROID_APK_URL, {
+    QRCode.toDataURL(ANDROID_APK_ABSOLUTE_URL, {
       width: 220,
       margin: 2,
       color: { dark: "#0b0616", light: "#ffffff" },
@@ -222,7 +223,7 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
             )}
           </div>
           <Button asChild size="sm" className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90">
-            <a href={ANDROID_APK_URL} target="_blank" rel="noopener noreferrer">
+            <a href={ANDROID_APK_URL} download="BMSupport.apk">
               Download on this device
             </a>
           </Button>
