@@ -296,13 +296,18 @@ export function buildTeamSheetBody(opts: {
   caption?: string | null;
   sourceUrl?: string | null;
   isUpdate: boolean;
+  teamLabel?: string | null;
 }): string {
-  const heading = opts.isUpdate ? "Team news — updated official line-up" : "Team news — official line-up";
+  const team = (opts.teamLabel ?? "").trim();
+  const heading = opts.isUpdate
+    ? `Team news — updated ${team ? `${team} ` : "official "}line-up`
+    : `Team news — ${team ? `${team} ` : "official "}line-up`;
   const caption = (opts.caption ?? "").trim();
   const parts = [
     `<p><strong>${heading}</strong></p>`,
-    `<p><img src="${escapeHtml(opts.imageUrl)}" alt="Middlesbrough official team sheet" /></p>`,
+    `<p><img src="${escapeHtml(opts.imageUrl)}" alt="${escapeHtml(team || "Middlesbrough")} team sheet" /></p>`,
   ];
+
   if (caption) parts.push(`<p>${escapeHtml(caption).replace(/\n+/g, "<br />")}</p>`);
   if (opts.sourceUrl) {
     parts.push(
