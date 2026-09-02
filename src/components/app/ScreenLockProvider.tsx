@@ -39,6 +39,15 @@ export function ScreenLockProvider() {
     if (!user) {
       setSettings(null);
       setLocked(false);
+      // Never leave a persisted lock flag behind after a sign-out: otherwise the
+      // next sign-in locks instantly and the overlay looks permanently stuck.
+      if (typeof window !== "undefined") {
+        try {
+          Object.keys(localStorage)
+            .filter((k) => k.startsWith("screenlock:locked:"))
+            .forEach((k) => localStorage.removeItem(k));
+        } catch {}
+      }
       return;
     }
     let cancelled = false;
@@ -64,7 +73,9 @@ export function ScreenLockProvider() {
         console.error("Could not load screen lock settings", loadError);
         return;
       }
+      let active: ScreenLockSettings | null = null;
       if (data) {
+        active = data;
         setSettings(data);
       } else {
         const row = {
@@ -82,12 +93,19 @@ export function ScreenLockProvider() {
           console.error("Could not create screen lock settings", createError);
           return;
         }
-        setSettings(created as ScreenLockSettings);
+        active = created as ScreenLockSettings;
+        setSettings(active);
       }
-      // Restore a lock that was active before a reload.
-      if (typeof window !== "undefined" && localStorage.getItem(`screenlock:locked:${user.id}`) === "1") {
-        setLocked(true);
-        void suspendTalkPresence(user.id);
+      // Restore a lock that was active before a reload — but only when the lock
+      // is still switched on. A stale flag must never trap the user.
+      const flagKey = `screenlock:locked:${user.id}`;
+      if (typeof window !== "undefined" && localStorage.getItem(flagKey) === "1") {
+        if (active?.enabled) {
+          setLocked(true);
+          void suspendTalkPresence(user.id);
+        } else {
+          localStorage.removeItem(flagKey);
+        }
       }
 
     })();
@@ -114,6 +132,14 @@ export function ScreenLockProvider() {
             typeof row.must_change === "boolean"
           ) {
             setSettings(row as ScreenLockSettings);
+            // Turning the lock off elsewhere must release a currently locked screen.
+            if (!row.enabled) {
+              setLocked(false);
+              try {
+                localStorage.removeItem(`screenlock:locked:${user.id}`);
+              } catch {}
+              resumeTalkPresence();
+            }
           }
         },
       )
