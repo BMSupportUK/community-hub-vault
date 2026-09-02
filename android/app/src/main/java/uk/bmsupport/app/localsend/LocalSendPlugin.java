@@ -2,6 +2,8 @@ package uk.bmsupport.app.localsend;
 
 import android.content.Context;
 import android.net.wifi.WifiManager;
+import android.security.keystore.KeyGenParameterSpec;
+import android.security.keystore.KeyProperties;
 import android.util.Base64;
 
 import com.getcapacitor.JSObject;
@@ -23,9 +25,14 @@ import java.net.MulticastSocket;
 import java.net.NetworkInterface;
 import java.net.Socket;
 import java.net.URL;
+import java.security.KeyPairGenerator;
+import java.security.KeyStore;
+import java.security.Principal;
+import java.security.PrivateKey;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
@@ -37,10 +44,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509ExtendedKeyManager;
 import javax.net.ssl.X509TrustManager;
+import javax.security.auth.x500.X500Principal;
+
 
 /**
  * Speaks the LocalSend v2 protocol so members can push an APK from the BM Support
