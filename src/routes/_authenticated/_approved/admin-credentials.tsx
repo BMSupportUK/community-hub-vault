@@ -72,6 +72,9 @@ function AdminCredentialsPage() {
   };
 
   useEffect(() => { if (isAdmin) load(); }, [isAdmin]);
+  // Live-refresh when a sale completion (or another admin) changes a credential.
+  useCredentialChanges(() => { if (isAdmin) load(); });
+
 
   const grouped = useMemo(() => {
     const map = new Map<string, CredentialRow[]>();
