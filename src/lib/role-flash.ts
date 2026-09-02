@@ -37,16 +37,23 @@ export function useRoleFlashMap(): Map<string, FlashRole> {
     const l = () => force((n) => n + 1);
     listeners.add(l);
     if (!cache) load();
+    const reload = () => { cache = null; load(); };
     // Refresh on focus to pick up role changes.
-    const onFocus = () => { cache = null; load(); };
-    window.addEventListener("focus", onFocus);
+    window.addEventListener("focus", reload);
+    // Live role changes (admin grants, subscription sync) update instantly.
+    const channel = supabase
+      .channel("role-flash-roles")
+      .on("postgres_changes", { event: "*", schema: "public", table: "user_roles" }, reload)
+      .subscribe();
     return () => {
       listeners.delete(l);
-      window.removeEventListener("focus", onFocus);
+      window.removeEventListener("focus", reload);
+      void supabase.removeChannel(channel);
     };
   }, []);
   return cache ?? new Map();
 }
+
 
 export function roleFlashClass(role: FlashRole | null | undefined): string {
   if (!role) return "";

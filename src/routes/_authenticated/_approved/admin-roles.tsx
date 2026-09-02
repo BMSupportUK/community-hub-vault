@@ -145,6 +145,32 @@ function AdminRolesPage() {
     if (isAdmin) loadAll();
   }, [isAdmin]);
 
+  // Live role updates: any grant/revoke (manual or from subscription sync)
+  // repaints the role chips without a refresh.
+  useEffect(() => {
+    if (!isAdmin) return;
+    const refreshRoleChips = async () => {
+      const { data } = await supabase.from("user_roles").select("user_id, role");
+      const roleMap = new Map<string, string[]>();
+      (data ?? []).forEach((r: any) => {
+        const arr = roleMap.get(r.user_id) ?? [];
+        arr.push(String(r.role));
+        roleMap.set(r.user_id, arr);
+      });
+      setRows((prev) => prev.map((r) => ({ ...r, roles: roleMap.get(r.id) ?? [] })));
+    };
+    const channel = supabase
+      .channel("admin-roles-live")
+      .on("postgres_changes", { event: "*", schema: "public", table: "user_roles" }, () => {
+        void refreshRoleChips();
+      })
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [isAdmin]);
+
+
   const activeRoles = useMemo(() => roleDefs.filter((r) => r.is_active), [roleDefs]);
 
   const filtered = useMemo(() => {
