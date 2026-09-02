@@ -1,5 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+
 
 /**
  * Fires `onChange` whenever an app credential is created or updated.
