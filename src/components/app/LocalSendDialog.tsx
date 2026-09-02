@@ -54,7 +54,9 @@ const PHASE_TEXT: Record<LocalSendProgress["phase"], string> = {
 };
 
 export function LocalSendDialog({ open, onOpenChange, appName, fileName, fileSize, fileUrl }: Props) {
-  const native = isLocalSendAvailable();
+  const nativeCapable = isLocalSendAvailable();
+  const [pluginMissing, setPluginMissing] = useState(false);
+  const native = nativeCapable && !pluginMissing;
   const desktopName = useDesktopPlatform();
   const localSendDownloadUrl = LOCALSEND_DOWNLOADS[desktopName] ?? LOCALSEND_DOWNLOADS.computer;
   const [devices, setDevices] = useState<LocalSendDevice[]>([]);
@@ -72,11 +74,17 @@ export function LocalSendDialog({ open, onOpenChange, appName, fileName, fileSiz
     setScanning(true);
     try {
       await LocalSend.scan();
-    } catch {
-      setError("Couldn't scan the network.");
+    } catch (e) {
+      const msg = String((e as Error)?.message ?? e).toLowerCase();
+      if (msg.includes("not implemented") || msg.includes("not available") || msg.includes("unimplemented")) {
+        setPluginMissing(true);
+      } else {
+        setError("Couldn't scan the network.");
+      }
     }
     window.setTimeout(() => setScanning(false), 7000);
   }, [native]);
+
 
   useEffect(() => {
     if (!open || !native) return;
