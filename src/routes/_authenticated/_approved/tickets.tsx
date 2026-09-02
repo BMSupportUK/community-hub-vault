@@ -1747,7 +1747,7 @@ function TicketDetail({
           </div>
         </div>
         {linkedOrder && (
-          <div className="lg:hidden rounded-lg border border-white/25 bg-white/10 backdrop-blur p-3">
+          <div className="lg:hidden rounded-lg border border-white/25 bg-white/10 backdrop-blur p-3 max-h-[55vh] overflow-y-auto overscroll-contain">
             {orderPanelInner}
           </div>
         )}
