@@ -1217,8 +1217,48 @@ function TicketDetail({
       );
       toast.success("Sale completed");
       await loadLinkedOrder();
+      await applyRenewal();
     } finally { setOrderBusy(false); }
   };
+
+  /**
+   * Extends the customer's credential by the months purchased and sets the
+   * account type from the products bought. Called automatically on Sale
+   * Complete; re-called with a chosen account when the customer has several.
+   */
+  const applyRenewal = async (credentialId?: string) => {
+    if (!linkedOrder) return;
+    try {
+      const res = await applyOrderToCredentialFn({
+        data: { orderId: linkedOrder.id, ...(credentialId ? { credentialId } : {}) },
+      });
+      if (res.status === "needs_selection") {
+        setCredPicker({ candidates: res.candidates, months: res.months });
+        toast.warning("Choose which account to extend");
+        return;
+      }
+      if (res.status === "no_credentials") {
+        toast.warning("No account credential found — create one, then the expiry can be set.");
+        return;
+      }
+      if (res.status === "no_term") {
+        toast.warning("Couldn't work out the subscription length from this order — set the expiry manually.");
+        return;
+      }
+      setCredPicker(null);
+      const expiry = new Date(res.newExpiry).toLocaleDateString("en-GB", {
+        day: "numeric", month: "short", year: "numeric",
+      });
+      toast.success(`${res.accountLabel}: +${res.months} month${res.months === 1 ? "" : "s"} → expires ${expiry}`);
+      await postTicketSystem(
+        `📅 Subscription updated — ${res.accountLabel} (${res.accountTypeLabel}) now runs for a further ${res.months} month${res.months === 1 ? "" : "s"} and expires on ${expiry}.`,
+      );
+    } catch (e: any) {
+      toast.error(e?.message ?? "Couldn't update the account expiry");
+    }
+  };
+
+
 
   const orderCancel = async () => {
     if (!linkedOrder || orderBusy) return;
