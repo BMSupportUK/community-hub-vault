@@ -192,6 +192,8 @@ public class LocalSendReceiver {
                     JSONObject info = new JSONObject(
                             new String(p.getData(), 0, p.getLength(), "UTF-8"));
                     if (fingerprint.equals(info.optString("fingerprint"))) continue;
+                    // Any LocalSend packet from another device means it is reachable.
+                    peer(p.getAddress().getHostAddress(), info);
                     if (!info.optBoolean("announce", false)) continue;
                     byte[] reply = selfInfo(false).toString().getBytes("UTF-8");
                     multicast.send(new DatagramPacket(reply, reply.length, p.getAddress(), PORT));
