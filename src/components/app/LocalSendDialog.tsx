@@ -90,6 +90,7 @@ export function LocalSendDialog({ open, onOpenChange, appName, fileName, fileSiz
   const [sendingTo, setSendingTo] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [doneOn, setDoneOn] = useState<string | null>(null);
+  const [launchFailed, setLaunchFailed] = useState(false);
   const listeners = useRef<PluginListenerHandle[]>([]);
 
   const startScan = useCallback(async () => {
