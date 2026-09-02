@@ -163,3 +163,100 @@ export const notifyStaffOfCustomerReply = createServerFn({ method: "POST" })
     }
     return { ok: true };
   });
+
+/**
+ * Passes a ticket over to another staff member: reassigns it, posts an
+ * internal note on the thread and alerts the new owner (bell + push).
+ */
+export const handOverTicket = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z
+      .object({
+        ticketId: z.string().uuid(),
+        toUserId: z.string().uuid(),
+        note: z.string().trim().max(500).optional(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const callerId = context.userId;
+
+    const { data: callerRoles } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", callerId);
+    const isStaff = (callerRoles ?? []).some((r: { role: string }) =>
+      (STAFF_ROLES as readonly string[]).includes(r.role),
+    );
+    if (!isStaff) return { ok: false, reason: "not_staff" };
+
+    const { data: targetRoles } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", data.toUserId);
+    const targetIsStaff = (targetRoles ?? []).some((r: { role: string }) =>
+      (STAFF_ROLES as readonly string[]).includes(r.role),
+    );
+    if (!targetIsStaff) return { ok: false, reason: "target_not_staff" };
+    if (data.toUserId === callerId) return { ok: false, reason: "self" };
+
+    const { data: ticket } = await supabaseAdmin
+      .from("tickets")
+      .select("id, subject")
+      .eq("id", data.ticketId)
+      .maybeSingle();
+    if (!ticket) return { ok: false, reason: "no_ticket" };
+    const subject = ((ticket as { subject: string | null }).subject) ?? "Ticket";
+
+    const [{ data: fromProf }, { data: toProf }] = await Promise.all([
+      supabaseAdmin.from("profiles").select("display_name, username").eq("id", callerId).maybeSingle(),
+      supabaseAdmin.from("profiles").select("display_name, username").eq("id", data.toUserId).maybeSingle(),
+    ]);
+    const named = (p: unknown) =>
+      (p as { display_name?: string | null; username?: string | null } | null)?.display_name ||
+      (p as { username?: string | null } | null)?.username ||
+      "Staff";
+    const fromName = named(fromProf);
+    const toName = named(toProf);
+
+    const { error: upErr } = await supabaseAdmin
+      .from("tickets")
+      .update({ assigned_to: data.toUserId } as never)
+      .eq("id", data.ticketId);
+    if (upErr) return { ok: false, reason: upErr.message };
+
+    await supabaseAdmin.from("ticket_messages").insert({
+      ticket_id: data.ticketId,
+      sender_id: callerId,
+      content: `🔁 Ticket passed from ${fromName} to ${toName}.${data.note ? ` Note: ${data.note}` : ""}`,
+      is_internal: true,
+    } as never);
+
+    await supabaseAdmin.from("user_notifications").insert({
+      user_id: data.toUserId,
+      kind: "ticket_handover",
+      title: `${fromName} passed you a ticket`,
+      body: data.note ? `${subject} — ${data.note}` : subject,
+      link_path: `/tickets?id=${data.ticketId}&view=assigned`,
+      source_type: "ticket",
+      source_id: data.ticketId,
+    } as never);
+
+    try {
+      const { broadcastToUser } = await import("@/lib/push.functions");
+      await broadcastToUser(
+        data.toUserId,
+        `${fromName} passed you a ticket`,
+        data.note ? `${subject} — ${data.note}` : subject,
+        `/tickets?id=${data.ticketId}&view=assigned`,
+        `ticket-handover-${data.ticketId}`,
+        "ticket-reply",
+      );
+    } catch (e) {
+      console.warn("[ticket-notify] handover push failed", e);
+    }
+
+    return { ok: true, toName };
+  });
