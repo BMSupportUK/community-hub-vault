@@ -1141,6 +1141,27 @@ export type Database = {
         }
         Relationships: []
       }
+      credential_change_events: {
+        Row: {
+          changed_at: string
+          credential_id: string
+          id: string
+          owner_id: string
+        }
+        Insert: {
+          changed_at?: string
+          credential_id: string
+          id?: string
+          owner_id: string
+        }
+        Update: {
+          changed_at?: string
+          credential_id?: string
+          id?: string
+          owner_id?: string
+        }
+        Relationships: []
+      }
       customer_reviews: {
         Row: {
           body: string
