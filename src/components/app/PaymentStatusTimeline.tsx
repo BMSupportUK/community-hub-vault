@@ -162,25 +162,17 @@ export function PaymentStatusTimeline({
       state: cancelled ? "failed" : phase === "awaiting" ? "active" : "done",
     },
     ...(showChecks && !cancelled
-      ? checkSteps.map((c, i) => {
-          const isLastCheck = i === checkSteps.length - 1;
-          // While a check is running, mark every check step up to the active one
-          // as done; when the flow ends (confirmed/failed) all checks are done.
-          const isActiveCheck =
-            checking &&
-            (phase === c.key ||
-              // If only one provider is shown, any "checking" phase lights it up.
-              (method !== null && checkSteps.length === 1));
-          const state: StepDef["state"] = isActiveCheck
+      ? checkSteps.map((c) => {
+          // Only one check step is ever shown — the provider actually used.
+          const state: StepDef["state"] = checking
             ? "active"
             : confirmed || failed
               ? "done"
-              : checking && !isLastCheck && checkSteps[i + 1]?.key === phase
-                ? "done"
-                : "upcoming";
+              : "upcoming";
           return { ...c, state };
         })
       : []),
+
     {
       key: "result",
       title: cancelled ? "Cancelled" : failed ? "Failed" : "Confirmed",
