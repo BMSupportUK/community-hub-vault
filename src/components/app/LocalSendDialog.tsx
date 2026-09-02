@@ -183,15 +183,27 @@ export function LocalSendDialog({ open, onOpenChange, appName, fileName, fileSiz
                 <p className="mt-1 text-[11px] text-violet-200">
                   Free, open source. Install it on your computer and on the Fire Stick / Android box.
                 </p>
-                <Button
-                  size="sm"
-                  className="mt-2 h-8 bg-gradient-primary text-primary-foreground hover:opacity-90"
-                  asChild
-                >
-                  <a href={localSendDownloadUrl} target="_blank" rel="noopener noreferrer">
-                    <Monitor className="size-3.5 mr-1" /> Get LocalSend for {desktopName}
-                  </a>
-                </Button>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <Button
+                    size="sm"
+                    className="h-8 bg-gradient-primary text-primary-foreground hover:opacity-90"
+                    asChild
+                  >
+                    <a href={LOCALSEND_DOWNLOADS.Windows} target="_blank" rel="noopener noreferrer">
+                      <Monitor className="size-3.5 mr-1" /> LocalSend for Windows
+                    </a>
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="h-8 bg-gradient-primary text-primary-foreground hover:opacity-90"
+                    asChild
+                  >
+                    <a href={LOCALSEND_DOWNLOADS.Mac} target="_blank" rel="noopener noreferrer">
+                      <Monitor className="size-3.5 mr-1" /> LocalSend for Mac
+                    </a>
+                  </Button>
+                </div>
+
               </li>
               <li className="rounded-lg border border-violet-500/30 bg-violet-500/10 p-2.5">
                 <p className="font-semibold text-foreground">2. Download the app file</p>
