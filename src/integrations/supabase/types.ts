@@ -6008,6 +6008,7 @@ export type Database = {
         Args: { _category_id: string }
         Returns: boolean
       }
+      is_sales_ticket: { Args: { _ticket_id: string }; Returns: boolean }
       is_user_dnd: { Args: { _user_id: string }; Returns: boolean }
       list_content_reports: {
         Args: { _status?: string }

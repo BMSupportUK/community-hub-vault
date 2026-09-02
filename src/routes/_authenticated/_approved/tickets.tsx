@@ -937,6 +937,15 @@ function TicketDetail({
   const cat = categories.find((c) => c.id === ticket.category_id);
   const CatIcon = ICONS[cat?.icon ?? "LifeBuoy"] ?? LifeBuoy;
   const StatusIcon = STATUS_META[ticket.status].Icon;
+  // Sales tickets (linked to an order) are admin/management only — never hand
+  // them to other staff roles.
+  const isSalesTicket = !!ticket.order_id;
+  const assignableStaff = useMemo(
+    () => (isSalesTicket ? staff.filter((s) => s.role === "admin" || s.role === "management") : staff),
+    [isSalesTicket, staff],
+  );
+
+
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [draft, setDraft] = useState("");
@@ -1974,7 +1983,7 @@ function TicketDetail({
             />
             <Select
               label="Assignee" value={ticket.assigned_to ?? ""}
-              options={[{ value: "", label: "Unassigned" }, ...staff.map((s) => ({ value: s.id, label: s.display_name || s.username || "Staff" }))]}
+              options={[{ value: "", label: "Unassigned" }, ...assignableStaff.map((s) => ({ value: s.id, label: s.display_name || s.username || "Staff" }))]}
               onChange={(v) => updateField({ assigned_to: v || null })}
             />
             {ticket.assigned_to && (() => {
@@ -1985,9 +1994,10 @@ function TicketDetail({
             <RequestAdminHelpButton ticketId={ticket.id} />
             <HandOverTicketButton
               ticketId={ticket.id}
-              staff={staff}
+              staff={assignableStaff}
               currentUserId={currentUserId}
             />
+
             <QuickRepliesPill
               scope="ticket"
               label="Staff shortcuts"
