@@ -213,15 +213,7 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
                 onClick={() => setOpen(true)}
                 className="w-full h-8"
               >
-                <Eye className="size-3.5 mr-1" /> View download link
-              </Button>
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={() => setWifiOpen(true)}
-                className="w-full h-8"
-              >
-                <Wifi className="size-3.5 mr-1" /> Send over Wi-Fi
+                <Eye className="size-3.5 mr-1" /> View download options
               </Button>
               <p className="text-[10px] text-center text-muted-foreground flex items-center justify-center gap-1">
                 <Clock className="size-3" /> Link expires in {remaining}
