@@ -1063,6 +1063,28 @@ function TicketDetail({
     }
   };
   useEffect(() => { loadLinkedOrder(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [ticket.order_id, getPaymentState]);
+  // Live-refresh the order panel when the order or its payment changes, so
+  // "Payment received" appears without a hard refresh.
+  useEffect(() => {
+    const orderId = ticket.order_id;
+    if (!orderId) return;
+    const ch = supabase
+      .channel(`ticket-order-${orderId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "orders", filter: `id=eq.${orderId}` },
+        () => { void loadLinkedOrder(); },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "order_payments", filter: `order_id=eq.${orderId}` },
+        () => { void loadLinkedOrder(); },
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ticket.order_id]);
+
   const orderIsUnpaid = !!linkedOrder && !linkedOrder.paid_at && linkedOrder.status !== "cancelled" && linkedOrder.status !== "refunded" && linkedOrder.status !== "completed";
   const accountSetupMessageExists = messages.some((m) => (m.content ?? "").startsWith("🛠️"));
   const extendSubMessageExists = messages.some((m) => (m.content ?? "").startsWith("🔄"));
