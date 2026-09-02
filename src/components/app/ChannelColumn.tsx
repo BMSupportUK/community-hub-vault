@@ -187,7 +187,7 @@ export function ChannelColumn({
     setLocalUnreadLoaded(false);
     void loadUnread();
     const channel = supabase
-      .channel(`channel-column-unread-${uid}`)
+      .channel(`channel-column-unread-${uid}-${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "chat_messages" }, scheduleLoad)
       .on(
         "postgres_changes",
