@@ -1834,8 +1834,79 @@ function TicketDetail({
               </button>
             ))}
           </div>
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:justify-between">
+            <Button
+              variant="outline"
+              onClick={() => {
+                const months = credPicker?.months ?? 0;
+                const count = credPicker?.candidates.length ?? 0;
+                setCredPicker(null);
+                setNewCred({ months, accountType: "single", loginName: "", password: "", existingCount: count });
+              }}
+            >
+              Add a new account instead
+            </Button>
             <Button variant="ghost" onClick={() => setCredPicker(null)}>Skip for now</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* New / additional account: staff enters the login details */}
+      <Dialog open={!!newCred} onOpenChange={(o) => { if (!o && !newCredBusy) setNewCred(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {(newCred?.existingCount ?? 0) > 0 ? "Set up the additional account" : "Set up the new account"}
+            </DialogTitle>
+            <DialogDescription>
+              Enter the login name and password for this customer. The expiry will be set to{" "}
+              {newCred?.months ?? 0} month{(newCred?.months ?? 0) === 1 ? "" : "s"} from today and the account will
+              appear in the admin credentials list.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="newcred-login">Login name</Label>
+              <Input
+                id="newcred-login"
+                autoComplete="off"
+                value={newCred?.loginName ?? ""}
+                onChange={(e) => setNewCred((p) => (p ? { ...p, loginName: e.target.value } : p))}
+                placeholder="e.g. jsmith01"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="newcred-pass">Password</Label>
+              <Input
+                id="newcred-pass"
+                autoComplete="off"
+                value={newCred?.password ?? ""}
+                onChange={(e) => setNewCred((p) => (p ? { ...p, password: e.target.value } : p))}
+                placeholder="Account password"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Account type</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {(["single", "multi", "triple"] as const).map((t) => (
+                  <Button
+                    key={t}
+                    type="button"
+                    variant={newCred?.accountType === t ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setNewCred((p) => (p ? { ...p, accountType: t } : p))}
+                  >
+                    {t === "single" ? "Single" : t === "multi" ? "Multi-room" : "Triple-room"}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" disabled={newCredBusy} onClick={() => setNewCred(null)}>Skip for now</Button>
+            <Button onClick={submitNewCredential} disabled={newCredBusy}>
+              {newCredBusy ? "Creating…" : "Create account"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
