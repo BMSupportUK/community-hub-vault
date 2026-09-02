@@ -57,7 +57,7 @@ public class LocalSendPlugin extends Plugin {
     private static final String MULTICAST_GROUP = "224.0.0.167";
     private static final String ALIAS = "BM Support";
 
-    private final ExecutorService pool = Executors.newFixedThreadPool(24);
+    private final ExecutorService pool = Executors.newFixedThreadPool(48);
     private final Set<String> seen = Collections.synchronizedSet(new HashSet<String>());
     private final AtomicBoolean cancelled = new AtomicBoolean(false);
     private String fingerprint;
@@ -93,10 +93,32 @@ public class LocalSendPlugin extends Plugin {
     public void scan(final PluginCall call) {
         cancelled.set(false);
         seen.clear();
+        // Discovery runs through the always-on receiver: it already owns UDP 53317,
+        // so a second socket here would swallow half the replies. Peers answer an
+        // announcement either by UDP or by POSTing /register to us — both arrive there.
+        final LocalSendReceiver r = ensureReceiver();
+        r.setPeers(new LocalSendReceiver.Peers() {
+            @Override
+            public void onPeer(String ip, JSONObject info) {
+                emitDevice(ip, info);
+            }
+        });
+        try {
+            r.start();
+        } catch (Exception ignored) {
+        }
         pool.execute(new Runnable() {
             @Override
             public void run() {
-                multicastDiscover();
+                // Repeat: LocalSend on Fire TV frequently misses a single packet.
+                for (int i = 0; i < 6 && !cancelled.get(); i++) {
+                    r.announce();
+                    try {
+                        Thread.sleep(900);
+                    } catch (InterruptedException e) {
+                        return;
+                    }
+                }
             }
         });
         pool.execute(new Runnable() {
@@ -106,61 +128,6 @@ public class LocalSendPlugin extends Plugin {
             }
         });
         call.resolve();
-    }
-
-    private void multicastDiscover() {
-        WifiManager wm = (WifiManager) getContext().getApplicationContext()
-                .getSystemService(Context.WIFI_SERVICE);
-        WifiManager.MulticastLock lock = null;
-        MulticastSocket socket = null;
-        try {
-            if (wm != null) {
-                lock = wm.createMulticastLock("bm-localsend");
-                lock.setReferenceCounted(true);
-                lock.acquire();
-            }
-            socket = new MulticastSocket(PORT);
-            socket.setReuseAddress(true);
-            socket.setSoTimeout(1000);
-            InetAddress group = InetAddress.getByName(MULTICAST_GROUP);
-            try {
-                socket.joinGroup(group);
-            } catch (Exception ignored) {
-            }
-
-            byte[] payload = selfInfo(true).toString().getBytes("UTF-8");
-            socket.send(new DatagramPacket(payload, payload.length, group, PORT));
-
-            long until = System.currentTimeMillis() + 6000;
-            while (System.currentTimeMillis() < until && !cancelled.get()) {
-                try {
-                    byte[] buf = new byte[8192];
-                    DatagramPacket p = new DatagramPacket(buf, buf.length);
-                    socket.receive(p);
-                    String body = new String(p.getData(), 0, p.getLength(), "UTF-8");
-                    JSONObject info = new JSONObject(body);
-                    String ip = p.getAddress().getHostAddress();
-                    if (info.optBoolean("announce", false)) {
-                        // Reply directly so the peer also learns about us.
-                        byte[] reply = selfInfo(false).toString().getBytes("UTF-8");
-                        socket.send(new DatagramPacket(reply, reply.length, p.getAddress(), PORT));
-                    }
-                    emitDevice(ip, info);
-                } catch (Exception ignored) {
-                }
-            }
-        } catch (Exception ignored) {
-        } finally {
-            if (socket != null) {
-                try {
-                    socket.close();
-                } catch (Exception ignored) {
-                }
-            }
-            if (lock != null && lock.isHeld()) {
-                lock.release();
-            }
-        }
     }
 
     private void sweepSubnet() {
@@ -173,11 +140,37 @@ public class LocalSendPlugin extends Plugin {
                 public void run() {
                     if (cancelled.get()) return;
                     if (!portOpen(host)) return;
-                    JSONObject info = register(host, "http");
-                    if (info == null) info = register(host, "https");
+                    // LocalSend encrypts by default now, so try HTTPS first and
+                    // fall back to plain HTTP for older/insecure-mode peers.
+                    JSONObject info = register(host, "https");
+                    if (info == null) info = register(host, "http");
+                    if (info == null) info = info(host, "https");
+                    if (info == null) info = info(host, "http");
                     if (info != null) emitDevice(host, info);
                 }
             });
+        }
+    }
+
+    /** Some peers reject /register but always answer GET /info. */
+    private JSONObject info(String host, String protocol) {
+        HttpURLConnection conn = null;
+        try {
+            URL url = new URL(protocol + "://" + host + ":" + PORT + "/api/localsend/v2/info");
+            conn = open(url);
+            conn.setRequestMethod("GET");
+            conn.setConnectTimeout(2500);
+            conn.setReadTimeout(4000);
+            if (conn.getResponseCode() / 100 != 2) return null;
+            String body = readAll(conn.getInputStream());
+            if (!body.trim().startsWith("{")) return null;
+            JSONObject o = new JSONObject(body);
+            if (!o.has("protocol")) o.put("protocol", protocol);
+            return o;
+        } catch (Exception e) {
+            return null;
+        } finally {
+            if (conn != null) conn.disconnect();
         }
     }
 

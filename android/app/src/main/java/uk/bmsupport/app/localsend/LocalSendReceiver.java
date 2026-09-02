@@ -44,6 +44,27 @@ public class LocalSendReceiver {
         void onEvent(String phase, String fileName, int percent, String error);
     }
 
+    /** Peers that announce themselves to us (UDP) or register with us (HTTP). */
+    public interface Peers {
+        void onPeer(String ip, JSONObject info);
+    }
+
+    private volatile Peers peers;
+
+    void setPeers(Peers p) {
+        this.peers = p;
+    }
+
+    private void peer(String ip, JSONObject info) {
+        Peers p = peers;
+        if (p != null && ip != null && info != null) {
+            try {
+                p.onPeer(ip, info);
+            } catch (Exception ignored) {
+            }
+        }
+    }
+
     private static final int PORT = 53317;
     private static final String MULTICAST_GROUP = "224.0.0.167";
 
@@ -171,11 +192,39 @@ public class LocalSendReceiver {
                     JSONObject info = new JSONObject(
                             new String(p.getData(), 0, p.getLength(), "UTF-8"));
                     if (fingerprint.equals(info.optString("fingerprint"))) continue;
+                    // Any LocalSend packet from another device means it is reachable.
+                    peer(p.getAddress().getHostAddress(), info);
                     if (!info.optBoolean("announce", false)) continue;
                     byte[] reply = selfInfo(false).toString().getBytes("UTF-8");
                     multicast.send(new DatagramPacket(reply, reply.length, p.getAddress(), PORT));
                 } catch (Exception ignored) {
                 }
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
+    /**
+     * Shout "we're here" on the LocalSend multicast group and on the subnet
+     * broadcast address (Fire TV / many routers drop multicast but pass broadcast).
+     * Peers answer either with a UDP reply or an HTTP /register to us — both land
+     * back in this class and are reported through {@link Peers}.
+     */
+    void announce() {
+        MulticastSocket s = multicast;
+        if (s == null) return;
+        try {
+            byte[] hello = selfInfo(true).toString().getBytes("UTF-8");
+            try {
+                s.send(new DatagramPacket(hello, hello.length,
+                        InetAddress.getByName(MULTICAST_GROUP), PORT));
+            } catch (Exception ignored) {
+            }
+            try {
+                s.setBroadcast(true);
+                s.send(new DatagramPacket(hello, hello.length,
+                        InetAddress.getByName("255.255.255.255"), PORT));
+            } catch (Exception ignored) {
             }
         } catch (Exception ignored) {
         }
@@ -244,8 +293,16 @@ public class LocalSendReceiver {
             if (path.endsWith("/info") && "GET".equals(method)) {
                 respond(out, 200, selfInfo(false).toString());
             } else if (path.endsWith("/register")) {
-                readBody(in, contentLength);
+                String reg = new String(readBody(in, contentLength), "UTF-8");
                 respond(out, 200, selfInfo(false).toString());
+                try {
+                    JSONObject info = reg.trim().startsWith("{")
+                            ? new JSONObject(reg) : new JSONObject();
+                    if (!fingerprint.equals(info.optString("fingerprint"))) {
+                        peer(client.getInetAddress().getHostAddress(), info);
+                    }
+                } catch (Exception ignored) {
+                }
             } else if (path.endsWith("/prepare-upload")) {
                 String body = new String(readBody(in, contentLength), "UTF-8");
                 respond(out, 200, preparePayload(body));
