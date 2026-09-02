@@ -309,8 +309,35 @@ export const updateAppBuild = createServerFn({ method: "POST" })
     if (data.fileSize !== undefined) patch.file_size = data.fileSize;
     const { error } = await supabaseAdmin.from("app_builds").update(patch as never).eq("id", data.id);
     if (error) throw new Error(error.message);
+
+    // A replaced APK or a bumped version number is a new release: alert members
+    // once per version. Cosmetic edits (notes, sort order) never alert.
+    try {
+      const isNewRelease = !!patch.file_path || data.versionName !== undefined;
+      if (isNewRelease) {
+        const { data: row } = await supabaseAdmin
+          .from("app_builds")
+          .select("id, app_name, file_name, version_name, release_notes, is_available")
+          .eq("id", data.id)
+          .maybeSingle();
+        if (row?.is_available) {
+          const { announceAppUpdate } = await import("@/lib/app-update-announce.server");
+          await announceAppUpdate({
+            buildId: row.id as string,
+            appName: (row.app_name as string | null) ?? null,
+            fileName: row.file_name as string,
+            versionName: (row.version_name as string | null) ?? null,
+            releaseNotes: (row.release_notes as string | null) ?? null,
+          });
+        }
+      }
+    } catch (e) {
+      console.warn("[app-build] update announcement failed", e);
+    }
+
     return { ok: true as const };
   });
+
 
 /** Staff: live transfers with the member they belong to and download progress. */
 export const listAppTransfers = createServerFn({ method: "GET" })
