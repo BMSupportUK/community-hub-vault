@@ -75,12 +75,16 @@ export function useQuickReplies(scope: QuickReplyScope = "talk") {
 export function QuickRepliesPill({
   onInsert,
   className,
+  scope = "talk",
+  label = "Shortcuts",
 }: {
   onInsert: (text: string) => void;
   className?: string;
+  scope?: QuickReplyScope;
+  label?: string;
 }) {
   const { user } = useAuth();
-  const { replies, loading, refresh, isStaff } = useQuickReplies();
+  const { replies, loading, refresh, isStaff } = useQuickReplies(scope);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [editing, setEditing] = useState<QuickReply | "new" | null>(null);
