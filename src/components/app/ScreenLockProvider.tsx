@@ -132,6 +132,14 @@ export function ScreenLockProvider() {
             typeof row.must_change === "boolean"
           ) {
             setSettings(row as ScreenLockSettings);
+            // Turning the lock off elsewhere must release a currently locked screen.
+            if (!row.enabled) {
+              setLocked(false);
+              try {
+                localStorage.removeItem(`screenlock:locked:${user.id}`);
+              } catch {}
+              resumeTalkPresence();
+            }
           }
         },
       )
