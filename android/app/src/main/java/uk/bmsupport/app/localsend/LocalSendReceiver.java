@@ -204,6 +204,32 @@ public class LocalSendReceiver {
         }
     }
 
+    /**
+     * Shout "we're here" on the LocalSend multicast group and on the subnet
+     * broadcast address (Fire TV / many routers drop multicast but pass broadcast).
+     * Peers answer either with a UDP reply or an HTTP /register to us — both land
+     * back in this class and are reported through {@link Peers}.
+     */
+    void announce() {
+        MulticastSocket s = multicast;
+        if (s == null) return;
+        try {
+            byte[] hello = selfInfo(true).toString().getBytes("UTF-8");
+            try {
+                s.send(new DatagramPacket(hello, hello.length,
+                        InetAddress.getByName(MULTICAST_GROUP), PORT));
+            } catch (Exception ignored) {
+            }
+            try {
+                s.setBroadcast(true);
+                s.send(new DatagramPacket(hello, hello.length,
+                        InetAddress.getByName("255.255.255.255"), PORT));
+            } catch (Exception ignored) {
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
     // ----------------------------------------------------------- http server
 
     private void acceptLoop() {
