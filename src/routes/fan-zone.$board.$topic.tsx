@@ -5,7 +5,7 @@ import { ForumPostBody } from "@/components/app/ForumPostBody";
 import { RelativeTime } from "@/components/app/RelativeTime";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { isTeamSheetPost } from "@/lib/forum-team-sheet";
+import { isTeamSheetPost, sortTeamSheetPosts } from "@/lib/forum-team-sheet";
 import { FanZoneShell } from "./fan-zone";
 
 

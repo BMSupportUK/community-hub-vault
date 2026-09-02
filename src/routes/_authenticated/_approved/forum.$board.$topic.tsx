@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { HtmlEditor } from "@/components/ui/html-editor";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { isTeamSheetPost } from "@/lib/forum-team-sheet";
+import { isTeamSheetPost, sortTeamSheetPosts } from "@/lib/forum-team-sheet";
 import { ForumPostBody } from "@/components/app/ForumPostBody";
 import { ForumPostReactions } from "@/components/app/ForumPostReactions";
 import { isPreparedForumPostBody, markPreparedForumPostBody, normalizeForumPostInput, prepareForumPostBody } from "@/lib/forum-embeds";
@@ -729,7 +729,7 @@ function TopicPage() {
       opPost: visible.find((p) => p.is_op) ?? null,
       replies: visible.filter((p) => !p.is_op && !p.is_pinned && !isTeamSheetPost(p.body)),
       pinnedReplies: visible.filter((p) => !p.is_op && p.is_pinned && !isTeamSheetPost(p.body)),
-      teamPosts: visible.filter((p) => !p.is_op && isTeamSheetPost(p.body)),
+      teamPosts: sortTeamSheetPosts(visible.filter((p) => !p.is_op && isTeamSheetPost(p.body))),
     };
   }, [posts, blocked]);
 
