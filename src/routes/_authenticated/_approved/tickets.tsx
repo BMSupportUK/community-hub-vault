@@ -1016,7 +1016,16 @@ function TicketDetail({
   const cancelOrderAndSquareInvoiceRpc = useServerFn(cancelOrderAndSquareInvoice);
   const getPaymentState = useServerFn(getOrderPaymentState);
   const applyOrderToCredentialFn = useServerFn(applyOrderToCredential);
+  const createCredentialForOrderFn = useServerFn(createCredentialForOrder);
   const [credPicker, setCredPicker] = useState<{ candidates: CredentialCandidate[]; months: number } | null>(null);
+  const [newCred, setNewCred] = useState<{
+    months: number;
+    accountType: "single" | "multi" | "triple";
+    loginName: string;
+    password: string;
+    existingCount: number;
+  } | null>(null);
+  const [newCredBusy, setNewCredBusy] = useState(false);
 
   const loadLinkedOrder = async () => {
     if (!ticket.order_id) { setLinkedOrder(null); setLinkedOrderUsername(null); return; }
