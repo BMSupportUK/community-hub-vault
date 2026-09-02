@@ -32,6 +32,13 @@ export function ScreenLockOverlay({ settings, onUnlock }: Props) {
   const [usePassword, setUsePassword] = useState(false);
   const [password, setPassword] = useState("");
 
+  // A hung network call must never leave the form permanently disabled.
+  useEffect(() => {
+    if (!busy) return;
+    const t = window.setTimeout(() => setBusy(false), 12_000);
+    return () => window.clearTimeout(t);
+  }, [busy]);
+
   const leaveLock = async () => {
     if (user) {
       try {
