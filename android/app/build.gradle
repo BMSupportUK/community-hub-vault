@@ -17,10 +17,25 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            def storeFileProp = System.getenv("ANDROID_KEYSTORE_PATH") ?: "../keystore/bmsupport-release.jks"
+            def pass = System.getenv("ANDROID_KEYSTORE_PASSWORD")
+            if (pass != null && file(storeFileProp).exists()) {
+                storeFile file(storeFileProp)
+                storePassword pass
+                keyAlias System.getenv("ANDROID_KEY_ALIAS") ?: "bmsupport"
+                keyPassword System.getenv("ANDROID_KEY_PASSWORD") ?: pass
+            }
+        }
+    }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            if (System.getenv("ANDROID_KEYSTORE_PASSWORD") != null) {
+                signingConfig signingConfigs.release
+            }
         }
     }
 }
