@@ -5,7 +5,7 @@ import { ForumPostBody } from "@/components/app/ForumPostBody";
 import { RelativeTime } from "@/components/app/RelativeTime";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { isTeamSheetPost } from "@/lib/forum-team-sheet";
+import { isTeamSheetPost, sortTeamSheetPosts } from "@/lib/forum-team-sheet";
 import { FanZoneShell } from "./fan-zone";
 
 
@@ -38,7 +38,7 @@ function TopicReadPage() {
 
   const posts = data.posts as PublicPost[];
   const op = posts.find((p) => p.is_op) ?? null;
-  const teamPosts = posts.filter((p) => !p.is_op && isTeamSheetPost(p.body));
+  const teamPosts = sortTeamSheetPosts(posts.filter((p) => !p.is_op && isTeamSheetPost(p.body)));
   const replies = posts.filter((p) => !p.is_op && !isTeamSheetPost(p.body));
 
   return (
