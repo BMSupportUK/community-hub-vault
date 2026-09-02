@@ -39,7 +39,14 @@ import { StaffOnDutyStrip } from "@/components/app/StaffOnDutyStrip";
 import { Nameplate } from "@/components/app/Nameplate";
 import { QuickRepliesPill } from "@/components/app/QuickRepliesDialog";
 import { useChannelJump } from "@/components/app/ChannelJump";
-import { applyOrderToCredential, type CredentialCandidate } from "@/lib/order-fulfilment.functions";
+import {
+  applyOrderToCredential,
+  createCredentialForOrder,
+  type CredentialCandidate,
+  type ApplyOrderResult,
+} from "@/lib/order-fulfilment.functions";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 
 export const Route = createFileRoute("/_authenticated/_approved/tickets")({
@@ -1009,7 +1016,16 @@ function TicketDetail({
   const cancelOrderAndSquareInvoiceRpc = useServerFn(cancelOrderAndSquareInvoice);
   const getPaymentState = useServerFn(getOrderPaymentState);
   const applyOrderToCredentialFn = useServerFn(applyOrderToCredential);
+  const createCredentialForOrderFn = useServerFn(createCredentialForOrder);
   const [credPicker, setCredPicker] = useState<{ candidates: CredentialCandidate[]; months: number } | null>(null);
+  const [newCred, setNewCred] = useState<{
+    months: number;
+    accountType: "single" | "multi" | "triple";
+    loginName: string;
+    password: string;
+    existingCount: number;
+  } | null>(null);
+  const [newCredBusy, setNewCredBusy] = useState(false);
 
   const loadLinkedOrder = async () => {
     if (!ticket.order_id) { setLinkedOrder(null); setLinkedOrderUsername(null); return; }
@@ -1232,31 +1248,72 @@ function TicketDetail({
       const res = await applyOrderToCredentialFn({
         data: { orderId: linkedOrder.id, ...(credentialId ? { credentialId } : {}) },
       });
-      if (res.status === "needs_selection") {
-        setCredPicker({ candidates: res.candidates, months: res.months });
-        toast.warning("Choose which account to extend");
-        return;
-      }
-      if (res.status === "no_credentials") {
-        toast.warning("No account credential found — create one, then the expiry can be set.");
-        return;
-      }
-      if (res.status === "no_term") {
-        toast.warning("Couldn't work out the subscription length from this order — set the expiry manually.");
-        return;
-      }
-      setCredPicker(null);
-      const expiry = new Date(res.newExpiry).toLocaleDateString("en-GB", {
-        day: "numeric", month: "short", year: "numeric",
-      });
-      toast.success(`${res.accountLabel}: +${res.months} month${res.months === 1 ? "" : "s"} → expires ${expiry}`);
-      await postTicketSystem(
-        `📅 Subscription updated — ${res.accountLabel} (${res.accountTypeLabel}) now runs for a further ${res.months} month${res.months === 1 ? "" : "s"} and expires on ${expiry}.`,
-      );
+      handleFulfilResult(res);
     } catch (e: any) {
       toast.error(e?.message ?? "Couldn't update the account expiry");
     }
   };
+
+  const handleFulfilResult = async (res: ApplyOrderResult) => {
+    if (res.status === "needs_selection") {
+      setCredPicker({ candidates: res.candidates, months: res.months });
+      toast.warning("Choose which account to extend");
+      return;
+    }
+    if (res.status === "needs_new_credentials") {
+      setNewCred({
+        months: res.months,
+        accountType: res.accountType ?? "single",
+        loginName: "",
+        password: "",
+        existingCount: res.existingAccounts.length,
+      });
+      toast.warning("Enter the login name and password for the new account");
+      return;
+    }
+    if (res.status === "no_term") {
+      toast.warning("Couldn't work out the subscription length from this order — set the expiry manually.");
+      return;
+    }
+    setCredPicker(null);
+    setNewCred(null);
+    const expiry = new Date(res.newExpiry).toLocaleDateString("en-GB", {
+      day: "numeric", month: "short", year: "numeric",
+    });
+    toast.success(
+      `${res.created ? "Account created" : res.accountLabel}: ${res.months} month${res.months === 1 ? "" : "s"} → expires ${expiry}`,
+    );
+    await postTicketSystem(
+      res.created
+        ? `🆕 Account set up — ${res.accountLabel} (${res.accountTypeLabel}), ${res.months} month${res.months === 1 ? "" : "s"}, expires ${expiry}. Your login details are in My Account.`
+        : `📅 Subscription updated — ${res.accountLabel} (${res.accountTypeLabel}) now runs for a further ${res.months} month${res.months === 1 ? "" : "s"} and expires on ${expiry}.`,
+    );
+  };
+
+  const submitNewCredential = async () => {
+    if (!linkedOrder || !newCred) return;
+    if (!newCred.loginName.trim() || !newCred.password.trim()) {
+      toast.error("Login name and password are required");
+      return;
+    }
+    setNewCredBusy(true);
+    try {
+      const res = await createCredentialForOrderFn({
+        data: {
+          orderId: linkedOrder.id,
+          loginName: newCred.loginName.trim(),
+          password: newCred.password,
+          accountType: newCred.accountType,
+        },
+      });
+      await handleFulfilResult(res);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Couldn't create the account");
+    } finally {
+      setNewCredBusy(false);
+    }
+  };
+
 
 
 
@@ -1777,8 +1834,79 @@ function TicketDetail({
               </button>
             ))}
           </div>
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:justify-between">
+            <Button
+              variant="outline"
+              onClick={() => {
+                const months = credPicker?.months ?? 0;
+                const count = credPicker?.candidates.length ?? 0;
+                setCredPicker(null);
+                setNewCred({ months, accountType: "single", loginName: "", password: "", existingCount: count });
+              }}
+            >
+              Add a new account instead
+            </Button>
             <Button variant="ghost" onClick={() => setCredPicker(null)}>Skip for now</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* New / additional account: staff enters the login details */}
+      <Dialog open={!!newCred} onOpenChange={(o) => { if (!o && !newCredBusy) setNewCred(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {(newCred?.existingCount ?? 0) > 0 ? "Set up the additional account" : "Set up the new account"}
+            </DialogTitle>
+            <DialogDescription>
+              Enter the login name and password for this customer. The expiry will be set to{" "}
+              {newCred?.months ?? 0} month{(newCred?.months ?? 0) === 1 ? "" : "s"} from today and the account will
+              appear in the admin credentials list.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="newcred-login">Login name</Label>
+              <Input
+                id="newcred-login"
+                autoComplete="off"
+                value={newCred?.loginName ?? ""}
+                onChange={(e) => setNewCred((p) => (p ? { ...p, loginName: e.target.value } : p))}
+                placeholder="e.g. jsmith01"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="newcred-pass">Password</Label>
+              <Input
+                id="newcred-pass"
+                autoComplete="off"
+                value={newCred?.password ?? ""}
+                onChange={(e) => setNewCred((p) => (p ? { ...p, password: e.target.value } : p))}
+                placeholder="Account password"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Account type</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {(["single", "multi", "triple"] as const).map((t) => (
+                  <Button
+                    key={t}
+                    type="button"
+                    variant={newCred?.accountType === t ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setNewCred((p) => (p ? { ...p, accountType: t } : p))}
+                  >
+                    {t === "single" ? "Single" : t === "multi" ? "Multi-room" : "Triple-room"}
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" disabled={newCredBusy} onClick={() => setNewCred(null)}>Skip for now</Button>
+            <Button onClick={submitNewCredential} disabled={newCredBusy}>
+              {newCredBusy ? "Creating…" : "Create account"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
