@@ -78,8 +78,8 @@ export function PaymentStatusTimeline({
         ? [
             {
               key: "checking_square",
-              title: "Checking Square",
-              desc: "Verifying your Square invoice payment.",
+              title: "Checking invoice",
+              desc: "Verifying your invoice payment.",
               icon: BadgeCheck,
             },
           ]
@@ -92,21 +92,15 @@ export function PaymentStatusTimeline({
                 icon: Bitcoin,
               },
             ]
-
           : [
               {
-                key: "checking_stripe",
-                title: "Checking Stripe",
-                desc: "Verifying your card payment with Stripe.",
+                key: "checking_payment",
+                title: "Checking payment",
+                desc: "Looking for your payment with our payment providers.",
                 icon: CreditCard,
               },
-              {
-                key: "checking_square",
-                title: "Checking Square",
-                desc: "No Stripe match — checking Square invoices.",
-                icon: BadgeCheck,
-              },
             ];
+
 
   const showChecks = started || phase !== "awaiting";
 
