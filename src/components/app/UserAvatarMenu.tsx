@@ -71,6 +71,7 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
   const [profile, setProfile] = useState<MiniProfile | null>(null);
   const [copied, setCopied] = useState(false);
   const [apkOpen, setApkOpen] = useState(false);
+  const [winOpen, setWinOpen] = useState(false);
   const [apkQr, setApkQr] = useState<string | null>(null);
   const isAdmin = hasAny(["admin", "management"]);
   const roleFlashMap = useRoleFlashMap();
