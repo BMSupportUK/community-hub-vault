@@ -204,12 +204,17 @@ export function pickTeamSheetPosts(
   return hits
     .filter((h) => h.images.length > 0 && h.createdAtMs >= from && h.createdAtMs <= to)
     .map((h) => {
-      if (isTeamSheetText(h.text)) return { ...h, side: "boro" as const };
+      // Opponent posts win the tie-break: a retweet of "Tonight's Burnley side"
+      // also reads like a generic team-news post.
       if (opponentName && isOpponentTeamSheetText(h.text, opponentName)) {
-        return { ...h, side: "opponent" as const };
+        const tokens = opponentTokens(opponentName);
+        const mentionsOpponent = tokens.some((w) => normalizeFancyText(h.text).toLowerCase().includes(w));
+        if (mentionsOpponent || !isTeamSheetText(h.text)) return { ...h, side: "opponent" as const };
       }
+      if (isTeamSheetText(h.text)) return { ...h, side: "boro" as const };
       return null;
     })
+
     .filter((h): h is TeamSheetHit & { side: "boro" | "opponent" } => h !== null)
     .sort((a, b) => a.createdAtMs - b.createdAtMs);
 }
