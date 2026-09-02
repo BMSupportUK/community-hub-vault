@@ -47,10 +47,12 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import androidApkAsset from "@/assets/BMSupport.apk.asset.json";
+import { ANDROID_RELEASE } from "@/lib/android-release";
+import { announceAndroidRelease } from "@/lib/android-release.functions";
 
-const ANDROID_APK_URL = androidApkAsset.url;
-const ANDROID_APK_ABSOLUTE_URL = `https://bmsupport.uk${androidApkAsset.url}`;
+const ANDROID_APK_URL = ANDROID_RELEASE.url;
+const ANDROID_APK_ABSOLUTE_URL = ANDROID_RELEASE.absoluteUrl;
+const ANDROID_ANNOUNCE_KEY = `bm-android-announced:${ANDROID_RELEASE.versionName}`;
 
 interface MiniProfile {
   id: string;
@@ -99,8 +101,22 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
     };
   }, [user, instanceId]);
 
+  // Fires the once-per-release "new Android version" alert. The server keeps the
+  // once-only guarantee; localStorage just stops us pinging it on every render.
+  useEffect(() => {
+    if (!user) return;
+    try {
+      if (localStorage.getItem(ANDROID_ANNOUNCE_KEY)) return;
+      localStorage.setItem(ANDROID_ANNOUNCE_KEY, "1");
+    } catch {
+      /* private mode — the server dedupes anyway */
+    }
+    announceAndroidRelease().catch(() => {});
+  }, [user]);
+
   useEffect(() => {
     if (!apkOpen || apkQr) return;
+
     let cancel = false;
     QRCode.toDataURL(ANDROID_APK_ABSOLUTE_URL, {
       width: 220,

@@ -25,3 +25,15 @@ Optional environment overrides: `ANDROID_KEYSTORE_PATH`, `ANDROID_KEY_ALIAS`,
 Do NOT regenerate or delete the keystore — losing it means existing users must
 uninstall before they can update again. Bump `versionCode`/`versionName` in
 `android/app/build.gradle` for each release.
+
+## Release checklist (every new version)
+
+1. `android/app/build.gradle`: increase `versionCode` by 1 and set the new `versionName`.
+2. Build the signed release APK with the commands above (the keystore is what
+   makes it install *over* the existing app instead of requiring an uninstall).
+3. Upload it: `lovable-assets create --file <apk> --filename BMSupport.apk > src/assets/BMSupport.apk.asset.json`.
+4. `src/lib/android-release.ts`: update `versionName`, `versionCode` and `notes`
+   to match. Changing `versionName` is what sends the one-time
+   "new version available" notification to every member (bell + push, once per
+   member per release, deduped through `scheduled_alert_log`).
+5. Publish the web app so the QR code and download button serve the new build.
