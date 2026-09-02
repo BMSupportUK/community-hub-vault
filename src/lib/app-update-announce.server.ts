@@ -56,7 +56,7 @@ export async function announceAppUpdate(opts: {
       kind: "app_update",
       title: `App update available — ${label}`,
       body,
-      link_path: "/install-guides?tab=app",
+      link_path: "/install-guides?tab=get-app",
       source_type: "app_build",
       source_id: opts.buildId,
     })) as never,
