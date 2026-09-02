@@ -297,7 +297,15 @@ public class LocalSendPlugin extends Plugin {
             }
             long size = declaredSize > 0 ? declaredSize : Math.max(0, src.getContentLength());
 
-            String base = protocol + "://" + host + ":" + port + "/api/localsend/v2";
+            // Confirm which scheme the peer actually speaks — discovery can guess
+            // wrong, and the wrong one dies mid-handshake.
+            String proto = protocol;
+            if (info(host, proto) == null) {
+                String alt = "https".equals(proto) ? "http" : "https";
+                if (info(host, alt) != null) proto = alt;
+            }
+            String base = proto + "://" + host + ":" + port + "/api/localsend/v2";
+
             String fileId = "bm-" + System.currentTimeMillis();
 
             JSONObject file = new JSONObject();
