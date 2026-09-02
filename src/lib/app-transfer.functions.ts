@@ -254,8 +254,26 @@ export const saveAppBuild = createServerFn({ method: "POST" })
       .select("id")
       .maybeSingle();
     if (error) throw new Error(error.message);
+
+    // Tell every member who can install it that a new release is live — once.
+    try {
+      if ((data.isAvailable ?? true) && inserted?.id) {
+        const { announceAppUpdate } = await import("@/lib/app-update-announce.server");
+        await announceAppUpdate({
+          buildId: inserted.id as string,
+          appName: data.appName ?? null,
+          fileName: data.fileName,
+          versionName: data.versionName ?? null,
+          releaseNotes: data.releaseNotes ?? null,
+        });
+      }
+    } catch (e) {
+      console.warn("[app-build] update announcement failed", e);
+    }
+
     return { id: inserted?.id as string };
   });
+
 
 /** Admin: toggles whether members can request a transfer, or edits build details. */
 export const updateAppBuild = createServerFn({ method: "POST" })
