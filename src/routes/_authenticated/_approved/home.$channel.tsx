@@ -224,7 +224,7 @@ function ChannelPage() {
     };
     refresh();
     const ch = supabase
-      .channel(`my-mutes:${user.id}`)
+      .channel(`my-mutes:${user.id}:${Math.random().toString(36).slice(2)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "chat_mutes", filter: `user_id=eq.${user.id}` },
@@ -279,7 +279,7 @@ function ChannelPage() {
     };
     refresh();
     const ch = supabase
-      .channel("all-mutes")
+      .channel(`all-mutes-${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "chat_mutes" }, () =>
         refresh(),
       )
@@ -620,7 +620,7 @@ function ChannelPage() {
     })();
 
     const ch = supabase
-      .channel(`chat:${channel.id}`)
+      .channel(`chat:${channel.id}:${Math.random().toString(36).slice(2)}`)
       .on(
         "postgres_changes",
         {
