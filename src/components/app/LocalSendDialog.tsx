@@ -145,7 +145,7 @@ export function LocalSendDialog({ open, onOpenChange, appName, fileName, fileSiz
         /declined|403/i.test(msg)
           ? "The TV declined the transfer — accept the prompt in LocalSend and try again."
           : /refused|connect|timed?\s?out|unreachable/i.test(msg)
-            ? "Couldn't reach LocalSend on that device. Make sure LocalSend is open on the TV and both devices are on the same Wi-Fi."
+            ? "Couldn't reach that device. Open the BM Support app (or LocalSend) on the TV and make sure both devices are on the same Wi-Fi."
             : msg,
       );
     } finally {
@@ -163,7 +163,7 @@ export function LocalSendDialog({ open, onOpenChange, appName, fileName, fileSiz
           </DialogTitle>
           <DialogDescription>
             {native
-              ? `Push ${appName} straight to a Fire Stick or Android box running LocalSend on this Wi-Fi.`
+              ? `Push ${appName} straight to a Fire Stick or Android box with the BM Support app (or LocalSend) open on this Wi-Fi.`
               : `Use LocalSend on your ${desktopName} to send ${appName} to your Fire Stick or Android box.`}
           </DialogDescription>
         </DialogHeader>
@@ -219,7 +219,7 @@ export function LocalSendDialog({ open, onOpenChange, appName, fileName, fileSiz
               <li className="rounded-lg border border-violet-500/30 bg-violet-500/10 p-2.5">
                 <p className="font-semibold text-foreground">3. Send it over Wi-Fi</p>
                 <p className="mt-1 text-[11px] text-violet-200">
-                  Open LocalSend on the TV and leave it on the main screen. On your computer, open
+                  Open the BM Support app on the TV and leave it on screen — it receives directly and opens the installer. No BM Support yet? Open LocalSend on the TV instead. On your computer, open
                   LocalSend, pick the file you just downloaded, choose the TV from the device list and
                   press Send — then press <strong>Accept</strong> on the TV with your remote. Open the
                   received file in LocalSend on the TV to install it.
@@ -307,7 +307,7 @@ export function LocalSendDialog({ open, onOpenChange, appName, fileName, fileSiz
                 <p className="text-xs text-muted-foreground text-center py-3">
                   {scanning
                     ? "Scanning your Wi-Fi for LocalSend devices…"
-                    : "No LocalSend devices found. Open LocalSend on the TV, then scan again."}
+                    : "No devices found. Open the BM Support app (or LocalSend) on the TV, then scan again."}
                 </p>
               )}
             </div>
