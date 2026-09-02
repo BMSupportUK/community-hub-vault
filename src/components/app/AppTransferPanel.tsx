@@ -224,14 +224,6 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
 
       </article>
 
-      <LocalSendDialog
-        open={wifiOpen}
-        onOpenChange={setWifiOpen}
-        appName={build.appName || build.fileName}
-        fileName={build.fileName}
-        fileSize={build.fileSize ?? 0}
-        fileUrl={transfer ? `https://${typeof window === "undefined" ? "bmsupport.uk" : window.location.host}/api/public/a/${transfer.token}` : ""}
-      />
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-sm sm:max-w-md border-violet-500/30 bg-violet-950/95 backdrop-blur-sm">
