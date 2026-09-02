@@ -170,6 +170,13 @@ export function LocalSendDialog({ open, onOpenChange, appName, fileName, fileSiz
 
         {!native ? (
           <div className="space-y-3">
+            {pluginMissing && (
+              <div className="rounded-lg border border-amber-400/40 bg-amber-500/10 p-2.5 text-[11px] text-amber-100">
+                One-tap Wi-Fi send needs the latest BM Support Android app. Update the app from the
+                store card, then reopen this screen. Until then use the steps below.
+              </div>
+            )}
+
             <ol className="space-y-2 text-xs text-violet-100">
               <li className="rounded-lg border border-violet-500/30 bg-violet-500/10 p-2.5">
                 <p className="font-semibold text-foreground">1. Install LocalSend on your {desktopName}</p>
