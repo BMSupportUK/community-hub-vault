@@ -472,27 +472,90 @@ public class LocalSendPlugin extends Plugin {
     }
 
     /**
-     * LocalSend peers use self-signed certificates, so HTTPS to a LAN peer needs a
-     * permissive trust manager. This applies only to sockets we open here — the
-     * app's global TLS trust is untouched.
+     * LocalSend peers use self-signed certificates AND ask the sender for a client
+     * certificate (mutual TLS). Without one the peer aborts the handshake with
+     * "certificate unknown", so we present a self-signed key pair held in the
+     * Android keystore and trust the peer's own self-signed cert. This applies only
+     * to sockets we open here — the app's global TLS trust is untouched.
      */
+    private static SSLContext sslCtx;
+    private static X509Certificate selfCert;
+
+    private static synchronized SSLContext sslContext() throws Exception {
+        if (sslCtx != null) return sslCtx;
+        KeyManager[] kms = null;
+        try {
+            KeyStore ks = KeyStore.getInstance("AndroidKeyStore");
+            ks.load(null);
+            final String alias = "bm-localsend-client";
+            if (!ks.containsAlias(alias)) {
+                KeyPairGenerator kpg = KeyPairGenerator.getInstance(
+                        KeyProperties.KEY_ALGORITHM_RSA, "AndroidKeyStore");
+                kpg.initialize(new KeyGenParameterSpec.Builder(alias,
+                        KeyProperties.PURPOSE_SIGN | KeyProperties.PURPOSE_VERIFY)
+                        .setKeySize(2048)
+                        .setDigests(KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA1)
+                        .setSignaturePaddings(KeyProperties.SIGNATURE_PADDING_RSA_PKCS1)
+                        .setCertificateSubject(new X500Principal("CN=BM Support"))
+                        .setCertificateNotBefore(new Date(System.currentTimeMillis() - 86400000L))
+                        .build());
+                kpg.generateKeyPair();
+            }
+            final PrivateKey key = (PrivateKey) ks.getKey(alias, null);
+            final X509Certificate cert = (X509Certificate) ks.getCertificate(alias);
+            if (key != null && cert != null) {
+                selfCert = cert;
+                final X509Certificate[] chain = new X509Certificate[]{cert};
+                kms = new KeyManager[]{new X509ExtendedKeyManager() {
+                    public String chooseClientAlias(String[] keyType, Principal[] issuers, Socket socket) {
+                        return alias;
+                    }
+
+                    public String chooseServerAlias(String keyType, Principal[] issuers, Socket socket) {
+                        return alias;
+                    }
+
+                    public X509Certificate[] getCertificateChain(String a) {
+                        return chain;
+                    }
+
+                    public PrivateKey getPrivateKey(String a) {
+                        return key;
+                    }
+
+                    public String[] getClientAliases(String keyType, Principal[] issuers) {
+                        return new String[]{alias};
+                    }
+
+                    public String[] getServerAliases(String keyType, Principal[] issuers) {
+                        return new String[]{alias};
+                    }
+                }};
+            }
+        } catch (Exception ignored) {
+            // No client cert available — fall back to an anonymous handshake.
+        }
+        SSLContext ctx = SSLContext.getInstance("TLS");
+        ctx.init(kms, new TrustManager[]{new X509TrustManager() {
+            public void checkClientTrusted(X509Certificate[] c, String a) {
+            }
+
+            public void checkServerTrusted(X509Certificate[] c, String a) {
+            }
+
+            public X509Certificate[] getAcceptedIssuers() {
+                return new X509Certificate[0];
+            }
+        }}, new SecureRandom());
+        sslCtx = ctx;
+        return ctx;
+    }
+
     private HttpURLConnection open(URL url) throws Exception {
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         if (conn instanceof HttpsURLConnection && isPrivateHost(url.getHost())) {
             HttpsURLConnection https = (HttpsURLConnection) conn;
-            SSLContext ctx = SSLContext.getInstance("TLS");
-            ctx.init(null, new TrustManager[]{new X509TrustManager() {
-                public void checkClientTrusted(X509Certificate[] c, String a) {
-                }
-
-                public void checkServerTrusted(X509Certificate[] c, String a) {
-                }
-
-                public X509Certificate[] getAcceptedIssuers() {
-                    return new X509Certificate[0];
-                }
-            }}, new SecureRandom());
-            https.setSSLSocketFactory(ctx.getSocketFactory());
+            https.setSSLSocketFactory(sslContext().getSocketFactory());
             https.setHostnameVerifier(new HostnameVerifier() {
                 public boolean verify(String hostname, SSLSession session) {
                     return isPrivateHost(hostname);
@@ -501,6 +564,7 @@ public class LocalSendPlugin extends Plugin {
         }
         return conn;
     }
+
 
     private static boolean isPrivateHost(String host) {
         if (host == null) return false;
