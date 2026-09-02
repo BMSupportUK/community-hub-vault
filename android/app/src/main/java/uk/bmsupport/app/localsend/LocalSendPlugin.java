@@ -93,10 +93,32 @@ public class LocalSendPlugin extends Plugin {
     public void scan(final PluginCall call) {
         cancelled.set(false);
         seen.clear();
+        // Discovery runs through the always-on receiver: it already owns UDP 53317,
+        // so a second socket here would swallow half the replies. Peers answer an
+        // announcement either by UDP or by POSTing /register to us — both arrive there.
+        final LocalSendReceiver r = ensureReceiver();
+        r.setPeers(new LocalSendReceiver.Peers() {
+            @Override
+            public void onPeer(String ip, JSONObject info) {
+                emitDevice(ip, info);
+            }
+        });
+        try {
+            r.start();
+        } catch (Exception ignored) {
+        }
         pool.execute(new Runnable() {
             @Override
             public void run() {
-                multicastDiscover();
+                // Repeat: LocalSend on Fire TV frequently misses a single packet.
+                for (int i = 0; i < 6 && !cancelled.get(); i++) {
+                    r.announce();
+                    try {
+                        Thread.sleep(900);
+                    } catch (InterruptedException e) {
+                        return;
+                    }
+                }
             }
         });
         pool.execute(new Runnable() {
