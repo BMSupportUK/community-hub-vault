@@ -1747,8 +1747,44 @@ function TicketDetail({
           )}
         </div>
       )}
+
+      <Dialog open={!!credPicker} onOpenChange={(o) => { if (!o) setCredPicker(null); }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Which account should be extended?</DialogTitle>
+            <DialogDescription>
+              This customer has more than one account. Pick the one to extend by{" "}
+              {credPicker?.months ?? 0} month{(credPicker?.months ?? 0) === 1 ? "" : "s"}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            {(credPicker?.candidates ?? []).map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => applyRenewal(c.id)}
+                className="w-full text-left px-3 py-2.5 rounded-lg border border-border hover:bg-accent transition"
+              >
+                <div className="font-semibold text-sm">
+                  {c.app_login_name?.trim() || `Account ${c.account_number ?? "?"}`}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {c.account_type ? `${c.account_type} · ` : ""}
+                  {c.expiry_at
+                    ? `expires ${new Date(c.expiry_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}`
+                    : "no expiry set"}
+                </div>
+              </button>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setCredPicker(null)}>Skip for now</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   ) : null;
+
 
   return (
     <div className="flex-1 flex flex-col lg:flex-row min-h-0">
