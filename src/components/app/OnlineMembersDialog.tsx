@@ -46,7 +46,7 @@ function bmSupportRoles(roles: string[]): string[] {
 
 /**
  * Roles shown in the members list. Members without an explicit subscriber
- * role are surfaced as "Non Subscriber" so the filter always covers them.
+ * role are surfaced as "Expired Subscription" so the filter always covers them.
  */
 function displayRoles(roles: string[]): string[] {
   const base = bmSupportRoles(roles);
