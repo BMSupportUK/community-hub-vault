@@ -539,6 +539,7 @@ public class LocalSendPlugin extends Plugin {
     @Override
     protected void handleOnDestroy() {
         cancelled.set(true);
+        if (receiver != null) receiver.stop();
         pool.shutdownNow();
         try {
             pool.awaitTermination(1, TimeUnit.SECONDS);
