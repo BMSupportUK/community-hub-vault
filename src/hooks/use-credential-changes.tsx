@@ -10,7 +10,10 @@ import { supabase } from "@/integrations/supabase/client";
  * instead. Pass an `ownerId` to only react to that customer's accounts.
  */
 export function useCredentialChanges(onChange: () => void, ownerId?: string | null) {
+  const cb = useRef(onChange);
+  cb.current = onChange;
   useEffect(() => {
+
     const channel = supabase
       .channel(`credential-changes-${ownerId ?? "all"}`)
       .on(
