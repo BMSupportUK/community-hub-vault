@@ -315,7 +315,7 @@ export function ScreenLockOverlay({ settings, onUnlock }: Props) {
             <button
               type="button"
               className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
-              onClick={() => void signOut()}
+              onClick={() => void leaveLock()}
             >
               <LogOut className="size-3" /> Sign out
             </button>
