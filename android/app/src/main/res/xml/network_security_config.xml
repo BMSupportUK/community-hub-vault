@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- LocalSend peers on the local network speak plain HTTP (or self-signed
+         HTTPS) on port 53317, so cleartext must be permitted for LAN sockets.
+         Our own hosts stay HTTPS-only below. -->
+    <base-config cleartextTrafficPermitted="true" />
+
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">bmsupport.uk</domain>
+        <domain includeSubdomains="true">lovable.app</domain>
+        <domain includeSubdomains="true">supabase.co</domain>
+    </domain-config>
+</network-security-config>

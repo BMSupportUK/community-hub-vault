@@ -9,9 +9,12 @@ import android.os.Build;
 import android.os.Bundle;
 import com.getcapacitor.BridgeActivity;
 
+import uk.bmsupport.app.localsend.LocalSendPlugin;
+
 public class MainActivity extends BridgeActivity {
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        registerPlugin(LocalSendPlugin.class);
         super.onCreate(savedInstanceState);
         createDefaultNotificationChannel();
         createTicketReplyNotificationChannel();
