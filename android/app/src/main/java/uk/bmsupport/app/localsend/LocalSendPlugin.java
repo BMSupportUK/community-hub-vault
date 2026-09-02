@@ -130,61 +130,6 @@ public class LocalSendPlugin extends Plugin {
         call.resolve();
     }
 
-    private void multicastDiscover() {
-        WifiManager wm = (WifiManager) getContext().getApplicationContext()
-                .getSystemService(Context.WIFI_SERVICE);
-        WifiManager.MulticastLock lock = null;
-        MulticastSocket socket = null;
-        try {
-            if (wm != null) {
-                lock = wm.createMulticastLock("bm-localsend");
-                lock.setReferenceCounted(true);
-                lock.acquire();
-            }
-            socket = new MulticastSocket(PORT);
-            socket.setReuseAddress(true);
-            socket.setSoTimeout(1000);
-            InetAddress group = InetAddress.getByName(MULTICAST_GROUP);
-            try {
-                socket.joinGroup(group);
-            } catch (Exception ignored) {
-            }
-
-            byte[] payload = selfInfo(true).toString().getBytes("UTF-8");
-            socket.send(new DatagramPacket(payload, payload.length, group, PORT));
-
-            long until = System.currentTimeMillis() + 6000;
-            while (System.currentTimeMillis() < until && !cancelled.get()) {
-                try {
-                    byte[] buf = new byte[8192];
-                    DatagramPacket p = new DatagramPacket(buf, buf.length);
-                    socket.receive(p);
-                    String body = new String(p.getData(), 0, p.getLength(), "UTF-8");
-                    JSONObject info = new JSONObject(body);
-                    String ip = p.getAddress().getHostAddress();
-                    if (info.optBoolean("announce", false)) {
-                        // Reply directly so the peer also learns about us.
-                        byte[] reply = selfInfo(false).toString().getBytes("UTF-8");
-                        socket.send(new DatagramPacket(reply, reply.length, p.getAddress(), PORT));
-                    }
-                    emitDevice(ip, info);
-                } catch (Exception ignored) {
-                }
-            }
-        } catch (Exception ignored) {
-        } finally {
-            if (socket != null) {
-                try {
-                    socket.close();
-                } catch (Exception ignored) {
-                }
-            }
-            if (lock != null && lock.isHeld()) {
-                lock.release();
-            }
-        }
-    }
-
     private void sweepSubnet() {
         String base = localSubnetBase();
         if (base == null) return;
@@ -195,11 +140,37 @@ public class LocalSendPlugin extends Plugin {
                 public void run() {
                     if (cancelled.get()) return;
                     if (!portOpen(host)) return;
-                    JSONObject info = register(host, "http");
-                    if (info == null) info = register(host, "https");
+                    // LocalSend encrypts by default now, so try HTTPS first and
+                    // fall back to plain HTTP for older/insecure-mode peers.
+                    JSONObject info = register(host, "https");
+                    if (info == null) info = register(host, "http");
+                    if (info == null) info = info(host, "https");
+                    if (info == null) info = info(host, "http");
                     if (info != null) emitDevice(host, info);
                 }
             });
+        }
+    }
+
+    /** Some peers reject /register but always answer GET /info. */
+    private JSONObject info(String host, String protocol) {
+        HttpURLConnection conn = null;
+        try {
+            URL url = new URL(protocol + "://" + host + ":" + PORT + "/api/localsend/v2/info");
+            conn = open(url);
+            conn.setRequestMethod("GET");
+            conn.setConnectTimeout(2500);
+            conn.setReadTimeout(4000);
+            if (conn.getResponseCode() / 100 != 2) return null;
+            String body = readAll(conn.getInputStream());
+            if (!body.trim().startsWith("{")) return null;
+            JSONObject o = new JSONObject(body);
+            if (!o.has("protocol")) o.put("protocol", protocol);
+            return o;
+        } catch (Exception e) {
+            return null;
+        } finally {
+            if (conn != null) conn.disconnect();
         }
     }
 
