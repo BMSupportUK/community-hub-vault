@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import QRCode from "qrcode";
-import { Smartphone, Copy, Download, Trash2, Loader2, ShieldCheck, Clock, Film, Eye, Lock } from "lucide-react";
+import { Smartphone, Copy, Download, Trash2, Loader2, ShieldCheck, Clock, Film, Eye, Lock, Wifi } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +15,7 @@ import {
   requestAppDownloadAccess,
 } from "@/lib/app-transfer.functions";
 import { useAuth } from "@/hooks/use-auth";
+import { LocalSendDialog } from "@/components/app/LocalSendDialog";
 
 type Build = Awaited<ReturnType<typeof listAppBuilds>>[number];
 type Transfer = Awaited<ReturnType<typeof listMyAppTransfers>>[number];
@@ -71,6 +72,7 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
   const remove = useServerFn(deleteMyAppTransfer);
   const [busy, setBusy] = useState<"request" | "delete" | null>(null);
   const [open, setOpen] = useState(false);
+  const [wifiOpen, setWifiOpen] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const videoUrl = useDemoVideoUrl(build.videoPath);
 
@@ -213,6 +215,14 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
               >
                 <Eye className="size-3.5 mr-1" /> View download link
               </Button>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => setWifiOpen(true)}
+                className="w-full h-8"
+              >
+                <Wifi className="size-3.5 mr-1" /> Send over Wi-Fi
+              </Button>
               <p className="text-[10px] text-center text-muted-foreground flex items-center justify-center gap-1">
                 <Clock className="size-3" /> Link expires in {remaining}
               </p>
@@ -221,6 +231,15 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
         </div>
 
       </article>
+
+      <LocalSendDialog
+        open={wifiOpen}
+        onOpenChange={setWifiOpen}
+        appName={build.appName || build.fileName}
+        fileName={build.fileName}
+        fileSize={build.fileSize ?? 0}
+        fileUrl={transfer ? `https://${typeof window === "undefined" ? "bmsupport.uk" : window.location.host}/api/public/a/${transfer.token}` : ""}
+      />
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-sm sm:max-w-md border-violet-500/30 bg-violet-950/95 backdrop-blur-sm">
