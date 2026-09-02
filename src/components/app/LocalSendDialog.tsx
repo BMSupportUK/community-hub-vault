@@ -58,7 +58,7 @@ export function LocalSendDialog({ open, onOpenChange, appName, fileName, fileSiz
   const [pluginMissing, setPluginMissing] = useState(false);
   const native = nativeCapable && !pluginMissing;
   const desktopName = useDesktopPlatform();
-  const localSendDownloadUrl = LOCALSEND_DOWNLOADS[desktopName] ?? LOCALSEND_DOWNLOADS.computer;
+  
   const [devices, setDevices] = useState<LocalSendDevice[]>([]);
   const [scanning, setScanning] = useState(false);
   const [progress, setProgress] = useState<LocalSendProgress | null>(null);
