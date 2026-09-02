@@ -31,28 +31,53 @@ async function load(): Promise<Map<string, FlashRole>> {
   return inflight;
 }
 
+// A single shared realtime subscription, ref-counted across all consumers.
+// Creating one channel per hook instance reuses the same topic and throws
+// "cannot add `postgres_changes` callbacks ... after `subscribe()`".
+let sharedChannel: ReturnType<typeof supabase.channel> | null = null;
+let subscriberCount = 0;
+
+function reloadRoles() {
+  cache = null;
+  void load();
+}
+
+function acquireSubscription() {
+  subscriberCount += 1;
+  if (sharedChannel) return;
+  sharedChannel = supabase
+    .channel("role-flash-roles")
+    .on("postgres_changes", { event: "*", schema: "public", table: "user_roles" }, reloadRoles)
+    .subscribe();
+}
+
+function releaseSubscription() {
+  subscriberCount = Math.max(0, subscriberCount - 1);
+  if (subscriberCount === 0 && sharedChannel) {
+    const ch = sharedChannel;
+    sharedChannel = null;
+    void supabase.removeChannel(ch);
+  }
+}
+
 export function useRoleFlashMap(): Map<string, FlashRole> {
   const [, force] = useState(0);
   useEffect(() => {
     const l = () => force((n) => n + 1);
     listeners.add(l);
     if (!cache) load();
-    const reload = () => { cache = null; load(); };
     // Refresh on focus to pick up role changes.
-    window.addEventListener("focus", reload);
-    // Live role changes (admin grants, subscription sync) update instantly.
-    const channel = supabase
-      .channel("role-flash-roles")
-      .on("postgres_changes", { event: "*", schema: "public", table: "user_roles" }, reload)
-      .subscribe();
+    window.addEventListener("focus", reloadRoles);
+    acquireSubscription();
     return () => {
       listeners.delete(l);
-      window.removeEventListener("focus", reload);
-      void supabase.removeChannel(channel);
+      window.removeEventListener("focus", reloadRoles);
+      releaseSubscription();
     };
   }, []);
   return cache ?? new Map();
 }
+
 
 
 export function roleFlashClass(role: FlashRole | null | undefined): string {
