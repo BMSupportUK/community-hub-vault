@@ -4502,6 +4502,7 @@ export type Database = {
           code: string
           created_at: string
           id: string
+          scope: string
           shared: boolean
           updated_at: string
           user_id: string
@@ -4511,6 +4512,7 @@ export type Database = {
           code: string
           created_at?: string
           id?: string
+          scope?: string
           shared?: boolean
           updated_at?: string
           user_id: string
@@ -4520,6 +4522,7 @@ export type Database = {
           code?: string
           created_at?: string
           id?: string
+          scope?: string
           shared?: boolean
           updated_at?: string
           user_id?: string
