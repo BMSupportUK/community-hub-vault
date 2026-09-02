@@ -41,6 +41,7 @@ function mapBuild(data: any) {
     videoPath: (data.video_path as string | null) ?? null,
     sortOrder: (data.sort_order as number | null) ?? 0,
     installInstructions: (data.install_instructions as string | null) ?? null,
+    announceUpdates: !!data.announce_updates,
     createdAt: data.created_at as string,
   };
 }
@@ -75,7 +76,7 @@ export const listAppBuilds = createServerFn({ method: "GET" })
     const { data } = await context.supabase
       .from("app_builds")
       .select(
-        "id, app_name, file_name, file_size, version_name, release_notes, is_available, video_path, sort_order, install_instructions, created_at",
+        "id, app_name, file_name, file_size, version_name, release_notes, is_available, video_path, sort_order, install_instructions, announce_updates, created_at",
       )
       .eq("is_current", true)
       .eq("is_available", true)
@@ -92,7 +93,7 @@ export const listAppBuildsAdmin = createServerFn({ method: "GET" })
     const { data } = await context.supabase
       .from("app_builds")
       .select(
-        "id, app_name, file_name, file_size, version_name, release_notes, is_available, video_path, sort_order, install_instructions, created_at",
+        "id, app_name, file_name, file_size, version_name, release_notes, is_available, video_path, sort_order, install_instructions, announce_updates, created_at",
       )
       .eq("is_current", true)
       .order("sort_order", { ascending: true })
@@ -229,6 +230,7 @@ export const saveAppBuild = createServerFn({ method: "POST" })
       videoPath?: string | null;
       sortOrder?: number | null;
       installInstructions?: string | null;
+      announceUpdates?: boolean;
     }) => data,
   )
   .handler(async ({ data, context }) => {
@@ -247,17 +249,18 @@ export const saveAppBuild = createServerFn({ method: "POST" })
         video_path: data.videoPath ?? null,
         sort_order: data.sortOrder ?? 0,
         install_instructions: data.installInstructions ?? null,
+        announce_updates: data.announceUpdates ?? false,
         is_current: true,
         is_available: data.isAvailable ?? true,
         created_by: context.userId,
-      })
+      } as never)
       .select("id")
       .maybeSingle();
     if (error) throw new Error(error.message);
 
-    // Tell every member who can install it that a new release is live — once.
+    // Only our own BM Support Android app announces releases to members — once.
     try {
-      if ((data.isAvailable ?? true) && inserted?.id) {
+      if (data.announceUpdates && (data.isAvailable ?? true) && inserted?.id) {
         const { announceAppUpdate } = await import("@/lib/app-update-announce.server");
         await announceAppUpdate({
           buildId: inserted.id as string,
@@ -291,6 +294,7 @@ export const updateAppBuild = createServerFn({ method: "POST" })
       filePath?: string | null;
       fileName?: string | null;
       fileSize?: number | null;
+      announceUpdates?: boolean;
     }) => data,
   )
   .handler(async ({ data, context }) => {
@@ -307,20 +311,21 @@ export const updateAppBuild = createServerFn({ method: "POST" })
     if (data.filePath !== undefined && data.filePath) patch.file_path = data.filePath;
     if (data.fileName !== undefined && data.fileName) patch.file_name = data.fileName;
     if (data.fileSize !== undefined) patch.file_size = data.fileSize;
+    if (data.announceUpdates !== undefined) patch.announce_updates = data.announceUpdates;
     const { error } = await supabaseAdmin.from("app_builds").update(patch as never).eq("id", data.id);
     if (error) throw new Error(error.message);
 
-    // A replaced APK or a bumped version number is a new release: alert members
-    // once per version. Cosmetic edits (notes, sort order) never alert.
+    // Only our own BM Support Android app alerts members. A replaced APK or a
+    // bumped version is a new release; cosmetic edits never alert.
     try {
       const isNewRelease = !!patch.file_path || data.versionName !== undefined;
       if (isNewRelease) {
         const { data: row } = await supabaseAdmin
           .from("app_builds")
-          .select("id, app_name, file_name, version_name, release_notes, is_available")
+          .select("id, app_name, file_name, version_name, release_notes, is_available, announce_updates")
           .eq("id", data.id)
           .maybeSingle();
-        if (row?.is_available) {
+        if (row?.is_available && (row as { announce_updates?: boolean }).announce_updates) {
           const { announceAppUpdate } = await import("@/lib/app-update-announce.server");
           await announceAppUpdate({
             buildId: row.id as string,

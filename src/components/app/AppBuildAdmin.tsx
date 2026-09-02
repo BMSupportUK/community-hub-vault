@@ -177,6 +177,18 @@ function BuildCard({
           />
           Available to members
         </label>
+        <label className="flex items-center gap-2 text-sm text-foreground">
+          <Switch
+            checked={build.announceUpdates}
+            onCheckedChange={(v) =>
+              patch({ id: build.id, announceUpdates: v }).catch(() => toast.error("Couldn't change update alerts"))
+            }
+          />
+          <span>
+            Our app — alert members on update
+            <span className="block text-xs text-muted-foreground">Only turn this on for the BM Support Android app</span>
+          </span>
+        </label>
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
