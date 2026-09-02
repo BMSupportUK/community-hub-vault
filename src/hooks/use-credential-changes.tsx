@@ -24,7 +24,7 @@ export function useCredentialChanges(onChange: () => void, ownerId?: string | nu
           table: "credential_change_events",
           ...(ownerId ? { filter: `owner_id=eq.${ownerId}` } : {}),
         },
-        () => onChange(),
+        () => cb.current(),
       )
       .subscribe();
     return () => { supabase.removeChannel(channel); };
