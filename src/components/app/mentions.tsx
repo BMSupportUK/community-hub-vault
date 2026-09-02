@@ -155,6 +155,7 @@ export function useMentionAutocomplete({
   textareaRef,
   canBroadcast,
   roleMentions = [],
+  allowedUserIds = null,
 }: {
   value: string;
   onChange: (next: string) => void;
@@ -162,6 +163,8 @@ export function useMentionAutocomplete({
   canBroadcast: boolean;
   /** Staff role tags the current user is allowed to insert, e.g. ["staff","management"]. */
   roleMentions?: string[];
+  /** When provided, only these user ids can be mentioned (e.g. ticket participants). */
+  allowedUserIds?: string[] | null;
 }) {
   const [query, setQuery] = useState<string | null>(null);
   const [results, setResults] = useState<MentionUser[]>([]);
@@ -205,12 +208,17 @@ export function useMentionAutocomplete({
     let cancelled = false;
     (async () => {
       const q = query.trim();
-      const builder = supabase
+      if (allowedUserIds && allowedUserIds.length === 0) {
+        setResults([]);
+        return;
+      }
+      let builder = supabase
         .from("profiles")
         .select("id, username, display_name")
         .not("username", "is", null)
         .order("username", { ascending: true })
         .limit(8);
+      if (allowedUserIds) builder = builder.in("id", allowedUserIds);
       const { data } = q
         ? await builder.ilike("username", `${q}%`)
         : await builder;
@@ -236,7 +244,7 @@ export function useMentionAutocomplete({
     return () => {
       cancelled = true;
     };
-  }, [query, canBroadcast, roleMentions.join(",")]);
+  }, [query, canBroadcast, roleMentions.join(","), allowedUserIds ? allowedUserIds.join(",") : null]);
 
   const apply = (user: MentionUser) => {
     const ta = textareaRef.current;
