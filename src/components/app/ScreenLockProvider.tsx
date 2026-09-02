@@ -120,7 +120,7 @@ export function ScreenLockProvider() {
   useEffect(() => {
     if (!user) return;
     const ch = supabase
-      .channel(`screen-lock-settings-${user.id}`)
+      .channel(`screen-lock-settings-${user.id}-${Math.random().toString(36).slice(2)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "screen_lock_settings", filter: `user_id=eq.${user.id}` },
