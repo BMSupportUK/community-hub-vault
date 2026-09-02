@@ -165,11 +165,18 @@ export function ScreenLockProvider() {
     (broadcast = true) => {
       setLocked(false);
       if (storageKey) localStorage.removeItem(storageKey);
+      // Restart the idle clock, otherwise the stale timestamp re-locks instantly.
+      if (user) {
+        try {
+          localStorage.setItem(`screenlock:last-activity:${user.id}`, String(Date.now()));
+        } catch {}
+      }
       resumeTalkPresence();
       if (broadcast) channelRef.current?.postMessage({ type: "unlock" });
     },
-    [storageKey],
+    [storageKey, user?.id],
   );
+
 
 
   // Cross-tab sync
