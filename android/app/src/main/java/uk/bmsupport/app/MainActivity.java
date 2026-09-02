@@ -1,12 +1,18 @@
 package uk.bmsupport.app;
 
+import android.app.DownloadManager;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.content.Context;
 import android.media.AudioAttributes;
 import android.media.RingtoneManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.webkit.CookieManager;
+import android.webkit.URLUtil;
+import android.widget.Toast;
 import com.getcapacitor.BridgeActivity;
 
 import uk.bmsupport.app.localsend.LocalSendPlugin;
@@ -18,6 +24,47 @@ public class MainActivity extends BridgeActivity {
         super.onCreate(savedInstanceState);
         createDefaultNotificationChannel();
         createTicketReplyNotificationChannel();
+        enableWebViewDownloads();
+    }
+
+    /**
+     * Android WebView does not download files unless the host app handles the
+     * request. Hand APK links to Android's Download Manager so downloads from
+     * the BM App Store and the avatar-menu QR popup work inside the app.
+     */
+    private void enableWebViewDownloads() {
+        getBridge().getWebView().setDownloadListener((url, userAgent, contentDisposition, mimeType, contentLength) -> {
+            try {
+                String fileName = URLUtil.guessFileName(url, contentDisposition, mimeType);
+                String effectiveMime = fileName.toLowerCase().endsWith(".apk")
+                        ? "application/vnd.android.package-archive"
+                        : mimeType;
+
+                DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
+                request.setTitle(fileName);
+                request.setDescription("Downloading BM Support app");
+                request.setMimeType(effectiveMime);
+                request.setNotificationVisibility(
+                        DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED
+                );
+                request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName);
+
+                if (userAgent != null && !userAgent.isEmpty()) {
+                    request.addRequestHeader("User-Agent", userAgent);
+                }
+                String cookies = CookieManager.getInstance().getCookie(url);
+                if (cookies != null && !cookies.isEmpty()) {
+                    request.addRequestHeader("Cookie", cookies);
+                }
+
+                DownloadManager manager = (DownloadManager) getSystemService(Context.DOWNLOAD_SERVICE);
+                if (manager == null) throw new IllegalStateException("Download service unavailable");
+                manager.enqueue(request);
+                Toast.makeText(this, "Downloading " + fileName, Toast.LENGTH_LONG).show();
+            } catch (Exception error) {
+                Toast.makeText(this, "Couldn't start the download", Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     private void createDefaultNotificationChannel() {

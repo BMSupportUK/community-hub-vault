@@ -13,9 +13,9 @@ import androidApkAsset from "@/assets/BMSupport.apk.asset.json";
  * "new version available" notification for every member.
  */
 export const ANDROID_RELEASE = {
-  versionName: "1.1.2",
-  versionCode: 4,
+  versionName: "1.1.3",
+  versionCode: 5,
   url: androidApkAsset.url,
   absoluteUrl: `https://bmsupport.uk${androidApkAsset.url}`,
-  notes: "Fixes the secure connection error when sending an app to a Fire Stick or Android box over Wi-Fi.",
+  notes: "Fixes app downloads on Android phones and keeps the secure Wi-Fi sending improvements.",
 } as const;
