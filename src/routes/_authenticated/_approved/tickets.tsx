@@ -937,6 +937,15 @@ function TicketDetail({
   const cat = categories.find((c) => c.id === ticket.category_id);
   const CatIcon = ICONS[cat?.icon ?? "LifeBuoy"] ?? LifeBuoy;
   const StatusIcon = STATUS_META[ticket.status].Icon;
+  // Sales tickets (linked to an order) are admin/management only — never hand
+  // them to other staff roles.
+  const isSalesTicket = !!ticket.order_id;
+  const assignableStaff = useMemo(
+    () => (isSalesTicket ? staff.filter((s) => s.role === "admin" || s.role === "management") : staff),
+    [isSalesTicket, staff],
+  );
+
+
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [draft, setDraft] = useState("");
