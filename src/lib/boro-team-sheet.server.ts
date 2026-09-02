@@ -60,6 +60,11 @@ const TEAM_SHEET_PATTERNS: RegExp[] = [
   /\bhere'?s\s+how\s+we\s+(?:line|lineup|line up)\b/i,
   /\bteam\s*sheet\b/i,
   /\bxi\s*[:|\u26bd]/i,
+  // "Our XI at Turf Moor", "The XI to face Burnley", "Tonight's XI".
+  /\b(?:our|the|this|tonight'?s|today'?s|toda?y'?s)\s+(?:[a-z0-9'’-]+\s+){0,3}xi\b/i,
+  /\bxi\s+(?:at|v|vs|versus|to\s+face|in|for)\b/i,
+  // "Tonight's Boro side", "Today's side to face …"
+  /\b(?:tonight'?s|today'?s|this\s+(?:afternoon|evening|lunchtime)'?s)\s+(?:[a-z0-9'’-]+\s+){0,3}(?:side|team|eleven)\b/i,
 ];
 
 const NEGATIVE_PATTERNS: RegExp[] = [
@@ -75,6 +80,20 @@ export function isTeamSheetText(rawText: string): boolean {
   if (NEGATIVE_PATTERNS.some((re) => re.test(text))) return false;
   return TEAM_SHEET_PATTERNS.some((re) => re.test(text));
 }
+
+/**
+ * The club retweets the opposition line-up ("RT @BurnleyOfficial: Tonight's
+ * Burnley side 📋"), which is the second half of the match day "Teams" tab.
+ */
+export function isOpponentTeamSheetText(rawText: string, opponentName: string): boolean {
+  const text = normalizeFancyText(rawText).toLowerCase();
+  if (NEGATIVE_PATTERNS.some((re) => re.test(text))) return false;
+  const tokens = opponentTokens(opponentName);
+  const named = tokens.some((w) => text.includes(w)) || tokens.length === 0;
+  if (!named) return false;
+  return /\b(side|xi|team\s*news|team\s*sheet|line[\s-]?up|eleven)\b/.test(text);
+}
+
 
 function normalizeImageUrl(raw: string): string | null {
   try {
