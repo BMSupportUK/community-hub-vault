@@ -1232,31 +1232,72 @@ function TicketDetail({
       const res = await applyOrderToCredentialFn({
         data: { orderId: linkedOrder.id, ...(credentialId ? { credentialId } : {}) },
       });
-      if (res.status === "needs_selection") {
-        setCredPicker({ candidates: res.candidates, months: res.months });
-        toast.warning("Choose which account to extend");
-        return;
-      }
-      if (res.status === "no_credentials") {
-        toast.warning("No account credential found — create one, then the expiry can be set.");
-        return;
-      }
-      if (res.status === "no_term") {
-        toast.warning("Couldn't work out the subscription length from this order — set the expiry manually.");
-        return;
-      }
-      setCredPicker(null);
-      const expiry = new Date(res.newExpiry).toLocaleDateString("en-GB", {
-        day: "numeric", month: "short", year: "numeric",
-      });
-      toast.success(`${res.accountLabel}: +${res.months} month${res.months === 1 ? "" : "s"} → expires ${expiry}`);
-      await postTicketSystem(
-        `📅 Subscription updated — ${res.accountLabel} (${res.accountTypeLabel}) now runs for a further ${res.months} month${res.months === 1 ? "" : "s"} and expires on ${expiry}.`,
-      );
+      handleFulfilResult(res);
     } catch (e: any) {
       toast.error(e?.message ?? "Couldn't update the account expiry");
     }
   };
+
+  const handleFulfilResult = async (res: ApplyOrderResult) => {
+    if (res.status === "needs_selection") {
+      setCredPicker({ candidates: res.candidates, months: res.months });
+      toast.warning("Choose which account to extend");
+      return;
+    }
+    if (res.status === "needs_new_credentials") {
+      setNewCred({
+        months: res.months,
+        accountType: res.accountType ?? "single",
+        loginName: "",
+        password: "",
+        existingCount: res.existingAccounts.length,
+      });
+      toast.warning("Enter the login name and password for the new account");
+      return;
+    }
+    if (res.status === "no_term") {
+      toast.warning("Couldn't work out the subscription length from this order — set the expiry manually.");
+      return;
+    }
+    setCredPicker(null);
+    setNewCred(null);
+    const expiry = new Date(res.newExpiry).toLocaleDateString("en-GB", {
+      day: "numeric", month: "short", year: "numeric",
+    });
+    toast.success(
+      `${res.created ? "Account created" : res.accountLabel}: ${res.months} month${res.months === 1 ? "" : "s"} → expires ${expiry}`,
+    );
+    await postTicketSystem(
+      res.created
+        ? `🆕 Account set up — ${res.accountLabel} (${res.accountTypeLabel}), ${res.months} month${res.months === 1 ? "" : "s"}, expires ${expiry}. Your login details are in My Account.`
+        : `📅 Subscription updated — ${res.accountLabel} (${res.accountTypeLabel}) now runs for a further ${res.months} month${res.months === 1 ? "" : "s"} and expires on ${expiry}.`,
+    );
+  };
+
+  const submitNewCredential = async () => {
+    if (!linkedOrder || !newCred) return;
+    if (!newCred.loginName.trim() || !newCred.password.trim()) {
+      toast.error("Login name and password are required");
+      return;
+    }
+    setNewCredBusy(true);
+    try {
+      const res = await createCredentialForOrderFn({
+        data: {
+          orderId: linkedOrder.id,
+          loginName: newCred.loginName.trim(),
+          password: newCred.password,
+          accountType: newCred.accountType,
+        },
+      });
+      await handleFulfilResult(res);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Couldn't create the account");
+    } finally {
+      setNewCredBusy(false);
+    }
+  };
+
 
 
 
