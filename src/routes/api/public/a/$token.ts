@@ -97,7 +97,10 @@ export const Route = createFileRoute("/api/public/a/$token")({
           },
         });
 
-        const name = (build.file_name || "BMSupport.apk").replace(/[^\w.\-]/g, "_");
+        let name = (build.file_name || "BMSupport.apk").replace(/[^\w.\-]/g, "_");
+        // Always hand the device a real .apk filename — otherwise browsers and
+        // the Downloader app save it as a .zip.
+        if (!/\.apk$/i.test(name)) name = `${name.replace(/\.[^.]*$/, "")}.apk`;
         return new Response(file.stream().pipeThrough(progress), {
           status: 200,
           headers: {

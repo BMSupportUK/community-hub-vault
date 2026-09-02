@@ -84,6 +84,7 @@ import { Route as AuthenticatedApprovedStreamingDevicesRouteImport } from './rou
 import { Route as AuthenticatedApprovedTicketsRouteImport } from './routes/_authenticated/_approved/tickets'
 import { Route as AuthenticatedApprovedVpnRouteImport } from './routes/_authenticated/_approved/vpn'
 import { Route as AuthenticatedApprovedWhatToWatchRouteImport } from './routes/_authenticated/_approved/what-to-watch'
+import { Route as ApiPublicAndroidApkRouteImport } from './routes/api/public/android-apk'
 import { Route as ApiPublicBoroMatchDetailRouteImport } from './routes/api/public/boro-match-detail'
 import { Route as ApiPublicLinkPreviewRouteImport } from './routes/api/public/link-preview'
 import { Route as ApiPublicTweetRouteImport } from './routes/api/public/tweet'
@@ -572,6 +573,11 @@ const AuthenticatedApprovedWhatToWatchRoute =
     path: '/what-to-watch',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
+const ApiPublicAndroidApkRoute = ApiPublicAndroidApkRouteImport.update({
+  id: '/api/public/android-apk',
+  path: '/api/public/android-apk',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicBoroMatchDetailRoute =
   ApiPublicBoroMatchDetailRouteImport.update({
     id: '/api/public/boro-match-detail',
@@ -953,6 +959,7 @@ export interface FileRoutesByFullPath {
   '/tickets': typeof AuthenticatedApprovedTicketsRoute
   '/vpn': typeof AuthenticatedApprovedVpnRoute
   '/what-to-watch': typeof AuthenticatedApprovedWhatToWatchRoute
+  '/api/public/android-apk': typeof ApiPublicAndroidApkRoute
   '/api/public/boro-match-detail': typeof ApiPublicBoroMatchDetailRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
@@ -1078,6 +1085,7 @@ export interface FileRoutesByTo {
   '/tickets': typeof AuthenticatedApprovedTicketsRoute
   '/vpn': typeof AuthenticatedApprovedVpnRoute
   '/what-to-watch': typeof AuthenticatedApprovedWhatToWatchRoute
+  '/api/public/android-apk': typeof ApiPublicAndroidApkRoute
   '/api/public/boro-match-detail': typeof ApiPublicBoroMatchDetailRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
@@ -1209,6 +1217,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/tickets': typeof AuthenticatedApprovedTicketsRoute
   '/_authenticated/_approved/vpn': typeof AuthenticatedApprovedVpnRoute
   '/_authenticated/_approved/what-to-watch': typeof AuthenticatedApprovedWhatToWatchRoute
+  '/api/public/android-apk': typeof ApiPublicAndroidApkRoute
   '/api/public/boro-match-detail': typeof ApiPublicBoroMatchDetailRoute
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
@@ -1339,6 +1348,7 @@ export interface FileRouteTypes {
     | '/tickets'
     | '/vpn'
     | '/what-to-watch'
+    | '/api/public/android-apk'
     | '/api/public/boro-match-detail'
     | '/api/public/link-preview'
     | '/api/public/tweet'
@@ -1464,6 +1474,7 @@ export interface FileRouteTypes {
     | '/tickets'
     | '/vpn'
     | '/what-to-watch'
+    | '/api/public/android-apk'
     | '/api/public/boro-match-detail'
     | '/api/public/link-preview'
     | '/api/public/tweet'
@@ -1594,6 +1605,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/tickets'
     | '/_authenticated/_approved/vpn'
     | '/_authenticated/_approved/what-to-watch'
+    | '/api/public/android-apk'
     | '/api/public/boro-match-detail'
     | '/api/public/link-preview'
     | '/api/public/tweet'
@@ -1667,6 +1679,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
   ATokenRoute: typeof ATokenRoute
+  ApiPublicAndroidApkRoute: typeof ApiPublicAndroidApkRoute
   ApiPublicBoroMatchDetailRoute: typeof ApiPublicBoroMatchDetailRoute
   ApiPublicLinkPreviewRoute: typeof ApiPublicLinkPreviewRoute
   ApiPublicTweetRoute: typeof ApiPublicTweetRoute
@@ -2231,6 +2244,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/what-to-watch'
       preLoaderRoute: typeof AuthenticatedApprovedWhatToWatchRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/api/public/android-apk': {
+      id: '/api/public/android-apk'
+      path: '/api/public/android-apk'
+      fullPath: '/api/public/android-apk'
+      preLoaderRoute: typeof ApiPublicAndroidApkRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/public/boro-match-detail': {
       id: '/api/public/boro-match-detail'
@@ -2916,6 +2936,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
   ATokenRoute: ATokenRoute,
+  ApiPublicAndroidApkRoute: ApiPublicAndroidApkRoute,
   ApiPublicBoroMatchDetailRoute: ApiPublicBoroMatchDetailRoute,
   ApiPublicLinkPreviewRoute: ApiPublicLinkPreviewRoute,
   ApiPublicTweetRoute: ApiPublicTweetRoute,
