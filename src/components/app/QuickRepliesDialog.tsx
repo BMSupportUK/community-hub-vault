@@ -118,7 +118,7 @@ export function QuickRepliesPill({
     const cleanCode = code.trim().replace(/^\//, "").replace(/\s+/g, "-");
     if (!cleanCode || !body.trim() || !user) return;
     setSaving(true);
-    const payload = { user_id: user.id, code: cleanCode, body: body.trim(), shared };
+    const payload = { user_id: user.id, code: cleanCode, body: body.trim(), shared, scope };
     const { error } =
       editing && editing !== "new"
         ? await supabase.from("staff_quick_replies").update(payload).eq("id", editing.id)
