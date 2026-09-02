@@ -22,12 +22,16 @@ export interface QuickReply {
   code: string;
   body: string;
   shared: boolean;
+  scope?: string;
 }
+
+/** Where a shortcut set lives — talk channels and tickets keep separate lists. */
+export type QuickReplyScope = "talk" | "ticket";
 
 const STAFF_ROLES = ["admin", "management", "moderator", "staff"] as const;
 
-/** Loads the quick replies the signed-in staff member can use. */
-export function useQuickReplies() {
+/** Loads the quick replies the signed-in staff member can use in this scope. */
+export function useQuickReplies(scope: QuickReplyScope = "talk") {
   const { user, hasAny } = useAuth();
   const isStaff = hasAny([...STAFF_ROLES]);
   const [replies, setReplies] = useState<QuickReply[]>([]);
@@ -38,11 +42,12 @@ export function useQuickReplies() {
     setLoading(true);
     const { data } = await supabase
       .from("staff_quick_replies")
-      .select("id, user_id, code, body, shared")
+      .select("id, user_id, code, body, shared, scope")
+      .eq("scope", scope)
       .order("code", { ascending: true });
     setReplies((data ?? []) as QuickReply[]);
     setLoading(false);
-  }, [user?.id, isStaff]);
+  }, [user?.id, isStaff, scope]);
 
   useEffect(() => {
     void refresh();
@@ -70,12 +75,16 @@ export function useQuickReplies() {
 export function QuickRepliesPill({
   onInsert,
   className,
+  scope = "talk",
+  label = "Shortcuts",
 }: {
   onInsert: (text: string) => void;
   className?: string;
+  scope?: QuickReplyScope;
+  label?: string;
 }) {
   const { user } = useAuth();
-  const { replies, loading, refresh, isStaff } = useQuickReplies();
+  const { replies, loading, refresh, isStaff } = useQuickReplies(scope);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [editing, setEditing] = useState<QuickReply | "new" | null>(null);
@@ -109,7 +118,7 @@ export function QuickRepliesPill({
     const cleanCode = code.trim().replace(/^\//, "").replace(/\s+/g, "-");
     if (!cleanCode || !body.trim() || !user) return;
     setSaving(true);
-    const payload = { user_id: user.id, code: cleanCode, body: body.trim(), shared };
+    const payload = { user_id: user.id, code: cleanCode, body: body.trim(), shared, scope };
     const { error } =
       editing && editing !== "new"
         ? await supabase.from("staff_quick_replies").update(payload).eq("id", editing.id)
@@ -141,7 +150,7 @@ export function QuickRepliesPill({
         )}
       >
         <Keyboard className="size-3.5" />
-        Shortcuts
+        {label}
         {replies.length > 0 && (
           <span className="rounded-full bg-amber-500/25 px-1.5 tabular-nums">{replies.length}</span>
         )}

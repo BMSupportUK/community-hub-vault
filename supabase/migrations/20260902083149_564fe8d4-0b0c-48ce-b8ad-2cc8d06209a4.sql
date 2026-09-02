@@ -1,0 +1,1 @@
+ALTER TABLE public.staff_quick_replies ADD COLUMN IF NOT EXISTS scope text NOT NULL DEFAULT 'talk';
