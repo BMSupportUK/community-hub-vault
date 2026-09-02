@@ -84,7 +84,7 @@ export function LocalSendDialog({ open, onOpenChange, appName, fileName, fileSiz
         setError("Couldn't scan the network.");
       }
     }
-    window.setTimeout(() => setScanning(false), 7000);
+    window.setTimeout(() => setScanning(false), 12000);
   }, [native]);
 
 
