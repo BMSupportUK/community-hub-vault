@@ -15,7 +15,10 @@ import androidApkAsset from "@/assets/BMSupport.apk.asset.json";
 export const ANDROID_RELEASE = {
   versionName: "1.1.3",
   versionCode: 5,
-  url: androidApkAsset.url,
-  absoluteUrl: `https://bmsupport.uk${androidApkAsset.url}`,
+  /** Raw CDN asset (served as application/zip) — proxied by /api/public/android-apk. */
+  assetUrl: androidApkAsset.url,
+  /** Always use this for downloads/QR: correct .apk filename + mime type. */
+  url: "/api/public/android-apk",
+  absoluteUrl: "https://bmsupport.uk/api/public/android-apk",
   notes: "Fixes app downloads on Android phones and keeps the secure Wi-Fi sending improvements.",
 } as const;
