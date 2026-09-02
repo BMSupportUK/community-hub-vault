@@ -36,6 +36,8 @@ import { notifyTicketReply, notifyStaffOfCustomerReply } from "@/lib/ticket-noti
 import { sendNewTicketPush } from "@/lib/push.functions";
 import { StaffOnDutyStrip } from "@/components/app/StaffOnDutyStrip";
 import { Nameplate } from "@/components/app/Nameplate";
+import { QuickRepliesPill } from "@/components/app/QuickRepliesDialog";
+import { useChannelJump } from "@/components/app/ChannelJump";
 
 export const Route = createFileRoute("/_authenticated/_approved/tickets")({
   validateSearch: (s: Record<string, unknown>): { id?: string; view?: "mine" | "all" | "assigned"; new2fa?: 1 } => ({
@@ -948,6 +950,7 @@ function TicketDetail({
     textareaRef: taRef,
     canBroadcast: false,
   });
+  const channelJump = useChannelJump({ value: draft, onChange: setDraft, editorRef: taRef });
   const [myUsername, setMyUsername] = useState<string | null>(null);
   useEffect(() => {
     supabase
@@ -1721,6 +1724,11 @@ function TicketDetail({
               return <StaffIdCard profile={a} />;
             })()}
             <RequestAdminHelpButton ticketId={ticket.id} />
+            <QuickRepliesPill
+              scope="ticket"
+              label="Staff shortcuts"
+              onInsert={(text) => onDraftChange(draftRef.current ? `${draftRef.current} ${text}` : text)}
+            />
             <span className={cn("ml-auto px-2 py-1 rounded text-xs capitalize", PRI_CLS[ticket.priority])}>{ticket.priority}</span>
           </div>
         )}
@@ -1828,11 +1836,12 @@ function TicketDetail({
           <div className="space-y-2">
             <div className="relative flex gap-2">
               {mention.dropdown}
+              {channelJump.dropdown}
               <textarea
                 ref={taRef}
                 value={draft} onChange={(e) => onDraftChange(e.target.value)} rows={1} maxLength={2000}
                 onBlur={() => sendTyping(true)}
-                placeholder={internal ? "Internal note (staff only)… type @ to mention" : "Reply to ticket… type @ to mention"}
+                placeholder={internal ? "Internal note (staff only)… type @ to mention, # for links" : "Reply to ticket… type @ to mention, # for links"}
                 onPaste={(e) => {
                   const imgs = extractImagesFromClipboard(e);
                   if (imgs.length) {
@@ -1842,6 +1851,7 @@ function TicketDetail({
                   }
                 }}
                 onKeyDown={(e) => {
+                  if (channelJump.onKeyDown(e)) return;
                   if (mention.onKeyDown(e)) return;
                   if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) send();
                 }}
