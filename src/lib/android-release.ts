@@ -13,9 +13,9 @@ import androidApkAsset from "@/assets/BMSupport.apk.asset.json";
  * "new version available" notification for every member.
  */
 export const ANDROID_RELEASE = {
-  versionName: "1.1.1",
-  versionCode: 3,
+  versionName: "1.1.2",
+  versionCode: 4,
   url: androidApkAsset.url,
   absoluteUrl: `https://bmsupport.uk${androidApkAsset.url}`,
-  notes: "Fixes Wi-Fi device discovery so LocalSend on your Firestick, Android box or PC is found reliably.",
+  notes: "Fixes the secure connection error when sending an app to a Fire Stick or Android box over Wi-Fi.",
 } as const;

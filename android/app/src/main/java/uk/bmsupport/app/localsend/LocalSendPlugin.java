@@ -2,6 +2,8 @@ package uk.bmsupport.app.localsend;
 
 import android.content.Context;
 import android.net.wifi.WifiManager;
+import android.security.keystore.KeyGenParameterSpec;
+import android.security.keystore.KeyProperties;
 import android.util.Base64;
 
 import com.getcapacitor.JSObject;
@@ -23,9 +25,14 @@ import java.net.MulticastSocket;
 import java.net.NetworkInterface;
 import java.net.Socket;
 import java.net.URL;
+import java.security.KeyPairGenerator;
+import java.security.KeyStore;
+import java.security.Principal;
+import java.security.PrivateKey;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.Collections;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.HashSet;
 import java.util.List;
@@ -37,10 +44,14 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
 import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509ExtendedKeyManager;
 import javax.net.ssl.X509TrustManager;
+import javax.security.auth.x500.X500Principal;
+
 
 /**
  * Speaks the LocalSend v2 protocol so members can push an APK from the BM Support
@@ -66,12 +77,28 @@ public class LocalSendPlugin extends Plugin {
 
     private String fingerprint() {
         if (fingerprint == null) {
+            // LocalSend's secure mode identifies peers by the SHA-256 of their
+            // certificate, so use ours when we have one.
+            try {
+                sslContext();
+                if (selfCert != null) {
+                    byte[] d = java.security.MessageDigest.getInstance("SHA-256")
+                            .digest(selfCert.getEncoded());
+                    StringBuilder sb = new StringBuilder();
+                    for (byte b : d) sb.append(String.format("%02X", b));
+                    fingerprint = sb.toString();
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        if (fingerprint == null) {
             byte[] rnd = new byte[16];
             new SecureRandom().nextBytes(rnd);
             fingerprint = Base64.encodeToString(rnd, Base64.NO_WRAP).replaceAll("[^A-Za-z0-9]", "");
         }
         return fingerprint;
     }
+
 
     private JSONObject selfInfo(boolean announce) throws Exception {
         JSONObject o = new JSONObject();
@@ -270,7 +297,15 @@ public class LocalSendPlugin extends Plugin {
             }
             long size = declaredSize > 0 ? declaredSize : Math.max(0, src.getContentLength());
 
-            String base = protocol + "://" + host + ":" + port + "/api/localsend/v2";
+            // Confirm which scheme the peer actually speaks — discovery can guess
+            // wrong, and the wrong one dies mid-handshake.
+            String proto = protocol;
+            if (info(host, proto) == null) {
+                String alt = "https".equals(proto) ? "http" : "https";
+                if (info(host, alt) != null) proto = alt;
+            }
+            String base = proto + "://" + host + ":" + port + "/api/localsend/v2";
+
             String fileId = "bm-" + System.currentTimeMillis();
 
             JSONObject file = new JSONObject();
@@ -472,27 +507,90 @@ public class LocalSendPlugin extends Plugin {
     }
 
     /**
-     * LocalSend peers use self-signed certificates, so HTTPS to a LAN peer needs a
-     * permissive trust manager. This applies only to sockets we open here — the
-     * app's global TLS trust is untouched.
+     * LocalSend peers use self-signed certificates AND ask the sender for a client
+     * certificate (mutual TLS). Without one the peer aborts the handshake with
+     * "certificate unknown", so we present a self-signed key pair held in the
+     * Android keystore and trust the peer's own self-signed cert. This applies only
+     * to sockets we open here — the app's global TLS trust is untouched.
      */
+    private static SSLContext sslCtx;
+    private static X509Certificate selfCert;
+
+    private static synchronized SSLContext sslContext() throws Exception {
+        if (sslCtx != null) return sslCtx;
+        KeyManager[] kms = null;
+        try {
+            KeyStore ks = KeyStore.getInstance("AndroidKeyStore");
+            ks.load(null);
+            final String alias = "bm-localsend-client";
+            if (!ks.containsAlias(alias)) {
+                KeyPairGenerator kpg = KeyPairGenerator.getInstance(
+                        KeyProperties.KEY_ALGORITHM_RSA, "AndroidKeyStore");
+                kpg.initialize(new KeyGenParameterSpec.Builder(alias,
+                        KeyProperties.PURPOSE_SIGN | KeyProperties.PURPOSE_VERIFY)
+                        .setKeySize(2048)
+                        .setDigests(KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA1)
+                        .setSignaturePaddings(KeyProperties.SIGNATURE_PADDING_RSA_PKCS1)
+                        .setCertificateSubject(new X500Principal("CN=BM Support"))
+                        .setCertificateNotBefore(new Date(System.currentTimeMillis() - 86400000L))
+                        .build());
+                kpg.generateKeyPair();
+            }
+            final PrivateKey key = (PrivateKey) ks.getKey(alias, null);
+            final X509Certificate cert = (X509Certificate) ks.getCertificate(alias);
+            if (key != null && cert != null) {
+                selfCert = cert;
+                final X509Certificate[] chain = new X509Certificate[]{cert};
+                kms = new KeyManager[]{new X509ExtendedKeyManager() {
+                    public String chooseClientAlias(String[] keyType, Principal[] issuers, Socket socket) {
+                        return alias;
+                    }
+
+                    public String chooseServerAlias(String keyType, Principal[] issuers, Socket socket) {
+                        return alias;
+                    }
+
+                    public X509Certificate[] getCertificateChain(String a) {
+                        return chain;
+                    }
+
+                    public PrivateKey getPrivateKey(String a) {
+                        return key;
+                    }
+
+                    public String[] getClientAliases(String keyType, Principal[] issuers) {
+                        return new String[]{alias};
+                    }
+
+                    public String[] getServerAliases(String keyType, Principal[] issuers) {
+                        return new String[]{alias};
+                    }
+                }};
+            }
+        } catch (Exception ignored) {
+            // No client cert available — fall back to an anonymous handshake.
+        }
+        SSLContext ctx = SSLContext.getInstance("TLS");
+        ctx.init(kms, new TrustManager[]{new X509TrustManager() {
+            public void checkClientTrusted(X509Certificate[] c, String a) {
+            }
+
+            public void checkServerTrusted(X509Certificate[] c, String a) {
+            }
+
+            public X509Certificate[] getAcceptedIssuers() {
+                return new X509Certificate[0];
+            }
+        }}, new SecureRandom());
+        sslCtx = ctx;
+        return ctx;
+    }
+
     private HttpURLConnection open(URL url) throws Exception {
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         if (conn instanceof HttpsURLConnection && isPrivateHost(url.getHost())) {
             HttpsURLConnection https = (HttpsURLConnection) conn;
-            SSLContext ctx = SSLContext.getInstance("TLS");
-            ctx.init(null, new TrustManager[]{new X509TrustManager() {
-                public void checkClientTrusted(X509Certificate[] c, String a) {
-                }
-
-                public void checkServerTrusted(X509Certificate[] c, String a) {
-                }
-
-                public X509Certificate[] getAcceptedIssuers() {
-                    return new X509Certificate[0];
-                }
-            }}, new SecureRandom());
-            https.setSSLSocketFactory(ctx.getSocketFactory());
+            https.setSSLSocketFactory(sslContext().getSocketFactory());
             https.setHostnameVerifier(new HostnameVerifier() {
                 public boolean verify(String hostname, SSLSession session) {
                     return isPrivateHost(hostname);
@@ -501,6 +599,7 @@ public class LocalSendPlugin extends Plugin {
         }
         return conn;
     }
+
 
     private static boolean isPrivateHost(String host) {
         if (host == null) return false;
