@@ -219,7 +219,11 @@ export function pickTeamSheetPosts(
 
 
     .filter((h): h is TeamSheetHit & { side: "boro" | "opponent" } => h !== null)
-    .sort((a, b) => a.createdAtMs - b.createdAtMs);
+    // Boro's XI is always posted first, then the opposition graphic.
+    .sort(
+      (a, b) =>
+        (a.side === "boro" ? 0 : 1) - (b.side === "boro" ? 0 : 1) || a.createdAtMs - b.createdAtMs,
+    );
 }
 
 
