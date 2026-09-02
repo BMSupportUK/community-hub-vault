@@ -48,8 +48,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
-const ANDROID_APK_URL =
-  "https://github.com/BMSupportUK/community-hub-vault/releases/latest/download/BMSupport.apk";
+const ANDROID_APK_URL = androidApkAsset.url;
+const ANDROID_APK_ABSOLUTE_URL = `https://bmsupport.uk${androidApkAsset.url}`;
 
 interface MiniProfile {
   id: string;
