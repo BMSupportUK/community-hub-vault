@@ -78,8 +78,8 @@ export function PaymentStatusTimeline({
         ? [
             {
               key: "checking_square",
-              title: "Checking Square",
-              desc: "Verifying your Square invoice payment.",
+              title: "Checking invoice",
+              desc: "Verifying your invoice payment.",
               icon: BadgeCheck,
             },
           ]
@@ -92,21 +92,15 @@ export function PaymentStatusTimeline({
                 icon: Bitcoin,
               },
             ]
-
           : [
               {
-                key: "checking_stripe",
-                title: "Checking Stripe",
-                desc: "Verifying your card payment with Stripe.",
+                key: "checking_payment",
+                title: "Checking payment",
+                desc: "Looking for your payment with our payment providers.",
                 icon: CreditCard,
               },
-              {
-                key: "checking_square",
-                title: "Checking Square",
-                desc: "No Stripe match — checking Square invoices.",
-                icon: BadgeCheck,
-              },
             ];
+
 
   const showChecks = started || phase !== "awaiting";
 
@@ -168,25 +162,17 @@ export function PaymentStatusTimeline({
       state: cancelled ? "failed" : phase === "awaiting" ? "active" : "done",
     },
     ...(showChecks && !cancelled
-      ? checkSteps.map((c, i) => {
-          const isLastCheck = i === checkSteps.length - 1;
-          // While a check is running, mark every check step up to the active one
-          // as done; when the flow ends (confirmed/failed) all checks are done.
-          const isActiveCheck =
-            checking &&
-            (phase === c.key ||
-              // If only one provider is shown, any "checking" phase lights it up.
-              (method !== null && checkSteps.length === 1));
-          const state: StepDef["state"] = isActiveCheck
+      ? checkSteps.map((c) => {
+          // Only one check step is ever shown — the provider actually used.
+          const state: StepDef["state"] = checking
             ? "active"
             : confirmed || failed
               ? "done"
-              : checking && !isLastCheck && checkSteps[i + 1]?.key === phase
-                ? "done"
-                : "upcoming";
+              : "upcoming";
           return { ...c, state };
         })
       : []),
+
     {
       key: "result",
       title: cancelled ? "Cancelled" : failed ? "Failed" : "Confirmed",

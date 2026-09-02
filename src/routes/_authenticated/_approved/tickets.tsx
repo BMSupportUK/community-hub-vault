@@ -1063,6 +1063,28 @@ function TicketDetail({
     }
   };
   useEffect(() => { loadLinkedOrder(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [ticket.order_id, getPaymentState]);
+  // Live-refresh the order panel when the order or its payment changes, so
+  // "Payment received" appears without a hard refresh.
+  useEffect(() => {
+    const orderId = ticket.order_id;
+    if (!orderId) return;
+    const ch = supabase
+      .channel(`ticket-order-${orderId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "orders", filter: `id=eq.${orderId}` },
+        () => { void loadLinkedOrder(); },
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "order_payments", filter: `order_id=eq.${orderId}` },
+        () => { void loadLinkedOrder(); },
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ticket.order_id]);
+
   const orderIsUnpaid = !!linkedOrder && !linkedOrder.paid_at && linkedOrder.status !== "cancelled" && linkedOrder.status !== "refunded" && linkedOrder.status !== "completed";
   const accountSetupMessageExists = messages.some((m) => (m.content ?? "").startsWith("🛠️"));
   const extendSubMessageExists = messages.some((m) => (m.content ?? "").startsWith("🔄"));
@@ -1223,10 +1245,10 @@ function TicketDetail({
     setOrderBusy(true);
     setPayCheckPhase("checking_stripe");
     try {
-      // One check that interrogates both providers the customer can pay with.
-      setPayCheckPhase("checking_square");
+      // One check that interrogates every provider the customer can pay with.
       const res = await checkPaymentAcrossProviders({ data: { orderId: linkedOrder.id } });
       await loadLinkedOrder();
+
       if (res.paid) {
         setPayCheckPhase("confirmed");
         if (res.status === "paid") {
@@ -1725,7 +1747,7 @@ function TicketDetail({
           </div>
         </div>
         {linkedOrder && (
-          <div className="lg:hidden rounded-lg border border-white/25 bg-white/10 backdrop-blur p-3">
+          <div className="lg:hidden rounded-lg border border-white/25 bg-white/10 backdrop-blur p-3 max-h-[55vh] overflow-y-auto overscroll-contain">
             {orderPanelInner}
           </div>
         )}
@@ -1952,7 +1974,7 @@ function TicketDetail({
       </div>
       </div>
       {linkedOrder && (
-        <aside className="hidden lg:flex flex-col w-80 shrink-0 border-l border-white/20 bg-white/5 backdrop-blur overflow-y-auto p-4">
+        <aside className="hidden lg:flex flex-col w-80 shrink-0 min-h-0 max-h-full border-l border-white/20 bg-white/5 backdrop-blur overflow-y-auto overscroll-contain p-4 pb-10">
           <div className="text-[10px] uppercase tracking-wider text-white/70 mb-2">Order</div>
           {orderPanelInner}
         </aside>
