@@ -135,7 +135,7 @@ export function ScreenLockOverlay({ settings, onUnlock }: Props) {
         setCode("");
         if (next >= MAX_ATTEMPTS) {
           toast.error("Too many attempts — signing you out");
-          await signOut();
+          await leaveLock();
           return;
         }
         toast.error(`Incorrect code (${MAX_ATTEMPTS - next} attempts left)`);
