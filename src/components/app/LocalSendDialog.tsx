@@ -212,15 +212,6 @@ export function LocalSendDialog({ open, onOpenChange, appName, fileName, fileSiz
                   </a>
                 </Button>
               </li>
-              <li className="rounded-lg border border-violet-500/30 bg-violet-500/10 p-2.5">
-                <p className="font-semibold text-foreground">3. Send it over Wi-Fi</p>
-                <p className="mt-1 text-[11px] text-violet-200">
-                  Open the BM Support app on the TV and leave it on screen — it receives directly and opens the installer. No BM Support yet? Open LocalSend on the TV instead. On your computer, open
-                  LocalSend, pick the file you just downloaded, choose the TV from the device list and
-                  press Send — then press <strong>Accept</strong> on the TV with your remote. Open the
-                  received file in LocalSend on the TV to install it.
-                </p>
-              </li>
             </ol>
             <p className="text-[11px] text-muted-foreground flex gap-1.5">
               <Smartphone className="size-3.5 shrink-0 mt-0.5" />
