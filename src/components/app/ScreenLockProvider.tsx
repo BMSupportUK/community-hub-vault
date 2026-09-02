@@ -93,12 +93,19 @@ export function ScreenLockProvider() {
           console.error("Could not create screen lock settings", createError);
           return;
         }
-        setSettings(created as ScreenLockSettings);
+        active = created as ScreenLockSettings;
+        setSettings(active);
       }
-      // Restore a lock that was active before a reload.
-      if (typeof window !== "undefined" && localStorage.getItem(`screenlock:locked:${user.id}`) === "1") {
-        setLocked(true);
-        void suspendTalkPresence(user.id);
+      // Restore a lock that was active before a reload — but only when the lock
+      // is still switched on. A stale flag must never trap the user.
+      const flagKey = `screenlock:locked:${user.id}`;
+      if (typeof window !== "undefined" && localStorage.getItem(flagKey) === "1") {
+        if (active?.enabled) {
+          setLocked(true);
+          void suspendTalkPresence(user.id);
+        } else {
+          localStorage.removeItem(flagKey);
+        }
       }
 
     })();
