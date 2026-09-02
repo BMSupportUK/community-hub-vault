@@ -191,6 +191,29 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
           </div>
         )}
 
+        {hasLiveLink && (
+          <div className="rounded-lg border border-emerald-400/40 bg-emerald-950/40 p-2 flex items-center gap-3">
+            <div className="rounded-md bg-white p-1 shrink-0">
+              {qrDataUrl ? (
+                <img src={qrDataUrl} alt={`QR code to download ${build.appName || build.fileName}`} className="block size-[92px]" />
+              ) : (
+                <div className="flex size-[92px] items-center justify-center">
+                  <Loader2 className="size-4 animate-spin text-violet-600" />
+                </div>
+              )}
+            </div>
+            <div className="min-w-0">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-emerald-300/90">
+                Scan with your phone camera
+              </p>
+              <p className="mt-1 font-mono text-[11px] text-foreground break-all">{shortUrl}</p>
+              <p className="mt-1 text-[10px] text-muted-foreground flex items-center gap-1">
+                <Clock className="size-3" /> {remaining}
+              </p>
+            </div>
+          </div>
+        )}
+
         <div className="mt-auto pt-1">
           {!hasLiveLink ? (
             <Button
@@ -213,6 +236,7 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
             </Button>
           )}
         </div>
+
       </article>
 
       <Dialog open={open} onOpenChange={setOpen}>
