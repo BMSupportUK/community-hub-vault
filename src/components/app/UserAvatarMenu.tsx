@@ -247,7 +247,7 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
             )}
           </div>
           <Button asChild size="sm" className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90">
-            <a href={ANDROID_APK_URL} download="BMSupport.apk">
+            <a href={ANDROID_APK_URL} download={`BMSupport-${ANDROID_RELEASE.versionName}.apk`}>
               Download on this device
             </a>
           </Button>
