@@ -25,7 +25,7 @@ export async function announceAppUpdate(opts: {
   const { data: roleRows } = await supabaseAdmin
     .from("user_roles")
     .select("user_id, role")
-    .in("role", AUDIENCE_ROLES as unknown as string[]);
+    .in("role", AUDIENCE_ROLES as unknown as never[]);
   const audience = [...new Set((roleRows ?? []).map((r) => r.user_id as string))];
   if (audience.length === 0) return { notified: 0, alertKey };
 
