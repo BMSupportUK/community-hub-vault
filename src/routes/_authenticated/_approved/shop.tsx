@@ -3858,7 +3858,7 @@ function OrderDetailImpl({
     if (busy) return;
     setBusy(true);
     try {
-      const handle = order.existing_username ? ` for @${order.existing_username}` : "";
+      const handle = order.existing_username ? ` for <strong>${order.existing_username}</strong>` : "";
       await sendSystem(
         `🔄 Your subscription${handle} is being updated. You'll receive confirmation once the extension is complete.`,
       );
