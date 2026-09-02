@@ -44,8 +44,9 @@ export function ScreenLockProvider() {
       if (typeof window !== "undefined") {
         try {
           Object.keys(localStorage)
-            .filter((k) => k.startsWith("screenlock:locked:"))
+            .filter((k) => k.startsWith("screenlock:"))
             .forEach((k) => localStorage.removeItem(k));
+
         } catch {}
       }
       return;
@@ -165,11 +166,18 @@ export function ScreenLockProvider() {
     (broadcast = true) => {
       setLocked(false);
       if (storageKey) localStorage.removeItem(storageKey);
+      // Restart the idle clock, otherwise the stale timestamp re-locks instantly.
+      if (user) {
+        try {
+          localStorage.setItem(`screenlock:last-activity:${user.id}`, String(Date.now()));
+        } catch {}
+      }
       resumeTalkPresence();
       if (broadcast) channelRef.current?.postMessage({ type: "unlock" });
     },
-    [storageKey],
+    [storageKey, user?.id],
   );
+
 
 
   // Cross-tab sync
@@ -187,28 +195,68 @@ export function ScreenLockProvider() {
     };
   }, [user?.id, doLock, doUnlock]);
 
-  // Idle timer
+  // Idle timer.
+  //
+  // A plain setTimeout is not enough: background tabs get their timers throttled
+  // or frozen, and the machine can sleep. So we track the wall-clock time of the
+  // last real interaction (persisted, so a reload keeps counting) and poll it.
   useEffect(() => {
     if (!user || !settings?.enabled || locked) return;
     const minutes = Math.max(1, settings.timeout_minutes || DEFAULT_TIMEOUT_MINUTES);
     const ms = minutes * 60_000;
+    const activityKey = `screenlock:last-activity:${user.id}`;
 
-    const reset = () => {
-      if (timerRef.current) window.clearTimeout(timerRef.current);
-      timerRef.current = window.setTimeout(() => doLock(), ms);
+    const readLast = (): number => {
+      try {
+        const raw = localStorage.getItem(activityKey);
+        const n = raw ? Number(raw) : NaN;
+        if (Number.isFinite(n) && n > 0 && n <= Date.now()) return n;
+      } catch {}
+      return Date.now();
     };
-    reset();
-    ACTIVITY_EVENTS.forEach((e) => window.addEventListener(e, reset, { passive: true }));
-    const onVisible = () => {
-      if (document.visibilityState === "visible") reset();
+
+    let lastActivity = readLast();
+    // If the app was already idle past the limit before this mount (reload, or
+    // the tab was frozen while the person was away), lock straight away.
+    if (Date.now() - lastActivity >= ms) {
+      doLock();
+      return;
+    }
+
+    const markActivity = () => {
+      lastActivity = Date.now();
+      try {
+        localStorage.setItem(activityKey, String(lastActivity));
+      } catch {}
     };
+    markActivity();
+
+    const check = () => {
+      // Re-read so activity in another tab of the same session counts too.
+      const stored = readLast();
+      if (stored > lastActivity) lastActivity = stored;
+      if (Date.now() - lastActivity >= ms) doLock();
+    };
+
+    ACTIVITY_EVENTS.forEach((e) => window.addEventListener(e, markActivity, { passive: true }));
+    const onVisible = () => check();
     document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onVisible);
+
+    // Poll (wall-clock based, so throttling only delays detection slightly) and
+    // keep a timeout as the precise trigger for a foreground tab.
+    const interval = window.setInterval(check, 5_000);
+    timerRef.current = window.setTimeout(check, ms + 250);
+
     return () => {
       if (timerRef.current) window.clearTimeout(timerRef.current);
-      ACTIVITY_EVENTS.forEach((e) => window.removeEventListener(e, reset));
+      window.clearInterval(interval);
+      ACTIVITY_EVENTS.forEach((e) => window.removeEventListener(e, markActivity));
       document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onVisible);
     };
   }, [user?.id, settings?.enabled, settings?.timeout_minutes, locked, doLock]);
+
 
   // Manual "Lock screen"
   useEffect(() => {
