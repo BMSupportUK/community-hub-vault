@@ -57,7 +57,7 @@ public class LocalSendPlugin extends Plugin {
     private static final String MULTICAST_GROUP = "224.0.0.167";
     private static final String ALIAS = "BM Support";
 
-    private final ExecutorService pool = Executors.newFixedThreadPool(24);
+    private final ExecutorService pool = Executors.newFixedThreadPool(48);
     private final Set<String> seen = Collections.synchronizedSet(new HashSet<String>());
     private final AtomicBoolean cancelled = new AtomicBoolean(false);
     private String fingerprint;
