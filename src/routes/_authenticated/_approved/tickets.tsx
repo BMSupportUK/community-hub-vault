@@ -1223,10 +1223,10 @@ function TicketDetail({
     setOrderBusy(true);
     setPayCheckPhase("checking_stripe");
     try {
-      // One check that interrogates both providers the customer can pay with.
-      setPayCheckPhase("checking_square");
+      // One check that interrogates every provider the customer can pay with.
       const res = await checkPaymentAcrossProviders({ data: { orderId: linkedOrder.id } });
       await loadLinkedOrder();
+
       if (res.paid) {
         setPayCheckPhase("confirmed");
         if (res.status === "paid") {
