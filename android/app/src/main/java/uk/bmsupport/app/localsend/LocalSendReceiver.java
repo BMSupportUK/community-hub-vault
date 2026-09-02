@@ -293,8 +293,16 @@ public class LocalSendReceiver {
             if (path.endsWith("/info") && "GET".equals(method)) {
                 respond(out, 200, selfInfo(false).toString());
             } else if (path.endsWith("/register")) {
-                readBody(in, contentLength);
+                String reg = new String(readBody(in, contentLength), "UTF-8");
                 respond(out, 200, selfInfo(false).toString());
+                try {
+                    JSONObject info = reg.trim().startsWith("{")
+                            ? new JSONObject(reg) : new JSONObject();
+                    if (!fingerprint.equals(info.optString("fingerprint"))) {
+                        peer(client.getInetAddress().getHostAddress(), info);
+                    }
+                } catch (Exception ignored) {
+                }
             } else if (path.endsWith("/prepare-upload")) {
                 String body = new String(readBody(in, contentLength), "UTF-8");
                 respond(out, 200, preparePayload(body));
