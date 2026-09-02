@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { PluginListenerHandle } from "@capacitor/core";
-import { Loader2, Wifi, Tv, RefreshCw, CheckCircle2, AlertTriangle, Smartphone } from "lucide-react";
+import { Loader2, Wifi, Tv, RefreshCw, CheckCircle2, AlertTriangle, Smartphone, Monitor, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -27,6 +27,25 @@ type Props = {
   fileUrl: string;
 };
 
+/** Best-guess desktop platform so we can label the LocalSend download. */
+function useDesktopPlatform() {
+  const [os, setOs] = useState<"Windows" | "Mac" | "Linux" | "computer">("computer");
+  useEffect(() => {
+    const ua = navigator.userAgent;
+    if (/Win/i.test(ua)) setOs("Windows");
+    else if (/Mac/i.test(ua)) setOs("Mac");
+    else if (/Linux|X11/i.test(ua)) setOs("Linux");
+  }, []);
+  return os;
+}
+
+const LOCALSEND_DOWNLOADS: Record<string, string> = {
+  Windows: "https://localsend.org/download?os=windows",
+  Mac: "https://localsend.org/download?os=macos",
+  Linux: "https://localsend.org/download?os=linux",
+  computer: "https://localsend.org/download",
+};
+
 const PHASE_TEXT: Record<LocalSendProgress["phase"], string> = {
   preparing: "Preparing…",
   waiting: "Waiting for you to accept on the TV…",
@@ -36,6 +55,8 @@ const PHASE_TEXT: Record<LocalSendProgress["phase"], string> = {
 
 export function LocalSendDialog({ open, onOpenChange, appName, fileName, fileSize, fileUrl }: Props) {
   const native = isLocalSendAvailable();
+  const desktopName = useDesktopPlatform();
+  const localSendDownloadUrl = LOCALSEND_DOWNLOADS[desktopName] ?? LOCALSEND_DOWNLOADS.computer;
   const [devices, setDevices] = useState<LocalSendDevice[]>([]);
   const [scanning, setScanning] = useState(false);
   const [progress, setProgress] = useState<LocalSendProgress | null>(null);
