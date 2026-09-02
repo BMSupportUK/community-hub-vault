@@ -39,6 +39,8 @@ import { StaffOnDutyStrip } from "@/components/app/StaffOnDutyStrip";
 import { Nameplate } from "@/components/app/Nameplate";
 import { QuickRepliesPill } from "@/components/app/QuickRepliesDialog";
 import { useChannelJump } from "@/components/app/ChannelJump";
+import { applyOrderToCredential, type CredentialCandidate } from "@/lib/order-fulfilment.functions";
+
 
 export const Route = createFileRoute("/_authenticated/_approved/tickets")({
   validateSearch: (s: Record<string, unknown>): { id?: string; view?: "mine" | "all" | "assigned"; new2fa?: 1 } => ({
