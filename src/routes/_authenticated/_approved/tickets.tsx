@@ -1190,7 +1190,7 @@ function TicketDetail({
     }
     setOrderBusy(true);
     try {
-      const handle = linkedOrder.existing_username ? ` for <strong>${linkedOrder.existing_username}</strong>` : "";
+      const handle = linkedOrder.existing_username ? ` for “${linkedOrder.existing_username}”` : "";
       await postTicketSystem(
         `🔄 Your subscription${handle} is being updated. You'll receive confirmation once the extension is complete.`,
       );
