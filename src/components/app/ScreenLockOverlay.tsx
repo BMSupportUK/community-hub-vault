@@ -288,8 +288,19 @@ export function ScreenLockOverlay({ settings, onUnlock }: Props) {
                   {useTotp ? "Use my lock code instead" : "Use authenticator code instead"}
                 </button>
               )}
+              <button
+                type="button"
+                className="w-full text-xs text-muted-foreground hover:text-foreground inline-flex items-center justify-center gap-1"
+                onClick={() => {
+                  setUsePassword(true);
+                  setCode("");
+                }}
+              >
+                <KeyRound className="size-3" /> Use my account password instead
+              </button>
             </form>
           )}
+
 
           <div className="pt-2 border-t border-border flex items-center justify-between gap-2">
             <button
