@@ -4822,6 +4822,7 @@ export type Database = {
           attachments: Json
           content: string
           created_at: string
+          edited_at: string | null
           id: string
           is_internal: boolean
           sender_id: string
@@ -4831,6 +4832,7 @@ export type Database = {
           attachments?: Json
           content: string
           created_at?: string
+          edited_at?: string | null
           id?: string
           is_internal?: boolean
           sender_id: string
@@ -4840,6 +4842,7 @@ export type Database = {
           attachments?: Json
           content?: string
           created_at?: string
+          edited_at?: string | null
           id?: string
           is_internal?: boolean
           sender_id?: string

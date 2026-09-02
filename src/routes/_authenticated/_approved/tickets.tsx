@@ -8,7 +8,7 @@ import ticketsHero from "@/assets/tickets-hero.jpg";
 import {
   Ticket as TicketIcon, Plus, Send, Lock, X, LifeBuoy, CreditCard, Bug, Sparkles, UserCog,
   Tv, Film, Circle, CircleDot, Clock4, CheckCircle2, XCircle, ChevronDown, Trash2,
-  Paperclip, FileText, Star, HelpCircle, Ban, Home,
+  Paperclip, FileText, Star, HelpCircle, Ban, Home, Pencil, Check, Forward,
 
 } from "lucide-react";
 import { toast } from "sonner";
@@ -32,7 +32,7 @@ import { cancelOrderAndSquareInvoice } from "@/lib/square-invoices.functions";
 import { checkOrderPaymentAcrossProviders } from "@/lib/order-payment-check.functions";
 import { getOrderPaymentState } from "@/lib/order-payment-state.functions";
 import { formatRoleLabel } from "@/lib/role-label";
-import { notifyTicketReply, notifyStaffOfCustomerReply } from "@/lib/ticket-notify.functions";
+import { notifyTicketReply, notifyStaffOfCustomerReply, handOverTicket } from "@/lib/ticket-notify.functions";
 import { sendNewTicketPush } from "@/lib/push.functions";
 import { StaffOnDutyStrip } from "@/components/app/StaffOnDutyStrip";
 import { Nameplate } from "@/components/app/Nameplate";
@@ -76,7 +76,7 @@ interface Ticket {
   status: Status; priority: Priority; assigned_to: string | null;
   created_at: string; updated_at: string; order_id?: string | null;
 }
-interface Message { id: string; ticket_id: string; sender_id: string; content: string; is_internal: boolean; created_at: string; attachments?: Attachment[]; }
+interface Message { id: string; ticket_id: string; sender_id: string; content: string; is_internal: boolean; created_at: string; edited_at?: string | null; attachments?: Attachment[]; }
 interface Attachment { name: string; path: string; size: number; type: string; }
 interface Profile { id: string; display_name: string | null; username: string | null; avatar_url?: string | null; equipped_nameplate_id?: string | null; role?: "admin" | "management" | "staff" | "moderator" | null; }
 
@@ -1442,6 +1442,24 @@ function TicketDetail({
     }
   };
 
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState("");
+  const canEditMessage = (m: Message) => isAdmin || m.sender_id === currentUserId;
+  const startEdit = (m: Message) => { setEditingId(m.id); setEditDraft(m.content); };
+  const saveEdit = async (m: Message) => {
+    const content = editDraft.trim();
+    if (!content) return toast.error("Message can't be empty");
+    const { error } = await supabase
+      .from("ticket_messages")
+      .update({ content, edited_at: new Date().toISOString() } as never)
+      .eq("id", m.id);
+    if (error) return toast.error(error.message);
+    setEditingId(null);
+    setEditDraft("");
+    await load();
+    toast.success("Reply updated");
+  };
+
   const updateField = async (patch: Partial<Pick<Ticket, "status" | "priority" | "assigned_to">>) => {
     const closing = patch.status === "closed" || patch.status === "resolved";
     const { error } = await supabase
@@ -1733,6 +1751,11 @@ function TicketDetail({
               return <StaffIdCard profile={a} />;
             })()}
             <RequestAdminHelpButton ticketId={ticket.id} />
+            <HandOverTicketButton
+              ticketId={ticket.id}
+              staff={staff}
+              currentUserId={currentUserId}
+            />
             <QuickRepliesPill
               scope="ticket"
               label="Staff shortcuts"
@@ -1801,6 +1824,19 @@ function TicketDetail({
                       <Lock className="size-3" /> Internal
                     </span>
                   )}
+                  {m.edited_at && (
+                    <span className="text-[10px] italic text-white/60 shrink-0">edited</span>
+                  )}
+                  {canEditMessage(m) && ticket.status !== "closed" && editingId !== m.id && (
+                    <button
+                      type="button"
+                      onClick={() => startEdit(m)}
+                      title="Edit this reply"
+                      className="shrink-0 inline-flex items-center gap-1 rounded-md bg-white/15 hover:bg-white/25 border border-white/25 px-1.5 py-0.5 text-[10px] font-semibold text-white"
+                    >
+                      <Pencil className="size-3" /> Edit
+                    </button>
+                  )}
                 </div>
                 <div
                   className={cn(
@@ -1810,7 +1846,35 @@ function TicketDetail({
                       : "bg-white/15 backdrop-blur text-white border border-white/25",
                   )}
                 >
-                  <MentionText content={m.content} currentUsername={myUsername} />
+                  {editingId === m.id ? (
+                    <div className="space-y-2">
+                      <textarea
+                        value={editDraft}
+                        onChange={(e) => setEditDraft(e.target.value)}
+                        rows={3}
+                        maxLength={2000}
+                        className="w-full rounded-lg bg-black/25 border border-white/30 px-2 py-1.5 text-sm text-white outline-none focus:border-white resize-y"
+                      />
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => saveEdit(m)}
+                          className="inline-flex items-center gap-1 rounded-md bg-white px-2 py-1 text-xs font-semibold text-rose-600 hover:bg-white/90"
+                        >
+                          <Check className="size-3" /> Save
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { setEditingId(null); setEditDraft(""); }}
+                          className="inline-flex items-center gap-1 rounded-md border border-white/30 px-2 py-1 text-xs font-semibold text-white hover:bg-white/15"
+                        >
+                          <X className="size-3" /> Cancel
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <MentionText content={m.content} currentUsername={myUsername} />
+                  )}
                   <TicketAttachments items={m.attachments} />
                 </div>
               </div>
@@ -2018,6 +2082,85 @@ function RequestAdminHelpButton({ ticketId }: { ticketId: string }) {
       <HelpCircle className="size-3.5" />
       {busy ? "Notifying…" : "Request owner help"}
     </button>
+  );
+}
+
+function HandOverTicketButton({
+  ticketId, staff, currentUserId,
+}: { ticketId: string; staff: Profile[]; currentUserId: string }) {
+  const [open, setOpen] = useState(false);
+  const [to, setTo] = useState("");
+  const [note, setNote] = useState("");
+  const [busy, setBusy] = useState(false);
+  const handOver = useServerFn(handOverTicket);
+  const options = staff.filter((s) => s.id !== currentUserId);
+
+  const submit = async () => {
+    if (!to) return toast.error("Pick a staff member");
+    setBusy(true);
+    try {
+      const res = await handOver({ data: { ticketId, toUserId: to, note: note.trim() || undefined } });
+      if (!res?.ok) return toast.error("Couldn't pass this ticket over");
+      toast.success(`Ticket passed to ${res.toName ?? "staff"}`);
+      setOpen(false);
+      setTo("");
+      setNote("");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Handover failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        title="Pass this ticket to another staff member"
+        className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-sky-300 text-sky-950 hover:bg-sky-200 text-xs font-semibold shadow"
+      >
+        <Forward className="size-3.5" /> Pass ticket over
+      </button>
+      {open && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4" onClick={() => !busy && setOpen(false)}>
+          <div
+            className="w-full max-w-sm rounded-2xl border border-white/20 bg-neutral-900 p-4 text-white shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-3 text-sm font-bold">Pass ticket to another staff member</div>
+            <select
+              value={to}
+              onChange={(e) => setTo(e.target.value)}
+              className="mb-2 w-full rounded-lg border border-white/25 bg-black/40 px-2 py-2 text-sm"
+            >
+              <option value="">Select staff…</option>
+              {options.map((s) => (
+                <option key={s.id} value={s.id}>{s.display_name || s.username || "Staff"}</option>
+              ))}
+            </select>
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              rows={3}
+              maxLength={500}
+              placeholder="Optional handover note (posted as an internal note)"
+              className="mb-3 w-full rounded-lg border border-white/25 bg-black/40 px-2 py-2 text-sm resize-y"
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                type="button" disabled={busy} onClick={() => setOpen(false)}
+                className="rounded-md border border-white/25 px-3 py-1.5 text-xs font-semibold hover:bg-white/10"
+              >Cancel</button>
+              <button
+                type="button" disabled={busy || !to} onClick={submit}
+                className="rounded-md bg-sky-400 px-3 py-1.5 text-xs font-bold text-sky-950 hover:bg-sky-300 disabled:opacity-50"
+              >{busy ? "Passing…" : "Pass over"}</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
