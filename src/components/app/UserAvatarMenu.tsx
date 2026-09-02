@@ -11,6 +11,7 @@ import {
   Shield,
   ShieldCheck,
   Smartphone,
+  Monitor,
   Lock,
 } from "lucide-react";
 import QRCode from "qrcode";
@@ -49,6 +50,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ANDROID_RELEASE } from "@/lib/android-release";
 import { announceAndroidRelease } from "@/lib/android-release.functions";
+import { WindowsInstallDialog } from "@/components/app/WindowsInstallDialog";
 
 const ANDROID_APK_URL = ANDROID_RELEASE.url;
 const ANDROID_APK_ABSOLUTE_URL = ANDROID_RELEASE.absoluteUrl;
@@ -69,6 +71,7 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
   const [profile, setProfile] = useState<MiniProfile | null>(null);
   const [copied, setCopied] = useState(false);
   const [apkOpen, setApkOpen] = useState(false);
+  const [winOpen, setWinOpen] = useState(false);
   const [apkQr, setApkQr] = useState<string | null>(null);
   const isAdmin = hasAny(["admin", "management"]);
   const roleFlashMap = useRoleFlashMap();
@@ -220,6 +223,7 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
 
   return (
     <>
+    <WindowsInstallDialog open={winOpen} onOpenChange={setWinOpen} />
     <Dialog open={apkOpen} onOpenChange={setApkOpen}>
       <DialogContent className="max-w-xs sm:max-w-sm">
         <DialogHeader>
@@ -356,6 +360,18 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
             >
               <Smartphone className="size-4 mr-2" />
               Get the Android app
+            </DropdownMenuItem>
+          ) : null}
+          {!inFanZone ? (
+            <DropdownMenuItem
+              onSelect={(e) => {
+                e.preventDefault();
+                setWinOpen(true);
+              }}
+              className="cursor-pointer"
+            >
+              <Monitor className="size-4 mr-2" />
+              Get the Windows app
             </DropdownMenuItem>
           ) : null}
           {!inFanZone && isAdmin ? (
