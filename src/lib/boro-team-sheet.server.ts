@@ -204,16 +204,19 @@ export function pickTeamSheetPosts(
   return hits
     .filter((h) => h.images.length > 0 && h.createdAtMs >= from && h.createdAtMs <= to)
     .map((h) => {
-      // Opponent posts win the tie-break: a retweet of "Tonight's Burnley side"
-      // also reads like a generic team-news post.
-      if (opponentName && isOpponentTeamSheetText(h.text, opponentName)) {
-        const tokens = opponentTokens(opponentName);
-        const mentionsOpponent = tokens.some((w) => normalizeFancyText(h.text).toLowerCase().includes(w));
-        if (mentionsOpponent || !isTeamSheetText(h.text)) return { ...h, side: "opponent" as const };
+      const text = normalizeFancyText(h.text);
+      // Boro's own graphic always names the club or speaks in the first person.
+      const boroFirstPerson = /\bboro\b|\bour\b|\bwe\b|\bus\b/i.test(text.replace(/^RT\s+@\w+:\s*/i, "x "));
+      if (!boroFirstPerson && opponentName && isOpponentTeamSheetText(text, opponentName)) {
+        return { ...h, side: "opponent" as const };
       }
-      if (isTeamSheetText(h.text)) return { ...h, side: "boro" as const };
+      if (isTeamSheetText(text)) return { ...h, side: "boro" as const };
+      if (opponentName && isOpponentTeamSheetText(text, opponentName)) {
+        return { ...h, side: "opponent" as const };
+      }
       return null;
     })
+
 
     .filter((h): h is TeamSheetHit & { side: "boro" | "opponent" } => h !== null)
     .sort((a, b) => a.createdAtMs - b.createdAtMs);
