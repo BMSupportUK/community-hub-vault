@@ -104,8 +104,10 @@ export function TalkChannelMembersPanel() {
   }, [members, onlineIds]);
 
   // LOCKED: Members panel header counter — online non-staff members only.
+  // Authorised change (user request): counter follows the active tab, showing offline count on the Offline tab.
   // Do not change, restyle, or remove without explicit authorisation. See mem://constraints/chat-counters-locked
   const membersInChat = groups.ordered.reduce((total, group) => total + group.list.length, 0);
+  const headerCount = activeTab === "offline" ? groups.offline.length : membersInChat;
 
   if (rows === null) {
     return (
@@ -120,8 +122,8 @@ export function TalkChannelMembersPanel() {
       <div className="shrink-0 border-b border-border px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
         <Users className="size-3.5" />
         Members
-        <span className="ml-auto inline-flex min-w-5 items-center justify-center rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-bold leading-none text-emerald-300">
-          {membersInChat}
+        <span className={"ml-auto inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none " + (activeTab === "offline" ? "bg-muted text-muted-foreground" : "bg-emerald-500/15 text-emerald-300")}>
+          {headerCount}
         </span>
       </div>
 
