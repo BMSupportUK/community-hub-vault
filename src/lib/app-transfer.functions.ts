@@ -230,6 +230,7 @@ export const saveAppBuild = createServerFn({ method: "POST" })
       videoPath?: string | null;
       sortOrder?: number | null;
       installInstructions?: string | null;
+      announceUpdates?: boolean;
     }) => data,
   )
   .handler(async ({ data, context }) => {
