@@ -205,25 +205,35 @@ export function LocalSendDialog({ open, onOpenChange, appName, fileName, fileSiz
 
             <ol className="space-y-2 text-xs text-violet-100">
               <li className="rounded-lg border border-violet-500/30 bg-violet-500/10 p-2.5">
-                <p className="font-semibold text-foreground">1. Install LocalSend on your {desktopName}</p>
+                <p className="font-semibold text-foreground">1. Open LocalSend on your {desktopName}</p>
                 <p className="mt-1 text-[11px] text-violet-200">
-                  Free, open source. Install it on your computer and on the Fire Stick / Android box.
+                  Already have it? We'll open it for you. If nothing happens it isn't installed —
+                  grab it below (free, open source), and install it on the Fire Stick / Android box too.
                 </p>
+                <Button
+                  size="sm"
+                  className="mt-2 h-8 bg-gradient-primary text-primary-foreground hover:opacity-90"
+                  onClick={() => {
+                    setLaunchFailed(false);
+                    tryOpenLocalSend(() => setLaunchFailed(true));
+                  }}
+                >
+                  <Wifi className="size-3.5 mr-1" /> Open LocalSend
+                </Button>
+
+                {launchFailed && (
+                  <p className="mt-2 text-[11px] text-amber-200">
+                    Couldn't find LocalSend on this {desktopName} — install it first:
+                  </p>
+                )}
+
                 <div className="mt-2 flex flex-wrap gap-2">
-                  <Button
-                    size="sm"
-                    className="h-8 bg-gradient-primary text-primary-foreground hover:opacity-90"
-                    asChild
-                  >
+                  <Button size="sm" variant="secondary" className="h-8" asChild>
                     <a href={LOCALSEND_DOWNLOADS.Windows} target="_blank" rel="noopener noreferrer">
                       <Monitor className="size-3.5 mr-1" /> LocalSend for Windows
                     </a>
                   </Button>
-                  <Button
-                    size="sm"
-                    className="h-8 bg-gradient-primary text-primary-foreground hover:opacity-90"
-                    asChild
-                  >
+                  <Button size="sm" variant="secondary" className="h-8" asChild>
                     <a href={LOCALSEND_DOWNLOADS.Mac} target="_blank" rel="noopener noreferrer">
                       <Monitor className="size-3.5 mr-1" /> LocalSend for Mac
                     </a>
