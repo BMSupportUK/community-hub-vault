@@ -38,7 +38,7 @@ function TopicReadPage() {
 
   const posts = data.posts as PublicPost[];
   const op = posts.find((p) => p.is_op) ?? null;
-  const teamPosts = posts.filter((p) => !p.is_op && isTeamSheetPost(p.body));
+  const teamPosts = sortTeamSheetPosts(posts.filter((p) => !p.is_op && isTeamSheetPost(p.body)));
   const replies = posts.filter((p) => !p.is_op && !isTeamSheetPost(p.body));
 
   return (
