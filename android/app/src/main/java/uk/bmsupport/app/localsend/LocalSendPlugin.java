@@ -61,6 +61,8 @@ public class LocalSendPlugin extends Plugin {
     private final Set<String> seen = Collections.synchronizedSet(new HashSet<String>());
     private final AtomicBoolean cancelled = new AtomicBoolean(false);
     private String fingerprint;
+    private LocalSendReceiver receiver;
+
 
     private String fingerprint() {
         if (fingerprint == null) {
