@@ -44,8 +44,9 @@ export function ScreenLockProvider() {
       if (typeof window !== "undefined") {
         try {
           Object.keys(localStorage)
-            .filter((k) => k.startsWith("screenlock:locked:"))
+            .filter((k) => k.startsWith("screenlock:"))
             .forEach((k) => localStorage.removeItem(k));
+
         } catch {}
       }
       return;
