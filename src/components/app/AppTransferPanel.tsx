@@ -204,14 +204,19 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
               Request Your App Download Link
             </Button>
           ) : (
-            <Button
-              size="sm"
-              variant="secondary"
-              onClick={() => setOpen(true)}
-              className="w-full h-8"
-            >
-              <Eye className="size-3.5 mr-1" /> View download link
-            </Button>
+            <div className="space-y-1.5">
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => setOpen(true)}
+                className="w-full h-8"
+              >
+                <Eye className="size-3.5 mr-1" /> View download link
+              </Button>
+              <p className="text-[10px] text-center text-muted-foreground flex items-center justify-center gap-1">
+                <Clock className="size-3" /> Link expires in {remaining}
+              </p>
+            </div>
           )}
         </div>
 
