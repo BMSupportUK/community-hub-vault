@@ -1008,6 +1008,9 @@ function TicketDetail({
   const checkPaymentAcrossProviders = useServerFn(checkOrderPaymentAcrossProviders);
   const cancelOrderAndSquareInvoiceRpc = useServerFn(cancelOrderAndSquareInvoice);
   const getPaymentState = useServerFn(getOrderPaymentState);
+  const applyOrderToCredentialFn = useServerFn(applyOrderToCredential);
+  const [credPicker, setCredPicker] = useState<{ candidates: CredentialCandidate[]; months: number } | null>(null);
+
   const loadLinkedOrder = async () => {
     if (!ticket.order_id) { setLinkedOrder(null); setLinkedOrderUsername(null); return; }
     const { data } = await supabase
