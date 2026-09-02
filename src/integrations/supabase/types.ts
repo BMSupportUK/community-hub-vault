@@ -6121,6 +6121,28 @@ export type Database = {
         Returns: undefined
       }
       sports_blogs_clear_expired: { Args: never; Returns: undefined }
+      staff_create_credential: {
+        Args: {
+          p_account_type?: string
+          p_login_name: string
+          p_months: number
+          p_owner_id: string
+          p_password: string
+        }
+        Returns: {
+          account_number: number
+          credential_id: string
+          expiry_at: string
+        }[]
+      }
+      staff_extend_credential: {
+        Args: {
+          p_account_type?: string
+          p_credential_id: string
+          p_months: number
+        }
+        Returns: string
+      }
       submit_appeal: { Args: { p_reason: string }; Returns: Json }
       submit_content_report: {
         Args: { _kind: string; _reason: string; _target: string }
