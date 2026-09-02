@@ -102,7 +102,22 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
   }, [user, instanceId]);
 
   useEffect(() => {
+  // Fires the once-per-release "new Android version" alert. The server keeps the
+  // once-only guarantee; localStorage just stops us pinging it on every render.
+  useEffect(() => {
+    if (!user) return;
+    try {
+      if (localStorage.getItem(ANDROID_ANNOUNCE_KEY)) return;
+      localStorage.setItem(ANDROID_ANNOUNCE_KEY, "1");
+    } catch {
+      /* private mode — the server dedupes anyway */
+    }
+    announceAndroidRelease().catch(() => {});
+  }, [user]);
+
+  useEffect(() => {
     if (!apkOpen || apkQr) return;
+
     let cancel = false;
     QRCode.toDataURL(ANDROID_APK_ABSOLUTE_URL, {
       width: 220,
