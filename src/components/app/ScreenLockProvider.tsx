@@ -39,6 +39,15 @@ export function ScreenLockProvider() {
     if (!user) {
       setSettings(null);
       setLocked(false);
+      // Never leave a persisted lock flag behind after a sign-out: otherwise the
+      // next sign-in locks instantly and the overlay looks permanently stuck.
+      if (typeof window !== "undefined") {
+        try {
+          Object.keys(localStorage)
+            .filter((k) => k.startsWith("screenlock:locked:"))
+            .forEach((k) => localStorage.removeItem(k));
+        } catch {}
+      }
       return;
     }
     let cancelled = false;
