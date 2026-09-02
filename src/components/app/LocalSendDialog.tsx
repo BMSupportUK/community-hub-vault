@@ -54,7 +54,9 @@ const PHASE_TEXT: Record<LocalSendProgress["phase"], string> = {
 };
 
 export function LocalSendDialog({ open, onOpenChange, appName, fileName, fileSize, fileUrl }: Props) {
-  const native = isLocalSendAvailable();
+  const nativeCapable = isLocalSendAvailable();
+  const [pluginMissing, setPluginMissing] = useState(false);
+  const native = nativeCapable && !pluginMissing;
   const desktopName = useDesktopPlatform();
   const localSendDownloadUrl = LOCALSEND_DOWNLOADS[desktopName] ?? LOCALSEND_DOWNLOADS.computer;
   const [devices, setDevices] = useState<LocalSendDevice[]>([]);
@@ -72,11 +74,17 @@ export function LocalSendDialog({ open, onOpenChange, appName, fileName, fileSiz
     setScanning(true);
     try {
       await LocalSend.scan();
-    } catch {
-      setError("Couldn't scan the network.");
+    } catch (e) {
+      const msg = String((e as Error)?.message ?? e).toLowerCase();
+      if (msg.includes("not implemented") || msg.includes("not available") || msg.includes("unimplemented")) {
+        setPluginMissing(true);
+      } else {
+        setError("Couldn't scan the network.");
+      }
     }
     window.setTimeout(() => setScanning(false), 7000);
   }, [native]);
+
 
   useEffect(() => {
     if (!open || !native) return;
@@ -162,6 +170,13 @@ export function LocalSendDialog({ open, onOpenChange, appName, fileName, fileSiz
 
         {!native ? (
           <div className="space-y-3">
+            {pluginMissing && (
+              <div className="rounded-lg border border-amber-400/40 bg-amber-500/10 p-2.5 text-[11px] text-amber-100">
+                One-tap Wi-Fi send needs the latest BM Support Android app. Update the app from the
+                store card, then reopen this screen. Until then use the steps below.
+              </div>
+            )}
+
             <ol className="space-y-2 text-xs text-violet-100">
               <li className="rounded-lg border border-violet-500/30 bg-violet-500/10 p-2.5">
                 <p className="font-semibold text-foreground">1. Install LocalSend on your {desktopName}</p>

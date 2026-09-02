@@ -301,11 +301,23 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
                 <Download className="size-4 mr-1" /> Download to this device
               </a>
             </Button>
+            <Button
+              size="sm"
+              variant="secondary"
+              className="h-9"
+              onClick={() => {
+                setOpen(false);
+                setWifiOpen(true);
+              }}
+            >
+              <Wifi className="size-4 mr-1" /> Send over Wi-Fi
+            </Button>
             <Button size="sm" variant="secondary" className="h-9" disabled={busy === "delete"} onClick={onDelete}>
               {busy === "delete" ? <Loader2 className="size-4 mr-1 animate-spin" /> : <Trash2 className="size-4 mr-1" />}
               Delete link
             </Button>
           </div>
+
         </DialogContent>
       </Dialog>
     </>
