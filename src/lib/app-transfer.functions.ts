@@ -76,7 +76,7 @@ export const listAppBuilds = createServerFn({ method: "GET" })
     const { data } = await context.supabase
       .from("app_builds")
       .select(
-        "id, app_name, file_name, file_size, version_name, release_notes, is_available, video_path, sort_order, install_instructions, created_at",
+        "id, app_name, file_name, file_size, version_name, release_notes, is_available, video_path, sort_order, install_instructions, announce_updates, created_at",
       )
       .eq("is_current", true)
       .eq("is_available", true)
@@ -93,7 +93,7 @@ export const listAppBuildsAdmin = createServerFn({ method: "GET" })
     const { data } = await context.supabase
       .from("app_builds")
       .select(
-        "id, app_name, file_name, file_size, version_name, release_notes, is_available, video_path, sort_order, install_instructions, created_at",
+        "id, app_name, file_name, file_size, version_name, release_notes, is_available, video_path, sort_order, install_instructions, announce_updates, created_at",
       )
       .eq("is_current", true)
       .order("sort_order", { ascending: true })
