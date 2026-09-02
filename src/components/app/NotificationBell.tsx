@@ -49,15 +49,20 @@ export function NotificationBell() {
     let active = true;
 
     const load = async () => {
+      // Only surface recent notifications — stale unread rows (months old)
+      // should not keep popping up in the bell.
+      const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
       const userRes = await supabase
           .from("user_notifications")
           .select("id, kind, title, body, link_path, source_id, created_at, read_at")
           .eq("user_id", user.id)
+          .gte("created_at", cutoff)
           .order("created_at", { ascending: false })
         .limit(50);
       const staffRes = isStaff
-        ? await supabase.from("staff_notifications").select("*").order("created_at", { ascending: false }).limit(50)
+        ? await supabase.from("staff_notifications").select("*").gte("created_at", cutoff).order("created_at", { ascending: false }).limit(50)
         : null;
+
       const readsRes = isStaff
         ? await supabase.from("staff_notification_reads").select("notification_id").eq("user_id", user.id)
         : null;
