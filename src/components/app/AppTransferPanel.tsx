@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import QRCode from "qrcode";
-import { Smartphone, Copy, Download, Trash2, Loader2, ShieldCheck, Clock, Film, Eye, Lock, Wifi } from "lucide-react";
+import { Smartphone, Copy, Download, Trash2, Loader2, ShieldCheck, Clock, Film, Eye, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,7 +15,6 @@ import {
   requestAppDownloadAccess,
 } from "@/lib/app-transfer.functions";
 import { useAuth } from "@/hooks/use-auth";
-import { LocalSendDialog } from "@/components/app/LocalSendDialog";
 
 type Build = Awaited<ReturnType<typeof listAppBuilds>>[number];
 type Transfer = Awaited<ReturnType<typeof listMyAppTransfers>>[number];
@@ -72,7 +71,6 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
   const remove = useServerFn(deleteMyAppTransfer);
   const [busy, setBusy] = useState<"request" | "delete" | null>(null);
   const [open, setOpen] = useState(false);
-  const [wifiOpen, setWifiOpen] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const videoUrl = useDemoVideoUrl(build.videoPath);
 
