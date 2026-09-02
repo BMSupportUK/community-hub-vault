@@ -9,3 +9,4 @@ Chat/presence counters are LOCKED — never change the presence hook, side rail 
 - [SECURITY DEFINER allowlist](mem://security/security-definer-allowlist) — Functions that must remain executable by `authenticated`; safe to ignore lint 0029 for them
 - [Sports guides frozen](mem://constraints/sports-guides-frozen) — Do not touch sports-guides routes or parser without explicit request
 - [Chat counters locked](mem://constraints/chat-counters-locked) — Frozen presence engine + all chat counter surfaces, expected behaviour per counter
+- [Boro team sheets locked](mem://constraints/boro-team-sheet-locked) — Frozen X team-sheet pipeline posting Boro + opposition XI into match-day threads; never narrow detection patterns

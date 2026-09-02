@@ -60,6 +60,11 @@ const TEAM_SHEET_PATTERNS: RegExp[] = [
   /\bhere'?s\s+how\s+we\s+(?:line|lineup|line up)\b/i,
   /\bteam\s*sheet\b/i,
   /\bxi\s*[:|\u26bd]/i,
+  // "Our XI at Turf Moor", "The XI to face Burnley", "Tonight's XI".
+  /\b(?:our|the|this|tonight'?s|today'?s|toda?y'?s)\s+(?:[a-z0-9'’-]+\s+){0,3}xi\b/i,
+  /\bxi\s+(?:at|v|vs|versus|to\s+face|in|for)\b/i,
+  // "Tonight's Boro side", "Today's side to face …"
+  /\b(?:tonight'?s|today'?s|this\s+(?:afternoon|evening|lunchtime)'?s)\s+(?:[a-z0-9'’-]+\s+){0,3}(?:side|team|eleven)\b/i,
 ];
 
 const NEGATIVE_PATTERNS: RegExp[] = [
@@ -75,6 +80,20 @@ export function isTeamSheetText(rawText: string): boolean {
   if (NEGATIVE_PATTERNS.some((re) => re.test(text))) return false;
   return TEAM_SHEET_PATTERNS.some((re) => re.test(text));
 }
+
+/**
+ * The club retweets the opposition line-up ("RT @BurnleyOfficial: Tonight's
+ * Burnley side 📋"), which is the second half of the match day "Teams" tab.
+ */
+export function isOpponentTeamSheetText(rawText: string, opponentName: string): boolean {
+  const text = normalizeFancyText(rawText).toLowerCase();
+  if (NEGATIVE_PATTERNS.some((re) => re.test(text))) return false;
+  const tokens = opponentTokens(opponentName);
+  const named = tokens.some((w) => text.includes(w)) || tokens.length === 0;
+  if (!named) return false;
+  return /\b(side|xi|team\s*news|team\s*sheet|line[\s-]?up|eleven)\b/.test(text);
+}
+
 
 function normalizeImageUrl(raw: string): string | null {
   try {
@@ -175,13 +194,34 @@ export async function fetchOfficialTimeline(): Promise<TeamSheetHit[]> {
   }
 }
 
-export function pickTeamSheetPosts(hits: TeamSheetHit[], kickoffMs: number): TeamSheetHit[] {
+export function pickTeamSheetPosts(
+  hits: TeamSheetHit[],
+  kickoffMs: number,
+  opponentName?: string,
+): Array<TeamSheetHit & { side: "boro" | "opponent" }> {
   const from = kickoffMs - WINDOW_BEFORE_MS;
   const to = kickoffMs + WINDOW_AFTER_MS;
   return hits
-    .filter((h) => h.images.length > 0 && h.createdAtMs >= from && h.createdAtMs <= to && isTeamSheetText(h.text))
+    .filter((h) => h.images.length > 0 && h.createdAtMs >= from && h.createdAtMs <= to)
+    .map((h) => {
+      const text = normalizeFancyText(h.text);
+      // Boro's own graphic always names the club or speaks in the first person.
+      const boroFirstPerson = /\bboro\b|\bour\b|\bwe\b|\bus\b/i.test(text.replace(/^RT\s+@\w+:\s*/i, "x "));
+      if (!boroFirstPerson && opponentName && isOpponentTeamSheetText(text, opponentName)) {
+        return { ...h, side: "opponent" as const };
+      }
+      if (isTeamSheetText(text)) return { ...h, side: "boro" as const };
+      if (opponentName && isOpponentTeamSheetText(text, opponentName)) {
+        return { ...h, side: "opponent" as const };
+      }
+      return null;
+    })
+
+
+    .filter((h): h is TeamSheetHit & { side: "boro" | "opponent" } => h !== null)
     .sort((a, b) => a.createdAtMs - b.createdAtMs);
 }
+
 
 export type FixtureLite = {
   id: string;
@@ -264,13 +304,18 @@ export function buildTeamSheetBody(opts: {
   caption?: string | null;
   sourceUrl?: string | null;
   isUpdate: boolean;
+  teamLabel?: string | null;
 }): string {
-  const heading = opts.isUpdate ? "Team news — updated official line-up" : "Team news — official line-up";
+  const team = (opts.teamLabel ?? "").trim();
+  const heading = opts.isUpdate
+    ? `Team news — updated ${team ? `${team} ` : "official "}line-up`
+    : `Team news — ${team ? `${team} ` : "official "}line-up`;
   const caption = (opts.caption ?? "").trim();
   const parts = [
     `<p><strong>${heading}</strong></p>`,
-    `<p><img src="${escapeHtml(opts.imageUrl)}" alt="Middlesbrough official team sheet" /></p>`,
+    `<p><img src="${escapeHtml(opts.imageUrl)}" alt="${escapeHtml(team || "Middlesbrough")} team sheet" /></p>`,
   ];
+
   if (caption) parts.push(`<p>${escapeHtml(caption).replace(/\n+/g, "<br />")}</p>`);
   if (opts.sourceUrl) {
     parts.push(
@@ -333,7 +378,8 @@ export async function syncBoroTeamSheet(opts?: { ignoreWindow?: boolean }): Prom
     return { ok: true, fixture: label, topic: null, posted: 0, skipped: ["no match day thread for this fixture yet"] };
   }
 
-  const hits = pickTeamSheetPosts(await fetchOfficialTimeline(), Date.parse(fx.kickoff_at));
+  const opponent = opponentOf(fx);
+  const hits = pickTeamSheetPosts(await fetchOfficialTimeline(), Date.parse(fx.kickoff_at), opponent);
   if (hits.length === 0) {
     return { ok: true, fixture: label, topic: topic.title, posted: 0, skipped: ["no team sheet posted yet"] };
   }
@@ -346,19 +392,23 @@ export async function syncBoroTeamSheet(opts?: { ignoreWindow?: boolean }): Prom
   const seenImages = new Set((existing ?? []).map((r) => String(r.image_url ?? "")));
 
   let posted = 0;
+  const postedBySide: Record<"boro" | "opponent", number> = { boro: 0, opponent: 0 };
   for (const hit of hits) {
     const imageUrl = hit.images[0]!;
     if (seenTweets.has(hit.tweetId) || seenImages.has(imageUrl)) {
       skipped.push(`already posted ${hit.tweetId}`);
       continue;
     }
-    const isUpdate = seenTweets.size + posted > 0;
+    const isUpdate = hit.side === "boro" ? seenTweets.size + postedBySide.boro > 0 : postedBySide.opponent > 0;
     const body = buildTeamSheetBody({
       imageUrl,
-      caption: normalizeFancyText(hit.text).replace(/https:\/\/t\.co\/\S+/g, "").trim(),
+      caption: normalizeFancyText(hit.text).replace(/https:\/\/t\.co\/\S+/g, "").replace(/^RT\s+@\w+:\s*/i, "").trim(),
       sourceUrl: hit.url,
       isUpdate,
+      teamLabel: hit.side === "opponent" ? opponent : "Boro",
     });
+    postedBySide[hit.side] += 1;
+
 
     const { data: post, error: postErr } = await supabaseAdmin
       .from("forum_posts")
