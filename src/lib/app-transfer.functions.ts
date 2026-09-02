@@ -41,6 +41,7 @@ function mapBuild(data: any) {
     videoPath: (data.video_path as string | null) ?? null,
     sortOrder: (data.sort_order as number | null) ?? 0,
     installInstructions: (data.install_instructions as string | null) ?? null,
+    announceUpdates: !!data.announce_updates,
     createdAt: data.created_at as string,
   };
 }
