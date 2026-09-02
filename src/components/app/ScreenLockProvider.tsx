@@ -73,7 +73,9 @@ export function ScreenLockProvider() {
         console.error("Could not load screen lock settings", loadError);
         return;
       }
+      let active: ScreenLockSettings | null = null;
       if (data) {
+        active = data;
         setSettings(data);
       } else {
         const row = {
