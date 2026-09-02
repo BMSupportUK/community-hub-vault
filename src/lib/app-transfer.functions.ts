@@ -311,20 +311,21 @@ export const updateAppBuild = createServerFn({ method: "POST" })
     if (data.filePath !== undefined && data.filePath) patch.file_path = data.filePath;
     if (data.fileName !== undefined && data.fileName) patch.file_name = data.fileName;
     if (data.fileSize !== undefined) patch.file_size = data.fileSize;
+    if (data.announceUpdates !== undefined) patch.announce_updates = data.announceUpdates;
     const { error } = await supabaseAdmin.from("app_builds").update(patch as never).eq("id", data.id);
     if (error) throw new Error(error.message);
 
-    // A replaced APK or a bumped version number is a new release: alert members
-    // once per version. Cosmetic edits (notes, sort order) never alert.
+    // Only our own BM Support Android app alerts members. A replaced APK or a
+    // bumped version is a new release; cosmetic edits never alert.
     try {
       const isNewRelease = !!patch.file_path || data.versionName !== undefined;
       if (isNewRelease) {
         const { data: row } = await supabaseAdmin
           .from("app_builds")
-          .select("id, app_name, file_name, version_name, release_notes, is_available")
+          .select("id, app_name, file_name, version_name, release_notes, is_available, announce_updates")
           .eq("id", data.id)
           .maybeSingle();
-        if (row?.is_available) {
+        if (row?.is_available && (row as { announce_updates?: boolean }).announce_updates) {
           const { announceAppUpdate } = await import("@/lib/app-update-announce.server");
           await announceAppUpdate({
             buildId: row.id as string,
