@@ -46,6 +46,31 @@ const LOCALSEND_DOWNLOADS: Record<string, string> = {
   computer: "https://localsend.org/download",
 };
 
+/**
+ * Tries to launch an installed LocalSend desktop app via its URL scheme.
+ * If the app isn't installed nothing happens, so we fall back after a moment.
+ */
+function tryOpenLocalSend(onFallback: () => void) {
+  let opened = false;
+  const markOpened = () => {
+    opened = true;
+  };
+  window.addEventListener("blur", markOpened, { once: true });
+  document.addEventListener("visibilitychange", markOpened, { once: true });
+
+  const frame = document.createElement("iframe");
+  frame.style.display = "none";
+  frame.src = "localsend://";
+  document.body.appendChild(frame);
+
+  window.setTimeout(() => {
+    frame.remove();
+    window.removeEventListener("blur", markOpened);
+    document.removeEventListener("visibilitychange", markOpened);
+    if (!opened && !document.hidden) onFallback();
+  }, 1600);
+}
+
 const PHASE_TEXT: Record<LocalSendProgress["phase"], string> = {
   preparing: "Preparing…",
   waiting: "Waiting for you to accept on the TV…",
