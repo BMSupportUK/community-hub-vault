@@ -323,15 +323,27 @@ export function LocalSendDialog({ open, onOpenChange, appName, fileName, fileSiz
                     </div>
                     {busy && progress && (
                       <div className="mt-2">
-                        <div className="h-1.5 w-full overflow-hidden rounded-full bg-violet-900">
-                          <div
-                            className="h-full bg-violet-400 transition-all"
-                            style={{ width: `${progress.phase === "sending" ? progress.percent : 3}%` }}
-                          />
-                        </div>
-                        <p className="mt-1 text-[11px] text-violet-200">
-                          {PHASE_TEXT[progress.phase]}
-                          {progress.phase === "sending" ? ` ${progress.percent}%` : ""}
+                        {progress.phase === "sending" && progress.percent > 0 ? (
+                          <div className="h-1.5 w-full overflow-hidden rounded-full bg-violet-900">
+                            <div
+                              className="h-full bg-violet-400 transition-all"
+                              style={{ width: `${progress.percent}%` }}
+                            />
+                          </div>
+                        ) : (
+                          <div className="h-1.5 w-full overflow-hidden rounded-full bg-violet-900">
+                            <div className="h-full w-1/3 animate-pulse rounded-full bg-violet-400" />
+                          </div>
+                        )}
+                        <p className="mt-1 text-[11px] text-violet-200 flex items-center gap-1">
+                          {progress.phase === "sending" || progress.phase === "done" ? (
+                            <CheckCircle2 className="size-3 text-emerald-300 shrink-0" />
+                          ) : null}
+                          {progress.phase === "sending"
+                            ? progress.percent > 0
+                              ? `Accepted on the TV — sending ${progress.percent}%`
+                              : "Accepted on the TV — sending…"
+                            : PHASE_TEXT[progress.phase]}
                         </p>
                       </div>
                     )}
