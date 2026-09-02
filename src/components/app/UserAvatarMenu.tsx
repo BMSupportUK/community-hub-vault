@@ -47,10 +47,12 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import androidApkAsset from "@/assets/BMSupport.apk.asset.json";
+import { ANDROID_RELEASE } from "@/lib/android-release";
+import { announceAndroidRelease } from "@/lib/android-release.functions";
 
-const ANDROID_APK_URL = androidApkAsset.url;
-const ANDROID_APK_ABSOLUTE_URL = `https://bmsupport.uk${androidApkAsset.url}`;
+const ANDROID_APK_URL = ANDROID_RELEASE.url;
+const ANDROID_APK_ABSOLUTE_URL = ANDROID_RELEASE.absoluteUrl;
+const ANDROID_ANNOUNCE_KEY = `bm-android-announced:${ANDROID_RELEASE.versionName}`;
 
 interface MiniProfile {
   id: string;
