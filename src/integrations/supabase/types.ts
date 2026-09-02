@@ -6061,6 +6061,10 @@ export type Database = {
         Args: { _duration_seconds: number; _reason?: string; _user_id: string }
         Returns: string
       }
+      reassign_ticket: {
+        Args: { _ticket_id: string; _to_user: string }
+        Returns: undefined
+      }
       record_admin_unlock_failure: { Args: never; Returns: Json }
       redeem_invite: { Args: { p_code: string }; Returns: Json }
       request_ticket_admin_help: {
