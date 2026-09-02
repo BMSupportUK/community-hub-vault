@@ -101,7 +101,6 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
     };
   }, [user, instanceId]);
 
-  useEffect(() => {
   // Fires the once-per-release "new Android version" alert. The server keeps the
   // once-only guarantee; localStorage just stops us pinging it on every render.
   useEffect(() => {
