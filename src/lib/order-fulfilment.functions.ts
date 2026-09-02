@@ -141,7 +141,7 @@ export const applyOrderToCredential = createServerFn({ method: "POST" })
     const { data: newExpiry, error } = await supabase.rpc("staff_extend_credential", {
       p_credential_id: target.id,
       p_months: terms.months,
-      p_account_type: terms.accountType,
+      p_account_type: terms.accountType ?? undefined,
     });
     if (error) throw new Error(error.message);
 
