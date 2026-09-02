@@ -279,7 +279,13 @@ export function ScreenLockProvider() {
 
   if (!user || !locked || !settings) return null;
 
-  return <ScreenLockOverlay settings={settings} onUnlock={() => doUnlock()} />;
+  if (typeof document === "undefined") return null;
+  // Portal to <body> so no ancestor transform/overflow/stacking context can
+  // swallow clicks or clip the lock card.
+  return createPortal(
+    <ScreenLockOverlay settings={settings} onUnlock={() => doUnlock()} />,
+    document.body,
+  );
 }
 
 /** Header pill: lock the app immediately before stepping away from the PC. */
