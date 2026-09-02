@@ -194,13 +194,26 @@ export async function fetchOfficialTimeline(): Promise<TeamSheetHit[]> {
   }
 }
 
-export function pickTeamSheetPosts(hits: TeamSheetHit[], kickoffMs: number): TeamSheetHit[] {
+export function pickTeamSheetPosts(
+  hits: TeamSheetHit[],
+  kickoffMs: number,
+  opponentName?: string,
+): Array<TeamSheetHit & { side: "boro" | "opponent" }> {
   const from = kickoffMs - WINDOW_BEFORE_MS;
   const to = kickoffMs + WINDOW_AFTER_MS;
   return hits
-    .filter((h) => h.images.length > 0 && h.createdAtMs >= from && h.createdAtMs <= to && isTeamSheetText(h.text))
+    .filter((h) => h.images.length > 0 && h.createdAtMs >= from && h.createdAtMs <= to)
+    .map((h) => {
+      if (isTeamSheetText(h.text)) return { ...h, side: "boro" as const };
+      if (opponentName && isOpponentTeamSheetText(h.text, opponentName)) {
+        return { ...h, side: "opponent" as const };
+      }
+      return null;
+    })
+    .filter((h): h is TeamSheetHit & { side: "boro" | "opponent" } => h !== null)
     .sort((a, b) => a.createdAtMs - b.createdAtMs);
 }
+
 
 export type FixtureLite = {
   id: string;
