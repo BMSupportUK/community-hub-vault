@@ -66,12 +66,28 @@ public class LocalSendPlugin extends Plugin {
 
     private String fingerprint() {
         if (fingerprint == null) {
+            // LocalSend's secure mode identifies peers by the SHA-256 of their
+            // certificate, so use ours when we have one.
+            try {
+                sslContext();
+                if (selfCert != null) {
+                    byte[] d = java.security.MessageDigest.getInstance("SHA-256")
+                            .digest(selfCert.getEncoded());
+                    StringBuilder sb = new StringBuilder();
+                    for (byte b : d) sb.append(String.format("%02X", b));
+                    fingerprint = sb.toString();
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        if (fingerprint == null) {
             byte[] rnd = new byte[16];
             new SecureRandom().nextBytes(rnd);
             fingerprint = Base64.encodeToString(rnd, Base64.NO_WRAP).replaceAll("[^A-Za-z0-9]", "");
         }
         return fingerprint;
     }
+
 
     private JSONObject selfInfo(boolean announce) throws Exception {
         JSONObject o = new JSONObject();
