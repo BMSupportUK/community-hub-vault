@@ -21,7 +21,7 @@ export const Route = createFileRoute("/api/public/android-apk")({
 
 async function handle(request: Request, method: "GET" | "HEAD") {
   const origin = new URL(request.url).origin;
-  const target = new URL(ANDROID_RELEASE.url, origin).toString();
+  const target = new URL(ANDROID_RELEASE.assetUrl, origin).toString();
 
   const range = request.headers.get("range");
   const upstream = await fetch(target, {
