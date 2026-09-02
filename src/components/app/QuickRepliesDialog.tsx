@@ -22,12 +22,16 @@ export interface QuickReply {
   code: string;
   body: string;
   shared: boolean;
+  scope?: string;
 }
+
+/** Where a shortcut set lives — talk channels and tickets keep separate lists. */
+export type QuickReplyScope = "talk" | "ticket";
 
 const STAFF_ROLES = ["admin", "management", "moderator", "staff"] as const;
 
-/** Loads the quick replies the signed-in staff member can use. */
-export function useQuickReplies() {
+/** Loads the quick replies the signed-in staff member can use in this scope. */
+export function useQuickReplies(scope: QuickReplyScope = "talk") {
   const { user, hasAny } = useAuth();
   const isStaff = hasAny([...STAFF_ROLES]);
   const [replies, setReplies] = useState<QuickReply[]>([]);
@@ -38,11 +42,12 @@ export function useQuickReplies() {
     setLoading(true);
     const { data } = await supabase
       .from("staff_quick_replies")
-      .select("id, user_id, code, body, shared")
+      .select("id, user_id, code, body, shared, scope")
+      .eq("scope", scope)
       .order("code", { ascending: true });
     setReplies((data ?? []) as QuickReply[]);
     setLoading(false);
-  }, [user?.id, isStaff]);
+  }, [user?.id, isStaff, scope]);
 
   useEffect(() => {
     void refresh();
