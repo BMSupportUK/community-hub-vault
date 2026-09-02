@@ -15,8 +15,27 @@ export type LocalSendProgress = {
   percent: number;
 };
 
+export type LocalSendReceiveEvent = {
+  phase:
+    | "listening"
+    | "stopped"
+    | "incoming"
+    | "receiving"
+    | "received"
+    | "installing"
+    | "cancelled"
+    | "error";
+  fileName: string;
+  percent: number;
+  error: string;
+};
+
 export interface LocalSendPlugin {
   scan(): Promise<void>;
+  /** Turns this device (e.g. a Fire Stick) into a LocalSend receiver. */
+  startReceiver(): Promise<{ running: boolean }>;
+  stopReceiver(): Promise<{ running: boolean }>;
+  receiverStatus(): Promise<{ running: boolean }>;
   send(options: {
     deviceIp: string;
     port: number;
@@ -33,6 +52,10 @@ export interface LocalSendPlugin {
   addListener(
     eventName: "localSendProgress",
     listener: (progress: LocalSendProgress) => void,
+  ): Promise<PluginListenerHandle>;
+  addListener(
+    eventName: "localSendReceive",
+    listener: (event: LocalSendReceiveEvent) => void,
   ): Promise<PluginListenerHandle>;
 }
 

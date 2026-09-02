@@ -61,6 +61,8 @@ public class LocalSendPlugin extends Plugin {
     private final Set<String> seen = Collections.synchronizedSet(new HashSet<String>());
     private final AtomicBoolean cancelled = new AtomicBoolean(false);
     private String fingerprint;
+    private LocalSendReceiver receiver;
+
 
     private String fingerprint() {
         if (fingerprint == null) {
@@ -397,6 +399,63 @@ public class LocalSendPlugin extends Plugin {
         call.resolve();
     }
 
+    // ------------------------------------------------------------- receiving
+
+    /** Starts (or confirms) the built-in LocalSend receiver on this device. */
+    @PluginMethod
+    public void startReceiver(PluginCall call) {
+        try {
+            ensureReceiver().start();
+            JSObject res = new JSObject();
+            res.put("running", true);
+            call.resolve(res);
+        } catch (Exception e) {
+            call.reject("Couldn't start the Wi-Fi receiver: " + e.getMessage());
+        }
+    }
+
+    @PluginMethod
+    public void stopReceiver(PluginCall call) {
+        if (receiver != null) receiver.stop();
+        JSObject res = new JSObject();
+        res.put("running", false);
+        call.resolve(res);
+    }
+
+    @PluginMethod
+    public void receiverStatus(PluginCall call) {
+        JSObject res = new JSObject();
+        res.put("running", receiver != null && receiver.isRunning());
+        call.resolve(res);
+    }
+
+    private synchronized LocalSendReceiver ensureReceiver() {
+        if (receiver == null) {
+            receiver = new LocalSendReceiver(getContext(), ALIAS + " TV", new LocalSendReceiver.Events() {
+                @Override
+                public void onEvent(String phase, String fileName, int percent, String error) {
+                    JSObject ev = new JSObject();
+                    ev.put("phase", phase);
+                    ev.put("fileName", fileName == null ? "" : fileName);
+                    ev.put("percent", percent);
+                    ev.put("error", error == null ? "" : error);
+                    notifyListeners("localSendReceive", ev);
+                }
+            });
+        }
+        return receiver;
+    }
+
+    /** Listen from app start so a sender finds this device without any setup. */
+    @Override
+    public void load() {
+        try {
+            ensureReceiver().start();
+        } catch (Exception ignored) {
+        }
+    }
+
+
     // ------------------------------------------------------------- helpers
 
     private void progress(PluginCall call, String phase, int percent) {
@@ -480,6 +539,7 @@ public class LocalSendPlugin extends Plugin {
     @Override
     protected void handleOnDestroy() {
         cancelled.set(true);
+        if (receiver != null) receiver.stop();
         pool.shutdownNow();
         try {
             pool.awaitTermination(1, TimeUnit.SECONDS);
