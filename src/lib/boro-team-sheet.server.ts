@@ -370,7 +370,8 @@ export async function syncBoroTeamSheet(opts?: { ignoreWindow?: boolean }): Prom
     return { ok: true, fixture: label, topic: null, posted: 0, skipped: ["no match day thread for this fixture yet"] };
   }
 
-  const hits = pickTeamSheetPosts(await fetchOfficialTimeline(), Date.parse(fx.kickoff_at));
+  const opponent = opponentOf(fx);
+  const hits = pickTeamSheetPosts(await fetchOfficialTimeline(), Date.parse(fx.kickoff_at), opponent);
   if (hits.length === 0) {
     return { ok: true, fixture: label, topic: topic.title, posted: 0, skipped: ["no team sheet posted yet"] };
   }
@@ -383,19 +384,23 @@ export async function syncBoroTeamSheet(opts?: { ignoreWindow?: boolean }): Prom
   const seenImages = new Set((existing ?? []).map((r) => String(r.image_url ?? "")));
 
   let posted = 0;
+  const postedBySide: Record<"boro" | "opponent", number> = { boro: 0, opponent: 0 };
   for (const hit of hits) {
     const imageUrl = hit.images[0]!;
     if (seenTweets.has(hit.tweetId) || seenImages.has(imageUrl)) {
       skipped.push(`already posted ${hit.tweetId}`);
       continue;
     }
-    const isUpdate = seenTweets.size + posted > 0;
+    const isUpdate = hit.side === "boro" ? seenTweets.size + postedBySide.boro > 0 : postedBySide.opponent > 0;
     const body = buildTeamSheetBody({
       imageUrl,
-      caption: normalizeFancyText(hit.text).replace(/https:\/\/t\.co\/\S+/g, "").trim(),
+      caption: normalizeFancyText(hit.text).replace(/https:\/\/t\.co\/\S+/g, "").replace(/^RT\s+@\w+:\s*/i, "").trim(),
       sourceUrl: hit.url,
       isUpdate,
+      teamLabel: hit.side === "opponent" ? opponent : "Boro",
     });
+    postedBySide[hit.side] += 1;
+
 
     const { data: post, error: postErr } = await supabaseAdmin
       .from("forum_posts")
