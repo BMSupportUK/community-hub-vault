@@ -136,6 +136,7 @@ export type Database = {
       }
       app_builds: {
         Row: {
+          announce_updates: boolean
           app_name: string | null
           created_at: string
           created_by: string | null
@@ -153,6 +154,7 @@ export type Database = {
           video_path: string | null
         }
         Insert: {
+          announce_updates?: boolean
           app_name?: string | null
           created_at?: string
           created_by?: string | null
@@ -170,6 +172,7 @@ export type Database = {
           video_path?: string | null
         }
         Update: {
+          announce_updates?: boolean
           app_name?: string | null
           created_at?: string
           created_by?: string | null
