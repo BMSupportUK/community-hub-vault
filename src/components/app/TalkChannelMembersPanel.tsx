@@ -240,9 +240,12 @@ function MemberRow({
 }) {
   const name = row.display_name || row.username || "Member";
   const flash = roleFlashMap.get(row.user_id);
-  const roles = sortRolesByPriority(row.roles ?? []);
+  const roles = sortRolesByPriority(
+    (row.roles ?? []).filter((role) => isSupportRole(role) && !HIDDEN_ROLES.has(role)),
+  );
   const top = highestRole(roles) ?? "member";
   const avatar = resolveAvatarUrl(row.user_id, row.avatar_url, roleFlashMap);
+  const roleLabels = roles.map((role) => formatRoleLabel(role)).join(" · ");
 
   return (
     <Popover>
@@ -263,14 +266,19 @@ function MemberRow({
               )}
             />
           </span>
-          <span
-            className={cn(
-              "min-w-0 flex-1 truncate text-sm font-medium",
-              ROLE_TEXT[top] ?? "text-foreground",
-              roleFlashClass(flash),
-            )}
-          >
-            {name}
+          <span className="min-w-0 flex-1">
+            <span
+              className={cn(
+                "block truncate text-sm font-medium",
+                ROLE_TEXT[top] ?? "text-foreground",
+                roleFlashClass(flash),
+              )}
+            >
+              {name}
+            </span>
+            <span className="block truncate text-[10px] leading-tight text-muted-foreground">
+              {roleLabels || "Member"}
+            </span>
           </span>
         </button>
       </PopoverTrigger>
