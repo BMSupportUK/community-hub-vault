@@ -180,7 +180,12 @@ function SignupPage() {
               {intent === "bm-support" && (
                 <>
                   <Field
-                    label="Referral code"
+                    label={
+                      <span>
+                        Referral code{" "}
+                        <span className="text-destructive">*</span>
+                      </span>
+                    }
                     value={inviteCode}
                     onChange={setInviteCode}
                     required

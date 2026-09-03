@@ -154,7 +154,7 @@ export function AuthFrame({ title, subtitle, children }: { title: string; subtit
 
 export function Field({
   label, type = "text", value, onChange, required = true,
-}: { label: string; type?: string; value: string; onChange: (v: string) => void; required?: boolean }) {
+}: { label: React.ReactNode; type?: string; value: string; onChange: (v: string) => void; required?: boolean }) {
   return (
     <label className="block">
       <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">{label}</span>
