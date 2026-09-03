@@ -42,8 +42,7 @@ type FanFriendRel =
 
 type IncomingRel =
   | { kind: "none" }
-  | { kind: "pending"; id: string }
-  | { kind: "accepted"; id: string };
+  | { kind: "pending"; id: string };
 
 function FanProfilePage() {
   const { userId } = Route.useParams();
