@@ -41,6 +41,9 @@ function FanZonePendingPage() {
     }
     toast.success("Request sent — a Fan Zone moderator will review it.");
     setReasonDraft("");
+  };
+
+
 
 
   const status = info?.status ?? "none";
