@@ -111,6 +111,10 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
   const { user, isStaff, isPending, signOut, hasAny, roles, hasRole, isFanZoneOnly } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
   const path = useRouterState({ select: (r) => r.location.pathname });
+  const fanZoneInfo = useFanZoneMembership(user?.id ?? null);
+  const canSeeFanZoneMembers =
+    hasAny(["admin", "management", "boro_fan_zone_moderator", "boro_fan_zone_member"]) ||
+    fanZoneInfo?.status === "approved";
   const [unreadNewContent, setUnreadNewContent] = useState(cachedUnreadNewContent);
   // LOCKED: side rail chat counter — total people in Talk Channels (staff included).
   // Do not change, restyle, or remove without explicit authorisation. See mem://constraints/chat-counters-locked
