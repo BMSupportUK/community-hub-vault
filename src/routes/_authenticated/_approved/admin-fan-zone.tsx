@@ -211,7 +211,17 @@ function AdminFanZonePage() {
         };
       });
       setProfiles(map);
+
+      // Non-admins can still see who the Owners / Moderators are so the
+      // role tabs work for everyone.
+      const { data: staff } = await supabase.rpc("fan_zone_staff_directory");
+      const rmap: Record<string, string[]> = {};
+      ((staff ?? []) as Array<{ user_id: string; role: string }>).forEach((s) => {
+        rmap[s.user_id] = [...(rmap[s.user_id] ?? []), s.role];
+      });
+      setUserRoles(rmap);
     }
+
   };
 
   useEffect(() => {
@@ -365,7 +375,7 @@ function AdminFanZonePage() {
                 <span className="ml-1 size-2 rounded-full bg-rose-500" aria-label={`${counts.pending} pending`} />
               )}
             </div>
-            {isAdmin && (
+            {(
               <Tabs value={roleTab} onValueChange={(v) => setRoleTab(v as RoleTab)}>
                 <TabsList className="bg-transparent p-0 h-auto gap-1">
                   <TabsTrigger value="admins" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
