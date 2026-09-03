@@ -246,7 +246,8 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     // Dual-role accounts (BM Support + Fan Zone) keep a way back to BM Support.
     { to: "/home", label: "BM Support", icon: Home, show: !isFanZoneOnly },
     { to: "/forum", label: "Boro Fan Zone", icon: BoroBadgeIcon, show: true },
-    { to: "/fanzone/messages", label: "Fan Zone Messages", icon: MessagesSquare, show: true },
+    { to: "/fanzone/messages", label: "Inbox", icon: MessagesSquare, show: true },
+    { to: "/admin-fan-zone", label: "Members", icon: Users, show: canSeeFanZoneMembers },
     { to: "/fanzone/profile", label: "Fan Zone Profile", icon: UserCircle2, show: true },
     { to: "/boro-fantasy", label: "Boro Fantasy", icon: FantasyBenchIcon, show: true },
     ...COMPETITIONS.map((c) => ({
