@@ -1,4 +1,6 @@
 import { FriendRequestsListener } from "@/components/app/FriendRequestsListener";
+import { FanZoneFriendRequestsListener } from "@/components/app/FanZoneFriendRequestsListener";
+
 import { TwoFactorBanner } from "@/components/app/TwoFactorBanner";
 import { OutstandingTicketsAlert } from "@/components/app/OutstandingTicketsAlert";
 import { TicketAssignedAlert } from "@/components/app/TicketAssignedAlert";
@@ -19,6 +21,8 @@ export function ApprovedDeferredExtras() {
     <>
       <TwoFactorBanner />
       <FriendRequestsListener />
+      <FanZoneFriendRequestsListener />
+
       {!isSoundTestPage && <OutstandingTicketsAlert />}
       <TicketAssignedAlert />
       <PaymentConfirmedAlert />

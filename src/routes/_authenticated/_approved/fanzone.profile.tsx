@@ -371,31 +371,66 @@ function PrivacyPanel({ userId }: { userId: string }) {
   );
 }
 
+type FanRequestRow = FriendRow & { direction: "incoming" | "outgoing" };
+
 function FriendsPanel({ userId }: { userId: string }) {
   const [rows, setRows] = useState<FriendRow[] | null>(null);
+  const [requests, setRequests] = useState<FanRequestRow[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
 
   const load = async () => {
-    const { data: friends } = await supabase
+    const { data: all } = await supabase
       .from("fan_zone_friendships")
-      .select("id, requester_id, addressee_id")
-      .eq("status", "accepted")
+      .select("id, requester_id, addressee_id, status")
       .or(`requester_id.eq.${userId},addressee_id.eq.${userId}`);
-    const list = friends ?? [];
-    const ids = list.map((f: any) => (f.requester_id === userId ? f.addressee_id : f.requester_id));
-    if (ids.length === 0) { setRows([]); return; }
+    const rowsAll = all ?? [];
+    const list = rowsAll.filter((f: any) => f.status === "accepted");
+    const pending = rowsAll.filter((f: any) => f.status !== "accepted");
+    const ids = Array.from(
+      new Set(rowsAll.map((f: any) => (f.requester_id === userId ? f.addressee_id : f.requester_id))),
+    );
+    if (ids.length === 0) { setRows([]); setRequests([]); return; }
     const { data: members } = await supabase
       .from("fan_zone_members")
       .select("user_id, fan_alias, fan_avatar_url")
       .in("user_id", ids);
     const byId = new Map((members ?? []).map((m: any) => [m.user_id, m]));
-    setRows(list.map((f: any) => {
+    const shape = (f: any): FriendRow => {
       const otherId = f.requester_id === userId ? f.addressee_id : f.requester_id;
       const m = byId.get(otherId) as any;
       return { user_id: otherId, fan_alias: m?.fan_alias ?? null, fan_avatar_url: m?.fan_avatar_url ?? null, friendship_id: f.id };
-    }));
+    };
+    setRows(list.map(shape));
+    setRequests(
+      pending.map((f: any) => ({
+        ...shape(f),
+        direction: f.addressee_id === userId ? ("incoming" as const) : ("outgoing" as const),
+      })),
+    );
   };
-  useEffect(() => { void load(); /* eslint-disable-next-line */ }, [userId]);
+  useEffect(() => {
+    void load();
+    const ch = supabase
+      .channel(`fanzone-friends-panel:${userId}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "fan_zone_friendships" }, () => void load())
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId]);
+
+  const accept = async (friendshipId: string) => {
+    setBusy(friendshipId);
+    const { error } = await supabase
+      .from("fan_zone_friendships")
+      .update({ status: "accepted" })
+      .eq("id", friendshipId)
+      .eq("addressee_id", userId);
+    setBusy(null);
+    if (error) return toast.error("Couldn't accept", { description: error.message });
+    toast.success("You are now Fan Zone friends");
+    void load();
+  };
+
 
   const remove = async (friendshipId: string) => {
     setBusy(friendshipId);
@@ -410,7 +445,40 @@ function FriendsPanel({ userId }: { userId: string }) {
   return (
     <div className="rounded-2xl border border-[#E11B22]/40 bg-black/35 backdrop-blur-md shadow-2xl text-white p-5 sm:p-6">
       <h2 className="font-display text-xl font-bold mb-1">Friends</h2>
-      <p className="text-sm text-white/70 mb-4">Your Boro Fan Zone friends. Remove anyone you no longer want connected.</p>
+      <p className="text-sm text-white/70 mb-4">Your Boro Fan Zone friends. This list is separate from your BM Support friends.</p>
+      {requests.length > 0 && (
+        <div className="mb-5 space-y-2">
+          <div className="text-[11px] uppercase tracking-wider font-semibold text-white/70">Friend requests</div>
+          <ul className="space-y-2">
+            {requests.map((r) => (
+              <li key={r.friendship_id} className="flex items-center gap-3 rounded-xl border border-[#E11B22]/40 bg-[#E11B22]/10 p-3">
+                <img src={r.fan_avatar_url || boroDefaultAvatar} alt="" className="size-10 rounded-full object-cover ring-2 ring-white/10" />
+                <div className="flex-1 min-w-0">
+                  <Link to="/fanzone/u/$userId" params={{ userId: r.user_id }} className="font-semibold text-sm truncate hover:underline block">
+                    {r.fan_alias || "Boro fan"}
+                  </Link>
+                  <div className="text-[11px] text-white/60">{r.direction === "incoming" ? "Wants to be your friend" : "Request sent — awaiting reply"}</div>
+                </div>
+                {r.direction === "incoming" ? (
+                  <div className="flex gap-2">
+                    <Button size="sm" disabled={busy === r.friendship_id} onClick={() => void accept(r.friendship_id)} className="bg-emerald-600 hover:bg-emerald-500 text-white border-0">
+                      {busy === r.friendship_id ? <Loader2 className="size-4 animate-spin" /> : "Accept"}
+                    </Button>
+                    <Button size="sm" variant="outline" disabled={busy === r.friendship_id} onClick={() => void remove(r.friendship_id)} className="bg-white/10 border-white/30 text-white hover:bg-white/20">
+                      Decline
+                    </Button>
+                  </div>
+                ) : (
+                  <Button size="sm" variant="outline" disabled={busy === r.friendship_id} onClick={() => void remove(r.friendship_id)} className="bg-white/10 border-white/30 text-white hover:bg-white/20">
+                    Cancel
+                  </Button>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       {rows === null ? (
         <div className="grid place-items-center py-12"><Loader2 className="size-5 animate-spin text-white/70" /></div>
       ) : rows.length === 0 ? (
