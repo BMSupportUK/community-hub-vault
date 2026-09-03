@@ -463,30 +463,25 @@ function InstallGuidesPage() {
 
         <div className="px-4 sm:px-8 py-6">
         <Tabs value={tab} onValueChange={setTab} className="w-full">
-           <TabsList
-             className="grid h-auto w-full gap-1 border border-border bg-surface/70 p-1"
-             style={{
-               gridTemplateColumns: `repeat(${3 + (canManageCategories ? 1 : 0) + (canSeeTransfers ? 1 : 0) + (canManageApps ? 1 : 0) + (canManageGuides ? 1 : 0)}, minmax(0, 1fr))`,
-             }}
-           >
-             <TabsTrigger value="welcome" className="min-w-0 truncate px-2 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">Welcome</TabsTrigger>
-             <TabsTrigger value="guides" className="min-w-0 truncate px-2 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">Guides</TabsTrigger>
-            {canSeeAppTab && (
-               <TabsTrigger value="get-app" className="min-w-0 truncate px-2 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">{hasLiveTransfer ? "View Your Download URL" : "Download BM Support Apps"}</TabsTrigger>
-            )}
-            {canManageCategories && (
-               <TabsTrigger value="categories" className="min-w-0 truncate px-2 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">Categories</TabsTrigger>
-            )}
-            {canSeeTransfers && (
-               <TabsTrigger value="transfers" className="min-w-0 truncate px-2 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">Transfers</TabsTrigger>
-            )}
-            {canManageApps && (
-               <TabsTrigger value="app-apk" className="min-w-0 truncate px-2 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">App APK</TabsTrigger>
-            )}
-            {canManageGuides && (
-               <TabsTrigger value="approvals" className="min-w-0 truncate px-2 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">Approvals</TabsTrigger>
-            )}
-          </TabsList>
+            <TabsList className="flex flex-nowrap overflow-x-auto scrollbar-hide h-auto w-full gap-1 border border-border bg-surface/70 p-1 sm:flex-wrap sm:overflow-visible">
+              <TabsTrigger value="welcome" className="shrink-0 truncate px-3 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">Welcome</TabsTrigger>
+              <TabsTrigger value="guides" className="shrink-0 truncate px-3 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">Guides</TabsTrigger>
+             {canSeeAppTab && (
+                <TabsTrigger value="get-app" className="shrink-0 truncate px-3 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">{hasLiveTransfer ? "View Your Download URL" : "Download BM Support Apps"}</TabsTrigger>
+             )}
+             {canManageCategories && (
+                <TabsTrigger value="categories" className="shrink-0 truncate px-3 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">Categories</TabsTrigger>
+             )}
+             {canSeeTransfers && (
+                <TabsTrigger value="transfers" className="shrink-0 truncate px-3 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">Transfers</TabsTrigger>
+             )}
+             {canManageApps && (
+                <TabsTrigger value="app-apk" className="shrink-0 truncate px-3 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">App APK</TabsTrigger>
+             )}
+             {canManageGuides && (
+                <TabsTrigger value="approvals" className="shrink-0 truncate px-3 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">Approvals</TabsTrigger>
+             )}
+           </TabsList>
 
           {canManageGuides && (
             <TabsContent value="approvals" className="mt-6">
