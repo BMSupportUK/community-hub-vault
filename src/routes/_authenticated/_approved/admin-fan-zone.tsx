@@ -375,7 +375,7 @@ function AdminFanZonePage() {
                 <span className="ml-1 size-2 rounded-full bg-rose-500" aria-label={`${counts.pending} pending`} />
               )}
             </div>
-            {isAdmin && (
+            {(
               <Tabs value={roleTab} onValueChange={(v) => setRoleTab(v as RoleTab)}>
                 <TabsList className="bg-transparent p-0 h-auto gap-1">
                   <TabsTrigger value="admins" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
