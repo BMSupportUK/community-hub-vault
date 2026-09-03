@@ -60,7 +60,11 @@ function SignupPage() {
       password,
       options: {
         emailRedirectTo: window.location.origin,
-        data: { display_name: displayName, username: displayName.toLowerCase().replace(/\s+/g, "") },
+        data: {
+          display_name: displayName,
+          username: displayName.toLowerCase().replace(/\s+/g, ""),
+          access_intent: intent,
+        },
       },
     });
     if (error) {
@@ -117,18 +121,7 @@ function SignupPage() {
     }
     setBusy(false);
     if (intent === "fan-zone") {
-      // Queue a Boro Fan Zone membership request for moderator review.
-      const { data: { user: signedInUser } } = await supabase.auth.getUser();
-      if (signedInUser) {
-        const { error: fzError } = await supabase
-          .from("fan_zone_members")
-          .insert({ user_id: signedInUser.id, status: "pending" });
-        if (fzError) {
-          toast.error("Account created, but your Fan Zone request didn't send — try again on the next screen.");
-          navigate({ to: "/fan-zone-pending" });
-          return;
-        }
-      }
+      // The account trigger atomically queues the Fan Zone membership request.
       toast.success("Account created. A Fan Zone moderator will review your request.");
 
       navigate({ to: "/fan-zone-pending" });

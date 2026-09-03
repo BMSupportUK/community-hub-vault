@@ -218,19 +218,32 @@ export const getPublicForumStats = createServerFn({ method: "GET" }).handler(asy
       .eq("status", "approved"),
     supabaseAdmin
       .from("fan_zone_members")
-      .select("user_id, fan_alias, decided_at")
+      .select("user_id, fan_alias, decided_at, requested_at")
       .eq("status", "approved")
       .order("decided_at", { ascending: false, nullsFirst: false })
-      .limit(1)
-      .maybeSingle(),
+      .order("requested_at", { ascending: false })
+      .limit(25),
   ]);
   const rows = (boards.data ?? []) as Array<{ topic_count: number; post_count: number }>;
+  const latestRows = (latest.data ?? []) as Array<{
+    user_id: string;
+    fan_alias: string | null;
+    decided_at: string | null;
+    requested_at: string;
+  }>;
+  const latestMember = latestRows
+    .slice()
+    .sort(
+      (a, b) =>
+        new Date(b.decided_at ?? b.requested_at).getTime() -
+        new Date(a.decided_at ?? a.requested_at).getTime(),
+    )[0];
   return {
     threads: rows.reduce((s, b) => s + (b.topic_count || 0), 0),
     replies: rows.reduce((s, b) => s + Math.max(0, (b.post_count || 0) - (b.topic_count || 0)), 0),
     members: memberCount.count ?? 0,
-    latest_member: (latest.data as { fan_alias: string | null } | null)?.fan_alias?.trim() || null,
-    latest_member_id: (latest.data as { user_id: string } | null)?.user_id ?? null,
+    latest_member: latestMember?.fan_alias?.trim() || null,
+    latest_member_id: latestMember?.user_id ?? null,
   };
 });
 

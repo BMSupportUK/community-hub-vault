@@ -217,17 +217,25 @@ function AdminFanZonePage() {
   useEffect(() => {
     if (!canView) return;
     void load();
-    if (!isAdmin) return;
     const ch = supabase
-      .channel("admin-fan-zone-feed")
+      .channel(`admin-fan-zone-feed-${Math.random().toString(36).slice(2)}`)
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "fan_zone_members" },
         () => void load(),
       )
       .subscribe();
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") void load();
+    };
+    const interval = window.setInterval(refreshWhenVisible, 15_000);
+    window.addEventListener("focus", refreshWhenVisible);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
     return () => {
-      supabase.removeChannel(ch);
+      window.clearInterval(interval);
+      window.removeEventListener("focus", refreshWhenVisible);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+      void supabase.removeChannel(ch);
     };
   }, [canView, isAdmin]);
 
