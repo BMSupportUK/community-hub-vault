@@ -60,6 +60,8 @@ type Profile = {
 function AdminFanZonePage() {
   const { user, hasAny } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
+  // Only the Owner (admin) can approve, reject or revoke Fan Zone access.
+  const canDecide = hasAny(["admin"]);
   const info = useFanZoneMembership(user?.id ?? null);
   const isMember = info?.status === "approved" || hasAny(["boro_fan_zone_member"]);
   const canView = isAdmin || isMember;
