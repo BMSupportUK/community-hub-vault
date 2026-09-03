@@ -165,12 +165,14 @@ function MembersPage() {
   const STAFF_ROLES = new Set(["admin", "management", "moderator", "staff"]);
   const EXCLUDE_ROLES = new Set(["pending", "banned"]);
   const filtered = profiles.filter((p) => {
-    const roles = rolesByUser[p.id] ?? [];
+    const allRoles = rolesByUser[p.id] ?? [];
+    // Boro Fan Zone roles don't count towards BM Support membership.
+    const roles = allRoles.filter((r) => isSupportRole(r));
     // Exclude staff/admin/moderator (they live in /staff)
     if (roles.some((r) => STAFF_ROLES.has(r))) return false;
     // Exclude pending and banned users
     if (roles.some((r) => EXCLUDE_ROLES.has(r))) return false;
-    // Must have at least one approved (non-staff, non-pending, non-banned) role
+    // Fan-Zone-only accounts never appear in the BM Support directory
     if (roles.length === 0) return false;
     if (!q.trim()) return true;
     const s = q.toLowerCase();
