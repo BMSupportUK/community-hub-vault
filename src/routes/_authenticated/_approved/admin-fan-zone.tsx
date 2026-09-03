@@ -574,7 +574,7 @@ function AdminFanZonePage() {
                         <td className="px-5 py-3 text-muted-foreground">
                           {formatAgo(r.requested_at)}
                         </td>
-                        {isAdmin && (
+                        {isAdmin && statusTab === "pending" && (
                           <td className="px-5 py-3 max-w-[280px]">
                             {r.reason ? (
                               <span className="text-xs text-muted-foreground line-clamp-2" title={r.reason}>
