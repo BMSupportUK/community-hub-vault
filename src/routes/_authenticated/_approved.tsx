@@ -35,7 +35,11 @@ function ApprovedLayout() {
 
   // Fan Zone routes have their own membership gating; page permissions cover
   // the BM Support side only.
-  const blocked = !isFanZonePath(path) && !isPageAllowed(pageKeyForPath(path), roles, perms);
+  const key = pageKeyForPath(path);
+  const blocked =
+    key !== "home" && // never redirect the fallback page onto itself
+    !isFanZonePath(path) &&
+    !isPageAllowed(key, roles, perms);
   if (blocked) return <Navigate to="/home" replace />;
 
   return (
