@@ -231,7 +231,7 @@ function SignupPage() {
                     className="mt-0.5 accent-primary"
                   />
                   <span className="text-sm">
-                    <span className="block font-semibold">Boro Fan Zone</span>
+                    <span className="block font-semibold">Boro Fan (Middlesbrough F.C. Forum)</span>
                     <span className="block text-xs text-muted-foreground">
                       Match-day banter, transfer talk and the forum.
                     </span>
