@@ -21,7 +21,10 @@ interface PagePerm { page_key: string; label: string; allowed_roles: string[]; s
 interface Channel { id: string; name: string; slug: string; staff_only: boolean; sort_order: number; group_label: string; }
 interface ChanPerm { channel_id: string; role: string; can_view: boolean; can_send: boolean; can_delete: boolean; can_mention: boolean; }
 
-const LOCKED = new Set(["admin", "management"]);
+const LOCKED = new Set(["admin"]);
+// Management can be toggled, but only by an admin (owner) account.
+const ADMIN_ONLY_ROLES = new Set(["management"]);
+const CHANNEL_LOCKED = new Set(["admin", "management"]);
 const HIDDEN_ROLES = new Set(["pending", "banned"]);
 
 // Auto-discover all page routes under /_authenticated/_approved at build time.
@@ -39,6 +42,7 @@ function humanLabel(key: string): string {
 function AdminPermissionsPage() {
   const { hasAny } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
+  const isOwnerAdmin = hasAny(["admin"]);
   const search = Route.useSearch();
   const [tab, setTab] = useState<"pages" | "channels">(search.tab ?? "pages");
   const [loading, setLoading] = useState(true);
@@ -145,7 +149,7 @@ function AdminPermissionsPage() {
         {loading ? (
           <div className="grid place-items-center py-16 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>
         ) : tab === "pages" ? (
-          <PagesTab pages={pages} roles={roles} onChanged={load} />
+          <PagesTab pages={pages} roles={roles} onChanged={load} canEditManagement={isOwnerAdmin} />
         ) : (
           <ChannelsTab channels={channels} roles={roles} chanPerms={chanPerms} onChanged={load} initialChannelId={search.channel} groupFilter={search.group} />
         )}
@@ -162,9 +166,13 @@ function TabBtn({ active, onClick, icon: Icon, children }: { active: boolean; on
   );
 }
 
-function PagesTab({ pages, roles, onChanged }: { pages: PagePerm[]; roles: RoleDef[]; onChanged: () => void }) {
+function PagesTab({ pages, roles, onChanged, canEditManagement }: { pages: PagePerm[]; roles: RoleDef[]; onChanged: () => void; canEditManagement: boolean }) {
   const toggle = async (page: PagePerm, role: string) => {
     if (LOCKED.has(role)) return;
+    if (ADMIN_ONLY_ROLES.has(role) && !canEditManagement) {
+      toast.error("Only an owner (admin) account can change management access.");
+      return;
+    }
     const has = page.allowed_roles.includes(role);
     const next = has ? page.allowed_roles.filter((r) => r !== role) : [...page.allowed_roles, role];
     const { error } = await supabase.from("page_permissions").update({ allowed_roles: next as any }).eq("page_key", page.page_key);
@@ -179,7 +187,7 @@ function PagesTab({ pages, roles, onChanged }: { pages: PagePerm[]; roles: RoleD
       <td className="px-4 py-3 font-medium sticky left-0 bg-surface-1">{p.label}<div className="text-[10px] text-muted-foreground font-normal">/{p.page_key}</div></td>
       {roles.map((r) => {
         const on = LOCKED.has(r.name) || p.allowed_roles.includes(r.name);
-        const locked = LOCKED.has(r.name);
+        const locked = LOCKED.has(r.name) || (ADMIN_ONLY_ROLES.has(r.name) && !canEditManagement);
         return (
           <td key={r.name} className="px-3 py-3 text-center">
             <input type="checkbox" checked={on} disabled={locked} onChange={() => toggle(p, r.name)} className="size-4 accent-primary disabled:opacity-50" />
@@ -229,7 +237,7 @@ function ChannelsTab({ channels, roles, chanPerms, onChanged, initialChannelId, 
   const permFor = (role: string): ChanPerm => chanPerms.find((cp) => cp.channel_id === active && cp.role === role) ?? { channel_id: active, role, can_view: false, can_send: false, can_delete: false, can_mention: false };
 
   const toggle = async (role: string, key: "can_view" | "can_send" | "can_delete" | "can_mention") => {
-    if (LOCKED.has(role)) return;
+    if (CHANNEL_LOCKED.has(role)) return;
     const cur = permFor(role);
     const next = { ...cur, [key]: !cur[key] };
     const { error } = await supabase.from("channel_permissions").upsert(next as any, { onConflict: "channel_id,role" });
@@ -271,7 +279,7 @@ function ChannelsTab({ channels, roles, chanPerms, onChanged, initialChannelId, 
             <tbody>
               {roles.map((r) => {
                 const cp = permFor(r.name);
-                const locked = LOCKED.has(r.name);
+                const locked = CHANNEL_LOCKED.has(r.name);
                 const Cell = ({ k }: { k: "can_view" | "can_send" | "can_delete" | "can_mention" }) => (
                   <td className="px-3 py-3 text-center">
                     <input type="checkbox" checked={locked || cp[k]} disabled={locked} onChange={() => toggle(r.name, k)} className="size-4 accent-primary disabled:opacity-50" />

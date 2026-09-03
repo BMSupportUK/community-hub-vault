@@ -266,11 +266,11 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     if (to === "/forum") return true;
     // Fan Zone members list: gated by canSeeFanZoneMembers, not page permissions.
     if (to === "/admin-fan-zone" && inFanZone) return true;
-    if (isAdmin) return true;
+    if (hasAny(["admin"])) return true;
     const key = to.replace(/^\//, "").split("/")[0];
     const allowed = pagePerms[key];
     // Unregistered page: nothing to enforce. Registered with nothing ticked:
-    // owner/management only (handled by the isAdmin bypass above).
+    // owner only (handled by the admin bypass above).
     if (!allowed) return true;
     return roles.some((r: AppRole) => allowed.includes(r));
   };
