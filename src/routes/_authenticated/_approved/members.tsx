@@ -52,7 +52,7 @@ const ROLE_COLOR: Record<string, string> = {
   banned: "bg-red-500/20 text-red-300 ring-red-400/40",
 };
 
-import { sortRolesByPriority } from "@/lib/role-rank";
+import { sortRolesByPriority, isSupportRole } from "@/lib/role-rank";
 
 function MembersPage() {
   const { hasAny, user: viewer } = useAuth();
@@ -165,12 +165,14 @@ function MembersPage() {
   const STAFF_ROLES = new Set(["admin", "management", "moderator", "staff"]);
   const EXCLUDE_ROLES = new Set(["pending", "banned"]);
   const filtered = profiles.filter((p) => {
-    const roles = rolesByUser[p.id] ?? [];
+    const allRoles = rolesByUser[p.id] ?? [];
+    // Boro Fan Zone roles don't count towards BM Support membership.
+    const roles = allRoles.filter((r) => isSupportRole(r));
     // Exclude staff/admin/moderator (they live in /staff)
     if (roles.some((r) => STAFF_ROLES.has(r))) return false;
     // Exclude pending and banned users
     if (roles.some((r) => EXCLUDE_ROLES.has(r))) return false;
-    // Must have at least one approved (non-staff, non-pending, non-banned) role
+    // Fan-Zone-only accounts never appear in the BM Support directory
     if (roles.length === 0) return false;
     if (!q.trim()) return true;
     const s = q.toLowerCase();
@@ -258,7 +260,10 @@ function MembersPage() {
         )}
         {visible.map((p) => {
 
-          const userRoles = sortRolesByPriority(rolesByUser[p.id] ?? ["member"]);
+          const userRoles = (() => {
+            const supportOnly = (rolesByUser[p.id] ?? []).filter((r) => isSupportRole(r));
+            return sortRolesByPriority(supportOnly.length ? supportOnly : ["member"]);
+          })();
           const name = p.display_name ?? p.username ?? "Unknown";
           const initial = name.slice(0, 1).toUpperCase();
           const isOnline = onlineUsers.has(p.id);

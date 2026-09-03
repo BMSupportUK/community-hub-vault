@@ -118,7 +118,7 @@ const ROLE_STYLES: Record<AppRole, string> = {
 };
 
 import { formatRoleLabel } from "@/lib/role-label";
-import { sortRolesByPriority } from "@/lib/role-rank";
+import { sortRolesByPriority, isSupportRole } from "@/lib/role-rank";
 
 async function sha256Hex(input: string) {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(input));
@@ -414,7 +414,11 @@ function ProfilePage() {
     load();
   };
 
-  const sortedRoles = useMemo(() => sortRolesByPriority(roles), [roles]);
+  // Boro Fan Zone roles are hidden on the BM Support side of the app.
+  const sortedRoles = useMemo(
+    () => sortRolesByPriority(roles).filter((r) => isSupportRole(r)),
+    [roles],
+  );
 
   if (loading) {
     return (
