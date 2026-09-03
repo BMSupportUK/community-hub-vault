@@ -29,6 +29,15 @@ export const Route = createFileRoute("/_authenticated/_approved")({
 });
 
 function ApprovedLayout() {
+  const { roles } = useAuth();
+  const path = useRouterState({ select: (r) => r.location.pathname });
+  const perms = usePagePermissions();
+
+  // Fan Zone routes have their own membership gating; page permissions cover
+  // the BM Support side only.
+  const blocked = !isFanZonePath(path) && !isPageAllowed(pageKeyForPath(path), roles, perms);
+  if (blocked) return <Navigate to="/home" replace />;
+
   return (
     <>
       <Outlet />
