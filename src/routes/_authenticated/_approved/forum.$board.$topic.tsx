@@ -132,6 +132,7 @@ function TopicPostArticleComponent({
 
   return (
     <article
+      id={`forum-post-${post.id}`}
       className={`boro-topic-post rounded-xl overflow-hidden transition-shadow hover:shadow-[0_14px_42px_-14px_rgba(225,27,34,0.5)] ${
         post.is_op
           ? "border-[#E11B22]/65 ring-1 ring-[#E11B22]/25"
@@ -330,6 +331,7 @@ function TopicPage() {
   const userIdRef = useRef<string | null>(user?.id ?? null);
   const replyBoxRef = useRef<HTMLDivElement>(null);
   const pendingReplyScrollRef = useRef(false);
+  const pendingScrollPostIdRef = useRef<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
   const [historyFor, setHistoryFor] = useState<Post | null>(null);
@@ -359,6 +361,19 @@ function TopicPage() {
     pendingReplyScrollRef.current = false;
     replyBoxRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [tab, reply]);
+
+  // After posting, jump to the page holding the new reply and scroll to it.
+  useEffect(() => {
+    const id = pendingScrollPostIdRef.current;
+    if (!id || !posts) return;
+    if (!posts.some((p) => p.id === id)) return;
+    pendingScrollPostIdRef.current = null;
+    requestAnimationFrame(() => {
+      document.getElementById(`forum-post-${id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  }, [posts]);
+
+
 
   const startEditTitle = () => {
     if (!topic) return;
@@ -624,13 +639,18 @@ function TopicPage() {
         locallyInsertedPostIdsRef.current.add(inserted.id);
         const replyCountBeforeInsert = topic.reply_count ?? 0;
         const showOnCurrentPage = shouldShowInsertedReply(page, replyCountBeforeInsert, REPLIES_PER_PAGE);
+        const targetPage = Math.max(1, Math.ceil((replyCountBeforeInsert + 1) / REPLIES_PER_PAGE));
         setTopic((current) => current ? { ...current, reply_count: (current.reply_count ?? 0) + 1 } : current);
+        pendingScrollPostIdRef.current = inserted.id;
         if (showOnCurrentPage) {
           setPosts((current) => {
             if (!current) return [inserted];
             const withoutDuplicate = current.filter((p) => p.id !== inserted.id);
             return [...withoutDuplicate, inserted].sort(sortPostsForTopic);
           });
+        } else {
+          // The new reply lives on a later page — go there so it's visible.
+          setPage(targetPage);
         }
       }
     });
