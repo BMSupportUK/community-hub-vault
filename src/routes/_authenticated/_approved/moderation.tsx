@@ -23,6 +23,8 @@ interface AppRow {
   created_at: string;
   reason: string | null;
   profile?: { display_name: string | null; username: string | null };
+  /** What the person chose on signup: BM Support or Boro Fan Zone. */
+  accessIntent?: "bm-support" | "fan-zone" | null;
 }
 
 type MsgStatus = "sending" | "sent" | "failed";
