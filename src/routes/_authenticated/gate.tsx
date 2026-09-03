@@ -60,10 +60,15 @@ function GatePage() {
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [referralNote, setReferralNote] = useState<string | null>(null);
 
+  const ACTIVATION_TEXT = "I would like to complete activation of my account.";
+  const defaultDraft = (code?: string | null) =>
+    `${ACTIVATION_TEXT}${code ? `\n\nReferral code: ${code}` : ""}`;
+
   const requestAccess = (action: "chat" | "form") => {
     if (action === "form" && !reasonDraft && !appId) {
-      setReasonDraft(`[${intentLabel}] `);
+      setReasonDraft(defaultDraft(referralCode));
     }
+
     if (captchaPassed) {
       if (action === "chat") setChatOpen(true);
       else setFormOpen(true);
