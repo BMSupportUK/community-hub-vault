@@ -63,8 +63,9 @@ function AdminFanZonePage() {
   // Only the Owner (admin) can approve, reject or revoke Fan Zone access.
   const canDecide = hasAny(["admin"]);
   const info = useFanZoneMembership(user?.id ?? null);
+  const isFanZoneMod = hasAny(["boro_fan_zone_moderator"]);
   const isMember = info?.status === "approved" || hasAny(["boro_fan_zone_member"]);
-  const canView = isAdmin || isMember;
+  const canView = isAdmin || isFanZoneMod || isMember;
   type StatusTab = "all" | Status;
   type RoleTab = "admins" | "moderators" | "members";
   const [roleTab, setRoleTab] = useState<RoleTab>("members");
