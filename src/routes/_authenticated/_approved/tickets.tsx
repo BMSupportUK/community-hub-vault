@@ -484,19 +484,21 @@ function TicketsPage() {
 
 
           <TabsContent value="welcome" className="mt-6">
-            <div className="rounded-2xl bg-gradient-to-br from-rose-600/30 via-fuchsia-600/20 to-violet-700/30 border border-rose-500/30 p-8 md:p-10 shadow-[0_0_60px_-15px_rgba(244,63,94,0.4)]">
-              <div className="min-w-0">
-                <h2 className="font-display text-2xl md:text-3xl font-bold">Welcome to the Help Desk</h2>
-                <p className="mt-3 text-rose-100/90 max-w-2xl">
-                  Account questions, billing, Live TV or Movies & Series issues — we've got you
-                  covered. Open a ticket and we'll respond as soon as a staff member is on duty.
-                </p>
-                <p className="mt-5 text-rose-200/80 max-w-2xl text-sm">
-                  Once your ticket is resolved, leave a rating so we know how we did.
-                </p>
-              </div>
-              <div className="mt-8 w-full [&>div]:px-0 [&>div]:pt-0">
-                <StaffOnDutyStrip variant="tickets" hideRoles={["moderator"]} />
+            <div className="rounded-2xl bg-gradient-to-br from-rose-600/30 via-fuchsia-600/20 to-violet-700/30 border border-rose-500/30 p-6 md:p-8 lg:p-10 shadow-[0_0_60px_-15px_rgba(244,63,94,0.4)]">
+              <div className="flex flex-col lg:flex-row lg:items-start gap-6 lg:gap-8">
+                <div className="min-w-0 flex-1">
+                  <h2 className="font-display text-2xl md:text-3xl font-bold">Welcome to the Help Desk</h2>
+                  <p className="mt-3 text-rose-100/90 max-w-2xl">
+                    Account questions, billing, Live TV or Movies & Series issues — we've got you
+                    covered. Open a ticket and we'll respond as soon as a staff member is on duty.
+                  </p>
+                  <p className="mt-5 text-rose-200/80 max-w-2xl text-sm">
+                    Once your ticket is resolved, leave a rating so we know how we did.
+                  </p>
+                </div>
+                <div className="w-full lg:w-auto lg:max-w-md shrink-0 [&>div]:px-0 [&>div]:pt-0">
+                  <StaffOnDutyStrip variant="tickets" hideRoles={["moderator"]} />
+                </div>
               </div>
             </div>
           </TabsContent>
