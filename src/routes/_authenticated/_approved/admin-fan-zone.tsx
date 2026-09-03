@@ -234,6 +234,10 @@ function AdminFanZonePage() {
   if (!canView) return <Navigate to="/home" />;
 
   const decide = async (userId: string, status: "approved" | "rejected" | "revoked") => {
+    if (!canDecide) {
+      toast.error("Only the Owner can approve Boro Fan Zone access.");
+      return;
+    }
     setBusy(userId);
     const { error } = await supabase
       .from("fan_zone_members")
@@ -615,6 +619,7 @@ function AdminFanZonePage() {
                         </td>
                         {isAdmin && (
                           <td className="px-3 py-3 text-right">
+                            {canDecide ? (
                             <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="icon" className="size-8" disabled={busy === r.user_id}>
@@ -647,6 +652,9 @@ function AdminFanZonePage() {
                               )}
                             </DropdownMenuContent>
                             </DropdownMenu>
+                            ) : (
+                              <span className="text-[11px] text-muted-foreground">Owner only</span>
+                            )}
                           </td>
                         )}
                       </tr>
