@@ -35,6 +35,8 @@ function SignupPage() {
   const isVpn = useVisitorVpn();
   const [vpnDialogOpen, setVpnDialogOpen] = useState(false);
 
+  const needsReferral = intent === "bm-support" && !inviteCode.trim();
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isVpn) {
@@ -42,6 +44,9 @@ function SignupPage() {
       return;
     }
     if (!intent) return toast.error("Please choose what you'd like access to.");
+    if (intent === "bm-support" && !inviteCode.trim()) {
+      return toast.error("A referral code is required for BM Support access.");
+    }
     if (!captchaToken) return toast.error("Please complete the captcha.");
     setBusy(true);
     const verify = await verifyTurnstile({ data: { token: captchaToken } });
@@ -172,7 +177,17 @@ function SignupPage() {
               <Field label="Display name" value={displayName} onChange={setDisplayName} />
               <Field label="Email" type="email" value={email} onChange={setEmail} />
               <Field label="Password" type="password" value={password} onChange={setPassword} />
-              <Field label="Invite code (optional)" value={inviteCode} onChange={setInviteCode} required={false} />
+              <Field
+                label={intent === "bm-support" ? "Referral code" : "Referral code (optional)"}
+                value={inviteCode}
+                onChange={setInviteCode}
+                required={intent === "bm-support"}
+              />
+              {intent === "bm-support" && (
+                <p className="text-xs text-muted-foreground -mt-1">
+                  BM Support registration requires a referral code from an existing member.
+                </p>
+              )}
               <fieldset className="space-y-2">
                 <legend className="text-xs font-medium text-foreground/80 mb-1">
                   What are you signing up for? <span className="text-destructive">*</span>
@@ -234,7 +249,7 @@ function SignupPage() {
                   <ShieldAlert className="size-4" /> Join BM Support
                 </button>
               ) : (
-                <button disabled={busy} className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-medium shadow-glow hover:opacity-90 disabled:opacity-50">
+                <button disabled={busy || needsReferral} className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-medium shadow-glow hover:opacity-90 disabled:opacity-50">
                   {busy ? "Creating…" : "Join BM Support"}
                 </button>
               )}
