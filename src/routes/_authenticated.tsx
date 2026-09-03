@@ -129,8 +129,11 @@ function AuthLayout() {
     return <Navigate to="/account-rejected" />;
   }
 
-  // Pending users are locked to /gate
-  if (isPending && !path.startsWith("/gate")) {
+  // Pending users are locked to their waiting room
+  if (isPending && fanZoneApplicant && !path.startsWith("/fan-zone-pending")) {
+    return <Navigate to="/fan-zone-pending" />;
+  }
+  if (isPending && !fanZoneApplicant && !path.startsWith("/gate")) {
     return <Navigate to="/gate" />;
   }
 
