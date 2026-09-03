@@ -2009,6 +2009,16 @@ function TicketDetail({
               if (!a) return null;
               return <StaffIdCard profile={a} />;
             })()}
+            {ticket.assigned_to && ticket.assigned_to !== currentUserId && (
+              <button
+                type="button"
+                onClick={() => void changeAssignee(currentUserId)}
+                title="Take control of this ticket back"
+                className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-emerald-300 text-emerald-950 hover:bg-emerald-200 text-xs font-semibold shadow"
+              >
+                <Forward className="size-3.5 rotate-180" /> Take back
+              </button>
+            )}
             <RequestAdminHelpButton ticketId={ticket.id} />
             <HandOverTicketButton
               ticketId={ticket.id}
