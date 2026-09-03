@@ -11,6 +11,7 @@ import { logMyIp } from "@/lib/ip-log.functions";
 import { useOnlineUsers } from "@/hooks/use-online-users";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { isAllowedForFanZoneOnly } from "@/lib/fan-zone-nav";
+import { useFanZoneMembershipState } from "@/hooks/use-fan-zone";
 
 // Defer non-critical header widgets & alerts so the shell paints immediately.
 const Clocks = lazy(() => import("@/components/app/Clocks").then((m) => ({ default: m.Clocks })));
