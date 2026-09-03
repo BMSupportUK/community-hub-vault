@@ -71,6 +71,7 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
   const { user, roles, signOut, hasAny, isFanZoneOnly } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<MiniProfile | null>(null);
+  const [fanProfile, setFanProfile] = useState<{ fan_alias: string | null; fan_avatar_url: string | null } | null>(null);
   const [copied, setCopied] = useState(false);
   const [apkOpen, setApkOpen] = useState(false);
   const [winOpen, setWinOpen] = useState(false);
