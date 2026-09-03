@@ -271,11 +271,6 @@ function sortPostsForTopic(a: Post, b: Post) {
   return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
 }
 
-function shouldShowInsertedReply(currentPage: number, replyCountBeforeInsert: number, repliesPerPage: number) {
-  const targetPage = Math.max(1, Math.ceil((replyCountBeforeInsert + 1) / repliesPerPage));
-  return targetPage === currentPage;
-}
-
 function prepareForumPostBodyForSubmit(raw: string): string {
   const normalized = normalizeForumPostInput(raw);
   if (isPreparedForumPostBody(normalized)) return normalized;
@@ -332,7 +327,6 @@ function TopicPage() {
   const replyBoxRef = useRef<HTMLDivElement>(null);
   const pendingReplyScrollRef = useRef(false);
   const pendingScrollPostIdRef = useRef<string | null>(null);
-  const autoSwitchedToRepliesRef = useRef(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
   const [historyFor, setHistoryFor] = useState<Post | null>(null);
@@ -358,10 +352,6 @@ function TopicPage() {
   }, [user?.id]);
 
   useEffect(() => {
-    autoSwitchedToRepliesRef.current = false;
-  }, [topicId]);
-
-  useEffect(() => {
     if (tab !== "reply" || !pendingReplyScrollRef.current) return;
     pendingReplyScrollRef.current = false;
     replyBoxRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -370,13 +360,21 @@ function TopicPage() {
   // After posting, jump to the page holding the new reply and scroll to it.
   useEffect(() => {
     const id = pendingScrollPostIdRef.current;
-    if (!id || !posts) return;
+    if (!id || !posts || tab !== "reply") return;
     if (!posts.some((p) => p.id === id)) return;
-    pendingScrollPostIdRef.current = null;
-    requestAnimationFrame(() => {
-      document.getElementById(`forum-post-${id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
-    });
-  }, [posts]);
+    let attempts = 0;
+    const scrollToReply = () => {
+      const element = document.getElementById(`forum-post-${id}`);
+      if (element) {
+        pendingScrollPostIdRef.current = null;
+        element.scrollIntoView({ behavior: "smooth", block: "center" });
+        return;
+      }
+      attempts += 1;
+      if (attempts < 6) window.setTimeout(scrollToReply, 100);
+    };
+    requestAnimationFrame(scrollToReply);
+  }, [posts, tab]);
 
 
 
@@ -638,16 +636,25 @@ function TopicPage() {
       return;
     }
     const inserted = data as Post | null;
+    let targetPage = page;
+    if (inserted) {
+      const { count } = await supabase
+        .from("forum_posts")
+        .select("id", { count: "exact", head: true })
+        .eq("topic_id", topic.id)
+        .eq("is_op", false)
+        .eq("is_pinned", false)
+        .lte("created_at", inserted.created_at);
+      targetPage = Math.max(1, Math.ceil((count ?? 1) / REPLIES_PER_PAGE));
+    }
     flushSync(() => {
       setSubmitting(false);
       if (inserted) {
         locallyInsertedPostIdsRef.current.add(inserted.id);
-        const replyCountBeforeInsert = topic.reply_count ?? 0;
-        const showOnCurrentPage = shouldShowInsertedReply(page, replyCountBeforeInsert, REPLIES_PER_PAGE);
-        const targetPage = Math.max(1, Math.ceil((replyCountBeforeInsert + 1) / REPLIES_PER_PAGE));
         setTopic((current) => current ? { ...current, reply_count: (current.reply_count ?? 0) + 1 } : current);
         pendingScrollPostIdRef.current = inserted.id;
-        if (showOnCurrentPage) {
+        setTab("reply");
+        if (targetPage === page) {
           setPosts((current) => {
             if (!current) return [inserted];
             const withoutDuplicate = current.filter((p) => p.id !== inserted.id);
@@ -757,26 +764,6 @@ function TopicPage() {
       teamPosts: sortTeamSheetPosts(visible.filter((p) => !p.is_op && isTeamSheetPost(p.body))),
     };
   }, [posts, blocked]);
-
-  // On first open, jump straight to the Replies tab and start at reply #1.
-  useEffect(() => {
-    if (autoSwitchedToRepliesRef.current || !topic || !posts) return;
-    if ((topic.reply_count ?? 0) > 0) {
-      autoSwitchedToRepliesRef.current = true;
-      flushSync(() => {
-        setTab("reply");
-        setPage(1);
-      });
-      const first = visiblePosts.pinnedReplies[0] ?? visiblePosts.replies[0];
-      if (first) {
-        requestAnimationFrame(() => {
-          document.getElementById(`forum-post-${first.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
-        });
-      }
-    } else {
-      autoSwitchedToRepliesRef.current = true;
-    }
-  }, [topic, posts, visiblePosts]);
 
   if (!canEnter) return <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-6 text-sm text-center">Members only.</div>;
   if (topic === null && posts !== null) {
