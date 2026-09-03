@@ -7,7 +7,7 @@ import { useFanZoneMembership } from "@/hooks/use-fan-zone";
 import { getIcon } from "@/components/app/IconPicker";
 import { formatLastSeen } from "@/lib/relative-time";
 import { Button } from "@/components/ui/button";
-import { MessageSquareText, Ban, BarChart3, UserCog, Users, Trophy, Search as SearchIcon } from "lucide-react";
+import { Ban, BarChart3, UserCog, Search as SearchIcon } from "lucide-react";
 import { FanZoneStaffBox } from "@/components/app/FanZoneStaffBox";
 import { BoroMatchCentreBox } from "@/components/app/BoroMatchCentreBox";
 import { BoroLiveMatchStrip } from "@/components/app/BoroLiveMatchStrip";
@@ -52,11 +52,8 @@ type Board = {
 function ForumLayout() {
   const matches = useMatches();
   const isNested = matches.some((m) => m.routeId.startsWith("/_authenticated/_approved/forum/"));
-  const { user, hasAny } = useAuth();
+  const { user } = useAuth();
   const info = useFanZoneMembership(user?.id ?? null);
-  const canSeeMembers =
-    hasAny(["admin", "management", "boro_fan_zone_moderator", "boro_fan_zone_member"]) ||
-    info?.status === "approved";
   useEffect(() => {
     const html = document.documentElement;
     html.style.setProperty("--boro-bg-image", `url(${boroBg})`);
@@ -118,28 +115,14 @@ function ForumLayout() {
                 </Button>
               );
             })()}
-            <Button asChild size="sm" className="bg-gradient-to-r from-[#E11B22] to-[#8B0F14] hover:from-[#F02B30] hover:to-[#9B1118] border-0 text-white shadow-md justify-center">
-              <Link to="/fanzone/messages"><MessageSquareText className="size-4 mr-1.5" />Inbox</Link>
-            </Button>
             <Button asChild size="sm" variant="outline" className="bg-black/40 backdrop-blur border-white/30 text-white hover:bg-black/60 hover:text-white justify-center">
               <Link to="/fanzone/profile"><UserCog className="size-4 mr-1.5" />Profile &amp; Settings</Link>
             </Button>
             <Button asChild size="sm" variant="outline" className="bg-black/40 backdrop-blur border-white/30 text-white hover:bg-black/60 hover:text-white justify-center">
               <Link to="/fanzone/blocks"><Ban className="size-4 mr-1.5" />Ignore</Link>
             </Button>
-            {canSeeMembers && (
-              <Button asChild size="sm" variant="outline" className="bg-black/40 backdrop-blur border-white/30 text-white hover:bg-black/60 hover:text-white justify-center">
-                <Link to="/admin-fan-zone"><Users className="size-4 mr-1.5" />Members</Link>
-              </Button>
-            )}
             <Button asChild size="sm" variant="outline" className="bg-black/40 backdrop-blur border-white/30 text-white hover:bg-black/60 hover:text-white justify-center">
               <Link to="/forum/search" search={{ q: "" }}><SearchIcon className="size-4 mr-1.5" />Search</Link>
-            </Button>
-            <Button asChild size="sm" className="bg-white text-[#961016] hover:bg-white/90 border-0 shadow-md justify-center col-span-2 sm:col-span-1">
-              <Link to="/boro-predictions"><Trophy className="size-4 mr-1.5" />MFC 2026 Predictions</Link>
-            </Button>
-            <Button asChild size="sm" className="bg-white text-[#961016] hover:bg-white/90 border-0 shadow-md justify-center col-span-2 sm:col-span-1">
-              <Link to="/boro-fantasy"><Trophy className="size-4 mr-1.5" />MFC Fantasy Manager</Link>
             </Button>
             <div className="col-span-2 sm:col-span-1 flex justify-center sm:justify-end">
               <FanZoneMentionsBell />

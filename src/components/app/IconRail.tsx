@@ -1,6 +1,7 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
 import { Home, Ticket, ShoppingCart, BookOpen, FileText, LogOut, MessageSquare, MessagesSquare, UserCircle2, Star, Trophy, Tv, Volleyball, Wrench, Goal, Users, Briefcase, MonitorPlay, Popcorn, Crown } from "lucide-react";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
+import { useFanZoneMembership } from "@/hooks/use-fan-zone";
 import { useFinishedCompetitions } from "@/hooks/use-finished-competitions";
 import { COMPETITIONS } from "@/lib/competitions";
 import { cn } from "@/lib/utils";
@@ -110,6 +111,10 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
   const { user, isStaff, isPending, signOut, hasAny, roles, hasRole, isFanZoneOnly } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
   const path = useRouterState({ select: (r) => r.location.pathname });
+  const fanZoneInfo = useFanZoneMembership(user?.id ?? null);
+  const canSeeFanZoneMembers =
+    hasAny(["admin", "management", "boro_fan_zone_moderator", "boro_fan_zone_member"]) ||
+    fanZoneInfo?.status === "approved";
   const [unreadNewContent, setUnreadNewContent] = useState(cachedUnreadNewContent);
   // LOCKED: side rail chat counter — total people in Talk Channels (staff included).
   // Do not change, restyle, or remove without explicit authorisation. See mem://constraints/chat-counters-locked
@@ -241,7 +246,8 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     // Dual-role accounts (BM Support + Fan Zone) keep a way back to BM Support.
     { to: "/home", label: "BM Support", icon: Home, show: !isFanZoneOnly },
     { to: "/forum", label: "Boro Fan Zone", icon: BoroBadgeIcon, show: true },
-    { to: "/fanzone/messages", label: "Fan Zone Messages", icon: MessagesSquare, show: true },
+    { to: "/fanzone/messages", label: "Inbox", icon: MessagesSquare, show: true },
+    { to: "/admin-fan-zone", label: "Members", icon: Users, show: canSeeFanZoneMembers },
     { to: "/fanzone/profile", label: "Fan Zone Profile", icon: UserCircle2, show: true },
     { to: "/boro-fantasy", label: "Boro Fantasy", icon: FantasyBenchIcon, show: true },
     ...COMPETITIONS.map((c) => ({
