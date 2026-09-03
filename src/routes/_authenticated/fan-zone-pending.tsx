@@ -7,6 +7,7 @@ import { FanZoneNameGate } from "@/components/app/FanZoneNamePrompt";
 import { useFanZoneMembership } from "@/hooks/use-fan-zone";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import pendingStadium from "@/assets/fan-zone-pending-stadium.jpg";
 
 
 export const Route = createFileRoute("/_authenticated/fan-zone-pending")({
@@ -114,7 +115,7 @@ function FanZonePendingPage() {
 
           {status !== "pending" && (
             <div className="mt-5 space-y-3 text-left">
-              <label className="block text-xs uppercase tracking-wider text-amber-300/80">
+              <label className="block text-xs uppercase tracking-wider text-red-300/90">
                 Why do you want in?
               </label>
               <textarea
@@ -123,13 +124,13 @@ function FanZonePendingPage() {
                 rows={4}
                 maxLength={500}
                 placeholder="e.g. Season ticket holder since 2010, love the away days."
-                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-white/40 outline-none focus:border-amber-500/50 resize-none"
+                className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2.5 text-sm text-white placeholder:text-white/40 outline-none focus:border-red-500/60 resize-none"
               />
               <div className="text-right text-[11px] text-white/40">{reasonDraft.length}/500</div>
               <Button
                 onClick={submitRequest}
                 disabled={submitting || reasonDraft.trim().length < 10}
-                className="w-full bg-gradient-to-r from-amber-500 to-rose-500 hover:from-amber-400 hover:to-rose-400 text-white"
+                className="w-full bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white"
               >
                 {submitting ? "Sending…" : "Send request"}
               </Button>
