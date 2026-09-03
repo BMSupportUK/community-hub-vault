@@ -261,6 +261,9 @@ function TicketsPage() {
   const search = Route.useSearch();
   const navigate = useNavigate();
   const canBeAssigned = hasAny(["admin", "management", "staff"]);
+  const hideReportCats =
+    hasAny(["member", "nonsubscriber"]) &&
+    !hasAny(["subscriber", "staff", "moderator", "management", "admin"]);
   const view = search.view ?? (canBeAssigned ? "assigned" : isStaff ? "all" : "mine");
 
   const [categories, setCategories] = useState<Category[]>([]);
@@ -477,7 +480,9 @@ function TicketsPage() {
                   </div>
                 </div>
 
-                <ActiveOutagesBox className="bg-black/20 border-white/15 shadow-lg" />
+                {!hideReportCats && (
+                  <ActiveOutagesBox className="bg-black/20 border-white/15 shadow-lg" />
+                )}
               </div>
             </header>
           )}
