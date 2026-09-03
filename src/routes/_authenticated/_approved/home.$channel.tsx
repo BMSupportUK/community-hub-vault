@@ -131,6 +131,9 @@ function ChannelPage() {
   const canManageSlow = hasAny(["admin", "management", "moderator", "staff"]);
   const isModOrAdmin = hasAny(["admin", "management", "moderator", "staff"]);
   const canMute = hasAny(["admin", "management", "moderator", "staff"]);
+  const hideMembersPanel =
+    hasAny(["member", "nonsubscriber"]) &&
+    !hasAny(["subscriber", "staff", "moderator", "management", "admin"]);
   const [muteSubmenuId, setMuteSubmenuId] = useState<string | null>(null);
   const [sideTab, setSideTab] = useState<"staff" | "members">("staff");
 
@@ -1181,7 +1184,7 @@ function ChannelPage() {
           )}
         </div>
         <div className="ml-auto flex items-center gap-2 px-3 py-2 rounded-2xl bg-card/50 border border-primary/30 shadow-[0_0_24px_-4px_color-mix(in_oklab,var(--primary)_40%,transparent),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-xl">
-          <OnlineMembersDialog />
+          {!hideMembersPanel && <OnlineMembersDialog />}
           {canManageSlow && (
             <button
               onClick={() => setSlowMode(channel.slow_mode_seconds > 0 ? 0 : 30)}
@@ -2248,30 +2251,38 @@ function ChannelPage() {
           </div>
         </div>
         <aside className="relative z-0 hidden md:flex md:flex-col w-56 xl:w-64 shrink-0 min-h-0 border-l border-border bg-surface/40">
-          <div className="shrink-0 grid grid-cols-2 gap-1 border-b border-border p-1.5">
-            {(["staff", "members"] as const).map((t) => (
-              <button
-                key={t}
-                type="button"
-                onClick={() => setSideTab(t)}
-                className={`rounded-md px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider transition-colors ${
-                  sideTab === t
-                    ? "bg-primary/20 text-primary ring-1 ring-primary/40"
-                    : "text-muted-foreground hover:bg-surface-2"
-                }`}
-              >
-                {t === "staff" ? "Staff" : "Members"}
-              </button>
-            ))}
-          </div>
-          {isModOrAdmin && (
-            <div className="shrink-0 border-b border-border px-1.5 py-1.5">
-              <QuickRepliesPill onInsert={insertQuickReply} className="w-full justify-center" />
+          {hideMembersPanel ? (
+            <div className="flex-1 min-h-0 overflow-hidden">
+              <StaffOnDutySidebar />
             </div>
+          ) : (
+            <>
+              <div className="shrink-0 grid grid-cols-2 gap-1 border-b border-border p-1.5">
+                {(["staff", "members"] as const).map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setSideTab(t)}
+                    className={`rounded-md px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider transition-colors ${
+                      sideTab === t
+                        ? "bg-primary/20 text-primary ring-1 ring-primary/40"
+                        : "text-muted-foreground hover:bg-surface-2"
+                    }`}
+                  >
+                    {t === "staff" ? "Staff" : "Members"}
+                  </button>
+                ))}
+              </div>
+              {isModOrAdmin && (
+                <div className="shrink-0 border-b border-border px-1.5 py-1.5">
+                  <QuickRepliesPill onInsert={insertQuickReply} className="w-full justify-center" />
+                </div>
+              )}
+              <div className="flex-1 min-h-0 overflow-hidden">
+                {sideTab === "staff" ? <StaffOnDutySidebar /> : <TalkChannelMembersPanel />}
+              </div>
+            </>
           )}
-          <div className="flex-1 min-h-0 overflow-hidden">
-            {sideTab === "staff" ? <StaffOnDutySidebar /> : <TalkChannelMembersPanel />}
-          </div>
         </aside>
 
       </div>
