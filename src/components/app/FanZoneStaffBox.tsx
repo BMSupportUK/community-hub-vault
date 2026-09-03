@@ -89,9 +89,8 @@ export function FanZoneStaffBox() {
                 <div
                   className={`mt-0.5 text-[10px] font-medium ${isOnline ? "text-emerald-400" : "text-white/55"}`}
                 >
-                  {isOnline ? "Online" : `Away · ${seenText}`}
+                  {isOnline ? "Away" : `Away · ${seenText}`}
                 </div>
-                <DndCountdown userId={m.user_id} compact className="mt-1" />
               </div>
             </div>
           );
