@@ -42,8 +42,7 @@ type FanFriendRel =
 
 type IncomingRel =
   | { kind: "none" }
-  | { kind: "pending"; id: string }
-  | { kind: "accepted"; id: string };
+  | { kind: "pending"; id: string };
 
 function FanProfilePage() {
   const { userId } = Route.useParams();
@@ -115,7 +114,7 @@ function FanProfilePage() {
       .eq("addressee_id", user.id)
       .maybeSingle();
     if (!theirs) setIncomingRel({ kind: "none" });
-    else if (theirs.status === "accepted") setIncomingRel({ kind: "accepted", id: theirs.id });
+    else if (theirs.status === "accepted") setIncomingRel({ kind: "none" });
     else setIncomingRel({ kind: "pending", id: theirs.id });
   };
 
@@ -171,7 +170,7 @@ function FanProfilePage() {
   };
 
   const isSelf = user?.id === userId;
-  const isFriend = friendRel.kind === "friends" || incomingRel.kind === "accepted";
+  const isFriend = friendRel.kind === "friends";
   const mainLocked = fanPrivate && !isSelf && !isStaff && !isFriend;
 
   return (

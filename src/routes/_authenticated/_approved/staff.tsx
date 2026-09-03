@@ -83,7 +83,9 @@ function StaffPage() {
       const fmap: Record<string, FriendState> = {};
       for (const f of (fs as any[] | null) ?? []) {
         const otherId = f.requester_id === viewer.id ? f.addressee_id : f.requester_id;
-        if (f.status === "accepted") fmap[otherId] = { kind: "friends", id: f.id };
+        if (f.status === "accepted") {
+          if (f.requester_id === viewer.id) fmap[otherId] = { kind: "friends", id: f.id };
+        }
         else if (f.requester_id === viewer.id) fmap[otherId] = { kind: "outgoing" };
         else fmap[otherId] = { kind: "incoming", id: f.id };
       }
