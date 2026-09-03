@@ -7,7 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { TalkMemberProfileCard } from "@/components/app/TalkMemberProfileCard";
 import { useRoleFlashMap, roleFlashClass, resolveAvatarUrl } from "@/lib/role-flash";
 import { formatRoleLabel } from "@/lib/role-label";
-import { sortRolesByPriority, highestRole } from "@/lib/role-rank";
+import { sortRolesByPriority, highestRole, isSupportRole } from "@/lib/role-rank";
 import { cn } from "@/lib/utils";
 
 type DirectoryRow = {
@@ -73,34 +73,39 @@ export function TalkChannelMembersPanel() {
         const roles = r.roles ?? [];
         if (roles.some((role) => HIDDEN_ROLES.has(role))) return false;
         if (roles.some((role) => STAFF_ROLES.has(role))) return false;
+        // BM Support directory: exclude Fan-Zone-only accounts.
+        if (!roles.some((role) => isSupportRole(role))) return false;
         return true;
       }),
     [rows],
   );
 
-  /** Online members bucketed by highest role, offline collected separately. */
+  /** Members bucketed by highest BM Support role, online and offline. */
   const groups = useMemo(() => {
     const online = members.filter((m) => onlineIds.has(m.user_id));
     const offline = members.filter((m) => !onlineIds.has(m.user_id));
-    const byRole = new Map<string, DirectoryRow[]>();
-    for (const m of online) {
-      const top = highestRole(sortRolesByPriority(m.roles ?? [])) ?? "member";
-      const list = byRole.get(top) ?? [];
-      list.push(m);
-      byRole.set(top, list);
-    }
     const sortByLatest = (a: DirectoryRow, b: DirectoryRow) => {
       const aDate = a.last_seen_at ? new Date(a.last_seen_at).getTime() : 0;
       const bDate = b.last_seen_at ? new Date(b.last_seen_at).getTime() : 0;
       return bDate - aDate;
     };
-    const ordered = Array.from(byRole.entries())
-      .map(([role, list]) => ({ role, list: list.sort(sortByLatest) }))
-      .sort((a, b) => {
-        const order = sortRolesByPriority([a.role, b.role]);
-        return order[0] === a.role ? -1 : 1;
-      });
-    return { ordered, offline: offline.sort(sortByLatest) };
+    const group = (list: DirectoryRow[]) => {
+      const byRole = new Map<string, DirectoryRow[]>();
+      for (const m of list) {
+        const supportRoles = (m.roles ?? []).filter((r) => isSupportRole(r));
+        const top = highestRole(sortRolesByPriority(supportRoles)) ?? "member";
+        const bucket = byRole.get(top) ?? [];
+        bucket.push(m);
+        byRole.set(top, bucket);
+      }
+      return Array.from(byRole.entries())
+        .map(([role, l]) => ({ role, list: l.sort(sortByLatest) }))
+        .sort((a, b) => {
+          const order = sortRolesByPriority([a.role, b.role]);
+          return order[0] === a.role ? -1 : 1;
+        });
+    };
+    return { ordered: group(online), offlineGroups: group(offline), offline: offline.sort(sortByLatest) };
   }, [members, onlineIds]);
 
   // LOCKED: Members panel header counter — online non-staff members only.
@@ -188,23 +193,30 @@ export function TalkChannelMembersPanel() {
 
         {activeTab === "offline" && (
           <>
-            {groups.offline.length > 0 ? (
-              <section>
-                <h3 className="px-1 pb-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                  Offline
-                </h3>
-                <div className="space-y-0.5">
-                  {groups.offline.map((m) => (
-                    <MemberRow
-                      key={m.user_id}
-                      row={m}
-                      online={false}
-                      selfId={user?.id ?? null}
-                      roleFlashMap={roleFlashMap}
-                    />
-                  ))}
-                </div>
-              </section>
+            {groups.offlineGroups.length > 0 ? (
+              groups.offlineGroups.map(({ role, list }) => (
+                <section key={role}>
+                  <h3
+                    className={cn(
+                      "px-1 pb-1 text-[10px] font-bold uppercase tracking-wider opacity-70",
+                      ROLE_TEXT[role] ?? "text-muted-foreground",
+                    )}
+                  >
+                    {formatRoleLabel(role)}
+                  </h3>
+                  <div className="space-y-0.5">
+                    {list.map((m) => (
+                      <MemberRow
+                        key={m.user_id}
+                        row={m}
+                        online={false}
+                        selfId={user?.id ?? null}
+                        roleFlashMap={roleFlashMap}
+                      />
+                    ))}
+                  </div>
+                </section>
+              ))
             ) : (
               <p className="px-2 py-6 text-center text-xs text-muted-foreground">No members offline.</p>
             )}
