@@ -165,13 +165,6 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
           <p className="text-xs text-foreground/80 whitespace-pre-wrap line-clamp-2">{build.releaseNotes}</p>
         )}
 
-        {build.installInstructions && (
-          <div className="rounded-lg border border-violet-500/30 bg-violet-500/10 p-2">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-violet-200">Install instructions</p>
-            <p className="mt-1 text-xs text-foreground/85 whitespace-pre-wrap line-clamp-3">{build.installInstructions}</p>
-          </div>
-        )}
-
         {build.videoPath && (
           <div className="overflow-hidden rounded-lg border border-violet-500/30 bg-black/50">
             {videoUrl ? (
@@ -233,6 +226,13 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
               24-hour secure install link. Scan the QR code or type the URL into Downloader on your device.
             </DialogDescription>
           </DialogHeader>
+
+          {build.installInstructions && (
+            <div className="rounded-lg border border-violet-500/30 bg-violet-500/10 p-3">
+              <p className="text-[10px] font-semibold uppercase tracking-wide text-violet-200">Additional App Information</p>
+              <p className="mt-1.5 text-xs text-foreground/85 whitespace-pre-wrap">{build.installInstructions}</p>
+            </div>
+          )}
 
           {shortUrl && (
             <div className="rounded-lg border border-emerald-400/40 bg-emerald-950/40 p-3">
