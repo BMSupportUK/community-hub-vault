@@ -198,10 +198,10 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
               size="sm"
               onClick={onRequest}
               disabled={busy === "request"}
-              className="bg-gradient-primary text-primary-foreground shadow-glow hover:opacity-90 w-full h-8"
+              className="bg-gradient-primary text-primary-foreground shadow-glow hover:opacity-90 w-full h-auto min-h-8 whitespace-normal py-2"
             >
-              {busy === "request" ? <Loader2 className="size-3.5 mr-1 animate-spin" /> : <ShieldCheck className="size-3.5 mr-1" />}
-              Request Your App Download Link
+              {busy === "request" ? <Loader2 className="size-3.5 mr-1 animate-spin shrink-0" /> : <ShieldCheck className="size-3.5 mr-1 shrink-0" />}
+              <span>Request Your App Download Link</span>
             </Button>
           ) : (
             <div className="space-y-1.5">
@@ -277,15 +277,15 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
             <Clock className="size-3.5" /> Expires in {remaining} · downloads: {transfer?.downloads ?? 0}
           </p>
 
-          <div className="flex flex-wrap gap-2 justify-center">
-            <Button size="sm" asChild className="bg-gradient-primary text-primary-foreground hover:opacity-90 h-9">
+          <div className="flex flex-col sm:flex-row flex-wrap gap-2 justify-center">
+            <Button size="sm" asChild className="bg-gradient-primary text-primary-foreground hover:opacity-90 h-auto min-h-9 w-full sm:w-auto whitespace-normal">
               <a href={`/api/public/a/${transfer?.token}`}>
-                <Download className="size-4 mr-1" /> Download to this device
+                <Download className="size-4 mr-1 shrink-0" /> <span>Download to this device</span>
               </a>
             </Button>
-            <Button size="sm" variant="secondary" className="h-9" disabled={busy === "delete"} onClick={onDelete}>
-              {busy === "delete" ? <Loader2 className="size-4 mr-1 animate-spin" /> : <Trash2 className="size-4 mr-1" />}
-              Delete link
+            <Button size="sm" variant="secondary" className="h-auto min-h-9 w-full sm:w-auto whitespace-normal" disabled={busy === "delete"} onClick={onDelete}>
+              {busy === "delete" ? <Loader2 className="size-4 mr-1 animate-spin shrink-0" /> : <Trash2 className="size-4 mr-1 shrink-0" />}
+              <span>Delete link</span>
             </Button>
           </div>
 
