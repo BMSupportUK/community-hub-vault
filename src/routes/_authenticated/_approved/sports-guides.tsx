@@ -847,36 +847,11 @@ function SportsGuidesPage() {
                     No blogs in this category yet.
                   </div>
                 ) : (
-                  <>
-                  {isMod && draggingBlog && !search.trim() && listPageCount > 1 && (
-                    <div className="mb-3 rounded-xl border border-dashed border-fuchsia-400/60 bg-purple-950/60 px-3 py-2 text-xs font-semibold text-fuchsia-200">
-                      Drop on any card to swap positions — all pages shown while dragging.
-                    </div>
-                  )}
                   <div>
-                  {draggingBlog ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
                       {filtered.map((b) => renderBlogCard(b))}
                     </div>
-                  ) : (
-                  <PagedGrid
-                    items={filtered}
-                    page={listPage}
-                    onPagesChange={setListPageCount}
-                    onPageSlicesChange={setListPageSlices}
-                    availableHeight={0}
-                    maxRows={2}
-                    className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5"
-                    renderItem={(b) => renderBlogCard(b)}
-                  />
-                  )}
                   </div>
-                  {listPageCount > 1 && !draggingBlog && (
-                    <div className="mt-3">
-                      <PaginationBar page={listPage} pageCount={listPageCount} onPageChange={handlePageChange} />
-                    </div>
-                  )}
-                  </>
                 )}
               </section>
 
