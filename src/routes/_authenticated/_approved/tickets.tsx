@@ -2002,7 +2002,7 @@ function TicketDetail({
             <Select
               label="Assignee" value={ticket.assigned_to ?? ""}
               options={[{ value: "", label: "Unassigned" }, ...assignableStaff.map((s) => ({ value: s.id, label: s.display_name || s.username || "Staff" }))]}
-              onChange={(v) => updateField({ assigned_to: v || null })}
+              onChange={(v) => void changeAssignee(v)}
             />
             {ticket.assigned_to && (() => {
               const a = staff.find((s) => s.id === ticket.assigned_to);
