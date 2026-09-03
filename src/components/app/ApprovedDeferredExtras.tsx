@@ -21,6 +21,8 @@ export function ApprovedDeferredExtras() {
     <>
       <TwoFactorBanner />
       <FriendRequestsListener />
+      <FanZoneFriendRequestsListener />
+
       {!isSoundTestPage && <OutstandingTicketsAlert />}
       <TicketAssignedAlert />
       <PaymentConfirmedAlert />
