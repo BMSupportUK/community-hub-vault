@@ -261,6 +261,10 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
 
 
   const items = inFanZone ? fanZoneItems : supportItems;
+  // Each rail keeps its own saved order, namespaced so BM Support and the
+  // Boro Fan Zone never overwrite each other's positions.
+  const scope = inFanZone ? "fanzone" : "support";
+  const orderKey = (to: string) => `${scope}:${to}`;
 
   const allowedByPerms = (to: string) => {
     if (to === "/forum") return true;
@@ -277,8 +281,8 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
   const visible = items.filter((i) => i.show && allowedByPerms(i.to));
 
   const sorted = [...visible].sort((a, b) => {
-    const ai = order[a.to] ?? items.findIndex((x) => x.to === a.to) * 10 + 1000;
-    const bi = order[b.to] ?? items.findIndex((x) => x.to === b.to) * 10 + 1000;
+    const ai = order[orderKey(a.to)] ?? items.findIndex((x) => x.to === a.to) * 10 + 1000;
+    const bi = order[orderKey(b.to)] ?? items.findIndex((x) => x.to === b.to) * 10 + 1000;
     return ai - bi;
   });
 
@@ -291,8 +295,9 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     const to = keys.indexOf(targetKey);
     if (from < 0 || to < 0) return;
     keys.splice(to, 0, keys.splice(from, 1)[0]);
-    const rows = keys.map((key, i) => ({ key, sort_order: (i + 1) * 10 }));
-    const nextOrder = Object.fromEntries(rows.map((r) => [r.key, r.sort_order]));
+    const rows = keys.map((key, i) => ({ key: orderKey(key), sort_order: (i + 1) * 10 }));
+    // Merge so the other rail's saved order stays intact.
+    const nextOrder = { ...order, ...Object.fromEntries(rows.map((r) => [r.key, r.sort_order])) };
     cachedNavOrder = nextOrder;
     setOrder(nextOrder);
     await supabase.from("nav_order").upsert(rows, { onConflict: "key" });
