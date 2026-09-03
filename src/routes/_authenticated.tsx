@@ -55,6 +55,9 @@ export const Route = createFileRoute("/_authenticated")({
 
 function AuthLayout() {
   const { loading, isPending, isBanned, isRejected, isMod, isStaff, hasAny, user, isFanZoneOnly } = useAuth();
+  // Fan Zone applicants wait on the Fan Zone screen, never the BM Support gate.
+  const { info: fanZoneInfo } = useFanZoneMembershipState(user?.id);
+  const fanZoneApplicant = fanZoneInfo?.status === "pending";
   const isAdmin = hasAny(["admin", "management"]);
   const navigate = useNavigate();
   const path = useRouterState({ select: (r) => r.location.pathname });
