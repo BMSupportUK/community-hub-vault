@@ -466,7 +466,7 @@ export const getPublicFanProfile = createServerFn({ method: "GET" })
         .from("fan_zone_friendships")
         .select("id", { count: "exact", head: true })
         .eq("status", "accepted")
-        .or(`requester_id.eq.${data.userId},addressee_id.eq.${data.userId}`),
+        .eq("requester_id", data.userId),
       supabaseAdmin.from("forum_posts").select("id").eq("author_id", data.userId),
       supabaseAdmin.from("profiles").select("last_seen_at").eq("id", data.userId).maybeSingle(),
     ]);

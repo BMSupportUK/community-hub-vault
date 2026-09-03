@@ -384,7 +384,7 @@ function FriendsPanel({ userId }: { userId: string }) {
       .select("id, requester_id, addressee_id, status")
       .or(`requester_id.eq.${userId},addressee_id.eq.${userId}`);
     const rowsAll = all ?? [];
-    const list = rowsAll.filter((f: any) => f.status === "accepted");
+    const list = rowsAll.filter((f: any) => f.status === "accepted" && f.requester_id === userId);
     const pending = rowsAll.filter((f: any) => f.status !== "accepted");
     const ids = Array.from(
       new Set(rowsAll.map((f: any) => (f.requester_id === userId ? f.addressee_id : f.requester_id))),
@@ -427,7 +427,7 @@ function FriendsPanel({ userId }: { userId: string }) {
       .eq("addressee_id", userId);
     setBusy(null);
     if (error) return toast.error("Couldn't accept", { description: error.message });
-    toast.success("You are now Fan Zone friends");
+    toast.success("Friend request accepted");
     void load();
   };
 
@@ -515,7 +515,7 @@ function StatsBox({ userId }: { userId: string }) {
       const [topicsRes, postsRes, friendsRes, postIdsRes] = await Promise.all([
         supabase.from("forum_topics").select("id", { count: "exact", head: true }).eq("author_id", userId),
         supabase.from("forum_posts").select("id", { count: "exact", head: true }).eq("author_id", userId),
-        supabase.from("fan_zone_friendships").select("id", { count: "exact", head: true }).eq("status", "accepted").or(`requester_id.eq.${userId},addressee_id.eq.${userId}`),
+        supabase.from("fan_zone_friendships").select("id", { count: "exact", head: true }).eq("status", "accepted").eq("requester_id", userId),
         supabase.from("forum_posts").select("id").eq("author_id", userId),
       ]);
       const postIds = (postIdsRes.data ?? []).map((p: any) => p.id);

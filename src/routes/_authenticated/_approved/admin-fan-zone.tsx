@@ -95,7 +95,7 @@ function AdminFanZonePage() {
     for (const f of (data ?? []) as Array<{ id: string; requester_id: string; addressee_id: string; status: string }>) {
       const otherId = f.requester_id === user.id ? f.addressee_id : f.requester_id;
       if (f.status === "accepted") {
-        fmap[otherId] = { kind: "friends" };
+        if (f.requester_id === user.id) fmap[otherId] = { kind: "friends" };
       } else if (f.requester_id === user.id) {
         fmap[otherId] = { kind: "outgoing" };
       } else {
@@ -145,7 +145,7 @@ function AdminFanZonePage() {
     const { error } = await supabase.from("fan_zone_friendships").update({ status: "accepted" }).eq("id", id);
     setFriendBusy(null);
     if (error) { toast.error(error.message); return; }
-    toast.success("You are now friends");
+    toast.success("Friend request accepted");
     void loadFriends();
   };
 
