@@ -414,7 +414,11 @@ function ProfilePage() {
     load();
   };
 
-  const sortedRoles = useMemo(() => sortRolesByPriority(roles), [roles]);
+  // Boro Fan Zone roles are hidden on the BM Support side of the app.
+  const sortedRoles = useMemo(
+    () => sortRolesByPriority(roles).filter((r) => isSupportRole(r)),
+    [roles],
+  );
 
   if (loading) {
     return (
