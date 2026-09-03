@@ -2718,6 +2718,35 @@ export type Database = {
           },
         ]
       }
+      forum_topic_reads: {
+        Row: {
+          last_post_id: string | null
+          last_read_at: string
+          topic_id: string
+          user_id: string
+        }
+        Insert: {
+          last_post_id?: string | null
+          last_read_at?: string
+          topic_id: string
+          user_id: string
+        }
+        Update: {
+          last_post_id?: string | null
+          last_read_at?: string
+          topic_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forum_topic_reads_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "forum_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       forum_topics: {
         Row: {
           author_id: string
