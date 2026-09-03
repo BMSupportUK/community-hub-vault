@@ -1,3 +1,2 @@
-# Roadmap
-
-- [x] Fix forum reply submission to open the exact page containing the new reply and scroll to it.
+- [ ] Make BM Support friendships one-way (requester lists accepted friend only)
+- [ ] Make Boro Fan Zone friendships one-way (requester lists accepted friend only)
