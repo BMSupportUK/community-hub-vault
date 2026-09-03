@@ -78,7 +78,7 @@ export function FanZoneAccessCard() {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Trophy className="size-5 text-amber-300" /> Join the Boro Fan Zone
+              <Trophy className="size-5 text-amber-300" /> Join the Boro Fan Zone - a Middlesbrough F.C. Forum
             </DialogTitle>
             <DialogDescription>
               Tell us briefly why you'd like in — match-day banter, transfer talk, the lot. An owner will review your request.
