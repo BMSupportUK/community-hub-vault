@@ -1667,22 +1667,27 @@ function Storefront() {
                   <div className="absolute inset-0 bg-gradient-to-r from-background/85 via-background/40 to-transparent" />
                   <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-b from-transparent to-background" />
                 </div>
-                <div className="relative px-6 md:px-10 pt-10 md:pt-16 pb-16 md:pb-24 max-w-3xl">
-                  <div className="text-xs uppercase tracking-[0.2em] text-sky-200/90 mb-3">
-                    BM Support · Shop
+                <div className="relative px-6 md:px-10 pt-10 md:pt-16 pb-16 md:pb-24">
+                  <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
+                    <div className="flex-1 min-w-0">
+                      <div className="text-xs uppercase tracking-[0.2em] text-sky-200/90 mb-3">
+                        BM Support · Shop
+                      </div>
+                      <h1 className="font-display text-4xl md:text-6xl font-bold leading-tight text-white drop-shadow">
+                        How To Purchase or Renew Your Subscription
+                      </h1>
+                      <p className="mt-4 text-sky-100/90 max-w-xl text-base md:text-lg">
+                        Watch the short walkthrough to see exactly how to place a new order or
+                        renew your existing subscription — from picking a package to pressing
+                        "I've paid".
+                      </p>
+                    </div>
+                    <div className="w-full lg:w-[420px] xl:w-[480px] shrink-0">
+                      <HowToOrderVideo isAdmin={isAdmin} inHero />
+                    </div>
                   </div>
-                  <h1 className="font-display text-4xl md:text-6xl font-bold leading-tight text-white drop-shadow">
-                    How To Purchase or Renew Your Subscription
-                  </h1>
-                  <p className="mt-4 text-sky-100/90 max-w-xl text-base md:text-lg">
-                    Watch the short walkthrough below to see exactly how to place a new order or
-                    renew your existing subscription — from picking a package to pressing
-                    "I've paid".
-                  </p>
                 </div>
               </section>
-
-              <HowToOrderVideo isAdmin={isAdmin} />
             </TabsContent>
 
 
@@ -6242,7 +6247,7 @@ function CryptoPanel({
 
 const HOW_TO_ORDER_VIDEO_KEY = "how_to_order_video";
 
-function HowToOrderVideo({ isAdmin }: { isAdmin: boolean }) {
+function HowToOrderVideo({ isAdmin, inHero }: { isAdmin: boolean; inHero?: boolean }) {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -6313,8 +6318,13 @@ function HowToOrderVideo({ isAdmin }: { isAdmin: boolean }) {
   };
 
   return (
-    <section className="px-2 md:px-6 pb-10 -mt-10 md:-mt-14 relative z-10">
-      <div className="max-w-3xl mx-auto">
+    <section
+      className={cn(
+        "relative z-10",
+        inHero ? "" : "px-2 md:px-6 pb-10 -mt-10 md:-mt-14",
+      )}
+    >
+      <div className={cn(inHero ? "" : "max-w-3xl mx-auto")}>
         <div className="rounded-2xl border border-border bg-surface-1 p-4 md:p-6 shadow-lg">
           <div className="flex items-center justify-between gap-3 mb-4">
             <h2 className="font-display font-semibold text-lg flex items-center gap-2">
