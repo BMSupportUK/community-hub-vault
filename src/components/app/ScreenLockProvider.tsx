@@ -35,6 +35,56 @@ export function ScreenLockProvider() {
   const channelRef = useRef<BroadcastChannel | null>(null);
   const storageKey = user ? `screenlock:locked:${user.id}` : null;
 
+  // Safety net: never let a stale overlay leftover kill clicks.
+  //
+  // Radix layers (dialog/sheet/dropdown/select) mark the rest of the page
+  // `inert`/`aria-hidden` and put `pointer-events: none` + `data-scroll-locked`
+  // on <body> while they are open. If a layer unmounts at an awkward moment
+  // (route change, the lock screen appearing/disappearing over it) those marks
+  // can be left behind and the whole UI — including the side rail links —
+  // stops responding to clicks. This watchdog clears them whenever no layer is
+  // actually open.
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const body = document.body;
+    const html = document.documentElement;
+
+    const anyLayerOpen = () =>
+      !!document.querySelector(
+        '[data-radix-popper-content-wrapper],[data-state="open"][role="dialog"],[data-state="open"][role="menu"],[data-screen-lock-host]',
+      );
+
+    const sweep = () => {
+      if (anyLayerOpen()) return;
+      if (body.style.pointerEvents === "none") body.style.removeProperty("pointer-events");
+      if (html.style.pointerEvents === "none") html.style.removeProperty("pointer-events");
+      if (body.hasAttribute("data-scroll-locked")) body.removeAttribute("data-scroll-locked");
+      if (body.style.overflow === "hidden") body.style.removeProperty("overflow");
+      Array.from(body.children).forEach((child) => {
+        if (child.hasAttribute("inert")) child.removeAttribute("inert");
+        if (child.getAttribute("aria-hidden") === "true") {
+          child.removeAttribute("aria-hidden");
+          child.removeAttribute("data-aria-hidden");
+        }
+      });
+    };
+
+    const observer = new MutationObserver(sweep);
+    observer.observe(body, {
+      attributes: true,
+      attributeFilter: ["style", "data-scroll-locked", "inert", "aria-hidden"],
+      childList: true,
+      subtree: false,
+    });
+    observer.observe(html, { attributes: true, attributeFilter: ["style"] });
+    const poll = window.setInterval(sweep, 1000);
+    return () => {
+      observer.disconnect();
+      window.clearInterval(poll);
+    };
+  }, []);
+
+
   // Load (or create) this user's lock settings.
   useEffect(() => {
     if (!user) {
