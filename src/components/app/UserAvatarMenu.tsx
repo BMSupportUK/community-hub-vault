@@ -71,6 +71,7 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
   const { user, roles, signOut, hasAny, isFanZoneOnly } = useAuth();
   const navigate = useNavigate();
   const [profile, setProfile] = useState<MiniProfile | null>(null);
+  const [fanProfile, setFanProfile] = useState<{ fan_alias: string | null; fan_avatar_url: string | null } | null>(null);
   const [copied, setCopied] = useState(false);
   const [apkOpen, setApkOpen] = useState(false);
   const [winOpen, setWinOpen] = useState(false);
@@ -107,6 +108,33 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
     };
   }, [user, instanceId]);
 
+  // Fan Zone accounts keep their own alias + avatar, separate from BM Support.
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    const load = async () => {
+      const { data } = await supabase
+        .from("fan_zone_members")
+        .select("fan_alias, fan_avatar_url")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (!cancelled) setFanProfile((data as any) ?? null);
+    };
+    load();
+    const ch = supabase
+      .channel(`fan-avatar-menu-${user.id}-${instanceId}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "fan_zone_members", filter: `user_id=eq.${user.id}` },
+        (payload) => setFanProfile(payload.new as any),
+      )
+      .subscribe();
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(ch);
+    };
+  }, [user, instanceId]);
+
   // Fires the once-per-release "new Android version" alert. The server keeps the
   // once-only guarantee; localStorage just stops us pinging it on every render.
   useEffect(() => {
@@ -139,14 +167,17 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
   }, [apkOpen, apkQr]);
 
   if (!user) return null;
-  const name = profile?.display_name || profile?.username || user.email?.split("@")[0] || "User";
+  const supportName = profile?.display_name || profile?.username || user.email?.split("@")[0] || "User";
+  // In the Fan Zone the account box shows the Fan Zone identity (own alias + avatar).
+  const name = (inFanZone && fanProfile?.fan_alias) || supportName;
   const handle = profile?.username ? `@${profile.username}` : (user.email ?? "");
   const initial = name.slice(0, 2).toUpperCase();
   const topRole = roles[0] ?? "member";
   const FLASH_PRIORITY: FlashRole[] = ["admin", "management", "moderator", "staff"];
   const flashRole = FLASH_PRIORITY.find((r) => roles.includes(r)) ?? null;
   const flashCls = roleFlashClass(flashRole);
-  const resolvedAvatar = resolveAvatarUrl(user.id, profile?.avatar_url, roleFlashMap);
+  const supportAvatar = resolveAvatarUrl(user.id, profile?.avatar_url, roleFlashMap);
+  const resolvedAvatar = inFanZone ? (fanProfile?.fan_avatar_url ?? supportAvatar) : supportAvatar;
   const isDnd = presence.kind === "dnd";
   const statusLabel = presence.shortLabel;
   const trigger =
