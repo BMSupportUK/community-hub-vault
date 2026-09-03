@@ -149,6 +149,18 @@ function GatePage() {
     };
   }, [user, inviteFromUrl, navigate, refreshRoles]);
 
+  // Once the referral code resolves, fold it into the default activation draft.
+  useEffect(() => {
+    if (!referralCode || appId) return;
+    setReasonDraft((prev) =>
+      prev.startsWith(ACTIVATION_TEXT) && !prev.includes(referralCode)
+        ? defaultDraft(referralCode)
+        : prev,
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [referralCode, appId]);
+
+
   useEffect(() => {
     if (!user) return;
     (async () => {
