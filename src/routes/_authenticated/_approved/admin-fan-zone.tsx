@@ -518,7 +518,7 @@ function AdminFanZonePage() {
               <tbody>
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={isAdmin ? 7 : 4} className="text-center text-muted-foreground py-16">
+                    <td colSpan={isAdmin ? (statusTab === "pending" ? 7 : 6) : 4} className="text-center text-muted-foreground py-16">
                       <div className="flex flex-col items-center gap-3">
                         <div className="size-12 rounded-full bg-surface-2/60 grid place-items-center">
                           <Users className="size-6 text-muted-foreground/60" />
