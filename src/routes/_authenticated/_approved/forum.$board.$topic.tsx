@@ -361,6 +361,19 @@ function TopicPage() {
     replyBoxRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
   }, [tab, reply]);
 
+  // After posting, jump to the page holding the new reply and scroll to it.
+  useEffect(() => {
+    const id = pendingScrollPostIdRef.current;
+    if (!id || !posts) return;
+    if (!posts.some((p) => p.id === id)) return;
+    pendingScrollPostIdRef.current = null;
+    requestAnimationFrame(() => {
+      document.getElementById(`forum-post-${id}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  }, [posts]);
+
+
+
   const startEditTitle = () => {
     if (!topic) return;
     setTitleDraft(topic.title);
