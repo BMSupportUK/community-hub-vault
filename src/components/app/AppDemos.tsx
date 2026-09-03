@@ -12,7 +12,7 @@ import { Plus, Pencil, Trash2, Upload, Play, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const CATEGORIES = [
-  { key: "official_server", label: "Official Server App" },
+  { key: "official_server", label: "Official Service App" },
   { key: "official_3rd_party", label: "Official 3rd Party App" },
   { key: "rebranded", label: "Rebranded Apps" },
 ] as const;
