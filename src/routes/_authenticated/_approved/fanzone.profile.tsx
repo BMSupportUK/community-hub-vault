@@ -519,7 +519,12 @@ function StatsBox({ userId }: { userId: string }) {
       const postIds = (postIdsRes.data ?? []).map((p: any) => p.id);
       let likes = 0, dislikes = 0, total = 0;
       if (postIds.length) {
-        const { data: rx } = await supabase.from("forum_post_reactions").select("emoji").in("post_id", postIds);
+        // Your own reactions on your own posts don't count towards reputation.
+        const { data: rx } = await supabase
+          .from("forum_post_reactions")
+          .select("emoji, user_id")
+          .in("post_id", postIds)
+          .neq("user_id", userId);
         for (const r of rx ?? []) {
           total++;
           if ((r as any).emoji === "👎") dislikes++; else likes++;
