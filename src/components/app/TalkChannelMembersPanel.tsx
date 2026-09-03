@@ -84,10 +84,10 @@ export function TalkChannelMembersPanel() {
   const groups = useMemo(() => {
     const online = members.filter((m) => onlineIds.has(m.user_id));
     const offline = members.filter((m) => !onlineIds.has(m.user_id));
-    const sortByLatest = (a: DirectoryRow, b: DirectoryRow) => {
-      const aDate = a.last_seen_at ? new Date(a.last_seen_at).getTime() : 0;
-      const bDate = b.last_seen_at ? new Date(b.last_seen_at).getTime() : 0;
-      return bDate - aDate;
+    const sortByName = (a: DirectoryRow, b: DirectoryRow) => {
+      const aName = (a.display_name || a.username || "Member").toLowerCase();
+      const bName = (b.display_name || b.username || "Member").toLowerCase();
+      return aName.localeCompare(bName);
     };
     const group = (list: DirectoryRow[]) => {
       const byRole = new Map<string, DirectoryRow[]>();
@@ -99,13 +99,13 @@ export function TalkChannelMembersPanel() {
         byRole.set(top, bucket);
       }
       return Array.from(byRole.entries())
-        .map(([role, l]) => ({ role, list: l.sort(sortByLatest) }))
+        .map(([role, l]) => ({ role, list: l.sort(sortByName) }))
         .sort((a, b) => {
           const order = sortRolesByPriority([a.role, b.role]);
           return order[0] === a.role ? -1 : 1;
         });
     };
-    return { ordered: group(online), offlineGroups: group(offline), offline: offline.sort(sortByLatest) };
+    return { ordered: group(online), offlineGroups: group(offline), offline: offline.sort(sortByName) };
   }, [members, onlineIds]);
 
   // LOCKED: Members panel header counter — online non-staff members only.
