@@ -80,38 +80,23 @@ export function TalkChannelMembersPanel() {
     [rows],
   );
 
-  /** Members bucketed by highest BM Support role, online and offline. */
+  /** Members sorted alphabetically, separated only by online status. */
   const groups = useMemo(() => {
-    const online = members.filter((m) => onlineIds.has(m.user_id));
-    const offline = members.filter((m) => !onlineIds.has(m.user_id));
     const sortByName = (a: DirectoryRow, b: DirectoryRow) => {
       const aName = (a.display_name || a.username || "Member").toLowerCase();
       const bName = (b.display_name || b.username || "Member").toLowerCase();
       return aName.localeCompare(bName);
     };
-    const group = (list: DirectoryRow[]) => {
-      const byRole = new Map<string, DirectoryRow[]>();
-      for (const m of list) {
-        const supportRoles = (m.roles ?? []).filter((r) => isSupportRole(r));
-        const top = highestRole(sortRolesByPriority(supportRoles)) ?? "member";
-        const bucket = byRole.get(top) ?? [];
-        bucket.push(m);
-        byRole.set(top, bucket);
-      }
-      return Array.from(byRole.entries())
-        .map(([role, l]) => ({ role, list: l.sort(sortByName) }))
-        .sort((a, b) => {
-          const order = sortRolesByPriority([a.role, b.role]);
-          return order[0] === a.role ? -1 : 1;
-        });
+    return {
+      online: members.filter((m) => onlineIds.has(m.user_id)).sort(sortByName),
+      offline: members.filter((m) => !onlineIds.has(m.user_id)).sort(sortByName),
     };
-    return { ordered: group(online), offlineGroups: group(offline), offline: offline.sort(sortByName) };
   }, [members, onlineIds]);
 
   // LOCKED: Members panel header counter — online non-staff members only.
   // Authorised change (user request): counter follows the active tab, showing offline count on the Offline tab.
   // Do not change, restyle, or remove without explicit authorisation. See mem://constraints/chat-counters-locked
-  const membersInChat = groups.ordered.reduce((total, group) => total + group.list.length, 0);
+  const membersInChat = groups.online.length;
   const headerCount = activeTab === "offline" ? groups.offline.length : membersInChat;
 
   if (rows === null) {
@@ -162,30 +147,18 @@ export function TalkChannelMembersPanel() {
       <div className="flex-1 min-h-0 overflow-y-auto px-2 py-2 space-y-3">
         {activeTab === "online" && (
           <>
-            {groups.ordered.map(({ role, list }) => (
-              <section key={role}>
-                <h3
-                  className={cn(
-                    "px-1 pb-1 text-[10px] font-bold uppercase tracking-wider",
-                    ROLE_TEXT[role] ?? "text-muted-foreground",
-                  )}
-                >
-                  {formatRoleLabel(role)}
-                </h3>
-                <div className="space-y-0.5">
-                  {list.map((m) => (
-                    <MemberRow
-                      key={m.user_id}
-                      row={m}
-                      online
-                      selfId={user?.id ?? null}
-                      roleFlashMap={roleFlashMap}
-                    />
-                  ))}
-                </div>
-              </section>
-            ))}
-            {groups.ordered.length === 0 && (
+            <div className="space-y-0.5">
+              {groups.online.map((m) => (
+                <MemberRow
+                  key={m.user_id}
+                  row={m}
+                  online
+                  selfId={user?.id ?? null}
+                  roleFlashMap={roleFlashMap}
+                />
+              ))}
+            </div>
+            {groups.online.length === 0 && (
               <p className="px-2 py-6 text-center text-xs text-muted-foreground">No members online.</p>
             )}
           </>
@@ -193,30 +166,18 @@ export function TalkChannelMembersPanel() {
 
         {activeTab === "offline" && (
           <>
-            {groups.offlineGroups.length > 0 ? (
-              groups.offlineGroups.map(({ role, list }) => (
-                <section key={role}>
-                  <h3
-                    className={cn(
-                      "px-1 pb-1 text-[10px] font-bold uppercase tracking-wider opacity-70",
-                      ROLE_TEXT[role] ?? "text-muted-foreground",
-                    )}
-                  >
-                    {formatRoleLabel(role)}
-                  </h3>
-                  <div className="space-y-0.5">
-                    {list.map((m) => (
-                      <MemberRow
-                        key={m.user_id}
-                        row={m}
-                        online={false}
-                        selfId={user?.id ?? null}
-                        roleFlashMap={roleFlashMap}
-                      />
-                    ))}
-                  </div>
-                </section>
-              ))
+            {groups.offline.length > 0 ? (
+              <div className="space-y-0.5">
+                {groups.offline.map((m) => (
+                  <MemberRow
+                    key={m.user_id}
+                    row={m}
+                    online={false}
+                    selfId={user?.id ?? null}
+                    roleFlashMap={roleFlashMap}
+                  />
+                ))}
+              </div>
             ) : (
               <p className="px-2 py-6 text-center text-xs text-muted-foreground">No members offline.</p>
             )}
