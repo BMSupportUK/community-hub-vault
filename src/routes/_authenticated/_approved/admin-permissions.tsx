@@ -170,6 +170,25 @@ function PagesTab({ pages, roles, onChanged }: { pages: PagePerm[]; roles: RoleD
     const { error } = await supabase.from("page_permissions").update({ allowed_roles: next as any }).eq("page_key", page.page_key);
     if (error) toast.error(error.message); else onChanged();
   };
+
+  const adminPages = pages.filter((p) => p.page_key.startsWith("admin")).sort((a, b) => a.sort_order - b.sort_order);
+  const otherPages = pages.filter((p) => !p.page_key.startsWith("admin")).sort((a, b) => a.sort_order - b.sort_order);
+
+  const renderRow = (p: PagePerm) => (
+    <tr key={p.page_key} className="border-t border-border">
+      <td className="px-4 py-3 font-medium sticky left-0 bg-surface-1">{p.label}<div className="text-[10px] text-muted-foreground font-normal">/{p.page_key}</div></td>
+      {roles.map((r) => {
+        const on = LOCKED.has(r.name) || p.allowed_roles.includes(r.name);
+        const locked = LOCKED.has(r.name);
+        return (
+          <td key={r.name} className="px-3 py-3 text-center">
+            <input type="checkbox" checked={on} disabled={locked} onChange={() => toggle(p, r.name)} className="size-4 accent-primary disabled:opacity-50" />
+          </td>
+        );
+      })}
+    </tr>
+  );
+
   return (
     <div className="rounded-2xl border border-border bg-surface-1 overflow-hidden">
       <div className="overflow-x-auto">
@@ -183,20 +202,17 @@ function PagesTab({ pages, roles, onChanged }: { pages: PagePerm[]; roles: RoleD
             </tr>
           </thead>
           <tbody>
-            {pages.map((p) => (
-              <tr key={p.page_key} className="border-t border-border">
-                <td className="px-4 py-3 font-medium sticky left-0 bg-surface-1">{p.label}<div className="text-[10px] text-muted-foreground font-normal">/{p.page_key}</div></td>
-                {roles.map((r) => {
-                  const on = LOCKED.has(r.name) || p.allowed_roles.includes(r.name);
-                  const locked = LOCKED.has(r.name);
-                  return (
-                    <td key={r.name} className="px-3 py-3 text-center">
-                      <input type="checkbox" checked={on} disabled={locked} onChange={() => toggle(p, r.name)} className="size-4 accent-primary disabled:opacity-50" />
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
+            {otherPages.map(renderRow)}
+            {adminPages.length > 0 && (
+              <>
+                <tr className="border-t border-border bg-surface-2/60">
+                  <td colSpan={roles.length + 1} className="px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground sticky left-0">
+                    Admin pages
+                  </td>
+                </tr>
+                {adminPages.map(renderRow)}
+              </>
+            )}
           </tbody>
         </table>
       </div>
