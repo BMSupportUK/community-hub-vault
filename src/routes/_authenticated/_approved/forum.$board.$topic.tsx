@@ -271,11 +271,6 @@ function sortPostsForTopic(a: Post, b: Post) {
   return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
 }
 
-function shouldShowInsertedReply(currentPage: number, replyCountBeforeInsert: number, repliesPerPage: number) {
-  const targetPage = Math.max(1, Math.ceil((replyCountBeforeInsert + 1) / repliesPerPage));
-  return targetPage === currentPage;
-}
-
 function prepareForumPostBodyForSubmit(raw: string): string {
   const normalized = normalizeForumPostInput(raw);
   if (isPreparedForumPostBody(normalized)) return normalized;
