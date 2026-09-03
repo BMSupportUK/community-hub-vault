@@ -296,7 +296,8 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     if (from < 0 || to < 0) return;
     keys.splice(to, 0, keys.splice(from, 1)[0]);
     const rows = keys.map((key, i) => ({ key: orderKey(key), sort_order: (i + 1) * 10 }));
-    const nextOrder = Object.fromEntries(rows.map((r) => [r.key, r.sort_order]));
+    // Merge so the other rail's saved order stays intact.
+    const nextOrder = { ...order, ...Object.fromEntries(rows.map((r) => [r.key, r.sort_order])) };
     cachedNavOrder = nextOrder;
     setOrder(nextOrder);
     await supabase.from("nav_order").upsert(rows, { onConflict: "key" });
