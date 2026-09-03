@@ -266,32 +266,75 @@ export function ScreenLockProvider() {
     return () => window.removeEventListener(LOCK_NOW_EVENT, handler);
   }, [doLock]);
 
+  // Dedicated portal host, kept interactive no matter what else is on screen.
+  //
+  // Radix overlays (dialog/sheet/dropdown/select) use aria-hidden + `inert` to
+  // neutralise every other <body> child while they are open, and leave
+  // `pointer-events: none` on <body> plus a scroll-lock attribute. When the
+  // inactivity lock appears on top of one of those, the lock card is visible
+  // but completely dead to touch/focus — which is exactly what happens in the
+  // Android WebView. So we mount into our own node and actively keep the
+  // blocking attributes off it (they can be re-applied by Radix's mutation
+  // observer at any time).
+  const [host, setHost] = useState<HTMLDivElement | null>(null);
+
   useEffect(() => {
-    if (typeof document === "undefined") return;
-    if (locked) {
-      const previousOverflow = document.body.style.overflow;
-      const previousPointerEvents = document.body.style.pointerEvents;
-      // A Radix modal/menu can leave pointer-events disabled on <body> when the
-      // inactivity lock interrupts it. That makes the full-screen lock appear
-      // visible but prevents Android WebView from focusing or tapping anything.
-      document.body.style.pointerEvents = "auto";
+    if (typeof document === "undefined" || !locked) return;
+
+    // Close any open Radix layer first so it stops fighting us.
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+
+    const el = document.createElement("div");
+    el.setAttribute("data-screen-lock-host", "");
+    el.style.position = "relative";
+    el.style.zIndex = "2147483000";
+    el.style.pointerEvents = "auto";
+    document.body.appendChild(el);
+    setHost(el);
+
+    const html = document.documentElement;
+    const prev = {
+      bodyOverflow: document.body.style.overflow,
+      bodyPointer: document.body.style.pointerEvents,
+      htmlPointer: html.style.pointerEvents,
+    };
+
+    const unblock = () => {
+      el.removeAttribute("aria-hidden");
+      el.removeAttribute("inert");
+      el.removeAttribute("data-aria-hidden");
+      if (el.style.pointerEvents !== "auto") el.style.pointerEvents = "auto";
+      if (document.body.style.pointerEvents === "none") document.body.style.pointerEvents = "auto";
+      if (html.style.pointerEvents === "none") html.style.pointerEvents = "auto";
+      // react-remove-scroll leaves this behind and it disables interaction.
+      document.body.removeAttribute("data-scroll-locked");
       document.body.style.overflow = "hidden";
-      return () => {
-        document.body.style.overflow = previousOverflow;
-        document.body.style.pointerEvents = previousPointerEvents;
-      };
-    }
-    return;
+    };
+    unblock();
+
+    const observer = new MutationObserver(unblock);
+    observer.observe(el, { attributes: true, attributeFilter: ["aria-hidden", "inert", "style", "data-aria-hidden"] });
+    observer.observe(document.body, { attributes: true, attributeFilter: ["style", "data-scroll-locked"] });
+    observer.observe(html, { attributes: true, attributeFilter: ["style"] });
+    // Belt and braces for WebView, where the observer can fire late.
+    const poll = window.setInterval(unblock, 500);
+
+    return () => {
+      observer.disconnect();
+      window.clearInterval(poll);
+      setHost(null);
+      el.remove();
+      document.body.style.overflow = prev.bodyOverflow;
+      document.body.style.pointerEvents = prev.bodyPointer;
+      html.style.pointerEvents = prev.htmlPointer;
+    };
   }, [locked]);
 
-  if (!user || !locked || !settings) return null;
+  if (!user || !locked || !settings || !host) return null;
 
-  if (typeof document === "undefined") return null;
-  // Portal to <body> so no ancestor transform/overflow/stacking context can
-  // swallow clicks or clip the lock card.
   return createPortal(
     <ScreenLockOverlay settings={settings} onUnlock={() => doUnlock()} />,
-    document.body,
+    host,
   );
 }
 
