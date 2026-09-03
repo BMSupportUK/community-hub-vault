@@ -229,9 +229,9 @@ export function ScreenLockOverlay({ settings, onUnlock }: Props) {
         alt="Illustration of a person at a computer with a locked screen"
         width={1920}
         height={1088}
-        className="absolute inset-0 h-full w-full object-cover"
+        className="fixed inset-0 h-full w-full object-cover pointer-events-none"
       />
-      <div className="absolute inset-0 bg-background/40" />
+      <div className="fixed inset-0 bg-background/40 pointer-events-none" />
       <div className="relative mx-auto my-[6vh] w-[92%] sm:w-[70%] md:w-[50%] lg:w-[34%] xl:w-[30%] max-w-[420px] rounded-2xl border border-primary/40 bg-background/95 shadow-[0_0_60px_-10px_hsl(var(--primary)/0.7)] overflow-hidden">
         <div className="p-6 space-y-4">
           <div className="flex items-center gap-3">
