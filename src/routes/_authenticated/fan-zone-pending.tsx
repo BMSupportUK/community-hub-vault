@@ -52,15 +52,15 @@ function FanZonePendingPage() {
   const status = info?.status ?? "none";
 
   return (
-    <div className="relative min-h-screen w-full flex items-center justify-center px-4 py-10 overflow-hidden">
+    <div className="relative min-h-dvh w-full flex items-center justify-center px-4 py-10 overflow-hidden">
       <img
         src={pendingStadium}
         alt="Middlesbrough supporter in the official red home shirt watching a floodlit match from the stands"
         width={1536}
         height={1024}
-        className="absolute inset-0 size-full object-cover"
+        className="absolute inset-0 size-full object-cover object-top"
       />
-      <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/70 via-zinc-950/80 to-zinc-950/95" />
+      <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/45 via-zinc-950/65 to-zinc-950/90" />
       <FanZoneNameGate />
       <div className="relative z-10 w-full max-w-md">
         <button
