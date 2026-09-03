@@ -32,9 +32,6 @@ function BoardTopicsPage() {
 
   return (
     <FanZoneShell>
-      <Button asChild variant="ghost" size="sm" className="-ml-2 mb-2 text-white/80 hover:text-white">
-        <Link to="/fan-zone"><ArrowLeft className="size-4 mr-1" /> All boards</Link>
-      </Button>
       {!state.board ? (
         <div className="rounded-xl border border-white/10 bg-white/5 p-8 text-center text-sm text-white/70">
           Board not found.
