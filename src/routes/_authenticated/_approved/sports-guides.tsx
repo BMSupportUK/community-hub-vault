@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import sportsBgAsset from "@/assets/sports-bg.jpg.asset.json";
 const sportsBg = sportsBgAsset.url;
 const SG_FOCUS_KEY = "sports-guides-focus-id";
-import { PagedGrid, PaginationBar } from "@/lib/paginate-by-height";
+
 
 export const Route = createFileRoute("/_authenticated/_approved/sports-guides")({
   component: SportsGuidesRoute,
