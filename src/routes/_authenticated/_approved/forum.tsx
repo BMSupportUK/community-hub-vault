@@ -7,7 +7,7 @@ import { useFanZoneMembership } from "@/hooks/use-fan-zone";
 import { getIcon } from "@/components/app/IconPicker";
 import { formatLastSeen } from "@/lib/relative-time";
 import { Button } from "@/components/ui/button";
-import { MessageSquareText, Ban, BarChart3, UserCog, Users, Trophy, Search as SearchIcon } from "lucide-react";
+import { Ban, BarChart3, UserCog, Search as SearchIcon } from "lucide-react";
 import { FanZoneStaffBox } from "@/components/app/FanZoneStaffBox";
 import { BoroMatchCentreBox } from "@/components/app/BoroMatchCentreBox";
 import { BoroLiveMatchStrip } from "@/components/app/BoroLiveMatchStrip";
