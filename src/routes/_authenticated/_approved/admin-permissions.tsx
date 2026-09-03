@@ -171,8 +171,8 @@ function PagesTab({ pages, roles, onChanged }: { pages: PagePerm[]; roles: RoleD
     if (error) toast.error(error.message); else onChanged();
   };
 
-  const adminPages = pages.filter((p) => p.page_key.startsWith("admin")).sort((a, b) => a.sort_order - b.sort_order);
-  const otherPages = pages.filter((p) => !p.page_key.startsWith("admin")).sort((a, b) => a.sort_order - b.sort_order);
+  const adminPages = pages.filter((p) => p.page_key.startsWith("admin")).sort((a, b) => a.label.localeCompare(b.label));
+  const otherPages = pages.filter((p) => !p.page_key.startsWith("admin")).sort((a, b) => a.label.localeCompare(b.label));
 
   const renderRow = (p: PagePerm) => (
     <tr key={p.page_key} className="border-t border-border">
