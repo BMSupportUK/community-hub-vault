@@ -51,23 +51,35 @@ function FanZonePendingPage() {
   const status = info?.status ?? "none";
 
   return (
-    <div className="min-h-screen w-full bg-gradient-to-br from-rose-950 via-zinc-950 to-amber-950 flex items-center justify-center px-4 py-10">
+    <div className="relative min-h-screen w-full flex items-center justify-center px-4 py-10 overflow-hidden">
+      <img
+        src={pendingStadium}
+        alt="Middlesbrough supporter in the official red home shirt watching a floodlit match from the stands"
+        width={1536}
+        height={1024}
+        className="absolute inset-0 size-full object-cover"
+      />
+      <div className="absolute inset-0 bg-gradient-to-b from-zinc-950/70 via-zinc-950/80 to-zinc-950/95" />
       <FanZoneNameGate />
-      <div className="w-full max-w-md">
+      <div className="relative z-10 w-full max-w-md">
         <button
           onClick={async () => { await signOut(); navigate({ to: "/login" }); }}
-          className="absolute top-4 right-4 text-xs text-white/40 hover:text-white/80 inline-flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-white/5"
+          className="absolute -top-6 right-0 text-xs text-white/60 hover:text-white inline-flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-white/10"
         >
           <LogOut className="size-3" /> Sign out
         </button>
 
-        <div className="rounded-2xl border border-amber-500/30 bg-zinc-950/80 backdrop-blur-sm p-8 shadow-2xl text-center">
-          <div className="mx-auto mb-5 size-16 rounded-full bg-amber-500/10 border border-amber-500/30 flex items-center justify-center">
+        <div className="rounded-2xl border border-red-500/40 bg-zinc-950/70 backdrop-blur-md p-8 shadow-2xl text-center">
+          <div className="mx-auto mb-5 size-16 rounded-full bg-red-500/15 border border-red-400/40 flex items-center justify-center">
             {status === "pending" ? (
-              <Loader2 className="size-7 text-amber-400 animate-spin" />
+              <Loader2 className="size-7 text-red-300 animate-spin" />
             ) : (
-              <Trophy className="size-7 text-amber-400" />
+              <Trophy className="size-7 text-red-300" />
             )}
+          </div>
+
+          <div className="text-[11px] uppercase tracking-[0.2em] text-red-300/80 font-semibold mb-2">
+            Boro Fan Zone
           </div>
 
           <h1 className="font-display text-2xl font-bold text-white mb-2">
