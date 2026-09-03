@@ -439,7 +439,6 @@ function ShopPage() {
           )}
         </div>
       </div>
-    </div>
   );
 }
 
