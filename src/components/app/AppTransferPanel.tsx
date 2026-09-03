@@ -218,7 +218,7 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
 
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-sm sm:max-w-md border-violet-500/30 bg-violet-950/95 backdrop-blur-sm">
+        <DialogContent className="max-w-sm sm:max-w-md max-h-[85vh] overflow-y-auto border-violet-500/30 bg-violet-950/95 backdrop-blur-sm">
           <DialogHeader>
             <DialogTitle className="font-display text-base flex items-center gap-2">
               <Smartphone className="size-4 text-violet-300" /> {build.appName || build.fileName}
