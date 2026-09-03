@@ -211,7 +211,17 @@ function AdminFanZonePage() {
         };
       });
       setProfiles(map);
+
+      // Non-admins can still see who the Owners / Moderators are so the
+      // role tabs work for everyone.
+      const { data: staff } = await supabase.rpc("fan_zone_staff_directory");
+      const rmap: Record<string, string[]> = {};
+      ((staff ?? []) as Array<{ user_id: string; role: string }>).forEach((s) => {
+        rmap[s.user_id] = [...(rmap[s.user_id] ?? []), s.role];
+      });
+      setUserRoles(rmap);
     }
+
   };
 
   useEffect(() => {
