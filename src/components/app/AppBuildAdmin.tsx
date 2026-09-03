@@ -205,12 +205,12 @@ function BuildCard({
           <Textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} placeholder="What's new in this build" />
         </div>
         <div className="sm:col-span-2">
-          <Label>Install instructions</Label>
+          <Label>Additional App Information</Label>
           <Textarea
             value={instructions}
             onChange={(e) => setInstructions(e.target.value)}
             rows={4}
-            placeholder="Step-by-step install steps members will see on this app's card"
+            placeholder="Extra app details members will see in the download popup"
           />
         </div>
       </div>
