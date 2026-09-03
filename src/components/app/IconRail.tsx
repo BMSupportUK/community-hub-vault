@@ -261,6 +261,10 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
 
 
   const items = inFanZone ? fanZoneItems : supportItems;
+  // Each rail keeps its own saved order, namespaced so BM Support and the
+  // Boro Fan Zone never overwrite each other's positions.
+  const scope = inFanZone ? "fanzone" : "support";
+  const orderKey = (to: string) => `${scope}:${to}`;
 
   const allowedByPerms = (to: string) => {
     if (to === "/forum") return true;
