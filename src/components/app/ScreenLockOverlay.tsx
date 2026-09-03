@@ -331,6 +331,7 @@ export function ScreenLockOverlay({ settings, onUnlock }: Props) {
                 value={code}
                 onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
               />
+              {Keypad}
               <Button type="submit" className="w-full" disabled={busy || code.length < 4}>
                 {busy ? <Loader2 className="size-4 animate-spin" /> : <Lock className="size-4" />} Unlock
               </Button>
