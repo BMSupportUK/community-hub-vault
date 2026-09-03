@@ -258,6 +258,9 @@ export function ScreenLockOverlay({ settings, onUnlock }: Props) {
                 maxLength={6}
                 placeholder="New code"
                 value={newCode}
+                onFocus={() => setField("new")}
+                onClick={() => setField("new")}
+                className={field === "new" ? "ring-1 ring-primary" : undefined}
                 onChange={(e) => setNewCode(e.target.value.replace(/\D/g, ""))}
               />
               <Input
@@ -267,8 +270,12 @@ export function ScreenLockOverlay({ settings, onUnlock }: Props) {
                 maxLength={6}
                 placeholder="Confirm code"
                 value={confirmCode}
+                onFocus={() => setField("confirm")}
+                onClick={() => setField("confirm")}
+                className={field === "confirm" ? "ring-1 ring-primary" : undefined}
                 onChange={(e) => setConfirmCode(e.target.value.replace(/\D/g, ""))}
               />
+              {Keypad}
               <Button className="w-full" onClick={saveNewCode} disabled={busy}>
                 {busy ? <Loader2 className="size-4 animate-spin" /> : <KeyRound className="size-4" />} Save &amp; unlock
               </Button>
