@@ -518,12 +518,7 @@ function HomeLayout() {
                   onAddGroup={isAdmin ? () => setShowAddGroup(true) : undefined}
                   onReorderChannels={isAdmin && channels !== null ? reorderChannels : undefined}
                   onReorderGroups={isAdmin && channels !== null ? reorderGroups : undefined}
-                  footer={
-                    <div className="space-y-4">
-                      <ServiceStatusBox />
-                      <WorkingStatusBox stackActions />
-                    </div>
-                  }
+                  footer={channelFooter}
                 />
               </SheetContent>
             </Sheet>
