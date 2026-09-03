@@ -220,7 +220,10 @@ export function ScreenLockOverlay({ settings, onUnlock }: Props) {
   );
 
   return (
-    <div className="fixed inset-0 z-[300] overflow-hidden bg-background isolate">
+    <div
+      className="fixed inset-0 z-[300] overflow-y-auto overscroll-contain bg-background isolate pointer-events-auto"
+      style={{ touchAction: "manipulation" }}
+    >
       <img
         src={lockBg}
         alt="Illustration of a person at a computer with a locked screen"
