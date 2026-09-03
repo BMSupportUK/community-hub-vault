@@ -61,6 +61,6 @@ export function isPageAllowed(
   if (!perms) return true; // still loading — don't flash a redirect
   const allowed = perms[pageKey];
   if (!allowed) return true;
-  if (roles.some((r) => r === "admin" || r === "management")) return true;
+  if (roles.some((r) => r === "admin")) return true;
   return roles.some((r) => allowed.includes(r));
 }

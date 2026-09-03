@@ -21,7 +21,9 @@ interface PagePerm { page_key: string; label: string; allowed_roles: string[]; s
 interface Channel { id: string; name: string; slug: string; staff_only: boolean; sort_order: number; group_label: string; }
 interface ChanPerm { channel_id: string; role: string; can_view: boolean; can_send: boolean; can_delete: boolean; can_mention: boolean; }
 
-const LOCKED = new Set(["admin", "management"]);
+const LOCKED = new Set(["admin"]);
+// Management can be toggled, but only by an admin (owner) account.
+const ADMIN_ONLY_ROLES = new Set(["management"]);
 const HIDDEN_ROLES = new Set(["pending", "banned"]);
 
 // Auto-discover all page routes under /_authenticated/_approved at build time.
