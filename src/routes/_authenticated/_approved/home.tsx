@@ -56,6 +56,15 @@ const channelSkeletonGroups: ChannelGroup[] = [
 function HomeLayout() {
   const { hasAny, user } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
+  const hideOutageBox =
+    hasAny(["member", "nonsubscriber"]) &&
+    !hasAny(["subscriber", "staff", "moderator", "management", "admin"]);
+  const channelFooter = (
+    <div className="space-y-4">
+      {!hideOutageBox && <ServiceStatusBox />}
+      <WorkingStatusBox stackActions />
+    </div>
+  );
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isHomeIndex = pathname === "/home" || pathname === "/home/";
