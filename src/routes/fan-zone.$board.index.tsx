@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Lock, Pin, MessageSquare, Eye, ArrowLeft } from "lucide-react";
+import { Lock, Pin, MessageSquare, Eye } from "lucide-react";
 import { listPublicTopics, type PublicTopicRow } from "@/lib/fan-zone-public.functions";
 import { RelativeTime } from "@/components/app/RelativeTime";
 import { Button } from "@/components/ui/button";
