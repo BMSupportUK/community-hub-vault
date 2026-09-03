@@ -561,7 +561,7 @@ function StatsBox({ userId }: { userId: string }) {
           <Item icon={FileText} label="Topics started" value={s.topics} />
           <Item icon={MessageSquare} label="Forum posts" value={s.posts} />
           <Item icon={Users} label="Friends" value={s.friends} />
-          <Item icon={ThumbsUp} label="Reactions received" value={s.reactionsReceived} />
+          
         </div>
       )}
     </div>
