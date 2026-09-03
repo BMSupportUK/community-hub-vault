@@ -362,11 +362,6 @@ function BoardsIndex() {
             <FanZoneStaffBox />
           </div>
         </div>
-        <div className="pt-2 text-center">
-          <Button asChild variant="ghost" size="sm">
-            <Link to="/home">← Back to channels</Link>
-          </Button>
-        </div>
       </div>
       <div className="lg:sticky lg:top-4 lg:self-start">
         <div className="space-y-4">
