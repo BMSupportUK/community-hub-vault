@@ -84,7 +84,7 @@ function FanZonePendingPage() {
 
           <h1 className="font-display text-2xl font-bold text-white mb-2">
             {status === "pending"
-              ? "Membership Pending Approval"
+              ? "Pending Activation"
               : status === "rejected"
               ? "Request Was Declined"
               : status === "revoked"
@@ -94,14 +94,14 @@ function FanZonePendingPage() {
 
           <p className="text-sm text-white/70 max-w-sm mx-auto mb-1">
             {status === "pending"
-              ? "Your request to join the Boro Fan Zone is being reviewed by the moderation team."
+              ? "Your Boro Fan Zone account is waiting for the owner to grant access — no security checks needed."
               : status === "rejected" || status === "revoked"
               ? "You can submit a new request below — keep it civil and tell us why you want in."
-              : "Tell us a bit about yourself and a moderator will review your request."}
+              : "Tell us a bit about yourself and the owner will review your request."}
           </p>
           {status === "pending" && (
             <p className="text-sm text-white/70 max-w-sm mx-auto mb-5">
-              You will be notified as soon as your access is approved.
+              The owner has been notified and you'll be let straight in as soon as it's approved.
             </p>
           )}
 
