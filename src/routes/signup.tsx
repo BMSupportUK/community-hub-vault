@@ -177,16 +177,18 @@ function SignupPage() {
               <Field label="Display name" value={displayName} onChange={setDisplayName} />
               <Field label="Email" type="email" value={email} onChange={setEmail} />
               <Field label="Password" type="password" value={password} onChange={setPassword} />
-              <Field
-                label={intent === "bm-support" ? "Referral code" : "Referral code (optional)"}
-                value={inviteCode}
-                onChange={setInviteCode}
-                required={intent === "bm-support"}
-              />
               {intent === "bm-support" && (
-                <p className="text-xs text-muted-foreground -mt-1">
-                  BM Support registration requires a referral code from an existing member.
-                </p>
+                <>
+                  <Field
+                    label="Referral code"
+                    value={inviteCode}
+                    onChange={setInviteCode}
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground -mt-1">
+                    BM Support registration requires a referral code from an existing member.
+                  </p>
+                </>
               )}
               <fieldset className="space-y-2">
                 <legend className="text-xs font-medium text-foreground/80 mb-1">
