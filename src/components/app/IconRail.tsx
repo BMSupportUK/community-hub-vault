@@ -264,10 +264,12 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
 
   const allowedByPerms = (to: string) => {
     if (to === "/forum") return true;
+    // Fan Zone members list: gated by canSeeFanZoneMembers, not page permissions.
+    if (to === "/admin-fan-zone" && inFanZone) return true;
     if (isAdmin) return true;
     const key = to.replace(/^\//, "");
     const allowed = pagePerms[key];
-    if (!allowed) return true; // unknown page: don't hide
+    if (!allowed || allowed.length === 0) return true; // unknown/unset page: don't hide
     return roles.some((r: AppRole) => allowed.includes(r));
   };
   const visible = items.filter((i) => i.show && allowedByPerms(i.to));
