@@ -13,12 +13,12 @@ import androidApkAsset from "@/assets/BMSupport.apk.asset.json";
  * "new version available" notification for every member.
  */
 export const ANDROID_RELEASE = {
-  versionName: "1.1.3",
-  versionCode: 5,
+  versionName: "1.1.4",
+  versionCode: 6,
   /** Raw CDN asset (served as application/zip) — proxied by /api/public/android-apk. */
   assetUrl: androidApkAsset.url,
   /** Always use this for downloads/QR: correct .apk filename + mime type. */
   url: "/api/public/android-apk",
   absoluteUrl: "https://bmsupport.uk/api/public/android-apk",
-  notes: "Fixes app downloads on Android phones and keeps the secure Wi-Fi sending improvements.",
+  notes: "Fixes the inactivity lock screen on Android phones — the unlock card now always responds to touch and typing.",
 } as const;
