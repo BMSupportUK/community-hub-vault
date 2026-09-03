@@ -200,7 +200,9 @@ export const handOverTicket = createServerFn({ method: "POST" })
       (STAFF_ROLES as readonly string[]).includes(r.role),
     );
     if (!targetIsStaff) return { ok: false, reason: "target_not_staff" };
-    if (data.toUserId === callerId) return { ok: false, reason: "self" };
+    // Taking a ticket back to yourself is allowed — it just reassigns and logs
+    // an internal note instead of alerting anyone.
+    const isTakeBack = data.toUserId === callerId;
 
     const { data: ticket } = await supabaseAdmin
       .from("tickets")
