@@ -21,7 +21,7 @@ export function FanZoneStaffBox() {
   const [members, setMembers] = useState<StaffMember[] | null>(null);
   const online = useOnlineUsers();
   const staffIds = useMemo(() => (members ?? []).map((m) => m.user_id), [members]);
-  const { lastSeen, tick } = useLastSeenMap(staffIds);
+  const { lastSeen } = useLastSeenMap(staffIds);
 
   useEffect(() => {
     void (async () => {
@@ -76,10 +76,6 @@ export function FanZoneStaffBox() {
                     {initials}
                   </div>
                 )}
-                <span
-                  className={`absolute -top-0.5 -left-0.5 size-3 rounded-full ring-2 ring-surface-1 ${isOnline ? "bg-emerald-500" : "bg-white/35"}`}
-                  aria-hidden
-                />
                 {isAdmin && (
                   <span className="absolute -bottom-0.5 -right-0.5 size-4 rounded-full bg-amber-400 grid place-items-center ring-2 ring-surface-1">
                     <Star className="size-2.5 text-amber-900" fill="currentColor" />
@@ -92,11 +88,9 @@ export function FanZoneStaffBox() {
                   {isAdmin ? "Owner" : "Fan Zone Mod"}
                 </div>
                 <div
-                  key={tick}
-                  className={`mt-0.5 flex items-center gap-1 text-[10px] font-medium ${isOnline ? "text-emerald-400" : "text-white/55"}`}
+                  className={`mt-0.5 text-[10px] font-medium ${isOnline ? "text-emerald-400" : "text-white/55"}`}
                 >
-                  <span className={`size-1.5 rounded-full ${isOnline ? "bg-emerald-500" : "bg-white/40"}`} />
-                  <span className="truncate">{isOnline ? "Online" : `Away · ${seenText}`}</span>
+                  {isOnline ? "Online" : `Away · ${seenText}`}
                 </div>
                 <DndCountdown userId={m.user_id} compact className="mt-1" />
               </div>
