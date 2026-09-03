@@ -77,7 +77,7 @@ function FanZonePendingPage() {
               ? "Request Was Declined"
               : status === "revoked"
               ? "Access Was Revoked"
-              : "Join the Boro Fan Zone"}
+              : "Join the Boro Fan Zone - a Middlesbrough F.C. Forum"}
           </h1>
 
           <p className="text-sm text-white/70 max-w-sm mx-auto mb-1">
