@@ -174,6 +174,51 @@ export function ScreenLockOverlay({ settings, onUnlock }: Props) {
 
   const settingMode = needsSetup || forceChange;
 
+  // Android boxes / Fire Sticks and some WebViews never raise a soft keyboard for
+  // these inputs, which left people unable to type anything at all. An on-screen
+  // keypad makes the lock screen usable without any keyboard.
+  const [field, setField] = useState<"new" | "confirm">("new");
+  const press = (digit: string) => {
+    if (settingMode) {
+      if (field === "new") setNewCode((v) => (v.length >= 6 ? v : v + digit));
+      else setConfirmCode((v) => (v.length >= 6 ? v : v + digit));
+      return;
+    }
+    setCode((v) => (v.length >= 6 ? v : v + digit));
+  };
+  const backspace = () => {
+    if (settingMode) {
+      if (field === "new") setNewCode((v) => v.slice(0, -1));
+      else setConfirmCode((v) => v.slice(0, -1));
+      return;
+    }
+    setCode((v) => v.slice(0, -1));
+  };
+
+  const Keypad = (
+    <div className="grid grid-cols-3 gap-2 pt-1">
+      {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((d) => (
+        <Button key={d} type="button" variant="secondary" className="h-11 text-base font-semibold" onClick={() => press(d)}>
+          {d}
+        </Button>
+      ))}
+      <Button type="button" variant="ghost" className="h-11 text-xs" onClick={backspace}>
+        Delete
+      </Button>
+      <Button type="button" variant="secondary" className="h-11 text-base font-semibold" onClick={() => press("0")}>
+        0
+      </Button>
+      <Button
+        type="button"
+        className="h-11 text-xs"
+        disabled={busy || (settingMode ? newCode.length < 4 || confirmCode.length < 4 : code.length < 4)}
+        onClick={() => (settingMode ? void saveNewCode() : void tryUnlock())}
+      >
+        {busy ? <Loader2 className="size-4 animate-spin" /> : "Enter"}
+      </Button>
+    </div>
+  );
+
   return (
     <div className="fixed inset-0 z-[300] overflow-hidden bg-background isolate">
       <img
