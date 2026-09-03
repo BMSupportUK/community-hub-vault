@@ -129,7 +129,29 @@ function FanZoneBoardsPage() {
 function GuestForumStats() {
   const [stats, setStats] = useState<PublicForumStats | null>(null);
   useEffect(() => {
-    void getPublicForumStats().then(setStats).catch(() => setStats(null));
+    let cancelled = false;
+    const load = () => {
+      void getPublicForumStats()
+        .then((next) => {
+          if (!cancelled) setStats(next);
+        })
+        .catch(() => {
+          if (!cancelled) setStats(null);
+        });
+    };
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") load();
+    };
+    load();
+    const interval = window.setInterval(refreshWhenVisible, 15_000);
+    window.addEventListener("focus", load);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+      window.removeEventListener("focus", load);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+    };
   }, []);
   const fmt = (n: number) => n.toLocaleString("en-GB");
   return (

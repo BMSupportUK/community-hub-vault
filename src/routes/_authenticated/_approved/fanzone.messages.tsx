@@ -76,8 +76,20 @@ function MessagesLayout() {
       .channel(`fz-inbox-${user.id}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "fan_zone_dm_messages" }, () => void load())
       .on("postgres_changes", { event: "*", schema: "public", table: "fan_zone_dm_threads" }, () => void load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "fan_zone_members" }, () => void loadMembers())
       .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") void loadMembers();
+    };
+    const interval = window.setInterval(refreshWhenVisible, 15_000);
+    window.addEventListener("focus", refreshWhenVisible);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener("focus", refreshWhenVisible);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
+      void supabase.removeChannel(ch);
+    };
   }, [canEnter, user?.id]);
 
   useEffect(() => {

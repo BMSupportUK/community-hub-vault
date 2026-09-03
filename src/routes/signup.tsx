@@ -60,7 +60,11 @@ function SignupPage() {
       password,
       options: {
         emailRedirectTo: window.location.origin,
-        data: { display_name: displayName, username: displayName.toLowerCase().replace(/\s+/g, "") },
+        data: {
+          display_name: displayName,
+          username: displayName.toLowerCase().replace(/\s+/g, ""),
+          access_intent: intent,
+        },
       },
     });
     if (error) {

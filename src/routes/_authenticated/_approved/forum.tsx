@@ -18,6 +18,7 @@ import boroHero from "@/assets/boro-hero.jpg";
 import boroBadge from "@/assets/boro-fan-zone-badge.png";
 import boroBg from "@/assets/boro-bg.jpg";
 import { censorText, useProfanityWords } from "@/lib/profanity";
+import { getPublicForumStats } from "@/lib/fan-zone-public.functions";
 
 export const Route = createFileRoute("/_authenticated/_approved/forum")({
   head: () => ({
@@ -400,49 +401,38 @@ function ForumStats({ boards }: { boards: Board[] }) {
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
-      const { count } = await supabase
-        .from("fan_zone_members")
-        .select("user_id", { count: "exact", head: true })
-        .eq("status", "approved");
-      if (!cancelled) setMemberCount(count ?? 0);
-
-      // decided_at can be null on older approvals, so fall back to requested_at.
-      const { data: rows } = await supabase
-        .from("fan_zone_members")
-        .select("user_id, fan_alias, decided_at, requested_at")
-        .eq("status", "approved")
-        .order("decided_at", { ascending: false, nullsFirst: false })
-        .order("requested_at", { ascending: false })
-        .limit(25);
-      const list = (rows ?? []) as Array<{
-        user_id: string;
-        fan_alias: string | null;
-        decided_at: string | null;
-        requested_at: string;
-      }>;
-      const newest = list
-        .slice()
-        .sort(
-          (a, b) =>
-            new Date(b.decided_at ?? b.requested_at).getTime() -
-            new Date(a.decided_at ?? a.requested_at).getTime(),
-        )[0];
+      const stats = await getPublicForumStats();
       if (!cancelled) {
-        setLatest(newest ? { name: newest.fan_alias?.trim() || "Boro Fan", userId: newest.user_id } : null);
+        setMemberCount(stats.members);
+        setLatest(
+          stats.latest_member && stats.latest_member_id
+            ? { name: stats.latest_member, userId: stats.latest_member_id }
+            : null,
+        );
       }
     };
 
     void load();
 
     const channel = supabase
-      .channel("forum-stats-members")
+      .channel(`forum-stats-members-${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "fan_zone_members" }, () => {
         void load();
       })
       .subscribe();
 
+    const refreshWhenVisible = () => {
+      if (document.visibilityState === "visible") void load();
+    };
+    const interval = window.setInterval(refreshWhenVisible, 15_000);
+    window.addEventListener("focus", refreshWhenVisible);
+    document.addEventListener("visibilitychange", refreshWhenVisible);
+
     return () => {
       cancelled = true;
+      window.clearInterval(interval);
+      window.removeEventListener("focus", refreshWhenVisible);
+      document.removeEventListener("visibilitychange", refreshWhenVisible);
       void supabase.removeChannel(channel);
     };
   }, []);
