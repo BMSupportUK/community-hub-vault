@@ -6,6 +6,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { FanZoneNameGate } from "@/components/app/FanZoneNamePrompt";
 import { useFanZoneMembership } from "@/hooks/use-fan-zone";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+
 
 export const Route = createFileRoute("/_authenticated/fan-zone-pending")({
   component: FanZonePendingPage,
@@ -35,9 +37,16 @@ function FanZonePendingPage() {
             .update({ status: "pending", reason, note: null, decided_at: null, decided_by: null })
             .eq("user_id", user.id);
     setSubmitting(false);
-    if (error) return;
+    if (error) {
+      toast.error("Couldn't send your request — please try again.");
+      return;
+    }
+    toast.success("Request sent — a Fan Zone moderator will review it.");
     setReasonDraft("");
   };
+
+
+
 
   const status = info?.status ?? "none";
 
