@@ -52,7 +52,7 @@ const ROLE_COLOR: Record<string, string> = {
   banned: "bg-red-500/20 text-red-300 ring-red-400/40",
 };
 
-import { sortRolesByPriority } from "@/lib/role-rank";
+import { sortRolesByPriority, isSupportRole } from "@/lib/role-rank";
 
 function MembersPage() {
   const { hasAny, user: viewer } = useAuth();
