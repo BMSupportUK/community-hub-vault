@@ -140,3 +140,100 @@ export const declineGuideAccessRequest = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true as const };
   });
+
+export type ApprovedGuideAccessMember = {
+  userId: string;
+  member: string;
+  approvedAt: string;
+  section: "guides" | "download";
+  stillHasAccess: boolean;
+};
+
+/** Members whose guide / download access was granted from this screen. */
+export const listApprovedGuideAccess = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<ApprovedGuideAccessMember[]> => {
+    await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: grants, error } = await supabaseAdmin
+      .from("user_notifications")
+      .select("user_id, title, created_at")
+      .eq("kind", "guide_access_granted")
+      .order("created_at", { ascending: false })
+      .limit(500);
+    if (error) throw new Error(error.message);
+
+    const rows = grants ?? [];
+    const ids = [...new Set(rows.map((r) => r.user_id as string))];
+    if (!ids.length) return [];
+
+    const [{ data: profiles }, { data: roles }] = await Promise.all([
+      supabaseAdmin.from("profiles").select("id, display_name, username").in("id", ids),
+      supabaseAdmin.from("user_roles").select("user_id, role").in("user_id", ids),
+    ]);
+    const nameOf = new Map(
+      (profiles ?? []).map((p) => [p.id, p.display_name || p.username || "Member"]),
+    );
+    const subscribers = new Set(
+      (roles ?? []).filter((r) => String(r.role) === "subscriber").map((r) => r.user_id as string),
+    );
+
+    const seen = new Set<string>();
+    const out: ApprovedGuideAccessMember[] = [];
+    for (const r of rows) {
+      const uid = r.user_id as string;
+      if (seen.has(uid)) continue;
+      seen.add(uid);
+      out.push({
+        userId: uid,
+        member: nameOf.get(uid) ?? "Member",
+        approvedAt: r.created_at as string,
+        section: String(r.title ?? "").toLowerCase().includes("guide") ? "guides" : "download",
+        stillHasAccess: subscribers.has(uid),
+      });
+    }
+    return out;
+  });
+
+/** Removes previously granted access from a member. */
+export const revokeGuideAccess = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ userId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    await assertAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    // Never let an admin strip access from staff-level accounts.
+    const { data: roles } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", data.userId);
+    const held = (roles ?? []).map((r) => String(r.role));
+    if (held.some((r) => r === "admin" || r === "management" || r === "staff")) {
+      throw new Error("Staff accounts can't have their access revoked here");
+    }
+
+    const { error } = await supabaseAdmin
+      .from("user_roles")
+      .delete()
+      .eq("user_id", data.userId)
+      .eq("role", "subscriber");
+    if (error) throw new Error(error.message);
+
+    await supabaseAdmin
+      .from("user_notifications")
+      .delete()
+      .eq("kind", "guide_access_granted")
+      .eq("user_id", data.userId);
+
+    await supabaseAdmin.from("user_notifications").insert({
+      user_id: data.userId,
+      kind: "guide_access_revoked",
+      title: "App & guide access removed",
+      body: "Your access to the install guides and app downloads has been removed.",
+      link_path: "/install-guides",
+    });
+
+    return { ok: true as const };
+  });

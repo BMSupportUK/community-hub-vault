@@ -458,7 +458,8 @@ export const requestAppDownloadAccess = createServerFn({ method: "POST" })
       body: isGuides
         ? `${who} wants access to the install guides.`
         : `${who} wants access to the BM App Store download section.`,
-      link_path: isGuides ? "/install-guides?tab=guides" : "/install-guides?tab=get-app",
+      // Staff notification: send admins straight to the approval queue.
+      link_path: "/install-guides?tab=approvals",
       entity_id: context.userId,
     });
     if (error) throw new Error(error.message);
