@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.sync_fan_zone_role() FROM PUBLIC, anon, authenticated;

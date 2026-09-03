@@ -11,6 +11,7 @@ import { logMyIp } from "@/lib/ip-log.functions";
 import { useOnlineUsers } from "@/hooks/use-online-users";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { isAllowedForFanZoneOnly } from "@/lib/fan-zone-nav";
+import { useFanZoneMembershipState } from "@/hooks/use-fan-zone";
 
 // Defer non-critical header widgets & alerts so the shell paints immediately.
 const Clocks = lazy(() => import("@/components/app/Clocks").then((m) => ({ default: m.Clocks })));
@@ -55,6 +56,9 @@ export const Route = createFileRoute("/_authenticated")({
 
 function AuthLayout() {
   const { loading, isPending, isBanned, isRejected, isMod, isStaff, hasAny, user, isFanZoneOnly } = useAuth();
+  // Fan Zone applicants wait on the Fan Zone screen, never the BM Support gate.
+  const { info: fanZoneInfo } = useFanZoneMembershipState(user?.id);
+  const fanZoneApplicant = fanZoneInfo?.status === "pending";
   const isAdmin = hasAny(["admin", "management"]);
   const navigate = useNavigate();
   const path = useRouterState({ select: (r) => r.location.pathname });
@@ -126,8 +130,11 @@ function AuthLayout() {
     return <Navigate to="/account-rejected" />;
   }
 
-  // Pending users are locked to /gate
-  if (isPending && !path.startsWith("/gate")) {
+  // Pending users are locked to their waiting room
+  if (isPending && fanZoneApplicant && !path.startsWith("/fan-zone-pending")) {
+    return <Navigate to="/fan-zone-pending" />;
+  }
+  if (isPending && !fanZoneApplicant && !path.startsWith("/gate")) {
     return <Navigate to="/gate" />;
   }
 
