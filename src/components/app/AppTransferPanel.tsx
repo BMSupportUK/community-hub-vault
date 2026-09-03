@@ -116,6 +116,7 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
       await request({ data: { buildId: build.id } });
       await queryClient.invalidateQueries({ queryKey: ["app-transfers"] });
       await queryClient.invalidateQueries({ queryKey: ["app-transfer"] });
+      setOpen(true);
       toast.success("Secure link created — valid for 24 hours");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Couldn't create the link");
