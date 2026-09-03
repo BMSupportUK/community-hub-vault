@@ -639,13 +639,18 @@ function TopicPage() {
         locallyInsertedPostIdsRef.current.add(inserted.id);
         const replyCountBeforeInsert = topic.reply_count ?? 0;
         const showOnCurrentPage = shouldShowInsertedReply(page, replyCountBeforeInsert, REPLIES_PER_PAGE);
+        const targetPage = Math.max(1, Math.ceil((replyCountBeforeInsert + 1) / REPLIES_PER_PAGE));
         setTopic((current) => current ? { ...current, reply_count: (current.reply_count ?? 0) + 1 } : current);
+        pendingScrollPostIdRef.current = inserted.id;
         if (showOnCurrentPage) {
           setPosts((current) => {
             if (!current) return [inserted];
             const withoutDuplicate = current.filter((p) => p.id !== inserted.id);
             return [...withoutDuplicate, inserted].sort(sortPostsForTopic);
           });
+        } else {
+          // The new reply lives on a later page — go there so it's visible.
+          setPage(targetPage);
         }
       }
     });
