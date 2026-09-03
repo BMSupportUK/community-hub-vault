@@ -23,6 +23,8 @@ interface AppRow {
   created_at: string;
   reason: string | null;
   profile?: { display_name: string | null; username: string | null };
+  /** What the person chose on signup: BM Support or Boro Fan Zone. */
+  accessIntent?: "bm-support" | "fan-zone" | null;
 }
 
 type MsgStatus = "sending" | "sent" | "failed";
@@ -61,7 +63,22 @@ function ModerationPage() {
     const ids = rows.map((r) => r.user_id);
     const { data: profs } = await supabase.from("profiles").select("id, display_name, username").in("id", ids);
     const profMap = new Map(profs?.map((p) => [p.id, p]) ?? []);
-    setApps(rows.map((r) => ({ ...r, profile: profMap.get(r.user_id) })));
+    const { data: signups } = await supabase
+      .from("signup_info")
+      .select("user_id, extra")
+      .in("user_id", ids);
+    const intentMap = new Map<string, "bm-support" | "fan-zone" | null>();
+    for (const s of signups ?? []) {
+      const raw = (s.extra as Record<string, unknown> | null)?.access_intent;
+      if (raw === "bm-support" || raw === "fan-zone") intentMap.set(s.user_id, raw);
+    }
+    setApps(
+      rows.map((r) => ({
+        ...r,
+        profile: profMap.get(r.user_id),
+        accessIntent: intentMap.get(r.user_id) ?? null,
+      })),
+    );
   };
 
   useEffect(() => {
@@ -335,6 +352,18 @@ function ModerationPage() {
                         {isAppeal && (
                           <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded-full font-semibold bg-fuchsia-500/15 text-fuchsia-400 shrink-0">
                             Appeal
+                          </span>
+                        )}
+                        {a.accessIntent && (
+                          <span
+                            title="What they selected when signing up"
+                            className={`text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded-full font-semibold shrink-0 ${
+                              a.accessIntent === "fan-zone"
+                                ? "bg-amber-500/15 text-amber-400"
+                                : "bg-sky-500/15 text-sky-400"
+                            }`}
+                          >
+                            {a.accessIntent === "fan-zone" ? "Boro Fan Zone" : "BM Support"}
                           </span>
                         )}
                       </div>
