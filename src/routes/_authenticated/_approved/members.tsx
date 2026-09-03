@@ -260,7 +260,10 @@ function MembersPage() {
         )}
         {visible.map((p) => {
 
-          const userRoles = sortRolesByPriority(rolesByUser[p.id] ?? ["member"]);
+          const userRoles = (() => {
+            const supportOnly = (rolesByUser[p.id] ?? []).filter((r) => isSupportRole(r));
+            return sortRolesByPriority(supportOnly.length ? supportOnly : ["member"]);
+          })();
           const name = p.display_name ?? p.username ?? "Unknown";
           const initial = name.slice(0, 1).toUpperCase();
           const isOnline = onlineUsers.has(p.id);
