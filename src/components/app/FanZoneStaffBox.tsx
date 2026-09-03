@@ -1,9 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Shield, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { DndCountdown } from "@/components/app/DndCountdown";
 import { useFanProfileTo } from "@/components/app/fan-profile-link";
+import { useOnlineUsers } from "@/hooks/use-online-users";
+import { useLastSeenMap } from "@/hooks/use-last-seen-map";
+import { formatLastSeen } from "@/lib/relative-time";
 
 type StaffMember = {
   user_id: string;
@@ -16,6 +19,9 @@ type StaffMember = {
 export function FanZoneStaffBox() {
   const profileTo = useFanProfileTo();
   const [members, setMembers] = useState<StaffMember[] | null>(null);
+  const online = useOnlineUsers();
+  const staffIds = useMemo(() => (members ?? []).map((m) => m.user_id), [members]);
+  const { lastSeen, tick } = useLastSeenMap(staffIds);
 
   useEffect(() => {
     void (async () => {
@@ -54,6 +60,8 @@ export function FanZoneStaffBox() {
           const name = m.fan_alias;
           const isAdmin = m.role === "admin";
           const initials = name.slice(0, 2).toUpperCase();
+          const isOnline = online.has(m.user_id);
+          const seenText = formatLastSeen(lastSeen[m.user_id] ?? null);
           const inner = (
             <div className="flex items-center gap-2.5 rounded-lg border border-white/[0.12] bg-white/[0.08] px-2.5 py-2 hover:border-[#E11B22]/60 hover:bg-white/[0.12] transition-colors">
               <div className="relative shrink-0">
@@ -68,6 +76,10 @@ export function FanZoneStaffBox() {
                     {initials}
                   </div>
                 )}
+                <span
+                  className={`absolute -top-0.5 -left-0.5 size-3 rounded-full ring-2 ring-surface-1 ${isOnline ? "bg-emerald-500" : "bg-white/35"}`}
+                  aria-hidden
+                />
                 {isAdmin && (
                   <span className="absolute -bottom-0.5 -right-0.5 size-4 rounded-full bg-amber-400 grid place-items-center ring-2 ring-surface-1">
                     <Star className="size-2.5 text-amber-900" fill="currentColor" />
@@ -78,6 +90,13 @@ export function FanZoneStaffBox() {
                 <div className="text-sm font-semibold truncate leading-tight">{name}</div>
                 <div className={`text-[10px] uppercase tracking-wider font-bold ${isAdmin ? "text-amber-400" : "text-[#E11B22]"}`}>
                   {isAdmin ? "Owner" : "Fan Zone Mod"}
+                </div>
+                <div
+                  key={tick}
+                  className={`mt-0.5 flex items-center gap-1 text-[10px] font-medium ${isOnline ? "text-emerald-400" : "text-white/55"}`}
+                >
+                  <span className={`size-1.5 rounded-full ${isOnline ? "bg-emerald-500" : "bg-white/40"}`} />
+                  <span className="truncate">{isOnline ? "Online" : `Away · ${seenText}`}</span>
                 </div>
                 <DndCountdown userId={m.user_id} compact className="mt-1" />
               </div>

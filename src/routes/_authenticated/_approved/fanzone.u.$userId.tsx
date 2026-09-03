@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { ArrowLeft, Loader2, MessageSquare, Ban, ShieldOff, Heart, Clock, Quote, UserCheck, UserPlus, Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -13,6 +13,8 @@ import { FanRoleBadge, type FanStaffRole } from "@/components/app/FanRoleBadge";
 
 /** Badge roles in rank order: BM Support first, then Boro Fan Zone. */
 const BADGE_ROLES = ["admin", "management", "moderator", "staff", "boro_fan_zone_moderator"] as const;
+import { useOnlineUsers } from "@/hooks/use-online-users";
+import { useLastSeenMap } from "@/hooks/use-last-seen-map";
 import { RelativeTime } from "@/components/app/RelativeTime";
 
 export const Route = createFileRoute("/_authenticated/_approved/fanzone/u/$userId")({
@@ -74,12 +76,14 @@ function FanProfilePage() {
     })();
   }, [userId]);
 
+  const onlineUsers = useOnlineUsers();
+  const isOnline = onlineUsers.has(userId);
+  const { lastSeen: liveSeen, tick } = useLastSeenMap(useMemo(() => [userId], [userId]));
+
   useEffect(() => {
-    void (async () => {
-      const { data } = await supabase.from("profiles").select("last_seen_at").eq("id", userId).maybeSingle();
-      setLastSeen((data as { last_seen_at: string | null } | null)?.last_seen_at ?? null);
-    })();
-  }, [userId]);
+    const live = liveSeen[userId];
+    if (live !== undefined) setLastSeen(live);
+  }, [liveSeen, userId]);
 
   const load = async () => {
     setLoading(true);
@@ -232,9 +236,21 @@ function FanProfilePage() {
                   Member since {new Date(p.joined_at).toLocaleDateString("en-GB", { month: "short", year: "numeric" })}
                   {p.supporter_since ? <> · Boro fan since <span className="font-semibold">{p.supporter_since}</span></> : null}
                 </div>
-                <div className="mt-1 inline-flex items-center gap-1.5 rounded-full bg-black/25 px-2 py-0.5 text-[11px] font-medium text-white/90">
-                  <Clock className="size-3" />
-                  Last active <RelativeTime iso={lastSeen} />
+                <div
+                  key={tick}
+                  className={`mt-1 inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[11px] font-medium ${isOnline ? "bg-emerald-500/25 text-emerald-100" : "bg-black/25 text-white/90"}`}
+                >
+                  {isOnline ? (
+                    <>
+                      <span className="size-2 rounded-full bg-emerald-400" />
+                      Online now
+                    </>
+                  ) : (
+                    <>
+                      <Clock className="size-3" />
+                      Away · last active <RelativeTime iso={lastSeen} />
+                    </>
+                  )}
                 </div>
               </div>
             </div>
