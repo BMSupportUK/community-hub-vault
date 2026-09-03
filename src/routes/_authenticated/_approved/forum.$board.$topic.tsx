@@ -331,6 +331,7 @@ function TopicPage() {
   const userIdRef = useRef<string | null>(user?.id ?? null);
   const replyBoxRef = useRef<HTMLDivElement>(null);
   const pendingReplyScrollRef = useRef(false);
+  const pendingScrollPostIdRef = useRef<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
   const [historyFor, setHistoryFor] = useState<Post | null>(null);
