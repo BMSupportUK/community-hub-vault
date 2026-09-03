@@ -206,7 +206,7 @@ export const handOverTicket = createServerFn({ method: "POST" })
 
     const { data: ticket } = await supabaseAdmin
       .from("tickets")
-      .select("id, subject, order_id")
+      .select("id, subject, order_id, assigned_to")
       .eq("id", data.ticketId)
       .maybeSingle();
     if (!ticket) return { ok: false, reason: "no_ticket" };
