@@ -193,23 +193,30 @@ export function TalkChannelMembersPanel() {
 
         {activeTab === "offline" && (
           <>
-            {groups.offline.length > 0 ? (
-              <section>
-                <h3 className="px-1 pb-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                  Offline
-                </h3>
-                <div className="space-y-0.5">
-                  {groups.offline.map((m) => (
-                    <MemberRow
-                      key={m.user_id}
-                      row={m}
-                      online={false}
-                      selfId={user?.id ?? null}
-                      roleFlashMap={roleFlashMap}
-                    />
-                  ))}
-                </div>
-              </section>
+            {groups.offlineGroups.length > 0 ? (
+              groups.offlineGroups.map(({ role, list }) => (
+                <section key={role}>
+                  <h3
+                    className={cn(
+                      "px-1 pb-1 text-[10px] font-bold uppercase tracking-wider opacity-70",
+                      ROLE_TEXT[role] ?? "text-muted-foreground",
+                    )}
+                  >
+                    {formatRoleLabel(role)}
+                  </h3>
+                  <div className="space-y-0.5">
+                    {list.map((m) => (
+                      <MemberRow
+                        key={m.user_id}
+                        row={m}
+                        online={false}
+                        selfId={user?.id ?? null}
+                        roleFlashMap={roleFlashMap}
+                      />
+                    ))}
+                  </div>
+                </section>
+              ))
             ) : (
               <p className="px-2 py-6 text-center text-xs text-muted-foreground">No members offline.</p>
             )}
