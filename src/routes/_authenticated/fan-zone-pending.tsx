@@ -35,9 +35,13 @@ function FanZonePendingPage() {
             .update({ status: "pending", reason, note: null, decided_at: null, decided_by: null })
             .eq("user_id", user.id);
     setSubmitting(false);
-    if (error) return;
+    if (error) {
+      toast.error("Couldn't send your request — please try again.");
+      return;
+    }
+    toast.success("Request sent — a Fan Zone moderator will review it.");
     setReasonDraft("");
-  };
+
 
   const status = info?.status ?? "none";
 
