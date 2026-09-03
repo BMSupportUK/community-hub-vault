@@ -86,8 +86,8 @@ export function FanReputationBox({ userId }: { userId: string }) {
       const fanIds = top.map(([id]) => id);
       let members: any[] = [];
       if (fanIds.length) {
-        const { data: m } = await supabase.from("fan_zone_members").select("user_id, fan_alias, fan_avatar_url").in("user_id", fanIds);
-        members = m ?? [];
+        const { data: m } = await supabase.rpc("fan_zone_aliases", { _ids: fanIds });
+        members = (m as any[]) ?? [];
       }
       const byId = new Map(members.map((m: any) => [m.user_id, m]));
       const topFans = top.map(([id, count]) => {

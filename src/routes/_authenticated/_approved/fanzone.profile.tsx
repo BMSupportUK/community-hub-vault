@@ -390,11 +390,9 @@ function FriendsPanel({ userId }: { userId: string }) {
       new Set(rowsAll.map((f: any) => (f.requester_id === userId ? f.addressee_id : f.requester_id))),
     );
     if (ids.length === 0) { setRows([]); setRequests([]); return; }
-    const { data: members } = await supabase
-      .from("fan_zone_members")
-      .select("user_id, fan_alias, fan_avatar_url")
-      .in("user_id", ids);
-    const byId = new Map((members ?? []).map((m: any) => [m.user_id, m]));
+    // Direct reads of other members' rows are restricted, so use the safe alias lookup.
+    const { data: members } = await supabase.rpc("fan_zone_aliases", { _ids: ids });
+    const byId = new Map(((members as any[]) ?? []).map((m: any) => [m.user_id, m]));
     const shape = (f: any): FriendRow => {
       const otherId = f.requester_id === userId ? f.addressee_id : f.requester_id;
       const m = byId.get(otherId) as any;
@@ -586,8 +584,8 @@ function ReputationBox({ userId }: { userId: string }) {
       const fanIds = top.map(([id]) => id);
       let members: any[] = [];
       if (fanIds.length) {
-        const { data: m } = await supabase.from("fan_zone_members").select("user_id, fan_alias, fan_avatar_url").in("user_id", fanIds);
-        members = m ?? [];
+        const { data: m } = await supabase.rpc("fan_zone_aliases", { _ids: fanIds });
+        members = (m as any[]) ?? [];
       }
       const byId = new Map(members.map((m: any) => [m.user_id, m]));
       const topFans = top.map(([id, count]) => {
