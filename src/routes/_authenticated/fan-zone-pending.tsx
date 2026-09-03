@@ -6,6 +6,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { FanZoneNameGate } from "@/components/app/FanZoneNamePrompt";
 import { useFanZoneMembership } from "@/hooks/use-fan-zone";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+
 
 export const Route = createFileRoute("/_authenticated/fan-zone-pending")({
   component: FanZonePendingPage,
