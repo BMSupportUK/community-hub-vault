@@ -358,6 +358,10 @@ function TopicPage() {
   }, [user?.id]);
 
   useEffect(() => {
+    autoSwitchedToRepliesRef.current = false;
+  }, [topicId]);
+
+  useEffect(() => {
     if (tab !== "reply" || !pendingReplyScrollRef.current) return;
     pendingReplyScrollRef.current = false;
     replyBoxRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
