@@ -15,7 +15,7 @@ export function FanStatsBox({ userId }: { userId: string }) {
       const [topicsRes, postsRes, friendsRes, postIdsRes] = await Promise.all([
         supabase.from("forum_topics").select("id", { count: "exact", head: true }).eq("author_id", userId),
         supabase.from("forum_posts").select("id", { count: "exact", head: true }).eq("author_id", userId),
-        supabase.from("fan_zone_friendships").select("id", { count: "exact", head: true }).eq("status", "accepted").eq("addressee_id", userId),
+        supabase.from("fan_zone_friendships").select("id", { count: "exact", head: true }).eq("status", "accepted").or(`requester_id.eq.${userId},addressee_id.eq.${userId}`),
         supabase.from("forum_posts").select("id").eq("author_id", userId),
       ]);
       const postIds = (postIdsRes.data ?? []).map((p: any) => p.id);
