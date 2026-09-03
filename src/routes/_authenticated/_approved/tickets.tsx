@@ -701,16 +701,20 @@ function TicketsPage() {
 }
 
 function NewTicketForm({
-  categories, onCancel, onCreated, preset,
+  categories: allCategories, onCancel, onCreated, preset,
 }: { categories: Category[]; onCancel: () => void; onCreated: (id: string) => void; preset?: "2fa-reset" }) {
   const { user, hasAny } = useAuth();
-  // Reporting channel / movie faults is for paying customers and staff only.
+  // Reporting live TV / movie faults is for paying customers and staff only.
   const hideReportCats =
     hasAny(["member", "nonsubscriber"]) &&
     !hasAny(["subscriber", "staff", "moderator", "management", "admin"]);
-  categories = hideReportCats
-    ? categories.filter((c) => c.slug !== "live-tv" && c.slug !== "movies-series")
-    : categories;
+  const categories = useMemo(
+    () =>
+      hideReportCats
+        ? allCategories.filter((c) => c.slug !== "live-tv" && c.slug !== "movies-series")
+        : allCategories,
+    [allCategories, hideReportCats],
+  );
   const resetCat = categories.find((c) => c.slug === "account-2fa-reset");
   const [subject, setSubject] = useState(preset === "2fa-reset" ? "2FA reset request" : "");
   const [categoryId, setCategoryId] = useState(
