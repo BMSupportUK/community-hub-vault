@@ -116,6 +116,7 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
       await request({ data: { buildId: build.id } });
       await queryClient.invalidateQueries({ queryKey: ["app-transfers"] });
       await queryClient.invalidateQueries({ queryKey: ["app-transfer"] });
+      setOpen(true);
       toast.success("Secure link created — valid for 24 hours");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Couldn't create the link");
@@ -217,7 +218,7 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
 
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-sm sm:max-w-md border-violet-500/30 bg-violet-950/95 backdrop-blur-sm">
+        <DialogContent className="max-w-sm sm:max-w-md max-h-[85vh] overflow-y-auto border-violet-500/30 bg-violet-950/95 backdrop-blur-sm">
           <DialogHeader>
             <DialogTitle className="font-display text-base flex items-center gap-2">
               <Smartphone className="size-4 text-violet-300" /> {build.appName || build.fileName}
