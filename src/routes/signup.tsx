@@ -115,12 +115,17 @@ function SignupPage() {
       // Queue a Boro Fan Zone membership request for moderator review.
       const { data: { user: signedInUser } } = await supabase.auth.getUser();
       if (signedInUser) {
-        await supabase
+        const { error: fzError } = await supabase
           .from("fan_zone_members")
-          .insert({ user_id: signedInUser.id, status: "pending" })
-          .then(() => undefined, () => undefined);
+          .insert({ user_id: signedInUser.id, status: "pending" });
+        if (fzError) {
+          toast.error("Account created, but your Fan Zone request didn't send — try again on the next screen.");
+          navigate({ to: "/fan-zone-pending" });
+          return;
+        }
       }
       toast.success("Account created. A Fan Zone moderator will review your request.");
+
       navigate({ to: "/fan-zone-pending" });
     } else {
       toast.success("Account created. A moderator will review your request.");
