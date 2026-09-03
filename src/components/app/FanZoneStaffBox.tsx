@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Shield, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { DndCountdown } from "@/components/app/DndCountdown";
 import { useFanProfileTo } from "@/components/app/fan-profile-link";
 import { useOnlineUsers } from "@/hooks/use-online-users";
 import { useLastSeenMap } from "@/hooks/use-last-seen-map";
