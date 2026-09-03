@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import QRCode from "qrcode";
-import { Smartphone, Copy, Download, Trash2, Loader2, ShieldCheck, Clock, Film, Eye, Lock } from "lucide-react";
+import { Smartphone, Copy, Download, Trash2, Loader2, ShieldCheck, Clock, Eye, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
@@ -144,75 +144,75 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
 
   return (
     <>
-      <article className="rounded-xl border border-violet-500/30 bg-violet-950/40 p-3 flex flex-col gap-2">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0">
-            <h4 className="font-display text-sm font-semibold text-foreground flex items-center gap-1.5 truncate">
-              <Smartphone className="size-3.5 text-violet-300 shrink-0" />
-              {build.appName || build.fileName}
-            </h4>
-            {build.versionName && (
-              <p className="text-[11px] text-violet-200 mt-0.5 truncate">{build.versionName}</p>
-            )}
-          </div>
-          <div className="text-[11px] text-muted-foreground text-right shrink-0">
-            {build.fileName}
-            {size ? ` · ${size}` : ""}
-          </div>
-        </div>
-
-        {build.releaseNotes && (
-          <p className="text-xs text-foreground/80 whitespace-pre-wrap line-clamp-2">{build.releaseNotes}</p>
-        )}
-
-        {build.videoPath && (
-          <div className="overflow-hidden rounded-lg border border-violet-500/30 bg-black/50">
-            {videoUrl ? (
-              <video
-                src={videoUrl}
-                controls
-                controlsList="nodownload noplaybackrate"
-                disablePictureInPicture
-                onContextMenu={(e) => e.preventDefault()}
-                className="w-full max-h-[120px] bg-black"
-              />
-            ) : (
-              <div className="flex items-center gap-2 p-3 text-xs text-muted-foreground">
-                <Film className="size-3.5" /> Loading walkthrough…
-              </div>
-            )}
-          </div>
-        )}
-
-
-        <div className="mt-auto pt-1">
-          {!hasLiveLink ? (
-            <Button
-              size="sm"
-              onClick={onRequest}
-              disabled={busy === "request"}
-              className="bg-gradient-primary text-primary-foreground shadow-glow hover:opacity-90 w-full h-auto min-h-8 whitespace-normal py-2"
-            >
-              {busy === "request" ? <Loader2 className="size-3.5 mr-1 animate-spin shrink-0" /> : <ShieldCheck className="size-3.5 mr-1 shrink-0" />}
-              <span>Request Your App Download Link</span>
-            </Button>
+      <article className="rounded-2xl border border-violet-500/30 bg-violet-950/40 overflow-hidden flex flex-col group hover:shadow-[0_0_30px_-10px_rgba(217,70,239,0.6)] transition-all">
+        <div className="aspect-[16/10] bg-violet-900/50 relative overflow-hidden">
+          {build.videoPath && videoUrl ? (
+            <video
+              src={videoUrl}
+              controls
+              controlsList="nodownload noplaybackrate"
+              disablePictureInPicture
+              onContextMenu={(e) => e.preventDefault()}
+              className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.02] transition-transform"
+            />
           ) : (
-            <div className="space-y-1.5">
-              <Button
-                size="sm"
-                variant="secondary"
-                onClick={() => setOpen(true)}
-                className="w-full h-8"
-              >
-                <Eye className="size-3.5 mr-1" /> View download options
-              </Button>
-              <p className="text-[10px] text-center text-muted-foreground flex items-center justify-center gap-1">
-                <Clock className="size-3" /> Link expires in {remaining}
-              </p>
+            <div className="w-full h-full grid place-items-center text-violet-300/60">
+              <Smartphone className="size-10" />
             </div>
           )}
         </div>
 
+        <div className="p-4 flex-1 flex flex-col gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <h4 className="font-display font-semibold text-lg leading-snug text-foreground flex items-center gap-1.5">
+              <Smartphone className="size-4 text-violet-300 shrink-0" />
+              {build.appName || build.fileName}
+            </h4>
+            {build.versionName && (
+              <span className="text-xs px-2 py-1 rounded-md bg-violet-500/20 text-violet-200 font-medium border border-violet-500/30">
+                {build.versionName}
+              </span>
+            )}
+          </div>
+
+          {build.releaseNotes && (
+            <p className="text-sm text-violet-200/70 line-clamp-2">{build.releaseNotes}</p>
+          )}
+
+          <div className="text-[11px] text-muted-foreground">
+            {build.fileName}
+            {size ? ` · ${size}` : ""}
+          </div>
+
+          <div className="mt-auto pt-3 flex items-center gap-2">
+            {!hasLiveLink ? (
+              <Button
+                size="sm"
+                onClick={onRequest}
+                disabled={busy === "request"}
+                className="bg-gradient-primary text-primary-foreground shadow-glow hover:opacity-90 flex-1 h-auto min-h-9 whitespace-normal py-2"
+              >
+                {busy === "request" ? <Loader2 className="size-3.5 mr-1 animate-spin shrink-0" /> : <ShieldCheck className="size-3.5 mr-1 shrink-0" />}
+                <span>Request Your App Download Link</span>
+              </Button>
+            ) : (
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() => setOpen(true)}
+                className="flex-1 h-auto min-h-9 whitespace-normal py-2"
+              >
+                <Eye className="size-3.5 mr-1 shrink-0" /> <span>View download options</span>
+              </Button>
+            )}
+          </div>
+
+          {hasLiveLink && (
+            <p className="text-[10px] text-center text-muted-foreground flex items-center justify-center gap-1">
+              <Clock className="size-3" /> Link expires in {remaining}
+            </p>
+          )}
+        </div>
       </article>
 
 
@@ -401,7 +401,7 @@ export function AppTransferPanel({ onUploadClick }: { onUploadClick?: () => void
           works for 24 hours. Each app has its own link.
         </p>
       </div>
-      <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
         {builds.map((b) => (
           <AppCard key={b.id} build={b} transfer={byBuild.get(b.id)} now={now} />
         ))}
