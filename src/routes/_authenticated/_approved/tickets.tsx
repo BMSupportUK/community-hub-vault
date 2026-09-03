@@ -1603,6 +1603,24 @@ function TicketDetail({
     if (error) toast.error(error.message);
   };
 
+  // Assignee changes go through the server helper: a DB trigger blocks
+  // overwriting an existing assignee with a plain update, so picking a new
+  // owner (including taking the ticket back yourself) must be reassigned
+  // properly and logged on the thread.
+  const handOverFn = useServerFn(handOverTicket);
+  const changeAssignee = async (v: string) => {
+    if (v === (ticket.assigned_to ?? "")) return;
+    if (!v) return updateField({ assigned_to: null });
+    if (!ticket.assigned_to) return updateField({ assigned_to: v });
+    try {
+      const res = await handOverFn({ data: { ticketId: ticket.id, toUserId: v } });
+      if (!res?.ok) return toast.error(res?.reason ? `Couldn't reassign: ${res.reason}` : "Couldn't reassign");
+      toast.success(res.tookBack ? "You've taken this ticket back" : `Ticket passed to ${res.toName ?? "staff"}`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Reassign failed");
+    }
+  };
+
   const closeTicket = async () => {
     if (ticket.status === "closed") return;
     if (!confirm("Close this ticket?")) return;
