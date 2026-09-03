@@ -108,6 +108,33 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
     };
   }, [user, instanceId]);
 
+  // Fan Zone accounts keep their own alias + avatar, separate from BM Support.
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    const load = async () => {
+      const { data } = await supabase
+        .from("fan_zone_members")
+        .select("fan_alias, fan_avatar_url")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (!cancelled) setFanProfile((data as any) ?? null);
+    };
+    load();
+    const ch = supabase
+      .channel(`fan-avatar-menu-${user.id}-${instanceId}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "fan_zone_members", filter: `user_id=eq.${user.id}` },
+        (payload) => setFanProfile(payload.new as any),
+      )
+      .subscribe();
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(ch);
+    };
+  }, [user, instanceId]);
+
   // Fires the once-per-release "new Android version" alert. The server keeps the
   // once-only guarantee; localStorage just stops us pinging it on every render.
   useEffect(() => {
