@@ -509,7 +509,7 @@ function AdminFanZonePage() {
                       Requested <ArrowUpDown className="size-3" />
                     </button>
                   </th>
-                  {isAdmin && <th className="text-left font-semibold px-5 py-3.5">Reason</th>}
+                  {isAdmin && statusTab === "pending" && <th className="text-left font-semibold px-5 py-3.5">Reason</th>}
                   {isAdmin && <th className="text-left font-semibold px-5 py-3.5">Status</th>}
                   <th className="w-12 px-3 text-center font-semibold">Friend</th>
                   {isAdmin && <th className="w-12 px-3" />}
@@ -518,7 +518,7 @@ function AdminFanZonePage() {
               <tbody>
                 {filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={isAdmin ? 7 : 4} className="text-center text-muted-foreground py-16">
+                    <td colSpan={isAdmin ? (statusTab === "pending" ? 7 : 6) : 4} className="text-center text-muted-foreground py-16">
                       <div className="flex flex-col items-center gap-3">
                         <div className="size-12 rounded-full bg-surface-2/60 grid place-items-center">
                           <Users className="size-6 text-muted-foreground/60" />
@@ -574,7 +574,7 @@ function AdminFanZonePage() {
                         <td className="px-5 py-3 text-muted-foreground">
                           {formatAgo(r.requested_at)}
                         </td>
-                        {isAdmin && (
+                        {isAdmin && statusTab === "pending" && (
                           <td className="px-5 py-3 max-w-[280px]">
                             {r.reason ? (
                               <span className="text-xs text-muted-foreground line-clamp-2" title={r.reason}>
