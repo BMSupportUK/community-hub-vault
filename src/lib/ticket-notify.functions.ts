@@ -200,11 +200,13 @@ export const handOverTicket = createServerFn({ method: "POST" })
       (STAFF_ROLES as readonly string[]).includes(r.role),
     );
     if (!targetIsStaff) return { ok: false, reason: "target_not_staff" };
-    if (data.toUserId === callerId) return { ok: false, reason: "self" };
+    // Taking a ticket back to yourself is allowed — it just reassigns and logs
+    // an internal note instead of alerting anyone.
+    const isTakeBack = data.toUserId === callerId;
 
     const { data: ticket } = await supabaseAdmin
       .from("tickets")
-      .select("id, subject, order_id")
+      .select("id, subject, order_id, assigned_to")
       .eq("id", data.ticketId)
       .maybeSingle();
     if (!ticket) return { ok: false, reason: "no_ticket" };
@@ -241,36 +243,45 @@ export const handOverTicket = createServerFn({ method: "POST" })
     } as never);
     if (upErr) return { ok: false, reason: upErr.message };
 
+    const prevAssignee = (ticket as { assigned_to: string | null }).assigned_to;
+
     await supabaseAdmin.from("ticket_messages").insert({
       ticket_id: data.ticketId,
       sender_id: callerId,
-      content: `🔁 Ticket passed from ${fromName} to ${toName}.${data.note ? ` Note: ${data.note}` : ""}`,
+      content: isTakeBack
+        ? `🔁 ${fromName} has taken control of this ticket back.${data.note ? ` Note: ${data.note}` : ""}`
+        : `🔁 Ticket passed from ${fromName} to ${toName}.${data.note ? ` Note: ${data.note}` : ""}`,
       is_internal: true,
     } as never);
 
-    await supabaseAdmin.from("user_notifications").insert({
-      user_id: data.toUserId,
-      kind: "ticket_handover",
-      title: `${fromName} passed you a ticket`,
-      body: data.note ? `${subject} — ${data.note}` : subject,
-      link_path: `/tickets?id=${data.ticketId}&view=assigned`,
-      source_type: "ticket",
-      source_id: data.ticketId,
-    } as never);
+    // Alert whoever is losing/gaining the ticket — never the caller themselves.
+    const notifyUser = isTakeBack ? (prevAssignee && prevAssignee !== callerId ? prevAssignee : null) : data.toUserId;
+    const title = isTakeBack ? `${fromName} took a ticket back` : `${fromName} passed you a ticket`;
+    if (notifyUser) {
+      await supabaseAdmin.from("user_notifications").insert({
+        user_id: notifyUser,
+        kind: "ticket_handover",
+        title,
+        body: data.note ? `${subject} — ${data.note}` : subject,
+        link_path: `/tickets?id=${data.ticketId}&view=assigned`,
+        source_type: "ticket",
+        source_id: data.ticketId,
+      } as never);
 
-    try {
-      const { broadcastToUser } = await import("@/lib/push.functions");
-      await broadcastToUser(
-        data.toUserId,
-        `${fromName} passed you a ticket`,
-        data.note ? `${subject} — ${data.note}` : subject,
-        `/tickets?id=${data.ticketId}&view=assigned`,
-        `ticket-handover-${data.ticketId}`,
-        "ticket-reply",
-      );
-    } catch (e) {
-      console.warn("[ticket-notify] handover push failed", e);
+      try {
+        const { broadcastToUser } = await import("@/lib/push.functions");
+        await broadcastToUser(
+          notifyUser,
+          title,
+          data.note ? `${subject} — ${data.note}` : subject,
+          `/tickets?id=${data.ticketId}&view=assigned`,
+          `ticket-handover-${data.ticketId}`,
+          "ticket-reply",
+        );
+      } catch (e) {
+        console.warn("[ticket-notify] handover push failed", e);
+      }
     }
 
-    return { ok: true, toName };
+    return { ok: true, toName, tookBack: isTakeBack };
   });
