@@ -509,7 +509,7 @@ function AdminFanZonePage() {
                       Requested <ArrowUpDown className="size-3" />
                     </button>
                   </th>
-                  {isAdmin && <th className="text-left font-semibold px-5 py-3.5">Reason</th>}
+                  {isAdmin && statusTab === "pending" && <th className="text-left font-semibold px-5 py-3.5">Reason</th>}
                   {isAdmin && <th className="text-left font-semibold px-5 py-3.5">Status</th>}
                   <th className="w-12 px-3 text-center font-semibold">Friend</th>
                   {isAdmin && <th className="w-12 px-3" />}
