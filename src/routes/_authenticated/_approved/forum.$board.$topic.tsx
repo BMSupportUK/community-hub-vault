@@ -758,6 +758,26 @@ function TopicPage() {
     };
   }, [posts, blocked]);
 
+  // On first open, jump straight to the Replies tab and start at reply #1.
+  useEffect(() => {
+    if (autoSwitchedToRepliesRef.current || !topic || !posts) return;
+    if ((topic.reply_count ?? 0) > 0) {
+      autoSwitchedToRepliesRef.current = true;
+      flushSync(() => {
+        setTab("reply");
+        setPage(1);
+      });
+      const first = visiblePosts.pinnedReplies[0] ?? visiblePosts.replies[0];
+      if (first) {
+        requestAnimationFrame(() => {
+          document.getElementById(`forum-post-${first.id}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+        });
+      }
+    } else {
+      autoSwitchedToRepliesRef.current = true;
+    }
+  }, [topic, posts, visiblePosts]);
+
   if (!canEnter) return <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-6 text-sm text-center">Members only.</div>;
   if (topic === null && posts !== null) {
     return <div className="text-center text-sm text-muted-foreground">Topic not found. <Link to="/forum/$board" params={{ board: slug }} className="underline">Back to board</Link></div>;
