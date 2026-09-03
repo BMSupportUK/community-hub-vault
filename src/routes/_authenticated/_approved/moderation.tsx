@@ -354,6 +354,18 @@ function ModerationPage() {
                             Appeal
                           </span>
                         )}
+                        {a.accessIntent && (
+                          <span
+                            title="What they selected when signing up"
+                            className={`text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded-full font-semibold shrink-0 ${
+                              a.accessIntent === "fan-zone"
+                                ? "bg-amber-500/15 text-amber-400"
+                                : "bg-sky-500/15 text-sky-400"
+                            }`}
+                          >
+                            {a.accessIntent === "fan-zone" ? "Boro Fan Zone" : "BM Support"}
+                          </span>
+                        )}
                       </div>
                       <div className="text-xs text-muted-foreground">Applied {new Date(a.created_at).toLocaleString("en-GB")}</div>
                       {displayReason && !expanded && (
