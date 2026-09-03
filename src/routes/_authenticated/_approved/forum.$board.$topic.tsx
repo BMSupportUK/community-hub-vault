@@ -376,6 +376,61 @@ function TopicPage() {
     requestAnimationFrame(scrollToReply);
   }, [posts, tab]);
 
+  // Resume reading where this member left off in the topic.
+  useEffect(() => {
+    if (!canEnter || !user) return;
+    resumeCheckedRef.current = false;
+    lastReadAtRef.current = null;
+    let cancelled = false;
+    void (async () => {
+      const { data: read } = await supabase
+        .from("forum_topic_reads")
+        .select("last_post_id, last_read_at")
+        .eq("user_id", user.id)
+        .eq("topic_id", topicId)
+        .maybeSingle();
+      if (cancelled) return;
+      lastReadAtRef.current = read?.last_read_at ?? null;
+      resumeCheckedRef.current = true;
+      if (!read?.last_read_at) return;
+      const { count } = await supabase
+        .from("forum_posts")
+        .select("id", { count: "exact", head: true })
+        .eq("topic_id", topicId)
+        .eq("is_op", false)
+        .eq("is_pinned", false)
+        .lte("created_at", read.last_read_at);
+      if (cancelled || !count) return;
+      if (read.last_post_id) pendingScrollPostIdRef.current = read.last_post_id;
+      setTab("reply");
+      setPage(Math.max(1, Math.ceil(count / REPLIES_PER_PAGE)));
+    })();
+    return () => { cancelled = true; };
+  }, [canEnter, user?.id, topicId]);
+
+  // Remember the furthest reply this member has seen.
+  useEffect(() => {
+    if (!canEnter || !user || !posts || posts.length === 0) return;
+    if (!resumeCheckedRef.current) return;
+    const replies = posts.filter((p) => !p.is_op && !p.is_pinned);
+    const newest = (replies.length ? replies : posts).reduce(
+      (best, p) => (p.created_at > best.created_at ? p : best),
+      (replies.length ? replies : posts)[0],
+    );
+    if (!newest) return;
+    const previous = lastReadAtRef.current;
+    if (previous && newest.created_at <= previous) return;
+    lastReadAtRef.current = newest.created_at;
+    void supabase
+      .from("forum_topic_reads")
+      .upsert(
+        { user_id: user.id, topic_id: topicId, last_post_id: newest.id, last_read_at: newest.created_at },
+        { onConflict: "user_id,topic_id" },
+      );
+  }, [posts, canEnter, user?.id, topicId]);
+
+
+
 
 
   const startEditTitle = () => {
