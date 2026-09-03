@@ -108,16 +108,8 @@ function SportsGuidesPage() {
   const dragCatId = useRef<string | null>(null);
   const dragBlogId = useRef<string | null>(null);
   const skipDefaultSubOnce = useRef(false);
-  const [listPage, setListPage] = useState(0);
-  const [listPageCount, setListPageCount] = useState(1);
-  const [listPageSlices, setListPageSlices] = useState<number[][]>([]);
   const [draggingBlog, setDraggingBlog] = useState(false);
   const listingsTopRef = useRef<HTMLElement | null>(null);
-
-  // Reset paging when the visible set changes.
-  useEffect(() => {
-    setListPage(0);
-  }, [activeCat, search, subFilter]);
 
   // (sub-filter default effect moved below subsByCat declaration)
 
@@ -305,8 +297,6 @@ function SportsGuidesPage() {
     if (!id) return;
     const targetIndex = filtered.findIndex((b) => b.id === id);
     if (targetIndex < 0) return;
-    const targetPage = listPageSlices.findIndex((slice) => slice.includes(targetIndex));
-    if (targetPage >= 0) setListPage(targetPage);
     window.setTimeout(() => {
       document
         .querySelector<HTMLElement>(`[data-guide-id="${id}"]`)
@@ -314,15 +304,8 @@ function SportsGuidesPage() {
     }, 80);
   };
 
-  const handlePageChange = (nextPage: number) => {
-    setListPage(nextPage);
-    window.setTimeout(() => {
-      listingsTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 0);
-  };
-
   // Remember which guide the user opened (read/edit) so coming back from the
-  // editor or reader returns to that card instead of the top of page 1.
+  // editor or reader returns to that card instead of the top of the list.
   const rememberGuide = (id: string) => {
     focusRestored.current = false;
     try { sessionStorage.setItem(SG_FOCUS_KEY, id); } catch { /* ignore */ }
@@ -331,25 +314,19 @@ function SportsGuidesPage() {
   const focusRestored = useRef(false);
   useEffect(() => {
     if (focusRestored.current || !filtered.length) return;
-    // Page slices are measured after first paint. Consuming the stored id
-    // before they exist loses the target page and drops the user on page 1.
-    if (!listPageSlices.length) return;
     let id: string | null = null;
     try { id = sessionStorage.getItem(SG_FOCUS_KEY); } catch { /* ignore */ }
     if (!id) return;
     const targetIndex = filtered.findIndex((b) => b.id === id);
     if (targetIndex < 0) return;
-    const targetPage = listPageSlices.findIndex((slice) => slice.includes(targetIndex));
-    if (targetPage < 0) return;
     focusRestored.current = true;
     try { sessionStorage.removeItem(SG_FOCUS_KEY); } catch { /* ignore */ }
-    setListPage(targetPage);
     window.setTimeout(() => {
       document
         .querySelector<HTMLElement>(`[data-guide-id="${id}"]`)
         ?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 150);
-  }, [filtered, listPageSlices]);
+  }, [filtered]);
 
   // Search every sports guide category and include a snippet showing where
   // the matching event or term appears.
