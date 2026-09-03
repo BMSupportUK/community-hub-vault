@@ -132,6 +132,7 @@ function TopicPostArticleComponent({
 
   return (
     <article
+      id={`forum-post-${post.id}`}
       className={`boro-topic-post rounded-xl overflow-hidden transition-shadow hover:shadow-[0_14px_42px_-14px_rgba(225,27,34,0.5)] ${
         post.is_op
           ? "border-[#E11B22]/65 ring-1 ring-[#E11B22]/25"
