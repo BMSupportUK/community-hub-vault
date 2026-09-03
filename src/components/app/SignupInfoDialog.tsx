@@ -104,8 +104,17 @@ export function SignupInfoDialog({ userId, trigger, displayName }: Props) {
 
   if (!canView) return null;
 
+  const accessIntent = info?.extra?.["access_intent"];
+  const intentLabel =
+    accessIntent === "fan-zone"
+      ? "Boro Fan Zone"
+      : accessIntent === "bm-support"
+        ? "BM Support"
+        : "Not recorded";
+
   const rows: Array<[string, string | null | undefined]> = info
     ? [
+        ["Signed up for", intentLabel],
         ["IP address", info.ip],
         [
           "VPN / Proxy",
