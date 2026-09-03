@@ -279,7 +279,7 @@ function ChannelsTab({ channels, roles, chanPerms, onChanged, initialChannelId, 
             <tbody>
               {roles.map((r) => {
                 const cp = permFor(r.name);
-                const locked = LOCKED.has(r.name);
+                const locked = CHANNEL_LOCKED.has(r.name);
                 const Cell = ({ k }: { k: "can_view" | "can_send" | "can_delete" | "can_mention" }) => (
                   <td className="px-3 py-3 text-center">
                     <input type="checkbox" checked={locked || cp[k]} disabled={locked} onChange={() => toggle(r.name, k)} className="size-4 accent-primary disabled:opacity-50" />
