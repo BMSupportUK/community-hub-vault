@@ -2,6 +2,7 @@ export const FAN_ZONE_PREFIXES = [
   "/forum",
   "/fanzone",
   "/fan-zone",
+  "/admin-fan-zone",
   "/boro-fantasy",
   "/boro-predictions",
   "/predictions",
