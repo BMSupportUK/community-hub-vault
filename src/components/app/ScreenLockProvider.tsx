@@ -269,10 +269,16 @@ export function ScreenLockProvider() {
   useEffect(() => {
     if (typeof document === "undefined") return;
     if (locked) {
-      const prev = document.body.style.overflow;
+      const previousOverflow = document.body.style.overflow;
+      const previousPointerEvents = document.body.style.pointerEvents;
+      // A Radix modal/menu can leave pointer-events disabled on <body> when the
+      // inactivity lock interrupts it. That makes the full-screen lock appear
+      // visible but prevents Android WebView from focusing or tapping anything.
+      document.body.style.pointerEvents = "auto";
       document.body.style.overflow = "hidden";
       return () => {
-        document.body.style.overflow = prev;
+        document.body.style.overflow = previousOverflow;
+        document.body.style.pointerEvents = previousPointerEvents;
       };
     }
     return;

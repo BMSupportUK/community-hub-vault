@@ -174,55 +174,9 @@ export function ScreenLockOverlay({ settings, onUnlock }: Props) {
 
   const settingMode = needsSetup || forceChange;
 
-  // Android boxes / Fire Sticks and some WebViews never raise a soft keyboard for
-  // these inputs, which left people unable to type anything at all. An on-screen
-  // keypad makes the lock screen usable without any keyboard.
-  const [field, setField] = useState<"new" | "confirm">("new");
-  const press = (digit: string) => {
-    if (settingMode) {
-      if (field === "new") setNewCode((v) => (v.length >= 6 ? v : v + digit));
-      else setConfirmCode((v) => (v.length >= 6 ? v : v + digit));
-      return;
-    }
-    setCode((v) => (v.length >= 6 ? v : v + digit));
-  };
-  const backspace = () => {
-    if (settingMode) {
-      if (field === "new") setNewCode((v) => v.slice(0, -1));
-      else setConfirmCode((v) => v.slice(0, -1));
-      return;
-    }
-    setCode((v) => v.slice(0, -1));
-  };
-
-  const Keypad = (
-    <div className="grid grid-cols-3 gap-2 pt-1">
-      {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((d) => (
-        <Button key={d} type="button" variant="secondary" className="h-11 text-base font-semibold" onClick={() => press(d)}>
-          {d}
-        </Button>
-      ))}
-      <Button type="button" variant="ghost" className="h-11 text-xs" onClick={backspace}>
-        Delete
-      </Button>
-      <Button type="button" variant="secondary" className="h-11 text-base font-semibold" onClick={() => press("0")}>
-        0
-      </Button>
-      <Button
-        type="button"
-        className="h-11 text-xs"
-        disabled={busy || (settingMode ? newCode.length < 4 || confirmCode.length < 4 : code.length < 4)}
-        onClick={() => (settingMode ? void saveNewCode() : void tryUnlock())}
-      >
-        {busy ? <Loader2 className="size-4 animate-spin" /> : "Enter"}
-      </Button>
-    </div>
-  );
-
   return (
     <div
-      className="fixed inset-0 z-[300] overflow-y-auto overscroll-contain bg-background isolate pointer-events-auto"
-      style={{ touchAction: "manipulation" }}
+      className="fixed inset-0 z-[300] min-h-dvh overflow-y-auto overscroll-contain bg-background isolate pointer-events-auto touch-auto"
     >
       <img
         src={lockBg}
@@ -232,7 +186,7 @@ export function ScreenLockOverlay({ settings, onUnlock }: Props) {
         className="fixed inset-0 h-full w-full object-cover pointer-events-none"
       />
       <div className="fixed inset-0 bg-background/40 pointer-events-none" />
-      <div className="relative mx-auto my-[6vh] w-[92%] sm:w-[70%] md:w-[50%] lg:w-[34%] xl:w-[30%] max-w-[420px] rounded-2xl border border-primary/40 bg-background/95 shadow-[0_0_60px_-10px_hsl(var(--primary)/0.7)] overflow-hidden">
+      <div className="relative mx-auto my-4 w-[92%] max-w-[420px] rounded-2xl border border-primary/40 bg-background/95 shadow-[0_0_60px_-10px_hsl(var(--primary)/0.7)] overflow-hidden sm:my-[6vh] sm:w-[70%] md:w-[50%] lg:w-[34%] xl:w-[30%]">
         <div className="p-6 space-y-4">
           <div className="flex items-center gap-3">
             <Avatar className="size-10">
@@ -261,9 +215,8 @@ export function ScreenLockOverlay({ settings, onUnlock }: Props) {
                 maxLength={6}
                 placeholder="New code"
                 value={newCode}
-                onFocus={() => setField("new")}
-                onClick={() => setField("new")}
-                className={field === "new" ? "ring-1 ring-primary" : undefined}
+                enterKeyHint="next"
+                className="pointer-events-auto touch-auto text-base"
                 onChange={(e) => setNewCode(e.target.value.replace(/\D/g, ""))}
               />
               <Input
@@ -273,12 +226,10 @@ export function ScreenLockOverlay({ settings, onUnlock }: Props) {
                 maxLength={6}
                 placeholder="Confirm code"
                 value={confirmCode}
-                onFocus={() => setField("confirm")}
-                onClick={() => setField("confirm")}
-                className={field === "confirm" ? "ring-1 ring-primary" : undefined}
+                enterKeyHint="done"
+                className="pointer-events-auto touch-auto text-base"
                 onChange={(e) => setConfirmCode(e.target.value.replace(/\D/g, ""))}
               />
-              {Keypad}
               <Button className="w-full" onClick={saveNewCode} disabled={busy}>
                 {busy ? <Loader2 className="size-4 animate-spin" /> : <KeyRound className="size-4" />} Save &amp; unlock
               </Button>
@@ -298,8 +249,10 @@ export function ScreenLockOverlay({ settings, onUnlock }: Props) {
                 type="password"
                 autoComplete="current-password"
                 autoFocus
+                enterKeyHint="done"
                 placeholder="Account password"
                 value={password}
+                className="pointer-events-auto touch-auto text-base"
                 onChange={(e) => setPassword(e.target.value)}
               />
               <Button type="submit" className="w-full" disabled={busy || password.length < 6}>
@@ -330,11 +283,12 @@ export function ScreenLockOverlay({ settings, onUnlock }: Props) {
                 autoComplete="one-time-code"
                 maxLength={6}
                 autoFocus
+                enterKeyHint="done"
                 placeholder={useTotp ? "6-digit authenticator code" : "Lock code"}
                 value={code}
+                className="pointer-events-auto touch-auto text-base"
                 onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
               />
-              {Keypad}
               <Button type="submit" className="w-full" disabled={busy || code.length < 4}>
                 {busy ? <Loader2 className="size-4 animate-spin" /> : <Lock className="size-4" />} Unlock
               </Button>
