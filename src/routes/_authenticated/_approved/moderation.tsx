@@ -184,8 +184,12 @@ function ModerationPage() {
       if (e1) return toast.error(e1.message);
 
       if (decision === "approved") {
-        // Remove pending role, add member role
-        await supabase.from("user_roles").delete().eq("user_id", app.user_id).eq("role", "pending");
+        // Member role only: strip every other BM Support role (Fan Zone roles are a separate product and kept)
+        await supabase
+          .from("user_roles")
+          .delete()
+          .eq("user_id", app.user_id)
+          .not("role", "in", "(member,boro_fan_zone_member,boro_fan_zone_moderator)");
         const { error: e2 } = await supabase.from("user_roles").insert({ user_id: app.user_id, role: "member" });
         if (e2 && !e2.message.includes("duplicate")) toast.error(e2.message);
         // Send automated approval message so the applicant knows to continue
