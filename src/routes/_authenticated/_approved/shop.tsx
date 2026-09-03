@@ -6247,7 +6247,7 @@ function CryptoPanel({
 
 const HOW_TO_ORDER_VIDEO_KEY = "how_to_order_video";
 
-function HowToOrderVideo({ isAdmin }: { isAdmin: boolean }) {
+function HowToOrderVideo({ isAdmin, inHero }: { isAdmin: boolean; inHero?: boolean }) {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -6318,8 +6318,13 @@ function HowToOrderVideo({ isAdmin }: { isAdmin: boolean }) {
   };
 
   return (
-    <section className="px-2 md:px-6 pb-10 -mt-10 md:-mt-14 relative z-10">
-      <div className="max-w-3xl mx-auto">
+    <section
+      className={cn(
+        "relative z-10",
+        inHero ? "" : "px-2 md:px-6 pb-10 -mt-10 md:-mt-14",
+      )}
+    >
+      <div className={cn(inHero ? "" : "max-w-3xl mx-auto")}>
         <div className="rounded-2xl border border-border bg-surface-1 p-4 md:p-6 shadow-lg">
           <div className="flex items-center justify-between gap-3 mb-4">
             <h2 className="font-display font-semibold text-lg flex items-center gap-2">
