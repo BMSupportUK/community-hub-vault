@@ -55,6 +55,8 @@ import {
   resetFantasyGuestPin, setGuestFantasyTeamName,
   getGuestFantasySwapHistory,
 } from "@/lib/fantasy-guest.functions";
+import fantasyBossAsset from "@/assets/fantasy-boss.jpg.asset.json";
+
 
 export const Route = createFileRoute("/boro-fantasy")({
   head: () => ({
