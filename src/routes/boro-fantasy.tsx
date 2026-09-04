@@ -1040,6 +1040,7 @@ function BoroFantasyPage() {
 
           {!user && showGuestLogin && (
             <GuestAccessCard
+              initialMode={guestMode}
               onSignIn={async (email, pin) => {
                 const res = await signInFn({ data: { email, pin } });
                 persistGuest({ guestId: res.guestId, email, pin, displayName: res.displayName, teamName: res.teamName ?? undefined });
