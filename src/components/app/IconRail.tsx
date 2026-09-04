@@ -317,7 +317,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
         : "shrink-0 hidden md:flex border-r border-primary-glow/40 sticky top-0 h-dvh",
     )}>
       <Link
-        to={!user || isFanZoneOnly ? "/forum" : inFanZone ? "/home" : "/home"}
+        to={!user ? "/fan-zone" : isFanZoneOnly ? "/forum" : "/home"}
         aria-label={!user || isFanZoneOnly ? "Boro Fan Zone" : inFanZone ? "Back to BM Support" : "BM Support"}
         title={!user || isFanZoneOnly ? "Boro Fan Zone" : inFanZone ? "Back to BM Support" : "BM Support"}
         className="relative z-10 shrink-0 size-12 rounded-2xl bg-gradient-primary flex items-center justify-center font-display font-bold text-sm text-primary-foreground shadow-glow mb-1 ring-2 ring-primary-glow/70 hover:ring-primary-glow hover:scale-110 transition-all duration-200"
