@@ -177,7 +177,75 @@ export function buildLiveBlock(fx: FixtureLite, json: any): string {
   return parts.join("");
 }
 
-export function buildPreviewBody(fx: FixtureLite, json: any): string {
+export const PRESSER_START = "<!--boro-presser-start-->";
+export const PRESSER_END = "<!--boro-presser-end-->";
+
+type PresserLite = { id: string; title: string; url: string } | null | undefined;
+
+/** Press conference embed, or a bespoke fixture graphic when the club posted none. */
+export function buildPresserBlock(fx: FixtureLite, json: any, presser: PresserLite): string {
+  const norm = normaliseEspnSummary(json);
+  const home = norm.home ?? fx.home_team;
+  const away = norm.away ?? fx.away_team;
+  const parts: string[] = [PRESSER_START];
+  parts.push(`<p><strong>Press conference</strong></p>`);
+  if (presser) {
+    parts.push(
+      `<div class="video-embed" style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;margin:0.75rem 0;width:100%;border-radius:0.5rem;"><iframe src="https://www.youtube-nocookie.com/embed/${esc(presser.id)}" title="${esc(presser.title)}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"></iframe></div>`,
+    );
+    parts.push(`<p><em>${esc(presser.title)} — Middlesbrough FC official channel.</em></p>`);
+  } else {
+    parts.push(fixtureGraphic(fx, json, home, away));
+    parts.push(
+      `<p><em>No press conference has been published by the club for this fixture yet. It will appear here automatically if one lands.</em></p>`,
+    );
+  }
+  parts.push(PRESSER_END);
+  return parts.join("");
+}
+
+/** Hand-built SVG fixture graphic used when there is no press conference video. */
+function fixtureGraphic(fx: FixtureLite, json: any, home: string, away: string): string {
+  const venue = json?.gameInfo?.venue?.fullName ?? null;
+  const ko = new Date(fx.kickoff_at);
+  const day = new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "Europe/London" }).format(ko);
+  const time = new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/London" }).format(ko);
+  const comp = fx.competition || "Fixture";
+  const fit = (s: string) => (s.length > 22 ? `${s.slice(0, 21)}…` : s);
+  return `<div style="margin:0.75rem 0;border-radius:0.75rem;overflow:hidden;border:1px solid rgba(225,27,34,0.35);">
+<svg viewBox="0 0 1200 630" width="100%" height="auto" role="img" aria-label="${esc(`${home} versus ${away} fixture graphic — no press conference`)}" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0a0d14"/><stop offset="55%" stop-color="#141a26"/><stop offset="100%" stop-color="#0a0d14"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="0%" r="80%">
+      <stop offset="0%" stop-color="#E11B22" stop-opacity="0.34"/><stop offset="100%" stop-color="#E11B22" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="stripes" width="26" height="26" patternTransform="rotate(35)" patternUnits="userSpaceOnUse">
+      <rect width="26" height="26" fill="none"/><rect width="9" height="26" fill="#ffffff" fill-opacity="0.028"/>
+    </pattern>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#stripes)"/>
+  <rect width="1200" height="630" fill="url(#glow)"/>
+  <rect x="0" y="0" width="1200" height="6" fill="#E11B22"/>
+  <g font-family="Helvetica, Arial, sans-serif" text-anchor="middle">
+    <text x="600" y="96" fill="#E11B22" font-size="26" letter-spacing="9" font-weight="bold">MATCH DAY</text>
+    <text x="600" y="140" fill="#ffffff" fill-opacity="0.5" font-size="22" letter-spacing="4">${esc(comp.toUpperCase())}</text>
+    <text x="600" y="272" fill="#ffffff" font-size="70" font-weight="bold">${esc(fit(home))}</text>
+    <text x="600" y="336" fill="#E11B22" font-size="34" font-weight="bold" letter-spacing="6">V</text>
+    <text x="600" y="410" fill="#ffffff" font-size="70" font-weight="bold">${esc(fit(away))}</text>
+    <line x1="330" y1="452" x2="870" y2="452" stroke="#ffffff" stroke-opacity="0.16" stroke-width="2"/>
+    <text x="600" y="498" fill="#ffffff" fill-opacity="0.78" font-size="28" letter-spacing="2">${esc(day)} · ${esc(time)} UK</text>
+    ${venue ? `<text x="600" y="536" fill="#ffffff" fill-opacity="0.45" font-size="22">${esc(venue)}</text>` : ""}
+    <text x="600" y="592" fill="#E11B22" font-size="24" letter-spacing="5" font-weight="bold">NO PRESS CONFERENCE AVAILABLE</text>
+  </g>
+</svg>
+</div>`;
+}
+
+export function buildPreviewBody(fx: FixtureLite, json: any, presser?: PresserLite): string {
+
   const norm = normaliseEspnSummary(json);
   const comp = json?.header?.competitions?.[0];
   const competitors: any[] = comp?.competitors ?? [];
@@ -209,6 +277,9 @@ export function buildPreviewBody(fx: FixtureLite, json: any): string {
   if (ref) facts.push(`<li><strong>Referee:</strong> ${esc(ref)}</li>`);
   if (odds) facts.push(`<li><strong>Odds:</strong> ${esc(odds)}</li>`);
   parts.push(`<ul>${facts.join("")}</ul>`);
+
+  parts.push(buildPresserBlock(fx, json, presser));
+
 
   const table = sides.filter((s) => s.rank);
   if (table.length) {
@@ -411,7 +482,24 @@ export function buildFullTimeBody(fx: FixtureLite, json: any): string {
 }
 
 /** Strip a legacy inline live block out of the preview reply. */
+/** Insert or refresh the press conference block inside an existing preview post. */
+function upsertPresserBlock(body: string, block: string): string {
+  const start = body.indexOf(PRESSER_START);
+  const end = body.indexOf(PRESSER_END);
+  if (start !== -1 && end !== -1) {
+    const current = body.slice(start, end + PRESSER_END.length);
+    // Keep an existing video block; never downgrade it to the "no presser" graphic.
+    if (/<iframe/i.test(current) && !/<iframe/i.test(block)) return body;
+    return `${body.slice(0, start)}${block}${body.slice(end + PRESSER_END.length)}`;
+  }
+  // Older previews have no block yet — drop it in after the facts list.
+  const anchor = body.indexOf("</ul>");
+  if (anchor === -1) return `${body}\n${block}`;
+  return `${body.slice(0, anchor + 5)}\n${block}${body.slice(anchor + 5)}`;
+}
+
 function stripLiveBlock(body: string): string {
+
   const start = body.indexOf(LIVE_START);
   const end = body.indexOf(LIVE_END);
   if (start === -1 || end === -1) return body;
@@ -521,6 +609,12 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
 
   const authorId = (await getMatchDayAuthorId()) ?? topic.author_id;
 
+  // Official Middlesbrough FC press conference video for this fixture (if any).
+  const { findPressConference } = await import("@/lib/boro-press-conference.server");
+  const presser = await findPressConference(fx).catch(() => null);
+  if (!presser) skipped.push("no press conference video found — fixture graphic used");
+
+
   const { data: logged } = await supabaseAdmin
     .from("boro_match_event_posts")
     .select("id, event_key, post_id, fingerprint, revision")
@@ -539,7 +633,7 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
 
   const preview = byKey.get("preview");
   if (!preview) {
-    const body = buildPreviewBody(fx, json);
+    const body = buildPreviewBody(fx, json, presser);
     const { data: post, error: postErr } = await supabaseAdmin
       .from("forum_posts")
       .insert({ topic_id: topic.id, author_id: authorId, body })
@@ -583,7 +677,11 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
         /Auto-filled from the fixture list/.test(existing.body) ||
         !/Form \(last 5\)/.test(existing.body);
       const upgrade = hasLiveData && basic;
-      const rebuilt = legacy || upgrade ? buildPreviewBody(fx, json) : stripLiveBlock(existing.body);
+      const rebuilt =
+        legacy || upgrade
+          ? buildPreviewBody(fx, json, presser)
+          : upsertPresserBlock(stripLiveBlock(existing.body), buildPresserBlock(fx, json, presser));
+
       if (rebuilt !== existing.body) {
         const { error: upErr } = await supabaseAdmin
           .from("forum_posts")
