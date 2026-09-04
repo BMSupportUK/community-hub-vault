@@ -64,7 +64,7 @@ export function FanZoneStaffBox() {
           // not be in this presence channel — a fresh "last active" ping counts
           // as online too. `tick` re-evaluates this every 30s with no refresh.
           const seenMs = seen ? new Date(seen).getTime() : 0;
-          const recentlyActive = seenMs > 0 && Date.now() - seenMs < 6 * 60_000 && tick >= 0;
+          const recentlyActive = seenMs > 0 && Date.now() - seenMs < 5 * 60_000 && tick >= 0;
           const isOnline = online.has(m.user_id) || recentlyActive;
           const seenText = formatLastSeen(seen);
           const inner = (

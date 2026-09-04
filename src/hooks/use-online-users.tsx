@@ -26,7 +26,7 @@ let retryDelay = 1000;
 let listenersBound = false;
 let currentState: Set<string> = new Set();
 const listeners = new Set<() => void>();
-const LAST_SEEN_PING_MS = 5 * 60_000;
+const LAST_SEEN_PING_MS = 2 * 60_000;
 const HEARTBEAT_MS = 25_000;
 
 function getSnapshot() {
