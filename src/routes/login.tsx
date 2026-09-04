@@ -37,7 +37,10 @@ function safeNext(value: unknown): string | undefined {
 }
 
 export const Route = createFileRoute("/login")({
-  validateSearch: (search: Record<string, unknown>) => ({ next: safeNext(search.next) }),
+  validateSearch: (search: Record<string, unknown>): { next?: string } => {
+    const next = safeNext(search.next);
+    return next ? { next } : {};
+  },
   beforeLoad: async ({ search }) => {
     const { data: { session } } = await supabase.auth.getSession();
     if (session) throw redirect({ to: (search.next ?? "/home") as never });
