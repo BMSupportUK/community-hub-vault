@@ -8,6 +8,7 @@ import { TurnstileWidget } from "@/components/app/TurnstileWidget";
 import { verifyTurnstile } from "@/lib/turnstile.functions";
 import { checkMyVpnOnLogin } from "@/lib/vpn-login-check.functions";
 import { refreshVpnUserSet } from "@/lib/vpn-flags";
+import { clearScreenLockState } from "@/lib/screen-lock-hash";
 
 async function getClientIpHint(): Promise<string | null> {
   try {
@@ -54,6 +55,8 @@ function LoginPage() {
     }
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) { setBusy(false); return toast.error(error.message); }
+    // A brand new sign-in starts unlocked, never inside a stale inactivity lock.
+    clearScreenLockState();
     try {
       await supabase.auth.getSession();
       const clientIpHint = await getClientIpHint();
