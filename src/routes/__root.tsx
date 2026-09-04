@@ -8,6 +8,7 @@ import {
   Link,
 } from "@tanstack/react-router";
 import { Toaster } from "sonner";
+import { FanZonePresenceTracker } from "@/components/app/FanZonePresenceTracker";
 import { useEffect, useState } from "react";
 
 import appCss from "../styles.css?url";
@@ -148,6 +149,7 @@ function RootComponent() {
         <PushSoundBridge />
         <ToastNotificationBridge />
         <LocalSendReceiverBridge />
+        <FanZonePresenceTracker />
         <Outlet />
         {/* z-index keeps toasts visible above the inactivity lock overlay (z-200) */}
         <Toaster theme="dark" position="bottom-right" style={{ zIndex: 2147483000 }} />
