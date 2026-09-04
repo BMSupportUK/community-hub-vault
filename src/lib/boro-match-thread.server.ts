@@ -623,7 +623,7 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
 
 
 
-  const authorId = (await getMatchDayAuthorId()) ?? topic.author_id;
+  const postAuthorId = authorId ?? topic.author_id;
 
   // Official Middlesbrough FC press conference video for this fixture (if any).
   const { findPressConference } = await import("@/lib/boro-press-conference.server");
