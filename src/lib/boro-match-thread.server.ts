@@ -592,6 +592,12 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
 
   const authorId = (await getMatchDayAuthorId()) ?? topic.author_id;
 
+  // Official Middlesbrough FC press conference video for this fixture (if any).
+  const { findPressConference } = await import("@/lib/boro-press-conference.server");
+  const presser = await findPressConference(fx).catch(() => null);
+  if (!presser) skipped.push("no press conference video found — fixture graphic used");
+
+
   const { data: logged } = await supabaseAdmin
     .from("boro_match_event_posts")
     .select("id, event_key, post_id, fingerprint, revision")
