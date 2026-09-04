@@ -8,6 +8,81 @@ const cache = new Map<string, { at: number; value: any }>();
 
 const norm = (value: string) => value.toLowerCase().replace(/[^a-z]/g, "");
 
+/** FotMob uses short club names; fixtures may carry the full ones (and vice versa). */
+const NAME_ALIASES: Record<string, string> = {
+  queensparkrangers: "qpr",
+  qpr: "qpr",
+  westbromwichalbion: "westbrom",
+  westbrom: "westbrom",
+  wba: "westbrom",
+  westhamunited: "westham",
+  westham: "westham",
+  sheffieldunited: "sheffutd",
+  sheffutd: "sheffutd",
+  sheffieldwednesday: "sheffwed",
+  sheffwed: "sheffwed",
+  wolverhamptonwanderers: "wolves",
+  wolves: "wolves",
+  brightonandhovealbion: "brighton",
+  brighton: "brighton",
+  boltonwanderers: "bolton",
+  bolton: "bolton",
+  blackburnrovers: "blackburn",
+  blackburn: "blackburn",
+  bristolcity: "bristolcity",
+  cardiffcity: "cardiff",
+  cardiff: "cardiff",
+  stokecity: "stoke",
+  stoke: "stoke",
+  swanseacity: "swansea",
+  swansea: "swansea",
+  norwichcity: "norwich",
+  norwich: "norwich",
+  birminghamcity: "birmingham",
+  birmingham: "birmingham",
+  hullcity: "hull",
+  hull: "hull",
+  leicestercity: "leicester",
+  leicester: "leicester",
+  coventrycity: "coventry",
+  coventry: "coventry",
+  derbycounty: "derby",
+  derby: "derby",
+  prestonnorthend: "preston",
+  preston: "preston",
+  charltonathletic: "charlton",
+  charlton: "charlton",
+  millwallfc: "millwall",
+  portsmouthfc: "portsmouth",
+  lincolncity: "lincoln",
+  lincoln: "lincoln",
+  doncasterrovers: "doncaster",
+  doncaster: "doncaster",
+  wrexhamafc: "wrexham",
+  ipswichtown: "ipswich",
+  ipswich: "ipswich",
+  lutontown: "luton",
+  luton: "luton",
+  oxfordunited: "oxford",
+  oxford: "oxford",
+  plymouthargyle: "plymouth",
+  plymouth: "plymouth",
+  southamptonfc: "southampton",
+  middlesbroughfc: "middlesbrough",
+};
+
+const canon = (value: string) => {
+  const base = norm(value).replace(/^afc/, "").replace(/(fc|afc)$/, "");
+  return NAME_ALIASES[base] ?? base;
+};
+
+const nameMatches = (a: string, b: string) => {
+  const x = canon(a);
+  const y = canon(b);
+  return x === y || x.includes(y) || y.includes(x);
+};
+
+
 async function fotmobJson(url: string, ttlMs: number): Promise<any | null> {
   const hit = cache.get(url);
   if (hit && Date.now() - hit.at < ttlMs) return hit.value;
@@ -40,12 +115,13 @@ export async function resolveFotmobMatch(input: {
 }): Promise<string | null> {
   const data = await fotmobJson(`https://www.fotmob.com/api/data/teams?id=${BORO_TEAM_ID}`, 30_000);
   const fixtures: any[] = data?.fixtures?.allFixtures?.fixtures ?? [];
-  const wanted = [norm(input.home), norm(input.away)];
+  const wanted = [input.home, input.away];
   const kickoff = Date.parse(input.kickoff);
   let best: { id: string; distance: number } | null = null;
   for (const fixture of fixtures) {
-    const names = [fixture?.home?.name, fixture?.away?.name].filter(Boolean).map((name) => norm(String(name)));
-    if (!wanted.every((name) => names.some((candidate) => candidate.includes(name) || name.includes(candidate)))) continue;
+    const names = [fixture?.home?.name, fixture?.away?.name].filter(Boolean).map((name) => String(name));
+    if (!wanted.every((name) => names.some((candidate) => nameMatches(candidate, name)))) continue;
+
     const distance = Math.abs(Date.parse(String(fixture?.status?.utcTime ?? "")) - kickoff);
     if (!Number.isFinite(distance) || distance > 36 * 60 * 60 * 1000 || !fixture?.id) continue;
     if (!best || distance < best.distance) best = { id: String(fixture.id), distance };
