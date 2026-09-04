@@ -1288,11 +1288,8 @@ function GuestLoginCard({
 
   return (
     <div className="mb-6 rounded-2xl border-2 border-primary/80 bg-surface p-5 shadow-soft backdrop-blur-md">
-      <div className="flex items-center justify-between mb-1">
+      <div className="mb-1">
         <h3 className="font-display text-xl font-bold text-foreground drop-shadow">{mode === "signin" ? "Guest sign in" : "Register as guest"}</h3>
-        <button type="button" className="text-xs font-semibold text-primary hover:underline" onClick={() => setMode(mode === "signin" ? "register" : "signin")} disabled={busy}>
-          {mode === "signin" ? "New here? Register" : "Already registered? Sign in"}
-        </button>
       </div>
       <p className="text-sm text-foreground/90 mb-4">
         {mode === "signin" ? "Enter the email and 4-digit PIN you used when you registered." : "Pick a display name, enter your email, and choose a 4-digit PIN."}
