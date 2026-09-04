@@ -383,6 +383,9 @@ function BoroPredictionsPage() {
               </div>
               {!user && !guest && !showGuestLogin && (
                 <div className="flex flex-col sm:flex-row gap-2">
+                  <Button asChild variant="outline" className="border-white/70 bg-white/10 text-white hover:bg-white/20">
+                    <Link to="/login" search={{ next: "/boro-predictions" }}>Boro Fan Zone member login</Link>
+                  </Button>
                   <Button onClick={() => { setGuestMode("signin"); setShowGuestLogin(true); }} className="bg-white text-primary hover:bg-white/90">Guest sign in</Button>
                   <Button variant="outline" onClick={() => { setGuestMode("register"); setShowGuestLogin(true); }} className="bg-white/10 text-white border-white/40 hover:bg-white/20">Guest register</Button>
                 </div>
