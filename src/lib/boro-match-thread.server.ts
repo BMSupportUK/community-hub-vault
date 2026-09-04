@@ -584,17 +584,24 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
     .maybeSingle();
   if (!board?.id) return { ...base, fixture: label, skipped: ["match day board not found"] };
 
+  const authorId = (await getMatchDayAuthorId()) ?? null;
+
   const { data: topics } = await supabaseAdmin
     .from("forum_topics")
     .select("id, title, created_at, author_id")
     .eq("board_id", board.id)
     .order("created_at", { ascending: false })
     .limit(40);
-  const topic = matchTopicToFixture(
-    (topics ?? []) as Array<{ id: string; title: string; created_at: string; author_id: string }>,
-    fx,
-  );
+  const existingTopics = (topics ?? []) as Array<{ id: string; title: string; created_at: string; author_id: string }>;
+  let topic = matchTopicToFixture(existingTopics, fx);
+  // No thread yet (the previous game has finished and this is the next fixture):
+  // open one automatically in the house format so the preview can post into it.
+  if (!topic && authorId) {
+    topic = await createMatchTopic(supabaseAdmin, board.id, authorId, fx);
+    if (!topic) skipped.push("could not open a match day thread automatically");
+  }
   if (!topic) return { ...base, fixture: label, topic: null, skipped: ["no match day thread for this fixture yet"] };
+
 
   // FotMob is the only live-data source. It is reachable from the server, so no
   // browser relay is needed and the thread can refresh in real time. Live data
