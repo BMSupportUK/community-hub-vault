@@ -6364,6 +6364,10 @@ function HowToOrderVideo({ isAdmin, inHero }: { isAdmin: boolean; inHero?: boole
               key={videoUrl}
               src={videoUrl}
               controls
+              controlsList="nodownload noremoteplayback noplaybackrate"
+              disablePictureInPicture
+              disableRemotePlayback
+              onContextMenu={(e) => e.preventDefault()}
               playsInline
               onPlay={() => {
                 const el = videoRef.current;
