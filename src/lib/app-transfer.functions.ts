@@ -29,6 +29,14 @@ async function requireStaffView(context: { supabase: any; userId: string }) {
   if (!data) throw new Error("Forbidden");
 }
 
+export const APP_BUILD_CATEGORIES = [
+  { key: "official_server", label: "Official Service App" },
+  { key: "official_3rd_party", label: "Official 3rd Party App" },
+  { key: "rebranded", label: "Rebranded Apps" },
+  { key: "bm_store", label: "BM Support App Store" },
+] as const;
+export type AppBuildCategory = (typeof APP_BUILD_CATEGORIES)[number]["key"];
+
 function mapBuild(data: any) {
   return {
     id: data.id as string,
@@ -42,6 +50,7 @@ function mapBuild(data: any) {
     sortOrder: (data.sort_order as number | null) ?? 0,
     installInstructions: (data.install_instructions as string | null) ?? null,
     announceUpdates: !!data.announce_updates,
+    category: ((data.category as string | null) ?? "bm_store") as AppBuildCategory,
     createdAt: data.created_at as string,
   };
 }
@@ -76,7 +85,7 @@ export const listAppBuilds = createServerFn({ method: "GET" })
     const { data } = await context.supabase
       .from("app_builds")
       .select(
-        "id, app_name, file_name, file_size, version_name, release_notes, is_available, video_path, sort_order, install_instructions, announce_updates, created_at",
+        "id, app_name, file_name, file_size, version_name, release_notes, is_available, video_path, sort_order, install_instructions, announce_updates, category, created_at",
       )
       .eq("is_current", true)
       .eq("is_available", true)
@@ -93,7 +102,7 @@ export const listAppBuildsAdmin = createServerFn({ method: "GET" })
     const { data } = await context.supabase
       .from("app_builds")
       .select(
-        "id, app_name, file_name, file_size, version_name, release_notes, is_available, video_path, sort_order, install_instructions, announce_updates, created_at",
+        "id, app_name, file_name, file_size, version_name, release_notes, is_available, video_path, sort_order, install_instructions, announce_updates, category, created_at",
       )
       .eq("is_current", true)
       .order("sort_order", { ascending: true })
@@ -231,6 +240,7 @@ export const saveAppBuild = createServerFn({ method: "POST" })
       sortOrder?: number | null;
       installInstructions?: string | null;
       announceUpdates?: boolean;
+      category?: AppBuildCategory | null;
     }) => data,
   )
   .handler(async ({ data, context }) => {
@@ -250,6 +260,7 @@ export const saveAppBuild = createServerFn({ method: "POST" })
         sort_order: data.sortOrder ?? 0,
         install_instructions: data.installInstructions ?? null,
         announce_updates: data.announceUpdates ?? false,
+        category: data.category ?? "bm_store",
         is_current: true,
         is_available: data.isAvailable ?? true,
         created_by: context.userId,
@@ -295,6 +306,7 @@ export const updateAppBuild = createServerFn({ method: "POST" })
       fileName?: string | null;
       fileSize?: number | null;
       announceUpdates?: boolean;
+      category?: AppBuildCategory | null;
     }) => data,
   )
   .handler(async ({ data, context }) => {
@@ -312,6 +324,7 @@ export const updateAppBuild = createServerFn({ method: "POST" })
     if (data.fileName !== undefined && data.fileName) patch.file_name = data.fileName;
     if (data.fileSize !== undefined) patch.file_size = data.fileSize;
     if (data.announceUpdates !== undefined) patch.announce_updates = data.announceUpdates;
+    if (data.category !== undefined && data.category) patch.category = data.category;
     const { error } = await supabaseAdmin.from("app_builds").update(patch as never).eq("id", data.id);
     if (error) throw new Error(error.message);
 

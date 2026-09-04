@@ -7,7 +7,9 @@ import { Smartphone, Copy, Download, Trash2, Loader2, ShieldCheck, Clock, Eye, L
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
+  APP_BUILD_CATEGORIES,
   listAppBuilds,
   listMyAppTransfers,
   requestAppTransfer,
@@ -367,6 +369,19 @@ export function AppTransferPanel({ onUploadClick }: { onUploadClick?: () => void
     return map;
   }, [transfers]);
 
+  const grouped = useMemo(() => {
+    const map: Record<string, Build[]> = {};
+    for (const b of builds ?? []) {
+      const key = (b.category ?? "bm_store") as string;
+      (map[key] ??= []).push(b);
+    }
+    return map;
+  }, [builds]);
+
+  const firstTab =
+    APP_BUILD_CATEGORIES.find((c) => (grouped[c.key] ?? []).length > 0)?.key ??
+    APP_BUILD_CATEGORIES[0].key;
+
   if (!canDownload) return <RequestAccessPanel />;
 
   if (!builds || builds.length === 0) {
@@ -402,11 +417,29 @@ export function AppTransferPanel({ onUploadClick }: { onUploadClick?: () => void
           works for 24 hours. Each app has its own link.
         </p>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-        {builds.map((b) => (
-          <AppCard key={b.id} build={b} transfer={byBuild.get(b.id)} now={now} />
+      <Tabs defaultValue={firstTab} className="w-full">
+        <TabsList className="flex h-auto flex-wrap justify-start gap-1 bg-violet-950/40 p-1">
+          {APP_BUILD_CATEGORIES.map((c) => (
+            <TabsTrigger key={c.key} value={c.key} className="whitespace-normal text-xs sm:text-sm">
+              {c.label}
+              <span className="ml-1.5 text-[10px] opacity-70">{(grouped[c.key] ?? []).length}</span>
+            </TabsTrigger>
+          ))}
+        </TabsList>
+        {APP_BUILD_CATEGORIES.map((c) => (
+          <TabsContent key={c.key} value={c.key} className="mt-4">
+            {(grouped[c.key] ?? []).length === 0 ? (
+              <p className="text-sm text-muted-foreground">No apps in this section yet.</p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                {(grouped[c.key] ?? []).map((b) => (
+                  <AppCard key={b.id} build={b} transfer={byBuild.get(b.id)} now={now} />
+                ))}
+              </div>
+            )}
+          </TabsContent>
         ))}
-      </div>
+      </Tabs>
     </section>
   );
 }

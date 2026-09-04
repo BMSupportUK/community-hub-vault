@@ -138,6 +138,7 @@ export type Database = {
         Row: {
           announce_updates: boolean
           app_name: string | null
+          category: string
           created_at: string
           created_by: string | null
           file_name: string
@@ -156,6 +157,7 @@ export type Database = {
         Insert: {
           announce_updates?: boolean
           app_name?: string | null
+          category?: string
           created_at?: string
           created_by?: string | null
           file_name: string
@@ -174,6 +176,7 @@ export type Database = {
         Update: {
           announce_updates?: boolean
           app_name?: string | null
+          category?: string
           created_at?: string
           created_by?: string | null
           file_name?: string

@@ -8,8 +8,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import {
+  APP_BUILD_CATEGORIES,
+  type AppBuildCategory,
   listAppBuildsAdmin,
   saveAppBuild,
   updateAppBuild,
@@ -60,6 +63,7 @@ function BuildCard({
   const [version, setVersion] = useState(build.versionName ?? "");
   const [notes, setNotes] = useState(build.releaseNotes ?? "");
   const [instructions, setInstructions] = useState(build.installInstructions ?? "");
+  const [category, setCategory] = useState<AppBuildCategory>(build.category ?? "bm_store");
   const [busy, setBusy] = useState<null | "save" | "apk" | "video" | "delete">(null);
 
   const patch = async (data: Parameters<typeof update>[0]["data"], msg?: string) => {
@@ -78,6 +82,7 @@ function BuildCard({
           versionName: version || null,
           releaseNotes: notes || null,
           installInstructions: instructions || null,
+          category,
         },
         "App details saved",
       );
@@ -148,6 +153,7 @@ function BuildCard({
             {build.fileName}
             {build.fileSize ? ` · ${(build.fileSize / 1048576).toFixed(1)} MB` : ""}
             {build.videoPath ? " · video attached" : ""}
+            {` · ${APP_BUILD_CATEGORIES.find((c) => c.key === (build.category ?? "bm_store"))?.label ?? ""}`}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -199,6 +205,20 @@ function BuildCard({
         <div>
           <Label>Version name</Label>
           <Input value={version} onChange={(e) => setVersion(e.target.value)} placeholder="e.g. 1.4.0" />
+        </div>
+        <div className="sm:col-span-2">
+          <Label>Store tab</Label>
+          <Select value={category} onValueChange={(v) => setCategory(v as AppBuildCategory)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Choose a tab" />
+            </SelectTrigger>
+            <SelectContent>
+              {APP_BUILD_CATEGORIES.map((c) => (
+                <SelectItem key={c.key} value={c.key}>{c.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <p className="mt-1 text-xs text-muted-foreground">Which "Get the App" tab members find this app under. Remember to save.</p>
         </div>
         <div className="sm:col-span-2">
           <Label>Release notes</Label>
@@ -277,6 +297,7 @@ function NewBuildForm({ onCreated }: { onCreated: () => Promise<void> }) {
   const [version, setVersion] = useState("");
   const [notes, setNotes] = useState("");
   const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [category, setCategory] = useState<AppBuildCategory>("bm_store");
   const [uploading, setUploading] = useState(false);
 
   const onUpload = async (file: File) => {
@@ -297,6 +318,7 @@ function NewBuildForm({ onCreated }: { onCreated: () => Promise<void> }) {
           versionName: version || null,
           releaseNotes: notes || null,
           videoPath,
+          category,
           isAvailable: true,
         },
       });
@@ -305,6 +327,7 @@ function NewBuildForm({ onCreated }: { onCreated: () => Promise<void> }) {
       setVersion("");
       setNotes("");
       setVideoFile(null);
+      setCategory("bm_store");
       setOpen(false);
       toast.success("App added to the store");
     } catch (e) {
@@ -333,6 +356,19 @@ function NewBuildForm({ onCreated }: { onCreated: () => Promise<void> }) {
         <div>
           <Label htmlFor="new-app-version">Version name</Label>
           <Input id="new-app-version" value={version} onChange={(e) => setVersion(e.target.value)} placeholder="e.g. 1.4.0" />
+        </div>
+        <div className="sm:col-span-2">
+          <Label>Store tab</Label>
+          <Select value={category} onValueChange={(v) => setCategory(v as AppBuildCategory)}>
+            <SelectTrigger>
+              <SelectValue placeholder="Choose a tab" />
+            </SelectTrigger>
+            <SelectContent>
+              {APP_BUILD_CATEGORIES.map((c) => (
+                <SelectItem key={c.key} value={c.key}>{c.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div className="sm:col-span-2">
           <Label htmlFor="new-app-notes">Release notes</Label>
