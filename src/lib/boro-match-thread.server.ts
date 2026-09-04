@@ -191,9 +191,11 @@ export function buildPresserBlock(fx: FixtureLite, json: any, presser: PresserLi
   parts.push(`<p><strong>Press conference</strong></p>`);
   if (presser) {
     parts.push(
-      `<div class="video-embed" style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;margin:0.75rem 0;width:100%;border-radius:0.5rem;"><iframe src="https://www.youtube-nocookie.com/embed/${esc(presser.id)}" title="${esc(presser.title)}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"></iframe></div>`,
+      `<div class="video-embed" style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;margin:0.75rem 0;width:100%;border-radius:0.5rem;"><iframe src="https://www.youtube.com/embed/${esc(presser.id)}?rel=0&amp;playsinline=1" title="${esc(presser.title)}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"></iframe></div>`,
     );
-    parts.push(`<p><em>${esc(presser.title)} — Middlesbrough FC official channel.</em></p>`);
+    parts.push(
+      `<p><em>${esc(presser.title)} — Middlesbrough FC official channel.</em> <a href="${esc(presser.url)}" target="_blank" rel="noopener noreferrer">Watch on YouTube</a></p>`,
+    );
   } else {
     parts.push(fixtureGraphic(fx, json, home, away));
     parts.push(
