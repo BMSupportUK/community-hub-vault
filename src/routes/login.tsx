@@ -80,11 +80,14 @@ function LoginPage() {
     const aal = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
     setBusy(false);
     if (aal.data?.nextLevel === "aal2" && aal.data?.currentLevel !== "aal2") {
+      try {
+        if (next) sessionStorage.setItem(POST_LOGIN_NEXT_KEY, next);
+      } catch { /* storage unavailable */ }
       navigate({ to: "/mfa-challenge" });
       return;
     }
     toast.success("Welcome back");
-    navigate({ to: "/home" });
+    navigate({ to: (next ?? "/home") as never });
   };
 
   return (
