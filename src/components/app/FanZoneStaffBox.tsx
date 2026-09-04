@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Shield, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,10 +22,10 @@ export function FanZoneStaffBox() {
   const staffIds = useMemo(() => (members ?? []).map((m) => m.user_id), [members]);
   const { lastSeen, tick } = useLastSeenMap(staffIds);
 
-  useEffect(() => {
-    void (async () => {
-      const { data } = await supabase.rpc("fan_zone_staff_directory");
-      const out: StaffMember[] = ((data ?? []) as Array<{
+  const loadMembers = useCallback(async () => {
+      const { data, error } = await supabase.rpc("fan_zone_staff_directory");
+      if (error) return;
+      const rows: StaffMember[] = ((data ?? []) as Array<{
         user_id: string;
         role: StaffMember["role"];
         fan_alias: string;
@@ -36,14 +36,40 @@ export function FanZoneStaffBox() {
         fan_alias: r.fan_alias,
         fan_avatar_url: r.fan_avatar_url,
       }));
+      const unique = new Map<string, StaffMember>();
+      rows.forEach((member) => {
+        const existing = unique.get(member.user_id);
+        if (!existing || member.role === "admin") unique.set(member.user_id, member);
+      });
+      const out = Array.from(unique.values());
       // Owners first, then moderators; alphabetical within each
       out.sort((a, b) => {
         if (a.role !== b.role) return a.role === "admin" ? -1 : 1;
         return a.fan_alias.toLowerCase().localeCompare(b.fan_alias.toLowerCase());
       });
       setMembers(out);
-    })();
   }, []);
+
+  useEffect(() => {
+    void loadMembers();
+    const channel = supabase
+      .channel(`fan-zone-staff-directory-${Math.random().toString(36).slice(2)}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "fan_zone_members" }, () => void loadMembers())
+      .on("postgres_changes", { event: "*", schema: "public", table: "user_roles" }, () => void loadMembers())
+      .subscribe();
+    const refresh = () => {
+      if (document.visibilityState === "visible") void loadMembers();
+    };
+    const interval = window.setInterval(refresh, 15_000);
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+      void supabase.removeChannel(channel);
+    };
+  }, [loadMembers]);
 
   if (!members || members.length === 0) return null;
 
