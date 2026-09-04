@@ -494,6 +494,8 @@ function upsertPresserBlock(body: string, block: string): string {
     if (/<iframe/i.test(current) && !/<iframe/i.test(block)) return body;
     return `${body.slice(0, start)}${block}${body.slice(end + PRESSER_END.length)}`;
   }
+  // Marker comments can be stripped by the editor — never stack a second video.
+  if (/youtube(?:-nocookie)?\.com\/embed/i.test(body)) return body;
   // Older previews have no block yet — drop it in after the facts list.
   const anchor = body.indexOf("</ul>");
   if (anchor === -1) return `${body}\n${block}`;
