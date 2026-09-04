@@ -708,6 +708,7 @@ function BoroFantasyPage() {
   const [tab, setTab] = useState("squad");
   const [guest, setGuest] = useState<GuestSession | null>(null);
   const [showGuestLogin, setShowGuestLogin] = useState(false);
+  const [guestMode, setGuestMode] = useState<"signin" | "register">("signin");
   const [joining, setJoining] = useState(false);
   const [markingFinished, setMarkingFinished] = useState(false);
 
