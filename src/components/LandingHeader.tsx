@@ -6,6 +6,8 @@ import { VpnBlockedDialog } from "@/components/VpnBlockedDialog";
 import { ShieldAlert, Menu, X } from "lucide-react";
 import { useFinishedCompetitions } from "@/hooks/use-finished-competitions";
 import { COMPETITIONS } from "@/lib/competitions";
+import { isFanZonePath } from "@/lib/fan-zone-nav";
+
 
 const baseNavItems = [
   { to: "/packages", label: "Packages" },
