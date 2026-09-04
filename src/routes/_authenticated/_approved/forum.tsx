@@ -129,34 +129,36 @@ function ForumLayout() {
               <FanZoneMentionsBell />
             </div>
           </div>
-          <div className="z-10 flex w-full justify-center">
-            <OnlineNowBox variant="hero" />
-          </div>
-          <div className="flex min-w-0 items-center gap-4 sm:gap-5">
-            <Link
-              to="/forum"
-              className="hidden sm:flex size-20 rounded-full bg-white items-center justify-center shadow-lg ring-2 ring-white/50 shrink-0 hover:ring-white hover:scale-105 transition-all"
-              aria-label="Back to Boro Fan Zone home"
-            >
-              <img
-                src={boroBadge}
-                alt="Boro Fan Zone badge"
-                width={1024}
-                height={1024}
-                className="size-[72px] object-contain"
-                loading="lazy"
-              />
-            </Link>
-            <div className="min-w-0 flex-1">
-              <div className="mb-1 text-[10px] font-bold uppercase tracking-[0.3em] text-white/80">
-                Members only · Est. terrace
+          <div className="z-10 flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-5 justify-between">
+            <div className="flex min-w-0 items-center gap-4 sm:gap-5">
+              <Link
+                to="/forum"
+                className="hidden sm:flex size-20 rounded-full bg-white items-center justify-center shadow-lg ring-2 ring-white/50 shrink-0 hover:ring-white hover:scale-105 transition-all"
+                aria-label="Back to Boro Fan Zone home"
+              >
+                <img
+                  src={boroBadge}
+                  alt="Boro Fan Zone badge"
+                  width={1024}
+                  height={1024}
+                  className="size-[72px] object-contain"
+                  loading="lazy"
+                />
+              </Link>
+              <div className="min-w-0 flex-1">
+                <div className="mb-1 text-[10px] font-bold uppercase tracking-[0.3em] text-white/80">
+                  Members only · Est. terrace
+                </div>
+                <h1 className="font-display text-3xl sm:text-4xl font-black leading-none text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)]">
+                  BORO FAN ZONE
+                </h1>
+                <p className="mt-2 text-sm text-white/85 italic">
+                  Up the Boro — boards, banter & match-day debate.
+                </p>
               </div>
-              <h1 className="font-display text-3xl sm:text-4xl font-black leading-none text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)]">
-                BORO FAN ZONE
-              </h1>
-              <p className="mt-2 text-sm text-white/85 italic">
-                Up the Boro — boards, banter & match-day debate.
-              </p>
+            </div>
+            <div className="shrink-0">
+              <OnlineNowBox variant="hero" />
             </div>
           </div>
         </div>
