@@ -676,7 +676,7 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
     const body = buildPreviewBody(fx, json, presser);
     const { data: post, error: postErr } = await supabaseAdmin
       .from("forum_posts")
-      .insert({ topic_id: topic.id, author_id: authorId, body })
+      .insert({ topic_id: topic.id, author_id: postAuthorId, body })
       .select("id")
       .single();
     if (postErr) skipped.push(`preview post failed: ${postErr.message}`);
@@ -745,7 +745,7 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
   if (!live) {
     const { data: post, error: postErr } = await supabaseAdmin
       .from("forum_posts")
-      .insert({ topic_id: topic.id, author_id: authorId, body: liveBody, is_pinned: true })
+      .insert({ topic_id: topic.id, author_id: postAuthorId, body: liveBody, is_pinned: true })
       .select("id")
       .single();
     if (postErr) skipped.push(`live post failed: ${postErr.message}`);
