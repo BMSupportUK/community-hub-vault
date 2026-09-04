@@ -44,30 +44,34 @@ export function FanZonePublicHeader() {
       </div>
 
       <div className="flex shrink-0 items-center gap-2">
-        <Button
-          asChild
-          size="icon"
-          variant="outline"
-          className="border-white/25 bg-white/10 text-white hover:bg-white/20 hover:text-white"
-          title={user ? "Two-factor authentication" : "Sign in to manage two-factor authentication"}
-        >
-          <Link to={user ? "/account-security" : "/login"} aria-label="Two-factor authentication">
-            <Shield className="size-4" />
-          </Link>
-        </Button>
-        <Button
-          type="button"
-          size="icon"
-          variant="outline"
-          className="border-white/25 bg-white/10 text-white hover:bg-white/20 hover:text-white"
-          title={user ? "Lock screen now" : "Sign in to use lock screen"}
-          onClick={() => (user ? lockScreenNow() : undefined)}
-          disabled={!user}
-          aria-label="Lock screen"
-        >
-          <Lock className="size-4" />
-        </Button>
-        <span className="hidden sm:inline h-5 w-px bg-white/25" />
+        {user && (
+          <>
+            <Button
+              asChild
+              size="icon"
+              variant="outline"
+              className="border-white/25 bg-white/10 text-white hover:bg-white/20 hover:text-white"
+              title="Two-factor authentication"
+            >
+              <Link to="/account-security" aria-label="Two-factor authentication">
+                <Shield className="size-4" />
+              </Link>
+            </Button>
+            <Button
+              type="button"
+              size="icon"
+              variant="outline"
+              className="border-white/25 bg-white/10 text-white hover:bg-white/20 hover:text-white"
+              title="Lock screen now"
+              onClick={() => lockScreenNow()}
+              aria-label="Lock screen"
+            >
+              <Lock className="size-4" />
+            </Button>
+            <span className="hidden sm:inline h-5 w-px bg-white/25" />
+          </>
+        )}
+
         <Button asChild size="sm" variant="outline" className="border-white/25 bg-white/10 text-white hover:bg-white/20 hover:text-white">
           <Link to="/login">
             <LogIn className="size-4 sm:mr-1.5" />
