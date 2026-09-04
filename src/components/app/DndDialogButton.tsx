@@ -114,13 +114,26 @@ export function DndDialogButton({
 
   const handleSave = async () => {
     if (!user) return;
-    const start = new Date(zonedWallTimeToUtcMs(startDay, startTime, userTimezone));
-    let end = new Date(zonedWallTimeToUtcMs(endDay, endTime, userTimezone));
-    if (end.getTime() <= start.getTime()) {
-      end = new Date(start.getTime() + 60 * 60 * 1000);
-      setEndDay(dateInTimeZone(end, userTimezone));
-      setEndTime(toHHMMInTimeZone(end, userTimezone));
+    const startMs = zonedWallTimeToUtcMs(startDay, startTime, userTimezone);
+    let endMs = zonedWallTimeToUtcMs(endDay, endTime, userTimezone);
+    if (isNaN(startMs) || isNaN(endMs)) {
+      toast.error("Enter a valid start and finish time");
+      return;
     }
+    // Respect exactly what was typed. Only an end that lands before the start on
+    // the *same* day is treated as an overnight window (e.g. 22:00 → 06:00).
+    if (endMs <= startMs && endDay === startDay) {
+      endMs = zonedWallTimeToUtcMs(addDaysToDateStr(endDay, 1), endTime, userTimezone);
+      setEndDay(addDaysToDateStr(endDay, 1));
+    }
+    if (endMs <= startMs) {
+      toast.error("Finish must be after the start", {
+        description: "Check the finish date and time.",
+      });
+      return;
+    }
+    const start = new Date(startMs);
+    const end = new Date(endMs);
 
     setSaving(true);
     const { error } = await supabase.from("user_dnd_status").upsert(
