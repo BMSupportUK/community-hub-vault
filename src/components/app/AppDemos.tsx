@@ -364,6 +364,10 @@ function PlayerDialog({ demo, onClose }: { demo: Demo | null; onClose: () => voi
                   src={videoUrl}
                   poster={posterUrl ?? undefined}
                   controls
+                  controlsList="nodownload noremoteplayback noplaybackrate"
+                  disablePictureInPicture
+                  disableRemotePlayback
+                  onContextMenu={(e) => e.preventDefault()}
                   autoPlay
                   playsInline
                   className="w-full h-full object-contain bg-black"
