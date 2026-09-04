@@ -498,6 +498,15 @@ function upsertPresserBlock(body: string, block: string): string {
   return `${body.slice(0, anchor + 5)}\n${block}${body.slice(anchor + 5)}`;
 }
 
+/** Remove a press conference block from a body (it belongs in the original post). */
+function stripPresserBlock(body: string): string {
+  const start = body.indexOf(PRESSER_START);
+  const end = body.indexOf(PRESSER_END);
+  if (start === -1 || end === -1) return body;
+  return `${body.slice(0, start)}${body.slice(end + PRESSER_END.length)}`;
+}
+
+
 function stripLiveBlock(body: string): string {
 
   const start = body.indexOf(LIVE_START);
