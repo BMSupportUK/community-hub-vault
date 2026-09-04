@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { Shield, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useFanProfileTo } from "@/components/app/fan-profile-link";
-import { useOnlineUsers } from "@/hooks/use-online-users";
+import { useFanZoneOnlineUsers } from "@/hooks/use-fan-zone-online";
 import { useLastSeenMap } from "@/hooks/use-last-seen-map";
 import { formatLastSeen } from "@/lib/relative-time";
 
