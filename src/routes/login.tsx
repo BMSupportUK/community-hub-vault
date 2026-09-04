@@ -27,16 +27,27 @@ async function getClientIpHint(): Promise<string | null> {
   }
 }
 
+const POST_LOGIN_NEXT_KEY = "post-login-next";
+
+/** Only allow same-site paths as a post-login destination. */
+function safeNext(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  if (!value.startsWith("/") || value.startsWith("//")) return undefined;
+  return value;
+}
+
 export const Route = createFileRoute("/login")({
-  beforeLoad: async () => {
+  validateSearch: (search: Record<string, unknown>) => ({ next: safeNext(search.next) }),
+  beforeLoad: async ({ search }) => {
     const { data: { session } } = await supabase.auth.getSession();
-    if (session) throw redirect({ to: "/home" });
+    if (session) throw redirect({ to: (search.next ?? "/home") as never });
   },
   component: LoginPage,
 });
 
 function LoginPage() {
   const navigate = useNavigate();
+  const { next } = Route.useSearch();
   const checkLoginLocation = useServerFn(checkMyVpnOnLogin);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
