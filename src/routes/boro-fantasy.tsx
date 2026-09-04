@@ -3988,15 +3988,16 @@ function ScoringBreakdown({
 // Guest access
 // ------------------------------------------------------------------
 function GuestAccessCard({
-  onSignIn, onRegister, onRequestReset, onResetPin, onCancel,
+  onSignIn, onRegister, onRequestReset, onResetPin, onCancel, initialMode = "signin",
 }: {
   onSignIn: (email: string, pin: string) => Promise<void>;
   onRegister: (email: string, pin: string, displayName: string, teamName: string) => Promise<void>;
   onRequestReset: (email: string) => Promise<void>;
   onResetPin: (email: string, code: string, newPin: string) => Promise<void>;
   onCancel: () => void;
+  initialMode?: "signin" | "register";
 }) {
-  const [mode, setMode] = useState<"signin" | "register" | "reset">("signin");
+  const [mode, setMode] = useState<"signin" | "register" | "reset">(initialMode);
   const [email, setEmail] = useState("");
   const [pin, setPin] = useState("");
   const [displayName, setDisplayName] = useState("");
