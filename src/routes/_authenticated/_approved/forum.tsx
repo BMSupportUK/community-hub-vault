@@ -13,6 +13,7 @@ import { BoroMatchCentreBox } from "@/components/app/BoroMatchCentreBox";
 import { BoroLiveMatchStrip } from "@/components/app/BoroLiveMatchStrip";
 import { FanZoneNameGate } from "@/components/app/FanZoneNamePrompt";
 import { FanZoneMentionsBell } from "@/components/app/FanZoneMentionsBell";
+import { OnlineNowBox } from "@/components/app/OnlineNowBox";
 import { useFanAliasVersion } from "@/hooks/use-fan-alias-version";
 import boroHero from "@/assets/boro-hero.jpg";
 import boroBadge from "@/assets/boro-fan-zone-badge.png";
@@ -127,6 +128,9 @@ function ForumLayout() {
             <div className="col-span-2 sm:col-span-1 flex justify-center sm:justify-end">
               <FanZoneMentionsBell />
             </div>
+          </div>
+          <div className="z-10 flex w-full justify-center">
+            <OnlineNowBox variant="hero" />
           </div>
           <div className="flex min-w-0 items-center gap-4 sm:gap-5">
             <Link
