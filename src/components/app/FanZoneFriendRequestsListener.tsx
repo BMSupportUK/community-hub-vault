@@ -30,11 +30,9 @@ export function FanZoneFriendRequestsListener() {
   const handlingRef = useRef(false);
 
   const enqueue = async (rowId: string, requesterId: string) => {
-    const { data: m } = await supabase
-      .from("fan_zone_members")
-      .select("fan_alias, fan_avatar_url")
-      .eq("user_id", requesterId)
-      .maybeSingle();
+    // Direct reads of other members' rows are restricted, so use the safe alias lookup.
+    const { data: rows } = await supabase.rpc("fan_zone_aliases", { _ids: [requesterId] });
+    const m = (rows ?? [])[0] as { fan_alias: string | null; fan_avatar_url: string | null } | undefined;
     setQueue((q) =>
       q.some((x) => x.id === rowId)
         ? q
@@ -78,12 +76,9 @@ export function FanZoneFriendRequestsListener() {
           const row = p.new as { addressee_id: string; status: string };
           const old = p.old as { status?: string };
           if (row.status !== "accepted" || old?.status === "accepted") return;
-          const { data: m } = await supabase
-            .from("fan_zone_members")
-            .select("fan_alias")
-            .eq("user_id", row.addressee_id)
-            .maybeSingle();
-          toast.success(`${m?.fan_alias || "A Boro fan"} accepted your Fan Zone friend request`, {
+          const { data: aliasRows } = await supabase.rpc("fan_zone_aliases", { _ids: [row.addressee_id] });
+          const m = (aliasRows ?? [])[0] as { fan_alias: string | null } | undefined;
+          toast.success(`${m?.fan_alias?.trim() || "A Boro fan"} accepted your Fan Zone friend request`, {
             action: {
               label: "View profile",
               onClick: () => navigate({ to: "/fanzone/u/$userId", params: { userId: row.addressee_id } }),
