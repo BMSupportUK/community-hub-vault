@@ -16,6 +16,15 @@ export const Route = createFileRoute("/mfa-challenge")({
   component: MfaChallengePage,
 });
 
+function popPostLoginNext(): string | undefined {
+  try {
+    const v = sessionStorage.getItem("post-login-next");
+    sessionStorage.removeItem("post-login-next");
+    if (v && v.startsWith("/") && !v.startsWith("//")) return v;
+  } catch { /* storage unavailable */ }
+  return undefined;
+}
+
 function MfaChallengePage() {
   const navigate = useNavigate();
   const [factorId, setFactorId] = useState<string | null>(null);
@@ -55,7 +64,7 @@ function MfaChallengePage() {
     setBusy(false);
     if (error) return toast.error(error.message);
     toast.success("Verified");
-    navigate({ to: "/home", replace: true });
+    navigate({ to: (popPostLoginNext() ?? "/home") as never, replace: true });
   };
 
   return (

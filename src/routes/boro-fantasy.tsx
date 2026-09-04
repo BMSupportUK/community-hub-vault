@@ -1020,6 +1020,9 @@ function BoroFantasyPage() {
               </div>
               {!user && !guest && !showGuestLogin && (
                 <div className="flex flex-col sm:flex-row gap-2">
+                  <Button asChild variant="outline" className="border-white/70 bg-white/10 text-white hover:bg-white/20">
+                    <Link to="/login" search={{ next: "/boro-fantasy" }}>Boro Fan Zone member login</Link>
+                  </Button>
                   <Button onClick={() => { setGuestMode("signin"); setShowGuestLogin(true); }} className="bg-white text-primary hover:bg-white/90">Guest sign in</Button>
                   <Button onClick={() => { setGuestMode("register"); setShowGuestLogin(true); }} variant="outline" className="border-white/70 bg-white/10 text-white hover:bg-white/20">Guest register</Button>
                 </div>
