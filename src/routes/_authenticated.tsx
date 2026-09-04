@@ -10,7 +10,7 @@ import { IconRail } from "@/components/app/IconRail";
 import { logMyIp } from "@/lib/ip-log.functions";
 import { useOnlineUsers } from "@/hooks/use-online-users";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { isAllowedForFanZoneOnly } from "@/lib/fan-zone-nav";
+import { isAllowedForFanZoneOnly, isFanZonePath } from "@/lib/fan-zone-nav";
 import { useFanZoneMembershipState } from "@/hooks/use-fan-zone";
 
 // Defer non-critical header widgets & alerts so the shell paints immediately.
@@ -62,6 +62,7 @@ function AuthLayout() {
   const isAdmin = hasAny(["admin", "management"]);
   const navigate = useNavigate();
   const path = useRouterState({ select: (r) => r.location.pathname });
+  const inFanZone = isFanZonePath(path);
   const search = useRouterState({ select: (r) => r.location.search as Record<string, unknown> });
   const shopTab = typeof search.tab === "string" ? search.tab : undefined;
   const shopView = typeof search.view === "string" ? search.view : undefined;
@@ -147,7 +148,7 @@ function AuthLayout() {
     <div className={unlockShell ? "relative flex min-h-dvh w-full bg-background" : "relative flex min-h-dvh w-full bg-background md:fixed md:inset-0 md:h-dvh md:w-dvw md:overflow-hidden"}>
       <IconRail />
       <div className={unlockShell ? "flex-1 flex flex-col min-w-0 min-h-dvh" : "flex-1 flex flex-col min-w-0 min-h-dvh md:h-full md:min-h-0 md:overflow-hidden"}>
-        <header className="h-14 shrink-0 border-b border-border bg-rail/40 backdrop-blur flex items-center justify-between px-2 lg:px-4 gap-1.5 lg:gap-3 overflow-x-auto scrollbar-thin mb-1">
+        {!inFanZone && <header className="h-14 shrink-0 border-b border-border bg-rail/40 backdrop-blur flex items-center justify-between px-2 lg:px-4 gap-1.5 lg:gap-3 overflow-x-auto scrollbar-thin mb-1">
           <div className="flex items-center gap-1.5 lg:gap-2 shrink-0">
             <Sheet open={navOpen} onOpenChange={setNavOpen}>
               <SheetTrigger
@@ -230,7 +231,7 @@ function AuthLayout() {
                 <Clocks />
               </DeferUntilIdle>
             </div>
-        </header>
+        </header>}
         <div className={unlockShell ? "flex-1 flex" : "flex-1 flex md:min-h-0 md:overflow-hidden"}>
           <Outlet />
         </div>
