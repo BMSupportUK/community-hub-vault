@@ -2,3 +2,4 @@
 - [x] Make Boro Fan Zone friendships one-way (requester lists accepted friend only)
 - [x] Show a guest-safe side rail and dedicated header across the public Boro Fan Zone
 - [x] Replace duplicate Fan Zone header links with the live online counter
+- [x] Keep the Fan Zone staff directory names current and deduplicate accounts
