@@ -660,7 +660,11 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
         /Auto-filled from the fixture list/.test(existing.body) ||
         !/Form \(last 5\)/.test(existing.body);
       const upgrade = hasLiveData && basic;
-      const rebuilt = legacy || upgrade ? buildPreviewBody(fx, json) : stripLiveBlock(existing.body);
+      const rebuilt =
+        legacy || upgrade
+          ? buildPreviewBody(fx, json, presser)
+          : upsertPresserBlock(stripLiveBlock(existing.body), buildPresserBlock(fx, json, presser));
+
       if (rebuilt !== existing.body) {
         const { error: upErr } = await supabaseAdmin
           .from("forum_posts")
