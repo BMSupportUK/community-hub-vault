@@ -215,32 +215,30 @@ function fixtureGraphic(fx: FixtureLite, json: any, home: string, away: string):
   const comp = fx.competition || "Fixture";
   const fit = (s: string) => (s.length > 22 ? `${s.slice(0, 21)}…` : s);
   return `<div style="margin:0.75rem 0;border-radius:0.75rem;overflow:hidden;border:1px solid rgba(225,27,34,0.35);">
-<svg viewBox="0 0 1200 630" width="100%" height="auto" role="img" aria-label="${esc(`${home} versus ${away} fixture graphic — no press conference`)}" xmlns="http://www.w3.org/2000/svg">
+<svg viewBox="0 0 1200 630" width="100%" height="auto" role="img" aria-label="${esc(`${home} versus ${away} — awaiting press conference`)}" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0%" stop-color="#0a0d14"/><stop offset="55%" stop-color="#141a26"/><stop offset="100%" stop-color="#0a0d14"/>
+    <linearGradient id="scrim" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#05070c" stop-opacity="0.92"/>
+      <stop offset="45%" stop-color="#05070c" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#05070c" stop-opacity="0.93"/>
     </linearGradient>
-    <radialGradient id="glow" cx="50%" cy="0%" r="80%">
-      <stop offset="0%" stop-color="#E11B22" stop-opacity="0.34"/><stop offset="100%" stop-color="#E11B22" stop-opacity="0"/>
-    </radialGradient>
     <pattern id="stripes" width="26" height="26" patternTransform="rotate(35)" patternUnits="userSpaceOnUse">
-      <rect width="26" height="26" fill="none"/><rect width="9" height="26" fill="#ffffff" fill-opacity="0.028"/>
+      <rect width="26" height="26" fill="none"/><rect width="9" height="26" fill="#ffffff" fill-opacity="0.03"/>
     </pattern>
   </defs>
-  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="#0a0d14"/>
+  <image href="/awaiting-press-conference.jpg" xlink:href="/awaiting-press-conference.jpg" x="0" y="0" width="1200" height="630" preserveAspectRatio="xMidYMid slice"/>
+  <rect width="1200" height="630" fill="url(#scrim)"/>
   <rect width="1200" height="630" fill="url(#stripes)"/>
-  <rect width="1200" height="630" fill="url(#glow)"/>
   <rect x="0" y="0" width="1200" height="6" fill="#E11B22"/>
   <g font-family="Helvetica, Arial, sans-serif" text-anchor="middle">
-    <text x="600" y="96" fill="#E11B22" font-size="26" letter-spacing="9" font-weight="bold">MATCH DAY</text>
-    <text x="600" y="140" fill="#ffffff" fill-opacity="0.5" font-size="22" letter-spacing="4">${esc(comp.toUpperCase())}</text>
-    <text x="600" y="272" fill="#ffffff" font-size="70" font-weight="bold">${esc(fit(home))}</text>
-    <text x="600" y="336" fill="#E11B22" font-size="34" font-weight="bold" letter-spacing="6">V</text>
-    <text x="600" y="410" fill="#ffffff" font-size="70" font-weight="bold">${esc(fit(away))}</text>
-    <line x1="330" y1="452" x2="870" y2="452" stroke="#ffffff" stroke-opacity="0.16" stroke-width="2"/>
-    <text x="600" y="498" fill="#ffffff" fill-opacity="0.78" font-size="28" letter-spacing="2">${esc(day)} · ${esc(time)} UK</text>
-    ${venue ? `<text x="600" y="536" fill="#ffffff" fill-opacity="0.45" font-size="22">${esc(venue)}</text>` : ""}
-    <text x="600" y="592" fill="#E11B22" font-size="24" letter-spacing="5" font-weight="bold">NO PRESS CONFERENCE AVAILABLE</text>
+    <text x="600" y="80" fill="#E11B22" font-size="26" letter-spacing="9" font-weight="bold">AWAITING PRESS CONFERENCE</text>
+    <text x="600" y="120" fill="#ffffff" fill-opacity="0.55" font-size="20" letter-spacing="4">${esc(comp.toUpperCase())}</text>
+    <text x="600" y="212" fill="#ffffff" font-size="58" font-weight="bold">${esc(fit(home))}</text>
+    <text x="600" y="262" fill="#E11B22" font-size="30" font-weight="bold" letter-spacing="6">V</text>
+    <text x="600" y="322" fill="#ffffff" font-size="58" font-weight="bold">${esc(fit(away))}</text>
+    <text x="600" y="556" fill="#ffffff" fill-opacity="0.85" font-size="26" letter-spacing="2">${esc(day)} · ${esc(time)} UK</text>
+    ${venue ? `<text x="600" y="592" fill="#ffffff" fill-opacity="0.5" font-size="20">${esc(venue)}</text>` : ""}
   </g>
 </svg>
 </div>`;
