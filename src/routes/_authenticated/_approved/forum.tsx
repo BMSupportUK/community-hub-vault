@@ -13,6 +13,7 @@ import { BoroMatchCentreBox } from "@/components/app/BoroMatchCentreBox";
 import { BoroLiveMatchStrip } from "@/components/app/BoroLiveMatchStrip";
 import { FanZoneNameGate } from "@/components/app/FanZoneNamePrompt";
 import { FanZoneMentionsBell } from "@/components/app/FanZoneMentionsBell";
+import { OnlineNowBox } from "@/components/app/OnlineNowBox";
 import { useFanAliasVersion } from "@/hooks/use-fan-alias-version";
 import boroHero from "@/assets/boro-hero.jpg";
 import boroBadge from "@/assets/boro-fan-zone-badge.png";
