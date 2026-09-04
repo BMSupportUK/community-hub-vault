@@ -131,6 +131,9 @@ export const listBoroFixturesPublic = createServerFn({ method: "POST" })
     const { data: fixtures, error } = await admin
       .from("boro_fixtures")
       .select("id, competition, home_team, away_team, kickoff_at, venue, home_score, away_score, status, minute, minute_added, month_key, home_reds, away_reds")
+      // LOCKED: Boro score predictions are Championship (league) fixtures only.
+      // Never widen this filter to include cup ties.
+      .eq("competition", "Championship")
       .order("kickoff_at", { ascending: true });
     if (error) throw new Error(error.message);
 
