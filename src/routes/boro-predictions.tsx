@@ -436,7 +436,7 @@ function BoroPredictionsPage() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_320px] gap-6">
+          <div className={`grid grid-cols-1 gap-6 ${user || isGuest ? "lg:grid-cols-[minmax(0,1fr)_320px]" : ""}`}>
           <Tabs value={tab} onValueChange={setTab}>
             <TabsList className="grid grid-cols-6 w-full sm:w-auto h-auto gap-1 p-1">
               <TabsTrigger value="fixtures">
@@ -588,10 +588,12 @@ function BoroPredictionsPage() {
             </TabsContent>
           </Tabs>
 
-          <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
-            <BoroPointsSidebar stats={myStats} loading={loading} joined={canPredict} />
-            <UpcomingMonthCard fixtures={upcoming} />
-          </aside>
+          {(user || isGuest) && (
+            <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
+              <BoroPointsSidebar stats={myStats} loading={loading} joined={canPredict} />
+              <UpcomingMonthCard fixtures={upcoming} />
+            </aside>
+          )}
           </div>
         </div>
       </main>
