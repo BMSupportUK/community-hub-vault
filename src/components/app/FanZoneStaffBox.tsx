@@ -18,7 +18,7 @@ type StaffMember = {
 export function FanZoneStaffBox() {
   const profileTo = useFanProfileTo();
   const [members, setMembers] = useState<StaffMember[] | null>(null);
-  const online = useOnlineUsers();
+  const online = useFanZoneOnlineUsers();
   const staffIds = useMemo(() => (members ?? []).map((m) => m.user_id), [members]);
   const { lastSeen, tick } = useLastSeenMap(staffIds);
 
@@ -86,12 +86,10 @@ export function FanZoneStaffBox() {
           const isAdmin = m.role === "admin";
           const initials = name.slice(0, 2).toUpperCase();
           const seen = lastSeen[m.user_id] ?? null;
-          // Presence is instant, but a member browsing in another tab/device may
-          // not be in this presence channel — a fresh "last active" ping counts
-          // as online too. `tick` re-evaluates this every 30s with no refresh.
-          const seenMs = seen ? new Date(seen).getTime() : 0;
-          const recentlyActive = seenMs > 0 && Date.now() - seenMs < 5 * 60_000 && tick >= 0;
-          const isOnline = online.has(m.user_id) || recentlyActive;
+          // Only Fan Zone presence counts here: staff working in BM Support are
+          // shown as away. `tick` keeps the "last active" text fresh every 30s.
+          void tick;
+          const isOnline = online.has(m.user_id);
           const seenText = formatLastSeen(seen);
           const inner = (
             <div className="flex items-center gap-2.5 rounded-lg border border-white/[0.12] bg-white/[0.08] px-2.5 py-2 hover:border-[#E11B22]/60 hover:bg-white/[0.12] transition-colors">
