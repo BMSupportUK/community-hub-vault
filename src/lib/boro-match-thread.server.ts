@@ -199,7 +199,7 @@ export function buildPresserBlock(fx: FixtureLite, json: any, presser: PresserLi
   } else {
     parts.push(fixtureGraphic(fx, json, home, away));
     parts.push(
-      `<p><em>No press conference has been published by the club for this fixture yet. It will appear here automatically if one lands.</em></p>`,
+      `<p><em>Awaiting the club's press conference — it will appear here automatically once it has been published.</em></p>`,
     );
   }
   parts.push(PRESSER_END);
