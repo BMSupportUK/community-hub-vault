@@ -482,23 +482,39 @@ export function buildFullTimeBody(fx: FixtureLite, json: any): string {
 }
 
 /** Strip a legacy inline live block out of the preview reply. */
-/** Insert or refresh the press conference block inside an existing preview post. */
-function upsertPresserBlock(body: string, block: string): string {
-  const start = body.indexOf(PRESSER_START);
-  const end = body.indexOf(PRESSER_END);
-  if (start !== -1 && end !== -1) {
-    const current = body.slice(start, end + PRESSER_END.length);
-    // Keep an existing video block; never downgrade it to the "no presser" graphic.
-    if (/<iframe/i.test(current) && !/<iframe/i.test(block)) return body;
-    return `${body.slice(0, start)}${block}${body.slice(end + PRESSER_END.length)}`;
+/** Insert or refresh the press conference block, never stacking duplicates. */
+const PRESSER_HEADING = "<p><strong>Press conference</strong></p>";
+
+function stripAllPresserBlocks(body: string): string {
+  let out = body;
+  // Remove every marker-delimited block (there may be several from older runs).
+  for (;;) {
+    const start = out.indexOf(PRESSER_START);
+    const end = out.indexOf(PRESSER_END, start + 1);
+    if (start === -1 || end === -1) break;
+    out = `${out.slice(0, start)}${out.slice(end + PRESSER_END.length)}`;
   }
-  // Marker comments can be stripped by the editor — never stack a second video.
-  if (/youtube(?:-nocookie)?\.com\/embed/i.test(body)) return body;
-  // Older previews have no block yet — drop it in after the facts list.
-  const anchor = body.indexOf("</ul>");
-  if (anchor === -1) return `${body}\n${block}`;
-  return `${body.slice(0, anchor + 5)}\n${block}${body.slice(anchor + 5)}`;
+  // Legacy blocks whose markers were stripped by the editor: cut from the heading on.
+  const heading = out.indexOf(PRESSER_HEADING);
+  if (heading !== -1) out = out.slice(0, heading);
+  return out.trimEnd();
 }
+
+function upsertPresserBlock(body: string, block: string): string {
+  // Never downgrade an existing video to the "awaiting press conference" graphic.
+  if (/youtube(?:-nocookie)?\.com\/embed/i.test(body) && !/<iframe/i.test(block)) {
+    // Still collapse duplicates of the existing video.
+    const first = body.indexOf(PRESSER_HEADING);
+    if (first === -1) return body;
+    const base = body.slice(0, first);
+    const rest = body.slice(first);
+    const second = rest.indexOf(PRESSER_HEADING, PRESSER_HEADING.length);
+    if (second === -1) return body;
+    return `${base}${rest.slice(0, second).trimEnd()}`;
+  }
+  return `${stripAllPresserBlocks(body)}\n${block}`;
+}
+
 
 /** Remove a press conference block from a body (it belongs in the original post). */
 function stripPresserBlock(body: string): string {
