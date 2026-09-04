@@ -1106,9 +1106,6 @@ function BoroFantasyPage() {
                 <SquadRulesTab />
               </TabsContent>
 
-              <TabsContent value="transfers" className="mt-4">
-                {stateQuery.isLoading || !state ? <Loading /> : <TransfersTab state={state} />}
-              </TabsContent>
 
               <TabsContent value="leaderboard" className="mt-4">
                 {lbQuery.isLoading ? (
