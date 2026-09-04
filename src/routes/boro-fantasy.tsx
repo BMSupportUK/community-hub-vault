@@ -4013,11 +4013,18 @@ function GuestAccessCard({
   return (
     <div className="mb-6 rounded-2xl border-2 border-primary/50 bg-card/90 backdrop-blur-md p-5 space-y-3">
       <div className="flex flex-wrap gap-2">
-        {(["signin", "register", "reset"] as const).map((m) => (
-          <Button key={m} size="sm" variant={mode === m ? "default" : "outline"} onClick={() => setMode(m)}>
-            {m === "signin" ? "Sign in" : m === "register" ? "Register" : "Forgot PIN"}
-          </Button>
-        ))}
+        {(["signin", "register", "reset"] as const)
+          .filter((m) => {
+            if (m === "reset") return true;
+            if (initialMode === "signin") return m !== "register";
+            if (initialMode === "register") return m !== "signin";
+            return true;
+          })
+          .map((m) => (
+            <Button key={m} size="sm" variant={mode === m ? "default" : "outline"} onClick={() => setMode(m)}>
+              {m === "signin" ? "Sign in" : m === "register" ? "Register" : "Forgot PIN"}
+            </Button>
+          ))}
         <Button size="sm" variant="ghost" className="ml-auto" onClick={onCancel}>Close</Button>
       </div>
 
