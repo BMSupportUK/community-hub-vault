@@ -506,6 +506,57 @@ function stripPresserBlock(body: string): string {
   return `${body.slice(0, start)}${body.slice(end + PRESSER_END.length)}`;
 }
 
+/** Short club names used in match day thread titles (house format). */
+const TITLE_SHORT_NAMES: Record<string, string> = {
+  "queens park rangers": "QPR",
+  "west bromwich albion": "West Brom",
+  "sheffield wednesday": "Sheffield Weds",
+  "wolverhampton wanderers": "Wolves",
+  "brighton & hove albion": "Brighton",
+  "nottingham forest": "Nottm Forest",
+};
+
+function titleTeam(name: string): string {
+  return TITLE_SHORT_NAMES[name.trim().toLowerCase()] ?? name.trim();
+}
+
+/** "QPR v Middlesbrough 05-09-26" — the format every match day thread uses. */
+export function matchThreadTitle(fx: FixtureLite): string {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "2-digit",
+    timeZone: "Europe/London",
+  }).format(new Date(fx.kickoff_at));
+  return `${titleTeam(fx.home_team)} v ${titleTeam(fx.away_team)} ${parts.replace(/\//g, "-")}`;
+}
+
+/** Open a match day thread for a fixture, with the standard first post. */
+async function createMatchTopic(
+  supabaseAdmin: any,
+  boardId: string,
+  authorId: string,
+  fx: FixtureLite,
+): Promise<{ id: string; title: string; author_id: string } | null> {
+  const title = matchThreadTitle(fx);
+  const { data: topic, error } = await supabaseAdmin
+    .from("forum_topics")
+    .insert({ board_id: boardId, author_id: authorId, title })
+    .select("id, title, author_id")
+    .single();
+  if (error || !topic) return null;
+  const { error: postErr } = await supabaseAdmin.from("forum_posts").insert({
+    topic_id: topic.id,
+    author_id: authorId,
+    body: `<div data-fz-prepared="1">Awaiting Press Conference</div>`,
+    is_op: true,
+  });
+  if (postErr) return topic as { id: string; title: string; author_id: string };
+  return topic as { id: string; title: string; author_id: string };
+}
+
+
+
 
 function stripLiveBlock(body: string): string {
 
