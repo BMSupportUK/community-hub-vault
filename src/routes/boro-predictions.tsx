@@ -340,7 +340,7 @@ function BoroPredictionsPage() {
   }, [fixtures, leaderboard]);
 
   return (
-    <div className={user ? "relative isolate min-h-dvh md:h-dvh md:overflow-hidden flex bg-transparent" : "relative isolate min-h-screen bg-transparent"}>
+    <div className={user ? "relative isolate min-h-dvh md:h-dvh md:overflow-hidden flex bg-transparent" : "relative isolate min-h-screen flex bg-transparent"}>
       <img
         src={riversideBg}
         alt=""
@@ -362,7 +362,7 @@ function BoroPredictionsPage() {
         <div className="w-full px-4 sm:px-8 lg:px-16 py-6">
           <div className="mb-3">
             <Link
-              to="/forum"
+              to={user ? "/forum" : "/fan-zone"}
               className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-sm transition hover:bg-white/20 hover:border-white/40"
             >
               <ArrowLeft className="size-3.5" />

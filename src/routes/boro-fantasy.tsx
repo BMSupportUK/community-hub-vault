@@ -984,7 +984,7 @@ function BoroFantasyPage() {
   }, [lbQuery.data, state?.gameweeks]);
 
   return (
-    <div className={user ? "relative isolate min-h-dvh md:h-dvh md:overflow-hidden flex bg-transparent" : "relative isolate min-h-screen bg-transparent"}>
+    <div className={user ? "relative isolate min-h-dvh md:h-dvh md:overflow-hidden flex bg-transparent" : "relative isolate min-h-screen flex bg-transparent"}>
       <img src={riversideBg} alt="" aria-hidden className="pointer-events-none fixed inset-0 z-0 h-screen w-screen object-cover object-center" />
       <div className="pointer-events-none fixed inset-0 z-0" style={{ background: "rgba(2, 6, 14, 0.78)" }} aria-hidden />
       <IconRail />
@@ -997,7 +997,7 @@ function BoroFantasyPage() {
         <div className="w-full px-4 sm:px-8 lg:px-16 py-6">
           <div className="mb-3">
             <Link
-              to="/forum"
+              to={user ? "/forum" : "/fan-zone"}
               className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-sm transition hover:bg-white/20 hover:border-white/40"
             >
               <ArrowLeft className="size-3.5" />

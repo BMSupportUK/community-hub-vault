@@ -245,7 +245,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
   const fanZoneItems: RailItem[] = [
     // Dual-role accounts (BM Support + Fan Zone) keep a way back to BM Support.
     { to: "/home", label: "BM Support", icon: Home, show: !!user && !isFanZoneOnly },
-    { to: "/forum", label: "Boro Fan Zone", icon: BoroBadgeIcon, show: true },
+    { to: user ? "/forum" : "/fan-zone", label: "Boro Fan Zone", icon: BoroBadgeIcon, show: true },
     { to: "/fanzone/messages", label: "Inbox", icon: MessagesSquare, show: !!user },
     { to: "/admin-fan-zone", label: "Members", icon: Users, show: !!user && canSeeFanZoneMembers },
     { to: "/fanzone/profile", label: "Fan Zone Profile", icon: UserCircle2, show: !!user },
@@ -269,7 +269,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
   const orderKey = (to: string) => `${scope}:${to}`;
 
   const allowedByPerms = (to: string) => {
-    if (to === "/forum") return true;
+    if (to === "/forum" || to === "/fan-zone") return true;
     // Fan Zone members list: gated by canSeeFanZoneMembers, not page permissions.
     if (to === "/admin-fan-zone" && inFanZone) return true;
     if (hasAny(["admin"])) return true;
@@ -317,7 +317,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
         : "shrink-0 hidden md:flex border-r border-primary-glow/40 sticky top-0 h-dvh",
     )}>
       <Link
-        to={!user || isFanZoneOnly ? "/forum" : inFanZone ? "/home" : "/home"}
+        to={!user ? "/fan-zone" : isFanZoneOnly ? "/forum" : "/home"}
         aria-label={!user || isFanZoneOnly ? "Boro Fan Zone" : inFanZone ? "Back to BM Support" : "BM Support"}
         title={!user || isFanZoneOnly ? "Boro Fan Zone" : inFanZone ? "Back to BM Support" : "BM Support"}
         className="relative z-10 shrink-0 size-12 rounded-2xl bg-gradient-primary flex items-center justify-center font-display font-bold text-sm text-primary-foreground shadow-glow mb-1 ring-2 ring-primary-glow/70 hover:ring-primary-glow hover:scale-110 transition-all duration-200"
