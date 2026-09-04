@@ -52,15 +52,28 @@ export function opponentOf(fx: { home_team: string; away_team: string }): string
   return isBoro(fx.home_team) ? fx.away_team : fx.home_team;
 }
 
+function acronym(name: string): string {
+  const words = name
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, " ")
+    .split(/\s+/)
+    .filter(Boolean);
+  return words.map((w) => w[0]).join("");
+}
+
 function matchesOpponent(title: string, opponent: string): boolean {
   const t = title.toLowerCase();
   const oppTokens = tokens(opponent);
+  const titleTokens = tokens(title);
+  // Club acronyms as used in official titles ("QPR" for Queens Park Rangers).
+  const acro = acronym(opponent);
+  if (acro.length >= 3 && titleTokens.includes(acro)) return true;
   if (!oppTokens.length) return false;
   if (oppTokens.some((tok) => t.includes(tok))) return true;
   // Handle abbreviated club names in titles ("West Brom" ⊂ "West Bromwich Albion").
-  const titleTokens = tokens(title);
   return titleTokens.some((tt) => oppTokens.some((ot) => ot.startsWith(tt) || tt.startsWith(ot)));
 }
+
 
 /**
  * Returns the press conference video for this fixture, or null when the club
