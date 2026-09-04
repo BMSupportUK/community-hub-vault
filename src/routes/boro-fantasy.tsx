@@ -3598,60 +3598,68 @@ function EntrantSquadDialog({
 
   return (
     <Dialog open={!!row} onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>{row?.teamName || "Unnamed FC"} — match day squad</DialogTitle>
-          <DialogDescription>
-            {row?.displayName || row?.username || "Guest"} · squads are only visible once the gameweek has locked.
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="max-w-full w-full h-screen max-h-screen rounded-none p-0 flex flex-col">
+        <div className="flex flex-col h-full overflow-hidden">
+          <DialogHeader className="px-4 pt-6 pb-2 shrink-0">
+            <DialogTitle className="text-xl">{row?.teamName || "Unnamed FC"} — match day squad</DialogTitle>
+            <DialogDescription>
+              {row?.displayName || row?.username || "Guest"} · squads are only visible once the gameweek has locked.
+            </DialogDescription>
+          </DialogHeader>
 
-        <Select value={gwId} onValueChange={setGwId}>
-          <SelectTrigger className="w-full">
-            <SelectValue placeholder="Choose a locked gameweek" />
-          </SelectTrigger>
-          <SelectContent position="item-aligned" className="z-[130] max-h-72">
-            {gameweeks.map((g) => (
-              <SelectItem key={g.id} value={g.id}>
-                GW{g.gwNumber} — {g.homeTeam} v {g.awayTeam}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          <div className="px-4 py-2 shrink-0">
+            <Select value={gwId} onValueChange={setGwId}>
+              <SelectTrigger className="w-full sm:w-80">
+                <SelectValue placeholder="Choose a locked gameweek" />
+              </SelectTrigger>
+              <SelectContent position="item-aligned" className="z-[130] max-h-72">
+                {gameweeks.map((g) => (
+                  <SelectItem key={g.id} value={g.id}>
+                    GW{g.gwNumber} — {g.homeTeam} v {g.awayTeam}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-        {query.isLoading ? (
-          <div className="flex items-center justify-center py-8"><Loader2 className="size-5 animate-spin" /></div>
-        ) : query.error ? (
-          <p className="rounded-lg border border-border/60 bg-muted/30 p-4 text-sm text-muted-foreground">
-            {(query.error as any)?.message ?? "Could not load that squad."}
-          </p>
-        ) : !data?.found ? (
-          <p className="rounded-lg border border-border/60 bg-muted/30 p-4 text-sm text-muted-foreground">
-            No squad was submitted for {gw ? `GW${gw.gwNumber}` : "this gameweek"}.
-          </p>
-        ) : (
-          <div className="space-y-3">
-            <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-xs">
-              <span className="font-semibold uppercase tracking-wide text-muted-foreground">
-                Formation {data.formation ?? "—"}
-              </span>
-              <span>
-                Hits <span className="font-bold tabular-nums">{data.transferCost}</span> · Points{" "}
-                <span className="font-bold tabular-nums text-primary">{data.points ?? "—"}</span>
-              </span>
-            </div>
-            <div>
-              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Starting 11</p>
-              <ul className="rounded-lg border border-border/60 bg-card/60">{starters.map(pickRow)}</ul>
-            </div>
-            {bench.length > 0 && (
-              <div>
-                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Bench</p>
-                <ul className="rounded-lg border border-border/60 bg-card/60">{bench.map(pickRow)}</ul>
+          <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-6">
+            {query.isLoading ? (
+              <div className="flex items-center justify-center py-12"><Loader2 className="size-6 animate-spin" /></div>
+            ) : query.error ? (
+              <p className="rounded-lg border border-border/60 bg-muted/30 p-4 text-sm text-muted-foreground">
+                {(query.error as any)?.message ?? "Could not load that squad."}
+              </p>
+            ) : !data?.found ? (
+              <p className="rounded-lg border border-border/60 bg-muted/30 p-4 text-sm text-muted-foreground">
+                No squad was submitted for {gw ? `GW${gw.gwNumber}` : "this gameweek"}.
+              </p>
+            ) : (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-xs">
+                  <span className="font-semibold uppercase tracking-wide text-muted-foreground">
+                    Formation {data.formation ?? "—"}
+                  </span>
+                  <span>
+                    Hits <span className="font-bold tabular-nums">{data.transferCost}</span> · Points{" "}
+                    <span className="font-bold tabular-nums text-primary">{data.points ?? "—"}</span>
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                  <div>
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Starting 11</p>
+                    <ul className="rounded-lg border border-border/60 bg-card/60">{starters.map(pickRow)}</ul>
+                  </div>
+                  {bench.length > 0 && (
+                    <div>
+                      <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Bench</p>
+                      <ul className="rounded-lg border border-border/60 bg-card/60">{bench.map(pickRow)}</ul>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>
-        )}
+        </div>
       </DialogContent>
     </Dialog>
   );
