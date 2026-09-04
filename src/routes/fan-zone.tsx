@@ -1,13 +1,14 @@
-import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
+import { createFileRoute, Outlet } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { IconRail } from "@/components/app/IconRail";
 import { FanZonePublicHeader } from "@/components/app/FanZonePublicHeader";
-import { Trophy, Users, Info, Settings } from "lucide-react";
+import { Info } from "lucide-react";
 import boroHero from "@/assets/boro-hero.jpg";
 import boroBadge from "@/assets/boro-fan-zone-badge.png";
 import boroBg from "@/assets/boro-bg.jpg";
 import { BoroLiveMatchStrip } from "@/components/app/BoroLiveMatchStrip";
+import { OnlineNowBox } from "@/components/app/OnlineNowBox";
 
 export const Route = createFileRoute("/fan-zone")({
   component: () => <Outlet />,
@@ -74,7 +75,7 @@ export function FanZoneShell({ children }: { children: React.ReactNode }) {
                 Up the Boro — boards, banter & match-day debate.
               </p>
             </div>
-            <div className="xl:self-center flex flex-col gap-2.5 min-w-0 xl:max-w-[540px]">
+            <div className="xl:self-center flex flex-col items-start gap-3 min-w-0 xl:items-end xl:max-w-[540px]">
               {!user && (
                 <div className="rounded-lg border border-amber-400/60 bg-amber-500/25 backdrop-blur-sm px-3.5 py-2.5 shadow-[0_0_20px_rgba(251,191,36,0.35)]">
                   <span className="inline-flex items-start gap-2 text-xs sm:text-sm font-semibold text-amber-50 leading-snug">
@@ -83,31 +84,7 @@ export function FanZoneShell({ children }: { children: React.ReactNode }) {
                   </span>
                 </div>
               )}
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-[repeat(auto-fit,minmax(0,1fr))] gap-2">
-                <Link
-                  to="/boro-predictions"
-                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-white/95 px-4 py-2.5 text-sm font-bold text-[#961016] shadow-lg ring-1 ring-white/40 hover:bg-white transition"
-                >
-                  <Trophy className="size-4 shrink-0" />
-                  <span className="truncate">MFC 2026 Predictions</span>
-                </Link>
-                <Link
-                  to="/boro-fantasy"
-                  className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#E11B22]/90 px-4 py-2.5 text-sm font-bold text-white shadow-lg ring-1 ring-white/30 hover:bg-[#E11B22] transition"
-                >
-                  <Users className="size-4 shrink-0" />
-                  <span className="truncate">MFC Fantasy Manager</span>
-                </Link>
-                {user && (
-                  <Link
-                    to="/fanzone/profile"
-                    className="inline-flex items-center justify-center gap-2 rounded-lg bg-white/15 px-4 py-2.5 text-sm font-bold text-white shadow-lg ring-1 ring-white/30 backdrop-blur-sm hover:bg-white/25 transition sm:col-span-2 xl:col-span-1"
-                  >
-                    <Settings className="size-4 shrink-0" />
-                    <span className="truncate">Profile & Settings</span>
-                  </Link>
-                )}
-              </div>
+              <OnlineNowBox variant="hero" />
             </div>
           </div>
         </header>
