@@ -708,6 +708,7 @@ function BoroFantasyPage() {
   const [tab, setTab] = useState("squad");
   const [guest, setGuest] = useState<GuestSession | null>(null);
   const [showGuestLogin, setShowGuestLogin] = useState(false);
+  const [guestMode, setGuestMode] = useState<"signin" | "register">("signin");
   const [joining, setJoining] = useState(false);
   const [markingFinished, setMarkingFinished] = useState(false);
 
@@ -1019,7 +1020,8 @@ function BoroFantasyPage() {
               </div>
               {!user && !guest && !showGuestLogin && (
                 <div className="flex flex-col sm:flex-row gap-2">
-                  <Button onClick={() => setShowGuestLogin(true)} className="bg-white text-primary hover:bg-white/90">Guest sign in</Button>
+                  <Button onClick={() => { setGuestMode("signin"); setShowGuestLogin(true); }} className="bg-white text-primary hover:bg-white/90">Guest sign in</Button>
+                  <Button onClick={() => { setGuestMode("register"); setShowGuestLogin(true); }} variant="outline" className="border-white/70 bg-white/10 text-white hover:bg-white/20">Guest register</Button>
                 </div>
               )}
             </div>
@@ -1039,6 +1041,7 @@ function BoroFantasyPage() {
 
           {!user && showGuestLogin && (
             <GuestAccessCard
+              initialMode={guestMode}
               onSignIn={async (email, pin) => {
                 const res = await signInFn({ data: { email, pin } });
                 persistGuest({ guestId: res.guestId, email, pin, displayName: res.displayName, teamName: res.teamName ?? undefined });
@@ -3985,15 +3988,16 @@ function ScoringBreakdown({
 // Guest access
 // ------------------------------------------------------------------
 function GuestAccessCard({
-  onSignIn, onRegister, onRequestReset, onResetPin, onCancel,
+  onSignIn, onRegister, onRequestReset, onResetPin, onCancel, initialMode = "signin",
 }: {
   onSignIn: (email: string, pin: string) => Promise<void>;
   onRegister: (email: string, pin: string, displayName: string, teamName: string) => Promise<void>;
   onRequestReset: (email: string) => Promise<void>;
   onResetPin: (email: string, code: string, newPin: string) => Promise<void>;
   onCancel: () => void;
+  initialMode?: "signin" | "register";
 }) {
-  const [mode, setMode] = useState<"signin" | "register" | "reset">("signin");
+  const [mode, setMode] = useState<"signin" | "register" | "reset">(initialMode);
   const [email, setEmail] = useState("");
   const [pin, setPin] = useState("");
   const [displayName, setDisplayName] = useState("");
