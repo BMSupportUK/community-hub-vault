@@ -91,10 +91,10 @@ export const Route = createFileRoute('/api/public/hooks/final-lock-reminders')({
           auth: { autoRefreshToken: false, persistSession: false },
         })
 
-        // Runs every 15 minutes. Both recipient queries only return entrants whose
-        // entry deadline (kick-off minus 30 minutes) is roughly one hour away, so
-        // the email lands as the final reminder before lock-out. The tracking
-        // tables key on the fixture/gameweek, so nobody gets it twice.
+        // Runs hourly. Both recipient queries only return entrants whose entry
+        // deadline (kick-off minus 30 minutes) is 1-2 hours away, so the email is
+        // the final warning while there is still plenty of time to enter. The
+        // tracking tables key on the fixture/gameweek, so nobody gets it twice.
         const stats = {
           predictions: { candidates: 0, sent: 0, skipped: 0, failed: 0 },
           fantasy: { candidates: 0, sent: 0, skipped: 0, failed: 0 },
