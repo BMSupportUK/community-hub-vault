@@ -1,7 +1,8 @@
 import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { useAuth } from "@/hooks/use-auth";
-import { LandingHeader } from "@/components/LandingHeader";
+import { IconRail } from "@/components/app/IconRail";
+import { FanZonePublicHeader } from "@/components/app/FanZonePublicHeader";
 import { Trophy, Users, Info, Settings } from "lucide-react";
 import boroHero from "@/assets/boro-hero.jpg";
 import boroBadge from "@/assets/boro-fan-zone-badge.png";
@@ -24,9 +25,11 @@ export function FanZoneShell({ children }: { children: React.ReactNode }) {
     };
   }, []);
   return (
-    <div className="boro-theme min-h-screen bg-background">
-      <LandingHeader />
-      <div className="relative w-full px-4 sm:px-6 lg:px-10 py-6">
+    <div className="boro-theme flex min-h-screen bg-background">
+      {!user && <IconRail />}
+      <div className="min-w-0 flex-1">
+      {!user && <FanZonePublicHeader />}
+      <div className="relative w-full px-4 py-6 sm:px-6 lg:px-10">
         <header className="relative mb-6 overflow-hidden rounded-2xl border border-[#E11B22]/40 shadow-[0_10px_40px_-10px_rgba(225,27,34,0.55)]">
           <div
             className="absolute inset-0 bg-cover bg-center"
@@ -112,6 +115,7 @@ export function FanZoneShell({ children }: { children: React.ReactNode }) {
         <div className="rounded-2xl border border-white/15 bg-black/62 backdrop-blur-md p-5 sm:p-7 shadow-2xl">
           {children}
         </div>
+      </div>
       </div>
     </div>
   );
