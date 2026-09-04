@@ -113,8 +113,43 @@ export async function findPressConference(fx: {
   }
 
   candidates.sort((a, b) => Date.parse(b.published ?? "") - Date.parse(a.published ?? ""));
-  return candidates[0] ?? null;
+
+  // Only embed a finished recording. A live/premiering stream (or a members /
+  // age-gated video) makes the embed demand a YouTube sign-in, so we wait until
+  // the broadcast has ended and the video plays back normally.
+  for (const candidate of candidates.slice(0, 5)) {
+    if (await isFinishedPublicVideo(candidate.id)) return candidate;
+  }
+  return null;
 }
+
+/** True when the video is a completed, publicly embeddable recording. */
+async function isFinishedPublicVideo(videoId: string): Promise<boolean> {
+  let html = "";
+  try {
+    const res = await fetch(`https://www.youtube.com/watch?v=${videoId}&hl=en`, {
+      headers: {
+        "user-agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
+        "accept-language": "en-GB,en;q=0.9",
+      },
+    });
+    if (!res.ok) return false;
+    html = await res.text();
+  } catch {
+    // Can't verify — better to show the fixture graphic than a sign-in wall.
+    return false;
+  }
+
+  if (/"status"\s*:\s*"(LOGIN_REQUIRED|UNPLAYABLE|ERROR)"/.test(html)) return false;
+  if (/"playableInEmbed"\s*:\s*false/.test(html)) return false;
+  if (/"isUpcoming"\s*:\s*true/.test(html)) return false;
+  // Currently live: live details present with no end timestamp.
+  if (/"isLiveNow"\s*:\s*true/.test(html)) return false;
+  if (/"isLiveContent"\s*:\s*true/.test(html) && !/"endTimestamp"/.test(html)) return false;
+  return true;
+}
+
 
 function decodeXml(s: string): string {
   return s

@@ -191,9 +191,11 @@ export function buildPresserBlock(fx: FixtureLite, json: any, presser: PresserLi
   parts.push(`<p><strong>Press conference</strong></p>`);
   if (presser) {
     parts.push(
-      `<div class="video-embed" style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;margin:0.75rem 0;width:100%;border-radius:0.5rem;"><iframe src="https://www.youtube-nocookie.com/embed/${esc(presser.id)}" title="${esc(presser.title)}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"></iframe></div>`,
+      `<div class="video-embed" style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;margin:0.75rem 0;width:100%;border-radius:0.5rem;"><iframe src="https://www.youtube.com/embed/${esc(presser.id)}?rel=0&amp;playsinline=1" title="${esc(presser.title)}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"></iframe></div>`,
     );
-    parts.push(`<p><em>${esc(presser.title)} — Middlesbrough FC official channel.</em></p>`);
+    parts.push(
+      `<p><em>${esc(presser.title)} — Middlesbrough FC official channel.</em> <a href="${esc(presser.url)}" target="_blank" rel="noopener noreferrer">Watch on YouTube</a></p>`,
+    );
   } else {
     parts.push(fixtureGraphic(fx, json, home, away));
     parts.push(
@@ -492,6 +494,8 @@ function upsertPresserBlock(body: string, block: string): string {
     if (/<iframe/i.test(current) && !/<iframe/i.test(block)) return body;
     return `${body.slice(0, start)}${block}${body.slice(end + PRESSER_END.length)}`;
   }
+  // Marker comments can be stripped by the editor — never stack a second video.
+  if (/youtube(?:-nocookie)?\.com\/embed/i.test(body)) return body;
   // Older previews have no block yet — drop it in after the facts list.
   const anchor = body.indexOf("</ul>");
   if (anchor === -1) return `${body}\n${block}`;
