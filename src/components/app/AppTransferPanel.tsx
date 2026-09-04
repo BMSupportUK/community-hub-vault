@@ -379,7 +379,7 @@ export function AppTransferPanel({ onUploadClick }: { onUploadClick?: () => void
   }, [builds]);
 
   const firstTab =
-    APP_BUILD_CATEGORIES.find((c) => (grouped[c.key] ?? []).length > 0)?.key ??
+    APP_BUILD_CATEGORIES.find((c) => c.key === "official_server")?.key ??
     APP_BUILD_CATEGORIES[0].key;
 
   if (!canDownload) return <RequestAccessPanel />;
