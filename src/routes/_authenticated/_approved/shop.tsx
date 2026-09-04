@@ -6250,6 +6250,7 @@ function HowToOrderVideo({ isAdmin, inHero }: { isAdmin: boolean; inHero?: boole
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   const loadUrl = async (path: string | null) => {
     if (!path) {
