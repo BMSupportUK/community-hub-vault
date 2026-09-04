@@ -76,12 +76,9 @@ export function FanZoneFriendRequestsListener() {
           const row = p.new as { addressee_id: string; status: string };
           const old = p.old as { status?: string };
           if (row.status !== "accepted" || old?.status === "accepted") return;
-          const { data: m } = await supabase
-            .from("fan_zone_members")
-            .select("fan_alias")
-            .eq("user_id", row.addressee_id)
-            .maybeSingle();
-          toast.success(`${m?.fan_alias || "A Boro fan"} accepted your Fan Zone friend request`, {
+          const { data: aliasRows } = await supabase.rpc("fan_zone_aliases", { _ids: [row.addressee_id] });
+          const m = (aliasRows ?? [])[0] as { fan_alias: string | null } | undefined;
+          toast.success(`${m?.fan_alias?.trim() || "A Boro fan"} accepted your Fan Zone friend request`, {
             action: {
               label: "View profile",
               onClick: () => navigate({ to: "/fanzone/u/$userId", params: { userId: row.addressee_id } }),
