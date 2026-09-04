@@ -278,7 +278,7 @@ export function buildPreviewBody(fx: FixtureLite, json: any, presser?: PresserLi
   if (odds) facts.push(`<li><strong>Odds:</strong> ${esc(odds)}</li>`);
   parts.push(`<ul>${facts.join("")}</ul>`);
 
-  parts.push(buildPresserBlock(fx, json, presser));
+  // Press conference lives in the thread's original post, not in this reply.
 
 
   const table = sides.filter((s) => s.rank);
@@ -498,6 +498,15 @@ function upsertPresserBlock(body: string, block: string): string {
   return `${body.slice(0, anchor + 5)}\n${block}${body.slice(anchor + 5)}`;
 }
 
+/** Remove a press conference block from a body (it belongs in the original post). */
+function stripPresserBlock(body: string): string {
+  const start = body.indexOf(PRESSER_START);
+  const end = body.indexOf(PRESSER_END);
+  if (start === -1 || end === -1) return body;
+  return `${body.slice(0, start)}${body.slice(end + PRESSER_END.length)}`;
+}
+
+
 function stripLiveBlock(body: string): string {
 
   const start = body.indexOf(LIVE_START);
@@ -614,6 +623,30 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
   const presser = await findPressConference(fx).catch(() => null);
   if (!presser) skipped.push("no press conference video found — fixture graphic used");
 
+  // The press conference belongs in the thread's original post (Original Post tab).
+  {
+    const { data: opPost } = await supabaseAdmin
+      .from("forum_posts")
+      .select("id, body")
+      .eq("topic_id", topic.id)
+      .eq("is_op", true)
+      .maybeSingle();
+    if (opPost?.id) {
+      const block = buildPresserBlock(fx, json, presser);
+      const nextBody = upsertPresserBlock(opPost.body ?? "", block);
+
+      if (nextBody !== opPost.body) {
+        const { error: opErr } = await supabaseAdmin
+          .from("forum_posts")
+          .update({ body: nextBody })
+          .eq("id", opPost.id);
+        if (opErr) skipped.push(`original post refresh failed: ${opErr.message}`);
+      }
+    }
+  }
+
+
+
 
   const { data: logged } = await supabaseAdmin
     .from("boro_match_event_posts")
@@ -680,7 +713,7 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
       const rebuilt =
         legacy || upgrade
           ? buildPreviewBody(fx, json, presser)
-          : upsertPresserBlock(stripLiveBlock(existing.body), buildPresserBlock(fx, json, presser));
+          : stripPresserBlock(stripLiveBlock(existing.body));
 
       if (rebuilt !== existing.body) {
         const { error: upErr } = await supabaseAdmin
