@@ -95,7 +95,7 @@ export function FanZoneStaffBox() {
                 <div
                   className={`mt-0.5 text-[10px] font-medium ${isOnline ? "text-emerald-400" : "text-white/55"}`}
                 >
-                  {isOnline ? "Online" : `Away · ${seenText}`}
+                  {isOnline ? "Online" : `Away · last active ${seenText}`}
                 </div>
               </div>
             </div>
