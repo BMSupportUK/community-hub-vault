@@ -616,7 +616,7 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
 
   const preview = byKey.get("preview");
   if (!preview) {
-    const body = buildPreviewBody(fx, json);
+    const body = buildPreviewBody(fx, json, presser);
     const { data: post, error: postErr } = await supabaseAdmin
       .from("forum_posts")
       .insert({ topic_id: topic.id, author_id: authorId, body })
