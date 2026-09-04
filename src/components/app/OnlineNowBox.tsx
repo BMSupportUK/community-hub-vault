@@ -2,13 +2,14 @@ import { useEffect, useState } from "react";
 import { Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { cn } from "@/lib/utils";
 
 /**
  * Live "online now" counter for the Fan Zone sidebar.
  * Uses its own presence channel (separate from the app shell presence)
  * so guests are counted too.
  */
-export function OnlineNowBox() {
+export function OnlineNowBox({ variant = "panel" }: { variant?: "panel" | "hero" }) {
   const { user } = useAuth();
   const [count, setCount] = useState(0);
   const [members, setMembers] = useState(0);
@@ -40,6 +41,28 @@ export function OnlineNowBox() {
   }, [user?.id]);
 
   const guests = Math.max(0, count - members);
+
+  if (variant === "hero") {
+    return (
+      <div
+        className={cn(
+          "flex items-center gap-2 rounded-full border border-white/30 bg-black/40 px-3.5 py-1.5 text-white backdrop-blur-sm shadow-lg shadow-black/20",
+        )}
+        title="Members and guests browsing the Fan Zone"
+      >
+        <span className="relative flex size-2">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+          <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
+        </span>
+        <span className="text-xs font-semibold tracking-wide">
+          {count} {count === 1 ? "person" : "people"} online
+        </span>
+        <span className="hidden sm:inline text-[10px] text-white/70">
+          {members} signed in · {guests} guest{guests === 1 ? "" : "s"}
+        </span>
+      </div>
+    );
+  }
 
   return (
     <section className="boro-inner-panel rounded-lg p-3">
