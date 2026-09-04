@@ -20,7 +20,7 @@ export function FanZoneStaffBox() {
   const [members, setMembers] = useState<StaffMember[] | null>(null);
   const online = useOnlineUsers();
   const staffIds = useMemo(() => (members ?? []).map((m) => m.user_id), [members]);
-  const { lastSeen } = useLastSeenMap(staffIds);
+  const { lastSeen, tick } = useLastSeenMap(staffIds);
 
   useEffect(() => {
     void (async () => {
