@@ -278,6 +278,9 @@ export function buildPreviewBody(fx: FixtureLite, json: any, presser?: PresserLi
   if (odds) facts.push(`<li><strong>Odds:</strong> ${esc(odds)}</li>`);
   parts.push(`<ul>${facts.join("")}</ul>`);
 
+  parts.push(buildPresserBlock(fx, json, presser));
+
+
   const table = sides.filter((s) => s.rank);
   if (table.length) {
     parts.push(
