@@ -185,21 +185,38 @@ export type PublicStaffMember = {
 /** Guest-visible Fan Zone staff list (admins first, then moderators). */
 export const getPublicFanZoneStaff = createServerFn({ method: "GET" }).handler(async (): Promise<PublicStaffMember[]> => {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data: roles } = await supabaseAdmin
-    .from("user_roles")
-    .select("user_id, role")
-    .in("role", ["admin", "boro_fan_zone_moderator"]);
-  const rows = (roles ?? []) as Array<{ user_id: string; role: PublicStaffMember["role"] }>;
+  const [{ data: roles }, { data: approvedMembers }] = await Promise.all([
+    supabaseAdmin
+      .from("user_roles")
+      .select("user_id, role")
+      .in("role", ["admin", "boro_fan_zone_moderator"]),
+    supabaseAdmin
+      .from("fan_zone_members")
+      .select("user_id")
+      .eq("status", "approved"),
+  ]);
+  const approvedIds = new Set(
+    ((approvedMembers ?? []) as Array<{ user_id: string }>).map((member) => member.user_id),
+  );
+  const rows = ((roles ?? []) as Array<{ user_id: string; role: PublicStaffMember["role"] }>).filter(
+    (member) => approvedIds.has(member.user_id),
+  );
   if (!rows.length) return [];
   const ids = rows.map((r) => r.user_id);
   const aliases = await loadAliases(supabaseAdmin, ids);
-  const out = rows.map((r) => ({
-    user_id: r.user_id,
-    role: r.role,
-    // Fan Zone alias only — never the BM Support display name/username.
-    fan_alias: aliases[r.user_id]?.alias || "Boro Fan",
-    fan_avatar_url: aliases[r.user_id]?.avatar || null,
-  }));
+  const unique = new Map<string, PublicStaffMember>();
+  rows.forEach((r) => {
+    const member = {
+      user_id: r.user_id,
+      role: r.role,
+      // Fan Zone alias only — never the BM Support display name/username.
+      fan_alias: aliases[r.user_id]?.alias || "Boro Fan",
+      fan_avatar_url: aliases[r.user_id]?.avatar || null,
+    };
+    const existing = unique.get(r.user_id);
+    if (!existing || r.role === "admin") unique.set(r.user_id, member);
+  });
+  const out = Array.from(unique.values());
   out.sort((a, b) => {
     if (a.role !== b.role) return a.role === "admin" ? -1 : 1;
     return a.fan_alias.toLowerCase().localeCompare(b.fan_alias.toLowerCase());
