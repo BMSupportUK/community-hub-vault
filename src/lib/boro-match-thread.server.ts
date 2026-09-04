@@ -632,11 +632,9 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
       .eq("is_op", true)
       .maybeSingle();
     if (opPost?.id) {
-      const placeholder = /awaiting press conference/i.test(opPost.body ?? "");
       const block = buildPresserBlock(fx, json, presser);
-      const nextBody = placeholder && !opPost.body.includes(PRESSER_START)
-        ? block
-        : upsertPresserBlock(opPost.body ?? "", block);
+      const nextBody = upsertPresserBlock(opPost.body ?? "", block);
+
       if (nextBody !== opPost.body) {
         const { error: opErr } = await supabaseAdmin
           .from("forum_posts")
