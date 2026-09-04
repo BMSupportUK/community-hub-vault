@@ -188,7 +188,7 @@ export function buildPresserBlock(fx: FixtureLite, json: any, presser: PresserLi
   const home = norm.home ?? fx.home_team;
   const away = norm.away ?? fx.away_team;
   const parts: string[] = [PRESSER_START];
-  parts.push(`<p><strong>Press conference</strong></p>`);
+  parts.push(`<div data-fz-prepared="1"><strong>Press conference</strong></div>`);
   if (presser) {
     parts.push(
       `<div class="video-embed" style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;margin:0.75rem 0;width:100%;border-radius:0.5rem;"><iframe src="https://www.youtube.com/embed/${esc(presser.id)}?rel=0&amp;playsinline=1" title="${esc(presser.title)}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"></iframe></div>`,
