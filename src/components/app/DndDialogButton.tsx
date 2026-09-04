@@ -3,7 +3,7 @@ import { Clock, Moon, Pencil, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useDndStatus } from "@/hooks/use-dnd";
-import { addDaysToDateStr, dateInTimeZone, zonedWallTimeToUtcMs } from "@/hooks/use-timezone";
+import { dateInTimeZone, zonedWallTimeToUtcMs } from "@/hooks/use-timezone";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
 import {
   Dialog,
