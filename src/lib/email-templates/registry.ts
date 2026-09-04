@@ -24,6 +24,8 @@ import { template as wcGuestPinReset } from './wc-guest-pin-reset'
 import { template as wcPredictionReminder } from './wc-prediction-reminder'
 import { template as boroPredictionReminder } from './boro-prediction-reminder'
 import { template as fantasySquadReminder } from './fantasy-squad-reminder'
+import { template as boroPredictionFinalReminder } from './boro-prediction-final-reminder'
+import { template as fantasySquadFinalReminder } from './fantasy-squad-final-reminder'
 import { template as boroPredictorInvite } from './boro-predictor-invite'
 import { template as ticketReply } from './ticket-reply'
 import { template as vaultPinReset } from './vault-pin-reset'
@@ -38,6 +40,8 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'wc-prediction-reminder': wcPredictionReminder,
   'boro-prediction-reminder': boroPredictionReminder,
   'fantasy-squad-reminder': fantasySquadReminder,
+  'boro-prediction-final-reminder': boroPredictionFinalReminder,
+  'fantasy-squad-final-reminder': fantasySquadFinalReminder,
   'boro-predictor-invite': boroPredictorInvite,
   'ticket-reply': ticketReply,
   'vault-pin-reset': vaultPinReset,
