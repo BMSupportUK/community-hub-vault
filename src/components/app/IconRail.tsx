@@ -269,7 +269,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
   const orderKey = (to: string) => `${scope}:${to}`;
 
   const allowedByPerms = (to: string) => {
-    if (to === "/forum") return true;
+    if (to === "/forum" || to === "/fan-zone") return true;
     // Fan Zone members list: gated by canSeeFanZoneMembers, not page permissions.
     if (to === "/admin-fan-zone" && inFanZone) return true;
     if (hasAny(["admin"])) return true;
