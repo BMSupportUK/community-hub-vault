@@ -3610,7 +3610,9 @@ function EntrantSquadDialog({
           <SelectTrigger className="w-full">
             <SelectValue placeholder="Choose a locked gameweek" />
           </SelectTrigger>
-          <SelectContent>
+          {/* Sits above the dialog overlay (z-100) so gameweeks stay clickable. */}
+          <SelectContent className="z-[130]">
+
             {gameweeks.map((g) => (
               <SelectItem key={g.id} value={g.id}>
                 GW{g.gwNumber} — {g.homeTeam} v {g.awayTeam}
