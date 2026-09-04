@@ -689,7 +689,7 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
       const rebuilt =
         legacy || upgrade
           ? buildPreviewBody(fx, json, presser)
-          : upsertPresserBlock(stripLiveBlock(existing.body), buildPresserBlock(fx, json, presser));
+          : stripPresserBlock(stripLiveBlock(existing.body));
 
       if (rebuilt !== existing.body) {
         const { error: upErr } = await supabaseAdmin
