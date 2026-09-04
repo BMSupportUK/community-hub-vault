@@ -141,11 +141,15 @@ export const upsertBoroPrediction = createServerFn({ method: "POST" })
 
     const { data: fx, error: fxErr } = await supabase
       .from("boro_fixtures")
-      .select("id, kickoff_at")
+      .select("id, kickoff_at, competition")
       .eq("id", data.fixtureId)
       .maybeSingle();
     if (fxErr) throw new Error(fxErr.message);
     if (!fx) throw new Error("Fixture not found");
+    // LOCKED: league-only game — cup ties must never be predictable.
+    if (((fx as any).competition ?? "") !== "Championship") {
+      throw new Error("Score predictions are for Championship fixtures only.");
+    }
     if (new Date((fx as any).kickoff_at).getTime() - 30 * 60 * 1000 <= Date.now()) {
       throw new Error("Predictions lock 30 minutes before kick-off — this fixture is closed.");
     }
