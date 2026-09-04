@@ -835,6 +835,38 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
   // Half-time and full-time stat round-ups are no longer posted as replies —
   // the pinned live block already carries the score and key stats.
 
+  // As soon as this game is over, open the thread for the next fixture so it is
+  // ready and waiting (the preview then fills it ~24h before kick-off).
+  if (authorId && isFullTime(json)) {
+    const { data: upcoming } = await supabaseAdmin
+      .from("boro_fixtures")
+      .select("id, home_team, away_team, kickoff_at, competition")
+      .gt("kickoff_at", new Date(Date.parse(fx.kickoff_at) + 3 * 60 * 60 * 1000).toISOString())
+      .order("kickoff_at", { ascending: true })
+      .limit(1);
+    const next = (upcoming ?? [])[0] as FixtureLite | undefined;
+    if (next) {
+      const { data: laterTopics } = await supabaseAdmin
+        .from("forum_topics")
+        .select("id, title, created_at, author_id")
+        .eq("board_id", board.id)
+        .order("created_at", { ascending: false })
+        .limit(40);
+      const already = matchTopicToFixture(
+        (laterTopics ?? []) as Array<{ id: string; title: string; created_at: string; author_id: string }>,
+        next,
+      );
+      if (!already) {
+        const created = await createMatchTopic(supabaseAdmin, board.id, authorId, next);
+        skipped.push(
+          created ? `opened next match day thread: ${created.title}` : "could not open next match day thread",
+        );
+      }
+    }
+  }
+
+
+
 
   return {
     ...base,
