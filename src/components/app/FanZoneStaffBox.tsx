@@ -20,7 +20,7 @@ export function FanZoneStaffBox() {
   const [members, setMembers] = useState<StaffMember[] | null>(null);
   const online = useOnlineUsers();
   const staffIds = useMemo(() => (members ?? []).map((m) => m.user_id), [members]);
-  const { lastSeen } = useLastSeenMap(staffIds);
+  const { lastSeen, tick } = useLastSeenMap(staffIds);
 
   useEffect(() => {
     void (async () => {
@@ -59,8 +59,14 @@ export function FanZoneStaffBox() {
           const name = m.fan_alias;
           const isAdmin = m.role === "admin";
           const initials = name.slice(0, 2).toUpperCase();
-          const isOnline = online.has(m.user_id);
-          const seenText = formatLastSeen(lastSeen[m.user_id] ?? null);
+          const seen = lastSeen[m.user_id] ?? null;
+          // Presence is instant, but a member browsing in another tab/device may
+          // not be in this presence channel — a fresh "last active" ping counts
+          // as online too. `tick` re-evaluates this every 30s with no refresh.
+          const seenMs = seen ? new Date(seen).getTime() : 0;
+          const recentlyActive = seenMs > 0 && Date.now() - seenMs < 5 * 60_000 && tick >= 0;
+          const isOnline = online.has(m.user_id) || recentlyActive;
+          const seenText = formatLastSeen(seen);
           const inner = (
             <div className="flex items-center gap-2.5 rounded-lg border border-white/[0.12] bg-white/[0.08] px-2.5 py-2 hover:border-[#E11B22]/60 hover:bg-white/[0.12] transition-colors">
               <div className="relative shrink-0">
@@ -89,7 +95,7 @@ export function FanZoneStaffBox() {
                 <div
                   className={`mt-0.5 text-[10px] font-medium ${isOnline ? "text-emerald-400" : "text-white/55"}`}
                 >
-                  {isOnline ? "Online" : `Away · ${seenText}`}
+                  {isOnline ? "Online" : `Away · last active ${seenText}`}
                 </div>
               </div>
             </div>
