@@ -131,6 +131,9 @@ export const listBoroFixturesPublic = createServerFn({ method: "POST" })
     const { data: fixtures, error } = await admin
       .from("boro_fixtures")
       .select("id, competition, home_team, away_team, kickoff_at, venue, home_score, away_score, status, minute, minute_added, month_key, home_reds, away_reds")
+      // LOCKED: Boro score predictions are Championship (league) fixtures only.
+      // Never widen this filter to include cup ties.
+      .eq("competition", "Championship")
       .order("kickoff_at", { ascending: true });
     if (error) throw new Error(error.message);
 
@@ -185,11 +188,15 @@ export const upsertBoroGuestPrediction = createServerFn({ method: "POST" })
     const admin = await getAdmin();
     const { data: fx, error: fxErr } = await admin
       .from("boro_fixtures")
-      .select("id, kickoff_at")
+      .select("id, kickoff_at, competition")
       .eq("id", data.fixtureId)
       .maybeSingle();
     if (fxErr) throw new Error(fxErr.message);
     if (!fx) throw new Error("Fixture not found");
+    // LOCKED: league-only game — cup ties must never be predictable.
+    if (((fx as any).competition ?? "") !== "Championship") {
+      throw new Error("Score predictions are for Championship fixtures only.");
+    }
     if (new Date((fx as any).kickoff_at).getTime() - 30 * 60 * 1000 <= Date.now()) {
       throw new Error("Predictions lock 30 minutes before kick-off — this fixture is closed.");
     }
