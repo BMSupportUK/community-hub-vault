@@ -1339,16 +1339,24 @@ function SquadBuilder({
   onMarkFinished: (gameweekId: string) => Promise<void>;
   markingFinished: boolean;
 }) {
-  // Every gameweek stays in the dropdown — locked and finished weeks remain
-  // selectable (read-only) so managers can look back at past squads.
+  // Members keep every gameweek in the dropdown — locked and finished weeks stay
+  // selectable (read-only) so they can look back at past squads. Guests only see
+  // weeks still open for picks, plus any past week they actually entered a team for.
   const openGameweeks = useMemo(
     () =>
       [...state.gameweeks]
+        .filter((g) => {
+          if (isMember) return true;
+          const stillOpen = g.status === "upcoming" && new Date(g.lockAt).getTime() > Date.now();
+          if (stillOpen) return true;
+          return (state.squads ?? []).some((s) => s.gameweekId === g.id);
+        })
         // Gameweek numbers run chronologically across league, cup and play-off
         // games, so one ordered list covers everything.
         .sort((a, b) => (a.gwNumber ?? 0) - (b.gwNumber ?? 0)),
-    [state.gameweeks],
+    [state.gameweeks, state.squads, isMember],
   );
+
   /** Still open for picks — used only to choose a sensible default selection. */
   const selectableGameweeks = useMemo(
     () => openGameweeks.filter((g) => g.status === "upcoming" && new Date(g.lockAt).getTime() > Date.now()),
