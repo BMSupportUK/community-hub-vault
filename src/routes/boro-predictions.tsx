@@ -35,6 +35,7 @@ import {
 import { FanZonePublicHeader } from "@/components/app/FanZonePublicHeader";
 import { IconRail } from "@/components/app/IconRail";
 import { TeamKit } from "@/lib/boro-team-kits";
+import boroPredictionsFanAsset from "@/assets/boro-predictions-fan.jpg.asset.json";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -472,7 +473,9 @@ function BoroPredictionsPage() {
             </TabsList>
 
             <TabsContent value="fixtures" className="mt-4">
-              {loading || !fixtures ? <Loading /> : (
+              {!user && !guest ? (
+                <PredictionGuestIllustration />
+              ) : loading || !fixtures ? <Loading /> : (
                 <FixturesByMonth fixtures={upcoming} canPredict={canPredict} canManage={canManage} onSave={handleSave} emptyText="No upcoming fixtures yet." ascending />
               )}
             </TabsContent>
@@ -593,6 +596,21 @@ function BoroPredictionsPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+function PredictionGuestIllustration() {
+  return (
+    <section className="overflow-hidden rounded-3xl border border-primary/30 bg-gradient-primary shadow-glow">
+      <img
+        src={boroPredictionsFanAsset.url}
+        alt="A Boro supporter watching a football match from the stadium stands"
+        loading="lazy"
+        width={1536}
+        height={1024}
+        className="aspect-[3/2] w-full object-cover"
+      />
+    </section>
   );
 }
 
