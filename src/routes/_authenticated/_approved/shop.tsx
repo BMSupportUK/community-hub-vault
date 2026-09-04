@@ -6360,10 +6360,17 @@ function HowToOrderVideo({ isAdmin, inHero }: { isAdmin: boolean; inHero?: boole
             </div>
           ) : videoUrl ? (
             <video
+              ref={videoRef}
               key={videoUrl}
               src={videoUrl}
               controls
               playsInline
+              onPlay={() => {
+                const el = videoRef.current;
+                if (el && document.fullscreenElement !== el) {
+                  el.requestFullscreen?.().catch(() => {});
+                }
+              }}
               className="w-full rounded-xl border border-border/60 bg-black"
             />
           ) : (
