@@ -2232,14 +2232,36 @@ function SquadBuilder({
     </div>
   );
 
+  if (!canPlay) {
+    return (
+      <div className="overflow-hidden rounded-3xl border border-primary/30 shadow-glow bg-gradient-primary">
+        <div className="grid items-center gap-0 md:grid-cols-2">
+          <img
+            src={fantasyBossAsset.url}
+            alt="Middlesbrough manager sat at his office desk planning a team selection"
+            loading="lazy"
+            width={1280}
+            height={720}
+            className="h-full w-full object-cover"
+          />
+          <div className="p-6 md:p-8 space-y-4 text-center md:text-left">
+            <h2 className="text-2xl md:text-3xl font-black tracking-tight">
+              Sign up today to enter — if you've got what it takes to be the Boro Boss
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Name your match day 11, pick your bench, formation and captain. Join the game
+              (or sign in as a guest) to start building your squad.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
 
-      {gw && !canPlay && (
-        <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm">
-          Join the game (or sign in as a guest) to save a squad — you can browse the player pool meanwhile.
-        </div>
-      )}
+
       {locked && (
         <div className="rounded-xl border border-border/60 bg-muted/30 px-4 py-3 text-sm flex items-center gap-2">
           <Lock className="size-4" /> This gameweek is locked. Changes will apply to the next one.
