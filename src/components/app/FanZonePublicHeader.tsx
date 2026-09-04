@@ -1,13 +1,16 @@
 import { Link } from "@tanstack/react-router";
-import { LogIn, Menu, UserPlus } from "lucide-react";
+import { LogIn, Lock, Menu, Shield, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { IconRail } from "@/components/app/IconRail";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useAuth } from "@/hooks/use-auth";
+import { lockScreenNow } from "@/components/app/ScreenLockProvider";
 import boroBadge from "@/assets/boro-fan-zone-badge.png";
 
 export function FanZonePublicHeader() {
   const [navOpen, setNavOpen] = useState(false);
+  const { user } = useAuth();
 
   return (
     <header className="relative z-30 flex min-h-16 items-center justify-between gap-3 border-b border-white/15 bg-black/55 px-3 py-2 backdrop-blur-md sm:px-6">
@@ -41,6 +44,30 @@ export function FanZonePublicHeader() {
       </div>
 
       <div className="flex shrink-0 items-center gap-2">
+        <Button
+          asChild
+          size="icon"
+          variant="outline"
+          className="border-white/25 bg-white/10 text-white hover:bg-white/20 hover:text-white"
+          title={user ? "Two-factor authentication" : "Sign in to manage two-factor authentication"}
+        >
+          <Link to={user ? "/account-security" : "/login"} aria-label="Two-factor authentication">
+            <Shield className="size-4" />
+          </Link>
+        </Button>
+        <Button
+          type="button"
+          size="icon"
+          variant="outline"
+          className="border-white/25 bg-white/10 text-white hover:bg-white/20 hover:text-white"
+          title={user ? "Lock screen now" : "Sign in to use lock screen"}
+          onClick={() => (user ? lockScreenNow() : undefined)}
+          disabled={!user}
+          aria-label="Lock screen"
+        >
+          <Lock className="size-4" />
+        </Button>
+        <span className="hidden sm:inline h-5 w-px bg-white/25" />
         <Button asChild size="sm" variant="outline" className="border-white/25 bg-white/10 text-white hover:bg-white/20 hover:text-white">
           <Link to="/login">
             <LogIn className="size-4 sm:mr-1.5" />
