@@ -3,6 +3,9 @@ import { Trophy, Medal, Award, Loader2, ArrowRight, CheckCircle2 } from "lucide-
 import { useCompetitionWinners } from "@/hooks/use-finished-competitions";
 import { COMPETITIONS } from "@/lib/competitions";
 import { LandingHeader } from "@/components/LandingHeader";
+import { IconRail } from "@/components/app/IconRail";
+import { FanZonePublicHeader } from "@/components/app/FanZonePublicHeader";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/competition-winners")({
   component: CompetitionWinnersPage,
@@ -26,6 +29,7 @@ const placeLabel = (place: number) =>
   place === 1 ? "1st place" : place === 2 ? "2nd place" : `${place}rd place`;
 
 function CompetitionWinnersPage() {
+  const { user } = useAuth();
   const { data, isLoading } = useCompetitionWinners();
   const summary = data ?? [];
 
@@ -37,8 +41,10 @@ function CompetitionWinnersPage() {
   );
 
   return (
-    <div className="min-h-dvh bg-background">
-      <LandingHeader />
+    <div className="flex min-h-dvh bg-background">
+      <IconRail />
+      <main className="min-w-0 flex-1">
+      {!user ? <FanZonePublicHeader /> : <LandingHeader />}
       <div className="mx-auto w-full max-w-5xl px-4 py-6 space-y-8">
         <header className="space-y-1">
           <h1 className="font-display text-2xl font-bold flex items-center gap-2">
@@ -139,6 +145,7 @@ function CompetitionWinnersPage() {
           </section>
         ) : null}
       </div>
+      </main>
     </div>
   );
 }

@@ -24,7 +24,7 @@ import {
   Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { WinnersTab } from "@/components/app/WinnersTab";
-import { LandingHeader } from "@/components/LandingHeader";
+import { FanZonePublicHeader } from "@/components/app/FanZonePublicHeader";
 import { IconRail } from "@/components/app/IconRail";
 import { useAuth } from "@/hooks/use-auth";
 import {
@@ -987,11 +987,11 @@ function BoroFantasyPage() {
     <div className={user ? "relative isolate min-h-dvh md:h-dvh md:overflow-hidden flex bg-transparent" : "relative isolate min-h-screen bg-transparent"}>
       <img src={riversideBg} alt="" aria-hidden className="pointer-events-none fixed inset-0 z-0 h-screen w-screen object-cover object-center" />
       <div className="pointer-events-none fixed inset-0 z-0" style={{ background: "rgba(2, 6, 14, 0.78)" }} aria-hidden />
-      {user && <IconRail />}
+      <IconRail />
       <main className="relative z-10 flex-1 overflow-y-auto min-w-0">
         {!user && (
           <div className="relative z-10 border-b border-white/10 bg-background/30 backdrop-blur-sm">
-            <LandingHeader />
+            <FanZonePublicHeader />
           </div>
         )}
         <div className="w-full px-4 sm:px-8 lg:px-16 py-6">

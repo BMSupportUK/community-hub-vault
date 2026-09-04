@@ -31,7 +31,7 @@ import {
 } from "@/lib/wc-guest.functions";
 import { teamFlag } from "@/lib/country-flags";
 import heroBg from "@/assets/england-world-cup-hero.jpg";
-import { LandingHeader } from "@/components/LandingHeader";
+import { FanZonePublicHeader } from "@/components/app/FanZonePublicHeader";
 import { IconRail } from "@/components/app/IconRail";
 import { Sheet, SheetTrigger, SheetContent } from "@/components/ui/sheet";
 import { supabase } from "@/integrations/supabase/client";
@@ -529,11 +529,11 @@ function PredictionsPage() {
   return (
     <FixturesFetchedAtContext.Provider value={fixturesAt}>
     <div className={user ? "min-h-dvh md:h-dvh md:overflow-hidden flex bg-background" : "contents"}>
-      {user && <IconRail />}
+      <IconRail />
       <main className="relative isolate flex-1 overflow-y-auto min-w-0">
         {!user && (
           <div className="relative z-20 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-            <LandingHeader />
+            <FanZonePublicHeader />
           </div>
         )}
       {user && (

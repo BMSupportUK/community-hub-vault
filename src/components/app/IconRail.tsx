@@ -1,5 +1,5 @@
 import { Link, useRouterState, useNavigate } from "@tanstack/react-router";
-import { Home, Ticket, ShoppingCart, BookOpen, FileText, LogOut, MessageSquare, MessagesSquare, UserCircle2, Star, Trophy, Tv, Volleyball, Wrench, Goal, Users, Briefcase, MonitorPlay, Popcorn, Crown } from "lucide-react";
+import { Home, Ticket, ShoppingCart, BookOpen, FileText, LogIn, LogOut, MessageSquare, MessagesSquare, UserCircle2, Star, Trophy, Tv, Volleyball, Wrench, Goal, Users, Briefcase, MonitorPlay, Popcorn, Crown, UserPlus } from "lucide-react";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { useFanZoneMembership } from "@/hooks/use-fan-zone";
 import { useFinishedCompetitions } from "@/hooks/use-finished-competitions";
@@ -244,11 +244,11 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
 
   const fanZoneItems: RailItem[] = [
     // Dual-role accounts (BM Support + Fan Zone) keep a way back to BM Support.
-    { to: "/home", label: "BM Support", icon: Home, show: !isFanZoneOnly },
+    { to: "/home", label: "BM Support", icon: Home, show: !!user && !isFanZoneOnly },
     { to: "/forum", label: "Boro Fan Zone", icon: BoroBadgeIcon, show: true },
-    { to: "/fanzone/messages", label: "Inbox", icon: MessagesSquare, show: true },
-    { to: "/admin-fan-zone", label: "Members", icon: Users, show: canSeeFanZoneMembers },
-    { to: "/fanzone/profile", label: "Fan Zone Profile", icon: UserCircle2, show: true },
+    { to: "/fanzone/messages", label: "Inbox", icon: MessagesSquare, show: !!user },
+    { to: "/admin-fan-zone", label: "Members", icon: Users, show: !!user && canSeeFanZoneMembers },
+    { to: "/fanzone/profile", label: "Fan Zone Profile", icon: UserCircle2, show: !!user },
     { to: "/boro-fantasy", label: "Boro Fantasy", icon: FantasyBenchIcon, show: true },
     ...COMPETITIONS.map((c) => ({
       to: c.to,
@@ -257,6 +257,8 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
       show: !finishedCompetitions.includes(c.key),
     })),
     { to: "/competition-winners", label: "Competition Winners", icon: Crown, show: true },
+    { to: "/login", label: "Sign in", icon: LogIn, show: !user },
+    { to: "/signup", label: "Join Fan Zone", icon: UserPlus, show: !user, search: { intent: "fan-zone" } },
   ];
 
 
@@ -315,12 +317,12 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
         : "shrink-0 hidden md:flex border-r border-primary-glow/40 sticky top-0 h-dvh",
     )}>
       <Link
-        to={isFanZoneOnly ? "/forum" : inFanZone ? "/home" : "/home"}
-        aria-label={isFanZoneOnly ? "Boro Fan Zone" : inFanZone ? "Back to BM Support" : "BM Support"}
-        title={isFanZoneOnly ? "Boro Fan Zone" : inFanZone ? "Back to BM Support" : "BM Support"}
+        to={!user || isFanZoneOnly ? "/forum" : inFanZone ? "/home" : "/home"}
+        aria-label={!user || isFanZoneOnly ? "Boro Fan Zone" : inFanZone ? "Back to BM Support" : "BM Support"}
+        title={!user || isFanZoneOnly ? "Boro Fan Zone" : inFanZone ? "Back to BM Support" : "BM Support"}
         className="relative z-10 shrink-0 size-12 rounded-2xl bg-gradient-primary flex items-center justify-center font-display font-bold text-sm text-primary-foreground shadow-glow mb-1 ring-2 ring-primary-glow/70 hover:ring-primary-glow hover:scale-110 transition-all duration-200"
       >
-        {isFanZoneOnly ? "FZ" : "BM"}
+        {!user || isFanZoneOnly ? "FZ" : "BM"}
       </Link>
 
       <div className="relative z-10 shrink-0 h-px w-12 bg-gradient-to-r from-transparent via-primary-glow to-transparent" />
