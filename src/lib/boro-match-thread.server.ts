@@ -506,6 +506,57 @@ function stripPresserBlock(body: string): string {
   return `${body.slice(0, start)}${body.slice(end + PRESSER_END.length)}`;
 }
 
+/** Short club names used in match day thread titles (house format). */
+const TITLE_SHORT_NAMES: Record<string, string> = {
+  "queens park rangers": "QPR",
+  "west bromwich albion": "West Brom",
+  "sheffield wednesday": "Sheffield Weds",
+  "wolverhampton wanderers": "Wolves",
+  "brighton & hove albion": "Brighton",
+  "nottingham forest": "Nottm Forest",
+};
+
+function titleTeam(name: string): string {
+  return TITLE_SHORT_NAMES[name.trim().toLowerCase()] ?? name.trim();
+}
+
+/** "QPR v Middlesbrough 05-09-26" — the format every match day thread uses. */
+export function matchThreadTitle(fx: FixtureLite): string {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "2-digit",
+    year: "2-digit",
+    timeZone: "Europe/London",
+  }).format(new Date(fx.kickoff_at));
+  return `${titleTeam(fx.home_team)} v ${titleTeam(fx.away_team)} ${parts.replace(/\//g, "-")}`;
+}
+
+/** Open a match day thread for a fixture, with the standard first post. */
+async function createMatchTopic(
+  supabaseAdmin: any,
+  boardId: string,
+  authorId: string,
+  fx: FixtureLite,
+): Promise<{ id: string; title: string; author_id: string } | null> {
+  const title = matchThreadTitle(fx);
+  const { data: topic, error } = await supabaseAdmin
+    .from("forum_topics")
+    .insert({ board_id: boardId, author_id: authorId, title })
+    .select("id, title, author_id")
+    .single();
+  if (error || !topic) return null;
+  const { error: postErr } = await supabaseAdmin.from("forum_posts").insert({
+    topic_id: topic.id,
+    author_id: authorId,
+    body: `<div data-fz-prepared="1">Awaiting Press Conference</div>`,
+    is_op: true,
+  });
+  if (postErr) return topic as { id: string; title: string; author_id: string };
+  return topic as { id: string; title: string; author_id: string };
+}
+
+
+
 
 function stripLiveBlock(body: string): string {
 
@@ -584,17 +635,24 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
     .maybeSingle();
   if (!board?.id) return { ...base, fixture: label, skipped: ["match day board not found"] };
 
+  const authorId = (await getMatchDayAuthorId()) ?? null;
+
   const { data: topics } = await supabaseAdmin
     .from("forum_topics")
     .select("id, title, created_at, author_id")
     .eq("board_id", board.id)
     .order("created_at", { ascending: false })
     .limit(40);
-  const topic = matchTopicToFixture(
-    (topics ?? []) as Array<{ id: string; title: string; created_at: string; author_id: string }>,
-    fx,
-  );
+  const existingTopics = (topics ?? []) as Array<{ id: string; title: string; created_at: string; author_id: string }>;
+  let topic = matchTopicToFixture(existingTopics, fx);
+  // No thread yet (the previous game has finished and this is the next fixture):
+  // open one automatically in the house format so the preview can post into it.
+  if (!topic && authorId) {
+    topic = await createMatchTopic(supabaseAdmin, board.id, authorId, fx);
+    if (!topic) skipped.push("could not open a match day thread automatically");
+  }
   if (!topic) return { ...base, fixture: label, topic: null, skipped: ["no match day thread for this fixture yet"] };
+
 
   // FotMob is the only live-data source. It is reachable from the server, so no
   // browser relay is needed and the thread can refresh in real time. Live data
@@ -616,7 +674,7 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
 
 
 
-  const authorId = (await getMatchDayAuthorId()) ?? topic.author_id;
+  const postAuthorId = authorId ?? topic.author_id;
 
   // Official Middlesbrough FC press conference video for this fixture (if any).
   const { findPressConference } = await import("@/lib/boro-press-conference.server");
@@ -669,7 +727,7 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
     const body = buildPreviewBody(fx, json, presser);
     const { data: post, error: postErr } = await supabaseAdmin
       .from("forum_posts")
-      .insert({ topic_id: topic.id, author_id: authorId, body })
+      .insert({ topic_id: topic.id, author_id: postAuthorId, body })
       .select("id")
       .single();
     if (postErr) skipped.push(`preview post failed: ${postErr.message}`);
@@ -738,7 +796,7 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
   if (!live) {
     const { data: post, error: postErr } = await supabaseAdmin
       .from("forum_posts")
-      .insert({ topic_id: topic.id, author_id: authorId, body: liveBody, is_pinned: true })
+      .insert({ topic_id: topic.id, author_id: postAuthorId, body: liveBody, is_pinned: true })
       .select("id")
       .single();
     if (postErr) skipped.push(`live post failed: ${postErr.message}`);
@@ -776,6 +834,38 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
 
   // Half-time and full-time stat round-ups are no longer posted as replies —
   // the pinned live block already carries the score and key stats.
+
+  // As soon as this game is over, open the thread for the next fixture so it is
+  // ready and waiting (the preview then fills it ~24h before kick-off).
+  if (authorId && isFullTime(json)) {
+    const { data: upcoming } = await supabaseAdmin
+      .from("boro_fixtures")
+      .select("id, home_team, away_team, kickoff_at, competition")
+      .gt("kickoff_at", new Date(Date.parse(fx.kickoff_at) + 3 * 60 * 60 * 1000).toISOString())
+      .order("kickoff_at", { ascending: true })
+      .limit(1);
+    const next = (upcoming ?? [])[0] as FixtureLite | undefined;
+    if (next) {
+      const { data: laterTopics } = await supabaseAdmin
+        .from("forum_topics")
+        .select("id, title, created_at, author_id")
+        .eq("board_id", board.id)
+        .order("created_at", { ascending: false })
+        .limit(40);
+      const already = matchTopicToFixture(
+        (laterTopics ?? []) as Array<{ id: string; title: string; created_at: string; author_id: string }>,
+        next,
+      );
+      if (!already) {
+        const created = await createMatchTopic(supabaseAdmin, board.id, authorId, next);
+        skipped.push(
+          created ? `opened next match day thread: ${created.title}` : "could not open next match day thread",
+        );
+      }
+    }
+  }
+
+
 
 
   return {
