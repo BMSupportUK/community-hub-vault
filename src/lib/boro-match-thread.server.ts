@@ -623,6 +623,32 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
   const presser = await findPressConference(fx).catch(() => null);
   if (!presser) skipped.push("no press conference video found — fixture graphic used");
 
+  // The press conference belongs in the thread's original post (Original Post tab).
+  {
+    const { data: opPost } = await supabaseAdmin
+      .from("forum_posts")
+      .select("id, body")
+      .eq("topic_id", topic.id)
+      .eq("is_op", true)
+      .maybeSingle();
+    if (opPost?.id) {
+      const placeholder = /awaiting press conference/i.test(opPost.body ?? "");
+      const block = buildPresserBlock(fx, json, presser);
+      const nextBody = placeholder && !opPost.body.includes(PRESSER_START)
+        ? block
+        : upsertPresserBlock(opPost.body ?? "", block);
+      if (nextBody !== opPost.body) {
+        const { error: opErr } = await supabaseAdmin
+          .from("forum_posts")
+          .update({ body: nextBody })
+          .eq("id", opPost.id);
+        if (opErr) skipped.push(`original post refresh failed: ${opErr.message}`);
+      }
+    }
+  }
+
+
+
 
   const { data: logged } = await supabaseAdmin
     .from("boro_match_event_posts")
