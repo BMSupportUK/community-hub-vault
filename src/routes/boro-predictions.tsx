@@ -340,7 +340,7 @@ function BoroPredictionsPage() {
   }, [fixtures, leaderboard]);
 
   return (
-    <div className={user ? "relative isolate min-h-dvh md:h-dvh md:overflow-hidden flex bg-transparent" : "relative isolate min-h-screen bg-transparent"}>
+    <div className={user ? "relative isolate min-h-dvh md:h-dvh md:overflow-hidden flex bg-transparent" : "relative isolate min-h-screen flex bg-transparent"}>
       <img
         src={riversideBg}
         alt=""
