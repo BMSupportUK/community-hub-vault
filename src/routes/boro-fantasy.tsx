@@ -3606,29 +3606,18 @@ function EntrantSquadDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-2">
-          <p className="text-xs font-semibold uppercase text-muted-foreground">Choose gameweek</p>
-          <div className="grid max-h-44 grid-cols-2 gap-2 overflow-y-auto rounded-md border border-border/60 bg-muted/20 p-2 sm:grid-cols-3">
+        <Select value={gwId} onValueChange={setGwId}>
+          <SelectTrigger className="w-full">
+            <SelectValue placeholder="Choose a locked gameweek" />
+          </SelectTrigger>
+          <SelectContent position="item-aligned" className="z-[130] max-h-72">
             {gameweeks.map((g) => (
-              <Button
-                key={g.id}
-                type="button"
-                size="sm"
-                variant={gwId === g.id ? "default" : "outline"}
-                className="h-auto min-h-10 whitespace-normal px-2 py-2 text-xs"
-                aria-pressed={gwId === g.id}
-                onClick={() => setGwId(g.id)}
-              >
-                GW{g.gwNumber}
-              </Button>
+              <SelectItem key={g.id} value={g.id}>
+                GW{g.gwNumber} — {g.homeTeam} v {g.awayTeam}
+              </SelectItem>
             ))}
-          </div>
-          {gw && (
-            <p className="text-xs text-muted-foreground">
-              GW{gw.gwNumber} — {gw.homeTeam} v {gw.awayTeam}
-            </p>
-          )}
-        </div>
+          </SelectContent>
+        </Select>
 
         {query.isLoading ? (
           <div className="flex items-center justify-center py-8"><Loader2 className="size-5 animate-spin" /></div>
