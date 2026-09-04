@@ -651,6 +651,33 @@ export type Database = {
           },
         ]
       }
+      boro_prediction_final_reminders: {
+        Row: {
+          created_at: string
+          entrant_id: string
+          entrant_kind: string
+          fixture_id: string
+          id: string
+          recipient_email: string
+        }
+        Insert: {
+          created_at?: string
+          entrant_id: string
+          entrant_kind: string
+          fixture_id: string
+          id?: string
+          recipient_email: string
+        }
+        Update: {
+          created_at?: string
+          entrant_id?: string
+          entrant_kind?: string
+          fixture_id?: string
+          id?: string
+          recipient_email?: string
+        }
+        Relationships: []
+      }
       boro_prediction_reminders: {
         Row: {
           entrant_id: string
@@ -2103,6 +2130,33 @@ export type Database = {
           special?: string | null
           stat_column?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      fantasy_squad_final_reminders: {
+        Row: {
+          created_at: string
+          entrant_id: string
+          entrant_kind: string
+          gameweek_id: string
+          id: string
+          recipient_email: string
+        }
+        Insert: {
+          created_at?: string
+          entrant_id: string
+          entrant_kind: string
+          gameweek_id: string
+          id?: string
+          recipient_email: string
+        }
+        Update: {
+          created_at?: string
+          entrant_id?: string
+          entrant_kind?: string
+          gameweek_id?: string
+          id?: string
+          recipient_email?: string
         }
         Relationships: []
       }
@@ -5918,6 +5972,19 @@ export type Database = {
         Returns: undefined
       }
       get_active_mute: { Args: { _user_id: string }; Returns: string }
+      get_boro_final_reminder_recipients: {
+        Args: never
+        Returns: {
+          display_name: string
+          entrant_id: string
+          entrant_kind: string
+          fixture_id: string
+          fixture_label: string
+          kickoff_at: string
+          lock_at: string
+          recipient_email: string
+        }[]
+      }
       get_boro_reminder_recipients: {
         Args: never
         Returns: {
@@ -5943,6 +6010,20 @@ export type Database = {
           matchday_memory: string
           supporter_since: number
           user_id: string
+        }[]
+      }
+      get_fantasy_final_reminder_recipients: {
+        Args: never
+        Returns: {
+          display_name: string
+          entrant_id: string
+          entrant_kind: string
+          fixture_label: string
+          gameweek_id: string
+          gw_number: number
+          kickoff_at: string
+          lock_at: string
+          recipient_email: string
         }[]
       }
       get_fantasy_reminder_recipients: {
