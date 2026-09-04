@@ -482,7 +482,24 @@ export function buildFullTimeBody(fx: FixtureLite, json: any): string {
 }
 
 /** Strip a legacy inline live block out of the preview reply. */
+/** Insert or refresh the press conference block inside an existing preview post. */
+function upsertPresserBlock(body: string, block: string): string {
+  const start = body.indexOf(PRESSER_START);
+  const end = body.indexOf(PRESSER_END);
+  if (start !== -1 && end !== -1) {
+    const current = body.slice(start, end + PRESSER_END.length);
+    // Keep an existing video block; never downgrade it to the "no presser" graphic.
+    if (/<iframe/i.test(current) && !/<iframe/i.test(block)) return body;
+    return `${body.slice(0, start)}${block}${body.slice(end + PRESSER_END.length)}`;
+  }
+  // Older previews have no block yet — drop it in after the facts list.
+  const anchor = body.indexOf("</ul>");
+  if (anchor === -1) return `${body}\n${block}`;
+  return `${body.slice(0, anchor + 5)}\n${block}${body.slice(anchor + 5)}`;
+}
+
 function stripLiveBlock(body: string): string {
+
   const start = body.indexOf(LIVE_START);
   const end = body.indexOf(LIVE_END);
   if (start === -1 || end === -1) return body;
