@@ -1367,9 +1367,13 @@ function SquadBuilder({
   const postponedGameweeks = useMemo(() => openGameweeks.filter((g) => isPostponedGw(g)), [openGameweeks]);
   const [gwId, setGwId] = useState<string>(state.currentGameweekId ?? "");
   useEffect(() => {
-    const valid = state.gameweeks.some((g) => g.id === gwId);
-    if (!valid) setGwId(state.currentGameweekId ?? selectableGameweeks[0]?.id ?? openGameweeks[0]?.id ?? "");
-  }, [state.currentGameweekId, state.gameweeks, selectableGameweeks, openGameweeks, gwId]);
+    const valid = openGameweeks.some((g) => g.id === gwId);
+    if (!valid) {
+      const current = openGameweeks.find((g) => g.id === state.currentGameweekId)?.id;
+      setGwId(current ?? selectableGameweeks[0]?.id ?? openGameweeks[0]?.id ?? "");
+    }
+  }, [state.currentGameweekId, selectableGameweeks, openGameweeks, gwId]);
+
   const gw = state.gameweeks.find((g) => g.id === gwId) ?? null;
   /** League games are restricted to the club's 25-man squad; cup ties are open to anyone. */
   const isLeagueGw = gw ? fantasyCompetitionGroup(gw.competition) === "league" : true;
