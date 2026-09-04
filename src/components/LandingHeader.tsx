@@ -24,10 +24,12 @@ const COMPETITION_NAV_LABELS: Record<string, string> = {
 
 export function LandingHeader() {
   const path = useRouterState({ select: (r) => r.location.pathname });
+  if (isFanZonePath(path)) return null;
   const isVpn = useVisitorVpn();
   const [vpnDialogOpen, setVpnDialogOpen] = useState(false);
   const [open, setOpen] = useState(false);
   const finished = useFinishedCompetitions();
+
 
   const navItems = [
     ...baseNavItems.slice(0, 4),
