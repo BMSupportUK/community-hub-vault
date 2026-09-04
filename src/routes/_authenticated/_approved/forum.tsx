@@ -129,6 +129,9 @@ function ForumLayout() {
               <FanZoneMentionsBell />
             </div>
           </div>
+          <div className="z-10 flex w-full justify-center">
+            <OnlineNowBox variant="hero" />
+          </div>
           <div className="flex min-w-0 items-center gap-4 sm:gap-5">
             <Link
               to="/forum"
