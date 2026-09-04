@@ -115,12 +115,13 @@ export async function resolveFotmobMatch(input: {
 }): Promise<string | null> {
   const data = await fotmobJson(`https://www.fotmob.com/api/data/teams?id=${BORO_TEAM_ID}`, 30_000);
   const fixtures: any[] = data?.fixtures?.allFixtures?.fixtures ?? [];
-  const wanted = [norm(input.home), norm(input.away)];
+  const wanted = [input.home, input.away];
   const kickoff = Date.parse(input.kickoff);
   let best: { id: string; distance: number } | null = null;
   for (const fixture of fixtures) {
-    const names = [fixture?.home?.name, fixture?.away?.name].filter(Boolean).map((name) => norm(String(name)));
-    if (!wanted.every((name) => names.some((candidate) => candidate.includes(name) || name.includes(candidate)))) continue;
+    const names = [fixture?.home?.name, fixture?.away?.name].filter(Boolean).map((name) => String(name));
+    if (!wanted.every((name) => names.some((candidate) => nameMatches(candidate, name)))) continue;
+
     const distance = Math.abs(Date.parse(String(fixture?.status?.utcTime ?? "")) - kickoff);
     if (!Number.isFinite(distance) || distance > 36 * 60 * 60 * 1000 || !fixture?.id) continue;
     if (!best || distance < best.distance) best = { id: String(fixture.id), distance };
