@@ -8,6 +8,81 @@ const cache = new Map<string, { at: number; value: any }>();
 
 const norm = (value: string) => value.toLowerCase().replace(/[^a-z]/g, "");
 
+/** FotMob uses short club names; fixtures may carry the full ones (and vice versa). */
+const NAME_ALIASES: Record<string, string> = {
+  queensparkrangers: "qpr",
+  qpr: "qpr",
+  westbromwichalbion: "westbrom",
+  westbrom: "westbrom",
+  wba: "westbrom",
+  westhamunited: "westham",
+  westham: "westham",
+  sheffieldunited: "sheffutd",
+  sheffutd: "sheffutd",
+  sheffieldwednesday: "sheffwed",
+  sheffwed: "sheffwed",
+  wolverhamptonwanderers: "wolves",
+  wolves: "wolves",
+  brightonandhovealbion: "brighton",
+  brighton: "brighton",
+  boltonwanderers: "bolton",
+  bolton: "bolton",
+  blackburnrovers: "blackburn",
+  blackburn: "blackburn",
+  bristolcity: "bristolcity",
+  cardiffcity: "cardiff",
+  cardiff: "cardiff",
+  stokecity: "stoke",
+  stoke: "stoke",
+  swanseacity: "swansea",
+  swansea: "swansea",
+  norwichcity: "norwich",
+  norwich: "norwich",
+  birminghamcity: "birmingham",
+  birmingham: "birmingham",
+  hullcity: "hull",
+  hull: "hull",
+  leicestercity: "leicester",
+  leicester: "leicester",
+  coventrycity: "coventry",
+  coventry: "coventry",
+  derbycounty: "derby",
+  derby: "derby",
+  prestonnorthend: "preston",
+  preston: "preston",
+  charltonathletic: "charlton",
+  charlton: "charlton",
+  millwallfc: "millwall",
+  portsmouthfc: "portsmouth",
+  lincolncity: "lincoln",
+  lincoln: "lincoln",
+  doncasterrovers: "doncaster",
+  doncaster: "doncaster",
+  wrexhamafc: "wrexham",
+  ipswichtown: "ipswich",
+  ipswich: "ipswich",
+  lutontown: "luton",
+  luton: "luton",
+  oxfordunited: "oxford",
+  oxford: "oxford",
+  plymouthargyle: "plymouth",
+  plymouth: "plymouth",
+  southamptonfc: "southampton",
+  middlesbroughfc: "middlesbrough",
+};
+
+const canon = (value: string) => {
+  const base = norm(value).replace(/^afc/, "").replace(/(fc|afc)$/, "");
+  return NAME_ALIASES[base] ?? base;
+};
+
+const nameMatches = (a: string, b: string) => {
+  const x = canon(a);
+  const y = canon(b);
+  return x === y || x.includes(y) || y.includes(x);
+};
+
+
 async function fotmobJson(url: string, ttlMs: number): Promise<any | null> {
   const hit = cache.get(url);
   if (hit && Date.now() - hit.at < ttlMs) return hit.value;
