@@ -188,7 +188,7 @@ export function buildPresserBlock(fx: FixtureLite, json: any, presser: PresserLi
   const home = norm.home ?? fx.home_team;
   const away = norm.away ?? fx.away_team;
   const parts: string[] = [PRESSER_START];
-  parts.push(`<p><strong>Press conference</strong></p>`);
+  parts.push(`<div data-fz-prepared="1"><strong>Press conference</strong></div>`);
   if (presser) {
     parts.push(
       `<div class="video-embed" style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;margin:0.75rem 0;width:100%;border-radius:0.5rem;"><iframe src="https://www.youtube.com/embed/${esc(presser.id)}?rel=0&amp;playsinline=1" title="${esc(presser.title)}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"></iframe></div>`,
@@ -483,7 +483,9 @@ export function buildFullTimeBody(fx: FixtureLite, json: any): string {
 
 /** Strip a legacy inline live block out of the preview reply. */
 /** Insert or refresh the press conference block, never stacking duplicates. */
-const PRESSER_HEADING = "<p><strong>Press conference</strong></p>";
+// Matches the heading in any wrapper we have ever written (p or div, prepared or not).
+const PRESSER_HEADING_RE = /<(p|div)\b[^>]*>\s*<strong>\s*Press conference\s*<\/strong>\s*<\/\1>/i;
+const AWAITING_PLACEHOLDER_RE = /<div\b[^>]*>\s*Awaiting Press Conference\s*<\/div>/gi;
 
 function stripAllPresserBlocks(body: string): string {
   let out = body;
@@ -491,28 +493,34 @@ function stripAllPresserBlocks(body: string): string {
   for (;;) {
     const start = out.indexOf(PRESSER_START);
     const end = out.indexOf(PRESSER_END, start + 1);
-    if (start === -1 || end === -1) break;
-    out = `${out.slice(0, start)}${out.slice(end + PRESSER_END.length)}`;
+    if (start === -1) break;
+    out = end === -1
+      ? out.slice(0, start)
+      : `${out.slice(0, start)}${out.slice(end + PRESSER_END.length)}`;
   }
-  // Legacy blocks whose markers were stripped by the editor: cut from the heading on.
-  const heading = out.indexOf(PRESSER_HEADING);
+  // Legacy blocks whose markers were stripped: cut from the first heading on,
+  // whatever wrapper element it used.
+  const heading = out.search(PRESSER_HEADING_RE);
   if (heading !== -1) out = out.slice(0, heading);
+  out = out.replace(AWAITING_PLACEHOLDER_RE, "");
   return out.trimEnd();
 }
 
 function upsertPresserBlock(body: string, block: string): string {
+  const base = stripAllPresserBlocks(body);
   // Never downgrade an existing video to the "awaiting press conference" graphic.
   if (/youtube(?:-nocookie)?\.com\/embed/i.test(body) && !/<iframe/i.test(block)) {
-    // Still collapse duplicates of the existing video.
-    const first = body.indexOf(PRESSER_HEADING);
-    if (first === -1) return body;
-    const base = body.slice(0, first);
-    const rest = body.slice(first);
-    const second = rest.indexOf(PRESSER_HEADING, PRESSER_HEADING.length);
-    if (second === -1) return body;
-    return `${base}${rest.slice(0, second).trimEnd()}`;
+    const keepFrom = body.search(PRESSER_HEADING_RE);
+    if (keepFrom === -1) return body;
+    const rest = body.slice(keepFrom);
+    const m = rest.match(PRESSER_HEADING_RE)!;
+    const secondRel = rest.slice(m[0].length).search(PRESSER_HEADING_RE);
+    const existing = (secondRel === -1 ? rest : rest.slice(0, m[0].length + secondRel))
+      .replace(new RegExp(`${PRESSER_START}|${PRESSER_END}`, "g"), "")
+      .trimEnd();
+    return `${base}\n${PRESSER_START}${existing}${PRESSER_END}`;
   }
-  return `${stripAllPresserBlocks(body)}\n${block}`;
+  return `${base}\n${block}`;
 }
 
 
