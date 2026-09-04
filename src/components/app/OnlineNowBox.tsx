@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
 import { Users } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
+import { setFanZonePresenceIdentity, subscribeFanZonePresence } from "@/lib/fan-zone-presence";
 
 /**
  * Live "online now" counter for the Fan Zone sidebar.
- * Uses its own presence channel (separate from the app shell presence)
- * so guests are counted too.
+ * Reads the shared Fan Zone presence channel (separate from the app shell
+ * presence) so guests are counted too, and several copies can render at once.
  */
 export function OnlineNowBox({ variant = "panel" }: { variant?: "panel" | "hero" }) {
   const { user } = useAuth();
@@ -15,29 +15,11 @@ export function OnlineNowBox({ variant = "panel" }: { variant?: "panel" | "hero"
   const [members, setMembers] = useState(0);
 
   useEffect(() => {
-    const key = user?.id ?? `guest-${Math.random().toString(36).slice(2, 10)}`;
-    const channel = supabase.channel("presence:fanzone-online", {
-      config: { presence: { key } },
-    });
-    const sync = () => {
-      const state = channel.presenceState() as Record<string, Array<{ guest?: boolean }>>;
-      const keys = Object.keys(state);
+    setFanZonePresenceIdentity(user?.id ?? null);
+    return subscribeFanZonePresence(({ keys }) => {
       setCount(keys.length);
-      setMembers(keys.filter((k) => !k.startsWith("guest-")).length);
-    };
-    channel
-      .on("presence", { event: "sync" }, sync)
-      .on("presence", { event: "join" }, sync)
-      .on("presence", { event: "leave" }, sync)
-      .subscribe(async (status) => {
-        if (status === "SUBSCRIBED") {
-          await channel.track({ guest: !user?.id, at: new Date().toISOString() });
-        }
-      });
-    return () => {
-      channel.untrack().catch(() => {});
-      supabase.removeChannel(channel);
-    };
+      setMembers(keys.filter((k) => !k.startsWith("guest-") && !k.startsWith("anon-")).length);
+    });
   }, [user?.id]);
 
   const guests = Math.max(0, count - members);
