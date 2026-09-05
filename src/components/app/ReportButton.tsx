@@ -72,6 +72,9 @@ export function ReportButton({ kind, targetId, disabled, className, variant = "c
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
+  const reportedCount = useReportedCount(kind, targetId);
+  const alreadyReported = reportedCount > 0;
+
 
   const submit = async () => {
     const text = reason.trim();
