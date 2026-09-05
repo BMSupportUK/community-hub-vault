@@ -124,6 +124,16 @@ function SportsGuidesPage() {
     } catch { /* ignore */ }
   }, [activeCat]);
 
+  // Show/hide the back-to-top arrow in the Categories tab based on scroll.
+  useEffect(() => {
+    const el = outerRef.current;
+    if (!el) return;
+    const onScroll = () => setShowBackTop(el.scrollTop > 400);
+    onScroll();
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, []);
+
   const queryKey = ["sports-guides-data", user?.id ?? "anon"] as const;
   const dataQuery = useQuery({
     queryKey,
