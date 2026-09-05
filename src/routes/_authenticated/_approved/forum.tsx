@@ -12,6 +12,8 @@ import { FanZoneStaffBox } from "@/components/app/FanZoneStaffBox";
 import { BoroMatchCentreBox } from "@/components/app/BoroMatchCentreBox";
 import { BoroLiveMatchStrip } from "@/components/app/BoroLiveMatchStrip";
 import { FanZoneNameGate } from "@/components/app/FanZoneNamePrompt";
+import { FanZoneBannedScreen } from "@/components/app/FanZoneBannedScreen";
+import { useFanZoneBan } from "@/hooks/use-fan-zone-ban";
 import { FanZoneMentionsBell } from "@/components/app/FanZoneMentionsBell";
 import { OnlineNowBox } from "@/components/app/OnlineNowBox";
 import { useFanAliasVersion } from "@/hooks/use-fan-alias-version";
