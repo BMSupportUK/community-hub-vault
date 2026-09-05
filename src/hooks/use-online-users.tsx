@@ -151,7 +151,7 @@ function openChannel(uid: string) {
   const ch = supabase.channel("presence:online", { config: { presence: { key: uid } } });
   const sync = () => {
     try {
-      setState(new Set(Object.keys(ch.presenceState())));
+      applyPresenceKeys(Object.keys(ch.presenceState()));
     } catch {
       /* ignore */
     }
@@ -177,10 +177,21 @@ function revive() {
   const state = channel?.state;
   if (state !== "joined") {
     openChannel(uid);
-  } else {
-    void track(uid);
+    return;
+  }
+  // Do NOT re-track while the channel is healthy: every re-track emits a
+  // synthetic leave+join to all other clients, which made status dots blink
+  // between online and offline. The socket already maintains presence.
+  const ch = channel;
+  if (ch) {
+    try {
+      applyPresenceKeys(Object.keys(ch.presenceState()));
+    } catch {
+      /* ignore */
+    }
   }
 }
+
 
 function bindWindowListeners() {
   if (listenersBound || typeof window === "undefined") return;
