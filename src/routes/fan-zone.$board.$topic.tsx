@@ -66,11 +66,19 @@ function TopicReadPage() {
 
   return (
     <FanZoneShell>
-      <Button asChild variant="ghost" size="sm" className="-ml-2 mb-2 text-white/80 hover:text-white">
-        <Link to="/fan-zone/$board" params={{ board: slug }}>
-          <ArrowLeft className="size-4 mr-1" /> {data.board.name || "Back"}
-        </Link>
-      </Button>
+      <div className="flex items-center gap-1 -ml-2 mb-2 flex-wrap">
+        <Button asChild variant="ghost" size="sm" className="text-white/80 hover:text-white px-2">
+          <Link to="/fan-zone">
+            <ArrowLeft className="size-4 mr-1" /> Boards
+          </Link>
+        </Button>
+        <span className="text-white/30">/</span>
+        <Button asChild variant="ghost" size="sm" className="text-white/80 hover:text-white px-2">
+          <Link to="/fan-zone/$board" params={{ board: slug }}>
+            {data.board.name || "Back"}
+          </Link>
+        </Button>
+      </div>
       <div className="flex items-center gap-2 flex-wrap">
         {data.topic.is_sticky && <Pin className="size-4 text-amber-400" />}
         {data.topic.is_locked && <Lock className="size-4 text-white/50" />}
