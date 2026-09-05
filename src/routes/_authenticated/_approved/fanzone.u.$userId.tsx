@@ -317,6 +317,19 @@ function FanProfilePage() {
                 <Button onClick={() => void toggleBlock()} variant="outline" disabled={busy} className="bg-white/10 border-white/30 text-white hover:bg-white/20 hover:text-white">
                   {p.is_blocked_by_me ? <><ShieldOff className="size-4 mr-1" /> Unblock</> : <><Ban className="size-4 mr-1" /> Block</>}
                 </Button>
+                {canModerate && (
+                  <FanZoneMuteDialog
+                    userId={userId}
+                    alias={p.fan_alias}
+                    mute={theirMute}
+                    onChanged={() => void refreshMute()}
+                  />
+                )}
+              </div>
+            )}
+            {canModerate && theirMute && (
+              <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+                Muted until {new Date(theirMute.expires_at).toLocaleString("en-GB")} — “{theirMute.reason}”
               </div>
             )}
           </div>
