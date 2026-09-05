@@ -96,7 +96,7 @@ function AuthLayout() {
   }, [path]);
 
   useEffect(() => {
-    if (loading || isPending || loggedRef.current) return;
+    if (loading || isPending || !user?.id || loggedRef.current) return;
     loggedRef.current = true;
     // Fire-and-forget, and defer past first paint so it never blocks
     // the initial render pipeline.
@@ -107,7 +107,8 @@ function AuthLayout() {
     };
     const id = window.setTimeout(run, 800);
     return () => window.clearTimeout(id);
-  }, [loading, isPending, logIp]);
+  }, [loading, isPending, user?.id, logIp]);
+
 
   if (loading) {
     return (
