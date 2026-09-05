@@ -76,6 +76,27 @@ function AdminFanZonePage() {
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [userRoles, setUserRoles] = useState<Record<string, string[]>>({});
   const [busy, setBusy] = useState<string | null>(null);
+  // Admins and moderators can mute members from this list.
+  const canMute = hasAny(["admin", "management", "moderator", "boro_fan_zone_moderator"]);
+  const [mutes, setMutes] = useState<Record<string, FanZoneMute>>({});
+  const loadMutes = useCallback(async () => {
+    if (!canMute) return;
+    const { data } = await supabase
+      .from("fan_zone_mutes")
+      .select("id, user_id, reason, expires_at, muted_by, created_at")
+      .gt("expires_at", new Date().toISOString());
+    const map: Record<string, FanZoneMute> = {};
+    ((data ?? []) as Array<Omit<FanZoneMute, "muted_by_name">>).forEach((m) => {
+      const existing = map[m.user_id];
+      if (!existing || Date.parse(m.expires_at) > Date.parse(existing.expires_at)) {
+        map[m.user_id] = { ...m, muted_by_name: null };
+      }
+    });
+    setMutes(map);
+  }, [canMute]);
+  useEffect(() => {
+    void loadMutes();
+  }, [loadMutes]);
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<"name" | "since" | "requested">("requested");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
