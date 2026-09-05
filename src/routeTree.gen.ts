@@ -17,6 +17,7 @@ import { Route as BoroPredictionsRouteImport } from './routes/boro-predictions'
 import { Route as CompetitionWinnersRouteImport } from './routes/competition-winners'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as FanZoneRouteImport } from './routes/fan-zone'
+import { Route as FanzoneBanDemoRouteImport } from './routes/fanzone-ban-demo'
 import { Route as FanzoneMuteDemoRouteImport } from './routes/fanzone-mute-demo'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
@@ -178,6 +179,11 @@ const ContactRoute = ContactRouteImport.update({
 const FanZoneRoute = FanZoneRouteImport.update({
   id: '/fan-zone',
   path: '/fan-zone',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FanzoneBanDemoRoute = FanzoneBanDemoRouteImport.update({
+  id: '/fanzone-ban-demo',
+  path: '/fanzone-ban-demo',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FanzoneMuteDemoRoute = FanzoneMuteDemoRouteImport.update({
@@ -906,6 +912,7 @@ export interface FileRoutesByFullPath {
   '/competition-winners': typeof CompetitionWinnersRoute
   '/contact': typeof ContactRoute
   '/fan-zone': typeof FanZoneRouteWithChildren
+  '/fanzone-ban-demo': typeof FanzoneBanDemoRoute
   '/fanzone-mute-demo': typeof FanzoneMuteDemoRoute
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
@@ -1036,6 +1043,7 @@ export interface FileRoutesByTo {
   '/boro-predictions': typeof BoroPredictionsRoute
   '/competition-winners': typeof CompetitionWinnersRoute
   '/contact': typeof ContactRoute
+  '/fanzone-ban-demo': typeof FanzoneBanDemoRoute
   '/fanzone-mute-demo': typeof FanzoneMuteDemoRoute
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
@@ -1167,6 +1175,7 @@ export interface FileRoutesById {
   '/competition-winners': typeof CompetitionWinnersRoute
   '/contact': typeof ContactRoute
   '/fan-zone': typeof FanZoneRouteWithChildren
+  '/fanzone-ban-demo': typeof FanzoneBanDemoRoute
   '/fanzone-mute-demo': typeof FanzoneMuteDemoRoute
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
@@ -1301,6 +1310,7 @@ export interface FileRouteTypes {
     | '/competition-winners'
     | '/contact'
     | '/fan-zone'
+    | '/fanzone-ban-demo'
     | '/fanzone-mute-demo'
     | '/faq'
     | '/forgot-password'
@@ -1431,6 +1441,7 @@ export interface FileRouteTypes {
     | '/boro-predictions'
     | '/competition-winners'
     | '/contact'
+    | '/fanzone-ban-demo'
     | '/fanzone-mute-demo'
     | '/faq'
     | '/forgot-password'
@@ -1561,6 +1572,7 @@ export interface FileRouteTypes {
     | '/competition-winners'
     | '/contact'
     | '/fan-zone'
+    | '/fanzone-ban-demo'
     | '/fanzone-mute-demo'
     | '/faq'
     | '/forgot-password'
@@ -1695,6 +1707,7 @@ export interface RootRouteChildren {
   CompetitionWinnersRoute: typeof CompetitionWinnersRoute
   ContactRoute: typeof ContactRoute
   FanZoneRoute: typeof FanZoneRouteWithChildren
+  FanzoneBanDemoRoute: typeof FanzoneBanDemoRoute
   FanzoneMuteDemoRoute: typeof FanzoneMuteDemoRoute
   FaqRoute: typeof FaqRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
@@ -1801,6 +1814,13 @@ declare module '@tanstack/react-router' {
       path: '/fan-zone'
       fullPath: '/fan-zone'
       preLoaderRoute: typeof FanZoneRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/fanzone-ban-demo': {
+      id: '/fanzone-ban-demo'
+      path: '/fanzone-ban-demo'
+      fullPath: '/fanzone-ban-demo'
+      preLoaderRoute: typeof FanzoneBanDemoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/fanzone-mute-demo': {
@@ -2968,6 +2988,7 @@ const rootRouteChildren: RootRouteChildren = {
   CompetitionWinnersRoute: CompetitionWinnersRoute,
   ContactRoute: ContactRoute,
   FanZoneRoute: FanZoneRouteWithChildren,
+  FanzoneBanDemoRoute: FanzoneBanDemoRoute,
   FanzoneMuteDemoRoute: FanzoneMuteDemoRoute,
   FaqRoute: FaqRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
