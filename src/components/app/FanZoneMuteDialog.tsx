@@ -95,13 +95,26 @@ export function FanZoneMuteDialog({
 
   return (
     <>
-      <Button
-        onClick={() => setOpen(true)}
-        variant="outline"
-        className="bg-white/10 border-white/30 text-white hover:bg-white/20 hover:text-white"
-      >
-        <VolumeX className="size-4 mr-1" /> Mute member
-      </Button>
+      {compact ? (
+        <Button
+          onClick={() => setOpen(true)}
+          size="icon"
+          variant="ghost"
+          title={`Mute ${alias}`}
+          aria-label={`Mute ${alias}`}
+          className="size-8 text-amber-400 hover:text-amber-300"
+        >
+          <VolumeX className="size-4" />
+        </Button>
+      ) : (
+        <Button
+          onClick={() => setOpen(true)}
+          variant="outline"
+          className="bg-white/10 border-white/30 text-white hover:bg-white/20 hover:text-white"
+        >
+          <VolumeX className="size-4 mr-1" /> Mute member
+        </Button>
+      )}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-md">
