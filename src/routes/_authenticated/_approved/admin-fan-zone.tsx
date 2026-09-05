@@ -17,6 +17,7 @@ import {
   Clock,
   Shield,
   ShieldCheck,
+  VolumeX,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -689,7 +690,7 @@ function AdminFanZonePage() {
                             ) : (
                               <FanZoneMuteDialog
                                 userId={r.user_id}
-                                alias={p?.display_name || r.fan_alias || "this member"}
+                                alias={name}
                                 mute={mutes[r.user_id] ?? null}
                                 onChanged={() => void loadMutes()}
                                 compact
