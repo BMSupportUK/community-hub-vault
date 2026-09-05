@@ -202,6 +202,7 @@ export async function fetchOfficialTimeline(handle: string = HANDLE): Promise<Te
       hits.push({
         tweetId: id,
         text: String(tweet.full_text ?? tweet.text ?? ""),
+        altText: altTextFromTweet(tweet),
         images: imagesFromTweet(tweet),
         createdAtMs: Number.isFinite(created) ? created : 0,
         url: `https://x.com/${handle}/status/${id}`,
@@ -271,7 +272,7 @@ export function opponentHandles(name: string): string[] {
 export function isOwnTeamSheetText(rawText: string): boolean {
   const text = normalizeFancyText(rawText);
   if (NEGATIVE_PATTERNS.some((re) => re.test(text))) return false;
-  return /\bteam\s*news\b|\bline[\s-]?ups?\b|\bstarting\s+(?:xi|eleven|line)\b|\bteam\s*sheet\b|\bour\s+xi\b|\b(?:today'?s|tonight'?s|this\s+afternoon'?s)\s+(?:team|side|xi)\b|\bhow\s+we\s+line\s*up\b|\bteam\s+to\s+face\b/i.test(
+  return /\bteam\s*news\b|\bline[\s-]?ups?\b|\bstarting\s+(?:xi|eleven|line)\b|\bteam\s*sheet\b|\bour\s+xi\b|\b(?:today'?s|tonight'?s|this\s+afternoon'?s)\s+(?:team|side|xi)\b|\bhow\s+we\s+line\s*up\b|\b(?:team|side|xi|eleven)\s+to\s+(?:face|play|take\s+on)\b|\b(?:team|side|xi|eleven)\s+(?:v|vs|versus)\b/i.test(
     text,
   );
 }
@@ -288,7 +289,7 @@ export async function fetchOpponentTeamSheets(
     const matched = hits
       .filter((h) => h.images.length > 0 && h.createdAtMs >= from && h.createdAtMs <= to)
       .filter((h) => !/^RT\s+@/i.test(h.text))
-      .filter((h) => isOwnTeamSheetText(h.text))
+      .filter((h) => isOwnTeamSheetText(`${h.text}\n${h.altText ?? ""}`))
       .sort((a, b) => a.createdAtMs - b.createdAtMs);
     if (matched.length > 0) return matched;
   }
