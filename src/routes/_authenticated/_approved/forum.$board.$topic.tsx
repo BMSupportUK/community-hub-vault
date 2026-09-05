@@ -681,9 +681,11 @@ function TopicPage() {
       setReply("");
     });
     const body = prepareForumPostBodyForSubmit(raw);
+    const quoteOfMatch = body.match(/<blockquote[^>]*\bdata-quote-of=["']([^"']+)["']/i);
+    const quoteOf = quoteOfMatch?.[1] ?? null;
     const { data, error } = await supabase
       .from("forum_posts")
-      .insert({ topic_id: topic.id, author_id: user.id, body, is_op: false })
+      .insert({ topic_id: topic.id, author_id: user.id, body, is_op: false, ...(quoteOf ? { quote_of: quoteOf } : {}) })
       .select("id, topic_id, author_id, body, quote_of, edited_at, is_op, is_pinned, created_at")
       .single();
     submittingRef.current = false;
