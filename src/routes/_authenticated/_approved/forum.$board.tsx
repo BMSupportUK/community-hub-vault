@@ -94,6 +94,7 @@ function BoardPage() {
   const isStaff = hasAny(["admin", "boro_fan_zone_moderator"]);
   const canUseSpecialMentions = hasAny(["admin", "management", "staff", "moderator"]);
   const info = useFanZoneMembership(user?.id ?? null);
+  const { mute: myMute } = useFanZoneMute(user?.id ?? null);
   const canEnter = isStaff || info?.status === "approved";
   const aliasVersion = useFanAliasVersion();
   const mentionCandidates = useMentionCandidates(canUseSpecialMentions);
