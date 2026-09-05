@@ -90,7 +90,8 @@ export function squadSizeFor(competition: string | null | undefined): number {
 /** Named substitutes allowed per competition, for the rules tab. */
 export const COMPETITION_BENCH_RULES: { competition: string; subs: number }[] = [
   { competition: "Sky Bet Championship", subs: FANTASY_BENCH_SIZE },
-  { competition: "Cup games", subs: FANTASY_BENCH_SIZE },
+  { competition: "Emirates FA Cup", subs: FANTASY_BENCH_SIZE },
+  { competition: "Carabao Cup", subs: FANTASY_BENCH_SIZE },
 ];
 
 export type FormationKey =
