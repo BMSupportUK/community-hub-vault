@@ -74,7 +74,7 @@ export const Route = createFileRoute("/boro-fantasy")({
 
 // ------------------------------------------------------------------
 // Player stats pop-up: tap any player's name to see their per-match
-// ESPN stat lines and the points those stats earned.
+// FotMob stat lines and the points those stats earned.
 // ------------------------------------------------------------------
 const PlayerStatsCtx = createContext<
   (playerId: string, scoringAs?: FantasyPosition | null, asSub?: boolean, gameweekNumber?: number | null) => void
@@ -139,7 +139,7 @@ function PlayerNameButton({
   );
 }
 
-/** ESPN-style abbreviation + plain-English label for every stat we read. */
+/** FotMob-style abbreviation + plain-English label for every stat we read. */
 const PLAYER_STAT_LABELS: Record<string, string> = Object.fromEntries(
   Object.entries(PLAYER_STAT_META).map(([k, m]) => [k, `${m.abbr} — ${m.means}`]),
 );
@@ -150,7 +150,7 @@ function scoringStatKeys(pos: FantasyPosition) {
   return STAT_KEYS_ALL.filter((k) => k === "minutes" || statPointsPer(k, pos) != null);
 }
 
-/** Small purple abbreviation chip, ESPN style. */
+/** Small purple abbreviation chip, FotMob style. */
 function AbbrChip({ abbr, title }: { abbr: string; title?: string }) {
   return (
     <span
@@ -221,7 +221,7 @@ function PlayerStatsDialog({
   /** Subs score half of every line — apply it to every rate we display. */
   const rateMul = asSub ? 0.5 : 1;
   const scaleRate = (r: number | null) => (r == null ? null : Math.round(r * rateMul * 100) / 100);
-  /** ESPN match-centre stats that score for this role, shown in the ESPN tab. */
+  /** FotMob match-centre stats that score for this role, shown in the FotMob tab. */
   const statKeys = useMemo(
     () => scoringStatKeys(pos).filter((k) => !isOurScoringStat(k) || k === "minutes"),
     [pos],
@@ -277,11 +277,11 @@ function PlayerStatsDialog({
       },
     ];
   }, [seasonRows, gameweekMatches, asSub]);
-  const espnRows = useMemo(
+  const fotmobRows = useMemo(
     () => seasonRows.filter((r) => !isOurScoringStat(r.key)),
     [seasonRows],
   );
-  /** Clean sheets are a scoring rule, not an ESPN stat column — derive them. */
+  /** Clean sheets are a scoring rule, not a FotMob stat column — derive them. */
   const cleanSheetRows = useMemo(() => {
     const rate = scaleRate(pos === "gk" || pos === "def" ? 4 : pos === "mid" ? 1 : null);
     const rateShort = scaleRate(pos === "gk" || pos === "def" ? 2 : pos === "mid" ? 0.5 : null);
@@ -313,7 +313,7 @@ function PlayerStatsDialog({
                   : pos === "gk" || pos === "def" ? 2 : pos === "mid" ? 0.5 : null,
               ) ?? 0
             : 0;
-        const espnPoints = scoringStatKeys(pos)
+        const fotmobPoints = scoringStatKeys(pos)
           .filter((key) => !isOurScoringStat(key))
           .reduce((sum, key) => {
             const rate = scaleRate(statPointsPer(key, pos));
@@ -323,14 +323,14 @@ function PlayerStatsDialog({
           ...match,
           ourPoints:
             Math.round((appearance + ourStatPoints + cleanSheetRate + (match.stats.bonus ?? 0)) * 100) / 100,
-          espnPoints: Math.round(espnPoints * 100) / 100,
+          fotmobPoints: Math.round(fotmobPoints * 100) / 100,
         };
       }),
     [gameweekMatches, pos, asSub, rateMul],
   );
   const weeklyPointRows = pointRows;
   const ourSeasonPoints = pointRows.reduce((sum, match) => sum + match.ourPoints, 0);
-  const espnSeasonPoints = pointRows.reduce((sum, match) => sum + match.espnPoints, 0);
+  const fotmobSeasonPoints = pointRows.reduce((sum, match) => sum + match.fotmobPoints, 0);
 
   return (
     <Dialog open={!!playerId} onOpenChange={(o) => { if (!o) onClose(); }}>
@@ -341,7 +341,7 @@ function PlayerStatsDialog({
             {data?.name ?? "Player stats"}
           </DialogTitle>
           <DialogDescription>
-          Every abbreviation we score on, the ESPN match-report stats behind them and the points earned.
+          Every abbreviation we score on, the FotMob match-report stats behind them and the points earned.
           </DialogDescription>
           {picked && (
             <p className="text-xs font-semibold text-emerald-500">
@@ -369,13 +369,13 @@ function PlayerStatsDialog({
             {matches.length === 0 && (
               <p className="rounded-lg border border-border bg-muted/30 p-3 text-sm text-muted-foreground">
                 No stats recorded yet — the tables below fill in automatically once this player features
-                in a finished game week and ESPN confirm the match stats.
+                in a finished game week and FotMob confirm the match stats.
               </p>
             )}
             <Tabs defaultValue="ours" className="w-full">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="ours">Our points</TabsTrigger>
-                <TabsTrigger value="espn">ESPN stats</TabsTrigger>
+                <TabsTrigger value="fotmob">FotMob stats</TabsTrigger>
               </TabsList>
 
               <TabsContent value="ours" className="space-y-2">
@@ -458,10 +458,10 @@ function PlayerStatsDialog({
                 </div>
               </TabsContent>
 
-              <TabsContent value="espn" className="space-y-3">
-                <h4 className="text-sm font-bold">ESPN match centre points</h4>
+              <TabsContent value="fotmob" className="space-y-3">
+                <h4 className="text-sm font-bold">FotMob match centre points</h4>
                 <p className="text-xs text-muted-foreground">
-                  Scored as a {POSITION_LABEL[pos].toLowerCase()} — these are the ESPN match-report
+                  Scored as a {POSITION_LABEL[pos].toLowerCase()} — these are the FotMob match-report
                   stats that earn points in that role. Subs earn half.
                 </p>
                 <div className="overflow-x-auto">
@@ -475,7 +475,7 @@ function PlayerStatsDialog({
                       </tr>
                     </thead>
                     <tbody>
-                      {espnRows.map((r) => (
+                      {fotmobRows.map((r) => (
                         <tr key={r.key} className="border-b border-border/60">
                           <td className="py-1.5 pr-2">
                             <StatAbbrLabel abbr={r.abbr} means={r.means} rate={r.rate} />
@@ -492,12 +492,12 @@ function PlayerStatsDialog({
                 </div>
                 {gameweekMatches.length === 0 ? (
                   <p className="rounded-lg border border-border bg-muted/30 p-3 text-sm text-muted-foreground">
-                    No ESPN match stats yet — they arrive automatically from the ESPN match centre once
+                    No FotMob match stats yet — they arrive automatically from the FotMob match centre once
                     this player features in a finished game week.
                   </p>
                 ) : (
                   <div className="space-y-2">
-                    <h4 className="text-sm font-bold">Weekly totals — ESPN match stats</h4>
+                    <h4 className="text-sm font-bold">Weekly totals — FotMob match stats</h4>
                     <div className="overflow-x-auto">
                       <table className="w-full min-w-[420px] text-left text-xs">
                         <thead>
@@ -533,8 +533,8 @@ function PlayerStatsDialog({
                       </table>
                     </div>
                     <div className="mt-3 flex items-center justify-between rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm">
-                      <span className="font-semibold">ESPN weekly total</span>
-                      <span className="font-bold tabular-nums text-primary">{espnSeasonPoints} pts</span>
+                      <span className="font-semibold">FotMob weekly total</span>
+                      <span className="font-bold tabular-nums text-primary">{fotmobSeasonPoints} pts</span>
                     </div>
                   </div>
                 )}
@@ -824,7 +824,7 @@ function BoroFantasyPage() {
   const canPlay = joined && (!!user || !!guest);
   const currentTeamName = (state?.teamName || guest?.teamName || "").trim();
 
-  // Live match? Pull ESPN in-play stats and refresh the pitch view every 30s so
+  // Live match? Pull FotMob in-play stats and refresh the pitch view every 30s so
   // each player's minutes and points update while the game is being played.
   const liveMatch = useMemo(() => {
     const now = Date.now();
@@ -3913,7 +3913,7 @@ function ScoringTab() {
       <div>
         <h3 className="font-display text-lg font-bold flex items-center gap-2"><Trophy className="size-4 text-primary" /> How scoring works</h3>
         <p className="text-sm text-muted-foreground mt-1">
-          ESPN supplies the available player match stats, such as goals, assists, shots, saves and goals conceded. Our game then
+          FotMob supplies the available player match stats, such as goals, assists, shots, saves and goals conceded. Our game then
           combines those stats with its own scoring rules for appearances, substitutes, captains, clean sheets, penalties, cards,
           own goals and bonuses. Points are updated once the fixture has finished and all stats and bonuses have been confirmed.
           Only Middlesbrough players score, and only in competitive fixtures. Where you named the player decides the rate: anyone in
@@ -3932,7 +3932,7 @@ function ScoringTab() {
           <TabsTrigger value="subs">Subs</TabsTrigger>
         </TabsList>
         <TabsContent value="starters" className="mt-4">
-          <ScoringBreakdown column="starter" note="Points for players named in your match day 11. A starter who doesn't get on the pitch scores 0. ESPN match stats and the game's own scoring rules are combined once the fixture is finished and all stats and bonuses have been confirmed." />
+          <ScoringBreakdown column="starter" note="Points for players named in your match day 11. A starter who doesn't get on the pitch scores 0. FotMob match stats and the game's own scoring rules are combined once the fixture is finished and all stats and bonuses have been confirmed." />
         </TabsContent>
         <TabsContent value="subs" className="mt-4">
           <ScoringBreakdown column="sub" note="Points for players who come off your bench: 1 point for getting on, then half points for every match stat. The stat points are added up first, then halved and rounded. Only five subs score — if more than five feature, the five who played the most minutes count, any other sub is locked at 0, and unused subs score 0." />

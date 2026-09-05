@@ -1,6 +1,6 @@
 // Star man ratings.
 //
-// Every competition we cover (league, cups, play-offs) reports the same ESPN
+// Every competition we cover (league, cups, play-offs) reports the same FotMob
 // match stat set, so the rating below works for any fixture. It is a 0-10
 // performance rating built from the stats we already store, used to pick the
 // three star players of the gameweek (3 / 2 / 1 bonus points).

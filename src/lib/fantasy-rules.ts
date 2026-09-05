@@ -276,7 +276,7 @@ export const SQUAD_RULES: { title: string; body: string }[] = [
   { title: "Competitive games only", body: "Gameweeks cover every competitive Middlesbrough first-team fixture — league games, cup ties and play-offs — in date order, with cup ties slotted into the gameweek their date falls in. Friendlies, testimonials and academy games are never part of the game." },
   { title: "Game time on show", body: "Once a match finishes the pitch view shows how many minutes each of your players actually played, so you can see who started, who came on and who didn't feature." },
   { title: "Leaderboard", body: "Points are added automatically once each match finishes and totals run all season on the Leaderboard tab. Once a gameweek is locked you can open any rival's squad for that gameweek from the leaderboard." },
-  { title: "Scoring & prizes", body: "Only Middlesbrough players score. ESPN supplies the available player match stats, while the game applies its own appearance, substitute, captain, clean-sheet, penalty, card, own-goal and bonus rules. Points are updated once the match finishes and all stats and bonuses have been confirmed. Starters score the full amount and subs score half. Winners are announced on the Winners tab at the end of the season — see the Scoring tab for the full points breakdown." },
+  { title: "Scoring & prizes", body: "Only Middlesbrough players score. FotMob supplies the available player match stats, while the game applies its own appearance, substitute, captain, clean-sheet, penalty, card, own-goal and bonus rules. Points are updated once the match finishes and all stats and bonuses have been confirmed. Starters score the full amount and subs score half. Winners are announced on the Winners tab at the end of the season — see the Scoring tab for the full points breakdown." },
 ];
 
 /**
@@ -284,7 +284,7 @@ export const SQUAD_RULES: { title: string; body: string }[] = [
  * for it, then what a match day 11 starter earns and what a sub earns.
  */
 export const SCORING_RULES: {
-  /** Short ESPN-style code shown next to the points. */
+  /** Short FotMob-style code shown next to the points. */
   abbr: string;
   label: string;
   minTime: string;
@@ -319,10 +319,10 @@ export const SCORING_RULES: {
 ];
 
 /**
- * Every stat column we read from the ESPN match report, with its ESPN-style
+ * Every stat column we read from the FotMob match report, with its FotMob-style
  * abbreviation, what it means and what a match day 11 starter earns for each
  * one (subs earn half). Stats with no point value are shown for information
- * only, exactly as ESPN lists them.
+ * only, exactly as FotMob lists them.
  */
 export const PLAYER_STAT_META: Record<
   string,
@@ -367,7 +367,7 @@ export const PLAYER_STAT_META: Record<
 /**
  * Our own scoring lines — the things the fantasy game itself awards
  * (appearance, goals, assists, cards, own goals, missed pens). Clean sheets
- * are derived separately. Everything else that scores comes off the ESPN
+ * are derived separately. Everything else that scores comes off the FotMob
  * match centre.
  */
 export const OUR_SCORING_STAT_KEYS = [

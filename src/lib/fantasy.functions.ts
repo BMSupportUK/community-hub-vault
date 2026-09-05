@@ -858,7 +858,7 @@ export type FantasyPlayerBreakdown = {
   matches: FantasyPlayerMatchStats[];
 };
 
-/** Per-match ESPN stat lines and points earned for one player (public read). */
+/** Per-match FotMob stat lines and points earned for one player (public read). */
 export const getFantasyPlayerBreakdown = createServerFn({ method: "GET" })
   .inputValidator((d: unknown) => z.object({ playerId: z.string().uuid() }).parse(d))
   .handler(async ({ data }): Promise<FantasyPlayerBreakdown> => {
