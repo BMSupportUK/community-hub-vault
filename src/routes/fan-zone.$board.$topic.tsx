@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Lock, Pin, ArrowLeft } from "lucide-react";
+import { Lock, Pin, ArrowLeft, ArrowUp } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { getPublicTopic, type PublicPost } from "@/lib/fan-zone-public.functions";
 import { ForumPostBody } from "@/components/app/ForumPostBody";
 import { RelativeTime } from "@/components/app/RelativeTime";
@@ -23,8 +24,30 @@ export const Route = createFileRoute("/fan-zone/$board/$topic")({
 function TopicReadPage() {
   const { board: slug, topic: topicId } = Route.useParams();
   const data = Route.useLoaderData();
+  const [activeTab, setActiveTab] = useState("posts");
+  const [showBackTop, setShowBackTop] = useState(false);
+  const repliesRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    const onScroll = () => {
+      const el = repliesRef.current;
+      const top = el ? Math.max(el.scrollTop, window.scrollY, document.documentElement.scrollTop) : Math.max(window.scrollY, document.documentElement.scrollTop);
+      setShowBackTop(top > 300);
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    const el = repliesRef.current;
+    if (el) el.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (el) el.removeEventListener("scroll", onScroll);
+    };
+  }, []);
 
+  const scrollToTop = () => {
+    repliesRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   if (!data) {
     return (
@@ -55,7 +78,7 @@ function TopicReadPage() {
       </div>
       <p className="text-xs text-white/60 mt-1">Started <RelativeTime iso={data.topic.created_at} /> · {data.topic.reply_count} replies · {data.topic.view_count} views</p>
 
-      <Tabs defaultValue="posts" className="w-full mt-5">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mt-5">
         <TabsList>
           <TabsTrigger value="posts">Original Post</TabsTrigger>
           {teamPosts.length > 0 && <TabsTrigger value="teams">Teams ({teamPosts.length})</TabsTrigger>}
@@ -81,15 +104,29 @@ function TopicReadPage() {
         </TabsContent>
 
 
-        <TabsContent value="replies" className="space-y-3 mt-3">
-          {replies.length === 0 ? (
-            <p className="text-sm text-white/60">No replies yet.</p>
-          ) : (
-            <ol className="space-y-3">
-              {replies.map((p) => (
-                <li key={p.id}><PostCard post={p} /></li>
-              ))}
-            </ol>
+        <TabsContent value="replies" className="space-y-3 mt-3 relative">
+          <div ref={repliesRef} className="max-h-[70vh] overflow-y-auto pr-1 -mr-1">
+            {replies.length === 0 ? (
+              <p className="text-sm text-white/60">No replies yet.</p>
+            ) : (
+              <ol className="space-y-3">
+                {replies.map((p) => (
+                  <li key={p.id}><PostCard post={p} /></li>
+                ))}
+              </ol>
+            )}
+          </div>
+          {activeTab === "replies" && showBackTop && (
+            <Button
+              type="button"
+              size="icon"
+              onClick={scrollToTop}
+              className="fixed bottom-6 right-6 size-11 rounded-full bg-gradient-to-r from-[#E11B22] to-[#8B0F14] text-white shadow-lg shadow-red-900/50 hover:shadow-red-500/40 hover:scale-110 transition-all z-50"
+              aria-label="Back to top"
+              title="Back to top"
+            >
+              <ArrowUp className="size-5" />
+            </Button>
           )}
         </TabsContent>
       </Tabs>
