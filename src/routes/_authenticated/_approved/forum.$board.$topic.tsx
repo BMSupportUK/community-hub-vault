@@ -1086,6 +1086,13 @@ function TopicPage() {
                     </Button>
                   </div>
                 </div>
+              ) : myMute ? (
+                <FanZoneMutedScreen
+                  expiresAt={myMute.expires_at}
+                  reason={myMute.reason}
+                  mutedBy={myMute.muted_by_name}
+                  returnTo="/forum"
+                />
               ) : topic.is_locked ? (
                 <div className="rounded-2xl border border-muted-foreground/20 bg-muted/20 p-4 text-sm text-center text-muted-foreground">
                   <Lock className="size-4 inline mr-1" /> This topic is locked.
