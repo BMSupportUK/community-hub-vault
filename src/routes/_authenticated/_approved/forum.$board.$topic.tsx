@@ -281,7 +281,7 @@ function escapeForumQuoteText(text: string): string {
   return text.replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch] ?? ch);
 }
 
-function quoteExcerptFromHtml(html: string): string {
+function quoteBodyFromHtml(html: string): string {
   const text = html
     .replace(/<blockquote\b[^>]*>[\s\S]*?<\/blockquote>/gi, " ")
     .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, " ")
@@ -297,8 +297,7 @@ function quoteExcerptFromHtml(html: string): string {
     .replace(/[ \t\f\v]+/g, " ")
     .replace(/\n\s+/g, "\n")
     .trim();
-  const clipped = text.length > 650 ? `${text.slice(0, 650).trim()}…` : text;
-  return escapeForumQuoteText(clipped || "quoted post").replace(/\n/g, "<br/>");
+  return escapeForumQuoteText(text || "quoted post").replace(/\n/g, "<br/>");
 }
 
 function TopicPage() {
