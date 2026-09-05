@@ -72,6 +72,39 @@ function setState(next: Set<string>) {
   notify();
 }
 
+/**
+ * Presence emits a leave+join pair whenever a client re-tracks or its socket
+ * rejoins. Taking those raw would make the green dot blink off and on, so a
+ * key that disappears is held for a short grace period and re-checked.
+ */
+function applyPresenceKeys(keys: string[]) {
+  const now = Date.now();
+  const next = new Set(keys);
+  for (const id of next) missingSince.delete(id);
+  let soonest = Number.POSITIVE_INFINITY;
+  for (const id of currentState) {
+    if (next.has(id)) continue;
+    const since = missingSince.get(id) ?? now;
+    missingSince.set(id, since);
+    const remaining = LINGER_MS - (now - since);
+    if (remaining > 0) {
+      next.add(id);
+      soonest = Math.min(soonest, remaining);
+    } else {
+      missingSince.delete(id);
+    }
+  }
+  if (Number.isFinite(soonest)) {
+    if (lingerTimer) clearTimeout(lingerTimer);
+    lingerTimer = setTimeout(() => {
+      lingerTimer = null;
+      if (channel) applyPresenceKeys(Object.keys(channel.presenceState()));
+    }, soonest + 50);
+  }
+  setState(next);
+}
+
+
 function pingLastSeen(uid: string) {
   try {
     supabase
