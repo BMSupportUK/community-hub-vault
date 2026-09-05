@@ -53,8 +53,20 @@ type Board = {
 function ForumLayout() {
   const matches = useMatches();
   const isNested = matches.some((m) => m.routeId.startsWith("/_authenticated/_approved/forum/"));
-  const { user } = useAuth();
+  const { user, hasAny } = useAuth();
+  const canModerate = hasAny(["admin", "management", "moderator", "boro_fan_zone_moderator"]);
+  const [pendingReports, setPendingReports] = useState(0);
+  useEffect(() => {
+    if (!canModerate) return;
+    let cancelled = false;
+    void (async () => {
+      const { data } = await supabase.rpc("list_content_reports", { _status: "pending" });
+      if (!cancelled) setPendingReports((data ?? []).length);
+    })();
+    return () => { cancelled = true; };
+  }, [canModerate]);
   const info = useFanZoneMembership(user?.id ?? null);
+
   useEffect(() => {
     const html = document.documentElement;
     html.style.setProperty("--boro-bg-image", `url(${boroBg})`);
