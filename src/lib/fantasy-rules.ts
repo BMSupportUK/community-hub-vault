@@ -41,8 +41,12 @@ export const FANTASY_GROUP_LABEL: Record<FantasyCompetitionGroup, string> = {
   cup: "Cup games",
   playoff: "Play-off games",
 };
-/** Default bench size (Championship, FA Cup and Carabao Cup name 9 subs). */
+/** Bench size going forward (Championship, FA Cup and Carabao Cup name 9 subs). */
 export const FANTASY_BENCH_SIZE = 9;
+/** Bench size used for gameweeks played before the 9-sub change. */
+export const FANTASY_BENCH_SIZE_LEGACY = 7;
+/** Gameweeks kicking off before this moment keep their original 7-sub bench. */
+export const FANTASY_BENCH_9_FROM_MS = Date.parse("2026-09-05T17:40:00Z");
 export const FANTASY_SQUAD_SIZE = 11 + FANTASY_BENCH_SIZE;
 /** Squad locks this many minutes before kick-off. */
 export const FANTASY_LOCK_MINUTES = 120;
