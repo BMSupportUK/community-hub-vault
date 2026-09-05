@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
-import { ArrowLeft, Loader2, Pin, Lock, Quote, Reply as ReplyIcon, Pencil, Trash2, Send, History, Check, X, MessageSquare, Eye, FolderInput } from "lucide-react";
+import { ArrowLeft, ArrowUp, Loader2, Pin, Lock, Quote, Reply as ReplyIcon, Pencil, Trash2, Send, History, Check, X, MessageSquare, Eye, FolderInput } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useFanZoneMembership } from "@/hooks/use-fan-zone";
@@ -344,6 +344,10 @@ function TopicPage() {
   const [editingTitle, setEditingTitle] = useState(false);
   const [titleDraft, setTitleDraft] = useState("");
   const [savingTitle, setSavingTitle] = useState(false);
+
+  const scrollRepliesToTop = () => {
+    document.getElementById("forum-replies-top")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   const isBoardMod = isStaff || (user ? moderatorIds.has(user.id) : false);
   const canPost = canEnter && !!topic && !topic.is_locked;
@@ -998,7 +1002,7 @@ function TopicPage() {
             </TabsContent>
 
 
-            <TabsContent value="reply" className="space-y-3 mt-3">
+            <TabsContent id="forum-replies-top" value="reply" className="space-y-3 mt-3 scroll-mt-4">
               {pinnedReplies.map((p) => renderPost(p, 0))}
               {pageReplies.length === 0 && pinnedReplies.length === 0 ? (
                 <div className="text-sm text-muted-foreground text-center py-6">No replies yet.</div>
@@ -1050,6 +1054,17 @@ function TopicPage() {
                 </div>
               ) : null}
               <ViewingBox />
+              <Button
+                type="button"
+                size="icon"
+                variant="destructive"
+                onClick={scrollRepliesToTop}
+                className="fixed bottom-6 right-6 z-50 size-11 rounded-full shadow-lg transition-transform hover:scale-110"
+                aria-label="Back to top"
+                title="Back to top"
+              >
+                <ArrowUp className="size-5" />
+              </Button>
             </TabsContent>
           </Tabs>
         );
