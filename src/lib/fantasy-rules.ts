@@ -41,8 +41,8 @@ export const FANTASY_GROUP_LABEL: Record<FantasyCompetitionGroup, string> = {
   cup: "Cup games",
   playoff: "Play-off games",
 };
-/** Default bench size (EFL competitions name 7 subs). */
-export const FANTASY_BENCH_SIZE = 7;
+/** Default bench size (Championship, FA Cup and Carabao Cup name 9 subs). */
+export const FANTASY_BENCH_SIZE = 9;
 export const FANTASY_SQUAD_SIZE = 11 + FANTASY_BENCH_SIZE;
 /** Squad locks this many minutes before kick-off. */
 export const FANTASY_LOCK_MINUTES = 120;
