@@ -64,10 +64,12 @@ export function FanZoneMuteDialog({
         onClick={() => void unmute()}
         disabled={busy}
         variant="outline"
-        className="bg-amber-500/15 border-amber-400/40 text-amber-100 hover:bg-amber-500/25 hover:text-white"
+        size={compact ? "sm" : "default"}
+        title={`Muted: ${mute.reason} — click to lift the mute`}
+        className="bg-amber-500/15 border-amber-400/40 text-amber-200 hover:bg-amber-500/25 hover:text-white"
       >
         {busy ? <Loader2 className="size-4 mr-1 animate-spin" /> : <Volume2 className="size-4 mr-1" />}
-        Muted until {new Date(mute.expires_at).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })} — unmute
+        Muted <MuteCountdown expiresAt={mute.expires_at} />
       </Button>
     );
   }
