@@ -137,14 +137,15 @@ function imagesFromTweet(tweet: Record<string, unknown>): string[] {
  * empty timeline while local dev works. When the direct read fails we retry the
  * same page through read-only text mirrors that hand back the untouched HTML.
  */
-async function fetchTimelineHtml(): Promise<string | null> {
+async function fetchTimelineHtml(handle: string): Promise<string | null> {
+  const timelineUrl = `https://syndication.twitter.com/srv/timeline-profile/screen-name/${handle}`;
   const targets: Array<{ url: string; headers: Record<string, string> }> = [
-    { url: TIMELINE_URL, headers: { accept: "text/html", "user-agent": UA, "accept-language": "en-GB,en;q=0.9" } },
+    { url: timelineUrl, headers: { accept: "text/html", "user-agent": UA, "accept-language": "en-GB,en;q=0.9" } },
     {
-      url: `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(TIMELINE_URL)}`,
+      url: `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(timelineUrl)}`,
       headers: { accept: "text/html" },
     },
-    { url: `https://proxy.cors.sh/${TIMELINE_URL}`, headers: { accept: "text/html" } },
+    { url: `https://proxy.cors.sh/${timelineUrl}`, headers: { accept: "text/html" } },
   ];
   for (const target of targets) {
     const controller = new AbortController();
@@ -163,9 +164,9 @@ async function fetchTimelineHtml(): Promise<string | null> {
   return null;
 }
 
-export async function fetchOfficialTimeline(): Promise<TeamSheetHit[]> {
+export async function fetchOfficialTimeline(handle: string = HANDLE): Promise<TeamSheetHit[]> {
   try {
-    const html = await fetchTimelineHtml();
+    const html = await fetchTimelineHtml(handle);
     if (!html) return [];
     const match = html.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
     if (!match?.[1]) return [];
@@ -185,7 +186,7 @@ export async function fetchOfficialTimeline(): Promise<TeamSheetHit[]> {
         text: String(tweet.full_text ?? tweet.text ?? ""),
         images: imagesFromTweet(tweet),
         createdAtMs: Number.isFinite(created) ? created : 0,
-        url: `https://x.com/${HANDLE}/status/${id}`,
+        url: `https://x.com/${handle}/status/${id}`,
       });
     }
     return hits;
@@ -193,6 +194,89 @@ export async function fetchOfficialTimeline(): Promise<TeamSheetHit[]> {
     return [];
   }
 }
+
+/**
+ * Boro does not always retweet the opposition XI, so we read the opponent's own
+ * official account as well. Handles are mapped for the clubs we meet; anything
+ * missing falls back to sensible guesses built from the club name.
+ */
+const CLUB_HANDLES: Record<string, string[]> = {
+  "queens park rangers": ["QPR"],
+  burnley: ["BurnleyOfficial"],
+  "west bromwich albion": ["WBA"],
+  "doncaster rovers": ["drfc_official"],
+  "swansea city": ["SwansOfficial"],
+  "sheffield united": ["SheffieldUnited"],
+  "sheffield wednesday": ["swfc"],
+  "leicester city": ["LCFC"],
+  southampton: ["SouthamptonFC"],
+  ipswich: ["IpswichTown"],
+  "ipswich town": ["IpswichTown"],
+  norwich: ["NorwichCityFC"],
+  "norwich city": ["NorwichCityFC"],
+  watford: ["WatfordFC"],
+  millwall: ["MillwallFC"],
+  "coventry city": ["Coventry_City"],
+  "bristol city": ["BristolCity"],
+  "hull city": ["HullCity"],
+  "preston north end": ["pnefc"],
+  "stoke city": ["stokecity"],
+  "blackburn rovers": ["Rovers"],
+  "birmingham city": ["BCFC"],
+  "charlton athletic": ["CAFCofficial"],
+  "derby county": ["dcfcofficial"],
+  "oxford united": ["OUFCOfficial"],
+  portsmouth: ["Pompey"],
+  wrexham: ["Wrexham_AFC"],
+  "leeds united": ["LUFC"],
+  sunderland: ["SunderlandAFC"],
+  "cardiff city": ["CardiffCityFC"],
+  "plymouth argyle": ["Only1Argyle"],
+  "luton town": ["LutonTown"],
+  "lincoln city": ["LincolnCity_FC"],
+};
+
+export function opponentHandles(name: string): string[] {
+  const key = name.toLowerCase().replace(/\s+/g, " ").trim();
+  const mapped = CLUB_HANDLES[key] ?? CLUB_HANDLES[key.replace(/\b(fc|afc)\b/g, "").trim()];
+  if (mapped) return mapped;
+  const words = key.replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter(Boolean);
+  const guesses = new Set<string>();
+  const acronym = words.map((w) => w[0]).join("");
+  if (acronym.length >= 3) guesses.add(acronym.toUpperCase());
+  guesses.add(`${words.join("")}FC`);
+  guesses.add(`${words[0]}FC`);
+  return [...guesses];
+}
+
+/** The opponent's own account speaks in the first person about their XI. */
+export function isOwnTeamSheetText(rawText: string): boolean {
+  const text = normalizeFancyText(rawText);
+  if (NEGATIVE_PATTERNS.some((re) => re.test(text))) return false;
+  return /\bteam\s*news\b|\bline[\s-]?ups?\b|\bstarting\s+(?:xi|eleven|line)\b|\bteam\s*sheet\b|\bour\s+xi\b|\b(?:today'?s|tonight'?s|this\s+afternoon'?s)\s+(?:team|side|xi)\b|\bhow\s+we\s+line\s*up\b|\bteam\s+to\s+face\b/i.test(
+    text,
+  );
+}
+
+/** Reads the opposition XI graphic straight from their official account. */
+export async function fetchOpponentTeamSheets(
+  opponentName: string,
+  kickoffMs: number,
+): Promise<TeamSheetHit[]> {
+  const from = kickoffMs - WINDOW_BEFORE_MS;
+  const to = kickoffMs + WINDOW_AFTER_MS;
+  for (const handle of opponentHandles(opponentName)) {
+    const hits = await fetchOfficialTimeline(handle).catch(() => []);
+    const matched = hits
+      .filter((h) => h.images.length > 0 && h.createdAtMs >= from && h.createdAtMs <= to)
+      .filter((h) => !/^RT\s+@/i.test(h.text))
+      .filter((h) => isOwnTeamSheetText(h.text))
+      .sort((a, b) => a.createdAtMs - b.createdAtMs);
+    if (matched.length > 0) return matched;
+  }
+  return [];
+}
+
 
 export function pickTeamSheetPosts(
   hits: TeamSheetHit[],
