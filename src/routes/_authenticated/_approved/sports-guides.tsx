@@ -647,7 +647,6 @@ function SportsGuidesPage() {
 
   return (
     <div
-      ref={outerRef}
       className="flex-1 overflow-y-auto relative bg-cover bg-center bg-fixed"
       style={{ backgroundImage: `url(${sportsBg})` }}
     >
