@@ -24,8 +24,30 @@ export const Route = createFileRoute("/fan-zone/$board/$topic")({
 function TopicReadPage() {
   const { board: slug, topic: topicId } = Route.useParams();
   const data = Route.useLoaderData();
+  const [activeTab, setActiveTab] = useState("posts");
+  const [showBackTop, setShowBackTop] = useState(false);
+  const repliesRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    const onScroll = () => {
+      const el = repliesRef.current;
+      const top = el ? Math.max(el.scrollTop, window.scrollY, document.documentElement.scrollTop) : Math.max(window.scrollY, document.documentElement.scrollTop);
+      setShowBackTop(top > 300);
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    const el = repliesRef.current;
+    if (el) el.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (el) el.removeEventListener("scroll", onScroll);
+    };
+  }, []);
 
+  const scrollToTop = () => {
+    repliesRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   if (!data) {
     return (
