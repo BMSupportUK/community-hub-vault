@@ -281,7 +281,7 @@ function escapeForumQuoteText(text: string): string {
   return text.replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch] ?? ch);
 }
 
-function quoteExcerptFromHtml(html: string): string {
+function quoteBodyFromHtml(html: string): string {
   const text = html
     .replace(/<blockquote\b[^>]*>[\s\S]*?<\/blockquote>/gi, " ")
     .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, " ")
@@ -297,8 +297,7 @@ function quoteExcerptFromHtml(html: string): string {
     .replace(/[ \t\f\v]+/g, " ")
     .replace(/\n\s+/g, "\n")
     .trim();
-  const clipped = text.length > 650 ? `${text.slice(0, 650).trim()}…` : text;
-  return escapeForumQuoteText(clipped || "quoted post").replace(/\n/g, "<br/>");
+  return escapeForumQuoteText(text || "quoted post").replace(/\n/g, "<br/>");
 }
 
 function TopicPage() {
@@ -682,9 +681,11 @@ function TopicPage() {
       setReply("");
     });
     const body = prepareForumPostBodyForSubmit(raw);
+    const quoteOfMatch = body.match(/<blockquote[^>]*\bdata-quote-of=["']([^"']+)["']/i);
+    const quoteOf = quoteOfMatch?.[1] ?? null;
     const { data, error } = await supabase
       .from("forum_posts")
-      .insert({ topic_id: topic.id, author_id: user.id, body, is_op: false })
+      .insert({ topic_id: topic.id, author_id: user.id, body, is_op: false, ...(quoteOf ? { quote_of: quoteOf } : {}) })
       .select("id, topic_id, author_id, body, quote_of, edited_at, is_op, is_pinned, created_at")
       .single();
     submittingRef.current = false;
@@ -733,16 +734,19 @@ function TopicPage() {
     // this client skips its own insert event so the page does not lock up.
   };
 
-  const quotePost = (p: Post) => {
+  const quotePost = (p: Post, opts?: { prepend?: boolean }) => {
     const author = profiles[p.author_id];
     const name = author?.display_name || author?.username || "someone";
     const safeName = escapeForumQuoteText(name);
-    const block = `<blockquote data-quote-of="${p.id}"><p><strong>${safeName}</strong> wrote:</p><p>${quoteExcerptFromHtml(p.body)}</p></blockquote><p><br/></p>`;
-    setReply((cur) => (cur || "") + block);
+    const block = `<blockquote data-quote-of="${p.id}"><p><strong>${safeName}</strong> wrote:</p><p>${quoteBodyFromHtml(p.body)}</p></blockquote><p><br/></p>`;
+    setReply((cur) => {
+      if (opts?.prepend) return block + (cur || "");
+      return (cur || "") + block;
+    });
   };
 
   const replyToPost = (p: Post) => {
-    quotePost(p);
+    quotePost(p, { prepend: true });
     pendingReplyScrollRef.current = true;
     setTab("reply");
   };
