@@ -725,6 +725,21 @@ function AdminFanZonePage() {
                             )}
                           </td>
                         )}
+                        {canBan && (
+                          <td className="px-3 py-3 text-center">
+                            {isSelf || isAdminRole(r.user_id) || isModeratorRole(r.user_id) ? (
+                              <span className="text-xs text-muted-foreground/60">—</span>
+                            ) : (
+                              <FanZoneBanDialog
+                                userId={r.user_id}
+                                alias={name}
+                                ban={bans[r.user_id] ?? null}
+                                onChanged={() => void loadBans()}
+                                compact
+                              />
+                            )}
+                          </td>
+                        )}
                         {isAdmin && (
                           <td className="px-3 py-3 text-right">
                             {canDecide ? (
