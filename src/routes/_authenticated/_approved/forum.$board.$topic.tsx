@@ -17,6 +17,8 @@ import { ForumPostReactions } from "@/components/app/ForumPostReactions";
 import { isPreparedForumPostBody, markPreparedForumPostBody, normalizeForumPostInput, prepareForumPostBody } from "@/lib/forum-embeds";
 import { useMentionCandidates, type MentionCandidate } from "@/hooks/use-mention-candidates";
 import { useFanBlocks } from "@/hooks/use-fan-blocks";
+import { useFanZoneMute } from "@/hooks/use-fan-zone-mute";
+import { FanZoneMutedScreen } from "@/components/app/FanZoneMutedScreen";
 import { toast } from "sonner";
 import { RotatingAffiliateBanner } from "@/components/app/RotatingAffiliateBanner";
 import { ForumPoll, AddPollToTopic } from "@/components/app/ForumPoll";
