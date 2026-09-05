@@ -639,6 +639,15 @@ function AdminFanZonePage() {
                                     <ShieldCheck className="size-3" /> Moderator
                                   </span>
                                 )}
+                                {bans[r.user_id] && (
+                                  <span
+                                    className="inline-flex items-center gap-1 rounded-full bg-[#E11B22]/15 text-rose-300 border border-[#E11B22]/45 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+                                    title={`Banned from the Boro Fan Zone: ${bans[r.user_id]!.reason}`}
+                                  >
+                                    <Gavel className="size-3" /> Banned{" "}
+                                    <BanCountdown expiresAt={bans[r.user_id]!.expires_at} />
+                                  </span>
+                                )}
                               </div>
                             </div>
                           </div>
