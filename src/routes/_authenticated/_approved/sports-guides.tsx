@@ -110,6 +110,8 @@ function SportsGuidesPage() {
   const skipDefaultSubOnce = useRef(false);
   const [draggingBlog, setDraggingBlog] = useState(false);
   const listingsTopRef = useRef<HTMLElement | null>(null);
+  const outerRef = useRef<HTMLDivElement | null>(null);
+  const [showBackTop, setShowBackTop] = useState(false);
 
   // (sub-filter default effect moved below subsByCat declaration)
 
