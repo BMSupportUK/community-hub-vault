@@ -14,6 +14,60 @@ type Props = {
   variant?: "chip" | "icon";
 };
 
+/* ------------------------------------------------------------------ *
+ * "Already reported" state, batched across every post on the page so
+ * a topic with 40 replies makes one request, not 40.
+ * ------------------------------------------------------------------ */
+const reportedCache = new Map<string, number>();
+const reportedSubscribers = new Map<string, Set<(count: number) => void>>();
+const pendingIds = new Set<string>();
+let pendingTimer: number | null = null;
+
+function notifyReported(id: string, count: number) {
+  reportedCache.set(id, count);
+  reportedSubscribers.get(id)?.forEach((fn) => fn(count));
+}
+
+function scheduleReportedLoad(id: string) {
+  if (reportedCache.has(id)) return;
+  pendingIds.add(id);
+  if (pendingTimer) return;
+  pendingTimer = window.setTimeout(() => {
+    pendingTimer = null;
+    const ids = Array.from(pendingIds);
+    pendingIds.clear();
+    if (ids.length === 0) return;
+    void supabase
+      .rpc("forum_reported_posts", { _ids: ids })
+      .then(({ data }) => {
+        const counts = new Map<string, number>();
+        ((data ?? []) as { target_id: string; report_count: number }[]).forEach((row) =>
+          counts.set(row.target_id, row.report_count),
+        );
+        ids.forEach((postId) => notifyReported(postId, counts.get(postId) ?? 0));
+      });
+  }, 25);
+}
+
+function useReportedCount(kind: Props["kind"], targetId: string) {
+  const [count, setCount] = useState(() => reportedCache.get(targetId) ?? 0);
+
+  useEffect(() => {
+    if (kind !== "forum_post") return;
+    setCount(reportedCache.get(targetId) ?? 0);
+    const set = reportedSubscribers.get(targetId) ?? new Set<(n: number) => void>();
+    set.add(setCount);
+    reportedSubscribers.set(targetId, set);
+    scheduleReportedLoad(targetId);
+    return () => {
+      set.delete(setCount);
+      if (set.size === 0) reportedSubscribers.delete(targetId);
+    };
+  }, [kind, targetId]);
+
+  return kind === "forum_post" ? count : 0;
+}
+
 export function ReportButton({ kind, targetId, disabled, className, variant = "chip" }: Props) {
   const [open, setOpen] = useState(false);
   const [reason, setReason] = useState("");
