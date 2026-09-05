@@ -104,6 +104,18 @@ export function ReportButton({ kind, targetId, disabled, className, variant = "c
       >
         <Flag className="size-3.5" />
       </button>
+    ) : alreadyReported ? (
+      <button
+        type="button"
+        disabled={disabled}
+        title="This post has already been reported and is waiting for a moderator"
+        className={`inline-flex items-center gap-1 rounded-full border border-amber-500/50 bg-amber-500/10 px-2 py-0.5 text-xs text-amber-600 dark:text-amber-400 disabled:opacity-50 ${className ?? ""}`}
+      >
+        <Flag className="size-3.5" />
+        <span>
+          Reported<span className="hidden sm:inline"> — with the moderators</span>
+        </span>
+      </button>
     ) : (
       <button
         type="button"
