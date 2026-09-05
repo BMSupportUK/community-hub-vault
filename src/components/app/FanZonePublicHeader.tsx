@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { lockScreenNow } from "@/components/app/ScreenLockProvider";
 import boroBadge from "@/assets/boro-fan-zone-badge.png";
 
-export function FanZonePublicHeader() {
+export function FanZonePublicHeader({ hideAuthButtons = false }: { hideAuthButtons?: boolean }) {
   const [navOpen, setNavOpen] = useState(false);
   const { user } = useAuth();
 
@@ -72,18 +72,22 @@ export function FanZonePublicHeader() {
           </>
         )}
 
-        <Button asChild size="sm" variant="outline" className="border-white/25 bg-white/10 text-white hover:bg-white/20 hover:text-white">
-          <Link to="/login">
-            <LogIn className="size-4 sm:mr-1.5" />
-            <span className="hidden sm:inline">Sign in</span>
-          </Link>
-        </Button>
-        <Button asChild size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90">
-          <Link to="/signup" search={{ intent: "fan-zone" } as never}>
-            <UserPlus className="size-4 sm:mr-1.5" />
-            <span className="hidden sm:inline">Join Fan Zone</span>
-          </Link>
-        </Button>
+        {!hideAuthButtons && (
+          <>
+            <Button asChild size="sm" variant="outline" className="border-white/25 bg-white/10 text-white hover:bg-white/20 hover:text-white">
+              <Link to="/login">
+                <LogIn className="size-4 sm:mr-1.5" />
+                <span className="hidden sm:inline">Sign in</span>
+              </Link>
+            </Button>
+            <Button asChild size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90">
+              <Link to="/signup" search={{ intent: "fan-zone" } as never}>
+                <UserPlus className="size-4 sm:mr-1.5" />
+                <span className="hidden sm:inline">Join Fan Zone</span>
+              </Link>
+            </Button>
+          </>
+        )}
       </div>
     </header>
   );

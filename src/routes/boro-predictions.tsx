@@ -357,7 +357,7 @@ function BoroPredictionsPage() {
       <main className="relative z-10 flex-1 overflow-y-auto min-w-0">
         {!user && (
           <div className="relative z-10 border-b border-white/10 bg-background/30 backdrop-blur-sm">
-            <FanZonePublicHeader />
+            <FanZonePublicHeader hideAuthButtons />
           </div>
         )}
         <div className="w-full px-4 sm:px-8 lg:px-16 py-6">
