@@ -682,6 +682,21 @@ function AdminFanZonePage() {
                             </Button>
                           )}
                         </td>
+                        {canMute && (
+                          <td className="px-3 py-3 text-center">
+                            {isSelf || isAdminRole(r.user_id) || isModeratorRole(r.user_id) ? (
+                              <span className="text-xs text-muted-foreground/60">—</span>
+                            ) : (
+                              <FanZoneMuteDialog
+                                userId={r.user_id}
+                                alias={p?.display_name || r.fan_alias || "this member"}
+                                mute={mutes[r.user_id] ?? null}
+                                onChanged={() => void loadMutes()}
+                                compact
+                              />
+                            )}
+                          </td>
+                        )}
                         {isAdmin && (
                           <td className="px-3 py-3 text-right">
                             {canDecide ? (
