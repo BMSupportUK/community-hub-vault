@@ -15,6 +15,8 @@ const WINDOW_AFTER_MS = 15 * 60 * 1000; // stop 15m after KO
 export type TeamSheetHit = {
   tweetId: string;
   text: string;
+  /** Image alt text — clubs often describe the graphic ("QPR's team to face Middlesbrough"). */
+  altText?: string;
   images: string[];
   createdAtMs: number;
   url: string;
