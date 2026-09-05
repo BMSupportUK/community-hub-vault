@@ -51,6 +51,7 @@ function FanProfilePage() {
   const navigate = useNavigate();
   const { user, hasAny } = useAuth();
   const isStaff = hasAny(["admin", "boro_fan_zone_moderator"]);
+  const canModerate = hasAny(["admin", "management", "moderator", "boro_fan_zone_moderator"]);
   const info = useFanZoneMembership(user?.id ?? null);
   const canEnter = isStaff || info?.status === "approved";
   const [p, setP] = useState<Profile | null>(null);
