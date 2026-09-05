@@ -851,9 +851,15 @@ function TopicPage() {
   return (
     <div className="boro-topic-page space-y-4">
       <div>
-        <Button asChild variant="ghost" size="sm" className="-ml-2 mb-1">
-          <Link to="/forum/$board" params={{ board: slug }}><ArrowLeft className="size-4 mr-1" />{board?.name ?? "Board"}</Link>
-        </Button>
+        <div className="flex items-center gap-1 -ml-2 mb-1 flex-wrap" aria-label="Forum navigation">
+          <Button asChild variant="ghost" size="sm" className="px-2">
+            <Link to="/forum"><ArrowLeft className="size-4 mr-1" />Boards</Link>
+          </Button>
+          <span className="text-muted-foreground/60" aria-hidden="true">/</span>
+          <Button asChild variant="ghost" size="sm" className="px-2">
+            <Link to="/forum/$board" params={{ board: slug }}>{board?.name ?? "Board"}</Link>
+          </Button>
+        </div>
         <div className="flex items-start justify-between gap-3 flex-wrap">
           {editingTitle ? (
             <div className="flex items-center gap-2 min-w-0 flex-1">

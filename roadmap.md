@@ -3,3 +3,5 @@
 - [x] Show a guest-safe side rail and dedicated header across the public Boro Fan Zone
 - [x] Replace duplicate Fan Zone header links with the live online counter
 - [x] Keep the Fan Zone staff directory names current and deduplicate accounts
+- [x] Add a board-index link before the current-board link inside forum topics
+- [x] Quote the full original post when replying to a forum post
