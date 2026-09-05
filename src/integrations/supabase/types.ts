@@ -5971,6 +5971,13 @@ export type Database = {
         Args: { _new_board_id: string; _topic_id: string }
         Returns: undefined
       }
+      forum_reported_posts: {
+        Args: { _ids: string[] }
+        Returns: {
+          report_count: number
+          target_id: string
+        }[]
+      }
       get_active_mute: { Args: { _user_id: string }; Returns: string }
       get_boro_final_reminder_recipients: {
         Args: never
