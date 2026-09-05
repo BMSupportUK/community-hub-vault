@@ -1545,7 +1545,7 @@ function SquadBuilder({
 
   const counts = formationCounts(formation);
   /** Bench size follows the real substitute rules of this gameweek's competition. */
-  const benchRules = useMemo(() => benchRulesFor(gw?.competition, gw?.kickoffAt), [gw?.competition]);
+  const benchRules = useMemo(() => benchRulesFor(gw?.competition, gw?.kickoffAt), [gw?.competition, gw?.kickoffAt]);
   const squadSize = 11 + benchRules.size;
   /** Match day 11 for the chosen formation plus the full bench allowance (no minimum cover). */
   const posQuota = useMemo(() => {
