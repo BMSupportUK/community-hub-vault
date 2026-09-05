@@ -606,16 +606,27 @@ function BoroPredictionsPage() {
 
 function PredictionGuestIllustration() {
   return (
-    <section className="overflow-hidden rounded-3xl border border-primary/30 bg-gradient-primary shadow-glow">
-      <img
-        src={boroPredictionsFanAsset.url}
-        alt="A Boro supporter watching a football match from the stadium stands"
-        loading="lazy"
-        width={1536}
-        height={1024}
-        className="aspect-[3/2] w-full object-cover"
-      />
-    </section>
+    <div className="overflow-hidden rounded-3xl border border-primary/30 shadow-glow bg-gradient-primary">
+      <div className="grid items-center gap-0 md:grid-cols-2">
+        <img
+          src={boroPredictionsFanAsset.url}
+          alt="A Boro supporter watching a football match from the stadium stands"
+          loading="lazy"
+          width={1280}
+          height={720}
+          className="h-full w-full object-cover"
+        />
+        <div className="p-6 md:p-8 space-y-4 text-center md:text-left">
+          <h2 className="text-2xl md:text-3xl font-black tracking-tight">
+            Sign up today to predict — if you've got what it takes to call the score
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Predict every Middlesbrough fixture this season. Join the predictor
+            (or sign in as a guest) to start submitting your scores.
+          </p>
+        </div>
+      </div>
+    </div>
   );
 }
 
