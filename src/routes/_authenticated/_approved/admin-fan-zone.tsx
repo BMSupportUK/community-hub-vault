@@ -633,7 +633,18 @@ function AdminFanZonePage() {
                         )}
                         {isAdmin && (
                           <td className="px-5 py-3">
-                            <StatusPill status={r.status} />
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <StatusPill status={r.status} />
+                              {mutes[r.user_id] && (
+                                <span
+                                  className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/40 bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-300"
+                                  title={`Muted: ${mutes[r.user_id]!.reason}`}
+                                >
+                                  <VolumeX className="size-3" /> Muted{" "}
+                                  <MuteCountdown expiresAt={mutes[r.user_id]!.expires_at} />
+                                </span>
+                              )}
+                            </div>
                           </td>
                         )}
                         <td className="px-3 py-3 text-center">
