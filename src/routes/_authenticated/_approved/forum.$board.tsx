@@ -14,6 +14,7 @@ import { HtmlEditor } from "@/components/ui/html-editor";
 import { markPreparedForumPostBody, normalizeForumPostInput, prepareForumPostBody } from "@/lib/forum-embeds";
 import { useMentionCandidates } from "@/hooks/use-mention-candidates";
 import { useFanBlocks } from "@/hooks/use-fan-blocks";
+import { useFanZoneMute } from "@/hooks/use-fan-zone-mute";
 import { toast } from "sonner";
 import { censorText, useProfanityWords } from "@/lib/profanity";
 import { RotatingAffiliateBanner } from "@/components/app/RotatingAffiliateBanner";
