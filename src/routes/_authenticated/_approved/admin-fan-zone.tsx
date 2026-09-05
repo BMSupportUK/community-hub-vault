@@ -252,9 +252,9 @@ function AdminFanZonePage() {
     };
   }, [canView, isAdmin]);
 
-  if (!canView) return <Navigate to="/home" />;
-
   const sendFanZoneApprovalEmail = useServerFn(sendAccountApprovalEmail);
+
+  if (!canView) return <Navigate to="/home" />;
 
   const decide = async (userId: string, status: "approved" | "rejected" | "revoked") => {
     if (!canDecide) {
