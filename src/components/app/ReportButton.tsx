@@ -87,6 +87,7 @@ export function ReportButton({ kind, targetId, disabled, className, variant = "c
     });
     setBusy(false);
     if (error) return toast.error("Couldn't send report", { description: error.message });
+    if (kind === "forum_post") notifyReported(targetId, (reportedCache.get(targetId) ?? 0) + 1);
     toast.success("Report sent to moderators");
     setReason("");
     setOpen(false);
