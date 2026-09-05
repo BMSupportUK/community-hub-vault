@@ -195,23 +195,42 @@ export async function fetchEspnBoroLive(): Promise<EspnBoroMatch[]> {
   return [...byKey.values()];
 }
 
+const LEAGUE_RE = /championship|premier league|league one|league two|efl league|sky bet/i;
+
 /**
  * Find an existing boro_fixtures row that corresponds to an ESPN event.
  * We match on opponent + a wide date window so re-scheduled cup ties still
  * line up with whatever the admin/scraper already inserted.
+ *
+ * League fixtures are played exactly once per season for a given home/away
+ * pair, so when the date window misses (e.g. the game was moved for TV by more
+ * than a few days) we still match on the teams alone. Without that fallback the
+ * live-score sync inserted a second copy of the same league game.
  */
 export function findBoroFixture(
   fixtures: BoroFixtureRow[],
   ev: EspnBoroMatch,
 ): BoroFixtureRow | undefined {
-  const candidates = fixtures.filter((f) => {
-    if (!nameMatches(f.home_team, ev.home) || !nameMatches(f.away_team, ev.away)) return false;
-    const diff = Math.abs(new Date(f.kickoff_at).getTime() - ev.kickoffMs);
-    return diff <= 3 * 24 * 60 * 60 * 1000;
-  });
-  return candidates.sort(
-    (a, b) =>
-      Math.abs(new Date(a.kickoff_at).getTime() - ev.kickoffMs) -
-      Math.abs(new Date(b.kickoff_at).getTime() - ev.kickoffMs),
-  )[0];
+  const sameTeams = fixtures.filter(
+    (f) => nameMatches(f.home_team, ev.home) && nameMatches(f.away_team, ev.away),
+  );
+  const nearest = (rows: BoroFixtureRow[]) =>
+    [...rows].sort(
+      (a, b) =>
+        Math.abs(new Date(a.kickoff_at).getTime() - ev.kickoffMs) -
+        Math.abs(new Date(b.kickoff_at).getTime() - ev.kickoffMs),
+    )[0];
+
+  const withinWindow = sameTeams.filter(
+    (f) =>
+      Math.abs(new Date(f.kickoff_at).getTime() - ev.kickoffMs) <= 3 * 24 * 60 * 60 * 1000,
+  );
+  if (withinWindow.length > 0) return nearest(withinWindow);
+
+  // Same league pairing anywhere in the season → same fixture, just moved.
+  if (LEAGUE_RE.test(ev.competition ?? "")) {
+    const leagueRows = sameTeams.filter((f) => LEAGUE_RE.test(f.competition ?? ""));
+    if (leagueRows.length > 0) return nearest(leagueRows);
+  }
+  return undefined;
 }
