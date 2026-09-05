@@ -135,6 +135,12 @@ export function ReportButton({ kind, targetId, disabled, className, variant = "c
         <DialogHeader>
           <DialogTitle>Report {kind === "dm_message" ? "message" : "post"}</DialogTitle>
         </DialogHeader>
+        {alreadyReported && (
+          <p className="rounded-md border border-amber-500/50 bg-amber-500/10 px-3 py-2 text-xs text-amber-600 dark:text-amber-400">
+            This post has already been reported and is waiting for a moderator — you only need to report it again if
+            there's something else they should know.
+          </p>
+        )}
         <p className="text-xs text-muted-foreground">
           Tell the moderators what's wrong. Reports are reviewed by owners and Boro Fan Zone moderators.
         </p>
