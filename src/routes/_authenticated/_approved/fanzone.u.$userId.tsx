@@ -176,6 +176,7 @@ function FanProfilePage() {
 
   const isSelf = user?.id === userId;
   const { mute: theirMute, refresh: refreshMute } = useFanZoneMute(canModerate ? userId : null);
+  const { ban: theirBan, refresh: refreshBan } = useFanZoneBan(canModerate ? userId : null);
   const isFriend = friendRel.kind === "friends";
   const mainLocked = fanPrivate && !isSelf && !isStaff && !isFriend;
 
