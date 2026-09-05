@@ -347,9 +347,23 @@ export function embedSocialUrls(html: string, options: EmbedSocialOptions = {}):
   // Editors often save pasted video URLs as anchors whose visible text is a
   // title such as "Watch this" rather than the URL itself. Convert by href,
   // not anchor text, so both newly-created and previously prepared posts work.
+  // Preserve ordinary watch links when that exact video is already embedded;
+  // otherwise an explicit player plus its credit link renders as two players.
+  const embeddedVideoKeys = new Set(
+    Array.from(html.matchAll(/<(?:iframe|video)\b[^>]*\bsrc=["']([^"']+)["'][^>]*>/gi))
+      .map((match) => videoEmbedKey(decodeBasicEntities(match[1] ?? "")))
+      .filter((key): key is string => key !== null),
+  );
   html = html.replace(
     /<a\b[^>]*href=["']([^"']+)["'][^>]*>[\s\S]*?<\/a>/gi,
-    (match, href: string) => tryVideoEmbedUrl(decodeBasicEntities(href).replace(/^http:/i, "https:")) ?? match,
+    (match, href: string) => {
+      const url = decodeBasicEntities(href).replace(/^http:/i, "https:");
+      const key = videoEmbedKey(url);
+      if (key && embeddedVideoKeys.has(key)) return match;
+      const embed = tryVideoEmbedUrl(url);
+      if (embed && key) embeddedVideoKeys.add(key);
+      return embed ?? match;
+    },
   );
   html = html.replace(
     /<(p|div|span)\b[^>]*>\s*(<div\b[^>]*class=["'][^"']*video-embed[^"']*["'][\s\S]*?<\/div>)\s*<\/\1>/gi,
