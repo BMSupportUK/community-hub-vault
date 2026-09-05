@@ -31,6 +31,8 @@ import { template as ticketReply } from './ticket-reply'
 import { template as vaultPinReset } from './vault-pin-reset'
 import { template as winnerNotification } from './winner-notification'
 import { template as screenLockReset } from './screen-lock-reset'
+import { template as accountApproved } from './account-approved'
+import { template as fanZoneApproved } from './fan-zone-approved'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'twofa-reset-admin': twofaResetAdmin,
@@ -47,4 +49,6 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'vault-pin-reset': vaultPinReset,
   'winner-notification': winnerNotification,
   'screen-lock-reset': screenLockReset,
+  'account-approved': accountApproved,
+  'fan-zone-approved': fanZoneApproved,
 }
