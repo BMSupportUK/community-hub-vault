@@ -28,6 +28,14 @@ let currentState: Set<string> = new Set();
 const listeners = new Set<() => void>();
 const LAST_SEEN_PING_MS = 2 * 60_000;
 const HEARTBEAT_MS = 25_000;
+/** Keep someone shown as online briefly while a re-track / socket blip settles. */
+const LINGER_MS = 10_000;
+/** Wait before dropping the shared channel, so a remount does not blank dots. */
+const TEARDOWN_GRACE_MS = 5_000;
+const missingSince = new Map<string, number>();
+let lingerTimer: ReturnType<typeof setTimeout> | null = null;
+let teardownTimer: ReturnType<typeof setTimeout> | null = null;
+
 
 function getSnapshot() {
   return currentState;
