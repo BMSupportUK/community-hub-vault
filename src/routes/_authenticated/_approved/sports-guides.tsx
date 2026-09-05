@@ -920,7 +920,7 @@ function SportsGuidesPage() {
             </div>
           </TabsContent>
 
-          <TabsContent value="categories" className="mt-6">
+          <TabsContent value="categories" className="relative mt-6">
             {isMod && (
               <div className="mb-4 flex items-center gap-2">
                 {addingCat ? (
