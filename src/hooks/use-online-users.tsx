@@ -204,6 +204,10 @@ function bindWindowListeners() {
 }
 
 function ensureChannel(uid: string) {
+  if (teardownTimer) {
+    clearTimeout(teardownTimer);
+    teardownTimer = null;
+  }
   if (channel && channelUid === uid) return;
   teardown();
   channelUid = uid;
@@ -227,6 +231,11 @@ function teardown() {
     clearTimeout(retryTimer);
     retryTimer = null;
   }
+  if (lingerTimer) {
+    clearTimeout(lingerTimer);
+    lingerTimer = null;
+  }
+  missingSince.clear();
   if (channel) {
     if (channelUid) pingLastSeen(channelUid);
     try {
@@ -253,10 +262,18 @@ export function useOnlineUsers(): Set<string> {
       refCount--;
       if (refCount <= 0) {
         refCount = 0;
-        teardown();
+        // Give a remount (route change, lock screen closing) a moment to pick
+        // the channel back up instead of dropping presence and re-joining,
+        // which blanked every dot and then filled it back in.
+        if (teardownTimer) clearTimeout(teardownTimer);
+        teardownTimer = setTimeout(() => {
+          teardownTimer = null;
+          if (refCount <= 0) teardown();
+        }, TEARDOWN_GRACE_MS);
       }
     };
   }, [user?.id]);
+
 
   return online;
 }
