@@ -41,8 +41,12 @@ export const FANTASY_GROUP_LABEL: Record<FantasyCompetitionGroup, string> = {
   cup: "Cup games",
   playoff: "Play-off games",
 };
-/** Default bench size (Championship, FA Cup and Carabao Cup name 9 subs). */
+/** Bench size going forward (Championship, FA Cup and Carabao Cup name 9 subs). */
 export const FANTASY_BENCH_SIZE = 9;
+/** Bench size used for gameweeks played before the 9-sub change. */
+export const FANTASY_BENCH_SIZE_LEGACY = 7;
+/** Gameweeks kicking off before this moment keep their original 7-sub bench. */
+export const FANTASY_BENCH_9_FROM_MS = Date.parse("2026-09-05T17:40:00Z");
 export const FANTASY_SQUAD_SIZE = 11 + FANTASY_BENCH_SIZE;
 /** Squad locks this many minutes before kick-off. */
 export const FANTASY_LOCK_MINUTES = 120;
@@ -78,13 +82,24 @@ export type BenchRules = {
   minGk: number;
 };
 
-export function benchRulesFor(competition: string | null | undefined): BenchRules {
-  return { size: FANTASY_BENCH_SIZE, competition: competition?.trim() || "Championship", minGk: FANTASY_BENCH_MIN_GK };
+/**
+ * Bench rules for a gameweek. Gameweeks that kicked off before the 9-sub change
+ * keep the 7-sub bench they were played with, so already-saved squads are never
+ * altered; everything from that point on names 9 subs.
+ */
+export function benchRulesFor(
+  competition: string | null | undefined,
+  kickoffAt?: string | null,
+): BenchRules {
+  const ko = kickoffAt ? Date.parse(kickoffAt) : NaN;
+  const size =
+    Number.isFinite(ko) && ko < FANTASY_BENCH_9_FROM_MS ? FANTASY_BENCH_SIZE_LEGACY : FANTASY_BENCH_SIZE;
+  return { size, competition: competition?.trim() || "Championship", minGk: FANTASY_BENCH_MIN_GK };
 }
 
-/** Total squad size (XI + bench) for a competition. */
-export function squadSizeFor(competition: string | null | undefined): number {
-  return 11 + benchRulesFor(competition).size;
+/** Total squad size (XI + bench) for a gameweek. */
+export function squadSizeFor(competition: string | null | undefined, kickoffAt?: string | null): number {
+  return 11 + benchRulesFor(competition, kickoffAt).size;
 }
 
 /** Named substitutes allowed per competition, for the rules tab. */
