@@ -33,6 +33,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { sendAccountApprovalEmail } from "@/lib/account-approval-email.functions";
 import bgAsset from "@/assets/fanzone-chat-bg.png.asset.json";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-fan-zone")({
@@ -252,6 +254,8 @@ function AdminFanZonePage() {
 
   if (!canView) return <Navigate to="/home" />;
 
+  const sendFanZoneApprovalEmail = useServerFn(sendAccountApprovalEmail);
+
   const decide = async (userId: string, status: "approved" | "rejected" | "revoked") => {
     if (!canDecide) {
       toast.error("Only the Owner can approve Boro Fan Zone access.");
@@ -270,6 +274,13 @@ function AdminFanZonePage() {
     if (error) {
       toast.error(error.message);
       return;
+    }
+    if (status === "approved") {
+      try {
+        await sendFanZoneApprovalEmail({ data: { userId, product: "fan-zone" } });
+      } catch (err) {
+        console.error("fan zone approval email failed", err);
+      }
     }
     toast.success(
       status === "approved"

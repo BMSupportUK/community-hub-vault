@@ -4,6 +4,7 @@ import { Shield, Check, X, Send, ChevronDown, ChevronRight, MessageSquare, FileT
 import { supabase } from "@/integrations/supabase/client";
 import { useServerFn } from "@tanstack/react-start";
 import { banUserFromGate } from "@/lib/blacklist.functions";
+import { sendAccountApprovalEmail } from "@/lib/account-approval-email.functions";
 import { useAuth } from "@/hooks/use-auth";
 import { ChannelColumn } from "@/components/app/ChannelColumn";
 import { StaffOnDutyStrip } from "@/components/app/StaffOnDutyStrip";
@@ -35,6 +36,7 @@ function ModerationPage() {
   const isOwnerOrManagement = hasAny(["admin", "management"]);
   const canBan = hasAny(["admin", "management"]);
   const banFromGate = useServerFn(banUserFromGate);
+  const sendApprovalEmail = useServerFn(sendAccountApprovalEmail);
   if (!isAdminUnlocked(user?.id)) {
     return <Navigate to="/admin" search={{ next: "/moderation" } as never} />;
   }
@@ -192,6 +194,12 @@ function ModerationPage() {
           .not("role", "in", "(member,boro_fan_zone_member,boro_fan_zone_moderator)");
         const { error: e2 } = await supabase.from("user_roles").insert({ user_id: app.user_id, role: "member" });
         if (e2 && !e2.message.includes("duplicate")) toast.error(e2.message);
+        // Email the applicant that their BM Support account is approved
+        try {
+          await sendApprovalEmail({ data: { userId: app.user_id, product: "bm-support" } });
+        } catch (err) {
+          console.error("approval email failed", err);
+        }
         // Send automated approval message so the applicant knows to continue
         const { data: approvedMsg } = await supabase
           .from("gate_messages")
