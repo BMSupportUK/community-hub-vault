@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import bgAsset from "@/assets/boro-fan-zone-profile-bg.jpg.asset.json";
 import { FanStatsBox, FanReputationBox } from "@/components/app/FanZoneStatsBoxes";
+import { FanZoneMuteDialog } from "@/components/app/FanZoneMuteDialog";
+import { useFanZoneMute } from "@/hooks/use-fan-zone-mute";
 import { FanRoleBadge, type FanStaffRole } from "@/components/app/FanRoleBadge";
 
 /** Badge roles in rank order: BM Support first, then Boro Fan Zone. */
