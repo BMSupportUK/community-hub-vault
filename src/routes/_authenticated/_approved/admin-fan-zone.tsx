@@ -586,6 +586,7 @@ function AdminFanZonePage() {
                   {isAdmin && <th className="text-left font-semibold px-5 py-3.5">Status</th>}
                   <th className="w-12 px-3 text-center font-semibold">Friend</th>
                   {canMute && <th className="px-3 text-center font-semibold">Mute</th>}
+                  {canBan && <th className="px-3 text-center font-semibold">Ban</th>}
                   {isAdmin && <th className="w-12 px-3" />}
                 </tr>
               </thead>
