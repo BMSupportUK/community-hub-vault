@@ -928,6 +928,22 @@ function SportsGuidesPage() {
                 </aside>
               )}
             </div>
+
+            {showBackTop && (
+              <Button
+                type="button"
+                size="icon"
+                onClick={() => {
+                  scrollerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+                className="fixed bottom-6 right-6 size-11 rounded-full bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white shadow-lg shadow-purple-900/50 hover:shadow-fuchsia-500/40 hover:scale-110 transition-all z-50"
+                aria-label="Back to top"
+                title="Back to top"
+              >
+                <ArrowUp className="size-5" />
+              </Button>
+            )}
           </TabsContent>
 
           <TabsContent value="categories" className="relative mt-6">
