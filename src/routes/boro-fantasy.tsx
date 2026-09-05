@@ -1448,15 +1448,15 @@ function SquadBuilder({
         setSelected([]);
         setStarters(Array(11).fill(null));
         setSlotPositions(Array(11).fill(null));
-        setBench(Array(benchRulesFor(gw?.competition).size).fill(null));
-        setBenchPositions(Array(benchRulesFor(gw?.competition).size).fill(null));
+        setBench(Array(benchRulesFor(gw?.competition, gw?.kickoffAt).size).fill(null));
+        setBenchPositions(Array(benchRulesFor(gw?.competition, gw?.kickoffAt).size).fill(null));
         setCaptainId("");
         setViceId("");
         return;
       }
       setFormation(existing.formation as FormationKey);
       setSelected(existing.picks.map((p) => p.playerId));
-      const size = benchRulesFor(gw?.competition).size;
+      const size = benchRulesFor(gw?.competition, gw?.kickoffAt).size;
       const st = Array(11).fill(null) as (string | null)[];
       const bn = Array(size).fill(null) as (string | null)[];
       const sp = Array(11).fill(null) as (FantasyPosition | null)[];
@@ -1496,11 +1496,11 @@ function SquadBuilder({
               ? d.starterPositions
               : Array(11).fill(null),
           );
-          setBench(Array.isArray(d.bench) && d.bench.length === benchRulesFor(gw?.competition).size ? d.bench : Array(benchRulesFor(gw?.competition).size).fill(null));
+          setBench(Array.isArray(d.bench) && d.bench.length === benchRulesFor(gw?.competition, gw?.kickoffAt).size ? d.bench : Array(benchRulesFor(gw?.competition, gw?.kickoffAt).size).fill(null));
           setBenchPositions(
-            Array.isArray(d.benchPositions) && d.benchPositions.length === benchRulesFor(gw?.competition).size
+            Array.isArray(d.benchPositions) && d.benchPositions.length === benchRulesFor(gw?.competition, gw?.kickoffAt).size
               ? d.benchPositions
-              : Array(benchRulesFor(gw?.competition).size).fill(null),
+              : Array(benchRulesFor(gw?.competition, gw?.kickoffAt).size).fill(null),
           );
           setCaptainId(d.captainId ?? "");
           setViceId(d.viceId ?? "");
@@ -1545,7 +1545,7 @@ function SquadBuilder({
 
   const counts = formationCounts(formation);
   /** Bench size follows the real substitute rules of this gameweek's competition. */
-  const benchRules = useMemo(() => benchRulesFor(gw?.competition), [gw?.competition]);
+  const benchRules = useMemo(() => benchRulesFor(gw?.competition, gw?.kickoffAt), [gw?.competition]);
   const squadSize = 11 + benchRules.size;
   /** Match day 11 for the chosen formation plus the full bench allowance (no minimum cover). */
   const posQuota = useMemo(() => {
