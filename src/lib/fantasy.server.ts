@@ -502,7 +502,7 @@ export async function saveSquad(admin: any, owner: Owner, input: SaveSquadInput)
   }
   const squadIds = [...input.starters, ...input.bench];
   if (new Set(squadIds).size !== squadIds.length) throw new Error("Duplicate players in your squad.");
-  const bench = benchRulesFor((gwRow as any).fixture?.competition);
+  const bench = benchRulesFor((gwRow as any).fixture?.competition, (gwRow as any).fixture?.kickoff_at);
   if (squadIds.length !== 11 + bench.size) {
     throw new Error(`Pick exactly ${11 + bench.size} players (11 starters + ${bench.size} subs).`);
   }
