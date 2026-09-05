@@ -17,6 +17,7 @@ import { Route as BoroPredictionsRouteImport } from './routes/boro-predictions'
 import { Route as CompetitionWinnersRouteImport } from './routes/competition-winners'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as FanZoneRouteImport } from './routes/fan-zone'
+import { Route as FanzoneMuteDemoRouteImport } from './routes/fanzone-mute-demo'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as LoginRouteImport } from './routes/login'
@@ -177,6 +178,11 @@ const ContactRoute = ContactRouteImport.update({
 const FanZoneRoute = FanZoneRouteImport.update({
   id: '/fan-zone',
   path: '/fan-zone',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FanzoneMuteDemoRoute = FanzoneMuteDemoRouteImport.update({
+  id: '/fanzone-mute-demo',
+  path: '/fanzone-mute-demo',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FaqRoute = FaqRouteImport.update({
@@ -900,6 +906,7 @@ export interface FileRoutesByFullPath {
   '/competition-winners': typeof CompetitionWinnersRoute
   '/contact': typeof ContactRoute
   '/fan-zone': typeof FanZoneRouteWithChildren
+  '/fanzone-mute-demo': typeof FanzoneMuteDemoRoute
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
@@ -1029,6 +1036,7 @@ export interface FileRoutesByTo {
   '/boro-predictions': typeof BoroPredictionsRoute
   '/competition-winners': typeof CompetitionWinnersRoute
   '/contact': typeof ContactRoute
+  '/fanzone-mute-demo': typeof FanzoneMuteDemoRoute
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
@@ -1159,6 +1167,7 @@ export interface FileRoutesById {
   '/competition-winners': typeof CompetitionWinnersRoute
   '/contact': typeof ContactRoute
   '/fan-zone': typeof FanZoneRouteWithChildren
+  '/fanzone-mute-demo': typeof FanzoneMuteDemoRoute
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
@@ -1292,6 +1301,7 @@ export interface FileRouteTypes {
     | '/competition-winners'
     | '/contact'
     | '/fan-zone'
+    | '/fanzone-mute-demo'
     | '/faq'
     | '/forgot-password'
     | '/login'
@@ -1421,6 +1431,7 @@ export interface FileRouteTypes {
     | '/boro-predictions'
     | '/competition-winners'
     | '/contact'
+    | '/fanzone-mute-demo'
     | '/faq'
     | '/forgot-password'
     | '/login'
@@ -1550,6 +1561,7 @@ export interface FileRouteTypes {
     | '/competition-winners'
     | '/contact'
     | '/fan-zone'
+    | '/fanzone-mute-demo'
     | '/faq'
     | '/forgot-password'
     | '/login'
@@ -1683,6 +1695,7 @@ export interface RootRouteChildren {
   CompetitionWinnersRoute: typeof CompetitionWinnersRoute
   ContactRoute: typeof ContactRoute
   FanZoneRoute: typeof FanZoneRouteWithChildren
+  FanzoneMuteDemoRoute: typeof FanzoneMuteDemoRoute
   FaqRoute: typeof FaqRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   LoginRoute: typeof LoginRoute
@@ -1788,6 +1801,13 @@ declare module '@tanstack/react-router' {
       path: '/fan-zone'
       fullPath: '/fan-zone'
       preLoaderRoute: typeof FanZoneRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/fanzone-mute-demo': {
+      id: '/fanzone-mute-demo'
+      path: '/fanzone-mute-demo'
+      fullPath: '/fanzone-mute-demo'
+      preLoaderRoute: typeof FanzoneMuteDemoRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/faq': {
@@ -2948,6 +2968,7 @@ const rootRouteChildren: RootRouteChildren = {
   CompetitionWinnersRoute: CompetitionWinnersRoute,
   ContactRoute: ContactRoute,
   FanZoneRoute: FanZoneRouteWithChildren,
+  FanzoneMuteDemoRoute: FanzoneMuteDemoRoute,
   FaqRoute: FaqRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   LoginRoute: LoginRoute,
