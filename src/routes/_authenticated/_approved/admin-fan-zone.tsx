@@ -103,6 +103,30 @@ function AdminFanZonePage() {
   useEffect(() => {
     void loadMutes();
   }, [loadMutes]);
+  // Boro Fan Zone bans — completely separate from BM Support account bans.
+  const canBan = canMute;
+  const [bans, setBans] = useState<Record<string, FanZoneBan>>({});
+  const loadBans = useCallback(async () => {
+    if (!canBan) return;
+    const nowIso = new Date().toISOString();
+    const { data } = await supabase
+      .from("fan_zone_bans")
+      .select("id, user_id, reason, expires_at, banned_by, created_at")
+      .or(`expires_at.is.null,expires_at.gt.${nowIso}`);
+    const map: Record<string, FanZoneBan> = {};
+    ((data ?? []) as Array<Omit<FanZoneBan, "banned_by_name">>).forEach((b) => {
+      const existing = map[b.user_id];
+      const better =
+        !existing ||
+        b.expires_at === null ||
+        (existing.expires_at !== null && Date.parse(b.expires_at) > Date.parse(existing.expires_at));
+      if (better) map[b.user_id] = { ...b, banned_by_name: null };
+    });
+    setBans(map);
+  }, [canBan]);
+  useEffect(() => {
+    void loadBans();
+  }, [loadBans]);
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<"name" | "since" | "requested">("requested");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
