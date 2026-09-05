@@ -134,6 +134,22 @@ function imagesFromTweet(tweet: Record<string, unknown>): string[] {
   return out;
 }
 
+/** Alt text attached to the graphic, which usually names the line-up outright. */
+function altTextFromTweet(tweet: Record<string, unknown>): string {
+  const buckets: Array<Record<string, unknown>> = [
+    ...(((tweet.extended_entities as Record<string, unknown> | undefined)?.media as Array<Record<string, unknown>>) ?? []),
+    ...(((tweet.entities as Record<string, unknown> | undefined)?.media as Array<Record<string, unknown>>) ?? []),
+    ...((tweet.mediaDetails as Array<Record<string, unknown>> | undefined) ?? []),
+    ...((tweet.photos as Array<Record<string, unknown>> | undefined) ?? []),
+  ];
+  const parts: string[] = [];
+  for (const m of buckets) {
+    const alt = String(m.ext_alt_text ?? m.altText ?? m.accessibilityLabel ?? "").trim();
+    if (alt && !parts.includes(alt)) parts.push(alt);
+  }
+  return parts.join(" \n ");
+}
+
 /**
  * X refuses a lot of serverless egress outright, so the deployed site sees an
  * empty timeline while local dev works. When the direct read fails we retry the
