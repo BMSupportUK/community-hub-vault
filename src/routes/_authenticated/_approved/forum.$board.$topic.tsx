@@ -373,7 +373,8 @@ function TopicPage() {
   };
 
   const isBoardMod = isStaff || (user ? moderatorIds.has(user.id) : false);
-  const canPost = canEnter && !!topic && !topic.is_locked;
+  const { mute: myMute } = useFanZoneMute(user?.id ?? null);
+  const canPost = canEnter && !!topic && !topic.is_locked && !myMute;
   const canEditTitle = !!user && !!topic && (topic.author_id === user.id || isBoardMod);
 
   useEffect(() => {
