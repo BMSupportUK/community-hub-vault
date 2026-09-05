@@ -74,6 +74,15 @@ function markLinkPreviewsInner(html: string): string {
     return url ? `<p>${escapeHtml(html).replace(/\n/g, "<br/>")}</p>${linkPreviewMarker(url)}` : html;
   }
 
+  // A post can already contain an explicit video player followed by a normal
+  // "Watch on YouTube" link. Keep the link, but never turn it into a second
+  // player for the same video during the render-time legacy conversion pass.
+  const embeddedVideoKeys = new Set(
+    Array.from(html.matchAll(/<(?:iframe|video)\b[^>]*\bsrc=["']([^"']+)["'][^>]*>/gi))
+      .map((match) => videoEmbedKey(decodeBasicEntities(match[1] ?? "")))
+      .filter((key): key is string => key !== null),
+  );
+
   return html.replace(/<(p|div)\b([^>]*)>([\s\S]*?)<\/\1>/gi, (match, tag: string, attrs: string, inner: string) => {
     if (/data-link-preview|data-tweet-embed|link-card|twitter-tweet|fb-post|video-embed/i.test(match)) return match;
     if (/(?:^|\s)class=["'][^"']*(?:mention|video-embed)[^"']*["']/i.test(match)) return match;
@@ -87,7 +96,12 @@ function markLinkPreviewsInner(html: string): string {
       .map((m) => decodeBasicEntities(m[1] ?? ""))
       .find((href) => tryVideoEmbedUrl(href));
     const videoUrl = anchorVideo ?? firstVideoUrlInText(htmlTextContent(inner));
-    if (videoUrl) return `${match}${tryVideoEmbedUrl(videoUrl)}`;
+    if (videoUrl) {
+      const key = videoEmbedKey(videoUrl);
+      if (key && embeddedVideoKeys.has(key)) return match;
+      if (key) embeddedVideoKeys.add(key);
+      return `${match}${tryVideoEmbedUrl(videoUrl)}`;
+    }
     const inlineUrl = firstAnchorPreviewUrl(inner) ?? firstPreviewUrlInText(htmlTextContent(inner));
     return inlineUrl ? `${match}${linkPreviewMarker(inlineUrl)}` : match;
   });
@@ -243,6 +257,15 @@ const YOUTUBE_RE = /^https?:\/\/(?:www\.|m\.|music\.)?(?:youtube\.com\/(?:watch\
 const VIMEO_RE = /^https?:\/\/(?:www\.)?vimeo\.com\/(?:video\/)?(\d{6,12})/i;
 const VIDEO_FILE_RE = /^https?:\/\/[^\s"'<>]+\.(mp4|webm|ogv|ogg|mov|m4v)(?:\?[^\s"'<>]*)?$/i;
 
+function videoEmbedKey(url: string): string | null {
+  const yt = url.match(YOUTUBE_RE);
+  if (yt) return `youtube:${yt[1]}`;
+  const vimeo = url.match(VIMEO_RE);
+  if (vimeo) return `vimeo:${vimeo[1]}`;
+  if (VIDEO_FILE_RE.test(url)) return `file:${url}`;
+  return null;
+}
+
 function iframeVideoEmbed(src: string, title: string): string {
   return `<div class="video-embed" style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;margin:0.75rem 0;width:100%;border-radius:0.5rem;"><iframe src="${escapeAttr(src)}" title="${escapeAttr(title)}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"></iframe></div>`;
 }
@@ -324,9 +347,23 @@ export function embedSocialUrls(html: string, options: EmbedSocialOptions = {}):
   // Editors often save pasted video URLs as anchors whose visible text is a
   // title such as "Watch this" rather than the URL itself. Convert by href,
   // not anchor text, so both newly-created and previously prepared posts work.
+  // Preserve ordinary watch links when that exact video is already embedded;
+  // otherwise an explicit player plus its credit link renders as two players.
+  const embeddedVideoKeys = new Set(
+    Array.from(html.matchAll(/<(?:iframe|video)\b[^>]*\bsrc=["']([^"']+)["'][^>]*>/gi))
+      .map((match) => videoEmbedKey(decodeBasicEntities(match[1] ?? "")))
+      .filter((key): key is string => key !== null),
+  );
   html = html.replace(
     /<a\b[^>]*href=["']([^"']+)["'][^>]*>[\s\S]*?<\/a>/gi,
-    (match, href: string) => tryVideoEmbedUrl(decodeBasicEntities(href).replace(/^http:/i, "https:")) ?? match,
+    (match, href: string) => {
+      const url = decodeBasicEntities(href).replace(/^http:/i, "https:");
+      const key = videoEmbedKey(url);
+      if (key && embeddedVideoKeys.has(key)) return match;
+      const embed = tryVideoEmbedUrl(url);
+      if (embed && key) embeddedVideoKeys.add(key);
+      return embed ?? match;
+    },
   );
   html = html.replace(
     /<(p|div|span)\b[^>]*>\s*(<div\b[^>]*class=["'][^"']*video-embed[^"']*["'][\s\S]*?<\/div>)\s*<\/\1>/gi,
