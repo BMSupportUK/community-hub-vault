@@ -281,7 +281,7 @@ function PlayerStatsDialog({
     () => seasonRows.filter((r) => !isOurScoringStat(r.key)),
     [seasonRows],
   );
-  /** Clean sheets are a scoring rule, not an FotMob stat column — derive them. */
+  /** Clean sheets are a scoring rule, not a FotMob stat column — derive them. */
   const cleanSheetRows = useMemo(() => {
     const rate = scaleRate(pos === "gk" || pos === "def" ? 4 : pos === "mid" ? 1 : null);
     const rateShort = scaleRate(pos === "gk" || pos === "def" ? 2 : pos === "mid" ? 0.5 : null);
