@@ -110,6 +110,8 @@ function SportsGuidesPage() {
   const skipDefaultSubOnce = useRef(false);
   const [draggingBlog, setDraggingBlog] = useState(false);
   const listingsTopRef = useRef<HTMLElement | null>(null);
+  const outerRef = useRef<HTMLDivElement | null>(null);
+  const [showBackTop, setShowBackTop] = useState(false);
 
   // (sub-filter default effect moved below subsByCat declaration)
 
@@ -121,6 +123,16 @@ function SportsGuidesPage() {
       else sessionStorage.removeItem("sports-guides-active-cat");
     } catch { /* ignore */ }
   }, [activeCat]);
+
+  // Show/hide the back-to-top arrow in the Categories tab based on scroll.
+  useEffect(() => {
+    const el = outerRef.current;
+    if (!el) return;
+    const onScroll = () => setShowBackTop(el.scrollTop > 400);
+    onScroll();
+    el.addEventListener("scroll", onScroll, { passive: true });
+    return () => el.removeEventListener("scroll", onScroll);
+  }, []);
 
   const queryKey = ["sports-guides-data", user?.id ?? "anon"] as const;
   const dataQuery = useQuery({
@@ -638,6 +650,7 @@ function SportsGuidesPage() {
 
   return (
     <div
+      ref={outerRef}
       className="flex-1 overflow-y-auto relative bg-cover bg-center bg-fixed"
       style={{ backgroundImage: `url(${sportsBg})` }}
     >
@@ -907,7 +920,7 @@ function SportsGuidesPage() {
             </div>
           </TabsContent>
 
-          <TabsContent value="categories" className="mt-6">
+          <TabsContent value="categories" className="relative mt-6">
             {isMod && (
               <div className="mb-4 flex items-center gap-2">
                 {addingCat ? (
@@ -1056,6 +1069,18 @@ function SportsGuidesPage() {
                 </div>
               ))}
             </div>
+
+            {showBackTop && (
+              <button
+                type="button"
+                onClick={() => outerRef.current?.scrollTo({ top: 0, behavior: "smooth" })}
+                className="fixed bottom-6 right-6 size-11 rounded-full bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white shadow-lg shadow-purple-900/50 hover:shadow-fuchsia-500/40 hover:scale-110 transition-all z-50 grid place-items-center"
+                aria-label="Back to top"
+                title="Back to top"
+              >
+                <ArrowUp className="size-5" />
+              </button>
+            )}
           </TabsContent>
         </Tabs>
       </div>
