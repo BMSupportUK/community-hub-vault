@@ -18,12 +18,15 @@ import {
   Shield,
   ShieldCheck,
   VolumeX,
+  Gavel,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useFanZoneMembership } from "@/hooks/use-fan-zone";
 import type { FanZoneMute } from "@/hooks/use-fan-zone-mute";
+import type { FanZoneBan } from "@/hooks/use-fan-zone-ban";
 import { FanZoneMuteDialog, MuteCountdown } from "@/components/app/FanZoneMuteDialog";
+import { FanZoneBanDialog, BanCountdown } from "@/components/app/FanZoneBanDialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -100,6 +103,30 @@ function AdminFanZonePage() {
   useEffect(() => {
     void loadMutes();
   }, [loadMutes]);
+  // Boro Fan Zone bans — completely separate from BM Support account bans.
+  const canBan = canMute;
+  const [bans, setBans] = useState<Record<string, FanZoneBan>>({});
+  const loadBans = useCallback(async () => {
+    if (!canBan) return;
+    const nowIso = new Date().toISOString();
+    const { data } = await supabase
+      .from("fan_zone_bans")
+      .select("id, user_id, reason, expires_at, banned_by, created_at")
+      .or(`expires_at.is.null,expires_at.gt.${nowIso}`);
+    const map: Record<string, FanZoneBan> = {};
+    ((data ?? []) as Array<Omit<FanZoneBan, "banned_by_name">>).forEach((b) => {
+      const existing = map[b.user_id];
+      const better =
+        !existing ||
+        b.expires_at === null ||
+        (existing.expires_at !== null && Date.parse(b.expires_at) > Date.parse(existing.expires_at));
+      if (better) map[b.user_id] = { ...b, banned_by_name: null };
+    });
+    setBans(map);
+  }, [canBan]);
+  useEffect(() => {
+    void loadBans();
+  }, [loadBans]);
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<"name" | "since" | "requested">("requested");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
@@ -559,6 +586,7 @@ function AdminFanZonePage() {
                   {isAdmin && <th className="text-left font-semibold px-5 py-3.5">Status</th>}
                   <th className="w-12 px-3 text-center font-semibold">Friend</th>
                   {canMute && <th className="px-3 text-center font-semibold">Mute</th>}
+                  {canBan && <th className="px-3 text-center font-semibold">Ban</th>}
                   {isAdmin && <th className="w-12 px-3" />}
                 </tr>
               </thead>
@@ -609,6 +637,15 @@ function AdminFanZonePage() {
                                 {isModeratorRole(r.user_id) && !isAdminRole(r.user_id) && (
                                   <span className="inline-flex items-center gap-1 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/30 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
                                     <ShieldCheck className="size-3" /> Moderator
+                                  </span>
+                                )}
+                                {bans[r.user_id] && (
+                                  <span
+                                    className="inline-flex items-center gap-1 rounded-full bg-[#E11B22]/15 text-rose-300 border border-[#E11B22]/45 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+                                    title={`Banned from the Boro Fan Zone: ${bans[r.user_id]!.reason}`}
+                                  >
+                                    <Gavel className="size-3" /> Banned{" "}
+                                    <BanCountdown expiresAt={bans[r.user_id]!.expires_at} />
                                   </span>
                                 )}
                               </div>
@@ -693,6 +730,21 @@ function AdminFanZonePage() {
                                 alias={name}
                                 mute={mutes[r.user_id] ?? null}
                                 onChanged={() => void loadMutes()}
+                                compact
+                              />
+                            )}
+                          </td>
+                        )}
+                        {canBan && (
+                          <td className="px-3 py-3 text-center">
+                            {isSelf || isAdminRole(r.user_id) || isModeratorRole(r.user_id) ? (
+                              <span className="text-xs text-muted-foreground/60">—</span>
+                            ) : (
+                              <FanZoneBanDialog
+                                userId={r.user_id}
+                                alias={name}
+                                ban={bans[r.user_id] ?? null}
+                                onChanged={() => void loadBans()}
                                 compact
                               />
                             )}

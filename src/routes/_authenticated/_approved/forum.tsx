@@ -12,6 +12,8 @@ import { FanZoneStaffBox } from "@/components/app/FanZoneStaffBox";
 import { BoroMatchCentreBox } from "@/components/app/BoroMatchCentreBox";
 import { BoroLiveMatchStrip } from "@/components/app/BoroLiveMatchStrip";
 import { FanZoneNameGate } from "@/components/app/FanZoneNamePrompt";
+import { FanZoneBannedScreen } from "@/components/app/FanZoneBannedScreen";
+import { useFanZoneBan } from "@/hooks/use-fan-zone-ban";
 import { FanZoneMentionsBell } from "@/components/app/FanZoneMentionsBell";
 import { OnlineNowBox } from "@/components/app/OnlineNowBox";
 import { useFanAliasVersion } from "@/hooks/use-fan-alias-version";
@@ -66,6 +68,8 @@ function ForumLayout() {
     return () => { cancelled = true; };
   }, [canModerate]);
   const info = useFanZoneMembership(user?.id ?? null);
+  // A live Boro Fan Zone ban locks the member out of the whole zone.
+  const { ban: myBan, loading: banLoading } = useFanZoneBan(user?.id ?? null);
 
   useEffect(() => {
     const html = document.documentElement;
@@ -76,6 +80,20 @@ function ForumLayout() {
       html.style.removeProperty("--boro-bg-image");
     };
   }, []);
+
+  if (myBan && !banLoading) {
+    return (
+      <div className="boro-theme relative w-full h-full overflow-y-auto scrollbar-hide">
+        <FanZoneBannedScreen
+          expiresAt={myBan.expires_at}
+          reason={myBan.reason}
+          bannedBy={myBan.banned_by_name}
+          returnTo="/forum"
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="boro-theme relative w-full h-full overflow-y-auto scrollbar-hide px-4 sm:px-6 lg:px-10 py-6">
       <header className="relative mb-6 overflow-hidden rounded-xl border border-[#E11B22]/55 shadow-[0_14px_46px_-12px_rgba(0,0,0,0.8)]">

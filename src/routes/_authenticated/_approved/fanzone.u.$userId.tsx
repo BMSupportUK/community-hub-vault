@@ -10,7 +10,9 @@ import { toast } from "sonner";
 import bgAsset from "@/assets/boro-fan-zone-profile-bg.jpg.asset.json";
 import { FanStatsBox, FanReputationBox } from "@/components/app/FanZoneStatsBoxes";
 import { FanZoneMuteDialog } from "@/components/app/FanZoneMuteDialog";
+import { FanZoneBanDialog } from "@/components/app/FanZoneBanDialog";
 import { useFanZoneMute } from "@/hooks/use-fan-zone-mute";
+import { useFanZoneBan } from "@/hooks/use-fan-zone-ban";
 import { FanRoleBadge, type FanStaffRole } from "@/components/app/FanRoleBadge";
 
 /** Badge roles in rank order: BM Support first, then Boro Fan Zone. */
@@ -174,6 +176,7 @@ function FanProfilePage() {
 
   const isSelf = user?.id === userId;
   const { mute: theirMute, refresh: refreshMute } = useFanZoneMute(canModerate ? userId : null);
+  const { ban: theirBan, refresh: refreshBan } = useFanZoneBan(canModerate ? userId : null);
   const isFriend = friendRel.kind === "friends";
   const mainLocked = fanPrivate && !isSelf && !isStaff && !isFriend;
 
@@ -325,11 +328,28 @@ function FanProfilePage() {
                     onChanged={() => void refreshMute()}
                   />
                 )}
+                {canModerate && (
+                  <FanZoneBanDialog
+                    userId={userId}
+                    alias={p.fan_alias}
+                    ban={theirBan}
+                    onChanged={() => void refreshBan()}
+                  />
+                )}
               </div>
             )}
             {canModerate && theirMute && (
               <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
                 Muted until {new Date(theirMute.expires_at).toLocaleString("en-GB")} — “{theirMute.reason}”
+              </div>
+            )}
+            {canModerate && theirBan && (
+              <div className="rounded-lg border border-[#E11B22]/45 bg-[#E11B22]/12 px-3 py-2 text-xs text-rose-200">
+                Banned from the Boro Fan Zone{" "}
+                {theirBan.expires_at
+                  ? `until ${new Date(theirBan.expires_at).toLocaleString("en-GB")}`
+                  : "permanently"}{" "}
+                — “{theirBan.reason}”
               </div>
             )}
           </div>
