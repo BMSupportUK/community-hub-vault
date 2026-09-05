@@ -28,6 +28,14 @@ let currentState: Set<string> = new Set();
 const listeners = new Set<() => void>();
 const LAST_SEEN_PING_MS = 2 * 60_000;
 const HEARTBEAT_MS = 25_000;
+/** Keep someone shown as online briefly while a re-track / socket blip settles. */
+const LINGER_MS = 10_000;
+/** Wait before dropping the shared channel, so a remount does not blank dots. */
+const TEARDOWN_GRACE_MS = 5_000;
+const missingSince = new Map<string, number>();
+let lingerTimer: ReturnType<typeof setTimeout> | null = null;
+let teardownTimer: ReturnType<typeof setTimeout> | null = null;
+
 
 function getSnapshot() {
   return currentState;
@@ -63,6 +71,39 @@ function setState(next: Set<string>) {
   currentState = next;
   notify();
 }
+
+/**
+ * Presence emits a leave+join pair whenever a client re-tracks or its socket
+ * rejoins. Taking those raw would make the green dot blink off and on, so a
+ * key that disappears is held for a short grace period and re-checked.
+ */
+function applyPresenceKeys(keys: string[]) {
+  const now = Date.now();
+  const next = new Set(keys);
+  for (const id of next) missingSince.delete(id);
+  let soonest = Number.POSITIVE_INFINITY;
+  for (const id of currentState) {
+    if (next.has(id)) continue;
+    const since = missingSince.get(id) ?? now;
+    missingSince.set(id, since);
+    const remaining = LINGER_MS - (now - since);
+    if (remaining > 0) {
+      next.add(id);
+      soonest = Math.min(soonest, remaining);
+    } else {
+      missingSince.delete(id);
+    }
+  }
+  if (Number.isFinite(soonest)) {
+    if (lingerTimer) clearTimeout(lingerTimer);
+    lingerTimer = setTimeout(() => {
+      lingerTimer = null;
+      if (channel) applyPresenceKeys(Object.keys(channel.presenceState()));
+    }, soonest + 50);
+  }
+  setState(next);
+}
+
 
 function pingLastSeen(uid: string) {
   try {
@@ -110,7 +151,7 @@ function openChannel(uid: string) {
   const ch = supabase.channel("presence:online", { config: { presence: { key: uid } } });
   const sync = () => {
     try {
-      setState(new Set(Object.keys(ch.presenceState())));
+      applyPresenceKeys(Object.keys(ch.presenceState()));
     } catch {
       /* ignore */
     }
@@ -136,10 +177,21 @@ function revive() {
   const state = channel?.state;
   if (state !== "joined") {
     openChannel(uid);
-  } else {
-    void track(uid);
+    return;
+  }
+  // Do NOT re-track while the channel is healthy: every re-track emits a
+  // synthetic leave+join to all other clients, which made status dots blink
+  // between online and offline. The socket already maintains presence.
+  const ch = channel;
+  if (ch) {
+    try {
+      applyPresenceKeys(Object.keys(ch.presenceState()));
+    } catch {
+      /* ignore */
+    }
   }
 }
+
 
 function bindWindowListeners() {
   if (listenersBound || typeof window === "undefined") return;
@@ -152,6 +204,10 @@ function bindWindowListeners() {
 }
 
 function ensureChannel(uid: string) {
+  if (teardownTimer) {
+    clearTimeout(teardownTimer);
+    teardownTimer = null;
+  }
   if (channel && channelUid === uid) return;
   teardown();
   channelUid = uid;
@@ -175,6 +231,11 @@ function teardown() {
     clearTimeout(retryTimer);
     retryTimer = null;
   }
+  if (lingerTimer) {
+    clearTimeout(lingerTimer);
+    lingerTimer = null;
+  }
+  missingSince.clear();
   if (channel) {
     if (channelUid) pingLastSeen(channelUid);
     try {
@@ -201,10 +262,18 @@ export function useOnlineUsers(): Set<string> {
       refCount--;
       if (refCount <= 0) {
         refCount = 0;
-        teardown();
+        // Give a remount (route change, lock screen closing) a moment to pick
+        // the channel back up instead of dropping presence and re-joining,
+        // which blanked every dot and then filled it back in.
+        if (teardownTimer) clearTimeout(teardownTimer);
+        teardownTimer = setTimeout(() => {
+          teardownTimer = null;
+          if (refCount <= 0) teardown();
+        }, TEARDOWN_GRACE_MS);
       }
     };
   }, [user?.id]);
+
 
   return online;
 }
