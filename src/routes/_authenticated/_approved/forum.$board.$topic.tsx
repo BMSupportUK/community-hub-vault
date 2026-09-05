@@ -300,6 +300,28 @@ function quoteBodyFromHtml(html: string): string {
   return escapeForumQuoteText(text || "quoted post").replace(/\n/g, "<br/>");
 }
 
+// Pull any videos out of the quoted post so a reply keeps the clip it answers.
+function quoteVideosFromHtml(html: string): string[] {
+  const body = html.replace(/<blockquote\b[^>]*>[\s\S]*?<\/blockquote>/gi, " ");
+  const urls: string[] = [];
+  const push = (u: string | undefined) => {
+    if (!u) return;
+    let url = u.trim().replace(/&amp;/gi, "&");
+    const yt = url.match(/(?:youtube(?:-nocookie)?\.com\/(?:embed|v|shorts)\/|youtu\.be\/|[?&]v=)([\w-]{6,})/i);
+    if (yt) url = `https://www.youtube.com/watch?v=${yt[1]}`;
+    else {
+      const vm = url.match(/(?:player\.)?vimeo\.com\/(?:video\/)?(\d+)/i);
+      if (vm) url = `https://vimeo.com/${vm[1]}`;
+      else if (!/\.(mp4|webm|ogg|mov)(\?|$)/i.test(url)) return;
+    }
+    if (!urls.includes(url)) urls.push(url);
+  };
+  for (const m of body.matchAll(/<(?:iframe|video|source)\b[^>]*\bsrc=["']([^"']+)["']/gi)) push(m[1]);
+  for (const m of body.matchAll(/<a\b[^>]*\bhref=["']([^"']+)["']/gi)) push(m[1]);
+  return urls;
+}
+
+
 function TopicPage() {
   const { board: slug, topic: topicId } = Route.useParams();
   const navigate = useNavigate();
