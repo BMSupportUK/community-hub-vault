@@ -3879,8 +3879,9 @@ function SquadRulesTab() {
       <section className="rounded-2xl border border-border/60 bg-card/85 backdrop-blur p-4">
         <h4 className="font-semibold mb-3">Bench cover</h4>
         <p className="text-sm text-muted-foreground mb-3">
-          You name {FANTASY_BENCH_SIZE} subs in every competition, for a {FANTASY_SQUAD_SIZE}-man squad. Sub 1 is reserved for
-          your replacement goalkeeper; the rest of the bench is entirely your call, with no other position cover required.
+          The Championship, the FA Cup and the Carabao Cup all allow a bench of {FANTASY_BENCH_SIZE}, so you name{" "}
+          {FANTASY_BENCH_SIZE} subs for a {FANTASY_SQUAD_SIZE}-man squad. Sub 1 is reserved for your replacement
+          goalkeeper and the other {FANTASY_BENCH_SIZE - 1} are outfield players of your choosing.
         </p>
         <div className="grid gap-2 sm:grid-cols-2">
           {COMPETITION_BENCH_RULES.map((r) => (
