@@ -325,11 +325,28 @@ function FanProfilePage() {
                     onChanged={() => void refreshMute()}
                   />
                 )}
+                {canModerate && (
+                  <FanZoneBanDialog
+                    userId={userId}
+                    alias={p.fan_alias}
+                    ban={theirBan}
+                    onChanged={() => void refreshBan()}
+                  />
+                )}
               </div>
             )}
             {canModerate && theirMute && (
               <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
                 Muted until {new Date(theirMute.expires_at).toLocaleString("en-GB")} — “{theirMute.reason}”
+              </div>
+            )}
+            {canModerate && theirBan && (
+              <div className="rounded-lg border border-[#E11B22]/45 bg-[#E11B22]/12 px-3 py-2 text-xs text-rose-200">
+                Banned from the Boro Fan Zone{" "}
+                {theirBan.expires_at
+                  ? `until ${new Date(theirBan.expires_at).toLocaleString("en-GB")}`
+                  : "permanently"}{" "}
+                — “{theirBan.reason}”
               </div>
             )}
           </div>
