@@ -18,12 +18,15 @@ import {
   Shield,
   ShieldCheck,
   VolumeX,
+  Gavel,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useFanZoneMembership } from "@/hooks/use-fan-zone";
 import type { FanZoneMute } from "@/hooks/use-fan-zone-mute";
+import type { FanZoneBan } from "@/hooks/use-fan-zone-ban";
 import { FanZoneMuteDialog, MuteCountdown } from "@/components/app/FanZoneMuteDialog";
+import { FanZoneBanDialog, BanCountdown } from "@/components/app/FanZoneBanDialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
