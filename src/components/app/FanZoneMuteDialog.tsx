@@ -16,16 +16,35 @@ const DURATIONS = [
   { label: "30 days", minutes: 43200 },
 ];
 
+/** Live "2d 4h 11m" style countdown to the end of a mute. */
+export function MuteCountdown({ expiresAt }: { expiresAt: string }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+  const total = Math.max(0, Math.floor((Date.parse(expiresAt) - now) / 1000));
+  const d = Math.floor(total / 86400);
+  const h = Math.floor((total % 86400) / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  const text = d > 0 ? `${d}d ${h}h ${m}m` : h > 0 ? `${h}h ${m}m ${s}s` : `${m}m ${s}s`;
+  return <span className="font-mono tabular-nums">{text}</span>;
+}
+
 export function FanZoneMuteDialog({
   userId,
   alias,
   mute,
   onChanged,
+  compact = false,
 }: {
   userId: string;
   alias: string;
   mute: FanZoneMute | null;
   onChanged: () => void;
+  /** Small icon-style trigger for table rows. */
+  compact?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [minutes, setMinutes] = useState(1440);
