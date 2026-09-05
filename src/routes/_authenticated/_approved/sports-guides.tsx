@@ -110,7 +110,9 @@ function SportsGuidesPage() {
   const skipDefaultSubOnce = useRef(false);
   const [draggingBlog, setDraggingBlog] = useState(false);
   const listingsTopRef = useRef<HTMLElement | null>(null);
+  const scrollerRef = useRef<HTMLDivElement | null>(null);
   const [showBackTop, setShowBackTop] = useState(false);
+
 
   // (sub-filter default effect moved below subsByCat declaration)
 
@@ -123,13 +125,23 @@ function SportsGuidesPage() {
     } catch { /* ignore */ }
   }, [activeCat]);
 
-  // Show/hide the back-to-top arrow in the Categories tab based on page scroll.
+  // Show/hide the back-to-top arrow based on scroll position of the page
+  // scroller (the guides list scrolls inside its own container, not window).
   useEffect(() => {
-    const onScroll = () => setShowBackTop(window.scrollY > 400);
+    const el = scrollerRef.current;
+    const onScroll = () => {
+      const y = Math.max(el?.scrollTop ?? 0, window.scrollY, document.documentElement.scrollTop);
+      setShowBackTop(y > 300);
+    };
     onScroll();
+    el?.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    return () => {
+      el?.removeEventListener("scroll", onScroll);
+      window.removeEventListener("scroll", onScroll);
+    };
   }, []);
+
 
   const queryKey = ["sports-guides-data", user?.id ?? "anon"] as const;
   const dataQuery = useQuery({
@@ -647,7 +659,9 @@ function SportsGuidesPage() {
 
   return (
     <div
+      ref={scrollerRef}
       className="flex-1 overflow-y-auto relative bg-cover bg-center bg-fixed"
+
       style={{ backgroundImage: `url(${sportsBg})` }}
     >
       <div className="absolute inset-0 bg-black/55 pointer-events-none" aria-hidden />
@@ -1069,7 +1083,11 @@ function SportsGuidesPage() {
             {showBackTop && (
               <button
                 type="button"
-                onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                onClick={() => {
+                  scrollerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                }}
+
                 className="fixed bottom-6 right-6 size-11 rounded-full bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white shadow-lg shadow-purple-900/50 hover:shadow-fuchsia-500/40 hover:scale-110 transition-all z-50 grid place-items-center"
                 aria-label="Back to top"
                 title="Back to top"
