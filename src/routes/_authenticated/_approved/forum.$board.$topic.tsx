@@ -760,7 +760,10 @@ function TopicPage() {
     const author = profiles[p.author_id];
     const name = author?.display_name || author?.username || "someone";
     const safeName = escapeForumQuoteText(name);
-    const block = `<blockquote data-quote-of="${p.id}"><p><strong>${safeName}</strong> wrote:</p><p>${quoteBodyFromHtml(p.body)}</p></blockquote><p><br/></p>`;
+    const videos = quoteVideosFromHtml(p.body)
+      .map((u) => `<p><a href="${escapeForumQuoteText(u)}">${escapeForumQuoteText(u)}</a></p>`)
+      .join("");
+    const block = `<blockquote data-quote-of="${p.id}"><p><strong>${safeName}</strong> wrote:</p><p>${quoteBodyFromHtml(p.body)}</p>${videos}</blockquote><p><br/></p>`;
     setReply((cur) => {
       if (opts?.prepend) return block + (cur || "");
       return (cur || "") + block;
