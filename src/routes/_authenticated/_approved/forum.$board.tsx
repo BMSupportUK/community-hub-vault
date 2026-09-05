@@ -14,6 +14,7 @@ import { HtmlEditor } from "@/components/ui/html-editor";
 import { markPreparedForumPostBody, normalizeForumPostInput, prepareForumPostBody } from "@/lib/forum-embeds";
 import { useMentionCandidates } from "@/hooks/use-mention-candidates";
 import { useFanBlocks } from "@/hooks/use-fan-blocks";
+import { useFanZoneMute } from "@/hooks/use-fan-zone-mute";
 import { toast } from "sonner";
 import { censorText, useProfanityWords } from "@/lib/profanity";
 import { RotatingAffiliateBanner } from "@/components/app/RotatingAffiliateBanner";
@@ -94,6 +95,7 @@ function BoardPage() {
   const isStaff = hasAny(["admin", "boro_fan_zone_moderator"]);
   const canUseSpecialMentions = hasAny(["admin", "management", "staff", "moderator"]);
   const info = useFanZoneMembership(user?.id ?? null);
+  const { mute: myMute } = useFanZoneMute(user?.id ?? null);
   const canEnter = isStaff || info?.status === "approved";
   const aliasVersion = useFanAliasVersion();
   const mentionCandidates = useMentionCandidates(canUseSpecialMentions);
@@ -360,7 +362,7 @@ function BoardPage() {
     return <div className="grid place-items-center py-20 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>;
   }
 
-  const canPost = !board.is_locked && (isStaff || info?.status === "approved");
+  const canPost = !board.is_locked && (isStaff || info?.status === "approved") && !myMute;
   const isBoardMod = isStaff || (user ? moderatorIds.has(user.id) : false);
   const renderSponsorAdvert = () => (
     <RotatingAffiliateBanner

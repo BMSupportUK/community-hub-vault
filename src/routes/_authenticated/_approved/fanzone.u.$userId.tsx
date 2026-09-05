@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import bgAsset from "@/assets/boro-fan-zone-profile-bg.jpg.asset.json";
 import { FanStatsBox, FanReputationBox } from "@/components/app/FanZoneStatsBoxes";
+import { FanZoneMuteDialog } from "@/components/app/FanZoneMuteDialog";
+import { useFanZoneMute } from "@/hooks/use-fan-zone-mute";
 import { FanRoleBadge, type FanStaffRole } from "@/components/app/FanRoleBadge";
 
 /** Badge roles in rank order: BM Support first, then Boro Fan Zone. */
@@ -49,6 +51,7 @@ function FanProfilePage() {
   const navigate = useNavigate();
   const { user, hasAny } = useAuth();
   const isStaff = hasAny(["admin", "boro_fan_zone_moderator"]);
+  const canModerate = hasAny(["admin", "management", "moderator", "boro_fan_zone_moderator"]);
   const info = useFanZoneMembership(user?.id ?? null);
   const canEnter = isStaff || info?.status === "approved";
   const [p, setP] = useState<Profile | null>(null);
@@ -170,6 +173,7 @@ function FanProfilePage() {
   };
 
   const isSelf = user?.id === userId;
+  const { mute: theirMute, refresh: refreshMute } = useFanZoneMute(canModerate ? userId : null);
   const isFriend = friendRel.kind === "friends";
   const mainLocked = fanPrivate && !isSelf && !isStaff && !isFriend;
 
@@ -313,6 +317,19 @@ function FanProfilePage() {
                 <Button onClick={() => void toggleBlock()} variant="outline" disabled={busy} className="bg-white/10 border-white/30 text-white hover:bg-white/20 hover:text-white">
                   {p.is_blocked_by_me ? <><ShieldOff className="size-4 mr-1" /> Unblock</> : <><Ban className="size-4 mr-1" /> Block</>}
                 </Button>
+                {canModerate && (
+                  <FanZoneMuteDialog
+                    userId={userId}
+                    alias={p.fan_alias}
+                    mute={theirMute}
+                    onChanged={() => void refreshMute()}
+                  />
+                )}
+              </div>
+            )}
+            {canModerate && theirMute && (
+              <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+                Muted until {new Date(theirMute.expires_at).toLocaleString("en-GB")} — “{theirMute.reason}”
               </div>
             )}
           </div>

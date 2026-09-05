@@ -17,6 +17,8 @@ import { ForumPostReactions } from "@/components/app/ForumPostReactions";
 import { isPreparedForumPostBody, markPreparedForumPostBody, normalizeForumPostInput, prepareForumPostBody } from "@/lib/forum-embeds";
 import { useMentionCandidates, type MentionCandidate } from "@/hooks/use-mention-candidates";
 import { useFanBlocks } from "@/hooks/use-fan-blocks";
+import { useFanZoneMute } from "@/hooks/use-fan-zone-mute";
+import { FanZoneMutedScreen } from "@/components/app/FanZoneMutedScreen";
 import { toast } from "sonner";
 import { RotatingAffiliateBanner } from "@/components/app/RotatingAffiliateBanner";
 import { ForumPoll, AddPollToTopic } from "@/components/app/ForumPoll";
@@ -371,7 +373,8 @@ function TopicPage() {
   };
 
   const isBoardMod = isStaff || (user ? moderatorIds.has(user.id) : false);
-  const canPost = canEnter && !!topic && !topic.is_locked;
+  const { mute: myMute } = useFanZoneMute(user?.id ?? null);
+  const canPost = canEnter && !!topic && !topic.is_locked && !myMute;
   const canEditTitle = !!user && !!topic && (topic.author_id === user.id || isBoardMod);
 
   useEffect(() => {
@@ -1083,6 +1086,13 @@ function TopicPage() {
                     </Button>
                   </div>
                 </div>
+              ) : myMute ? (
+                <FanZoneMutedScreen
+                  expiresAt={myMute.expires_at}
+                  reason={myMute.reason}
+                  mutedBy={myMute.muted_by_name}
+                  returnTo="/forum"
+                />
               ) : topic.is_locked ? (
                 <div className="rounded-2xl border border-muted-foreground/20 bg-muted/20 p-4 text-sm text-center text-muted-foreground">
                   <Lock className="size-4 inline mr-1" /> This topic is locked.

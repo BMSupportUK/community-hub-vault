@@ -1715,6 +1715,36 @@ export type Database = {
         }
         Relationships: []
       }
+      fan_zone_mutes: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          muted_by: string | null
+          reason: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          muted_by?: string | null
+          reason: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          muted_by?: string | null
+          reason?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       fantasy_club_transfers: {
         Row: {
           created_at: string
@@ -5853,6 +5883,18 @@ export type Database = {
           updated_at: string
         }[]
       }
+      fan_zone_active_mute: {
+        Args: { _user_id?: string }
+        Returns: {
+          created_at: string
+          expires_at: string
+          id: string
+          muted_by: string
+          muted_by_name: string
+          reason: string
+          user_id: string
+        }[]
+      }
       fan_zone_admin_avatar: { Args: never; Returns: string }
       fan_zone_aliases: {
         Args: { _ids: string[] }
@@ -5866,6 +5908,10 @@ export type Database = {
       fan_zone_block: { Args: { _other: string }; Returns: undefined }
       fan_zone_default_avatar_url: { Args: never; Returns: string }
       fan_zone_moderator_avatar: { Args: never; Returns: string }
+      fan_zone_mute: {
+        Args: { _minutes: number; _reason: string; _user_id: string }
+        Returns: string
+      }
       fan_zone_privacy: {
         Args: { _ids: string[] }
         Returns: {
@@ -5891,6 +5937,7 @@ export type Database = {
         }[]
       }
       fan_zone_unblock: { Args: { _other: string }; Returns: undefined }
+      fan_zone_unmute: { Args: { _user_id: string }; Returns: undefined }
       fantasy_calc_points:
         | {
             Args: {
