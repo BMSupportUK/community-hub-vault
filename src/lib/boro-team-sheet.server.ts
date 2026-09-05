@@ -467,10 +467,17 @@ export async function syncBoroTeamSheet(opts?: { ignoreWindow?: boolean }): Prom
   }
 
   const opponent = opponentOf(fx);
-  const hits = pickTeamSheetPosts(await fetchOfficialTimeline(), Date.parse(fx.kickoff_at), opponent);
+  const kickoffMs = Date.parse(fx.kickoff_at);
+  const hits = pickTeamSheetPosts(await fetchOfficialTimeline(), kickoffMs, opponent);
+  // Boro only sometimes retweets the opposition XI — read their account too.
+  if (!hits.some((h) => h.side === "opponent")) {
+    const own = await fetchOpponentTeamSheets(opponent, kickoffMs);
+    for (const hit of own) hits.push({ ...hit, side: "opponent" as const });
+  }
   if (hits.length === 0) {
     return { ok: true, fixture: label, topic: topic.title, posted: 0, skipped: ["no team sheet posted yet"] };
   }
+
 
   const { data: existing } = await supabaseAdmin
     .from("boro_team_sheets")
