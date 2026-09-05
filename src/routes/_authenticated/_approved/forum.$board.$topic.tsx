@@ -732,16 +732,19 @@ function TopicPage() {
     // this client skips its own insert event so the page does not lock up.
   };
 
-  const quotePost = (p: Post) => {
+  const quotePost = (p: Post, opts?: { prepend?: boolean }) => {
     const author = profiles[p.author_id];
     const name = author?.display_name || author?.username || "someone";
     const safeName = escapeForumQuoteText(name);
-    const block = `<blockquote data-quote-of="${p.id}"><p><strong>${safeName}</strong> wrote:</p><p>${quoteExcerptFromHtml(p.body)}</p></blockquote><p><br/></p>`;
-    setReply((cur) => (cur || "") + block);
+    const block = `<blockquote data-quote-of="${p.id}"><p><strong>${safeName}</strong> wrote:</p><p>${quoteBodyFromHtml(p.body)}</p></blockquote><p><br/></p>`;
+    setReply((cur) => {
+      if (opts?.prepend) return block + (cur || "");
+      return (cur || "") + block;
+    });
   };
 
   const replyToPost = (p: Post) => {
-    quotePost(p);
+    quotePost(p, { prepend: true });
     pendingReplyScrollRef.current = true;
     setTab("reply");
   };
