@@ -659,7 +659,9 @@ function SportsGuidesPage() {
 
   return (
     <div
+      ref={scrollerRef}
       className="flex-1 overflow-y-auto relative bg-cover bg-center bg-fixed"
+
       style={{ backgroundImage: `url(${sportsBg})` }}
     >
       <div className="absolute inset-0 bg-black/55 pointer-events-none" aria-hidden />
