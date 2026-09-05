@@ -1,5 +1,5 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
   Check,
@@ -17,10 +17,13 @@ import {
   Clock,
   Shield,
   ShieldCheck,
+  VolumeX,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useFanZoneMembership } from "@/hooks/use-fan-zone";
+import type { FanZoneMute } from "@/hooks/use-fan-zone-mute";
+import { FanZoneMuteDialog, MuteCountdown } from "@/components/app/FanZoneMuteDialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -76,6 +79,27 @@ function AdminFanZonePage() {
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [userRoles, setUserRoles] = useState<Record<string, string[]>>({});
   const [busy, setBusy] = useState<string | null>(null);
+  // Admins and moderators can mute members from this list.
+  const canMute = hasAny(["admin", "management", "moderator", "boro_fan_zone_moderator"]);
+  const [mutes, setMutes] = useState<Record<string, FanZoneMute>>({});
+  const loadMutes = useCallback(async () => {
+    if (!canMute) return;
+    const { data } = await supabase
+      .from("fan_zone_mutes")
+      .select("id, user_id, reason, expires_at, muted_by, created_at")
+      .gt("expires_at", new Date().toISOString());
+    const map: Record<string, FanZoneMute> = {};
+    ((data ?? []) as Array<Omit<FanZoneMute, "muted_by_name">>).forEach((m) => {
+      const existing = map[m.user_id];
+      if (!existing || Date.parse(m.expires_at) > Date.parse(existing.expires_at)) {
+        map[m.user_id] = { ...m, muted_by_name: null };
+      }
+    });
+    setMutes(map);
+  }, [canMute]);
+  useEffect(() => {
+    void loadMutes();
+  }, [loadMutes]);
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<"name" | "since" | "requested">("requested");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
@@ -534,6 +558,7 @@ function AdminFanZonePage() {
                   {isAdmin && statusTab === "pending" && <th className="text-left font-semibold px-5 py-3.5">Reason</th>}
                   {isAdmin && <th className="text-left font-semibold px-5 py-3.5">Status</th>}
                   <th className="w-12 px-3 text-center font-semibold">Friend</th>
+                  {canMute && <th className="px-3 text-center font-semibold">Mute</th>}
                   {isAdmin && <th className="w-12 px-3" />}
                 </tr>
               </thead>
@@ -609,7 +634,18 @@ function AdminFanZonePage() {
                         )}
                         {isAdmin && (
                           <td className="px-5 py-3">
-                            <StatusPill status={r.status} />
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <StatusPill status={r.status} />
+                              {mutes[r.user_id] && (
+                                <span
+                                  className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/40 bg-amber-500/10 px-2.5 py-0.5 text-xs font-medium text-amber-300"
+                                  title={`Muted: ${mutes[r.user_id]!.reason}`}
+                                >
+                                  <VolumeX className="size-3" /> Muted{" "}
+                                  <MuteCountdown expiresAt={mutes[r.user_id]!.expires_at} />
+                                </span>
+                              )}
+                            </div>
                           </td>
                         )}
                         <td className="px-3 py-3 text-center">
@@ -647,6 +683,21 @@ function AdminFanZonePage() {
                             </Button>
                           )}
                         </td>
+                        {canMute && (
+                          <td className="px-3 py-3 text-center">
+                            {isSelf || isAdminRole(r.user_id) || isModeratorRole(r.user_id) ? (
+                              <span className="text-xs text-muted-foreground/60">—</span>
+                            ) : (
+                              <FanZoneMuteDialog
+                                userId={r.user_id}
+                                alias={name}
+                                mute={mutes[r.user_id] ?? null}
+                                onChanged={() => void loadMutes()}
+                                compact
+                              />
+                            )}
+                          </td>
+                        )}
                         {isAdmin && (
                           <td className="px-3 py-3 text-right">
                             {canDecide ? (

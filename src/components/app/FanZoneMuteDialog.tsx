@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Loader2, VolumeX, Volume2 } from "lucide-react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -16,16 +16,35 @@ const DURATIONS = [
   { label: "30 days", minutes: 43200 },
 ];
 
+/** Live "2d 4h 11m" style countdown to the end of a mute. */
+export function MuteCountdown({ expiresAt }: { expiresAt: string }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+  const total = Math.max(0, Math.floor((Date.parse(expiresAt) - now) / 1000));
+  const d = Math.floor(total / 86400);
+  const h = Math.floor((total % 86400) / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  const text = d > 0 ? `${d}d ${h}h ${m}m` : h > 0 ? `${h}h ${m}m ${s}s` : `${m}m ${s}s`;
+  return <span className="font-mono tabular-nums">{text}</span>;
+}
+
 export function FanZoneMuteDialog({
   userId,
   alias,
   mute,
   onChanged,
+  compact = false,
 }: {
   userId: string;
   alias: string;
   mute: FanZoneMute | null;
   onChanged: () => void;
+  /** Small icon-style trigger for table rows. */
+  compact?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const [minutes, setMinutes] = useState(1440);
@@ -64,23 +83,38 @@ export function FanZoneMuteDialog({
         onClick={() => void unmute()}
         disabled={busy}
         variant="outline"
-        className="bg-amber-500/15 border-amber-400/40 text-amber-100 hover:bg-amber-500/25 hover:text-white"
+        size={compact ? "sm" : "default"}
+        title={`Muted: ${mute.reason} — click to lift the mute`}
+        className="bg-amber-500/15 border-amber-400/40 text-amber-200 hover:bg-amber-500/25 hover:text-white"
       >
         {busy ? <Loader2 className="size-4 mr-1 animate-spin" /> : <Volume2 className="size-4 mr-1" />}
-        Muted until {new Date(mute.expires_at).toLocaleString("en-GB", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" })} — unmute
+        Muted <MuteCountdown expiresAt={mute.expires_at} />
       </Button>
     );
   }
 
   return (
     <>
-      <Button
-        onClick={() => setOpen(true)}
-        variant="outline"
-        className="bg-white/10 border-white/30 text-white hover:bg-white/20 hover:text-white"
-      >
-        <VolumeX className="size-4 mr-1" /> Mute member
-      </Button>
+      {compact ? (
+        <Button
+          onClick={() => setOpen(true)}
+          size="icon"
+          variant="ghost"
+          title={`Mute ${alias}`}
+          aria-label={`Mute ${alias}`}
+          className="size-8 text-amber-400 hover:text-amber-300"
+        >
+          <VolumeX className="size-4" />
+        </Button>
+      ) : (
+        <Button
+          onClick={() => setOpen(true)}
+          variant="outline"
+          className="bg-white/10 border-white/30 text-white hover:bg-white/20 hover:text-white"
+        >
+          <VolumeX className="size-4 mr-1" /> Mute member
+        </Button>
+      )}
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-md">
