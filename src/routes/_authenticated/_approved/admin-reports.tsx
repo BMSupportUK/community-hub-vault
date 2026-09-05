@@ -31,7 +31,7 @@ type Report = {
 
 function AdminReportsPage() {
   const { hasAny } = useAuth();
-  const allowed = hasAny(["admin", "boro_fan_zone_moderator"]);
+  const allowed = hasAny(["admin", "management", "moderator", "boro_fan_zone_moderator"]);
   const [status, setStatus] = useState<"pending" | "reviewed" | "dismissed">("pending");
   const [rows, setRows] = useState<Report[] | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
