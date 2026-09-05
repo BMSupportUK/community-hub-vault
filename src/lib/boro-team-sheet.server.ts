@@ -307,7 +307,7 @@ export function pickTeamSheetPosts(
   return hits
     .filter((h) => h.images.length > 0 && h.createdAtMs >= from && h.createdAtMs <= to)
     .map((h) => {
-      const text = normalizeFancyText(h.text);
+      const text = normalizeFancyText(`${h.text}\n${h.altText ?? ""}`);
       // Boro's own graphic always names the club or speaks in the first person.
       const boroFirstPerson = /\bboro\b|\bour\b|\bwe\b|\bus\b/i.test(text.replace(/^RT\s+@\w+:\s*/i, "x "));
       if (!boroFirstPerson && opponentName && isOpponentTeamSheetText(text, opponentName)) {
