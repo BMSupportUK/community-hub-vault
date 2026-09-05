@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Lock, Pin, ArrowLeft } from "lucide-react";
+import { Lock, Pin, ArrowLeft, ArrowUp } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { getPublicTopic, type PublicPost } from "@/lib/fan-zone-public.functions";
 import { ForumPostBody } from "@/components/app/ForumPostBody";
 import { RelativeTime } from "@/components/app/RelativeTime";
