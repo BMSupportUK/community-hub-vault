@@ -15,6 +15,8 @@ const WINDOW_AFTER_MS = 15 * 60 * 1000; // stop 15m after KO
 export type TeamSheetHit = {
   tweetId: string;
   text: string;
+  /** Image alt text — clubs often describe the graphic ("QPR's team to face Middlesbrough"). */
+  altText?: string;
   images: string[];
   createdAtMs: number;
   url: string;
@@ -132,6 +134,22 @@ function imagesFromTweet(tweet: Record<string, unknown>): string[] {
   return out;
 }
 
+/** Alt text attached to the graphic, which usually names the line-up outright. */
+function altTextFromTweet(tweet: Record<string, unknown>): string {
+  const buckets: Array<Record<string, unknown>> = [
+    ...(((tweet.extended_entities as Record<string, unknown> | undefined)?.media as Array<Record<string, unknown>>) ?? []),
+    ...(((tweet.entities as Record<string, unknown> | undefined)?.media as Array<Record<string, unknown>>) ?? []),
+    ...((tweet.mediaDetails as Array<Record<string, unknown>> | undefined) ?? []),
+    ...((tweet.photos as Array<Record<string, unknown>> | undefined) ?? []),
+  ];
+  const parts: string[] = [];
+  for (const m of buckets) {
+    const alt = String(m.ext_alt_text ?? m.altText ?? m.accessibilityLabel ?? "").trim();
+    if (alt && !parts.includes(alt)) parts.push(alt);
+  }
+  return parts.join(" \n ");
+}
+
 /**
  * X refuses a lot of serverless egress outright, so the deployed site sees an
  * empty timeline while local dev works. When the direct read fails we retry the
@@ -184,6 +202,7 @@ export async function fetchOfficialTimeline(handle: string = HANDLE): Promise<Te
       hits.push({
         tweetId: id,
         text: String(tweet.full_text ?? tweet.text ?? ""),
+        altText: altTextFromTweet(tweet),
         images: imagesFromTweet(tweet),
         createdAtMs: Number.isFinite(created) ? created : 0,
         url: `https://x.com/${handle}/status/${id}`,
@@ -253,7 +272,7 @@ export function opponentHandles(name: string): string[] {
 export function isOwnTeamSheetText(rawText: string): boolean {
   const text = normalizeFancyText(rawText);
   if (NEGATIVE_PATTERNS.some((re) => re.test(text))) return false;
-  return /\bteam\s*news\b|\bline[\s-]?ups?\b|\bstarting\s+(?:xi|eleven|line)\b|\bteam\s*sheet\b|\bour\s+xi\b|\b(?:today'?s|tonight'?s|this\s+afternoon'?s)\s+(?:team|side|xi)\b|\bhow\s+we\s+line\s*up\b|\bteam\s+to\s+face\b/i.test(
+  return /\bteam\s*news\b|\bline[\s-]?ups?\b|\bstarting\s+(?:xi|eleven|line)\b|\bteam\s*sheet\b|\bour\s+xi\b|\b(?:today'?s|tonight'?s|this\s+afternoon'?s)\s+(?:team|side|xi)\b|\bhow\s+we\s+line\s*up\b|\b(?:team|side|xi|eleven)\s+to\s+(?:face|play|take\s+on)\b|\b(?:team|side|xi|eleven)\s+(?:v|vs|versus)\b/i.test(
     text,
   );
 }
@@ -270,7 +289,7 @@ export async function fetchOpponentTeamSheets(
     const matched = hits
       .filter((h) => h.images.length > 0 && h.createdAtMs >= from && h.createdAtMs <= to)
       .filter((h) => !/^RT\s+@/i.test(h.text))
-      .filter((h) => isOwnTeamSheetText(h.text))
+      .filter((h) => isOwnTeamSheetText(`${h.text}\n${h.altText ?? ""}`))
       .sort((a, b) => a.createdAtMs - b.createdAtMs);
     if (matched.length > 0) return matched;
   }
@@ -288,7 +307,7 @@ export function pickTeamSheetPosts(
   return hits
     .filter((h) => h.images.length > 0 && h.createdAtMs >= from && h.createdAtMs <= to)
     .map((h) => {
-      const text = normalizeFancyText(h.text);
+      const text = normalizeFancyText(`${h.text}\n${h.altText ?? ""}`);
       // Boro's own graphic always names the club or speaks in the first person.
       const boroFirstPerson = /\bboro\b|\bour\b|\bwe\b|\bus\b/i.test(text.replace(/^RT\s+@\w+:\s*/i, "x "));
       if (!boroFirstPerson && opponentName && isOpponentTeamSheetText(text, opponentName)) {
