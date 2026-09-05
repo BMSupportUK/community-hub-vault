@@ -360,7 +360,7 @@ function BoardPage() {
     return <div className="grid place-items-center py-20 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>;
   }
 
-  const canPost = !board.is_locked && (isStaff || info?.status === "approved");
+  const canPost = !board.is_locked && (isStaff || info?.status === "approved") && !myMute;
   const isBoardMod = isStaff || (user ? moderatorIds.has(user.id) : false);
   const renderSponsorAdvert = () => (
     <RotatingAffiliateBanner
