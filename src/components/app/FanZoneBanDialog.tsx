@@ -59,7 +59,7 @@ export function FanZoneBanDialog({
     setBusy(true);
     const { error } = await supabase.rpc("fan_zone_ban", {
       _user_id: userId,
-      _minutes: minutes,
+      _minutes: minutes as unknown as number,
       _reason: text.slice(0, 1000),
     });
     setBusy(false);
