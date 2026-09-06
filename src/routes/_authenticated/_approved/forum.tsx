@@ -7,7 +7,8 @@ import { useFanZoneMembership } from "@/hooks/use-fan-zone";
 import { getIcon } from "@/components/app/IconPicker";
 import { formatLastSeen } from "@/lib/relative-time";
 import { Button } from "@/components/ui/button";
-import { Ban, BarChart3, UserCog, Search as SearchIcon, ShieldAlert, MailQuestion } from "lucide-react";
+import { Ban, BarChart3, UserCog, Search as SearchIcon, ShieldAlert, MailQuestion, ArrowLeftRight } from "lucide-react";
+import { isFanZoneOnlyRoles } from "@/lib/fan-zone-nav";
 import { FanZoneStaffBox } from "@/components/app/FanZoneStaffBox";
 import { BoroMatchCentreBox } from "@/components/app/BoroMatchCentreBox";
 import { BoroLiveMatchStrip } from "@/components/app/BoroLiveMatchStrip";
@@ -60,7 +61,8 @@ function ForumLayout() {
   const matches = useMatches();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const isNested = matches.some((m) => m.routeId.startsWith("/_authenticated/_approved/forum/"));
-  const { user, hasAny } = useAuth();
+  const { user, hasAny, roles } = useAuth();
+  const hasSupportSide = !isFanZoneOnlyRoles((roles ?? []) as string[]);
   const canModerate = hasAny(["admin", "management", "moderator", "boro_fan_zone_moderator"]);
   // Outstanding reports counter — kept live so staff see new ones straight away.
   const [pendingReports, setPendingReports] = useState(0);
@@ -194,6 +196,14 @@ function ForumLayout() {
         />
         <div className="relative px-4 py-5 sm:px-8 sm:py-6 flex flex-col gap-5">
           <div className="z-10 grid w-full grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:justify-end">
+            {hasSupportSide && (
+              <Button asChild size="sm" variant="outline" className="bg-white/15 backdrop-blur border-white/40 text-white hover:bg-white/25 hover:text-white justify-center col-span-2 sm:col-span-1">
+                <Link to="/home">
+                  <ArrowLeftRight className="size-4 mr-1.5" />
+                  Switch to BM Support
+                </Link>
+              </Button>
+            )}
             {canModerate && (
               <Button asChild size="sm" variant="outline" className="bg-black/40 backdrop-blur border-white/30 text-white hover:bg-black/60 hover:text-white justify-center col-span-2 sm:col-span-1">
                 <Link to="/admin-reports">
@@ -337,7 +347,8 @@ function ForumLayout() {
 }
 
 function BoardsIndex() {
-  const { user, hasAny } = useAuth();
+  const { user, hasAny, roles } = useAuth();
+  const hasSupportSide = !isFanZoneOnlyRoles((roles ?? []) as string[]);
   const isStaff = hasAny(["admin", "boro_fan_zone_moderator"]);
   const info = useFanZoneMembership(user?.id ?? null);
   const [boards, setBoards] = useState<Board[] | null>(null);

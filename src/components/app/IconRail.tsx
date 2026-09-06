@@ -243,8 +243,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
   ];
 
   const fanZoneItems: RailItem[] = [
-    // Dual-role accounts (BM Support + Fan Zone) keep a way back to BM Support.
-    { to: "/home", label: "BM Support", icon: Home, show: !!user && !isFanZoneOnly },
+    // Switching back to BM Support lives on the Fan Zone header, not the rail.
     { to: user ? "/forum" : "/fan-zone", label: "Boro Fan Zone", icon: BoroBadgeIcon, show: true },
     { to: "/fanzone/messages", label: "Inbox", icon: MessagesSquare, show: !!user },
     { to: "/admin-fan-zone", label: "Members", icon: Users, show: !!user && canSeeFanZoneMembers },
