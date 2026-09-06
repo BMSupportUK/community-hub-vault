@@ -38,6 +38,24 @@ export function FanZoneBannedScreen({ expiresAt, reason, bannedBy, returnTo = "/
   const [appealOpen, setAppealOpen] = useState(false);
   const [hasAppeal, setHasAppeal] = useState(false);
 
+  const { user } = useAuth();
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+    void (async () => {
+      const { data } = await supabase
+        .from("fan_zone_appeals")
+        .select("id")
+        .eq("user_id", user.id)
+        .limit(1)
+        .maybeSingle();
+      if (!cancelled) setHasAppeal(!!data);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
+
   const permanent = target === null;
   const remaining = target === null ? 0 : target - now;
   const expired = !permanent && remaining <= 0;
