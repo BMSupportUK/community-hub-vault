@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Radio, CalendarDays, Trophy, ChevronRight } from "lucide-react";
+import { Radio, CalendarDays, Trophy } from "lucide-react";
 import {
   getBoroMatchCentre,
   type MatchCentreDTO,
@@ -343,15 +343,6 @@ export function BoroLiveMatchStrip() {
               </span>
             )}
 
-            <button
-              type="button"
-              onClick={openMatchCentre}
-              className="shrink-0 inline-flex items-center gap-1.5 rounded-lg bg-[#E11B22] px-2.5 py-1.5 text-xs font-bold text-white shadow hover:bg-[#c41820] transition"
-            >
-              <span className="hidden sm:inline">View match centre</span>
-              <span className="sm:hidden">View</span>
-              <ChevronRight className="size-3.5" />
-            </button>
           </div>
         </div>
       </div>
