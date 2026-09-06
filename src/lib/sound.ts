@@ -196,6 +196,10 @@ const GAIN_SCALE = 0.35;
 /**
  * Play a notification sound. Safe to call from realtime handlers / timers.
  * `gain` is a relative loudness hint; the final level is clamped to MAX_LEVEL.
+ *
+ * Playback is serialised: if several alerts fire at once (typical right after
+ * sign-in), they are queued and played one after another instead of stacking
+ * into a single unintelligible blast.
  */
 export function playSound(
   src: string,
@@ -206,6 +210,64 @@ export function playSound(
     console.warn("[sound] ignored playback with no source", opts.label ?? "");
     return Promise.resolve(false);
   }
+  if (getSoundPrefs().muted) return Promise.resolve(false);
+
+  // Collapse an identical sound that is already waiting in the queue.
+  if (queue.some((item) => item.src === src)) return Promise.resolve(true);
+
+  return new Promise<boolean>((resolve) => {
+    queue.push({ src, opts, resolve });
+    void drainQueue();
+  });
+}
+
+interface QueueItem {
+  src: string;
+  opts: { volume?: number; gain?: number; label?: string };
+  resolve: (ok: boolean) => void;
+}
+
+const queue: QueueItem[] = [];
+let draining = false;
+/** Silence between queued alerts, ms. */
+const GAP_MS = 300;
+/** Safety cap when a clip's duration can't be determined. */
+const FALLBACK_DURATION_MS = 1800;
+
+function wait(ms: number) {
+  return new Promise<void>((r) => setTimeout(r, ms));
+}
+
+function durationMs(src: string): number {
+  const buf = buffers.get(src);
+  if (buf?.duration) return Math.min(8000, buf.duration * 1000);
+  const el = elements.get(src);
+  if (el && Number.isFinite(el.duration) && el.duration > 0) return Math.min(8000, el.duration * 1000);
+  return FALLBACK_DURATION_MS;
+}
+
+async function drainQueue() {
+  if (draining) return;
+  draining = true;
+  try {
+    while (queue.length) {
+      const item = queue.shift()!;
+      let ok = false;
+      try {
+        ok = await playNow(item.src, item.opts);
+      } catch { /* noop */ }
+      item.resolve(ok);
+      if (ok) await wait(durationMs(item.src) + GAP_MS);
+    }
+  } finally {
+    draining = false;
+  }
+}
+
+function playNow(
+  src: string,
+  opts: { volume?: number; gain?: number; label?: string } = {},
+): Promise<boolean> {
   try {
     ensureUnlockListeners();
     registeredSources.add(src);
@@ -222,6 +284,7 @@ export function playSound(
     : MAX_LEVEL * 0.5;
 
   return (async () => {
+
     // --- 1. Web Audio buffer path ---
     const c = getCtx();
     if (c) {
