@@ -287,8 +287,8 @@ function AdminReportsPage() {
   }, [allowed, tab, loadSanctions]);
 
   useEffect(() => {
-    if (allowed) void loadAppeals();
-  }, [allowed, loadAppeals]);
+    if (allowed && tab === "appeals") void loadAppeals();
+  }, [allowed, tab, loadAppeals]);
 
   if (!allowed) return <Navigate to="/forum" />;
 
