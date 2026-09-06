@@ -1,6 +1,7 @@
 import { createFileRoute, Link, Outlet, useMatches, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Loader2, MessageSquare, Ban, Search, X } from "lucide-react";
+import { ArrowLeft, Loader2, MessageSquare, Ban, Search, X, Trash2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { FanZoneNameGate } from "@/components/app/FanZoneNamePrompt";
@@ -47,8 +48,33 @@ function MessagesLayout() {
   const [search, setSearch] = useState("");
   const [showResults, setShowResults] = useState(false);
   const [starting, setStarting] = useState<string | null>(null);
+  const [selecting, setSelecting] = useState(false);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [clearing, setClearing] = useState(false);
   const searchBoxRef = useRef<HTMLDivElement>(null);
   useProfanityWords();
+
+  const toggleSelected = (id: string) =>
+    setSelected((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
+
+  const clearSelected = async () => {
+    if (selected.length === 0) return;
+    setClearing(true);
+    const { error } = await (supabase.rpc as unknown as (fn: string, args: Record<string, unknown>) => Promise<{ error: { message: string } | null }>)(
+      "clear_fan_dm_threads",
+      { _threads: selected },
+    );
+    setClearing(false);
+    if (error) {
+      toast.error("Couldn't clear messages", { description: error.message });
+      return;
+    }
+    toast.success(`${selected.length} conversation${selected.length === 1 ? "" : "s"} cleared`);
+    setSelected([]);
+    setSelecting(false);
+    void load();
+  };
+
 
   const load = async () => {
     const { data } = await supabase.rpc("list_my_fan_dm_threads");
@@ -131,7 +157,7 @@ function MessagesLayout() {
       style={{ backgroundImage: `linear-gradient(to bottom, rgba(6,8,14,0.62), rgba(6,8,14,0.76)), url(${bgAsset.url})` }}
     >
       <FanZoneNameGate />
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-6">
       <div className="flex items-center justify-between gap-3 mb-4">
         <Button asChild variant="ghost" size="sm" className="-ml-2">
           <Link to="/forum"><ArrowLeft className="size-4 mr-1" />Forum</Link>
@@ -141,13 +167,24 @@ function MessagesLayout() {
         </Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-[320px_minmax(0,1fr)]">
-        <aside className="rounded-2xl border border-[#E11B22]/30 bg-surface-1/95 backdrop-blur-md shadow-soft overflow-hidden">
+      <div className="grid gap-4 lg:grid-cols-[360px_minmax(0,1fr)]">
+        <aside className="rounded-2xl border border-[#E11B22]/30 bg-surface-1/95 backdrop-blur-md shadow-soft overflow-hidden flex flex-col max-h-[calc(100vh-9rem)]">
           <div className="px-4 py-3 border-b border-border/60 flex items-center gap-2">
             <MessageSquare className="size-4 text-[#E11B22]" />
-            <h2 className="font-display font-bold text-sm">Fan zone inbox</h2>
+            <h2 className="font-display font-bold text-sm flex-1">Fan zone inbox</h2>
+            {threads && threads.length > 0 && (
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="h-7 px-2 text-[11px]"
+                onClick={() => { setSelecting((s) => !s); setSelected([]); }}
+              >
+                {selecting ? "Cancel" : "Select"}
+              </Button>
+            )}
           </div>
-          <div ref={searchBoxRef} className="relative px-3 py-2 border-b border-border/60">
+          <div ref={searchBoxRef} className="relative z-30 px-3 py-2 border-b border-border/60">
             <Search className="size-4 absolute left-5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
             <Input
               value={search}
@@ -167,7 +204,7 @@ function MessagesLayout() {
               </button>
             )}
             {showResults && search.trim() && (
-              <div className="absolute z-20 left-3 right-3 mt-1 rounded-lg border border-border bg-surface-1 shadow-lg max-h-72 overflow-y-auto">
+              <div className="absolute z-50 left-3 right-3 mt-1 rounded-lg border border-border bg-popover text-popover-foreground shadow-xl max-h-72 overflow-y-auto">
                 {filteredMembers.length === 0 ? (
                   <p className="px-3 py-3 text-xs text-muted-foreground text-center">No fans match.</p>
                 ) : (
@@ -175,7 +212,7 @@ function MessagesLayout() {
                     {filteredMembers.map((m) => {
                       const name = m.fan_alias || "Boro Fan";
                       return (
-                        <li key={m.user_id}>
+                        <li key={m.user_id} className="bg-popover">
                           <div className="w-full flex items-center gap-2 px-3 py-2 hover:bg-surface-2/60">
                             <Link to="/fanzone/u/$userId" params={{ userId: m.user_id }} className="shrink-0">
                             {m.fan_avatar_url ? (
@@ -186,7 +223,7 @@ function MessagesLayout() {
                               </div>
                             )}
                             </Link>
-                            <Link to="/fanzone/u/$userId" params={{ userId: m.user_id }} className="min-w-0 flex-1 text-xs font-semibold truncate hover:text-[#E11B22] hover:underline">
+                            <Link to="/fanzone/u/$userId" params={{ userId: m.user_id }} className="min-w-0 flex-1 text-xs font-semibold truncate leading-tight hover:text-[#E11B22] hover:underline">
                               {name}
                             </Link>
                             <Button type="button" size="sm" variant="ghost" disabled={starting === m.user_id} onClick={() => void startChat(m.user_id)}>
@@ -202,15 +239,45 @@ function MessagesLayout() {
               </div>
             )}
           </div>
+          {selecting && (
+            <div className="flex items-center gap-2 px-3 py-2 border-b border-border/60 bg-surface-2/50">
+              <button
+                type="button"
+                className="text-[11px] text-muted-foreground hover:text-foreground"
+                onClick={() => setSelected(selected.length === (threads?.length ?? 0) ? [] : (threads ?? []).map((t) => t.thread_id))}
+              >
+                {selected.length === (threads?.length ?? 0) && selected.length > 0 ? "Deselect all" : "Select all"}
+              </button>
+              <span className="text-[11px] text-muted-foreground ml-auto">{selected.length} selected</span>
+              <Button
+                type="button"
+                size="sm"
+                variant="destructive"
+                className="h-7 px-2 text-[11px]"
+                disabled={selected.length === 0 || clearing}
+                onClick={() => void clearSelected()}
+              >
+                {clearing ? <Loader2 className="size-3.5 animate-spin" /> : <Trash2 className="size-3.5 mr-1" />}
+                Clear
+              </Button>
+            </div>
+          )}
           {threads === null ? (
             <div className="grid place-items-center py-12 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>
           ) : threads.length === 0 ? (
             <p className="p-6 text-xs text-muted-foreground text-center">No conversations yet. Search a fan above to start one.</p>
           ) : (
-            <ul className="divide-y divide-border/60 max-h-[70vh] overflow-y-auto">
+            <ul className="divide-y divide-border/60 flex-1 overflow-y-auto">
               {threads.map((t) => (
                 <li key={t.thread_id}>
                   <div className="flex items-center gap-3 px-4 py-3 hover:bg-surface-2/60 transition-colors">
+                    {selecting && (
+                      <Checkbox
+                        checked={selected.includes(t.thread_id)}
+                        onCheckedChange={() => toggleSelected(t.thread_id)}
+                        aria-label={`Select conversation with ${t.other_alias}`}
+                      />
+                    )}
                     <Link to="/fanzone/u/$userId" params={{ userId: t.other_user_id }} className="shrink-0">
                       <img src={t.other_avatar} alt="" className="size-10 rounded-full object-cover ring-2 ring-white/10" />
                     </Link>
@@ -231,7 +298,7 @@ function MessagesLayout() {
           )}
         </aside>
 
-        <section className="rounded-2xl border border-border bg-surface-1/95 backdrop-blur-md shadow-soft min-h-[60vh] overflow-hidden">
+        <section className="rounded-2xl border border-border bg-surface-1/95 backdrop-blur-md shadow-soft min-h-[calc(100vh-9rem)] overflow-hidden">
           {isNested ? (
             <Outlet />
           ) : (
@@ -242,6 +309,7 @@ function MessagesLayout() {
         </section>
       </div>
       </div>
+
     </div>
   );
 }
