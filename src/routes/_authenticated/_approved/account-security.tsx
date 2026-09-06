@@ -222,22 +222,30 @@ function AccountSecurityPage() {
           </div>
         </div>
 
-        <ScreenLockSettingsCard />
-
         <div className="rounded-2xl border border-border bg-surface p-6 text-sm text-muted-foreground">
-
-          <h3 className="font-display font-semibold text-foreground mb-2">Lost your device?</h3>
+          <h3 className="font-display font-semibold text-foreground mb-2">Need your 2FA reset?</h3>
           <p>
-            If you lose access to your authenticator app, raise a support ticket and our staff will verify your identity and reset 2FA on your account.
+            If you have lost your phone, wiped your authenticator app, or the codes no longer work,
+            your account can only be unlocked by our staff. You do not need your old codes to ask —
+            sign-in is not required to start the request, and we will verify who you are before
+            turning 2FA off so you can set it up again on a new device.
+          </p>
+          <p className="mt-2">
+            Still signed in here? Raise a request below. Locked out at the sign-in screen? Use the
+            &ldquo;Lost your device? Request a 2FA reset&rdquo; link on the code page.
           </p>
           <Link
             to="/tickets"
             search={{ id: undefined, view: undefined, new2fa: 1 } as never}
             className="inline-block mt-3 text-primary hover:underline"
           >
-            Contact support →
+            Request a 2FA reset →
           </Link>
         </div>
+        </>
+        )}
+
+        {tab === "lock" && <ScreenLockSettingsCard />}
       </div>
 
       {removeOpen && factor && (
