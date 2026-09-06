@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
-import { ArrowLeft, Loader2, MailQuestion, RefreshCw, Send, ShieldOff } from "lucide-react";
+import { ArrowLeft, CalendarClock, Loader2, MailQuestion, RefreshCw, Send, ShieldOff, UserRound } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
@@ -40,11 +40,21 @@ type AppealMsg = {
   created_at: string;
 };
 
+type BanInfo = {
+  user_id: string;
+  reason: string | null;
+  created_at: string;
+  expires_at: string | null;
+};
+
+
 function FanZoneAppealsPage() {
   const { hasAny } = useAuth();
   const allowed = hasAny(["admin", "management", "moderator", "boro_fan_zone_moderator"]);
   const [appeals, setAppeals] = useState<Appeal[] | null>(null);
   const [names, setNames] = useState<Record<string, string>>({});
+  const [avatars, setAvatars] = useState<Record<string, string>>({});
+  const [bans, setBans] = useState<Record<string, BanInfo>>({});
   const [active, setActive] = useState<Appeal | null>(null);
   const [msgs, setMsgs] = useState<AppealMsg[] | null>(null);
   const [replyBody, setReplyBody] = useState("");
@@ -57,17 +67,34 @@ function FanZoneAppealsPage() {
     const want = [...new Set(ids.filter(Boolean))];
     if (!want.length) return;
     const [fz, pr] = await Promise.all([
-      supabase.from("fan_zone_members").select("user_id, fan_alias").in("user_id", want),
+      supabase.from("fan_zone_members").select("user_id, fan_alias, fan_avatar_url").in("user_id", want),
       supabase.from("profiles").select("id, display_name, username").in("id", want),
     ]);
     const map: Record<string, string> = {};
+    const avs: Record<string, string> = {};
     (pr.data ?? []).forEach((p) => {
       map[p.id as string] = (p.display_name as string) || (p.username as string) || "Member";
     });
     (fz.data ?? []).forEach((m) => {
       if (m.fan_alias) map[m.user_id as string] = m.fan_alias as string;
+      if (m.fan_avatar_url) avs[m.user_id as string] = m.fan_avatar_url as string;
     });
     setNames((prev) => ({ ...prev, ...map }));
+    setAvatars((prev) => ({ ...prev, ...avs }));
+  }, []);
+
+  const loadBans = useCallback(async (ids: string[]) => {
+    const want = [...new Set(ids.filter(Boolean))];
+    if (!want.length) return;
+    const { data } = await supabase
+      .from("fan_zone_bans")
+      .select("user_id, reason, created_at, expires_at")
+      .in("user_id", want);
+    const map: Record<string, BanInfo> = {};
+    ((data ?? []) as BanInfo[]).forEach((b) => {
+      map[b.user_id] = b;
+    });
+    setBans((prev) => ({ ...prev, ...map }));
   }, []);
 
   const loadAppeals = useCallback(async () => {
@@ -85,7 +112,9 @@ function FanZoneAppealsPage() {
     const list = (data ?? []) as Appeal[];
     setAppeals(list);
     void loadNames(list.map((a) => a.user_id));
-  }, [loadNames]);
+    void loadBans(list.map((a) => a.user_id));
+  }, [loadNames, loadBans]);
+
 
   const openAppeal = useCallback(
     async (a: Appeal) => {
@@ -209,13 +238,15 @@ function FanZoneAppealsPage() {
         </div>
       );
     return (
-      <ul className="grid gap-3 sm:grid-cols-2">
-        {appeals.map((a) => (
-          <li key={a.id}>
-            <button
-              type="button"
-              onClick={() => void openAppeal(a)}
-              className="group relative w-full overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-surface-1 to-surface-2 p-4 text-left shadow-soft transition-all hover:-translate-y-0.5 hover:border-[#E11B22]/60 hover:shadow-lg"
+      <ul className="grid gap-4 sm:grid-cols-2">
+        {appeals.map((a) => {
+          const ban = bans[a.user_id];
+          const name = names[a.user_id] ?? "Fan Zone member";
+          const avatar = avatars[a.user_id];
+          return (
+            <li
+              key={a.id}
+              className="group relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-surface-1 to-surface-2 p-4 shadow-soft transition-all hover:border-[#E11B22]/60 hover:shadow-lg"
             >
               <span
                 className={`absolute inset-y-0 left-0 w-1 ${
@@ -226,23 +257,75 @@ function FanZoneAppealsPage() {
                       : "bg-emerald-400"
                 }`}
               />
-              <div className="flex items-start justify-between gap-3 pl-2">
-                <div className="min-w-0">
-                  <div className="font-display font-bold text-sm truncate group-hover:text-[#ff6b70] transition-colors">
-                    {names[a.user_id] ?? "Fan Zone member"}
+              <div className="pl-2 space-y-3">
+                <div className="flex items-start gap-3">
+                  {avatar ? (
+                    <img
+                      src={avatar}
+                      alt={`${name} avatar`}
+                      loading="lazy"
+                      className="size-12 shrink-0 rounded-full border border-[#E11B22]/40 object-cover"
+                    />
+                  ) : (
+                    <span className="grid size-12 shrink-0 place-items-center rounded-full border border-[#E11B22]/40 bg-[#E11B22]/15 text-[#ff8a8e]">
+                      <UserRound className="size-6" />
+                    </span>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="font-display font-bold text-sm truncate">{name}</div>
+                    <div className="text-[11px] text-muted-foreground mt-0.5">
+                      Last activity {formatLastSeen(a.updated_at)}
+                    </div>
                   </div>
-                  <div className="text-[11px] text-muted-foreground mt-0.5">
-                    Last activity {formatLastSeen(a.updated_at)}
+                  {statusPill(a.status)}
+                </div>
+
+                <div className="rounded-xl border border-border/70 bg-surface-2/70 p-3 space-y-1.5">
+                  <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-[#ff8a8e]">
+                    <ShieldOff className="size-3.5" />
+                    Ban details
+                  </div>
+                  <p className="text-sm leading-relaxed">
+                    {ban?.reason?.trim() ? ban.reason : "No reason recorded."}
+                  </p>
+                  <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                    <CalendarClock className="size-3.5" />
+                    {ban
+                      ? `Banned ${new Date(ban.created_at).toLocaleString("en-GB", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}${
+                          ban.expires_at
+                            ? ` · ends ${new Date(ban.expires_at).toLocaleDateString("en-GB", {
+                                day: "2-digit",
+                                month: "short",
+                                year: "numeric",
+                              })}`
+                            : " · permanent"
+                        }`
+                      : "No active ban on record."}
                   </div>
                 </div>
-                {statusPill(a.status)}
+
+                <Button
+                  size="sm"
+                  onClick={() => void openAppeal(a)}
+                  className="w-full bg-[#E11B22] text-white hover:bg-[#c2151b]"
+                >
+                  <MailQuestion className="size-4 mr-1.5" />
+                  Open appeal
+                </Button>
               </div>
-            </button>
-          </li>
-        ))}
+            </li>
+          );
+        })}
       </ul>
     );
   };
+
 
   return (
     <main className="flex-1 w-full min-w-0 min-h-full self-stretch overflow-y-auto">
