@@ -168,8 +168,9 @@ function AdminReportsPage() {
   }, [status, allowed, tab]);
 
   useEffect(() => {
-    if (allowed && tab !== "reports") void loadSanctions();
-  }, [allowed, tab, loadSanctions]);
+    if (allowed && (tab === "mutes" || tab === "bans")) void loadSanctions();
+    if (allowed && tab === "log") void loadLog();
+  }, [allowed, tab, loadSanctions, loadLog]);
 
   if (!allowed) return <Navigate to="/forum" />;
 
@@ -188,9 +189,51 @@ function AdminReportsPage() {
       _user_id: row.user_id,
     });
     setBusyId(null);
+    setConfirmLift(null);
     if (error) return toast.error("Couldn't lift", { description: error.message });
     toast.success(kind === "mute" ? "Mute lifted" : "Ban lifted");
     void loadSanctions();
+  };
+
+  const logList = () => {
+    if (log === null)
+      return (
+        <div className="grid place-items-center py-12 text-muted-foreground">
+          <Loader2 className="size-5 animate-spin" />
+        </div>
+      );
+    if (!log.length)
+      return <p className="text-sm text-muted-foreground text-center py-12">Nothing logged yet.</p>;
+    return (
+      <ul className="space-y-2">
+        {log.map((r) => {
+          const lifted = r.action === "unmute" || r.action === "unban";
+          const Icon = r.action === "mute" ? VolumeX : r.action === "unmute" ? Volume2 : r.action === "ban" ? Gavel : ShieldCheck;
+          return (
+            <li key={r.id} className="rounded-xl border border-border bg-surface-1 p-3 space-y-1.5 shadow-soft">
+              <div className="flex flex-wrap items-center gap-2 text-xs">
+                <span
+                  className={`rounded-full px-2 py-0.5 font-semibold inline-flex items-center gap-1 border ${
+                    lifted
+                      ? "bg-emerald-500/15 border-emerald-400/40 text-emerald-300"
+                      : "bg-[#E11B22]/15 border-[#E11B22]/40 text-[#E11B22]"
+                  }`}
+                >
+                  <Icon className="size-3" />
+                  {ACTION_LABEL[r.action]}
+                </span>
+                <strong className="text-foreground text-sm">{names[r.user_id] ?? "Fan Zone member"}</strong>
+                <span className="text-muted-foreground">
+                  by {r.actor_id ? (names[r.actor_id] ?? "staff") : "system"} · {formatLastSeen(r.created_at)}
+                  {!lifted && r.expires_at !== undefined ? ` · ${untilLabel(r.expires_at)}` : ""}
+                </span>
+              </div>
+              {r.reason && <div className="text-sm text-muted-foreground">{r.reason}</div>}
+            </li>
+          );
+        })}
+      </ul>
+    );
   };
 
   const sanctionList = (kind: "mute" | "ban", list: Sanction[] | null) => {
