@@ -105,18 +105,39 @@ function AdminReportsPage() {
   };
 
   const loadNames = useCallback(async (ids: string[]) => {
-    const missing = Array.from(new Set(ids));
+    const missing = Array.from(new Set(ids.filter(Boolean)));
     if (!missing.length) return;
-    const { data } = await supabase
-      .from("fan_zone_members")
-      .select("user_id, fan_alias")
-      .in("user_id", missing);
+    const [fz, profs] = await Promise.all([
+      supabase.from("fan_zone_members").select("user_id, fan_alias").in("user_id", missing),
+      supabase.from("profiles").select("id, display_name, username").in("id", missing),
+    ]);
     const map: Record<string, string> = {};
-    ((data ?? []) as Array<{ user_id: string; fan_alias: string | null }>).forEach((r) => {
+    ((profs.data ?? []) as Array<{ id: string; display_name: string | null; username: string | null }>).forEach((p) => {
+      const n = p.display_name ?? p.username;
+      if (n) map[p.id] = n;
+    });
+    ((fz.data ?? []) as Array<{ user_id: string; fan_alias: string | null }>).forEach((r) => {
       if (r.fan_alias) map[r.user_id] = r.fan_alias;
     });
     setNames((prev) => ({ ...map, ...prev }));
   }, []);
+
+  const loadLog = useCallback(async () => {
+    setLog(null);
+    const { data, error } = await supabase
+      .from("fan_zone_mod_actions")
+      .select("id, user_id, actor_id, action, reason, expires_at, created_at")
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (error) {
+      toast.error("Couldn't load the moderation log", { description: error.message });
+      setLog([]);
+      return;
+    }
+    const list = (data ?? []) as ModAction[];
+    setLog(list);
+    void loadNames(list.flatMap((r) => [r.user_id, r.actor_id ?? ""]));
+  }, [loadNames]);
 
   const loadSanctions = useCallback(async () => {
     const nowIso = new Date().toISOString();
