@@ -11,7 +11,10 @@ type Props = {
   mutedBy?: string | null;
   /** Where the "return to the forum" button sends the user. */
   returnTo?: string;
+  /** When given, shows a "Carry on reading" button that dismisses this screen. */
+  onKeepReading?: () => void;
 };
+
 
 function parts(ms: number) {
   const total = Math.max(0, Math.floor(ms / 1000));
@@ -23,7 +26,7 @@ function parts(ms: number) {
   };
 }
 
-export function FanZoneMutedScreen({ expiresAt, reason, mutedBy, returnTo = "/forum" }: Props) {
+export function FanZoneMutedScreen({ expiresAt, reason, mutedBy, returnTo = "/forum", onKeepReading }: Props) {
   const target = useMemo(() => Date.parse(expiresAt), [expiresAt]);
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
@@ -111,7 +114,19 @@ export function FanZoneMutedScreen({ expiresAt, reason, mutedBy, returnTo = "/fo
               </div>
             </div>
           )}
+
+          {!expired && onKeepReading && (
+            <Button
+              variant="outline"
+              onClick={onKeepReading}
+              className="w-full border-white/25 bg-white/5 text-white hover:bg-white/15"
+            >
+              Carry on reading the forum
+              <ArrowRight className="ml-1.5 size-4" />
+            </Button>
+          )}
         </div>
+
       </div>
     </div>
   );
