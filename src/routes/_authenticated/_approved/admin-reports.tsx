@@ -78,7 +78,7 @@ type AppealMsg = {
   created_at: string;
 };
 
-type MainTab = "reports" | "mutes" | "bans";
+type MainTab = "reports" | "mutes" | "bans" | "appeals";
 
 const ACTION_LABEL: Record<ModAction["action"], string> = {
   mute: "Muted",
@@ -287,8 +287,8 @@ function AdminReportsPage() {
   }, [allowed, tab, loadSanctions]);
 
   useEffect(() => {
-    if (allowed) void loadAppeals();
-  }, [allowed, loadAppeals]);
+    if (allowed && tab === "appeals") void loadAppeals();
+  }, [allowed, tab, loadAppeals]);
 
   if (!allowed) return <Navigate to="/forum" />;
 
@@ -395,6 +395,53 @@ function AdminReportsPage() {
     );
   };
 
+  const appealsList = () => {
+    if (appeals === null)
+      return (
+        <div className="grid place-items-center py-12 text-muted-foreground">
+          <Loader2 className="size-5 animate-spin" />
+        </div>
+      );
+    if (!appeals.length)
+      return <p className="text-sm text-muted-foreground text-center py-12">No appeals yet.</p>;
+    return (
+      <ul className="space-y-2">
+        {appeals.map((a) => (
+          <li key={a.id}>
+            <button
+              type="button"
+              onClick={() => {
+                setAppealsOpen(true);
+                void openAppeal(a);
+              }}
+              className="w-full text-left rounded-xl border border-border bg-surface-1 p-3 shadow-soft hover:border-[#E11B22]/50 transition-colors"
+            >
+              <div className="flex flex-wrap items-center gap-2 text-xs">
+                <span
+                  className={`rounded-full px-2 py-0.5 font-semibold border ${
+                    a.status === "open"
+                      ? "bg-[#E11B22]/15 border-[#E11B22]/40 text-[#E11B22]"
+                      : a.status === "replied"
+                        ? "bg-amber-500/15 border-amber-400/40 text-amber-300"
+                        : "bg-emerald-500/15 border-emerald-400/40 text-emerald-300"
+                  }`}
+                >
+                  {a.status === "open" ? "Needs a reply" : a.status === "replied" ? "Replied" : "Closed"}
+                </span>
+                <strong className="text-foreground text-sm">
+                  {names[a.user_id] ?? "Fan Zone member"}
+                </strong>
+                <span className="text-muted-foreground">
+                  last activity {formatLastSeen(a.updated_at)}
+                </span>
+              </div>
+            </button>
+          </li>
+        ))}
+      </ul>
+    );
+  };
+
   const sanctionList = (kind: "mute" | "ban", list: Sanction[] | null) => {
     if (list === null)
       return (
@@ -457,18 +504,16 @@ function AdminReportsPage() {
             <Link to="/forum"><ArrowLeft className="size-4 mr-1" />Boro Fan Zone</Link>
           </Button>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => { setAppealsOpen(true); void loadAppeals(); }}>
-              <Inbox className="size-4 mr-1" />Appeals
-              {openCount > 0 && (
-                <span className="ml-1.5 rounded-full bg-[#E11B22] px-1.5 py-0.5 text-[10px] font-bold text-white">
-                  {openCount}
-                </span>
-              )}
-            </Button>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => (tab === "reports" ? void load() : void loadSanctions())}
+              onClick={() =>
+                tab === "reports"
+                  ? void load()
+                  : tab === "appeals"
+                    ? void loadAppeals()
+                    : void loadSanctions()
+              }
             >
               <RefreshCw className="size-4 mr-1" />Refresh
             </Button>
@@ -485,11 +530,20 @@ function AdminReportsPage() {
             <TabsTrigger value="reports">Reports</TabsTrigger>
             <TabsTrigger value="mutes">Mutes</TabsTrigger>
             <TabsTrigger value="bans">Bans</TabsTrigger>
+            <TabsTrigger value="appeals" className="relative gap-1.5">
+              Appeals
+              {openCount > 0 && (
+                <span className="rounded-full bg-[#E11B22] px-1.5 py-0.5 text-[10px] font-bold text-white">
+                  {openCount}
+                </span>
+              )}
+            </TabsTrigger>
           </TabsList>
         </Tabs>
 
         {tab === "mutes" && sanctionList("mute", mutes)}
         {tab === "bans" && sanctionList("ban", bans)}
+        {tab === "appeals" && appealsList()}
 
         <Dialog
           open={appealsOpen}
@@ -511,47 +565,7 @@ function AdminReportsPage() {
               </DialogDescription>
             </DialogHeader>
             <div className="max-h-[60vh] overflow-y-auto pr-1">
-              {!activeAppeal ? (
-                appeals === null ? (
-                  <div className="grid place-items-center py-12 text-muted-foreground">
-                    <Loader2 className="size-5 animate-spin" />
-                  </div>
-                ) : !appeals.length ? (
-                  <p className="text-sm text-muted-foreground text-center py-12">No appeals yet.</p>
-                ) : (
-                  <ul className="space-y-2">
-                    {appeals.map((a) => (
-                      <li key={a.id}>
-                        <button
-                          type="button"
-                          onClick={() => void openAppeal(a)}
-                          className="w-full text-left rounded-xl border border-border bg-surface-1 p-3 shadow-soft hover:border-[#E11B22]/50 transition-colors"
-                        >
-                          <div className="flex flex-wrap items-center gap-2 text-xs">
-                            <span
-                              className={`rounded-full px-2 py-0.5 font-semibold border ${
-                                a.status === "open"
-                                  ? "bg-[#E11B22]/15 border-[#E11B22]/40 text-[#E11B22]"
-                                  : a.status === "replied"
-                                    ? "bg-amber-500/15 border-amber-400/40 text-amber-300"
-                                    : "bg-emerald-500/15 border-emerald-400/40 text-emerald-300"
-                              }`}
-                            >
-                              {a.status === "open" ? "Needs a reply" : a.status === "replied" ? "Replied" : "Closed"}
-                            </span>
-                            <strong className="text-foreground text-sm">
-                              {names[a.user_id] ?? "Fan Zone member"}
-                            </strong>
-                            <span className="text-muted-foreground">
-                              last activity {formatLastSeen(a.updated_at)}
-                            </span>
-                          </div>
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )
-              ) : (
+              {activeAppeal ? (
                 <div className="space-y-3">
                   <Button variant="ghost" size="sm" className="-ml-2" onClick={() => setActiveAppeal(null)}>
                     <ArrowLeft className="size-4 mr-1" />All appeals
@@ -602,6 +616,8 @@ function AdminReportsPage() {
                     </Button>
                   </div>
                 </div>
+              ) : (
+                appealsList()
               )}
             </div>
           </DialogContent>
