@@ -223,6 +223,7 @@ export function playSound(
     console.warn("[sound] ignored playback with no source", opts.label ?? "");
     return Promise.resolve(false);
   }
+  if (!signedIn) return Promise.resolve(false);
   if (getSoundPrefs().muted) return Promise.resolve(false);
 
   // Collapse an identical sound that is already waiting in the queue.
