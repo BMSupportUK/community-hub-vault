@@ -47,8 +47,33 @@ function MessagesLayout() {
   const [search, setSearch] = useState("");
   const [showResults, setShowResults] = useState(false);
   const [starting, setStarting] = useState<string | null>(null);
+  const [selecting, setSelecting] = useState(false);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [clearing, setClearing] = useState(false);
   const searchBoxRef = useRef<HTMLDivElement>(null);
   useProfanityWords();
+
+  const toggleSelected = (id: string) =>
+    setSelected((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
+
+  const clearSelected = async () => {
+    if (selected.length === 0) return;
+    setClearing(true);
+    const { error } = await (supabase.rpc as unknown as (fn: string, args: Record<string, unknown>) => Promise<{ error: { message: string } | null }>)(
+      "clear_fan_dm_threads",
+      { _threads: selected },
+    );
+    setClearing(false);
+    if (error) {
+      toast.error("Couldn't clear messages", { description: error.message });
+      return;
+    }
+    toast.success(`${selected.length} conversation${selected.length === 1 ? "" : "s"} cleared`);
+    setSelected([]);
+    setSelecting(false);
+    void load();
+  };
+
 
   const load = async () => {
     const { data } = await supabase.rpc("list_my_fan_dm_threads");
