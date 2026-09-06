@@ -397,6 +397,14 @@ function BoardPage() {
 
       <div className={`grid gap-4 ${open ? "" : "md:grid-cols-[minmax(0,1fr)_180px] lg:grid-cols-[minmax(0,1fr)_256px]"} md:items-start`}>
         <div className="min-w-0 space-y-4">
+          {myMute && (
+            <FanZoneMutedScreen
+              expiresAt={myMute.expires_at}
+              reason={myMute.reason}
+              mutedBy={myMute.muted_by_name}
+              returnTo="/forum"
+            />
+          )}
           {canPost && open && (
             <section
               aria-label={`New topic in ${board.name}`}
