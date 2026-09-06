@@ -571,10 +571,12 @@ async function createMatchTopic(
     .select("id, title, author_id")
     .single();
   if (error || !topic) return null;
+  // Open with the "awaiting press conference" fixture graphic straight away —
+  // the real video replaces it later via upsertPresserBlock.
   const { error: postErr } = await supabaseAdmin.from("forum_posts").insert({
     topic_id: topic.id,
     author_id: authorId,
-    body: `<div data-fz-prepared="1">Awaiting Press Conference</div>`,
+    body: buildPresserBlock(fx, {}, null),
     is_op: true,
   });
   if (postErr) return topic as { id: string; title: string; author_id: string };
