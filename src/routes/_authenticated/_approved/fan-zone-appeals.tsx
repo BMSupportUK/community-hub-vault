@@ -45,6 +45,8 @@ function FanZoneAppealsPage() {
   const allowed = hasAny(["admin", "management", "moderator", "boro_fan_zone_moderator"]);
   const [appeals, setAppeals] = useState<Appeal[] | null>(null);
   const [names, setNames] = useState<Record<string, string>>({});
+  const [avatars, setAvatars] = useState<Record<string, string>>({});
+  const [bans, setBans] = useState<Record<string, BanInfo>>({});
   const [active, setActive] = useState<Appeal | null>(null);
   const [msgs, setMsgs] = useState<AppealMsg[] | null>(null);
   const [replyBody, setReplyBody] = useState("");
@@ -57,17 +59,34 @@ function FanZoneAppealsPage() {
     const want = [...new Set(ids.filter(Boolean))];
     if (!want.length) return;
     const [fz, pr] = await Promise.all([
-      supabase.from("fan_zone_members").select("user_id, fan_alias").in("user_id", want),
+      supabase.from("fan_zone_members").select("user_id, fan_alias, fan_avatar_url").in("user_id", want),
       supabase.from("profiles").select("id, display_name, username").in("id", want),
     ]);
     const map: Record<string, string> = {};
+    const avs: Record<string, string> = {};
     (pr.data ?? []).forEach((p) => {
       map[p.id as string] = (p.display_name as string) || (p.username as string) || "Member";
     });
     (fz.data ?? []).forEach((m) => {
       if (m.fan_alias) map[m.user_id as string] = m.fan_alias as string;
+      if (m.fan_avatar_url) avs[m.user_id as string] = m.fan_avatar_url as string;
     });
     setNames((prev) => ({ ...prev, ...map }));
+    setAvatars((prev) => ({ ...prev, ...avs }));
+  }, []);
+
+  const loadBans = useCallback(async (ids: string[]) => {
+    const want = [...new Set(ids.filter(Boolean))];
+    if (!want.length) return;
+    const { data } = await supabase
+      .from("fan_zone_bans")
+      .select("user_id, reason, created_at, expires_at")
+      .in("user_id", want);
+    const map: Record<string, BanInfo> = {};
+    ((data ?? []) as BanInfo[]).forEach((b) => {
+      map[b.user_id] = b;
+    });
+    setBans((prev) => ({ ...prev, ...map }));
   }, []);
 
   const loadAppeals = useCallback(async () => {
@@ -85,7 +104,9 @@ function FanZoneAppealsPage() {
     const list = (data ?? []) as Appeal[];
     setAppeals(list);
     void loadNames(list.map((a) => a.user_id));
-  }, [loadNames]);
+    void loadBans(list.map((a) => a.user_id));
+  }, [loadNames, loadBans]);
+
 
   const openAppeal = useCallback(
     async (a: Appeal) => {
