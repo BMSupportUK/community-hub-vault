@@ -16,6 +16,28 @@ function normalize(_kind: "email" | "ip", value: string) {
   return value.trim().toLowerCase();
 }
 
+/** Emails a banned BM Support user so they know why and how to appeal. */
+async function sendBanEmail(userId: string, reason: string) {
+  try {
+    const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(userId);
+    const toEmail = authUser?.user?.email;
+    if (!toEmail) return;
+    const { data: prof } = await supabaseAdmin
+      .from("profiles")
+      .select("display_name, username")
+      .eq("id", userId)
+      .maybeSingle();
+    const displayName = (prof as any)?.display_name || (prof as any)?.username || undefined;
+    const { sendAndLogEmail } = await import("@/lib/email-templates/send-and-log");
+    await sendAndLogEmail(supabaseAdmin, "account-banned", toEmail, {
+      templateData: { displayName, reason, appealUrl: "https://bmsupport.uk/contact" },
+      idempotencyKey: `account-banned-${userId}-${new Date().toISOString().slice(0, 10)}`,
+    });
+  } catch (err) {
+    console.error("ban email failed", err);
+  }
+}
+
 export const listBlacklist = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -109,7 +131,10 @@ export const addBlacklist = createServerFn({ method: "POST" })
     let banned = 0;
     for (const uid of matchedUserIds) {
       const { error: bErr } = await supabaseAdmin.rpc("apply_blacklist_ban" as never, { _user_id: uid } as never);
-      if (!bErr) banned += 1;
+      if (!bErr) {
+        banned += 1;
+        await sendBanEmail(uid, data.reason?.trim() || "Breach of our community and service rules.");
+      }
     }
 
     return { ok: true, banned, duplicate: false as const };
@@ -179,6 +204,7 @@ export const banUserFromGate = createServerFn({ method: "POST" })
 
     // Apply the ban
     await supabaseAdmin.rpc("apply_blacklist_ban" as never, { _user_id: data.userId } as never);
+    await sendBanEmail(data.userId, reason);
 
     if (data.applicationId) {
       await supabaseAdmin
