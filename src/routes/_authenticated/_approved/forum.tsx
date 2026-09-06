@@ -74,6 +74,12 @@ function ForumLayout() {
   // A live Boro Fan Zone ban locks the member out of the whole zone.
   const { ban: myBan, loading: banLoading } = useFanZoneBan(user?.id ?? null);
   const { mute: myMute } = useFanZoneMute(user?.id ?? null);
+  // The naughty-step screen greets a muted member on the Fan Zone home page
+  // (the boards index). "Carry on reading" drops them into read-only browsing.
+  const [muteBrowsing, setMuteBrowsing] = useState(false);
+  useEffect(() => {
+    if (!myMute) setMuteBrowsing(false);
+  }, [myMute]);
 
   useEffect(() => {
     const html = document.documentElement;
