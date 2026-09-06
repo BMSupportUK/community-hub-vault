@@ -359,10 +359,16 @@ function FanZoneAppealsPage() {
               <Button variant="outline" size="sm" disabled={replyBusy} onClick={() => void sendReply(true)}>
                 Reply &amp; close
               </Button>
-              <Button size="sm" disabled={replyBusy} onClick={() => void sendReply(false)}>
+              <Button
+                size="sm"
+                disabled={replyBusy}
+                onClick={() => void sendReply(false)}
+                className="bg-[#E11B22] text-white hover:bg-[#c2151b]"
+              >
                 {replyBusy ? <Loader2 className="size-3.5 animate-spin mr-1" /> : <Send className="size-3.5 mr-1" />}
                 Send reply
               </Button>
+              </div>
             </div>
           </div>
         ) : (
