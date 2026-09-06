@@ -13,6 +13,7 @@ export const Route = createFileRoute("/_authenticated/_approved/account-security
 type Factor = { id: string; status: string; friendly_name: string | null };
 
 function AccountSecurityPage() {
+  const [tab, setTab] = useState<"2fa" | "lock">("2fa");
   const [loading, setLoading] = useState(true);
   const [factor, setFactor] = useState<Factor | null>(null);
 
@@ -122,6 +123,28 @@ function AccountSecurityPage() {
       </section>
 
       <div className="p-6 max-w-2xl mx-auto space-y-5">
+        <div className="inline-flex p-1 rounded-xl bg-surface-2 border border-border">
+          {([
+            ["2fa", "Two-factor"],
+            ["lock", "Screen lock"],
+          ] as const).map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setTab(key)}
+              className={`px-4 h-9 rounded-lg text-sm font-medium transition-colors ${
+                tab === key
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {tab === "2fa" && (
+        <>
         <div className="rounded-2xl border border-border bg-surface p-6">
           <div className="flex items-start gap-4">
             <div className={`size-11 rounded-xl grid place-items-center ${factor ? "bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-400/30" : "bg-amber-500/15 text-amber-300 ring-1 ring-amber-400/30"}`}>
@@ -200,22 +223,30 @@ function AccountSecurityPage() {
           </div>
         </div>
 
-        <ScreenLockSettingsCard />
-
         <div className="rounded-2xl border border-border bg-surface p-6 text-sm text-muted-foreground">
-
-          <h3 className="font-display font-semibold text-foreground mb-2">Lost your device?</h3>
+          <h3 className="font-display font-semibold text-foreground mb-2">Need your 2FA reset?</h3>
           <p>
-            If you lose access to your authenticator app, raise a support ticket and our staff will verify your identity and reset 2FA on your account.
+            If you have lost your phone, wiped your authenticator app, or the codes no longer work,
+            your account can only be unlocked by our staff. You do not need your old codes to ask —
+            sign-in is not required to start the request, and we will verify who you are before
+            turning 2FA off so you can set it up again on a new device.
+          </p>
+          <p className="mt-2">
+            Still signed in here? Raise a request below. Locked out at the sign-in screen? Use the
+            &ldquo;Lost your device? Request a 2FA reset&rdquo; link on the code page.
           </p>
           <Link
             to="/tickets"
             search={{ id: undefined, view: undefined, new2fa: 1 } as never}
             className="inline-block mt-3 text-primary hover:underline"
           >
-            Contact support →
+            Request a 2FA reset →
           </Link>
         </div>
+        </>
+        )}
+
+        {tab === "lock" && <ScreenLockSettingsCard />}
       </div>
 
       {removeOpen && factor && (
