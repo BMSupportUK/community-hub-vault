@@ -42,6 +42,17 @@ function ApprovedLayout() {
     !isPageAllowed(key, roles, perms);
   if (blocked) return <Navigate to="/home" replace />;
 
+  if (isFanZonePath(path)) {
+    return (
+      <FanZoneBanGate>
+        <Outlet />
+        <DeferUntilIdle>
+          <ApprovedDeferredExtras />
+        </DeferUntilIdle>
+      </FanZoneBanGate>
+    );
+  }
+
   return (
     <>
       <Outlet />
