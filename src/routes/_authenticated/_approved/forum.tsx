@@ -209,6 +209,19 @@ function ForumLayout() {
             )}
             {canModerate && (
               <Button asChild size="sm" variant="outline" className="bg-black/40 backdrop-blur border-white/30 text-white hover:bg-black/60 hover:text-white justify-center col-span-2 sm:col-span-1">
+                <Link to="/fan-zone-sanctions">
+                  <Ban className="size-4 mr-1.5" />
+                  Mutes &amp; bans
+                  {activeSanctions > 0 && (
+                    <span className="ml-1.5 inline-flex items-center justify-center rounded-full bg-[#E11B22] text-white text-[10px] font-bold px-1.5 min-w-[1.25rem] h-5">
+                      {activeSanctions}
+                    </span>
+                  )}
+                </Link>
+              </Button>
+            )}
+            {canModerate && (
+              <Button asChild size="sm" variant="outline" className="bg-black/40 backdrop-blur border-white/30 text-white hover:bg-black/60 hover:text-white justify-center col-span-2 sm:col-span-1">
                 <Link to="/fan-zone-appeals">
                   <MailQuestion className="size-4 mr-1.5" />
                   Appeals
