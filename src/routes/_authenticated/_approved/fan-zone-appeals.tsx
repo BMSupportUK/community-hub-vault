@@ -436,12 +436,16 @@ function FanZoneAppealsPage() {
               <Button
                 variant="outline"
                 size="sm"
-                disabled={liftBusy}
+                disabled={liftBusy || !activeBan}
                 onClick={() => void liftBan()}
-                className="mr-auto border-emerald-400/50 text-emerald-300 hover:bg-emerald-500/10 hover:text-emerald-200"
+                className={`mr-auto ${
+                  activeBan
+                    ? "border-emerald-400/50 text-emerald-300 hover:bg-emerald-500/10 hover:text-emerald-200"
+                    : "border-white/10 bg-white/5 text-white/40 hover:bg-white/5 hover:text-white/40"
+                }`}
               >
                 {liftBusy ? <Loader2 className="size-3.5 animate-spin mr-1" /> : <ShieldOff className="size-3.5 mr-1" />}
-                Remove ban
+                {activeBan ? "Remove ban" : "Ban already lifted"}
               </Button>
               {active.status === "closed" && (
                 <Button variant="outline" size="sm" onClick={() => void reopenAppeal()}>
