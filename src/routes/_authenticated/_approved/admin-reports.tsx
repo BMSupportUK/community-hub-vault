@@ -457,18 +457,16 @@ function AdminReportsPage() {
             <Link to="/forum"><ArrowLeft className="size-4 mr-1" />Boro Fan Zone</Link>
           </Button>
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => { setAppealsOpen(true); void loadAppeals(); }}>
-              <Inbox className="size-4 mr-1" />Appeals
-              {openCount > 0 && (
-                <span className="ml-1.5 rounded-full bg-[#E11B22] px-1.5 py-0.5 text-[10px] font-bold text-white">
-                  {openCount}
-                </span>
-              )}
-            </Button>
             <Button
               variant="outline"
               size="sm"
-              onClick={() => (tab === "reports" ? void load() : void loadSanctions())}
+              onClick={() =>
+                tab === "reports"
+                  ? void load()
+                  : tab === "appeals"
+                    ? void loadAppeals()
+                    : void loadSanctions()
+              }
             >
               <RefreshCw className="size-4 mr-1" />Refresh
             </Button>
