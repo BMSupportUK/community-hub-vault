@@ -225,7 +225,11 @@ function AdminReportsPage() {
                 <strong className="text-foreground text-sm">{names[r.user_id] ?? "Fan Zone member"}</strong>
                 <span className="text-muted-foreground">
                   by {r.actor_id ? (names[r.actor_id] ?? "staff") : "system"} · {formatLastSeen(r.created_at)}
-                  {!lifted && r.expires_at !== undefined ? ` · ${untilLabel(r.expires_at)}` : ""}
+                  {!lifted
+                    ? r.expires_at
+                      ? ` · until ${new Date(r.expires_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}`
+                      : " · permanent"
+                    : ""}
                 </span>
               </div>
               {r.reason && <div className="text-sm text-muted-foreground">{r.reason}</div>}
