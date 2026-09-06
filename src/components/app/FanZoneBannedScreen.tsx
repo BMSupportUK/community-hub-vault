@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Gavel, Clock, ArrowRight, ShieldBan, MailQuestion } from "lucide-react";
+import { Gavel, Clock, ArrowRight, ShieldBan, MailQuestion, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { FanZoneAppealPanel } from "@/components/app/FanZoneAppealPanel";
@@ -34,6 +34,7 @@ export function FanZoneBannedScreen({ expiresAt, reason, bannedBy, returnTo = "/
   }, []);
 
   const [appealOpen, setAppealOpen] = useState(false);
+  const [hasAppeal, setHasAppeal] = useState(false);
 
   const permanent = target === null;
   const remaining = target === null ? 0 : target - now;
@@ -93,8 +94,17 @@ export function FanZoneBannedScreen({ expiresAt, reason, bannedBy, returnTo = "/
           onClick={() => setAppealOpen(true)}
           className="bg-[#E11B22] text-white shadow-lg hover:bg-[#c5161c]"
         >
-          <MailQuestion className="mr-1.5 size-4" />
-          Appeal this ban
+          {hasAppeal ? (
+            <>
+              <MessageSquare className="mr-1.5 size-4" />
+              View Appeal Chat Box
+            </>
+          ) : (
+            <>
+              <MailQuestion className="mr-1.5 size-4" />
+              Appeal this ban
+            </>
+          )}
         </Button>
       </div>
 
@@ -145,8 +155,17 @@ export function FanZoneBannedScreen({ expiresAt, reason, bannedBy, returnTo = "/
             className="mt-3 w-full border-white/25 bg-white/5 text-white hover:bg-white/10"
             onClick={() => setAppealOpen(true)}
           >
-            <MailQuestion className="mr-1.5 size-4" />
-            Appeal this ban
+            {hasAppeal ? (
+              <>
+                <MessageSquare className="mr-1.5 size-4" />
+                View Appeal Chat Box
+              </>
+            ) : (
+              <>
+                <MailQuestion className="mr-1.5 size-4" />
+                Appeal this ban
+              </>
+            )}
           </Button>
         </aside>
       </div>
@@ -155,15 +174,21 @@ export function FanZoneBannedScreen({ expiresAt, reason, bannedBy, returnTo = "/
         <DialogContent className="boro-theme max-w-lg border-[#E11B22]/40 bg-[#0B1A2B] text-white">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-white">
-              <MailQuestion className="size-4 text-[#E11B22]" />
-              Appeal this ban
+              {hasAppeal ? (
+                <MessageSquare className="size-4 text-[#E11B22]" />
+              ) : (
+                <MailQuestion className="size-4 text-[#E11B22]" />
+              )}
+              {hasAppeal ? "Appeal chat box" : "Appeal this ban"}
             </DialogTitle>
             <DialogDescription className="text-white/60">
-              Tell a moderator what happened. You'll get an email when they reply.
+              {hasAppeal
+                ? "Read the moderator's replies and send follow-up messages."
+                : "Tell a moderator what happened. You'll get an email when they reply."}
             </DialogDescription>
           </DialogHeader>
           <div className="max-h-[65vh] overflow-y-auto pr-1">
-            <FanZoneAppealPanel />
+            <FanZoneAppealPanel onAppealKnown={setHasAppeal} />
           </div>
         </DialogContent>
       </Dialog>

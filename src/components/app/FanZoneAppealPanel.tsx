@@ -11,11 +11,16 @@ import { formatLastSeen } from "@/lib/relative-time";
 
 type Msg = { id: string; from_staff: boolean; body: string; created_at: string };
 
+type Props = {
+  /** Called when the panel discovers whether the user already has an appeal open. */
+  onAppealKnown?: (hasAppeal: boolean) => void;
+};
+
 /**
  * The appeal form and thread shown on the Fan Zone ban screen: the member
  * writes their appeal here and sees the moderator's replies in the same place.
  */
-export function FanZoneAppealPanel() {
+export function FanZoneAppealPanel({ onAppealKnown }: Props) {
   const { user } = useAuth();
   const send = useServerFn(submitFanZoneAppeal);
   const [appealId, setAppealId] = useState<string | null>(null);
@@ -35,6 +40,7 @@ export function FanZoneAppealPanel() {
     if (!appeal) {
       setAppealId(null);
       setMsgs([]);
+      onAppealKnown?.(false);
       return;
     }
     setAppealId(appeal.id);
@@ -44,7 +50,8 @@ export function FanZoneAppealPanel() {
       .eq("appeal_id", appeal.id)
       .order("created_at", { ascending: true });
     setMsgs((data ?? []) as Msg[]);
-  }, [user?.id]);
+    onAppealKnown?.(true);
+  }, [user?.id, onAppealKnown]);
 
   useEffect(() => {
     void load();
