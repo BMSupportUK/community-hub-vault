@@ -321,7 +321,7 @@ function AdminReportsPage() {
         </div>
       );
     if (!log.length)
-      return <p className="text-sm text-muted-foreground text-center py-12">Nothing logged for this member yet.</p>;
+      return <p className="text-sm text-muted-foreground text-center py-12">Nothing logged for this one yet.</p>;
     return (
       <ul className="space-y-2">
         {log.map((r) => {
@@ -432,7 +432,7 @@ function AdminReportsPage() {
                 variant="ghost"
                 onClick={() => {
                   setLogUser({ id: r.user_id, kind });
-                  void loadLog(r.user_id);
+                  void loadLog(r.user_id, kind, r.created_at);
                 }}
               >
                 <ScrollText className="size-3.5 mr-1" />
@@ -612,10 +612,13 @@ function AdminReportsPage() {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <ScrollText className="size-4 text-[#E11B22]" />
-                {logUser ? `${names[logUser.id] ?? "Fan Zone member"} — history` : "History"}
+                {logUser
+                  ? `${names[logUser.id] ?? "Fan Zone member"} — this ${logUser.kind}`
+                  : "Log"}
               </DialogTitle>
               <DialogDescription>
-                Every mute, ban, early lift and ban appeal for this member — and who did it.
+                Notes for this one {logUser?.kind === "mute" ? "mute" : "ban"} only — who set it, any appeal
+                and reply, and whether it was lifted early.
               </DialogDescription>
             </DialogHeader>
             <div className="max-h-[60vh] overflow-y-auto pr-1">{logList()}</div>
