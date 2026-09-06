@@ -34,6 +34,7 @@ export function FanZoneBannedScreen({ expiresAt, reason, bannedBy, returnTo = "/
   }, []);
 
   const [appealOpen, setAppealOpen] = useState(false);
+  const [hasAppeal, setHasAppeal] = useState(false);
 
   const permanent = target === null;
   const remaining = target === null ? 0 : target - now;
