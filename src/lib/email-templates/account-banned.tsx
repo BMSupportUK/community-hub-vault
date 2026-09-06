@@ -1,8 +1,9 @@
 import React from 'react'
-import { Body, Container, Head, Heading, Html, Preview, Text, Section, Hr } from '@react-email/components'
+import { Body, Button, Container, Head, Heading, Html, Preview, Text, Section, Hr } from '@react-email/components'
 import type { TemplateEntry } from './registry'
 
 const SITE_NAME = 'BM Support'
+const APPEAL_URL = 'https://bmsupport.uk/banned'
 
 interface Props {
   displayName?: string
@@ -30,11 +31,11 @@ const AccountBannedEmail = ({
         <Section style={appealCard}>
           <Text style={cardLabel}>Think this is a mistake?</Text>
           <Text style={text}>
-            You can appeal this decision. Simply reply to this email, tell us what happened and our team will review your account and come back to you.
+            You can appeal this decision from the site. Sign in with your usual email and password and use the appeal
+            chat box on the page you land on — tell us what happened and our team will review your account and reply to
+            you there.
           </Text>
-          <Text style={text}>
-            Please include the email address on your account so we can find it quickly.
-          </Text>
+          <Button href={APPEAL_URL} style={button}>Sign in and appeal</Button>
         </Section>
         <Hr style={hr} />
         <Text style={footer}>{SITE_NAME}</Text>
@@ -61,5 +62,6 @@ const reasonText = { fontSize: '14px', color: '#7f1d1d', lineHeight: '1.6', marg
 const card = { background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', padding: '16px 20px', margin: '16px 0' }
 const appealCard = { background: '#f5f3ff', border: '1px solid #c4b5fd', borderRadius: '8px', padding: '16px 20px', margin: '16px 0' }
 const cardLabel = { fontSize: '12px', color: '#5b21b6', textTransform: 'uppercase' as const, letterSpacing: '0.5px', margin: '0 0 6px', fontWeight: 'bold' as const }
+const button = { backgroundColor: '#E11B22', color: '#ffffff', fontSize: '14px', fontWeight: 'bold' as const, textDecoration: 'none', padding: '12px 22px', borderRadius: '8px', display: 'inline-block' }
 const hr = { borderColor: '#eee', margin: '24px 0' }
 const footer = { fontSize: '12px', color: '#999', margin: '0 0 6px' }
