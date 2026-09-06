@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatLastSeen } from "@/lib/relative-time";
 import { toast } from "sonner";
-import moderatorBg from "@/assets/profile-header-moderator.jpg";
+import moderationBg from "@/assets/fan-zone-moderation-bg.png.asset.json";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-reports")({
   component: AdminReportsPage,
@@ -88,12 +88,12 @@ function AdminReportsPage() {
   return (
     <main className="relative flex-1 w-full min-w-0 min-h-full self-stretch overflow-y-auto">
       <div
-        className="pointer-events-none fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: `url(${moderatorBg})` }}
+        className="pointer-events-none absolute inset-0 z-0 bg-cover bg-center bg-no-repeat bg-fixed"
+        style={{ backgroundImage: `url(${moderationBg.url})` }}
         aria-hidden
       />
-      <div className="pointer-events-none fixed inset-0 -z-10 bg-background/85" aria-hidden />
-      <div className="w-full px-4 sm:px-6 py-6 space-y-4">
+      <div className="pointer-events-none absolute inset-0 z-0 bg-background/80" aria-hidden />
+      <div className="relative z-10 w-full px-4 sm:px-6 py-6 space-y-4">
         <div className="flex items-center justify-between gap-3">
           <Button asChild variant="ghost" size="sm" className="-ml-2">
             <Link to="/forum"><ArrowLeft className="size-4 mr-1" />Boro Fan Zone</Link>
