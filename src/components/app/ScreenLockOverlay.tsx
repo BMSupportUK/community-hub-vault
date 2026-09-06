@@ -9,6 +9,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { hashLockCode } from "@/lib/screen-lock-hash";
 import { requestLockReset } from "@/lib/screen-lock.functions";
 import lockBg from "@/assets/screen-lock-bg.jpg";
+import { useRouterState } from "@tanstack/react-router";
+import { isFanZonePath } from "@/lib/fan-zone-nav";
+import { useFanZoneMembership } from "@/hooks/use-fan-zone";
+import { useFanAvatarLock } from "@/lib/fan-avatar-lock";
+import { BORO_DEFAULT_AVATAR_URL } from "@/lib/boro-default-avatar";
 import type { ScreenLockSettings } from "@/components/app/ScreenLockProvider";
 
 const MAX_ATTEMPTS = 5;
@@ -87,7 +92,20 @@ export function ScreenLockOverlay({ settings, onUnlock }: Props) {
     })();
   }, [user?.id]);
 
-  const name = profile?.display_name || profile?.username || user?.email || "";
+  // The lock screen must reflect the site the member was using: BM Support
+  // and the Boro Fan Zone have separate identities.
+  const path = useRouterState({ select: (st) => st.location.pathname });
+  const inFanZone = isFanZonePath(path);
+  const fanInfo = useFanZoneMembership(user?.id ?? null);
+  const { forcedAvatar } = useFanAvatarLock();
+
+  const supportName = profile?.display_name || profile?.username || user?.email || "";
+  const name = inFanZone
+    ? fanInfo?.fanAlias || supportName
+    : supportName;
+  const avatarSrc = inFanZone
+    ? forcedAvatar || fanInfo?.fanAvatarUrl || BORO_DEFAULT_AVATAR_URL
+    : profile?.avatar_url || null;
 
   const saveNewCode = async () => {
     if (!user) return;
@@ -190,7 +208,7 @@ export function ScreenLockOverlay({ settings, onUnlock }: Props) {
         <div className="p-6 space-y-4">
           <div className="flex items-center gap-3">
             <Avatar className="size-10">
-              {profile?.avatar_url ? <AvatarImage src={profile.avatar_url} alt="" /> : null}
+              {avatarSrc ? <AvatarImage src={avatarSrc} alt="" /> : null}
               <AvatarFallback>{(name || "?").slice(0, 1).toUpperCase()}</AvatarFallback>
             </Avatar>
             <div className="min-w-0">
