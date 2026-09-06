@@ -33,7 +33,9 @@ export function MentionSoundAlert() {
 
   useEffect(() => {
     if (!user || Capacitor.isNativePlatform()) return;
+    ensureSoundUnlocked();
     let cancelled = false;
+
 
     const announce = (row: MentionNotification) => {
       if (seen.current.has(row.id)) return;
