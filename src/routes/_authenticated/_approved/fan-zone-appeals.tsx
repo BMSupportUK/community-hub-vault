@@ -334,6 +334,7 @@ function FanZoneAppealsPage() {
     );
   };
 
+  const activeBan = active ? isBanActive(bans[active.user_id]) : false;
 
   return (
     <main className="flex-1 w-full min-w-0 min-h-full self-stretch overflow-y-auto">
