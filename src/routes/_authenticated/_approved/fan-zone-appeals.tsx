@@ -197,6 +197,7 @@ function FanZoneAppealsPage() {
     setLiftBusy(false);
     if (error) return toast.error("Couldn't remove the ban", { description: error.message });
     toast.success("Ban removed — they can use the Fan Zone again.");
+    await loadBans([active.user_id]);
   };
 
   const reopenAppeal = async () => {
