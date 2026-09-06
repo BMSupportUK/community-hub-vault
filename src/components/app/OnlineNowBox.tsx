@@ -59,7 +59,7 @@ export function OnlineNowBox({ variant = "panel" }: { variant?: "panel" | "hero"
         className={cn(
           "flex items-center gap-2 rounded-full border border-white/30 bg-black/40 px-3.5 py-1.5 text-white backdrop-blur-sm shadow-lg shadow-black/20",
         )}
-        title="Members and guests browsing the Fan Zone"
+        title="Staff, members and guests browsing the Fan Zone"
       >
         <span className="relative flex size-2">
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
@@ -69,7 +69,7 @@ export function OnlineNowBox({ variant = "panel" }: { variant?: "panel" | "hero"
           {count} {count === 1 ? "person" : "people"} online
         </span>
         <span className="hidden sm:inline text-[10px] text-white/70">
-          {members} signed in · {guests} guest{guests === 1 ? "" : "s"}
+          {breakdown}
         </span>
       </div>
     );
@@ -93,7 +93,7 @@ export function OnlineNowBox({ variant = "panel" }: { variant?: "panel" | "hero"
         <span className="text-[10px] text-muted-foreground leading-tight">
           {count === 1 ? "person browsing" : "people browsing"}
           <br />
-          {members} signed in · {guests} guest{guests === 1 ? "" : "s"}
+          {breakdown}
         </span>
       </div>
     </section>
