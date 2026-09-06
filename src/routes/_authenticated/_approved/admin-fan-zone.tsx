@@ -23,6 +23,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useFanZoneMembership } from "@/hooks/use-fan-zone";
+import { useOnlineUsers } from "@/hooks/use-online-users";
 import type { FanZoneMute } from "@/hooks/use-fan-zone-mute";
 import type { FanZoneBan } from "@/hooks/use-fan-zone-ban";
 import { FanZoneMuteDialog, MuteCountdown } from "@/components/app/FanZoneMuteDialog";
