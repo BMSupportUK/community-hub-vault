@@ -6,6 +6,7 @@ import { sendShiftEventPush, sendBreakEventPush } from "@/lib/push.functions";
 import { isFanZoneOnlyRoles } from "@/lib/fan-zone-nav";
 import { sortRolesByPriority } from "@/lib/role-rank";
 import { leaveTalkChannelsOnSignOut } from "@/hooks/use-talk-channel-presence";
+import { setSoundSignedIn } from "@/lib/sound";
 
 export type AppRole =
   | "admin"
