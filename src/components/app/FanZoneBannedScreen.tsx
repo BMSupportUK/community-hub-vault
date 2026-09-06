@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Gavel, Clock, ArrowRight, ShieldBan } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { FanZoneAppealPanel } from "@/components/app/FanZoneAppealPanel";
 import bannedArt from "@/assets/fan-zone-banned.jpg";
 
 type Props = {
