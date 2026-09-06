@@ -10,6 +10,16 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-reports")({
   component: AdminReportsPage,
+  head: () => ({
+    meta: [
+      { title: "Moderation centre — Boro Fan Zone reports" },
+      { name: "description", content: "Review reported posts and messages in the Boro Fan Zone, then mark them reviewed or dismissed." },
+      { property: "og:title", content: "Moderation centre — Boro Fan Zone reports" },
+      { property: "og:description", content: "Review reported posts and messages in the Boro Fan Zone, then mark them reviewed or dismissed." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
 });
 
 type Report = {
