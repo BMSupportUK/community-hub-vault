@@ -160,12 +160,18 @@ function AdminReportsPage() {
     setNames((prev) => ({ ...map, ...prev }));
   }, []);
 
-  const loadLog = useCallback(async (userId: string) => {
+  const loadLog = useCallback(async (userId: string, kind: "mute" | "ban", since: string) => {
     setLog(null);
+    // Only notes tied to this one mute/ban: nothing from before it started.
+    const from = new Date(Date.parse(since) - 5000).toISOString();
+    const actions =
+      kind === "mute" ? ["mute", "unmute"] : ["ban", "unban", "appeal", "appeal_reply"];
     const { data, error } = await supabase
       .from("fan_zone_mod_actions")
       .select("id, user_id, actor_id, action, reason, expires_at, created_at")
       .eq("user_id", userId)
+      .in("action", actions)
+      .gte("created_at", from)
       .order("created_at", { ascending: false })
       .limit(200);
     if (error) {
@@ -177,6 +183,7 @@ function AdminReportsPage() {
     setLog(list);
     void loadNames(list.flatMap((r) => [r.user_id, r.actor_id ?? ""]));
   }, [loadNames]);
+
 
   const loadAppeals = useCallback(async () => {
     setAppeals(null);
@@ -314,7 +321,7 @@ function AdminReportsPage() {
         </div>
       );
     if (!log.length)
-      return <p className="text-sm text-muted-foreground text-center py-12">Nothing logged for this member yet.</p>;
+      return <p className="text-sm text-muted-foreground text-center py-12">Nothing logged for this one yet.</p>;
     return (
       <ul className="space-y-2">
         {log.map((r) => {
@@ -425,7 +432,7 @@ function AdminReportsPage() {
                 variant="ghost"
                 onClick={() => {
                   setLogUser({ id: r.user_id, kind });
-                  void loadLog(r.user_id);
+                  void loadLog(r.user_id, kind, r.created_at);
                 }}
               >
                 <ScrollText className="size-3.5 mr-1" />
@@ -605,10 +612,13 @@ function AdminReportsPage() {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <ScrollText className="size-4 text-[#E11B22]" />
-                {logUser ? `${names[logUser.id] ?? "Fan Zone member"} — history` : "History"}
+                {logUser
+                  ? `${names[logUser.id] ?? "Fan Zone member"} — this ${logUser.kind}`
+                  : "Log"}
               </DialogTitle>
               <DialogDescription>
-                Every mute, ban, early lift and ban appeal for this member — and who did it.
+                Notes for this one {logUser?.kind === "mute" ? "mute" : "ban"} only — who set it, any appeal
+                and reply, and whether it was lifted early.
               </DialogDescription>
             </DialogHeader>
             <div className="max-h-[60vh] overflow-y-auto pr-1">{logList()}</div>
