@@ -454,6 +454,23 @@ function AdminFanZonePage() {
               </Tabs>
             )}
           </div>
+          <div className="flex items-center gap-6 overflow-x-auto pl-[88px]">
+            <Tabs value={presenceTab} onValueChange={(v) => setPresenceTab(v as PresenceTab)}>
+              <TabsList className="bg-transparent p-0 h-auto gap-1">
+                <TabsTrigger value="all" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
+                  All
+                </TabsTrigger>
+                <TabsTrigger value="online" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
+                  <span className="size-1.5 rounded-full bg-emerald-400 mr-1.5" /> Online
+                  {presenceCounts.online > 0 && <span className="ml-1.5 text-xs text-emerald-400">{presenceCounts.online}</span>}
+                </TabsTrigger>
+                <TabsTrigger value="offline" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
+                  <span className="size-1.5 rounded-full bg-muted-foreground/60 mr-1.5" /> Offline
+                  {presenceCounts.offline > 0 && <span className="ml-1.5 text-xs text-muted-foreground">{presenceCounts.offline}</span>}
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
           {isAdmin && roleTab === "members" && (
             <div className="flex items-center gap-6 overflow-x-auto pl-[88px]">
               <Tabs value={statusTab} onValueChange={(v) => setStatusTab(v as StatusTab)}>
