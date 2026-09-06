@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { Link } from "@tanstack/react-router";
+import { Link, useRouterState } from "@tanstack/react-router";
 import { LoaderCircle, ShieldCheck, ShieldAlert } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useVisitorVpnStatus } from "@/hooks/use-visitor-vpn";
+import { isFanZonePath } from "@/lib/fan-zone-nav";
 
 export function TwoFactorBanner() {
   return null;
@@ -11,6 +12,8 @@ export function TwoFactorBanner() {
 
 export function TwoFactorPill() {
   const { user } = useAuth();
+  const path = useRouterState({ select: (s) => s.location.pathname });
+  const securityTo = isFanZonePath(path) ? "/fan-zone-security" : "/account-security";
   const [enabled, setEnabled] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -37,7 +40,7 @@ export function TwoFactorPill() {
   if (enabled) {
     return (
       <Link
-        to="/account-security"
+        to={securityTo}
         title="Two-factor authentication is on"
         className="hidden md:inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 bg-emerald-500/15 border border-emerald-500/40 text-emerald-400 text-[11px] font-semibold hover:bg-emerald-500/25 transition-colors"
       >
@@ -49,7 +52,7 @@ export function TwoFactorPill() {
 
   return (
     <Link
-      to="/account-security"
+      to={securityTo}
       title="Enable two-factor authentication"
       className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 bg-amber-500/15 border border-amber-500/50 text-amber-400 text-[11px] font-semibold hover:bg-amber-500/25 transition-colors animate-pulse"
     >
