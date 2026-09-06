@@ -9,10 +9,13 @@ import {
   type PublicStaffMember,
 } from "@/lib/fan-zone-public.functions";
 import { getIcon } from "@/components/app/IconPicker";
-import { Lock, Pin, MessageSquare, ChevronRight, BarChart3, Shield, Star } from "lucide-react";
+import { Lock, Pin, MessageSquare, ChevronRight, BarChart3, Shield, Star, Loader2 } from "lucide-react";
 import { RelativeTime } from "@/components/app/RelativeTime";
 import { BoroMatchCentreBox } from "@/components/app/BoroMatchCentreBox";
 import { FanZoneShell } from "./fan-zone";
+import { useAuth } from "@/hooks/use-auth";
+import { useFanZoneMute } from "@/hooks/use-fan-zone-mute";
+import { FanZoneMutedScreen } from "@/components/app/FanZoneMutedScreen";
 
 export const Route = createFileRoute("/fan-zone/")({
   loader: () => listPublicBoards(),
@@ -36,7 +39,38 @@ export const Route = createFileRoute("/fan-zone/")({
 });
 
 function FanZoneBoardsPage() {
+  const { user } = useAuth();
+  const { mute: myMute, loading: muteLoading } = useFanZoneMute(user?.id ?? null);
+  const [muteBrowsing, setMuteBrowsing] = useState(false);
+  useEffect(() => {
+    if (!myMute) setMuteBrowsing(false);
+  }, [myMute]);
   const boards = Route.useLoaderData() as PublicBoard[];
+
+  if (muteLoading) {
+    return (
+      <FanZoneShell>
+        <div className="grid place-items-center py-20 text-white/70">
+          <Loader2 className="size-6 animate-spin" />
+        </div>
+      </FanZoneShell>
+    );
+  }
+
+  if (myMute && !muteBrowsing) {
+    return (
+      <FanZoneShell>
+        <FanZoneMutedScreen
+          expiresAt={myMute.expires_at}
+          reason={myMute.reason}
+          mutedBy={myMute.muted_by_name}
+          returnTo="/fan-zone"
+          onKeepReading={() => setMuteBrowsing(true)}
+        />
+      </FanZoneShell>
+    );
+  }
+
   return (
     <FanZoneShell>
       <div className="boro-forum-index grid gap-4 md:grid-cols-[minmax(0,1fr)_280px] items-start">
