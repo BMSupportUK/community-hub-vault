@@ -174,15 +174,21 @@ export function FanZoneBannedScreen({ expiresAt, reason, bannedBy, returnTo = "/
         <DialogContent className="boro-theme max-w-lg border-[#E11B22]/40 bg-[#0B1A2B] text-white">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-white">
-              <MailQuestion className="size-4 text-[#E11B22]" />
-              Appeal this ban
+              {hasAppeal ? (
+                <MessageSquare className="size-4 text-[#E11B22]" />
+              ) : (
+                <MailQuestion className="size-4 text-[#E11B22]" />
+              )}
+              {hasAppeal ? "Appeal chat box" : "Appeal this ban"}
             </DialogTitle>
             <DialogDescription className="text-white/60">
-              Tell a moderator what happened. You'll get an email when they reply.
+              {hasAppeal
+                ? "Read the moderator's replies and send follow-up messages."
+                : "Tell a moderator what happened. You'll get an email when they reply."}
             </DialogDescription>
           </DialogHeader>
           <div className="max-h-[65vh] overflow-y-auto pr-1">
-            <FanZoneAppealPanel />
+            <FanZoneAppealPanel onAppealKnown={setHasAppeal} />
           </div>
         </DialogContent>
       </Dialog>
