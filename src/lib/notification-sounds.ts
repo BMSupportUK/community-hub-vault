@@ -23,6 +23,7 @@ import fanZoneAppealMsgAsset from "@/assets/fan-zone-appeal-message.mp3.asset.js
 import fanZoneAppealStaffAsset from "@/assets/fan-zone-appeal-staff-reply.mp3.asset.json";
 import contentReportedAsset from "@/assets/content-reported.mp3.asset.json";
 import fanZoneMentionAsset from "@/assets/fan-zone-mention.mp3.asset.json";
+import daneBmSupportAsset from "@/assets/dane-bm-support-needed.mp3.asset.json";
 
 export type SoundKey =
   | "mention"
@@ -43,7 +44,8 @@ export type SoundKey =
   | "fan-zone-appeal"
   | "fan-zone-appeal-message"
   | "fan-zone-appeal-staff-reply"
-  | "content-reported";
+  | "content-reported"
+  | "dane-bm-support";
 
 export interface SoundDef {
   key: SoundKey;
@@ -72,6 +74,7 @@ export const NOTIFICATION_SOUNDS: readonly SoundDef[] = [
   { key: "fan-zone-appeal-message", label: "Fan Zone appeal message", src: fanZoneAppealMsgAsset.url, gain: 2.0 },
   { key: "fan-zone-appeal-staff-reply", label: "Fan Zone appeal reply", src: fanZoneAppealStaffAsset.url, gain: 2.0 },
   { key: "content-reported", label: "Content reported", src: contentReportedAsset.url, gain: 2.0 },
+  { key: "dane-bm-support", label: "Needed in BM Support", src: daneBmSupportAsset.url, gain: 2.0 },
 ];
 
 const BY_KEY = new Map<string, SoundDef>(NOTIFICATION_SOUNDS.map((s) => [s.key, s]));

@@ -10,7 +10,20 @@ type MentionNotification = {
   id: string;
   created_at: string;
   link_path?: string | null;
+  kind?: string | null;
 };
+
+/** Notification kinds that mean "you are wanted somewhere". */
+const ALERT_KINDS = ["mention", "staff_mention", "ticket_help_requested"] as const;
+
+/** Dane J — gets a bespoke voice clip when BM Support needs him mid Fan Zone. */
+const DANE_USER_ID = "73c113ce-ce1b-43f0-af24-c2a36cf0d8e7";
+
+const FAN_ZONE_PREFIXES = ["/forum", "/fan-zone", "/fanzone", "/boro-predictions"];
+
+/** Where the person is standing right now, not where the notification points. */
+const isViewingFanZone = () =>
+  typeof window !== "undefined" && FAN_ZONE_PREFIXES.some((p) => window.location.pathname.startsWith(p));
 
 /** Boro Fan Zone mentions get their own clip, kept separate from BM Support. */
 const isFanZoneMention = (row: MentionNotification) => !!row.link_path && row.link_path.startsWith("/forum");
@@ -28,19 +41,33 @@ export function MentionSoundAlert() {
     const announce = (row: MentionNotification) => {
       if (seen.current.has(row.id)) return;
       seen.current.add(row.id);
-      const fanZone = isFanZoneMention(row) ? getSound("fan-zone-mention") : undefined;
-      void playSound(fanZone?.src ?? mentionAudio, {
-        label: `mention-${row.id}`,
-        gain: fanZone?.gain ?? 1.8,
-      });
+      const kind = row.kind ?? "mention";
+      if (kind === "mention" && isFanZoneMention(row)) {
+        const fanZone = getSound("fan-zone-mention");
+        void playSound(fanZone?.src ?? mentionAudio, {
+          label: `mention-${row.id}`,
+          gain: fanZone?.gain ?? 1.8,
+        });
+        return;
+      }
+      // BM Support wants Dane while he is over in the Boro Fan Zone.
+      if (user?.id === DANE_USER_ID && isViewingFanZone()) {
+        const needed = getSound("dane-bm-support");
+        if (needed) {
+          void playSound(needed.src, { label: `bm-support-needed-${row.id}`, gain: needed.gain });
+          return;
+        }
+      }
+      if (kind !== "mention") return; // other kinds have their own alerts elsewhere
+      void playSound(mentionAudio, { label: `mention-${row.id}`, gain: 1.8 });
     };
 
     const poll = async () => {
       const { data, error } = await supabase
         .from("user_notifications")
-        .select("id, created_at, link_path")
+        .select("id, created_at, link_path, kind")
         .eq("user_id", user.id)
-        .eq("kind", "mention")
+        .in("kind", ALERT_KINDS as unknown as string[])
         .is("read_at", null)
         .gte("created_at", new Date(mountedAt.current - 5_000).toISOString())
         .order("created_at", { ascending: true });
@@ -59,8 +86,8 @@ export function MentionSoundAlert() {
           filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
-          const row = payload.new as MentionNotification & { kind?: string };
-          if (row.kind === "mention") announce(row);
+          const row = payload.new as MentionNotification;
+          if (ALERT_KINDS.includes((row.kind ?? "") as (typeof ALERT_KINDS)[number])) announce(row);
         },
       )
       .subscribe();
