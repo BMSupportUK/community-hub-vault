@@ -199,7 +199,7 @@ function AdminReportsPage() {
     }
     const list = (data ?? []) as Appeal[];
     setAppeals(list);
-    setOpenCount(list.filter((a) => a.status === "open").length);
+    setOpenCount(list.filter((a) => a.status !== "closed").length);
     void loadNames(list.map((a) => a.user_id));
   }, [loadNames]);
 
