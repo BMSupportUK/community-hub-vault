@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
-import { ArrowLeft, Loader2, MailQuestion, RefreshCw, Send, ShieldOff } from "lucide-react";
+import { ArrowLeft, CalendarClock, Loader2, MailQuestion, RefreshCw, Send, ShieldOff, UserRound } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
