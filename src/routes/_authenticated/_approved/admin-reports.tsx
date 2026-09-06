@@ -290,13 +290,18 @@ function AdminReportsPage() {
           <Button asChild variant="ghost" size="sm" className="-ml-2">
             <Link to="/forum"><ArrowLeft className="size-4 mr-1" />Boro Fan Zone</Link>
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => (tab === "reports" ? void load() : tab === "log" ? void loadLog() : void loadSanctions())}
-          >
-            <RefreshCw className="size-4 mr-1" />Refresh
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => { setLogOpen(true); void loadLog(); }}>
+              <ScrollText className="size-4 mr-1" />Log
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => (tab === "reports" ? void load() : void loadSanctions())}
+            >
+              <RefreshCw className="size-4 mr-1" />Refresh
+            </Button>
+          </div>
         </div>
 
         <header className="flex items-center gap-2">
@@ -309,13 +314,26 @@ function AdminReportsPage() {
             <TabsTrigger value="reports">Reports</TabsTrigger>
             <TabsTrigger value="mutes">Mutes</TabsTrigger>
             <TabsTrigger value="bans">Bans</TabsTrigger>
-            <TabsTrigger value="log"><ScrollText className="size-3.5 mr-1" />Log</TabsTrigger>
           </TabsList>
         </Tabs>
 
         {tab === "mutes" && sanctionList("mute", mutes)}
         {tab === "bans" && sanctionList("ban", bans)}
-        {tab === "log" && logList()}
+
+        <Dialog open={logOpen} onOpenChange={setLogOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <ScrollText className="size-4 text-[#E11B22]" />
+                Moderation log
+              </DialogTitle>
+              <DialogDescription>
+                Every mute, ban and early lift in the Boro Fan Zone — who it was done to, and who did it.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="max-h-[60vh] overflow-y-auto pr-1">{logList()}</div>
+          </DialogContent>
+        </Dialog>
 
         <AlertDialog open={!!confirmLift} onOpenChange={(o) => { if (!o) setConfirmLift(null); }}>
           <AlertDialogContent>
