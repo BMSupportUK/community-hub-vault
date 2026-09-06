@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Radio, CalendarDays, Trophy, ChevronRight, X } from "lucide-react";
+import { Radio, CalendarDays, Trophy, ChevronRight } from "lucide-react";
 import {
   getBoroMatchCentre,
   type MatchCentreDTO,
@@ -12,7 +12,7 @@ import { TeamKit } from "@/lib/boro-team-kits";
 import { londonWeekStart } from "@/lib/boro-match-week";
 
 
-import { Dialog, DialogContent, DialogTitle, DialogClose } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { BoroMatchDetailTabs } from "@/components/app/BoroMatchDetailTabs";
 
 function fmtKickoff(iso: string, tz: string) {
@@ -356,15 +356,35 @@ export function BoroLiveMatchStrip() {
         </div>
       </div>
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="fixed left-1/2 top-1/2 z-[101] -translate-x-1/2 -translate-y-1/2 max-w-7xl w-[calc(100%-2rem)] max-h-[85vh] overflow-y-auto p-0 border-2 border-[#E11B22]/70 bg-[#0B0E14] shadow-[0_30px_80px_-20px_rgba(0,0,0,0.9)]">
-          <DialogTitle className="sr-only">Boro fixture details</DialogTitle>
-          <DialogClose
-            className="absolute right-2 top-2 z-10 inline-flex items-center justify-center size-8 rounded-full bg-black/70 text-white ring-1 ring-white/25 hover:bg-black/90 transition"
-            aria-label="Close match centre"
-          >
-            <X className="size-4" />
-          </DialogClose>
+      {/* Slim always-visible tab pinned to the right edge */}
+      <button
+        type="button"
+        onClick={openMatchCentre}
+        aria-label="Open match centre"
+        className="fixed right-0 top-1/3 z-40 hidden sm:flex flex-col items-center gap-2 rounded-l-xl border border-r-0 border-[#E11B22]/70 bg-gradient-to-b from-[#E11B22] to-[#8B0F14] px-1.5 py-3 text-white shadow-[0_10px_30px_-12px_rgba(0,0,0,0.9)] transition hover:px-2.5"
+      >
+        {live?.inPlay ? (
+          <span className="relative flex size-2.5">
+            <span className="absolute inline-flex size-full animate-ping rounded-full bg-white/80" />
+            <span className="relative inline-flex size-2.5 rounded-full bg-white" />
+          </span>
+        ) : (
+          <Radio className="size-3.5" />
+        )}
+        <span
+          className="text-[10px] font-black uppercase tracking-[0.18em]"
+          style={{ writingMode: "vertical-rl" }}
+        >
+          {live?.inPlay ? "Live" : "Match centre"}
+        </span>
+      </button>
+
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetContent
+          side="right"
+          className="z-[101] w-full sm:max-w-xl lg:max-w-3xl overflow-y-auto p-0 border-l-2 border-[#E11B22]/70 bg-[#0B0E14] shadow-[0_30px_80px_-20px_rgba(0,0,0,0.9)] [&>button]:right-3 [&>button]:top-3 [&>button]:z-20 [&>button]:inline-flex [&>button]:size-8 [&>button]:items-center [&>button]:justify-center [&>button]:rounded-full [&>button]:bg-black/70 [&>button]:text-white [&>button]:ring-1 [&>button]:ring-white/25"
+        >
+          <SheetTitle className="sr-only">Boro fixture details</SheetTitle>
           {(() => {
             const m = selectedMatch;
             if (!m) return null;
@@ -516,8 +536,8 @@ export function BoroLiveMatchStrip() {
               </div>
             );
           })()}
-        </DialogContent>
-      </Dialog>
+        </SheetContent>
+      </Sheet>
     </>
   );
 }
