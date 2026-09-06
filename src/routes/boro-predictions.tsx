@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
+import { FanZoneBanGate } from "@/components/app/FanZoneBanGate";
 import {
   listBoroFixtures,
   upsertBoroPrediction,
@@ -45,7 +46,11 @@ import {
 } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/boro-predictions")({
-  component: BoroPredictionsPage,
+  component: () => (
+    <FanZoneBanGate>
+      <BoroPredictionsPage />
+    </FanZoneBanGate>
+  ),
 });
 
 function formatKickoff(iso: string) {

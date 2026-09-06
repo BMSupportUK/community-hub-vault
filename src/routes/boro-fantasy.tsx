@@ -27,6 +27,7 @@ import { WinnersTab } from "@/components/app/WinnersTab";
 import { FanZonePublicHeader } from "@/components/app/FanZonePublicHeader";
 import { IconRail } from "@/components/app/IconRail";
 import { useAuth } from "@/hooks/use-auth";
+import { FanZoneBanGate } from "@/components/app/FanZoneBanGate";
 import {
   benchRulesFor, COMPETITION_BENCH_RULES, FORMATION_KEYS, POSITION_ORDER,
   POSITION_SHORT, POSITION_LABEL, SCORING_RULES, SQUAD_RULES,
@@ -69,7 +70,11 @@ export const Route = createFileRoute("/boro-fantasy")({
       { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
-  component: FantasyPageWithStats,
+  component: () => (
+    <FanZoneBanGate>
+      <FantasyPageWithStats />
+    </FanZoneBanGate>
+  ),
 });
 
 // ------------------------------------------------------------------
