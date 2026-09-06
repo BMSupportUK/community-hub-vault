@@ -1745,6 +1745,36 @@ export type Database = {
         }
         Relationships: []
       }
+      fan_zone_mod_actions: {
+        Row: {
+          action: string
+          actor_id: string | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          reason: string | null
+          user_id: string
+        }
+        Insert: {
+          action: string
+          actor_id?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          reason?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: string
+          actor_id?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          reason?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       fan_zone_mutes: {
         Row: {
           created_at: string
