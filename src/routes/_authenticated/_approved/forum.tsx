@@ -229,16 +229,18 @@ function ForumLayout() {
         <div className="flex min-h-72 items-center justify-center" aria-label="Checking Fan Zone access">
           <Loader2 className="size-6 animate-spin text-white/70" />
         </div>
-      ) : myMute ? (
+      ) : myMute && !muteBrowsing ? (
         <FanZoneMutedScreen
           expiresAt={myMute.expires_at}
           reason={myMute.reason}
           mutedBy={myMute.muted_by_name}
           returnTo="/forum"
+          onKeepReading={() => setMuteBrowsing(true)}
         />
       ) : (
         <BoardsIndex />
       )}
+
       <FanZoneNameGate />
     </div>
   );
