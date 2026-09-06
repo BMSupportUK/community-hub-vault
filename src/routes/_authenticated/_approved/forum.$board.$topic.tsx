@@ -1020,7 +1020,7 @@ function TopicPage() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_180px] lg:grid-cols-[minmax(0,1fr)_256px] md:items-start">
+      <div className={`grid gap-4 md:items-start ${isMatchDayThread ? "md:grid-cols-[minmax(0,1fr)_240px] lg:grid-cols-[minmax(0,1fr)_280px]" : "md:grid-cols-[minmax(0,1fr)_180px] lg:grid-cols-[minmax(0,1fr)_256px]"}`}>
         <div className="min-w-0">
       {(() => {
         const totalPages = Math.max(1, Math.ceil((topic.reply_count ?? replies.length) / REPLIES_PER_PAGE));
@@ -1199,7 +1199,7 @@ function TopicPage() {
       })()}
         </div>
         <aside
-          className="w-full min-w-0 md:grid md:place-items-center md:sticky md:top-4"
+          className="w-full min-w-0 max-w-full md:sticky md:top-4"
           aria-label={isMatchDayThread ? "Match poll" : "Sponsored advert"}
         >
           {isMatchDayThread ? renderTopicPoll() : renderSponsorAdvert()}
