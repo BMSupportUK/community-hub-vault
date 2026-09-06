@@ -119,7 +119,7 @@ function AdminReportsPage() {
   const [bans, setBans] = useState<Sanction[] | null>(null);
   const [names, setNames] = useState<Record<string, string>>({});
   const [log, setLog] = useState<ModAction[] | null>(null);
-  const [logOpen, setLogOpen] = useState(false);
+  const [logUser, setLogUser] = useState<{ id: string; kind: "mute" | "ban" } | null>(null);
   const [confirmLift, setConfirmLift] = useState<{ kind: "mute" | "ban"; row: Sanction } | null>(null);
   const [appealsOpen, setAppealsOpen] = useState(false);
   const [appeals, setAppeals] = useState<Appeal[] | null>(null);
@@ -160,11 +160,12 @@ function AdminReportsPage() {
     setNames((prev) => ({ ...map, ...prev }));
   }, []);
 
-  const loadLog = useCallback(async () => {
+  const loadLog = useCallback(async (userId: string) => {
     setLog(null);
     const { data, error } = await supabase
       .from("fan_zone_mod_actions")
       .select("id, user_id, actor_id, action, reason, expires_at, created_at")
+      .eq("user_id", userId)
       .order("created_at", { ascending: false })
       .limit(200);
     if (error) {
@@ -313,7 +314,7 @@ function AdminReportsPage() {
         </div>
       );
     if (!log.length)
-      return <p className="text-sm text-muted-foreground text-center py-12">Nothing logged yet.</p>;
+      return <p className="text-sm text-muted-foreground text-center py-12">Nothing logged for this member yet.</p>;
     return (
       <ul className="space-y-2">
         {log.map((r) => {
@@ -372,7 +373,7 @@ function AdminReportsPage() {
                   onClick={() => {
                     const a = (appeals ?? []).find((x) => x.user_id === r.user_id);
                     if (!a) return toast.error("That appeal is no longer available");
-                    setLogOpen(false);
+                    setLogUser(null);
                     setAppealsOpen(true);
                     void openAppeal(a);
                   }}
@@ -418,7 +419,18 @@ function AdminReportsPage() {
               <div className="text-[10px] uppercase tracking-wide text-muted-foreground mb-1">Reason</div>
               {r.reason}
             </div>
-            <div className="flex justify-end">
+            <div className="flex flex-wrap justify-end gap-2">
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  setLogUser({ id: r.user_id, kind });
+                  void loadLog(r.user_id);
+                }}
+              >
+                <ScrollText className="size-3.5 mr-1" />
+                Log
+              </Button>
               <Button size="sm" variant="outline" disabled={busyId === r.id} onClick={() => setConfirmLift({ kind, row: r })}>
                 {busyId === r.id ? <Loader2 className="size-3.5 animate-spin mr-1" /> : <Check className="size-3.5 mr-1" />}
                 Lift {kind}
@@ -445,9 +457,6 @@ function AdminReportsPage() {
                   {openCount}
                 </span>
               )}
-            </Button>
-            <Button variant="outline" size="sm" onClick={() => { setLogOpen(true); void loadLog(); }}>
-              <ScrollText className="size-4 mr-1" />Log
             </Button>
             <Button
               variant="outline"
@@ -591,15 +600,15 @@ function AdminReportsPage() {
           </DialogContent>
         </Dialog>
 
-        <Dialog open={logOpen} onOpenChange={setLogOpen}>
+        <Dialog open={!!logUser} onOpenChange={(o) => { if (!o) setLogUser(null); }}>
           <DialogContent className="max-w-2xl">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <ScrollText className="size-4 text-[#E11B22]" />
-                Moderation log
+                {logUser ? `${names[logUser.id] ?? "Fan Zone member"} — history` : "History"}
               </DialogTitle>
               <DialogDescription>
-                Every mute, ban, early lift and ban appeal in the Boro Fan Zone — who it was done to, and who did it.
+                Every mute, ban, early lift and ban appeal for this member — and who did it.
               </DialogDescription>
             </DialogHeader>
             <div className="max-h-[60vh] overflow-y-auto pr-1">{logList()}</div>
