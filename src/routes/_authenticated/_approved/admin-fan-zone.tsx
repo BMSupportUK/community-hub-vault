@@ -418,7 +418,7 @@ function AdminFanZonePage() {
         }
         return (new Date(a.requested_at).getTime() - new Date(b.requested_at).getTime()) * dir;
       });
-  }, [roleGroups, roleTab, statusTab, profiles, search, sortKey, sortDir]);
+  }, [roleGroups, roleTab, statusTab, presenceTab, onlineUsers, profiles, search, sortKey, sortDir]);
 
   const toggleSort = (key: "name" | "since" | "requested") => {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
