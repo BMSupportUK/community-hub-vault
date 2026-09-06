@@ -136,28 +136,49 @@ function FanZoneSanctionsPage() {
     const nowIso = new Date().toISOString();
     setMutes(null);
     setBans(null);
-    const [m, b] = await Promise.all([
+    setPastMutes(null);
+    setPastBans(null);
+    const cols = "id, user_id, reason, expires_at, created_at";
+    const [m, b, pm, pb] = await Promise.all([
       supabase
         .from("fan_zone_mutes")
-        .select("id, user_id, reason, expires_at, created_at")
+        .select(cols)
         .gt("expires_at", nowIso)
         .order("created_at", { ascending: false }),
       supabase
         .from("fan_zone_bans")
-        .select("id, user_id, reason, expires_at, created_at")
+        .select(cols)
         .or(`expires_at.is.null,expires_at.gt.${nowIso}`)
         .order("created_at", { ascending: false }),
+      supabase
+        .from("fan_zone_mutes")
+        .select(cols)
+        .lte("expires_at", nowIso)
+        .order("created_at", { ascending: false })
+        .limit(100),
+      supabase
+        .from("fan_zone_bans")
+        .select(cols)
+        .not("expires_at", "is", null)
+        .lte("expires_at", nowIso)
+        .order("created_at", { ascending: false })
+        .limit(100),
     ]);
     const mList = (m.data ?? []) as Sanction[];
     const bList = (b.data ?? []) as Sanction[];
+    const pmList = (pm.data ?? []) as Sanction[];
+    const pbList = (pb.data ?? []) as Sanction[];
     setMutes(mList);
     setBans(bList);
-    void loadNames([...mList, ...bList].map((r) => r.user_id));
+    setPastMutes(pmList);
+    setPastBans(pbList);
+    void loadNames([...mList, ...bList, ...pmList, ...pbList].map((r) => r.user_id));
   }, [loadNames]);
 
   useEffect(() => {
     if (allowed) void loadSanctions();
   }, [allowed, loadSanctions]);
+
 
   if (!allowed) return <Navigate to="/forum" />;
 
