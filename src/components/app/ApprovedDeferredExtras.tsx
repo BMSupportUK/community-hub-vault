@@ -7,6 +7,7 @@ import { TicketAssignedAlert } from "@/components/app/TicketAssignedAlert";
 import { PaymentConfirmedAlert } from "@/components/app/PaymentConfirmedAlert";
 import { TicketHelpRequestedAlert } from "@/components/app/TicketHelpRequestedAlert";
 import { FanZoneAppealAlert } from "@/components/app/FanZoneAppealAlert";
+import { ContentReportAlert } from "@/components/app/ContentReportAlert";
 import { FanZoneAccessCard } from "@/components/app/FanZoneAccessCard";
 import { ScreenLockProvider } from "@/components/app/ScreenLockProvider";
 import { ScreenLockResetAlerts } from "@/components/app/ScreenLockResetAlerts";
@@ -29,6 +30,7 @@ export function ApprovedDeferredExtras() {
       <PaymentConfirmedAlert />
       <TicketHelpRequestedAlert />
       <FanZoneAppealAlert />
+      <ContentReportAlert />
       <FanZoneAccessCard />
       <ScreenLockProvider />
       <ScreenLockResetAlerts />
