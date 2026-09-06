@@ -61,6 +61,7 @@ export function FanZoneMuteDialog({
   const [minutes, setMinutes] = useState(1440);
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const submit = async () => {
     const text = reason.trim();
