@@ -1,21 +1,10 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
-import { useCallback, useEffect, useState } from "react";
-import { ArrowLeft, Check, Loader2, RefreshCw, Trash2, Flag, VolumeX, Gavel, ScrollText, Volume2, ShieldCheck, Inbox, Send, MailQuestion } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowLeft, Check, Loader2, RefreshCw, Trash2, Flag, Ban } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { formatLastSeen } from "@/lib/relative-time";
 import { toast } from "sonner";
 
@@ -39,65 +28,6 @@ type Report = {
   target_author_id: string | null;
   target_author_name: string | null;
 };
-
-type Sanction = {
-  id: string;
-  user_id: string;
-  reason: string;
-  /** null = permanent (bans only). */
-  expires_at: string | null;
-  created_at: string;
-};
-
-type ModAction = {
-  id: string;
-  user_id: string;
-  actor_id: string | null;
-  action: "mute" | "unmute" | "ban" | "unban" | "appeal" | "appeal_reply";
-  reason: string | null;
-  expires_at: string | null;
-  created_at: string;
-};
-
-type Appeal = {
-  id: string;
-  user_id: string;
-  status: "open" | "replied" | "closed";
-  created_at: string;
-  updated_at: string;
-};
-
-type AppealMsg = {
-  id: string;
-  from_staff: boolean;
-  author_id: string;
-  body: string;
-  created_at: string;
-};
-
-type MainTab = "reports" | "mutes" | "bans";
-
-const ACTION_LABEL: Record<ModAction["action"], string> = {
-  mute: "Muted",
-  unmute: "Mute lifted",
-  ban: "Banned",
-  unban: "Ban lifted",
-  appeal: "Appealed",
-  appeal_reply: "Appeal reply",
-};
-
-function untilLabel(expiresAt: string | null): string {
-  if (!expiresAt) return "Permanent";
-  const ms = Date.parse(expiresAt) - Date.now();
-  if (ms <= 0) return "Expired";
-  const mins = Math.floor(ms / 60000);
-  const days = Math.floor(mins / 1440);
-  const hours = Math.floor((mins % 1440) / 60);
-  const rest = mins % 60;
-  if (days > 0) return `${days}d ${hours}h left`;
-  if (hours > 0) return `${hours}h ${rest}m left`;
-  return `${rest}m left`;
-}
 
 function AdminReportsPage() {
   const { hasAny } = useAuth();
