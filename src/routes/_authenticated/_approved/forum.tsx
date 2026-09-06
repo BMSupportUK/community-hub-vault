@@ -73,6 +73,7 @@ function ForumLayout() {
   const info = useFanZoneMembership(user?.id ?? null);
   // A live Boro Fan Zone ban locks the member out of the whole zone.
   const { ban: myBan, loading: banLoading } = useFanZoneBan(user?.id ?? null);
+  const { mute: myMute } = useFanZoneMute(user?.id ?? null);
 
   useEffect(() => {
     const html = document.documentElement;
