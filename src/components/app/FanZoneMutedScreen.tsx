@@ -114,7 +114,19 @@ export function FanZoneMutedScreen({ expiresAt, reason, mutedBy, returnTo = "/fo
               </div>
             </div>
           )}
+
+          {!expired && onKeepReading && (
+            <Button
+              variant="outline"
+              onClick={onKeepReading}
+              className="w-full border-white/25 bg-white/5 text-white hover:bg-white/15"
+            >
+              Carry on reading the forum
+              <ArrowRight className="ml-1.5 size-4" />
+            </Button>
+          )}
         </div>
+
       </div>
     </div>
   );
