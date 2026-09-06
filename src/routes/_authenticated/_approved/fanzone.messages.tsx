@@ -1,6 +1,7 @@
 import { createFileRoute, Link, Outlet, useMatches, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Loader2, MessageSquare, Ban, Search, X } from "lucide-react";
+import { ArrowLeft, Loader2, MessageSquare, Ban, Search, X, Trash2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { FanZoneNameGate } from "@/components/app/FanZoneNamePrompt";
