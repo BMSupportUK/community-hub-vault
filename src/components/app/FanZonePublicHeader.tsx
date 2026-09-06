@@ -53,7 +53,7 @@ export function FanZonePublicHeader({ hideAuthButtons = false }: { hideAuthButto
               className="border-white/25 bg-white/10 text-white hover:bg-white/20 hover:text-white"
               title="Two-factor authentication"
             >
-              <Link to="/account-security" aria-label="Two-factor authentication">
+              <Link to="/fan-zone-security" aria-label="Two-factor authentication">
                 <Shield className="size-4" />
               </Link>
             </Button>

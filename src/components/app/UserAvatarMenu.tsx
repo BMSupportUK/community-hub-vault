@@ -390,7 +390,7 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
             Copy username
           </DropdownMenuItem>
           <DropdownMenuItem asChild className="cursor-pointer">
-            <Link to="/account-security">
+            <Link to={inFanZone ? "/fan-zone-security" : "/account-security"}>
               <ShieldCheck className="size-4 mr-2" />
               Security & 2FA
             </Link>

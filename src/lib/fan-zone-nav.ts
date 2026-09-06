@@ -3,6 +3,7 @@ export const FAN_ZONE_PREFIXES = [
   "/fanzone",
   "/fan-zone",
   "/fan-zone-appeals",
+  "/fan-zone-security",
   "/fan-zone-sanctions",
   "/admin-fan-zone",
   "/admin-reports",
@@ -47,6 +48,7 @@ export function isFanZoneOnlyRoles(roles: readonly string[]): boolean {
  */
 const FAN_ZONE_ONLY_ALLOWED = [
   "/account-security",
+  "/fan-zone-security",
   "/account-rejected",
   "/banned",
   "/gate",
