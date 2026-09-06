@@ -56,7 +56,7 @@ type ModAction = {
   id: string;
   user_id: string;
   actor_id: string | null;
-  action: "mute" | "unmute" | "ban" | "unban";
+  action: "mute" | "unmute" | "ban" | "unban" | "appeal" | "appeal_reply";
   reason: string | null;
   expires_at: string | null;
   created_at: string;
@@ -85,6 +85,14 @@ const ACTION_LABEL: Record<ModAction["action"], string> = {
   unmute: "Mute lifted",
   ban: "Banned",
   unban: "Ban lifted",
+  appeal: "Appealed",
+  appeal_reply: "Appeal reply",
+};
+
+const APPEAL_STATUS_LABEL: Record<Appeal["status"], string> = {
+  open: "Waiting for a reply",
+  replied: "Replied",
+  closed: "Closed",
 };
 
 function untilLabel(expiresAt: string | null): string {
@@ -309,14 +317,31 @@ function AdminReportsPage() {
     return (
       <ul className="space-y-2">
         {log.map((r) => {
-          const lifted = r.action === "unmute" || r.action === "unban";
-          const Icon = r.action === "mute" ? VolumeX : r.action === "unmute" ? Volume2 : r.action === "ban" ? Gavel : ShieldCheck;
+          const isAppeal = r.action === "appeal" || r.action === "appeal_reply";
+          const lifted = r.action === "unmute" || r.action === "unban" || r.action === "appeal_reply";
+          const Icon =
+            r.action === "mute"
+              ? VolumeX
+              : r.action === "unmute"
+                ? Volume2
+                : r.action === "ban"
+                  ? Gavel
+                  : r.action === "appeal"
+                    ? MailQuestion
+                    : r.action === "appeal_reply"
+                      ? Inbox
+                      : ShieldCheck;
+          const appealStatus = isAppeal
+            ? (appeals ?? []).find((a) => a.user_id === r.user_id)?.status
+            : undefined;
           return (
             <li key={r.id} className="rounded-xl border border-border bg-surface-1 p-3 space-y-1.5 shadow-soft">
               <div className="flex flex-wrap items-center gap-2 text-xs">
                 <span
                   className={`rounded-full px-2 py-0.5 font-semibold inline-flex items-center gap-1 border ${
-                    lifted
+                    isAppeal
+                      ? "bg-amber-500/15 border-amber-400/40 text-amber-300"
+                      : lifted
                       ? "bg-emerald-500/15 border-emerald-400/40 text-emerald-300"
                       : "bg-[#E11B22]/15 border-[#E11B22]/40 text-[#E11B22]"
                   }`}
@@ -327,7 +352,11 @@ function AdminReportsPage() {
                 <strong className="text-foreground text-sm">{names[r.user_id] ?? "Fan Zone member"}</strong>
                 <span className="text-muted-foreground">
                   by {r.actor_id ? (names[r.actor_id] ?? "staff") : "system"} · {formatLastSeen(r.created_at)}
-                  {!lifted
+                  {isAppeal
+                    ? appealStatus
+                      ? ` · now: ${APPEAL_STATUS_LABEL[appealStatus]}`
+                      : ""
+                    : !lifted
                     ? r.expires_at
                       ? ` · until ${new Date(r.expires_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}`
                       : " · permanent"
@@ -335,6 +364,22 @@ function AdminReportsPage() {
                 </span>
               </div>
               {r.reason && <div className="text-sm text-muted-foreground">{r.reason}</div>}
+              {isAppeal && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="-ml-2 h-7 px-2 text-xs"
+                  onClick={() => {
+                    const a = (appeals ?? []).find((x) => x.user_id === r.user_id);
+                    if (!a) return toast.error("That appeal is no longer available");
+                    setLogOpen(false);
+                    setAppealsOpen(true);
+                    void openAppeal(a);
+                  }}
+                >
+                  Open appeal
+                </Button>
+              )}
             </li>
           );
         })}
@@ -554,7 +599,7 @@ function AdminReportsPage() {
                 Moderation log
               </DialogTitle>
               <DialogDescription>
-                Every mute, ban and early lift in the Boro Fan Zone — who it was done to, and who did it.
+                Every mute, ban, early lift and ban appeal in the Boro Fan Zone — who it was done to, and who did it.
               </DialogDescription>
             </DialogHeader>
             <div className="max-h-[60vh] overflow-y-auto pr-1">{logList()}</div>
