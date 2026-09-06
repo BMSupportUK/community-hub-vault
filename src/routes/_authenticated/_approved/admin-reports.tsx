@@ -78,7 +78,7 @@ type AppealMsg = {
   created_at: string;
 };
 
-type MainTab = "reports" | "mutes" | "bans";
+type MainTab = "reports" | "mutes" | "bans" | "appeals";
 
 const ACTION_LABEL: Record<ModAction["action"], string> = {
   mute: "Muted",
