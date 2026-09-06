@@ -109,6 +109,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => sub.subscription.unsubscribe();
   }, []);
 
+  // Alert clips are for signed-in people only; signed-out visitors still get
+  // push notifications and mentions, just without audio.
+  useEffect(() => {
+    setSoundSignedIn(!!session?.user);
+    return () => setSoundSignedIn(false);
+  }, [session?.user?.id]);
+
+
   // Keep the signed-in user's role set fresh: Realtime on user_roles gives an
   // instant update when an admin (or the subscription sync) grants/removes a
   // role, with a polling + focus fallback in case the socket drops.
