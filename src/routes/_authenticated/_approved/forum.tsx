@@ -14,6 +14,9 @@ import { BoroLiveMatchStrip } from "@/components/app/BoroLiveMatchStrip";
 import { FanZoneNameGate } from "@/components/app/FanZoneNamePrompt";
 import { FanZoneBannedScreen } from "@/components/app/FanZoneBannedScreen";
 import { useFanZoneBan } from "@/hooks/use-fan-zone-ban";
+import { useFanZoneMute } from "@/hooks/use-fan-zone-mute";
+import { MuteCountdown } from "@/components/app/FanZoneMuteDialog";
+import { VolumeX } from "lucide-react";
 import { FanZoneMentionsBell } from "@/components/app/FanZoneMentionsBell";
 import { OnlineNowBox } from "@/components/app/OnlineNowBox";
 import { useFanAliasVersion } from "@/hooks/use-fan-alias-version";
@@ -70,6 +73,7 @@ function ForumLayout() {
   const info = useFanZoneMembership(user?.id ?? null);
   // A live Boro Fan Zone ban locks the member out of the whole zone.
   const { ban: myBan, loading: banLoading } = useFanZoneBan(user?.id ?? null);
+  const { mute: myMute } = useFanZoneMute(user?.id ?? null);
 
   useEffect(() => {
     const html = document.documentElement;
@@ -210,6 +214,14 @@ function ForumLayout() {
       <div className="mb-4">
         <BoroLiveMatchStrip />
       </div>
+      {myMute && (
+        <div className="mb-4 rounded-xl border border-amber-500/45 bg-amber-500/12 px-4 py-3 text-sm text-amber-100 flex flex-wrap items-center gap-2">
+          <VolumeX className="size-4" />
+          <strong>You're muted</strong>
+          <span className="text-amber-100/80">— “{myMute.reason}”</span>
+          <span className="ml-auto">Ends in <MuteCountdown expiresAt={myMute.expires_at} /></span>
+        </div>
+      )}
       {isNested ? <Outlet /> : <BoardsIndex />}
       <FanZoneNameGate />
     </div>
