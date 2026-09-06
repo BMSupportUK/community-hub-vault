@@ -199,8 +199,7 @@ export function FanZoneAliasSettings() {
           </div>
           <div>
             <label className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground">Bio</label>
-            <Textarea value={bio} onChange={(e) => setBio(e.target.value.slice(0, 1500))} placeholder="Tell other Boro fans a bit about yourself" maxLength={1500} rows={5} className="mt-1" />
-            <p className="text-[11px] text-muted-foreground mt-1.5 text-right">{bio.length}/1500</p>
+            <Textarea value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Tell other Boro fans a bit about yourself" rows={7} className="mt-1" />
           </div>
           <div>
             <label className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground">Favourite matchday memory</label>
