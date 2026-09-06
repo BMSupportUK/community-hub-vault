@@ -214,7 +214,7 @@ function ForumLayout() {
       <div className="mb-4">
         <BoroLiveMatchStrip />
       </div>
-      {myMute && (isNested || muteBrowsing) && (
+      {myMute && (
         <div className="mb-4 rounded-xl border border-amber-500/45 bg-amber-500/12 px-4 py-3 text-sm text-amber-100 flex flex-wrap items-center gap-2">
           <VolumeX className="size-4" />
           <strong>You're muted</strong>
@@ -224,18 +224,6 @@ function ForumLayout() {
       )}
       {isNested ? (
         <Outlet />
-      ) : muteLoading ? (
-        <div className="flex min-h-72 items-center justify-center" aria-label="Checking Fan Zone access">
-          <Loader2 className="size-6 animate-spin text-white/70" />
-        </div>
-      ) : myMute && !muteBrowsing ? (
-        <FanZoneMutedScreen
-          expiresAt={myMute.expires_at}
-          reason={myMute.reason}
-          mutedBy={myMute.muted_by_name}
-          returnTo="/forum"
-          onKeepReading={() => setMuteBrowsing(true)}
-        />
       ) : (
         <BoardsIndex />
       )}
