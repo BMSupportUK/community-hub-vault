@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, useMemo } from "react";
 import { ArrowLeft, Loader2, MessageSquare, Ban, ShieldOff, Heart, Clock, Quote, UserCheck, UserPlus, Lock } from "lucide-react";
+import { FanZoneProfileFacts } from "@/components/app/FanZoneProfileFacts";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { FanZoneNameGate } from "@/components/app/FanZoneNamePrompt";
@@ -272,33 +273,13 @@ function FanProfilePage() {
                 This member has blocked you. You can't message them.
               </div>
             )}
-            {p.bio && (
-              <div>
-                <div className="text-[11px] uppercase tracking-wider font-semibold text-white/70 mb-1">Bio</div>
-                <p className="text-sm whitespace-pre-wrap leading-relaxed">{p.bio}</p>
-              </div>
-            )}
-            {p.fav_player && (
-              <div className="flex items-start gap-2">
-                <Heart className="size-4 text-[#E11B22] mt-0.5 shrink-0" />
-                <div>
-                  <div className="text-[11px] uppercase tracking-wider font-semibold text-white/70">Favourite player</div>
-                  <p className="text-sm font-medium">{p.fav_player}</p>
-                </div>
-              </div>
-            )}
-            {p.matchday_memory && (
-              <div className="flex items-start gap-2">
-                <Quote className="size-4 text-[#E11B22] mt-0.5 shrink-0" />
-                <div>
-                  <div className="text-[11px] uppercase tracking-wider font-semibold text-white/70">Matchday memory</div>
-                  <p className="text-sm italic">"{p.matchday_memory}"</p>
-                </div>
-              </div>
-            )}
-            {!p.bio && !p.fav_player && !p.matchday_memory && (
-              <p className="text-sm text-white/60 italic">No profile info yet.</p>
-            )}
+            <FanZoneProfileFacts
+              bio={p.bio}
+              supporterSince={p.supporter_since}
+              favPlayer={p.fav_player}
+              matchdayMemory={p.matchday_memory}
+            />
+
 
             {!isSelf && (
               <div className="flex flex-wrap gap-2 pt-2 border-t border-white/10">

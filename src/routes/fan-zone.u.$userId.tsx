@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, Award, Clock, FileText, Heart, Lock, MessageSquare, Quote, ThumbsUp, Users } from "lucide-react";
+import { FanZoneProfileFacts } from "@/components/app/FanZoneProfileFacts";
 import { getPublicFanProfile } from "@/lib/fan-zone-public.functions";
 import { Button } from "@/components/ui/button";
 import boroDefaultAvatar from "@/assets/boro-default-avatar.png";
@@ -93,33 +94,13 @@ function PublicFanProfilePage() {
             </div>
 
             <div className="space-y-5 p-6">
-              {p.bio && (
-                <div>
-                  <div className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-white/70">Bio</div>
-                  <p className="whitespace-pre-wrap text-sm leading-relaxed">{p.bio}</p>
-                </div>
-              )}
-              {p.fav_player && (
-                <div className="flex items-start gap-2">
-                  <Heart className="mt-0.5 size-4 shrink-0 text-[#E11B22]" />
-                  <div>
-                    <div className="text-[11px] font-semibold uppercase tracking-wider text-white/70">Favourite player</div>
-                    <p className="text-sm font-medium">{p.fav_player}</p>
-                  </div>
-                </div>
-              )}
-              {p.matchday_memory && (
-                <div className="flex items-start gap-2">
-                  <Quote className="mt-0.5 size-4 shrink-0 text-[#E11B22]" />
-                  <div>
-                    <div className="text-[11px] font-semibold uppercase tracking-wider text-white/70">Matchday memory</div>
-                    <p className="text-sm italic">"{p.matchday_memory}"</p>
-                  </div>
-                </div>
-              )}
-              {!p.bio && !p.fav_player && !p.matchday_memory && (
-                <p className="text-sm italic text-white/60">No profile info yet.</p>
-              )}
+              <FanZoneProfileFacts
+                bio={p.bio}
+                supporterSince={p.supporter_since}
+                favPlayer={p.fav_player}
+                matchdayMemory={p.matchday_memory}
+              />
+
               <div className="rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-xs text-white/70">
                 Join the Boro Fan Zone to message members, add friends and post in the forums.
               </div>
