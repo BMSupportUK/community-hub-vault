@@ -39,7 +39,27 @@ export function useFanZoneBan(userId: string | null | undefined) {
     void refresh();
   }, [refresh, userId]);
 
+  // Live updates: the ban screen appears (and lifts) without a refresh.
+  useEffect(() => {
+    if (!userId) return;
+    const ch = supabase
+      .channel(`fan-zone-ban-${userId}-${Math.random().toString(36).slice(2)}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "fan_zone_bans", filter: `user_id=eq.${userId}` },
+        () => void refresh(),
+      )
+      .subscribe();
+    const onFocus = () => void refresh();
+    window.addEventListener("focus", onFocus);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      void supabase.removeChannel(ch);
+    };
+  }, [userId, refresh]);
+
   // Release the screen automatically the moment a timed ban expires.
+
   useEffect(() => {
     if (!ban || !ban.expires_at) return;
     const ms = Date.parse(ban.expires_at) - Date.now();

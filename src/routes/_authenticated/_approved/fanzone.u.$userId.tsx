@@ -125,9 +125,14 @@ function FanProfilePage() {
 
   useEffect(() => { if (canEnter) void load(); }, [userId, canEnter]);
 
+  // These hooks must run on every render — never behind the "members only" return.
+  const { mute: theirMute, refresh: refreshMute } = useFanZoneMute(canModerate ? userId : null);
+  const { ban: theirBan, refresh: refreshBan } = useFanZoneBan(canModerate ? userId : null);
+
   if (!canEnter) {
     return <div className="p-6 text-sm text-center">Members only.</div>;
   }
+
 
   const startDm = async () => {
     setBusy(true);
@@ -175,9 +180,8 @@ function FanProfilePage() {
   };
 
   const isSelf = user?.id === userId;
-  const { mute: theirMute, refresh: refreshMute } = useFanZoneMute(canModerate ? userId : null);
-  const { ban: theirBan, refresh: refreshBan } = useFanZoneBan(canModerate ? userId : null);
   const isFriend = friendRel.kind === "friends";
+
   const mainLocked = fanPrivate && !isSelf && !isStaff && !isFriend;
 
   return (

@@ -172,12 +172,20 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
   const name = (inFanZone && fanProfile?.fan_alias) || supportName;
   const handle = profile?.username ? `@${profile.username}` : (user.email ?? "");
   const initial = name.slice(0, 2).toUpperCase();
-  const topRole = roles[0] ?? "member";
+  const supportRole = roles[0] ?? "member";
+  // Inside the Boro Fan Zone the box shows a Fan Zone role, never the BM Support one.
+  const fanRole = roles.includes("admin")
+    ? "Owner"
+    : roles.includes("boro_fan_zone_moderator") || roles.includes("moderator")
+      ? "Fan Zone moderator"
+      : "Fan Zone member";
+  const topRole = inFanZone ? fanRole : supportRole;
   const FLASH_PRIORITY: FlashRole[] = ["admin", "management", "moderator", "staff"];
   const flashRole = FLASH_PRIORITY.find((r) => roles.includes(r)) ?? null;
   const flashCls = roleFlashClass(flashRole);
   const supportAvatar = resolveAvatarUrl(user.id, profile?.avatar_url, roleFlashMap);
   const resolvedAvatar = inFanZone ? (fanProfile?.fan_avatar_url ?? supportAvatar) : supportAvatar;
+
   const isDnd = presence.kind === "dnd";
   const statusLabel = presence.shortLabel;
   const trigger =
@@ -295,12 +303,14 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
       >
         <div className="relative p-4 pb-3 overflow-hidden">
           <Nameplate
-            id={profile?.equipped_nameplate_id ?? null}
+            id={inFanZone ? null : (profile?.equipped_nameplate_id ?? null)}
             className="absolute inset-0"
             fallbackStyle={{
-              background:
-                "linear-gradient(to bottom right, hsl(var(--primary)/0.3), hsl(330 80% 60% / 0.2), hsl(220 80% 60% / 0.2))",
+              background: inFanZone
+                ? "linear-gradient(to bottom right, rgba(225,27,34,0.35), rgba(139,15,20,0.3), rgba(11,26,43,0.4))"
+                : "linear-gradient(to bottom right, hsl(var(--primary)/0.3), hsl(330 80% 60% / 0.2), hsl(220 80% 60% / 0.2))",
             }}
+
           />
           <div className="relative flex items-center gap-3">
             <Avatar className="h-14 w-14 ring-2 ring-background shadow-lg">
