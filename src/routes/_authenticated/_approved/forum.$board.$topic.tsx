@@ -983,6 +983,23 @@ function TopicPage() {
               )}
             </h2>
           )}
+          {(() => {
+            // Same page controls as the bottom of the replies list, kept beside the title.
+            const topPages = Math.max(1, Math.ceil((topic.reply_count ?? 0) / REPLIES_PER_PAGE));
+            if (tab !== "reply" || topPages <= 1) return null;
+            const safe = Math.min(page, topPages);
+            return (
+              <div className="flex items-center gap-2 shrink-0">
+                <Button size="sm" variant="outline" disabled={safe <= 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
+                  Previous
+                </Button>
+                <span className="text-xs text-muted-foreground whitespace-nowrap">Page {safe} of {topPages}</span>
+                <Button size="sm" variant="outline" disabled={safe >= topPages} onClick={() => setPage((p) => Math.min(topPages, p + 1))}>
+                  Next
+                </Button>
+              </div>
+            );
+          })()}
           {isBoardMod && (
             <div className="flex gap-1.5">
               <Button size="sm" variant="outline" onClick={toggleSticky}>{topic.is_sticky ? "Unpin" : "Pin"}</Button>
