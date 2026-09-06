@@ -1787,6 +1787,7 @@ export type Database = {
           is_private: boolean
           matchday_memory: string | null
           note: string | null
+          privacy_audience: string
           reason: string | null
           requested_at: string
           status: Database["public"]["Enums"]["fan_zone_status"]
@@ -1804,6 +1805,7 @@ export type Database = {
           is_private?: boolean
           matchday_memory?: string | null
           note?: string | null
+          privacy_audience?: string
           reason?: string | null
           requested_at?: string
           status?: Database["public"]["Enums"]["fan_zone_status"]
@@ -1821,6 +1823,7 @@ export type Database = {
           is_private?: boolean
           matchday_memory?: string | null
           note?: string | null
+          privacy_audience?: string
           reason?: string | null
           requested_at?: string
           status?: Database["public"]["Enums"]["fan_zone_status"]
@@ -1887,6 +1890,27 @@ export type Database = {
           reason?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      fan_zone_profile_viewers: {
+        Row: {
+          created_at: string
+          id: string
+          owner_id: string
+          viewer_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          owner_id: string
+          viewer_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          owner_id?: string
+          viewer_id?: string
         }
         Relationships: []
       }
@@ -6069,6 +6093,10 @@ export type Database = {
         Returns: string
       }
       fan_zone_block: { Args: { _other: string }; Returns: undefined }
+      fan_zone_can_view_profile: {
+        Args: { _owner: string; _viewer: string }
+        Returns: boolean
+      }
       fan_zone_default_avatar_url: { Args: never; Returns: string }
       fan_zone_moderator_avatar: { Args: never; Returns: string }
       fan_zone_mute: {
@@ -6078,7 +6106,9 @@ export type Database = {
       fan_zone_privacy: {
         Args: { _ids: string[] }
         Returns: {
+          can_view: boolean
           is_private: boolean
+          privacy_audience: string
           user_id: string
         }[]
       }
@@ -6089,7 +6119,14 @@ export type Database = {
           user_id: string
         }[]
       }
-      fan_zone_set_privacy: { Args: { _private: boolean }; Returns: boolean }
+      fan_zone_set_privacy: {
+        Args: { _audience?: string; _private: boolean }
+        Returns: boolean
+      }
+      fan_zone_set_profile_viewers: {
+        Args: { _viewers: string[] }
+        Returns: number
+      }
       fan_zone_staff_directory: {
         Args: never
         Returns: {
@@ -6218,6 +6255,7 @@ export type Database = {
         Args: { _user_id: string }
         Returns: {
           bio: string
+          can_view: boolean
           fan_alias: string
           fan_avatar_url: string
           fav_player: string
