@@ -124,10 +124,8 @@ export function FanZoneBannedScreen({ expiresAt, reason, bannedBy, returnTo = "/
             </div>
           )}
 
-          <p className="text-center text-xs text-white/45">
-            Think this is a mistake? Reply to the ban notice email and a moderator will take another
-            look.
-          </p>
+          <FanZoneAppealPanel />
+
         </div>
       </div>
     </div>
