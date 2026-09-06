@@ -77,22 +77,46 @@ export function FanZoneBanDialog({
     setBusy(false);
     if (error) return toast.error("Couldn't lift the ban", { description: error.message });
     toast.success(`${alias} can enter the Boro Fan Zone again`);
+    setConfirmOpen(false);
     onChanged();
   };
 
   if (ban) {
     return (
-      <Button
-        onClick={() => void unban()}
-        disabled={busy}
-        variant="outline"
-        size={compact ? "sm" : "default"}
-        title={`Banned: ${ban.reason} — click to lift the ban`}
-        className="bg-[#E11B22]/15 border-[#E11B22]/50 text-rose-200 hover:bg-[#E11B22]/25 hover:text-white"
-      >
-        {busy ? <Loader2 className="size-4 mr-1 animate-spin" /> : <ShieldCheck className="size-4 mr-1" />}
-        Banned <BanCountdown expiresAt={ban.expires_at} />
-      </Button>
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogTrigger asChild>
+          <Button
+            disabled={busy}
+            variant="outline"
+            size={compact ? "sm" : "default"}
+            title={`Banned: ${ban.reason} — click to lift the ban`}
+            className="bg-[#E11B22]/15 border-[#E11B22]/50 text-rose-200 hover:bg-[#E11B22]/25 hover:text-white"
+          >
+            {busy ? <Loader2 className="size-4 mr-1 animate-spin" /> : <ShieldCheck className="size-4 mr-1" />}
+            Banned <BanCountdown expiresAt={ban.expires_at} />
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Lift the ban on {alias} early?</AlertDialogTitle>
+            <AlertDialogDescription>
+              They'll get straight back into the Boro Fan Zone before the ban was due to end
+              {ban.expires_at ? "" : " (this ban is permanent)"}. This is recorded in the moderation log against your
+              name.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={busy}>Keep the ban</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={busy}
+              onClick={(e) => { e.preventDefault(); void unban(); }}
+            >
+              {busy ? <Loader2 className="size-4 mr-1 animate-spin" /> : null}
+              Lift the ban
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     );
   }
 
