@@ -1554,6 +1554,65 @@ export type Database = {
         }
         Relationships: []
       }
+      fan_zone_appeal_messages: {
+        Row: {
+          appeal_id: string
+          author_id: string
+          body: string
+          created_at: string
+          from_staff: boolean
+          id: string
+        }
+        Insert: {
+          appeal_id: string
+          author_id: string
+          body: string
+          created_at?: string
+          from_staff?: boolean
+          id?: string
+        }
+        Update: {
+          appeal_id?: string
+          author_id?: string
+          body?: string
+          created_at?: string
+          from_staff?: boolean
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fan_zone_appeal_messages_appeal_id_fkey"
+            columns: ["appeal_id"]
+            isOneToOne: false
+            referencedRelation: "fan_zone_appeals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fan_zone_appeals: {
+        Row: {
+          created_at: string
+          id: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       fan_zone_bans: {
         Row: {
           banned_by: string | null
@@ -5976,6 +6035,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      fan_zone_appeal_staff: { Args: never; Returns: boolean }
       fan_zone_avatar_locked: { Args: { _user_id: string }; Returns: boolean }
       fan_zone_ban: {
         Args: { _minutes: number; _reason: string; _user_id: string }
