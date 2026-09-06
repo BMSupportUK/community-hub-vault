@@ -260,52 +260,87 @@ function FanZoneAppealsPage() {
           </Button>
         </div>
 
-        <header className="flex items-center gap-2">
-          <MailQuestion className="size-5 text-[#E11B22]" />
-          <h1 className="font-display font-bold text-xl">Ban appeals</h1>
+        <header className="relative overflow-hidden rounded-2xl border border-[#E11B22]/40 bg-gradient-to-r from-[#E11B22]/25 via-surface-2 to-surface-1 p-5 shadow-soft">
+          <div className="absolute -right-10 -top-12 size-40 rounded-full bg-[#E11B22]/20 blur-3xl" />
+          <div className="relative flex items-center gap-3">
+            <span className="grid size-11 place-items-center rounded-xl border border-[#E11B22]/50 bg-[#E11B22]/20 text-[#ff6b70]">
+              <MailQuestion className="size-5" />
+            </span>
+            <div>
+              <h1 className="font-display font-bold text-2xl tracking-tight">Ban appeals</h1>
+              <p className="text-xs text-muted-foreground">
+                Boro Fan Zone · review and reply to members appealing a ban
+              </p>
+            </div>
+          </div>
         </header>
 
         {active ? (
-          <div className="space-y-3">
+          <div className="space-y-4">
             <Button variant="ghost" size="sm" className="-ml-2" onClick={() => setActive(null)}>
               <ArrowLeft className="size-4 mr-1" />
               All appeals
             </Button>
-            <h2 className="font-semibold">
-              Appeal from {names[active.user_id] ?? "a Fan Zone member"}
-            </h2>
-            <p className="text-xs text-muted-foreground">
-              Your reply is kept here and emailed to the member.
-            </p>
-            {msgs === null ? (
-              <div className="grid place-items-center py-10 text-muted-foreground">
-                <Loader2 className="size-5 animate-spin" />
+
+            <div className="overflow-hidden rounded-2xl border border-border bg-surface-1 shadow-soft">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-gradient-to-r from-[#E11B22]/15 to-transparent px-4 py-3">
+                <div>
+                  <h2 className="font-display font-bold">
+                    Appeal from {names[active.user_id] ?? "a Fan Zone member"}
+                  </h2>
+                  <p className="text-[11px] text-muted-foreground">
+                    Your reply is kept here and emailed to the member.
+                  </p>
+                </div>
+                {statusPill(active.status)}
               </div>
-            ) : (
-              <ul className="space-y-2">
-                {msgs.map((m) => (
-                  <li
-                    key={m.id}
-                    className={`rounded-xl border p-3 text-sm ${
-                      m.from_staff ? "border-emerald-400/40 bg-emerald-500/10" : "border-border bg-surface-1"
-                    }`}
-                  >
-                    <div className="mb-1 text-[10px] uppercase tracking-wide text-muted-foreground">
-                      {names[m.author_id] ?? (m.from_staff ? "Moderator" : "Member")} · {formatLastSeen(m.created_at)}
-                    </div>
-                    <p className="whitespace-pre-wrap">{m.body}</p>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <Textarea
-              rows={4}
-              maxLength={2000}
-              value={replyBody}
-              onChange={(e) => setReplyBody(e.target.value)}
-              placeholder="Write your reply…"
-            />
-            <div className="flex flex-wrap justify-end gap-2">
+
+              {msgs === null ? (
+                <div className="grid place-items-center py-10 text-muted-foreground">
+                  <Loader2 className="size-5 animate-spin" />
+                </div>
+              ) : (
+                <ul className="space-y-3 p-4">
+                  {msgs.map((m) => (
+                    <li
+                      key={m.id}
+                      className={`flex ${m.from_staff ? "justify-end" : "justify-start"}`}
+                    >
+                      <div
+                        className={`max-w-[85%] rounded-2xl border px-4 py-2.5 text-sm shadow-soft ${
+                          m.from_staff
+                            ? "rounded-br-md border-emerald-400/45 bg-gradient-to-br from-emerald-500/20 to-emerald-500/5"
+                            : "rounded-bl-md border-[#E11B22]/35 bg-gradient-to-br from-[#E11B22]/15 to-transparent"
+                        }`}
+                      >
+                        <div
+                          className={`mb-1 text-[10px] font-semibold uppercase tracking-wider ${
+                            m.from_staff ? "text-emerald-300" : "text-[#ff8a8e]"
+                          }`}
+                        >
+                          {names[m.author_id] ?? (m.from_staff ? "Moderator" : "Member")} ·{" "}
+                          <span className="text-muted-foreground font-normal normal-case tracking-normal">
+                            {formatLastSeen(m.created_at)}
+                          </span>
+                        </div>
+                        <p className="whitespace-pre-wrap leading-relaxed">{m.body}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            <div className="rounded-2xl border border-border bg-surface-1 p-4 shadow-soft space-y-3">
+              <Textarea
+                rows={4}
+                maxLength={2000}
+                value={replyBody}
+                onChange={(e) => setReplyBody(e.target.value)}
+                placeholder="Write your reply…"
+                className="resize-none border-border/70 bg-surface-2 focus-visible:ring-[#E11B22]/50"
+              />
+              <div className="flex flex-wrap items-center justify-end gap-2">
               <Button
                 variant="outline"
                 size="sm"
