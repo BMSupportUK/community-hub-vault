@@ -4,6 +4,7 @@ import type { TemplateEntry } from './registry'
 
 const ZONE_NAME = 'Boro Fan Zone'
 export const FAN_ZONE_APPEAL_EMAIL = 'bmsupport2022@protonmail.com'
+const SITE_URL = 'https://bmsupport.uk'
 
 interface Props {
   displayName?: string
@@ -98,5 +99,16 @@ const infoCard = { background: '#f8fafc', border: '1px solid #e2e8f0', borderRad
 const appealCard = { background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: '8px', padding: '16px 20px', margin: '16px 0' }
 const cardLabel = { fontSize: '12px', color: '#9a3412', textTransform: 'uppercase' as const, letterSpacing: '0.5px', margin: '0 0 6px', fontWeight: 'bold' as const }
 const link = { color: '#E11B22', fontWeight: 'bold' as const, textDecoration: 'underline' }
+const smallText = { fontSize: '12px', color: '#666', lineHeight: '1.6', margin: '8px 0 0' }
+const button = {
+  display: 'inline-block',
+  background: '#E11B22',
+  color: '#ffffff',
+  fontWeight: 'bold' as const,
+  fontSize: '14px',
+  padding: '10px 18px',
+  borderRadius: '6px',
+  textDecoration: 'none',
+}
 const hr = { borderColor: '#eee', margin: '24px 0' }
 const footer = { fontSize: '12px', color: '#999', margin: '0 0 6px' }
