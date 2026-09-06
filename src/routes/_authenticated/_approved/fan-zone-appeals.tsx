@@ -47,6 +47,12 @@ type BanInfo = {
   expires_at: string | null;
 };
 
+function isBanActive(ban: BanInfo | undefined) {
+  if (!ban) return false;
+  if (ban.expires_at === null) return true;
+  return Date.parse(ban.expires_at) > Date.now();
+}
+
 
 function FanZoneAppealsPage() {
   const { hasAny } = useAuth();
