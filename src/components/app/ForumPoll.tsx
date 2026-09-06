@@ -203,11 +203,11 @@ function ForumPollComponent({
   }
 
   return (
-    <section className="rounded-2xl border border-[#E11B22]/40 bg-gradient-to-br from-surface-1 to-surface-2/60 p-4 sm:p-5 shadow-soft">
-      <div className="flex items-start justify-between gap-3 mb-3">
-        <div className="flex items-center gap-2 min-w-0">
+    <section className="w-full min-w-0 max-w-full overflow-hidden rounded-lg border border-[#E11B22]/40 bg-gradient-to-br from-surface-1 to-surface-2/60 p-3 shadow-soft sm:p-4">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 mb-3">
+        <div className="flex min-w-0 items-start gap-2">
           <BarChart3 className="size-4 text-[#E11B22] shrink-0" />
-          <h3 className="font-display font-bold text-sm sm:text-base truncate">{poll.question}</h3>
+          <h3 className="min-w-0 break-words font-display text-sm font-bold leading-snug sm:text-base">{poll.question}</h3>
         </div>
         {canManage && (
           <div className="flex items-center gap-1 shrink-0">
@@ -241,19 +241,19 @@ function ForumPollComponent({
                 className={`absolute inset-y-0 left-0 ${mine ? "bg-[#E11B22]/25" : "bg-surface-2"}`}
                 style={{ width: `${pct}%` }}
               />
-              <span className="relative flex items-center justify-between gap-2 px-3 py-2 text-sm">
-                <span className="font-medium truncate">{o.label}</span>
-                <span className="text-xs tabular-nums text-muted-foreground shrink-0">{pct}% · {count}</span>
+              <span className="relative grid min-w-0 grid-cols-1 gap-1 px-3 py-2.5 text-sm">
+                <span className="min-w-0 break-words font-medium leading-snug">{o.label}</span>
+                <span className="text-[11px] tabular-nums text-muted-foreground">{pct}% · {count} vote{count === 1 ? "" : "s"}</span>
               </span>
             </button>
           );
         })}
       </div>
-      <div className="mt-2.5 text-[11px] text-muted-foreground flex items-center gap-2 flex-wrap">
+      <div className="mt-3 grid gap-1 border-t border-border/60 pt-2.5 text-[11px] leading-relaxed text-muted-foreground">
         <span>{totalVotes} vote{totalVotes === 1 ? "" : "s"}</span>
-        {poll.allow_multiple && <span>· Multiple choice</span>}
-        {closed ? <span>· Closed {poll.closes_at ? new Date(poll.closes_at).toLocaleString("en-GB") : ""}</span> : poll.closes_at && <span>· Closes {new Date(poll.closes_at).toLocaleString("en-GB")}</span>}
-        {!canVote && !canManage && <span>· Members only</span>}
+        {poll.allow_multiple && <span>Multiple choice</span>}
+        {closed ? <span>Closed {poll.closes_at ? new Date(poll.closes_at).toLocaleString("en-GB") : ""}</span> : poll.closes_at && <span>Closes {new Date(poll.closes_at).toLocaleString("en-GB")}</span>}
+        {!canVote && !canManage && <span>Members only</span>}
       </div>
     </section>
   );
