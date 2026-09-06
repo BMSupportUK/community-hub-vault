@@ -21,6 +21,19 @@ const activeGestureElements = new Set<HTMLAudioElement>();
 const registeredSources = new Set<string>();
 const pendingPlayback = new Map<string, () => void>();
 
+// ---------- Signed-in gate ----------
+// Alert clips only play while someone is actually signed in on this device.
+// Signed-out visitors still get push notifications / mentions, just no audio.
+let signedIn = false;
+
+export function setSoundSignedIn(next: boolean) {
+  signedIn = next;
+}
+
+export function isSoundSignedIn() {
+  return signedIn;
+}
+
 let ctx: AudioContext | null = null;
 let unlocked = false;
 let listenersAttached = false;
@@ -210,6 +223,7 @@ export function playSound(
     console.warn("[sound] ignored playback with no source", opts.label ?? "");
     return Promise.resolve(false);
   }
+  if (!signedIn) return Promise.resolve(false);
   if (getSoundPrefs().muted) return Promise.resolve(false);
 
   // Collapse an identical sound that is already waiting in the queue.
@@ -274,7 +288,9 @@ function playNow(
   } catch { /* noop */ }
 
   const prefs = getSoundPrefs();
+  if (!signedIn) return Promise.resolve(false);
   if (prefs.muted) return Promise.resolve(false);
+
 
   const { volume = 1.0, gain = 1.0, label } = opts;
   const name = label ?? src;
