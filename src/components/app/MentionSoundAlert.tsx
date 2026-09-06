@@ -19,11 +19,8 @@ const ALERT_KINDS = ["mention", "staff_mention", "ticket_help_requested"] as con
 /** Dane J — gets a bespoke voice clip when BM Support needs him mid Fan Zone. */
 const DANE_USER_ID = "73c113ce-ce1b-43f0-af24-c2a36cf0d8e7";
 
-const FAN_ZONE_PREFIXES = ["/forum", "/fan-zone", "/fanzone", "/boro-predictions"];
 
-/** Where the person is standing right now, not where the notification points. */
-const isViewingFanZone = () =>
-  typeof window !== "undefined" && FAN_ZONE_PREFIXES.some((p) => window.location.pathname.startsWith(p));
+
 
 /** Boro Fan Zone mentions get their own clip, kept separate from BM Support. */
 const isFanZoneMention = (row: MentionNotification) => !!row.link_path && row.link_path.startsWith("/forum");
