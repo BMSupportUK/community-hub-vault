@@ -483,11 +483,20 @@ function AdminReportsPage() {
             <TabsTrigger value="reports">Reports</TabsTrigger>
             <TabsTrigger value="mutes">Mutes</TabsTrigger>
             <TabsTrigger value="bans">Bans</TabsTrigger>
+            <TabsTrigger value="appeals" className="relative gap-1.5">
+              Appeals
+              {openCount > 0 && (
+                <span className="rounded-full bg-[#E11B22] px-1.5 py-0.5 text-[10px] font-bold text-white">
+                  {openCount}
+                </span>
+              )}
+            </TabsTrigger>
           </TabsList>
         </Tabs>
 
         {tab === "mutes" && sanctionList("mute", mutes)}
         {tab === "bans" && sanctionList("ban", bans)}
+        {tab === "appeals" && appealsList()}
 
         <Dialog
           open={appealsOpen}
