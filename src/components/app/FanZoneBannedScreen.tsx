@@ -72,7 +72,26 @@ export function FanZoneBannedScreen({ expiresAt, reason, bannedBy, returnTo = "/
     { label: "sec", value: s },
   ];
 
-  const countdown = permanent ? (
+  const continueButton = onContinue ? (
+    <Button onClick={onContinue} className="bg-[#E11B22] text-white hover:bg-[#c5161c]">
+      Continue to the Fan Zone
+      <ArrowRight className="ml-1.5 size-4" />
+    </Button>
+  ) : (
+    <Button asChild className="bg-[#E11B22] text-white hover:bg-[#c5161c]">
+      <Link to={returnTo}>
+        Continue to the Fan Zone
+        <ArrowRight className="ml-1.5 size-4" />
+      </Link>
+    </Button>
+  );
+
+  const countdown = lifted ? (
+    <div className="space-y-3 rounded-xl border border-emerald-400/40 bg-emerald-500/15 px-4 py-4 text-center">
+      <p className="text-sm font-semibold text-white">Your ban has been lifted.</p>
+      {continueButton}
+    </div>
+  ) : permanent ? (
     <div className="flex flex-col items-center gap-2 rounded-xl border border-[#E11B22]/40 bg-black/30 px-4 py-6 text-center">
       <ShieldBan className="size-6 text-[#E11B22]" />
       <span className="font-display text-lg font-black uppercase tracking-wide text-white">
@@ -82,12 +101,7 @@ export function FanZoneBannedScreen({ expiresAt, reason, bannedBy, returnTo = "/
   ) : expired ? (
     <div className="space-y-3 rounded-xl border border-emerald-400/40 bg-emerald-500/15 px-4 py-4 text-center">
       <p className="text-sm font-semibold text-white">Your ban has been served — welcome back.</p>
-      <Button asChild className="bg-[#E11B22] text-white hover:bg-[#c5161c]">
-        <Link to={returnTo}>
-          Return to the Fan Zone
-          <ArrowRight className="ml-1.5 size-4" />
-        </Link>
-      </Button>
+      {continueButton}
     </div>
   ) : (
     <div className="rounded-xl border border-white/15 bg-black/30 px-3 py-3 sm:px-4 sm:py-4">
