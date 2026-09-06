@@ -2,6 +2,7 @@ import { createFileRoute, Outlet, useRouterState, Navigate } from "@tanstack/rea
 import { lazy, Suspense, useEffect, useState, type ReactNode } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { isFanZonePath } from "@/lib/fan-zone-nav";
+import { FanZoneBanGate } from "@/components/app/FanZoneBanGate";
 import { isPageAllowed, pageKeyForPath, usePagePermissions } from "@/lib/page-access";
 
 const ApprovedDeferredExtras = lazy(() =>
