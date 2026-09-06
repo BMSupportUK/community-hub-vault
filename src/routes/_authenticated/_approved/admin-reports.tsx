@@ -1,10 +1,20 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
-import { ArrowLeft, Check, Loader2, RefreshCw, Trash2, Flag, VolumeX, Gavel } from "lucide-react";
+import { ArrowLeft, Check, Loader2, RefreshCw, Trash2, Flag, VolumeX, Gavel, ScrollText, Volume2, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { formatLastSeen } from "@/lib/relative-time";
 import { toast } from "sonner";
 
