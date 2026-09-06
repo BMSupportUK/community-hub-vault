@@ -271,24 +271,16 @@ export function BoroLiveMatchStrip() {
     <>
       <div className="group mb-5 w-full overflow-hidden rounded-xl border border-[#E11B22]/45 bg-black/70 backdrop-blur-md shadow-[0_10px_30px_-14px_rgba(225,27,34,0.6)] text-left transition hover:border-[#E11B22]/80">
         <div className="flex items-stretch">
-          <div className="flex items-center gap-1.5 px-3 py-2.5 bg-gradient-to-b from-[#E11B22] to-[#8B0F14] text-white shrink-0">
-            {live?.inPlay ? (
-              <>
-                <span className="relative flex size-2.5">
-                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-white/80" />
-                  <span className="relative inline-flex size-2.5 rounded-full bg-white" />
-                </span>
-                <span className="text-[10px] font-black uppercase tracking-[0.18em]">Live</span>
-              </>
-            ) : (
-              <>
-                <Radio className="size-3.5" />
-                <span className="text-[10px] font-black uppercase tracking-[0.18em] hidden sm:inline">
-                  Match centre
-                </span>
-              </>
-            )}
-          </div>
+          {live?.inPlay && (
+            <div className="flex items-center gap-1.5 px-3 py-2.5 bg-gradient-to-b from-[#E11B22] to-[#8B0F14] text-white shrink-0">
+              <span className="relative flex size-2.5">
+                <span className="absolute inline-flex size-full animate-ping rounded-full bg-white/80" />
+                <span className="relative inline-flex size-2.5 rounded-full bg-white" />
+              </span>
+              <span className="text-[10px] font-black uppercase tracking-[0.18em]">Live</span>
+            </div>
+          )}
+
 
           <div className="flex-1 min-w-0 px-3 py-2 flex items-center gap-3">
             {live ? (
