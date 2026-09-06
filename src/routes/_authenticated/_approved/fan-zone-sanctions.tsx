@@ -74,17 +74,22 @@ function untilLabel(expiresAt: string | null): string {
   return `${rest}m left`;
 }
 
+type Tab = "mutes" | "past-mutes" | "bans" | "past-bans";
+
 function FanZoneSanctionsPage() {
   const { hasAny } = useAuth();
   const allowed = hasAny(["admin", "management", "moderator", "boro_fan_zone_moderator"]);
-  const [tab, setTab] = useState<"mutes" | "bans">("mutes");
+  const [tab, setTab] = useState<Tab>("mutes");
   const [busyId, setBusyId] = useState<string | null>(null);
   const [mutes, setMutes] = useState<Sanction[] | null>(null);
   const [bans, setBans] = useState<Sanction[] | null>(null);
+  const [pastMutes, setPastMutes] = useState<Sanction[] | null>(null);
+  const [pastBans, setPastBans] = useState<Sanction[] | null>(null);
   const [names, setNames] = useState<Record<string, string>>({});
   const [log, setLog] = useState<ModAction[] | null>(null);
   const [logUser, setLogUser] = useState<{ id: string; kind: "mute" | "ban" } | null>(null);
   const [confirmLift, setConfirmLift] = useState<{ kind: "mute" | "ban"; row: Sanction } | null>(null);
+
 
   const loadNames = useCallback(async (ids: string[]) => {
     const missing = Array.from(new Set(ids.filter(Boolean)));
