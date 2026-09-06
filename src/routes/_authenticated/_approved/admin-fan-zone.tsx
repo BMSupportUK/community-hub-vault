@@ -501,9 +501,6 @@ function AdminFanZonePage() {
             </div>
             <Tabs value={presenceTab} onValueChange={(v) => setPresenceTab(v as PresenceTab)}>
               <TabsList className="bg-transparent p-0 h-auto gap-1">
-                <TabsTrigger value="all" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
-                  All
-                </TabsTrigger>
                 <TabsTrigger value="online" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
                   <span className="size-1.5 rounded-full bg-emerald-400 mr-1.5" /> Online
                   {presenceCounts.online > 0 && <span className="ml-1.5 text-xs text-emerald-400">{presenceCounts.online}</span>}
