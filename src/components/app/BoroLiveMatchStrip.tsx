@@ -536,8 +536,8 @@ export function BoroLiveMatchStrip() {
               </div>
             );
           })()}
-        </DialogContent>
-      </Dialog>
+        </SheetContent>
+      </Sheet>
     </>
   );
 }
