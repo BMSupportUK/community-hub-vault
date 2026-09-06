@@ -90,6 +90,8 @@ function AdminReportsPage() {
   const [mutes, setMutes] = useState<Sanction[] | null>(null);
   const [bans, setBans] = useState<Sanction[] | null>(null);
   const [names, setNames] = useState<Record<string, string>>({});
+  const [log, setLog] = useState<ModAction[] | null>(null);
+  const [confirmLift, setConfirmLift] = useState<{ kind: "mute" | "ban"; row: Sanction } | null>(null);
 
   const load = async () => {
     setRows(null);
