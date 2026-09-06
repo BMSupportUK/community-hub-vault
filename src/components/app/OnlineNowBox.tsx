@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { setFanZonePresenceIdentity, subscribeFanZonePresence } from "@/lib/fan-zone-presence";
 
-const STAFF_ROLES = ["admin", "management", "moderator", "boro_fan_zone_moderator"];
+const STAFF_ROLES = ["admin", "management", "moderator", "boro_fan_zone_moderator"] as const;
 
 /**
  * Live "online now" counter for the Fan Zone sidebar.
