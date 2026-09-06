@@ -15,6 +15,7 @@ import { FanZoneNameGate } from "@/components/app/FanZoneNamePrompt";
 import { FanZoneBannedScreen } from "@/components/app/FanZoneBannedScreen";
 import { useFanZoneBan } from "@/hooks/use-fan-zone-ban";
 import { useFanZoneMute } from "@/hooks/use-fan-zone-mute";
+import { FanZoneMutedScreen } from "@/components/app/FanZoneMutedScreen";
 import { MuteCountdown } from "@/components/app/FanZoneMuteDialog";
 import { VolumeX } from "lucide-react";
 import { FanZoneMentionsBell } from "@/components/app/FanZoneMentionsBell";
