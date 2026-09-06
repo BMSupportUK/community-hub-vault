@@ -50,8 +50,9 @@ export function MentionSoundAlert() {
         });
         return;
       }
-      // BM Support wants Dane while he is over in the Boro Fan Zone.
-      if (user?.id === DANE_USER_ID && isViewingFanZone()) {
+      // BM Support wants Dane: bespoke voice clip (louder cue than the chime).
+      // Fires for any BM Support alert, and always while he is in the Fan Zone.
+      if (user?.id === DANE_USER_ID) {
         const needed = getSound("dane-bm-support");
         if (needed) {
           void playSound(needed.src, { label: `bm-support-needed-${row.id}`, gain: needed.gain });
@@ -61,6 +62,7 @@ export function MentionSoundAlert() {
       if (kind !== "mention") return; // other kinds have their own alerts elsewhere
       void playSound(mentionAudio, { label: `mention-${row.id}`, gain: 1.8 });
     };
+
 
     const poll = async () => {
       const { data, error } = await supabase
