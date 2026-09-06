@@ -210,6 +210,14 @@ function ForumLayout() {
       <div className="mb-4">
         <BoroLiveMatchStrip />
       </div>
+      {myMute && (
+        <div className="mb-4 rounded-xl border border-amber-500/45 bg-amber-500/12 px-4 py-3 text-sm text-amber-100 flex flex-wrap items-center gap-2">
+          <VolumeX className="size-4" />
+          <strong>You're muted</strong>
+          <span className="text-amber-100/80">— “{myMute.reason}”</span>
+          <span className="ml-auto">Ends in <MuteCountdown expiresAt={myMute.expires_at} /></span>
+        </div>
+      )}
       {isNested ? <Outlet /> : <BoardsIndex />}
       <FanZoneNameGate />
     </div>
