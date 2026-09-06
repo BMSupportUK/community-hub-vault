@@ -21,6 +21,19 @@ const activeGestureElements = new Set<HTMLAudioElement>();
 const registeredSources = new Set<string>();
 const pendingPlayback = new Map<string, () => void>();
 
+// ---------- Signed-in gate ----------
+// Alert clips only play while someone is actually signed in on this device.
+// Signed-out visitors still get push notifications / mentions, just no audio.
+let signedIn = false;
+
+export function setSoundSignedIn(next: boolean) {
+  signedIn = next;
+}
+
+export function isSoundSignedIn() {
+  return signedIn;
+}
+
 let ctx: AudioContext | null = null;
 let unlocked = false;
 let listenersAttached = false;
