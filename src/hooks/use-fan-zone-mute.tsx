@@ -45,6 +45,25 @@ export function useFanZoneMute(userId: string | null | undefined) {
     };
   }, [refresh, userId]);
 
+  // Live updates: the muted screen appears (and lifts) without a refresh.
+  useEffect(() => {
+    if (!userId) return;
+    const ch = supabase
+      .channel(`fan-zone-mute-${userId}-${Math.random().toString(36).slice(2)}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "fan_zone_mutes", filter: `user_id=eq.${userId}` },
+        () => void refresh(),
+      )
+      .subscribe();
+    const onFocus = () => void refresh();
+    window.addEventListener("focus", onFocus);
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      void supabase.removeChannel(ch);
+    };
+  }, [userId, refresh]);
+
   // Clear the mute automatically the moment it expires.
   useEffect(() => {
     if (!mute) return;
@@ -56,6 +75,7 @@ export function useFanZoneMute(userId: string | null | undefined) {
     const t = setTimeout(() => void refresh(), Math.min(ms + 500, 2_147_000_000));
     return () => clearTimeout(t);
   }, [mute, refresh]);
+
 
   return { mute, loading, refresh };
 }
