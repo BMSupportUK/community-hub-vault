@@ -394,9 +394,7 @@ function AdminFanZonePage() {
     const group = roleTab === "admins" ? roleGroups.admins : roleTab === "moderators" ? roleGroups.moderators : roleGroups.members;
     return group
       .filter((r) => (roleTab !== "members" || statusTab === "all" ? true : r.status === statusTab))
-      .filter((r) =>
-        presenceTab === "all" ? true : presenceTab === "online" ? onlineUsers.has(r.user_id) : !onlineUsers.has(r.user_id),
-      )
+      .filter((r) => (presenceTab === "online" ? onlineUsers.has(r.user_id) : !onlineUsers.has(r.user_id)))
       .filter((r) => {
         if (!q) return true;
         const p = profiles[r.user_id];
