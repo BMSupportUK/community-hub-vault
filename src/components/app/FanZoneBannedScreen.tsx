@@ -15,6 +15,10 @@ type Props = {
   bannedBy?: string | null;
   /** Where the "return to the Fan Zone" button sends the user. */
   returnTo?: string;
+  /** When true, the ban has just been lifted and the customer must click to continue. */
+  lifted?: boolean;
+  /** Called when the customer clicks the continue button after the ban is lifted. */
+  onContinue?: () => void;
 };
 
 function parts(ms: number) {
