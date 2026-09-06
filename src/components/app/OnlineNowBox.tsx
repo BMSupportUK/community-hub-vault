@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import { Users } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { setFanZonePresenceIdentity, subscribeFanZonePresence } from "@/lib/fan-zone-presence";
+
+const STAFF_ROLES = ["admin", "management", "moderator", "boro_fan_zone_moderator"];
 
 /**
  * Live "online now" counter for the Fan Zone sidebar.
@@ -12,17 +15,43 @@ import { setFanZonePresenceIdentity, subscribeFanZonePresence } from "@/lib/fan-
 export function OnlineNowBox({ variant = "panel" }: { variant?: "panel" | "hero" }) {
   const { user } = useAuth();
   const [count, setCount] = useState(0);
-  const [members, setMembers] = useState(0);
+  const [signedIn, setSignedIn] = useState<string[]>([]);
+  const [staffIds, setStaffIds] = useState<string[]>([]);
 
   useEffect(() => {
     setFanZonePresenceIdentity(user?.id ?? null);
     return subscribeFanZonePresence(({ keys }) => {
       setCount(keys.length);
-      setMembers(keys.filter((k) => !k.startsWith("guest-") && !k.startsWith("anon-")).length);
+      setSignedIn(keys.filter((k) => !k.startsWith("guest-") && !k.startsWith("anon-")));
     });
   }, [user?.id]);
 
-  const guests = Math.max(0, count - members);
+  // Work out which of the signed-in people online are staff.
+  useEffect(() => {
+    if (!user || signedIn.length === 0) {
+      setStaffIds([]);
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      const { data } = await supabase
+        .from("user_roles")
+        .select("user_id, role")
+        .in("user_id", signedIn)
+        .in("role", STAFF_ROLES);
+      if (cancelled) return;
+      setStaffIds([...new Set((data ?? []).map((r) => r.user_id as string))]);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user, signedIn.join(",")]);
+
+  const staff = staffIds.filter((id) => signedIn.includes(id)).length;
+  const members = Math.max(0, signedIn.length - staff);
+  const guests = Math.max(0, count - signedIn.length);
+  const breakdown = `${staff} staff · ${members} member${members === 1 ? "" : "s"} · ${guests} guest${guests === 1 ? "" : "s"}`;
+
 
   if (variant === "hero") {
     return (
