@@ -254,9 +254,8 @@ function AdminReportsPage() {
                     : r.action === "appeal_reply"
                       ? Inbox
                       : ShieldCheck;
-          const appealStatus = isAppeal
-            ? (appeals ?? []).find((a) => a.user_id === r.user_id)?.status
-            : undefined;
+          const appealStatus: Appeal["status"] | undefined = undefined;
+
           return (
             <li key={r.id} className="rounded-xl border border-border bg-surface-1 p-3 space-y-1.5 shadow-soft">
               <div className="flex flex-wrap items-center gap-2 text-xs">
