@@ -36,6 +36,7 @@ type Profile = {
   matchday_memory: string | null;
   joined_at: string;
   is_private: boolean;
+  can_view: boolean;
   is_blocked_by_me: boolean;
   has_blocked_me: boolean;
 };
@@ -183,7 +184,7 @@ function FanProfilePage() {
   const isSelf = user?.id === userId;
   const isFriend = friendRel.kind === "friends";
 
-  const mainLocked = fanPrivate && !isSelf && !isStaff && !isFriend;
+  const mainLocked = p ? !p.can_view : fanPrivate && !isSelf && !isStaff && !isFriend;
 
   return (
     <div
