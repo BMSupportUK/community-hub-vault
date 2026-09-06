@@ -15,6 +15,7 @@ import { markPreparedForumPostBody, normalizeForumPostInput, prepareForumPostBod
 import { useMentionCandidates } from "@/hooks/use-mention-candidates";
 import { useFanBlocks } from "@/hooks/use-fan-blocks";
 import { useFanZoneMute } from "@/hooks/use-fan-zone-mute";
+import { FanZoneMutedScreen } from "@/components/app/FanZoneMutedScreen";
 import { toast } from "sonner";
 import { censorText, useProfanityWords } from "@/lib/profanity";
 import { RotatingAffiliateBanner } from "@/components/app/RotatingAffiliateBanner";
