@@ -305,30 +305,88 @@ function FanZoneProfilePage() {
 
 type FriendRow = { user_id: string; fan_alias: string | null; fan_avatar_url: string | null; friendship_id: string };
 
+type Audience = "friends" | "selected" | "nobody";
+
+const AUDIENCE_OPTIONS: Array<{ value: Audience; title: string; blurb: string }> = [
+  { value: "friends", title: "All my friends", blurb: "Anyone you've accepted as a friend can view your profile." },
+  { value: "selected", title: "Only people I choose", blurb: "Pick the friends who are allowed to view your profile." },
+  { value: "nobody", title: "Nobody", blurb: "Only you (and admins) can view your profile." },
+];
+
 function PrivacyPanel({ userId }: { userId: string }) {
   const [loading, setLoading] = useState(true);
   const [isPrivate, setIsPrivate] = useState(false);
+  const [audience, setAudience] = useState<Audience>("friends");
   const [saving, setSaving] = useState(false);
+  const [friends, setFriends] = useState<FriendRow[]>([]);
+  const [allowed, setAllowed] = useState<string[]>([]);
+  const [savingViewers, setSavingViewers] = useState(false);
+
+  const loadFriends = async () => {
+    const { data: all } = await supabase
+      .from("fan_zone_friendships")
+      .select("id, requester_id, addressee_id, status")
+      .eq("status", "accepted")
+      .or(`requester_id.eq.${userId},addressee_id.eq.${userId}`);
+    const rowsAll = (all ?? []) as any[];
+    const ids = Array.from(new Set(rowsAll.map((f) => (f.requester_id === userId ? f.addressee_id : f.requester_id))));
+    if (ids.length === 0) return setFriends([]);
+    const { data: members } = await supabase.rpc("fan_zone_aliases", { _ids: ids });
+    const byId = new Map(((members as any[]) ?? []).map((m: any) => [m.user_id, m]));
+    setFriends(
+      rowsAll.map((f) => {
+        const otherId = f.requester_id === userId ? f.addressee_id : f.requester_id;
+        const m = byId.get(otherId) as any;
+        return {
+          user_id: otherId,
+          fan_alias: m?.fan_alias ?? null,
+          fan_avatar_url: m?.fan_avatar_url ?? null,
+          friendship_id: f.id,
+        };
+      }),
+    );
+  };
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { data } = await supabase.rpc("fan_zone_privacy", { _ids: [userId] });
+      const [{ data }, { data: viewers }] = await Promise.all([
+        supabase.rpc("fan_zone_privacy", { _ids: [userId] }),
+        supabase.from("fan_zone_profile_viewers").select("viewer_id").eq("owner_id", userId),
+        loadFriends(),
+      ] as const);
       if (cancelled) return;
-      setIsPrivate(!!(data ?? [])[0]?.is_private);
+      const row = (data ?? [])[0] as any;
+      setIsPrivate(!!row?.is_private);
+      setAudience((row?.privacy_audience as Audience) ?? "friends");
+      setAllowed(((viewers ?? []) as Array<{ viewer_id: string }>).map((v) => v.viewer_id));
       setLoading(false);
     })();
     return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
-  const update = async (next: boolean) => {
+  const update = async (next: boolean, nextAudience: Audience = audience) => {
     setSaving(true);
-    const { error } = await supabase.rpc("fan_zone_set_privacy", { _private: next });
+    const { error } = await supabase.rpc("fan_zone_set_privacy", { _private: next, _audience: nextAudience } as never);
     setSaving(false);
     if (error) return toast.error("Couldn't update privacy", { description: error.message });
     setIsPrivate(next);
+    setAudience(nextAudience);
     notifyFanAliasChange();
     toast.success(next ? "Your Fan Zone profile is now private" : "Your Fan Zone profile is now visible to members");
+  };
+
+  const toggleViewer = async (id: string) => {
+    const next = allowed.includes(id) ? allowed.filter((v) => v !== id) : [...allowed, id];
+    setAllowed(next);
+    setSavingViewers(true);
+    const { error } = await supabase.rpc("fan_zone_set_profile_viewers", { _viewers: next } as never);
+    setSavingViewers(false);
+    if (error) {
+      setAllowed(allowed);
+      toast.error("Couldn't update the list", { description: error.message });
+    }
   };
 
   return (
@@ -345,8 +403,8 @@ function PrivacyPanel({ userId }: { userId: string }) {
             <div className="flex-1 min-w-0">
               <div className="font-semibold text-sm">Private Fan Zone profile</div>
               <p className="text-xs text-white/60 mt-1">
-                When on, only you, your friends and admins can view your profile. Other fans see a “Private profile” notice
-                and can send you a friend request.
+                When on, your profile is hidden from other fans — they see a “Private profile” notice and can send you a
+                friend request. Admins can always view it.
               </p>
             </div>
             <button
@@ -360,6 +418,81 @@ function PrivacyPanel({ userId }: { userId: string }) {
               <span className={`absolute top-0.5 size-5 rounded-full bg-white transition-all ${isPrivate ? "left-[22px]" : "left-0.5"}`} />
             </button>
           </div>
+
+          {isPrivate && (
+            <div className="rounded-xl border border-[#E11B22]/30 bg-white/5 p-4 space-y-3">
+              <div className="text-xs uppercase tracking-[0.18em] font-bold text-[#E11B22]/90">Who can view it</div>
+              <div className="space-y-2">
+                {AUDIENCE_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    disabled={saving}
+                    onClick={() => void update(true, opt.value)}
+                    className={`w-full text-left flex items-start gap-3 rounded-lg border p-3 transition disabled:opacity-60 ${
+                      audience === opt.value
+                        ? "border-[#E11B22] bg-[#E11B22]/15"
+                        : "border-white/10 bg-white/[0.03] hover:border-white/25"
+                    }`}
+                  >
+                    <span
+                      className={`mt-0.5 size-4 shrink-0 rounded-full border-2 grid place-items-center ${
+                        audience === opt.value ? "border-[#E11B22]" : "border-white/40"
+                      }`}
+                    >
+                      {audience === opt.value && <span className="size-2 rounded-full bg-[#E11B22]" />}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-sm font-semibold">{opt.title}</span>
+                      <span className="block text-xs text-white/60 mt-0.5">{opt.blurb}</span>
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              {audience === "selected" && (
+                <div className="rounded-lg border border-white/10 bg-black/30 p-3">
+                  <div className="flex items-center justify-between gap-2 mb-2">
+                    <div className="text-xs font-semibold text-white/80">
+                      Allowed viewers {allowed.length > 0 && <span className="text-white/50">· {allowed.length} selected</span>}
+                    </div>
+                    {savingViewers && <Loader2 className="size-3.5 animate-spin text-white/60" />}
+                  </div>
+                  {friends.length === 0 ? (
+                    <p className="text-xs text-white/60">
+                      You have no friends yet. Add friends first, then choose who can view your profile.
+                    </p>
+                  ) : (
+                    <div className="space-y-1 max-h-64 overflow-y-auto">
+                      {friends.map((f) => {
+                        const on = allowed.includes(f.user_id);
+                        return (
+                          <label
+                            key={f.user_id}
+                            className="flex items-center gap-3 rounded-md px-2 py-1.5 hover:bg-white/5 cursor-pointer"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={on}
+                              onChange={() => void toggleViewer(f.user_id)}
+                              className="size-4 accent-[#E11B22]"
+                            />
+                            <img
+                              src={f.fan_avatar_url || boroDefaultAvatar}
+                              alt=""
+                              className="size-7 rounded-full object-cover ring-1 ring-white/15"
+                            />
+                            <span className="text-sm truncate">{f.fan_alias || "Boro Fan"}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
           <p className="text-[11px] text-white/50">
             Your fan zone posts and alias stay visible either way — only your Fan Zone profile page is restricted. Your BM
             Support profile has its own separate privacy setting.
