@@ -9,10 +9,13 @@ import {
   type PublicStaffMember,
 } from "@/lib/fan-zone-public.functions";
 import { getIcon } from "@/components/app/IconPicker";
-import { Lock, Pin, MessageSquare, ChevronRight, BarChart3, Shield, Star } from "lucide-react";
+import { Lock, Pin, MessageSquare, ChevronRight, BarChart3, Shield, Star, Loader2 } from "lucide-react";
 import { RelativeTime } from "@/components/app/RelativeTime";
 import { BoroMatchCentreBox } from "@/components/app/BoroMatchCentreBox";
 import { FanZoneShell } from "./fan-zone";
+import { useAuth } from "@/hooks/use-auth";
+import { useFanZoneMute } from "@/hooks/use-fan-zone-mute";
+import { FanZoneMutedScreen } from "@/components/app/FanZoneMutedScreen";
 
 export const Route = createFileRoute("/fan-zone/")({
   loader: () => listPublicBoards(),
