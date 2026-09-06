@@ -9,6 +9,7 @@ import boroBadge from "@/assets/boro-fan-zone-badge.png";
 import boroBg from "@/assets/boro-bg.jpg";
 import { BoroLiveMatchStrip } from "@/components/app/BoroLiveMatchStrip";
 import { OnlineNowBox } from "@/components/app/OnlineNowBox";
+import { FanZoneBanGate } from "@/components/app/FanZoneBanGate";
 
 export const Route = createFileRoute("/fan-zone")({
   component: () => <Outlet />,
@@ -26,6 +27,7 @@ export function FanZoneShell({ children }: { children: React.ReactNode }) {
     };
   }, []);
   return (
+    <FanZoneBanGate>
     <div className="boro-theme flex min-h-screen bg-background">
       <IconRail />
       <div className="min-w-0 flex-1">
@@ -95,5 +97,6 @@ export function FanZoneShell({ children }: { children: React.ReactNode }) {
       </div>
       </div>
     </div>
+    </FanZoneBanGate>
   );
 }
