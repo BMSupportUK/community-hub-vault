@@ -67,6 +67,7 @@ import { Route as AuthenticatedApprovedAdminStreamingDevicesRouteImport } from '
 import { Route as AuthenticatedApprovedAdminTicketCategoriesRouteImport } from './routes/_authenticated/_approved/admin-ticket-categories'
 import { Route as AuthenticatedApprovedClockRouteImport } from './routes/_authenticated/_approved/clock'
 import { Route as AuthenticatedApprovedFanZoneAppealsRouteImport } from './routes/_authenticated/_approved/fan-zone-appeals'
+import { Route as AuthenticatedApprovedFanZoneSanctionsRouteImport } from './routes/_authenticated/_approved/fan-zone-sanctions'
 import { Route as AuthenticatedApprovedForumRouteImport } from './routes/_authenticated/_approved/forum'
 import { Route as AuthenticatedApprovedHomeRouteImport } from './routes/_authenticated/_approved/home'
 import { Route as AuthenticatedApprovedInstallGuidesRouteImport } from './routes/_authenticated/_approved/install-guides'
@@ -463,6 +464,12 @@ const AuthenticatedApprovedFanZoneAppealsRoute =
   AuthenticatedApprovedFanZoneAppealsRouteImport.update({
     id: '/fan-zone-appeals',
     path: '/fan-zone-appeals',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedFanZoneSanctionsRoute =
+  AuthenticatedApprovedFanZoneSanctionsRouteImport.update({
+    id: '/fan-zone-sanctions',
+    path: '/fan-zone-sanctions',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
 const AuthenticatedApprovedForumRoute =
@@ -968,6 +975,7 @@ export interface FileRoutesByFullPath {
   '/admin-ticket-categories': typeof AuthenticatedApprovedAdminTicketCategoriesRoute
   '/clock': typeof AuthenticatedApprovedClockRoute
   '/fan-zone-appeals': typeof AuthenticatedApprovedFanZoneAppealsRoute
+  '/fan-zone-sanctions': typeof AuthenticatedApprovedFanZoneSanctionsRoute
   '/forum': typeof AuthenticatedApprovedForumRouteWithChildren
   '/home': typeof AuthenticatedApprovedHomeRouteWithChildren
   '/install-guides': typeof AuthenticatedApprovedInstallGuidesRoute
@@ -1099,6 +1107,7 @@ export interface FileRoutesByTo {
   '/admin-ticket-categories': typeof AuthenticatedApprovedAdminTicketCategoriesRoute
   '/clock': typeof AuthenticatedApprovedClockRoute
   '/fan-zone-appeals': typeof AuthenticatedApprovedFanZoneAppealsRoute
+  '/fan-zone-sanctions': typeof AuthenticatedApprovedFanZoneSanctionsRoute
   '/forum': typeof AuthenticatedApprovedForumRouteWithChildren
   '/install-guides': typeof AuthenticatedApprovedInstallGuidesRoute
   '/knowledge-base': typeof AuthenticatedApprovedKnowledgeBaseRoute
@@ -1234,6 +1243,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/admin-ticket-categories': typeof AuthenticatedApprovedAdminTicketCategoriesRoute
   '/_authenticated/_approved/clock': typeof AuthenticatedApprovedClockRoute
   '/_authenticated/_approved/fan-zone-appeals': typeof AuthenticatedApprovedFanZoneAppealsRoute
+  '/_authenticated/_approved/fan-zone-sanctions': typeof AuthenticatedApprovedFanZoneSanctionsRoute
   '/_authenticated/_approved/forum': typeof AuthenticatedApprovedForumRouteWithChildren
   '/_authenticated/_approved/home': typeof AuthenticatedApprovedHomeRouteWithChildren
   '/_authenticated/_approved/install-guides': typeof AuthenticatedApprovedInstallGuidesRoute
@@ -1369,6 +1379,7 @@ export interface FileRouteTypes {
     | '/admin-ticket-categories'
     | '/clock'
     | '/fan-zone-appeals'
+    | '/fan-zone-sanctions'
     | '/forum'
     | '/home'
     | '/install-guides'
@@ -1500,6 +1511,7 @@ export interface FileRouteTypes {
     | '/admin-ticket-categories'
     | '/clock'
     | '/fan-zone-appeals'
+    | '/fan-zone-sanctions'
     | '/forum'
     | '/install-guides'
     | '/knowledge-base'
@@ -1634,6 +1646,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/admin-ticket-categories'
     | '/_authenticated/_approved/clock'
     | '/_authenticated/_approved/fan-zone-appeals'
+    | '/_authenticated/_approved/fan-zone-sanctions'
     | '/_authenticated/_approved/forum'
     | '/_authenticated/_approved/home'
     | '/_authenticated/_approved/install-guides'
@@ -2177,6 +2190,13 @@ declare module '@tanstack/react-router' {
       path: '/fan-zone-appeals'
       fullPath: '/fan-zone-appeals'
       preLoaderRoute: typeof AuthenticatedApprovedFanZoneAppealsRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/fan-zone-sanctions': {
+      id: '/_authenticated/_approved/fan-zone-sanctions'
+      path: '/fan-zone-sanctions'
+      fullPath: '/fan-zone-sanctions'
+      preLoaderRoute: typeof AuthenticatedApprovedFanZoneSanctionsRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
     '/_authenticated/_approved/forum': {
@@ -2826,6 +2846,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedAdminTicketCategoriesRoute: typeof AuthenticatedApprovedAdminTicketCategoriesRoute
   AuthenticatedApprovedClockRoute: typeof AuthenticatedApprovedClockRoute
   AuthenticatedApprovedFanZoneAppealsRoute: typeof AuthenticatedApprovedFanZoneAppealsRoute
+  AuthenticatedApprovedFanZoneSanctionsRoute: typeof AuthenticatedApprovedFanZoneSanctionsRoute
   AuthenticatedApprovedForumRoute: typeof AuthenticatedApprovedForumRouteWithChildren
   AuthenticatedApprovedHomeRoute: typeof AuthenticatedApprovedHomeRouteWithChildren
   AuthenticatedApprovedInstallGuidesRoute: typeof AuthenticatedApprovedInstallGuidesRoute
@@ -2912,6 +2933,8 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
   AuthenticatedApprovedClockRoute: AuthenticatedApprovedClockRoute,
   AuthenticatedApprovedFanZoneAppealsRoute:
     AuthenticatedApprovedFanZoneAppealsRoute,
+  AuthenticatedApprovedFanZoneSanctionsRoute:
+    AuthenticatedApprovedFanZoneSanctionsRoute,
   AuthenticatedApprovedForumRoute: AuthenticatedApprovedForumRouteWithChildren,
   AuthenticatedApprovedHomeRoute: AuthenticatedApprovedHomeRouteWithChildren,
   AuthenticatedApprovedInstallGuidesRoute:

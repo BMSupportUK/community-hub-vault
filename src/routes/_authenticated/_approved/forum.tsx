@@ -62,15 +62,51 @@ function ForumLayout() {
   const isNested = matches.some((m) => m.routeId.startsWith("/_authenticated/_approved/forum/"));
   const { user, hasAny } = useAuth();
   const canModerate = hasAny(["admin", "management", "moderator", "boro_fan_zone_moderator"]);
+  // Outstanding reports counter — kept live so staff see new ones straight away.
   const [pendingReports, setPendingReports] = useState(0);
   useEffect(() => {
     if (!canModerate) return;
     let cancelled = false;
-    void (async () => {
+    const count = async () => {
       const { data } = await supabase.rpc("list_content_reports", { _status: "pending" });
       if (!cancelled) setPendingReports((data ?? []).length);
-    })();
-    return () => { cancelled = true; };
+    };
+    void count();
+    const ch = supabase
+      .channel(`fz-report-pill-${Math.random().toString(36).slice(2)}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "content_reports" }, () => void count())
+      .subscribe();
+    return () => {
+      cancelled = true;
+      void supabase.removeChannel(ch);
+    };
+  }, [canModerate]);
+  // Active mutes and bans get their own pill.
+  const [activeSanctions, setActiveSanctions] = useState(0);
+  useEffect(() => {
+    if (!canModerate) return;
+    let cancelled = false;
+    const count = async () => {
+      const nowIso = new Date().toISOString();
+      const [m, b] = await Promise.all([
+        supabase.from("fan_zone_mutes").select("id", { count: "exact", head: true }).gt("expires_at", nowIso),
+        supabase
+          .from("fan_zone_bans")
+          .select("id", { count: "exact", head: true })
+          .or(`expires_at.is.null,expires_at.gt.${nowIso}`),
+      ]);
+      if (!cancelled) setActiveSanctions((m.count ?? 0) + (b.count ?? 0));
+    };
+    void count();
+    const ch = supabase
+      .channel(`fz-sanction-pill-${Math.random().toString(36).slice(2)}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "fan_zone_mutes" }, () => void count())
+      .on("postgres_changes", { event: "*", schema: "public", table: "fan_zone_bans" }, () => void count())
+      .subscribe();
+    return () => {
+      cancelled = true;
+      void supabase.removeChannel(ch);
+    };
   }, [canModerate]);
   // Open ban appeals get their own pill next to the moderation centre.
   const [openAppeals, setOpenAppeals] = useState(0);
@@ -166,6 +202,19 @@ function ForumLayout() {
                   {pendingReports > 0 && (
                     <span className="ml-1.5 inline-flex items-center justify-center rounded-full bg-[#E11B22] text-white text-[10px] font-bold px-1.5 min-w-[1.25rem] h-5">
                       {pendingReports}
+                    </span>
+                  )}
+                </Link>
+              </Button>
+            )}
+            {canModerate && (
+              <Button asChild size="sm" variant="outline" className="bg-black/40 backdrop-blur border-white/30 text-white hover:bg-black/60 hover:text-white justify-center col-span-2 sm:col-span-1">
+                <Link to="/fan-zone-sanctions">
+                  <Ban className="size-4 mr-1.5" />
+                  Mutes &amp; bans
+                  {activeSanctions > 0 && (
+                    <span className="ml-1.5 inline-flex items-center justify-center rounded-full bg-[#E11B22] text-white text-[10px] font-bold px-1.5 min-w-[1.25rem] h-5">
+                      {activeSanctions}
                     </span>
                   )}
                 </Link>
