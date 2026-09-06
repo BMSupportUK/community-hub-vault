@@ -938,6 +938,15 @@ function TopicPage() {
       }}
     />
   );
+  const renderTopicPoll = () => (
+    <ForumPoll
+      topicId={topic.id}
+      userId={user?.id ?? null}
+      canManage={isBoardMod || (!!user && topic.author_id === user.id)}
+      canVote={canPost}
+    />
+  );
+  const isMatchDayThread = (board?.slug ?? slug) === "match-day";
   const { opPost, replies, pinnedReplies, teamPosts } = visiblePosts;
 
   return (
@@ -1090,14 +1099,7 @@ function TopicPage() {
 
         return (
           <Tabs value={tab} onValueChange={(v) => setTab(v as "posts" | "reply" | "teams")} className="w-full">
-            <div className="mb-3">
-              <ForumPoll
-                topicId={topic.id}
-                userId={user?.id ?? null}
-                canManage={isBoardMod || (!!user && topic.author_id === user.id)}
-                canVote={canPost}
-              />
-            </div>
+            {!isMatchDayThread && <div className="mb-3">{renderTopicPoll()}</div>}
             <TabsList>
               <TabsTrigger value="posts">Original Post</TabsTrigger>
               {teamPosts.length > 0 && <TabsTrigger value="teams">Teams ({teamPosts.length})</TabsTrigger>}
@@ -1196,8 +1198,11 @@ function TopicPage() {
         );
       })()}
         </div>
-        <aside className="hidden w-full min-w-0 md:grid md:place-items-center md:sticky md:top-4" aria-label="Sponsored advert">
-          {renderSponsorAdvert()}
+        <aside
+          className="w-full min-w-0 md:grid md:place-items-center md:sticky md:top-4"
+          aria-label={isMatchDayThread ? "Match poll" : "Sponsored advert"}
+        >
+          {isMatchDayThread ? renderTopicPoll() : renderSponsorAdvert()}
         </aside>
       </div>
 
