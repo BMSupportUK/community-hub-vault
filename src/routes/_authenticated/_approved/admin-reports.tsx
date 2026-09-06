@@ -1,10 +1,20 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
-import { ArrowLeft, Check, Loader2, RefreshCw, Trash2, Flag, VolumeX, Gavel } from "lucide-react";
+import { ArrowLeft, Check, Loader2, RefreshCw, Trash2, Flag, VolumeX, Gavel, ScrollText, Volume2, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { formatLastSeen } from "@/lib/relative-time";
 import { toast } from "sonner";
 
@@ -38,7 +48,24 @@ type Sanction = {
   created_at: string;
 };
 
-type MainTab = "reports" | "mutes" | "bans";
+type ModAction = {
+  id: string;
+  user_id: string;
+  actor_id: string | null;
+  action: "mute" | "unmute" | "ban" | "unban";
+  reason: string | null;
+  expires_at: string | null;
+  created_at: string;
+};
+
+type MainTab = "reports" | "mutes" | "bans" | "log";
+
+const ACTION_LABEL: Record<ModAction["action"], string> = {
+  mute: "Muted",
+  unmute: "Mute lifted",
+  ban: "Banned",
+  unban: "Ban lifted",
+};
 
 function untilLabel(expiresAt: string | null): string {
   if (!expiresAt) return "Permanent";
@@ -63,6 +90,8 @@ function AdminReportsPage() {
   const [mutes, setMutes] = useState<Sanction[] | null>(null);
   const [bans, setBans] = useState<Sanction[] | null>(null);
   const [names, setNames] = useState<Record<string, string>>({});
+  const [log, setLog] = useState<ModAction[] | null>(null);
+  const [confirmLift, setConfirmLift] = useState<{ kind: "mute" | "ban"; row: Sanction } | null>(null);
 
   const load = async () => {
     setRows(null);
@@ -76,18 +105,39 @@ function AdminReportsPage() {
   };
 
   const loadNames = useCallback(async (ids: string[]) => {
-    const missing = Array.from(new Set(ids));
+    const missing = Array.from(new Set(ids.filter(Boolean)));
     if (!missing.length) return;
-    const { data } = await supabase
-      .from("fan_zone_members")
-      .select("user_id, fan_alias")
-      .in("user_id", missing);
+    const [fz, profs] = await Promise.all([
+      supabase.from("fan_zone_members").select("user_id, fan_alias").in("user_id", missing),
+      supabase.from("profiles").select("id, display_name, username").in("id", missing),
+    ]);
     const map: Record<string, string> = {};
-    ((data ?? []) as Array<{ user_id: string; fan_alias: string | null }>).forEach((r) => {
+    ((profs.data ?? []) as Array<{ id: string; display_name: string | null; username: string | null }>).forEach((p) => {
+      const n = p.display_name ?? p.username;
+      if (n) map[p.id] = n;
+    });
+    ((fz.data ?? []) as Array<{ user_id: string; fan_alias: string | null }>).forEach((r) => {
       if (r.fan_alias) map[r.user_id] = r.fan_alias;
     });
     setNames((prev) => ({ ...map, ...prev }));
   }, []);
+
+  const loadLog = useCallback(async () => {
+    setLog(null);
+    const { data, error } = await supabase
+      .from("fan_zone_mod_actions")
+      .select("id, user_id, actor_id, action, reason, expires_at, created_at")
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (error) {
+      toast.error("Couldn't load the moderation log", { description: error.message });
+      setLog([]);
+      return;
+    }
+    const list = (data ?? []) as ModAction[];
+    setLog(list);
+    void loadNames(list.flatMap((r) => [r.user_id, r.actor_id ?? ""]));
+  }, [loadNames]);
 
   const loadSanctions = useCallback(async () => {
     const nowIso = new Date().toISOString();
@@ -118,8 +168,9 @@ function AdminReportsPage() {
   }, [status, allowed, tab]);
 
   useEffect(() => {
-    if (allowed && tab !== "reports") void loadSanctions();
-  }, [allowed, tab, loadSanctions]);
+    if (allowed && (tab === "mutes" || tab === "bans")) void loadSanctions();
+    if (allowed && tab === "log") void loadLog();
+  }, [allowed, tab, loadSanctions, loadLog]);
 
   if (!allowed) return <Navigate to="/forum" />;
 
@@ -138,9 +189,55 @@ function AdminReportsPage() {
       _user_id: row.user_id,
     });
     setBusyId(null);
+    setConfirmLift(null);
     if (error) return toast.error("Couldn't lift", { description: error.message });
     toast.success(kind === "mute" ? "Mute lifted" : "Ban lifted");
     void loadSanctions();
+  };
+
+  const logList = () => {
+    if (log === null)
+      return (
+        <div className="grid place-items-center py-12 text-muted-foreground">
+          <Loader2 className="size-5 animate-spin" />
+        </div>
+      );
+    if (!log.length)
+      return <p className="text-sm text-muted-foreground text-center py-12">Nothing logged yet.</p>;
+    return (
+      <ul className="space-y-2">
+        {log.map((r) => {
+          const lifted = r.action === "unmute" || r.action === "unban";
+          const Icon = r.action === "mute" ? VolumeX : r.action === "unmute" ? Volume2 : r.action === "ban" ? Gavel : ShieldCheck;
+          return (
+            <li key={r.id} className="rounded-xl border border-border bg-surface-1 p-3 space-y-1.5 shadow-soft">
+              <div className="flex flex-wrap items-center gap-2 text-xs">
+                <span
+                  className={`rounded-full px-2 py-0.5 font-semibold inline-flex items-center gap-1 border ${
+                    lifted
+                      ? "bg-emerald-500/15 border-emerald-400/40 text-emerald-300"
+                      : "bg-[#E11B22]/15 border-[#E11B22]/40 text-[#E11B22]"
+                  }`}
+                >
+                  <Icon className="size-3" />
+                  {ACTION_LABEL[r.action]}
+                </span>
+                <strong className="text-foreground text-sm">{names[r.user_id] ?? "Fan Zone member"}</strong>
+                <span className="text-muted-foreground">
+                  by {r.actor_id ? (names[r.actor_id] ?? "staff") : "system"} · {formatLastSeen(r.created_at)}
+                  {!lifted
+                    ? r.expires_at
+                      ? ` · until ${new Date(r.expires_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}`
+                      : " · permanent"
+                    : ""}
+                </span>
+              </div>
+              {r.reason && <div className="text-sm text-muted-foreground">{r.reason}</div>}
+            </li>
+          );
+        })}
+      </ul>
+    );
   };
 
   const sanctionList = (kind: "mute" | "ban", list: Sanction[] | null) => {
@@ -175,7 +272,7 @@ function AdminReportsPage() {
               {r.reason}
             </div>
             <div className="flex justify-end">
-              <Button size="sm" variant="outline" disabled={busyId === r.id} onClick={() => void lift(kind, r)}>
+              <Button size="sm" variant="outline" disabled={busyId === r.id} onClick={() => setConfirmLift({ kind, row: r })}>
                 {busyId === r.id ? <Loader2 className="size-3.5 animate-spin mr-1" /> : <Check className="size-3.5 mr-1" />}
                 Lift {kind}
               </Button>
@@ -196,7 +293,7 @@ function AdminReportsPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => (tab === "reports" ? void load() : void loadSanctions())}
+            onClick={() => (tab === "reports" ? void load() : tab === "log" ? void loadLog() : void loadSanctions())}
           >
             <RefreshCw className="size-4 mr-1" />Refresh
           </Button>
@@ -212,11 +309,42 @@ function AdminReportsPage() {
             <TabsTrigger value="reports">Reports</TabsTrigger>
             <TabsTrigger value="mutes">Mutes</TabsTrigger>
             <TabsTrigger value="bans">Bans</TabsTrigger>
+            <TabsTrigger value="log"><ScrollText className="size-3.5 mr-1" />Log</TabsTrigger>
           </TabsList>
         </Tabs>
 
         {tab === "mutes" && sanctionList("mute", mutes)}
         {tab === "bans" && sanctionList("ban", bans)}
+        {tab === "log" && logList()}
+
+        <AlertDialog open={!!confirmLift} onOpenChange={(o) => { if (!o) setConfirmLift(null); }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                Lift the {confirmLift?.kind === "ban" ? "ban" : "mute"} on{" "}
+                {confirmLift ? (names[confirmLift.row.user_id] ?? "this member") : "this member"} early?
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {confirmLift?.kind === "ban"
+                  ? "They'll get straight back into the Fan Zone before the ban was due to end."
+                  : "They'll be able to post again straight away, before the mute was due to end."}{" "}
+                This is recorded in the moderation log against your name.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={!!busyId}>Keep it in place</AlertDialogCancel>
+              <AlertDialogAction
+                disabled={!!busyId}
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (confirmLift) void lift(confirmLift.kind, confirmLift.row);
+                }}
+              >
+                Lift {confirmLift?.kind === "ban" ? "ban" : "mute"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {tab === "reports" && (
           <>
