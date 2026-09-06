@@ -1,4 +1,4 @@
-import { createFileRoute, Link, Outlet, useMatches } from "@tanstack/react-router";
+import { createFileRoute, Link, Outlet, useMatches, useRouterState } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import { MessageSquare, Pin, Lock, Loader2, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -58,6 +58,7 @@ type Board = {
 
 function ForumLayout() {
   const matches = useMatches();
+  const pathname = useRouterState({ select: (state) => state.location.pathname });
   const isNested = matches.some((m) => m.routeId.startsWith("/_authenticated/_approved/forum/"));
   const { user, hasAny } = useAuth();
   const canModerate = hasAny(["admin", "management", "moderator", "boro_fan_zone_moderator"]);
@@ -81,6 +82,9 @@ function ForumLayout() {
   useEffect(() => {
     if (!myMute) setMuteBrowsing(false);
   }, [myMute]);
+  useEffect(() => {
+    if (pathname !== "/forum" && pathname !== "/forum/") setMuteBrowsing(false);
+  }, [pathname]);
 
   useEffect(() => {
     const html = document.documentElement;
