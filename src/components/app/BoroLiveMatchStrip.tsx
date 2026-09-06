@@ -12,7 +12,7 @@ import { TeamKit } from "@/lib/boro-team-kits";
 import { londonWeekStart } from "@/lib/boro-match-week";
 
 
-import { Dialog, DialogContent, DialogTitle, DialogClose } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { BoroMatchDetailTabs } from "@/components/app/BoroMatchDetailTabs";
 
 function fmtKickoff(iso: string, tz: string) {
