@@ -40,6 +40,11 @@ function mentionNav(m: MentionRow):
     }
     return { to: "/home/$channel", params: { channel: homeMatch[1] } };
   }
+  // Forum mentions point at one post — carry the post id as a hash so the
+  // topic page can scroll straight to it.
+  if (base.startsWith("/forum") && m.source_id) {
+    return { to: base, hash: `forum-post-${m.source_id}`, search: existing } as any;
+  }
   return { to: base };
 }
 

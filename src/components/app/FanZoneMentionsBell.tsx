@@ -11,6 +11,7 @@ type MentionRow = {
   title: string;
   body: string | null;
   link_path: string | null;
+  source_id: string | null;
   read_at: string | null;
   created_at: string;
 };
@@ -30,7 +31,7 @@ export function FanZoneMentionsBell() {
   const load = useCallback(async (uid: string) => {
     const { data } = await supabase
       .from("user_notifications")
-      .select("id, title, body, link_path, read_at, created_at")
+      .select("id, title, body, link_path, source_id, read_at, created_at")
       .eq("user_id", uid)
       .eq("kind", "mention")
       .order("created_at", { ascending: false })
@@ -67,7 +68,14 @@ export function FanZoneMentionsBell() {
     setItems((prev) => prev.filter((x) => x.id !== m.id));
     setOpen(false);
     await supabase.from("user_notifications").delete().eq("id", m.id);
-    if (m.link_path) navigate({ to: m.link_path as any });
+    if (!m.link_path) return;
+    const [base, qs] = m.link_path.split("#")[0].split("?");
+    // The mention lives in one post inside the topic, so land on that post.
+    navigate({
+      to: base as any,
+      search: qs ? (Object.fromEntries(new URLSearchParams(qs)) as any) : undefined,
+      hash: m.source_id ? `forum-post-${m.source_id}` : undefined,
+    } as any);
   };
 
   const clearAll = async () => {
