@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Radio, CalendarDays, Trophy, ChevronRight, X } from "lucide-react";
+import { Radio, CalendarDays, Trophy, ChevronRight } from "lucide-react";
 import {
   getBoroMatchCentre,
   type MatchCentreDTO,
