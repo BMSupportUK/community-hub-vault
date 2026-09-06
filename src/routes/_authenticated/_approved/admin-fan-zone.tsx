@@ -23,6 +23,7 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useFanZoneMembership } from "@/hooks/use-fan-zone";
+import { useOnlineUsers } from "@/hooks/use-online-users";
 import type { FanZoneMute } from "@/hooks/use-fan-zone-mute";
 import type { FanZoneBan } from "@/hooks/use-fan-zone-ban";
 import { FanZoneMuteDialog, MuteCountdown } from "@/components/app/FanZoneMuteDialog";
@@ -76,7 +77,10 @@ function AdminFanZonePage() {
   const canView = isAdmin || isFanZoneMod || isMember;
   type StatusTab = "all" | Status;
   type RoleTab = "admins" | "moderators" | "members";
+  type PresenceTab = "all" | "online" | "offline";
   const [roleTab, setRoleTab] = useState<RoleTab>("members");
+  const [presenceTab, setPresenceTab] = useState<PresenceTab>("all");
+  const onlineUsers = useOnlineUsers();
   const [statusTab, setStatusTab] = useState<StatusTab>(isAdmin ? "all" : "approved");
   const [rows, setRows] = useState<Row[]>([]);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
@@ -378,12 +382,21 @@ function AdminFanZonePage() {
     [roleGroups],
   );
 
+  const presenceCounts = useMemo(() => {
+    const group = roleTab === "admins" ? roleGroups.admins : roleTab === "moderators" ? roleGroups.moderators : roleGroups.members;
+    const online = group.filter((r) => onlineUsers.has(r.user_id)).length;
+    return { online, offline: group.length - online };
+  }, [roleGroups, roleTab, onlineUsers]);
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     const dir = sortDir === "asc" ? 1 : -1;
     const group = roleTab === "admins" ? roleGroups.admins : roleTab === "moderators" ? roleGroups.moderators : roleGroups.members;
     return group
       .filter((r) => (roleTab !== "members" || statusTab === "all" ? true : r.status === statusTab))
+      .filter((r) =>
+        presenceTab === "all" ? true : presenceTab === "online" ? onlineUsers.has(r.user_id) : !onlineUsers.has(r.user_id),
+      )
       .filter((r) => {
         if (!q) return true;
         const p = profiles[r.user_id];
@@ -406,7 +419,7 @@ function AdminFanZonePage() {
         }
         return (new Date(a.requested_at).getTime() - new Date(b.requested_at).getTime()) * dir;
       });
-  }, [roleGroups, roleTab, statusTab, profiles, search, sortKey, sortDir]);
+  }, [roleGroups, roleTab, statusTab, presenceTab, onlineUsers, profiles, search, sortKey, sortDir]);
 
   const toggleSort = (key: "name" | "since" | "requested") => {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -453,6 +466,23 @@ function AdminFanZonePage() {
                 </TabsList>
               </Tabs>
             )}
+          </div>
+          <div className="flex items-center gap-6 overflow-x-auto pl-[88px]">
+            <Tabs value={presenceTab} onValueChange={(v) => setPresenceTab(v as PresenceTab)}>
+              <TabsList className="bg-transparent p-0 h-auto gap-1">
+                <TabsTrigger value="all" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
+                  All
+                </TabsTrigger>
+                <TabsTrigger value="online" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
+                  <span className="size-1.5 rounded-full bg-emerald-400 mr-1.5" /> Online
+                  {presenceCounts.online > 0 && <span className="ml-1.5 text-xs text-emerald-400">{presenceCounts.online}</span>}
+                </TabsTrigger>
+                <TabsTrigger value="offline" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
+                  <span className="size-1.5 rounded-full bg-muted-foreground/60 mr-1.5" /> Offline
+                  {presenceCounts.offline > 0 && <span className="ml-1.5 text-xs text-muted-foreground">{presenceCounts.offline}</span>}
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
           </div>
           {isAdmin && roleTab === "members" && (
             <div className="flex items-center gap-6 overflow-x-auto pl-[88px]">
@@ -628,7 +658,19 @@ function AdminFanZonePage() {
                               >
                                 {name}
                               </Link>
-                              <div className="flex items-center gap-1.5 mt-1">
+                             <div className="flex items-center gap-1.5 mt-1">
+                                <span
+                                  className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide border ${
+                                    onlineUsers.has(r.user_id)
+                                      ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
+                                      : "bg-muted/30 text-muted-foreground border-border"
+                                  }`}
+                                >
+                                  <span
+                                    className={`size-1.5 rounded-full ${onlineUsers.has(r.user_id) ? "bg-emerald-400" : "bg-muted-foreground/60"}`}
+                                  />
+                                  {onlineUsers.has(r.user_id) ? "Online" : "Offline"}
+                                </span>
                                 {isAdminRole(r.user_id) && (
                                   <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
                                     <Shield className="size-3" /> Owner
