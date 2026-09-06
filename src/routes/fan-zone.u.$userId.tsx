@@ -3,7 +3,7 @@ import { ArrowLeft, Award, Clock, FileText, Heart, Lock, MessageSquare, Quote, T
 import { FanZoneProfileFacts } from "@/components/app/FanZoneProfileFacts";
 import { getPublicFanProfile } from "@/lib/fan-zone-public.functions";
 import { Button } from "@/components/ui/button";
-import boroDefaultAvatar from "@/assets/boro-default-avatar.png";
+import { BORO_DEFAULT_AVATAR_URL as boroDefaultAvatar } from "@/lib/boro-default-avatar";
 import { FanZoneShell } from "./fan-zone";
 import { FanRoleBadge } from "@/components/app/FanRoleBadge";
 import { RelativeTime } from "@/components/app/RelativeTime";

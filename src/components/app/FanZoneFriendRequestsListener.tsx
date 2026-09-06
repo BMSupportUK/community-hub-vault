@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
-import boroDefaultAvatar from "@/assets/boro-default-avatar.png";
+import { BORO_DEFAULT_AVATAR_URL as boroDefaultAvatar } from "@/lib/boro-default-avatar";
 
 /**
  * Boro Fan Zone friend requests — completely separate from the BM Support
