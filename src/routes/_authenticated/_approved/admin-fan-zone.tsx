@@ -628,7 +628,19 @@ function AdminFanZonePage() {
                               >
                                 {name}
                               </Link>
-                              <div className="flex items-center gap-1.5 mt-1">
+                             <div className="flex items-center gap-1.5 mt-1">
+                                <span
+                                  className={`inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide border ${
+                                    onlineUsers.has(r.user_id)
+                                      ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
+                                      : "bg-muted/30 text-muted-foreground border-border"
+                                  }`}
+                                >
+                                  <span
+                                    className={`size-1.5 rounded-full ${onlineUsers.has(r.user_id) ? "bg-emerald-400" : "bg-muted-foreground/60"}`}
+                                  />
+                                  {onlineUsers.has(r.user_id) ? "Online" : "Offline"}
+                                </span>
                                 {isAdminRole(r.user_id) && (
                                   <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
                                     <Shield className="size-3" /> Owner
