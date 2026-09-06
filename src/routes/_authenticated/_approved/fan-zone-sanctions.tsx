@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { formatLastSeen } from "@/lib/relative-time";
 import { toast } from "sonner";
+import moderatorBg from "@/assets/profile-header-moderator.jpg";
 
 export const Route = createFileRoute("/_authenticated/_approved/fan-zone-sanctions")({
   component: FanZoneSanctionsPage,
@@ -74,17 +75,22 @@ function untilLabel(expiresAt: string | null): string {
   return `${rest}m left`;
 }
 
+type Tab = "mutes" | "past-mutes" | "bans" | "past-bans";
+
 function FanZoneSanctionsPage() {
   const { hasAny } = useAuth();
   const allowed = hasAny(["admin", "management", "moderator", "boro_fan_zone_moderator"]);
-  const [tab, setTab] = useState<"mutes" | "bans">("mutes");
+  const [tab, setTab] = useState<Tab>("mutes");
   const [busyId, setBusyId] = useState<string | null>(null);
   const [mutes, setMutes] = useState<Sanction[] | null>(null);
   const [bans, setBans] = useState<Sanction[] | null>(null);
+  const [pastMutes, setPastMutes] = useState<Sanction[] | null>(null);
+  const [pastBans, setPastBans] = useState<Sanction[] | null>(null);
   const [names, setNames] = useState<Record<string, string>>({});
   const [log, setLog] = useState<ModAction[] | null>(null);
   const [logUser, setLogUser] = useState<{ id: string; kind: "mute" | "ban" } | null>(null);
   const [confirmLift, setConfirmLift] = useState<{ kind: "mute" | "ban"; row: Sanction } | null>(null);
+
 
   const loadNames = useCallback(async (ids: string[]) => {
     const missing = Array.from(new Set(ids.filter(Boolean)));
@@ -131,28 +137,49 @@ function FanZoneSanctionsPage() {
     const nowIso = new Date().toISOString();
     setMutes(null);
     setBans(null);
-    const [m, b] = await Promise.all([
+    setPastMutes(null);
+    setPastBans(null);
+    const cols = "id, user_id, reason, expires_at, created_at";
+    const [m, b, pm, pb] = await Promise.all([
       supabase
         .from("fan_zone_mutes")
-        .select("id, user_id, reason, expires_at, created_at")
+        .select(cols)
         .gt("expires_at", nowIso)
         .order("created_at", { ascending: false }),
       supabase
         .from("fan_zone_bans")
-        .select("id, user_id, reason, expires_at, created_at")
+        .select(cols)
         .or(`expires_at.is.null,expires_at.gt.${nowIso}`)
         .order("created_at", { ascending: false }),
+      supabase
+        .from("fan_zone_mutes")
+        .select(cols)
+        .lte("expires_at", nowIso)
+        .order("created_at", { ascending: false })
+        .limit(100),
+      supabase
+        .from("fan_zone_bans")
+        .select(cols)
+        .not("expires_at", "is", null)
+        .lte("expires_at", nowIso)
+        .order("created_at", { ascending: false })
+        .limit(100),
     ]);
     const mList = (m.data ?? []) as Sanction[];
     const bList = (b.data ?? []) as Sanction[];
+    const pmList = (pm.data ?? []) as Sanction[];
+    const pbList = (pb.data ?? []) as Sanction[];
     setMutes(mList);
     setBans(bList);
-    void loadNames([...mList, ...bList].map((r) => r.user_id));
+    setPastMutes(pmList);
+    setPastBans(pbList);
+    void loadNames([...mList, ...bList, ...pmList, ...pbList].map((r) => r.user_id));
   }, [loadNames]);
 
   useEffect(() => {
     if (allowed) void loadSanctions();
   }, [allowed, loadSanctions]);
+
 
   if (!allowed) return <Navigate to="/forum" />;
 
@@ -237,7 +264,7 @@ function FanZoneSanctionsPage() {
     );
   };
 
-  const sanctionList = (kind: "mute" | "ban", list: Sanction[] | null) => {
+  const sanctionList = (kind: "mute" | "ban", list: Sanction[] | null, past = false) => {
     if (list === null)
       return (
         <div className="grid place-items-center py-12 text-muted-foreground">
@@ -247,21 +274,35 @@ function FanZoneSanctionsPage() {
     if (!list.length)
       return (
         <p className="text-sm text-muted-foreground text-center py-12">
-          No active {kind === "mute" ? "mutes" : "bans"}.
+          No {past ? "expired" : "active"} {kind === "mute" ? "mutes" : "bans"}.
         </p>
       );
     return (
       <ul className="space-y-3">
         {list.map((r) => (
-          <li key={r.id} className="rounded-xl border border-border bg-surface-1 p-4 space-y-3 shadow-soft">
+          <li
+            key={r.id}
+            className={`rounded-xl border p-4 space-y-3 shadow-soft ${
+              past ? "border-border/60 bg-surface-1/70" : "border-border bg-surface-1"
+            }`}
+          >
             <div className="flex flex-wrap items-center gap-2 text-xs">
-              <span className="rounded-full bg-[#E11B22]/15 border border-[#E11B22]/40 text-[#E11B22] px-2 py-0.5 font-semibold inline-flex items-center gap-1">
+              <span
+                className={`rounded-full px-2 py-0.5 font-semibold inline-flex items-center gap-1 border ${
+                  past
+                    ? "bg-muted/40 border-border text-muted-foreground"
+                    : "bg-[#E11B22]/15 border-[#E11B22]/40 text-[#E11B22]"
+                }`}
+              >
                 {kind === "mute" ? <VolumeX className="size-3" /> : <Gavel className="size-3" />}
-                {kind === "mute" ? "Muted" : "Banned"}
+                {past ? (kind === "mute" ? "Mute ended" : "Ban ended") : kind === "mute" ? "Muted" : "Banned"}
               </span>
               <strong className="text-foreground text-sm">{names[r.user_id] ?? "Fan Zone member"}</strong>
               <span className="text-muted-foreground">
-                {untilLabel(r.expires_at)} · started {formatLastSeen(r.created_at)}
+                {past
+                  ? `ended ${r.expires_at ? formatLastSeen(r.expires_at) : "—"}`
+                  : untilLabel(r.expires_at)}{" "}
+                · started {formatLastSeen(r.created_at)}
               </span>
             </div>
             <div className="rounded-lg bg-surface-2/40 border border-border/60 px-3 py-2 text-sm">
@@ -271,19 +312,21 @@ function FanZoneSanctionsPage() {
             <div className="flex flex-wrap justify-end gap-2">
               <Button
                 size="sm"
-                variant="ghost"
+                variant={past ? "outline" : "ghost"}
                 onClick={() => {
                   setLogUser({ id: r.user_id, kind });
                   void loadLog(r.user_id, kind, r.created_at);
                 }}
               >
                 <ScrollText className="size-3.5 mr-1" />
-                Log
+                {past ? "View log of action taken" : "Log"}
               </Button>
-              <Button size="sm" variant="outline" disabled={busyId === r.id} onClick={() => setConfirmLift({ kind, row: r })}>
-                {busyId === r.id ? <Loader2 className="size-3.5 animate-spin mr-1" /> : <Check className="size-3.5 mr-1" />}
-                Lift {kind}
-              </Button>
+              {!past && (
+                <Button size="sm" variant="outline" disabled={busyId === r.id} onClick={() => setConfirmLift({ kind, row: r })}>
+                  {busyId === r.id ? <Loader2 className="size-3.5 animate-spin mr-1" /> : <Check className="size-3.5 mr-1" />}
+                  Lift {kind}
+                </Button>
+              )}
             </div>
           </li>
         ))}
@@ -292,7 +335,13 @@ function FanZoneSanctionsPage() {
   };
 
   return (
-    <main className="flex-1 w-full min-w-0 min-h-full self-stretch overflow-y-auto">
+    <main className="relative flex-1 w-full min-w-0 min-h-full self-stretch overflow-y-auto">
+      <div
+        className="pointer-events-none fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url(${moderatorBg})` }}
+        aria-hidden
+      />
+      <div className="pointer-events-none fixed inset-0 -z-10 bg-background/85" aria-hidden />
       <div className="w-full px-4 sm:px-6 py-6 space-y-4">
         <div className="flex items-center justify-between gap-3">
           <Button asChild variant="ghost" size="sm" className="-ml-2">
@@ -308,18 +357,31 @@ function FanZoneSanctionsPage() {
           <h1 className="font-display font-bold text-xl">Mutes &amp; bans</h1>
         </header>
 
-        <Tabs value={tab} onValueChange={(v) => setTab(v as "mutes" | "bans")}>
-          <TabsList>
+        <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
+          <TabsList className="flex-wrap h-auto">
             <TabsTrigger value="mutes">
-              Mutes{mutes?.length ? ` (${mutes.length})` : ""}
+              Active mutes{mutes?.length ? ` (${mutes.length})` : ""}
             </TabsTrigger>
             <TabsTrigger value="bans">
-              Bans{bans?.length ? ` (${bans.length})` : ""}
+              Active bans{bans?.length ? ` (${bans.length})` : ""}
+            </TabsTrigger>
+            <TabsTrigger value="past-mutes">
+              Expired mutes{pastMutes?.length ? ` (${pastMutes.length})` : ""}
+            </TabsTrigger>
+            <TabsTrigger value="past-bans">
+              Expired bans{pastBans?.length ? ` (${pastBans.length})` : ""}
             </TabsTrigger>
           </TabsList>
         </Tabs>
 
-        {tab === "mutes" ? sanctionList("mute", mutes) : sanctionList("ban", bans)}
+        {tab === "mutes"
+          ? sanctionList("mute", mutes)
+          : tab === "bans"
+            ? sanctionList("ban", bans)
+            : tab === "past-mutes"
+              ? sanctionList("mute", pastMutes, true)
+              : sanctionList("ban", pastBans, true)}
+
 
         <Dialog open={!!logUser} onOpenChange={(o) => { if (!o) setLogUser(null); }}>
           <DialogContent className="max-w-2xl">
