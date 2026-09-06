@@ -122,6 +122,28 @@ function AccountSecurityPage() {
       </section>
 
       <div className="p-6 max-w-2xl mx-auto space-y-5">
+        <div className="inline-flex p-1 rounded-xl bg-surface-2 border border-border">
+          {([
+            ["2fa", "Two-factor"],
+            ["lock", "Screen lock"],
+          ] as const).map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setTab(key)}
+              className={`px-4 h-9 rounded-lg text-sm font-medium transition-colors ${
+                tab === key
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {tab === "2fa" && (
+        <>
         <div className="rounded-2xl border border-border bg-surface p-6">
           <div className="flex items-start gap-4">
             <div className={`size-11 rounded-xl grid place-items-center ${factor ? "bg-emerald-500/15 text-emerald-300 ring-1 ring-emerald-400/30" : "bg-amber-500/15 text-amber-300 ring-1 ring-amber-400/30"}`}>
