@@ -20,6 +20,7 @@ import outageAudio from "@/assets/outage-notify.mp3";
 import outageResolvedAudio from "@/assets/outage-resolved.mp3";
 import fanZoneAppealAsset from "@/assets/fan-zone-appeal-alert.mp3.asset.json";
 import fanZoneAppealMsgAsset from "@/assets/fan-zone-appeal-message.mp3.asset.json";
+import fanZoneAppealStaffAsset from "@/assets/fan-zone-appeal-staff-reply.mp3.asset.json";
 
 export type SoundKey =
   | "mention"
@@ -37,7 +38,8 @@ export type SoundKey =
   | "outage"
   | "outage-resolved"
   | "fan-zone-appeal"
-  | "fan-zone-appeal-message";
+  | "fan-zone-appeal-message"
+  | "fan-zone-appeal-staff-reply";
 
 export interface SoundDef {
   key: SoundKey;
@@ -63,6 +65,7 @@ export const NOTIFICATION_SOUNDS: readonly SoundDef[] = [
   { key: "outage-resolved", label: "Outage resolved", src: outageResolvedAudio, gain: 1.8 },
   { key: "fan-zone-appeal", label: "Fan Zone ban appeal", src: fanZoneAppealAsset.url, gain: 2.0 },
   { key: "fan-zone-appeal-message", label: "Fan Zone appeal message", src: fanZoneAppealMsgAsset.url, gain: 2.0 },
+  { key: "fan-zone-appeal-staff-reply", label: "Fan Zone appeal reply", src: fanZoneAppealStaffAsset.url, gain: 2.0 },
 ];
 
 const BY_KEY = new Map<string, SoundDef>(NOTIFICATION_SOUNDS.map((s) => [s.key, s]));
