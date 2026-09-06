@@ -265,41 +265,14 @@ function MessagesLayout() {
           {threads === null ? (
             <div className="grid place-items-center py-12 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>
           ) : threads.length === 0 ? (
-            <div className="flex-1 overflow-y-auto">
-              <p className="px-4 pt-4 pb-2 text-xs text-muted-foreground text-center">
-                No conversations yet. Pick a fan below to start one.
+            <div className="flex-1 flex flex-col items-center justify-center gap-3 p-6 text-center">
+              <div className="size-14 rounded-2xl bg-surface-2/70 border border-border grid place-items-center">
+                <Search className="size-7 text-[#E11B22]" />
+              </div>
+              <p className="text-sm font-semibold">No conversations yet</p>
+              <p className="text-xs text-muted-foreground max-w-[16rem]">
+                Use the search box above to find a fan and start a chat.
               </p>
-              {members.length === 0 ? (
-                <p className="p-6 text-xs text-muted-foreground text-center">No other fans yet.</p>
-              ) : (
-                <ul className="divide-y divide-border/60">
-                  {members.map((m) => {
-                    const name = m.fan_alias || "Boro Fan";
-                    return (
-                      <li key={m.user_id}>
-                        <div className="flex items-center gap-3 px-4 py-3 hover:bg-surface-2/60 transition-colors">
-                          <Link to="/fanzone/u/$userId" params={{ userId: m.user_id }} className="shrink-0">
-                            {m.fan_avatar_url ? (
-                              <img src={m.fan_avatar_url} alt="" className="size-9 rounded-full object-cover ring-2 ring-white/10" />
-                            ) : (
-                              <div className="size-9 rounded-full bg-gradient-to-br from-rose-600 to-amber-600 grid place-items-center text-white text-xs font-bold">
-                                {name.slice(0, 1).toUpperCase()}
-                              </div>
-                            )}
-                          </Link>
-                          <Link to="/fanzone/u/$userId" params={{ userId: m.user_id }} className="min-w-0 flex-1 text-sm font-semibold truncate hover:text-[#E11B22] hover:underline">
-                            {name}
-                          </Link>
-                          <Button type="button" size="sm" variant="outline" className="h-7 px-2 text-[11px]" disabled={starting === m.user_id} onClick={() => void startChat(m.user_id)}>
-                            {starting === m.user_id ? <Loader2 className="size-3.5 animate-spin" /> : <MessageSquare className="size-3.5 mr-1" />}
-                            Chat
-                          </Button>
-                        </div>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
             </div>
           ) : (
             <ul className="divide-y divide-border/60 flex-1 overflow-y-auto">
