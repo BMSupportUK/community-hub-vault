@@ -76,7 +76,10 @@ function AdminFanZonePage() {
   const canView = isAdmin || isFanZoneMod || isMember;
   type StatusTab = "all" | Status;
   type RoleTab = "admins" | "moderators" | "members";
+  type PresenceTab = "all" | "online" | "offline";
   const [roleTab, setRoleTab] = useState<RoleTab>("members");
+  const [presenceTab, setPresenceTab] = useState<PresenceTab>("all");
+  const onlineUsers = useOnlineUsers();
   const [statusTab, setStatusTab] = useState<StatusTab>(isAdmin ? "all" : "approved");
   const [rows, setRows] = useState<Row[]>([]);
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
