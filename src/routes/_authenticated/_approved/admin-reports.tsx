@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatLastSeen } from "@/lib/relative-time";
 import { toast } from "sonner";
+import moderatorBg from "@/assets/profile-header-moderator.jpg";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-reports")({
   component: AdminReportsPage,
@@ -85,7 +86,13 @@ function AdminReportsPage() {
   };
 
   return (
-    <main className="flex-1 w-full min-w-0 min-h-full self-stretch overflow-y-auto">
+    <main className="relative flex-1 w-full min-w-0 min-h-full self-stretch overflow-y-auto">
+      <div
+        className="pointer-events-none fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url(${moderatorBg})` }}
+        aria-hidden
+      />
+      <div className="pointer-events-none fixed inset-0 -z-10 bg-background/85" aria-hidden />
       <div className="w-full px-4 sm:px-6 py-6 space-y-4">
         <div className="flex items-center justify-between gap-3">
           <Button asChild variant="ghost" size="sm" className="-ml-2">

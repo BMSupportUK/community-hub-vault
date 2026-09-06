@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { formatLastSeen } from "@/lib/relative-time";
 import { toast } from "sonner";
+import moderatorBg from "@/assets/profile-header-moderator.jpg";
 
 export const Route = createFileRoute("/_authenticated/_approved/fan-zone-sanctions")({
   component: FanZoneSanctionsPage,
