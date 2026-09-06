@@ -127,6 +127,7 @@ function FanZoneAppealsPage() {
       setActive(a);
       setMsgs(null);
       setReplyBody("");
+      void loadBans([a.user_id]);
       const { data, error } = await supabase
         .from("fan_zone_appeal_messages")
         .select("id, from_staff, author_id, body, created_at")
@@ -141,7 +142,7 @@ function FanZoneAppealsPage() {
       setMsgs(list);
       void loadNames(list.map((m) => m.author_id));
     },
-    [loadNames],
+    [loadNames, loadBans],
   );
 
   useEffect(() => {
