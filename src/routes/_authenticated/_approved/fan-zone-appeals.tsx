@@ -238,13 +238,15 @@ function FanZoneAppealsPage() {
         </div>
       );
     return (
-      <ul className="grid gap-3 sm:grid-cols-2">
-        {appeals.map((a) => (
-          <li key={a.id}>
-            <button
-              type="button"
-              onClick={() => void openAppeal(a)}
-              className="group relative w-full overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-surface-1 to-surface-2 p-4 text-left shadow-soft transition-all hover:-translate-y-0.5 hover:border-[#E11B22]/60 hover:shadow-lg"
+      <ul className="grid gap-4 sm:grid-cols-2">
+        {appeals.map((a) => {
+          const ban = bans[a.user_id];
+          const name = names[a.user_id] ?? "Fan Zone member";
+          const avatar = avatars[a.user_id];
+          return (
+            <li
+              key={a.id}
+              className="group relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-surface-1 to-surface-2 p-4 shadow-soft transition-all hover:border-[#E11B22]/60 hover:shadow-lg"
             >
               <span
                 className={`absolute inset-y-0 left-0 w-1 ${
@@ -255,23 +257,75 @@ function FanZoneAppealsPage() {
                       : "bg-emerald-400"
                 }`}
               />
-              <div className="flex items-start justify-between gap-3 pl-2">
-                <div className="min-w-0">
-                  <div className="font-display font-bold text-sm truncate group-hover:text-[#ff6b70] transition-colors">
-                    {names[a.user_id] ?? "Fan Zone member"}
+              <div className="pl-2 space-y-3">
+                <div className="flex items-start gap-3">
+                  {avatar ? (
+                    <img
+                      src={avatar}
+                      alt={`${name} avatar`}
+                      loading="lazy"
+                      className="size-12 shrink-0 rounded-full border border-[#E11B22]/40 object-cover"
+                    />
+                  ) : (
+                    <span className="grid size-12 shrink-0 place-items-center rounded-full border border-[#E11B22]/40 bg-[#E11B22]/15 text-[#ff8a8e]">
+                      <UserRound className="size-6" />
+                    </span>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <div className="font-display font-bold text-sm truncate">{name}</div>
+                    <div className="text-[11px] text-muted-foreground mt-0.5">
+                      Last activity {formatLastSeen(a.updated_at)}
+                    </div>
                   </div>
-                  <div className="text-[11px] text-muted-foreground mt-0.5">
-                    Last activity {formatLastSeen(a.updated_at)}
+                  {statusPill(a.status)}
+                </div>
+
+                <div className="rounded-xl border border-border/70 bg-surface-2/70 p-3 space-y-1.5">
+                  <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider text-[#ff8a8e]">
+                    <ShieldOff className="size-3.5" />
+                    Ban details
+                  </div>
+                  <p className="text-sm leading-relaxed">
+                    {ban?.reason?.trim() ? ban.reason : "No reason recorded."}
+                  </p>
+                  <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                    <CalendarClock className="size-3.5" />
+                    {ban
+                      ? `Banned ${new Date(ban.created_at).toLocaleString("en-GB", {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}${
+                          ban.expires_at
+                            ? ` · ends ${new Date(ban.expires_at).toLocaleDateString("en-GB", {
+                                day: "2-digit",
+                                month: "short",
+                                year: "numeric",
+                              })}`
+                            : " · permanent"
+                        }`
+                      : "No active ban on record."}
                   </div>
                 </div>
-                {statusPill(a.status)}
+
+                <Button
+                  size="sm"
+                  onClick={() => void openAppeal(a)}
+                  className="w-full bg-[#E11B22] text-white hover:bg-[#c2151b]"
+                >
+                  <MailQuestion className="size-4 mr-1.5" />
+                  Open appeal
+                </Button>
               </div>
-            </button>
-          </li>
-        ))}
+            </li>
+          );
+        })}
       </ul>
     );
   };
+
 
   return (
     <main className="flex-1 w-full min-w-0 min-h-full self-stretch overflow-y-auto">
