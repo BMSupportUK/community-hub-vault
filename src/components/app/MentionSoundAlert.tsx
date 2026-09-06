@@ -3,12 +3,17 @@ import { Capacitor } from "@capacitor/core";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { playSound } from "@/lib/sound";
+import { getSound } from "@/lib/notification-sounds";
 import mentionAudio from "@/assets/mention-notify.mp3";
 
 type MentionNotification = {
   id: string;
   created_at: string;
+  link_path?: string | null;
 };
+
+/** Boro Fan Zone mentions get their own clip, kept separate from BM Support. */
+const isFanZoneMention = (row: MentionNotification) => !!row.link_path && row.link_path.startsWith("/forum");
 
 /** App-wide mention audio, independent of where the notification bell renders. */
 export function MentionSoundAlert() {
@@ -23,13 +28,17 @@ export function MentionSoundAlert() {
     const announce = (row: MentionNotification) => {
       if (seen.current.has(row.id)) return;
       seen.current.add(row.id);
-      void playSound(mentionAudio, { label: `mention-${row.id}`, gain: 1.8 });
+      const fanZone = isFanZoneMention(row) ? getSound("fan-zone-mention") : undefined;
+      void playSound(fanZone?.src ?? mentionAudio, {
+        label: `mention-${row.id}`,
+        gain: fanZone?.gain ?? 1.8,
+      });
     };
 
     const poll = async () => {
       const { data, error } = await supabase
         .from("user_notifications")
-        .select("id, created_at")
+        .select("id, created_at, link_path")
         .eq("user_id", user.id)
         .eq("kind", "mention")
         .is("read_at", null)

@@ -368,6 +368,13 @@ function TopicPage() {
   const [titleDraft, setTitleDraft] = useState("");
   const [savingTitle, setSavingTitle] = useState(false);
 
+  // A mention link arrives as #forum-post-<id>; jump to that exact post.
+  const jumpPostIdRef = useRef<string | null>(
+    typeof window !== "undefined" && window.location.hash.startsWith("#forum-post-")
+      ? window.location.hash.slice("#forum-post-".length)
+      : null,
+  );
+
   const scrollRepliesToTop = () => {
     document.getElementById("forum-replies-top")?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
@@ -409,6 +416,7 @@ function TopicPage() {
   // Resume reading where this member left off in the topic.
   useEffect(() => {
     if (!canEnter || !user) return;
+    if (jumpPostIdRef.current) { resumeCheckedRef.current = true; return; }
     resumeCheckedRef.current = false;
     lastReadAtRef.current = null;
     let cancelled = false;
@@ -437,6 +445,62 @@ function TopicPage() {
     })();
     return () => { cancelled = true; };
   }, [canEnter, user?.id, topicId]);
+
+  // Land on the mentioned post: work out which page holds it, then scroll.
+  useEffect(() => {
+    const target = jumpPostIdRef.current;
+    if (!target || !canEnter) return;
+    let cancelled = false;
+    void (async () => {
+      const { data: post } = await supabase
+        .from("forum_posts")
+        .select("id, created_at, is_op, is_pinned, topic_id")
+        .eq("id", target)
+        .maybeSingle();
+      if (cancelled) return;
+      jumpPostIdRef.current = null;
+      if (!post || (post as { topic_id: string }).topic_id !== topicId) return;
+      const row = post as { created_at: string; is_op: boolean; is_pinned: boolean | null };
+      pendingScrollPostIdRef.current = target;
+      if (row.is_op || row.is_pinned) {
+        setTab("posts");
+        setPage(1);
+      } else {
+        const { count } = await supabase
+          .from("forum_posts")
+          .select("id", { count: "exact", head: true })
+          .eq("topic_id", topicId)
+          .eq("is_op", false)
+          .eq("is_pinned", false)
+          .lte("created_at", row.created_at);
+        if (cancelled) return;
+        setTab("reply");
+        setPage(Math.max(1, Math.ceil((count ?? 1) / REPLIES_PER_PAGE)));
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [canEnter, topicId]);
+
+  // Flash the target post once it is on screen so the mention is obvious.
+  useEffect(() => {
+    const id = pendingScrollPostIdRef.current;
+    if (!id || !posts) return;
+    if (!posts.some((p) => p.id === id)) return;
+    let attempts = 0;
+    const tryScroll = () => {
+      const element = document.getElementById(`forum-post-${id}`);
+      if (element) {
+        pendingScrollPostIdRef.current = null;
+        element.scrollIntoView({ behavior: "smooth", block: "center" });
+        element.classList.add("ring-2", "ring-[#E11B22]", "rounded-2xl");
+        window.setTimeout(() => element.classList.remove("ring-2", "ring-[#E11B22]", "rounded-2xl"), 2600);
+        return;
+      }
+      attempts += 1;
+      if (attempts < 10) window.setTimeout(tryScroll, 120);
+    };
+    requestAnimationFrame(tryScroll);
+  }, [posts, tab, page]);
 
   // Remember the furthest reply this member has seen.
   useEffect(() => {

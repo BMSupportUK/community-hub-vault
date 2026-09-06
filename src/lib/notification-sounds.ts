@@ -22,9 +22,11 @@ import fanZoneAppealAsset from "@/assets/fan-zone-appeal-alert.mp3.asset.json";
 import fanZoneAppealMsgAsset from "@/assets/fan-zone-appeal-message.mp3.asset.json";
 import fanZoneAppealStaffAsset from "@/assets/fan-zone-appeal-staff-reply.mp3.asset.json";
 import contentReportedAsset from "@/assets/content-reported.mp3.asset.json";
+import fanZoneMentionAsset from "@/assets/fan-zone-mention.mp3.asset.json";
 
 export type SoundKey =
   | "mention"
+  | "fan-zone-mention"
   | "staff-mention"
   | "broadcast"
   | "order"
@@ -52,6 +54,7 @@ export interface SoundDef {
 
 export const NOTIFICATION_SOUNDS: readonly SoundDef[] = [
   { key: "mention", label: "Mention", src: mentionAudio, gain: 1.5 },
+  { key: "fan-zone-mention", label: "Fan Zone mention", src: fanZoneMentionAsset.url, gain: 2.0 },
   { key: "staff-mention", label: "Staff mention", src: staffMentionAudio, gain: 1.5 },
   { key: "broadcast", label: "Broadcast", src: broadcastAudio, gain: 1.5 },
   { key: "order", label: "Sale / Order", src: orderAudio, gain: 1.8 },
