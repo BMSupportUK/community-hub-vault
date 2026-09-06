@@ -11,7 +11,10 @@ type Props = {
   mutedBy?: string | null;
   /** Where the "return to the forum" button sends the user. */
   returnTo?: string;
+  /** When given, shows a "Carry on reading" button that dismisses this screen. */
+  onKeepReading?: () => void;
 };
+
 
 function parts(ms: number) {
   const total = Math.max(0, Math.floor(ms / 1000));
