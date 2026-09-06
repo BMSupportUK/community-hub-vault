@@ -48,7 +48,24 @@ type Sanction = {
   created_at: string;
 };
 
-type MainTab = "reports" | "mutes" | "bans";
+type ModAction = {
+  id: string;
+  user_id: string;
+  actor_id: string | null;
+  action: "mute" | "unmute" | "ban" | "unban";
+  reason: string | null;
+  expires_at: string | null;
+  created_at: string;
+};
+
+type MainTab = "reports" | "mutes" | "bans" | "log";
+
+const ACTION_LABEL: Record<ModAction["action"], string> = {
+  mute: "Muted",
+  unmute: "Mute lifted",
+  ban: "Banned",
+  unban: "Ban lifted",
+};
 
 function untilLabel(expiresAt: string | null): string {
   if (!expiresAt) return "Permanent";
