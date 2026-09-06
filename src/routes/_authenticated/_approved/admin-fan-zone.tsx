@@ -77,9 +77,9 @@ function AdminFanZonePage() {
   const canView = isAdmin || isFanZoneMod || isMember;
   type StatusTab = "all" | Status;
   type RoleTab = "admins" | "moderators" | "members";
-  type PresenceTab = "all" | "online" | "offline";
+  type PresenceTab = "online" | "offline";
   const [roleTab, setRoleTab] = useState<RoleTab>("members");
-  const [presenceTab, setPresenceTab] = useState<PresenceTab>("all");
+  const [presenceTab, setPresenceTab] = useState<PresenceTab>("online");
   const onlineUsers = useOnlineUsers();
   const [statusTab, setStatusTab] = useState<StatusTab>(isAdmin ? "all" : "approved");
   const [rows, setRows] = useState<Row[]>([]);
@@ -394,9 +394,7 @@ function AdminFanZonePage() {
     const group = roleTab === "admins" ? roleGroups.admins : roleTab === "moderators" ? roleGroups.moderators : roleGroups.members;
     return group
       .filter((r) => (roleTab !== "members" || statusTab === "all" ? true : r.status === statusTab))
-      .filter((r) =>
-        presenceTab === "all" ? true : presenceTab === "online" ? onlineUsers.has(r.user_id) : !onlineUsers.has(r.user_id),
-      )
+      .filter((r) => (presenceTab === "online" ? onlineUsers.has(r.user_id) : !onlineUsers.has(r.user_id)))
       .filter((r) => {
         if (!q) return true;
         const p = profiles[r.user_id];
@@ -503,9 +501,6 @@ function AdminFanZonePage() {
             </div>
             <Tabs value={presenceTab} onValueChange={(v) => setPresenceTab(v as PresenceTab)}>
               <TabsList className="bg-transparent p-0 h-auto gap-1">
-                <TabsTrigger value="all" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
-                  All
-                </TabsTrigger>
                 <TabsTrigger value="online" className="data-[state=active]:bg-surface-2 data-[state=active]:text-foreground rounded-md px-3 py-1.5 text-sm">
                   <span className="size-1.5 rounded-full bg-emerald-400 mr-1.5" /> Online
                   {presenceCounts.online > 0 && <span className="ml-1.5 text-xs text-emerald-400">{presenceCounts.online}</span>}
