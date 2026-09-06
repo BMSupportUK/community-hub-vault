@@ -72,6 +72,28 @@ function ForumLayout() {
     })();
     return () => { cancelled = true; };
   }, [canModerate]);
+  // Open ban appeals get their own pill next to the moderation centre.
+  const [openAppeals, setOpenAppeals] = useState(0);
+  useEffect(() => {
+    if (!canModerate) return;
+    let cancelled = false;
+    const count = async () => {
+      const { count: n } = await supabase
+        .from("fan_zone_appeals")
+        .select("id", { count: "exact", head: true })
+        .neq("status", "closed");
+      if (!cancelled) setOpenAppeals(n ?? 0);
+    };
+    void count();
+    const ch = supabase
+      .channel(`fz-appeal-pill-${Math.random().toString(36).slice(2)}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "fan_zone_appeals" }, () => void count())
+      .subscribe();
+    return () => {
+      cancelled = true;
+      void supabase.removeChannel(ch);
+    };
+  }, [canModerate]);
   const info = useFanZoneMembership(user?.id ?? null);
   // A live Boro Fan Zone ban locks the member out of the whole zone.
   const { ban: myBan, loading: banLoading } = useFanZoneBan(user?.id ?? null);
@@ -144,6 +166,19 @@ function ForumLayout() {
                   {pendingReports > 0 && (
                     <span className="ml-1.5 inline-flex items-center justify-center rounded-full bg-[#E11B22] text-white text-[10px] font-bold px-1.5 min-w-[1.25rem] h-5">
                       {pendingReports}
+                    </span>
+                  )}
+                </Link>
+              </Button>
+            )}
+            {canModerate && (
+              <Button asChild size="sm" variant="outline" className="bg-black/40 backdrop-blur border-white/30 text-white hover:bg-black/60 hover:text-white justify-center col-span-2 sm:col-span-1">
+                <Link to="/fan-zone-appeals">
+                  <MailQuestion className="size-4 mr-1.5" />
+                  Appeals
+                  {openAppeals > 0 && (
+                    <span className="ml-1.5 inline-flex items-center justify-center rounded-full bg-[#E11B22] text-white text-[10px] font-bold px-1.5 min-w-[1.25rem] h-5">
+                      {openAppeals}
                     </span>
                   )}
                 </Link>
