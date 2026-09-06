@@ -288,7 +288,9 @@ function playNow(
   } catch { /* noop */ }
 
   const prefs = getSoundPrefs();
+  if (!signedIn) return Promise.resolve(false);
   if (prefs.muted) return Promise.resolve(false);
+
 
   const { volume = 1.0, gain = 1.0, label } = opts;
   const name = label ?? src;
