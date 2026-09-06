@@ -184,7 +184,11 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
   const flashRole = FLASH_PRIORITY.find((r) => roles.includes(r)) ?? null;
   const flashCls = roleFlashClass(flashRole);
   const supportAvatar = resolveAvatarUrl(user.id, profile?.avatar_url, roleFlashMap);
-  const resolvedAvatar = inFanZone ? (fanProfile?.fan_avatar_url ?? supportAvatar) : supportAvatar;
+  // Inside the Fan Zone: staff keep their badge picture, everyone else falls
+  // back to the Boro Fan Zone default rather than their BM Support picture.
+  const resolvedAvatar = inFanZone
+    ? forcedFanAvatar || fanProfile?.fan_avatar_url || BORO_DEFAULT_AVATAR_URL
+    : supportAvatar;
 
   const isDnd = presence.kind === "dnd";
   const statusLabel = presence.shortLabel;
