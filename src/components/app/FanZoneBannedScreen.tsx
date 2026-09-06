@@ -4,6 +4,8 @@ import { Gavel, Clock, ArrowRight, ShieldBan, MailQuestion, MessageSquare } from
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { FanZoneAppealPanel } from "@/components/app/FanZoneAppealPanel";
+import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
 import bannedArt from "@/assets/fan-zone-banned.jpg";
 
 type Props = {
