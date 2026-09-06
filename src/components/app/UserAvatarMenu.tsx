@@ -306,9 +306,11 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
             id={inFanZone ? null : (profile?.equipped_nameplate_id ?? null)}
             className="absolute inset-0"
             fallbackStyle={{
-              background:
-                "linear-gradient(to bottom right, hsl(var(--primary)/0.3), hsl(330 80% 60% / 0.2), hsl(220 80% 60% / 0.2))",
+              background: inFanZone
+                ? "linear-gradient(to bottom right, rgba(225,27,34,0.35), rgba(139,15,20,0.3), rgba(11,26,43,0.4))"
+                : "linear-gradient(to bottom right, hsl(var(--primary)/0.3), hsl(330 80% 60% / 0.2), hsl(220 80% 60% / 0.2))",
             }}
+
           />
           <div className="relative flex items-center gap-3">
             <Avatar className="h-14 w-14 ring-2 ring-background shadow-lg">
