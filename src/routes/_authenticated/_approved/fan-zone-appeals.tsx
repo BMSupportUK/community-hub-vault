@@ -175,6 +175,25 @@ function FanZoneAppealsPage() {
     }
   };
 
+  const statusPill = (status: Appeal["status"]) => (
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider border ${
+        status === "open"
+          ? "bg-[#E11B22]/15 border-[#E11B22]/50 text-[#ff6b70]"
+          : status === "replied"
+            ? "bg-amber-500/15 border-amber-400/50 text-amber-300"
+            : "bg-emerald-500/15 border-emerald-400/50 text-emerald-300"
+      }`}
+    >
+      <span
+        className={`size-1.5 rounded-full ${
+          status === "open" ? "bg-[#E11B22]" : status === "replied" ? "bg-amber-400" : "bg-emerald-400"
+        }`}
+      />
+      {status === "open" ? "Needs a reply" : status === "replied" ? "Replied" : "Closed"}
+    </span>
+  );
+
   const list = () => {
     if (appeals === null)
       return (
@@ -183,30 +202,40 @@ function FanZoneAppealsPage() {
         </div>
       );
     if (!appeals.length)
-      return <p className="text-sm text-muted-foreground text-center py-12">No appeals yet.</p>;
+      return (
+        <div className="rounded-2xl border border-dashed border-border bg-surface-1/60 py-14 text-center">
+          <MailQuestion className="mx-auto mb-2 size-6 text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">No appeals yet.</p>
+        </div>
+      );
     return (
-      <ul className="space-y-2">
+      <ul className="grid gap-3 sm:grid-cols-2">
         {appeals.map((a) => (
           <li key={a.id}>
             <button
               type="button"
               onClick={() => void openAppeal(a)}
-              className="w-full text-left rounded-xl border border-border bg-surface-1 p-3 shadow-soft hover:border-[#E11B22]/50 transition-colors"
+              className="group relative w-full overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-surface-1 to-surface-2 p-4 text-left shadow-soft transition-all hover:-translate-y-0.5 hover:border-[#E11B22]/60 hover:shadow-lg"
             >
-              <div className="flex flex-wrap items-center gap-2 text-xs">
-                <span
-                  className={`rounded-full px-2 py-0.5 font-semibold border ${
-                    a.status === "open"
-                      ? "bg-[#E11B22]/15 border-[#E11B22]/40 text-[#E11B22]"
-                      : a.status === "replied"
-                        ? "bg-amber-500/15 border-amber-400/40 text-amber-300"
-                        : "bg-emerald-500/15 border-emerald-400/40 text-emerald-300"
-                  }`}
-                >
-                  {a.status === "open" ? "Needs a reply" : a.status === "replied" ? "Replied" : "Closed"}
-                </span>
-                <strong className="text-foreground text-sm">{names[a.user_id] ?? "Fan Zone member"}</strong>
-                <span className="text-muted-foreground">last activity {formatLastSeen(a.updated_at)}</span>
+              <span
+                className={`absolute inset-y-0 left-0 w-1 ${
+                  a.status === "open"
+                    ? "bg-[#E11B22]"
+                    : a.status === "replied"
+                      ? "bg-amber-400"
+                      : "bg-emerald-400"
+                }`}
+              />
+              <div className="flex items-start justify-between gap-3 pl-2">
+                <div className="min-w-0">
+                  <div className="font-display font-bold text-sm truncate group-hover:text-[#ff6b70] transition-colors">
+                    {names[a.user_id] ?? "Fan Zone member"}
+                  </div>
+                  <div className="text-[11px] text-muted-foreground mt-0.5">
+                    Last activity {formatLastSeen(a.updated_at)}
+                  </div>
+                </div>
+                {statusPill(a.status)}
               </div>
             </button>
           </li>
