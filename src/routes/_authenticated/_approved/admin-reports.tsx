@@ -293,7 +293,7 @@ function AdminReportsPage() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => (tab === "reports" ? void load() : void loadSanctions())}
+            onClick={() => (tab === "reports" ? void load() : tab === "log" ? void loadLog() : void loadSanctions())}
           >
             <RefreshCw className="size-4 mr-1" />Refresh
           </Button>
@@ -309,11 +309,42 @@ function AdminReportsPage() {
             <TabsTrigger value="reports">Reports</TabsTrigger>
             <TabsTrigger value="mutes">Mutes</TabsTrigger>
             <TabsTrigger value="bans">Bans</TabsTrigger>
+            <TabsTrigger value="log"><ScrollText className="size-3.5 mr-1" />Log</TabsTrigger>
           </TabsList>
         </Tabs>
 
         {tab === "mutes" && sanctionList("mute", mutes)}
         {tab === "bans" && sanctionList("ban", bans)}
+        {tab === "log" && logList()}
+
+        <AlertDialog open={!!confirmLift} onOpenChange={(o) => { if (!o) setConfirmLift(null); }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                Lift the {confirmLift?.kind === "ban" ? "ban" : "mute"} on{" "}
+                {confirmLift ? (names[confirmLift.row.user_id] ?? "this member") : "this member"} early?
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {confirmLift?.kind === "ban"
+                  ? "They'll get straight back into the Fan Zone before the ban was due to end."
+                  : "They'll be able to post again straight away, before the mute was due to end."}{" "}
+                This is recorded in the moderation log against your name.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={!!busyId}>Keep it in place</AlertDialogCancel>
+              <AlertDialogAction
+                disabled={!!busyId}
+                onClick={(e) => {
+                  e.preventDefault();
+                  if (confirmLift) void lift(confirmLift.kind, confirmLift.row);
+                }}
+              >
+                Lift {confirmLift?.kind === "ban" ? "ban" : "mute"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         {tab === "reports" && (
           <>
