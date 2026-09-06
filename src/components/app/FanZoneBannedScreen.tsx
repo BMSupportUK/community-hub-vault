@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Gavel, Clock, ArrowRight, ShieldBan } from "lucide-react";
+import { Gavel, Clock, ArrowRight, ShieldBan, MailQuestion } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { FanZoneAppealPanel } from "@/components/app/FanZoneAppealPanel";
 import bannedArt from "@/assets/fan-zone-banned.jpg";
 
@@ -32,6 +33,8 @@ export function FanZoneBannedScreen({ expiresAt, reason, bannedBy, returnTo = "/
     return () => clearInterval(t);
   }, []);
 
+  const [appealOpen, setAppealOpen] = useState(false);
+
   const permanent = target === null;
   const remaining = target === null ? 0 : target - now;
   const expired = !permanent && remaining <= 0;
@@ -44,91 +47,128 @@ export function FanZoneBannedScreen({ expiresAt, reason, bannedBy, returnTo = "/
     { label: "sec", value: s },
   ];
 
-  return (
-    <div className="boro-theme mx-auto w-full max-w-xl px-4 py-8 sm:py-12">
-      <div className="overflow-hidden rounded-2xl border border-[#E11B22]/50 bg-[#0B1A2B]/80 shadow-[0_18px_60px_-16px_rgba(0,0,0,0.85)] backdrop-blur">
-        <img
-          src={bannedArt}
-          alt="A Boro fan standing in a courtroom dock while a judge passes sentence"
-          width={1024}
-          height={1024}
-          loading="lazy"
-          className="h-56 w-full object-cover object-top sm:h-72"
-        />
-
-        <div className="space-y-4 p-5 sm:p-6">
-          <div className="rounded-xl border border-[#E11B22]/55 bg-[#E11B22]/15 px-4 py-4 text-center">
-            <div className="mb-1 flex items-center justify-center gap-2 text-white">
-              <Gavel className="size-5" />
-              <h1 className="font-display text-2xl font-black tracking-tight sm:text-3xl">
-                You have been banned
-              </h1>
-            </div>
-            <p className="text-sm text-white/75">
-              {permanent
-                ? "Your access to the Boro Fan Zone has been removed permanently."
-                : "You can't sign in to the Boro Fan Zone until your ban is served."}
-            </p>
-            <p className="mt-2 text-xs text-white/50">
-              This only affects the Boro Fan Zone — your BM Support account is unchanged.
-            </p>
-          </div>
-
-          <div className="rounded-xl border border-white/15 bg-black/30 px-4 py-3">
-            <div className="mb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-white/55">
-              Reason
-            </div>
-            <p className="text-sm text-white">{reason || "No reason given."}</p>
-            {bannedBy && <p className="mt-2 text-xs text-white/55">Banned by {bannedBy}</p>}
-          </div>
-
-          {permanent ? (
-            <div className="flex items-center justify-center gap-2 rounded-xl border border-[#E11B22]/40 bg-black/30 px-4 py-5 text-center">
-              <ShieldBan className="size-5 text-[#E11B22]" />
-              <span className="font-display text-lg font-black uppercase tracking-wide text-white">
-                Permanent ban
-              </span>
-            </div>
-          ) : expired ? (
-            <div className="space-y-3 rounded-xl border border-emerald-400/40 bg-emerald-500/15 px-4 py-4 text-center">
-              <p className="text-sm font-semibold text-white">
-                Your ban has been served — welcome back.
-              </p>
-              <Button asChild className="bg-[#E11B22] text-white hover:bg-[#c5161c]">
-                <Link to={returnTo}>
-                  Return to the Fan Zone
-                  <ArrowRight className="ml-1.5 size-4" />
-                </Link>
-              </Button>
-            </div>
-          ) : (
-            <div className="rounded-xl border border-white/15 bg-black/30 px-4 py-4">
-              <div className="mb-2 flex items-center justify-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-white/55">
-                <Clock className="size-3.5" />
-                Ban ends in
-              </div>
-              <div className="flex items-end justify-center gap-2 sm:gap-3">
-                {cells.map((c) => (
-                  <div
-                    key={c.label}
-                    className="min-w-[62px] rounded-lg border border-[#E11B22]/40 bg-[#E11B22]/10 px-2 py-2 text-center"
-                  >
-                    <div className="font-display text-2xl font-black leading-none text-white tabular-nums sm:text-3xl">
-                      {String(c.value).padStart(2, "0")}
-                    </div>
-                    <div className="mt-1 text-[10px] uppercase tracking-widest text-white/55">
-                      {c.label}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <FanZoneAppealPanel />
-
-        </div>
+  const countdown = permanent ? (
+    <div className="flex flex-col items-center gap-2 rounded-xl border border-[#E11B22]/40 bg-black/30 px-4 py-6 text-center">
+      <ShieldBan className="size-6 text-[#E11B22]" />
+      <span className="font-display text-lg font-black uppercase tracking-wide text-white">
+        Permanent ban
+      </span>
+    </div>
+  ) : expired ? (
+    <div className="space-y-3 rounded-xl border border-emerald-400/40 bg-emerald-500/15 px-4 py-4 text-center">
+      <p className="text-sm font-semibold text-white">Your ban has been served — welcome back.</p>
+      <Button asChild className="bg-[#E11B22] text-white hover:bg-[#c5161c]">
+        <Link to={returnTo}>
+          Return to the Fan Zone
+          <ArrowRight className="ml-1.5 size-4" />
+        </Link>
+      </Button>
+    </div>
+  ) : (
+    <div className="rounded-xl border border-white/15 bg-black/30 px-4 py-4">
+      <div className="mb-3 flex items-center justify-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-white/55">
+        <Clock className="size-3.5" />
+        Ban ends in
       </div>
+      <div className="flex flex-wrap items-end justify-center gap-2 lg:flex-col lg:items-stretch">
+        {cells.map((c) => (
+          <div
+            key={c.label}
+            className="min-w-[62px] flex-1 rounded-lg border border-[#E11B22]/40 bg-[#E11B22]/10 px-2 py-2 text-center"
+          >
+            <div className="font-display text-2xl font-black leading-none text-white tabular-nums sm:text-3xl">
+              {String(c.value).padStart(2, "0")}
+            </div>
+            <div className="mt-1 text-[10px] uppercase tracking-widest text-white/55">{c.label}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="boro-theme relative mx-auto w-full max-w-5xl px-4 py-8 sm:py-12">
+      <div className="mb-4 flex justify-end">
+        <Button
+          onClick={() => setAppealOpen(true)}
+          className="bg-[#E11B22] text-white shadow-lg hover:bg-[#c5161c]"
+        >
+          <MailQuestion className="mr-1.5 size-4" />
+          Appeal this ban
+        </Button>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start">
+        <div className="overflow-hidden rounded-2xl border border-[#E11B22]/50 bg-[#0B1A2B]/80 shadow-[0_18px_60px_-16px_rgba(0,0,0,0.85)] backdrop-blur">
+          <img
+            src={bannedArt}
+            alt="A Boro fan standing in a courtroom dock while a judge passes sentence"
+            width={1024}
+            height={1024}
+            loading="lazy"
+            className="h-56 w-full object-cover object-top sm:h-72"
+          />
+
+          <div className="space-y-4 p-5 sm:p-6">
+            <div className="rounded-xl border border-[#E11B22]/55 bg-[#E11B22]/15 px-4 py-4 text-center">
+              <div className="mb-1 flex items-center justify-center gap-2 text-white">
+                <Gavel className="size-5" />
+                <h1 className="font-display text-2xl font-black tracking-tight sm:text-3xl">
+                  You have been banned
+                </h1>
+              </div>
+              <p className="text-sm text-white/75">
+                {permanent
+                  ? "Your access to the Boro Fan Zone has been removed permanently."
+                  : "You can't sign in to the Boro Fan Zone until your ban is served."}
+              </p>
+              <p className="mt-2 text-xs text-white/50">
+                This only affects the Boro Fan Zone — your BM Support account is unchanged.
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-white/15 bg-black/30 px-4 py-3">
+              <div className="mb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-white/55">
+                Reason
+              </div>
+              <p className="text-sm text-white">{reason || "No reason given."}</p>
+              {bannedBy && <p className="mt-2 text-xs text-white/55">Banned by {bannedBy}</p>}
+            </div>
+
+            <div className="lg:hidden">{countdown}</div>
+          </div>
+        </div>
+
+        <aside className="rounded-2xl border border-[#E11B22]/40 bg-[#0B1A2B]/80 p-4 shadow-[0_18px_60px_-16px_rgba(0,0,0,0.85)] backdrop-blur lg:sticky lg:top-6">
+          <div className="hidden lg:block">{countdown}</div>
+          <div className="lg:hidden">{countdown}</div>
+          <Button
+            variant="outline"
+            className="mt-3 w-full border-white/25 bg-white/5 text-white hover:bg-white/10"
+            onClick={() => setAppealOpen(true)}
+          >
+            <MailQuestion className="mr-1.5 size-4" />
+            Appeal this ban
+          </Button>
+        </aside>
+      </div>
+
+      <Dialog open={appealOpen} onOpenChange={setAppealOpen}>
+        <DialogContent className="boro-theme max-w-lg border-[#E11B22]/40 bg-[#0B1A2B] text-white">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-white">
+              <MailQuestion className="size-4 text-[#E11B22]" />
+              Appeal this ban
+            </DialogTitle>
+            <DialogDescription className="text-white/60">
+              Tell a moderator what happened. You'll get an email when they reply.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[65vh] overflow-y-auto pr-1">
+            <FanZoneAppealPanel />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
