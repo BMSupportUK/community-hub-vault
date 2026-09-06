@@ -31,7 +31,7 @@ function parts(ms: number) {
   };
 }
 
-export function FanZoneBannedScreen({ expiresAt, reason, bannedBy, returnTo = "/fan-zone" }: Props) {
+export function FanZoneBannedScreen({ expiresAt, reason, bannedBy, returnTo = "/fan-zone", lifted, onContinue }: Props) {
   const target = useMemo(() => (expiresAt ? Date.parse(expiresAt) : null), [expiresAt]);
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
