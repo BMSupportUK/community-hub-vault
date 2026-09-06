@@ -263,7 +263,7 @@ function FanZoneSanctionsPage() {
     );
   };
 
-  const sanctionList = (kind: "mute" | "ban", list: Sanction[] | null) => {
+  const sanctionList = (kind: "mute" | "ban", list: Sanction[] | null, past = false) => {
     if (list === null)
       return (
         <div className="grid place-items-center py-12 text-muted-foreground">
@@ -273,21 +273,35 @@ function FanZoneSanctionsPage() {
     if (!list.length)
       return (
         <p className="text-sm text-muted-foreground text-center py-12">
-          No active {kind === "mute" ? "mutes" : "bans"}.
+          No {past ? "expired" : "active"} {kind === "mute" ? "mutes" : "bans"}.
         </p>
       );
     return (
       <ul className="space-y-3">
         {list.map((r) => (
-          <li key={r.id} className="rounded-xl border border-border bg-surface-1 p-4 space-y-3 shadow-soft">
+          <li
+            key={r.id}
+            className={`rounded-xl border p-4 space-y-3 shadow-soft ${
+              past ? "border-border/60 bg-surface-1/70" : "border-border bg-surface-1"
+            }`}
+          >
             <div className="flex flex-wrap items-center gap-2 text-xs">
-              <span className="rounded-full bg-[#E11B22]/15 border border-[#E11B22]/40 text-[#E11B22] px-2 py-0.5 font-semibold inline-flex items-center gap-1">
+              <span
+                className={`rounded-full px-2 py-0.5 font-semibold inline-flex items-center gap-1 border ${
+                  past
+                    ? "bg-muted/40 border-border text-muted-foreground"
+                    : "bg-[#E11B22]/15 border-[#E11B22]/40 text-[#E11B22]"
+                }`}
+              >
                 {kind === "mute" ? <VolumeX className="size-3" /> : <Gavel className="size-3" />}
-                {kind === "mute" ? "Muted" : "Banned"}
+                {past ? (kind === "mute" ? "Mute ended" : "Ban ended") : kind === "mute" ? "Muted" : "Banned"}
               </span>
               <strong className="text-foreground text-sm">{names[r.user_id] ?? "Fan Zone member"}</strong>
               <span className="text-muted-foreground">
-                {untilLabel(r.expires_at)} · started {formatLastSeen(r.created_at)}
+                {past
+                  ? `ended ${r.expires_at ? formatLastSeen(r.expires_at) : "—"}`
+                  : untilLabel(r.expires_at)}{" "}
+                · started {formatLastSeen(r.created_at)}
               </span>
             </div>
             <div className="rounded-lg bg-surface-2/40 border border-border/60 px-3 py-2 text-sm">
@@ -297,19 +311,21 @@ function FanZoneSanctionsPage() {
             <div className="flex flex-wrap justify-end gap-2">
               <Button
                 size="sm"
-                variant="ghost"
+                variant={past ? "outline" : "ghost"}
                 onClick={() => {
                   setLogUser({ id: r.user_id, kind });
                   void loadLog(r.user_id, kind, r.created_at);
                 }}
               >
                 <ScrollText className="size-3.5 mr-1" />
-                Log
+                {past ? "View log of action taken" : "Log"}
               </Button>
-              <Button size="sm" variant="outline" disabled={busyId === r.id} onClick={() => setConfirmLift({ kind, row: r })}>
-                {busyId === r.id ? <Loader2 className="size-3.5 animate-spin mr-1" /> : <Check className="size-3.5 mr-1" />}
-                Lift {kind}
-              </Button>
+              {!past && (
+                <Button size="sm" variant="outline" disabled={busyId === r.id} onClick={() => setConfirmLift({ kind, row: r })}>
+                  {busyId === r.id ? <Loader2 className="size-3.5 animate-spin mr-1" /> : <Check className="size-3.5 mr-1" />}
+                  Lift {kind}
+                </Button>
+              )}
             </div>
           </li>
         ))}
@@ -318,7 +334,13 @@ function FanZoneSanctionsPage() {
   };
 
   return (
-    <main className="flex-1 w-full min-w-0 min-h-full self-stretch overflow-y-auto">
+    <main className="relative flex-1 w-full min-w-0 min-h-full self-stretch overflow-y-auto">
+      <div
+        className="pointer-events-none fixed inset-0 -z-10 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: `url(${moderatorBg})` }}
+        aria-hidden
+      />
+      <div className="pointer-events-none fixed inset-0 -z-10 bg-background/85" aria-hidden />
       <div className="w-full px-4 sm:px-6 py-6 space-y-4">
         <div className="flex items-center justify-between gap-3">
           <Button asChild variant="ghost" size="sm" className="-ml-2">
@@ -334,18 +356,31 @@ function FanZoneSanctionsPage() {
           <h1 className="font-display font-bold text-xl">Mutes &amp; bans</h1>
         </header>
 
-        <Tabs value={tab} onValueChange={(v) => setTab(v as "mutes" | "bans")}>
-          <TabsList>
+        <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)}>
+          <TabsList className="flex-wrap h-auto">
             <TabsTrigger value="mutes">
-              Mutes{mutes?.length ? ` (${mutes.length})` : ""}
+              Active mutes{mutes?.length ? ` (${mutes.length})` : ""}
             </TabsTrigger>
             <TabsTrigger value="bans">
-              Bans{bans?.length ? ` (${bans.length})` : ""}
+              Active bans{bans?.length ? ` (${bans.length})` : ""}
+            </TabsTrigger>
+            <TabsTrigger value="past-mutes">
+              Expired mutes{pastMutes?.length ? ` (${pastMutes.length})` : ""}
+            </TabsTrigger>
+            <TabsTrigger value="past-bans">
+              Expired bans{pastBans?.length ? ` (${pastBans.length})` : ""}
             </TabsTrigger>
           </TabsList>
         </Tabs>
 
-        {tab === "mutes" ? sanctionList("mute", mutes) : sanctionList("ban", bans)}
+        {tab === "mutes"
+          ? sanctionList("mute", mutes)
+          : tab === "bans"
+            ? sanctionList("ban", bans)
+            : tab === "past-mutes"
+              ? sanctionList("mute", pastMutes, true)
+              : sanctionList("ban", pastBans, true)}
+
 
         <Dialog open={!!logUser} onOpenChange={(o) => { if (!o) setLogUser(null); }}>
           <DialogContent className="max-w-2xl">
