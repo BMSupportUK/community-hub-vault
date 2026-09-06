@@ -66,6 +66,18 @@ export function FanZoneAppealPanel() {
     };
   }, [appealId, load]);
 
+  // Safety net: if the live connection drops, still pick replies up quickly.
+  useEffect(() => {
+    if (!user?.id) return;
+    const t = setInterval(() => void load(), 15_000);
+    const onFocus = () => void load();
+    window.addEventListener("focus", onFocus);
+    return () => {
+      clearInterval(t);
+      window.removeEventListener("focus", onFocus);
+    };
+  }, [user?.id, load]);
+
   const submit = async () => {
     const text = body.trim();
     if (text.length < 10) {
