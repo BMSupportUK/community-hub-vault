@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -58,7 +59,7 @@ type ModAction = {
   created_at: string;
 };
 
-type MainTab = "reports" | "mutes" | "bans" | "log";
+type MainTab = "reports" | "mutes" | "bans";
 
 const ACTION_LABEL: Record<ModAction["action"], string> = {
   mute: "Muted",
@@ -91,6 +92,7 @@ function AdminReportsPage() {
   const [bans, setBans] = useState<Sanction[] | null>(null);
   const [names, setNames] = useState<Record<string, string>>({});
   const [log, setLog] = useState<ModAction[] | null>(null);
+  const [logOpen, setLogOpen] = useState(false);
   const [confirmLift, setConfirmLift] = useState<{ kind: "mute" | "ban"; row: Sanction } | null>(null);
 
   const load = async () => {
@@ -169,8 +171,7 @@ function AdminReportsPage() {
 
   useEffect(() => {
     if (allowed && (tab === "mutes" || tab === "bans")) void loadSanctions();
-    if (allowed && tab === "log") void loadLog();
-  }, [allowed, tab, loadSanctions, loadLog]);
+  }, [allowed, tab, loadSanctions]);
 
   if (!allowed) return <Navigate to="/forum" />;
 
