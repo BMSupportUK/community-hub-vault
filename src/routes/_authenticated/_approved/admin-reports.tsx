@@ -160,12 +160,18 @@ function AdminReportsPage() {
     setNames((prev) => ({ ...map, ...prev }));
   }, []);
 
-  const loadLog = useCallback(async (userId: string) => {
+  const loadLog = useCallback(async (userId: string, kind: "mute" | "ban", since: string) => {
     setLog(null);
+    // Only notes tied to this one mute/ban: nothing from before it started.
+    const from = new Date(Date.parse(since) - 5000).toISOString();
+    const actions =
+      kind === "mute" ? ["mute", "unmute"] : ["ban", "unban", "appeal", "appeal_reply"];
     const { data, error } = await supabase
       .from("fan_zone_mod_actions")
       .select("id, user_id, actor_id, action, reason, expires_at, created_at")
       .eq("user_id", userId)
+      .in("action", actions)
+      .gte("created_at", from)
       .order("created_at", { ascending: false })
       .limit(200);
     if (error) {
@@ -177,6 +183,7 @@ function AdminReportsPage() {
     setLog(list);
     void loadNames(list.flatMap((r) => [r.user_id, r.actor_id ?? ""]));
   }, [loadNames]);
+
 
   const loadAppeals = useCallback(async () => {
     setAppeals(null);
