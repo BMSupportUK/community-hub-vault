@@ -155,8 +155,17 @@ export function FanZoneBannedScreen({ expiresAt, reason, bannedBy, returnTo = "/
             className="mt-3 w-full border-white/25 bg-white/5 text-white hover:bg-white/10"
             onClick={() => setAppealOpen(true)}
           >
-            <MailQuestion className="mr-1.5 size-4" />
-            Appeal this ban
+            {hasAppeal ? (
+              <>
+                <MessageSquare className="mr-1.5 size-4" />
+                View Appeal Chat Box
+              </>
+            ) : (
+              <>
+                <MailQuestion className="mr-1.5 size-4" />
+                Appeal this ban
+              </>
+            )}
           </Button>
         </aside>
       </div>
