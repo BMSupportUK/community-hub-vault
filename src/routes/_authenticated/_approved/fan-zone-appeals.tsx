@@ -40,6 +40,14 @@ type AppealMsg = {
   created_at: string;
 };
 
+type BanInfo = {
+  user_id: string;
+  reason: string | null;
+  created_at: string;
+  expires_at: string | null;
+};
+
+
 function FanZoneAppealsPage() {
   const { hasAny } = useAuth();
   const allowed = hasAny(["admin", "management", "moderator", "boro_fan_zone_moderator"]);
