@@ -5,3 +5,7 @@
 - [x] Keep the Fan Zone staff directory names current and deduplicate accounts
 - [x] Add a board-index link before the current-board link inside forum topics
 - [x] Quote the full original post when replying to a forum post
+
+## Fan Zone appeals
+- [x] Appeal form on ban screen + inbox in moderation centre with email replies
+- [ ] Log every appeal submission in the moderation log (who appealed, current status)
