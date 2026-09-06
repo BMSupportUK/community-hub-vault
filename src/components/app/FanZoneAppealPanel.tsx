@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Loader2, Send, MailQuestion } from "lucide-react";
 import { toast } from "sonner";
@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { submitFanZoneAppeal } from "@/lib/fan-zone-appeals.functions";
 import { formatLastSeen } from "@/lib/relative-time";
+import { getSound } from "@/lib/notification-sounds";
+import { ensureSoundUnlocked, playSound } from "@/lib/sound";
 
 type Msg = { id: string; from_staff: boolean; body: string; created_at: string };
 
@@ -27,6 +29,7 @@ export function FanZoneAppealPanel({ onAppealKnown }: Props) {
   const [msgs, setMsgs] = useState<Msg[] | null>(null);
   const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);
+  const seenStaff = useRef<Set<string> | null>(null);
 
   const load = useCallback(async () => {
     if (!user?.id) return;
@@ -49,9 +52,26 @@ export function FanZoneAppealPanel({ onAppealKnown }: Props) {
       .select("id, from_staff, body, created_at")
       .eq("appeal_id", appeal.id)
       .order("created_at", { ascending: true });
-    setMsgs((data ?? []) as Msg[]);
+    const rows = (data ?? []) as Msg[];
+    const staffIds = rows.filter((m) => m.from_staff).map((m) => m.id);
+    if (seenStaff.current === null) {
+      seenStaff.current = new Set(staffIds);
+    } else {
+      const fresh = staffIds.filter((id) => !seenStaff.current!.has(id));
+      fresh.forEach((id) => seenStaff.current!.add(id));
+      if (fresh.length) {
+        const sound = getSound("fan-zone-appeal-staff-reply");
+        if (sound) void playSound(sound.src, { gain: sound.gain, label: sound.label });
+      }
+    }
+    setMsgs(rows);
     onAppealKnown?.(true);
   }, [user?.id, onAppealKnown]);
+
+  useEffect(() => {
+    const sound = getSound("fan-zone-appeal-staff-reply");
+    if (sound) ensureSoundUnlocked([sound.src]);
+  }, []);
 
   useEffect(() => {
     void load();
