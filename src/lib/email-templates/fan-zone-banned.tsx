@@ -3,7 +3,7 @@ import { Body, Container, Head, Heading, Html, Preview, Text, Section, Hr, Link 
 import type { TemplateEntry } from './registry'
 
 const ZONE_NAME = 'Boro Fan Zone'
-export const FAN_ZONE_APPEAL_EMAIL = 'support@bmsupport.uk'
+export const FAN_ZONE_APPEAL_EMAIL = 'bmsupport2022@protonmail.com'
 
 interface Props {
   displayName?: string
