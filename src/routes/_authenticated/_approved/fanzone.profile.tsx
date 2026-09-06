@@ -242,12 +242,13 @@ function FanZoneProfilePage() {
                 <label className="text-[11px] uppercase tracking-wider font-semibold text-white/70">Bio</label>
                 <Textarea
                   value={bio}
-                  onChange={(e) => setBio(e.target.value.slice(0, 500))}
+                  onChange={(e) => setBio(e.target.value.slice(0, 1500))}
                   placeholder="Tell other Boro fans a bit about yourself"
-                  maxLength={500}
-                  rows={4}
+                  maxLength={1500}
+                  rows={5}
                   className="mt-1 bg-white/10 border-white/20 text-white placeholder:text-white/40"
                 />
+                <p className="text-[11px] text-white/40 mt-1.5 text-right">{bio.length}/1500</p>
               </div>
 
               <div>
