@@ -86,21 +86,21 @@ export function FanZoneBannedScreen({ expiresAt, reason, bannedBy, returnTo = "/
       </Button>
     </div>
   ) : (
-    <div className="rounded-xl border border-white/15 bg-black/30 px-4 py-4">
-      <div className="mb-3 flex items-center justify-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-white/55">
+    <div className="rounded-xl border border-white/15 bg-black/30 px-3 py-3 sm:px-4 sm:py-4">
+      <div className="mb-2 flex items-center justify-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-white/55 sm:mb-3">
         <Clock className="size-3.5" />
         Ban ends in
       </div>
-      <div className="flex flex-wrap items-end justify-center gap-2 lg:flex-col lg:items-stretch">
+      <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
         {cells.map((c) => (
           <div
             key={c.label}
-            className="min-w-[62px] flex-1 rounded-lg border border-[#E11B22]/40 bg-[#E11B22]/10 px-2 py-2 text-center"
+            className="rounded-lg border border-[#E11B22]/40 bg-[#E11B22]/10 px-1 py-2 text-center sm:px-2"
           >
-            <div className="font-display text-2xl font-black leading-none text-white tabular-nums sm:text-3xl">
+            <div className="font-display text-xl font-black leading-none text-white tabular-nums sm:text-2xl lg:text-3xl">
               {String(c.value).padStart(2, "0")}
             </div>
-            <div className="mt-1 text-[10px] uppercase tracking-widest text-white/55">{c.label}</div>
+            <div className="mt-1 text-[9px] uppercase tracking-widest text-white/55 sm:text-[10px]">{c.label}</div>
           </div>
         ))}
       </div>
