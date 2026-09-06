@@ -86,12 +86,6 @@ const ACTION_LABEL: Record<ModAction["action"], string> = {
   appeal_reply: "Appeal reply",
 };
 
-const APPEAL_STATUS_LABEL: Record<Appeal["status"], string> = {
-  open: "Waiting for a reply",
-  replied: "Replied",
-  closed: "Closed",
-};
-
 function untilLabel(expiresAt: string | null): string {
   if (!expiresAt) return "Permanent";
   const ms = Date.parse(expiresAt) - Date.now();
@@ -254,7 +248,6 @@ function AdminReportsPage() {
                     : r.action === "appeal_reply"
                       ? Inbox
                       : ShieldCheck;
-          const appealStatus: Appeal["status"] | undefined = undefined;
 
           return (
             <li key={r.id} className="rounded-xl border border-border bg-surface-1 p-3 space-y-1.5 shadow-soft">
@@ -275,9 +268,7 @@ function AdminReportsPage() {
                 <span className="text-muted-foreground">
                   by {r.actor_id ? (names[r.actor_id] ?? "staff") : "system"} · {formatLastSeen(r.created_at)}
                   {isAppeal
-                    ? appealStatus
-                      ? ` · now: ${APPEAL_STATUS_LABEL[appealStatus]}`
-                      : ""
+                    ? ""
                     : !lifted
                     ? r.expires_at
                       ? ` · until ${new Date(r.expires_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}`
