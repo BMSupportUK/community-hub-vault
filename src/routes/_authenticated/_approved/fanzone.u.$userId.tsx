@@ -1,6 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState, useMemo } from "react";
 import { ArrowLeft, Loader2, MessageSquare, Ban, ShieldOff, Heart, Clock, Quote, UserCheck, UserPlus, Lock } from "lucide-react";
+import { FanZoneProfileFacts } from "@/components/app/FanZoneProfileFacts";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { FanZoneNameGate } from "@/components/app/FanZoneNamePrompt";

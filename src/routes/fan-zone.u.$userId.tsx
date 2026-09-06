@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowLeft, Award, Clock, FileText, Heart, Lock, MessageSquare, Quote, ThumbsUp, Users } from "lucide-react";
+import { FanZoneProfileFacts } from "@/components/app/FanZoneProfileFacts";
 import { getPublicFanProfile } from "@/lib/fan-zone-public.functions";
 import { Button } from "@/components/ui/button";
 import boroDefaultAvatar from "@/assets/boro-default-avatar.png";
