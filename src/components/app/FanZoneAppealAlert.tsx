@@ -19,7 +19,8 @@ export function FanZoneAppealAlert() {
   useEffect(() => {
     if (!user || !isStaff) return;
     const sound = getSound("fan-zone-appeal");
-    if (sound) ensureSoundUnlocked([sound.src]);
+    const msgSound = getSound("fan-zone-appeal-message");
+    ensureSoundUnlocked([sound?.src, msgSound?.src].filter(Boolean) as string[]);
 
     const ch = supabase
       .channel(`fan-zone-appeals-alert-${user.id}`)
@@ -40,12 +41,31 @@ export function FanZoneAppealAlert() {
           });
         },
       )
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "fan_zone_appeal_messages" },
+        (p) => {
+          const row = p.new as { id?: string; from_staff?: boolean; author_id?: string };
+          if (!row?.id || row.from_staff || row.author_id === user.id) return;
+          if (seen.current.has(row.id)) return;
+          seen.current.add(row.id);
+          if (msgSound) void playSound(msgSound.src, { gain: msgSound.gain, label: msgSound.label });
+          toast.info("New appeal message", {
+            description: "A member replied in their ban appeal.",
+            action: {
+              label: "Open",
+              onClick: () => void navigate({ to: "/admin-reports" }),
+            },
+          });
+        },
+      )
       .subscribe();
 
     return () => {
       supabase.removeChannel(ch);
     };
   }, [user, isStaff, navigate]);
+
 
   return null;
 }
