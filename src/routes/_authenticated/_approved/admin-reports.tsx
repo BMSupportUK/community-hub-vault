@@ -599,7 +599,7 @@ function AdminReportsPage() {
                 Moderation log
               </DialogTitle>
               <DialogDescription>
-                Every mute, ban and early lift in the Boro Fan Zone — who it was done to, and who did it.
+                Every mute, ban, early lift and ban appeal in the Boro Fan Zone — who it was done to, and who did it.
               </DialogDescription>
             </DialogHeader>
             <div className="max-h-[60vh] overflow-y-auto pr-1">{logList()}</div>
