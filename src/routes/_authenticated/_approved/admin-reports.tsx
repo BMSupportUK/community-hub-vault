@@ -78,7 +78,7 @@ type AppealMsg = {
   created_at: string;
 };
 
-type MainTab = "reports" | "mutes" | "bans" | "appeals";
+type MainTab = "reports" | "mutes" | "bans";
 
 const ACTION_LABEL: Record<ModAction["action"], string> = {
   mute: "Muted",
@@ -285,10 +285,6 @@ function AdminReportsPage() {
   useEffect(() => {
     if (allowed && (tab === "mutes" || tab === "bans")) void loadSanctions();
   }, [allowed, tab, loadSanctions]);
-
-  useEffect(() => {
-    if (allowed && tab === "appeals") void loadAppeals();
-  }, [allowed, tab, loadAppeals]);
 
   if (!allowed) return <Navigate to="/forum" />;
 
@@ -508,11 +504,7 @@ function AdminReportsPage() {
               variant="outline"
               size="sm"
               onClick={() =>
-                tab === "reports"
-                  ? void load()
-                  : tab === "appeals"
-                    ? void loadAppeals()
-                    : void loadSanctions()
+                tab === "reports" ? void load() : void loadSanctions()
               }
             >
               <RefreshCw className="size-4 mr-1" />Refresh
@@ -530,98 +522,11 @@ function AdminReportsPage() {
             <TabsTrigger value="reports">Reports</TabsTrigger>
             <TabsTrigger value="mutes">Mutes</TabsTrigger>
             <TabsTrigger value="bans">Bans</TabsTrigger>
-            <TabsTrigger value="appeals" className="relative gap-1.5">
-              Appeals
-              {openCount > 0 && (
-                <span className="rounded-full bg-[#E11B22] px-1.5 py-0.5 text-[10px] font-bold text-white">
-                  {openCount}
-                </span>
-              )}
-            </TabsTrigger>
           </TabsList>
         </Tabs>
 
         {tab === "mutes" && sanctionList("mute", mutes)}
         {tab === "bans" && sanctionList("ban", bans)}
-        {tab === "appeals" && appealsList()}
-
-        <Dialog
-          open={appealsOpen}
-          onOpenChange={(o) => {
-            setAppealsOpen(o);
-            if (!o) setActiveAppeal(null);
-          }}
-        >
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <MailQuestion className="size-4 text-[#E11B22]" />
-                {activeAppeal ? `Appeal from ${names[activeAppeal.user_id] ?? "a Fan Zone member"}` : "Ban appeals"}
-              </DialogTitle>
-              <DialogDescription>
-                {activeAppeal
-                  ? "Your reply is kept here and emailed to the member."
-                  : "Every appeal sent from the Fan Zone ban screen. Open one to read it and reply."}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="max-h-[60vh] overflow-y-auto pr-1">
-              {activeAppeal ? (
-                <div className="space-y-3">
-                  <Button variant="ghost" size="sm" className="-ml-2" onClick={() => setActiveAppeal(null)}>
-                    <ArrowLeft className="size-4 mr-1" />All appeals
-                  </Button>
-                  {appealMsgs === null ? (
-                    <div className="grid place-items-center py-10 text-muted-foreground">
-                      <Loader2 className="size-5 animate-spin" />
-                    </div>
-                  ) : (
-                    <ul className="space-y-2">
-                      {appealMsgs.map((m) => (
-                        <li
-                          key={m.id}
-                          className={`rounded-xl border p-3 text-sm ${
-                            m.from_staff
-                              ? "border-emerald-400/40 bg-emerald-500/10"
-                              : "border-border bg-surface-1"
-                          }`}
-                        >
-                          <div className="mb-1 text-[10px] uppercase tracking-wide text-muted-foreground">
-                            {m.from_staff ? (names[m.author_id] ?? "Moderator") : (names[m.author_id] ?? "Member")} ·{" "}
-                            {formatLastSeen(m.created_at)}
-                          </div>
-                          <p className="whitespace-pre-wrap">{m.body}</p>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                  <Textarea
-                    rows={4}
-                    maxLength={2000}
-                    value={replyBody}
-                    onChange={(e) => setReplyBody(e.target.value)}
-                    placeholder="Write your reply…"
-                  />
-                  <div className="flex flex-wrap justify-end gap-2">
-                    {activeAppeal.status === "closed" && (
-                      <Button variant="outline" size="sm" onClick={() => void reopenAppeal()}>
-                        Reopen
-                      </Button>
-                    )}
-                    <Button variant="outline" size="sm" disabled={replyBusy} onClick={() => void sendReply(true)}>
-                      Reply &amp; close
-                    </Button>
-                    <Button size="sm" disabled={replyBusy} onClick={() => void sendReply(false)}>
-                      {replyBusy ? <Loader2 className="size-3.5 animate-spin mr-1" /> : <Send className="size-3.5 mr-1" />}
-                      Send reply
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                appealsList()
-              )}
-            </div>
-          </DialogContent>
-        </Dialog>
 
         <Dialog open={!!logUser} onOpenChange={(o) => { if (!o) setLogUser(null); }}>
           <DialogContent className="max-w-2xl">
