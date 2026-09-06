@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { Capacitor } from "@capacitor/core";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { playSound } from "@/lib/sound";
+import { ensureSoundUnlocked, playSound } from "@/lib/sound";
 import { getSound } from "@/lib/notification-sounds";
 import mentionAudio from "@/assets/mention-notify.mp3";
 
