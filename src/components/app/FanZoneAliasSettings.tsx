@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import boroDefaultAvatar from "@/assets/boro-default-avatar.png";
+import { BORO_DEFAULT_AVATAR_URL as boroDefaultAvatar } from "@/lib/boro-default-avatar";
 import { useFanAvatarLock } from "@/lib/fan-avatar-lock";
 
 /** Top-of-board card letting an approved fan zone member set an alias + avatar

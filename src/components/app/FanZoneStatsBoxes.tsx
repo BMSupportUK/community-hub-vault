@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Loader2, ThumbsUp, ThumbsDown, MessageSquare, FileText, Users, Award } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import boroDefaultAvatar from "@/assets/boro-default-avatar.png";
+import { BORO_DEFAULT_AVATAR_URL as boroDefaultAvatar } from "@/lib/boro-default-avatar";
 import { useFanProfileTo } from "@/components/app/fan-profile-link";
 
 type Stats = { topics: number; posts: number; friends: number; reactionsReceived: number };

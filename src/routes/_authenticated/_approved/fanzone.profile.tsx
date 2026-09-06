@@ -11,7 +11,7 @@ import { notifyFanAliasChange } from "@/lib/fan-alias-bus";
 import { useAuth } from "@/hooks/use-auth";
 import { useFanZoneMembership } from "@/hooks/use-fan-zone";
 import { toast } from "sonner";
-import boroDefaultAvatar from "@/assets/boro-default-avatar.png";
+import { BORO_DEFAULT_AVATAR_URL as boroDefaultAvatar } from "@/lib/boro-default-avatar";
 import bgAsset from "@/assets/boro-fan-zone-profile-bg.jpg.asset.json";
 import { useFanAvatarLock } from "@/lib/fan-avatar-lock";
 
