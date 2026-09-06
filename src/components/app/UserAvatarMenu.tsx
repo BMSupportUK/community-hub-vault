@@ -41,6 +41,8 @@ import {
 import { VpnBadge } from "@/lib/vpn-flags";
 import { cn } from "@/lib/utils";
 import { isFanZonePath } from "@/lib/fan-zone-nav";
+import { useFanAvatarLock } from "@/lib/fan-avatar-lock";
+import { BORO_DEFAULT_AVATAR_URL } from "@/lib/boro-default-avatar";
 import {
   Dialog,
   DialogContent,
@@ -83,6 +85,7 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
   const presence = usePresence(user?.id, Boolean(user));
   const path = useRouterState({ select: (s) => s.location.pathname });
   const inFanZone = isFanZonePath(path) || isFanZoneOnly;
+  const { forcedAvatar: forcedFanAvatar } = useFanAvatarLock();
 
   useEffect(() => {
     if (!user) return;
@@ -184,7 +187,11 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
   const flashRole = FLASH_PRIORITY.find((r) => roles.includes(r)) ?? null;
   const flashCls = roleFlashClass(flashRole);
   const supportAvatar = resolveAvatarUrl(user.id, profile?.avatar_url, roleFlashMap);
-  const resolvedAvatar = inFanZone ? (fanProfile?.fan_avatar_url ?? supportAvatar) : supportAvatar;
+  // Inside the Fan Zone: staff keep their badge picture, everyone else falls
+  // back to the Boro Fan Zone default rather than their BM Support picture.
+  const resolvedAvatar = inFanZone
+    ? forcedFanAvatar || fanProfile?.fan_avatar_url || BORO_DEFAULT_AVATAR_URL
+    : supportAvatar;
 
   const isDnd = presence.kind === "dnd";
   const statusLabel = presence.shortLabel;
