@@ -74,22 +74,42 @@ export function FanZoneMuteDialog({
     setBusy(false);
     if (error) return toast.error("Couldn't lift the mute", { description: error.message });
     toast.success(`${alias} can post again`);
+    setConfirmOpen(false);
     onChanged();
   };
 
   if (mute) {
     return (
-      <Button
-        onClick={() => void unmute()}
-        disabled={busy}
-        variant="outline"
-        size={compact ? "sm" : "default"}
-        title={`Muted: ${mute.reason} — click to lift the mute`}
-        className="bg-amber-500/15 border-amber-400/40 text-amber-200 hover:bg-amber-500/25 hover:text-white"
-      >
-        {busy ? <Loader2 className="size-4 mr-1 animate-spin" /> : <Volume2 className="size-4 mr-1" />}
-        Muted <MuteCountdown expiresAt={mute.expires_at} />
-      </Button>
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogTrigger asChild>
+          <Button
+            disabled={busy}
+            variant="outline"
+            size={compact ? "sm" : "default"}
+            title={`Muted: ${mute.reason} — click to lift the mute`}
+            className="bg-amber-500/15 border-amber-400/40 text-amber-200 hover:bg-amber-500/25 hover:text-white"
+          >
+            {busy ? <Loader2 className="size-4 mr-1 animate-spin" /> : <Volume2 className="size-4 mr-1" />}
+            Muted <MuteCountdown expiresAt={mute.expires_at} />
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Lift the mute on {alias} early?</AlertDialogTitle>
+            <AlertDialogDescription>
+              They'll be able to post again straight away, before the mute was due to end. This is recorded in the
+              moderation log against your name.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={busy}>Keep the mute</AlertDialogCancel>
+            <AlertDialogAction disabled={busy} onClick={(e) => { e.preventDefault(); void unmute(); }}>
+              {busy ? <Loader2 className="size-4 mr-1 animate-spin" /> : null}
+              Lift the mute
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     );
   }
 
