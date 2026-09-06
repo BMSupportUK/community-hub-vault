@@ -86,21 +86,21 @@ export function FanZoneBannedScreen({ expiresAt, reason, bannedBy, returnTo = "/
       </Button>
     </div>
   ) : (
-    <div className="rounded-xl border border-white/15 bg-black/30 px-4 py-4">
-      <div className="mb-3 flex items-center justify-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-white/55">
+    <div className="rounded-xl border border-white/15 bg-black/30 px-3 py-3 sm:px-4 sm:py-4">
+      <div className="mb-2 flex items-center justify-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.2em] text-white/55 sm:mb-3">
         <Clock className="size-3.5" />
         Ban ends in
       </div>
-      <div className="flex flex-wrap items-end justify-center gap-2 lg:flex-col lg:items-stretch">
+      <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
         {cells.map((c) => (
           <div
             key={c.label}
-            className="min-w-[62px] flex-1 rounded-lg border border-[#E11B22]/40 bg-[#E11B22]/10 px-2 py-2 text-center"
+            className="rounded-lg border border-[#E11B22]/40 bg-[#E11B22]/10 px-1 py-2 text-center sm:px-2"
           >
-            <div className="font-display text-2xl font-black leading-none text-white tabular-nums sm:text-3xl">
+            <div className="font-display text-xl font-black leading-none text-white tabular-nums sm:text-2xl lg:text-3xl">
               {String(c.value).padStart(2, "0")}
             </div>
-            <div className="mt-1 text-[10px] uppercase tracking-widest text-white/55">{c.label}</div>
+            <div className="mt-1 text-[9px] uppercase tracking-widest text-white/55 sm:text-[10px]">{c.label}</div>
           </div>
         ))}
       </div>
@@ -130,21 +130,42 @@ export function FanZoneBannedScreen({ expiresAt, reason, bannedBy, returnTo = "/
 
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start">
-        <div className="overflow-hidden rounded-2xl border border-[#E11B22]/50 bg-[#0B1A2B]/80 shadow-[0_18px_60px_-16px_rgba(0,0,0,0.85)] backdrop-blur">
+        <aside className="order-first rounded-2xl border border-[#E11B22]/40 bg-[#0B1A2B]/80 p-3 shadow-[0_18px_60px_-16px_rgba(0,0,0,0.85)] backdrop-blur sm:p-4 lg:sticky lg:top-6 lg:order-none lg:col-start-2 lg:row-start-1">
+          {countdown}
+          <Button
+            variant="outline"
+            className="mt-3 w-full border-white/25 bg-white/5 text-white hover:bg-white/10"
+            onClick={() => setAppealOpen(true)}
+          >
+            {hasAppeal ? (
+              <>
+                <MessageSquare className="mr-1.5 size-4" />
+                View Appeal Chat Box
+              </>
+            ) : (
+              <>
+                <MailQuestion className="mr-1.5 size-4" />
+                Appeal this ban
+              </>
+            )}
+          </Button>
+        </aside>
+
+        <div className="order-last overflow-hidden rounded-2xl border border-[#E11B22]/50 bg-[#0B1A2B]/80 shadow-[0_18px_60px_-16px_rgba(0,0,0,0.85)] backdrop-blur lg:order-none lg:col-start-1 lg:row-start-1">
           <img
             src={bannedArt}
             alt="A Boro fan standing in a courtroom dock while a judge passes sentence"
             width={1024}
             height={1024}
             loading="lazy"
-            className="h-56 w-full object-cover object-top sm:h-72"
+            className="h-40 w-full object-cover object-top sm:h-56 lg:h-72"
           />
 
-          <div className="space-y-4 p-5 sm:p-6">
+          <div className="space-y-4 p-4 sm:p-6">
             <div className="rounded-xl border border-[#E11B22]/55 bg-[#E11B22]/15 px-4 py-4 text-center">
               <div className="mb-1 flex items-center justify-center gap-2 text-white">
                 <Gavel className="size-5" />
-                <h1 className="font-display text-2xl font-black tracking-tight sm:text-3xl">
+                <h1 className="font-display text-xl font-black tracking-tight sm:text-2xl lg:text-3xl">
                   You have been banned
                 </h1>
               </div>
@@ -167,27 +188,6 @@ export function FanZoneBannedScreen({ expiresAt, reason, bannedBy, returnTo = "/
             </div>
           </div>
         </div>
-
-        <aside className="rounded-2xl border border-[#E11B22]/40 bg-[#0B1A2B]/80 p-4 shadow-[0_18px_60px_-16px_rgba(0,0,0,0.85)] backdrop-blur lg:sticky lg:top-6">
-          {countdown}
-          <Button
-            variant="outline"
-            className="mt-3 w-full border-white/25 bg-white/5 text-white hover:bg-white/10"
-            onClick={() => setAppealOpen(true)}
-          >
-            {hasAppeal ? (
-              <>
-                <MessageSquare className="mr-1.5 size-4" />
-                View Appeal Chat Box
-              </>
-            ) : (
-              <>
-                <MailQuestion className="mr-1.5 size-4" />
-                Appeal this ban
-              </>
-            )}
-          </Button>
-        </aside>
       </div>
 
       <Dialog open={appealOpen} onOpenChange={setAppealOpen}>
