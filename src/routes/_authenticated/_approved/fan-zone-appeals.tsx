@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
-import { ArrowLeft, Loader2, MailQuestion, RefreshCw, Send } from "lucide-react";
+import { ArrowLeft, Loader2, MailQuestion, RefreshCw, Send, ShieldOff } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
@@ -49,6 +49,7 @@ function FanZoneAppealsPage() {
   const [msgs, setMsgs] = useState<AppealMsg[] | null>(null);
   const [replyBody, setReplyBody] = useState("");
   const [replyBusy, setReplyBusy] = useState(false);
+  const [liftBusy, setLiftBusy] = useState(false);
   const sendAppealReply = useServerFn(replyToFanZoneAppeal);
   const setAppealStatus = useServerFn(setFanZoneAppealStatus);
 
@@ -151,6 +152,15 @@ function FanZoneAppealsPage() {
     } finally {
       setReplyBusy(false);
     }
+  };
+
+  const liftBan = async () => {
+    if (!active) return;
+    setLiftBusy(true);
+    const { error } = await supabase.rpc("fan_zone_unban", { _user_id: active.user_id });
+    setLiftBusy(false);
+    if (error) return toast.error("Couldn't remove the ban", { description: error.message });
+    toast.success("Ban removed — they can use the Fan Zone again.");
   };
 
   const reopenAppeal = async () => {
@@ -267,6 +277,16 @@ function FanZoneAppealsPage() {
               placeholder="Write your reply…"
             />
             <div className="flex flex-wrap justify-end gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={liftBusy}
+                onClick={() => void liftBan()}
+                className="mr-auto border-emerald-400/50 text-emerald-300 hover:bg-emerald-500/10 hover:text-emerald-200"
+              >
+                {liftBusy ? <Loader2 className="size-3.5 animate-spin mr-1" /> : <ShieldOff className="size-3.5 mr-1" />}
+                Remove ban
+              </Button>
               {active.status === "closed" && (
                 <Button variant="outline" size="sm" onClick={() => void reopenAppeal()}>
                   Reopen
