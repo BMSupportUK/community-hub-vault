@@ -272,7 +272,7 @@ function AdminReportsPage() {
               {r.reason}
             </div>
             <div className="flex justify-end">
-              <Button size="sm" variant="outline" disabled={busyId === r.id} onClick={() => void lift(kind, r)}>
+              <Button size="sm" variant="outline" disabled={busyId === r.id} onClick={() => setConfirmLift({ kind, row: r })}>
                 {busyId === r.id ? <Loader2 className="size-3.5 animate-spin mr-1" /> : <Check className="size-3.5 mr-1" />}
                 Lift {kind}
               </Button>
