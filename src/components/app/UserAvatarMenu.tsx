@@ -172,12 +172,20 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
   const name = (inFanZone && fanProfile?.fan_alias) || supportName;
   const handle = profile?.username ? `@${profile.username}` : (user.email ?? "");
   const initial = name.slice(0, 2).toUpperCase();
-  const topRole = roles[0] ?? "member";
+  const supportRole = roles[0] ?? "member";
+  // Inside the Boro Fan Zone the box shows a Fan Zone role, never the BM Support one.
+  const fanRole = roles.includes("admin")
+    ? "Owner"
+    : roles.includes("boro_fan_zone_moderator") || roles.includes("moderator")
+      ? "Fan Zone moderator"
+      : "Fan Zone member";
+  const topRole = inFanZone ? fanRole : supportRole;
   const FLASH_PRIORITY: FlashRole[] = ["admin", "management", "moderator", "staff"];
   const flashRole = FLASH_PRIORITY.find((r) => roles.includes(r)) ?? null;
   const flashCls = roleFlashClass(flashRole);
   const supportAvatar = resolveAvatarUrl(user.id, profile?.avatar_url, roleFlashMap);
   const resolvedAvatar = inFanZone ? (fanProfile?.fan_avatar_url ?? supportAvatar) : supportAvatar;
+
   const isDnd = presence.kind === "dnd";
   const statusLabel = presence.shortLabel;
   const trigger =
