@@ -18,9 +18,6 @@ import {
 } from "@/components/ui/alert-dialog";
 import { formatLastSeen } from "@/lib/relative-time";
 import { toast } from "sonner";
-import { useServerFn } from "@tanstack/react-start";
-import { Textarea } from "@/components/ui/textarea";
-import { replyToFanZoneAppeal, setFanZoneAppealStatus } from "@/lib/fan-zone-appeals.functions";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-reports")({
   component: AdminReportsPage,
@@ -78,7 +75,7 @@ type AppealMsg = {
   created_at: string;
 };
 
-type MainTab = "reports" | "mutes" | "bans" | "appeals";
+type MainTab = "reports" | "mutes" | "bans";
 
 const ACTION_LABEL: Record<ModAction["action"], string> = {
   mute: "Muted",
@@ -87,12 +84,6 @@ const ACTION_LABEL: Record<ModAction["action"], string> = {
   unban: "Ban lifted",
   appeal: "Appealed",
   appeal_reply: "Appeal reply",
-};
-
-const APPEAL_STATUS_LABEL: Record<Appeal["status"], string> = {
-  open: "Waiting for a reply",
-  replied: "Replied",
-  closed: "Closed",
 };
 
 function untilLabel(expiresAt: string | null): string {
@@ -121,15 +112,6 @@ function AdminReportsPage() {
   const [log, setLog] = useState<ModAction[] | null>(null);
   const [logUser, setLogUser] = useState<{ id: string; kind: "mute" | "ban" } | null>(null);
   const [confirmLift, setConfirmLift] = useState<{ kind: "mute" | "ban"; row: Sanction } | null>(null);
-  const [appealsOpen, setAppealsOpen] = useState(false);
-  const [appeals, setAppeals] = useState<Appeal[] | null>(null);
-  const [openCount, setOpenCount] = useState(0);
-  const [activeAppeal, setActiveAppeal] = useState<Appeal | null>(null);
-  const [appealMsgs, setAppealMsgs] = useState<AppealMsg[] | null>(null);
-  const [replyBody, setReplyBody] = useState("");
-  const [replyBusy, setReplyBusy] = useState(false);
-  const sendAppealReply = useServerFn(replyToFanZoneAppeal);
-  const setAppealStatus = useServerFn(setFanZoneAppealStatus);
 
   const load = async () => {
     setRows(null);
@@ -185,75 +167,6 @@ function AdminReportsPage() {
   }, [loadNames]);
 
 
-  const loadAppeals = useCallback(async () => {
-    setAppeals(null);
-    const { data, error } = await supabase
-      .from("fan_zone_appeals")
-      .select("id, user_id, status, created_at, updated_at")
-      .order("updated_at", { ascending: false })
-      .limit(200);
-    if (error) {
-      toast.error("Couldn't load appeals", { description: error.message });
-      setAppeals([]);
-      return;
-    }
-    const list = (data ?? []) as Appeal[];
-    setAppeals(list);
-    setOpenCount(list.filter((a) => a.status !== "closed").length);
-    void loadNames(list.map((a) => a.user_id));
-  }, [loadNames]);
-
-  const openAppeal = useCallback(async (a: Appeal) => {
-    setActiveAppeal(a);
-    setAppealMsgs(null);
-    setReplyBody("");
-    const { data, error } = await supabase
-      .from("fan_zone_appeal_messages")
-      .select("id, from_staff, author_id, body, created_at")
-      .eq("appeal_id", a.id)
-      .order("created_at", { ascending: true });
-    if (error) {
-      toast.error("Couldn't open the appeal", { description: error.message });
-      setAppealMsgs([]);
-      return;
-    }
-    const list = (data ?? []) as AppealMsg[];
-    setAppealMsgs(list);
-    void loadNames(list.map((m) => m.author_id));
-  }, [loadNames]);
-
-  const sendReply = async (close: boolean) => {
-    if (!activeAppeal) return;
-    const text = replyBody.trim();
-    if (text.length < 2) return toast.error("Write a reply first");
-    setReplyBusy(true);
-    try {
-      await sendAppealReply({ data: { appealId: activeAppeal.id, body: text, close } });
-      setReplyBody("");
-      toast.success(close ? "Reply sent and appeal closed" : "Reply sent and emailed");
-      await openAppeal(activeAppeal);
-      await loadAppeals();
-    } catch (err) {
-      toast.error("Couldn't send the reply", {
-        description: err instanceof Error ? err.message : undefined,
-      });
-    } finally {
-      setReplyBusy(false);
-    }
-  };
-
-  const reopenAppeal = async () => {
-    if (!activeAppeal) return;
-    try {
-      await setAppealStatus({ data: { appealId: activeAppeal.id, status: "open" } });
-      toast.success("Appeal reopened");
-      await loadAppeals();
-      setActiveAppeal({ ...activeAppeal, status: "open" });
-    } catch (err) {
-      toast.error("Couldn't reopen", { description: err instanceof Error ? err.message : undefined });
-    }
-  };
-
   const loadSanctions = useCallback(async () => {
     const nowIso = new Date().toISOString();
     setMutes(null);
@@ -285,10 +198,6 @@ function AdminReportsPage() {
   useEffect(() => {
     if (allowed && (tab === "mutes" || tab === "bans")) void loadSanctions();
   }, [allowed, tab, loadSanctions]);
-
-  useEffect(() => {
-    if (allowed && tab === "appeals") void loadAppeals();
-  }, [allowed, tab, loadAppeals]);
 
   if (!allowed) return <Navigate to="/forum" />;
 
@@ -339,9 +248,7 @@ function AdminReportsPage() {
                     : r.action === "appeal_reply"
                       ? Inbox
                       : ShieldCheck;
-          const appealStatus = isAppeal
-            ? (appeals ?? []).find((a) => a.user_id === r.user_id)?.status
-            : undefined;
+
           return (
             <li key={r.id} className="rounded-xl border border-border bg-surface-1 p-3 space-y-1.5 shadow-soft">
               <div className="flex flex-wrap items-center gap-2 text-xs">
@@ -361,9 +268,7 @@ function AdminReportsPage() {
                 <span className="text-muted-foreground">
                   by {r.actor_id ? (names[r.actor_id] ?? "staff") : "system"} · {formatLastSeen(r.created_at)}
                   {isAppeal
-                    ? appealStatus
-                      ? ` · now: ${APPEAL_STATUS_LABEL[appealStatus]}`
-                      : ""
+                    ? ""
                     : !lifted
                     ? r.expires_at
                       ? ` · until ${new Date(r.expires_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}`
@@ -373,71 +278,15 @@ function AdminReportsPage() {
               </div>
               {r.reason && <div className="text-sm text-muted-foreground">{r.reason}</div>}
               {isAppeal && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="-ml-2 h-7 px-2 text-xs"
-                  onClick={() => {
-                    const a = (appeals ?? []).find((x) => x.user_id === r.user_id);
-                    if (!a) return toast.error("That appeal is no longer available");
-                    setLogUser(null);
-                    setAppealsOpen(true);
-                    void openAppeal(a);
-                  }}
-                >
-                  Open appeal
+                <Button asChild variant="ghost" size="sm" className="-ml-2 h-7 px-2 text-xs">
+                  <Link to="/fan-zone-appeals" onClick={() => setLogUser(null)}>
+                    Open appeal
+                  </Link>
                 </Button>
               )}
             </li>
           );
         })}
-      </ul>
-    );
-  };
-
-  const appealsList = () => {
-    if (appeals === null)
-      return (
-        <div className="grid place-items-center py-12 text-muted-foreground">
-          <Loader2 className="size-5 animate-spin" />
-        </div>
-      );
-    if (!appeals.length)
-      return <p className="text-sm text-muted-foreground text-center py-12">No appeals yet.</p>;
-    return (
-      <ul className="space-y-2">
-        {appeals.map((a) => (
-          <li key={a.id}>
-            <button
-              type="button"
-              onClick={() => {
-                setAppealsOpen(true);
-                void openAppeal(a);
-              }}
-              className="w-full text-left rounded-xl border border-border bg-surface-1 p-3 shadow-soft hover:border-[#E11B22]/50 transition-colors"
-            >
-              <div className="flex flex-wrap items-center gap-2 text-xs">
-                <span
-                  className={`rounded-full px-2 py-0.5 font-semibold border ${
-                    a.status === "open"
-                      ? "bg-[#E11B22]/15 border-[#E11B22]/40 text-[#E11B22]"
-                      : a.status === "replied"
-                        ? "bg-amber-500/15 border-amber-400/40 text-amber-300"
-                        : "bg-emerald-500/15 border-emerald-400/40 text-emerald-300"
-                  }`}
-                >
-                  {a.status === "open" ? "Needs a reply" : a.status === "replied" ? "Replied" : "Closed"}
-                </span>
-                <strong className="text-foreground text-sm">
-                  {names[a.user_id] ?? "Fan Zone member"}
-                </strong>
-                <span className="text-muted-foreground">
-                  last activity {formatLastSeen(a.updated_at)}
-                </span>
-              </div>
-            </button>
-          </li>
-        ))}
       </ul>
     );
   };
@@ -508,11 +357,7 @@ function AdminReportsPage() {
               variant="outline"
               size="sm"
               onClick={() =>
-                tab === "reports"
-                  ? void load()
-                  : tab === "appeals"
-                    ? void loadAppeals()
-                    : void loadSanctions()
+                tab === "reports" ? void load() : void loadSanctions()
               }
             >
               <RefreshCw className="size-4 mr-1" />Refresh
@@ -530,98 +375,11 @@ function AdminReportsPage() {
             <TabsTrigger value="reports">Reports</TabsTrigger>
             <TabsTrigger value="mutes">Mutes</TabsTrigger>
             <TabsTrigger value="bans">Bans</TabsTrigger>
-            <TabsTrigger value="appeals" className="relative gap-1.5">
-              Appeals
-              {openCount > 0 && (
-                <span className="rounded-full bg-[#E11B22] px-1.5 py-0.5 text-[10px] font-bold text-white">
-                  {openCount}
-                </span>
-              )}
-            </TabsTrigger>
           </TabsList>
         </Tabs>
 
         {tab === "mutes" && sanctionList("mute", mutes)}
         {tab === "bans" && sanctionList("ban", bans)}
-        {tab === "appeals" && appealsList()}
-
-        <Dialog
-          open={appealsOpen}
-          onOpenChange={(o) => {
-            setAppealsOpen(o);
-            if (!o) setActiveAppeal(null);
-          }}
-        >
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <MailQuestion className="size-4 text-[#E11B22]" />
-                {activeAppeal ? `Appeal from ${names[activeAppeal.user_id] ?? "a Fan Zone member"}` : "Ban appeals"}
-              </DialogTitle>
-              <DialogDescription>
-                {activeAppeal
-                  ? "Your reply is kept here and emailed to the member."
-                  : "Every appeal sent from the Fan Zone ban screen. Open one to read it and reply."}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="max-h-[60vh] overflow-y-auto pr-1">
-              {activeAppeal ? (
-                <div className="space-y-3">
-                  <Button variant="ghost" size="sm" className="-ml-2" onClick={() => setActiveAppeal(null)}>
-                    <ArrowLeft className="size-4 mr-1" />All appeals
-                  </Button>
-                  {appealMsgs === null ? (
-                    <div className="grid place-items-center py-10 text-muted-foreground">
-                      <Loader2 className="size-5 animate-spin" />
-                    </div>
-                  ) : (
-                    <ul className="space-y-2">
-                      {appealMsgs.map((m) => (
-                        <li
-                          key={m.id}
-                          className={`rounded-xl border p-3 text-sm ${
-                            m.from_staff
-                              ? "border-emerald-400/40 bg-emerald-500/10"
-                              : "border-border bg-surface-1"
-                          }`}
-                        >
-                          <div className="mb-1 text-[10px] uppercase tracking-wide text-muted-foreground">
-                            {m.from_staff ? (names[m.author_id] ?? "Moderator") : (names[m.author_id] ?? "Member")} ·{" "}
-                            {formatLastSeen(m.created_at)}
-                          </div>
-                          <p className="whitespace-pre-wrap">{m.body}</p>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                  <Textarea
-                    rows={4}
-                    maxLength={2000}
-                    value={replyBody}
-                    onChange={(e) => setReplyBody(e.target.value)}
-                    placeholder="Write your reply…"
-                  />
-                  <div className="flex flex-wrap justify-end gap-2">
-                    {activeAppeal.status === "closed" && (
-                      <Button variant="outline" size="sm" onClick={() => void reopenAppeal()}>
-                        Reopen
-                      </Button>
-                    )}
-                    <Button variant="outline" size="sm" disabled={replyBusy} onClick={() => void sendReply(true)}>
-                      Reply &amp; close
-                    </Button>
-                    <Button size="sm" disabled={replyBusy} onClick={() => void sendReply(false)}>
-                      {replyBusy ? <Loader2 className="size-3.5 animate-spin mr-1" /> : <Send className="size-3.5 mr-1" />}
-                      Send reply
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                appealsList()
-              )}
-            </div>
-          </DialogContent>
-        </Dialog>
 
         <Dialog open={!!logUser} onOpenChange={(o) => { if (!o) setLogUser(null); }}>
           <DialogContent className="max-w-2xl">
