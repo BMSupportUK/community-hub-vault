@@ -2,7 +2,7 @@ import { useEffect, useRef } from "react";
 import { Capacitor } from "@capacitor/core";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { playSound } from "@/lib/sound";
+import { ensureSoundUnlocked, playSound } from "@/lib/sound";
 import { getSound } from "@/lib/notification-sounds";
 import mentionAudio from "@/assets/mention-notify.mp3";
 
@@ -19,11 +19,8 @@ const ALERT_KINDS = ["mention", "staff_mention", "ticket_help_requested"] as con
 /** Dane J — gets a bespoke voice clip when BM Support needs him mid Fan Zone. */
 const DANE_USER_ID = "73c113ce-ce1b-43f0-af24-c2a36cf0d8e7";
 
-const FAN_ZONE_PREFIXES = ["/forum", "/fan-zone", "/fanzone", "/boro-predictions"];
 
-/** Where the person is standing right now, not where the notification points. */
-const isViewingFanZone = () =>
-  typeof window !== "undefined" && FAN_ZONE_PREFIXES.some((p) => window.location.pathname.startsWith(p));
+
 
 /** Boro Fan Zone mentions get their own clip, kept separate from BM Support. */
 const isFanZoneMention = (row: MentionNotification) => !!row.link_path && row.link_path.startsWith("/forum");
@@ -36,7 +33,9 @@ export function MentionSoundAlert() {
 
   useEffect(() => {
     if (!user || Capacitor.isNativePlatform()) return;
+    ensureSoundUnlocked();
     let cancelled = false;
+
 
     const announce = (row: MentionNotification) => {
       if (seen.current.has(row.id)) return;
@@ -50,8 +49,9 @@ export function MentionSoundAlert() {
         });
         return;
       }
-      // BM Support wants Dane while he is over in the Boro Fan Zone.
-      if (user?.id === DANE_USER_ID && isViewingFanZone()) {
+      // BM Support wants Dane: bespoke voice clip (louder cue than the chime).
+      // Fires for any BM Support alert, and always while he is in the Fan Zone.
+      if (user?.id === DANE_USER_ID) {
         const needed = getSound("dane-bm-support");
         if (needed) {
           void playSound(needed.src, { label: `bm-support-needed-${row.id}`, gain: needed.gain });
@@ -61,6 +61,7 @@ export function MentionSoundAlert() {
       if (kind !== "mention") return; // other kinds have their own alerts elsewhere
       void playSound(mentionAudio, { label: `mention-${row.id}`, gain: 1.8 });
     };
+
 
     const poll = async () => {
       const { data, error } = await supabase
