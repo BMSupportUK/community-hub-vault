@@ -26,7 +26,7 @@ function parts(ms: number) {
   };
 }
 
-export function FanZoneMutedScreen({ expiresAt, reason, mutedBy, returnTo = "/forum" }: Props) {
+export function FanZoneMutedScreen({ expiresAt, reason, mutedBy, returnTo = "/forum", onKeepReading }: Props) {
   const target = useMemo(() => Date.parse(expiresAt), [expiresAt]);
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
