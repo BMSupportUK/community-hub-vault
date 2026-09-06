@@ -3,6 +3,21 @@ import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useFanZoneBan } from "@/hooks/use-fan-zone-ban";
 import { FanZoneBannedScreen } from "@/components/app/FanZoneBannedScreen";
+import { IconRail } from "@/components/app/IconRail";
+import { FanZonePublicHeader } from "@/components/app/FanZonePublicHeader";
+
+/** Keeps the Fan Zone side rail and header around the ban notice. */
+function BanChrome({ children }: { children: ReactNode }) {
+  return (
+    <div className="boro-theme flex min-h-screen bg-background">
+      <IconRail />
+      <div className="min-w-0 flex-1 overflow-y-auto scrollbar-hide">
+        <FanZonePublicHeader />
+        {children}
+      </div>
+    </div>
+  );
+}
 
 /**
  * Blocks every Boro Fan Zone page for a banned member: they see the ban
@@ -44,20 +59,20 @@ export function FanZoneBanGate({ children }: { children: ReactNode }) {
 
   if (effectiveBan) {
     return (
-      <div className="boro-theme relative w-full min-h-screen overflow-y-auto scrollbar-hide">
+      <BanChrome>
         <FanZoneBannedScreen
           expiresAt={effectiveBan.expires_at}
           reason={effectiveBan.reason}
           bannedBy={effectiveBan.banned_by_name}
           returnTo="/home"
         />
-      </div>
+      </BanChrome>
     );
   }
 
   if (lifted) {
     return (
-      <div className="boro-theme relative w-full min-h-screen overflow-y-auto scrollbar-hide">
+      <BanChrome>
         <FanZoneBannedScreen
           expiresAt={null}
           reason=""
@@ -66,7 +81,7 @@ export function FanZoneBanGate({ children }: { children: ReactNode }) {
           lifted
           onContinue={() => setLifted(false)}
         />
-      </div>
+      </BanChrome>
     );
   }
 
