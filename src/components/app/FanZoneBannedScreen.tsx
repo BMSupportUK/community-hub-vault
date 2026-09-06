@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Gavel, Clock, ArrowRight, ShieldBan, MailQuestion } from "lucide-react";
+import { Gavel, Clock, ArrowRight, ShieldBan, MailQuestion, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { FanZoneAppealPanel } from "@/components/app/FanZoneAppealPanel";
