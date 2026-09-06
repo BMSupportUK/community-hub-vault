@@ -8,4 +8,5 @@
 
 ## Fan Zone appeals
 - [x] Appeal form on ban screen + inbox in moderation centre with email replies
-- [ ] Log every appeal submission in the moderation log (who appealed, current status)
+- [x] Log every appeal submission in the moderation log (who appealed, current status)
+- [x] After a ban is lifted, show a "Continue to the Fan Zone" button instead of auto-redirecting
