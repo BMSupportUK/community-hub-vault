@@ -175,6 +175,25 @@ function FanZoneAppealsPage() {
     }
   };
 
+  const statusPill = (status: Appeal["status"]) => (
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider border ${
+        status === "open"
+          ? "bg-[#E11B22]/15 border-[#E11B22]/50 text-[#ff6b70]"
+          : status === "replied"
+            ? "bg-amber-500/15 border-amber-400/50 text-amber-300"
+            : "bg-emerald-500/15 border-emerald-400/50 text-emerald-300"
+      }`}
+    >
+      <span
+        className={`size-1.5 rounded-full ${
+          status === "open" ? "bg-[#E11B22]" : status === "replied" ? "bg-amber-400" : "bg-emerald-400"
+        }`}
+      />
+      {status === "open" ? "Needs a reply" : status === "replied" ? "Replied" : "Closed"}
+    </span>
+  );
+
   const list = () => {
     if (appeals === null)
       return (
@@ -183,30 +202,40 @@ function FanZoneAppealsPage() {
         </div>
       );
     if (!appeals.length)
-      return <p className="text-sm text-muted-foreground text-center py-12">No appeals yet.</p>;
+      return (
+        <div className="rounded-2xl border border-dashed border-border bg-surface-1/60 py-14 text-center">
+          <MailQuestion className="mx-auto mb-2 size-6 text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">No appeals yet.</p>
+        </div>
+      );
     return (
-      <ul className="space-y-2">
+      <ul className="grid gap-3 sm:grid-cols-2">
         {appeals.map((a) => (
           <li key={a.id}>
             <button
               type="button"
               onClick={() => void openAppeal(a)}
-              className="w-full text-left rounded-xl border border-border bg-surface-1 p-3 shadow-soft hover:border-[#E11B22]/50 transition-colors"
+              className="group relative w-full overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-surface-1 to-surface-2 p-4 text-left shadow-soft transition-all hover:-translate-y-0.5 hover:border-[#E11B22]/60 hover:shadow-lg"
             >
-              <div className="flex flex-wrap items-center gap-2 text-xs">
-                <span
-                  className={`rounded-full px-2 py-0.5 font-semibold border ${
-                    a.status === "open"
-                      ? "bg-[#E11B22]/15 border-[#E11B22]/40 text-[#E11B22]"
-                      : a.status === "replied"
-                        ? "bg-amber-500/15 border-amber-400/40 text-amber-300"
-                        : "bg-emerald-500/15 border-emerald-400/40 text-emerald-300"
-                  }`}
-                >
-                  {a.status === "open" ? "Needs a reply" : a.status === "replied" ? "Replied" : "Closed"}
-                </span>
-                <strong className="text-foreground text-sm">{names[a.user_id] ?? "Fan Zone member"}</strong>
-                <span className="text-muted-foreground">last activity {formatLastSeen(a.updated_at)}</span>
+              <span
+                className={`absolute inset-y-0 left-0 w-1 ${
+                  a.status === "open"
+                    ? "bg-[#E11B22]"
+                    : a.status === "replied"
+                      ? "bg-amber-400"
+                      : "bg-emerald-400"
+                }`}
+              />
+              <div className="flex items-start justify-between gap-3 pl-2">
+                <div className="min-w-0">
+                  <div className="font-display font-bold text-sm truncate group-hover:text-[#ff6b70] transition-colors">
+                    {names[a.user_id] ?? "Fan Zone member"}
+                  </div>
+                  <div className="text-[11px] text-muted-foreground mt-0.5">
+                    Last activity {formatLastSeen(a.updated_at)}
+                  </div>
+                </div>
+                {statusPill(a.status)}
               </div>
             </button>
           </li>
@@ -231,52 +260,87 @@ function FanZoneAppealsPage() {
           </Button>
         </div>
 
-        <header className="flex items-center gap-2">
-          <MailQuestion className="size-5 text-[#E11B22]" />
-          <h1 className="font-display font-bold text-xl">Ban appeals</h1>
+        <header className="relative overflow-hidden rounded-2xl border border-[#E11B22]/40 bg-gradient-to-r from-[#E11B22]/25 via-surface-2 to-surface-1 p-5 shadow-soft">
+          <div className="absolute -right-10 -top-12 size-40 rounded-full bg-[#E11B22]/20 blur-3xl" />
+          <div className="relative flex items-center gap-3">
+            <span className="grid size-11 place-items-center rounded-xl border border-[#E11B22]/50 bg-[#E11B22]/20 text-[#ff6b70]">
+              <MailQuestion className="size-5" />
+            </span>
+            <div>
+              <h1 className="font-display font-bold text-2xl tracking-tight">Ban appeals</h1>
+              <p className="text-xs text-muted-foreground">
+                Boro Fan Zone · review and reply to members appealing a ban
+              </p>
+            </div>
+          </div>
         </header>
 
         {active ? (
-          <div className="space-y-3">
+          <div className="space-y-4">
             <Button variant="ghost" size="sm" className="-ml-2" onClick={() => setActive(null)}>
               <ArrowLeft className="size-4 mr-1" />
               All appeals
             </Button>
-            <h2 className="font-semibold">
-              Appeal from {names[active.user_id] ?? "a Fan Zone member"}
-            </h2>
-            <p className="text-xs text-muted-foreground">
-              Your reply is kept here and emailed to the member.
-            </p>
-            {msgs === null ? (
-              <div className="grid place-items-center py-10 text-muted-foreground">
-                <Loader2 className="size-5 animate-spin" />
+
+            <div className="overflow-hidden rounded-2xl border border-border bg-surface-1 shadow-soft">
+              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-gradient-to-r from-[#E11B22]/15 to-transparent px-4 py-3">
+                <div>
+                  <h2 className="font-display font-bold">
+                    Appeal from {names[active.user_id] ?? "a Fan Zone member"}
+                  </h2>
+                  <p className="text-[11px] text-muted-foreground">
+                    Your reply is kept here and emailed to the member.
+                  </p>
+                </div>
+                {statusPill(active.status)}
               </div>
-            ) : (
-              <ul className="space-y-2">
-                {msgs.map((m) => (
-                  <li
-                    key={m.id}
-                    className={`rounded-xl border p-3 text-sm ${
-                      m.from_staff ? "border-emerald-400/40 bg-emerald-500/10" : "border-border bg-surface-1"
-                    }`}
-                  >
-                    <div className="mb-1 text-[10px] uppercase tracking-wide text-muted-foreground">
-                      {names[m.author_id] ?? (m.from_staff ? "Moderator" : "Member")} · {formatLastSeen(m.created_at)}
-                    </div>
-                    <p className="whitespace-pre-wrap">{m.body}</p>
-                  </li>
-                ))}
-              </ul>
-            )}
-            <Textarea
-              rows={4}
-              maxLength={2000}
-              value={replyBody}
-              onChange={(e) => setReplyBody(e.target.value)}
-              placeholder="Write your reply…"
-            />
-            <div className="flex flex-wrap justify-end gap-2">
+
+              {msgs === null ? (
+                <div className="grid place-items-center py-10 text-muted-foreground">
+                  <Loader2 className="size-5 animate-spin" />
+                </div>
+              ) : (
+                <ul className="space-y-3 p-4">
+                  {msgs.map((m) => (
+                    <li
+                      key={m.id}
+                      className={`flex ${m.from_staff ? "justify-end" : "justify-start"}`}
+                    >
+                      <div
+                        className={`max-w-[85%] rounded-2xl border px-4 py-2.5 text-sm shadow-soft ${
+                          m.from_staff
+                            ? "rounded-br-md border-emerald-400/45 bg-gradient-to-br from-emerald-500/20 to-emerald-500/5"
+                            : "rounded-bl-md border-[#E11B22]/35 bg-gradient-to-br from-[#E11B22]/15 to-transparent"
+                        }`}
+                      >
+                        <div
+                          className={`mb-1 text-[10px] font-semibold uppercase tracking-wider ${
+                            m.from_staff ? "text-emerald-300" : "text-[#ff8a8e]"
+                          }`}
+                        >
+                          {names[m.author_id] ?? (m.from_staff ? "Moderator" : "Member")} ·{" "}
+                          <span className="text-muted-foreground font-normal normal-case tracking-normal">
+                            {formatLastSeen(m.created_at)}
+                          </span>
+                        </div>
+                        <p className="whitespace-pre-wrap leading-relaxed">{m.body}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            <div className="rounded-2xl border border-border bg-surface-1 p-4 shadow-soft space-y-3">
+              <Textarea
+                rows={4}
+                maxLength={2000}
+                value={replyBody}
+                onChange={(e) => setReplyBody(e.target.value)}
+                placeholder="Write your reply…"
+                className="resize-none border-border/70 bg-surface-2 focus-visible:ring-[#E11B22]/50"
+              />
+              <div className="flex flex-wrap items-center justify-end gap-2">
               <Button
                 variant="outline"
                 size="sm"
@@ -295,10 +359,16 @@ function FanZoneAppealsPage() {
               <Button variant="outline" size="sm" disabled={replyBusy} onClick={() => void sendReply(true)}>
                 Reply &amp; close
               </Button>
-              <Button size="sm" disabled={replyBusy} onClick={() => void sendReply(false)}>
+              <Button
+                size="sm"
+                disabled={replyBusy}
+                onClick={() => void sendReply(false)}
+                className="bg-[#E11B22] text-white hover:bg-[#c2151b]"
+              >
                 {replyBusy ? <Loader2 className="size-3.5 animate-spin mr-1" /> : <Send className="size-3.5 mr-1" />}
                 Send reply
               </Button>
+              </div>
             </div>
           </div>
         ) : (
