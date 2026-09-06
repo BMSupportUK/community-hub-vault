@@ -1693,6 +1693,32 @@ export type Database = {
           },
         ]
       }
+      fan_zone_dm_thread_clears: {
+        Row: {
+          cleared_at: string
+          thread_id: string
+          user_id: string
+        }
+        Insert: {
+          cleared_at?: string
+          thread_id: string
+          user_id: string
+        }
+        Update: {
+          cleared_at?: string
+          thread_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fan_zone_dm_thread_clears_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "fan_zone_dm_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fan_zone_dm_threads: {
         Row: {
           created_at: string
@@ -5974,6 +6000,7 @@ export type Database = {
       check_admin_unlock_lockout: { Args: never; Returns: Json }
       cleanup_old_chat_messages: { Args: never; Returns: number }
       clear_admin_unlock_failures: { Args: never; Returns: undefined }
+      clear_fan_dm_threads: { Args: { _threads: string[] }; Returns: number }
       close_ticket: { Args: { _ticket_id: string }; Returns: undefined }
       create_app_role: {
         Args: { _label: string; _name: string }
