@@ -303,7 +303,7 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
       >
         <div className="relative p-4 pb-3 overflow-hidden">
           <Nameplate
-            id={profile?.equipped_nameplate_id ?? null}
+            id={inFanZone ? null : (profile?.equipped_nameplate_id ?? null)}
             className="absolute inset-0"
             fallbackStyle={{
               background:
