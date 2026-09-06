@@ -64,6 +64,7 @@ export function FanZoneBanDialog({
   const [minutes, setMinutes] = useState<number | null>(10080);
   const [reason, setReason] = useState("");
   const [busy, setBusy] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const submit = async () => {
     const text = reason.trim();
