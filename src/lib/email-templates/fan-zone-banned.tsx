@@ -4,6 +4,7 @@ import type { TemplateEntry } from './registry'
 
 const ZONE_NAME = 'Boro Fan Zone'
 export const FAN_ZONE_APPEAL_EMAIL = 'bmsupport2022@protonmail.com'
+const SITE_URL = 'https://bmsupport.uk'
 
 interface Props {
   displayName?: string
@@ -56,11 +57,17 @@ const FanZoneBannedEmail = ({ displayName, reason, expiresAt, appealEmail }: Pro
           <Section style={appealCard}>
             <Text style={cardLabel}>Want to appeal?</Text>
             <Text style={text}>
-              Open the {ZONE_NAME} in the app and write your appeal on the ban notice — a moderator will read it and
-              you'll get an email with their reply. You can also email us at{' '}
-              <Link href={`mailto:${email}`} style={link}>{email}</Link> if you'd rather.
+              Log in to the site and open the {ZONE_NAME}. You'll see the ban notice with an{' '}
+              <strong>appeal chat box</strong> — write your appeal there and a moderator will reply in the same chat
+              box, so keep an eye on it. Replies appear straight away, no need to refresh.
+            </Text>
+            <Text style={text}>
+              <Link href={`${SITE_URL}/fan-zone`} style={button}>Log in and appeal</Link>
             </Text>
             <Text style={text}>Tell us what happened so we can look into it properly.</Text>
+            <Text style={smallText}>
+              Can't log in? Email us at <Link href={`mailto:${email}`} style={link}>{email}</Link>.
+            </Text>
           </Section>
           <Hr style={hr} />
           <Text style={footer}>{ZONE_NAME} — {email}</Text>
@@ -92,5 +99,16 @@ const infoCard = { background: '#f8fafc', border: '1px solid #e2e8f0', borderRad
 const appealCard = { background: '#fff7ed', border: '1px solid #fed7aa', borderRadius: '8px', padding: '16px 20px', margin: '16px 0' }
 const cardLabel = { fontSize: '12px', color: '#9a3412', textTransform: 'uppercase' as const, letterSpacing: '0.5px', margin: '0 0 6px', fontWeight: 'bold' as const }
 const link = { color: '#E11B22', fontWeight: 'bold' as const, textDecoration: 'underline' }
+const smallText = { fontSize: '12px', color: '#666', lineHeight: '1.6', margin: '8px 0 0' }
+const button = {
+  display: 'inline-block',
+  background: '#E11B22',
+  color: '#ffffff',
+  fontWeight: 'bold' as const,
+  fontSize: '14px',
+  padding: '10px 18px',
+  borderRadius: '6px',
+  textDecoration: 'none',
+}
 const hr = { borderColor: '#eee', margin: '24px 0' }
 const footer = { fontSize: '12px', color: '#999', margin: '0 0 6px' }
