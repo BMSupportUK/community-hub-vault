@@ -395,6 +395,53 @@ function AdminReportsPage() {
     );
   };
 
+  const appealsList = () => {
+    if (appeals === null)
+      return (
+        <div className="grid place-items-center py-12 text-muted-foreground">
+          <Loader2 className="size-5 animate-spin" />
+        </div>
+      );
+    if (!appeals.length)
+      return <p className="text-sm text-muted-foreground text-center py-12">No appeals yet.</p>;
+    return (
+      <ul className="space-y-2">
+        {appeals.map((a) => (
+          <li key={a.id}>
+            <button
+              type="button"
+              onClick={() => {
+                setAppealsOpen(true);
+                void openAppeal(a);
+              }}
+              className="w-full text-left rounded-xl border border-border bg-surface-1 p-3 shadow-soft hover:border-[#E11B22]/50 transition-colors"
+            >
+              <div className="flex flex-wrap items-center gap-2 text-xs">
+                <span
+                  className={`rounded-full px-2 py-0.5 font-semibold border ${
+                    a.status === "open"
+                      ? "bg-[#E11B22]/15 border-[#E11B22]/40 text-[#E11B22]"
+                      : a.status === "replied"
+                        ? "bg-amber-500/15 border-amber-400/40 text-amber-300"
+                        : "bg-emerald-500/15 border-emerald-400/40 text-emerald-300"
+                  }`}
+                >
+                  {a.status === "open" ? "Needs a reply" : a.status === "replied" ? "Replied" : "Closed"}
+                </span>
+                <strong className="text-foreground text-sm">
+                  {names[a.user_id] ?? "Fan Zone member"}
+                </strong>
+                <span className="text-muted-foreground">
+                  last activity {formatLastSeen(a.updated_at)}
+                </span>
+              </div>
+            </button>
+          </li>
+        ))}
+      </ul>
+    );
+  };
+
   const sanctionList = (kind: "mute" | "ban", list: Sanction[] | null) => {
     if (list === null)
       return (
