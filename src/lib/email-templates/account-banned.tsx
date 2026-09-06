@@ -1,5 +1,5 @@
 import React from 'react'
-import { Body, Container, Head, Heading, Html, Preview, Text, Section, Hr, Button } from '@react-email/components'
+import { Body, Container, Head, Heading, Html, Preview, Text, Section, Hr } from '@react-email/components'
 import type { TemplateEntry } from './registry'
 
 const SITE_NAME = 'BM Support'
@@ -7,13 +7,11 @@ const SITE_NAME = 'BM Support'
 interface Props {
   displayName?: string
   reason?: string
-  appealUrl?: string
 }
 
 const AccountBannedEmail = ({
   displayName,
   reason,
-  appealUrl = 'https://bmsupport.uk/contact',
 }: Props) => (
   <Html lang="en" dir="ltr">
     <Head />
@@ -32,19 +30,12 @@ const AccountBannedEmail = ({
         <Section style={appealCard}>
           <Text style={cardLabel}>Think this is a mistake?</Text>
           <Text style={text}>
-            You can appeal this decision. Tell us what happened and our team will review your account
-            and come back to you by email.
+            You can appeal this decision. Simply reply to this email, tell us what happened and our team will review your account and come back to you.
           </Text>
-          <Section style={{ textAlign: 'center', margin: '20px 0 4px' }}>
-            <Button href={appealUrl} style={btn}>Appeal this decision</Button>
-          </Section>
-          <Text style={smallText}>
-            Or open this link: <a href={appealUrl} style={link}>{appealUrl}</a>
+          <Text style={text}>
+            Please include the email address on your account so we can find it quickly.
           </Text>
         </Section>
-        <Text style={smallText2}>
-          Please include the email address on your account so we can find it quickly.
-        </Text>
         <Hr style={hr} />
         <Text style={footer}>{SITE_NAME}</Text>
       </Container>
@@ -59,7 +50,6 @@ export const template = {
   previewData: {
     displayName: 'Jane',
     reason: 'Repeated breach of our community rules.',
-    appealUrl: 'https://bmsupport.uk/contact',
   },
 } satisfies TemplateEntry
 
@@ -68,12 +58,8 @@ const container = { padding: '24px', maxWidth: '560px', margin: '0 auto' }
 const h1 = { fontSize: '22px', fontWeight: 'bold' as const, color: '#0d0d0d', margin: '0 0 16px' }
 const text = { fontSize: '14px', color: '#444', lineHeight: '1.6', margin: '0 0 12px' }
 const reasonText = { fontSize: '14px', color: '#7f1d1d', lineHeight: '1.6', margin: '0' }
-const smallText = { fontSize: '12px', color: '#666', lineHeight: '1.5', margin: '8px 0 0', textAlign: 'center' as const }
-const smallText2 = { fontSize: '12px', color: '#666', lineHeight: '1.5', margin: '12px 0 0' }
 const card = { background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '8px', padding: '16px 20px', margin: '16px 0' }
 const appealCard = { background: '#f5f3ff', border: '1px solid #c4b5fd', borderRadius: '8px', padding: '16px 20px', margin: '16px 0' }
 const cardLabel = { fontSize: '12px', color: '#5b21b6', textTransform: 'uppercase' as const, letterSpacing: '0.5px', margin: '0 0 6px', fontWeight: 'bold' as const }
-const btn = { background: '#7c3aed', color: '#ffffff', padding: '12px 22px', borderRadius: '8px', textDecoration: 'none', fontWeight: 'bold' as const, fontSize: '14px' }
-const link = { color: '#7c3aed', textDecoration: 'underline' }
 const hr = { borderColor: '#eee', margin: '24px 0' }
 const footer = { fontSize: '12px', color: '#999', margin: '0 0 6px' }

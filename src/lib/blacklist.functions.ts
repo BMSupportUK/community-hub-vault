@@ -30,7 +30,7 @@ async function sendBanEmail(userId: string, reason: string) {
     const displayName = (prof as any)?.display_name || (prof as any)?.username || undefined;
     const { sendAndLogEmail } = await import("@/lib/email-templates/send-and-log");
     await sendAndLogEmail(supabaseAdmin, "account-banned", toEmail, {
-      templateData: { displayName, reason, appealUrl: "https://bmsupport.uk/contact" },
+      templateData: { displayName, reason },
       idempotencyKey: `account-banned-${userId}-${new Date().toISOString().slice(0, 10)}`,
     });
   } catch (err) {
