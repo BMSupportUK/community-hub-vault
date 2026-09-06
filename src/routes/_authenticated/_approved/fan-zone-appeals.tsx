@@ -47,6 +47,12 @@ type BanInfo = {
   expires_at: string | null;
 };
 
+function isBanActive(ban: BanInfo | undefined) {
+  if (!ban) return false;
+  if (ban.expires_at === null) return true;
+  return Date.parse(ban.expires_at) > Date.now();
+}
+
 
 function FanZoneAppealsPage() {
   const { hasAny } = useAuth();
@@ -121,6 +127,7 @@ function FanZoneAppealsPage() {
       setActive(a);
       setMsgs(null);
       setReplyBody("");
+      void loadBans([a.user_id]);
       const { data, error } = await supabase
         .from("fan_zone_appeal_messages")
         .select("id, from_staff, author_id, body, created_at")
@@ -135,7 +142,7 @@ function FanZoneAppealsPage() {
       setMsgs(list);
       void loadNames(list.map((m) => m.author_id));
     },
-    [loadNames],
+    [loadNames, loadBans],
   );
 
   useEffect(() => {
@@ -190,6 +197,7 @@ function FanZoneAppealsPage() {
     setLiftBusy(false);
     if (error) return toast.error("Couldn't remove the ban", { description: error.message });
     toast.success("Ban removed — they can use the Fan Zone again.");
+    await loadBans([active.user_id]);
   };
 
   const reopenAppeal = async () => {
@@ -326,6 +334,7 @@ function FanZoneAppealsPage() {
     );
   };
 
+  const activeBan = active ? isBanActive(bans[active.user_id]) : false;
 
   return (
     <main className="flex-1 w-full min-w-0 min-h-full self-stretch overflow-y-auto">
@@ -427,12 +436,16 @@ function FanZoneAppealsPage() {
               <Button
                 variant="outline"
                 size="sm"
-                disabled={liftBusy}
+                disabled={liftBusy || !activeBan}
                 onClick={() => void liftBan()}
-                className="mr-auto border-emerald-400/50 text-emerald-300 hover:bg-emerald-500/10 hover:text-emerald-200"
+                className={`mr-auto ${
+                  activeBan
+                    ? "border-emerald-400/50 text-emerald-300 hover:bg-emerald-500/10 hover:text-emerald-200"
+                    : "border-white/10 bg-white/5 text-white/40 hover:bg-white/5 hover:text-white/40"
+                }`}
               >
                 {liftBusy ? <Loader2 className="size-3.5 animate-spin mr-1" /> : <ShieldOff className="size-3.5 mr-1" />}
-                Remove ban
+                {activeBan ? "Remove ban" : "Ban already lifted"}
               </Button>
               {active.status === "closed" && (
                 <Button variant="outline" size="sm" onClick={() => void reopenAppeal()}>
