@@ -65,19 +65,6 @@ function statusIsInProgress(status: string | null | undefined) {
   return true;
 }
 
-function Side({ name, logo }: { name: string; logo?: string | null }) {
-  return (
-    <span className="flex items-center gap-1.5 min-w-0">
-      {logo ? (
-        <img src={logo} alt="" width={20} height={20} className="size-5 object-contain shrink-0" loading="lazy" />
-      ) : (
-        <TeamKit team={name} size={18} className="shrink-0" />
-      )}
-      <span className="truncate font-semibold text-white">{name}</span>
-    </span>
-  );
-}
-
 function BigSide({ name, logo }: { name: string; logo?: string | null }) {
   return (
     <div className="flex flex-1 flex-col items-center gap-2 min-w-0">
@@ -269,76 +256,6 @@ export function BoroLiveMatchStrip() {
 
   return (
     <>
-      <div className="group mb-5 w-full overflow-hidden rounded-xl border border-[#E11B22]/45 bg-black/70 backdrop-blur-md shadow-[0_10px_30px_-14px_rgba(225,27,34,0.6)] text-left transition hover:border-[#E11B22]/80">
-        <div className="flex items-stretch">
-          {live?.inPlay && (
-            <div className="flex items-center gap-1.5 px-3 py-2.5 bg-gradient-to-b from-[#E11B22] to-[#8B0F14] text-white shrink-0">
-              <span className="relative flex size-2.5">
-                <span className="absolute inline-flex size-full animate-ping rounded-full bg-white/80" />
-                <span className="relative inline-flex size-2.5 rounded-full bg-white" />
-              </span>
-              <span className="text-[10px] font-black uppercase tracking-[0.18em]">Live</span>
-            </div>
-          )}
-
-
-          <div className="flex-1 min-w-0 px-3 py-2 flex items-center gap-3">
-            {live ? (
-              <div className="flex-1 min-w-0 flex items-center gap-2 sm:gap-3 text-sm">
-                <Side name={live.home} logo={live.homeLogo} />
-                <span className="font-display text-lg sm:text-xl font-black text-white tabular-nums px-1.5">
-                  {live.homeScore}
-                  <span className="text-white/50 px-1">-</span>
-                  {live.awayScore}
-                </span>
-                <Side name={live.away} logo={live.awayLogo} />
-                <span className="ml-auto shrink-0 rounded-md bg-white/10 px-2 py-0.5 text-[11px] font-bold text-amber-200">
-                  {live.inPlay ? live.clock || live.statusDetail : live.statusDetail}
-                </span>
-              </div>
-            ) : headlineFixture ? (
-              <div className="flex-1 min-w-0 flex items-center gap-2 sm:gap-3 text-sm">
-                <CalendarDays className="size-4 text-[#E11B22] shrink-0" />
-                <Side name={headlineFixture.home} logo={headlineFixture.homeLogo} />
-                <span className="text-[11px] font-bold uppercase tracking-wider text-white/50 px-1">v</span>
-                <Side name={headlineFixture.away} logo={headlineFixture.awayLogo} />
-                <span className="ml-auto shrink-0 flex items-center gap-2">
-                  {countdown(headlineFixture.kickoff, now) && (
-                    <span className="rounded-md bg-[#E11B22]/20 px-2 py-0.5 text-[11px] font-bold text-red-200">
-                      in {countdown(headlineFixture.kickoff, now)}
-                    </span>
-                  )}
-                  <span className="hidden md:inline text-[11px] text-white/70">
-                    {fmtKickoff(headlineFixture.kickoff, tz)} · {headlineFixture.competition}
-                  </span>
-                </span>
-              </div>
-            ) : lr ? (
-              <div className="flex-1 min-w-0 flex items-center gap-2 sm:gap-3 text-sm">
-                <Trophy className="size-4 text-[#E11B22] shrink-0" />
-                <Side name={lr.home} logo={lr.homeLogo} />
-                <span className="font-display text-lg font-black text-white tabular-nums px-1.5">
-                  {lr.homeScore}
-                  <span className="text-white/50 px-1">-</span>
-                  {lr.awayScore}
-                </span>
-                <Side name={lr.away} logo={lr.awayLogo} />
-                <span className="ml-auto shrink-0 rounded-md bg-white/10 px-2 py-0.5 text-[11px] font-bold text-white/80">
-                  FT
-                </span>
-              </div>
-            ) : null}
-
-            {live && lr && (
-              <span className="hidden lg:inline text-[11px] text-white/60 shrink-0 border-l border-white/10 pl-3">
-                Last: {lr.home} {lr.homeScore}-{lr.awayScore} {lr.away}
-              </span>
-            )}
-
-          </div>
-        </div>
-      </div>
-
       {/* Slim always-visible tab pinned to the right edge */}
       <button
         type="button"
