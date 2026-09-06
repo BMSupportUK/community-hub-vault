@@ -13,6 +13,7 @@ export const Route = createFileRoute("/_authenticated/_approved/account-security
 type Factor = { id: string; status: string; friendly_name: string | null };
 
 function AccountSecurityPage() {
+  const [tab, setTab] = useState<"2fa" | "lock">("2fa");
   const [loading, setLoading] = useState(true);
   const [factor, setFactor] = useState<Factor | null>(null);
 
