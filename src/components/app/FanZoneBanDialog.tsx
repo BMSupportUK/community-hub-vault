@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import type { FanZoneBan } from "@/hooks/use-fan-zone-ban";
+import { banFanZoneMember } from "@/lib/fan-zone-ban.functions";
 
 const DURATIONS: Array<{ label: string; minutes: number | null }> = [
   { label: "24 hours", minutes: 1440 },
@@ -57,13 +58,13 @@ export function FanZoneBanDialog({
     const text = reason.trim();
     if (text.length < 3) return toast.error("Please give a reason for the ban");
     setBusy(true);
-    const { error } = await supabase.rpc("fan_zone_ban", {
-      _user_id: userId,
-      _minutes: minutes as unknown as number,
-      _reason: text.slice(0, 1000),
-    });
+    try {
+      await banFanZoneMember({ data: { userId, minutes, reason: text.slice(0, 1000) } });
+    } catch (err: any) {
+      setBusy(false);
+      return toast.error("Couldn't ban this member", { description: err?.message ?? "Please try again" });
+    }
     setBusy(false);
-    if (error) return toast.error("Couldn't ban this member", { description: error.message });
     toast.success(`${alias} has been banned from the Boro Fan Zone`);
     setReason("");
     setOpen(false);
