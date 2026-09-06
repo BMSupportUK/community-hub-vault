@@ -98,6 +98,7 @@ export function FanZoneBannedScreen({ expiresAt, reason, bannedBy, returnTo = "/
         </Button>
       </div>
 
+
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_280px] lg:items-start">
         <div className="overflow-hidden rounded-2xl border border-[#E11B22]/50 bg-[#0B1A2B]/80 shadow-[0_18px_60px_-16px_rgba(0,0,0,0.85)] backdrop-blur">
           <img
@@ -134,14 +135,11 @@ export function FanZoneBannedScreen({ expiresAt, reason, bannedBy, returnTo = "/
               <p className="text-sm text-white">{reason || "No reason given."}</p>
               {bannedBy && <p className="mt-2 text-xs text-white/55">Banned by {bannedBy}</p>}
             </div>
-
-            <div className="lg:hidden">{countdown}</div>
           </div>
         </div>
 
         <aside className="rounded-2xl border border-[#E11B22]/40 bg-[#0B1A2B]/80 p-4 shadow-[0_18px_60px_-16px_rgba(0,0,0,0.85)] backdrop-blur lg:sticky lg:top-6">
-          <div className="hidden lg:block">{countdown}</div>
-          <div className="lg:hidden">{countdown}</div>
+          {countdown}
           <Button
             variant="outline"
             className="mt-3 w-full border-white/25 bg-white/5 text-white hover:bg-white/10"
