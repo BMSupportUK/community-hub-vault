@@ -56,11 +56,11 @@ const FanZoneBannedEmail = ({ displayName, reason, expiresAt, appealEmail }: Pro
           <Section style={appealCard}>
             <Text style={cardLabel}>Want to appeal?</Text>
             <Text style={text}>
-              Appeals for the {ZONE_NAME} are handled by email only. Email us at{' '}
-              <Link href={`mailto:${email}`} style={link}>{email}</Link> and tell us what happened, and a moderator will
-              review it.
+              Open the {ZONE_NAME} in the app and write your appeal on the ban notice — a moderator will read it and
+              you'll get an email with their reply. You can also email us at{' '}
+              <Link href={`mailto:${email}`} style={link}>{email}</Link> if you'd rather.
             </Text>
-            <Text style={text}>Please include the email address on your account so we can find it quickly.</Text>
+            <Text style={text}>Tell us what happened so we can look into it properly.</Text>
           </Section>
           <Hr style={hr} />
           <Text style={footer}>{ZONE_NAME} — {email}</Text>

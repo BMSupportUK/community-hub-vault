@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { Gavel, Clock, ArrowRight, ShieldBan } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { FanZoneAppealPanel } from "@/components/app/FanZoneAppealPanel";
 import bannedArt from "@/assets/fan-zone-banned.jpg";
 
 type Props = {
@@ -124,10 +125,8 @@ export function FanZoneBannedScreen({ expiresAt, reason, bannedBy, returnTo = "/
             </div>
           )}
 
-          <p className="text-center text-xs text-white/45">
-            Think this is a mistake? Reply to the ban notice email and a moderator will take another
-            look.
-          </p>
+          <FanZoneAppealPanel />
+
         </div>
       </div>
     </div>
