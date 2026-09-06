@@ -1,4 +1,4 @@
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useFanZoneBan } from "@/hooks/use-fan-zone-ban";
@@ -11,16 +11,33 @@ import { FanZoneBannedScreen } from "@/components/app/FanZoneBannedScreen";
  * Nothing is rendered until BOTH the sign-in state and the ban check have
  * settled, and once a ban is known the screen stays put through background
  * re-checks — otherwise the page flickers between the content and the ban box.
+ *
+ * When the ban is lifted the gate keeps the ban screen visible with a
+ * "Continue to the Fan Zone" button, so the customer chooses when to leave
+ * instead of being auto-redirected.
  */
 export function FanZoneBanGate({ children }: { children: ReactNode }) {
   const { user, loading: authLoading } = useAuth();
   const { ban, loading } = useFanZoneBan(user?.id ?? null);
+  const [lifted, setLifted] = useState(false);
 
   // Sticky: keep showing the ban screen while a later check is in flight.
   const lastBan = useRef<typeof ban>(null);
   useEffect(() => {
     if (!loading) lastBan.current = ban;
   }, [ban, loading]);
+
+  // Detect a ban being lifted while the customer is on the page.
+  const wasBanned = useRef(false);
+  useEffect(() => {
+    if (loading) return;
+    if (ban) {
+      wasBanned.current = true;
+      if (lifted) setLifted(false);
+    } else if (wasBanned.current && !lifted) {
+      setLifted(true);
+    }
+  }, [ban, loading, lifted]);
 
   const settled = !authLoading && !loading;
   const effectiveBan = loading ? (lastBan.current ?? ban) : ban;
@@ -33,6 +50,21 @@ export function FanZoneBanGate({ children }: { children: ReactNode }) {
           reason={effectiveBan.reason}
           bannedBy={effectiveBan.banned_by_name}
           returnTo="/home"
+        />
+      </div>
+    );
+  }
+
+  if (lifted) {
+    return (
+      <div className="boro-theme relative w-full min-h-screen overflow-y-auto scrollbar-hide">
+        <FanZoneBannedScreen
+          expiresAt={null}
+          reason=""
+          bannedBy={null}
+          returnTo="/home"
+          lifted
+          onContinue={() => setLifted(false)}
         />
       </div>
     );
