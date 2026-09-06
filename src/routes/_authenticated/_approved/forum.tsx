@@ -13,7 +13,6 @@ import { BoroMatchCentreBox } from "@/components/app/BoroMatchCentreBox";
 import { BoroLiveMatchStrip } from "@/components/app/BoroLiveMatchStrip";
 import { FanZoneNameGate } from "@/components/app/FanZoneNamePrompt";
 import { FanZoneBannedScreen } from "@/components/app/FanZoneBannedScreen";
-import { FanZoneMutedScreen } from "@/components/app/FanZoneMutedScreen";
 import { useFanZoneBan } from "@/hooks/use-fan-zone-ban";
 import { useFanZoneMute } from "@/hooks/use-fan-zone-mute";
 import { MuteCountdown } from "@/components/app/FanZoneMuteDialog";
