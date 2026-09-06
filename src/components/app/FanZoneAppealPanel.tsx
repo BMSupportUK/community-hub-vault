@@ -40,6 +40,7 @@ export function FanZoneAppealPanel({ onAppealKnown }: Props) {
     if (!appeal) {
       setAppealId(null);
       setMsgs([]);
+      onAppealKnown?.(false);
       return;
     }
     setAppealId(appeal.id);
@@ -49,7 +50,8 @@ export function FanZoneAppealPanel({ onAppealKnown }: Props) {
       .eq("appeal_id", appeal.id)
       .order("created_at", { ascending: true });
     setMsgs((data ?? []) as Msg[]);
-  }, [user?.id]);
+    onAppealKnown?.(true);
+  }, [user?.id, onAppealKnown]);
 
   useEffect(() => {
     void load();
