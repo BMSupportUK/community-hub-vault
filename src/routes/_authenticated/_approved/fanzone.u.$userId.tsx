@@ -271,7 +271,7 @@ function FanProfilePage() {
           <div className="p-6 space-y-5 text-white">
             {p.has_blocked_me && (
               <div className="rounded-lg border border-amber-500/40 bg-amber-500/5 px-3 py-2 text-xs text-amber-300">
-                This member has blocked you. You can't message them.
+                YOUR UNABLE TO CONTACT THIS USER
               </div>
             )}
             <FanZoneProfileFacts
