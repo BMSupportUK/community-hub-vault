@@ -118,6 +118,47 @@ function resolveIds(names: string[], players: FantasyPlayer[]): string[] | null 
   return unique.length === 11 ? unique : null;
 }
 
+/**
+ * Second, independent source: the live match feed's line-up for Middlesbrough.
+ * Its names always include first names, so it settles shared surnames such as
+ * Jones. Returns null when the feed has no confirmed eleven yet.
+ */
+async function fetchFeedStarterIds(
+  admin: Admin,
+  fixtureId: string,
+  players: FantasyPlayer[],
+): Promise<string[] | null> {
+  try {
+    const { data: fixture } = await admin
+      .from("boro_fixtures")
+      .select("home_team, away_team, kickoff_at")
+      .eq("id", fixtureId)
+      .maybeSingle();
+    if (!fixture?.home_team || !fixture?.away_team || !fixture?.kickoff_at) return null;
+
+    const { getCachedSummaryForFixture } = await import("@/lib/espn-summary-cache.server");
+    const summary = await getCachedSummaryForFixture({
+      home_team: String(fixture.home_team),
+      away_team: String(fixture.away_team),
+      kickoff_at: String(fixture.kickoff_at),
+    });
+    const rosters: any[] = Array.isArray(summary?.rosters) ? summary.rosters : [];
+    const boro = rosters.find((roster: any) =>
+      normaliseName(String(roster?.team?.displayName ?? roster?.team?.name ?? "")).includes(
+        "middlesbrough",
+      ),
+    );
+    const names: string[] = (boro?.roster ?? [])
+      .filter((entry: any) => entry?.starter === true)
+      .map((entry: any) => String(entry?.athlete?.displayName ?? ""))
+      .filter((name: string) => name.trim() !== "");
+    if (names.length !== 11) return null;
+    return resolveIds(names, players);
+  } catch {
+    return null;
+  }
+}
+
 /** Read the starting XI from the official team-sheet graphic already captured for the fixture. */
 export async function fetchTeamSheetStarterIds(
   admin: Admin,
@@ -157,19 +198,28 @@ export async function fetchTeamSheetStarterIds(
   const firstIds = firstNames ? resolveIds(firstNames, players) : null;
   if (!firstIds) return null;
 
-  // Back-up pass: read the sheet again, independently, and only act when both
-  // reads produce the very same eleven players. This is what stops a misread
-  // shared surname (three Joneses in the squad) benching a real starter.
-  const secondNames = await readStarterNames(
-    imageUrl,
-    apiKey,
-    'Look at this Middlesbrough team sheet. List, as JSON only, {"starters":["First Last"]} — the 11 STARTING players in shirt-number order, each with first name then surname exactly as printed or as the recognised full name. Do not include substitutes and do not abbreviate to surnames.',
-  );
-  const secondIds = secondNames ? resolveIds(secondNames, players) : null;
-  if (!secondIds) return null;
+  // Back-up source: the live match feed's own line-up, which always carries
+  // full first names. Preferred check — it is a completely separate source from
+  // the graphic, so a misread shared surname (three Joneses) cannot slip past.
+  let source = "";
+  let checkIds = await fetchFeedStarterIds(admin, fixtureId, players);
+  if (checkIds) {
+    source = "match-feed";
+  } else {
+    // Feed line-ups are not published yet: fall back to an independent second
+    // read of the graphic, again demanding first name + surname.
+    const secondNames = await readStarterNames(
+      imageUrl,
+      apiKey,
+      'Look at this Middlesbrough team sheet. List, as JSON only, {"starters":["First Last"]} — the 11 STARTING players in shirt-number order, each with first name then surname exactly as printed or as the recognised full name. Do not include substitutes and do not abbreviate to surnames.',
+    );
+    checkIds = secondNames ? resolveIds(secondNames, players) : null;
+    source = "second-read";
+  }
+  if (!checkIds) return null;
 
   const agree =
-    firstIds.length === secondIds.length && firstIds.every((id) => secondIds.includes(id));
+    firstIds.length === checkIds.length && firstIds.every((id) => checkIds!.includes(id));
   if (!agree) return null;
 
   await admin.from("app_settings").upsert(
@@ -178,7 +228,7 @@ export async function fetchTeamSheetStarterIds(
       value: {
         starterIds: firstIds,
         extractedAt: new Date().toISOString(),
-        verifiedBySecondRead: true,
+        verifiedBy: source,
       },
     },
     { onConflict: "key" },
