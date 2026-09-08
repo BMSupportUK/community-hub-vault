@@ -221,6 +221,32 @@ export async function fetchOfficialTimeline(handle: string = HANDLE): Promise<Te
  */
 const CLUB_HANDLES: Record<string, string[]> = {
   "queens park rangers": ["QPR"],
+  "crystal palace": ["CPFC"],
+  arsenal: ["Arsenal"],
+  chelsea: ["ChelseaFC"],
+  everton: ["Everton"],
+  fulham: ["FulhamFC"],
+  brentford: ["BrentfordFC"],
+  "west ham united": ["WestHam"],
+  "nottingham forest": ["NFFC"],
+  "aston villa": ["AVFCOfficial"],
+  "wolverhampton wanderers": ["Wolves"],
+  "brighton & hove albion": ["OfficialBHAFC"],
+  "brighton and hove albion": ["OfficialBHAFC"],
+  "tottenham hotspur": ["SpursOfficial"],
+  "newcastle united": ["NUFC"],
+  "manchester united": ["ManUtd"],
+  "manchester city": ["ManCity"],
+  liverpool: ["LFC"],
+  bournemouth: ["afcbournemouth"],
+  "afc bournemouth": ["afcbournemouth"],
+  "bolton wanderers": ["OfficialBWFC"],
+  "bristol rovers": ["Official_BRFC"],
+  "huddersfield town": ["htafc"],
+  "barnsley": ["BarnsleyFC"],
+  "rotherham united": ["OfficialRUFC"],
+  "peterborough united": ["theposh"],
+  "shrewsbury town": ["shrewsweb"],
   burnley: ["BurnleyOfficial"],
   "west bromwich albion": ["WBA"],
   "doncaster rovers": ["drfc_official"],
@@ -272,7 +298,7 @@ export function opponentHandles(name: string): string[] {
 export function isOwnTeamSheetText(rawText: string): boolean {
   const text = normalizeFancyText(rawText);
   if (NEGATIVE_PATTERNS.some((re) => re.test(text))) return false;
-  return /\bteam\s*news\b|\bline[\s-]?ups?\b|\bstarting\s+(?:xi|eleven|line)\b|\bteam\s*sheet\b|\bour\s+xi\b|\b(?:today'?s|tonight'?s|this\s+afternoon'?s)\s+(?:team|side|xi)\b|\bhow\s+we\s+line\s*up\b|\b(?:team|side|xi|eleven)\s+to\s+(?:face|play|take\s+on)\b|\b(?:team|side|xi|eleven)\s+(?:v|vs|versus)\b/i.test(
+  return /\bteam\s*news\b|\bline[\s-]?ups?\b|\bstarting\s+(?:xi|eleven|line)\b|\bteam\s*sheet\b|\bour\s+xi\b|\b(?:your|the|this|tonight'?s|today'?s)\s+(?:[a-z0-9'’-]+\s+){0,3}(?:xi|eleven)\b|\bxi\s*[:|\u26bd🔥👊📋]|\b(?:today'?s|tonight'?s|this\s+afternoon'?s)\s+(?:team|side|xi)\b|\bhow\s+we\s+line\s*up\b|\b(?:team|side|xi|eleven)\s+to\s+(?:face|play|take\s+on)\b|\b(?:team|side|xi|eleven)\s+(?:v|vs|versus)\b/i.test(
     text,
   );
 }
@@ -489,12 +515,18 @@ export async function syncBoroTeamSheet(opts?: { ignoreWindow?: boolean }): Prom
   const kickoffMs = Date.parse(fx.kickoff_at);
   // Each club's own official line-up graphic, read from its own account —
   // retweets are ignored. Boro's XI is always first, the opposition second.
-  const boroHits = pickTeamSheetPosts(await fetchOfficialTimeline(), kickoffMs, opponent)
-    .filter((h) => h.side === "boro" && !/^RT\s+@/i.test(h.text));
-  const opponentHits = (await fetchOpponentTeamSheets(opponent, kickoffMs)).map((h) => ({
-    ...h,
-    side: "opponent" as const,
-  }));
+  const boroTimeline = pickTeamSheetPosts(await fetchOfficialTimeline(), kickoffMs, opponent);
+  const boroHits = boroTimeline.filter((h) => h.side === "boro" && !/^RT\s+@/i.test(h.text));
+  let opponentHits: Array<TeamSheetHit & { side: "opponent" }> = (
+    await fetchOpponentTeamSheets(opponent, kickoffMs)
+  ).map((h) => ({ ...h, side: "opponent" as const }));
+  // The opposition account can be unreadable (handle changes, blocked egress),
+  // so fall back to Boro's retweet of the visitors' XI.
+  if (opponentHits.length === 0) {
+    opponentHits = boroTimeline
+      .filter((h) => h.side === "opponent")
+      .map((h) => ({ ...h, side: "opponent" as const }));
+  }
   const hits = [...boroHits, ...opponentHits];
   if (hits.length === 0) {
     return { ok: true, fixture: label, topic: topic.title, posted: 0, skipped: ["no team sheet posted yet"] };
