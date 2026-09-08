@@ -515,12 +515,18 @@ export async function syncBoroTeamSheet(opts?: { ignoreWindow?: boolean }): Prom
   const kickoffMs = Date.parse(fx.kickoff_at);
   // Each club's own official line-up graphic, read from its own account —
   // retweets are ignored. Boro's XI is always first, the opposition second.
-  const boroHits = pickTeamSheetPosts(await fetchOfficialTimeline(), kickoffMs, opponent)
-    .filter((h) => h.side === "boro" && !/^RT\s+@/i.test(h.text));
-  const opponentHits = (await fetchOpponentTeamSheets(opponent, kickoffMs)).map((h) => ({
-    ...h,
-    side: "opponent" as const,
-  }));
+  const boroTimeline = pickTeamSheetPosts(await fetchOfficialTimeline(), kickoffMs, opponent);
+  const boroHits = boroTimeline.filter((h) => h.side === "boro" && !/^RT\s+@/i.test(h.text));
+  let opponentHits: Array<TeamSheetHit & { side: "opponent" }> = (
+    await fetchOpponentTeamSheets(opponent, kickoffMs)
+  ).map((h) => ({ ...h, side: "opponent" as const }));
+  // The opposition account can be unreadable (handle changes, blocked egress),
+  // so fall back to Boro's retweet of the visitors' XI.
+  if (opponentHits.length === 0) {
+    opponentHits = boroTimeline
+      .filter((h) => h.side === "opponent")
+      .map((h) => ({ ...h, side: "opponent" as const }));
+  }
   const hits = [...boroHits, ...opponentHits];
   if (hits.length === 0) {
     return { ok: true, fixture: label, topic: topic.title, posted: 0, skipped: ["no team sheet posted yet"] };
