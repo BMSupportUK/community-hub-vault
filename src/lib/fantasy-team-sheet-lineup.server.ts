@@ -59,7 +59,10 @@ export async function fetchTeamSheetStarterIds(
   const cachedIds = Array.isArray(cached?.value?.starterIds)
     ? cached.value.starterIds.filter((id: unknown): id is string => typeof id === "string")
     : [];
-  if (cachedIds.length >= 9) return cachedIds;
+  // Only a complete eleven may be acted on. A partial read makes a real starter
+  // look like he was left out, and he gets wrongly benched.
+  if (cachedIds.length === 11) return cachedIds;
+
 
   const { data: sheet } = await admin
     .from("boro_team_sheets")
