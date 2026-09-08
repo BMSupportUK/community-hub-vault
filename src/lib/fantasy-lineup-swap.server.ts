@@ -198,7 +198,7 @@ export async function applyLineupSwapsForGameweek(
  */
 export async function syncLineupSwaps(opts?: { ignoreWindow?: boolean }): Promise<LineupSwapResult> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { fetchBoroStarterIds } = await import("@/lib/fantasy-live-stats.server");
+  
   const { isFantasyLeagueCompetition } = await import("@/lib/fantasy-rules");
 
   const nowMs = Date.now();
