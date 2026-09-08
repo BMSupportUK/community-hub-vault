@@ -800,6 +800,34 @@ function SportsGuidesPage() {
                   )}
                 </div>
 
+                {activeCat && (subsByCat[activeCat]?.length ?? 0) > 0 && !search.trim() && (
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {(subsByCat[activeCat] ?? []).map((sub) => {
+                      const count = blogs.filter((b) => b.category_id === activeCat && b.subcategory === sub.name).length;
+                      const active = subFilter === sub.name;
+                      const unread = unreadSubCounts[activeCat]?.[sub.name] ?? 0;
+                      return (
+                        <button
+                          key={sub.id}
+                          onClick={() => setSubFilter(sub.name)}
+                          className={`group relative text-xs font-bold uppercase tracking-wider px-4 py-2 rounded-full border-2 transition-all duration-200 ${active ? "bg-gradient-to-r from-fuchsia-500 via-purple-500 to-indigo-500 text-white border-white/30 shadow-lg shadow-fuchsia-500/50 scale-105 ring-2 ring-fuchsia-400/40 ring-offset-2 ring-offset-purple-950" : "bg-purple-950/70 text-purple-100 border-purple-400/50 hover:bg-purple-800/80 hover:border-fuchsia-400/70 hover:text-white hover:shadow-md hover:shadow-purple-500/30 hover:scale-105"}`}
+                        >
+                          <span className="inline-flex items-center gap-1.5">
+                            {unread > 0 && (
+                              <span className="size-2 rounded-full bg-fuchsia-400 shadow-[0_0_8px_rgba(232,121,249,1)] animate-pulse" />
+                            )}
+                            <span className="drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">{sub.name}</span>
+                            <span className={`ml-1 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[10px] font-black ${active ? "bg-white/25 text-white" : "bg-fuchsia-500/30 text-fuchsia-100 border border-fuchsia-400/40"}`}>{count}</span>
+                          </span>
+                          {unread > 0 && (
+                            <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded-full bg-fuchsia-500 text-white font-bold shadow-md">{unread}</span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
                 {activeCategory && (
                   <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl bg-slate-950/75 ring-1 ring-purple-500/30 px-3 py-2 backdrop-blur-sm">
                     <h2 className="font-display text-2xl font-bold text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.85)]">
@@ -834,34 +862,6 @@ function SportsGuidesPage() {
                         );
                       })}
                     </div>
-                  </div>
-                )}
-
-                {activeCat && (subsByCat[activeCat]?.length ?? 0) > 0 && !search.trim() && (
-                  <div className="flex flex-wrap gap-2 mb-5">
-                    {(subsByCat[activeCat] ?? []).map((sub) => {
-                      const count = blogs.filter((b) => b.category_id === activeCat && b.subcategory === sub.name).length;
-                      const active = subFilter === sub.name;
-                      const unread = unreadSubCounts[activeCat]?.[sub.name] ?? 0;
-                      return (
-                        <button
-                          key={sub.id}
-                          onClick={() => setSubFilter(sub.name)}
-                          className={`group relative text-xs font-bold uppercase tracking-wider px-4 py-2 rounded-full border-2 transition-all duration-200 ${active ? "bg-gradient-to-r from-fuchsia-500 via-purple-500 to-indigo-500 text-white border-white/30 shadow-lg shadow-fuchsia-500/50 scale-105 ring-2 ring-fuchsia-400/40 ring-offset-2 ring-offset-purple-950" : "bg-purple-950/70 text-purple-100 border-purple-400/50 hover:bg-purple-800/80 hover:border-fuchsia-400/70 hover:text-white hover:shadow-md hover:shadow-purple-500/30 hover:scale-105"}`}
-                        >
-                          <span className="inline-flex items-center gap-1.5">
-                            {unread > 0 && (
-                              <span className="size-2 rounded-full bg-fuchsia-400 shadow-[0_0_8px_rgba(232,121,249,1)] animate-pulse" />
-                            )}
-                            <span className="drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">{sub.name}</span>
-                            <span className={`ml-1 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[10px] font-black ${active ? "bg-white/25 text-white" : "bg-fuchsia-500/30 text-fuchsia-100 border border-fuchsia-400/40"}`}>{count}</span>
-                          </span>
-                          {unread > 0 && (
-                            <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded-full bg-fuchsia-500 text-white font-bold shadow-md">{unread}</span>
-                          )}
-                        </button>
-                      );
-                    })}
                   </div>
                 )}
 
