@@ -206,13 +206,19 @@ export function buildPresserBlock(fx: FixtureLite, json: any, presser: PresserLi
 
 /**
  * Plain image placeholder shown until the club publishes the press conference
- * video. Deliberately just the photo — no captions, no SVG text (SVG markup is
- * stripped by the post sanitiser, which used to leave bare words behind).
+ * video. Within 24 hours of kick-off the club has almost certainly not filmed
+ * one, so the image carries a clear caption instead of an open-ended wait.
  */
 function fixtureGraphic(fx: FixtureLite, json: any, home: string, away: string): string {
-  const alt = `${home} v ${away} — awaiting press conference`;
-  return `<div style="margin:0.75rem 0;border-radius:0.75rem;overflow:hidden;border:1px solid rgba(225,27,34,0.35);"><img src="/awaiting-press-conference.jpg" alt="${esc(alt)}" loading="lazy" style="display:block;width:100%;height:auto;" /></div>`;
+  const ko = Date.parse(fx.kickoff_at ?? "");
+  const imminent = Number.isFinite(ko) && ko - Date.now() < 24 * 60 * 60 * 1000;
+  const caption = imminent ? "No Press Conference For This Game" : `${home} v ${away} — awaiting press conference`;
+  const overlay = imminent
+    ? `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.55);padding:1rem;text-align:center;"><span style="font-weight:800;font-size:clamp(1rem,3.4vw,1.6rem);line-height:1.2;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,0.7);letter-spacing:0.01em;">No Press Conference For This Game</span></div>`
+    : "";
+  return `<div style="position:relative;margin:0.75rem 0;border-radius:0.75rem;overflow:hidden;border:1px solid rgba(225,27,34,0.35);"><img src="/awaiting-press-conference.jpg" alt="${esc(caption)}" loading="lazy" style="display:block;width:100%;height:auto;" />${overlay}</div>`;
 }
+
 
 
 export function buildPreviewBody(fx: FixtureLite, json: any, presser?: PresserLite): string {
