@@ -113,7 +113,10 @@ export async function fetchTeamSheetStarterIds(
       .map((name) => (typeof name === "string" ? matchPlayer(name, players)?.id : undefined))
       .filter((id): id is string => typeof id === "string");
     const uniqueIds = [...new Set(ids)];
-    if (uniqueIds.length < 9) return null;
+    // All eleven names must map to a squad player. Anything less is a bad read:
+    // never cache it and never swap from it.
+    if (uniqueIds.length !== 11) return null;
+
     await admin.from("app_settings").upsert(
       { key: cacheKey, value: { starterIds: uniqueIds, extractedAt: new Date().toISOString() } },
       { onConflict: "key" },
