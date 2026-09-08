@@ -118,6 +118,47 @@ function resolveIds(names: string[], players: FantasyPlayer[]): string[] | null 
   return unique.length === 11 ? unique : null;
 }
 
+/**
+ * Second, independent source: the live match feed's line-up for Middlesbrough.
+ * Its names always include first names, so it settles shared surnames such as
+ * Jones. Returns null when the feed has no confirmed eleven yet.
+ */
+async function fetchFeedStarterIds(
+  admin: Admin,
+  fixtureId: string,
+  players: FantasyPlayer[],
+): Promise<string[] | null> {
+  try {
+    const { data: fixture } = await admin
+      .from("boro_fixtures")
+      .select("home_team, away_team, kickoff_at")
+      .eq("id", fixtureId)
+      .maybeSingle();
+    if (!fixture?.home_team || !fixture?.away_team || !fixture?.kickoff_at) return null;
+
+    const { getCachedSummaryForFixture } = await import("@/lib/espn-summary-cache.server");
+    const summary = await getCachedSummaryForFixture({
+      home_team: String(fixture.home_team),
+      away_team: String(fixture.away_team),
+      kickoff_at: String(fixture.kickoff_at),
+    });
+    const rosters: any[] = Array.isArray(summary?.rosters) ? summary.rosters : [];
+    const boro = rosters.find((roster: any) =>
+      normaliseName(String(roster?.team?.displayName ?? roster?.team?.name ?? "")).includes(
+        "middlesbrough",
+      ),
+    );
+    const names: string[] = (boro?.roster ?? [])
+      .filter((entry: any) => entry?.starter === true)
+      .map((entry: any) => String(entry?.athlete?.displayName ?? ""))
+      .filter((name: string) => name.trim() !== "");
+    if (names.length !== 11) return null;
+    return resolveIds(names, players);
+  } catch {
+    return null;
+  }
+}
+
 /** Read the starting XI from the official team-sheet graphic already captured for the fixture. */
 export async function fetchTeamSheetStarterIds(
   admin: Admin,
