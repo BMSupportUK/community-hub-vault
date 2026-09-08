@@ -57,6 +57,19 @@ export async function applyLineupSwapsForGameweek(
   const skipped: string[] = [];
   let squadsChanged = 0;
 
+  // A real starting eleven is eleven players. Acting on fewer would treat a
+  // starter we failed to read as though he had been left out, and bench him.
+  if (official.size !== 11) {
+    return {
+      ok: true,
+      gameweek: gameweek.gw_number,
+      squadsChanged: 0,
+      swaps,
+      skipped: [`official starting XI incomplete (${official.size} players read) — no swaps applied`],
+    };
+  }
+
+
   const { data: squads, error } = await admin
     .from("fantasy_squads")
     .select("id, gameweek_id")
