@@ -17,16 +17,32 @@ function normaliseName(value: string): string {
 
 function matchPlayer(name: string, players: FantasyPlayer[]): FantasyPlayer | null {
   const wanted = normaliseName(name);
+  if (!wanted) return null;
   const exact = players.find((player) => normaliseName(player.name) === wanted);
   if (exact) return exact;
 
-  const wantedSurname = wanted.split(" ").at(-1);
+  const bits = wanted.split(" ").filter(Boolean);
+  const wantedSurname = bits.at(-1);
   if (!wantedSurname) return null;
   const surnameMatches = players.filter(
     (player) => normaliseName(player.name).split(" ").at(-1) === wantedSurname,
   );
-  return surnameMatches.length === 1 ? surnameMatches[0] ?? null : null;
+  if (surnameMatches.length === 1) return surnameMatches[0] ?? null;
+  if (surnameMatches.length === 0) return null;
+
+  // Several squad members share the surname (Jones), so a bare surname on the
+  // graphic is ambiguous. Only accept it when the first name or initial given
+  // narrows it to exactly one player; otherwise leave it unmatched so the
+  // caller refuses to act on a partial eleven.
+  const wantedFirst = bits.length > 1 ? bits[0]! : "";
+  if (!wantedFirst) return null;
+  const narrowed = surnameMatches.filter((player) => {
+    const first = normaliseName(player.name).split(" ")[0] ?? "";
+    return first.startsWith(wantedFirst) || wantedFirst.startsWith(first);
+  });
+  return narrowed.length === 1 ? narrowed[0] ?? null : null;
 }
+
 
 /** Read the starting XI from the official team-sheet graphic already captured for the fixture. */
 export async function fetchTeamSheetStarterIds(
