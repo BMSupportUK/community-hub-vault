@@ -230,15 +230,20 @@ export async function syncLineupSwaps(opts?: { ignoreWindow?: boolean }): Promis
   if (pErr) return { ok: false, squadsChanged: 0, swaps: [], skipped: [], error: pErr.message };
   const players = (playerRows ?? []) as PlayerRow[];
 
-  let starterIds = await fetchBoroStarterIds(target['boro_fixtures'], players);
-  if (!starterIds) {
-    const { fetchTeamSheetStarterIds } = await import("@/lib/fantasy-team-sheet-lineup.server");
-    starterIds = await fetchTeamSheetStarterIds(
-      supabaseAdmin as unknown as Admin,
-      target['boro_fixtures'].id,
-      players,
-    );
-  }
+  // Only the double-checked reader may drive swaps: it reads the official
+  // team-sheet graphic with full first names AND cross-checks the eleven
+  // against a second, independent source before returning anything. The raw
+  // match-feed reader is deliberately not used here — it accepted partial or
+  // surname-only line-ups and benched real starters.
+  const { fetchTeamSheetStarterIds } = await import("@/lib/fantasy-team-sheet-lineup.server");
+  const verified = await fetchTeamSheetStarterIds(
+    supabaseAdmin as unknown as Admin,
+    target['boro_fixtures'].id,
+    players,
+  );
+  const starterIds =
+    verified && new Set(verified).size === 11 ? [...new Set(verified)] : null;
+
   if (!starterIds) {
     return {
       ok: true,
