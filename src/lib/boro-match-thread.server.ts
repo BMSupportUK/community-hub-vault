@@ -213,10 +213,8 @@ function fixtureGraphic(fx: FixtureLite, json: any, home: string, away: string):
   const ko = Date.parse(fx.kickoff_at ?? "");
   const imminent = Number.isFinite(ko) && ko - Date.now() < 24 * 60 * 60 * 1000;
   const caption = imminent ? "No Press Conference For This Game" : `${home} v ${away} — awaiting press conference`;
-  const overlay = imminent
-    ? `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,0.55);padding:1rem;text-align:center;"><span style="font-weight:800;font-size:clamp(1rem,3.4vw,1.6rem);line-height:1.2;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,0.7);letter-spacing:0.01em;">No Press Conference For This Game</span></div>`
-    : "";
-  return `<div style="position:relative;margin:0.75rem 0;border-radius:0.75rem;overflow:hidden;border:1px solid rgba(225,27,34,0.35);"><img src="/awaiting-press-conference.jpg" alt="${esc(caption)}" loading="lazy" style="display:block;width:100%;height:auto;" />${overlay}</div>`;
+  const image = imminent ? "/no-press-conference-for-this-game.jpg" : "/awaiting-press-conference.jpg";
+  return `<div style="position:relative;margin:0.75rem 0;border-radius:0.75rem;overflow:hidden;border:1px solid rgba(225,27,34,0.35);"><img src="${image}" alt="${esc(caption)}" loading="lazy" style="display:block;width:100%;height:auto;" /></div>`;
 }
 
 
