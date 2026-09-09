@@ -180,6 +180,7 @@ interface ParsedMatch {
   sourcePrefix?: string;
   sourceTime: string;
   sourceZone: string;
+  sourceIanaZone: string;
   localTime: string;
   localZone: string;
   sourceDate: string;
@@ -289,6 +290,7 @@ function parseMatches(
       sourcePrefix: `${sourceDayDate} `,
       sourceTime: matchedSourceTime,
       sourceZone: sourceAbbr,
+      sourceIanaZone: sourceTz,
       localTime: hh,
       localZone: abbr,
       sourceDate: sourceDayDate,
@@ -352,6 +354,7 @@ function parseMatches(
           sourcePrefix: `${sourceDayDate} `,
           sourceTime: matchedSourceTime,
           sourceZone: sourceAbbr,
+          sourceIanaZone: tz,
           localTime: hh,
           localZone: abbr,
           sourceDate: sourceDayDate,
@@ -981,9 +984,8 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     // For US-source guides (ET/EST/EDT, or a numeric GMT-4/GMT-5 fallback
     // abbreviation) show British time first, with the original source time
     // second. Otherwise keep source-first, local-second.
-    const sourceZoneUpper = m.sourceZone.toUpperCase();
     const isEtSource =
-      ["ET", "EST", "EDT"].includes(sourceZoneUpper) || /^GMT[-−]\d/.test(sourceZoneUpper);
+      m.sourceIanaZone === "America/New_York";
 
     const ukDate = isEtSource
       ? new Intl.DateTimeFormat("en-GB", {
