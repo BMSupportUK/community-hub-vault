@@ -34,8 +34,7 @@ export function ScreenLockOverlay({ settings, onUnlock }: Props) {
   const [hasTotp, setHasTotp] = useState(false);
   const [profile, setProfile] = useState<{ display_name: string | null; username: string | null; avatar_url: string | null } | null>(null);
   const [requested, setRequested] = useState(false);
-  const [usePassword, setUsePassword] = useState(false);
-  const [password, setPassword] = useState("");
+
 
   // A hung network call must never leave the form permanently disabled.
   useEffect(() => {
