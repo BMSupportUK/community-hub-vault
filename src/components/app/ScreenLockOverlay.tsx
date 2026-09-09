@@ -252,42 +252,8 @@ export function ScreenLockOverlay({ settings, onUnlock }: Props) {
                 {busy ? <Loader2 className="size-4 animate-spin" /> : <KeyRound className="size-4" />} Save &amp; unlock
               </Button>
             </div>
-          ) : usePassword ? (
-            <form
-              className="space-y-3"
-              onSubmit={(e) => {
-                e.preventDefault();
-                void unlockWithPassword();
-              }}
-            >
-              <p className="text-sm text-muted-foreground">
-                Enter your account password to unlock.
-              </p>
-              <Input
-                type="password"
-                autoComplete="current-password"
-                autoFocus
-                enterKeyHint="done"
-                placeholder="Account password"
-                value={password}
-                className="pointer-events-auto touch-auto text-base"
-                onChange={(e) => setPassword(e.target.value)}
-              />
-              <Button type="submit" className="w-full" disabled={busy || password.length < 6}>
-                {busy ? <Loader2 className="size-4 animate-spin" /> : <Lock className="size-4" />} Unlock
-              </Button>
-              <button
-                type="button"
-                className="w-full text-xs text-muted-foreground hover:text-foreground inline-flex items-center justify-center gap-1"
-                onClick={() => {
-                  setUsePassword(false);
-                  setPassword("");
-                }}
-              >
-                <KeyRound className="size-3" /> Use my lock code instead
-              </button>
-            </form>
           ) : (
+
             <form
               className="space-y-3"
               onSubmit={(e) => {
