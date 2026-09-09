@@ -34,8 +34,7 @@ export function ScreenLockOverlay({ settings, onUnlock }: Props) {
   const [hasTotp, setHasTotp] = useState(false);
   const [profile, setProfile] = useState<{ display_name: string | null; username: string | null; avatar_url: string | null } | null>(null);
   const [requested, setRequested] = useState(false);
-  const [usePassword, setUsePassword] = useState(false);
-  const [password, setPassword] = useState("");
+
 
   // A hung network call must never leave the form permanently disabled.
   useEffect(() => {
@@ -53,21 +52,6 @@ export function ScreenLockOverlay({ settings, onUnlock }: Props) {
     await signOut();
   };
 
-  const unlockWithPassword = async () => {
-    if (!user?.email || password.length < 6) {
-      toast.error("Enter your account password");
-      return;
-    }
-    setBusy(true);
-    const { error } = await supabase.auth.signInWithPassword({ email: user.email, password });
-    setBusy(false);
-    if (error) {
-      toast.error("Incorrect password");
-      return;
-    }
-    setPassword("");
-    onUnlock();
-  };
 
   // Setup mode: no code set yet. Change mode: temp code used, must set new one.
   const needsSetup = !settings.code_hash;
@@ -252,42 +236,8 @@ export function ScreenLockOverlay({ settings, onUnlock }: Props) {
                 {busy ? <Loader2 className="size-4 animate-spin" /> : <KeyRound className="size-4" />} Save &amp; unlock
               </Button>
             </div>
-          ) : usePassword ? (
-            <form
-              className="space-y-3"
-              onSubmit={(e) => {
-                e.preventDefault();
-                void unlockWithPassword();
-              }}
-            >
-              <p className="text-sm text-muted-foreground">
-                Enter your account password to unlock.
-              </p>
-              <Input
-                type="password"
-                autoComplete="current-password"
-                autoFocus
-                enterKeyHint="done"
-                placeholder="Account password"
-                value={password}
-                className="pointer-events-auto touch-auto text-base"
-                onChange={(e) => setPassword(e.target.value)}
-              />
-              <Button type="submit" className="w-full" disabled={busy || password.length < 6}>
-                {busy ? <Loader2 className="size-4 animate-spin" /> : <Lock className="size-4" />} Unlock
-              </Button>
-              <button
-                type="button"
-                className="w-full text-xs text-muted-foreground hover:text-foreground inline-flex items-center justify-center gap-1"
-                onClick={() => {
-                  setUsePassword(false);
-                  setPassword("");
-                }}
-              >
-                <KeyRound className="size-3" /> Use my lock code instead
-              </button>
-            </form>
           ) : (
+
             <form
               className="space-y-3"
               onSubmit={(e) => {
@@ -323,16 +273,6 @@ export function ScreenLockOverlay({ settings, onUnlock }: Props) {
                   {useTotp ? "Use my lock code instead" : "Use authenticator code instead"}
                 </button>
               )}
-              <button
-                type="button"
-                className="w-full text-xs text-muted-foreground hover:text-foreground inline-flex items-center justify-center gap-1"
-                onClick={() => {
-                  setUsePassword(true);
-                  setCode("");
-                }}
-              >
-                <KeyRound className="size-3" /> Use my account password instead
-              </button>
             </form>
           )}
 
