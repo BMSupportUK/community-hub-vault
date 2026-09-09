@@ -187,6 +187,15 @@ function collectUniqueUsers(channel: RealtimeChannel): Set<string> {
     }
   }
 
+  // The mounted Talk route is authoritative for this browser: if its realtime
+  // presence snapshot is delayed or was silently dropped, the person is still
+  // inside the room and must never see their own rail/member count fall to 0.
+  // The watchdog below also repairs the missing server presence for everyone
+  // else; this local fallback keeps the UI correct while that repair settles.
+  if (activeTracker && !presenceSuspended) {
+    userIds.add(activeTracker.userId);
+  }
+
   for (const key of Array.from(lastSeenLocal.keys())) {
     if (!liveKeys.has(key)) {
       lastSeenLocal.delete(key);
@@ -665,6 +674,22 @@ function ensureSharedChannel() {
         subscribed = false;
         resubscribe();
         return;
+      }
+
+      // A joined socket can occasionally lose this browser's presence without
+      // producing a channel error. Re-track only when our exact local presence
+      // is absent, rather than waiting forever with the counter stuck at zero.
+      const active = Array.from(trackers.values()).at(-1);
+      if (active && !presenceSuspended) {
+        const localPresences = live.presenceState<TalkPresence>()[getConnectionId()] ?? [];
+        const localIsTracked = localPresences.some(
+          (presence) =>
+            presence.user_id === active.userId && presence.channel_id === active.channelId,
+        );
+        if (!localIsTracked) {
+          trackedSignature = "";
+          void syncTracking();
+        }
       }
       flushCount();
       const now = Date.now();
