@@ -52,21 +52,6 @@ export function ScreenLockOverlay({ settings, onUnlock }: Props) {
     await signOut();
   };
 
-  const unlockWithPassword = async () => {
-    if (!user?.email || password.length < 6) {
-      toast.error("Enter your account password");
-      return;
-    }
-    setBusy(true);
-    const { error } = await supabase.auth.signInWithPassword({ email: user.email, password });
-    setBusy(false);
-    if (error) {
-      toast.error("Incorrect password");
-      return;
-    }
-    setPassword("");
-    onUnlock();
-  };
 
   // Setup mode: no code set yet. Change mode: temp code used, must set new one.
   const needsSetup = !settings.code_hash;
