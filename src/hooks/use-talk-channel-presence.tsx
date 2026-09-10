@@ -158,6 +158,16 @@ function scheduleLingerFlush(delay: number) {
 function collectUniqueUsers(channel: RealtimeChannel): Set<string> {
   const state = channel.presenceState<TalkPresence>();
   const userIds = new Set<string>();
+  const channelMap = new Map<string, Set<string>>();
+  const addToChannel = (channelId: string | undefined, userId: string) => {
+    if (!channelId) return;
+    let set = channelMap.get(channelId);
+    if (!set) {
+      set = new Set<string>();
+      channelMap.set(channelId, set);
+    }
+    set.add(userId);
+  };
   const now = Date.now();
   const cutoff = now - STALE_MS;
   const liveKeys = new Set<string>();
