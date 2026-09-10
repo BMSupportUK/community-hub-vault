@@ -69,6 +69,10 @@ let subscribed = false;
 let trackedSignature = "";
 let currentCount = 0;
 let currentUserIds: Set<string> = new Set();
+// Per-channel online sets, derived from the same live presence scan in
+// collectUniqueUsers. Read-only view for "who is in this room right now".
+let channelUserIds: Map<string, Set<string>> = new Map();
+const channelUserListeners = new Set<(map: Map<string, Set<string>>) => void>();
 let _connectionId: string | null = null;
 function getConnectionId(): string {
   if (!_connectionId) _connectionId = crypto.randomUUID();
@@ -154,6 +158,16 @@ function scheduleLingerFlush(delay: number) {
 function collectUniqueUsers(channel: RealtimeChannel): Set<string> {
   const state = channel.presenceState<TalkPresence>();
   const userIds = new Set<string>();
+  const channelMap = new Map<string, Set<string>>();
+  const addToChannel = (channelId: string | undefined, userId: string) => {
+    if (!channelId) return;
+    let set = channelMap.get(channelId);
+    if (!set) {
+      set = new Set<string>();
+      channelMap.set(channelId, set);
+    }
+    set.add(userId);
+  };
   const now = Date.now();
   const cutoff = now - STALE_MS;
   const liveKeys = new Set<string>();
@@ -184,6 +198,7 @@ function collectUniqueUsers(channel: RealtimeChannel): Set<string> {
       lastSeenLocal.set(seenKey, now);
       presenceStamps.set(seenKey, stamp);
       userIds.add(presence.user_id);
+      addToChannel(presence.channel_id, presence.user_id);
     }
   }
 
@@ -194,7 +209,9 @@ function collectUniqueUsers(channel: RealtimeChannel): Set<string> {
   // else; this local fallback keeps the UI correct while that repair settles.
   if (activeTracker && !presenceSuspended) {
     userIds.add(activeTracker.userId);
+    addToChannel(activeTracker.channelId, activeTracker.userId);
   }
+  channelUserIds = channelMap;
 
   for (const key of Array.from(lastSeenLocal.keys())) {
     if (!liveKeys.has(key)) {
@@ -272,14 +289,37 @@ function flushCount() {
     return;
   }
   let nextIds: Set<string>;
+  const prevChannelMap = channelUserIds;
   try {
     nextIds = collectUniqueUsers(sharedChannel);
   } catch {
     return;
   }
   const changed = !sameIds(nextIds, currentUserIds);
+  // The per-channel buckets can move (someone switched rooms) even when the
+  // global online set is identical, so compare them separately.
+  let channelsChanged = prevChannelMap.size !== channelUserIds.size;
+  if (!channelsChanged) {
+    for (const [cid, set] of channelUserIds) {
+      const prev = prevChannelMap.get(cid);
+      if (!prev || !sameIds(set, prev)) {
+        channelsChanged = true;
+        break;
+      }
+    }
+  }
   currentUserIds = nextIds;
   currentCount = nextIds.size;
+  if (channelsChanged) {
+    const snapshot = channelUserIds;
+    for (const listener of Array.from(channelUserListeners)) {
+      try {
+        listener(snapshot);
+      } catch {
+        /* ignore */
+      }
+    }
+  }
   if (!changed) return;
   for (const listener of Array.from(listeners)) {
     try {
@@ -791,6 +831,33 @@ export function useTalkChannelPresentUsers(): Set<string> {
 /** Live count of everyone currently inside any Talk Channel, including staff. */
 export function useTalkChannelTotalCount(): number {
   return useTalkChannelPresentUsers().size;
+}
+
+/**
+ * Set of user IDs currently present in ONE talk channel (read-only).
+ * Additive view over the same presence scan; the global counters above are
+ * unaffected. Returns an empty set until the channel id is known.
+ */
+export function useTalkChannelPresentUsersInChannel(channelId: string | null | undefined): Set<string> {
+  const [ids, setIds] = useState<Set<string>>(() =>
+    channelId ? channelUserIds.get(channelId) ?? new Set() : new Set(),
+  );
+
+  useEffect(() => {
+    ensureSharedChannel();
+    const update = (map: Map<string, Set<string>>) => {
+      setIds(channelId ? map.get(channelId) ?? new Set() : new Set());
+    };
+    channelUserListeners.add(update);
+    update(channelUserIds);
+    // A sync may already be settled; re-read on the next tick as well.
+    publishCount();
+    return () => {
+      channelUserListeners.delete(update);
+    };
+  }, [channelId]);
+
+  return ids;
 }
 
 /** Live count of online non-staff members currently inside a Talk Channel. */
