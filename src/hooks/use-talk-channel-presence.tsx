@@ -69,6 +69,10 @@ let subscribed = false;
 let trackedSignature = "";
 let currentCount = 0;
 let currentUserIds: Set<string> = new Set();
+// Per-channel online sets, derived from the same live presence scan in
+// collectUniqueUsers. Read-only view for "who is in this room right now".
+let channelUserIds: Map<string, Set<string>> = new Map();
+const channelUserListeners = new Set<(map: Map<string, Set<string>>) => void>();
 let _connectionId: string | null = null;
 function getConnectionId(): string {
   if (!_connectionId) _connectionId = crypto.randomUUID();
