@@ -1,5 +1,5 @@
 import { DEFAULT_AVATAR_URL } from "@/lib/default-avatar";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -55,7 +55,7 @@ const ROLE_COLOR: Record<string, string> = {
 import { sortRolesByPriority, isSupportRole } from "@/lib/role-rank";
 
 function MembersPage() {
-  const { hasAny, user: viewer, roles, loading } = useAuth();
+  const { hasAny, user: viewer, loading } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
   const onlineUsers = useOnlineUsers();
 
@@ -188,6 +188,12 @@ function MembersPage() {
   const offlineList = filtered.filter((p) => !onlineUsers.has(p.id));
   const visible = tab === "online" ? onlineList : offlineList;
 
+  // Members directory is for subscribers and staff only — plain members and
+  // non-subscribers (expired) are sent back to /home.
+  const canViewDirectory = hasAny(["admin", "management", "moderator", "staff", "subscriber"]);
+  if (!loading && viewer && !canViewDirectory) {
+    return <Navigate to="/home" replace />;
+  }
 
   return (
     <main className="flex-1 overflow-y-auto">
