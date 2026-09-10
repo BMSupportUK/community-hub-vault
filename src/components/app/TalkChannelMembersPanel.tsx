@@ -102,6 +102,8 @@ export function TalkChannelMembersPanel({ channelId }: { channelId: string | nul
 
   // LOCKED: Members panel header counter — online non-staff members only.
   // Authorised change (user request): counter follows the active tab, showing offline count on the Offline tab.
+  // Authorised change (user request, 2026-09-10): list and counter are scoped to the
+  // channel being viewed — only members with access to it, online = inside this channel.
   // Do not change, restyle, or remove without explicit authorisation. See mem://constraints/chat-counters-locked
   const membersInChat = groups.online.length;
   const headerCount = activeTab === "offline" ? groups.offline.length : membersInChat;
