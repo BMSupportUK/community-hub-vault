@@ -6536,6 +6536,20 @@ export type Database = {
           username: string
         }[]
       }
+      talk_channel_member_directory_for_channel: {
+        Args: { _channel: string }
+        Returns: {
+          avatar_url: string
+          created_at: string
+          custom_status: string
+          display_name: string
+          equipped_nameplate_id: string
+          last_seen_at: string
+          roles: Database["public"]["Enums"]["app_role"][]
+          user_id: string
+          username: string
+        }[]
+      }
       unmute_user: { Args: { _user_id: string }; Returns: boolean }
       upsert_my_signup_vpn: {
         Args: {
