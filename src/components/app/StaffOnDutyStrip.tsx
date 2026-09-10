@@ -54,16 +54,20 @@ function DaneStatusLine({ userId }: { userId: string }) {
 const ROLE_ORDER = ["admin", "management", "staff", "moderator"] as const;
 const OFF_ORDER = ["admin", "management", "staff", "moderator"] as const;
 
-export function StaffOnDutySidebar() {
-  return <StaffOnDutyStrip variant="sidebar" />;
+export function StaffOnDutySidebar({ channelId }: { channelId?: string | null } = {}) {
+  return <StaffOnDutyStrip variant="sidebar" channelId={channelId} />;
 }
 
 export function StaffOnDutyStrip({
   variant = "strip",
   hideRoles = [],
+  channelId = null,
 }: {
   variant?: "strip" | "sidebar" | "tickets";
   hideRoles?: string[];
+  /** When set, the strip only shows staff who can view this talk channel,
+   *  and presence reflects that channel specifically. */
+  channelId?: string | null;
 } = {}) {
   const [shifts, setShifts] = useState<StaffShift[]>([]);
   const [breaks, setBreaks] = useState<StaffBreak[]>([]);
@@ -74,7 +78,36 @@ export function StaffOnDutyStrip({
   const [selfId, setSelfId] = useState<string | null>(null);
   const [dutyTab, setDutyTab] = useState<"on" | "off">("on");
   const roleFlashMap = useRoleFlashMap();
-  const presentUserIds = useTalkChannelPresentUsers();
+  const presentGlobalIds = useTalkChannelPresentUsers();
+  const presentChannelIds = useTalkChannelPresentUsersInChannel(channelId);
+  const presentUserIds = channelId ? presentChannelIds : presentGlobalIds;
+  // IDs allowed to view the scoped channel; null means "no channel filter".
+  const [allowedIds, setAllowedIds] = useState<Set<string> | null>(null);
+
+  useEffect(() => {
+    if (!channelId) {
+      setAllowedIds(null);
+      return;
+    }
+    let alive = true;
+    const load = async () => {
+      const { data, error } = await supabase.rpc("talk_channel_member_directory_for_channel", {
+        _channel: channelId,
+      });
+      if (!alive) return;
+      if (error) {
+        console.error("Could not load channel access list", error);
+        return;
+      }
+      setAllowedIds(new Set(((data ?? []) as Array<{ user_id: string }>).map((r) => r.user_id)));
+    };
+    void load();
+    const t = setInterval(load, 60_000);
+    return () => {
+      alive = false;
+      clearInterval(t);
+    };
+  }, [channelId]);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => setSelfId(data.user?.id ?? null));
