@@ -131,11 +131,7 @@ function ChannelPage() {
   const canManageSlow = hasAny(["admin", "management", "moderator", "staff"]);
   const isModOrAdmin = hasAny(["admin", "management", "moderator", "staff"]);
   const canMute = hasAny(["admin", "management", "moderator", "staff"]);
-  const hideMembersPanel =
-    slug === "welcome" ||
-    slug === "rules" ||
-    (hasAny(["member", "nonsubscriber"]) &&
-      !hasAny(["subscriber", "staff", "moderator", "management", "admin"]));
+  const hideMembersPanel = slug === "welcome" || slug === "rules";
   const [muteSubmenuId, setMuteSubmenuId] = useState<string | null>(null);
   const [sideTab, setSideTab] = useState<"staff" | "members">("staff");
 
