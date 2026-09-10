@@ -58,12 +58,8 @@ function MembersPage() {
   const { hasAny, user: viewer, roles, loading } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
   const onlineUsers = useOnlineUsers();
-  // Members directory is for subscribers and staff only — plain members,
-  // non-subscribers (expired) and guests are sent back to /home.
-  const canViewDirectory = hasAny(["admin", "management", "moderator", "staff", "subscriber"]);
-  if (!loading && viewer && !canViewDirectory) {
-    return <Navigate to="/home" replace />;
-  }
+
+
 
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [rolesByUser, setRolesByUser] = useState<Record<string, string[]>>({});
