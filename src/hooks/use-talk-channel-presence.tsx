@@ -833,6 +833,33 @@ export function useTalkChannelTotalCount(): number {
   return useTalkChannelPresentUsers().size;
 }
 
+/**
+ * Set of user IDs currently present in ONE talk channel (read-only).
+ * Additive view over the same presence scan; the global counters above are
+ * unaffected. Returns an empty set until the channel id is known.
+ */
+export function useTalkChannelPresentUsersInChannel(channelId: string | null | undefined): Set<string> {
+  const [ids, setIds] = useState<Set<string>>(() =>
+    channelId ? channelUserIds.get(channelId) ?? new Set() : new Set(),
+  );
+
+  useEffect(() => {
+    ensureSharedChannel();
+    const update = (map: Map<string, Set<string>>) => {
+      setIds(channelId ? map.get(channelId) ?? new Set() : new Set());
+    };
+    channelUserListeners.add(update);
+    update(channelUserIds);
+    // A sync may already be settled; re-read on the next tick as well.
+    publishCount();
+    return () => {
+      channelUserListeners.delete(update);
+    };
+  }, [channelId]);
+
+  return ids;
+}
+
 /** Live count of online non-staff members currently inside a Talk Channel. */
 export function useTalkChannelMemberCount(): number {
   const onlineIds = useTalkChannelPresentUsers();
