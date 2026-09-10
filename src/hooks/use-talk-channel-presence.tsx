@@ -211,7 +211,11 @@ function collectUniqueUsers(channel: RealtimeChannel): Set<string> {
     userIds.add(activeTracker.userId);
     addToChannel(activeTracker.channelId, activeTracker.userId);
   }
-  channelUserIds = channelMap;
+  // Remember each user's room so the linger grace below can keep them in it.
+  for (const [cid, set] of channelMap) {
+    for (const id of set) lastChannelByUser.set(id, cid);
+  }
+
 
   for (const key of Array.from(lastSeenLocal.keys())) {
     if (!liveKeys.has(key)) {
