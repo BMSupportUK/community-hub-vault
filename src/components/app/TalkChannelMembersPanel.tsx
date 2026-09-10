@@ -36,25 +36,32 @@ const ROLE_TEXT: Record<string, string> = {
 };
 
 /**
- * Members tab inside Talk Channels. It lists every non-staff member and marks
- * members currently present in Talk Channels with a live green status dot.
+ * Members tab inside Talk Channels. Lists the non-staff members who have
+ * access to the channel being viewed, and marks the ones currently inside
+ * that channel with a live green status dot.
  */
-export function TalkChannelMembersPanel() {
+export function TalkChannelMembersPanel({ channelId }: { channelId: string | null }) {
   const { user } = useAuth();
-  const onlineIds = useTalkChannelPresentUsers();
+  const onlineIds = useTalkChannelPresentUsersInChannel(channelId);
   const roleFlashMap = useRoleFlashMap();
   const [rows, setRows] = useState<DirectoryRow[] | null>(null);
   const [activeTab, setActiveTab] = useState<"online" | "offline">("online");
 
   const load = useCallback(async () => {
-    const { data, error } = await supabase.rpc("talk_channel_member_directory");
+    if (!channelId) {
+      setRows([]);
+      return;
+    }
+    const { data, error } = await supabase.rpc("talk_channel_member_directory_for_channel", {
+      _channel: channelId,
+    });
     if (error) {
       console.error("Could not load Talk Channel member directory", error);
       setRows([]);
       return;
     }
     setRows((data as DirectoryRow[] | null) ?? []);
-  }, []);
+  }, [channelId]);
 
   useEffect(() => {
     void load();
