@@ -198,6 +198,7 @@ function collectUniqueUsers(channel: RealtimeChannel): Set<string> {
       lastSeenLocal.set(seenKey, now);
       presenceStamps.set(seenKey, stamp);
       userIds.add(presence.user_id);
+      addToChannel(presence.channel_id, presence.user_id);
     }
   }
 
@@ -208,7 +209,9 @@ function collectUniqueUsers(channel: RealtimeChannel): Set<string> {
   // else; this local fallback keeps the UI correct while that repair settles.
   if (activeTracker && !presenceSuspended) {
     userIds.add(activeTracker.userId);
+    addToChannel(activeTracker.channelId, activeTracker.userId);
   }
+  channelUserIds = channelMap;
 
   for (const key of Array.from(lastSeenLocal.keys())) {
     if (!liveKeys.has(key)) {
