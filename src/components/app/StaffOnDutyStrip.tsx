@@ -259,14 +259,15 @@ export function StaffOnDutyStrip({
       const bn = profiles[b.user_id]?.display_name || profiles[b.user_id]?.username || "";
       return an.localeCompare(bn);
     })
-    .filter((s) => !hideRoles.includes(roleFlashMap.get(s.user_id) ?? ""));
+    .filter((s) => !hideRoles.includes(roleFlashMap.get(s.user_id) ?? ""))
+    .filter((s) => !allowedIds || allowedIds.has(s.user_id));
 
   const daneShift = allOrderedShifts.find((s) => isDaneJProfile(profiles[s.user_id]));
   const orderedShifts = allOrderedShifts.filter((s) => !isDaneJProfile(profiles[s.user_id]));
 
   const allVisibleOffDuty = useMemo(
-    () => offDuty.filter((p) => !hideRoles.includes(p.role)),
-    [offDuty, hideRoles]
+    () => offDuty.filter((p) => !hideRoles.includes(p.role) && (!allowedIds || allowedIds.has(p.id))),
+    [offDuty, hideRoles, allowedIds]
   );
   const daneOff = daneShift ? undefined : allVisibleOffDuty.find((p) => isDaneJProfile(p));
   const visibleOffDuty = useMemo(
