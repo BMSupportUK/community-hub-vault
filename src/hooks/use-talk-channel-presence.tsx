@@ -145,6 +145,8 @@ const explicitlyDepartedKeys = new Set<string>();
 const cleanlyDepartedUserIds = new Set<string>();
 /** First moment a previously visible user vanished from presence state. */
 const missingSince = new Map<string, number>();
+/** Last room each user was seen in, so the linger grace can keep them there. */
+const lastChannelByUser = new Map<string, string>();
 let lingerTimer: ReturnType<typeof setTimeout> | null = null;
 
 function scheduleLingerFlush(delay: number) {
@@ -211,7 +213,11 @@ function collectUniqueUsers(channel: RealtimeChannel): Set<string> {
     userIds.add(activeTracker.userId);
     addToChannel(activeTracker.channelId, activeTracker.userId);
   }
-  channelUserIds = channelMap;
+  // Remember each user's room so the linger grace below can keep them in it.
+  for (const [cid, set] of channelMap) {
+    for (const id of set) lastChannelByUser.set(id, cid);
+  }
+
 
   for (const key of Array.from(lastSeenLocal.keys())) {
     if (!liveKeys.has(key)) {
@@ -235,12 +241,14 @@ function collectUniqueUsers(channel: RealtimeChannel): Set<string> {
     // reconnect-only grace period and showing a false green member status.
     if (cleanlyDepartedUserIds.delete(id)) {
       missingSince.delete(id);
+      lastChannelByUser.delete(id);
       continue;
     }
     // Route exit is deliberate, not a network blip. Remove this browser's user
     // immediately instead of applying the remote-user disconnect grace.
     if (!activeTracker && id === trackedUserId) {
       missingSince.delete(id);
+      lastChannelByUser.delete(id);
       continue;
     }
     const missingAt = missingSince.get(id) ?? now;
@@ -248,12 +256,19 @@ function collectUniqueUsers(channel: RealtimeChannel): Set<string> {
     const remaining = LINGER_MS - (now - missingAt);
     if (remaining > 0) {
       userIds.add(id);
+      // The per-room list gets the same grace window as the global count, so a
+      // heartbeat blip cannot bounce someone into the Offline tab of the room
+      // they are still sitting in.
+      addToChannel(lastChannelByUser.get(id), id);
       nextExpiry = Math.min(nextExpiry, remaining);
     } else {
       missingSince.delete(id);
+      lastChannelByUser.delete(id);
     }
   }
   if (Number.isFinite(nextExpiry)) scheduleLingerFlush(nextExpiry);
+
+  channelUserIds = channelMap;
 
   return userIds;
 }
