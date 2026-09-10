@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Users, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { useTalkChannelPresentUsers } from "@/hooks/use-talk-channel-presence";
+import { useTalkChannelPresentUsersInChannel } from "@/hooks/use-talk-channel-presence";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { TalkMemberProfileCard } from "@/components/app/TalkMemberProfileCard";
 import { useRoleFlashMap, roleFlashClass, resolveAvatarUrl } from "@/lib/role-flash";
