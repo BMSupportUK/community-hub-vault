@@ -145,6 +145,8 @@ const explicitlyDepartedKeys = new Set<string>();
 const cleanlyDepartedUserIds = new Set<string>();
 /** First moment a previously visible user vanished from presence state. */
 const missingSince = new Map<string, number>();
+/** Last room each user was seen in, so the linger grace can keep them there. */
+const lastChannelByUser = new Map<string, string>();
 let lingerTimer: ReturnType<typeof setTimeout> | null = null;
 
 function scheduleLingerFlush(delay: number) {
