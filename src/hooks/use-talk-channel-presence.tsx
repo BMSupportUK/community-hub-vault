@@ -289,14 +289,37 @@ function flushCount() {
     return;
   }
   let nextIds: Set<string>;
+  const prevChannelMap = channelUserIds;
   try {
     nextIds = collectUniqueUsers(sharedChannel);
   } catch {
     return;
   }
   const changed = !sameIds(nextIds, currentUserIds);
+  // The per-channel buckets can move (someone switched rooms) even when the
+  // global online set is identical, so compare them separately.
+  let channelsChanged = prevChannelMap.size !== channelUserIds.size;
+  if (!channelsChanged) {
+    for (const [cid, set] of channelUserIds) {
+      const prev = prevChannelMap.get(cid);
+      if (!prev || !sameIds(set, prev)) {
+        channelsChanged = true;
+        break;
+      }
+    }
+  }
   currentUserIds = nextIds;
   currentCount = nextIds.size;
+  if (channelsChanged) {
+    const snapshot = channelUserIds;
+    for (const listener of Array.from(channelUserListeners)) {
+      try {
+        listener(snapshot);
+      } catch {
+        /* ignore */
+      }
+    }
+  }
   if (!changed) return;
   for (const listener of Array.from(listeners)) {
     try {
