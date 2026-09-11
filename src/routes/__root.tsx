@@ -61,12 +61,9 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   }, [error]);
 
   if (!showError) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background px-4 text-sm text-muted-foreground">
-        Loading…
-      </div>
-    );
+    return <BmSplash />;
   }
+
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
