@@ -20,6 +20,8 @@ import { PushSoundBridge } from "@/components/app/PushSoundBridge";
 import { MentionSoundAlert } from "@/components/app/MentionSoundAlert";
 import { ToastNotificationBridge } from "@/components/app/ToastNotificationBridge";
 import { LocalSendReceiverBridge } from "@/components/app/LocalSendReceiverBridge";
+import { BmSplash } from "@/components/app/BmSplash";
+
 
 function NotFoundComponent() {
   return (
