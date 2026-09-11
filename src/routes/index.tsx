@@ -38,6 +38,7 @@ function hasStoredSession() {
 }
 
 export const Route = createFileRoute("/")({
+  pendingMs: 0,
   pendingComponent: () => <BmSplash />,
   head: () => ({
     meta: [
@@ -72,7 +73,9 @@ interface HeroBox {
 
 function Landing() {
   const [redirectingToLogin, setRedirectingToLogin] = useState(() => isAndroidAppShell());
-  const [resolvingSession, setResolvingSession] = useState(false);
+  // Compute on the very first client render so a returning member never sees a
+  // frame of the marketing page before the splash.
+  const [resolvingSession, setResolvingSession] = useState(() => hasStoredSession());
   const [boxes, setBoxes] = useState<HeroBox[]>([]);
 
   useEffect(() => {
