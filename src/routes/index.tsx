@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { LandingHeader } from "@/components/LandingHeader";
 import welcomeHero from "@/assets/welcome-hero.webp";
 import { MessageSquare, CalendarClock, LifeBuoy, Sparkles } from "lucide-react";
+import { BmSplash } from "@/components/app/BmSplash";
 
 function pickIcon(title: string) {
   const t = title.toLowerCase();
@@ -23,7 +24,21 @@ function isAndroidAppShell() {
   return isCapacitorAndroid || hasCapacitorBridge || isAndroidWebView;
 }
 
+function hasStoredSession() {
+  if (typeof window === "undefined") return false;
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith("sb-") && key.endsWith("-auth-token")) return true;
+    }
+  } catch {
+    return false;
+  }
+  return false;
+}
+
 export const Route = createFileRoute("/")({
+  pendingComponent: () => <BmSplash />,
   head: () => ({
     meta: [
       { title: "BM Support | Customer Portal" },
