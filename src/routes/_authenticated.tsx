@@ -111,10 +111,9 @@ function AuthLayout() {
 
 
   if (loading) {
-    return (
-      <div className="min-h-screen grid place-items-center text-muted-foreground">Loading…</div>
-    );
+    return <BmSplash />;
   }
+
 
   // Auth state clears before route navigation completes during sign-out.
   // Handle that state first so an empty role list can never route via /gate.
