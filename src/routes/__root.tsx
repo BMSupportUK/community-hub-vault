@@ -20,6 +20,8 @@ import { PushSoundBridge } from "@/components/app/PushSoundBridge";
 import { MentionSoundAlert } from "@/components/app/MentionSoundAlert";
 import { ToastNotificationBridge } from "@/components/app/ToastNotificationBridge";
 import { LocalSendReceiverBridge } from "@/components/app/LocalSendReceiverBridge";
+import { BmSplash } from "@/components/app/BmSplash";
+
 
 function NotFoundComponent() {
   return (
@@ -61,12 +63,9 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   }, [error]);
 
   if (!showError) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-background px-4 text-sm text-muted-foreground">
-        Loading…
-      </div>
-    );
+    return <BmSplash />;
   }
+
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">

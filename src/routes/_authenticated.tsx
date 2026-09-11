@@ -12,6 +12,8 @@ import { useOnlineUsers } from "@/hooks/use-online-users";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { isAllowedForFanZoneOnly, isFanZonePath } from "@/lib/fan-zone-nav";
 import { useFanZoneMembershipState } from "@/hooks/use-fan-zone";
+import { BmSplash } from "@/components/app/BmSplash";
+
 
 // Defer non-critical header widgets & alerts so the shell paints immediately.
 const Clocks = lazy(() => import("@/components/app/Clocks").then((m) => ({ default: m.Clocks })));
@@ -111,10 +113,9 @@ function AuthLayout() {
 
 
   if (loading) {
-    return (
-      <div className="min-h-screen grid place-items-center text-muted-foreground">Loading…</div>
-    );
+    return <BmSplash />;
   }
+
 
   // Auth state clears before route navigation completes during sign-out.
   // Handle that state first so an empty role list can never route via /gate.
