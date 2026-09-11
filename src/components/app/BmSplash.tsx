@@ -1,4 +1,5 @@
 import { Loader2 } from "lucide-react";
+import bmLogo from "@/assets/bm-support-logo.png.asset.json";
 
 /**
  * Full-screen BM Support splash shown while we work out whether the visitor is
@@ -13,17 +14,12 @@ export function BmSplash({ label = "Loading…" }: { label?: string }) {
           "radial-gradient(900px 500px at 50% 20%, rgba(220,38,38,0.28), transparent 65%), linear-gradient(160deg, #170606 0%, #0a0a0a 60%, #000 100%)",
       }}
     >
-      <div
-        className="grid size-24 place-items-center rounded-3xl border border-red-400/40 shadow-[0_18px_70px_rgba(220,38,38,0.45)]"
-        style={{
-          background:
-            "linear-gradient(135deg, rgba(248,113,113,0.35) 0%, rgba(127,29,29,0.9) 100%)",
-        }}
-      >
-        <span className="font-display text-3xl font-black tracking-tight text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.6)]">
-          BM
-        </span>
-      </div>
+      <img
+        src={bmLogo.url}
+        alt="BM Support"
+        className="size-32 rounded-full drop-shadow-[0_18px_70px_rgba(220,38,38,0.45)] sm:size-40"
+      />
+
 
       <div className="text-center">
         <div className="font-display text-xl font-bold tracking-wide text-white">BM Support</div>
