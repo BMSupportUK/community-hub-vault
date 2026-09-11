@@ -72,6 +72,7 @@ interface HeroBox {
 
 function Landing() {
   const [redirectingToLogin, setRedirectingToLogin] = useState(() => isAndroidAppShell());
+  const [resolvingSession, setResolvingSession] = useState(false);
   const [boxes, setBoxes] = useState<HeroBox[]>([]);
 
   useEffect(() => {
@@ -81,8 +82,28 @@ function Landing() {
     }
   }, []);
 
+  // A saved sign-in lives in device storage and can only be read after the page
+  // loads, so keep the splash up until we know where the member belongs.
   useEffect(() => {
-    if (redirectingToLogin) return;
+    if (isAndroidAppShell() || !hasStoredSession()) return;
+    setResolvingSession(true);
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      if (cancelled) return;
+      if (data.session) {
+        window.location.replace("/home");
+        return;
+      }
+      setResolvingSession(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (redirectingToLogin || resolvingSession) return;
     (async () => {
       const { data } = await supabase
         .from("hero_boxes")
@@ -90,11 +111,12 @@ function Landing() {
         .order("position");
       setBoxes((data ?? []) as HeroBox[]);
     })();
-  }, [redirectingToLogin]);
+  }, [redirectingToLogin, resolvingSession]);
 
-  if (redirectingToLogin) {
-    return <div className="min-h-screen bg-background" />;
+  if (redirectingToLogin || resolvingSession) {
+    return <BmSplash />;
   }
+
 
   return (
     <div className="min-h-screen md:h-screen md:overflow-hidden bg-background flex flex-col">
