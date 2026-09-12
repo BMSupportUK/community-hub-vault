@@ -33,8 +33,8 @@ export async function showLocalNotification(
   const payload: NotificationOptions = {
     body: opts.body,
     tag: opts.tag,
-    icon: opts.icon ?? "/favicon.ico",
-    badge: "/favicon.ico",
+    icon: opts.icon ?? "/icon-192.png",
+    badge: "/favicon.png",
     silent: opts.silent ?? true,
   };
   try {

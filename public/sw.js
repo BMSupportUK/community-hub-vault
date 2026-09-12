@@ -39,8 +39,8 @@ self.addEventListener("push", (event) => {
 
     const options = {
       body: payload.body || "",
-      icon: payload.icon || "/favicon.ico",
-      badge: payload.badge || "/favicon.ico",
+      icon: payload.icon || "/icon-192.png",
+      badge: payload.badge || "/favicon.png",
       tag: payload.tag || "bm-support",
       data: { url: payload.url || "/status" },
       vibrate: [120, 60, 120],
