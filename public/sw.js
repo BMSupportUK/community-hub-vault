@@ -39,7 +39,7 @@ self.addEventListener("push", (event) => {
 
     const options = {
       body: payload.body || "",
-      icon: payload.icon || "/favicon.png",
+      icon: payload.icon || "/icon-192.png",
       badge: payload.badge || "/favicon.png",
       tag: payload.tag || "bm-support",
       data: { url: payload.url || "/status" },
