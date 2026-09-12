@@ -597,6 +597,8 @@ export async function syncBoroTeamSheet(opts?: { ignoreWindow?: boolean }): Prom
       caption: hit.text,
       source_url: hit.url,
       is_update: isUpdate,
+      side: hit.side,
+
       status: "posted",
     });
     if (rowErr) skipped.push(`log failed: ${rowErr.message}`);
