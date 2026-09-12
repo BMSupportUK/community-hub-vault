@@ -178,6 +178,26 @@ export async function fetchTeamSheetStarterIds(
   // look like he was left out, and he gets wrongly benched.
   if (cachedIds.length === 11) return cachedIds;
 
+  // The match centre's own confirmed line-up is an official source in its own
+  // right: it always carries full first names, so shared surnames cannot be
+  // mixed up. As soon as it confirms exactly eleven Boro starters we act on it,
+  // without waiting for the club's team-sheet graphic to be captured and read.
+  const feedFirst = await fetchFeedStarterIds(admin, fixtureId, players);
+  if (feedFirst && new Set(feedFirst).size === 11) {
+    await admin.from("app_settings").upsert(
+      {
+        key: cacheKey,
+        value: {
+          starterIds: feedFirst,
+          extractedAt: new Date().toISOString(),
+          verifiedBy: "match-centre",
+        },
+      },
+      { onConflict: "key" },
+    );
+    return feedFirst;
+  }
+
   const { data: sheet } = await admin
     .from("boro_team_sheets")
     .select("image_url")
