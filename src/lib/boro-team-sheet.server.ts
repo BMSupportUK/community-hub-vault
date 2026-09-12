@@ -527,10 +527,28 @@ export async function syncBoroTeamSheet(opts?: { ignoreWindow?: boolean }): Prom
       .filter((h) => h.side === "opponent")
       .map((h) => ({ ...h, side: "opponent" as const }));
   }
+  // Boro's XI must always be the first team sheet in the thread. If the
+  // opposition publish theirs first, hold it back until Boro's is in.
+  const { data: priorSheets } = await supabaseAdmin
+    .from("boro_team_sheets")
+    .select("side")
+    .eq("fixture_id", fx.id);
+  const boroAlreadyPosted = (priorSheets ?? []).some((r) => (r.side ?? "boro") === "boro");
+  if (boroHits.length === 0 && !boroAlreadyPosted && opponentHits.length > 0) {
+    return {
+      ok: true,
+      fixture: label,
+      topic: topic.title,
+      posted: 0,
+      skipped: ["holding the opposition XI until Boro's line-up is posted"],
+    };
+  }
+
   const hits = [...boroHits, ...opponentHits];
   if (hits.length === 0) {
     return { ok: true, fixture: label, topic: topic.title, posted: 0, skipped: ["no team sheet posted yet"] };
   }
+
 
 
 
@@ -579,6 +597,8 @@ export async function syncBoroTeamSheet(opts?: { ignoreWindow?: boolean }): Prom
       caption: hit.text,
       source_url: hit.url,
       is_update: isUpdate,
+      side: hit.side,
+
       status: "posted",
     });
     if (rowErr) skipped.push(`log failed: ${rowErr.message}`);

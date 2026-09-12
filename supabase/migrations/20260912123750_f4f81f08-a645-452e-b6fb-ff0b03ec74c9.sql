@@ -1,0 +1,1 @@
+ALTER TABLE public.boro_team_sheets ADD COLUMN IF NOT EXISTS side TEXT;
