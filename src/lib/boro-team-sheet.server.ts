@@ -77,9 +77,29 @@ const NEGATIVE_PATTERNS: RegExp[] = [
   /\bwomen'?s\b/i,
 ];
 
+/**
+ * Teaser posts ("Team news 🔜", "Team news coming shortly", "Line-up dropping
+ * in 10 minutes") carry a graphic but no actual XI. They must never be posted
+ * as a team sheet — the real announcement follows minutes later.
+ */
+const TEASER_PATTERNS: RegExp[] = [
+  /\u{1F51C}/u, // 🔜
+  /\bcoming\s+(?:soon|shortly|up|next|at\b|in\b)/i,
+  /\b(?:dropping|drops|incoming|loading|imminent)\b/i,
+  /\b(?:not\s+long\s+now|almost\s+here|any\s+minute)\b/i,
+  /\bin\s+\d{1,3}\s*(?:mins?|minutes?)\b/i,
+  /\bstay\s+tuned\b/i,
+];
+
+export function isTeaserText(rawText: string): boolean {
+  const text = normalizeFancyText(rawText);
+  return TEASER_PATTERNS.some((re) => re.test(text));
+}
+
 export function isTeamSheetText(rawText: string): boolean {
   const text = normalizeFancyText(rawText);
   if (NEGATIVE_PATTERNS.some((re) => re.test(text))) return false;
+  if (isTeaserText(text)) return false;
   return TEAM_SHEET_PATTERNS.some((re) => re.test(text));
 }
 
@@ -90,11 +110,13 @@ export function isTeamSheetText(rawText: string): boolean {
 export function isOpponentTeamSheetText(rawText: string, opponentName: string): boolean {
   const text = normalizeFancyText(rawText).toLowerCase();
   if (NEGATIVE_PATTERNS.some((re) => re.test(text))) return false;
+  if (isTeaserText(text)) return false;
   const tokens = opponentTokens(opponentName);
   const named = tokens.some((w) => text.includes(w)) || tokens.length === 0;
   if (!named) return false;
   return /\b(side|xi|team\s*news|team\s*sheet|line[\s-]?up|eleven)\b/.test(text);
 }
+
 
 
 function normalizeImageUrl(raw: string): string | null {
