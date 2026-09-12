@@ -3,7 +3,9 @@ type Admin = { from: (table: string) => any };
 type FantasyPlayer = {
   id: string;
   name: string;
+  shirt_number?: number | null;
 };
+
 
 function normaliseName(value: string): string {
   return value
@@ -43,12 +45,19 @@ function matchPlayer(name: string, players: FantasyPlayer[]): FantasyPlayer | nu
   return narrowed.length === 1 ? narrowed[0] ?? null : null;
 }
 
-/** Ask the reader for the eleven names. Returns the raw names exactly as read. */
-async function readStarterNames(
+export type SheetEntry = { number: number | null; text: string };
+
+/**
+ * Transcribe the graphic verbatim. Club graphics print SURNAMES with shirt
+ * numbers, so the reader must never be asked to supply first names — it
+ * hallucinates them (it once returned "Tom Vitek" and "Finley Jones"). We take
+ * the printed text plus the shirt number and resolve the player ourselves.
+ */
+async function readSheetEntries(
   imageUrl: string,
   apiKey: string,
   instruction: string,
-): Promise<string[] | null> {
+): Promise<SheetEntry[] | null> {
   try {
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -79,12 +88,25 @@ async function readStarterNames(
     if (!raw) return null;
     const parsed = JSON.parse(raw) as { starters?: unknown };
     if (!Array.isArray(parsed.starters) || parsed.starters.length !== 11) return null;
-    const names = parsed.starters.filter((n): n is string => typeof n === "string" && n.trim() !== "");
-    return names.length === 11 ? names : null;
+    const entries: SheetEntry[] = [];
+    for (const item of parsed.starters) {
+      if (typeof item === "string") {
+        if (!item.trim()) return null;
+        entries.push({ number: null, text: item });
+        continue;
+      }
+      const row = item as { number?: unknown; text?: unknown; name?: unknown };
+      const text = typeof row.text === "string" ? row.text : typeof row.name === "string" ? row.name : "";
+      if (!text.trim()) return null;
+      const num = typeof row.number === "number" && Number.isFinite(row.number) ? row.number : null;
+      entries.push({ number: num, text });
+    }
+    return entries.length === 11 ? entries : null;
   } catch {
     return null;
   }
 }
+
 
 /** Surnames shared by more than one squad member — these always need a first name. */
 function sharedSurnames(players: FantasyPlayer[]): Set<string> {
@@ -117,6 +139,57 @@ function resolveIds(names: string[], players: FantasyPlayer[]): string[] | null 
   const unique = [...new Set(ids)];
   return unique.length === 11 ? unique : null;
 }
+
+/** Strip captain marks, initials and punctuation: "N. BORGES (C)" -> "borges". */
+function printedSurname(text: string): string {
+  const cleaned = normaliseName(text.replace(/\((?:c|gk|vc)\)/gi, " "));
+  const bits = cleaned.split(" ").filter((b) => b.length > 1);
+  return bits.at(-1) ?? "";
+}
+
+/**
+ * Resolve the printed eleven to squad players using the SHIRT NUMBER as the
+ * primary key — club graphics print surnames only, and the number is what makes
+ * "JONES" unambiguous. The printed surname must also agree with the player
+ * holding that number, otherwise the whole read is refused.
+ */
+function resolveEntries(entries: SheetEntry[], players: FantasyPlayer[]): string[] | null {
+  const ids: string[] = [];
+  for (const entry of entries) {
+    const surname = printedSurname(entry.text);
+    if (!surname) return null;
+
+    const byNumber =
+      entry.number == null
+        ? []
+        : players.filter((p) => (p.shirt_number ?? null) === entry.number);
+    const numberMatch =
+      byNumber.length === 1
+        ? byNumber[0]!
+        : byNumber.find((p) => normaliseName(p.name).split(" ").at(-1) === surname) ?? null;
+
+    if (numberMatch) {
+      const holderSurname = normaliseName(numberMatch.name).split(" ").at(-1) ?? "";
+      // Number and printed surname must describe the same person.
+      if (holderSurname !== surname && !holderSurname.includes(surname) && !surname.includes(holderSurname)) {
+        return null;
+      }
+      ids.push(numberMatch.id);
+      continue;
+    }
+
+    // No usable number: fall back to a surname that is unique in the squad.
+    const bySurname = players.filter(
+      (p) => normaliseName(p.name).split(" ").at(-1) === surname,
+    );
+    if (bySurname.length !== 1) return null;
+    ids.push(bySurname[0]!.id);
+  }
+  const unique = [...new Set(ids)];
+  return unique.length === 11 ? unique : null;
+}
+
+
 
 /**
  * Second, independent source: the live match feed's line-up for Middlesbrough.
@@ -198,24 +271,29 @@ export async function fetchTeamSheetStarterIds(
     return feedFirst;
   }
 
+  // Only ever read Boro's OWN graphic. The fixture also stores the opposition
+  // line-up (and sometimes a "team news soon" teaser), and reading either of
+  // those would resolve no Boro players at all.
   const { data: sheet } = await admin
     .from("boro_team_sheets")
     .select("image_url")
     .eq("fixture_id", fixtureId)
+    .eq("side", "boro")
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
+
   const imageUrl = typeof sheet?.image_url === "string" ? sheet.image_url : null;
   const apiKey = process.env["LOVABLE_API_KEY"];
   if (!imageUrl || !apiKey) return null;
 
-  // First pass.
-  const firstNames = await readStarterNames(
+  // First pass — verbatim transcription with shirt numbers.
+  const firstEntries = await readSheetEntries(
     imageUrl,
     apiKey,
-    'Read this Middlesbrough team-sheet graphic. Return JSON only in the form {"starters":["First Last"]}. Give the player\'s FIRST NAME and SURNAME for every one of the exactly 11 players under STARTING — never a surname on its own. Exclude every substitute.',
+    'Transcribe this Middlesbrough team-sheet graphic EXACTLY as printed. Return JSON only: {"starters":[{"number":9,"text":"as printed"}]} — the exactly 11 STARTING players, in the order shown, with the shirt number printed beside each name (null if no number is shown). Copy the text verbatim: never add, guess or complete a first name. Exclude every substitute.',
   );
-  const firstIds = firstNames ? resolveIds(firstNames, players) : null;
+  const firstIds = firstEntries ? resolveEntries(firstEntries, players) : null;
   if (!firstIds) return null;
 
   // Back-up source: the live match feed's own line-up, which always carries
@@ -227,15 +305,16 @@ export async function fetchTeamSheetStarterIds(
     source = "match-feed";
   } else {
     // Feed line-ups are not published yet: fall back to an independent second
-    // read of the graphic, again demanding first name + surname.
-    const secondNames = await readStarterNames(
+    // read of the graphic, again verbatim with shirt numbers.
+    const secondEntries = await readSheetEntries(
       imageUrl,
       apiKey,
-      'Look at this Middlesbrough team sheet. List, as JSON only, {"starters":["First Last"]} — the 11 STARTING players in shirt-number order, each with first name then surname exactly as printed or as the recognised full name. Do not include substitutes and do not abbreviate to surnames.',
+      'Look at this football team sheet. Return JSON only: {"starters":[{"number":1,"text":"printed name"}]} listing the 11 STARTING players with their shirt numbers, copied character for character from the image. Do not invent first names and do not include substitutes.',
     );
-    checkIds = secondNames ? resolveIds(secondNames, players) : null;
+    checkIds = secondEntries ? resolveEntries(secondEntries, players) : null;
     source = "second-read";
   }
+
   if (!checkIds) return null;
 
   const agree =

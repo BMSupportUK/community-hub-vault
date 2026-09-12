@@ -11,7 +11,7 @@
 
 type Admin = { from: (table: string) => any; rpc?: unknown };
 
-type PlayerRow = { id: string; name: string; position: string; alt_position: string | null };
+type PlayerRow = { id: string; name: string; position: string; alt_position: string | null; shirt_number?: number | null };
 type PickRow = {
   id: string;
   player_id: string;
@@ -226,7 +226,7 @@ export async function syncLineupSwaps(opts?: { ignoreWindow?: boolean }): Promis
 
   const { data: playerRows, error: pErr } = await supabaseAdmin
     .from("fantasy_players")
-    .select("id, name, position, alt_position");
+    .select("id, name, position, alt_position, shirt_number");
   if (pErr) return { ok: false, squadsChanged: 0, swaps: [], skipped: [], error: pErr.message };
   const players = (playerRows ?? []) as PlayerRow[];
 
