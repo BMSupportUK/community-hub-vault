@@ -763,6 +763,7 @@ export type Database = {
           is_update: boolean
           post_id: string | null
           posted_at: string
+          side: string | null
           source_url: string | null
           status: string
           topic_id: string | null
@@ -778,6 +779,7 @@ export type Database = {
           is_update?: boolean
           post_id?: string | null
           posted_at?: string
+          side?: string | null
           source_url?: string | null
           status?: string
           topic_id?: string | null
@@ -793,6 +795,7 @@ export type Database = {
           is_update?: boolean
           post_id?: string | null
           posted_at?: string
+          side?: string | null
           source_url?: string | null
           status?: string
           topic_id?: string | null
