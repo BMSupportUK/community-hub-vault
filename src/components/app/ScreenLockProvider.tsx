@@ -439,9 +439,13 @@ export function ScreenLockProvider({ children }: { children: ReactNode }) {
     };
   }, [locked]);
 
+  // A known-locked screen goes straight to the lock screen: no reason to make
+  // someone stare at the loading screen before they can type their code.
+  if (user && ready && settings && locked) {
+    return <ScreenLockOverlay settings={settings} onUnlock={() => doUnlock()} />;
+  }
   if (!user || !ready || !settings || resumeChecking) return <BmSplash />;
-  if (!locked) return <>{children}</>;
-  return <ScreenLockOverlay settings={settings} onUnlock={() => doUnlock()} />;
+  return <>{children}</>;
 }
 
 /** Header pill: lock the app immediately before stepping away from the PC. */
