@@ -247,13 +247,13 @@ function InstallGuidesPage() {
   const load = () => queryClient.invalidateQueries({ queryKey: ["install-guides-data"] });
 
   useEffect(() => {
-    if (!activeCat && categories.length) {
-      const amazon = categories.find(
-        (c) => c.slug === "amazon" || c.name.toLowerCase() === "amazon",
+    if (!activeCat && categories.length && tab === "guides") {
+      const android = categories.find(
+        (c) => c.slug === "android" || c.name.toLowerCase() === "android",
       );
-      setActiveCat((amazon ?? categories[0]).id);
+      setActiveCat((android ?? categories[0]).id);
     }
-  }, [categories, activeCat]);
+  }, [categories, activeCat, tab]);
 
   const counts = useMemo(() => {
     const m: Record<string, number> = {};
