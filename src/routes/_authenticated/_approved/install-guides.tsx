@@ -170,7 +170,7 @@ function InstallGuidesPage() {
       (tab === "transfers" && !canSeeTransfers) ||
       (isRestrictedAdminTab && !canManageGuides)
     ) {
-      setTab("welcome");
+      setTab("guides");
     }
   }, [tab, canSeeAppTab, canManageGuides, canSeeTransfers]);
   const [unlocked, setUnlocked] = useState<UnlockedGuide | null>(null);
