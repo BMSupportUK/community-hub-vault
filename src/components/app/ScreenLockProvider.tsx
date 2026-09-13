@@ -193,39 +193,6 @@ export function ScreenLockProvider({ children }: { children: ReactNode }) {
     };
   }, [user?.id, isStaff]);
 
-  // Hide the page as soon as the app leaves the foreground. On return, decide
-  // whether inactivity requires the lock before revealing any protected UI.
-  useEffect(() => {
-    if (!user || !ready) return;
-    const checkResume = () => {
-      if (document.visibilityState !== "visible") {
-        setResumeChecking(true);
-        return;
-      }
-      if (!settings?.enabled || locked) {
-        setResumeChecking(false);
-        return;
-      }
-      let expired = false;
-      try {
-        const lastActivity = Number(localStorage.getItem(`screenlock:last-activity:${user.id}`));
-        const timeoutMs = Math.max(1, settings.timeout_minutes || DEFAULT_TIMEOUT_MINUTES) * 60_000;
-        expired = Number.isFinite(lastActivity) && lastActivity > 0 && Date.now() - lastActivity >= timeoutMs;
-      } catch {}
-      if (expired) doLock();
-      setResumeChecking(false);
-    };
-    const hide = () => setResumeChecking(true);
-    document.addEventListener("visibilitychange", checkResume);
-    window.addEventListener("pageshow", checkResume);
-    window.addEventListener("pagehide", hide);
-    return () => {
-      document.removeEventListener("visibilitychange", checkResume);
-      window.removeEventListener("pageshow", checkResume);
-      window.removeEventListener("pagehide", hide);
-    };
-  }, [user?.id, ready, settings?.enabled, settings?.timeout_minutes, locked, doLock]);
-
   // Live-update when settings change elsewhere (settings page, admin reset).
   useEffect(() => {
     if (!user) return;
@@ -288,6 +255,39 @@ export function ScreenLockProvider({ children }: { children: ReactNode }) {
     },
     [storageKey, user?.id],
   );
+
+  // Hide the page as soon as the app leaves the foreground. On return, decide
+  // whether inactivity requires the lock before revealing any protected UI.
+  useEffect(() => {
+    if (!user || !ready) return;
+    const checkResume = () => {
+      if (document.visibilityState !== "visible") {
+        setResumeChecking(true);
+        return;
+      }
+      if (!settings?.enabled || locked) {
+        setResumeChecking(false);
+        return;
+      }
+      let expired = false;
+      try {
+        const lastActivity = Number(localStorage.getItem(`screenlock:last-activity:${user.id}`));
+        const timeoutMs = Math.max(1, settings.timeout_minutes || DEFAULT_TIMEOUT_MINUTES) * 60_000;
+        expired = Number.isFinite(lastActivity) && lastActivity > 0 && Date.now() - lastActivity >= timeoutMs;
+      } catch {}
+      if (expired) doLock();
+      setResumeChecking(false);
+    };
+    const hide = () => setResumeChecking(true);
+    document.addEventListener("visibilitychange", checkResume);
+    window.addEventListener("pageshow", checkResume);
+    window.addEventListener("pagehide", hide);
+    return () => {
+      document.removeEventListener("visibilitychange", checkResume);
+      window.removeEventListener("pageshow", checkResume);
+      window.removeEventListener("pagehide", hide);
+    };
+  }, [user?.id, ready, settings?.enabled, settings?.timeout_minutes, locked, doLock]);
 
 
 
