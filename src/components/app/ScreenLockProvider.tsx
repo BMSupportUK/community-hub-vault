@@ -405,14 +405,7 @@ export function ScreenLockProvider({ children }: { children: ReactNode }) {
     };
     unblock();
 
-    const observer = new MutationObserver(unblock);
-    observer.observe(document.body, { attributes: true, attributeFilter: ["style", "data-scroll-locked"] });
-    observer.observe(html, { attributes: true, attributeFilter: ["style"] });
-    const poll = window.setInterval(unblock, 500);
-
     return () => {
-      observer.disconnect();
-      window.clearInterval(poll);
       document.body.style.overflow = prev.bodyOverflow;
       document.body.style.pointerEvents = prev.bodyPointer;
       html.style.pointerEvents = prev.htmlPointer;
