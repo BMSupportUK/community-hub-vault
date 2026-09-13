@@ -21,7 +21,7 @@ export interface ScreenLockSettings {
 export const LOCK_NOW_EVENT = "app:screen-lock-now";
 export const LOCK_STATE_EVENT = "app:screen-lock-state";
 const ACTIVITY_EVENTS = ["mousemove", "mousedown", "keydown", "touchstart", "scroll", "wheel"] as const;
-const RESUME_SPLASH_MS = 10_000;
+const RESUME_SPLASH_MS = 3_000;
 
 /** Ask the app to lock immediately (used by the avatar menu). */
 export function lockScreenNow() {
