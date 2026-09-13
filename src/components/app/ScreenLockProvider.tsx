@@ -21,6 +21,7 @@ export interface ScreenLockSettings {
 export const LOCK_NOW_EVENT = "app:screen-lock-now";
 export const LOCK_STATE_EVENT = "app:screen-lock-state";
 const ACTIVITY_EVENTS = ["mousemove", "mousedown", "keydown", "touchstart", "scroll", "wheel"] as const;
+const RESUME_SPLASH_MS = 10_000;
 
 /** Ask the app to lock immediately (used by the avatar menu). */
 export function lockScreenNow() {
@@ -43,6 +44,8 @@ export function ScreenLockProvider({ children }: { children: ReactNode }) {
   });
   const timerRef = useRef<number | null>(null);
   const channelRef = useRef<BroadcastChannel | null>(null);
+  const resumeTimerRef = useRef<number | null>(null);
+  const wasBackgroundedRef = useRef(false);
   const storageKey = user ? `screenlock:locked:${user.id}` : null;
 
   // Safety net: never let a stale overlay leftover kill clicks.
@@ -260,32 +263,52 @@ export function ScreenLockProvider({ children }: { children: ReactNode }) {
   );
 
   // Hide the page as soon as the app leaves the foreground. On return, decide
-  // whether inactivity requires the lock before revealing any protected UI.
+  // whether inactivity requires the lock, then keep the branded splash visible
+  // long enough for the resumed app to settle before revealing protected UI.
   useEffect(() => {
     if (!user || !ready) return;
+    const clearResumeTimer = () => {
+      if (resumeTimerRef.current !== null) {
+        window.clearTimeout(resumeTimerRef.current);
+        resumeTimerRef.current = null;
+      }
+    };
+    const hide = () => {
+      wasBackgroundedRef.current = true;
+      clearResumeTimer();
+      setResumeChecking(true);
+    };
     const checkResume = () => {
       if (document.visibilityState !== "visible") {
-        setResumeChecking(true);
+        hide();
         return;
       }
-      if (!settings?.enabled || locked) {
+      if (!wasBackgroundedRef.current) return;
+
+      wasBackgroundedRef.current = false;
+      clearResumeTimer();
+      setResumeChecking(true);
+
+      if (settings?.enabled && !locked) {
+        let expired = false;
+        try {
+          const lastActivity = Number(localStorage.getItem(`screenlock:last-activity:${user.id}`));
+          const timeoutMs = Math.max(1, settings.timeout_minutes || DEFAULT_TIMEOUT_MINUTES) * 60_000;
+          expired = Number.isFinite(lastActivity) && lastActivity > 0 && Date.now() - lastActivity >= timeoutMs;
+        } catch {}
+        if (expired) doLock();
+      }
+
+      resumeTimerRef.current = window.setTimeout(() => {
+        resumeTimerRef.current = null;
         setResumeChecking(false);
-        return;
-      }
-      let expired = false;
-      try {
-        const lastActivity = Number(localStorage.getItem(`screenlock:last-activity:${user.id}`));
-        const timeoutMs = Math.max(1, settings.timeout_minutes || DEFAULT_TIMEOUT_MINUTES) * 60_000;
-        expired = Number.isFinite(lastActivity) && lastActivity > 0 && Date.now() - lastActivity >= timeoutMs;
-      } catch {}
-      if (expired) doLock();
-      setResumeChecking(false);
+      }, RESUME_SPLASH_MS);
     };
-    const hide = () => setResumeChecking(true);
     document.addEventListener("visibilitychange", checkResume);
     window.addEventListener("pageshow", checkResume);
     window.addEventListener("pagehide", hide);
     return () => {
+      clearResumeTimer();
       document.removeEventListener("visibilitychange", checkResume);
       window.removeEventListener("pageshow", checkResume);
       window.removeEventListener("pagehide", hide);
