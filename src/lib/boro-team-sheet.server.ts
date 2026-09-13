@@ -704,6 +704,9 @@ export async function postManualTeamSheet(input: {
     source_url: input.sourceUrl ?? null,
     is_update: isUpdate,
     status: "manual",
+    // Manual uploads are always Boro's own graphic — the fantasy swap reader
+    // filters on side = 'boro', so this must never be left NULL.
+    side: "boro",
   });
 
   return { ok: true, fixture: `${fx.home_team} v ${fx.away_team}`, topic: topic.title, posted: 1, skipped: [] };
