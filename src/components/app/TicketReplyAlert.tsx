@@ -16,6 +16,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { LOCK_STATE_EVENT } from "@/components/app/ScreenLockProvider";
 
 interface ReplyPayload {
   id: string;
@@ -34,8 +35,25 @@ export function TicketReplyAlert() {
   const navigate = useNavigate();
   const isStaffRole = hasAny(["admin", "management", "staff", "moderator"]);
   const [queue, setQueue] = useState<ReplyPayload[]>([]);
+  const [screenLocked, setScreenLocked] = useState(() => {
+    if (!user || typeof window === "undefined") return false;
+    try {
+      return localStorage.getItem(`screenlock:locked:${user.id}`) === "1";
+    } catch {
+      return false;
+    }
+  });
   const seenRef = useRef<Set<string>>(new Set());
   const current = queue[0] ?? null;
+
+  useEffect(() => {
+    const update = (event: Event) => {
+      const detail = (event as CustomEvent<{ locked?: boolean }>).detail;
+      if (typeof detail?.locked === "boolean") setScreenLocked(detail.locked);
+    };
+    window.addEventListener(LOCK_STATE_EVENT, update);
+    return () => window.removeEventListener(LOCK_STATE_EVENT, update);
+  }, []);
 
   useEffect(() => {
     if (!user || !isStaffRole) return;
@@ -117,7 +135,7 @@ export function TicketReplyAlert() {
   }, [user, isStaffRole]);
 
 
-  if (!current) return null;
+  if (!current || screenLocked) return null;
 
   const dismiss = async (open = true) => {
     setQueue((q) => q.slice(1));

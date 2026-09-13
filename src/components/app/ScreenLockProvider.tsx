@@ -19,6 +19,7 @@ export interface ScreenLockSettings {
 }
 
 export const LOCK_NOW_EVENT = "app:screen-lock-now";
+export const LOCK_STATE_EVENT = "app:screen-lock-state";
 const ACTIVITY_EVENTS = ["mousemove", "mousedown", "keydown", "touchstart", "scroll", "wheel"] as const;
 
 /** Ask the app to lock immediately (used by the avatar menu). */
@@ -173,6 +174,7 @@ export function ScreenLockProvider({ children }: { children: ReactNode }) {
       }
       const shouldLock = Boolean(active?.enabled && (savedLocked || idleExpired));
       setLocked(shouldLock);
+      window.dispatchEvent(new CustomEvent(LOCK_STATE_EVENT, { detail: { locked: shouldLock } }));
       setSettings(active);
       setReady(true);
       if (shouldLock) {
@@ -230,6 +232,7 @@ export function ScreenLockProvider({ children }: { children: ReactNode }) {
   const doLock = useCallback(
     (broadcast = true) => {
       setLocked(true);
+      window.dispatchEvent(new CustomEvent(LOCK_STATE_EVENT, { detail: { locked: true } }));
       if (storageKey) localStorage.setItem(storageKey, "1");
       // A locked screen means the person is away from the PC: drop them out of
       // the Talk channel presence so member counters/lists don't count them.
@@ -242,6 +245,7 @@ export function ScreenLockProvider({ children }: { children: ReactNode }) {
   const doUnlock = useCallback(
     (broadcast = true) => {
       setLocked(false);
+      window.dispatchEvent(new CustomEvent(LOCK_STATE_EVENT, { detail: { locked: false } }));
       if (storageKey) localStorage.removeItem(storageKey);
       // Restart the idle clock, otherwise the stale timestamp re-locks instantly.
       if (user) {
