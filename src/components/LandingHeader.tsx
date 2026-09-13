@@ -19,7 +19,6 @@ const baseNavItems = [
 
 const COMPETITION_NAV_LABELS: Record<string, string> = {
   wc2026: "World Cup 2026 Predictions Comp",
-  boro2026: "Boro 2026 Predictions",
 };
 
 export function LandingHeader() {
