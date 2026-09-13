@@ -9,7 +9,6 @@ import { TicketHelpRequestedAlert } from "@/components/app/TicketHelpRequestedAl
 import { FanZoneAppealAlert } from "@/components/app/FanZoneAppealAlert";
 import { ContentReportAlert } from "@/components/app/ContentReportAlert";
 import { FanZoneAccessCard } from "@/components/app/FanZoneAccessCard";
-import { ScreenLockProvider } from "@/components/app/ScreenLockProvider";
 import { ScreenLockResetAlerts } from "@/components/app/ScreenLockResetAlerts";
 import { usePushRegister } from "@/hooks/use-push-register";
 import { useLocation } from "@tanstack/react-router";
@@ -32,7 +31,6 @@ export function ApprovedDeferredExtras() {
       <FanZoneAppealAlert />
       <ContentReportAlert />
       <FanZoneAccessCard />
-      <ScreenLockProvider />
       <ScreenLockResetAlerts />
     </>
   );

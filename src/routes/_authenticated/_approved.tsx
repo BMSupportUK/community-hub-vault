@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { isFanZonePath } from "@/lib/fan-zone-nav";
 import { FanZoneBanGate } from "@/components/app/FanZoneBanGate";
 import { isPageAllowed, pageKeyForPath, usePagePermissions } from "@/lib/page-access";
+import { ScreenLockProvider } from "@/components/app/ScreenLockProvider";
 
 const ApprovedDeferredExtras = lazy(() =>
   import("@/components/app/ApprovedDeferredExtras").then((module) => ({
@@ -45,21 +46,23 @@ function ApprovedLayout() {
 
   if (isFanZonePath(path)) {
     return (
-      <FanZoneBanGate>
-        <Outlet />
-        <DeferUntilIdle>
-          <ApprovedDeferredExtras />
-        </DeferUntilIdle>
-      </FanZoneBanGate>
+      <ScreenLockProvider>
+        <FanZoneBanGate>
+          <Outlet />
+          <DeferUntilIdle>
+            <ApprovedDeferredExtras />
+          </DeferUntilIdle>
+        </FanZoneBanGate>
+      </ScreenLockProvider>
     );
   }
 
   return (
-    <>
+    <ScreenLockProvider>
       <Outlet />
       <DeferUntilIdle>
         <ApprovedDeferredExtras />
       </DeferUntilIdle>
-    </>
+    </ScreenLockProvider>
   );
 }
