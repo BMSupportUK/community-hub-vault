@@ -19,7 +19,6 @@ const baseNavItems = [
 
 const COMPETITION_NAV_LABELS: Record<string, string> = {
   wc2026: "World Cup 2026 Predictions Comp",
-  boro2026: "Boro 2026 Predictions",
 };
 
 export function LandingHeader() {
@@ -33,11 +32,10 @@ export function LandingHeader() {
 
   const navItems = [
     ...baseNavItems.slice(0, 4),
-    ...COMPETITIONS.filter((c) => !finished.includes(c.key)).map((c) => ({
+    ...COMPETITIONS.filter((c) => c.key !== "boro2026" && !finished.includes(c.key)).map((c) => ({
       to: c.to,
       label: COMPETITION_NAV_LABELS[c.key] ?? c.title,
     })),
-    { to: "/boro-fantasy", label: "MFC Fantasy Manager" },
     { to: "/competition-winners", label: "Competition Winners" },
     ...baseNavItems.slice(4),
   ];
