@@ -278,7 +278,9 @@ export async function fetchTeamSheetStarterIds(
     .from("boro_team_sheets")
     .select("image_url")
     .eq("fixture_id", fixtureId)
-    .eq("side", "boro")
+    // NULL side is treated as Boro everywhere else in the pipeline (legacy and
+    // manually uploaded rows) — never let it hide Boro's own graphic here.
+    .or("side.eq.boro,side.is.null")
     .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
