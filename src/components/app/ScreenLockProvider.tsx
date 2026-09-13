@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Lock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +9,7 @@ import {
 } from "@/lib/screen-lock-hash";
 import { ScreenLockOverlay } from "@/components/app/ScreenLockOverlay";
 import { resumeTalkPresence, suspendTalkPresence } from "@/hooks/use-talk-channel-presence";
+import { BmSplash } from "@/components/app/BmSplash";
 
 
 export interface ScreenLockSettings {
@@ -26,11 +27,20 @@ export function lockScreenNow() {
   window.dispatchEvent(new Event(LOCK_NOW_EVENT));
 }
 
-export function ScreenLockProvider() {
+export function ScreenLockProvider({ children }: { children: ReactNode }) {
   const { user, hasAny } = useAuth();
   const isStaff = hasAny(["admin", "management", "staff", "moderator"]);
   const [settings, setSettings] = useState<ScreenLockSettings | null>(null);
-  const [locked, setLocked] = useState(false);
+  const [ready, setReady] = useState(false);
+  const [resumeChecking, setResumeChecking] = useState(false);
+  const [locked, setLocked] = useState(() => {
+    if (typeof window === "undefined" || !user) return false;
+    try {
+      return localStorage.getItem(`screenlock:locked:${user.id}`) === "1";
+    } catch {
+      return false;
+    }
+  });
   const timerRef = useRef<number | null>(null);
   const channelRef = useRef<BroadcastChannel | null>(null);
   const storageKey = user ? `screenlock:locked:${user.id}` : null;
@@ -90,6 +100,7 @@ export function ScreenLockProvider() {
     if (!user) {
       setSettings(null);
       setLocked(false);
+      setReady(false);
       // Never leave a persisted lock flag behind after a sign-out: otherwise the
       // next sign-in locks instantly and the overlay looks permanently stuck.
       if (typeof window !== "undefined") {
@@ -128,7 +139,6 @@ export function ScreenLockProvider() {
       let active: ScreenLockSettings | null = null;
       if (data) {
         active = data;
-        setSettings(data);
       } else {
         const row = {
           user_id: user.id,
@@ -146,18 +156,35 @@ export function ScreenLockProvider() {
           return;
         }
         active = created as ScreenLockSettings;
-        setSettings(active);
       }
-      // Restore a lock that was active before a reload — but only when the lock
-      // is still switched on. A stale flag must never trap the user.
+      // Decide the initial lock state before allowing the protected page to
+      // render. This covers both a persisted lock and inactivity while the app
+      // was closed/backgrounded, without exposing one frame of page content.
       const flagKey = `screenlock:locked:${user.id}`;
-      if (typeof window !== "undefined" && localStorage.getItem(flagKey) === "1") {
-        if (active?.enabled) {
-          setLocked(true);
-          void suspendTalkPresence(user.id);
-        } else {
+      const activityKey = `screenlock:last-activity:${user.id}`;
+      let savedLocked = false;
+      let idleExpired = false;
+      if (typeof window !== "undefined") {
+        try {
+          savedLocked = localStorage.getItem(flagKey) === "1";
+          const lastActivity = Number(localStorage.getItem(activityKey));
+          const timeoutMs = Math.max(1, active?.timeout_minutes || DEFAULT_TIMEOUT_MINUTES) * 60_000;
+          idleExpired = Number.isFinite(lastActivity) && lastActivity > 0 && Date.now() - lastActivity >= timeoutMs;
+        } catch {}
+      }
+      const shouldLock = Boolean(active?.enabled && (savedLocked || idleExpired));
+      setLocked(shouldLock);
+      setSettings(active);
+      setReady(true);
+      if (shouldLock) {
+        try {
+          localStorage.setItem(flagKey, "1");
+        } catch {}
+        void suspendTalkPresence(user.id);
+      } else if (!active?.enabled) {
+        try {
           localStorage.removeItem(flagKey);
-        }
+        } catch {}
       }
 
     })();
@@ -228,6 +255,39 @@ export function ScreenLockProvider() {
     },
     [storageKey, user?.id],
   );
+
+  // Hide the page as soon as the app leaves the foreground. On return, decide
+  // whether inactivity requires the lock before revealing any protected UI.
+  useEffect(() => {
+    if (!user || !ready) return;
+    const checkResume = () => {
+      if (document.visibilityState !== "visible") {
+        setResumeChecking(true);
+        return;
+      }
+      if (!settings?.enabled || locked) {
+        setResumeChecking(false);
+        return;
+      }
+      let expired = false;
+      try {
+        const lastActivity = Number(localStorage.getItem(`screenlock:last-activity:${user.id}`));
+        const timeoutMs = Math.max(1, settings.timeout_minutes || DEFAULT_TIMEOUT_MINUTES) * 60_000;
+        expired = Number.isFinite(lastActivity) && lastActivity > 0 && Date.now() - lastActivity >= timeoutMs;
+      } catch {}
+      if (expired) doLock();
+      setResumeChecking(false);
+    };
+    const hide = () => setResumeChecking(true);
+    document.addEventListener("visibilitychange", checkResume);
+    window.addEventListener("pageshow", checkResume);
+    window.addEventListener("pagehide", hide);
+    return () => {
+      document.removeEventListener("visibilitychange", checkResume);
+      window.removeEventListener("pageshow", checkResume);
+      window.removeEventListener("pagehide", hide);
+    };
+  }, [user?.id, ready, settings?.enabled, settings?.timeout_minutes, locked, doLock]);
 
 
 
@@ -380,12 +440,11 @@ export function ScreenLockProvider() {
     };
   }, [locked]);
 
-  if (!user || !locked || !settings || !host) return null;
+  if (!user || !ready || !settings || resumeChecking) return <BmSplash />;
+  if (!locked) return <>{children}</>;
+  if (!host) return <BmSplash />;
 
-  return createPortal(
-    <ScreenLockOverlay settings={settings} onUnlock={() => doUnlock()} />,
-    host,
-  );
+  return createPortal(<ScreenLockOverlay settings={settings} onUnlock={() => doUnlock()} />, host);
 }
 
 /** Header pill: lock the app immediately before stepping away from the PC. */
