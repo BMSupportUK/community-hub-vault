@@ -116,7 +116,7 @@ function InstallGuidesPage() {
   const { tab: tabParam } = Route.useSearch();
   const [tab, setTab] = useState<string>(() => {
     if (tabParam) return tabParam;
-    try { return sessionStorage.getItem(IG_TAB_KEY) || "welcome"; } catch { return "welcome"; }
+    try { return sessionStorage.getItem(IG_TAB_KEY) || "guides"; } catch { return "guides"; }
   });
   useEffect(() => {
     if (tabParam) setTab(tabParam);
