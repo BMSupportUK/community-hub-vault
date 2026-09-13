@@ -71,14 +71,19 @@ function getStore(userId: string): Store {
   };
   void load();
 
+  // A unique topic per store instance: reusing `dnd-<userId>` could pick up a
+  // channel that is already subscribed (after a resume/remount), and adding
+  // postgres_changes callbacks to a joined channel throws.
+  const topic = `dnd-${userId}-${Math.random().toString(36).slice(2)}-${Date.now()}`;
   const ch = supabase
-    .channel(`dnd-${userId}`)
+    .channel(topic)
     .on(
       "postgres_changes",
       { event: "*", schema: "public", table: "user_dnd_status", filter: `user_id=eq.${userId}` },
       () => void load(),
     )
     .subscribe();
+
 
   // Roll windows over locally so the badge flips on/off at the boundary, and
   // resync whenever the tab regains focus (timers are throttled in background
