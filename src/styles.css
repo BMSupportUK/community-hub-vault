@@ -224,6 +224,48 @@ html.theme-sunset body {
   background-attachment: fixed;
 }
 
+/* ===== Pink Pulse theme (berry / hot pink / coral) ===== */
+html.theme-pink {
+  --background: oklch(0.23 0.09 345);
+  --foreground: oklch(0.98 0.01 350);
+  --surface: oklch(0.29 0.12 345);
+  --surface-2: oklch(0.36 0.16 350);
+  --rail: oklch(0.25 0.08 340);
+
+  --card: oklch(0.20 0.06 345);
+  --card-foreground: oklch(0.98 0.01 350);
+  --popover: oklch(0.20 0.06 345);
+  --popover-foreground: oklch(0.98 0.01 350);
+
+  --primary: oklch(0.68 0.26 350);
+  --primary-foreground: oklch(0.99 0.005 350);
+  --primary-glow: oklch(0.78 0.19 10);
+
+  --secondary: oklch(0.32 0.11 330);
+  --secondary-foreground: oklch(0.98 0.01 350);
+  --muted: oklch(0.26 0.045 340);
+  --muted-foreground: oklch(0.77 0.04 345);
+  --accent: oklch(0.72 0.22 18);
+  --accent-foreground: oklch(0.18 0.04 345);
+
+  --border: oklch(0.38 0.10 345);
+  --input: oklch(0.27 0.065 345);
+  --ring: oklch(0.72 0.24 350);
+
+  --gradient-primary: linear-gradient(135deg, oklch(0.61 0.27 335), oklch(0.69 0.27 350) 50%, oklch(0.73 0.22 18));
+  --gradient-rail: linear-gradient(180deg, oklch(0.30 0.12 338), oklch(0.26 0.09 345) 55%, oklch(0.23 0.08 355));
+  --gradient-accent: linear-gradient(90deg, oklch(0.65 0.28 335), oklch(0.72 0.25 350), oklch(0.76 0.20 18));
+  --shadow-glow: 0 0 0 1px color-mix(in oklab, var(--primary) 42%, transparent), 0 12px 40px -10px color-mix(in oklab, var(--primary) 58%, transparent);
+}
+html.theme-pink body {
+  background:
+    radial-gradient(ellipse at top left, oklch(0.56 0.27 335 / 0.52), transparent 55%),
+    radial-gradient(ellipse at top right, oklch(0.65 0.26 350 / 0.46), transparent 55%),
+    radial-gradient(ellipse at bottom, oklch(0.69 0.22 18 / 0.48), transparent 60%),
+    var(--color-background);
+  background-attachment: fixed;
+}
+
 @layer base {
   * { border-color: var(--color-border); }
   /* Viewport lock removed — the app scrolls naturally on all screens. */
