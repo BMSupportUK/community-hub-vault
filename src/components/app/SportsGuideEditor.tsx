@@ -423,9 +423,9 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
       toast.error(error.message || "Failed to save blog");
       return;
     }
-    if (!editing.id) {
-      try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
-    }
+    try {
+      localStorage.removeItem(editing.id ? editDraftKey(editing.id) : DRAFT_KEY);
+    } catch { /* ignore */ }
     toast.success(editing.id ? "Blog updated" : "Blog added");
     navigate({
       to: "/sports-guides",
