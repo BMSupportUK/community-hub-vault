@@ -6,7 +6,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { backfillVpnDetection } from "@/lib/vpn-backfill.functions";
-import { useAppTheme, setAppTheme, type AppTheme } from "@/hooks/use-app-theme";
+import { setAppTheme, useDefaultAppTheme } from "@/hooks/use-app-theme";
+import { ThemePicker, APP_THEME_OPTIONS } from "@/components/app/ThemePicker";
 import {
   Dialog,
   DialogContent,
@@ -864,66 +865,22 @@ function RecoveryCodes() {
   );
 }
 function ThemePickerCard() {
-  const current = useAppTheme();
-  const [busy, setBusy] = useState<AppTheme | null>(null);
-  const choose = async (t: AppTheme) => {
-    if (t === current) return;
-    setBusy(t);
+  const current = useDefaultAppTheme();
+  const choose = async (theme: Parameters<typeof setAppTheme>[0]) => {
     try {
-      await setAppTheme(t);
-      const names: Record<AppTheme, string> = {
-        purple: "Vibrant Purple",
-        red: "Crimson & Rose",
-        ocean: "Electric Ocean",
-        sunset: "Sunset Blaze",
-        pink: "Pink Pulse",
-      };
-      toast.success(`Default theme set to ${names[t]}`);
+      await setAppTheme(theme);
+      const name = APP_THEME_OPTIONS.find((option) => option.value === theme)?.name ?? theme;
+      toast.success(`Default theme set to ${name}`);
     } catch (e: any) {
       toast.error(e?.message ?? "Failed to update theme");
-    } finally {
-      setBusy(null);
     }
   };
-  const Option = ({ value, name, swatches }: { value: AppTheme; name: string; swatches: string[] }) => {
-    const active = current === value;
-    return (
-      <button
-        onClick={() => choose(value)}
-        disabled={busy !== null}
-        className={`flex-1 text-left rounded-2xl border p-4 transition-all ${active ? "border-primary shadow-glow bg-primary/5" : "border-border bg-surface-1 hover:border-primary/50"}`}
-      >
-        <div className="flex items-center justify-between mb-3">
-          <div className="font-display font-bold">{name}</div>
-          {active && <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded-full bg-primary text-primary-foreground">Active</span>}
-          {busy === value && <Loader2 className="size-4 animate-spin text-muted-foreground" />}
-        </div>
-        <div className="flex gap-1.5">
-          {swatches.map((c) => (
-            <span key={c} className="h-7 flex-1 rounded-md ring-1 ring-black/20" style={{ background: c }} />
-          ))}
-        </div>
-      </button>
-    );
-  };
   return (
-    <section className="rounded-3xl border-2 border-primary/40 bg-gradient-to-br from-primary/15 via-surface-1 to-accent/15 p-5 shadow-glow">
-      <div className="flex items-center gap-3 mb-3">
-        <div className="size-11 rounded-2xl bg-gradient-primary text-primary-foreground grid place-items-center shadow-glow">
-          <Sparkles className="size-5" />
-        </div>
-        <div>
-          <h2 className="font-display text-xl font-bold text-foreground">App settings — default theme</h2>
-          <p className="text-xs text-muted-foreground">Switch the colour scheme everyone sees across the app.</p>
-        </div>
-      </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-        <Option value="purple" name="Vibrant Purple" swatches={["#7c3aed", "#a855f7", "#3b82f6", "#ec4899"]} />
-        <Option value="red" name="Crimson & Rose" swatches={["#dc2626", "#ef4444", "#f43f5e", "#fb7185"]} />
-        <Option value="ocean" name="Electric Ocean" swatches={["#0891b2", "#06b6d4", "#22d3ee", "#5eead4"]} />
-        <Option value="sunset" name="Sunset Blaze" swatches={["#ea580c", "#f97316", "#f59e0b", "#ec4899"]} />
-        <Option value="pink" name="Pink Pulse" swatches={["#500724", "#9d174d", "#ec4899", "#f9a8d4"]} />
-      </div>
-    </section>
+    <ThemePicker
+      current={current}
+      onChoose={choose}
+      title="App settings — default theme"
+      description="Choose the starting theme for users who have not selected their own theme."
+    />
   );
 }
