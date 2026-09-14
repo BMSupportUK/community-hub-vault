@@ -28,3 +28,27 @@ export function clearScreenLockState() {
       .forEach((k) => localStorage.removeItem(k));
   } catch {}
 }
+
+/**
+ * True when a saved lock flag or an expired idle timer means the screen might
+ * need locking. Used to decide whether a loading screen must cover the app
+ * while the real lock check runs — when nothing suggests a lock, we never hide
+ * the app behind a splash.
+ */
+export function screenLockMayBeLocked(): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    const keys = Object.keys(localStorage).filter((k) => k.startsWith("screenlock:"));
+    for (const k of keys) {
+      if (k.startsWith("screenlock:locked:") && localStorage.getItem(k) === "1") return true;
+    }
+    for (const k of keys) {
+      if (!k.startsWith("screenlock:last-activity:")) continue;
+      const last = Number(localStorage.getItem(k));
+      if (!Number.isFinite(last) || last <= 0) continue;
+      const minutes = Number(localStorage.getItem("screenlock:timeout-minutes")) || DEFAULT_TIMEOUT_MINUTES;
+      if (Date.now() - last >= Math.max(1, minutes) * 60_000) return true;
+    }
+  } catch {}
+  return false;
+}
