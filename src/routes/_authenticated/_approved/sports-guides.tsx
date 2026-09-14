@@ -15,9 +15,10 @@ const SG_FOCUS_KEY = "sports-guides-focus-id";
 
 export const Route = createFileRoute("/_authenticated/_approved/sports-guides")({
   component: SportsGuidesRoute,
-  validateSearch: (search: Record<string, unknown>): { cat?: string; sub?: string } => ({
+  validateSearch: (search: Record<string, unknown>): { cat?: string; sub?: string; welcome?: boolean } => ({
     cat: typeof search.cat === "string" ? search.cat : undefined,
     sub: typeof search.sub === "string" ? search.sub : undefined,
+    welcome: search.welcome === true || search.welcome === "true" ? true : undefined,
   }),
 });
 

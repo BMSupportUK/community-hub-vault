@@ -232,7 +232,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     { to: "/tickets", label: "Tickets", icon: Ticket, show: !hasRole("moderator") },
     { to: "/shop", label: "Shop", icon: ShoppingCart, show: true },
     { to: "/install-guides", label: "Install Guides & BM App Store", icon: Wrench, show: true },
-    { to: "/sports-guides", label: "Sports guides", icon: SportsGuideIcon, show: true },
+    { to: "/sports-guides", label: "Sports guides", icon: SportsGuideIcon, show: true, search: { welcome: "true" } },
     { to: "/knowledge-base", label: "Knowledge base", icon: BookOpen, show: true },
     { to: "/what-to-watch", label: "What to Watch", icon: Popcorn, show: true },
     { to: "/leaderboard", label: "Referrals", icon: Trophy, show: true },
