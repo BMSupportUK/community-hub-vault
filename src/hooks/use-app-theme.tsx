@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-export type AppTheme = "purple" | "red" | "ocean" | "sunset" | "pink";
-const THEMES: AppTheme[] = ["purple", "red", "ocean", "sunset", "pink"];
+export type AppTheme = "purple" | "red" | "ocean" | "sunset" | "pink" | "berry";
+const THEMES: AppTheme[] = ["purple", "red", "ocean", "sunset", "pink", "berry"];
 function normalize(v: unknown): AppTheme {
   return THEMES.includes(v as AppTheme) ? (v as AppTheme) : "purple";
 }
@@ -22,7 +22,7 @@ function apply(t: AppTheme) {
   cache = t;
   if (typeof document !== "undefined") {
     const html = document.documentElement;
-    html.classList.remove("theme-red", "theme-ocean", "theme-sunset", "theme-pink");
+    html.classList.remove("theme-red", "theme-ocean", "theme-sunset", "theme-pink", "theme-berry");
     if (t !== "purple") html.classList.add(`theme-${t}`);
   }
   listeners.forEach((l) => l(t));

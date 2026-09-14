@@ -14,7 +14,8 @@ export const APP_THEME_OPTIONS: Array<{
   { value: "red", name: "Crimson & Rose", description: "Bold crimson with warm rose highlights.", swatches: ["#dc2626", "#ef4444", "#f43f5e", "#fb7185"] },
   { value: "ocean", name: "Electric Ocean", description: "Bright cyan, teal and ocean blue.", swatches: ["#0891b2", "#06b6d4", "#22d3ee", "#5eead4"] },
   { value: "sunset", name: "Sunset Blaze", description: "Warm orange, amber and pink accents.", swatches: ["#ea580c", "#f97316", "#f59e0b", "#ec4899"] },
-  { value: "pink", name: "Pink Pulse", description: "Vibrant berry glass with hot-pink highlights.", swatches: ["#500724", "#9d174d", "#ec4899", "#f9a8d4"] },
+  { value: "pink", name: "Pink Pulse", description: "Colourful bright pink from edge to edge.", swatches: ["#831843", "#db2777", "#f472b6", "#fbcfe8"] },
+  { value: "berry", name: "Berry Glass", description: "Deep berry glass with hot-pink highlights.", swatches: ["#500724", "#9d174d", "#ec4899", "#f9a8d4"] },
 ];
 
 interface ThemePickerProps {

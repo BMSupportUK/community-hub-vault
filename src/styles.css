@@ -224,8 +224,50 @@ html.theme-sunset body {
   background-attachment: fixed;
 }
 
-/* ===== Pink Pulse theme (vibrant berry glass) ===== */
+/* ===== Pink Pulse theme (bright colourful pink) ===== */
 html.theme-pink {
+  --background: oklch(0.225 0.08 348);
+  --foreground: oklch(0.99 0.01 350);
+  --surface: oklch(0.31 0.13 348);
+  --surface-2: oklch(0.39 0.17 352);
+  --rail: oklch(0.255 0.11 345);
+
+  --card: oklch(0.275 0.10 348);
+  --card-foreground: oklch(0.99 0.01 350);
+  --popover: oklch(0.255 0.105 348);
+  --popover-foreground: oklch(0.99 0.01 350);
+
+  --primary: oklch(0.72 0.25 350);
+  --primary-foreground: oklch(0.995 0.005 350);
+  --primary-glow: oklch(0.86 0.14 355);
+
+  --secondary: oklch(0.38 0.15 342);
+  --secondary-foreground: oklch(0.99 0.01 350);
+  --muted: oklch(0.30 0.07 348);
+  --muted-foreground: oklch(0.84 0.04 352);
+  --accent: oklch(0.81 0.17 357);
+  --accent-foreground: oklch(0.20 0.07 345);
+
+  --border: oklch(0.57 0.16 350 / 0.78);
+  --input: oklch(0.34 0.11 348);
+  --ring: oklch(0.79 0.20 352);
+
+  --gradient-primary: linear-gradient(135deg, oklch(0.63 0.26 340), oklch(0.74 0.25 350) 52%, oklch(0.82 0.18 359));
+  --gradient-rail: linear-gradient(180deg, oklch(0.36 0.16 340), oklch(0.30 0.13 349) 55%, oklch(0.25 0.10 357));
+  --gradient-accent: linear-gradient(90deg, oklch(0.67 0.26 340), oklch(0.77 0.23 351), oklch(0.86 0.14 359));
+  --shadow-glow: 0 0 0 1px color-mix(in oklab, var(--primary-glow) 44%, transparent), 0 14px 42px -12px color-mix(in oklab, var(--primary) 72%, transparent);
+}
+html.theme-pink body {
+  background:
+    radial-gradient(ellipse at top left, oklch(0.66 0.25 340 / 0.46), transparent 56%),
+    radial-gradient(ellipse at top right, oklch(0.78 0.22 352 / 0.40), transparent 55%),
+    radial-gradient(ellipse at bottom, oklch(0.82 0.16 359 / 0.38), transparent 62%),
+    var(--color-background);
+  background-attachment: fixed;
+}
+
+/* ===== Berry Glass theme ===== */
+html.theme-berry {
   --background: oklch(0.205 0.075 342);
   --foreground: oklch(0.985 0.012 350);
   --surface: oklch(0.27 0.105 342);
@@ -258,7 +300,7 @@ html.theme-pink {
   --shadow-glow: 0 0 0 1px color-mix(in oklab, var(--primary-glow) 40%, transparent), 0 16px 46px -14px color-mix(in oklab, var(--primary) 72%, transparent);
   --shadow-soft: 0 14px 40px -16px oklch(0.12 0.06 342 / 0.8);
 }
-html.theme-pink body {
+html.theme-berry body {
   background:
     radial-gradient(ellipse at top left, oklch(0.59 0.25 334 / 0.42), transparent 58%),
     radial-gradient(ellipse at top right, oklch(0.69 0.25 347 / 0.34), transparent 55%),
@@ -267,33 +309,33 @@ html.theme-pink body {
   background-attachment: fixed;
 }
 
-html.theme-pink :is([role="dialog"], [role="menu"], [data-slot="card"], [data-slot="popover-content"]) {
+html.theme-berry :is([role="dialog"], [role="menu"], [data-slot="card"], [data-slot="popover-content"]) {
   border-color: color-mix(in oklab, var(--primary-glow) 28%, var(--border));
   backdrop-filter: blur(18px) saturate(130%);
   box-shadow: var(--shadow-soft), inset 0 1px 0 color-mix(in oklab, var(--foreground) 8%, transparent);
 }
 
-html.theme-pink :is(input, textarea, select):focus {
+html.theme-berry :is(input, textarea, select):focus {
   box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 24%, transparent), inset 0 1px 0 color-mix(in oklab, var(--foreground) 6%, transparent);
 }
 
-html.theme-pink .landing-hero-panel {
+html.theme-berry .landing-hero-panel {
   border-color: color-mix(in oklab, var(--primary-glow) 38%, transparent) !important;
   background: linear-gradient(135deg, oklch(0.43 0.19 334 / 0.96), oklch(0.57 0.24 346 / 0.94) 52%, oklch(0.35 0.15 355 / 0.97)) !important;
   box-shadow: 0 0 80px color-mix(in oklab, var(--primary) 40%, transparent), inset 0 1px 0 color-mix(in oklab, var(--foreground) 10%, transparent) !important;
 }
 
-html.theme-pink .landing-hero-glow {
+html.theme-berry .landing-hero-glow {
   background: linear-gradient(45deg, color-mix(in oklab, var(--primary-glow) 40%, transparent), transparent 52%, color-mix(in oklab, var(--primary) 34%, transparent)) !important;
 }
 
-html.theme-pink .landing-feature-card {
+html.theme-berry .landing-feature-card {
   border-color: color-mix(in oklab, var(--primary-glow) 36%, transparent) !important;
   background: linear-gradient(135deg, color-mix(in oklab, var(--surface-2) 84%, transparent), color-mix(in oklab, var(--background) 88%, transparent)) !important;
   box-shadow: 0 14px 48px color-mix(in oklab, var(--background) 70%, transparent), inset 0 1px 0 color-mix(in oklab, var(--foreground) 8%, transparent) !important;
 }
 
-html.theme-pink .landing-feature-icon {
+html.theme-berry .landing-feature-icon {
   background: linear-gradient(135deg, color-mix(in oklab, var(--primary-glow) 22%, transparent), color-mix(in oklab, var(--primary) 46%, transparent)) !important;
 }
 
@@ -404,47 +446,47 @@ html.theme-pink .landing-feature-icon {
 }
 
 /* Legacy purple/violet page bridge: old hardcoded utilities now follow the admin theme. */
-:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink) :is(.bg-purple-950\/30, .bg-violet-950\/30) { background-color: color-mix(in oklab, var(--surface) 38%, transparent) !important; }
-:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink) :is(.bg-purple-950\/40, .bg-violet-950\/40, .bg-purple-900\/30, .bg-violet-900\/30, .bg-slate-950\/40) { background-color: color-mix(in oklab, var(--surface) 50%, transparent) !important; }
-:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink) :is(.bg-purple-950\/50, .bg-violet-950\/50, .bg-purple-900\/40, .bg-violet-900\/40, .bg-slate-950\/75) { background-color: color-mix(in oklab, var(--surface) 64%, transparent) !important; }
-:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink) :is(.bg-purple-950\/60, .bg-violet-950\/60, .bg-purple-900\/50, .bg-violet-900\/50, .bg-slate-950\/90) { background-color: color-mix(in oklab, var(--surface) 76%, transparent) !important; }
-:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink) :is(.bg-purple-950\/70, .bg-violet-950\/70, .bg-purple-900\/60, .bg-violet-900\/60, .bg-purple-800\/60) { background-color: color-mix(in oklab, var(--surface-2) 76%, transparent) !important; }
-:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink) :is(.bg-purple-950\/80, .bg-violet-950\/80, .bg-purple-900\/70, .bg-violet-900\/70, .bg-purple-800\/40, .bg-violet-800\/40) { background-color: color-mix(in oklab, var(--surface-2) 84%, transparent) !important; }
-:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink) :is(.bg-purple-800\/50, .bg-violet-800\/50, .bg-purple-800\/80, .bg-violet-800\/80) { background-color: color-mix(in oklab, var(--primary) 24%, var(--surface-2)) !important; }
-:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink) :is(.bg-fuchsia-500, .bg-fuchsia-600, .bg-violet-600, .bg-purple-600, .bg-blue-600) { background-color: var(--primary) !important; }
-:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink) :is(.bg-fuchsia-500\/10, .bg-fuchsia-500\/15, .bg-fuchsia-500\/20, .bg-violet-500\/20, .bg-purple-500\/20, .bg-rose-500\/20, .bg-rose-600\/30, .bg-rose-700\/85) { background-color: color-mix(in oklab, var(--primary) 18%, transparent) !important; }
-:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink) :is(.bg-fuchsia-500\/30, .bg-violet-500\/30, .bg-purple-500\/30, .bg-fuchsia-600\/30, .bg-violet-600\/30, .bg-purple-600\/30, .bg-fuchsia-600\/20, .bg-fuchsia-700\/75, .bg-violet-700\/30, .bg-violet-800\/85) { background-color: color-mix(in oklab, var(--primary) 30%, transparent) !important; }
-:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink) :is(.bg-rose-950, .bg-rose-950\/40, .bg-fuchsia-950, .bg-fuchsia-950\/60, .bg-slate-950, .bg-slate-950\/80, .bg-slate-900\/80, .bg-slate-900\/40) { background-color: color-mix(in oklab, var(--surface) 72%, transparent) !important; }
+:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink, html.theme-berry) :is(.bg-purple-950\/30, .bg-violet-950\/30) { background-color: color-mix(in oklab, var(--surface) 38%, transparent) !important; }
+:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink, html.theme-berry) :is(.bg-purple-950\/40, .bg-violet-950\/40, .bg-purple-900\/30, .bg-violet-900\/30, .bg-slate-950\/40) { background-color: color-mix(in oklab, var(--surface) 50%, transparent) !important; }
+:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink, html.theme-berry) :is(.bg-purple-950\/50, .bg-violet-950\/50, .bg-purple-900\/40, .bg-violet-900\/40, .bg-slate-950\/75) { background-color: color-mix(in oklab, var(--surface) 64%, transparent) !important; }
+:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink, html.theme-berry) :is(.bg-purple-950\/60, .bg-violet-950\/60, .bg-purple-900\/50, .bg-violet-900\/50, .bg-slate-950\/90) { background-color: color-mix(in oklab, var(--surface) 76%, transparent) !important; }
+:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink, html.theme-berry) :is(.bg-purple-950\/70, .bg-violet-950\/70, .bg-purple-900\/60, .bg-violet-900\/60, .bg-purple-800\/60) { background-color: color-mix(in oklab, var(--surface-2) 76%, transparent) !important; }
+:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink, html.theme-berry) :is(.bg-purple-950\/80, .bg-violet-950\/80, .bg-purple-900\/70, .bg-violet-900\/70, .bg-purple-800\/40, .bg-violet-800\/40) { background-color: color-mix(in oklab, var(--surface-2) 84%, transparent) !important; }
+:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink, html.theme-berry) :is(.bg-purple-800\/50, .bg-violet-800\/50, .bg-purple-800\/80, .bg-violet-800\/80) { background-color: color-mix(in oklab, var(--primary) 24%, var(--surface-2)) !important; }
+:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink, html.theme-berry) :is(.bg-fuchsia-500, .bg-fuchsia-600, .bg-violet-600, .bg-purple-600, .bg-blue-600) { background-color: var(--primary) !important; }
+:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink, html.theme-berry) :is(.bg-fuchsia-500\/10, .bg-fuchsia-500\/15, .bg-fuchsia-500\/20, .bg-violet-500\/20, .bg-purple-500\/20, .bg-rose-500\/20, .bg-rose-600\/30, .bg-rose-700\/85) { background-color: color-mix(in oklab, var(--primary) 18%, transparent) !important; }
+:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink, html.theme-berry) :is(.bg-fuchsia-500\/30, .bg-violet-500\/30, .bg-purple-500\/30, .bg-fuchsia-600\/30, .bg-violet-600\/30, .bg-purple-600\/30, .bg-fuchsia-600\/20, .bg-fuchsia-700\/75, .bg-violet-700\/30, .bg-violet-800\/85) { background-color: color-mix(in oklab, var(--primary) 30%, transparent) !important; }
+:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink, html.theme-berry) :is(.bg-rose-950, .bg-rose-950\/40, .bg-fuchsia-950, .bg-fuchsia-950\/60, .bg-slate-950, .bg-slate-950\/80, .bg-slate-900\/80, .bg-slate-900\/40) { background-color: color-mix(in oklab, var(--surface) 72%, transparent) !important; }
 
-:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink) :is(.border-purple-500\/20, .border-violet-500\/20, .border-fuchsia-500\/20) { border-color: color-mix(in oklab, var(--border) 55%, transparent) !important; }
-:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink) :is(.border-purple-500\/30, .border-violet-500\/30, .border-fuchsia-500\/30, .border-rose-500\/30, .border-purple-400\/30, .border-violet-400\/30, .border-fuchsia-400\/30) { border-color: color-mix(in oklab, var(--border) 70%, transparent) !important; }
-:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink) :is(.border-purple-500\/40, .border-violet-500\/40, .border-fuchsia-500\/40, .border-rose-500\/40, .border-purple-400\/40, .border-violet-400\/40, .border-fuchsia-400\/40) { border-color: color-mix(in oklab, var(--primary) 42%, transparent) !important; }
-:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink) :is(.border-purple-500\/50, .border-violet-500\/50, .border-fuchsia-500\/50, .border-purple-400\/50, .border-violet-400\/50, .border-fuchsia-400\/50) { border-color: color-mix(in oklab, var(--primary) 52%, transparent) !important; }
-:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink) :is(.border-purple-500\/60, .border-violet-500\/60, .border-fuchsia-500\/60, .border-purple-400\/60, .border-violet-400\/60, .border-fuchsia-400\/60, .border-purple-400\/70, .border-violet-400\/70, .border-fuchsia-400\/70, .border-fuchsia-500\/70) { border-color: color-mix(in oklab, var(--primary) 68%, transparent) !important; }
+:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink, html.theme-berry) :is(.border-purple-500\/20, .border-violet-500\/20, .border-fuchsia-500\/20) { border-color: color-mix(in oklab, var(--border) 55%, transparent) !important; }
+:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink, html.theme-berry) :is(.border-purple-500\/30, .border-violet-500\/30, .border-fuchsia-500\/30, .border-rose-500\/30, .border-purple-400\/30, .border-violet-400\/30, .border-fuchsia-400\/30) { border-color: color-mix(in oklab, var(--border) 70%, transparent) !important; }
+:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink, html.theme-berry) :is(.border-purple-500\/40, .border-violet-500\/40, .border-fuchsia-500\/40, .border-rose-500\/40, .border-purple-400\/40, .border-violet-400\/40, .border-fuchsia-400\/40) { border-color: color-mix(in oklab, var(--primary) 42%, transparent) !important; }
+:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink, html.theme-berry) :is(.border-purple-500\/50, .border-violet-500\/50, .border-fuchsia-500\/50, .border-purple-400\/50, .border-violet-400\/50, .border-fuchsia-400\/50) { border-color: color-mix(in oklab, var(--primary) 52%, transparent) !important; }
+:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink, html.theme-berry) :is(.border-purple-500\/60, .border-violet-500\/60, .border-fuchsia-500\/60, .border-purple-400\/60, .border-violet-400\/60, .border-fuchsia-400\/60, .border-purple-400\/70, .border-violet-400\/70, .border-fuchsia-400\/70, .border-fuchsia-500\/70) { border-color: color-mix(in oklab, var(--primary) 68%, transparent) !important; }
 
-:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink) :is(.text-purple-50, .text-violet-50, .text-fuchsia-50) { color: var(--foreground) !important; }
-:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink) :is(.text-purple-100, .text-violet-100, .text-fuchsia-100, .text-purple-100\/80, .text-violet-100\/80, .text-fuchsia-100\/80, .text-purple-100\/90, .text-violet-100\/90, .text-fuchsia-100\/90) { color: color-mix(in oklab, var(--foreground) 92%, transparent) !important; }
-:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink) :is(.text-purple-200, .text-violet-200, .text-fuchsia-200, .text-purple-200\/70, .text-violet-200\/70, .text-fuchsia-200\/70, .text-purple-200\/80, .text-violet-200\/80, .text-fuchsia-200\/80) { color: color-mix(in oklab, var(--foreground) 76%, transparent) !important; }
-:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink) :is(.text-purple-300, .text-violet-300, .text-fuchsia-300, .text-purple-300\/50, .text-violet-300\/50, .text-fuchsia-300\/50, .text-purple-300\/60, .text-violet-300\/60, .text-fuchsia-300\/60, .text-purple-300\/70, .text-violet-300\/70, .text-fuchsia-300\/70, .text-purple-300\/80, .text-violet-300\/80, .text-fuchsia-300\/80) { color: var(--muted-foreground) !important; }
-:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink) :is(.text-fuchsia-400, .text-violet-400, .text-purple-400, .text-blue-400, .text-fuchsia-200, .text-violet-200) { color: var(--primary-glow) !important; }
-:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink) :is(.text-rose-600, .text-rose-700, .text-rose-300, .text-rose-500, .text-amber-500) { color: var(--primary-glow) !important; }
+:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink, html.theme-berry) :is(.text-purple-50, .text-violet-50, .text-fuchsia-50) { color: var(--foreground) !important; }
+:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink, html.theme-berry) :is(.text-purple-100, .text-violet-100, .text-fuchsia-100, .text-purple-100\/80, .text-violet-100\/80, .text-fuchsia-100\/80, .text-purple-100\/90, .text-violet-100\/90, .text-fuchsia-100\/90) { color: color-mix(in oklab, var(--foreground) 92%, transparent) !important; }
+:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink, html.theme-berry) :is(.text-purple-200, .text-violet-200, .text-fuchsia-200, .text-purple-200\/70, .text-violet-200\/70, .text-fuchsia-200\/70, .text-purple-200\/80, .text-violet-200\/80, .text-fuchsia-200\/80) { color: color-mix(in oklab, var(--foreground) 76%, transparent) !important; }
+:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink, html.theme-berry) :is(.text-purple-300, .text-violet-300, .text-fuchsia-300, .text-purple-300\/50, .text-violet-300\/50, .text-fuchsia-300\/50, .text-purple-300\/60, .text-violet-300\/60, .text-fuchsia-300\/60, .text-purple-300\/70, .text-violet-300\/70, .text-fuchsia-300\/70, .text-purple-300\/80, .text-violet-300\/80, .text-fuchsia-300\/80) { color: var(--muted-foreground) !important; }
+:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink, html.theme-berry) :is(.text-fuchsia-400, .text-violet-400, .text-purple-400, .text-blue-400, .text-fuchsia-200, .text-violet-200) { color: var(--primary-glow) !important; }
+:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink, html.theme-berry) :is(.text-rose-600, .text-rose-700, .text-rose-300, .text-rose-500, .text-amber-500) { color: var(--primary-glow) !important; }
 
-:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink) :is(.ring-purple-400\/30, .ring-violet-400\/30, .ring-fuchsia-400\/30, .ring-purple-400\/40, .ring-violet-400\/40, .ring-fuchsia-400\/40, .ring-purple-500\/30, .ring-violet-500\/30, .ring-fuchsia-500\/30) { --tw-ring-color: color-mix(in oklab, var(--primary) 45%, transparent) !important; }
-:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink) :is(.shadow-purple-900\/40, .shadow-purple-900\/50, .shadow-violet-900\/40, .shadow-fuchsia-900\/40, .shadow-fuchsia-500\/50, .shadow-purple-500\/30) { --tw-shadow-color: color-mix(in oklab, var(--primary) 42%, transparent) !important; }
+:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink, html.theme-berry) :is(.ring-purple-400\/30, .ring-violet-400\/30, .ring-fuchsia-400\/30, .ring-purple-400\/40, .ring-violet-400\/40, .ring-fuchsia-400\/40, .ring-purple-500\/30, .ring-violet-500\/30, .ring-fuchsia-500\/30) { --tw-ring-color: color-mix(in oklab, var(--primary) 45%, transparent) !important; }
+:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink, html.theme-berry) :is(.shadow-purple-900\/40, .shadow-purple-900\/50, .shadow-violet-900\/40, .shadow-fuchsia-900\/40, .shadow-fuchsia-500\/50, .shadow-purple-500\/30) { --tw-shadow-color: color-mix(in oklab, var(--primary) 42%, transparent) !important; }
 
-:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink) :is(.from-violet-600, .from-fuchsia-600, .from-purple-600, .from-violet-500, .from-fuchsia-500, .from-purple-500, .from-violet-300, .from-fuchsia-300, .from-purple-300):is(.bg-gradient-to-r, .bg-gradient-to-br, .bg-gradient-to-tr),
-:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink) :is(.to-blue-600, .to-purple-600, .to-violet-700, .to-blue-300, .to-violet-400):is(.bg-gradient-to-r, .bg-gradient-to-br, .bg-gradient-to-tr) {
+:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink, html.theme-berry) :is(.from-violet-600, .from-fuchsia-600, .from-purple-600, .from-violet-500, .from-fuchsia-500, .from-purple-500, .from-violet-300, .from-fuchsia-300, .from-purple-300):is(.bg-gradient-to-r, .bg-gradient-to-br, .bg-gradient-to-tr),
+:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink, html.theme-berry) :is(.to-blue-600, .to-purple-600, .to-violet-700, .to-blue-300, .to-violet-400):is(.bg-gradient-to-r, .bg-gradient-to-br, .bg-gradient-to-tr) {
   background: var(--gradient-primary) !important;
 }
-:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink) .bg-clip-text:is(.from-violet-600, .from-fuchsia-600, .from-purple-600, .from-violet-400, .from-fuchsia-400, .from-violet-300, .from-fuchsia-300, .from-purple-300, .from-sky-300) {
+:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink, html.theme-berry) .bg-clip-text:is(.from-violet-600, .from-fuchsia-600, .from-purple-600, .from-violet-400, .from-fuchsia-400, .from-violet-300, .from-fuchsia-300, .from-purple-300, .from-sky-300) {
   background: var(--gradient-accent) !important;
   -webkit-background-clip: text !important;
   background-clip: text !important;
 }
-:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink) :is(.bg-\[\#1a0b2e\], .from-\[\#1a0b2e\], .via-\[\#2d1b4e\], .to-\[\#1a0b2e\]) {
+:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink, html.theme-berry) :is(.bg-\[\#1a0b2e\], .from-\[\#1a0b2e\], .via-\[\#2d1b4e\], .to-\[\#1a0b2e\]) {
   background: var(--gradient-primary) !important;
 }
-:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink) :is(.from-\[\#1a0b2e\]\/95, .from-\[\#1a0b2e\]\/80, .from-\[\#1a0b2e\]\/55, .via-\[\#1a0b2e\]\/70, .via-\[\#1a0b2e\]\/40, .to-\[\#2d1b4e\]\/55) {
+:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink, html.theme-berry) :is(.from-\[\#1a0b2e\]\/95, .from-\[\#1a0b2e\]\/80, .from-\[\#1a0b2e\]\/55, .via-\[\#1a0b2e\]\/70, .via-\[\#1a0b2e\]\/40, .to-\[\#2d1b4e\]\/55) {
   --tw-gradient-from: color-mix(in oklab, var(--background) 92%, transparent) var(--tw-gradient-from-position) !important;
   --tw-gradient-via: color-mix(in oklab, var(--background) 58%, transparent) var(--tw-gradient-via-position) !important;
   --tw-gradient-to: color-mix(in oklab, var(--surface) 70%, transparent) var(--tw-gradient-to-position) !important;
