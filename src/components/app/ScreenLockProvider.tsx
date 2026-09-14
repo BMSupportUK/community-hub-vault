@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import {
   DEFAULT_TIMEOUT_MINUTES,
   STAFF_MAX_TIMEOUT_MINUTES,
+  screenLockMayBeLocked,
 } from "@/lib/screen-lock-hash";
 import { ScreenLockOverlay } from "@/components/app/ScreenLockOverlay";
 import { resumeTalkPresence, suspendTalkPresence } from "@/hooks/use-talk-channel-presence";
