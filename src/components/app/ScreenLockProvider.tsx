@@ -21,7 +21,7 @@ export interface ScreenLockSettings {
 export const LOCK_NOW_EVENT = "app:screen-lock-now";
 export const LOCK_STATE_EVENT = "app:screen-lock-state";
 const ACTIVITY_EVENTS = ["mousemove", "mousedown", "keydown", "touchstart", "scroll", "wheel"] as const;
-const RESUME_SPLASH_MS = 3_000;
+
 
 /** Ask the app to lock immediately (used by the avatar menu). */
 export function lockScreenNow() {
@@ -262,70 +262,48 @@ export function ScreenLockProvider({ children }: { children: ReactNode }) {
     [storageKey, user?.id],
   );
 
-  // Hide the page as soon as the app leaves the foreground. On return, decide
-  // whether inactivity requires the lock, then keep the branded splash visible
-  // long enough for the resumed app to settle before revealing protected UI.
+  // While the app is in the background we blank the page (nothing is visible
+  // anyway). On return we make the lock decision straight away — it is a local
+  // read, so there is nothing to wait for and no reason to hold a loading
+  // screen over an app that is already loaded.
   useEffect(() => {
     if (!user || !ready) return;
-    const clearResumeTimer = () => {
-      if (resumeTimerRef.current !== null) {
-        window.clearTimeout(resumeTimerRef.current);
-        resumeTimerRef.current = null;
-      }
-    };
     const hide = () => {
       wasBackgroundedRef.current = true;
-      clearResumeTimer();
-      setResumeChecking(true);
+      if (settings?.enabled && !locked) setResumeChecking(true);
     };
     const checkResume = () => {
       if (document.visibilityState !== "visible") {
-        // Only hide content while backgrounded when a lock check may be needed
-        // on return; otherwise there is nothing to protect and no reason to
-        // flash the loading screen.
-        if (settings?.enabled && !locked) hide();
+        hide();
         return;
       }
-      if (!wasBackgroundedRef.current) return;
-
+      if (!wasBackgroundedRef.current) {
+        setResumeChecking(false);
+        return;
+      }
       wasBackgroundedRef.current = false;
-      clearResumeTimer();
 
-      // The splash only stays up if the inactivity check could actually lock
-      // the app — i.e. the lock feature is on and the screen isn't already
-      // locked. When it isn't needed, reveal the protected area immediately.
       if (settings?.enabled && !locked) {
-        setResumeChecking(true);
         let expired = false;
         try {
           const lastActivity = Number(localStorage.getItem(`screenlock:last-activity:${user.id}`));
           const timeoutMs = Math.max(1, settings.timeout_minutes || DEFAULT_TIMEOUT_MINUTES) * 60_000;
           expired = Number.isFinite(lastActivity) && lastActivity > 0 && Date.now() - lastActivity >= timeoutMs;
         } catch {}
-        if (expired) {
-          doLock();
-          // Lock screen takes over instantly — no need for the splash hold.
-          setResumeChecking(false);
-          return;
-        }
-        resumeTimerRef.current = window.setTimeout(() => {
-          resumeTimerRef.current = null;
-          setResumeChecking(false);
-        }, RESUME_SPLASH_MS);
-      } else {
-        setResumeChecking(false);
+        if (expired) doLock();
       }
+      setResumeChecking(false);
     };
     document.addEventListener("visibilitychange", checkResume);
     window.addEventListener("pageshow", checkResume);
     window.addEventListener("pagehide", hide);
     return () => {
-      clearResumeTimer();
       document.removeEventListener("visibilitychange", checkResume);
       window.removeEventListener("pageshow", checkResume);
       window.removeEventListener("pagehide", hide);
     };
   }, [user?.id, ready, settings?.enabled, settings?.timeout_minutes, locked, doLock]);
+
 
 
 
