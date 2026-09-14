@@ -280,29 +280,41 @@ export function ScreenLockProvider({ children }: { children: ReactNode }) {
     };
     const checkResume = () => {
       if (document.visibilityState !== "visible") {
-        hide();
+        // Only hide content while backgrounded when a lock check may be needed
+        // on return; otherwise there is nothing to protect and no reason to
+        // flash the loading screen.
+        if (settings?.enabled && !locked) hide();
         return;
       }
       if (!wasBackgroundedRef.current) return;
 
       wasBackgroundedRef.current = false;
       clearResumeTimer();
-      setResumeChecking(true);
 
+      // The splash only stays up if the inactivity check could actually lock
+      // the app — i.e. the lock feature is on and the screen isn't already
+      // locked. When it isn't needed, reveal the protected area immediately.
       if (settings?.enabled && !locked) {
+        setResumeChecking(true);
         let expired = false;
         try {
           const lastActivity = Number(localStorage.getItem(`screenlock:last-activity:${user.id}`));
           const timeoutMs = Math.max(1, settings.timeout_minutes || DEFAULT_TIMEOUT_MINUTES) * 60_000;
           expired = Number.isFinite(lastActivity) && lastActivity > 0 && Date.now() - lastActivity >= timeoutMs;
         } catch {}
-        if (expired) doLock();
-      }
-
-      resumeTimerRef.current = window.setTimeout(() => {
-        resumeTimerRef.current = null;
+        if (expired) {
+          doLock();
+          // Lock screen takes over instantly — no need for the splash hold.
+          setResumeChecking(false);
+          return;
+        }
+        resumeTimerRef.current = window.setTimeout(() => {
+          resumeTimerRef.current = null;
+          setResumeChecking(false);
+        }, RESUME_SPLASH_MS);
+      } else {
         setResumeChecking(false);
-      }, RESUME_SPLASH_MS);
+      }
     };
     document.addEventListener("visibilitychange", checkResume);
     window.addEventListener("pageshow", checkResume);
