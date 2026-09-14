@@ -339,6 +339,50 @@ html.theme-berry .landing-feature-icon {
   background: linear-gradient(135deg, color-mix(in oklab, var(--primary-glow) 22%, transparent), color-mix(in oklab, var(--primary) 46%, transparent)) !important;
 }
 
+/* ===== Boro Heritage theme (home red / anniversary gold / heritage blue) ===== */
+html.theme-boro {
+  --background: oklch(0.20 0.055 254);
+  --foreground: oklch(0.97 0.012 88);
+  --surface: oklch(0.255 0.072 254);
+  --surface-2: oklch(0.31 0.09 252);
+  --rail: oklch(0.22 0.065 255);
+
+  --card: oklch(0.235 0.06 254);
+  --card-foreground: oklch(0.97 0.012 88);
+  --popover: oklch(0.225 0.06 254);
+  --popover-foreground: oklch(0.97 0.012 88);
+
+  --primary: oklch(0.56 0.225 27);
+  --primary-foreground: oklch(0.99 0.008 88);
+  --primary-glow: oklch(0.78 0.145 82);
+
+  --secondary: oklch(0.35 0.10 254);
+  --secondary-foreground: oklch(0.97 0.012 88);
+  --muted: oklch(0.27 0.045 254);
+  --muted-foreground: oklch(0.78 0.035 88);
+  --accent: oklch(0.76 0.15 82);
+  --accent-foreground: oklch(0.20 0.055 254);
+
+  --border: oklch(0.58 0.095 78 / 0.72);
+  --input: oklch(0.28 0.065 254);
+  --ring: oklch(0.78 0.145 82);
+
+  --gradient-primary: linear-gradient(135deg, oklch(0.50 0.22 27), oklch(0.59 0.23 28) 58%, oklch(0.76 0.15 82));
+  --gradient-rail: linear-gradient(180deg, oklch(0.285 0.09 252), oklch(0.235 0.072 255) 56%, oklch(0.195 0.055 258));
+  --gradient-accent: linear-gradient(90deg, oklch(0.55 0.225 27), oklch(0.78 0.145 82), oklch(0.46 0.12 252));
+  --shadow-glow: 0 0 0 1px color-mix(in oklab, var(--primary-glow) 38%, transparent), 0 14px 42px -12px color-mix(in oklab, var(--primary) 55%, transparent);
+  --shadow-soft: 0 14px 38px -16px oklch(0.10 0.04 255 / 0.82);
+}
+
+html.theme-boro body {
+  background:
+    radial-gradient(ellipse at top left, oklch(0.54 0.22 27 / 0.40), transparent 55%),
+    radial-gradient(ellipse at top right, oklch(0.70 0.14 82 / 0.24), transparent 52%),
+    radial-gradient(ellipse at bottom, oklch(0.39 0.12 252 / 0.54), transparent 62%),
+    var(--color-background);
+  background-attachment: fixed;
+}
+
 @layer base {
   * { border-color: var(--color-border); }
   /* Viewport lock removed — the app scrolls naturally on all screens. */
@@ -446,7 +490,7 @@ html.theme-berry .landing-feature-icon {
 }
 
 /* Legacy purple/violet page bridge: old hardcoded utilities now follow the admin theme. */
-:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink, html.theme-berry) :is(.bg-purple-950\/30, .bg-violet-950\/30) { background-color: color-mix(in oklab, var(--surface) 38%, transparent) !important; }
+:is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink, html.theme-berry, html.theme-boro) :is(.bg-purple-950\/30, .bg-violet-950\/30) { background-color: color-mix(in oklab, var(--surface) 38%, transparent) !important; }
 :is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink, html.theme-berry) :is(.bg-purple-950\/40, .bg-violet-950\/40, .bg-purple-900\/30, .bg-violet-900\/30, .bg-slate-950\/40) { background-color: color-mix(in oklab, var(--surface) 50%, transparent) !important; }
 :is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink, html.theme-berry) :is(.bg-purple-950\/50, .bg-violet-950\/50, .bg-purple-900\/40, .bg-violet-900\/40, .bg-slate-950\/75) { background-color: color-mix(in oklab, var(--surface) 64%, transparent) !important; }
 :is(html.theme-red, html.theme-ocean, html.theme-sunset, html.theme-pink, html.theme-berry) :is(.bg-purple-950\/60, .bg-violet-950\/60, .bg-purple-900\/50, .bg-violet-900\/50, .bg-slate-950\/90) { background-color: color-mix(in oklab, var(--surface) 76%, transparent) !important; }

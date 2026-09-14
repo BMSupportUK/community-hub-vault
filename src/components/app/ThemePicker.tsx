@@ -16,6 +16,7 @@ export const APP_THEME_OPTIONS: Array<{
   { value: "sunset", name: "Sunset Blaze", description: "Warm orange, amber and pink accents.", swatches: ["#ea580c", "#f97316", "#f59e0b", "#ec4899"] },
   { value: "pink", name: "Pink Pulse", description: "Colourful bright pink from edge to edge.", swatches: ["#831843", "#db2777", "#f472b6", "#fbcfe8"] },
   { value: "berry", name: "Berry Glass", description: "Deep berry glass with hot-pink highlights.", swatches: ["#500724", "#9d174d", "#ec4899", "#f9a8d4"] },
+  { value: "boro", name: "Boro Heritage", description: "Boro red and gold over deep heritage blue.", swatches: ["#d71920", "#d4af37", "#17365d", "#f7f3e8"] },
 ];
 
 interface ThemePickerProps {
