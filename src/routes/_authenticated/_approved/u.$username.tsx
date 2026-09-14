@@ -831,7 +831,6 @@ function PersonalThemePanel() {
       toast.success(`${name} saved to your profile`);
     } catch (error: any) {
       toast.error(error?.message ?? "Couldn't save your theme");
-      throw error;
     }
   };
 

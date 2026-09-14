@@ -138,7 +138,9 @@ export function useDefaultAppTheme() {
       startChannel();
     };
     start();
-    return () => defaultListeners.delete(setTheme);
+    return () => {
+      defaultListeners.delete(setTheme);
+    };
   }, []);
   return theme;
 }
