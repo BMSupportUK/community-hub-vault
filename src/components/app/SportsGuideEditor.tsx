@@ -285,12 +285,27 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
           }
         }
         const restoredExcerpt = row.excerpt ?? row.archived_excerpt ?? null;
-        setEditing({ ...(row as Blog), body: restoredBody, excerpt: restoredExcerpt });
-        if (!row.body && row.archived_body) {
-          toast.message("Previous listing restored — it had expired and was cleared from the public page.");
+        // If there's a locally saved edit draft for this guide, restore it
+        // over the stored version so a crash/reload never wipes in-progress
+        // edits for the current date.
+        let editDraft: Blog | null = null;
+        try {
+          const rawDraft = localStorage.getItem(editDraftKey(blogId));
+          if (rawDraft) editDraft = JSON.parse(rawDraft) as Blog;
+        } catch {
+          editDraft = null;
         }
-        if (prunedExpired) {
-          toast.message("Expired events removed — only upcoming events are shown.");
+        if (editDraft && editDraft.id === blogId) {
+          setEditing(editDraft);
+          toast.message("Unsaved changes restored from before the reload.");
+        } else {
+          setEditing({ ...(row as Blog), body: restoredBody, excerpt: restoredExcerpt });
+          if (!row.body && row.archived_body) {
+            toast.message("Previous listing restored — it had expired and was cleared from the public page.");
+          }
+          if (prunedExpired) {
+            toast.message("Expired events removed — only upcoming events are shown.");
+          }
         }
       } else {
         // Restore previously saved draft if present so users don't lose work
