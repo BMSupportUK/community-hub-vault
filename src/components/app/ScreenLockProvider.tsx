@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import {
   DEFAULT_TIMEOUT_MINUTES,
   STAFF_MAX_TIMEOUT_MINUTES,
+  screenLockMayBeLocked,
 } from "@/lib/screen-lock-hash";
 import { ScreenLockOverlay } from "@/components/app/ScreenLockOverlay";
 import { resumeTalkPresence, suspendTalkPresence } from "@/hooks/use-talk-channel-presence";
@@ -180,6 +181,19 @@ export function ScreenLockProvider({ children }: { children: ReactNode }) {
       window.dispatchEvent(new CustomEvent(LOCK_STATE_EVENT, { detail: { locked: shouldLock } }));
       setSettings(active);
       setReady(true);
+      // Remember the timeout locally so a future cold start can tell, before any
+      // network call, whether a lock could be due.
+      try {
+        if (active?.enabled) {
+          localStorage.setItem(
+            "screenlock:timeout-minutes",
+            String(active.timeout_minutes || DEFAULT_TIMEOUT_MINUTES),
+          );
+        } else {
+          localStorage.removeItem("screenlock:timeout-minutes");
+          localStorage.removeItem(activityKey);
+        }
+      } catch {}
       if (shouldLock) {
         try {
           localStorage.setItem(flagKey, "1");
@@ -434,7 +448,13 @@ export function ScreenLockProvider({ children }: { children: ReactNode }) {
   if (user && ready && settings && locked) {
     return <ScreenLockOverlay settings={settings} onUnlock={() => doUnlock()} />;
   }
-  if (!user || !ready || !settings || resumeChecking) return <BmSplash />;
+  // Never hold a loading screen over an app that has nothing to hide: if no
+  // saved lock and no expired idle timer suggest a lock, show the app while the
+  // settings finish loading in the background.
+  if (!user || !ready || !settings || resumeChecking) {
+    if (screenLockMayBeLocked()) return <BmSplash />;
+    return <>{children}</>;
+  }
   return <>{children}</>;
 }
 
