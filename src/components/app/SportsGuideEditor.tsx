@@ -343,12 +343,15 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
     })();
   }, [blogId, navigate]);
 
-  // Persist new-blog draft to localStorage on every change so it survives
-  // navigation/refresh until the blog is saved or cancelled.
+  // Persist draft to localStorage on every change so it survives
+  // navigation/refresh/crashes until the blog is saved or cancelled.
+  // New guides use one shared key; edits use a per-guide key so the stored
+  // version is never the only copy of in-progress work.
   useEffect(() => {
-    if (blogId || !editing) return;
+    if (!editing) return;
     try {
-      localStorage.setItem(DRAFT_KEY, JSON.stringify(editing));
+      const key = blogId ? editDraftKey(blogId) : DRAFT_KEY;
+      localStorage.setItem(key, JSON.stringify(editing));
     } catch {
       /* ignore quota errors */
     }
