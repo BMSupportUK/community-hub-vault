@@ -181,6 +181,19 @@ export function ScreenLockProvider({ children }: { children: ReactNode }) {
       window.dispatchEvent(new CustomEvent(LOCK_STATE_EVENT, { detail: { locked: shouldLock } }));
       setSettings(active);
       setReady(true);
+      // Remember the timeout locally so a future cold start can tell, before any
+      // network call, whether a lock could be due.
+      try {
+        if (active?.enabled) {
+          localStorage.setItem(
+            "screenlock:timeout-minutes",
+            String(active.timeout_minutes || DEFAULT_TIMEOUT_MINUTES),
+          );
+        } else {
+          localStorage.removeItem("screenlock:timeout-minutes");
+          localStorage.removeItem(activityKey);
+        }
+      } catch {}
       if (shouldLock) {
         try {
           localStorage.setItem(flagKey, "1");
