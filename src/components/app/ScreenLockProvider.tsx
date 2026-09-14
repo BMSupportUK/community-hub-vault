@@ -434,7 +434,13 @@ export function ScreenLockProvider({ children }: { children: ReactNode }) {
   if (user && ready && settings && locked) {
     return <ScreenLockOverlay settings={settings} onUnlock={() => doUnlock()} />;
   }
-  if (!user || !ready || !settings || resumeChecking) return <BmSplash />;
+  // Never hold a loading screen over an app that has nothing to hide: if no
+  // saved lock and no expired idle timer suggest a lock, show the app while the
+  // settings finish loading in the background.
+  if (!user || !ready || !settings || resumeChecking) {
+    if (screenLockMayBeLocked()) return <BmSplash />;
+    return <>{children}</>;
+  }
   return <>{children}</>;
 }
 
