@@ -92,7 +92,7 @@ function SportsGuidesPage() {
   const { isMod, user, hasAny } = useAuth();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const { cat: catFromUrl, sub: subFromUrl } = Route.useSearch();
+  const { cat: catFromUrl, sub: subFromUrl, welcome: welcomeFromUrl } = Route.useSearch();
   const canManageCategories = hasAny(["admin", "management", "staff"]);
   const [tab, setTab] = useState<string>(() => {
     try { return sessionStorage.getItem("sports-guides-active-tab") || "welcome"; } catch { return "welcome"; }
@@ -125,6 +125,27 @@ function SportsGuidesPage() {
       else sessionStorage.removeItem("sports-guides-active-cat");
     } catch { /* ignore */ }
   }, [activeCat]);
+
+  // Clicking Sports guides from the side rail must always land on the Welcome tab first.
+  useEffect(() => {
+    if (welcomeFromUrl) {
+      setTab("welcome");
+      try {
+        sessionStorage.removeItem("sports-guides-active-tab");
+        sessionStorage.removeItem("sports-guides-active-cat");
+      } catch { /* ignore */ }
+      navigate({ to: "/sports-guides", search: {}, replace: true });
+    }
+  }, [welcomeFromUrl, navigate]);
+
+  // Switching to the Guides tab always defaults to the Daily Sports & PPV category.
+  const handleTabChange = (value: string) => {
+    setTab(value);
+    if (value === "guides") {
+      const dailySports = categories.find((c) => c.slug === "daily-sports-ppv")?.id ?? categories[0]?.id;
+      if (dailySports) setActiveCat(dailySports);
+    }
+  };
 
   // Show/hide the back-to-top arrow based on scroll position of the page
   // scroller (the guides list scrolls inside its own container, not window).
