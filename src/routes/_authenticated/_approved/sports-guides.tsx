@@ -15,9 +15,10 @@ const SG_FOCUS_KEY = "sports-guides-focus-id";
 
 export const Route = createFileRoute("/_authenticated/_approved/sports-guides")({
   component: SportsGuidesRoute,
-  validateSearch: (search: Record<string, unknown>): { cat?: string; sub?: string } => ({
+  validateSearch: (search: Record<string, unknown>): { cat?: string; sub?: string; welcome?: boolean } => ({
     cat: typeof search.cat === "string" ? search.cat : undefined,
     sub: typeof search.sub === "string" ? search.sub : undefined,
+    welcome: search.welcome === true || search.welcome === "true" ? true : undefined,
   }),
 });
 
@@ -91,7 +92,7 @@ function SportsGuidesPage() {
   const { isMod, user, hasAny } = useAuth();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const { cat: catFromUrl, sub: subFromUrl } = Route.useSearch();
+  const { cat: catFromUrl, sub: subFromUrl, welcome: welcomeFromUrl } = Route.useSearch();
   const canManageCategories = hasAny(["admin", "management", "staff"]);
   const [tab, setTab] = useState<string>(() => {
     try { return sessionStorage.getItem("sports-guides-active-tab") || "welcome"; } catch { return "welcome"; }
@@ -124,6 +125,27 @@ function SportsGuidesPage() {
       else sessionStorage.removeItem("sports-guides-active-cat");
     } catch { /* ignore */ }
   }, [activeCat]);
+
+  // Clicking Sports guides from the side rail must always land on the Welcome tab first.
+  useEffect(() => {
+    if (welcomeFromUrl) {
+      setTab("welcome");
+      try {
+        sessionStorage.removeItem("sports-guides-active-tab");
+        sessionStorage.removeItem("sports-guides-active-cat");
+      } catch { /* ignore */ }
+      navigate({ to: "/sports-guides", search: {}, replace: true });
+    }
+  }, [welcomeFromUrl, navigate]);
+
+  // Switching to the Guides tab always defaults to the Daily Sports & PPV category.
+  const handleTabChange = (value: string) => {
+    setTab(value);
+    if (value === "guides") {
+      const dailySports = categories.find((c) => c.slug === "daily-sports-ppv")?.id ?? categories[0]?.id;
+      if (dailySports) setActiveCat(dailySports);
+    }
+  };
 
   // Show/hide the back-to-top arrow based on scroll position of the page
   // scroller (the guides list scrolls inside its own container, not window).
@@ -671,7 +693,7 @@ function SportsGuidesPage() {
       </header>
 
       <div className="relative px-8 py-6">
-        <Tabs value={tab} onValueChange={setTab} className="w-full">
+        <Tabs value={tab} onValueChange={handleTabChange} className="w-full">
           <TabsList className={`grid ${canManageCategories ? "grid-cols-3" : "grid-cols-2"} max-w-2xl bg-purple-950/60 border border-purple-500/30`}>
             <TabsTrigger value="welcome" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Welcome</TabsTrigger>
             <TabsTrigger value="guides" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Guides</TabsTrigger>
@@ -689,7 +711,7 @@ function SportsGuidesPage() {
               <p className="mt-4 text-purple-200/70 max-w-2xl">
                 Whether you're a fan of football, basketball, soccer, tennis, baseball, hockey, or golf — we've got you covered with expert analysis and up-to-date information.
               </p>
-              <Button className="mt-6 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0 shadow-lg shadow-purple-900/50" onClick={() => setTab("guides")}>Browse guides</Button>
+              <Button className="mt-6 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0 shadow-lg shadow-purple-900/50" onClick={() => handleTabChange("guides")}>Browse guides</Button>
             </div>
           </TabsContent>
 
