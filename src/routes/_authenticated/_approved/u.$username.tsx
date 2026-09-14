@@ -29,6 +29,8 @@ import { VpnBadge } from "@/lib/vpn-flags";
 import { HtmlEditor } from "@/components/ui/html-editor";
 import { sanitizeRichHtml } from "@/lib/sanitize-html";
 import { SoundSettings } from "@/components/app/SoundSettings";
+import { ThemePicker, APP_THEME_OPTIONS } from "@/components/app/ThemePicker";
+import { setPersonalAppTheme, useAppTheme } from "@/hooks/use-app-theme";
 import { useServerFn } from "@tanstack/react-start";
 import { assignReferrer } from "@/lib/referrals.functions";
 
@@ -158,7 +160,7 @@ function ProfilePage() {
   const [rel, setRel] = useState<FriendRel>({ kind: "none" });
   const [relBusy, setRelBusy] = useState(false);
   const initialTab = (["profile","creds","tickets","orders","referrals","friends"].includes(search.tab ?? "") ? search.tab : "profile") as "profile" | "creds" | "tickets" | "orders" | "referrals" | "friends";
-  const allowedTabs = ["profile","creds","tickets","orders","referrals","friends","notifications"] as const;
+  const allowedTabs = ["profile","creds","tickets","orders","referrals","friends","notifications","theme"] as const;
   type TabId = typeof allowedTabs[number];
   const initialTabSafe = (allowedTabs.includes((search.tab ?? "") as TabId) ? search.tab : initialTab) as TabId;
   const [mainTab, setMainTab] = useState<TabId>(initialTabSafe);
@@ -492,6 +494,7 @@ function ProfilePage() {
     { id: "friends", label: `Friends (${friends.length})` },
     ...(canSeeReferrals ? [{ id: "referrals", label: `Referrals (${referrals.length})` }] : []),
     ...(isOwner ? [{ id: "notifications", label: "Notifications" }] : []),
+    ...(isOwner ? [{ id: "theme", label: "Theme" }] : []),
   ];
 
   return (
@@ -790,6 +793,12 @@ function ProfilePage() {
               <SoundSettings />
             </TabsContent>
           )}
+
+          {isOwner && (
+            <TabsContent value="theme" className="mt-6">
+              <PersonalThemePanel />
+            </TabsContent>
+          )}
         </Tabs>
       </div>
 
@@ -810,6 +819,29 @@ function ProfilePage() {
       )}
       </div>
     </div>
+  );
+}
+
+function PersonalThemePanel() {
+  const current = useAppTheme();
+  const choose = async (theme: Parameters<typeof setPersonalAppTheme>[0]) => {
+    try {
+      await setPersonalAppTheme(theme);
+      const name = APP_THEME_OPTIONS.find((option) => option.value === theme)?.name ?? theme;
+      toast.success(`${name} saved to your profile`);
+    } catch (error: any) {
+      toast.error(error?.message ?? "Couldn't save your theme");
+      throw error;
+    }
+  };
+
+  return (
+    <ThemePicker
+      current={current}
+      onChoose={choose}
+      title="Choose your theme"
+      description="Your choice is saved to your account and follows you across devices."
+    />
   );
 }
 
