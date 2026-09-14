@@ -25,12 +25,32 @@ type Blog = {
   published: boolean;
   not_guaranteed: boolean;
   subcategory: string | null;
+  updated_at?: string | null;
+};
+
+type EditDraft = {
+  savedAt: string;
+  baseUpdatedAt: string | null;
+  value: Blog;
 };
 
 const DRAFT_KEY = "sports-guide-new-draft";
 // Per-guide edit draft so unsaved changes to an existing guide survive a
 // crash/reload instead of being wiped.
 const editDraftKey = (id: string) => `sports-guide-edit-draft-${id}`;
+
+const londonDate = (value: string | Date) =>
+  new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/London",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date(value));
+
+const sameGuideVersion = (draft: EditDraft, row: Blog) =>
+  draft.value.id === row.id &&
+  draft.baseUpdatedAt === (row.updated_at ?? null) &&
+  londonDate(draft.savedAt) === londonDate(new Date());
 
 // Default body template for new guides. The reader splits one card per event
 // using: date heading, then each event as time → event name → channels with a
@@ -167,6 +187,7 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const loadedGuideRef = useRef<Blog | null>(null);
   const [newSubName, setNewSubName] = useState("");
   const [addingSub, setAddingSub] = useState(false);
 
@@ -288,18 +309,29 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
         // If there's a locally saved edit draft for this guide, restore it
         // over the stored version so a crash/reload never wipes in-progress
         // edits for the current date.
-        let editDraft: Blog | null = null;
+        let editDraft: EditDraft | null = null;
         try {
           const rawDraft = localStorage.getItem(editDraftKey(blogId));
-          if (rawDraft) editDraft = JSON.parse(rawDraft) as Blog;
+          if (rawDraft) {
+            const parsed = JSON.parse(rawDraft) as Partial<EditDraft>;
+            if (parsed.savedAt && parsed.value && "baseUpdatedAt" in parsed) {
+              editDraft = parsed as EditDraft;
+            } else {
+              localStorage.removeItem(editDraftKey(blogId));
+            }
+          }
         } catch {
           editDraft = null;
+          localStorage.removeItem(editDraftKey(blogId));
         }
-        if (editDraft && editDraft.id === blogId) {
-          setEditing(editDraft);
+        const loadedGuide = { ...(row as Blog), body: restoredBody, excerpt: restoredExcerpt };
+        loadedGuideRef.current = loadedGuide;
+        if (editDraft && sameGuideVersion(editDraft, loadedGuide)) {
+          setEditing(editDraft.value);
           toast.message("Unsaved changes restored from before the reload.");
         } else {
-          setEditing({ ...(row as Blog), body: restoredBody, excerpt: restoredExcerpt });
+          if (editDraft) localStorage.removeItem(editDraftKey(blogId));
+          setEditing(loadedGuide);
           if (!row.body && row.archived_body) {
             toast.message("Previous listing restored — it had expired and was cleared from the public page.");
           }
@@ -351,13 +383,30 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
     if (!editing) return;
     try {
       const key = blogId ? editDraftKey(blogId) : DRAFT_KEY;
-      localStorage.setItem(key, JSON.stringify(editing));
+      if (blogId) {
+        const loadedGuide = loadedGuideRef.current;
+        if (!loadedGuide || JSON.stringify(editing) === JSON.stringify(loadedGuide)) {
+          localStorage.removeItem(key);
+          return;
+        }
+        const draft: EditDraft = {
+          savedAt: new Date().toISOString(),
+          baseUpdatedAt: loadedGuide.updated_at ?? null,
+          value: editing,
+        };
+        localStorage.setItem(key, JSON.stringify(draft));
+      } else {
+        localStorage.setItem(key, JSON.stringify(editing));
+      }
     } catch {
       /* ignore quota errors */
     }
   }, [editing, blogId]);
 
-  const close = () =>
+  const close = () => {
+    try {
+      localStorage.removeItem(blogId ? editDraftKey(blogId) : DRAFT_KEY);
+    } catch { /* ignore */ }
     navigate({
       to: "/sports-guides",
       search: {
@@ -365,6 +414,7 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
         sub: editing?.subcategory || undefined,
       },
     });
+  };
 
   const save = async () => {
     if (!editing) return;
