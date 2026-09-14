@@ -28,6 +28,9 @@ type Blog = {
 };
 
 const DRAFT_KEY = "sports-guide-new-draft";
+// Per-guide edit draft so unsaved changes to an existing guide survive a
+// crash/reload instead of being wiped.
+const editDraftKey = (id: string) => `sports-guide-edit-draft-${id}`;
 
 // Default body template for new guides. The reader splits one card per event
 // using: date heading, then each event as time → event name → channels with a
@@ -282,12 +285,27 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
           }
         }
         const restoredExcerpt = row.excerpt ?? row.archived_excerpt ?? null;
-        setEditing({ ...(row as Blog), body: restoredBody, excerpt: restoredExcerpt });
-        if (!row.body && row.archived_body) {
-          toast.message("Previous listing restored — it had expired and was cleared from the public page.");
+        // If there's a locally saved edit draft for this guide, restore it
+        // over the stored version so a crash/reload never wipes in-progress
+        // edits for the current date.
+        let editDraft: Blog | null = null;
+        try {
+          const rawDraft = localStorage.getItem(editDraftKey(blogId));
+          if (rawDraft) editDraft = JSON.parse(rawDraft) as Blog;
+        } catch {
+          editDraft = null;
         }
-        if (prunedExpired) {
-          toast.message("Expired events removed — only upcoming events are shown.");
+        if (editDraft && editDraft.id === blogId) {
+          setEditing(editDraft);
+          toast.message("Unsaved changes restored from before the reload.");
+        } else {
+          setEditing({ ...(row as Blog), body: restoredBody, excerpt: restoredExcerpt });
+          if (!row.body && row.archived_body) {
+            toast.message("Previous listing restored — it had expired and was cleared from the public page.");
+          }
+          if (prunedExpired) {
+            toast.message("Expired events removed — only upcoming events are shown.");
+          }
         }
       } else {
         // Restore previously saved draft if present so users don't lose work
@@ -325,12 +343,15 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
     })();
   }, [blogId, navigate]);
 
-  // Persist new-blog draft to localStorage on every change so it survives
-  // navigation/refresh until the blog is saved or cancelled.
+  // Persist draft to localStorage on every change so it survives
+  // navigation/refresh/crashes until the blog is saved or cancelled.
+  // New guides use one shared key; edits use a per-guide key so the stored
+  // version is never the only copy of in-progress work.
   useEffect(() => {
-    if (blogId || !editing) return;
+    if (!editing) return;
     try {
-      localStorage.setItem(DRAFT_KEY, JSON.stringify(editing));
+      const key = blogId ? editDraftKey(blogId) : DRAFT_KEY;
+      localStorage.setItem(key, JSON.stringify(editing));
     } catch {
       /* ignore quota errors */
     }
@@ -402,9 +423,9 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
       toast.error(error.message || "Failed to save blog");
       return;
     }
-    if (!editing.id) {
-      try { localStorage.removeItem(DRAFT_KEY); } catch { /* ignore */ }
-    }
+    try {
+      localStorage.removeItem(editing.id ? editDraftKey(editing.id) : DRAFT_KEY);
+    } catch { /* ignore */ }
     toast.success(editing.id ? "Blog updated" : "Blog added");
     navigate({
       to: "/sports-guides",
