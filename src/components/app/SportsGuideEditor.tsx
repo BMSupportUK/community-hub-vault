@@ -28,6 +28,9 @@ type Blog = {
 };
 
 const DRAFT_KEY = "sports-guide-new-draft";
+// Per-guide edit draft so unsaved changes to an existing guide survive a
+// crash/reload instead of being wiped.
+const editDraftKey = (id: string) => `sports-guide-edit-draft-${id}`;
 
 // Default body template for new guides. The reader splits one card per event
 // using: date heading, then each event as time → event name → channels with a
