@@ -922,7 +922,7 @@ function ThemePickerCard() {
         <Option value="red" name="Crimson & Rose" swatches={["#dc2626", "#ef4444", "#f43f5e", "#fb7185"]} />
         <Option value="ocean" name="Electric Ocean" swatches={["#0891b2", "#06b6d4", "#22d3ee", "#5eead4"]} />
         <Option value="sunset" name="Sunset Blaze" swatches={["#ea580c", "#f97316", "#f59e0b", "#ec4899"]} />
-        <Option value="pink" name="Pink Pulse" swatches={["#831843", "#db2777", "#f43f5e", "#fb7185"]} />
+        <Option value="pink" name="Pink Pulse" swatches={["#500724", "#9d174d", "#ec4899", "#f9a8d4"]} />
       </div>
     </section>
   );

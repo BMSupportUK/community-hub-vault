@@ -224,46 +224,77 @@ html.theme-sunset body {
   background-attachment: fixed;
 }
 
-/* ===== Pink Pulse theme (berry / hot pink / coral) ===== */
+/* ===== Pink Pulse theme (vibrant berry glass) ===== */
 html.theme-pink {
-  --background: oklch(0.23 0.09 345);
-  --foreground: oklch(0.98 0.01 350);
-  --surface: oklch(0.29 0.12 345);
-  --surface-2: oklch(0.36 0.16 350);
-  --rail: oklch(0.25 0.08 340);
+  --background: oklch(0.205 0.075 342);
+  --foreground: oklch(0.985 0.012 350);
+  --surface: oklch(0.27 0.105 342);
+  --surface-2: oklch(0.34 0.145 347);
+  --rail: oklch(0.225 0.085 338);
 
-  --card: oklch(0.20 0.06 345);
-  --card-foreground: oklch(0.98 0.01 350);
-  --popover: oklch(0.20 0.06 345);
-  --popover-foreground: oklch(0.98 0.01 350);
+  --card: oklch(0.245 0.085 342 / 0.88);
+  --card-foreground: oklch(0.985 0.012 350);
+  --popover: oklch(0.235 0.09 342 / 0.96);
+  --popover-foreground: oklch(0.985 0.012 350);
 
-  --primary: oklch(0.68 0.26 350);
-  --primary-foreground: oklch(0.99 0.005 350);
-  --primary-glow: oklch(0.78 0.19 10);
+  --primary: oklch(0.69 0.265 346);
+  --primary-foreground: oklch(0.995 0.006 350);
+  --primary-glow: oklch(0.82 0.17 354);
 
-  --secondary: oklch(0.32 0.11 330);
-  --secondary-foreground: oklch(0.98 0.01 350);
-  --muted: oklch(0.26 0.045 340);
-  --muted-foreground: oklch(0.77 0.04 345);
-  --accent: oklch(0.72 0.22 18);
-  --accent-foreground: oklch(0.18 0.04 345);
+  --secondary: oklch(0.315 0.12 336);
+  --secondary-foreground: oklch(0.985 0.012 350);
+  --muted: oklch(0.255 0.055 340);
+  --muted-foreground: oklch(0.80 0.045 348);
+  --accent: oklch(0.76 0.205 356);
+  --accent-foreground: oklch(0.19 0.07 340);
 
-  --border: oklch(0.38 0.10 345);
-  --input: oklch(0.27 0.065 345);
-  --ring: oklch(0.72 0.24 350);
+  --border: oklch(0.51 0.14 347 / 0.72);
+  --input: oklch(0.30 0.09 342 / 0.88);
+  --ring: oklch(0.77 0.215 350);
 
-  --gradient-primary: linear-gradient(135deg, oklch(0.61 0.27 335), oklch(0.69 0.27 350) 50%, oklch(0.73 0.22 18));
-  --gradient-rail: linear-gradient(180deg, oklch(0.30 0.12 338), oklch(0.26 0.09 345) 55%, oklch(0.23 0.08 355));
-  --gradient-accent: linear-gradient(90deg, oklch(0.65 0.28 335), oklch(0.72 0.25 350), oklch(0.76 0.20 18));
-  --shadow-glow: 0 0 0 1px color-mix(in oklab, var(--primary) 42%, transparent), 0 12px 40px -10px color-mix(in oklab, var(--primary) 58%, transparent);
+  --gradient-primary: linear-gradient(135deg, oklch(0.55 0.24 333), oklch(0.68 0.27 346) 52%, oklch(0.74 0.22 358));
+  --gradient-rail: linear-gradient(180deg, oklch(0.29 0.13 336 / 0.96), oklch(0.245 0.10 343 / 0.97) 55%, oklch(0.21 0.075 350 / 0.98));
+  --gradient-accent: linear-gradient(90deg, oklch(0.63 0.27 334), oklch(0.72 0.25 347), oklch(0.80 0.18 358));
+  --shadow-glow: 0 0 0 1px color-mix(in oklab, var(--primary-glow) 40%, transparent), 0 16px 46px -14px color-mix(in oklab, var(--primary) 72%, transparent);
+  --shadow-soft: 0 14px 40px -16px oklch(0.12 0.06 342 / 0.8);
 }
 html.theme-pink body {
   background:
-    radial-gradient(ellipse at top left, oklch(0.56 0.27 335 / 0.52), transparent 55%),
-    radial-gradient(ellipse at top right, oklch(0.65 0.26 350 / 0.46), transparent 55%),
-    radial-gradient(ellipse at bottom, oklch(0.69 0.22 18 / 0.48), transparent 60%),
+    radial-gradient(ellipse at top left, oklch(0.59 0.25 334 / 0.42), transparent 58%),
+    radial-gradient(ellipse at top right, oklch(0.69 0.25 347 / 0.34), transparent 55%),
+    radial-gradient(ellipse at bottom, oklch(0.72 0.20 357 / 0.34), transparent 62%),
     var(--color-background);
   background-attachment: fixed;
+}
+
+html.theme-pink :is([role="dialog"], [role="menu"], [data-slot="card"], [data-slot="popover-content"]) {
+  border-color: color-mix(in oklab, var(--primary-glow) 28%, var(--border));
+  backdrop-filter: blur(18px) saturate(130%);
+  box-shadow: var(--shadow-soft), inset 0 1px 0 color-mix(in oklab, var(--foreground) 8%, transparent);
+}
+
+html.theme-pink :is(input, textarea, select):focus {
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 24%, transparent), inset 0 1px 0 color-mix(in oklab, var(--foreground) 6%, transparent);
+}
+
+html.theme-pink .landing-hero-panel {
+  border-color: color-mix(in oklab, var(--primary-glow) 38%, transparent) !important;
+  background: linear-gradient(135deg, oklch(0.43 0.19 334 / 0.96), oklch(0.57 0.24 346 / 0.94) 52%, oklch(0.35 0.15 355 / 0.97)) !important;
+  box-shadow: 0 0 80px color-mix(in oklab, var(--primary) 40%, transparent), inset 0 1px 0 color-mix(in oklab, var(--foreground) 10%, transparent) !important;
+}
+
+html.theme-pink .landing-hero-glow {
+  background: linear-gradient(45deg, color-mix(in oklab, var(--primary-glow) 40%, transparent), transparent 52%, color-mix(in oklab, var(--primary) 34%, transparent)) !important;
+}
+
+html.theme-pink .landing-feature-card {
+  border-color: color-mix(in oklab, var(--primary-glow) 36%, transparent) !important;
+  background: linear-gradient(135deg, color-mix(in oklab, var(--surface-2) 84%, transparent), color-mix(in oklab, var(--background) 88%, transparent)) !important;
+  box-shadow: 0 14px 48px color-mix(in oklab, var(--background) 70%, transparent), inset 0 1px 0 color-mix(in oklab, var(--foreground) 8%, transparent) !important;
+}
+
+html.theme-pink .landing-feature-icon {
+  background: linear-gradient(135deg, color-mix(in oklab, var(--primary-glow) 22%, transparent), color-mix(in oklab, var(--primary) 46%, transparent)) !important;
 }
 
 @layer base {

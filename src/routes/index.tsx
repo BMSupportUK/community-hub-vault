@@ -127,7 +127,7 @@ function Landing() {
 
       <main className="flex-1 min-h-0 md:overflow-hidden px-6 py-4 md:py-4 flex flex-col gap-3">
         <section
-          className="relative max-w-7xl w-full mx-auto rounded-3xl border border-red-900/60 p-4 md:p-6 lg:p-8 pb-16 md:pb-20 flex-1 flex flex-col justify-center"
+          className="landing-hero-panel relative max-w-7xl w-full mx-auto rounded-3xl border border-red-900/60 p-4 md:p-6 lg:p-8 pb-16 md:pb-20 flex-1 flex flex-col justify-center"
           style={{
             background:
               "radial-gradient(1200px 600px at 10% 10%, rgba(248,113,113,0.25), transparent 60%), radial-gradient(900px 500px at 90% 90%, rgba(127,29,29,0.6), transparent 60%), linear-gradient(135deg, #7f1d1d 0%, #991b1b 50%, #450a0a 100%)",
@@ -149,7 +149,7 @@ function Landing() {
             </div>
 
             <div className="relative w-full md:-ml-2 lg:-ml-4">
-              <div className="absolute -inset-4 bg-gradient-to-tr from-red-500/40 via-transparent to-blue-500/30 blur-2xl rounded-3xl" aria-hidden />
+              <div className="landing-hero-glow absolute -inset-4 bg-gradient-to-tr from-red-500/40 via-transparent to-blue-500/30 blur-2xl rounded-3xl" aria-hidden />
               <div className="relative rounded-3xl overflow-hidden border border-white/20 shadow-[0_20px_80px_rgba(0,0,0,0.6)] max-w-[680px] ml-auto">
                 <img
                   src={welcomeHero}
@@ -170,14 +170,14 @@ function Landing() {
           {boxes.map((b) => (
             <div
               key={b.id}
-              className="group relative flex items-center gap-4 p-4 rounded-2xl border border-red-400/30 backdrop-blur-md shadow-[0_12px_50px_rgba(127,29,29,0.5)] hover:border-red-300/60 transition-all"
+              className="landing-feature-card group relative flex items-center gap-4 p-4 rounded-2xl border border-red-400/30 backdrop-blur-md shadow-[0_12px_50px_rgba(127,29,29,0.5)] hover:border-red-300/60 transition-all"
               style={{
                 background:
                   "linear-gradient(135deg, rgba(127,29,29,0.9) 0%, rgba(69,10,10,0.9) 100%)",
               }}
             >
               <div
-                className="shrink-0 size-14 rounded-xl grid place-items-center overflow-hidden ring-1 ring-red-300/40 group-hover:ring-red-200/70 transition shadow-inner"
+                className="landing-feature-icon shrink-0 size-14 rounded-xl grid place-items-center overflow-hidden ring-1 ring-red-300/40 group-hover:ring-red-200/70 transition shadow-inner"
                 style={{
                   background:
                     "linear-gradient(135deg, rgba(254,202,202,0.18) 0%, rgba(220,38,38,0.35) 100%)",
