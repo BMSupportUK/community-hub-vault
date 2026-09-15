@@ -150,6 +150,7 @@ function SportsGuidesPage() {
   useEffect(() => {
     if (welcomeFromUrl) {
       setTab("welcome");
+      setActiveCat(null);
       try {
         sessionStorage.removeItem("sports-guides-active-tab");
         sessionStorage.removeItem("sports-guides-active-cat");
@@ -158,17 +159,11 @@ function SportsGuidesPage() {
     }
   }, [welcomeFromUrl, navigate]);
 
-  // Switching to the Guides tab always defaults to the Daily Sports & PPV category.
+  // The Guides tab only exists once a category has been picked — never auto-select one.
   const handleTabChange = (value: string) => {
+    if (value === "guides" && !activeCat) return;
     setTab(value);
     setOpenSubcategoryPopupFor(null);
-    if (value === "guides" && !activeCat) {
-      const dailySports = defaultCatId();
-      if (dailySports) {
-        setActiveCat(dailySports);
-        scrollCardsToTop();
-      }
-    }
   };
 
 
