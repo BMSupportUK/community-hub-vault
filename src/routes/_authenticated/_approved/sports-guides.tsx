@@ -621,6 +621,25 @@ function SportsGuidesPage() {
     );
   };
 
+  /** Add a sub-category directly beneath a main category (turns it into a heading). */
+  const addChildCategory = async (parentId: string) => {
+    const name = prompt("New sub-category name")?.trim();
+    if (!name) return;
+    if (categories.some((c) => c.name.toLowerCase() === name.toLowerCase())) {
+      return toast.error("A category with that name already exists");
+    }
+    const slug = `${name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")}-${Date.now().toString(36)}`;
+    const siblings = childrenByParent[parentId] ?? [];
+    const nextOrder = (siblings[siblings.length - 1]?.sort_order ?? categories[categories.length - 1]?.sort_order ?? 0) + 10;
+    const { error } = await supabase
+      .from("sports_categories")
+      .insert({ name, slug, sort_order: nextOrder, parent_id: parentId } as never);
+    if (error) return toast.error(error.message);
+    setOpenGroups((cur) => (cur.includes(parentId) ? cur : [...cur, parentId]));
+    toast.success("Sub-category added");
+    load();
+  };
+
   /** Move a category under a main heading, or back out to the top level. */
   const setCategoryParent = async (id: string, parentId: string | null) => {
     const { error } = await supabase.from("sports_categories").update({ parent_id: parentId } as never).eq("id", id);
