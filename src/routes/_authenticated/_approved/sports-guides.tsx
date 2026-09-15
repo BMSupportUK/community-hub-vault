@@ -143,8 +143,19 @@ function SportsGuidesPage() {
     setTab(value);
     if (value === "guides") {
       const dailySports = categories.find((c) => c.slug === "daily-sports-ppv")?.id ?? categories[0]?.id;
-      if (dailySports) setActiveCat(dailySports);
+      if (dailySports) {
+        setActiveCat(dailySports);
+        scrollCardsToTop();
+      }
     }
+  };
+
+  const scrollCardsToTop = () => {
+    window.setTimeout(() => {
+      scrollerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      listingsTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 0);
   };
 
   // Show/hide the back-to-top arrow based on scroll position of the page
@@ -787,7 +798,7 @@ function SportsGuidesPage() {
                           <GripVertical className="size-3.5 opacity-40 group-hover:opacity-80 cursor-grab shrink-0" />
                         )}
                         <button
-                          onClick={() => setActiveCat(c.id)}
+                          onClick={() => { setActiveCat(c.id); scrollCardsToTop(); }}
                           className="flex-1 flex items-center justify-between px-2 py-2 text-sm text-left"
                         >
                           <span className="flex items-center gap-2">
@@ -1044,7 +1055,7 @@ function SportsGuidesPage() {
                       </button>
                     </div>
                   )}
-                  <button onClick={() => { setActiveCat(c.id); setTab("guides"); }} className="text-left w-full">
+                  <button onClick={() => { setActiveCat(c.id); setTab("guides"); scrollCardsToTop(); }} className="text-left w-full">
                     <div className="font-display font-semibold text-lg text-purple-50">{c.name}</div>
                     <div className="text-sm text-purple-200/70 mt-1">{counts[c.id] ?? 0} guide{(counts[c.id] ?? 0) === 1 ? "" : "s"}</div>
                   </button>
