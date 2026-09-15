@@ -7,6 +7,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import sportsBgAsset from "@/assets/sports-bg.jpg.asset.json";
 const sportsBg = sportsBgAsset.url;
@@ -107,6 +109,9 @@ function SportsGuidesPage() {
   const [newCatName, setNewCatName] = useState("");
   const [addingCat, setAddingCat] = useState(false);
   const [newSubName, setNewSubName] = useState<Record<string, string>>({});
+  const [headingDialogOpen, setHeadingDialogOpen] = useState(false);
+  const [headingName, setHeadingName] = useState("");
+  const [headingPicks, setHeadingPicks] = useState<string[]>([]);
   const dragCatId = useRef<string | null>(null);
   const dragBlogId = useRef<string | null>(null);
   const skipDefaultSubOnce = useRef(false);
@@ -643,20 +648,39 @@ function SportsGuidesPage() {
     load();
   };
 
-  /** Create a brand-new main heading at the top level. */
+  /** Open the new-heading dialog (name + pick which categories file under it). */
+  const openHeadingDialog = () => {
+    setHeadingName("");
+    setHeadingPicks([]);
+    setHeadingDialogOpen(true);
+  };
+
+  /** Create a brand-new main heading and file the picked categories under it. */
   const addTopCategory = async () => {
-    const name = prompt("New heading name")?.trim();
-    if (!name) return;
+    const name = headingName.trim();
+    if (!name) return toast.error("Enter a heading name");
     if (categories.some((c) => c.name.toLowerCase() === name.toLowerCase())) {
       return toast.error("A category with that name already exists");
     }
     const slug = `${name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")}-${Date.now().toString(36)}`;
     const nextOrder = (categories[categories.length - 1]?.sort_order ?? 0) + 10;
-    const { error } = await supabase
+    const { data: created, error } = await supabase
       .from("sports_categories")
-      .insert({ name, slug, sort_order: nextOrder } as never);
+      .insert({ name, slug, sort_order: nextOrder } as never)
+      .select("id")
+      .single();
     if (error) return toast.error(error.message);
-    toast.success("Heading added");
+    const newId = (created as { id: string } | null)?.id;
+    if (newId && headingPicks.length > 0) {
+      const { error: moveErr } = await supabase
+        .from("sports_categories")
+        .update({ parent_id: newId } as never)
+        .in("id", headingPicks);
+      if (moveErr) return toast.error(moveErr.message);
+      setOpenGroups((cur) => (cur.includes(newId) ? cur : [...cur, newId]));
+    }
+    setHeadingDialogOpen(false);
+    toast.success(headingPicks.length > 0 ? `Heading added with ${headingPicks.length} categor${headingPicks.length === 1 ? "y" : "ies"}` : "Heading added");
     load();
   };
 
@@ -916,7 +940,7 @@ function SportsGuidesPage() {
                     {canManageCategories && (
                       <button
                         type="button"
-                        onClick={() => addTopCategory()}
+                        onClick={openHeadingDialog}
                         title="Add heading"
                         className="p-1 rounded-md text-purple-200/70 hover:text-white hover:bg-fuchsia-600/60"
                       >
@@ -1453,7 +1477,7 @@ function SportsGuidesPage() {
                     <Button onClick={() => setAddingCat(true)} className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0">
                       <Plus className="size-4 mr-1" /> Add Category
                     </Button>
-                    <Button onClick={addTopCategory} className="bg-gradient-to-r from-fuchsia-600 to-pink-600 hover:from-fuchsia-500 hover:to-pink-500 text-white border-0">
+                    <Button onClick={openHeadingDialog} className="bg-gradient-to-r from-fuchsia-600 to-pink-600 hover:from-fuchsia-500 hover:to-pink-500 text-white border-0">
                       <Plus className="size-4 mr-1" /> Add Heading
                     </Button>
                   </>
@@ -1653,6 +1677,55 @@ function SportsGuidesPage() {
           </TabsContent>
         </Tabs>
       </div>
+
+      <Dialog open={headingDialogOpen} onOpenChange={setHeadingDialogOpen}>
+        <DialogContent className="bg-slate-950 border border-fuchsia-500/40 text-purple-50 sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-fuchsia-200">Add a heading</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Input
+              value={headingName}
+              onChange={(e) => setHeadingName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void addTopCategory(); } }}
+              placeholder="Heading name, e.g. Fighting"
+              autoFocus
+              className="bg-purple-950/60 border-purple-500/30 text-purple-50 placeholder:text-purple-300/50"
+            />
+            <div>
+              <p className="text-xs text-purple-200/70 mb-2">Pick which categories go under this heading (optional — you can drag them in later):</p>
+              <div className="max-h-56 overflow-y-auto space-y-1 rounded-lg border border-purple-500/20 bg-purple-950/40 p-2">
+                {orderedCategories.filter((c) => !isGroupHeading(c)).length === 0 && (
+                  <p className="text-xs text-purple-300/50 px-1 py-2">No categories available to file yet.</p>
+                )}
+                {orderedCategories.filter((c) => !isGroupHeading(c)).map((c) => {
+                  const parent = c.parent_id ? categories.find((p) => p.id === c.parent_id) : null;
+                  const checked = headingPicks.includes(c.id);
+                  return (
+                    <label key={c.id} className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-fuchsia-600/20 cursor-pointer text-sm">
+                      <Checkbox
+                        checked={checked}
+                        onCheckedChange={(v) =>
+                          setHeadingPicks((cur) => (v ? [...cur, c.id] : cur.filter((id) => id !== c.id)))
+                        }
+                        className="border-purple-400/50 data-[state=checked]:bg-fuchsia-600 data-[state=checked]:border-fuchsia-500"
+                      />
+                      <span className="text-purple-100">{c.name}</span>
+                      {parent && <span className="text-[11px] text-purple-300/60">(currently in {parent.name})</span>}
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setHeadingDialogOpen(false)} className="text-purple-200 hover:text-white hover:bg-purple-800/40">Cancel</Button>
+            <Button onClick={() => void addTopCategory()} className="bg-gradient-to-r from-fuchsia-600 to-pink-600 hover:from-fuchsia-500 hover:to-pink-500 text-white border-0">
+              Create heading
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
     </div>
   );
