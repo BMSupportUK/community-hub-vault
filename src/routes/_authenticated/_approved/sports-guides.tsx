@@ -1343,31 +1343,16 @@ function SportsGuidesPage() {
           <TabsContent value="guides" className="mt-6">
             <div className={`relative grid grid-cols-1 gap-6 ${search.trim() ? "lg:grid-cols-[minmax(0,1fr)_320px]" : ""}`}>
 
-              {activeCategory &&
-                activeCategory.slug !== "sports-passes" &&
-                (subsByCat[activeCategory.id]?.length ?? 0) > 0 &&
-                openSubcategoryPopupFor === activeCategory.id &&
-                !search.trim() && (
-                  <aside
-                    className="z-40 h-fit rounded-2xl border border-sky-400/40 bg-slate-950/95 p-4 shadow-2xl shadow-sky-950/50 backdrop-blur lg:absolute lg:left-0 lg:top-0 lg:w-[520px] xl:w-[640px]"
-                  >
-
-                    <div className="mb-3 flex items-center justify-between gap-3 px-1">
-                      <h3 className="font-display font-semibold text-purple-100">
-                        {activeCategory.name} sub-categories
-                      </h3>
-                      <button
-                        type="button"
-                        onClick={() => setOpenSubcategoryPopupFor(null)}
-                        title="Close sub-categories"
-                        aria-label={`Close ${activeCategory.name} sub-categories`}
-                        className="flex shrink-0 items-center gap-1 rounded-full bg-fuchsia-600/80 px-2.5 py-1 text-xs font-bold text-white shadow-md shadow-fuchsia-950/50 transition-all hover:bg-fuchsia-500 hover:shadow-lg hover:shadow-fuchsia-500/40"
-                      >
-                        <X className="size-3.5" />
-                        <span className="hidden sm:inline">Close</span>
-                      </button>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2 xl:grid-cols-3">
+              {activeCategory && activeCategory.slug !== "sports-passes" && (
+                <Dialog
+                  open={openSubcategoryPopupFor === activeCategory.id}
+                  onOpenChange={(o) => { if (!o) setOpenSubcategoryPopupFor(null); }}
+                >
+                  <DialogContent className="max-w-2xl border-fuchsia-500/40 bg-slate-950/95 backdrop-blur">
+                    <DialogHeader>
+                      <DialogTitle className="text-purple-100">{activeCategory.name} sub-categories</DialogTitle>
+                    </DialogHeader>
+                    <div className="grid max-h-[60vh] grid-cols-2 gap-2 overflow-y-auto xl:grid-cols-3">
                       {(subsByCat[activeCategory.id] ?? []).map((sub) => {
                         const count = blogs.filter((b) => b.category_id === activeCategory.id && b.subcategory === sub.name).length;
                         const active = subFilter === sub.name;
@@ -1376,7 +1361,7 @@ function SportsGuidesPage() {
                           <button
                             key={sub.id}
                             type="button"
-                            onClick={() => { setSubFilter(sub.name); scrollCardsToTop(); }}
+                            onClick={() => { setSubFilter(sub.name); setOpenSubcategoryPopupFor(null); scrollCardsToTop(); }}
                             className={`flex items-center justify-between gap-2 rounded-lg border px-3 py-2.5 text-left text-xs font-bold uppercase transition-colors ${active ? "border-fuchsia-300 bg-fuchsia-600 text-white" : "border-purple-400/40 bg-purple-900/60 text-purple-100 hover:bg-purple-800/80"}`}
                           >
                             <span className="break-words leading-tight">{sub.name}</span>
@@ -1388,8 +1373,10 @@ function SportsGuidesPage() {
                         );
                       })}
                     </div>
-                  </aside>
-                )}
+                  </DialogContent>
+                </Dialog>
+              )}
+
 
               <section ref={listingsTopRef}>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
