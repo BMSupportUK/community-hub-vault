@@ -741,20 +741,26 @@ function SportsGuidesPage() {
 
 
   /**
-   * Dropping one category onto another: file it under a top-level target
-   * (turning that target into a heading), otherwise just reorder.
+   * Dropping one category onto another.
+   * - Two main categories: always reorder (so you can drag a category above
+   *   Football or any other heading).
+   * - A sub-category dropped on a main category: file it under that category.
    */
   const dropCategoryOnCategory = (draggedId: string, targetId: string) => {
     if (draggedId === targetId) return;
     const dragged = categories.find((c) => c.id === draggedId);
     const target = categories.find((c) => c.id === targetId);
     if (!dragged || !target) return;
-    if (!target.parent_id && !isGroupHeading(dragged) && (dragged.parent_id ?? null) !== target.id) {
+    const draggedParent = dragged.parent_id ?? null;
+    const targetParent = target.parent_id ?? null;
+    if (draggedParent && !targetParent && !isGroupHeading(dragged) && draggedParent !== target.id) {
       void setCategoryParent(draggedId, target.id);
       return;
     }
+    if (draggedParent !== targetParent) return;
     void reorderCategories(draggedId, targetId);
   };
+
 
 
   const reorderBlogs = async (fromId: string, toId: string) => {
