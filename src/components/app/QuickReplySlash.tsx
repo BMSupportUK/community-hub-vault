@@ -13,11 +13,14 @@ export function useQuickReplySlash({
   onChange,
   editorRef,
   scope = "talk",
+  onSend,
 }: {
   value: string;
   onChange: (next: string) => void;
   editorRef: React.RefObject<HTMLTextAreaElement | HTMLDivElement | null>;
   scope?: QuickReplyScope;
+  /** When set, confirming a shortcut sends it straight to chat instead of inserting it. */
+  onSend?: (text: string) => void;
 }) {
   const { replies, isStaff } = useQuickReplies(scope);
   const [query, setQuery] = useState<string | null>(null);
@@ -63,11 +66,22 @@ export function useQuickReplySlash({
       .slice(0, 8);
   }, [replies, query]);
 
-  /** Swap the "/query" token for the shortcut sentence. */
+  /** Swap the "/query" token for the shortcut sentence, or send it straight away. */
   const insertReply = (reply: QuickReply) => {
     if (queryStart.current < 0) return;
     const caret = caretOffset();
-    const next = `${value.slice(0, queryStart.current)}${reply.body} ${value.slice(caret)}`;
+    const next = `${value.slice(0, queryStart.current)}${reply.body} ${value.slice(caret)}`.trim();
+    if (onSend) {
+      // Confirmed: send the shortcut straight to chat and clear the composer.
+      onChange("");
+      const clearEl = editorRef.current;
+      if (clearEl && !(clearEl instanceof HTMLTextAreaElement)) clearEl.textContent = "";
+      setQuery(null);
+      setConfirming(null);
+      queryStart.current = -1;
+      onSend(next);
+      return;
+    }
     onChange(next);
     const el = editorRef.current;
     if (el && !(el instanceof HTMLTextAreaElement)) el.textContent = next;
@@ -136,7 +150,7 @@ export function useQuickReplySlash({
       <div className="absolute bottom-full left-0 mb-2 w-80 max-w-[90vw] rounded-lg border border-border bg-popover text-popover-foreground shadow-xl overflow-hidden z-50">
         <div className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border bg-muted/40">
           <Keyboard className="size-3.5 text-amber-400" />
-          {confirming ? "Use this shortcut?" : `Shortcuts /${query || "…"}`}
+          {confirming ? (onSend ? "Send this shortcut now?" : "Use this shortcut?") : `Shortcuts /${query || "…"}`}
         </div>
 
         {confirming ? (
@@ -166,7 +180,7 @@ export function useQuickReplySlash({
                 }}
                 className="rounded-md bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground"
               >
-                Use shortcut
+                {onSend ? "Send now" : "Use shortcut"}
               </button>
             </div>
           </div>
@@ -199,7 +213,9 @@ export function useQuickReplySlash({
 
         <div className="px-3 py-1.5 text-[10px] text-muted-foreground border-t border-border bg-muted/40">
           {confirming
-            ? "Enter to insert · Esc to go back"
+            ? onSend
+              ? "Enter to send · Esc to go back"
+              : "Enter to insert · Esc to go back"
             : "↑↓ navigate · Enter or Tab to choose · Esc close"}
         </div>
       </div>
