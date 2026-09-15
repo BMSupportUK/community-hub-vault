@@ -283,9 +283,6 @@ function SportsGuidesPage() {
     setSubDialogFor(id);
   };
 
-  /** The category the guides list should land on by default. */
-  const defaultCatId = () =>
-    leafCategories.find((c) => c.slug === "daily-sports-ppv")?.id ?? leafCategories[0]?.id;
 
   // Keep the heading of the open category expanded. If the selected category has
   // just become a heading (categories were moved under it), drop down to its
