@@ -1192,7 +1192,7 @@ function SportsGuidesPage() {
                               )}
                               <button
                                 type="button"
-                                 onClick={() => { setDismissedSubcategoryPopupFor(null); setActiveCat(child.id); setTab("guides"); scrollCardsToTop(); }}
+                                 onClick={() => { setActiveCat(child.id); setTab("guides"); scrollCardsToTop(); }}
                                 className="flex flex-1 items-center justify-between gap-2 px-2 py-2.5 text-left text-sm"
                               >
                                 <span className="flex min-w-0 items-center gap-2">
