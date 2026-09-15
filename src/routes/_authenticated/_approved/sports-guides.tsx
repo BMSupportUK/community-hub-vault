@@ -1358,7 +1358,7 @@ function SportsGuidesPage() {
                       </h3>
                       <button
                         type="button"
-                        onClick={() => setDismissedSubcategoryPopupFor(activeCategory.id)}
+                        onClick={() => setOpenSubcategoryPopupFor(null)}
                         title="Close sub-categories"
                         aria-label={`Close ${activeCategory.name} sub-categories`}
                         className="flex shrink-0 items-center gap-1 rounded-full bg-fuchsia-600/80 px-2.5 py-1 text-xs font-bold text-white shadow-md shadow-fuchsia-950/50 transition-all hover:bg-fuchsia-500 hover:shadow-lg hover:shadow-fuchsia-500/40"
