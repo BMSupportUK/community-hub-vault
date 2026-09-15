@@ -1074,7 +1074,7 @@ function SportsGuidesPage() {
                             <GripVertical className="size-3.5 opacity-40 group-hover:opacity-80 cursor-grab shrink-0" />
                           )}
                           <button
-                            onClick={() => toggleGroup(top.id)}
+                            onClick={() => setOpenGroups([top.id])}
                             aria-expanded={open}
                             className="flex-1 flex items-center justify-between px-2 py-2 text-sm text-left font-semibold"
                           >
@@ -1118,6 +1118,14 @@ function SportsGuidesPage() {
                         <h3 className="font-display font-semibold text-purple-100">
                           {parent?.name ?? "Subcategories"}
                         </h3>
+                        <button
+                          type="button"
+                          onClick={() => setOpenGroups([])}
+                          title="Close"
+                          className="shrink-0 p-1 rounded-md text-purple-200/70 hover:text-white hover:bg-fuchsia-600/60"
+                        >
+                          <X className="size-4" />
+                        </button>
                         {canManageCategories && parent && (
                           <button
                             type="button"
@@ -1432,7 +1440,7 @@ function SportsGuidesPage() {
                   )}
                   <button
                     onClick={() => {
-                      if (isGroupHeading(c)) { toggleGroup(c.id); return; }
+                      if (isGroupHeading(c)) { setTab("guides"); setOpenGroups([c.id]); return; }
                       setActiveCat(c.id); setTab("guides"); scrollCardsToTop();
                     }}
                     className="text-left w-full"
