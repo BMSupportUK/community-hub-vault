@@ -267,16 +267,41 @@ function SportsGuidesPage() {
     () => orderedCategories.filter((c) => !isGroupHeading(c)),
     [orderedCategories, childrenByParent],
   );
+  /**
+   * Opening a heading shows its sub-categories AND lands the guides list on one
+   * of them, so a heading never looks empty after categories are moved into it.
+   */
+  const openHeading = (id: string) => {
+    const kids = childrenByParent[id] ?? [];
+    setOpenGroups([id]);
+    setDismissedSubcategoryPopupFor(null);
+    setTab("guides");
+    const target = kids.find((k) => k.id === activeCat) ?? kids[0];
+    if (target) {
+      setActiveCat(target.id);
+      scrollCardsToTop();
+    }
+  };
+
   /** The category the guides list should land on by default. */
   const defaultCatId = () =>
     leafCategories.find((c) => c.slug === "daily-sports-ppv")?.id ?? leafCategories[0]?.id;
 
-  // Keep the heading of the open category expanded.
+  // Keep the heading of the open category expanded. If the selected category has
+  // just become a heading (categories were moved under it), drop down to its
+  // first category so the guides list still shows something.
   useEffect(() => {
     if (!activeCat) return;
-    const parent = categories.find((c) => c.id === activeCat)?.parent_id;
-    setOpenGroups(parent ? [parent] : []);
-  }, [activeCat, categories]);
+    const current = categories.find((c) => c.id === activeCat);
+    if (!current) return;
+    const kids = childrenByParent[activeCat] ?? [];
+    if (kids.length) {
+      setOpenGroups([activeCat]);
+      setActiveCat(kids[0].id);
+      return;
+    }
+    setOpenGroups(current.parent_id ? [current.parent_id] : []);
+  }, [activeCat, categories, childrenByParent]);
 
   // Resolve catFromUrl as either category id or slug.
   const resolvedCatFromUrl = useMemo(() => {
@@ -689,7 +714,12 @@ function SportsGuidesPage() {
   const setCategoryParent = async (id: string, parentId: string | null) => {
     const { error } = await supabase.from("sports_categories").update({ parent_id: parentId } as never).eq("id", id);
     if (error) return toast.error(error.message);
-    if (parentId) setOpenGroups((cur) => (cur.includes(parentId) ? cur : [...cur, parentId]));
+    // Keep the moved category selected and its new heading open so the guides
+    // list keeps showing the category you just moved.
+    setOpenGroups(parentId ? [parentId] : []);
+    setDismissedSubcategoryPopupFor(null);
+    setActiveCat(id);
+    setTab("guides");
     toast.success(parentId ? "Category grouped" : "Category moved to top level");
     load();
   };
@@ -1065,7 +1095,7 @@ function SportsGuidesPage() {
                             <GripVertical className="size-3.5 opacity-40 group-hover:opacity-80 cursor-grab shrink-0" />
                           )}
                           <button
-                            onClick={() => setOpenGroups([top.id])}
+                            onClick={() => openHeading(top.id)}
                             aria-expanded={open}
                             className="flex-1 flex items-center justify-between px-2 py-2 text-sm text-left font-semibold"
                           >
@@ -1609,7 +1639,7 @@ function SportsGuidesPage() {
                   )}
                   <button
                     onClick={() => {
-                      if (isGroupHeading(c)) { setTab("guides"); setOpenGroups([c.id]); return; }
+                      if (isGroupHeading(c)) { openHeading(c.id); return; }
                        setDismissedSubcategoryPopupFor(null); setActiveCat(c.id); setTab("guides"); scrollCardsToTop();
                     }}
                     className="text-left w-full"
