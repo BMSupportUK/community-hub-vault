@@ -903,6 +903,11 @@ function SportsGuidesPage() {
                     </button>
                   )}
                 </div>
+                {isMod && draggingBlog && (
+                  <div className="mb-2 rounded-lg border border-emerald-400/50 bg-emerald-500/15 px-3 py-2 text-[11px] font-semibold text-emerald-100">
+                    Drop the guide on a heading or category to move it there
+                  </div>
+                )}
                 <div className="space-y-1">
                   {topCategories.map((top) => {
                     const kids = childrenByParent[top.id] ?? [];
