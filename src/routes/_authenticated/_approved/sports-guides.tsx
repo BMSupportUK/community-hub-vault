@@ -1633,7 +1633,7 @@ function SportsGuidesPage() {
                   <button
                     onClick={() => {
                       if (isGroupHeading(c)) { openHeading(c.id); return; }
-                       setDismissedSubcategoryPopupFor(null); setActiveCat(c.id); setTab("guides"); scrollCardsToTop();
+                       setActiveCat(c.id); setTab("guides"); scrollCardsToTop();
                     }}
                     className="text-left w-full"
                   >
