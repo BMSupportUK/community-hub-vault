@@ -152,10 +152,10 @@ function SportsGuidesPage() {
   // Switching to the Guides tab always defaults to the Daily Sports & PPV category.
   const handleTabChange = (value: string) => {
     setTab(value);
+    setOpenSubcategoryPopupFor(null);
     if (value === "guides" && !activeCat) {
       const dailySports = defaultCatId();
       if (dailySports) {
-        setDismissedSubcategoryPopupFor(null);
         setActiveCat(dailySports);
         scrollCardsToTop();
       }
