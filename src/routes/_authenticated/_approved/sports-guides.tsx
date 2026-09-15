@@ -143,8 +143,19 @@ function SportsGuidesPage() {
     setTab(value);
     if (value === "guides") {
       const dailySports = categories.find((c) => c.slug === "daily-sports-ppv")?.id ?? categories[0]?.id;
-      if (dailySports) setActiveCat(dailySports);
+      if (dailySports) {
+        setActiveCat(dailySports);
+        scrollCardsToTop();
+      }
     }
+  };
+
+  const scrollCardsToTop = () => {
+    window.setTimeout(() => {
+      scrollerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+      window.scrollTo({ top: 0, behavior: "smooth" });
+      listingsTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 0);
   };
 
   // Show/hide the back-to-top arrow based on scroll position of the page
