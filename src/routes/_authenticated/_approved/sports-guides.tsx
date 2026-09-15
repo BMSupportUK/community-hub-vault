@@ -103,6 +103,7 @@ function SportsGuidesPage() {
   const [search, setSearch] = useState("");
   const [resultsOpen, setResultsOpen] = useState(true);
   const [subFilter, setSubFilter] = useState<string | null>(null);
+  const [dismissedSubcategoryPopupFor, setDismissedSubcategoryPopupFor] = useState<string | null>(null);
   const [newCatName, setNewCatName] = useState("");
   const [addingCat, setAddingCat] = useState(false);
   const [newSubName, setNewSubName] = useState<Record<string, string>>({});
@@ -154,6 +155,7 @@ function SportsGuidesPage() {
     if (value === "guides") {
       const dailySports = defaultCatId();
       if (dailySports) {
+        setDismissedSubcategoryPopupFor(null);
         setActiveCat(dailySports);
         scrollCardsToTop();
       }
@@ -996,7 +998,7 @@ function SportsGuidesPage() {
                             <GripVertical className="size-3.5 opacity-40 group-hover:opacity-80 cursor-grab shrink-0" />
                           )}
                           <button
-                            onClick={() => { setActiveCat(c.id); scrollCardsToTop(); }}
+                            onClick={() => { setDismissedSubcategoryPopupFor(null); setActiveCat(c.id); scrollCardsToTop(); }}
                             className="flex-1 flex items-center justify-between px-2 py-2 text-sm text-left"
                           >
                             <span className="flex items-center gap-2">
@@ -1178,7 +1180,7 @@ function SportsGuidesPage() {
                               )}
                               <button
                                 type="button"
-                                onClick={() => { setActiveCat(child.id); scrollCardsToTop(); }}
+                                 onClick={() => { setDismissedSubcategoryPopupFor(null); setActiveCat(child.id); scrollCardsToTop(); }}
                                 className="flex flex-1 items-center justify-between gap-2 px-2 py-2.5 text-left text-sm"
                               >
                                 <span className="flex min-w-0 items-center gap-2">
@@ -1206,6 +1208,53 @@ function SportsGuidesPage() {
                   })()}
                 </aside>
               )}
+
+              {activeCategory &&
+                activeCategory.slug !== "sports-passes" &&
+                (subsByCat[activeCategory.id]?.length ?? 0) > 0 &&
+                dismissedSubcategoryPopupFor !== activeCategory.id &&
+                !search.trim() && (
+                  <aside
+                    className={`z-40 h-fit rounded-2xl border border-sky-400/40 bg-slate-950/95 p-4 shadow-2xl shadow-sky-950/50 backdrop-blur lg:absolute lg:top-0 lg:w-[240px] ${openGroups[0] ? "lg:left-[492px]" : "lg:left-[256px]"}`}
+                  >
+                    <div className="mb-3 flex items-center justify-between gap-2 px-1">
+                      <h3 className="font-display font-semibold text-purple-100">
+                        {activeCategory.name} sub-categories
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={() => setDismissedSubcategoryPopupFor(activeCategory.id)}
+                        title="Close sub-categories"
+                        aria-label={`Close ${activeCategory.name} sub-categories`}
+                        className="flex shrink-0 items-center gap-1 rounded-full bg-fuchsia-600/80 px-2.5 py-1 text-xs font-bold text-white shadow-md shadow-fuchsia-950/50 transition-all hover:bg-fuchsia-500 hover:shadow-lg hover:shadow-fuchsia-500/40"
+                      >
+                        <X className="size-3.5" />
+                        <span className="hidden sm:inline">Close</span>
+                      </button>
+                    </div>
+                    <div className="space-y-2">
+                      {(subsByCat[activeCategory.id] ?? []).map((sub) => {
+                        const count = blogs.filter((b) => b.category_id === activeCategory.id && b.subcategory === sub.name).length;
+                        const active = subFilter === sub.name;
+                        const unread = unreadSubCounts[activeCategory.id]?.[sub.name] ?? 0;
+                        return (
+                          <button
+                            key={sub.id}
+                            type="button"
+                            onClick={() => { setSubFilter(sub.name); scrollCardsToTop(); }}
+                            className={`flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-2.5 text-left text-xs font-bold uppercase transition-colors ${active ? "border-fuchsia-300 bg-fuchsia-600 text-white" : "border-purple-400/40 bg-purple-900/60 text-purple-100 hover:bg-purple-800/80"}`}
+                          >
+                            <span className="break-words">{sub.name}</span>
+                            <span className="flex shrink-0 items-center gap-1.5">
+                              {unread > 0 && <span className="size-2 rounded-full bg-fuchsia-200" />}
+                              <span>{count}</span>
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </aside>
+                )}
 
               <section ref={listingsTopRef}>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
@@ -1245,7 +1294,7 @@ function SportsGuidesPage() {
                   </h2>
                 )}
 
-                {activeCat && (subsByCat[activeCat]?.length ?? 0) > 0 && !search.trim() && (
+                {activeCategory?.slug === "sports-passes" && activeCat && (subsByCat[activeCat]?.length ?? 0) > 0 && !search.trim() && (
                   <div className="mb-4 grid gap-2 rounded-xl border border-fuchsia-500/30 bg-purple-950/65 p-3 sm:grid-cols-2 xl:grid-cols-3">
                     {(subsByCat[activeCat] ?? []).map((sub) => {
                       const count = blogs.filter((b) => b.category_id === activeCat && b.subcategory === sub.name).length;
@@ -1449,7 +1498,7 @@ function SportsGuidesPage() {
                   <button
                     onClick={() => {
                       if (isGroupHeading(c)) { setTab("guides"); setOpenGroups([c.id]); return; }
-                      setActiveCat(c.id); setTab("guides"); scrollCardsToTop();
+                       setDismissedSubcategoryPopupFor(null); setActiveCat(c.id); setTab("guides"); scrollCardsToTop();
                     }}
                     className="text-left w-full"
                   >
