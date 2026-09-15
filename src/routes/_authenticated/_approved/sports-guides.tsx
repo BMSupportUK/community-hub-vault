@@ -1121,40 +1121,42 @@ function SportsGuidesPage() {
 
               </aside>
 
-              {openGroups[0] && (
-                <aside className="z-30 h-fit rounded-2xl border border-fuchsia-500/35 bg-purple-950/95 p-4 shadow-2xl shadow-fuchsia-950/50 backdrop-blur lg:absolute lg:right-[276px] lg:top-0 lg:w-[260px]">
+              <Dialog open={!!subDialogFor} onOpenChange={(o) => { if (!o) setSubDialogFor(null); }}>
+                <DialogContent className="max-w-2xl border-fuchsia-500/40 bg-purple-950/95 backdrop-blur">
                   {(() => {
-                  const parent = categories.find((c) => c.id === openGroups[0]);
-                  const children = childrenByParent[openGroups[0]] ?? [];
+                  const parent = categories.find((c) => c.id === subDialogFor);
+                  const children = childrenByParent[subDialogFor ?? ""] ?? [];
+                  const grandParent = parent?.parent_id ? categories.find((c) => c.id === parent.parent_id) : null;
                   return (
                     <>
-                      <div className="flex items-center justify-between gap-2 px-2 mb-3">
-                        <h3 className="font-display font-semibold text-purple-100">
-                          {parent?.name ?? "Subcategories"}
-                        </h3>
-                        <span className="flex shrink-0 items-center gap-1">
-                          {canManageCategories && parent && (
-                            <button
-                              type="button"
-                              onClick={() => addChildCategory(parent.id)}
-                              title="Add sub-category"
-                              className="p-1 rounded-md text-purple-200/70 hover:text-white hover:bg-fuchsia-600/60"
-                            >
-                              <Plus className="size-4" />
-                            </button>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => setOpenGroups([])}
-                            title="Close subcategories"
-                            className="flex items-center gap-1 rounded-full bg-fuchsia-600/80 px-2.5 py-1 text-xs font-bold text-white shadow-md shadow-fuchsia-950/50 hover:bg-fuchsia-500 hover:shadow-lg hover:shadow-fuchsia-500/40 transition-all"
-                          >
-                            <X className="size-3.5" />
-                            <span className="hidden sm:inline">Close</span>
-                          </button>
-                        </span>
-                      </div>
-                      <div className="space-y-1">
+                      <DialogHeader>
+                        <DialogTitle className="flex items-center justify-between gap-2 text-purple-100">
+                          <span>{parent?.name ?? "Sub-categories"}</span>
+                          <span className="flex shrink-0 items-center gap-1">
+                            {grandParent && (
+                              <button
+                                type="button"
+                                onClick={() => setSubDialogFor(grandParent.id)}
+                                className="rounded-full border border-fuchsia-400/50 bg-fuchsia-600/20 px-2.5 py-1 text-[11px] font-bold uppercase text-fuchsia-100 hover:bg-fuchsia-600/40"
+                              >
+                                Back to {grandParent.name}
+                              </button>
+                            )}
+                            {canManageCategories && parent && (
+                              <button
+                                type="button"
+                                onClick={() => addChildCategory(parent.id)}
+                                title="Add sub-category"
+                                className="p-1 rounded-md text-purple-200/70 hover:text-white hover:bg-fuchsia-600/60"
+                              >
+                                <Plus className="size-4" />
+                              </button>
+                            )}
+                          </span>
+                        </DialogTitle>
+                      </DialogHeader>
+                      <div className="grid max-h-[60vh] gap-1 overflow-y-auto sm:grid-cols-2">
+
                         {children.map((child) => {
                           const active = child.id === activeCat;
                           const unread = unreadCounts[child.id] ?? 0;
