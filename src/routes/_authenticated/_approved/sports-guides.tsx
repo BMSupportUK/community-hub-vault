@@ -1086,7 +1086,7 @@ function SportsGuidesPage() {
                             <GripVertical className="size-3.5 opacity-40 group-hover:opacity-80 cursor-grab shrink-0" />
                           )}
                           <button
-                            onClick={() => setOpenGroups([top.id])}
+                            onClick={() => openHeading(top.id)}
                             aria-expanded={open}
                             className="flex-1 flex items-center justify-between px-2 py-2 text-sm text-left font-semibold"
                           >
@@ -1630,7 +1630,7 @@ function SportsGuidesPage() {
                   )}
                   <button
                     onClick={() => {
-                      if (isGroupHeading(c)) { setTab("guides"); setOpenGroups([c.id]); return; }
+                      if (isGroupHeading(c)) { openHeading(c.id); return; }
                        setDismissedSubcategoryPopupFor(null); setActiveCat(c.id); setTab("guides"); scrollCardsToTop();
                     }}
                     className="text-left w-full"
