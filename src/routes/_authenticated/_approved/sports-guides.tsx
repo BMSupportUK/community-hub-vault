@@ -1055,7 +1055,7 @@ function SportsGuidesPage() {
                       </button>
                     </div>
                   )}
-                  <button onClick={() => { setActiveCat(c.id); setTab("guides"); }} className="text-left w-full">
+                  <button onClick={() => { setActiveCat(c.id); setTab("guides"); scrollCardsToTop(); }} className="text-left w-full">
                     <div className="font-display font-semibold text-lg text-purple-50">{c.name}</div>
                     <div className="text-sm text-purple-200/70 mt-1">{counts[c.id] ?? 0} guide{(counts[c.id] ?? 0) === 1 ? "" : "s"}</div>
                   </button>
