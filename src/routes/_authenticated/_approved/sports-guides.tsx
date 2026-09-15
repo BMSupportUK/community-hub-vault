@@ -689,7 +689,12 @@ function SportsGuidesPage() {
   const setCategoryParent = async (id: string, parentId: string | null) => {
     const { error } = await supabase.from("sports_categories").update({ parent_id: parentId } as never).eq("id", id);
     if (error) return toast.error(error.message);
-    if (parentId) setOpenGroups((cur) => (cur.includes(parentId) ? cur : [...cur, parentId]));
+    // Keep the moved category selected and its new heading open so the guides
+    // list keeps showing the category you just moved.
+    setOpenGroups(parentId ? [parentId] : []);
+    setDismissedSubcategoryPopupFor(null);
+    setActiveCat(id);
+    setTab("guides");
     toast.success(parentId ? "Category grouped" : "Category moved to top level");
     load();
   };
