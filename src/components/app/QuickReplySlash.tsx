@@ -213,7 +213,9 @@ export function useQuickReplySlash({
 
         <div className="px-3 py-1.5 text-[10px] text-muted-foreground border-t border-border bg-muted/40">
           {confirming
-            ? "Enter to insert · Esc to go back"
+            ? onSend
+              ? "Enter to send · Esc to go back"
+              : "Enter to insert · Esc to go back"
             : "↑↓ navigate · Enter or Tab to choose · Esc close"}
         </div>
       </div>
