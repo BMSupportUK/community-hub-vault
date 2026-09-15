@@ -266,7 +266,7 @@ function SportsGuidesPage() {
   useEffect(() => {
     if (!activeCat) return;
     const parent = categories.find((c) => c.id === activeCat)?.parent_id;
-    if (parent) setOpenGroups([parent]);
+    setOpenGroups(parent ? [parent] : []);
   }, [activeCat, categories]);
 
   // Resolve catFromUrl as either category id or slug.
@@ -801,7 +801,7 @@ function SportsGuidesPage() {
           </TabsContent>
 
           <TabsContent value="guides" className="mt-6">
-            <div className={`grid grid-cols-1 gap-6 ${search.trim() ? "lg:grid-cols-[240px_220px_minmax(0,1fr)] xl:grid-cols-[260px_220px_minmax(0,1fr)_320px]" : "lg:grid-cols-[260px_220px_minmax(0,1fr)]"}`}>
+            <div className={`grid grid-cols-1 gap-6 ${search.trim() ? (openGroups[0] ? "lg:grid-cols-[240px_220px_minmax(0,1fr)] xl:grid-cols-[260px_220px_minmax(0,1fr)_320px]" : "lg:grid-cols-[280px_1fr_340px]") : (openGroups[0] ? "lg:grid-cols-[260px_220px_minmax(0,1fr)]" : "lg:grid-cols-[280px_1fr]")}`}>
               <aside className="rounded-2xl bg-purple-950/50 border border-purple-500/30 p-4 h-fit backdrop-blur">
                 <div className="flex items-center justify-between mb-3 px-2 gap-2">
                   <h3 className="font-display font-semibold text-purple-100">Categories</h3>
@@ -923,8 +923,9 @@ function SportsGuidesPage() {
 
               </aside>
 
-              <aside className="rounded-2xl bg-purple-950/60 border border-fuchsia-500/35 p-4 h-fit backdrop-blur lg:sticky lg:top-4">
-                {openGroups[0] ? (() => {
+              {openGroups[0] && (
+                <aside className="rounded-2xl bg-purple-950/60 border border-fuchsia-500/35 p-4 h-fit backdrop-blur lg:sticky lg:top-4">
+                  {(() => {
                   const parent = categories.find((c) => c.id === openGroups[0]);
                   const children = childrenByParent[openGroups[0]] ?? [];
                   return (
@@ -954,10 +955,9 @@ function SportsGuidesPage() {
                       </div>
                     </>
                   );
-                })() : (
-                  <p className="px-2 py-1 text-sm text-purple-200/70">Select a category to view its sections.</p>
-                )}
-              </aside>
+                  })()}
+                </aside>
+              )}
 
               <section ref={listingsTopRef}>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
