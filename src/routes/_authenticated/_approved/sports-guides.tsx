@@ -1400,9 +1400,14 @@ function SportsGuidesPage() {
                     <Button variant="ghost" className="text-purple-200 hover:text-white hover:bg-purple-800/60" onClick={() => { setAddingCat(false); setNewCatName(""); }}>Cancel</Button>
                   </>
                 ) : (
-                  <Button onClick={() => setAddingCat(true)} className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0">
-                    <Plus className="size-4 mr-1" /> Add Category
-                  </Button>
+                  <>
+                    <Button onClick={() => setAddingCat(true)} className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0">
+                      <Plus className="size-4 mr-1" /> Add Category
+                    </Button>
+                    <Button onClick={addTopCategory} className="bg-gradient-to-r from-fuchsia-600 to-pink-600 hover:from-fuchsia-500 hover:to-pink-500 text-white border-0">
+                      <Plus className="size-4 mr-1" /> Add Heading
+                    </Button>
+                  </>
                 )}
                 <span className="text-xs text-purple-200/60 ml-2">Drag cards to reorder — order is saved for everyone.</span>
               </div>
@@ -1481,6 +1486,15 @@ function SportsGuidesPage() {
                       </select>
                       {isGroupHeading(c) && (
                         <div className="text-[11px] text-purple-200/60 mt-1">Move its categories out first to regroup this heading.</div>
+                      )}
+                      {c.parent_id && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setCategoryParent(c.id, null); }}
+                          className="mt-2 w-full rounded-md bg-fuchsia-600/80 hover:bg-fuchsia-500 text-white text-[11px] font-semibold px-2 py-1.5 transition"
+                          title="Turn this sub-category into its own main heading"
+                        >
+                          Make this a main heading
+                        </button>
                       )}
                     </div>
                   )}
