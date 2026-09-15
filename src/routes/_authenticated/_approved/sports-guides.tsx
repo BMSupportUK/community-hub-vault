@@ -132,6 +132,13 @@ function SportsGuidesPage() {
 
   // Persist UI state across screen swaps (route remounts).
   useEffect(() => { try { sessionStorage.setItem("sports-guides-active-tab", tab); } catch { /* ignore */ } }, [tab]);
+  // The Guides tab must stay hidden until a category is picked — for everyone, including admins.
+  useEffect(() => {
+    if (!activeCat && tab === "guides") {
+      setTab("welcome");
+      try { sessionStorage.setItem("sports-guides-active-tab", "welcome"); } catch { /* ignore */ }
+    }
+  }, [activeCat, tab]);
   useEffect(() => {
     try {
       if (activeCat) sessionStorage.setItem("sports-guides-active-cat", activeCat);
