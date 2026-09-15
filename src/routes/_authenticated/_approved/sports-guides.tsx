@@ -121,7 +121,7 @@ function SportsGuidesPage() {
     try { sessionStorage.setItem("sports-guides-open-groups", JSON.stringify(openGroups)); } catch { /* ignore */ }
   }, [openGroups]);
   const toggleGroup = (id: string) =>
-    setOpenGroups((cur) => (cur.includes(id) ? cur.filter((g) => g !== id) : [...cur, id]));
+    setOpenGroups((cur) => (cur.includes(id) ? [] : [id]));
 
 
   // (sub-filter default effect moved below subsByCat declaration)
@@ -266,7 +266,7 @@ function SportsGuidesPage() {
   useEffect(() => {
     if (!activeCat) return;
     const parent = categories.find((c) => c.id === activeCat)?.parent_id;
-    if (parent) setOpenGroups((cur) => (cur.includes(parent) ? cur : [...cur, parent]));
+    setOpenGroups(parent ? [parent] : []);
   }, [activeCat, categories]);
 
   // Resolve catFromUrl as either category id or slug.
@@ -801,7 +801,7 @@ function SportsGuidesPage() {
           </TabsContent>
 
           <TabsContent value="guides" className="mt-6">
-            <div className={`grid grid-cols-1 gap-6 ${search.trim() ? "lg:grid-cols-[280px_1fr_340px]" : "lg:grid-cols-[280px_1fr]"}`}>
+            <div className={`grid grid-cols-1 gap-6 ${search.trim() ? (openGroups[0] ? "lg:grid-cols-[240px_220px_minmax(0,1fr)] xl:grid-cols-[260px_220px_minmax(0,1fr)_320px]" : "lg:grid-cols-[280px_1fr_340px]") : (openGroups[0] ? "lg:grid-cols-[260px_220px_minmax(0,1fr)]" : "lg:grid-cols-[280px_1fr]")}`}>
               <aside className="rounded-2xl bg-purple-950/50 border border-purple-500/30 p-4 h-fit backdrop-blur">
                 <div className="flex items-center justify-between mb-3 px-2 gap-2">
                   <h3 className="font-display font-semibold text-purple-100">Categories</h3>
@@ -837,11 +837,10 @@ function SportsGuidesPage() {
                     const kids = childrenByParent[top.id] ?? [];
                     const heading = kids.length > 0;
                     const open = openGroups.includes(top.id);
-                    const rows: Category[] = heading ? (open ? kids : []) : [];
                     const headingUnread = heading
                       ? kids.reduce((sum, k) => sum + (unreadCounts[k.id] ?? 0), 0)
                       : unreadCounts[top.id] ?? 0;
-                    const renderRow = (c: Category, indented: boolean) => {
+                    const renderRow = (c: Category) => {
                       const active = c.id === activeCat;
                       const unread = unreadCounts[c.id] ?? 0;
                       return (
@@ -856,7 +855,7 @@ function SportsGuidesPage() {
                             if (dragCatId.current) reorderCategories(dragCatId.current, c.id);
                             dragCatId.current = null;
                           }}
-                          className={`group flex items-center gap-1 px-1 rounded-lg ${indented ? "ml-4" : ""} ${active ? "bg-gradient-to-r from-violet-600 to-blue-600 text-white shadow-md shadow-purple-900/40" : "text-purple-100/80 hover:bg-purple-800/40"}`}
+                          className={`group flex items-center gap-1 px-1 rounded-lg ${active ? "bg-gradient-to-r from-violet-600 to-blue-600 text-white shadow-md shadow-purple-900/40" : "text-purple-100/80 hover:bg-purple-800/40"}`}
                         >
                           {isMod && (
                             <GripVertical className="size-3.5 opacity-40 group-hover:opacity-80 cursor-grab shrink-0" />
@@ -881,7 +880,7 @@ function SportsGuidesPage() {
                       );
                     };
 
-                    if (!heading) return renderRow(top, false);
+                    if (!heading) return renderRow(top);
 
                     return (
                       <div key={top.id} className="space-y-1">
@@ -895,7 +894,7 @@ function SportsGuidesPage() {
                             if (dragCatId.current) reorderCategories(dragCatId.current, top.id);
                             dragCatId.current = null;
                           }}
-                          className="group flex items-center gap-1 px-1 rounded-lg text-purple-100/80 hover:bg-purple-800/40"
+                          className={`group flex items-center gap-1 px-1 rounded-lg ${open ? "bg-purple-800/60 text-white ring-1 ring-fuchsia-400/40" : "text-purple-100/80 hover:bg-purple-800/40"}`}
                         >
                           {isMod && (
                             <GripVertical className="size-3.5 opacity-40 group-hover:opacity-80 cursor-grab shrink-0" />
@@ -906,24 +905,59 @@ function SportsGuidesPage() {
                             className="flex-1 flex items-center justify-between px-2 py-2 text-sm text-left font-semibold"
                           >
                             <span className="flex items-center gap-2">
-                              {open ? <ChevronDown className="size-4 shrink-0" /> : <ChevronRight className="size-4 shrink-0" />}
-                              {headingUnread > 0 && !open && (
+                              <ChevronRight className="size-4 shrink-0" />
+                              {headingUnread > 0 && (
                                 <span className="size-2 rounded-full bg-fuchsia-400 shadow-[0_0_8px_rgba(232,121,249,0.9)]" />
                               )}
                               {top.name}
                             </span>
-                            {headingUnread > 0 && !open && (
+                            {headingUnread > 0 && (
                               <span className="text-xs px-2 py-0.5 rounded-full bg-fuchsia-500 text-white font-semibold">{headingUnread}</span>
                             )}
                           </button>
                         </div>
-                        {rows.map((c) => renderRow(c, true))}
                       </div>
                     );
                   })}
                 </div>
 
               </aside>
+
+              {openGroups[0] && (
+                <aside className="rounded-2xl bg-purple-950/60 border border-fuchsia-500/35 p-4 h-fit backdrop-blur lg:sticky lg:top-4">
+                  {(() => {
+                  const parent = categories.find((c) => c.id === openGroups[0]);
+                  const children = childrenByParent[openGroups[0]] ?? [];
+                  return (
+                    <>
+                      <h3 className="font-display font-semibold text-purple-100 px-2 mb-3">
+                        {parent?.name ?? "Subcategories"}
+                      </h3>
+                      <div className="space-y-1">
+                        {children.map((child) => {
+                          const active = child.id === activeCat;
+                          const unread = unreadCounts[child.id] ?? 0;
+                          return (
+                            <button
+                              key={child.id}
+                              type="button"
+                              onClick={() => { setActiveCat(child.id); scrollCardsToTop(); }}
+                              className={`w-full flex items-center justify-between gap-2 rounded-lg px-3 py-2.5 text-left text-sm transition-colors ${active ? "bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white shadow-md shadow-fuchsia-950/40" : "text-purple-100/80 hover:bg-purple-800/50"}`}
+                            >
+                              <span className="flex min-w-0 items-center gap-2">
+                                {unread > 0 && <span className="size-2 shrink-0 rounded-full bg-fuchsia-300" />}
+                                <span className="break-words">{child.name}</span>
+                              </span>
+                              {unread > 0 && <span className="shrink-0 rounded-full bg-fuchsia-500 px-2 py-0.5 text-xs font-semibold text-white">{unread}</span>}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </>
+                  );
+                  })()}
+                </aside>
+              )}
 
               <section ref={listingsTopRef}>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
@@ -958,27 +992,18 @@ function SportsGuidesPage() {
                 </div>
 
                 {activeCat && (subsByCat[activeCat]?.length ?? 0) > 0 && !search.trim() && (
-                  <div className="flex flex-wrap gap-2 mb-4">
+                  <div className="mb-4 grid gap-2 rounded-xl border border-fuchsia-500/30 bg-purple-950/65 p-3 sm:grid-cols-2 xl:grid-cols-3">
                     {(subsByCat[activeCat] ?? []).map((sub) => {
                       const count = blogs.filter((b) => b.category_id === activeCat && b.subcategory === sub.name).length;
                       const active = subFilter === sub.name;
                       const unread = unreadSubCounts[activeCat]?.[sub.name] ?? 0;
                       return (
-                        <button
-                          key={sub.id}
-                          onClick={() => setSubFilter(sub.name)}
-                          className={`group relative text-xs font-bold uppercase tracking-wider px-4 py-2 rounded-full border-2 transition-all duration-200 ${active ? "bg-gradient-to-r from-fuchsia-500 via-purple-500 to-indigo-500 text-white border-white/30 shadow-lg shadow-fuchsia-500/50 scale-105 ring-2 ring-fuchsia-400/40 ring-offset-2 ring-offset-purple-950" : "bg-purple-950/70 text-purple-100 border-purple-400/50 hover:bg-purple-800/80 hover:border-fuchsia-400/70 hover:text-white hover:shadow-md hover:shadow-purple-500/30 hover:scale-105"}`}
-                        >
-                          <span className="inline-flex items-center gap-1.5">
-                            {unread > 0 && (
-                              <span className="size-2 rounded-full bg-fuchsia-400 shadow-[0_0_8px_rgba(232,121,249,1)] animate-pulse" />
-                            )}
-                            <span className="drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]">{sub.name}</span>
-                            <span className={`ml-1 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full text-[10px] font-black ${active ? "bg-white/25 text-white" : "bg-fuchsia-500/30 text-fuchsia-100 border border-fuchsia-400/40"}`}>{count}</span>
+                        <button key={sub.id} onClick={() => setSubFilter(sub.name)} className={`flex items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left text-xs font-bold uppercase transition-colors ${active ? "border-fuchsia-300 bg-fuchsia-600 text-white" : "border-purple-400/40 bg-purple-900/60 text-purple-100 hover:bg-purple-800/80"}`}>
+                          <span className="break-words">{sub.name}</span>
+                          <span className="flex shrink-0 items-center gap-1.5">
+                            {unread > 0 && <span className="size-2 rounded-full bg-fuchsia-200" />}
+                            <span>{count}</span>
                           </span>
-                          {unread > 0 && (
-                            <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded-full bg-fuchsia-500 text-white font-bold shadow-md">{unread}</span>
-                          )}
                         </button>
                       );
                     })}
