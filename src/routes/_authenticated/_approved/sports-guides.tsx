@@ -1678,6 +1678,55 @@ function SportsGuidesPage() {
         </Tabs>
       </div>
 
+      <Dialog open={headingDialogOpen} onOpenChange={setHeadingDialogOpen}>
+        <DialogContent className="bg-slate-950 border border-fuchsia-500/40 text-purple-50 sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-fuchsia-200">Add a heading</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Input
+              value={headingName}
+              onChange={(e) => setHeadingName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); void addTopCategory(); } }}
+              placeholder="Heading name, e.g. Fighting"
+              autoFocus
+              className="bg-purple-950/60 border-purple-500/30 text-purple-50 placeholder:text-purple-300/50"
+            />
+            <div>
+              <p className="text-xs text-purple-200/70 mb-2">Pick which categories go under this heading (optional — you can drag them in later):</p>
+              <div className="max-h-56 overflow-y-auto space-y-1 rounded-lg border border-purple-500/20 bg-purple-950/40 p-2">
+                {orderedCategories.filter((c) => !isGroupHeading(c)).length === 0 && (
+                  <p className="text-xs text-purple-300/50 px-1 py-2">No categories available to file yet.</p>
+                )}
+                {orderedCategories.filter((c) => !isGroupHeading(c)).map((c) => {
+                  const parent = c.parent_id ? categories.find((p) => p.id === c.parent_id) : null;
+                  const checked = headingPicks.includes(c.id);
+                  return (
+                    <label key={c.id} className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-fuchsia-600/20 cursor-pointer text-sm">
+                      <Checkbox
+                        checked={checked}
+                        onCheckedChange={(v) =>
+                          setHeadingPicks((cur) => (v ? [...cur, c.id] : cur.filter((id) => id !== c.id)))
+                        }
+                        className="border-purple-400/50 data-[state=checked]:bg-fuchsia-600 data-[state=checked]:border-fuchsia-500"
+                      />
+                      <span className="text-purple-100">{c.name}</span>
+                      {parent && <span className="text-[11px] text-purple-300/60">(currently in {parent.name})</span>}
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setHeadingDialogOpen(false)} className="text-purple-200 hover:text-white hover:bg-purple-800/40">Cancel</Button>
+            <Button onClick={() => void addTopCategory()} className="bg-gradient-to-r from-fuchsia-600 to-pink-600 hover:from-fuchsia-500 hover:to-pink-500 text-white border-0">
+              Create heading
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
     </div>
   );
 }
