@@ -1259,7 +1259,8 @@ function SportsGuidesPage() {
           <TabsContent value="welcome" className="mt-6">
             <div className="relative grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_260px]">
               <div className="space-y-6">
-                <div className="relative flex-1 group">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <div className="relative flex-1 group">
                   <div className="absolute -inset-0.5 rounded-xl bg-gradient-to-r from-fuchsia-500 via-purple-500 to-indigo-500 opacity-60 blur-sm group-focus-within:opacity-100 group-focus-within:blur-md transition-all duration-300" />
                   <div className="relative flex items-center rounded-xl bg-slate-950/90 ring-1 ring-fuchsia-400/40 shadow-lg shadow-fuchsia-900/40 backdrop-blur-md">
                     <div className="pl-3 pr-2 py-2.5 grid place-items-center">
