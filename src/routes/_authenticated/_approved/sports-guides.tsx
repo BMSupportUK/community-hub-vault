@@ -1349,7 +1349,7 @@ function SportsGuidesPage() {
           </TabsContent>
 
           <TabsContent value="guides" className="mt-6">
-            <div className={`relative grid grid-cols-1 gap-6 ${search.trim() ? "lg:grid-cols-[minmax(0,1fr)_320px]" : ""}`}>
+            <div className={`relative grid grid-cols-1 gap-6 ${search.trim() ? "lg:grid-cols-[minmax(0,1fr)_320px]" : activeCategory ? "lg:grid-cols-[minmax(0,1fr)_56px]" : ""}`}>
 
               {activeCategory && activeCategory.slug !== "sports-passes" && (
                 <Dialog
