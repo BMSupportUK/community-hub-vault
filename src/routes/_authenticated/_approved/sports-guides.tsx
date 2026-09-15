@@ -1623,8 +1623,27 @@ function SportsGuidesPage() {
                 <span className="text-xs text-purple-200/60 ml-2">Drag cards to reorder — order is saved for everyone.</span>
               </div>
             )}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {orderedCategories.map((c) => (
+            <div className="space-y-5">
+              {topCategories.map((top) => {
+                const descendants: Category[] = [];
+                const collectChildren = (parentId: string) => {
+                  for (const child of childrenByParent[parentId] ?? []) {
+                    descendants.push(child);
+                    collectChildren(child.id);
+                  }
+                };
+                collectChildren(top.id);
+                const groupedCategories = [top, ...descendants];
+                return (
+                <section key={top.id} className={`rounded-xl ${descendants.length > 0 ? "border border-fuchsia-500/35 bg-purple-950/35 p-3" : ""}`}>
+                  {descendants.length > 0 && (
+                    <div className="mb-3 flex items-center gap-2 border-b border-fuchsia-500/25 pb-2">
+                      <span className="text-xs font-bold uppercase text-fuchsia-200">{top.name}</span>
+                      <span className="text-[10px] text-purple-200/60">Main category</span>
+                    </div>
+                  )}
+                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {groupedCategories.map((c) => (
                 <div
                   key={c.id}
                   draggable={isMod}
@@ -1636,7 +1655,7 @@ function SportsGuidesPage() {
                     if (dragCatId.current) reorderCategories(dragCatId.current, c.id);
                     dragCatId.current = null;
                   }}
-                  className="rounded-2xl bg-purple-950/50 border border-purple-500/30 p-5 hover:border-fuchsia-500/70 hover:shadow-[0_0_30px_-10px_rgba(217,70,239,0.6)] transition relative backdrop-blur"
+                  className={`rounded-2xl border p-5 transition relative backdrop-blur hover:border-fuchsia-500/70 hover:shadow-[0_0_30px_-10px_rgba(217,70,239,0.6)] ${c.parent_id ? "ml-3 border-fuchsia-500/25 bg-purple-900/40" : "border-purple-500/30 bg-purple-950/50"}`}
                 >
                   {isMod && (
                     <div className="absolute top-2 right-2 flex items-center gap-1">
@@ -1804,7 +1823,11 @@ function SportsGuidesPage() {
                     </div>
                   )}
                 </div>
-              ))}
+                  ))}
+                  </div>
+                </section>
+                );
+              })}
             </div>
 
             {showBackTop && (
