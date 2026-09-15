@@ -986,7 +986,7 @@ function SportsGuidesPage() {
                             <GripVertical className="size-3.5 opacity-40 group-hover:opacity-80 cursor-grab shrink-0" />
                           )}
                           <button
-                            onClick={() => { setDismissedSubcategoryPopupFor(null); setActiveCat(c.id); scrollCardsToTop(); }}
+                            onClick={() => { setDismissedSubcategoryPopupFor(null); setActiveCat(c.id); setTab("guides"); scrollCardsToTop(); }}
                             className="flex-1 flex items-center justify-between px-2 py-2 text-sm text-left"
                           >
                             <span className="flex items-center gap-2">
@@ -1098,7 +1098,7 @@ function SportsGuidesPage() {
               </aside>
 
               {openGroups[0] && (
-                <aside className="z-30 h-fit rounded-2xl border border-fuchsia-500/35 bg-purple-950/95 p-4 shadow-2xl shadow-fuchsia-950/50 backdrop-blur lg:absolute lg:left-[256px] lg:top-0 lg:w-[220px]">
+                <aside className="z-30 h-fit rounded-2xl border border-fuchsia-500/35 bg-purple-950/95 p-4 shadow-2xl shadow-fuchsia-950/50 backdrop-blur lg:absolute lg:right-[276px] lg:top-0 lg:w-[260px]">
                   {(() => {
                   const parent = categories.find((c) => c.id === openGroups[0]);
                   const children = childrenByParent[openGroups[0]] ?? [];
@@ -1168,7 +1168,7 @@ function SportsGuidesPage() {
                               )}
                               <button
                                 type="button"
-                                 onClick={() => { setDismissedSubcategoryPopupFor(null); setActiveCat(child.id); scrollCardsToTop(); }}
+                                 onClick={() => { setDismissedSubcategoryPopupFor(null); setActiveCat(child.id); setTab("guides"); scrollCardsToTop(); }}
                                 className="flex flex-1 items-center justify-between gap-2 px-2 py-2.5 text-left text-sm"
                               >
                                 <span className="flex min-w-0 items-center gap-2">
