@@ -1224,19 +1224,19 @@ function SportsGuidesPage() {
                                 onClick={() => {
                                   chooseCategory(child.id);
                                 }}
-                                className="flex flex-1 items-center justify-between gap-2 px-2 py-2.5 text-left text-sm"
+                                className="flex flex-1 flex-col items-stretch gap-1.5 px-2 py-2.5 text-left text-sm"
                               >
-                                <span className="flex min-w-0 flex-1 items-center gap-2">
-                                  {unread > 0 && <span className="size-2 shrink-0 rounded-full bg-fuchsia-300" />}
-                                  <span className="truncate whitespace-nowrap">{child.name}</span>
+                                <span className="flex min-w-0 items-start gap-2">
+                                  {unread > 0 && <span className="mt-1.5 size-2 shrink-0 rounded-full bg-fuchsia-300" />}
+                                  <span className="min-w-0 break-words leading-snug">{child.name}</span>
                                 </span>
-                                <span className="flex shrink-0 items-center gap-1.5">
+                                <span className="flex flex-wrap items-center gap-1.5">
                                   {(() => {
                                     const subCount = (childrenByParent[child.id]?.length ?? 0) + (subsByCat[child.id]?.length ?? 0);
                                     return subCount > 1 ? (
-                                      <span className="whitespace-nowrap rounded-full border border-fuchsia-400/50 bg-fuchsia-600/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-fuchsia-100">View more categories</span>
+                                      <span className="rounded-full border border-fuchsia-400/50 bg-fuchsia-600/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-fuchsia-100">View more categories</span>
                                     ) : (
-                                      <span className="whitespace-nowrap rounded-full border border-purple-400/40 bg-purple-800/60 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-purple-100/90">Click to read guides</span>
+                                      <span className="rounded-full border border-purple-400/40 bg-purple-800/60 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-purple-100/90">Click to read guides</span>
                                     );
                                   })()}
                                   {unread > 0 && <span className="rounded-full bg-fuchsia-500 px-2 py-0.5 text-xs font-semibold text-white">{unread}</span>}
@@ -1271,11 +1271,11 @@ function SportsGuidesPage() {
                                 setTab("guides");
                                 scrollCardsToTop();
                               }}
-                              className="flex items-center justify-between gap-2 rounded-lg border border-purple-400/40 bg-purple-900/60 px-3 py-2.5 text-left text-sm font-semibold text-purple-100 transition-colors hover:border-fuchsia-400/60 hover:bg-purple-800/80"
+                              className="flex flex-col items-stretch gap-1.5 rounded-lg border border-purple-400/40 bg-purple-900/60 px-3 py-2.5 text-left text-sm font-semibold text-purple-100 transition-colors hover:border-fuchsia-400/60 hover:bg-purple-800/80"
                             >
-                              <span className="min-w-0 truncate">{sub.name}</span>
-                              <span className="flex shrink-0 items-center gap-1.5">
-                                <span className="whitespace-nowrap rounded-full border border-purple-400/40 bg-purple-800/60 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-purple-100/90">Click to read guides</span>
+                              <span className="min-w-0 break-words leading-snug">{sub.name}</span>
+                              <span className="flex flex-wrap items-center gap-1.5">
+                                <span className="rounded-full border border-purple-400/40 bg-purple-800/60 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-purple-100/90">Click to read guides</span>
                                 {unread > 0 && <span className="size-2 rounded-full bg-fuchsia-300" />}
                                 <span className="rounded-full bg-purple-950/70 px-2 py-0.5 text-xs">{count}</span>
                               </span>
