@@ -700,13 +700,13 @@ function SportsGuidesPage() {
   const guideDropProps = (categoryId: string) =>
     isMod
       ? {
-          onDragOver: (e: React.DragEvent) => {
+          onDragOver: (e: ReactDragEvent) => {
             if (!dragBlogId.current) return;
             e.preventDefault();
             setDropCatId(categoryId);
           },
           onDragLeave: () => setDropCatId((cur) => (cur === categoryId ? null : cur)),
-          onDrop: (e: React.DragEvent) => {
+          onDrop: (e: ReactDragEvent) => {
             if (!dragBlogId.current) return;
             e.preventDefault();
             e.stopPropagation();
