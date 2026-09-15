@@ -668,6 +668,23 @@ function SportsGuidesPage() {
   };
 
 
+  /**
+   * Dropping one category onto another: file it under a top-level target
+   * (turning that target into a heading), otherwise just reorder.
+   */
+  const dropCategoryOnCategory = (draggedId: string, targetId: string) => {
+    if (draggedId === targetId) return;
+    const dragged = categories.find((c) => c.id === draggedId);
+    const target = categories.find((c) => c.id === targetId);
+    if (!dragged || !target) return;
+    if (!target.parent_id && !isGroupHeading(dragged) && (dragged.parent_id ?? null) !== target.id) {
+      void setCategoryParent(draggedId, target.id);
+      return;
+    }
+    void reorderCategories(draggedId, targetId);
+  };
+
+
   const reorderBlogs = async (fromId: string, toId: string) => {
     if (fromId === toId || !activeCat) return;
     // Swap two blogs within the active category — swap their sort_order so
