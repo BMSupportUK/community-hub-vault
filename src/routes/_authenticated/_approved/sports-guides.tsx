@@ -267,6 +267,22 @@ function SportsGuidesPage() {
     () => orderedCategories.filter((c) => !isGroupHeading(c)),
     [orderedCategories, childrenByParent],
   );
+  /**
+   * Opening a heading shows its sub-categories AND lands the guides list on one
+   * of them, so a heading never looks empty after categories are moved into it.
+   */
+  const openHeading = (id: string) => {
+    const kids = childrenByParent[id] ?? [];
+    setOpenGroups([id]);
+    setDismissedSubcategoryPopupFor(null);
+    setTab("guides");
+    const target = kids.find((k) => k.id === activeCat) ?? kids[0];
+    if (target) {
+      setActiveCat(target.id);
+      scrollCardsToTop();
+    }
+  };
+
   /** The category the guides list should land on by default. */
   const defaultCatId = () =>
     leafCategories.find((c) => c.slug === "daily-sports-ppv")?.id ?? leafCategories[0]?.id;
