@@ -1273,7 +1273,7 @@ function SportsGuidesPage() {
                               }}
                               className="flex items-center justify-between gap-2 rounded-lg border border-purple-400/40 bg-purple-900/60 px-3 py-2.5 text-left text-sm font-semibold text-purple-100 transition-colors hover:border-fuchsia-400/60 hover:bg-purple-800/80"
                             >
-                              <span className="break-words">{sub.name}</span>
+                              <span className="min-w-0 truncate">{sub.name}</span>
                               <span className="flex shrink-0 items-center gap-1.5">
                                 <span className="whitespace-nowrap rounded-full border border-purple-400/40 bg-purple-800/60 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-purple-100/90">Click to read guides</span>
                                 {unread > 0 && <span className="size-2 rounded-full bg-fuchsia-300" />}
