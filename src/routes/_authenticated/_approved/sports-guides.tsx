@@ -919,14 +919,26 @@ function SportsGuidesPage() {
                           key={c.id}
                           draggable={isMod}
                           onDragStart={() => { dragCatId.current = c.id; }}
-                          onDragOver={(e) => { if (isMod) e.preventDefault(); }}
+                          onDragOver={(e) => {
+                            if (!isMod) return;
+                            e.preventDefault();
+                            if (dragBlogId.current) setDropCatId(c.id);
+                          }}
+                          onDragLeave={() => setDropCatId((cur) => (cur === c.id ? null : cur))}
                           onDrop={(e) => {
                             if (!isMod) return;
                             e.preventDefault();
+                            if (dragBlogId.current) {
+                              void moveBlogToCategory(dragBlogId.current, c.id);
+                              dragBlogId.current = null;
+                              setDraggingBlog(false);
+                              setDropCatId(null);
+                              return;
+                            }
                             if (dragCatId.current) reorderCategories(dragCatId.current, c.id);
                             dragCatId.current = null;
                           }}
-                          className={`group flex items-center gap-1 px-1 rounded-lg ${active ? "bg-gradient-to-r from-violet-600 to-blue-600 text-white shadow-md shadow-purple-900/40" : "text-purple-100/80 hover:bg-purple-800/40"}`}
+                          className={`group flex items-center gap-1 px-1 rounded-lg ${dropCatId === c.id ? "ring-2 ring-emerald-400 bg-emerald-500/20" : ""} ${active ? "bg-gradient-to-r from-violet-600 to-blue-600 text-white shadow-md shadow-purple-900/40" : "text-purple-100/80 hover:bg-purple-800/40"}`}
                         >
                           {isMod && (
                             <GripVertical className="size-3.5 opacity-40 group-hover:opacity-80 cursor-grab shrink-0" />
