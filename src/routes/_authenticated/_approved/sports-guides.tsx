@@ -1230,8 +1230,8 @@ function SportsGuidesPage() {
                     </>
                   );
                   })()}
-                </aside>
-              )}
+                </DialogContent>
+              </Dialog>
     </>
   );
 
