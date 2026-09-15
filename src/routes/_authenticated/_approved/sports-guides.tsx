@@ -643,20 +643,39 @@ function SportsGuidesPage() {
     load();
   };
 
-  /** Create a brand-new main heading at the top level. */
+  /** Open the new-heading dialog (name + pick which categories file under it). */
+  const openHeadingDialog = () => {
+    setHeadingName("");
+    setHeadingPicks([]);
+    setHeadingDialogOpen(true);
+  };
+
+  /** Create a brand-new main heading and file the picked categories under it. */
   const addTopCategory = async () => {
-    const name = prompt("New heading name")?.trim();
-    if (!name) return;
+    const name = headingName.trim();
+    if (!name) return toast.error("Enter a heading name");
     if (categories.some((c) => c.name.toLowerCase() === name.toLowerCase())) {
       return toast.error("A category with that name already exists");
     }
     const slug = `${name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")}-${Date.now().toString(36)}`;
     const nextOrder = (categories[categories.length - 1]?.sort_order ?? 0) + 10;
-    const { error } = await supabase
+    const { data: created, error } = await supabase
       .from("sports_categories")
-      .insert({ name, slug, sort_order: nextOrder } as never);
+      .insert({ name, slug, sort_order: nextOrder } as never)
+      .select("id")
+      .single();
     if (error) return toast.error(error.message);
-    toast.success("Heading added");
+    const newId = (created as { id: string } | null)?.id;
+    if (newId && headingPicks.length > 0) {
+      const { error: moveErr } = await supabase
+        .from("sports_categories")
+        .update({ parent_id: newId } as never)
+        .in("id", headingPicks);
+      if (moveErr) return toast.error(moveErr.message);
+      setOpenGroups((cur) => (cur.includes(newId) ? cur : [...cur, newId]));
+    }
+    setHeadingDialogOpen(false);
+    toast.success(headingPicks.length > 0 ? `Heading added with ${headingPicks.length} categor${headingPicks.length === 1 ? "y" : "ies"}` : "Heading added");
     load();
   };
 
