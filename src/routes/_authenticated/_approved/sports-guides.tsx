@@ -872,8 +872,8 @@ function SportsGuidesPage() {
           </TabsContent>
 
           <TabsContent value="guides" className="mt-6">
-            <div className={`grid grid-cols-1 gap-6 ${search.trim() ? (openGroups[0] ? "lg:grid-cols-[220px_200px_minmax(0,1fr)_260px] xl:grid-cols-[240px_220px_minmax(0,1fr)_280px]" : "lg:grid-cols-[240px_minmax(0,1fr)_280px_320px]") : (openGroups[0] ? "lg:grid-cols-[220px_200px_minmax(0,1fr)_260px]" : "lg:grid-cols-[240px_minmax(0,1fr)_280px]")}`}>
-              <aside className="rounded-2xl bg-purple-950/50 border border-purple-500/30 p-4 h-fit backdrop-blur">
+            <div className={`relative grid grid-cols-1 gap-6 ${search.trim() ? "lg:grid-cols-[240px_minmax(0,1fr)_320px]" : "lg:grid-cols-[240px_minmax(0,1fr)]"}`}>
+              <aside className="relative z-20 rounded-2xl bg-purple-950/50 border border-purple-500/30 p-4 h-fit backdrop-blur">
                 <div className="flex items-center justify-between mb-3 px-2 gap-2">
                   <h3 className="font-display font-semibold text-purple-100">Categories</h3>
                   {user && blogs.some(isUnread) && (
@@ -1050,7 +1050,7 @@ function SportsGuidesPage() {
               </aside>
 
               {openGroups[0] && (
-                <aside className="rounded-2xl bg-purple-950/60 border border-fuchsia-500/35 p-4 h-fit backdrop-blur lg:sticky lg:top-4">
+                <aside className="z-30 h-fit rounded-2xl border border-fuchsia-500/35 bg-purple-950/95 p-4 shadow-2xl shadow-fuchsia-950/50 backdrop-blur lg:absolute lg:left-[256px] lg:top-0 lg:w-[220px]">
                   {(() => {
                   const parent = categories.find((c) => c.id === openGroups[0]);
                   const children = childrenByParent[openGroups[0]] ?? [];
@@ -1130,6 +1130,43 @@ function SportsGuidesPage() {
                   )}
                 </div>
 
+                {activeCategory && !search.trim() && (
+                  <div className="mb-4 rounded-xl border border-purple-500/30 bg-slate-950/75 p-4 backdrop-blur">
+                    <h2 className="font-display text-xl font-bold text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.85)]">
+                      <span className="bg-gradient-to-r from-fuchsia-300 to-sky-300 bg-clip-text text-transparent">{activeCategory.name}</span>{" "}Guides
+                    </h2>
+                    <div className="mt-3 flex flex-wrap gap-1" aria-label="Jump to guide title by letter">
+                      {Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i)).map((letter) => {
+                        const has = !!azMap[letter];
+                        const unread = azUnread.has(letter);
+                        return (
+                          <button
+                            key={letter}
+                            onClick={() => jumpToLetter(letter)}
+                            disabled={!has}
+                            title={
+                              unread
+                                ? `Unread guide starting with ${letter}`
+                                : has
+                                  ? `Jump to first guide title starting with ${letter}`
+                                  : `No guide title starting with ${letter}`
+                            }
+                            className={`w-7 h-7 grid place-items-center rounded text-[11px] font-bold transition-colors ring-1 ${
+                              unread
+                                ? "bg-fuchsia-500 text-white animate-pulse ring-fuchsia-300 cursor-pointer"
+                                : has
+                                ? "bg-slate-900/80 text-white ring-purple-400/40 hover:bg-fuchsia-600 hover:ring-fuchsia-300 cursor-pointer"
+                                : "bg-slate-900/40 text-purple-200/40 ring-purple-500/10 cursor-not-allowed"
+                            }`}
+                          >
+                            {letter}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
                 {activeCat && (subsByCat[activeCat]?.length ?? 0) > 0 && !search.trim() && (
                   <div className="mb-4 grid gap-2 rounded-xl border border-fuchsia-500/30 bg-purple-950/65 p-3 sm:grid-cols-2 xl:grid-cols-3">
                     {(subsByCat[activeCat] ?? []).map((sub) => {
@@ -1161,43 +1198,6 @@ function SportsGuidesPage() {
                   </div>
                 )}
               </section>
-
-              {activeCategory && !search.trim() && (
-                <aside className="rounded-2xl bg-slate-950/75 border border-purple-500/30 backdrop-blur h-fit lg:sticky lg:top-4 p-4">
-                  <h2 className="font-display text-xl font-bold text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.85)]">
-                    <span className="bg-gradient-to-r from-fuchsia-300 to-sky-300 bg-clip-text text-transparent">{activeCategory.name}</span>{" "}Guides
-                  </h2>
-                  <div className="mt-3 flex flex-wrap gap-1" aria-label="Jump to guide title by letter">
-                    {Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i)).map((letter) => {
-                      const has = !!azMap[letter];
-                      const unread = azUnread.has(letter);
-                      return (
-                        <button
-                          key={letter}
-                          onClick={() => jumpToLetter(letter)}
-                          disabled={!has}
-                          title={
-                            unread
-                              ? `Unread guide starting with ${letter}`
-                              : has
-                                ? `Jump to first guide title starting with ${letter}`
-                                : `No guide title starting with ${letter}`
-                          }
-                          className={`w-7 h-7 grid place-items-center rounded text-[11px] font-bold transition-colors ring-1 ${
-                            unread
-                              ? "bg-fuchsia-500 text-white animate-pulse ring-fuchsia-300 cursor-pointer"
-                              : has
-                              ? "bg-slate-900/80 text-white ring-purple-400/40 hover:bg-fuchsia-600 hover:ring-fuchsia-300 cursor-pointer"
-                              : "bg-slate-900/40 text-purple-200/40 ring-purple-500/10 cursor-not-allowed"
-                          }`}
-                        >
-                          {letter}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </aside>
-              )}
 
               {search.trim() && (
                 <aside className="rounded-2xl bg-purple-950/60 border border-purple-500/30 backdrop-blur h-fit lg:sticky lg:top-4 overflow-hidden">
