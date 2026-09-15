@@ -483,7 +483,7 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
       to: "/sports-guides",
       search: {
         cat: editing.category_id || undefined,
-        sub: payload.subcategory || undefined,
+        sub: payload.subcategory ?? "",
       },
     });
     } catch (e: any) {
