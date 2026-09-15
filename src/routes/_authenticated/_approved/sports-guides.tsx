@@ -1276,6 +1276,7 @@ function SportsGuidesPage() {
                             >
                               <span className="break-words">{sub.name}</span>
                               <span className="flex shrink-0 items-center gap-1.5">
+                                <span className="whitespace-nowrap rounded-full border border-purple-400/40 bg-purple-800/60 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-purple-100/90">Click to read guides</span>
                                 {unread > 0 && <span className="size-2 rounded-full bg-fuchsia-300" />}
                                 <span className="rounded-full bg-purple-950/70 px-2 py-0.5 text-xs">{count}</span>
                               </span>
