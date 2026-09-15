@@ -255,7 +255,15 @@ function SportsGuidesPage() {
   const topCategories = useMemo(() => categories.filter((c) => !c.parent_id), [categories]);
   /** Headings first, each followed by its own categories — used by the admin grid. */
   const orderedCategories = useMemo(
-    () => topCategories.flatMap((c) => [c, ...(childrenByParent[c.id] ?? [])]),
+    () => {
+      const out: Category[] = [];
+      const walk = (c: Category) => {
+        out.push(c);
+        for (const kid of childrenByParent[c.id] ?? []) walk(kid);
+      };
+      topCategories.forEach(walk);
+      return out;
+    },
     [topCategories, childrenByParent],
   );
   /** A heading with categories under it never holds guides itself. */
