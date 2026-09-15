@@ -121,7 +121,7 @@ function SportsGuidesPage() {
     try { sessionStorage.setItem("sports-guides-open-groups", JSON.stringify(openGroups)); } catch { /* ignore */ }
   }, [openGroups]);
   const toggleGroup = (id: string) =>
-    setOpenGroups((cur) => (cur.includes(id) ? cur.filter((g) => g !== id) : [...cur, id]));
+    setOpenGroups((cur) => (cur.includes(id) ? [] : [id]));
 
 
   // (sub-filter default effect moved below subsByCat declaration)
@@ -266,7 +266,7 @@ function SportsGuidesPage() {
   useEffect(() => {
     if (!activeCat) return;
     const parent = categories.find((c) => c.id === activeCat)?.parent_id;
-    if (parent) setOpenGroups((cur) => (cur.includes(parent) ? cur : [...cur, parent]));
+    if (parent) setOpenGroups([parent]);
   }, [activeCat, categories]);
 
   // Resolve catFromUrl as either category id or slug.
