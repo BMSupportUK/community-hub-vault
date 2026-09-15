@@ -354,6 +354,24 @@ function SportsGuidesPage() {
     try { sessionStorage.setItem(SG_FOCUS_KEY, id); } catch { /* ignore */ }
   };
 
+  // Coming back from the editor/reader, always show the guide we came from —
+  // even when its sub-category isn't the category's default (or is blank),
+  // which previously filtered the card out of the list entirely.
+  const focusTargeted = useRef(false);
+  useEffect(() => {
+    if (focusTargeted.current || !blogs.length) return;
+    let id: string | null = null;
+    try { id = sessionStorage.getItem(SG_FOCUS_KEY); } catch { /* ignore */ }
+    if (!id) return;
+    const target = blogs.find((b) => b.id === id);
+    if (!target) return;
+    focusTargeted.current = true;
+    setTab("guides");
+    setActiveCat(target.category_id);
+    skipDefaultSubOnce.current = true;
+    setSubFilter(target.subcategory || null);
+  }, [blogs]);
+
   const focusRestored = useRef(false);
   useEffect(() => {
     if (focusRestored.current || !filtered.length) return;

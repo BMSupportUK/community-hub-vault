@@ -411,7 +411,9 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
       to: "/sports-guides",
       search: {
         cat: editing?.category_id || undefined,
-        sub: editing?.subcategory || undefined,
+        // Always send the guide's own sub-section (blank string when it has
+        // none) so the list shows this guide's card instead of the default.
+        sub: editing?.subcategory ?? "",
       },
     });
   };
@@ -481,7 +483,7 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
       to: "/sports-guides",
       search: {
         cat: editing.category_id || undefined,
-        sub: payload.subcategory || undefined,
+        sub: payload.subcategory ?? "",
       },
     });
     } catch (e: any) {
