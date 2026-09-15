@@ -310,13 +310,13 @@ function SportsGuidesPage() {
     return bySlug?.id ?? null;
   }, [catFromUrl, categories]);
 
+  // Only honour an explicit category from the URL. Do NOT auto-select a default
+  // category: the Guides tab must stay hidden until the visitor picks one on Welcome.
   useEffect(() => {
-    if (categories.length) {
-      const preferred = defaultCatId();
-      if (preferred) setActiveCat((cur) => cur ?? resolvedCatFromUrl ?? preferred);
-    }
+    if (resolvedCatFromUrl) setActiveCat((cur) => cur ?? resolvedCatFromUrl);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categories, resolvedCatFromUrl]);
+
 
   // If we arrived back here from new/edit/read, jump straight to the category.
   useEffect(() => {
