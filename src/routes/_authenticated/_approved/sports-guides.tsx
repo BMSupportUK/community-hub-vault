@@ -1487,6 +1487,15 @@ function SportsGuidesPage() {
                       {isGroupHeading(c) && (
                         <div className="text-[11px] text-purple-200/60 mt-1">Move its categories out first to regroup this heading.</div>
                       )}
+                      {c.parent_id && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); setCategoryParent(c.id, null); }}
+                          className="mt-2 w-full rounded-md bg-fuchsia-600/80 hover:bg-fuchsia-500 text-white text-[11px] font-semibold px-2 py-1.5 transition"
+                          title="Turn this sub-category into its own main heading"
+                        >
+                          Make this a main heading
+                        </button>
+                      )}
                     </div>
                   )}
                   {canManageCategories && (
