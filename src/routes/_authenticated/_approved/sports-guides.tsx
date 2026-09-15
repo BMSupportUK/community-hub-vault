@@ -1021,6 +1021,16 @@ function SportsGuidesPage() {
                               <Plus className="size-3.5" />
                             </button>
                           )}
+                          {canManageCategories && c.parent_id && (
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); setCategoryParent(c.id, null); }}
+                              title="Make this a heading (move to top level)"
+                              className="shrink-0 mr-1 p-1 rounded-md text-purple-200/70 hover:text-white hover:bg-fuchsia-600/60"
+                            >
+                              <ArrowUp className="size-3.5" />
+                            </button>
+                          )}
                          </div>
                        );
                      };
