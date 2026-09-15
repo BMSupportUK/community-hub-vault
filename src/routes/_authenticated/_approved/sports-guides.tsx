@@ -1148,7 +1148,7 @@ function SportsGuidesPage() {
               </aside>
 
               <Dialog open={!!subDialogFor} onOpenChange={(o) => { if (!o) setSubDialogFor(null); }}>
-                <DialogContent className="max-w-2xl border-fuchsia-500/40 bg-purple-950/95 backdrop-blur">
+                <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-2xl lg:max-w-4xl xl:max-w-6xl 2xl:max-w-7xl border-fuchsia-500/40 bg-purple-950/95 backdrop-blur">
                   {(() => {
                   const parent = categories.find((c) => c.id === subDialogFor);
                   const children = childrenByParent[subDialogFor ?? ""] ?? [];
@@ -1182,7 +1182,7 @@ function SportsGuidesPage() {
                           </span>
                         </DialogTitle>
                       </DialogHeader>
-                      <div className="grid max-h-[60vh] gap-1 overflow-y-auto sm:grid-cols-2">
+                      <div className="grid max-h-[60vh] gap-1 overflow-y-auto sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
 
                         {children.map((child) => {
                           const active = child.id === activeCat;
@@ -1226,9 +1226,9 @@ function SportsGuidesPage() {
                                 }}
                                 className="flex flex-1 items-center justify-between gap-2 px-2 py-2.5 text-left text-sm"
                               >
-                                <span className="flex min-w-0 items-center gap-2">
+                                <span className="flex min-w-0 flex-1 items-center gap-2">
                                   {unread > 0 && <span className="size-2 shrink-0 rounded-full bg-fuchsia-300" />}
-                                  <span className="break-words">{child.name}</span>
+                                  <span className="truncate whitespace-nowrap">{child.name}</span>
                                 </span>
                                 <span className="flex shrink-0 items-center gap-1.5">
                                   {(() => {
@@ -1273,7 +1273,7 @@ function SportsGuidesPage() {
                               }}
                               className="flex items-center justify-between gap-2 rounded-lg border border-purple-400/40 bg-purple-900/60 px-3 py-2.5 text-left text-sm font-semibold text-purple-100 transition-colors hover:border-fuchsia-400/60 hover:bg-purple-800/80"
                             >
-                              <span className="break-words">{sub.name}</span>
+                              <span className="min-w-0 truncate">{sub.name}</span>
                               <span className="flex shrink-0 items-center gap-1.5">
                                 <span className="whitespace-nowrap rounded-full border border-purple-400/40 bg-purple-800/60 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-purple-100/90">Click to read guides</span>
                                 {unread > 0 && <span className="size-2 rounded-full bg-fuchsia-300" />}
@@ -1423,11 +1423,11 @@ function SportsGuidesPage() {
                   open={openSubcategoryPopupFor === activeCategory.id}
                   onOpenChange={(o) => { if (!o) setOpenSubcategoryPopupFor(null); }}
                 >
-                  <DialogContent className="max-w-2xl border-fuchsia-500/40 bg-slate-950/95 backdrop-blur">
+                  <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-2xl lg:max-w-4xl xl:max-w-6xl 2xl:max-w-7xl border-fuchsia-500/40 bg-slate-950/95 backdrop-blur">
                     <DialogHeader>
                       <DialogTitle className="text-purple-100">{activeCategory.name} sub-categories</DialogTitle>
                     </DialogHeader>
-                    <div className="grid max-h-[60vh] grid-cols-2 gap-2 overflow-y-auto xl:grid-cols-3">
+                    <div className="grid max-h-[60vh] grid-cols-2 gap-2 overflow-y-auto sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
                       {(subsByCat[activeCategory.id] ?? []).map((sub) => {
                         const count = blogs.filter((b) => b.category_id === activeCategory.id && b.subcategory === sub.name).length;
                         const active = subFilter === sub.name;
@@ -1439,7 +1439,7 @@ function SportsGuidesPage() {
                             onClick={() => { setSubFilter(sub.name); setOpenSubcategoryPopupFor(null); scrollCardsToTop(); }}
                             className={`flex items-center justify-between gap-2 rounded-lg border px-3 py-2.5 text-left text-xs font-bold uppercase transition-colors ${active ? "border-fuchsia-300 bg-fuchsia-600 text-white" : "border-purple-400/40 bg-purple-900/60 text-purple-100 hover:bg-purple-800/80"}`}
                           >
-                            <span className="break-words leading-tight">{sub.name}</span>
+                            <span className="min-w-0 truncate leading-tight">{sub.name}</span>
                             <span className="flex shrink-0 items-center gap-1.5">
                               {unread > 0 && <span className="size-2 rounded-full bg-fuchsia-200" />}
                               <span>{count}</span>
