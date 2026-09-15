@@ -1424,9 +1424,20 @@ function SportsGuidesPage() {
                 </div>
 
                 {activeCategory && !search.trim() && (
-                  <h2 className="mb-4 font-display text-xl font-bold text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.85)]">
-                    <span className="bg-gradient-to-r from-fuchsia-300 to-sky-300 bg-clip-text text-transparent">{activeCategory.name}</span>{" "}Guides
-                  </h2>
+                  <div className="mb-4 flex flex-wrap items-center gap-3">
+                    <h2 className="font-display text-xl font-bold text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.85)]">
+                      <span className="bg-gradient-to-r from-fuchsia-300 to-sky-300 bg-clip-text text-transparent">{activeCategory.name}</span>{" "}Guides
+                    </h2>
+                    {activeCategory.slug !== "sports-passes" && (subsByCat[activeCategory.id]?.length ?? 0) > 0 && openSubcategoryPopupFor !== activeCategory.id && (
+                      <button
+                        type="button"
+                        onClick={() => setOpenSubcategoryPopupFor(activeCategory.id)}
+                        className="text-[11px] font-bold uppercase tracking-wide px-3 py-1.5 rounded-full border border-fuchsia-400/50 bg-fuchsia-600/20 text-fuchsia-100 hover:bg-fuchsia-600/40 transition-colors"
+                      >
+                        Sub-categories
+                      </button>
+                    )}
+                  </div>
                 )}
 
                 {activeCategory?.slug === "sports-passes" && activeCat && (subsByCat[activeCat]?.length ?? 0) > 0 && !search.trim() && (
