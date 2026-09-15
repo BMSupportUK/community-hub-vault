@@ -1045,7 +1045,7 @@ function SportsGuidesPage() {
                           onDragOver={(e) => {
                             if (!isMod) return;
                             e.preventDefault();
-                            if (dragBlogId.current) setDropCatId(top.id);
+                            if (dragBlogId.current || dragCatId.current) setDropCatId(top.id);
                           }}
                           onDragLeave={() => setDropCatId((cur) => (cur === top.id ? null : cur))}
                           onDrop={(e) => {
@@ -1064,8 +1064,9 @@ function SportsGuidesPage() {
                               setDropCatId(null);
                               return;
                             }
-                            if (dragCatId.current) reorderCategories(dragCatId.current, top.id);
+                            if (dragCatId.current) dropCategoryOnCategory(dragCatId.current, top.id);
                             dragCatId.current = null;
+                            setDropCatId(null);
                           }}
                           className={`group flex items-center gap-1 px-1 rounded-lg ${dropCatId === top.id ? "ring-2 ring-emerald-400 bg-emerald-500/20" : ""} ${open ? "bg-purple-800/60 text-white ring-1 ring-fuchsia-400/40" : "text-purple-100/80 hover:bg-purple-800/40"}`}
                         >
