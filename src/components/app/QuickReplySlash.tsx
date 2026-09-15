@@ -180,7 +180,7 @@ export function useQuickReplySlash({
                 }}
                 className="rounded-md bg-primary px-2.5 py-1 text-xs font-semibold text-primary-foreground"
               >
-                Use shortcut
+                {onSend ? "Send now" : "Use shortcut"}
               </button>
             </div>
           </div>
