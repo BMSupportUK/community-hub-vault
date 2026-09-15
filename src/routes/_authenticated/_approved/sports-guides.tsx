@@ -110,6 +110,7 @@ function SportsGuidesPage() {
   const dragBlogId = useRef<string | null>(null);
   const skipDefaultSubOnce = useRef(false);
   const [draggingBlog, setDraggingBlog] = useState(false);
+  const [dropCatId, setDropCatId] = useState<string | null>(null);
   const listingsTopRef = useRef<HTMLElement | null>(null);
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const [showBackTop, setShowBackTop] = useState(false);
