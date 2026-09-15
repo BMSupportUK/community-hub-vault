@@ -1118,24 +1118,26 @@ function SportsGuidesPage() {
                         <h3 className="font-display font-semibold text-purple-100">
                           {parent?.name ?? "Subcategories"}
                         </h3>
-                        <button
-                          type="button"
-                          onClick={() => setOpenGroups([])}
-                          title="Close"
-                          className="shrink-0 p-1 rounded-md text-purple-200/70 hover:text-white hover:bg-fuchsia-600/60"
-                        >
-                          <X className="size-4" />
-                        </button>
-                        {canManageCategories && parent && (
+                        <span className="flex shrink-0 items-center gap-1">
+                          {canManageCategories && parent && (
+                            <button
+                              type="button"
+                              onClick={() => addChildCategory(parent.id)}
+                              title="Add sub-category"
+                              className="p-1 rounded-md text-purple-200/70 hover:text-white hover:bg-fuchsia-600/60"
+                            >
+                              <Plus className="size-4" />
+                            </button>
+                          )}
                           <button
                             type="button"
-                            onClick={() => addChildCategory(parent.id)}
-                            title="Add sub-category"
-                            className="shrink-0 p-1 rounded-md text-purple-200/70 hover:text-white hover:bg-fuchsia-600/60"
+                            onClick={() => setOpenGroups([])}
+                            title="Close"
+                            className="p-1 rounded-md text-purple-200/70 hover:text-white hover:bg-fuchsia-600/60"
                           >
-                            <Plus className="size-4" />
+                            <X className="size-4" />
                           </button>
-                        )}
+                        </span>
                       </div>
                       <div className="space-y-1">
                         {children.map((child) => {
