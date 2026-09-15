@@ -1400,9 +1400,14 @@ function SportsGuidesPage() {
                     <Button variant="ghost" className="text-purple-200 hover:text-white hover:bg-purple-800/60" onClick={() => { setAddingCat(false); setNewCatName(""); }}>Cancel</Button>
                   </>
                 ) : (
-                  <Button onClick={() => setAddingCat(true)} className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0">
-                    <Plus className="size-4 mr-1" /> Add Category
-                  </Button>
+                  <>
+                    <Button onClick={() => setAddingCat(true)} className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0">
+                      <Plus className="size-4 mr-1" /> Add Category
+                    </Button>
+                    <Button onClick={addTopCategory} className="bg-gradient-to-r from-fuchsia-600 to-pink-600 hover:from-fuchsia-500 hover:to-pink-500 text-white border-0">
+                      <Plus className="size-4 mr-1" /> Add Heading
+                    </Button>
+                  </>
                 )}
                 <span className="text-xs text-purple-200/60 ml-2">Drag cards to reorder — order is saved for everyone.</span>
               </div>
