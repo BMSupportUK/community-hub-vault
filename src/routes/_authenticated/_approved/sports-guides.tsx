@@ -255,7 +255,15 @@ function SportsGuidesPage() {
   const topCategories = useMemo(() => categories.filter((c) => !c.parent_id), [categories]);
   /** Headings first, each followed by its own categories — used by the admin grid. */
   const orderedCategories = useMemo(
-    () => topCategories.flatMap((c) => [c, ...(childrenByParent[c.id] ?? [])]),
+    () => {
+      const out: Category[] = [];
+      const walk = (c: Category) => {
+        out.push(c);
+        for (const kid of childrenByParent[c.id] ?? []) walk(kid);
+      };
+      topCategories.forEach(walk);
+      return out;
+    },
     [topCategories, childrenByParent],
   );
   /** A heading with categories under it never holds guides itself. */
@@ -1644,10 +1652,20 @@ function SportsGuidesPage() {
                         className="mt-1 w-full rounded-md bg-purple-950/60 border border-purple-500/30 text-sm text-purple-50 px-2 py-1.5 disabled:opacity-40"
                       >
                         <option value="">No heading (top level)</option>
-                        {categories
-                          .filter((p) => p.id !== c.id && !p.parent_id)
+                        {orderedCategories
+                          .filter((p) => {
+                            if (p.id === c.id) return false;
+                            // Block a fourth level: a mid-level group whose own parent is already grouped can't take children.
+                            if (p.parent_id) {
+                              const gp = categories.find((g) => g.id === p.parent_id);
+                              if (gp?.parent_id) return false;
+                            }
+                            return true;
+                          })
                           .map((p) => (
-                            <option key={p.id} value={p.id}>{p.name}</option>
+                            <option key={p.id} value={p.id}>
+                              {p.parent_id ? `— ${p.name} (under ${categories.find((g) => g.id === p.parent_id)?.name ?? ""})` : p.name}
+                            </option>
                           ))}
                       </select>
                       {isGroupHeading(c) && (
