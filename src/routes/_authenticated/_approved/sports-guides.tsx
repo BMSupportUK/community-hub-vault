@@ -641,6 +641,23 @@ function SportsGuidesPage() {
     load();
   };
 
+  /** Create a brand-new main heading at the top level. */
+  const addTopCategory = async () => {
+    const name = prompt("New heading name")?.trim();
+    if (!name) return;
+    if (categories.some((c) => c.name.toLowerCase() === name.toLowerCase())) {
+      return toast.error("A category with that name already exists");
+    }
+    const slug = `${name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")}-${Date.now().toString(36)}`;
+    const nextOrder = (categories[categories.length - 1]?.sort_order ?? 0) + 10;
+    const { error } = await supabase
+      .from("sports_categories")
+      .insert({ name, slug, sort_order: nextOrder } as never);
+    if (error) return toast.error(error.message);
+    toast.success("Heading added");
+    load();
+  };
+
   /** Move a category under a main heading, or back out to the top level. */
   const setCategoryParent = async (id: string, parentId: string | null) => {
     const { error } = await supabase.from("sports_categories").update({ parent_id: parentId } as never).eq("id", id);
@@ -648,6 +665,23 @@ function SportsGuidesPage() {
     if (parentId) setOpenGroups((cur) => (cur.includes(parentId) ? cur : [...cur, parentId]));
     toast.success(parentId ? "Category grouped" : "Category moved to top level");
     load();
+  };
+
+
+  /**
+   * Dropping one category onto another: file it under a top-level target
+   * (turning that target into a heading), otherwise just reorder.
+   */
+  const dropCategoryOnCategory = (draggedId: string, targetId: string) => {
+    if (draggedId === targetId) return;
+    const dragged = categories.find((c) => c.id === draggedId);
+    const target = categories.find((c) => c.id === targetId);
+    if (!dragged || !target) return;
+    if (!target.parent_id && !isGroupHeading(dragged) && (dragged.parent_id ?? null) !== target.id) {
+      void setCategoryParent(draggedId, target.id);
+      return;
+    }
+    void reorderCategories(draggedId, targetId);
   };
 
 
@@ -872,10 +906,22 @@ function SportsGuidesPage() {
           </TabsContent>
 
           <TabsContent value="guides" className="mt-6">
-            <div className={`relative grid grid-cols-1 gap-6 ${search.trim() ? "lg:grid-cols-[240px_minmax(0,1fr)_320px]" : "lg:grid-cols-[240px_minmax(0,1fr)]"}`}>
+            <div className={`relative grid grid-cols-1 gap-6 ${search.trim() ? "lg:grid-cols-[240px_minmax(0,1fr)_320px]" : activeCategory ? "lg:grid-cols-[240px_minmax(0,1fr)_60px]" : "lg:grid-cols-[240px_minmax(0,1fr)]"}`}>
               <aside className="relative z-20 rounded-2xl bg-purple-950/50 border border-purple-500/30 p-4 h-fit backdrop-blur">
                 <div className="flex items-center justify-between mb-3 px-2 gap-2">
-                  <h3 className="font-display font-semibold text-purple-100">Categories</h3>
+                  <h3 className="font-display font-semibold text-purple-100 flex items-center gap-1">
+                    Categories
+                    {canManageCategories && (
+                      <button
+                        type="button"
+                        onClick={() => addTopCategory()}
+                        title="Add heading"
+                        className="p-1 rounded-md text-purple-200/70 hover:text-white hover:bg-fuchsia-600/60"
+                      >
+                        <Plus className="size-3.5" />
+                      </button>
+                    )}
+                  </h3>
                   {user && blogs.some(isUnread) && (
                     <button
                       onClick={async () => {
@@ -927,7 +973,7 @@ function SportsGuidesPage() {
                           onDragOver={(e) => {
                             if (!isMod) return;
                             e.preventDefault();
-                            if (dragBlogId.current) setDropCatId(c.id);
+                            if (dragBlogId.current || dragCatId.current) setDropCatId(c.id);
                           }}
                           onDragLeave={() => setDropCatId((cur) => (cur === c.id ? null : cur))}
                           onDrop={(e) => {
@@ -940,8 +986,9 @@ function SportsGuidesPage() {
                               setDropCatId(null);
                               return;
                             }
-                            if (dragCatId.current) reorderCategories(dragCatId.current, c.id);
+                            if (dragCatId.current) dropCategoryOnCategory(dragCatId.current, c.id);
                             dragCatId.current = null;
+                            setDropCatId(null);
                           }}
                           className={`group flex items-center gap-1 px-1 rounded-lg ${dropCatId === c.id ? "ring-2 ring-emerald-400 bg-emerald-500/20" : ""} ${active ? "bg-gradient-to-r from-violet-600 to-blue-600 text-white shadow-md shadow-purple-900/40" : "text-purple-100/80 hover:bg-purple-800/40"}`}
                         >
@@ -974,6 +1021,16 @@ function SportsGuidesPage() {
                               <Plus className="size-3.5" />
                             </button>
                           )}
+                          {canManageCategories && c.parent_id && (
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); setCategoryParent(c.id, null); }}
+                              title="Make this a heading (move to top level)"
+                              className="shrink-0 mr-1 p-1 rounded-md text-purple-200/70 hover:text-white hover:bg-fuchsia-600/60"
+                            >
+                              <ArrowUp className="size-3.5" />
+                            </button>
+                          )}
                          </div>
                        );
                      };
@@ -988,7 +1045,7 @@ function SportsGuidesPage() {
                           onDragOver={(e) => {
                             if (!isMod) return;
                             e.preventDefault();
-                            if (dragBlogId.current) setDropCatId(top.id);
+                            if (dragBlogId.current || dragCatId.current) setDropCatId(top.id);
                           }}
                           onDragLeave={() => setDropCatId((cur) => (cur === top.id ? null : cur))}
                           onDrop={(e) => {
@@ -1007,8 +1064,9 @@ function SportsGuidesPage() {
                               setDropCatId(null);
                               return;
                             }
-                            if (dragCatId.current) reorderCategories(dragCatId.current, top.id);
+                            if (dragCatId.current) dropCategoryOnCategory(dragCatId.current, top.id);
                             dragCatId.current = null;
+                            setDropCatId(null);
                           }}
                           className={`group flex items-center gap-1 px-1 rounded-lg ${dropCatId === top.id ? "ring-2 ring-emerald-400 bg-emerald-500/20" : ""} ${open ? "bg-purple-800/60 text-white ring-1 ring-fuchsia-400/40" : "text-purple-100/80 hover:bg-purple-800/40"}`}
                         >
@@ -1076,19 +1134,59 @@ function SportsGuidesPage() {
                           const active = child.id === activeCat;
                           const unread = unreadCounts[child.id] ?? 0;
                           return (
-                            <button
+                            <div
                               key={child.id}
-                              type="button"
-                              onClick={() => { setActiveCat(child.id); scrollCardsToTop(); }}
+                              draggable={isMod}
+                              onDragStart={() => { dragCatId.current = child.id; }}
+                              onDragEnd={() => { dragCatId.current = null; setDropCatId(null); }}
                               {...guideDropProps(child.id)}
-                              className={`w-full flex items-center justify-between gap-2 rounded-lg px-3 py-2.5 text-left text-sm transition-colors ${dropCatId === child.id ? "ring-2 ring-emerald-400 bg-emerald-500/20" : ""} ${active ? "bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white shadow-md shadow-fuchsia-950/40" : "text-purple-100/80 hover:bg-purple-800/50"}`}
+                              onDragOver={(e) => {
+                                if (!isMod) return;
+                                if (!dragBlogId.current && !dragCatId.current) return;
+                                e.preventDefault();
+                                setDropCatId(child.id);
+                              }}
+                              onDrop={(e) => {
+                                if (!isMod) return;
+                                e.preventDefault();
+                                e.stopPropagation();
+                                if (dragBlogId.current) {
+                                  void moveBlogToCategory(dragBlogId.current, child.id);
+                                  dragBlogId.current = null;
+                                  setDraggingBlog(false);
+                                } else if (dragCatId.current) {
+                                  dropCategoryOnCategory(dragCatId.current, child.id);
+                                  dragCatId.current = null;
+                                }
+                                setDropCatId(null);
+                              }}
+                              className={`group flex items-center gap-1 rounded-lg px-1 transition-colors ${dropCatId === child.id ? "ring-2 ring-emerald-400 bg-emerald-500/20" : ""} ${active ? "bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white shadow-md shadow-fuchsia-950/40" : "text-purple-100/80 hover:bg-purple-800/50"}`}
                             >
-                              <span className="flex min-w-0 items-center gap-2">
-                                {unread > 0 && <span className="size-2 shrink-0 rounded-full bg-fuchsia-300" />}
-                                <span className="break-words">{child.name}</span>
-                              </span>
-                              {unread > 0 && <span className="shrink-0 rounded-full bg-fuchsia-500 px-2 py-0.5 text-xs font-semibold text-white">{unread}</span>}
-                            </button>
+                              {isMod && (
+                                <GripVertical className="size-3.5 shrink-0 cursor-grab opacity-40 group-hover:opacity-80" />
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => { setActiveCat(child.id); scrollCardsToTop(); }}
+                                className="flex flex-1 items-center justify-between gap-2 px-2 py-2.5 text-left text-sm"
+                              >
+                                <span className="flex min-w-0 items-center gap-2">
+                                  {unread > 0 && <span className="size-2 shrink-0 rounded-full bg-fuchsia-300" />}
+                                  <span className="break-words">{child.name}</span>
+                                </span>
+                                {unread > 0 && <span className="shrink-0 rounded-full bg-fuchsia-500 px-2 py-0.5 text-xs font-semibold text-white">{unread}</span>}
+                              </button>
+                              {canManageCategories && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); setCategoryParent(child.id, null); }}
+                                  title="Make this a heading (move to top level)"
+                                  className="shrink-0 rounded-md p-1 text-purple-200/70 hover:bg-fuchsia-600/60 hover:text-white"
+                                >
+                                  <ArrowUp className="size-3.5" />
+                                </button>
+                              )}
+                            </div>
                           );
                         })}
                       </div>
@@ -1131,40 +1229,9 @@ function SportsGuidesPage() {
                 </div>
 
                 {activeCategory && !search.trim() && (
-                  <div className="mb-4 rounded-xl border border-purple-500/30 bg-slate-950/75 p-4 backdrop-blur">
-                    <h2 className="font-display text-xl font-bold text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.85)]">
-                      <span className="bg-gradient-to-r from-fuchsia-300 to-sky-300 bg-clip-text text-transparent">{activeCategory.name}</span>{" "}Guides
-                    </h2>
-                    <div className="mt-3 flex flex-wrap gap-1" aria-label="Jump to guide title by letter">
-                      {Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i)).map((letter) => {
-                        const has = !!azMap[letter];
-                        const unread = azUnread.has(letter);
-                        return (
-                          <button
-                            key={letter}
-                            onClick={() => jumpToLetter(letter)}
-                            disabled={!has}
-                            title={
-                              unread
-                                ? `Unread guide starting with ${letter}`
-                                : has
-                                  ? `Jump to first guide title starting with ${letter}`
-                                  : `No guide title starting with ${letter}`
-                            }
-                            className={`w-7 h-7 grid place-items-center rounded text-[11px] font-bold transition-colors ring-1 ${
-                              unread
-                                ? "bg-fuchsia-500 text-white animate-pulse ring-fuchsia-300 cursor-pointer"
-                                : has
-                                ? "bg-slate-900/80 text-white ring-purple-400/40 hover:bg-fuchsia-600 hover:ring-fuchsia-300 cursor-pointer"
-                                : "bg-slate-900/40 text-purple-200/40 ring-purple-500/10 cursor-not-allowed"
-                            }`}
-                          >
-                            {letter}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
+                  <h2 className="mb-4 font-display text-xl font-bold text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.85)]">
+                    <span className="bg-gradient-to-r from-fuchsia-300 to-sky-300 bg-clip-text text-transparent">{activeCategory.name}</span>{" "}Guides
+                  </h2>
                 )}
 
                 {activeCat && (subsByCat[activeCat]?.length ?? 0) > 0 && !search.trim() && (
@@ -1198,6 +1265,44 @@ function SportsGuidesPage() {
                   </div>
                 )}
               </section>
+
+              {activeCategory && !search.trim() && (
+                <aside className="h-fit rounded-2xl border border-purple-500/30 bg-slate-950/75 p-2 backdrop-blur lg:sticky lg:top-4">
+                  <div className="mb-2 text-center text-[10px] font-bold uppercase tracking-wider text-fuchsia-300/80">A–Z</div>
+                  <div
+                    className="flex flex-wrap justify-center gap-1 lg:flex-col lg:flex-nowrap lg:items-center"
+                    aria-label="Jump to guide title by letter"
+                  >
+                    {Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i)).map((letter) => {
+                      const has = !!azMap[letter];
+                      const unread = azUnread.has(letter);
+                      return (
+                        <button
+                          key={letter}
+                          onClick={() => jumpToLetter(letter)}
+                          disabled={!has}
+                          title={
+                            unread
+                              ? `Unread guide starting with ${letter}`
+                              : has
+                                ? `Jump to first guide title starting with ${letter}`
+                                : `No guide title starting with ${letter}`
+                          }
+                          className={`w-7 h-6 grid place-items-center rounded text-[11px] font-bold transition-colors ring-1 ${
+                            unread
+                              ? "bg-fuchsia-500 text-white animate-pulse ring-fuchsia-300 cursor-pointer"
+                              : has
+                              ? "bg-slate-900/80 text-white ring-purple-400/40 hover:bg-fuchsia-600 hover:ring-fuchsia-300 cursor-pointer"
+                              : "bg-slate-900/40 text-purple-200/40 ring-purple-500/10 cursor-not-allowed"
+                          }`}
+                        >
+                          {letter}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </aside>
+              )}
 
               {search.trim() && (
                 <aside className="rounded-2xl bg-purple-950/60 border border-purple-500/30 backdrop-blur h-fit lg:sticky lg:top-4 overflow-hidden">
