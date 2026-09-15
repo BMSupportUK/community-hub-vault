@@ -92,6 +92,8 @@ export function QuickRepliesPill({
   const [body, setBody] = useState("");
   const [shared, setShared] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [confirmUse, setConfirmUse] = useState<QuickReply | null>(null);
+
   const bodyRef = useRef<HTMLTextAreaElement | null>(null);
 
   // `#` command inside the shortcut text so saved replies can share channel/page links.
@@ -236,7 +238,38 @@ export function QuickRepliesPill({
             </div>
           )}
 
+          {confirmUse && (
+            <div className="space-y-2 rounded-lg border border-primary/40 bg-primary/10 p-3">
+              <div className="flex items-center gap-2">
+                <span className="rounded bg-amber-500/20 px-1.5 py-0.5 font-mono text-[11px] font-bold text-amber-300">
+                  /{confirmUse.code}
+                </span>
+                <span className="text-xs font-semibold">Use this shortcut?</span>
+              </div>
+              <p className="max-h-28 overflow-y-auto whitespace-pre-wrap text-xs text-foreground/90">
+                {confirmUse.body}
+              </p>
+              <div className="flex justify-end gap-2">
+                <Button type="button" size="sm" variant="outline" onClick={() => setConfirmUse(null)}>
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => {
+                    onInsert(confirmUse.body);
+                    setConfirmUse(null);
+                    setOpen(false);
+                  }}
+                >
+                  Use shortcut
+                </Button>
+              </div>
+            </div>
+          )}
+
           <div className="max-h-72 space-y-1.5 overflow-y-auto">
+
             {loading ? (
               <div className="grid place-items-center py-8 text-muted-foreground">
                 <Loader2 className="size-5 animate-spin" />
@@ -253,12 +286,10 @@ export function QuickRepliesPill({
                 >
                   <button
                     type="button"
-                    onClick={() => {
-                      onInsert(r.body);
-                      setOpen(false);
-                    }}
+                    onClick={() => setConfirmUse(r)}
                     className="min-w-0 flex-1 text-left"
                   >
+
                     <div className="flex items-center gap-1.5">
                       <span className="rounded bg-amber-500/20 px-1.5 py-0.5 font-mono text-[11px] font-bold text-amber-300">
                         /{r.code}
