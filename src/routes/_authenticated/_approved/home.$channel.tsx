@@ -56,6 +56,8 @@ import { OnlineMembersDialog } from "@/components/app/OnlineMembersDialog";
 import { TalkChannelMembersPanel } from "@/components/app/TalkChannelMembersPanel";
 import { QuickRepliesPill, useQuickReplies } from "@/components/app/QuickRepliesDialog";
 import { useChannelJump } from "@/components/app/ChannelJump";
+import { useQuickReplySlash } from "@/components/app/QuickReplySlash";
+
 
 import { cn } from "@/lib/utils";
 import { DEFAULT_AVATAR_URL } from "@/lib/default-avatar";
@@ -480,6 +482,14 @@ function ChannelPage() {
     onChange: setDraft,
     editorRef: taRef,
   });
+
+  // `/` command — pick a saved staff shortcut straight from the composer.
+  const quickSlash = useQuickReplySlash({
+    value: draft,
+    onChange: setDraft,
+    editorRef: taRef,
+  });
+
 
   useEffect(() => {
     const editor = taRef.current;
@@ -2081,6 +2091,8 @@ function ChannelPage() {
             <div className="relative flex items-end gap-2 rounded-xl bg-surface-2 border border-border focus-within:border-primary px-3 py-2">
               {mention.dropdown}
               {channelJump.dropdown}
+              {quickSlash.dropdown}
+
               <div
                 ref={taRef}
                 contentEditable={canSend && slowRemaining <= 0 && !isMuted}
@@ -2135,6 +2147,8 @@ function ChannelPage() {
                 onKeyDown={(e) => {
                   if (mention.onKeyDown(e)) return;
                   if (channelJump.onKeyDown(e)) return;
+                  if (quickSlash.onKeyDown(e)) return;
+
                   if (e.key === " " || e.key === "Tab") {
                     const current = e.currentTarget.innerText.replace(/\n$/, "");
                     const expanded = expandQuickReply(current);
