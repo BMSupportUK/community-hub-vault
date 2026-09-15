@@ -711,7 +711,6 @@ function SportsGuidesPage() {
     // Keep the moved category selected and its new heading open so the guides
     // list keeps showing the category you just moved.
     setOpenGroups(parentId ? [parentId] : []);
-    setDismissedSubcategoryPopupFor(null);
     setActiveCat(id);
     setTab("guides");
     toast.success(parentId ? "Category grouped" : "Category moved to top level");
