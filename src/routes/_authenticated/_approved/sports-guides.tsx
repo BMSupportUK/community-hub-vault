@@ -669,6 +669,57 @@ function SportsGuidesPage() {
     );
   };
 
+  /** Drag a guide card onto a category/heading in the sidebar to file it there. */
+  const moveBlogToCategory = async (blogId: string, categoryId: string) => {
+    const blog = blogs.find((b) => b.id === blogId);
+    if (!blog || blog.category_id === categoryId) return;
+    const subs = subsByCat[categoryId] ?? [];
+    const nextSub = subs.some((s) => s.name === blog.subcategory)
+      ? blog.subcategory
+      : (subs.find((s) => s.is_default)?.name ?? subs[0]?.name ?? null);
+    queryClient.setQueryData<typeof dataQuery.data>(queryKey, (prev) =>
+      prev
+        ? {
+            ...prev,
+            blogs: prev.blogs.map((b) =>
+              b.id === blogId ? { ...b, category_id: categoryId, subcategory: nextSub } : b,
+            ),
+          }
+        : prev,
+    );
+    const { error } = await supabase
+      .from("sports_blogs")
+      .update({ category_id: categoryId, subcategory: nextSub })
+      .eq("id", blogId);
+    if (error) { toast.error(error.message); load(); return; }
+    const name = categories.find((c) => c.id === categoryId)?.name ?? "category";
+    toast.success(`Moved to ${name}`);
+  };
+
+  /** Drop-target props that accept a dragged guide card for a given category. */
+  const guideDropProps = (categoryId: string) =>
+    isMod
+      ? {
+          onDragOver: (e: React.DragEvent) => {
+            if (!dragBlogId.current) return;
+            e.preventDefault();
+            setDropCatId(categoryId);
+          },
+          onDragLeave: () => setDropCatId((cur) => (cur === categoryId ? null : cur)),
+          onDrop: (e: React.DragEvent) => {
+            if (!dragBlogId.current) return;
+            e.preventDefault();
+            e.stopPropagation();
+            void moveBlogToCategory(dragBlogId.current, categoryId);
+            dragBlogId.current = null;
+            setDraggingBlog(false);
+            setDropCatId(null);
+          },
+        }
+      : {};
+
+
+
   const renderBlogCard = (b: Blog) => (
     <article
       key={b.id}
