@@ -1266,6 +1266,44 @@ function SportsGuidesPage() {
                 )}
               </section>
 
+              {activeCategory && !search.trim() && (
+                <aside className="h-fit rounded-2xl border border-purple-500/30 bg-slate-950/75 p-2 backdrop-blur lg:sticky lg:top-4">
+                  <div className="mb-2 text-center text-[10px] font-bold uppercase tracking-wider text-fuchsia-300/80">A–Z</div>
+                  <div
+                    className="flex flex-wrap justify-center gap-1 lg:flex-col lg:flex-nowrap lg:items-center"
+                    aria-label="Jump to guide title by letter"
+                  >
+                    {Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i)).map((letter) => {
+                      const has = !!azMap[letter];
+                      const unread = azUnread.has(letter);
+                      return (
+                        <button
+                          key={letter}
+                          onClick={() => jumpToLetter(letter)}
+                          disabled={!has}
+                          title={
+                            unread
+                              ? `Unread guide starting with ${letter}`
+                              : has
+                                ? `Jump to first guide title starting with ${letter}`
+                                : `No guide title starting with ${letter}`
+                          }
+                          className={`w-7 h-6 grid place-items-center rounded text-[11px] font-bold transition-colors ring-1 ${
+                            unread
+                              ? "bg-fuchsia-500 text-white animate-pulse ring-fuchsia-300 cursor-pointer"
+                              : has
+                              ? "bg-slate-900/80 text-white ring-purple-400/40 hover:bg-fuchsia-600 hover:ring-fuchsia-300 cursor-pointer"
+                              : "bg-slate-900/40 text-purple-200/40 ring-purple-500/10 cursor-not-allowed"
+                          }`}
+                        >
+                          {letter}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </aside>
+              )}
+
               {search.trim() && (
                 <aside className="rounded-2xl bg-purple-950/60 border border-purple-500/30 backdrop-blur h-fit lg:sticky lg:top-4 overflow-hidden">
                   <button
