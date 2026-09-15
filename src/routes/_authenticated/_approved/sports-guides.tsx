@@ -1194,7 +1194,17 @@ function SportsGuidesPage() {
                               )}
                               <button
                                 type="button"
-                                 onClick={() => { setActiveCat(child.id); setTab("guides"); scrollCardsToTop(); }}
+                                onClick={() => {
+                                  if ((childrenByParent[child.id]?.length ?? 0) > 0) {
+                                    setSubDialogFor(child.id);
+                                    setOpenGroups([child.id]);
+                                    return;
+                                  }
+                                  setSubDialogFor(null);
+                                  setActiveCat(child.id);
+                                  setTab("guides");
+                                  scrollCardsToTop();
+                                }}
                                 className="flex flex-1 items-center justify-between gap-2 px-2 py-2.5 text-left text-sm"
                               >
                                 <span className="flex min-w-0 items-center gap-2">
