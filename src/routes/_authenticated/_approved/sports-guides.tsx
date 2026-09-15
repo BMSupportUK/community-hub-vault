@@ -980,14 +980,32 @@ function SportsGuidesPage() {
                         <div
                           draggable={isMod}
                           onDragStart={() => { dragCatId.current = top.id; }}
-                          onDragOver={(e) => { if (isMod) e.preventDefault(); }}
+                          onDragOver={(e) => {
+                            if (!isMod) return;
+                            e.preventDefault();
+                            if (dragBlogId.current) setDropCatId(top.id);
+                          }}
+                          onDragLeave={() => setDropCatId((cur) => (cur === top.id ? null : cur))}
                           onDrop={(e) => {
                             if (!isMod) return;
                             e.preventDefault();
+                            if (dragBlogId.current) {
+                              // Headings hold sub-categories, so file the guide in the
+                              // heading's default (or first) sub-category and open it.
+                              const target = kids.find((k) => k.id === activeCat) ?? kids[0];
+                              if (target) {
+                                void moveBlogToCategory(dragBlogId.current, target.id);
+                                setOpenGroups((cur) => (cur.includes(top.id) ? cur : [top.id]));
+                              }
+                              dragBlogId.current = null;
+                              setDraggingBlog(false);
+                              setDropCatId(null);
+                              return;
+                            }
                             if (dragCatId.current) reorderCategories(dragCatId.current, top.id);
                             dragCatId.current = null;
                           }}
-                          className={`group flex items-center gap-1 px-1 rounded-lg ${open ? "bg-purple-800/60 text-white ring-1 ring-fuchsia-400/40" : "text-purple-100/80 hover:bg-purple-800/40"}`}
+                          className={`group flex items-center gap-1 px-1 rounded-lg ${dropCatId === top.id ? "ring-2 ring-emerald-400 bg-emerald-500/20" : ""} ${open ? "bg-purple-800/60 text-white ring-1 ring-fuchsia-400/40" : "text-purple-100/80 hover:bg-purple-800/40"}`}
                         >
                           {isMod && (
                             <GripVertical className="size-3.5 opacity-40 group-hover:opacity-80 cursor-grab shrink-0" />
