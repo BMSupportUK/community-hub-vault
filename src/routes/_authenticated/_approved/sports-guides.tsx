@@ -1134,19 +1134,59 @@ function SportsGuidesPage() {
                           const active = child.id === activeCat;
                           const unread = unreadCounts[child.id] ?? 0;
                           return (
-                            <button
+                            <div
                               key={child.id}
-                              type="button"
-                              onClick={() => { setActiveCat(child.id); scrollCardsToTop(); }}
+                              draggable={isMod}
+                              onDragStart={() => { dragCatId.current = child.id; }}
+                              onDragEnd={() => { dragCatId.current = null; setDropCatId(null); }}
                               {...guideDropProps(child.id)}
-                              className={`w-full flex items-center justify-between gap-2 rounded-lg px-3 py-2.5 text-left text-sm transition-colors ${dropCatId === child.id ? "ring-2 ring-emerald-400 bg-emerald-500/20" : ""} ${active ? "bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white shadow-md shadow-fuchsia-950/40" : "text-purple-100/80 hover:bg-purple-800/50"}`}
+                              onDragOver={(e) => {
+                                if (!isMod) return;
+                                if (!dragBlogId.current && !dragCatId.current) return;
+                                e.preventDefault();
+                                setDropCatId(child.id);
+                              }}
+                              onDrop={(e) => {
+                                if (!isMod) return;
+                                e.preventDefault();
+                                e.stopPropagation();
+                                if (dragBlogId.current) {
+                                  void moveBlogToCategory(dragBlogId.current, child.id);
+                                  dragBlogId.current = null;
+                                  setDraggingBlog(false);
+                                } else if (dragCatId.current) {
+                                  dropCategoryOnCategory(dragCatId.current, child.id);
+                                  dragCatId.current = null;
+                                }
+                                setDropCatId(null);
+                              }}
+                              className={`group flex items-center gap-1 rounded-lg px-1 transition-colors ${dropCatId === child.id ? "ring-2 ring-emerald-400 bg-emerald-500/20" : ""} ${active ? "bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white shadow-md shadow-fuchsia-950/40" : "text-purple-100/80 hover:bg-purple-800/50"}`}
                             >
-                              <span className="flex min-w-0 items-center gap-2">
-                                {unread > 0 && <span className="size-2 shrink-0 rounded-full bg-fuchsia-300" />}
-                                <span className="break-words">{child.name}</span>
-                              </span>
-                              {unread > 0 && <span className="shrink-0 rounded-full bg-fuchsia-500 px-2 py-0.5 text-xs font-semibold text-white">{unread}</span>}
-                            </button>
+                              {isMod && (
+                                <GripVertical className="size-3.5 shrink-0 cursor-grab opacity-40 group-hover:opacity-80" />
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => { setActiveCat(child.id); scrollCardsToTop(); }}
+                                className="flex flex-1 items-center justify-between gap-2 px-2 py-2.5 text-left text-sm"
+                              >
+                                <span className="flex min-w-0 items-center gap-2">
+                                  {unread > 0 && <span className="size-2 shrink-0 rounded-full bg-fuchsia-300" />}
+                                  <span className="break-words">{child.name}</span>
+                                </span>
+                                {unread > 0 && <span className="shrink-0 rounded-full bg-fuchsia-500 px-2 py-0.5 text-xs font-semibold text-white">{unread}</span>}
+                              </button>
+                              {canManageCategories && (
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); setCategoryParent(child.id, null); }}
+                                  title="Make this a heading (move to top level)"
+                                  className="shrink-0 rounded-md p-1 text-purple-200/70 hover:bg-fuchsia-600/60 hover:text-white"
+                                >
+                                  <ArrowUp className="size-3.5" />
+                                </button>
+                              )}
+                            </div>
                           );
                         })}
                       </div>
