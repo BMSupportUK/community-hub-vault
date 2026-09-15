@@ -943,11 +943,21 @@ function SportsGuidesPage() {
                             {headingUnread > 0 && (
                               <span className="text-xs px-2 py-0.5 rounded-full bg-fuchsia-500 text-white font-semibold">{headingUnread}</span>
                             )}
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
+                           </button>
+                          {canManageCategories && (
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); addChildCategory(top.id); }}
+                              title="Add sub-category"
+                              className="shrink-0 mr-1 p-1 rounded-md text-purple-200/70 hover:text-white hover:bg-fuchsia-600/60"
+                            >
+                              <Plus className="size-3.5" />
+                            </button>
+                          )}
+                         </div>
+                       </div>
+                     );
+                   })}
                 </div>
 
               </aside>
