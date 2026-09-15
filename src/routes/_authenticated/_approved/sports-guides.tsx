@@ -604,6 +604,10 @@ function SportsGuidesPage() {
 
   const reorderCategories = async (fromId: string, toId: string) => {
     if (fromId === toId) return;
+    const from = categories.find((c) => c.id === fromId);
+    const to = categories.find((c) => c.id === toId);
+    // Only reorder within the same level (same heading, or both headings).
+    if (!from || !to || (from.parent_id ?? null) !== (to.parent_id ?? null)) return;
     const list = [...categories];
     const fromIdx = list.findIndex((c) => c.id === fromId);
     const toIdx = list.findIndex((c) => c.id === toId);
@@ -616,6 +620,16 @@ function SportsGuidesPage() {
       updated.map((c) => supabase.from("sports_categories").update({ sort_order: c.sort_order }).eq("id", c.id))
     );
   };
+
+  /** Move a category under a main heading, or back out to the top level. */
+  const setCategoryParent = async (id: string, parentId: string | null) => {
+    const { error } = await supabase.from("sports_categories").update({ parent_id: parentId } as never).eq("id", id);
+    if (error) return toast.error(error.message);
+    if (parentId) setOpenGroups((cur) => (cur.includes(parentId) ? cur : [...cur, parentId]));
+    toast.success(parentId ? "Category grouped" : "Category moved to top level");
+    load();
+  };
+
 
   const reorderBlogs = async (fromId: string, toId: string) => {
     if (fromId === toId || !activeCat) return;
