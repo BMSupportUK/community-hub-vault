@@ -269,7 +269,6 @@ function SportsGuidesPage() {
   const openHeading = (id: string) => {
     const kids = childrenByParent[id] ?? [];
     setOpenGroups([id]);
-    setDismissedSubcategoryPopupFor(null);
     setTab("guides");
     const target = kids.find((k) => k.id === activeCat) ?? kids[0];
     if (target) {
