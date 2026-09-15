@@ -1283,6 +1283,12 @@ function SportsGuidesPage() {
                     )}
                   </div>
                 </div>
+                  {isMod && (
+                    <Button onClick={openNew} className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0 shrink-0">
+                      <Plus className="size-4 mr-1" /> Add Blog
+                    </Button>
+                  )}
+                </div>
 
                 {search.trim() ? (
                   <div className="rounded-2xl bg-purple-950/60 border border-purple-500/30 backdrop-blur overflow-hidden">
