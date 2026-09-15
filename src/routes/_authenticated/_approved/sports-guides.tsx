@@ -106,6 +106,8 @@ function SportsGuidesPage() {
   const [resultsOpen, setResultsOpen] = useState(true);
   const [subFilter, setSubFilter] = useState<string | null>(null);
   const [openSubcategoryPopupFor, setOpenSubcategoryPopupFor] = useState<string | null>(null);
+  // Category whose sub-categories are shown in the centre dialog (null = closed).
+  const [subDialogFor, setSubDialogFor] = useState<string | null>(null);
   const [newCatName, setNewCatName] = useState("");
   const [addingCat, setAddingCat] = useState(false);
   const [newSubName, setNewSubName] = useState<Record<string, string>>({});
