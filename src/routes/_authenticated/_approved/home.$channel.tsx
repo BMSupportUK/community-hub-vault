@@ -488,6 +488,8 @@ function ChannelPage() {
     value: draft,
     onChange: setDraft,
     editorRef: taRef,
+    // Confirming a shortcut sends it straight into chat.
+    onSend: (text) => void send(text),
   });
 
 
