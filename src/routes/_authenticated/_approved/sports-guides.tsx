@@ -1229,40 +1229,9 @@ function SportsGuidesPage() {
                 </div>
 
                 {activeCategory && !search.trim() && (
-                  <div className="mb-4 rounded-xl border border-purple-500/30 bg-slate-950/75 p-4 backdrop-blur">
-                    <h2 className="font-display text-xl font-bold text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.85)]">
-                      <span className="bg-gradient-to-r from-fuchsia-300 to-sky-300 bg-clip-text text-transparent">{activeCategory.name}</span>{" "}Guides
-                    </h2>
-                    <div className="mt-3 flex flex-wrap gap-1" aria-label="Jump to guide title by letter">
-                      {Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i)).map((letter) => {
-                        const has = !!azMap[letter];
-                        const unread = azUnread.has(letter);
-                        return (
-                          <button
-                            key={letter}
-                            onClick={() => jumpToLetter(letter)}
-                            disabled={!has}
-                            title={
-                              unread
-                                ? `Unread guide starting with ${letter}`
-                                : has
-                                  ? `Jump to first guide title starting with ${letter}`
-                                  : `No guide title starting with ${letter}`
-                            }
-                            className={`w-7 h-7 grid place-items-center rounded text-[11px] font-bold transition-colors ring-1 ${
-                              unread
-                                ? "bg-fuchsia-500 text-white animate-pulse ring-fuchsia-300 cursor-pointer"
-                                : has
-                                ? "bg-slate-900/80 text-white ring-purple-400/40 hover:bg-fuchsia-600 hover:ring-fuchsia-300 cursor-pointer"
-                                : "bg-slate-900/40 text-purple-200/40 ring-purple-500/10 cursor-not-allowed"
-                            }`}
-                          >
-                            {letter}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
+                  <h2 className="mb-4 font-display text-xl font-bold text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.85)]">
+                    <span className="bg-gradient-to-r from-fuchsia-300 to-sky-300 bg-clip-text text-transparent">{activeCategory.name}</span>{" "}Guides
+                  </h2>
                 )}
 
                 {activeCat && (subsByCat[activeCat]?.length ?? 0) > 0 && !search.trim() && (
