@@ -132,6 +132,13 @@ function SportsGuidesPage() {
 
   // Persist UI state across screen swaps (route remounts).
   useEffect(() => { try { sessionStorage.setItem("sports-guides-active-tab", tab); } catch { /* ignore */ } }, [tab]);
+  // The Guides tab must stay hidden until a category is picked — for everyone, including admins.
+  useEffect(() => {
+    if (!activeCat && tab === "guides") {
+      setTab("welcome");
+      try { sessionStorage.setItem("sports-guides-active-tab", "welcome"); } catch { /* ignore */ }
+    }
+  }, [activeCat, tab]);
   useEffect(() => {
     try {
       if (activeCat) sessionStorage.setItem("sports-guides-active-cat", activeCat);
@@ -143,6 +150,7 @@ function SportsGuidesPage() {
   useEffect(() => {
     if (welcomeFromUrl) {
       setTab("welcome");
+      setActiveCat(null);
       try {
         sessionStorage.removeItem("sports-guides-active-tab");
         sessionStorage.removeItem("sports-guides-active-cat");
@@ -151,17 +159,11 @@ function SportsGuidesPage() {
     }
   }, [welcomeFromUrl, navigate]);
 
-  // Switching to the Guides tab always defaults to the Daily Sports & PPV category.
+  // The Guides tab only exists once a category has been picked — never auto-select one.
   const handleTabChange = (value: string) => {
+    if (value === "guides" && !activeCat) return;
     setTab(value);
     setOpenSubcategoryPopupFor(null);
-    if (value === "guides" && !activeCat) {
-      const dailySports = defaultCatId();
-      if (dailySports) {
-        setActiveCat(dailySports);
-        scrollCardsToTop();
-      }
-    }
   };
 
 
@@ -281,9 +283,6 @@ function SportsGuidesPage() {
     setSubDialogFor(id);
   };
 
-  /** The category the guides list should land on by default. */
-  const defaultCatId = () =>
-    leafCategories.find((c) => c.slug === "daily-sports-ppv")?.id ?? leafCategories[0]?.id;
 
   // Keep the heading of the open category expanded. If the selected category has
   // just become a heading (categories were moved under it), drop down to its
