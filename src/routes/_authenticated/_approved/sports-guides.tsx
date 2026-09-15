@@ -798,7 +798,7 @@ function SportsGuidesPage() {
                           <GripVertical className="size-3.5 opacity-40 group-hover:opacity-80 cursor-grab shrink-0" />
                         )}
                         <button
-                          onClick={() => setActiveCat(c.id)}
+                          onClick={() => { setActiveCat(c.id); scrollCardsToTop(); }}
                           className="flex-1 flex items-center justify-between px-2 py-2 text-sm text-left"
                         >
                           <span className="flex items-center gap-2">
