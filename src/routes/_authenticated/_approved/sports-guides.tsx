@@ -1346,7 +1346,7 @@ function SportsGuidesPage() {
               {activeCategory &&
                 activeCategory.slug !== "sports-passes" &&
                 (subsByCat[activeCategory.id]?.length ?? 0) > 0 &&
-                dismissedSubcategoryPopupFor !== activeCategory.id &&
+                openSubcategoryPopupFor === activeCategory.id &&
                 !search.trim() && (
                   <aside
                     className="z-40 h-fit rounded-2xl border border-sky-400/40 bg-slate-950/95 p-4 shadow-2xl shadow-sky-950/50 backdrop-blur lg:absolute lg:left-0 lg:top-0 lg:w-[520px] xl:w-[640px]"
