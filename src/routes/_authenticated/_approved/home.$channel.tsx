@@ -807,8 +807,10 @@ function ChannelPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [channel?.id, user?.id]);
 
-  const send = async () => {
-    if (!user || !channel || (!draft.trim() && !pendingGif)) return;
+  const send = async (overrideText?: unknown) => {
+    // A confirmed `/` shortcut passes its sentence straight in and skips the composer.
+    const directText = typeof overrideText === "string" ? overrideText : null;
+    if (!user || !channel || (!(directText ?? draft).trim() && !pendingGif)) return;
     if (channel.slow_mode_seconds > 0 && !isModOrAdmin && lastSentAt) {
       const remain = channel.slow_mode_seconds * 1000 - (Date.now() - lastSentAt);
       if (remain > 0) {
@@ -818,8 +820,8 @@ function ChannelPage() {
     }
     setSending(true);
     // Keep the formatted HTML when the toolbar was used, otherwise send plain text.
-    const richHtml = draftHtml.trim();
-    const originalContent = richHtml && isRichChatContent(richHtml) ? richHtml : draft.trim();
+    const richHtml = directText ? "" : draftHtml.trim();
+    const originalContent = directText ?? (richHtml && isRichChatContent(richHtml) ? richHtml : draft.trim());
     const originalGif = pendingGif;
     const originalPlain = draft.trim();
     const originalHtml = richHtml;
