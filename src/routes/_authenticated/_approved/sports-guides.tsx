@@ -69,7 +69,7 @@ function Highlight({ text, query }: { text: string; query: string }) {
   );
 }
 
-type Category = { id: string; name: string; slug: string; sort_order: number };
+type Category = { id: string; name: string; slug: string; sort_order: number; parent_id?: string | null };
 type Subcategory = { id: string; category_id: string; name: string; sort_order: number; is_default: boolean };
 type Blog = {
   id: string;
@@ -113,6 +113,15 @@ function SportsGuidesPage() {
   const listingsTopRef = useRef<HTMLElement | null>(null);
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const [showBackTop, setShowBackTop] = useState(false);
+  // Which main category headings are open in the sidebar.
+  const [openGroups, setOpenGroups] = useState<string[]>(() => {
+    try { return JSON.parse(sessionStorage.getItem("sports-guides-open-groups") || "[]") as string[]; } catch { return []; }
+  });
+  useEffect(() => {
+    try { sessionStorage.setItem("sports-guides-open-groups", JSON.stringify(openGroups)); } catch { /* ignore */ }
+  }, [openGroups]);
+  const toggleGroup = (id: string) =>
+    setOpenGroups((cur) => (cur.includes(id) ? cur.filter((g) => g !== id) : [...cur, id]));
 
 
   // (sub-filter default effect moved below subsByCat declaration)
