@@ -265,18 +265,12 @@ function SportsGuidesPage() {
     [orderedCategories, childrenByParent],
   );
   /**
-   * Opening a heading shows its sub-categories AND lands the guides list on one
-   * of them, so a heading never looks empty after categories are moved into it.
+   * Opening a heading shows its sub-categories in the centre dialog. The user
+   * then picks one and is taken straight to that guide list.
    */
   const openHeading = (id: string) => {
-    const kids = childrenByParent[id] ?? [];
     setOpenGroups([id]);
-    setTab("guides");
-    const target = kids.find((k) => k.id === activeCat) ?? kids[0];
-    if (target) {
-      setActiveCat(target.id);
-      scrollCardsToTop();
-    }
+    setSubDialogFor(id);
   };
 
   /** The category the guides list should land on by default. */
