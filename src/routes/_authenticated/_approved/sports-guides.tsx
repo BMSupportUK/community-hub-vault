@@ -7,6 +7,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import sportsBgAsset from "@/assets/sports-bg.jpg.asset.json";
 const sportsBg = sportsBgAsset.url;
@@ -107,6 +109,9 @@ function SportsGuidesPage() {
   const [newCatName, setNewCatName] = useState("");
   const [addingCat, setAddingCat] = useState(false);
   const [newSubName, setNewSubName] = useState<Record<string, string>>({});
+  const [headingDialogOpen, setHeadingDialogOpen] = useState(false);
+  const [headingName, setHeadingName] = useState("");
+  const [headingPicks, setHeadingPicks] = useState<string[]>([]);
   const dragCatId = useRef<string | null>(null);
   const dragBlogId = useRef<string | null>(null);
   const skipDefaultSubOnce = useRef(false);
