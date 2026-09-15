@@ -66,11 +66,22 @@ export function useQuickReplySlash({
       .slice(0, 8);
   }, [replies, query]);
 
-  /** Swap the "/query" token for the shortcut sentence. */
+  /** Swap the "/query" token for the shortcut sentence, or send it straight away. */
   const insertReply = (reply: QuickReply) => {
     if (queryStart.current < 0) return;
     const caret = caretOffset();
-    const next = `${value.slice(0, queryStart.current)}${reply.body} ${value.slice(caret)}`;
+    const next = `${value.slice(0, queryStart.current)}${reply.body} ${value.slice(caret)}`.trim();
+    if (onSend) {
+      // Confirmed: send the shortcut straight to chat and clear the composer.
+      onChange("");
+      const clearEl = editorRef.current;
+      if (clearEl && !(clearEl instanceof HTMLTextAreaElement)) clearEl.textContent = "";
+      setQuery(null);
+      setConfirming(null);
+      queryStart.current = -1;
+      onSend(next);
+      return;
+    }
     onChange(next);
     const el = editorRef.current;
     if (el && !(el instanceof HTMLTextAreaElement)) el.textContent = next;
