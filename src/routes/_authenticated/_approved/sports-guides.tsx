@@ -151,7 +151,7 @@ function SportsGuidesPage() {
   const handleTabChange = (value: string) => {
     setTab(value);
     if (value === "guides") {
-      const dailySports = categories.find((c) => c.slug === "daily-sports-ppv")?.id ?? categories[0]?.id;
+      const dailySports = defaultCatId();
       if (dailySports) {
         setActiveCat(dailySports);
         scrollCardsToTop();
@@ -236,6 +236,39 @@ function SportsGuidesPage() {
   const baselineAt = dataQuery.data?.baselineAt ?? null;
   const load = () => queryClient.invalidateQueries({ queryKey });
 
+  // Two-level menu: main headings (no parent) and the categories grouped under them.
+  const childrenByParent = useMemo(() => {
+    const m: Record<string, Category[]> = {};
+    for (const c of categories) {
+      if (!c.parent_id) continue;
+      if (!m[c.parent_id]) m[c.parent_id] = [];
+      m[c.parent_id].push(c);
+    }
+    return m;
+  }, [categories]);
+  const topCategories = useMemo(() => categories.filter((c) => !c.parent_id), [categories]);
+  /** Headings first, each followed by its own categories — used by the admin grid. */
+  const orderedCategories = useMemo(
+    () => topCategories.flatMap((c) => [c, ...(childrenByParent[c.id] ?? [])]),
+    [topCategories, childrenByParent],
+  );
+  /** A heading with categories under it never holds guides itself. */
+  const isGroupHeading = (c: Category) => (childrenByParent[c.id]?.length ?? 0) > 0;
+  const leafCategories = useMemo(
+    () => orderedCategories.filter((c) => !isGroupHeading(c)),
+    [orderedCategories, childrenByParent],
+  );
+  /** The category the guides list should land on by default. */
+  const defaultCatId = () =>
+    leafCategories.find((c) => c.slug === "daily-sports-ppv")?.id ?? leafCategories[0]?.id;
+
+  // Keep the heading of the open category expanded.
+  useEffect(() => {
+    if (!activeCat) return;
+    const parent = categories.find((c) => c.id === activeCat)?.parent_id;
+    if (parent) setOpenGroups((cur) => (cur.includes(parent) ? cur : [...cur, parent]));
+  }, [activeCat, categories]);
+
   // Resolve catFromUrl as either category id or slug.
   const resolvedCatFromUrl = useMemo(() => {
     if (!catFromUrl) return null;
@@ -247,10 +280,10 @@ function SportsGuidesPage() {
 
   useEffect(() => {
     if (categories.length) {
-      const preferred =
-        categories.find((c) => c.slug === "daily-sports-ppv")?.id ?? categories[0].id;
-      setActiveCat((cur) => cur ?? resolvedCatFromUrl ?? preferred);
+      const preferred = defaultCatId();
+      if (preferred) setActiveCat((cur) => cur ?? resolvedCatFromUrl ?? preferred);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categories, resolvedCatFromUrl]);
 
   // If we arrived back here from new/edit/read, jump straight to the category.
