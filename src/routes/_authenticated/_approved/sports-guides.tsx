@@ -969,9 +969,21 @@ function SportsGuidesPage() {
                   const children = childrenByParent[openGroups[0]] ?? [];
                   return (
                     <>
-                      <h3 className="font-display font-semibold text-purple-100 px-2 mb-3">
-                        {parent?.name ?? "Subcategories"}
-                      </h3>
+                      <div className="flex items-center justify-between gap-2 px-2 mb-3">
+                        <h3 className="font-display font-semibold text-purple-100">
+                          {parent?.name ?? "Subcategories"}
+                        </h3>
+                        {canManageCategories && parent && (
+                          <button
+                            type="button"
+                            onClick={() => addChildCategory(parent.id)}
+                            title="Add sub-category"
+                            className="shrink-0 p-1 rounded-md text-purple-200/70 hover:text-white hover:bg-fuchsia-600/60"
+                          >
+                            <Plus className="size-4" />
+                          </button>
+                        )}
+                      </div>
                       <div className="space-y-1">
                         {children.map((child) => {
                           const active = child.id === activeCat;
