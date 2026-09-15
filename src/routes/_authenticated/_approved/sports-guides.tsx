@@ -1121,7 +1121,6 @@ function SportsGuidesPage() {
                             className="flex-1 flex items-center justify-between px-2 py-2 text-sm text-left font-semibold"
                           >
                             <span className="flex items-center gap-2">
-                              <ChevronRight className="size-4 shrink-0" />
                               {headingUnread > 0 && (
                                 <span className="size-2 rounded-full bg-fuchsia-400 shadow-[0_0_8px_rgba(232,121,249,0.9)]" />
                               )}
