@@ -1214,29 +1214,36 @@ function SportsGuidesPage() {
 
       <div className="relative px-8 py-6">
         <Tabs value={tab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className={`grid ${canManageCategories ? "grid-cols-3" : "grid-cols-2"} max-w-2xl bg-purple-950/60 border border-purple-500/30`}>
+          <TabsList className={`grid ${activeCat ? (canManageCategories ? "grid-cols-3" : "grid-cols-2") : (canManageCategories ? "grid-cols-2" : "grid-cols-1")} max-w-2xl bg-purple-950/60 border border-purple-500/30`}>
             <TabsTrigger value="welcome" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Welcome</TabsTrigger>
-            <TabsTrigger value="guides" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Guides</TabsTrigger>
+            {activeCat && (
+              <TabsTrigger value="guides" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Guides</TabsTrigger>
+            )}
             {canManageCategories && (
               <TabsTrigger value="categories" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Categories</TabsTrigger>
             )}
           </TabsList>
 
           <TabsContent value="welcome" className="mt-6">
-            <div className="rounded-2xl bg-gradient-to-br from-fuchsia-600/30 via-purple-600/30 to-violet-700/30 border border-purple-500/40 p-10 shadow-[0_0_60px_-15px_rgba(168,85,247,0.5)]">
-              <h2 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 to-blue-600 bg-clip-text text-transparent">Welcome to Sports Guide</h2>
-              <p className="mt-3 text-lg text-purple-100/90 max-w-2xl">
-                Dive into the world of sports with comprehensive guides, insights, and news from your favorite games.
-              </p>
-              <p className="mt-4 text-purple-200/70 max-w-2xl">
-                Whether you're a fan of football, basketball, soccer, tennis, baseball, hockey, or golf — we've got you covered with expert analysis and up-to-date information.
-              </p>
-              <Button className="mt-6 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0 shadow-lg shadow-purple-900/50" onClick={() => handleTabChange("guides")}>Browse guides</Button>
+            <div className="relative grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_260px]">
+              <div className="rounded-2xl bg-gradient-to-br from-fuchsia-600/30 via-purple-600/30 to-violet-700/30 border border-purple-500/40 p-10 shadow-[0_0_60px_-15px_rgba(168,85,247,0.5)]">
+                <h2 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 to-blue-600 bg-clip-text text-transparent">Welcome to Sports Guide</h2>
+                <p className="mt-3 text-lg text-purple-100/90 max-w-2xl">
+                  Dive into the world of sports with comprehensive guides, insights, and news from your favorite games.
+                </p>
+                <p className="mt-4 text-purple-200/70 max-w-2xl">
+                  Whether you're a fan of football, basketball, soccer, tennis, baseball, hockey, or golf — we've got you covered with expert analysis and up-to-date information.
+                </p>
+                <p className="mt-6 text-sm font-semibold text-fuchsia-200">
+                  Pick a category on the right to open the guides.
+                </p>
+              </div>
+              <div className="relative lg:sticky lg:top-4 h-fit">{categoryNav}</div>
             </div>
           </TabsContent>
 
           <TabsContent value="guides" className="mt-6">
-            <div className={`relative grid grid-cols-1 gap-6 ${search.trim() ? "lg:grid-cols-[240px_minmax(0,1fr)_320px]" : activeCategory ? "lg:grid-cols-[240px_minmax(0,1fr)_60px]" : "lg:grid-cols-[240px_minmax(0,1fr)]"}`}>
+            <div className={`relative grid grid-cols-1 gap-6 ${search.trim() ? "lg:grid-cols-[minmax(0,1fr)_320px]" : ""}`}>
 
               {activeCategory &&
                 activeCategory.slug !== "sports-passes" &&
@@ -1244,8 +1251,9 @@ function SportsGuidesPage() {
                 dismissedSubcategoryPopupFor !== activeCategory.id &&
                 !search.trim() && (
                   <aside
-                    className={`z-40 h-fit rounded-2xl border border-sky-400/40 bg-slate-950/95 p-4 shadow-2xl shadow-sky-950/50 backdrop-blur lg:absolute lg:top-0 lg:w-[520px] xl:w-[640px] ${openGroups[0] ? "lg:left-[492px]" : "lg:left-[256px]"}`}
+                    className="z-40 h-fit rounded-2xl border border-sky-400/40 bg-slate-950/95 p-4 shadow-2xl shadow-sky-950/50 backdrop-blur lg:absolute lg:left-0 lg:top-0 lg:w-[520px] xl:w-[640px]"
                   >
+
                     <div className="mb-3 flex items-center justify-between gap-3 px-1">
                       <h3 className="font-display font-semibold text-purple-100">
                         {activeCategory.name} sub-categories
