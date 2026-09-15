@@ -1075,7 +1075,8 @@ function SportsGuidesPage() {
                               key={child.id}
                               type="button"
                               onClick={() => { setActiveCat(child.id); scrollCardsToTop(); }}
-                              className={`w-full flex items-center justify-between gap-2 rounded-lg px-3 py-2.5 text-left text-sm transition-colors ${active ? "bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white shadow-md shadow-fuchsia-950/40" : "text-purple-100/80 hover:bg-purple-800/50"}`}
+                              {...guideDropProps(child.id)}
+                              className={`w-full flex items-center justify-between gap-2 rounded-lg px-3 py-2.5 text-left text-sm transition-colors ${dropCatId === child.id ? "ring-2 ring-emerald-400 bg-emerald-500/20" : ""} ${active ? "bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white shadow-md shadow-fuchsia-950/40" : "text-purple-100/80 hover:bg-purple-800/50"}`}
                             >
                               <span className="flex min-w-0 items-center gap-2">
                                 {unread > 0 && <span className="size-2 shrink-0 rounded-full bg-fuchsia-300" />}
