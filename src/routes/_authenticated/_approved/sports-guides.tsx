@@ -1132,10 +1132,11 @@ function SportsGuidesPage() {
                           <button
                             type="button"
                             onClick={() => setOpenGroups([])}
-                            title="Close"
-                            className="p-1 rounded-md text-purple-200/70 hover:text-white hover:bg-fuchsia-600/60"
+                            title="Close subcategories"
+                            className="flex items-center gap-1 rounded-full bg-fuchsia-600/80 px-2.5 py-1 text-xs font-bold text-white shadow-md shadow-fuchsia-950/50 hover:bg-fuchsia-500 hover:shadow-lg hover:shadow-fuchsia-500/40 transition-all"
                           >
-                            <X className="size-4" />
+                            <X className="size-3.5" />
+                            <span className="hidden sm:inline">Close</span>
                           </button>
                         </span>
                       </div>
