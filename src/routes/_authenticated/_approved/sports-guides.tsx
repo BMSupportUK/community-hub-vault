@@ -287,12 +287,21 @@ function SportsGuidesPage() {
   const defaultCatId = () =>
     leafCategories.find((c) => c.slug === "daily-sports-ppv")?.id ?? leafCategories[0]?.id;
 
-  // Keep the heading of the open category expanded.
+  // Keep the heading of the open category expanded. If the selected category has
+  // just become a heading (categories were moved under it), drop down to its
+  // first category so the guides list still shows something.
   useEffect(() => {
     if (!activeCat) return;
-    const parent = categories.find((c) => c.id === activeCat)?.parent_id;
-    setOpenGroups(parent ? [parent] : []);
-  }, [activeCat, categories]);
+    const current = categories.find((c) => c.id === activeCat);
+    if (!current) return;
+    const kids = childrenByParent[activeCat] ?? [];
+    if (kids.length) {
+      setOpenGroups([activeCat]);
+      setActiveCat(kids[0].id);
+      return;
+    }
+    setOpenGroups(current.parent_id ? [current.parent_id] : []);
+  }, [activeCat, categories, childrenByParent]);
 
   // Resolve catFromUrl as either category id or slug.
   const resolvedCatFromUrl = useMemo(() => {
