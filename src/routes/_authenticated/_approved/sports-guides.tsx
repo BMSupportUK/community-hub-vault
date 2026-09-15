@@ -105,7 +105,7 @@ function SportsGuidesPage() {
   const [search, setSearch] = useState("");
   const [resultsOpen, setResultsOpen] = useState(true);
   const [subFilter, setSubFilter] = useState<string | null>(null);
-  const [dismissedSubcategoryPopupFor, setDismissedSubcategoryPopupFor] = useState<string | null>(null);
+  const [openSubcategoryPopupFor, setOpenSubcategoryPopupFor] = useState<string | null>(null);
   const [newCatName, setNewCatName] = useState("");
   const [addingCat, setAddingCat] = useState(false);
   const [newSubName, setNewSubName] = useState<Record<string, string>>({});
@@ -120,13 +120,8 @@ function SportsGuidesPage() {
   const listingsTopRef = useRef<HTMLElement | null>(null);
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const [showBackTop, setShowBackTop] = useState(false);
-  // Which main category headings are open in the sidebar.
-  const [openGroups, setOpenGroups] = useState<string[]>(() => {
-    try { return JSON.parse(sessionStorage.getItem("sports-guides-open-groups") || "[]") as string[]; } catch { return []; }
-  });
-  useEffect(() => {
-    try { sessionStorage.setItem("sports-guides-open-groups", JSON.stringify(openGroups)); } catch { /* ignore */ }
-  }, [openGroups]);
+  // Which main category headings are open in the sidebar. Start closed on load.
+  const [openGroups, setOpenGroups] = useState<string[]>([]);
   const toggleGroup = (id: string) =>
     setOpenGroups((cur) => (cur.includes(id) ? [] : [id]));
 
