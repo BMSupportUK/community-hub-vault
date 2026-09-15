@@ -11,7 +11,7 @@ import { HtmlEditor } from "@/components/ui/html-editor";
 import { toast } from "sonner";
 import { pruneExpiredGuideEvents } from "@/lib/prune-expired-guide-events";
 
-type Category = { id: string; name: string };
+type Category = { id: string; name: string; parent_id?: string | null };
 type Subcategory = { id: string; category_id: string; name: string; sort_order: number; is_default: boolean };
 type Blog = {
   id: string;
@@ -263,7 +263,7 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
   useEffect(() => {
     (async () => {
       const [{ data: cats }, { data: subs }] = await Promise.all([
-        supabase.from("sports_categories").select("id, name").order("sort_order"),
+        supabase.from("sports_categories").select("id, name, parent_id").order("sort_order"),
         supabase
           .from("sports_subcategories")
           .select("id, category_id, name, sort_order, is_default")
@@ -531,9 +531,15 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
                   setEditing({ ...editing, category_id: newCatId, subcategory: def });
                 }}
               >
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
+                {categories
+                  // Main headings only group other categories — guides live on the ones below them.
+                  .filter((c) => !categories.some((k) => k.parent_id === c.id))
+                  .map((c) => {
+                    const parent = c.parent_id ? categories.find((p) => p.id === c.parent_id)?.name : null;
+                    return (
+                      <option key={c.id} value={c.id}>{parent ? `${parent} / ${c.name}` : c.name}</option>
+                    );
+                  })}
               </select>
             </div>
             {subsForEditing.length > 0 && (

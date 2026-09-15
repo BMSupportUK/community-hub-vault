@@ -69,7 +69,7 @@ function Highlight({ text, query }: { text: string; query: string }) {
   );
 }
 
-type Category = { id: string; name: string; slug: string; sort_order: number };
+type Category = { id: string; name: string; slug: string; sort_order: number; parent_id?: string | null };
 type Subcategory = { id: string; category_id: string; name: string; sort_order: number; is_default: boolean };
 type Blog = {
   id: string;
@@ -113,6 +113,15 @@ function SportsGuidesPage() {
   const listingsTopRef = useRef<HTMLElement | null>(null);
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const [showBackTop, setShowBackTop] = useState(false);
+  // Which main category headings are open in the sidebar.
+  const [openGroups, setOpenGroups] = useState<string[]>(() => {
+    try { return JSON.parse(sessionStorage.getItem("sports-guides-open-groups") || "[]") as string[]; } catch { return []; }
+  });
+  useEffect(() => {
+    try { sessionStorage.setItem("sports-guides-open-groups", JSON.stringify(openGroups)); } catch { /* ignore */ }
+  }, [openGroups]);
+  const toggleGroup = (id: string) =>
+    setOpenGroups((cur) => (cur.includes(id) ? cur.filter((g) => g !== id) : [...cur, id]));
 
 
   // (sub-filter default effect moved below subsByCat declaration)
@@ -142,7 +151,7 @@ function SportsGuidesPage() {
   const handleTabChange = (value: string) => {
     setTab(value);
     if (value === "guides") {
-      const dailySports = categories.find((c) => c.slug === "daily-sports-ppv")?.id ?? categories[0]?.id;
+      const dailySports = defaultCatId();
       if (dailySports) {
         setActiveCat(dailySports);
         scrollCardsToTop();
@@ -227,6 +236,39 @@ function SportsGuidesPage() {
   const baselineAt = dataQuery.data?.baselineAt ?? null;
   const load = () => queryClient.invalidateQueries({ queryKey });
 
+  // Two-level menu: main headings (no parent) and the categories grouped under them.
+  const childrenByParent = useMemo(() => {
+    const m: Record<string, Category[]> = {};
+    for (const c of categories) {
+      if (!c.parent_id) continue;
+      if (!m[c.parent_id]) m[c.parent_id] = [];
+      m[c.parent_id].push(c);
+    }
+    return m;
+  }, [categories]);
+  const topCategories = useMemo(() => categories.filter((c) => !c.parent_id), [categories]);
+  /** Headings first, each followed by its own categories — used by the admin grid. */
+  const orderedCategories = useMemo(
+    () => topCategories.flatMap((c) => [c, ...(childrenByParent[c.id] ?? [])]),
+    [topCategories, childrenByParent],
+  );
+  /** A heading with categories under it never holds guides itself. */
+  const isGroupHeading = (c: Category) => (childrenByParent[c.id]?.length ?? 0) > 0;
+  const leafCategories = useMemo(
+    () => orderedCategories.filter((c) => !isGroupHeading(c)),
+    [orderedCategories, childrenByParent],
+  );
+  /** The category the guides list should land on by default. */
+  const defaultCatId = () =>
+    leafCategories.find((c) => c.slug === "daily-sports-ppv")?.id ?? leafCategories[0]?.id;
+
+  // Keep the heading of the open category expanded.
+  useEffect(() => {
+    if (!activeCat) return;
+    const parent = categories.find((c) => c.id === activeCat)?.parent_id;
+    if (parent) setOpenGroups((cur) => (cur.includes(parent) ? cur : [...cur, parent]));
+  }, [activeCat, categories]);
+
   // Resolve catFromUrl as either category id or slug.
   const resolvedCatFromUrl = useMemo(() => {
     if (!catFromUrl) return null;
@@ -238,10 +280,10 @@ function SportsGuidesPage() {
 
   useEffect(() => {
     if (categories.length) {
-      const preferred =
-        categories.find((c) => c.slug === "daily-sports-ppv")?.id ?? categories[0].id;
-      setActiveCat((cur) => cur ?? resolvedCatFromUrl ?? preferred);
+      const preferred = defaultCatId();
+      if (preferred) setActiveCat((cur) => cur ?? resolvedCatFromUrl ?? preferred);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categories, resolvedCatFromUrl]);
 
   // If we arrived back here from new/edit/read, jump straight to the category.
@@ -562,6 +604,10 @@ function SportsGuidesPage() {
 
   const reorderCategories = async (fromId: string, toId: string) => {
     if (fromId === toId) return;
+    const from = categories.find((c) => c.id === fromId);
+    const to = categories.find((c) => c.id === toId);
+    // Only reorder within the same level (same heading, or both headings).
+    if (!from || !to || (from.parent_id ?? null) !== (to.parent_id ?? null)) return;
     const list = [...categories];
     const fromIdx = list.findIndex((c) => c.id === fromId);
     const toIdx = list.findIndex((c) => c.id === toId);
@@ -574,6 +620,16 @@ function SportsGuidesPage() {
       updated.map((c) => supabase.from("sports_categories").update({ sort_order: c.sort_order }).eq("id", c.id))
     );
   };
+
+  /** Move a category under a main heading, or back out to the top level. */
+  const setCategoryParent = async (id: string, parentId: string | null) => {
+    const { error } = await supabase.from("sports_categories").update({ parent_id: parentId } as never).eq("id", id);
+    if (error) return toast.error(error.message);
+    if (parentId) setOpenGroups((cur) => (cur.includes(parentId) ? cur : [...cur, parentId]));
+    toast.success(parentId ? "Category grouped" : "Category moved to top level");
+    load();
+  };
+
 
   const reorderBlogs = async (fromId: string, toId: string) => {
     if (fromId === toId || !activeCat) return;
@@ -777,46 +833,96 @@ function SportsGuidesPage() {
                   )}
                 </div>
                 <div className="space-y-1">
-                  {categories.map((c) => {
-                    const active = c.id === activeCat;
-                    const n = counts[c.id] ?? 0;
-                    return (
-                      <div
-                        key={c.id}
-                        draggable={isMod}
-                        onDragStart={() => { dragCatId.current = c.id; }}
-                        onDragOver={(e) => { if (isMod) e.preventDefault(); }}
-                        onDrop={(e) => {
-                          if (!isMod) return;
-                          e.preventDefault();
-                          if (dragCatId.current) reorderCategories(dragCatId.current, c.id);
-                          dragCatId.current = null;
-                        }}
-                        className={`group flex items-center gap-1 px-1 rounded-lg ${active ? "bg-gradient-to-r from-violet-600 to-blue-600 text-white shadow-md shadow-purple-900/40" : "text-purple-100/80 hover:bg-purple-800/40"}`}
-                      >
-                        {isMod && (
-                          <GripVertical className="size-3.5 opacity-40 group-hover:opacity-80 cursor-grab shrink-0" />
-                        )}
-                        <button
-                          onClick={() => { setActiveCat(c.id); scrollCardsToTop(); }}
-                          className="flex-1 flex items-center justify-between px-2 py-2 text-sm text-left"
+                  {topCategories.map((top) => {
+                    const kids = childrenByParent[top.id] ?? [];
+                    const heading = kids.length > 0;
+                    const open = openGroups.includes(top.id);
+                    const rows: Category[] = heading ? (open ? kids : []) : [];
+                    const headingUnread = heading
+                      ? kids.reduce((sum, k) => sum + (unreadCounts[k.id] ?? 0), 0)
+                      : unreadCounts[top.id] ?? 0;
+                    const renderRow = (c: Category, indented: boolean) => {
+                      const active = c.id === activeCat;
+                      const unread = unreadCounts[c.id] ?? 0;
+                      return (
+                        <div
+                          key={c.id}
+                          draggable={isMod}
+                          onDragStart={() => { dragCatId.current = c.id; }}
+                          onDragOver={(e) => { if (isMod) e.preventDefault(); }}
+                          onDrop={(e) => {
+                            if (!isMod) return;
+                            e.preventDefault();
+                            if (dragCatId.current) reorderCategories(dragCatId.current, c.id);
+                            dragCatId.current = null;
+                          }}
+                          className={`group flex items-center gap-1 px-1 rounded-lg ${indented ? "ml-4" : ""} ${active ? "bg-gradient-to-r from-violet-600 to-blue-600 text-white shadow-md shadow-purple-900/40" : "text-purple-100/80 hover:bg-purple-800/40"}`}
                         >
-                          <span className="flex items-center gap-2">
-                            {(unreadCounts[c.id] ?? 0) > 0 && (
-                              <span className="size-2 rounded-full bg-fuchsia-400 shadow-[0_0_8px_rgba(232,121,249,0.9)]" />
+                          {isMod && (
+                            <GripVertical className="size-3.5 opacity-40 group-hover:opacity-80 cursor-grab shrink-0" />
+                          )}
+                          <button
+                            onClick={() => { setActiveCat(c.id); scrollCardsToTop(); }}
+                            className="flex-1 flex items-center justify-between px-2 py-2 text-sm text-left"
+                          >
+                            <span className="flex items-center gap-2">
+                              {unread > 0 && (
+                                <span className="size-2 rounded-full bg-fuchsia-400 shadow-[0_0_8px_rgba(232,121,249,0.9)]" />
+                              )}
+                              {c.name}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              {unread > 0 && (
+                                <span className="text-xs px-2 py-0.5 rounded-full bg-fuchsia-500 text-white font-semibold">{unread}</span>
+                              )}
+                            </span>
+                          </button>
+                        </div>
+                      );
+                    };
+
+                    if (!heading) return renderRow(top, false);
+
+                    return (
+                      <div key={top.id} className="space-y-1">
+                        <div
+                          draggable={isMod}
+                          onDragStart={() => { dragCatId.current = top.id; }}
+                          onDragOver={(e) => { if (isMod) e.preventDefault(); }}
+                          onDrop={(e) => {
+                            if (!isMod) return;
+                            e.preventDefault();
+                            if (dragCatId.current) reorderCategories(dragCatId.current, top.id);
+                            dragCatId.current = null;
+                          }}
+                          className="group flex items-center gap-1 px-1 rounded-lg text-purple-100/80 hover:bg-purple-800/40"
+                        >
+                          {isMod && (
+                            <GripVertical className="size-3.5 opacity-40 group-hover:opacity-80 cursor-grab shrink-0" />
+                          )}
+                          <button
+                            onClick={() => toggleGroup(top.id)}
+                            aria-expanded={open}
+                            className="flex-1 flex items-center justify-between px-2 py-2 text-sm text-left font-semibold"
+                          >
+                            <span className="flex items-center gap-2">
+                              {open ? <ChevronDown className="size-4 shrink-0" /> : <ChevronRight className="size-4 shrink-0" />}
+                              {headingUnread > 0 && !open && (
+                                <span className="size-2 rounded-full bg-fuchsia-400 shadow-[0_0_8px_rgba(232,121,249,0.9)]" />
+                              )}
+                              {top.name}
+                            </span>
+                            {headingUnread > 0 && !open && (
+                              <span className="text-xs px-2 py-0.5 rounded-full bg-fuchsia-500 text-white font-semibold">{headingUnread}</span>
                             )}
-                            {c.name}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            {(unreadCounts[c.id] ?? 0) > 0 && (
-                              <span className="text-xs px-2 py-0.5 rounded-full bg-fuchsia-500 text-white font-semibold">{unreadCounts[c.id]}</span>
-                            )}
-                          </span>
-                        </button>
+                          </button>
+                        </div>
+                        {rows.map((c) => renderRow(c, true))}
                       </div>
                     );
                   })}
                 </div>
+
               </aside>
 
               <section ref={listingsTopRef}>
@@ -1022,7 +1128,7 @@ function SportsGuidesPage() {
               </div>
             )}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {categories.map((c) => (
+              {orderedCategories.map((c) => (
                 <div
                   key={c.id}
                   draggable={isMod}
@@ -1055,10 +1161,49 @@ function SportsGuidesPage() {
                       </button>
                     </div>
                   )}
-                  <button onClick={() => { setActiveCat(c.id); setTab("guides"); scrollCardsToTop(); }} className="text-left w-full">
-                    <div className="font-display font-semibold text-lg text-purple-50">{c.name}</div>
-                    <div className="text-sm text-purple-200/70 mt-1">{counts[c.id] ?? 0} guide{(counts[c.id] ?? 0) === 1 ? "" : "s"}</div>
+                  <button
+                    onClick={() => {
+                      if (isGroupHeading(c)) { toggleGroup(c.id); return; }
+                      setActiveCat(c.id); setTab("guides"); scrollCardsToTop();
+                    }}
+                    className="text-left w-full"
+                  >
+                    <div className="font-display font-semibold text-lg text-purple-50 flex items-center gap-2">
+                      {c.parent_id && <span className="text-purple-300/60 text-sm">{categories.find((p) => p.id === c.parent_id)?.name} /</span>}
+                      {c.name}
+                      {isGroupHeading(c) && (
+                        <span className="text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded bg-fuchsia-500/30 text-fuchsia-100 border border-fuchsia-400/40">
+                          Main heading
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-sm text-purple-200/70 mt-1">
+                      {isGroupHeading(c)
+                        ? `${childrenByParent[c.id]?.length ?? 0} categories`
+                        : `${counts[c.id] ?? 0} guide${(counts[c.id] ?? 0) === 1 ? "" : "s"}`}
+                    </div>
                   </button>
+                  {canManageCategories && (
+                    <div className="mt-3">
+                      <label className="text-[11px] uppercase tracking-wider font-semibold text-fuchsia-300/80">Group under</label>
+                      <select
+                        value={c.parent_id ?? ""}
+                        onChange={(e) => setCategoryParent(c.id, e.target.value || null)}
+                        disabled={isGroupHeading(c)}
+                        className="mt-1 w-full rounded-md bg-purple-950/60 border border-purple-500/30 text-sm text-purple-50 px-2 py-1.5 disabled:opacity-40"
+                      >
+                        <option value="">No heading (top level)</option>
+                        {categories
+                          .filter((p) => p.id !== c.id && !p.parent_id)
+                          .map((p) => (
+                            <option key={p.id} value={p.id}>{p.name}</option>
+                          ))}
+                      </select>
+                      {isGroupHeading(c) && (
+                        <div className="text-[11px] text-purple-200/60 mt-1">Move its categories out first to regroup this heading.</div>
+                      )}
+                    </div>
+                  )}
                   {canManageCategories && (
                     <div className="mt-4 pt-4 border-t border-purple-500/20">
                       <div className="text-[11px] uppercase tracking-wider font-semibold text-fuchsia-300/80 mb-2">

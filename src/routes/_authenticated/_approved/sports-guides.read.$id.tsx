@@ -26,7 +26,7 @@ type Blog = {
   not_guaranteed: boolean | null;
   subcategory: string | null;
 };
-type Category = { id: string; name: string };
+type Category = { id: string; name: string; parent_id?: string | null };
 
 function ReadPage() {
   const { id } = Route.useParams();
@@ -61,7 +61,7 @@ function ReadPage() {
     (async () => {
       const [{ data: b, error }, { data: cats }] = await Promise.all([
         supabase.from("sports_blogs").select("*").eq("id", id).maybeSingle(),
-        supabase.from("sports_categories").select("id, name").order("sort_order"),
+        supabase.from("sports_categories").select("id, name, parent_id").order("sort_order"),
       ]);
       if (error || !b) {
         toast.error(error?.message ?? "Blog not found");
@@ -239,7 +239,12 @@ function ReadPage() {
           <article className="flex-1 min-h-0 w-full max-w-none mx-auto px-3 sm:px-6 py-6 flex flex-col gap-4 overflow-hidden">
             <div className="flex flex-wrap gap-2">
               <span className="text-xs px-2 py-1 rounded-md bg-fuchsia-500/30 text-white font-semibold border border-fuchsia-400/50">
-                {categories.find((c) => c.id === blog.category_id)?.name}
+                {(() => {
+                  const cat = categories.find((c) => c.id === blog.category_id);
+                  if (!cat) return null;
+                  const parent = cat.parent_id ? categories.find((p) => p.id === cat.parent_id)?.name : null;
+                  return parent ? `${parent} / ${cat.name}` : cat.name;
+                })()}
               </span>
               {blog.badge && (
                 <span className="text-xs px-2 py-1 rounded-md bg-violet-500/20 text-violet-200 font-medium border border-violet-500/30">

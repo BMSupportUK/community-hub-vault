@@ -4701,6 +4701,7 @@ export type Database = {
           created_at: string
           id: string
           name: string
+          parent_id: string | null
           slug: string
           sort_order: number
         }
@@ -4708,6 +4709,7 @@ export type Database = {
           created_at?: string
           id?: string
           name: string
+          parent_id?: string | null
           slug: string
           sort_order?: number
         }
@@ -4715,10 +4717,19 @@ export type Database = {
           created_at?: string
           id?: string
           name?: string
+          parent_id?: string | null
           slug?: string
           sort_order?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "sports_categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "sports_categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       sports_subcategories: {
         Row: {
