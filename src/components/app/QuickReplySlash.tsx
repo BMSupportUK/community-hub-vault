@@ -13,11 +13,14 @@ export function useQuickReplySlash({
   onChange,
   editorRef,
   scope = "talk",
+  onSend,
 }: {
   value: string;
   onChange: (next: string) => void;
   editorRef: React.RefObject<HTMLTextAreaElement | HTMLDivElement | null>;
   scope?: QuickReplyScope;
+  /** When set, confirming a shortcut sends it straight to chat instead of inserting it. */
+  onSend?: (text: string) => void;
 }) {
   const { replies, isStaff } = useQuickReplies(scope);
   const [query, setQuery] = useState<string | null>(null);
