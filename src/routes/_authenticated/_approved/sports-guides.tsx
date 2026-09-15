@@ -1161,10 +1161,49 @@ function SportsGuidesPage() {
                       </button>
                     </div>
                   )}
-                  <button onClick={() => { setActiveCat(c.id); setTab("guides"); scrollCardsToTop(); }} className="text-left w-full">
-                    <div className="font-display font-semibold text-lg text-purple-50">{c.name}</div>
-                    <div className="text-sm text-purple-200/70 mt-1">{counts[c.id] ?? 0} guide{(counts[c.id] ?? 0) === 1 ? "" : "s"}</div>
+                  <button
+                    onClick={() => {
+                      if (isGroupHeading(c)) { toggleGroup(c.id); return; }
+                      setActiveCat(c.id); setTab("guides"); scrollCardsToTop();
+                    }}
+                    className="text-left w-full"
+                  >
+                    <div className="font-display font-semibold text-lg text-purple-50 flex items-center gap-2">
+                      {c.parent_id && <span className="text-purple-300/60 text-sm">{categories.find((p) => p.id === c.parent_id)?.name} /</span>}
+                      {c.name}
+                      {isGroupHeading(c) && (
+                        <span className="text-[9px] uppercase tracking-wider font-bold px-1.5 py-0.5 rounded bg-fuchsia-500/30 text-fuchsia-100 border border-fuchsia-400/40">
+                          Main heading
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-sm text-purple-200/70 mt-1">
+                      {isGroupHeading(c)
+                        ? `${childrenByParent[c.id]?.length ?? 0} categories`
+                        : `${counts[c.id] ?? 0} guide${(counts[c.id] ?? 0) === 1 ? "" : "s"}`}
+                    </div>
                   </button>
+                  {canManageCategories && (
+                    <div className="mt-3">
+                      <label className="text-[11px] uppercase tracking-wider font-semibold text-fuchsia-300/80">Group under</label>
+                      <select
+                        value={c.parent_id ?? ""}
+                        onChange={(e) => setCategoryParent(c.id, e.target.value || null)}
+                        disabled={isGroupHeading(c)}
+                        className="mt-1 w-full rounded-md bg-purple-950/60 border border-purple-500/30 text-sm text-purple-50 px-2 py-1.5 disabled:opacity-40"
+                      >
+                        <option value="">No heading (top level)</option>
+                        {categories
+                          .filter((p) => p.id !== c.id && !p.parent_id)
+                          .map((p) => (
+                            <option key={p.id} value={p.id}>{p.name}</option>
+                          ))}
+                      </select>
+                      {isGroupHeading(c) && (
+                        <div className="text-[11px] text-purple-200/60 mt-1">Move its categories out first to regroup this heading.</div>
+                      )}
+                    </div>
+                  )}
                   {canManageCategories && (
                     <div className="mt-4 pt-4 border-t border-purple-500/20">
                       <div className="text-[11px] uppercase tracking-wider font-semibold text-fuchsia-300/80 mb-2">
