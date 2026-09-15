@@ -621,6 +621,25 @@ function SportsGuidesPage() {
     );
   };
 
+  /** Add a sub-category directly beneath a main category (turns it into a heading). */
+  const addChildCategory = async (parentId: string) => {
+    const name = prompt("New sub-category name")?.trim();
+    if (!name) return;
+    if (categories.some((c) => c.name.toLowerCase() === name.toLowerCase())) {
+      return toast.error("A category with that name already exists");
+    }
+    const slug = `${name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")}-${Date.now().toString(36)}`;
+    const siblings = childrenByParent[parentId] ?? [];
+    const nextOrder = (siblings[siblings.length - 1]?.sort_order ?? categories[categories.length - 1]?.sort_order ?? 0) + 10;
+    const { error } = await supabase
+      .from("sports_categories")
+      .insert({ name, slug, sort_order: nextOrder, parent_id: parentId } as never);
+    if (error) return toast.error(error.message);
+    setOpenGroups((cur) => (cur.includes(parentId) ? cur : [...cur, parentId]));
+    toast.success("Sub-category added");
+    load();
+  };
+
   /** Move a category under a main heading, or back out to the top level. */
   const setCategoryParent = async (id: string, parentId: string | null) => {
     const { error } = await supabase.from("sports_categories").update({ parent_id: parentId } as never).eq("id", id);
@@ -875,10 +894,20 @@ function SportsGuidesPage() {
                                 <span className="text-xs px-2 py-0.5 rounded-full bg-fuchsia-500 text-white font-semibold">{unread}</span>
                               )}
                             </span>
-                          </button>
-                        </div>
-                      );
-                    };
+                           </button>
+                          {canManageCategories && !c.parent_id && (
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); addChildCategory(c.id); }}
+                              title="Add sub-category"
+                              className="shrink-0 mr-1 p-1 rounded-md text-purple-200/70 hover:text-white hover:bg-fuchsia-600/60"
+                            >
+                              <Plus className="size-3.5" />
+                            </button>
+                          )}
+                         </div>
+                       );
+                     };
 
                     if (!heading) return renderRow(top);
 
@@ -914,11 +943,21 @@ function SportsGuidesPage() {
                             {headingUnread > 0 && (
                               <span className="text-xs px-2 py-0.5 rounded-full bg-fuchsia-500 text-white font-semibold">{headingUnread}</span>
                             )}
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
+                           </button>
+                          {canManageCategories && (
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); addChildCategory(top.id); }}
+                              title="Add sub-category"
+                              className="shrink-0 mr-1 p-1 rounded-md text-purple-200/70 hover:text-white hover:bg-fuchsia-600/60"
+                            >
+                              <Plus className="size-3.5" />
+                            </button>
+                          )}
+                         </div>
+                       </div>
+                     );
+                   })}
                 </div>
 
               </aside>
@@ -930,9 +969,21 @@ function SportsGuidesPage() {
                   const children = childrenByParent[openGroups[0]] ?? [];
                   return (
                     <>
-                      <h3 className="font-display font-semibold text-purple-100 px-2 mb-3">
-                        {parent?.name ?? "Subcategories"}
-                      </h3>
+                      <div className="flex items-center justify-between gap-2 px-2 mb-3">
+                        <h3 className="font-display font-semibold text-purple-100">
+                          {parent?.name ?? "Subcategories"}
+                        </h3>
+                        {canManageCategories && parent && (
+                          <button
+                            type="button"
+                            onClick={() => addChildCategory(parent.id)}
+                            title="Add sub-category"
+                            className="shrink-0 p-1 rounded-md text-purple-200/70 hover:text-white hover:bg-fuchsia-600/60"
+                          >
+                            <Plus className="size-4" />
+                          </button>
+                        )}
+                      </div>
                       <div className="space-y-1">
                         {children.map((child) => {
                           const active = child.id === activeCat;
