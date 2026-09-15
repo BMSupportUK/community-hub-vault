@@ -940,7 +940,7 @@ function SportsGuidesPage() {
                     {canManageCategories && (
                       <button
                         type="button"
-                        onClick={() => addTopCategory()}
+                        onClick={openHeadingDialog}
                         title="Add heading"
                         className="p-1 rounded-md text-purple-200/70 hover:text-white hover:bg-fuchsia-600/60"
                       >
@@ -1477,7 +1477,7 @@ function SportsGuidesPage() {
                     <Button onClick={() => setAddingCat(true)} className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0">
                       <Plus className="size-4 mr-1" /> Add Category
                     </Button>
-                    <Button onClick={addTopCategory} className="bg-gradient-to-r from-fuchsia-600 to-pink-600 hover:from-fuchsia-500 hover:to-pink-500 text-white border-0">
+                    <Button onClick={openHeadingDialog} className="bg-gradient-to-r from-fuchsia-600 to-pink-600 hover:from-fuchsia-500 hover:to-pink-500 text-white border-0">
                       <Plus className="size-4 mr-1" /> Add Heading
                     </Button>
                   </>
