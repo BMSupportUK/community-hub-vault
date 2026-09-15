@@ -375,6 +375,24 @@ function SportsGuidesPage() {
     return m;
   }, [subcategories]);
 
+  /**
+   * Category navigation is deliberately staged. A category with another set of
+   * choices opens that set first; only the final choice opens the guide list.
+   */
+  const chooseCategory = (categoryId: string) => {
+    const categoryChildren = childrenByParent[categoryId] ?? [];
+    const guideSubcategories = subsByCat[categoryId] ?? [];
+    if (categoryChildren.length > 0 || guideSubcategories.length > 0) {
+      setSubDialogFor(categoryId);
+      setOpenGroups([categoryId]);
+      return;
+    }
+    setSubDialogFor(null);
+    setActiveCat(categoryId);
+    setTab("guides");
+    scrollCardsToTop();
+  };
+
   // When switching category, default to that category's default sub-category
   // (falling back to the first sub-category only when no default is set).
   useEffect(() => {
@@ -1014,7 +1032,7 @@ function SportsGuidesPage() {
                             <GripVertical className="size-3.5 opacity-40 group-hover:opacity-80 cursor-grab shrink-0" />
                           )}
                           <button
-                            onClick={() => { setActiveCat(c.id); setTab("guides"); scrollCardsToTop(); }}
+                            onClick={() => chooseCategory(c.id)}
                             className="flex-1 flex items-center justify-between px-2 py-2 text-sm text-left"
                           >
                             <span className="flex items-center gap-2">
@@ -1130,6 +1148,7 @@ function SportsGuidesPage() {
                   {(() => {
                   const parent = categories.find((c) => c.id === subDialogFor);
                   const children = childrenByParent[subDialogFor ?? ""] ?? [];
+                  const guideSubcategories = subsByCat[subDialogFor ?? ""] ?? [];
                   const grandParent = parent?.parent_id ? categories.find((c) => c.id === parent.parent_id) : null;
                   return (
                     <>
@@ -1199,15 +1218,7 @@ function SportsGuidesPage() {
                               <button
                                 type="button"
                                 onClick={() => {
-                                  if ((childrenByParent[child.id]?.length ?? 0) > 0) {
-                                    setSubDialogFor(child.id);
-                                    setOpenGroups([child.id]);
-                                    return;
-                                  }
-                                  setSubDialogFor(null);
-                                  setActiveCat(child.id);
-                                  setTab("guides");
-                                  scrollCardsToTop();
+                                  chooseCategory(child.id);
                                 }}
                                 className="flex flex-1 items-center justify-between gap-2 px-2 py-2.5 text-left text-sm"
                               >
@@ -1228,6 +1239,32 @@ function SportsGuidesPage() {
                                 </button>
                               )}
                             </div>
+                          );
+                        })}
+                        {guideSubcategories.map((sub) => {
+                          const count = blogs.filter((b) => b.category_id === parent?.id && b.subcategory === sub.name).length;
+                          const unread = parent ? unreadSubCounts[parent.id]?.[sub.name] ?? 0 : 0;
+                          return (
+                            <button
+                              key={sub.id}
+                              type="button"
+                              onClick={() => {
+                                if (!parent) return;
+                                skipDefaultSubOnce.current = true;
+                                setActiveCat(parent.id);
+                                setSubFilter(sub.name);
+                                setSubDialogFor(null);
+                                setTab("guides");
+                                scrollCardsToTop();
+                              }}
+                              className="flex items-center justify-between gap-2 rounded-lg border border-purple-400/40 bg-purple-900/60 px-3 py-2.5 text-left text-sm font-semibold text-purple-100 transition-colors hover:border-fuchsia-400/60 hover:bg-purple-800/80"
+                            >
+                              <span className="break-words">{sub.name}</span>
+                              <span className="flex shrink-0 items-center gap-1.5">
+                                {unread > 0 && <span className="size-2 rounded-full bg-fuchsia-300" />}
+                                <span className="rounded-full bg-purple-950/70 px-2 py-0.5 text-xs">{count}</span>
+                              </span>
+                            </button>
                           );
                         })}
                       </div>
