@@ -641,6 +641,23 @@ function SportsGuidesPage() {
     load();
   };
 
+  /** Create a brand-new main heading at the top level. */
+  const addTopCategory = async () => {
+    const name = prompt("New heading name")?.trim();
+    if (!name) return;
+    if (categories.some((c) => c.name.toLowerCase() === name.toLowerCase())) {
+      return toast.error("A category with that name already exists");
+    }
+    const slug = `${name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "")}-${Date.now().toString(36)}`;
+    const nextOrder = (categories[categories.length - 1]?.sort_order ?? 0) + 10;
+    const { error } = await supabase
+      .from("sports_categories")
+      .insert({ name, slug, sort_order: nextOrder } as never);
+    if (error) return toast.error(error.message);
+    toast.success("Heading added");
+    load();
+  };
+
   /** Move a category under a main heading, or back out to the top level. */
   const setCategoryParent = async (id: string, parentId: string | null) => {
     const { error } = await supabase.from("sports_categories").update({ parent_id: parentId } as never).eq("id", id);
@@ -872,10 +889,22 @@ function SportsGuidesPage() {
           </TabsContent>
 
           <TabsContent value="guides" className="mt-6">
-            <div className={`relative grid grid-cols-1 gap-6 ${search.trim() ? "lg:grid-cols-[240px_minmax(0,1fr)_320px]" : "lg:grid-cols-[240px_minmax(0,1fr)]"}`}>
+            <div className={`relative grid grid-cols-1 gap-6 ${search.trim() ? "lg:grid-cols-[240px_minmax(0,1fr)_320px]" : activeCategory ? "lg:grid-cols-[240px_minmax(0,1fr)_60px]" : "lg:grid-cols-[240px_minmax(0,1fr)]"}`}>
               <aside className="relative z-20 rounded-2xl bg-purple-950/50 border border-purple-500/30 p-4 h-fit backdrop-blur">
                 <div className="flex items-center justify-between mb-3 px-2 gap-2">
-                  <h3 className="font-display font-semibold text-purple-100">Categories</h3>
+                  <h3 className="font-display font-semibold text-purple-100 flex items-center gap-1">
+                    Categories
+                    {canManageCategories && (
+                      <button
+                        type="button"
+                        onClick={() => addTopCategory()}
+                        title="Add heading"
+                        className="p-1 rounded-md text-purple-200/70 hover:text-white hover:bg-fuchsia-600/60"
+                      >
+                        <Plus className="size-3.5" />
+                      </button>
+                    )}
+                  </h3>
                   {user && blogs.some(isUnread) && (
                     <button
                       onClick={async () => {
