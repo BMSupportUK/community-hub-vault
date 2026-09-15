@@ -105,7 +105,7 @@ function SportsGuidesPage() {
   const [search, setSearch] = useState("");
   const [resultsOpen, setResultsOpen] = useState(true);
   const [subFilter, setSubFilter] = useState<string | null>(null);
-  const [dismissedSubcategoryPopupFor, setDismissedSubcategoryPopupFor] = useState<string | null>(null);
+  const [openSubcategoryPopupFor, setOpenSubcategoryPopupFor] = useState<string | null>(null);
   const [newCatName, setNewCatName] = useState("");
   const [addingCat, setAddingCat] = useState(false);
   const [newSubName, setNewSubName] = useState<Record<string, string>>({});
@@ -120,13 +120,8 @@ function SportsGuidesPage() {
   const listingsTopRef = useRef<HTMLElement | null>(null);
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const [showBackTop, setShowBackTop] = useState(false);
-  // Which main category headings are open in the sidebar.
-  const [openGroups, setOpenGroups] = useState<string[]>(() => {
-    try { return JSON.parse(sessionStorage.getItem("sports-guides-open-groups") || "[]") as string[]; } catch { return []; }
-  });
-  useEffect(() => {
-    try { sessionStorage.setItem("sports-guides-open-groups", JSON.stringify(openGroups)); } catch { /* ignore */ }
-  }, [openGroups]);
+  // Which main category headings are open in the sidebar. Start closed on load.
+  const [openGroups, setOpenGroups] = useState<string[]>([]);
   const toggleGroup = (id: string) =>
     setOpenGroups((cur) => (cur.includes(id) ? [] : [id]));
 
@@ -157,10 +152,10 @@ function SportsGuidesPage() {
   // Switching to the Guides tab always defaults to the Daily Sports & PPV category.
   const handleTabChange = (value: string) => {
     setTab(value);
+    setOpenSubcategoryPopupFor(null);
     if (value === "guides" && !activeCat) {
       const dailySports = defaultCatId();
       if (dailySports) {
-        setDismissedSubcategoryPopupFor(null);
         setActiveCat(dailySports);
         scrollCardsToTop();
       }
@@ -274,7 +269,6 @@ function SportsGuidesPage() {
   const openHeading = (id: string) => {
     const kids = childrenByParent[id] ?? [];
     setOpenGroups([id]);
-    setDismissedSubcategoryPopupFor(null);
     setTab("guides");
     const target = kids.find((k) => k.id === activeCat) ?? kids[0];
     if (target) {
@@ -717,7 +711,6 @@ function SportsGuidesPage() {
     // Keep the moved category selected and its new heading open so the guides
     // list keeps showing the category you just moved.
     setOpenGroups(parentId ? [parentId] : []);
-    setDismissedSubcategoryPopupFor(null);
     setActiveCat(id);
     setTab("guides");
     toast.success(parentId ? "Category grouped" : "Category moved to top level");
@@ -1017,7 +1010,7 @@ function SportsGuidesPage() {
                             <GripVertical className="size-3.5 opacity-40 group-hover:opacity-80 cursor-grab shrink-0" />
                           )}
                           <button
-                            onClick={() => { setDismissedSubcategoryPopupFor(null); setActiveCat(c.id); setTab("guides"); scrollCardsToTop(); }}
+                            onClick={() => { setActiveCat(c.id); setTab("guides"); scrollCardsToTop(); }}
                             className="flex-1 flex items-center justify-between px-2 py-2 text-sm text-left"
                           >
                             <span className="flex items-center gap-2">
@@ -1199,7 +1192,7 @@ function SportsGuidesPage() {
                               )}
                               <button
                                 type="button"
-                                 onClick={() => { setDismissedSubcategoryPopupFor(null); setActiveCat(child.id); setTab("guides"); scrollCardsToTop(); }}
+                                 onClick={() => { setActiveCat(child.id); setTab("guides"); scrollCardsToTop(); }}
                                 className="flex flex-1 items-center justify-between gap-2 px-2 py-2.5 text-left text-sm"
                               >
                                 <span className="flex min-w-0 items-center gap-2">
@@ -1353,7 +1346,7 @@ function SportsGuidesPage() {
               {activeCategory &&
                 activeCategory.slug !== "sports-passes" &&
                 (subsByCat[activeCategory.id]?.length ?? 0) > 0 &&
-                dismissedSubcategoryPopupFor !== activeCategory.id &&
+                openSubcategoryPopupFor === activeCategory.id &&
                 !search.trim() && (
                   <aside
                     className="z-40 h-fit rounded-2xl border border-sky-400/40 bg-slate-950/95 p-4 shadow-2xl shadow-sky-950/50 backdrop-blur lg:absolute lg:left-0 lg:top-0 lg:w-[520px] xl:w-[640px]"
@@ -1365,7 +1358,7 @@ function SportsGuidesPage() {
                       </h3>
                       <button
                         type="button"
-                        onClick={() => setDismissedSubcategoryPopupFor(activeCategory.id)}
+                        onClick={() => setOpenSubcategoryPopupFor(null)}
                         title="Close sub-categories"
                         aria-label={`Close ${activeCategory.name} sub-categories`}
                         className="flex shrink-0 items-center gap-1 rounded-full bg-fuchsia-600/80 px-2.5 py-1 text-xs font-bold text-white shadow-md shadow-fuchsia-950/50 transition-all hover:bg-fuchsia-500 hover:shadow-lg hover:shadow-fuchsia-500/40"
@@ -1431,9 +1424,20 @@ function SportsGuidesPage() {
                 </div>
 
                 {activeCategory && !search.trim() && (
-                  <h2 className="mb-4 font-display text-xl font-bold text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.85)]">
-                    <span className="bg-gradient-to-r from-fuchsia-300 to-sky-300 bg-clip-text text-transparent">{activeCategory.name}</span>{" "}Guides
-                  </h2>
+                  <div className="mb-4 flex flex-wrap items-center gap-3">
+                    <h2 className="font-display text-xl font-bold text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.85)]">
+                      <span className="bg-gradient-to-r from-fuchsia-300 to-sky-300 bg-clip-text text-transparent">{activeCategory.name}</span>{" "}Guides
+                    </h2>
+                    {activeCategory.slug !== "sports-passes" && (subsByCat[activeCategory.id]?.length ?? 0) > 0 && openSubcategoryPopupFor !== activeCategory.id && (
+                      <button
+                        type="button"
+                        onClick={() => setOpenSubcategoryPopupFor(activeCategory.id)}
+                        className="text-[11px] font-bold uppercase tracking-wide px-3 py-1.5 rounded-full border border-fuchsia-400/50 bg-fuchsia-600/20 text-fuchsia-100 hover:bg-fuchsia-600/40 transition-colors"
+                      >
+                        Sub-categories
+                      </button>
+                    )}
+                  </div>
                 )}
 
                 {activeCategory?.slug === "sports-passes" && activeCat && (subsByCat[activeCat]?.length ?? 0) > 0 && !search.trim() && (
@@ -1640,7 +1644,7 @@ function SportsGuidesPage() {
                   <button
                     onClick={() => {
                       if (isGroupHeading(c)) { openHeading(c.id); return; }
-                       setDismissedSubcategoryPopupFor(null); setActiveCat(c.id); setTab("guides"); scrollCardsToTop();
+                       setActiveCat(c.id); setTab("guides"); scrollCardsToTop();
                     }}
                     className="text-left w-full"
                   >
