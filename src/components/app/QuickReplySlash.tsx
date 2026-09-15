@@ -150,7 +150,7 @@ export function useQuickReplySlash({
       <div className="absolute bottom-full left-0 mb-2 w-80 max-w-[90vw] rounded-lg border border-border bg-popover text-popover-foreground shadow-xl overflow-hidden z-50">
         <div className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border bg-muted/40">
           <Keyboard className="size-3.5 text-amber-400" />
-          {confirming ? "Use this shortcut?" : `Shortcuts /${query || "…"}`}
+          {confirming ? (onSend ? "Send this shortcut now?" : "Use this shortcut?") : `Shortcuts /${query || "…"}`}
         </div>
 
         {confirming ? (
