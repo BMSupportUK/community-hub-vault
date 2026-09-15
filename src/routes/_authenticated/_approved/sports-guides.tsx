@@ -872,7 +872,7 @@ function SportsGuidesPage() {
           </TabsContent>
 
           <TabsContent value="guides" className="mt-6">
-            <div className={`grid grid-cols-1 gap-6 ${search.trim() ? (openGroups[0] ? "lg:grid-cols-[240px_220px_minmax(0,1fr)] xl:grid-cols-[260px_220px_minmax(0,1fr)_320px]" : "lg:grid-cols-[280px_1fr_340px]") : (openGroups[0] ? "lg:grid-cols-[260px_220px_minmax(0,1fr)]" : "lg:grid-cols-[280px_1fr]")}`}>
+            <div className={`grid grid-cols-1 gap-6 ${search.trim() ? (openGroups[0] ? "lg:grid-cols-[220px_200px_minmax(0,1fr)_260px] xl:grid-cols-[240px_220px_minmax(0,1fr)_280px]" : "lg:grid-cols-[240px_minmax(0,1fr)_280px_320px]") : (openGroups[0] ? "lg:grid-cols-[220px_200px_minmax(0,1fr)_260px]" : "lg:grid-cols-[240px_minmax(0,1fr)_280px]")}`}>
               <aside className="rounded-2xl bg-purple-950/50 border border-purple-500/30 p-4 h-fit backdrop-blur">
                 <div className="flex items-center justify-between mb-3 px-2 gap-2">
                   <h3 className="font-display font-semibold text-purple-100">Categories</h3>
@@ -1149,43 +1149,6 @@ function SportsGuidesPage() {
                   </div>
                 )}
 
-                {activeCategory && (
-                  <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl bg-slate-950/75 ring-1 ring-purple-500/30 px-3 py-2 backdrop-blur-sm">
-                    <h2 className="font-display text-2xl font-bold text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.85)]">
-                      <span className="bg-gradient-to-r from-fuchsia-300 to-sky-300 bg-clip-text text-transparent">{activeCategory.name}</span>{" "}Guides
-                    </h2>
-                    <div className="flex flex-wrap gap-0.5" aria-label="Jump to guide title by letter">
-                      {Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i)).map((letter) => {
-                        const has = !!azMap[letter];
-                        const unread = azUnread.has(letter);
-                        return (
-                          <button
-                            key={letter}
-                            onClick={() => jumpToLetter(letter)}
-                            disabled={!has}
-                            title={
-                              unread
-                                ? `Unread guide starting with ${letter}`
-                                : has
-                                  ? `Jump to first guide title starting with ${letter}`
-                                  : `No guide title starting with ${letter}`
-                            }
-                            className={`w-6 h-6 grid place-items-center rounded text-[11px] font-bold transition-colors ring-1 ${
-                              unread
-                                ? "bg-fuchsia-500 text-white animate-pulse ring-fuchsia-300 cursor-pointer"
-                                : has
-                                ? "bg-slate-900/80 text-white ring-purple-400/40 hover:bg-fuchsia-600 hover:ring-fuchsia-300 cursor-pointer"
-                                : "bg-slate-900/40 text-purple-200/40 ring-purple-500/10 cursor-not-allowed"
-                            }`}
-                          >
-                            {letter}
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-
                 {filtered.length === 0 ? (
                   <div className="rounded-2xl border border-dashed border-purple-500/40 p-12 text-center text-purple-200/70 bg-purple-950/30">
                     No blogs in this category yet.
@@ -1198,6 +1161,43 @@ function SportsGuidesPage() {
                   </div>
                 )}
               </section>
+
+              {activeCategory && !search.trim() && (
+                <aside className="rounded-2xl bg-slate-950/75 border border-purple-500/30 backdrop-blur h-fit lg:sticky lg:top-4 p-4">
+                  <h2 className="font-display text-xl font-bold text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.85)]">
+                    <span className="bg-gradient-to-r from-fuchsia-300 to-sky-300 bg-clip-text text-transparent">{activeCategory.name}</span>{" "}Guides
+                  </h2>
+                  <div className="mt-3 flex flex-wrap gap-1" aria-label="Jump to guide title by letter">
+                    {Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i)).map((letter) => {
+                      const has = !!azMap[letter];
+                      const unread = azUnread.has(letter);
+                      return (
+                        <button
+                          key={letter}
+                          onClick={() => jumpToLetter(letter)}
+                          disabled={!has}
+                          title={
+                            unread
+                              ? `Unread guide starting with ${letter}`
+                              : has
+                                ? `Jump to first guide title starting with ${letter}`
+                                : `No guide title starting with ${letter}`
+                          }
+                          className={`w-7 h-7 grid place-items-center rounded text-[11px] font-bold transition-colors ring-1 ${
+                            unread
+                              ? "bg-fuchsia-500 text-white animate-pulse ring-fuchsia-300 cursor-pointer"
+                              : has
+                              ? "bg-slate-900/80 text-white ring-purple-400/40 hover:bg-fuchsia-600 hover:ring-fuchsia-300 cursor-pointer"
+                              : "bg-slate-900/40 text-purple-200/40 ring-purple-500/10 cursor-not-allowed"
+                          }`}
+                        >
+                          {letter}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </aside>
+              )}
 
               {search.trim() && (
                 <aside className="rounded-2xl bg-purple-950/60 border border-purple-500/30 backdrop-blur h-fit lg:sticky lg:top-4 overflow-hidden">
