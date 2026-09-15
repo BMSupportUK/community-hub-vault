@@ -819,46 +819,96 @@ function SportsGuidesPage() {
                   )}
                 </div>
                 <div className="space-y-1">
-                  {categories.map((c) => {
-                    const active = c.id === activeCat;
-                    const n = counts[c.id] ?? 0;
-                    return (
-                      <div
-                        key={c.id}
-                        draggable={isMod}
-                        onDragStart={() => { dragCatId.current = c.id; }}
-                        onDragOver={(e) => { if (isMod) e.preventDefault(); }}
-                        onDrop={(e) => {
-                          if (!isMod) return;
-                          e.preventDefault();
-                          if (dragCatId.current) reorderCategories(dragCatId.current, c.id);
-                          dragCatId.current = null;
-                        }}
-                        className={`group flex items-center gap-1 px-1 rounded-lg ${active ? "bg-gradient-to-r from-violet-600 to-blue-600 text-white shadow-md shadow-purple-900/40" : "text-purple-100/80 hover:bg-purple-800/40"}`}
-                      >
-                        {isMod && (
-                          <GripVertical className="size-3.5 opacity-40 group-hover:opacity-80 cursor-grab shrink-0" />
-                        )}
-                        <button
-                          onClick={() => { setActiveCat(c.id); scrollCardsToTop(); }}
-                          className="flex-1 flex items-center justify-between px-2 py-2 text-sm text-left"
+                  {topCategories.map((top) => {
+                    const kids = childrenByParent[top.id] ?? [];
+                    const heading = kids.length > 0;
+                    const open = openGroups.includes(top.id);
+                    const rows: Category[] = heading ? (open ? kids : []) : [];
+                    const headingUnread = heading
+                      ? kids.reduce((sum, k) => sum + (unreadCounts[k.id] ?? 0), 0)
+                      : unreadCounts[top.id] ?? 0;
+                    const renderRow = (c: Category, indented: boolean) => {
+                      const active = c.id === activeCat;
+                      const unread = unreadCounts[c.id] ?? 0;
+                      return (
+                        <div
+                          key={c.id}
+                          draggable={isMod}
+                          onDragStart={() => { dragCatId.current = c.id; }}
+                          onDragOver={(e) => { if (isMod) e.preventDefault(); }}
+                          onDrop={(e) => {
+                            if (!isMod) return;
+                            e.preventDefault();
+                            if (dragCatId.current) reorderCategories(dragCatId.current, c.id);
+                            dragCatId.current = null;
+                          }}
+                          className={`group flex items-center gap-1 px-1 rounded-lg ${indented ? "ml-4" : ""} ${active ? "bg-gradient-to-r from-violet-600 to-blue-600 text-white shadow-md shadow-purple-900/40" : "text-purple-100/80 hover:bg-purple-800/40"}`}
                         >
-                          <span className="flex items-center gap-2">
-                            {(unreadCounts[c.id] ?? 0) > 0 && (
-                              <span className="size-2 rounded-full bg-fuchsia-400 shadow-[0_0_8px_rgba(232,121,249,0.9)]" />
+                          {isMod && (
+                            <GripVertical className="size-3.5 opacity-40 group-hover:opacity-80 cursor-grab shrink-0" />
+                          )}
+                          <button
+                            onClick={() => { setActiveCat(c.id); scrollCardsToTop(); }}
+                            className="flex-1 flex items-center justify-between px-2 py-2 text-sm text-left"
+                          >
+                            <span className="flex items-center gap-2">
+                              {unread > 0 && (
+                                <span className="size-2 rounded-full bg-fuchsia-400 shadow-[0_0_8px_rgba(232,121,249,0.9)]" />
+                              )}
+                              {c.name}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              {unread > 0 && (
+                                <span className="text-xs px-2 py-0.5 rounded-full bg-fuchsia-500 text-white font-semibold">{unread}</span>
+                              )}
+                            </span>
+                          </button>
+                        </div>
+                      );
+                    };
+
+                    if (!heading) return renderRow(top, false);
+
+                    return (
+                      <div key={top.id} className="space-y-1">
+                        <div
+                          draggable={isMod}
+                          onDragStart={() => { dragCatId.current = top.id; }}
+                          onDragOver={(e) => { if (isMod) e.preventDefault(); }}
+                          onDrop={(e) => {
+                            if (!isMod) return;
+                            e.preventDefault();
+                            if (dragCatId.current) reorderCategories(dragCatId.current, top.id);
+                            dragCatId.current = null;
+                          }}
+                          className="group flex items-center gap-1 px-1 rounded-lg text-purple-100/80 hover:bg-purple-800/40"
+                        >
+                          {isMod && (
+                            <GripVertical className="size-3.5 opacity-40 group-hover:opacity-80 cursor-grab shrink-0" />
+                          )}
+                          <button
+                            onClick={() => toggleGroup(top.id)}
+                            aria-expanded={open}
+                            className="flex-1 flex items-center justify-between px-2 py-2 text-sm text-left font-semibold"
+                          >
+                            <span className="flex items-center gap-2">
+                              {open ? <ChevronDown className="size-4 shrink-0" /> : <ChevronRight className="size-4 shrink-0" />}
+                              {headingUnread > 0 && !open && (
+                                <span className="size-2 rounded-full bg-fuchsia-400 shadow-[0_0_8px_rgba(232,121,249,0.9)]" />
+                              )}
+                              {top.name}
+                            </span>
+                            {headingUnread > 0 && !open && (
+                              <span className="text-xs px-2 py-0.5 rounded-full bg-fuchsia-500 text-white font-semibold">{headingUnread}</span>
                             )}
-                            {c.name}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            {(unreadCounts[c.id] ?? 0) > 0 && (
-                              <span className="text-xs px-2 py-0.5 rounded-full bg-fuchsia-500 text-white font-semibold">{unreadCounts[c.id]}</span>
-                            )}
-                          </span>
-                        </button>
+                          </button>
+                        </div>
+                        {rows.map((c) => renderRow(c, true))}
                       </div>
                     );
                   })}
                 </div>
+
               </aside>
 
               <section ref={listingsTopRef}>
