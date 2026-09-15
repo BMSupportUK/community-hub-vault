@@ -1227,17 +1227,91 @@ function SportsGuidesPage() {
 
           <TabsContent value="welcome" className="mt-6">
             <div className="relative grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_260px]">
-              <div className="rounded-2xl bg-gradient-to-br from-fuchsia-600/30 via-purple-600/30 to-violet-700/30 border border-purple-500/40 p-10 shadow-[0_0_60px_-15px_rgba(168,85,247,0.5)]">
-                <h2 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 to-blue-600 bg-clip-text text-transparent">Welcome to Sports Guide</h2>
-                <p className="mt-3 text-lg text-purple-100/90 max-w-2xl">
-                  Dive into the world of sports with comprehensive guides, insights, and news from your favorite games.
-                </p>
-                <p className="mt-4 text-purple-200/70 max-w-2xl">
-                  Whether you're a fan of football, basketball, soccer, tennis, baseball, hockey, or golf — we've got you covered with expert analysis and up-to-date information.
-                </p>
-                <p className="mt-6 text-sm font-semibold text-fuchsia-200">
-                  Pick a category on the right to open the guides.
-                </p>
+              <div className="space-y-6">
+                <div className="relative flex-1 group">
+                  <div className="absolute -inset-0.5 rounded-xl bg-gradient-to-r from-fuchsia-500 via-purple-500 to-indigo-500 opacity-60 blur-sm group-focus-within:opacity-100 group-focus-within:blur-md transition-all duration-300" />
+                  <div className="relative flex items-center rounded-xl bg-slate-950/90 ring-1 ring-fuchsia-400/40 shadow-lg shadow-fuchsia-900/40 backdrop-blur-md">
+                    <div className="pl-3 pr-2 py-2.5 grid place-items-center">
+                      <Search className="size-5 text-fuchsia-300 drop-shadow-[0_0_6px_rgba(232,121,249,0.8)]" />
+                    </div>
+                    <Input
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder="Search all sports guides..."
+                      className="h-11 border-0 bg-transparent text-base font-medium text-white placeholder:text-purple-200/60 focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
+                    />
+                    {search && (
+                      <button
+                        type="button"
+                        onClick={() => setSearch("")}
+                        className="mr-2 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider text-fuchsia-200 hover:text-white hover:bg-fuchsia-500/20 transition-colors"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {search.trim() ? (
+                  <div className="rounded-2xl bg-purple-950/60 border border-purple-500/30 backdrop-blur overflow-hidden">
+                    <button
+                      onClick={() => setResultsOpen((v) => !v)}
+                      className="w-full flex items-center justify-between gap-2 px-4 py-3 border-b border-purple-500/30 bg-purple-900/40 text-purple-100 hover:bg-purple-900/60"
+                    >
+                      <span className="flex items-center gap-2 font-semibold text-sm">
+                        {resultsOpen ? <ChevronDown className="size-4" /> : <ChevronRight className="size-4" />}
+                        {searchResults.length} Result{searchResults.length === 1 ? "" : "s"}
+                      </span>
+                      <span
+                        role="button"
+                        onClick={(e) => { e.stopPropagation(); setSearch(""); }}
+                        className="p-1 rounded hover:bg-purple-800/60 text-purple-200"
+                        title="Clear search"
+                      >
+                        <X className="size-4" />
+                      </span>
+                    </button>
+                    {resultsOpen && (
+                      <div className="max-h-[60vh] overflow-y-auto divide-y divide-purple-500/20">
+                        {searchResults.length === 0 ? (
+                          <div className="px-4 py-6 text-sm text-purple-200/70 text-center">No matches</div>
+                        ) : (
+                          searchResults.map(({ blog, snippet }) => {
+                            const cat = categories.find((c) => c.id === blog.category_id);
+                            return (
+                              <button
+                                key={blog.id}
+                                onClick={() => { rememberGuide(blog.id); navigate({ to: "/sports-guides/read/$id", params: { id: blog.id }, search: { cat: blog.category_id } }); }}
+                                className="w-full text-left px-4 py-3 hover:bg-purple-900/50 transition-colors block"
+                              >
+                                <div className="text-[10px] uppercase tracking-wider text-fuchsia-300/80 mb-1">{cat?.name ?? "Guide"}</div>
+                                <div className="font-semibold text-sm text-purple-50 leading-snug">
+                                  <Highlight text={blog.title} query={search} />
+                                </div>
+                                <div className="mt-1 text-xs text-purple-200/80 leading-relaxed">
+                                  <Highlight text={snippet} query={search} />
+                                </div>
+                              </button>
+                            );
+                          })
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="rounded-2xl bg-gradient-to-br from-fuchsia-600/30 via-purple-600/30 to-violet-700/30 border border-purple-500/40 p-10 shadow-[0_0_60px_-15px_rgba(168,85,247,0.5)]">
+                    <h2 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 to-blue-600 bg-clip-text text-transparent">Welcome to Sports Guide</h2>
+                    <p className="mt-3 text-lg text-purple-100/90 max-w-2xl">
+                      Dive into the world of sports with comprehensive guides, insights, and news from your favorite games.
+                    </p>
+                    <p className="mt-4 text-purple-200/70 max-w-2xl">
+                      Whether you're a fan of football, basketball, soccer, tennis, baseball, hockey, or golf — we've got you covered with expert analysis and up-to-date information.
+                    </p>
+                    <p className="mt-6 text-sm font-semibold text-fuchsia-200">
+                      Pick a category on the right to open the guides, or search above to jump straight to a guide.
+                    </p>
+                  </div>
+                )}
               </div>
               <div className="relative lg:sticky lg:top-4 h-fit">{categoryNav}</div>
             </div>
