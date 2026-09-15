@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate, Outlet, useChildMatches } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type DragEvent as ReactDragEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Search, Pencil, Trash2, ImageIcon, GripVertical, X, ChevronDown, ChevronRight, ArrowUp, ArrowDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -110,6 +110,7 @@ function SportsGuidesPage() {
   const dragBlogId = useRef<string | null>(null);
   const skipDefaultSubOnce = useRef(false);
   const [draggingBlog, setDraggingBlog] = useState(false);
+  const [dropCatId, setDropCatId] = useState<string | null>(null);
   const listingsTopRef = useRef<HTMLElement | null>(null);
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const [showBackTop, setShowBackTop] = useState(false);
@@ -668,6 +669,57 @@ function SportsGuidesPage() {
     );
   };
 
+  /** Drag a guide card onto a category/heading in the sidebar to file it there. */
+  const moveBlogToCategory = async (blogId: string, categoryId: string) => {
+    const blog = blogs.find((b) => b.id === blogId);
+    if (!blog || blog.category_id === categoryId) return;
+    const subs = subsByCat[categoryId] ?? [];
+    const nextSub = subs.some((s) => s.name === blog.subcategory)
+      ? blog.subcategory
+      : (subs.find((s) => s.is_default)?.name ?? subs[0]?.name ?? null);
+    queryClient.setQueryData<typeof dataQuery.data>(queryKey, (prev) =>
+      prev
+        ? {
+            ...prev,
+            blogs: prev.blogs.map((b) =>
+              b.id === blogId ? { ...b, category_id: categoryId, subcategory: nextSub } : b,
+            ),
+          }
+        : prev,
+    );
+    const { error } = await supabase
+      .from("sports_blogs")
+      .update({ category_id: categoryId, subcategory: nextSub })
+      .eq("id", blogId);
+    if (error) { toast.error(error.message); load(); return; }
+    const name = categories.find((c) => c.id === categoryId)?.name ?? "category";
+    toast.success(`Moved to ${name}`);
+  };
+
+  /** Drop-target props that accept a dragged guide card for a given category. */
+  const guideDropProps = (categoryId: string) =>
+    isMod
+      ? {
+          onDragOver: (e: ReactDragEvent) => {
+            if (!dragBlogId.current) return;
+            e.preventDefault();
+            setDropCatId(categoryId);
+          },
+          onDragLeave: () => setDropCatId((cur) => (cur === categoryId ? null : cur)),
+          onDrop: (e: ReactDragEvent) => {
+            if (!dragBlogId.current) return;
+            e.preventDefault();
+            e.stopPropagation();
+            void moveBlogToCategory(dragBlogId.current, categoryId);
+            dragBlogId.current = null;
+            setDraggingBlog(false);
+            setDropCatId(null);
+          },
+        }
+      : {};
+
+
+
   const renderBlogCard = (b: Blog) => (
     <article
       key={b.id}
@@ -851,6 +903,11 @@ function SportsGuidesPage() {
                     </button>
                   )}
                 </div>
+                {isMod && draggingBlog && (
+                  <div className="mb-2 rounded-lg border border-emerald-400/50 bg-emerald-500/15 px-3 py-2 text-[11px] font-semibold text-emerald-100">
+                    Drop the guide on a heading or category to move it there
+                  </div>
+                )}
                 <div className="space-y-1">
                   {topCategories.map((top) => {
                     const kids = childrenByParent[top.id] ?? [];
@@ -867,14 +924,26 @@ function SportsGuidesPage() {
                           key={c.id}
                           draggable={isMod}
                           onDragStart={() => { dragCatId.current = c.id; }}
-                          onDragOver={(e) => { if (isMod) e.preventDefault(); }}
+                          onDragOver={(e) => {
+                            if (!isMod) return;
+                            e.preventDefault();
+                            if (dragBlogId.current) setDropCatId(c.id);
+                          }}
+                          onDragLeave={() => setDropCatId((cur) => (cur === c.id ? null : cur))}
                           onDrop={(e) => {
                             if (!isMod) return;
                             e.preventDefault();
+                            if (dragBlogId.current) {
+                              void moveBlogToCategory(dragBlogId.current, c.id);
+                              dragBlogId.current = null;
+                              setDraggingBlog(false);
+                              setDropCatId(null);
+                              return;
+                            }
                             if (dragCatId.current) reorderCategories(dragCatId.current, c.id);
                             dragCatId.current = null;
                           }}
-                          className={`group flex items-center gap-1 px-1 rounded-lg ${active ? "bg-gradient-to-r from-violet-600 to-blue-600 text-white shadow-md shadow-purple-900/40" : "text-purple-100/80 hover:bg-purple-800/40"}`}
+                          className={`group flex items-center gap-1 px-1 rounded-lg ${dropCatId === c.id ? "ring-2 ring-emerald-400 bg-emerald-500/20" : ""} ${active ? "bg-gradient-to-r from-violet-600 to-blue-600 text-white shadow-md shadow-purple-900/40" : "text-purple-100/80 hover:bg-purple-800/40"}`}
                         >
                           {isMod && (
                             <GripVertical className="size-3.5 opacity-40 group-hover:opacity-80 cursor-grab shrink-0" />
@@ -916,14 +985,32 @@ function SportsGuidesPage() {
                         <div
                           draggable={isMod}
                           onDragStart={() => { dragCatId.current = top.id; }}
-                          onDragOver={(e) => { if (isMod) e.preventDefault(); }}
+                          onDragOver={(e) => {
+                            if (!isMod) return;
+                            e.preventDefault();
+                            if (dragBlogId.current) setDropCatId(top.id);
+                          }}
+                          onDragLeave={() => setDropCatId((cur) => (cur === top.id ? null : cur))}
                           onDrop={(e) => {
                             if (!isMod) return;
                             e.preventDefault();
+                            if (dragBlogId.current) {
+                              // Headings hold sub-categories, so file the guide in the
+                              // heading's default (or first) sub-category and open it.
+                              const target = kids.find((k) => k.id === activeCat) ?? kids[0];
+                              if (target) {
+                                void moveBlogToCategory(dragBlogId.current, target.id);
+                                setOpenGroups((cur) => (cur.includes(top.id) ? cur : [top.id]));
+                              }
+                              dragBlogId.current = null;
+                              setDraggingBlog(false);
+                              setDropCatId(null);
+                              return;
+                            }
                             if (dragCatId.current) reorderCategories(dragCatId.current, top.id);
                             dragCatId.current = null;
                           }}
-                          className={`group flex items-center gap-1 px-1 rounded-lg ${open ? "bg-purple-800/60 text-white ring-1 ring-fuchsia-400/40" : "text-purple-100/80 hover:bg-purple-800/40"}`}
+                          className={`group flex items-center gap-1 px-1 rounded-lg ${dropCatId === top.id ? "ring-2 ring-emerald-400 bg-emerald-500/20" : ""} ${open ? "bg-purple-800/60 text-white ring-1 ring-fuchsia-400/40" : "text-purple-100/80 hover:bg-purple-800/40"}`}
                         >
                           {isMod && (
                             <GripVertical className="size-3.5 opacity-40 group-hover:opacity-80 cursor-grab shrink-0" />
@@ -993,7 +1080,8 @@ function SportsGuidesPage() {
                               key={child.id}
                               type="button"
                               onClick={() => { setActiveCat(child.id); scrollCardsToTop(); }}
-                              className={`w-full flex items-center justify-between gap-2 rounded-lg px-3 py-2.5 text-left text-sm transition-colors ${active ? "bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white shadow-md shadow-fuchsia-950/40" : "text-purple-100/80 hover:bg-purple-800/50"}`}
+                              {...guideDropProps(child.id)}
+                              className={`w-full flex items-center justify-between gap-2 rounded-lg px-3 py-2.5 text-left text-sm transition-colors ${dropCatId === child.id ? "ring-2 ring-emerald-400 bg-emerald-500/20" : ""} ${active ? "bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white shadow-md shadow-fuchsia-950/40" : "text-purple-100/80 hover:bg-purple-800/50"}`}
                             >
                               <span className="flex min-w-0 items-center gap-2">
                                 {unread > 0 && <span className="size-2 shrink-0 rounded-full bg-fuchsia-300" />}
