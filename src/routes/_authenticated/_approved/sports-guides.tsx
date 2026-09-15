@@ -1231,7 +1231,17 @@ function SportsGuidesPage() {
                                   {unread > 0 && <span className="size-2 shrink-0 rounded-full bg-fuchsia-300" />}
                                   <span className="break-words">{child.name}</span>
                                 </span>
-                                {unread > 0 && <span className="shrink-0 rounded-full bg-fuchsia-500 px-2 py-0.5 text-xs font-semibold text-white">{unread}</span>}
+                                <span className="flex shrink-0 items-center gap-1.5">
+                                  {(() => {
+                                    const subCount = (childrenByParent[child.id]?.length ?? 0) + (subsByCat[child.id]?.length ?? 0);
+                                    return subCount > 1 ? (
+                                      <span className="whitespace-nowrap rounded-full border border-fuchsia-400/50 bg-fuchsia-600/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-fuchsia-100">View more categories</span>
+                                    ) : (
+                                      <span className="whitespace-nowrap rounded-full border border-purple-400/40 bg-purple-800/60 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-purple-100/90">Click to read guides</span>
+                                    );
+                                  })()}
+                                  {unread > 0 && <span className="rounded-full bg-fuchsia-500 px-2 py-0.5 text-xs font-semibold text-white">{unread}</span>}
+                                </span>
                               </button>
                               {canManageCategories && (
                                 <button
