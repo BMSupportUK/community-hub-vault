@@ -11,6 +11,8 @@ import { formatRoleLabel } from "@/lib/role-label";
 import { sortRolesByPriority } from "@/lib/role-rank";
 import { formatLastSeen } from "@/lib/relative-time";
 import { useUserPage } from "@/hooks/use-online-users";
+import { useLiveLastSeen } from "@/hooks/use-live-last-seen";
+
 
 import { cn } from "@/lib/utils";
 
@@ -51,6 +53,8 @@ export function TalkMemberProfileCard({
 }) {
   const roleFlashMap = useRoleFlashMap();
   const currentPage = useUserPage(row.user_id);
+  const { lastSeenAt } = useLiveLastSeen(row.user_id, row.last_seen_at);
+
   const name = row.display_name || row.username || "Member";
   // Boro Fan Zone roles are hidden in Talk Channels; all other roles show.
   const roles = sortRolesByPriority(
@@ -143,7 +147,7 @@ export function TalkMemberProfileCard({
               Last active
             </h4>
             <p className="mt-0.5 text-sm">
-              {online ? "Active now" : formatLastSeen(row.last_seen_at)}
+              {online ? "Active now" : formatLastSeen(lastSeenAt)}
             </p>
           </div>
 
@@ -159,7 +163,7 @@ export function TalkMemberProfileCard({
               Status
             </h4>
             <p className="mt-0.5 text-sm">
-              {online ? "Online now" : `Last seen ${formatLastSeen(row.last_seen_at)}`}
+              {online ? "Online now" : `Last seen ${formatLastSeen(lastSeenAt)}`}
             </p>
           </div>
 

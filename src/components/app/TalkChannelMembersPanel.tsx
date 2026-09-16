@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useTalkChannelPresentUsersInChannel } from "@/hooks/use-talk-channel-presence";
 import { useUserPage } from "@/hooks/use-online-users";
+import { useLiveLastSeen } from "@/hooks/use-live-last-seen";
+
 import { formatLastSeen } from "@/lib/relative-time";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { TalkMemberProfileCard } from "@/components/app/TalkMemberProfileCard";
@@ -219,6 +221,8 @@ function MemberRow({
   const avatar = resolveAvatarUrl(row.user_id, row.avatar_url, roleFlashMap);
   const roleLabels = roles.map((role) => formatRoleLabel(role)).join(" · ");
   const currentPage = useUserPage(row.user_id);
+  const { lastSeenAt } = useLiveLastSeen(row.user_id, row.last_seen_at);
+
 
   return (
     <Popover>
@@ -254,7 +258,7 @@ function MemberRow({
             </span>
             <span className="flex items-center gap-1 truncate text-[10px] leading-tight text-muted-foreground">
               <Clock className="size-2.5 shrink-0" />
-              Last active {online ? "now" : formatLastSeen(row.last_seen_at)}
+              Last active {online ? "now" : formatLastSeen(lastSeenAt)}
             </span>
             {currentPage && (
               <span className="flex items-center gap-1 truncate text-[10px] leading-tight text-muted-foreground">

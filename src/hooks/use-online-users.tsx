@@ -152,14 +152,21 @@ function applyPresenceKeys(keys: string[]) {
     if (lingerTimer) clearTimeout(lingerTimer);
     lingerTimer = setTimeout(() => {
       lingerTimer = null;
-      if (channel) applyPresenceKeys(Object.keys(channel.presenceState()));
+      if (channel) {
+        applyPresenceKeys(Object.keys(channel.presenceState()));
+        collectPages();
+      }
     }, soonest + 50);
   }
   setState(next);
 }
 
 
+
+let lastSeenPingAt = 0;
+
 function pingLastSeen(uid: string) {
+  lastSeenPingAt = Date.now();
   try {
     supabase
       .from("profiles")
@@ -170,6 +177,9 @@ function pingLastSeen(uid: string) {
     /* ignore */
   }
 }
+
+/** Ping at most this often when navigation triggers an extra "last active" write. */
+const NAV_PING_MIN_GAP_MS = 15_000;
 
 async function track(uid: string) {
   if (!channel) return;
@@ -182,17 +192,38 @@ async function track(uid: string) {
   } catch {
     /* ignore — heartbeat/retry will try again */
   }
+  collectPages();
+}
+
+/** Show our own page instantly instead of waiting for the presence round-trip. */
+function echoOwnPage() {
+  const uid = channelUid;
+  if (!uid) return;
+  const next = new Map(pageState);
+  if (myPage) {
+    if (next.get(uid) === myPage) return;
+    next.set(uid, myPage);
+  } else if (!next.delete(uid)) {
+    return;
+  }
+  pageState = next;
+  notifyPages();
 }
 
 /**
  * Publish the page this user is currently viewing so member/staff cards can
- * show it. Re-tracks only when the page name actually changes.
+ * show it. Re-tracks only when the page name actually changes, and refreshes
+ * "last active" as the user moves around the site.
  */
 export function setPresencePage(label: string | null) {
   if (myPage === label) return;
   myPage = label;
-  if (channelUid && channel?.state === "joined") void track(channelUid);
+  echoOwnPage();
+  if (!channelUid) return;
+  if (channel?.state === "joined") void track(channelUid);
+  if (Date.now() - lastSeenPingAt >= NAV_PING_MIN_GAP_MS) pingLastSeen(channelUid);
 }
+
 
 
 function scheduleRetry(uid: string) {
