@@ -569,11 +569,11 @@ function PlayerStatsDialog({
                             return (
                               <tr key={k} className="border-b border-border/60">
                                 <td className="py-1.5 pr-2 text-muted-foreground">
-                                  <StatAbbrLabel abbr={meta.abbr} means={meta.means} rate={statPointsPer(k, pos)} />
+                                  <StatAbbrLabel abbr={meta.abbr} means={meta.means} rate={scaleRate(statPointsPer(k, pos))} />
                                 </td>
                                 {gameweekMatches.map((m) => (
                                   <td key={m.fixtureId} className="px-2 py-1.5 text-center tabular-nums">
-                                    {m.stats[k] ?? 0}
+                                    {scoredStatCount(k, m.stats)}
                                   </td>
                                 ))}
                               </tr>
@@ -586,6 +586,13 @@ function PlayerStatsDialog({
                       <span className="font-semibold">FotMob weekly total</span>
                       <span className="font-bold tabular-nums text-primary">{fotmobSeasonPoints} pts</span>
                     </div>
+                    <div className="flex items-center justify-between rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 text-sm">
+                      <span className="font-semibold">
+                        Final score awarded{asSub ? " (sub — half points, rounded)" : ""}
+                      </span>
+                      <span className="font-bold tabular-nums text-primary">{finalTotalPoints} pts</span>
+                    </div>
+
                   </div>
                 )}
               </TabsContent>
