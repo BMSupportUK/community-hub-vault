@@ -25,8 +25,8 @@ type EspnEvent = {
 };
 type EspnRosterPlayer = {
   starter?: boolean;
-  subbedIn?: boolean;
-  subbedOut?: boolean;
+  subbedIn?: boolean | { didSub?: boolean };
+  subbedOut?: boolean | { didSub?: boolean };
   athlete?: EspnAthlete;
   // NOTE: ESPN's position field is deliberately NOT read. Positions always come
   // from our own fantasy_players.position so scoring can't be skewed by ESPN
@@ -72,7 +72,7 @@ export type FantasyStatRow = {
   fouls_committed: number;
   fouls_suffered: number;
   offsides: number;
-  // Extended ESPN match-report player stats (0 when the feed omits them).
+  // Extended match-report player stats (0 when the feed omits them).
   accurate_long_balls: number;
   accurate_passes: number;
   passes: number;
@@ -299,7 +299,7 @@ export async function fetchFantasyStatsForFixture(
     if (minutes <= 0) continue;
 
 
-    // Position-dependent scoring uses OUR stored position, never ESPN's.
+    // Position-dependent scoring uses OUR stored position, never the feed's.
     const isKeeper = target.position === "gk";
     let pensSaved = 0;
     if (isKeeper && rp.starter && !gkAssigned) {
@@ -416,7 +416,7 @@ export async function syncFantasyScoring(): Promise<{
         else locked += 1;
       }
 
-      // In-play: pull whatever ESPN has so far so the pitch view and points
+      // In-play: pull whatever FotMob has so far so the pitch view and points
       // update minute-by-minute during the game. The gameweek stays "locked"
       // (not final) until the fixture actually finishes.
       const koMs = Date.parse(fx.kickoff_at);
@@ -451,7 +451,7 @@ export async function syncFantasyScoring(): Promise<{
 
     const rows = await fetchFantasyStatsForFixture(fx, players);
     if (!rows || rows.length === 0) {
-      pending.push(`gw${raw['gw_number']}: no ESPN player data yet`);
+      pending.push(`gw${raw['gw_number']}: no FotMob player data yet`);
       continue;
     }
 
