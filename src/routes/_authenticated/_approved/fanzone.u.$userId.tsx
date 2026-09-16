@@ -10,11 +10,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import bgAsset from "@/assets/boro-fan-zone-profile-bg.jpg.asset.json";
 import { FanStatsBox, FanReputationBox } from "@/components/app/FanZoneStatsBoxes";
-import {
-  FanZoneProfileFeedTabs,
-  FanZoneProfileFeedPanel,
-  type FanFeedTab,
-} from "@/components/app/FanZoneProfileFeeds";
+import { FanZoneProfileFeedTabs } from "@/components/app/FanZoneProfileFeeds";
 
 import { FanZoneMuteDialog } from "@/components/app/FanZoneMuteDialog";
 import { FanZoneBanDialog } from "@/components/app/FanZoneBanDialog";
