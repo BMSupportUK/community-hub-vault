@@ -254,11 +254,37 @@ export async function espnJson<T = any>(url: string, tries = 2): Promise<T | nul
 }
 
 
-/** ESPN date-range query string, e.g. 20260814-20260817. */
-export function espnDateRange(fromMs: number, toMs: number): string {
-  const fmt = (ms: number) => {
-    const d = new Date(ms);
-    return `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, "0")}${String(d.getUTCDate()).padStart(2, "0")}`;
+// ESPN's scoreboard `dates` parameter no longer accepts a start-end range:
+// "20260916-20260918" answers 400 ("Failed to get events endpoint") on every
+// host, which is exactly the paired 403/400 failures seen in production. Only a
+// single day (YYYYMMDD), a month (YYYYMM) or a year (YYYY) are accepted, so
+// build those instead.
+export function espnDateParams(fromMs: number, toMs: number): string[] {
+  const from = new Date(Math.min(fromMs, toMs));
+  const to = new Date(Math.max(fromMs, toMs));
+  const spanDays = (to.getTime() - from.getTime()) / 86_400_000;
+
+  const years = () => {
+    const out: string[] = [];
+    for (let y = from.getUTCFullYear(); y <= to.getUTCFullYear(); y += 1) out.push(String(y));
+    return out;
   };
-  return `${fmt(fromMs)}-${fmt(toMs)}`;
+
+  // Anything longer than ~2 months is cheaper (and safer for the worker's
+  // subrequest budget) as one query per calendar year.
+  if (spanDays > 62) return years();
+
+  const out: string[] = [];
+  const cursor = new Date(Date.UTC(from.getUTCFullYear(), from.getUTCMonth(), 1));
+  const end = Date.UTC(to.getUTCFullYear(), to.getUTCMonth(), 1);
+  while (cursor.getTime() <= end) {
+    out.push(`${cursor.getUTCFullYear()}${String(cursor.getUTCMonth() + 1).padStart(2, "0")}`);
+    cursor.setUTCMonth(cursor.getUTCMonth() + 1);
+  }
+  return out;
+}
+
+/** @deprecated ranges are rejected by ESPN — kept for callers wanting one param. */
+export function espnDateRange(fromMs: number, toMs: number): string {
+  return espnDateParams(fromMs, toMs)[0]!;
 }
