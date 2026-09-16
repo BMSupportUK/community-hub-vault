@@ -1,5 +1,12 @@
 // Server-only live score overlay for the World Cup predictions pages.
-// ESPN is queried at read time so the UI is not stuck waiting for the cron sync.
+// FotMob is queried at read time so the UI is not stuck waiting for the cron sync.
+
+import {
+  FOTMOB_WORLD_CUP_ID,
+  fotmobDateKey,
+  fotmobLeague,
+  fotmobMatchesByDate,
+} from "@/lib/fotmob-fetch";
 
 export type WcLiveFixtureRow = {
   id: string;
@@ -26,7 +33,7 @@ export type WcLiveOverlay = {
   phase: "ET" | "PENS" | null;
 };
 
-export type EspnLiveMatch = {
+export type WcLiveMatch = {
   home: string;
   away: string;
   kickoffMs: number;
@@ -90,7 +97,7 @@ export function findWcLiveFixture(
   )[0];
 }
 
-function parseEspnMinute(displayClock?: string, rawClock?: number, state?: string) {
+function parseLiveClock(displayClock?: string, rawClock?: number, state?: string) {
   if (state !== "in") return { minute: null, minuteAdded: null };
   const [baseStr, addedStr] = (displayClock ?? "").split("+");
   const base = parseInt(baseStr ?? "", 10);
@@ -106,179 +113,116 @@ function parseEspnMinute(displayClock?: string, rawClock?: number, state?: strin
   };
 }
 
-function sourceScore(ev: EspnLiveMatch) {
+function sourceScore(ev: WcLiveMatch) {
   const stateScore = ev.status === "FINISHED" ? 20_000 : ev.status === "IN_PLAY" || ev.status === "PAUSED" ? 10_000 : 0;
   return stateScore + (ev.minute ?? 0) + (ev.minuteAdded ?? 0) / 100;
 }
 
-export async function fetchEspnWcLive(): Promise<EspnLiveMatch[]> {
+export async function fetchWcLive(): Promise<WcLiveMatch[]> {
   try {
     const today = new Date();
-    const ymd = (d: Date) =>
-      `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, "0")}${String(d.getUTCDate()).padStart(2, "0")}`;
-    const dates = [-1, 0, 1].map((offset) => {
+    const days = [-1, 0, 1].map((offset) => {
       const d = new Date(today);
       d.setUTCDate(d.getUTCDate() + offset);
-      return ymd(d);
+      return fotmobDateKey(d);
     });
-    const responses = await Promise.all(
-      ["", ...dates.map((d) => `?dates=${d}`)].map((qs) =>
-        fetch(`https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard${qs}`, {
-          headers: { accept: "application/json" },
-        })
-          .then((r) => (r.ok ? r.json() : { events: [] }))
-          .catch(() => ({ events: [] })),
-      ),
-    );
+    const feeds = await Promise.all(days.map((day) => fotmobMatchesByDate(day, 15_000)));
 
-    type EspnJson = {
-      events?: Array<{
-        date?: string;
-        competitions?: Array<{
-          status?: {
-            clock?: number;
-            displayClock?: string;
-            type?: { state?: string; name?: string };
+    const byMatch = new Map<string, WcLiveMatch>();
+    for (const feed of feeds) {
+      const leagues: any[] = feed?.leagues ?? [];
+      for (const league of leagues) {
+        const isWorldCup =
+          Number(league?.primaryId) === FOTMOB_WORLD_CUP_ID ||
+          Number(league?.id) === FOTMOB_WORLD_CUP_ID ||
+          /world cup/i.test(String(league?.name ?? ""));
+        if (!isWorldCup) continue;
+        for (const raw of (league?.matches ?? []) as any[]) {
+          const status = raw?.status ?? {};
+          if (!status?.started) continue;
+          const homeName = String(raw?.home?.name ?? raw?.home?.longName ?? "");
+          const awayName = String(raw?.away?.name ?? raw?.away?.longName ?? "");
+          if (!homeName || !awayName) continue;
+          const kickoffMs = Date.parse(String(status?.utcTime ?? ""));
+          if (!Number.isFinite(kickoffMs)) continue;
+
+          const reason = String(status?.reason?.short ?? status?.reason?.long ?? "").toUpperCase();
+          const liveLabel = String(status?.liveTime?.short ?? status?.liveTime?.long ?? "");
+          const finished = !!status?.finished;
+          const paused = /HT|BREAK/.test(reason) || /HT/i.test(liveLabel);
+          const state: string = finished ? "FINISHED" : paused ? "PAUSED" : "IN_PLAY";
+          const clock = parseLiveClock(finished ? "" : liveLabel);
+
+          let phase: "ET" | "PENS" | null = null;
+          if (/PEN/.test(reason) || /PEN/i.test(liveLabel)) phase = "PENS";
+          else if (/AET|ET/.test(reason) || /^ET/i.test(liveLabel)) phase = "ET";
+
+          const homePens = typeof raw?.home?.penScore === "number" ? raw.home.penScore : null;
+          const awayPens = typeof raw?.away?.penScore === "number" ? raw.away.penScore : null;
+          let penWinner: "home" | "away" | null = null;
+          if (homePens !== null && awayPens !== null && homePens !== awayPens) {
+            penWinner = homePens > awayPens ? "home" : "away";
+          }
+
+          const match: WcLiveMatch = {
+            home: homeName,
+            away: awayName,
+            kickoffMs,
+            status: state,
+            minute: clock.minute,
+            minuteAdded: clock.minuteAdded,
+            homeScore: typeof raw?.home?.score === "number" ? raw.home.score : null,
+            awayScore: typeof raw?.away?.score === "number" ? raw.away.score : null,
+            homeReds: 0,
+            awayReds: 0,
+            phase,
+            homePens,
+            awayPens,
+            penWinner,
           };
-          competitors?: Array<{
-            id?: string;
-            homeAway?: string;
-            score?: string;
-            shootoutScore?: number;
-            team?: { id?: string; displayName?: string };
-          }>;
-          details?: Array<{
-            type?: { id?: string; text?: string };
-            team?: { id?: string };
-          }>;
-        }>;
-      }>;
-    };
-
-    const byMatch = new Map<string, EspnLiveMatch>();
-    const allEvents = (responses as EspnJson[]).flatMap((j) => j.events ?? []);
-    for (const e of allEvents) {
-      const comp = e.competitions?.[0];
-      if (!comp || !e.date) continue;
-      const state = comp.status?.type?.state;
-      if (state !== "in" && state !== "post") continue;
-      const homeC = comp.competitors?.find((c) => c.homeAway === "home");
-      const awayC = comp.competitors?.find((c) => c.homeAway === "away");
-      if (!homeC?.team?.displayName || !awayC?.team?.displayName) continue;
-      const typeName = comp.status?.type?.name ?? "";
-      const status = state === "post" ? "FINISHED" : typeName === "STATUS_HALFTIME" ? "PAUSED" : "IN_PLAY";
-      const parsed = parseEspnMinute(comp.status?.displayClock, comp.status?.clock, state);
-      // Detect knockout phase from ESPN's status type name.
-      // Examples: STATUS_FIRST_HALF_EXTRA_TIME, STATUS_END_OF_EXTRATIME, STATUS_SHOOTOUT, STATUS_FINAL_PEN, STATUS_FINAL_AET.
-      let phase: "ET" | "PENS" | null = null;
-      if (/SHOOTOUT|FINAL_PEN|PENALTY/i.test(typeName)) phase = "PENS";
-      else if (/OVERTIME|EXTRA[_ ]?TIME|FINAL_AET/i.test(typeName)) phase = "ET";
-      const homeTeamId = homeC.team?.id ?? homeC.id ?? "";
-      const awayTeamId = awayC.team?.id ?? awayC.id ?? "";
-      const homePens =
-        typeof homeC.shootoutScore === "number" ? homeC.shootoutScore : null;
-      const awayPens =
-        typeof awayC.shootoutScore === "number" ? awayC.shootoutScore : null;
-      let penWinner: "home" | "away" | null = null;
-      if (homePens !== null && awayPens !== null && homePens !== awayPens) {
-        penWinner = homePens > awayPens ? "home" : "away";
+          const key = `${kickoffMs}|${norm(match.home)}|${norm(match.away)}`;
+          const existing = byMatch.get(key);
+          if (!existing || sourceScore(match) >= sourceScore(existing)) byMatch.set(key, match);
+        }
       }
-      let homeReds = 0;
-      let awayReds = 0;
-      for (const d of comp.details ?? []) {
-        const txt = d.type?.text ?? "";
-        // ESPN penalty shootouts include detail text like "Scored", which
-        // contains "red". Only count actual red-card event labels.
-        if (!/\bred\s+card\b|\bsent\s+off\b/i.test(txt)) continue;
-        const tid = d.team?.id ?? "";
-        if (tid && tid === homeTeamId) homeReds += 1;
-        else if (tid && tid === awayTeamId) awayReds += 1;
-      }
-      const match: EspnLiveMatch = {
-        home: homeC.team.displayName,
-        away: awayC.team.displayName,
-        kickoffMs: new Date(e.date).getTime(),
-        status,
-        minute: parsed.minute,
-        minuteAdded: parsed.minuteAdded,
-        homeScore: homeC.score != null && homeC.score !== "" ? Number(homeC.score) : null,
-        awayScore: awayC.score != null && awayC.score !== "" ? Number(awayC.score) : null,
-        homeReds,
-        awayReds,
-        phase,
-        homePens,
-        awayPens,
-        penWinner,
-      };
-      const key = `${e.date}|${norm(match.home)}|${norm(match.away)}`;
-      const existing = byMatch.get(key);
-      if (!existing || sourceScore(match) >= sourceScore(existing)) byMatch.set(key, match);
     }
     return [...byMatch.values()];
-  } catch {
+  } catch (error) {
+    console.error("[wc-live-scores] fotmob live failed", String(error));
     return [];
   }
 }
 
-export type EspnWcFixture = {
+export type WcFixture = {
   home: string;
   away: string;
   kickoffMs: number;
 };
 
 /**
- * Wider ESPN sweep covering the next few months of World Cup fixtures.
- * Used to resolve placeholder team names (e.g. "3rd Group A/B/C/D/F",
- * "Winner Match 99") in knockout rows once FIFA confirms the matchups.
+ * Every World Cup fixture FotMob lists for the tournament. Used to resolve
+ * placeholder team names (e.g. "3rd Group A/B/C/D/F", "Winner Match 99") in
+ * knockout rows once FIFA confirms the matchups.
  */
-export async function fetchEspnWcAllFixtures(): Promise<EspnWcFixture[]> {
+export async function fetchWcAllFixtures(): Promise<WcFixture[]> {
   try {
-    const today = new Date();
-    const ym = (d: Date) =>
-      `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
-    const months: string[] = [];
-    for (let i = 0; i <= 2; i += 1) {
-      const d = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() + i, 1));
-      months.push(ym(d));
-    }
-    const responses = await Promise.all(
-      months.map((m) =>
-        fetch(
-          `https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=${m}&limit=200`,
-          { headers: { accept: "application/json" } },
-        )
-          .then((r) => (r.ok ? r.json() : { events: [] }))
-          .catch(() => ({ events: [] })),
-      ),
-    );
-    type EspnJson = {
-      events?: Array<{
-        date?: string;
-        competitions?: Array<{
-          competitors?: Array<{
-            homeAway?: string;
-            team?: { displayName?: string };
-          }>;
-        }>;
-      }>;
-    };
-    const out: EspnWcFixture[] = [];
+    const league = await fotmobLeague(FOTMOB_WORLD_CUP_ID, 10 * 60_000);
+    const all: any[] = league?.fixtures?.allMatches ?? league?.matches?.allMatches ?? [];
+    const out: WcFixture[] = [];
     const seen = new Set<string>();
-    for (const j of responses as EspnJson[]) {
-      for (const e of j.events ?? []) {
-        const comp = e.competitions?.[0];
-        if (!comp || !e.date) continue;
-        const home = comp.competitors?.find((c) => c.homeAway === "home")?.team?.displayName ?? "";
-        const away = comp.competitors?.find((c) => c.homeAway === "away")?.team?.displayName ?? "";
-        if (!home || !away) continue;
-        const key = `${e.date}|${home}|${away}`;
-        if (seen.has(key)) continue;
-        seen.add(key);
-        out.push({ home, away, kickoffMs: new Date(e.date).getTime() });
-      }
+    for (const raw of all) {
+      const home = String(raw?.home?.name ?? raw?.home?.longName ?? "");
+      const away = String(raw?.away?.name ?? raw?.away?.longName ?? "");
+      const kickoffMs = Date.parse(String(raw?.status?.utcTime ?? raw?.time ?? ""));
+      if (!home || !away || !Number.isFinite(kickoffMs)) continue;
+      const key = `${kickoffMs}|${home}|${away}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({ home, away, kickoffMs });
     }
     return out;
-  } catch {
+  } catch (error) {
+    console.error("[wc-live-scores] fotmob fixtures failed", String(error));
     return [];
   }
 }
@@ -293,7 +237,7 @@ export function isWcPlaceholderName(name: string | null | undefined): boolean {
 export async function getWcLiveOverlays(fixtures: WcLiveFixtureRow[]) {
   const overlays = new Map<string, WcLiveOverlay>();
   try {
-    const live = await fetchEspnWcLive();
+    const live = await fetchWcLive();
     for (const ev of live) {
       const fx = findWcLiveFixture(fixtures, ev.home, ev.away, ev.kickoffMs);
       if (!fx) continue;
@@ -314,9 +258,9 @@ export async function getWcLiveOverlays(fixtures: WcLiveFixtureRow[]) {
   return overlays;
 }
 
-// Pick the freshest source per field. If ESPN is missing, partial, or stale
+// Pick the freshest source per field. If FotMob is missing, partial, or stale
 // (lower minute than what the cron sync already wrote), prefer the DB row so
-// the live timer never ticks backwards or freezes on a stale ESPN snapshot.
+// the live timer never ticks backwards or freezes on a stale snapshot.
 export function mergeWcLive(
   row: Pick<WcLiveFixtureRow, "home_score" | "away_score" | "status" | "minute" | "minute_added" | "home_reds" | "away_reds">,
   overlay: WcLiveOverlay | undefined,
@@ -342,7 +286,7 @@ export function mergeWcLive(
     };
   }
 
-  // If DB already says FINISHED, never demote it back to IN_PLAY from a stale ESPN snapshot.
+  // If DB already says FINISHED, never demote it back to IN_PLAY from a stale snapshot.
   if (dbStatus === "FINISHED" && overlay.status !== "FINISHED") {
     return {
       home_score: dbHome,
@@ -361,7 +305,7 @@ export function mergeWcLive(
   const overlayLive = overlay.status === "IN_PLAY" || overlay.status === "PAUSED";
   const dbLive = dbStatus === "IN_PLAY" || dbStatus === "PAUSED";
 
-  // If both sources are mid-match but the DB clock is ahead, the ESPN payload
+  // If both sources are mid-match but the DB clock is ahead, the FotMob payload
   // is stale — keep the freshest values we already have.
   if (overlayLive && dbLive && dbClock > overlayClock) {
     return {
