@@ -7,9 +7,10 @@ import signupIllustration from "@/assets/signup-illustration.webp";
 import { recordSignupInfo } from "@/lib/signup-info.functions";
 import { TurnstileWidget } from "@/components/app/TurnstileWidget";
 import { verifyTurnstile } from "@/lib/turnstile.functions";
-import { useVisitorVpn } from "@/hooks/use-visitor-vpn";
+import { useVisitorVpnStatus, refreshVisitorVpn } from "@/hooks/use-visitor-vpn";
+import { assertSignupAllowed } from "@/lib/vpn-public-check.functions";
 import { VpnBlockedDialog } from "@/components/VpnBlockedDialog";
-import { ShieldAlert } from "lucide-react";
+import { ShieldAlert, Loader2, RefreshCw } from "lucide-react";
 
 export const Route = createFileRoute("/signup")({
   validateSearch: (search: Record<string, unknown>): { invite?: string } => ({
