@@ -91,9 +91,11 @@ export function ChatMiniProfile({
 }
 
 function MiniProfileCard({ profile }: { profile: ChatMiniProfileData }) {
-  const { name, username, avatarUrl, hasAvatar, role, isOnline, lastSeenAt, customStatus, isSelf } = profile;
+  const { name, username, avatarUrl, hasAvatar, role, isOnline, lastSeenAt: seedLastSeen, customStatus, isSelf } = profile;
   const currentPage = useUserPage(profile.userId);
+  const { lastSeenAt } = useLiveLastSeen(profile.userId, seedLastSeen);
   const initial = (name || "?").slice(0, 1).toUpperCase();
+
 
 
   return (
