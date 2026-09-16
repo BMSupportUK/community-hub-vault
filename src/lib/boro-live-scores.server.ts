@@ -203,10 +203,18 @@ export function findBoroFixture(
   );
   if (withinWindow.length > 0) return nearest(withinWindow);
 
-  // Same league pairing anywhere in the season → same fixture, just moved.
+  // Same league pairing, moved for TV → same fixture. Only inside the same
+  // part of the season: without this cap last season's finished result for the
+  // same pairing got pasted onto this season's fixture, marking games that
+  // haven't been played yet as FINISHED.
   if (LEAGUE_RE.test(ev.competition ?? "")) {
-    const leagueRows = sameTeams.filter((f) => LEAGUE_RE.test(f.competition ?? ""));
+    const leagueRows = sameTeams.filter(
+      (f) =>
+        LEAGUE_RE.test(f.competition ?? "") &&
+        Math.abs(new Date(f.kickoff_at).getTime() - ev.kickoffMs) <= 100 * 24 * 60 * 60 * 1000,
+    );
     if (leagueRows.length > 0) return nearest(leagueRows);
   }
   return undefined;
+
 }

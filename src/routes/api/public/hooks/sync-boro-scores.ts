@@ -74,6 +74,20 @@ async function syncBoroScores() {
     // snapshot.
     if (fx.status === "FINISHED" && ev.status !== "FINISHED") continue;
 
+    // A result can never belong to a fixture whose kick-off is still in the
+    // future. This stops an old match for the same pairing marking an unplayed
+    // game as started/finished (and locking its fantasy gameweek).
+    const fxKickoffMs = new Date(fx.kickoff_at).getTime();
+    if (
+      ev.status !== "SCHEDULED" &&
+      Number.isFinite(fxKickoffMs) &&
+      fxKickoffMs > Date.now() + 30 * 60 * 1000
+    ) {
+      skipped.push(`future fixture, result ignored: ${ev.home} v ${ev.away}`);
+      continue;
+    }
+
+
     const newCompetition = fx.competition || ev.competition;
     const patch: {
       status?: string;
