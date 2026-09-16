@@ -832,11 +832,15 @@ function ChannelPage() {
       setDraftHtml(originalHtml);
       if (taRef.current) taRef.current.innerHTML = originalHtml;
     };
-    let content = pendingGif ?? originalContent;
-    setDraft("");
-    setDraftHtml("");
-    if (taRef.current) taRef.current.innerHTML = "";
-    setPendingGif(null);
+    let content = directText ?? pendingGif ?? originalContent;
+    // A confirmed `/` shortcut sends on its own; whatever the user was already
+    // typing (and any attached GIF) must stay untouched in the composer.
+    if (!directText) {
+      setDraft("");
+      setDraftHtml("");
+      if (taRef.current) taRef.current.innerHTML = "";
+      setPendingGif(null);
+    }
     if (/^https?:\/\/\S+$/i.test(content) && /(tenor\.com|giphy\.com|gph\.is)\//i.test(content)) {
       setUploadingPaste(true);
       try {

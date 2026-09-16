@@ -42,8 +42,8 @@ export async function resolveEspnEvent(input: {
   const hit = cache.get(key);
   if (hit && Date.now() - hit.at < TTL_MS) return hit.value;
 
-  const { espnJson, espnDateRange } = await import("@/lib/espn-fetch");
-  const dates = espnDateRange(ko - 86_400_000, ko + 86_400_000);
+  const { espnJson, espnDateParams } = await import("@/lib/espn-fetch");
+  const dateParams = espnDateParams(ko - 86_400_000, ko + 86_400_000);
   const wanted = [norm(input.home), norm(input.away)];
 
   let best: { value: ResolvedEspnEvent; distance: number } | null = null;
@@ -52,7 +52,9 @@ export async function resolveEspnEvent(input: {
   // A recognised competition has one authoritative feed. Avoid waiting for
   // four unrelated competitions when its scoreboard is temporarily blocked.
   const slugs = preferredSlug ? [preferredSlug] : orderedSlugs;
-  for (const slug of slugs) {
+  const requests: Array<{ slug: string; dates: string }> = [];
+  for (const slug of slugs) for (const dates of dateParams) requests.push({ slug, dates });
+  for (const { slug, dates } of requests) {
     const json = (await espnJson(
       `https://site.api.espn.com/apis/site/v2/sports/soccer/${slug}/scoreboard?dates=${dates}&limit=400`,
     )) as { events?: any[] } | null;

@@ -3,7 +3,7 @@
 // domestic cups so live scores and newly-drawn cup ties show up without
 // admin intervention. ESPN is keyless and updates in near real time.
 
-import { espnJson, espnDateRange } from "@/lib/espn-fetch";
+import { espnJson, espnDateParams } from "@/lib/espn-fetch";
 
 const ESPN_COMPETITIONS: Array<{ slug: string; name: string }> = [
   { slug: "eng.2", name: "Championship" },
@@ -116,9 +116,9 @@ export async function fetchEspnBoroLive(): Promise<EspnBoroMatch[]> {
   // month-by-month loop burned all 50 on ESPN alone — every fetch then failed.
   const now = Date.now();
   const ranges = [
-    espnDateRange(now - 2 * 86_400_000, now + 3 * 86_400_000),
-    espnDateRange(now, now + 300 * 86_400_000),
-  ];
+    ...espnDateParams(now - 2 * 86_400_000, now + 3 * 86_400_000),
+    ...espnDateParams(now, now + 300 * 86_400_000),
+  ].filter((value, index, all) => all.indexOf(value) === index);
 
   const urls: Array<{ url: string; competition: string }> = [];
   for (const c of ESPN_COMPETITIONS) {
