@@ -3,12 +3,13 @@ import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { Users, Search, Clock, UserPlus, Eye, Check, Lock, ShieldOff } from "lucide-react";
+import { Users, Search, Clock, UserPlus, Eye, Check, Lock, ShieldOff, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { resetUserMfa } from "@/lib/mfa.functions";
 import profileHeader from "@/assets/profile-header.jpg";
-import { useOnlineUsers } from "@/hooks/use-online-users";
+import { useOnlineUsers, useUserPage } from "@/hooks/use-online-users";
+
 import { formatLastSeen } from "@/lib/relative-time";
 
 import { VpnBadge } from "@/lib/vpn-flags";
@@ -53,6 +54,36 @@ const ROLE_COLOR: Record<string, string> = {
 };
 
 import { sortRolesByPriority, isSupportRole } from "@/lib/role-rank";
+
+/** Last active date, then the page this member is currently viewing. */
+function MemberActivity({
+  userId,
+  isOnline,
+  lastSeenAt,
+}: {
+  userId: string;
+  isOnline: boolean;
+  lastSeenAt: string | null;
+}) {
+  const page = useUserPage(userId);
+  return (
+    <div className="mt-2 space-y-0.5 text-[11px] text-muted-foreground">
+      <div className="flex items-center gap-1.5">
+        <Clock className="size-3 shrink-0" />
+        <span className="truncate">
+          Last active {isOnline ? "now" : formatLastSeen(lastSeenAt)}
+        </span>
+      </div>
+      {page && (
+        <div className="flex items-center gap-1.5">
+          <MapPin className="size-3 shrink-0" />
+          <span className="truncate">{page}</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
 
 function MembersPage() {
   const { hasAny, user: viewer, loading } = useAuth();
