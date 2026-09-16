@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { CircleDot, CalendarClock, Clock } from "lucide-react";
+import { CircleDot, CalendarClock, Clock, MapPin } from "lucide-react";
+import { useUserPage } from "@/hooks/use-online-users";
+
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { useRoleFlashMap, roleFlashClass, resolveAvatarUrl, type FlashRole } from "@/lib/role-flash";
@@ -49,6 +51,19 @@ function DaneStatusLine({ userId }: { userId: string }) {
     <div className="text-[10px] font-semibold text-emerald-500">Online</div>
   );
 }
+
+/** Where in the site this person currently is, shown under their working status. */
+function ViewingLine({ userId }: { userId: string }) {
+  const page = useUserPage(userId);
+  if (!page) return null;
+  return (
+    <div className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground min-w-0">
+      <MapPin className="size-3 shrink-0" />
+      <span className="truncate">{page}</span>
+    </div>
+  );
+}
+
 
 
 const ROLE_ORDER = ["admin", "management", "staff", "moderator"] as const;
