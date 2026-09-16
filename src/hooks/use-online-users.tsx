@@ -221,10 +221,12 @@ function openChannel(uid: string) {
   const sync = () => {
     try {
       applyPresenceKeys(Object.keys(ch.presenceState()));
+      collectPages();
     } catch {
       /* ignore */
     }
   };
+
   ch.on("presence", { event: "sync" }, sync)
     .on("presence", { event: "join" }, sync)
     .on("presence", { event: "leave" }, sync)
