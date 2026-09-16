@@ -319,7 +319,23 @@ function teardown() {
   }
   channelUid = null;
   setState(new Set());
+  if (pageState.size) {
+    pageState = new Map();
+    notifyPages();
+  }
 }
+
+/** Map of user id → friendly name of the page they are currently viewing. */
+export function useUserPages(): Map<string, string> {
+  return useSyncExternalStore(subscribePageStore, getPageSnapshot, getPageSnapshot);
+}
+
+/** The page a single user is currently viewing, or null when unknown. */
+export function useUserPage(userId: string | null | undefined): string | null {
+  const pages = useUserPages();
+  return userId ? pages.get(userId) ?? null : null;
+}
+
 
 export function useOnlineUsers(): Set<string> {
   const { user } = useAuth();
