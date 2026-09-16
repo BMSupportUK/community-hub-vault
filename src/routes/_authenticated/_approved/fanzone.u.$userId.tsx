@@ -70,7 +70,6 @@ function FanProfilePage() {
   const [fanPrivate, setFanPrivate] = useState(false);
   const [staffRole, setStaffRole] = useState<FanStaffRole | null>(null);
   const [lastSeen, setLastSeen] = useState<string | null>(null);
-  const [feedTab, setFeedTab] = useState<FanFeedTab>("activity");
 
   useEffect(() => {
     void (async () => {
