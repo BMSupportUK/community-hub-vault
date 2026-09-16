@@ -412,5 +412,18 @@ export function statPointsPer(key: string, position: FantasyPosition): number | 
   return meta.points[position] ?? null;
 }
 
+/**
+ * How many of a stat actually score, matching the scoring engine exactly:
+ * a shot on goal that went in is already paid as a goal, and a keeper's shots
+ * on goal against falls back to shots faced when the feed only gives that.
+ */
+export function scoredStatCount(key: string, stats: Record<string, number | null | undefined>): number {
+  const n = (k: string) => Number(stats[k] ?? 0) || 0;
+  if (key === "shots_on_target") return Math.max(n("shots_on_target") - n("goals"), 0);
+  if (key === "shots_on_goal_against") return Math.max(n("shots_on_goal_against"), n("shots_faced"));
+  return n(key);
+}
+
+
 // The live stat legend is built from PLAYER_STAT_META, which mirrors the
 // scoring rules table, so there is no separate hand-written stat key here.
