@@ -152,11 +152,15 @@ function applyPresenceKeys(keys: string[]) {
     if (lingerTimer) clearTimeout(lingerTimer);
     lingerTimer = setTimeout(() => {
       lingerTimer = null;
-      if (channel) applyPresenceKeys(Object.keys(channel.presenceState()));
+      if (channel) {
+        applyPresenceKeys(Object.keys(channel.presenceState()));
+        collectPages();
+      }
     }, soonest + 50);
   }
   setState(next);
 }
+
 
 
 function pingLastSeen(uid: string) {
