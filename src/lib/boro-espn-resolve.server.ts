@@ -42,8 +42,8 @@ export async function resolveEspnEvent(input: {
   const hit = cache.get(key);
   if (hit && Date.now() - hit.at < TTL_MS) return hit.value;
 
-  const { espnJson, espnDateRange } = await import("@/lib/espn-fetch");
-  const dates = espnDateRange(ko - 86_400_000, ko + 86_400_000);
+  const { espnJson, espnDateParams } = await import("@/lib/espn-fetch");
+  const dateParams = espnDateParams(ko - 86_400_000, ko + 86_400_000);
   const wanted = [norm(input.home), norm(input.away)];
 
   let best: { value: ResolvedEspnEvent; distance: number } | null = null;
