@@ -423,6 +423,8 @@ export function StaffOnDutyStrip({
               <Clock className="size-3 shrink-0" />
               <span>Working {fmtHMS(shiftElapsed)}</span>
             </div>
+            <ViewingLine userId={s.user_id} />
+
 
             <DndCountdown userId={s.user_id} compact className="mt-1" />
             {renderNextShift(s.user_id)}
