@@ -85,6 +85,29 @@ async function baitRequestBlocked(): Promise<boolean> {
   }
 }
 
+/** Cross-origin bait: filter lists block these hosts outright. */
+async function externalBaitBlocked(): Promise<boolean> {
+  const urls = [
+    "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js",
+    "https://static.doubleclick.net/instream/ad_status.js",
+  ];
+  const results = await Promise.all(
+    urls.map(async (u) => {
+      try {
+        const ctrl = new AbortController();
+        const t = window.setTimeout(() => ctrl.abort(), 2500);
+        await fetch(`${u}?t=${Date.now()}`, { method: "GET", mode: "no-cors", cache: "no-store", signal: ctrl.signal });
+        window.clearTimeout(t);
+        return false;
+      } catch (e) {
+        if (e instanceof DOMException && e.name === "AbortError") return false;
+        return true;
+      }
+    }),
+  );
+  return results.some(Boolean);
+}
+
 function run(force = false): Promise<AdBlockStatus> {
   hydrate();
   if (!force && cached !== null && Date.now() - cachedAt < TTL_MS) {
@@ -93,11 +116,13 @@ function run(force = false): Promise<AdBlockStatus> {
   if (inflight) return inflight;
   inflight = (async () => {
     try {
-      const [elementBlocked, requestBlocked] = await Promise.all([
+      const [elementBlocked, requestBlocked, externalBlocked] = await Promise.all([
         baitElementBlocked(),
         baitRequestBlocked(),
+        externalBaitBlocked(),
       ]);
-      const status: AdBlockStatus = elementBlocked || requestBlocked ? "blocked" : "clean";
+      const status: AdBlockStatus =
+        elementBlocked || requestBlocked || externalBlocked ? "blocked" : "clean";
       emit(status);
       return status;
     } catch {
