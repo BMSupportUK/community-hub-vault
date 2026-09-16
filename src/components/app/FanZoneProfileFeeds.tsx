@@ -35,18 +35,18 @@ export function FanZoneProfileFeeds({ userId }: { userId: string }) {
   }, []);
 
   return (
-    <div className="rounded-xl border border-white/12 bg-black/35 p-4">
+    <div className="overflow-hidden rounded-xl border border-white/12 bg-black/35">
       <Tabs defaultValue="activity">
-        <TabsList className="mb-3 bg-white/10">
-          <TabsTrigger value="activity" className="data-[state=active]:bg-[#E11B22] data-[state=active]:text-white">
+        <TabsList className="grid h-auto w-full grid-cols-2 rounded-none border-b border-white/12 bg-white/10 p-0">
+          <TabsTrigger value="activity" className="min-h-12 rounded-none border-r border-white/12 px-3 py-3 text-white/75 data-[state=active]:bg-[#E11B22] data-[state=active]:text-white">
             <Activity className="size-4 mr-1.5" />Latest Activity
           </TabsTrigger>
-          <TabsTrigger value="new" className="data-[state=active]:bg-[#E11B22] data-[state=active]:text-white">
+          <TabsTrigger value="new" className="min-h-12 rounded-none px-3 py-3 text-white/75 data-[state=active]:bg-[#E11B22] data-[state=active]:text-white">
             <Sparkles className="size-4 mr-1.5" />New Content
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="activity" className="mt-0">
+        <TabsContent value="activity" className="mt-0 p-4">
           <ForumPostFeed
             posts={mine ?? []}
             loading={mine === null}
@@ -59,7 +59,7 @@ export function FanZoneProfileFeeds({ userId }: { userId: string }) {
           </div>
         </TabsContent>
 
-        <TabsContent value="new" className="mt-0">
+        <TabsContent value="new" className="mt-0 p-4">
           <ForumPostFeed posts={all ?? []} loading={all === null} showAuthor empty="No forum posts yet." />
           <div className="mt-3 flex justify-center">
             <Button asChild variant="outline" className="border-white/25 bg-white/10 text-white hover:bg-white/20 hover:text-white">
