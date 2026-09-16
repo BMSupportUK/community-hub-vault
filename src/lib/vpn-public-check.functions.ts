@@ -128,3 +128,33 @@ export const checkVisitorVpn = createServerFn({ method: "POST" })
   const is_proxy = results.some((r) => r.is_proxy) || is_vpn;
   return { is_vpn, is_proxy, checked: true };
 });
+
+/**
+ * Server-side sign-up gate: re-checks the real request IP at submit time.
+ * A positive flag OR an unverifiable lookup both block the sign-up.
+ * Local/private IPs are allowed so preview testing still works.
+ */
+export const assertSignupAllowed = createServerFn({ method: "POST" }).handler(
+  async (): Promise<{ allowed: boolean; reason: "clean" | "vpn" | "unverified" }> => {
+    const headerCandidate =
+      getRequestHeader("cf-connecting-ip") ??
+      getRequestHeader("x-real-ip") ??
+      getRequestHeader("x-forwarded-for") ??
+      getRequestIP({ xForwardedFor: true });
+    const ip = normalizeIp(headerCandidate) ?? "unknown";
+    if (isPrivateIp(ip)) return { allowed: true, reason: "clean" };
+
+    const [primary, ipapi, ipwhois, ipquery] = await Promise.all([
+      probe(ip),
+      probeIpapi(ip),
+      probeIpwhois(ip),
+      probeIpquery(ip),
+    ]);
+    const results = [primary, ipapi, ipwhois, ipquery].filter(
+      (r): r is VpnVerdict => r !== null,
+    );
+    if (results.length === 0) return { allowed: false, reason: "unverified" };
+    const flagged = results.some((r) => r.is_vpn || r.is_proxy);
+    return flagged ? { allowed: false, reason: "vpn" } : { allowed: true, reason: "clean" };
+  },
+);
