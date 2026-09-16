@@ -5,7 +5,7 @@ const BORO_TEAM_RE = /\bmiddles(?:brough|borough)\b|\bboro\b/i;
 
 async function syncBoroScores() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { fetchEspnBoroLive, findBoroFixture } = await import("@/lib/boro-live-scores.server");
+  const { fetchBoroLiveMatches, findBoroFixture } = await import("@/lib/boro-live-scores.server");
 
   const { data: fixtures, error: fxErr } = await supabaseAdmin
     .from("boro_fixtures")
@@ -15,8 +15,7 @@ async function syncBoroScores() {
   if (fxErr) return { ok: false, error: fxErr.message };
 
   const rows = (fixtures ?? []) as BoroFixtureRow[];
-  const live = await fetchEspnBoroLive();
-  const debug = (globalThis as { __espnDebug?: { ok: number; bad: number; total: number } }).__espnDebug ?? null;
+  const live = await fetchBoroLiveMatches();
 
   let updated = 0;
   let inserted = 0;
@@ -38,7 +37,7 @@ async function syncBoroScores() {
         skipped.push(`skip non-league ${ev.competition}: ${ev.home} v ${ev.away}`);
         continue;
       }
-      // ESPN knows about a fixture we don't yet — most often a freshly drawn
+      // FotMob knows about a fixture we don't yet — most often a freshly drawn
       // cup tie. Insert it so it shows up on the predictions page.
       const { data: insRows, error: insErr } = await supabaseAdmin
         .from("boro_fixtures")
@@ -96,7 +95,7 @@ async function syncBoroScores() {
     if (ev.homeReds !== (fx.home_reds ?? 0)) patch.home_reds = ev.homeReds;
     if (ev.awayReds !== (fx.away_reds ?? 0)) patch.away_reds = ev.awayReds;
     if (newCompetition !== fx.competition && ev.competition !== "Championship") {
-      // Only overwrite competition if ESPN says it's a cup — we don't want a
+      // Only overwrite competition if FotMob says it's a cup — we don't want a
       // generic "Championship" label to clobber a more specific BBC value.
       patch.competition = ev.competition;
     }
@@ -162,7 +161,6 @@ async function syncBoroScores() {
     updated_list: updatedList,
     inserted_list: insertedList,
     skipped,
-    fetches: debug,
   };
 }
 

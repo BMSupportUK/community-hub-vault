@@ -44,7 +44,7 @@ export function normaliseBoroMatchDetail(json: any): MatchDetailDTO {
   const lineups: TeamLineup[] = (json?.rosters ?? []).map((roster: any) => ({
     teamId: roster?.team?.id != null ? String(roster.team.id) : null,
     team: roster?.team?.displayName ?? "",
-    logo: roster?.team?.id ? `https://a.espncdn.com/i/teamlogos/soccer/500/${roster.team.id}.png` : null,
+    logo: roster?.team?.id ? `https://images.fotmob.com/image_resources/logo/teamlogo/${roster.team.id}.png` : null,
     formation: roster?.formation ?? null,
     players: (roster?.roster ?? []).map((player: any, index: number) => {
       const stats: Record<string, string> = {};

@@ -1,9 +1,7 @@
-import { espnJson } from "@/lib/espn-fetch";
+// Full Championship table, read from FotMob (the app's only match data source).
 
-// The legacy site.api hostname now rejects standings requests with 403 from
-// both local and deployed environments. ESPN's web API serves the same schema.
-const ESPN_STANDINGS_URL =
-  "https://site.web.api.espn.com/apis/v2/sports/soccer/eng.2/standings";
+import { fotmobTeamData, fotmobTeamLogo } from "@/lib/fotmob-fetch";
+
 const BORO_TEAM_RE = /\bmiddles(?:brough|borough)\b|\bboro\b/i;
 
 export type FullLeagueRow = {
@@ -21,52 +19,44 @@ export type FullLeagueRow = {
   isBoro: boolean;
 };
 
+const int = (value: unknown) => {
+  const n = Number(value);
+  return Number.isFinite(n) ? Math.round(n) : 0;
+};
+
+/** FotMob writes goals as "20-9". */
+function goals(scoresStr: unknown): { for: number; against: number } {
+  const [scored, conceded] = String(scoresStr ?? "")
+    .split("-")
+    .map((part) => int(part.trim()));
+  return { for: scored ?? 0, against: conceded ?? 0 };
+}
+
 export async function fetchFullStandings(): Promise<FullLeagueRow[]> {
-  const json = (await espnJson(ESPN_STANDINGS_URL)) as null | {
-    children?: Array<{
-      standings?: {
-        entries?: Array<{
-          team?: { id?: string; displayName?: string; shortDisplayName?: string };
-          stats?: Array<{ name?: string; type?: string; value?: number; displayValue?: string }>;
-        }>;
-      };
-    }>;
-  };
-  const entries = json?.children?.[0]?.standings?.entries ?? [];
+  const data = await fotmobTeamData(2 * 60_000);
+  const table = data?.table?.[0]?.data?.table;
+  const entries: any[] = Array.isArray(table?.all) ? table.all : Array.isArray(table) ? table : [];
   if (!entries.length) return [];
 
-  const num = (s: { value?: number; displayValue?: string } | undefined) =>
-    typeof s?.value === "number" ? s.value : parseInt(s?.displayValue ?? "0", 10) || 0;
-
-  const raw = entries.map((e) => {
-    const stats = e.stats ?? [];
-    const by = (t: string) => stats.find((s) => s.type === t || s.name === t);
-    const name = e.team?.shortDisplayName || e.team?.displayName || "";
+  const raw = entries.map((entry, index) => {
+    const name = String(entry?.shortName ?? entry?.name ?? "");
+    const g = goals(entry?.scoresStr);
     return {
-      rank: num(by("rank")),
+      rank: int(entry?.idx) || index + 1,
       team: name,
-      logo: e.team?.id
-        ? `https://a.espncdn.com/i/teamlogos/soccer/500/${e.team.id}.png`
-        : null,
-      played: num(by("gamesplayed") ?? by("gamesPlayed")),
-      won: num(by("wins")),
-      drawn: num(by("ties")),
-      lost: num(by("losses")),
-      goalsFor: num(by("pointsfor") ?? by("pointsFor")),
-      goalsAgainst: num(by("pointsagainst") ?? by("pointsAgainst")),
-      goalDifference: num(by("pointdifferential") ?? by("pointDifferential")),
-      points: num(by("points")),
+      logo: fotmobTeamLogo(entry?.id),
+      played: int(entry?.played),
+      won: int(entry?.wins),
+      drawn: int(entry?.draws),
+      lost: int(entry?.losses),
+      goalsFor: g.for,
+      goalsAgainst: g.against,
+      goalDifference: int(entry?.goalConDiff),
+      points: int(entry?.pts),
       isBoro: BORO_TEAM_RE.test(name),
     };
   });
 
-  const hasRanks = raw.some((r) => r.rank > 0);
-  raw.sort((a, b) =>
-    hasRanks
-      ? (a.rank || 999) - (b.rank || 999)
-      : b.points - a.points ||
-        b.goalDifference - a.goalDifference ||
-        a.team.localeCompare(b.team),
-  );
-  return raw.map(({ rank: _r, ...r }, i) => ({ position: i + 1, ...r }));
+  raw.sort((a, b) => (a.rank || 999) - (b.rank || 999));
+  return raw.map(({ rank: _rank, ...row }, index) => ({ position: index + 1, ...row }));
 }
