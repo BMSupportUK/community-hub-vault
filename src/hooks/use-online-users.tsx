@@ -1,7 +1,9 @@
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useSyncExternalStore } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useTalkChannelPresentUsers } from "@/hooks/use-talk-channel-presence";
 import type { RealtimeChannel } from "@supabase/supabase-js";
+
 
 /**
  * Shared presence store for "who is online".
