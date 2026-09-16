@@ -10,11 +10,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import bgAsset from "@/assets/boro-fan-zone-profile-bg.jpg.asset.json";
 import { FanStatsBox, FanReputationBox } from "@/components/app/FanZoneStatsBoxes";
-import {
-  FanZoneProfileFeedTabs,
-  FanZoneProfileFeedPanel,
-  type FanFeedTab,
-} from "@/components/app/FanZoneProfileFeeds";
+import { FanZoneProfileFeedTabs } from "@/components/app/FanZoneProfileFeeds";
 
 import { FanZoneMuteDialog } from "@/components/app/FanZoneMuteDialog";
 import { FanZoneBanDialog } from "@/components/app/FanZoneBanDialog";
@@ -74,7 +70,6 @@ function FanProfilePage() {
   const [fanPrivate, setFanPrivate] = useState(false);
   const [staffRole, setStaffRole] = useState<FanStaffRole | null>(null);
   const [lastSeen, setLastSeen] = useState<string | null>(null);
-  const [feedTab, setFeedTab] = useState<FanFeedTab>("activity");
 
   useEffect(() => {
     void (async () => {
@@ -275,7 +270,7 @@ function FanProfilePage() {
             </div>
           </div>
 
-          <FanZoneProfileFeedTabs value={feedTab} onChange={setFeedTab} />
+          <FanZoneProfileFeedTabs userId={userId} />
 
           <div className="p-6 space-y-5 text-white">
             {p.has_blocked_me && (
@@ -290,7 +285,7 @@ function FanProfilePage() {
               matchdayMemory={p.matchday_memory}
             />
 
-            <FanZoneProfileFeedPanel userId={userId} tab={feedTab} />
+            
 
 
 
