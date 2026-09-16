@@ -290,7 +290,7 @@ function FanProfilePage() {
               matchdayMemory={p.matchday_memory}
             />
 
-            <FanZoneProfileFeeds userId={userId} />
+            <FanZoneProfileFeedPanel userId={userId} tab={feedTab} />
 
 
 
