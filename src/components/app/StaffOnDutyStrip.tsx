@@ -507,6 +507,9 @@ export function StaffOnDutyStrip({
                 <div className="text-[10px] text-muted-foreground">Off duty</div>
               )}
             </div>
+            <ViewingLine userId={p.id} />
+
+
 
             <DndCountdown userId={p.id} compact className="mt-1" />
             {renderNextShift(p.id)}
