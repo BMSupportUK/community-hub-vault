@@ -827,6 +827,25 @@ function ProfilePage() {
   );
 }
 
+/** Stacked activity lines under the bio: last active, then the page being viewed. */
+function ProfileActivity({ userId, lastSeenAt }: { userId: string; lastSeenAt: string | null }) {
+  const onlineUsers = useOnlineUsers();
+  const isOnline = onlineUsers.has(userId);
+  const page = useUserPage(userId);
+  return (
+    <div className="mt-3 space-y-1 text-xs text-purple-200/80">
+      <div className="flex items-center gap-1.5">
+        <ClockIcon className="size-3.5 shrink-0 text-amber-100/80" />
+        <span>Last active {isOnline ? "now" : formatLastSeen(lastSeenAt)}</span>
+      </div>
+      <div className="flex items-center gap-1.5">
+        <MapPin className="size-3.5 shrink-0 text-amber-100/80" />
+        <span>{isOnline ? page ?? "Online now" : `Last seen ${formatLastSeen(lastSeenAt)}`}</span>
+      </div>
+    </div>
+  );
+}
+
 function PersonalThemePanel() {
   const current = useAppTheme();
   const choose = async (theme: Parameters<typeof setPersonalAppTheme>[0]) => {
