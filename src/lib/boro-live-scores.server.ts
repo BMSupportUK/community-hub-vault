@@ -3,6 +3,7 @@
 // uses) so live scores and newly-drawn cup ties show up without admin
 // intervention.
 
+import { clubNamesMatch } from "@/lib/club-names";
 import { fotmobMatchDetails, fotmobTeamData } from "@/lib/fotmob-fetch";
 
 export type BoroLiveMatch = {
@@ -51,11 +52,7 @@ function isBoro(name: string) {
 }
 
 function nameMatches(a: string, b: string) {
-  const na = norm(a);
-  const nb = norm(b);
-  if (na === nb) return true;
-  if (na.includes(nb) || nb.includes(na)) return true;
-  return false;
+  return clubNamesMatch(a, b);
 }
 
 /** FotMob writes the live clock as "62'" or "45+2'". */
