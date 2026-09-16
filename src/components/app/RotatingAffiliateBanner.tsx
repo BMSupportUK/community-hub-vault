@@ -138,6 +138,11 @@ function RotatingAffiliateBannerComponent({
           decoding="async"
           fetchPriority="low"
           sizes="(max-width: 768px) 200px, 256px"
+          onError={() => {
+            // A sponsor image that won't load on an otherwise-loaded page
+            // is a strong ad-blocker signal.
+            if (current.id !== "__fallback__") reportAdImageBlocked();
+          }}
         />
       </a>
     </div>
