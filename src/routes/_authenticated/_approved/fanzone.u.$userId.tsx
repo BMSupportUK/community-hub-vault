@@ -275,7 +275,7 @@ function FanProfilePage() {
             </div>
           </div>
 
-          <FanZoneProfileFeedTabs value={feedTab} onChange={setFeedTab} />
+          <FanZoneProfileFeedTabs userId={userId} />
 
           <div className="p-6 space-y-5 text-white">
             {p.has_blocked_me && (
