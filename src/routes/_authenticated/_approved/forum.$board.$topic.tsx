@@ -951,6 +951,7 @@ function TopicPage() {
   const { opPost, replies, pinnedReplies, teamPosts } = visiblePosts;
 
   return (
+    <AdBlockGate>
     <div className="boro-topic-page space-y-4">
       <div>
         <div className="flex items-center gap-1 -ml-2 mb-1 flex-wrap" aria-label="Forum navigation">
