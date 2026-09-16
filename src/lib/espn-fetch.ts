@@ -221,7 +221,16 @@ async function viaEspnCdn<T>(url: string): Promise<T | null> {
   }
 }
 
+// Last successful payload per URL. When every path is refused we serve this for
+// a short while so live scores show the most recent data instead of going blank.
+const lastGood = new Map<string, { at: number; value: unknown }>();
+const LAST_GOOD_TTL_MS = 15 * 60 * 1000;
+
 export async function espnJson<T = any>(url: string, tries = 2): Promise<T | null> {
+  const remember = (value: T | null): T | null => {
+    if (value != null) lastGood.set(url, { at: Date.now(), value });
+    return value;
+  };
   let lastStatus: number | string = "none";
   for (let attempt = 0; attempt < tries; attempt += 1) {
     try {
