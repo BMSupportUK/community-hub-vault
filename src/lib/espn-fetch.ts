@@ -239,7 +239,7 @@ export async function espnJson<T = any>(url: string, tries = 2): Promise<T | nul
         cache: "no-store",
         signal: AbortSignal.timeout(DIRECT_TIMEOUT_MS),
       });
-      if (res.ok) return (await res.json()) as T;
+      if (res.ok) return remember((await res.json()) as T);
       lastStatus = res.status;
       // 4xx other than 429 will not fix themselves on a direct retry.
       if (res.status !== 429 && res.status < 500) break;
@@ -253,13 +253,21 @@ export async function espnJson<T = any>(url: string, tries = 2): Promise<T | nul
   // The first-party web API currently answers reliably from the production
   // worker and returns the exact same payload shape as site.api.
   const viaWebApi = await viaEspnWebApi<T>(url);
-  if (viaWebApi != null) return viaWebApi;
+  if (viaWebApi != null) return remember(viaWebApi);
 
   // Keep the CDN and mirrors as independent fallbacks if that host changes.
   const viaCdn = await viaEspnCdn<T>(url);
-  if (viaCdn != null) return viaCdn;
+  if (viaCdn != null) return remember(viaCdn);
 
-  return viaMirror<T>(url);
+  const mirrored = await viaMirror<T>(url);
+  if (mirrored != null) return remember(mirrored);
+
+  const cached = lastGood.get(url);
+  if (cached && Date.now() - cached.at < LAST_GOOD_TTL_MS) {
+    console.error("[espn-fetch] serving last good payload", url);
+    return cached.value as T;
+  }
+  return null;
 }
 
 
