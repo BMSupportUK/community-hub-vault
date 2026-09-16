@@ -149,55 +149,43 @@ export function makePlayerMatcher(players: Array<{ id: string; name: string; pos
   };
 }
 
-/** Find the ESPN event id for one of our fixtures (kickoff + opponent match). */
-async function findEspnEventId(fixture: {
+/** FotMob match feed for one of our fixtures, mapped into the shape below. */
+async function fetchMatchSummary(fixture: {
   kickoff_at: string;
   home_team: string;
   away_team: string;
-}): Promise<{ league: string; eventId: string } | null> {
-  const ko = new Date(fixture.kickoff_at);
-  const ym = `${ko.getUTCFullYear()}${String(ko.getUTCMonth() + 1).padStart(2, "0")}`;
-  const opponent = BORO_RE.test(fixture.home_team) ? fixture.away_team : fixture.home_team;
-  const wantOpp = norm(opponent);
-
-  for (const league of ESPN_LEAGUES) {
-    try {
-      const json = (await espnJson(
-        `https://site.api.espn.com/apis/site/v2/sports/soccer/${league}/scoreboard?dates=${ym}&limit=400`,
-      )) as { events?: Array<{ id?: string; date?: string; name?: string }> } | null;
-      if (!json) continue;
-      for (const ev of json.events ?? []) {
-        const name = ev.name ?? "";
-        if (!BORO_RE.test(name)) continue;
-        const n = norm(name);
-        const oppHit = wantOpp && (n.includes(wantOpp) || wantOpp.split(" ").every((w) => w.length > 3 && n.includes(w)));
-        if (!oppHit) continue;
-        const evMs = ev.date ? Date.parse(ev.date) : NaN;
-        if (Number.isFinite(evMs) && Math.abs(evMs - ko.getTime()) > 3 * 24 * 3600 * 1000) continue;
-        if (ev.id) return { league, eventId: ev.id };
-      }
-    } catch {
-      /* try next league */
-    }
+}): Promise<EspnSummary | null> {
+  const { fetchFotmobSummary } = await import("@/lib/fotmob-boro.server");
+  try {
+    return (await fetchFotmobSummary({
+      home: fixture.home_team,
+      away: fixture.away_team,
+      kickoff: fixture.kickoff_at,
+    })) as EspnSummary | null;
+  } catch (error) {
+    console.error("[fantasy-live-stats] fotmob summary failed", String(error));
+    return null;
   }
-  return null;
+}
+
+/** FotMob marks substitutions as objects; treat any of the shapes as a flag. */
+function didSub(value: unknown): boolean {
+  if (typeof value === "boolean") return value;
+  return !!(value as { didSub?: boolean } | null)?.didSub;
 }
 
 /**
  * The official Middlesbrough starting XI for a fixture, as fantasy player ids.
- * Returns null while ESPN hasn't published the line-up yet.
+ * Returns null while FotMob hasn't published a confirmed line-up yet.
  */
 export async function fetchBoroStarterIds(
   fixture: { kickoff_at: string; home_team: string; away_team: string },
   players: Array<{ id: string; name: string; position: string }>,
 ): Promise<string[] | null> {
-  const found = await findEspnEventId(fixture);
-  if (!found) return null;
-  const summaryJson = (await espnJson(
-    `https://site.api.espn.com/apis/site/v2/sports/soccer/${found.league}/summary?event=${found.eventId}`,
-  )) as EspnSummary | null;
-  if (!summaryJson) return null;
-  const summary: EspnSummary = summaryJson;
+  const summary = await fetchMatchSummary(fixture);
+  if (!summary) return null;
+  // A predicted XI is not a team sheet.
+  if ((summary as { _lineupsConfirmed?: boolean })._lineupsConfirmed === false) return null;
   const boroSide = (summary.rosters ?? []).find((r) => BORO_RE.test(r.team?.displayName ?? ""));
   const roster = boroSide?.roster ?? [];
   const starters = roster.filter((r) => r.starter);
@@ -215,7 +203,7 @@ export async function fetchBoroStarterIds(
 }
 
 /**
- * Build fantasy stat rows for a finished fixture straight from ESPN.
+ * Build fantasy stat rows for a finished fixture straight from FotMob.
  * Returns null when the match data isn't available yet.
  */
 export async function fetchFantasyStatsForFixture(
@@ -223,13 +211,9 @@ export async function fetchFantasyStatsForFixture(
   players: Array<{ id: string; name: string; position: string }>,
   opts?: { live?: boolean },
 ): Promise<FantasyStatRow[] | null> {
-  const found = await findEspnEventId(fixture);
-  if (!found) return null;
-  const summaryJson = (await espnJson(
-    `https://site.api.espn.com/apis/site/v2/sports/soccer/${found.league}/summary?event=${found.eventId}`,
-  )) as EspnSummary | null;
-  if (!summaryJson) return null;
-  const summary: EspnSummary = summaryJson;
+  const summary = await fetchMatchSummary(fixture);
+  if (!summary) return null;
+
 
   const boroSide = (summary.rosters ?? []).find((r) => BORO_RE.test(r.team?.displayName ?? ""));
   if (!boroSide?.roster?.length) return null;
