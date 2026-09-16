@@ -48,7 +48,7 @@ function NewForumContentPage() {
       style={{ backgroundImage: `url(${bgAsset.url})` }}
     >
       <div className="absolute inset-0 bg-black/80" aria-hidden />
-      <div className="relative z-10 mx-auto w-full max-w-3xl px-4 py-8 sm:px-6">
+      <div className="relative z-10 w-full px-4 py-8 sm:px-6">
         <Button asChild variant="ghost" size="sm" className="-ml-2 mb-3 text-white hover:bg-white/10 hover:text-white">
           <Link to="/forum">
             <ArrowLeft className="size-4 mr-1" />Back to forum
@@ -56,7 +56,7 @@ function NewForumContentPage() {
         </Button>
         <h1 className="font-display text-2xl font-black text-white sm:text-3xl">New forum content</h1>
         <p className="mb-5 mt-1 text-sm text-white/70">{total} post{total === 1 ? "" : "s"} · 20 per page</p>
-        <ForumPostFeed posts={posts} loading={loading} showAuthor empty="No forum posts yet." />
+        <ForumPostFeed posts={posts} loading={loading} showAuthor empty="No forum posts yet." variant="grid" />
         <ForumFeedPager page={page} total={total} pageSize={FORUM_FEED_PAGE_SIZE} onPage={setPage} />
       </div>
     </div>

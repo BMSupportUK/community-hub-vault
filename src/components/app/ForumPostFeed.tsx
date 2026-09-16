@@ -10,11 +10,13 @@ export function ForumPostFeed({
   loading,
   showAuthor = false,
   empty = "Nothing posted yet.",
+  variant = "list",
 }: {
   posts: ForumFeedPost[];
   loading: boolean;
   showAuthor?: boolean;
   empty?: string;
+  variant?: "list" | "grid";
 }) {
   if (loading) {
     return (
@@ -30,20 +32,24 @@ export function ForumPostFeed({
       </div>
     );
   }
+  const listClasses =
+    variant === "grid"
+      ? "grid grid-cols-1 items-start gap-3 sm:grid-cols-2 xl:grid-cols-3"
+      : "space-y-2.5";
   return (
-    <ul className="space-y-2.5">
+    <ul className={listClasses}>
       {posts.map((p) => (
         <li key={p.id}>
           <Link
             to="/forum/$board/$topic"
             params={{ board: p.board_slug, topic: p.topic_id }}
-            className="block rounded-xl border border-white/12 bg-white/5 p-3.5 transition-colors hover:border-[#E11B22]/60 hover:bg-white/10"
+            className="block h-full rounded-xl border border-white/12 bg-white/5 p-3.5 transition-colors hover:border-[#E11B22]/60 hover:bg-white/10"
           >
             <div className="flex flex-wrap items-center gap-2 text-[11px] uppercase tracking-wide text-white/55">
               <span className="rounded-full bg-[#E11B22]/25 px-2 py-0.5 font-semibold text-[#FFD3D5]">
                 {p.is_op ? "Topic" : "Reply"}
               </span>
-              <span className="truncate">{p.board_name}</span>
+              <span className="break-words">{p.board_name}</span>
               <span aria-hidden>·</span>
               <RelativeTime iso={p.created_at} />
             </div>
@@ -60,7 +66,13 @@ export function ForumPostFeed({
                 <span className="truncate font-semibold">{p.author_alias}</span>
               </div>
             )}
-            <p className="mt-1.5 line-clamp-3 text-sm text-white/75 break-words">
+            <p
+              className={
+                variant === "grid"
+                  ? "mt-1.5 text-sm leading-relaxed text-white/75 break-words"
+                  : "mt-1.5 line-clamp-3 text-sm text-white/75 break-words"
+              }
+            >
               {censorText(stripForumHtml(p.body)) || "—"}
             </p>
           </Link>
