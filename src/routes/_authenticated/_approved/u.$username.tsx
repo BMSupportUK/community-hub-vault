@@ -5,7 +5,10 @@ import {
   Coffee, UtensilsCrossed, Ticket, ShoppingBag, Eye, EyeOff,
   Lock, KeyRound, Copy, Check, Globe, Calendar, StickyNote, AtSign,
   Trophy, Gift, X as XIcon, UserPlus, Plus, Trash2, Smartphone,
+  MapPin,
 } from "lucide-react";
+import { useOnlineUsers, useUserPage } from "@/hooks/use-online-users";
+import { formatLastSeen } from "@/lib/relative-time";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { useCurrency } from "@/hooks/use-currency";
@@ -51,6 +54,7 @@ interface ProfileRow {
   created_at: string;
   is_private: boolean | null;
   timezone: string | null;
+  last_seen_at: string | null;
   equipped_nameplate_id: string | null;
   custom_status: string | null;
 }
@@ -646,7 +650,8 @@ function ProfilePage() {
                    ) : (
                      <p className="text-sm text-purple-200/60 italic">No bio yet.</p>
                    )}
-                </div>
+                   <ProfileActivity userId={profile.id} lastSeenAt={profile.last_seen_at} />
+                 </div>
               </section>
               <aside className="space-y-4">
                 <div className="rounded-2xl bg-gradient-to-br from-fuchsia-600/30 via-purple-600/30 to-violet-700/30 border border-purple-500/40 p-5 shadow-[0_0_60px_-15px_rgba(168,85,247,0.5)] text-white">
