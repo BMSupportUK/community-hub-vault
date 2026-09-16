@@ -326,6 +326,8 @@ function MembersPage() {
                     </span>
                   ))}
                 </div>
+                <MemberActivity userId={p.id} isOnline={isOnline} lastSeenAt={p.last_seen_at} />
+
                 {p.bio && (
                   <p className="text-xs text-muted-foreground mt-2 line-clamp-2">{p.bio}</p>
                 )}
