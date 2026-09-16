@@ -256,7 +256,7 @@ function MemberRow({
             </span>
             <span className="flex items-center gap-1 truncate text-[10px] leading-tight text-muted-foreground">
               <Clock className="size-2.5 shrink-0" />
-              Last active {online ? "now" : formatLastSeen(row.last_seen_at)}
+              Last active {online ? "now" : formatLastSeen(lastSeenAt)}
             </span>
             {currentPage && (
               <span className="flex items-center gap-1 truncate text-[10px] leading-tight text-muted-foreground">
