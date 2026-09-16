@@ -19,6 +19,7 @@ import { FanZoneMutedScreen } from "@/components/app/FanZoneMutedScreen";
 import { toast } from "sonner";
 import { censorText, useProfanityWords } from "@/lib/profanity";
 import { RotatingAffiliateBanner } from "@/components/app/RotatingAffiliateBanner";
+import { AdBlockGate } from "@/components/app/AdBlockGate";
 import { PollDraftEditor, persistDraftPoll, type DraftPoll } from "@/components/app/ForumPoll";
 import { BarChart3 } from "lucide-react";
 
@@ -377,6 +378,7 @@ function BoardPage() {
   );
 
   return (
+    <AdBlockGate>
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
@@ -612,5 +614,6 @@ function BoardPage() {
         </DialogContent>
       </Dialog>
     </div>
+    </AdBlockGate>
   );
 }

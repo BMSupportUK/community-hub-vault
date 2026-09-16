@@ -108,6 +108,7 @@ import { Route as AuthenticatedApprovedHomeChannelRouteImport } from './routes/_
 import { Route as AuthenticatedApprovedSportsGuidesNewRouteImport } from './routes/_authenticated/_approved/sports-guides.new'
 import { Route as AuthenticatedApprovedUUsernameRouteImport } from './routes/_authenticated/_approved/u.$username'
 import { Route as ApiPublicATokenRouteImport } from './routes/api/public/a/$token'
+import { Route as ApiPublicAdsAdBannerTrackRouteImport } from './routes/api/public/ads/ad-banner-track'
 import { Route as ApiPublicHooksBackupCredentialsRouteImport } from './routes/api/public/hooks/backup-credentials'
 import { Route as ApiPublicHooksBackupOrdersRouteImport } from './routes/api/public/hooks/backup-orders'
 import { Route as ApiPublicHooksBoroFetchFixturesRouteImport } from './routes/api/public/hooks/boro-fetch-fixtures'
@@ -711,6 +712,12 @@ const ApiPublicATokenRoute = ApiPublicATokenRouteImport.update({
   path: '/api/public/a/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicAdsAdBannerTrackRoute =
+  ApiPublicAdsAdBannerTrackRouteImport.update({
+    id: '/api/public/ads/ad-banner-track',
+    path: '/api/public/ads/ad-banner-track',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksBackupCredentialsRoute =
   ApiPublicHooksBackupCredentialsRouteImport.update({
     id: '/api/public/hooks/backup-credentials',
@@ -1016,6 +1023,7 @@ export interface FileRoutesByFullPath {
   '/sports-guides/new': typeof AuthenticatedApprovedSportsGuidesNewRoute
   '/u/$username': typeof AuthenticatedApprovedUUsernameRoute
   '/api/public/a/$token': typeof ApiPublicATokenRoute
+  '/api/public/ads/ad-banner-track': typeof ApiPublicAdsAdBannerTrackRoute
   '/api/public/hooks/backup-credentials': typeof ApiPublicHooksBackupCredentialsRoute
   '/api/public/hooks/backup-orders': typeof ApiPublicHooksBackupOrdersRoute
   '/api/public/hooks/boro-fetch-fixtures': typeof ApiPublicHooksBoroFetchFixturesRoute
@@ -1147,6 +1155,7 @@ export interface FileRoutesByTo {
   '/sports-guides/new': typeof AuthenticatedApprovedSportsGuidesNewRoute
   '/u/$username': typeof AuthenticatedApprovedUUsernameRoute
   '/api/public/a/$token': typeof ApiPublicATokenRoute
+  '/api/public/ads/ad-banner-track': typeof ApiPublicAdsAdBannerTrackRoute
   '/api/public/hooks/backup-credentials': typeof ApiPublicHooksBackupCredentialsRoute
   '/api/public/hooks/backup-orders': typeof ApiPublicHooksBackupOrdersRoute
   '/api/public/hooks/boro-fetch-fixtures': typeof ApiPublicHooksBoroFetchFixturesRoute
@@ -1284,6 +1293,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/sports-guides/new': typeof AuthenticatedApprovedSportsGuidesNewRoute
   '/_authenticated/_approved/u/$username': typeof AuthenticatedApprovedUUsernameRoute
   '/api/public/a/$token': typeof ApiPublicATokenRoute
+  '/api/public/ads/ad-banner-track': typeof ApiPublicAdsAdBannerTrackRoute
   '/api/public/hooks/backup-credentials': typeof ApiPublicHooksBackupCredentialsRoute
   '/api/public/hooks/backup-orders': typeof ApiPublicHooksBackupOrdersRoute
   '/api/public/hooks/boro-fetch-fixtures': typeof ApiPublicHooksBoroFetchFixturesRoute
@@ -1420,6 +1430,7 @@ export interface FileRouteTypes {
     | '/sports-guides/new'
     | '/u/$username'
     | '/api/public/a/$token'
+    | '/api/public/ads/ad-banner-track'
     | '/api/public/hooks/backup-credentials'
     | '/api/public/hooks/backup-orders'
     | '/api/public/hooks/boro-fetch-fixtures'
@@ -1551,6 +1562,7 @@ export interface FileRouteTypes {
     | '/sports-guides/new'
     | '/u/$username'
     | '/api/public/a/$token'
+    | '/api/public/ads/ad-banner-track'
     | '/api/public/hooks/backup-credentials'
     | '/api/public/hooks/backup-orders'
     | '/api/public/hooks/boro-fetch-fixtures'
@@ -1687,6 +1699,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/sports-guides/new'
     | '/_authenticated/_approved/u/$username'
     | '/api/public/a/$token'
+    | '/api/public/ads/ad-banner-track'
     | '/api/public/hooks/backup-credentials'
     | '/api/public/hooks/backup-orders'
     | '/api/public/hooks/boro-fetch-fixtures'
@@ -1752,6 +1765,7 @@ export interface RootRouteChildren {
   ApiPublicTweetImageRoute: typeof ApiPublicTweetImageRoute
   LovableEmailEventsRoute: typeof LovableEmailEventsRoute
   ApiPublicATokenRoute: typeof ApiPublicATokenRoute
+  ApiPublicAdsAdBannerTrackRoute: typeof ApiPublicAdsAdBannerTrackRoute
   ApiPublicHooksBackupCredentialsRoute: typeof ApiPublicHooksBackupCredentialsRoute
   ApiPublicHooksBackupOrdersRoute: typeof ApiPublicHooksBackupOrdersRoute
   ApiPublicHooksBoroFetchFixturesRoute: typeof ApiPublicHooksBoroFetchFixturesRoute
@@ -2479,6 +2493,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicATokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/ads/ad-banner-track': {
+      id: '/api/public/ads/ad-banner-track'
+      path: '/api/public/ads/ad-banner-track'
+      fullPath: '/api/public/ads/ad-banner-track'
+      preLoaderRoute: typeof ApiPublicAdsAdBannerTrackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/backup-credentials': {
       id: '/api/public/hooks/backup-credentials'
       path: '/api/public/hooks/backup-credentials'
@@ -3055,6 +3076,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicTweetImageRoute: ApiPublicTweetImageRoute,
   LovableEmailEventsRoute: LovableEmailEventsRoute,
   ApiPublicATokenRoute: ApiPublicATokenRoute,
+  ApiPublicAdsAdBannerTrackRoute: ApiPublicAdsAdBannerTrackRoute,
   ApiPublicHooksBackupCredentialsRoute: ApiPublicHooksBackupCredentialsRoute,
   ApiPublicHooksBackupOrdersRoute: ApiPublicHooksBackupOrdersRoute,
   ApiPublicHooksBoroFetchFixturesRoute: ApiPublicHooksBoroFetchFixturesRoute,
