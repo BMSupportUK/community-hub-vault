@@ -5,7 +5,10 @@ import {
   Coffee, UtensilsCrossed, Ticket, ShoppingBag, Eye, EyeOff,
   Lock, KeyRound, Copy, Check, Globe, Calendar, StickyNote, AtSign,
   Trophy, Gift, X as XIcon, UserPlus, Plus, Trash2, Smartphone,
+  MapPin,
 } from "lucide-react";
+import { useOnlineUsers, useUserPage } from "@/hooks/use-online-users";
+import { formatLastSeen } from "@/lib/relative-time";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { useCurrency } from "@/hooks/use-currency";
@@ -51,6 +54,7 @@ interface ProfileRow {
   created_at: string;
   is_private: boolean | null;
   timezone: string | null;
+  last_seen_at: string | null;
   equipped_nameplate_id: string | null;
   custom_status: string | null;
 }
@@ -646,7 +650,8 @@ function ProfilePage() {
                    ) : (
                      <p className="text-sm text-purple-200/60 italic">No bio yet.</p>
                    )}
-                </div>
+                   <ProfileActivity userId={profile.id} lastSeenAt={profile.last_seen_at} />
+                 </div>
               </section>
               <aside className="space-y-4">
                 <div className="rounded-2xl bg-gradient-to-br from-fuchsia-600/30 via-purple-600/30 to-violet-700/30 border border-purple-500/40 p-5 shadow-[0_0_60px_-15px_rgba(168,85,247,0.5)] text-white">
@@ -817,6 +822,25 @@ function ProfilePage() {
           onChange={() => load()}
         />
       )}
+      </div>
+    </div>
+  );
+}
+
+/** Stacked activity lines under the bio: last active, then the page being viewed. */
+function ProfileActivity({ userId, lastSeenAt }: { userId: string; lastSeenAt: string | null }) {
+  const onlineUsers = useOnlineUsers();
+  const isOnline = onlineUsers.has(userId);
+  const page = useUserPage(userId);
+  return (
+    <div className="mt-3 space-y-1 text-xs text-purple-200/80">
+      <div className="flex items-center gap-1.5">
+        <ClockIcon className="size-3.5 shrink-0 text-amber-100/80" />
+        <span>Last active {isOnline ? "now" : formatLastSeen(lastSeenAt)}</span>
+      </div>
+      <div className="flex items-center gap-1.5">
+        <MapPin className="size-3.5 shrink-0 text-amber-100/80" />
+        <span>{isOnline ? page ?? "Online now" : `Last seen ${formatLastSeen(lastSeenAt)}`}</span>
       </div>
     </div>
   );
