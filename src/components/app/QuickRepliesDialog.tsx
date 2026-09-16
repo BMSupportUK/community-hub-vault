@@ -74,11 +74,14 @@ export function useQuickReplies(scope: QuickReplyScope = "talk") {
  */
 export function QuickRepliesPill({
   onInsert,
+  onSend,
   className,
   scope = "talk",
   label = "Shortcuts",
 }: {
   onInsert: (text: string) => void;
+  /** When set, confirming a shortcut posts it straight into the room instead of the message bar. */
+  onSend?: (text: string) => void;
   className?: string;
   scope?: QuickReplyScope;
   label?: string;
@@ -165,7 +168,9 @@ export function QuickRepliesPill({
               <Keyboard className="size-5 text-amber-400" /> Staff quick replies
             </DialogTitle>
             <DialogDescription>
-              Pick a shortcut to drop the sentence into the message bar, or type{" "}
+              {onSend
+                ? "Pick a shortcut, confirm it, and it posts straight into the chatroom. Or type "
+                : "Pick a shortcut to drop the sentence into the message bar, or type "}
               <code className="rounded bg-surface-2 px-1">/code</code> in chat and press space to
               expand it.
             </DialogDescription>
@@ -244,7 +249,9 @@ export function QuickRepliesPill({
                 <span className="rounded bg-amber-500/20 px-1.5 py-0.5 font-mono text-[11px] font-bold text-amber-300">
                   /{confirmUse.code}
                 </span>
-                <span className="text-xs font-semibold">Use this shortcut?</span>
+                <span className="text-xs font-semibold">
+                  {onSend ? "Send this message to the chatroom?" : "Use this shortcut?"}
+                </span>
               </div>
               <p className="max-h-28 overflow-y-auto whitespace-pre-wrap text-xs text-foreground/90">
                 {confirmUse.body}
@@ -257,12 +264,13 @@ export function QuickRepliesPill({
                   type="button"
                   size="sm"
                   onClick={() => {
-                    onInsert(confirmUse.body);
+                    if (onSend) onSend(confirmUse.body);
+                    else onInsert(confirmUse.body);
                     setConfirmUse(null);
                     setOpen(false);
                   }}
                 >
-                  Use shortcut
+                  {onSend ? "Yes, send it now" : "Use shortcut"}
                 </Button>
               </div>
             </div>
