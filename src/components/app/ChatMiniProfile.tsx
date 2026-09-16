@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { User } from "lucide-react";
+import { User, MapPin } from "lucide-react";
+import { useUserPage } from "@/hooks/use-online-users";
+
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Nameplate } from "@/components/app/Nameplate";
@@ -90,7 +92,9 @@ export function ChatMiniProfile({
 
 function MiniProfileCard({ profile }: { profile: ChatMiniProfileData }) {
   const { name, username, avatarUrl, hasAvatar, role, isOnline, lastSeenAt, customStatus, isSelf } = profile;
+  const currentPage = useUserPage(profile.userId);
   const initial = (name || "?").slice(0, 1).toUpperCase();
+
 
   return (
     <>
