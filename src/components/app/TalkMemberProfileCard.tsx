@@ -11,6 +11,8 @@ import { formatRoleLabel } from "@/lib/role-label";
 import { sortRolesByPriority } from "@/lib/role-rank";
 import { formatLastSeen } from "@/lib/relative-time";
 import { useUserPage } from "@/hooks/use-online-users";
+import { useLiveLastSeen } from "@/hooks/use-live-last-seen";
+
 
 import { cn } from "@/lib/utils";
 
