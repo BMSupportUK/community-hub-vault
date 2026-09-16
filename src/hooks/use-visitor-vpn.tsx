@@ -94,6 +94,11 @@ function persistCache() {
   }
 }
 
+/** Force a fresh VPN lookup (used by the "Re-check" control on sign-up). */
+export function refreshVisitorVpn(): Promise<VisitorVpnStatus> {
+  return refresh(true);
+}
+
 export function useVisitorVpn() {
   const status = useVisitorVpnStatus();
   return status === "protected";
