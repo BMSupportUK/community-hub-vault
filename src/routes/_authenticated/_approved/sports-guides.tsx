@@ -1427,7 +1427,7 @@ function SportsGuidesPage() {
                     <DialogHeader>
                       <DialogTitle className="text-purple-100">{activeCategory.name} sub-categories</DialogTitle>
                     </DialogHeader>
-                    <div className="grid max-h-[60vh] grid-cols-2 gap-2 overflow-y-auto sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+                    <div className="grid max-h-[60vh] grid-cols-1 gap-2 overflow-y-auto sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
                       {(subsByCat[activeCategory.id] ?? []).map((sub) => {
                         const count = blogs.filter((b) => b.category_id === activeCategory.id && b.subcategory === sub.name).length;
                         const active = subFilter === sub.name;
@@ -1437,10 +1437,10 @@ function SportsGuidesPage() {
                             key={sub.id}
                             type="button"
                             onClick={() => { setSubFilter(sub.name); setOpenSubcategoryPopupFor(null); scrollCardsToTop(); }}
-                            className={`flex items-center justify-between gap-2 rounded-lg border px-3 py-2.5 text-left text-xs font-bold uppercase transition-colors ${active ? "border-fuchsia-300 bg-fuchsia-600 text-white" : "border-purple-400/40 bg-purple-900/60 text-purple-100 hover:bg-purple-800/80"}`}
+                            className={`flex min-h-16 min-w-0 flex-col items-stretch justify-between gap-2 rounded-lg border px-3 py-2.5 text-left text-xs font-bold uppercase transition-colors ${active ? "border-fuchsia-300 bg-fuchsia-600 text-white" : "border-purple-400/40 bg-purple-900/60 text-purple-100 hover:bg-purple-800/80"}`}
                           >
-                            <span className="min-w-0 truncate leading-tight">{sub.name}</span>
-                            <span className="flex shrink-0 items-center gap-1.5">
+                            <span className="w-full whitespace-normal break-words leading-snug">{sub.name}</span>
+                            <span className="flex items-center gap-1.5 self-end">
                               {unread > 0 && <span className="size-2 rounded-full bg-fuchsia-200" />}
                               <span>{count}</span>
                             </span>
