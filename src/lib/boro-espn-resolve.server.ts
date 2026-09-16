@@ -52,7 +52,9 @@ export async function resolveEspnEvent(input: {
   // A recognised competition has one authoritative feed. Avoid waiting for
   // four unrelated competitions when its scoreboard is temporarily blocked.
   const slugs = preferredSlug ? [preferredSlug] : orderedSlugs;
-  for (const slug of slugs) {
+  const requests: Array<{ slug: string; dates: string }> = [];
+  for (const slug of slugs) for (const dates of dateParams) requests.push({ slug, dates });
+  for (const { slug, dates } of requests) {
     const json = (await espnJson(
       `https://site.api.espn.com/apis/site/v2/sports/soccer/${slug}/scoreboard?dates=${dates}&limit=400`,
     )) as { events?: any[] } | null;
