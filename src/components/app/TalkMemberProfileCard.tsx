@@ -147,7 +147,7 @@ export function TalkMemberProfileCard({
               Last active
             </h4>
             <p className="mt-0.5 text-sm">
-              {online ? "Active now" : formatLastSeen(row.last_seen_at)}
+              {online ? "Active now" : formatLastSeen(lastSeenAt)}
             </p>
           </div>
 
