@@ -218,6 +218,7 @@ function MemberRow({
   const top = highestRole(roles) ?? "member";
   const avatar = resolveAvatarUrl(row.user_id, row.avatar_url, roleFlashMap);
   const roleLabels = roles.map((role) => formatRoleLabel(role)).join(" · ");
+  const currentPage = useUserPage(row.user_id);
 
   return (
     <Popover>
@@ -251,6 +252,16 @@ function MemberRow({
             <span className="block truncate text-[10px] leading-tight text-muted-foreground">
               {roleLabels || "Member"}
             </span>
+            <span className="flex items-center gap-1 truncate text-[10px] leading-tight text-muted-foreground">
+              <Clock className="size-2.5 shrink-0" />
+              Last active {online ? "now" : formatLastSeen(row.last_seen_at)}
+            </span>
+            {currentPage && (
+              <span className="flex items-center gap-1 truncate text-[10px] leading-tight text-muted-foreground">
+                <MapPin className="size-2.5 shrink-0" />
+                {currentPage}
+              </span>
+            )}
           </span>
         </button>
       </PopoverTrigger>
