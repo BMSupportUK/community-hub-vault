@@ -235,7 +235,7 @@ function PlayerStatsDialog({
   const seasonRows = useMemo(
     () =>
       scoringStatKeys(pos).map((k) => {
-        const total = gameweekMatches.reduce((s, m) => s + (m.stats[k] ?? 0), 0);
+        const total = gameweekMatches.reduce((s, m) => s + scoredStatCount(k, m.stats), 0);
         const rate = scaleRate(statPointsPer(k, pos));
         return {
           key: k,
@@ -248,6 +248,7 @@ function PlayerStatsDialog({
       }),
     [gameweekMatches, pos, rateMul],
   );
+
   /**
    * "Our points" lines. Minutes on their own score nothing — what we actually
    * award is the appearance: 2 pts for a starter who features, 1 pt for a sub
