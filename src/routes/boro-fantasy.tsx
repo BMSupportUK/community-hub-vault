@@ -307,11 +307,13 @@ function PlayerStatsDialog({
       gameweekMatches.map((match) => {
         const minutes = match.stats.minutes ?? 0;
         const appearance = minutes > 0 ? (asSub ? 1 : 2) : 0;
+        // Star bonus is a scoring line of its own, counted once here.
+        const starPoints = (match.stats.bonus ?? 0) * rateMul;
         const ourStatPoints = scoringStatKeys(pos)
           .filter((key) => isOurScoringStat(key) && key !== "minutes")
           .reduce((sum, key) => {
             const rate = scaleRate(statPointsPer(key, pos));
-            return sum + (rate == null ? 0 : (match.stats[key] ?? 0) * rate);
+            return sum + (rate == null ? 0 : scoredStatCount(key, match.stats) * rate);
           }, 0);
         const cleanSheetRate =
           minutes > 0 && (match.stats.goals_conceded ?? 0) === 0
@@ -325,18 +327,21 @@ function PlayerStatsDialog({
           .filter((key) => !isOurScoringStat(key))
           .reduce((sum, key) => {
             const rate = scaleRate(statPointsPer(key, pos));
-            return sum + (rate == null ? 0 : (match.stats[key] ?? 0) * rate);
+            return sum + (rate == null ? 0 : scoredStatCount(key, match.stats) * rate);
           }, 0);
         return {
           ...match,
           ourPoints:
-            Math.round((appearance + ourStatPoints + cleanSheetRate + (match.stats.bonus ?? 0)) * 100) / 100,
-          fotmobPoints: Math.round(fotmobPoints * 100) / 100,
+            minutes > 0
+              ? Math.round((appearance + ourStatPoints + cleanSheetRate + starPoints) * 100) / 100
+              : 0,
+          fotmobPoints: minutes > 0 ? Math.round(fotmobPoints * 100) / 100 : 0,
         };
       }),
     [gameweekMatches, pos, asSub, rateMul],
   );
   const weeklyPointRows = pointRows;
+
   const ourSeasonPoints = pointRows.reduce((sum, match) => sum + match.ourPoints, 0);
   const fotmobSeasonPoints = pointRows.reduce((sum, match) => sum + match.fotmobPoints, 0);
 
