@@ -11,9 +11,10 @@ export function AdBlockGate({ children }: { children: React.ReactNode }) {
   const { hasAny } = useAuth();
   const status = useAdBlockStatus();
   const [rechecking, setRechecking] = useState(false);
-  const exempt = hasAny(["admin", "management", "staff", "moderator"]);
+  const [bypassed, setBypassed] = useState(false);
+  const isStaff = hasAny(["admin", "management", "staff", "moderator"]);
 
-  if (exempt || status !== "blocked") return <>{children}</>;
+  if (status !== "blocked" || bypassed) return <>{children}</>;
 
   const recheck = async () => {
     setRechecking(true);
@@ -48,6 +49,17 @@ export function AdBlockGate({ children }: { children: React.ReactNode }) {
           </>
         )}
       </button>
+      {isStaff && (
+        <div>
+          <button
+            type="button"
+            onClick={() => setBypassed(true)}
+            className="text-xs text-muted-foreground underline hover:text-foreground"
+          >
+            Continue anyway (staff)
+          </button>
+        </div>
+      )}
     </div>
   );
 }
