@@ -43,8 +43,13 @@ function DeferUntilIdle({ children }: { children: ReactNode }) {
 
 function OnlinePresence() {
   useOnlineUsers();
+  const path = useRouterState({ select: (r) => r.location.pathname });
+  useEffect(() => {
+    setPresencePage(pageLabelForPath(path));
+  }, [path]);
   return null;
 }
+
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async ({ location }) => {
