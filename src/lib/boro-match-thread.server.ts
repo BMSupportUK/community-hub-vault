@@ -560,32 +560,47 @@ async function createMatchTopic(
 
 /**
  * Every match day thread carries a match prediction poll (home win / draw /
- * away win) that closes at kick-off. Added once per thread; a poll that already
- * exists (including a hand-made one) is left alone.
+ * away win) that closes 10 minutes before kick-off. Added once per thread; a
+ * poll that already exists has its closing time corrected to kick-off minus
+ * 10 minutes so older threads line up too.
  */
+const POLL_CLOSE_BEFORE_KO_MS = 10 * 60 * 1000;
+
 async function ensureMatchPoll(
   supabaseAdmin: any,
   topicId: string,
   authorId: string,
   fx: FixtureLite,
 ): Promise<boolean> {
-  const { data: existing } = await supabaseAdmin
-    .from("forum_polls")
-    .select("id")
-    .eq("topic_id", topicId)
-    .maybeSingle();
-  if (existing?.id) return false;
-
   const home = titleTeam(fx.home_team);
   const away = titleTeam(fx.away_team);
   const ko = Date.parse(fx.kickoff_at);
+  const closesAt = Number.isFinite(ko)
+    ? new Date(ko - POLL_CLOSE_BEFORE_KO_MS).toISOString()
+    : null;
+
+  const { data: existing } = await supabaseAdmin
+    .from("forum_polls")
+    .select("id, closes_at")
+    .eq("topic_id", topicId)
+    .maybeSingle();
+  if (existing?.id) {
+    if (closesAt && existing.closes_at !== closesAt) {
+      await supabaseAdmin
+        .from("forum_polls")
+        .update({ closes_at: closesAt })
+        .eq("id", existing.id);
+    }
+    return false;
+  }
+
   const { data: poll, error } = await supabaseAdmin
     .from("forum_polls")
     .insert({
       topic_id: topicId,
       question: `${home} v ${away} Match Prediction`,
       allow_multiple: false,
-      closes_at: Number.isFinite(ko) ? new Date(ko).toISOString() : null,
+      closes_at: closesAt,
       created_by: authorId,
     })
     .select("id")
