@@ -174,11 +174,26 @@ function pingLastSeen(uid: string) {
 async function track(uid: string) {
   if (!channel) return;
   try {
-    await channel.track({ user_id: uid, online_at: new Date().toISOString() });
+    await channel.track({
+      user_id: uid,
+      online_at: new Date().toISOString(),
+      ...(myPage ? { page: myPage } : {}),
+    });
   } catch {
     /* ignore — heartbeat/retry will try again */
   }
 }
+
+/**
+ * Publish the page this user is currently viewing so member/staff cards can
+ * show it. Re-tracks only when the page name actually changes.
+ */
+export function setPresencePage(label: string | null) {
+  if (myPage === label) return;
+  myPage = label;
+  if (channelUid && channel?.state === "joined") void track(channelUid);
+}
+
 
 function scheduleRetry(uid: string) {
   if (retryTimer) return;
