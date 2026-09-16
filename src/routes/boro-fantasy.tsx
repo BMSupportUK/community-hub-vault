@@ -284,7 +284,7 @@ function PlayerStatsDialog({
         points: Math.round(starPoints * 100) / 100,
       },
     ];
-  }, [seasonRows, gameweekMatches, asSub]);
+  }, [seasonRows, gameweekMatches, asSub, rateMul]);
   const fotmobRows = useMemo(
     () => seasonRows.filter((r) => !isOurScoringStat(r.key)),
     [seasonRows],
