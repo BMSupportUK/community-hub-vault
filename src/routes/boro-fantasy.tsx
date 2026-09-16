@@ -35,7 +35,7 @@ import {
   playerPositions, playerPositionLabel, xiFitsFormation, resolveSlotPosition,
   fantasyCompetitionGroup, FANTASY_GROUP_LABEL,
   FANTASY_BENCH_SIZE, FANTASY_SQUAD_SIZE, FANTASY_LOCK_MINUTES,
-  PLAYER_STAT_META, statPointsPer, isOurScoringStat,
+  PLAYER_STAT_META, statPointsPer, isOurScoringStat, scoredStatCount,
   type FantasyPosition, type FormationKey, type FantasyCompetitionGroup,
 } from "@/lib/fantasy-rules";
 import {
@@ -235,7 +235,7 @@ function PlayerStatsDialog({
   const seasonRows = useMemo(
     () =>
       scoringStatKeys(pos).map((k) => {
-        const total = gameweekMatches.reduce((s, m) => s + (m.stats[k] ?? 0), 0);
+        const total = gameweekMatches.reduce((s, m) => s + scoredStatCount(k, m.stats), 0);
         const rate = scaleRate(statPointsPer(k, pos));
         return {
           key: k,
@@ -248,6 +248,7 @@ function PlayerStatsDialog({
       }),
     [gameweekMatches, pos, rateMul],
   );
+
   /**
    * "Our points" lines. Minutes on their own score nothing — what we actually
    * award is the appearance: 2 pts for a starter who features, 1 pt for a sub
@@ -257,9 +258,11 @@ function PlayerStatsDialog({
     const rows = seasonRows.filter((r) => isOurScoringStat(r.key) && r.key !== "minutes");
     const apps = gameweekMatches.filter((m) => (m.stats.minutes ?? 0) > 0).length;
     const appRate = asSub ? 1 : 2;
-    // Star player awards (3 / 2 / 1 pts) are stored as a bonus on the match line.
-    const starPoints = gameweekMatches.reduce((s, m) => s + (m.stats.bonus ?? 0), 0);
+    // Star player awards (3 / 2 / 1 pts) are stored as a bonus on the match
+    // line. Subs earn half of it, like every other scoring line.
+    const starPoints = gameweekMatches.reduce((s, m) => s + (m.stats.bonus ?? 0) * rateMul, 0);
     const starWins = gameweekMatches.filter((m) => (m.stats.bonus ?? 0) > 0).length;
+
     return [
       {
         key: "app",
@@ -281,7 +284,7 @@ function PlayerStatsDialog({
         points: Math.round(starPoints * 100) / 100,
       },
     ];
-  }, [seasonRows, gameweekMatches, asSub]);
+  }, [seasonRows, gameweekMatches, asSub, rateMul]);
   const fotmobRows = useMemo(
     () => seasonRows.filter((r) => !isOurScoringStat(r.key)),
     [seasonRows],
@@ -304,11 +307,13 @@ function PlayerStatsDialog({
       gameweekMatches.map((match) => {
         const minutes = match.stats.minutes ?? 0;
         const appearance = minutes > 0 ? (asSub ? 1 : 2) : 0;
+        // Star bonus is a scoring line of its own, counted once here.
+        const starPoints = (match.stats.bonus ?? 0) * rateMul;
         const ourStatPoints = scoringStatKeys(pos)
           .filter((key) => isOurScoringStat(key) && key !== "minutes")
           .reduce((sum, key) => {
             const rate = scaleRate(statPointsPer(key, pos));
-            return sum + (rate == null ? 0 : (match.stats[key] ?? 0) * rate);
+            return sum + (rate == null ? 0 : scoredStatCount(key, match.stats) * rate);
           }, 0);
         const cleanSheetRate =
           minutes > 0 && (match.stats.goals_conceded ?? 0) === 0
@@ -322,18 +327,21 @@ function PlayerStatsDialog({
           .filter((key) => !isOurScoringStat(key))
           .reduce((sum, key) => {
             const rate = scaleRate(statPointsPer(key, pos));
-            return sum + (rate == null ? 0 : (match.stats[key] ?? 0) * rate);
+            return sum + (rate == null ? 0 : scoredStatCount(key, match.stats) * rate);
           }, 0);
         return {
           ...match,
           ourPoints:
-            Math.round((appearance + ourStatPoints + cleanSheetRate + (match.stats.bonus ?? 0)) * 100) / 100,
-          fotmobPoints: Math.round(fotmobPoints * 100) / 100,
+            minutes > 0
+              ? Math.round((appearance + ourStatPoints + cleanSheetRate + starPoints) * 100) / 100
+              : 0,
+          fotmobPoints: minutes > 0 ? Math.round(fotmobPoints * 100) / 100 : 0,
         };
       }),
     [gameweekMatches, pos, asSub, rateMul],
   );
   const weeklyPointRows = pointRows;
+
   const ourSeasonPoints = pointRows.reduce((sum, match) => sum + match.ourPoints, 0);
   const fotmobSeasonPoints = pointRows.reduce((sum, match) => sum + match.fotmobPoints, 0);
 

@@ -376,15 +376,17 @@ export const PLAYER_STAT_META: Record<
   yellows: { abbr: "YC", means: "Yellow cards", points: -1 },
   reds: { abbr: "RC", means: "Red cards", points: -3 },
   own_goals: { abbr: "OG", means: "Own goals", points: -2 },
-  bonus: { abbr: "STAR", means: "Star player bonus (3 / 2 / 1 pts for the top three ratings)", points: 1 },
+  // The star award is shown on its own STAR line (3 / 2 / 1 pts), so it must
+  // never carry a per-unit rate — otherwise it gets counted twice.
+  bonus: { abbr: "STAR", means: "Star player bonus (3 / 2 / 1 pts for the top three ratings)" },
 };
 
 /** Points a starter earns per unit of a stat, for the player profile table. */
 /**
  * Our own scoring lines — the things the fantasy game itself awards
- * (appearance, goals, assists, cards, own goals, missed pens). Clean sheets
- * are derived separately. Everything else that scores comes off the FotMob
- * match centre.
+ * (appearance, goals, assists, cards, own goals, missed pens, star award).
+ * Clean sheets are derived separately. Everything else that scores comes off
+ * the FotMob match centre.
  */
 export const OUR_SCORING_STAT_KEYS = [
   "minutes",
@@ -395,7 +397,9 @@ export const OUR_SCORING_STAT_KEYS = [
   "yellows",
   "reds",
   "own_goals",
+  "bonus",
 ] as const;
+
 
 export function isOurScoringStat(key: string): boolean {
   return (OUR_SCORING_STAT_KEYS as readonly string[]).includes(key);
@@ -407,6 +411,19 @@ export function statPointsPer(key: string, position: FantasyPosition): number | 
   if (typeof meta.points === "number") return meta.points;
   return meta.points[position] ?? null;
 }
+
+/**
+ * How many of a stat actually score, matching the scoring engine exactly:
+ * a shot on goal that went in is already paid as a goal, and a keeper's shots
+ * on goal against falls back to shots faced when the feed only gives that.
+ */
+export function scoredStatCount(key: string, stats: Record<string, number | null | undefined>): number {
+  const n = (k: string) => Number(stats[k] ?? 0) || 0;
+  if (key === "shots_on_target") return Math.max(n("shots_on_target") - n("goals"), 0);
+  if (key === "shots_on_goal_against") return Math.max(n("shots_on_goal_against"), n("shots_faced"));
+  return n(key);
+}
+
 
 // The live stat legend is built from PLAYER_STAT_META, which mirrors the
 // scoring rules table, so there is no separate hand-written stat key here.
