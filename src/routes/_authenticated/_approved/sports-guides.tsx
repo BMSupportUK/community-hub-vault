@@ -1264,7 +1264,11 @@ function SportsGuidesPage() {
                               type="button"
                               onClick={() => {
                                 if (!parent) return;
-                                skipDefaultSubOnce.current = true;
+                                // Only arm the skip flag when the category is
+                                // actually changing, otherwise the default-sub
+                                // effect never runs and the flag would swallow
+                                // the next real category switch.
+                                if (parent.id !== activeCat) skipDefaultSubOnce.current = true;
                                 setActiveCat(parent.id);
                                 setSubFilter(sub.name);
                                 setSubDialogFor(null);
