@@ -8,6 +8,8 @@ import {
   MapPin,
 } from "lucide-react";
 import { useOnlineUsers, useUserPage } from "@/hooks/use-online-users";
+import { useLiveLastSeen } from "@/hooks/use-live-last-seen";
+
 import { formatLastSeen } from "@/lib/relative-time";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
