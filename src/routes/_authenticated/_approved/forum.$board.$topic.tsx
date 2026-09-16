@@ -1251,5 +1251,6 @@ function TopicPage() {
         </DialogContent>
       </Dialog>
     </div>
+    </AdBlockGate>
   );
 }
