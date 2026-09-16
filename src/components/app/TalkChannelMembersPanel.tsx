@@ -219,6 +219,8 @@ function MemberRow({
   const avatar = resolveAvatarUrl(row.user_id, row.avatar_url, roleFlashMap);
   const roleLabels = roles.map((role) => formatRoleLabel(role)).join(" · ");
   const currentPage = useUserPage(row.user_id);
+  const { lastSeenAt } = useLiveLastSeen(row.user_id, row.last_seen_at);
+
 
   return (
     <Popover>
