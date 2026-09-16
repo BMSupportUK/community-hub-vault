@@ -33,14 +33,29 @@ function SignupPage() {
   const [busy, setBusy] = useState(false);
   const [captchaToken, setCaptchaToken] = useState("");
   const [intent, setIntent] = useState<"bm-support" | "fan-zone" | "">("");
-  const isVpn = useVisitorVpn();
+  const vpnStatus = useVisitorVpnStatus();
   const [vpnDialogOpen, setVpnDialogOpen] = useState(false);
+  const [rechecking, setRechecking] = useState(false);
+  const [serverBlock, setServerBlock] = useState<"vpn" | "unverified" | null>(null);
 
+  const checking = vpnStatus === "checking" || rechecking;
+  const blocked = vpnStatus === "protected" || vpnStatus === "unavailable" || !!serverBlock;
+  const blockedForVpn = vpnStatus === "protected" || serverBlock === "vpn";
   const needsReferral = intent === "bm-support" && !inviteCode.trim();
+
+  const recheck = async () => {
+    setRechecking(true);
+    setServerBlock(null);
+    try {
+      await refreshVisitorVpn();
+    } finally {
+      setRechecking(false);
+    }
+  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isVpn) {
+    if (blocked || checking) {
       setVpnDialogOpen(true);
       return;
     }
@@ -50,6 +65,21 @@ function SignupPage() {
     }
     if (!captchaToken) return toast.error("Please complete the captcha.");
     setBusy(true);
+    // Server-side gate on the real request IP — must pass before any account exists.
+    try {
+      const gate = await assertSignupAllowed();
+      if (!gate.allowed) {
+        setBusy(false);
+        setServerBlock(gate.reason === "vpn" ? "vpn" : "unverified");
+        setVpnDialogOpen(true);
+        return;
+      }
+    } catch {
+      setBusy(false);
+      setServerBlock("unverified");
+      setVpnDialogOpen(true);
+      return;
+    }
     const verify = await verifyTurnstile({ data: { token: captchaToken } });
     if (!verify.success) {
       setBusy(false);
