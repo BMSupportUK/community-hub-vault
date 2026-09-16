@@ -247,7 +247,9 @@ export function QuickRepliesPill({
                 <span className="rounded bg-amber-500/20 px-1.5 py-0.5 font-mono text-[11px] font-bold text-amber-300">
                   /{confirmUse.code}
                 </span>
-                <span className="text-xs font-semibold">Use this shortcut?</span>
+                <span className="text-xs font-semibold">
+                  {onSend ? "Send this message to the chatroom?" : "Use this shortcut?"}
+                </span>
               </div>
               <p className="max-h-28 overflow-y-auto whitespace-pre-wrap text-xs text-foreground/90">
                 {confirmUse.body}
