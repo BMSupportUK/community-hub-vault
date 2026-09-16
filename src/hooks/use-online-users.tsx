@@ -36,6 +36,11 @@ const missingSince = new Map<string, number>();
 let lingerTimer: ReturnType<typeof setTimeout> | null = null;
 let teardownTimer: ReturnType<typeof setTimeout> | null = null;
 
+/** Friendly name of the page this client is currently on, shared via presence. */
+let myPage: string | null = null;
+let pageState: Map<string, string> = new Map();
+const pageListeners = new Set<() => void>();
+
 
 function getSnapshot() {
   return currentState;
@@ -44,6 +49,54 @@ function getSnapshot() {
 function subscribeStore(cb: () => void) {
   listeners.add(cb);
   return () => listeners.delete(cb);
+}
+
+function getPageSnapshot() {
+  return pageState;
+}
+
+function subscribePageStore(cb: () => void) {
+  pageListeners.add(cb);
+  return () => pageListeners.delete(cb);
+}
+
+function notifyPages() {
+  for (const fn of Array.from(pageListeners)) {
+    try {
+      fn();
+    } catch {
+      /* never let one subscriber break the rest */
+    }
+  }
+}
+
+/** Rebuild the "who is viewing what" map from the presence payloads. */
+function collectPages() {
+  if (!channel) return;
+  const next = new Map<string, string>();
+  try {
+    const state = channel.presenceState() as Record<string, Array<{ user_id?: string; page?: string }>>;
+    for (const [key, entries] of Object.entries(state)) {
+      for (const entry of entries) {
+        const id = entry?.user_id ?? key;
+        if (id && entry?.page) next.set(id, entry.page);
+      }
+    }
+  } catch {
+    return;
+  }
+  if (next.size === pageState.size) {
+    let same = true;
+    for (const [id, page] of next) {
+      if (pageState.get(id) !== page) {
+        same = false;
+        break;
+      }
+    }
+    if (same) return;
+  }
+  pageState = next;
+  notifyPages();
 }
 
 function notify() {
@@ -55,6 +108,7 @@ function notify() {
     }
   }
 }
+
 
 function setState(next: Set<string>) {
   // Skip no-op updates so we don't thrash renders.
