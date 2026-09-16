@@ -1,10 +1,7 @@
 // Server-only automatic fantasy scoring. Pulls Middlesbrough player stats from
-// ESPN's public match summary once a fixture finishes, writes them into
+// FotMob's match feed once a fixture finishes, writes them into
 // fantasy_player_stats and re-scores the gameweek — no admin involvement.
 
-import { espnJson } from "@/lib/espn-fetch";
-
-const ESPN_LEAGUES = ["eng.2", "eng.fa", "eng.league_cup", "eng.trophy"];
 
 const BORO_RE = /\bmiddles(?:brough|borough)\b|\bboro\b/i;
 
