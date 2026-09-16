@@ -342,8 +342,38 @@ function PlayerStatsDialog({
   );
   const weeklyPointRows = pointRows;
 
+  /**
+   * The final score exactly as the scoring engine awards it: every line counted
+   * at the full rate, then for a sub the stat points are halved and the whole
+   * match total rounded to the nearest point.
+   */
+  const finalMatchPoints = useMemo(
+    () =>
+      gameweekMatches.map((match) => {
+        const minutes = match.stats.minutes ?? 0;
+        if (minutes <= 0) return 0;
+        let stat = scoringStatKeys(pos)
+          .filter((key) => key !== "minutes")
+          .reduce((sum, key) => {
+            const rate = statPointsPer(key, pos);
+            return sum + (rate == null ? 0 : scoredStatCount(key, match.stats) * rate);
+          }, 0);
+        stat += match.stats.bonus ?? 0;
+        if ((match.stats.goals_conceded ?? 0) === 0) {
+          const csFull = pos === "gk" || pos === "def" ? 4 : pos === "mid" ? 1 : 0;
+          const csShort = pos === "gk" || pos === "def" ? 2 : pos === "mid" ? 0.5 : 0;
+          stat += minutes >= 60 ? csFull : csShort;
+        }
+        const appearance = asSub ? 1 : 2;
+        return Math.round(appearance + (asSub ? stat / 2 : stat));
+      }),
+    [gameweekMatches, pos, asSub],
+  );
+  const finalTotalPoints = finalMatchPoints.reduce((s, p) => s + p, 0);
+
   const ourSeasonPoints = pointRows.reduce((sum, match) => sum + match.ourPoints, 0);
   const fotmobSeasonPoints = pointRows.reduce((sum, match) => sum + match.fotmobPoints, 0);
+
 
   return (
     <Dialog open={!!playerId} onOpenChange={(o) => { if (!o) onClose(); }}>
