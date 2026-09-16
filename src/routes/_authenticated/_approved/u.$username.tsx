@@ -828,10 +828,11 @@ function ProfilePage() {
 }
 
 /** Stacked activity lines under the bio: last active, then the page being viewed. */
-function ProfileActivity({ userId, lastSeenAt }: { userId: string; lastSeenAt: string | null }) {
+function ProfileActivity({ userId, lastSeenAt: seedLastSeen }: { userId: string; lastSeenAt: string | null }) {
   const onlineUsers = useOnlineUsers();
   const isOnline = onlineUsers.has(userId);
   const page = useUserPage(userId);
+  const { lastSeenAt } = useLiveLastSeen(userId, seedLastSeen);
   return (
     <div className="mt-3 space-y-1 text-xs text-purple-200/80">
       <div className="flex items-center gap-1.5">
@@ -845,6 +846,7 @@ function ProfileActivity({ userId, lastSeenAt }: { userId: string; lastSeenAt: s
     </div>
   );
 }
+
 
 function PersonalThemePanel() {
   const current = useAppTheme();
