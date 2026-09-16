@@ -7,39 +7,25 @@ import { ForumPostFeed } from "@/components/app/ForumPostFeed";
 
 export type FanFeedTab = "activity" | "new";
 
-/** Tab strip that sits inside the profile header. */
-export function FanZoneProfileFeedTabs({
-  value,
-  onChange,
-}: {
-  value: FanFeedTab;
-  onChange: (tab: FanFeedTab) => void;
-}) {
-  const tabs: { key: FanFeedTab; label: string; Icon: typeof Activity }[] = [
-    { key: "activity", label: "Latest Activity", Icon: Activity },
-    { key: "new", label: "New Content", Icon: Sparkles },
-  ];
+/** Header buttons that open each feed on its own page. */
+export function FanZoneProfileFeedTabs({ userId }: { userId: string }) {
+  const cls =
+    "flex min-h-12 items-center justify-center gap-1.5 px-3 py-3 text-sm font-semibold text-white/85 transition-colors hover:bg-[#E11B22] hover:text-white";
 
   return (
     <div className="grid w-full grid-cols-2 border-t border-white/20 bg-black/25">
-      {tabs.map(({ key, label, Icon }) => (
-        <button
-          key={key}
-          type="button"
-          onClick={() => onChange(key)}
-          aria-pressed={value === key}
-          className={`flex min-h-12 items-center justify-center gap-1.5 px-3 py-3 text-sm font-semibold transition-colors ${
-            key === "activity" ? "border-r border-white/20" : ""
-          } ${
-            value === key
-              ? "bg-[#E11B22] text-white"
-              : "text-white/75 hover:bg-white/10 hover:text-white"
-          }`}
-        >
-          <Icon className="size-4" />
-          {label}
-        </button>
-      ))}
+      <Link
+        to="/fanzone/posts/$userId"
+        params={{ userId }}
+        className={`${cls} border-r border-white/20`}
+      >
+        <Activity className="size-4" />
+        Latest Activity
+      </Link>
+      <Link to="/fanzone/new-posts" className={cls}>
+        <Sparkles className="size-4" />
+        New Content
+      </Link>
     </div>
   );
 }
