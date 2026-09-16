@@ -10,7 +10,11 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import bgAsset from "@/assets/boro-fan-zone-profile-bg.jpg.asset.json";
 import { FanStatsBox, FanReputationBox } from "@/components/app/FanZoneStatsBoxes";
-import { FanZoneProfileFeeds } from "@/components/app/FanZoneProfileFeeds";
+import {
+  FanZoneProfileFeedTabs,
+  FanZoneProfileFeedPanel,
+  type FanFeedTab,
+} from "@/components/app/FanZoneProfileFeeds";
 
 import { FanZoneMuteDialog } from "@/components/app/FanZoneMuteDialog";
 import { FanZoneBanDialog } from "@/components/app/FanZoneBanDialog";
@@ -70,6 +74,7 @@ function FanProfilePage() {
   const [fanPrivate, setFanPrivate] = useState(false);
   const [staffRole, setStaffRole] = useState<FanStaffRole | null>(null);
   const [lastSeen, setLastSeen] = useState<string | null>(null);
+  const [feedTab, setFeedTab] = useState<FanFeedTab>("activity");
 
   useEffect(() => {
     void (async () => {
