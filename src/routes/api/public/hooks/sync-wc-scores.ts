@@ -17,13 +17,13 @@ async function syncScores() {
   //    the matchups. We match each ESPN fixture to a DB row by kickoff +
   //    one resolved side, and fill in the still-placeholder side.
   // -------------------------------------------------------------------
-  const { fetchEspnWcAllFixtures, isWcPlaceholderName } = await import(
+  const { fetchWcAllFixtures, isWcPlaceholderName } = await import(
     "@/lib/wc-live-scores.server"
   );
   const { findWcLiveFixture } = await import("@/lib/wc-live-scores.server");
-  const allEspn = await fetchEspnWcAllFixtures();
+  const allFotmob = await fetchWcAllFixtures();
   const resolved: string[] = [];
-  for (const ev of allEspn) {
+  for (const ev of allFotmob) {
     // Candidates: knockout rows within 6h of this kickoff where at least
     // one side already matches the ESPN event and the other side is a
     // placeholder. ESPN sometimes nudges kickoff by a few minutes when
@@ -60,11 +60,11 @@ async function syncScores() {
   let updated = 0;
   const skipped: string[] = [];
   const toScore = new Set<string>();
-  const { fetchEspnWcLive } = await import("@/lib/wc-live-scores.server");
-  const espnLive = await fetchEspnWcLive();
+  const { fetchWcLive } = await import("@/lib/wc-live-scores.server");
+  const fotmobLive = await fetchWcLive();
 
   const espnApplied: string[] = [];
-  for (const ev of espnLive) {
+  for (const ev of fotmobLive) {
     const fx = findWcLiveFixture(fixtures as WcLiveFixtureRow[], ev.home, ev.away, ev.kickoffMs);
     if (!fx) {
       skipped.push(`espn: ${ev.home} v ${ev.away}`);
@@ -134,7 +134,7 @@ async function syncScores() {
     scored.push(id);
   }
 
-  return { ok: true, updated, skipped, espn: espnApplied, scored, resolved, total: espnLive.length };
+  return { ok: true, updated, skipped, espn: espnApplied, scored, resolved, total: fotmobLive.length };
 }
 
 export const Route = createFileRoute("/api/public/hooks/sync-wc-scores")({
