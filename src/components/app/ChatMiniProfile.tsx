@@ -142,10 +142,21 @@ function MiniProfileCard({ profile }: { profile: ChatMiniProfileData }) {
               </span>
             )}
           </div>
+          <div className="mt-2 text-xs text-muted-foreground">
+            <span className="font-semibold text-foreground/80">Last active: </span>
+            {isOnline ? "Active now" : formatLastSeen(lastSeenAt)}
+          </div>
+          {currentPage && (
+            <div className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+              <MapPin className="size-3.5 shrink-0" />
+              <span className="truncate">{currentPage}</span>
+            </div>
+          )}
           <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
             <PresenceMiniDot userId={profile.userId} isOnline={isOnline} />
             <span>{isOnline ? "Online now" : `Active ${formatLastSeen(lastSeenAt)}`}</span>
           </div>
+
           {username && (
             <div className="mt-3">
               <Link
