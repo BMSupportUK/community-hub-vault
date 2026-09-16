@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useTalkChannelPresentUsersInChannel } from "@/hooks/use-talk-channel-presence";
 import { useUserPage } from "@/hooks/use-online-users";
+import { useLiveLastSeen } from "@/hooks/use-live-last-seen";
+
 import { formatLastSeen } from "@/lib/relative-time";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { TalkMemberProfileCard } from "@/components/app/TalkMemberProfileCard";
