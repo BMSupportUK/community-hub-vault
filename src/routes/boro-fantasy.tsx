@@ -258,9 +258,11 @@ function PlayerStatsDialog({
     const rows = seasonRows.filter((r) => isOurScoringStat(r.key) && r.key !== "minutes");
     const apps = gameweekMatches.filter((m) => (m.stats.minutes ?? 0) > 0).length;
     const appRate = asSub ? 1 : 2;
-    // Star player awards (3 / 2 / 1 pts) are stored as a bonus on the match line.
-    const starPoints = gameweekMatches.reduce((s, m) => s + (m.stats.bonus ?? 0), 0);
+    // Star player awards (3 / 2 / 1 pts) are stored as a bonus on the match
+    // line. Subs earn half of it, like every other scoring line.
+    const starPoints = gameweekMatches.reduce((s, m) => s + (m.stats.bonus ?? 0) * rateMul, 0);
     const starWins = gameweekMatches.filter((m) => (m.stats.bonus ?? 0) > 0).length;
+
     return [
       {
         key: "app",
