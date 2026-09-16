@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import type { WcLiveFixtureRow } from "@/lib/wc-live-scores.server";
 
 async function syncScores() {
-  // ESPN's public scoreboard is the single source of truth — it's keyless and
+  // FotMob is the single source of truth — it's keyless and
   // updates in real time. football-data's free tier was unreliable (often
   // hours behind and occasionally dropped scores), so it's no longer used.
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -14,7 +14,7 @@ async function syncScores() {
   // -------------------------------------------------------------------
   // 1) Resolve placeholder team names ("3rd Group A/B/C/D/F",
   //    "Winner Match 99", etc.) on knockout fixtures once FIFA confirms
-  //    the matchups. We match each ESPN fixture to a DB row by kickoff +
+  //    the matchups. We match each FotMob fixture to a DB row by kickoff +
   //    one resolved side, and fill in the still-placeholder side.
   // -------------------------------------------------------------------
   const { fetchWcAllFixtures, isWcPlaceholderName } = await import(
@@ -25,8 +25,8 @@ async function syncScores() {
   const resolved: string[] = [];
   for (const ev of allFotmob) {
     // Candidates: knockout rows within 6h of this kickoff where at least
-    // one side already matches the ESPN event and the other side is a
-    // placeholder. ESPN sometimes nudges kickoff by a few minutes when
+    // one side already matches the FotMob match and the other side is a
+    // placeholder. Providers sometimes nudge kickoff by a few minutes when
     // venues are confirmed, so use a tight window.
     const candidates = (fixtures as WcLiveFixtureRow[]).filter((f) => {
       const diff = Math.abs(new Date(f.kickoff_at).getTime() - ev.kickoffMs);
@@ -63,11 +63,11 @@ async function syncScores() {
   const { fetchWcLive } = await import("@/lib/wc-live-scores.server");
   const fotmobLive = await fetchWcLive();
 
-  const espnApplied: string[] = [];
+  const fotmobApplied: string[] = [];
   for (const ev of fotmobLive) {
     const fx = findWcLiveFixture(fixtures as WcLiveFixtureRow[], ev.home, ev.away, ev.kickoffMs);
     if (!fx) {
-      skipped.push(`espn: ${ev.home} v ${ev.away}`);
+      skipped.push(`fotmob: ${ev.home} v ${ev.away}`);
       continue;
     }
     const unchanged =
@@ -102,11 +102,11 @@ async function syncScores() {
       })
       .eq("id", fx.id);
     if (upErr) {
-      skipped.push(`espn: ${ev.home} v ${ev.away}: ${upErr.message}`);
+      skipped.push(`fotmob: ${ev.home} v ${ev.away}: ${upErr.message}`);
       continue;
     }
     updated += 1;
-    espnApplied.push(`${ev.home} ${ev.homeScore}-${ev.awayScore} ${ev.away} (${ev.status}${ev.minute != null ? ` ${ev.minute}${ev.minuteAdded ? `+${ev.minuteAdded}` : ""}'` : ""})`);
+    fotmobApplied.push(`${ev.home} ${ev.homeScore}-${ev.awayScore} ${ev.away} (${ev.status}${ev.minute != null ? ` ${ev.minute}${ev.minuteAdded ? `+${ev.minuteAdded}` : ""}'` : ""})`);
     if (
       ev.status === "FINISHED" &&
       ev.homeScore !== null &&
@@ -134,7 +134,7 @@ async function syncScores() {
     scored.push(id);
   }
 
-  return { ok: true, updated, skipped, espn: espnApplied, scored, resolved, total: fotmobLive.length };
+  return { ok: true, updated, skipped, fotmob: fotmobApplied, scored, resolved, total: fotmobLive.length };
 }
 
 export const Route = createFileRoute("/api/public/hooks/sync-wc-scores")({
