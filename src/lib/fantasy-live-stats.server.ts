@@ -28,9 +28,9 @@ type EspnRosterPlayer = {
   subbedIn?: boolean | { didSub?: boolean };
   subbedOut?: boolean | { didSub?: boolean };
   athlete?: EspnAthlete;
-  // NOTE: ESPN's position field is deliberately NOT read. Positions always come
-  // from our own fantasy_players.position so scoring can't be skewed by ESPN
-  // classifying a player differently. Only raw stats are taken from ESPN.
+  // NOTE: the feed's position field is deliberately NOT read. Positions always
+  // come from our own fantasy_players.position so scoring can't be skewed by a
+  // provider classifying a player differently. Only raw stats are taken.
   stats?: Array<{ name?: string; abbreviation?: string; value?: number; displayValue?: string }>;
 };
 type EspnSummary = {
@@ -94,7 +94,7 @@ function statVal(p: EspnRosterPlayer, name: string): number {
 }
 
 /**
- * Read a stat by the abbreviation ESPN prints in the match report player stats
+ * Read a stat by the abbreviation the match report player stats table prints
  * table (A, TCH, AC.PASS, BCC, DUELW …). Falls back to the raw display value
  * so percentage columns like PASS% still come through.
  */
@@ -117,7 +117,7 @@ function eventMinute(ev: EspnEvent): number {
 }
 
 /**
- * Match an ESPN display name onto one of our fantasy players: exact normalised
+ * Match a feed display name onto one of our fantasy players: exact normalised
  * name, then surname, then "first initial + surname" disambiguation.
  */
 export function makePlayerMatcher(players: Array<{ id: string; name: string; position: string }>) {
@@ -322,14 +322,14 @@ export async function fetchFantasyStatsForFixture(
       yellows: statVal(rp, "yellowCards"),
       reds: statVal(rp, "redCards"),
       own_goals: statVal(rp, "ownGoals"),
-      // Straight from ESPN's match report "player stats" table.
+      // Straight from the match report "player stats" table.
       shots: statVal(rp, "totalShots"),
       shots_on_target: statVal(rp, "shotsOnTarget"),
       shots_faced: statVal(rp, "shotsFaced"),
       fouls_committed: statVal(rp, "foulsCommitted"),
       fouls_suffered: statVal(rp, "foulsSuffered"),
       offsides: statVal(rp, "offsides"),
-      // Extended stats, read by the abbreviation ESPN prints in the report.
+      // Extended stats, read by the abbreviation printed in the report.
       accurate_long_balls: abbrVal(rp, "AC.LONG"),
       accurate_passes: abbrVal(rp, "AC.PASS"),
       passes: abbrVal(rp, "PASS"),
