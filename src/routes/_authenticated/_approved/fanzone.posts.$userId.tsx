@@ -1,0 +1,75 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { ArrowLeft } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { Button } from "@/components/ui/button";
+import bgAsset from "@/assets/boro-fan-zone-profile-bg.jpg.asset.json";
+import { fetchForumFeed, FORUM_FEED_PAGE_SIZE, type ForumFeedPost } from "@/lib/forum-feed";
+import { ForumPostFeed, ForumFeedPager } from "@/components/app/ForumPostFeed";
+
+export const Route = createFileRoute("/_authenticated/_approved/fanzone/posts/$userId")({
+  head: () => ({
+    meta: [
+      { title: "Member posts | Boro Fan Zone" },
+      { name: "description", content: "Every forum topic and reply posted by this Boro Fan Zone member, 20 per page." },
+      { property: "og:title", content: "Member posts | Boro Fan Zone" },
+      { property: "og:description", content: "Browse all forum posts from a Boro Fan Zone member." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
+  component: MemberPostsPage,
+});
+
+function MemberPostsPage() {
+  const { userId } = Route.useParams();
+  const [page, setPage] = useState(1);
+  const [posts, setPosts] = useState<ForumFeedPost[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [alias, setAlias] = useState<string>("this member");
+
+  useEffect(() => {
+    void (async () => {
+      const { data } = await supabase.rpc("fan_zone_aliases", { _ids: [userId] });
+      const row = ((data as any[]) ?? [])[0];
+      if (row?.fan_alias) setAlias(row.fan_alias);
+    })();
+  }, [userId]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    void (async () => {
+      const res = await fetchForumFeed({ authorId: userId, page });
+      if (cancelled) return;
+      setPosts(res.posts);
+      setTotal(res.total);
+      setLoading(false);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [userId, page]);
+
+  return (
+    <div
+      className="boro-theme relative min-h-[calc(100vh-4rem)] w-full overflow-hidden bg-cover bg-center bg-no-repeat"
+      style={{ backgroundImage: `url(${bgAsset.url})` }}
+    >
+      <div className="absolute inset-0 bg-black/80" aria-hidden />
+      <div className="relative z-10 mx-auto w-full max-w-3xl px-4 py-8 sm:px-6">
+        <Button asChild variant="ghost" size="sm" className="-ml-2 mb-3 text-white hover:bg-white/10 hover:text-white">
+          <Link to="/fanzone/u/$userId" params={{ userId }}>
+            <ArrowLeft className="size-4 mr-1" />Back to profile
+          </Link>
+        </Button>
+        <h1 className="font-display text-2xl font-black text-white sm:text-3xl">Posts by {alias}</h1>
+        <p className="mb-5 mt-1 text-sm text-white/70">{total} post{total === 1 ? "" : "s"} · 20 per page</p>
+        <ForumPostFeed posts={posts} loading={loading} empty="This member hasn't posted yet." />
+        <ForumFeedPager page={page} total={total} pageSize={FORUM_FEED_PAGE_SIZE} onPage={setPage} />
+      </div>
+    </div>
+  );
+}
