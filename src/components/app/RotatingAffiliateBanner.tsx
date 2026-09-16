@@ -1,6 +1,5 @@
 import { memo, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { reportAdImageBlocked } from "@/hooks/use-adblock";
 import advertiseLeaderboard from "@/assets/advertise-leaderboard.png";
 
 type Banner = {
@@ -138,11 +137,6 @@ function RotatingAffiliateBannerComponent({
           decoding="async"
           fetchPriority="low"
           sizes="(max-width: 768px) 200px, 256px"
-          onError={() => {
-            // A sponsor image that won't load on an otherwise-loaded page
-            // is a strong ad-blocker signal.
-            if (current.id !== "__fallback__") reportAdImageBlocked();
-          }}
         />
       </a>
     </div>
