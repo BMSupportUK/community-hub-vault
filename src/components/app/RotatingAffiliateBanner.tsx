@@ -1,5 +1,6 @@
 import { memo, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { reportAdImageBlocked } from "@/hooks/use-adblock";
 import advertiseLeaderboard from "@/assets/advertise-leaderboard.png";
 
 type Banner = {
