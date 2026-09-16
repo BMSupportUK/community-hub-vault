@@ -698,6 +698,10 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
   }
   if (!topic) return { ...base, fixture: label, topic: null, skipped: ["no match day thread for this fixture yet"] };
 
+  // Match prediction poll — added to every match day thread that hasn't got one.
+  await ensureMatchPoll(supabaseAdmin, topic.id, authorId ?? topic.author_id, fx).catch(() => false);
+
+
 
   // FotMob is the only live-data source. It is reachable from the server, so no
   // browser relay is needed and the thread can refresh in real time. Live data
