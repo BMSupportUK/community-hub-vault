@@ -97,19 +97,16 @@ export function findWcLiveFixture(
   )[0];
 }
 
-function parseLiveClock(displayClock?: string, rawClock?: number, state?: string) {
-  if (state !== "in") return { minute: null, minuteAdded: null };
-  const [baseStr, addedStr] = (displayClock ?? "").split("+");
+/** FotMob writes the live clock as "62'" or "45+2'". */
+function parseLiveClock(label: string | null | undefined) {
+  const text = String(label ?? "").replace(/[^0-9+]/g, "");
+  if (!text) return { minute: null as number | null, minuteAdded: null as number | null };
+  const [baseStr, addedStr] = text.split("+");
   const base = parseInt(baseStr ?? "", 10);
-  const addedParsed = parseInt(addedStr ?? "", 10);
-  const minute = Number.isFinite(base)
-    ? base
-    : typeof rawClock === "number" && rawClock > 0
-      ? Math.max(1, Math.ceil(rawClock / 60))
-      : null;
+  const added = parseInt(addedStr ?? "", 10);
   return {
-    minute,
-    minuteAdded: Number.isFinite(addedParsed) ? addedParsed : null,
+    minute: Number.isFinite(base) ? base : null,
+    minuteAdded: Number.isFinite(added) ? added : null,
   };
 }
 
