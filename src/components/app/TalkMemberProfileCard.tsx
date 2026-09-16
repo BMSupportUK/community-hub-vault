@@ -136,12 +136,29 @@ export function TalkMemberProfileCard({
 
           <div>
             <h4 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+              Last active
+            </h4>
+            <p className="mt-0.5 text-sm">
+              {online ? "Active now" : formatLastSeen(row.last_seen_at)}
+            </p>
+          </div>
+
+          <div>
+            <h4 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+              Currently viewing
+            </h4>
+            <p className="mt-0.5 text-sm">{currentPage ?? "Not in the app"}</p>
+          </div>
+
+          <div>
+            <h4 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
               Status
             </h4>
             <p className="mt-0.5 text-sm">
               {online ? "Online now" : `Last seen ${formatLastSeen(row.last_seen_at)}`}
             </p>
           </div>
+
 
           <MemberAppLogins userId={row.user_id} selfId={selfId} />
         </div>
