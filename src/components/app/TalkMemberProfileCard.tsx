@@ -51,6 +51,8 @@ export function TalkMemberProfileCard({
 }) {
   const roleFlashMap = useRoleFlashMap();
   const currentPage = useUserPage(row.user_id);
+  const { lastSeenAt } = useLiveLastSeen(row.user_id, row.last_seen_at);
+
   const name = row.display_name || row.username || "Member";
   // Boro Fan Zone roles are hidden in Talk Channels; all other roles show.
   const roles = sortRolesByPriority(
