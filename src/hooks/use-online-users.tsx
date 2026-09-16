@@ -1,7 +1,9 @@
-import { useEffect, useSyncExternalStore } from "react";
+import { useEffect, useMemo, useSyncExternalStore } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useTalkChannelPresentUsers } from "@/hooks/use-talk-channel-presence";
 import type { RealtimeChannel } from "@supabase/supabase-js";
+
 
 /**
  * Shared presence store for "who is online".
@@ -371,6 +373,10 @@ export function useUserPage(userId: string | null | undefined): string | null {
 export function useOnlineUsers(): Set<string> {
   const { user } = useAuth();
   const online = useSyncExternalStore(subscribeStore, getSnapshot, getSnapshot);
+  // Anyone sitting in a Talk Channel is online, full stop. The global presence
+  // socket can lag or blip on a device that is parked in the chatroom, which
+  // made people in chat show as offline everywhere else.
+  const inChat = useTalkChannelPresentUsers();
 
   useEffect(() => {
     if (!user?.id) return;
@@ -392,6 +398,19 @@ export function useOnlineUsers(): Set<string> {
     };
   }, [user?.id]);
 
-
-  return online;
+  return useMemo(() => {
+    if (inChat.size === 0) return online;
+    let extra = false;
+    for (const id of inChat) {
+      if (!online.has(id)) {
+        extra = true;
+        break;
+      }
+    }
+    if (!extra) return online;
+    const merged = new Set(online);
+    for (const id of inChat) merged.add(id);
+    return merged;
+  }, [online, inChat]);
 }
+
