@@ -163,7 +163,7 @@ export function TalkMemberProfileCard({
               Status
             </h4>
             <p className="mt-0.5 text-sm">
-              {online ? "Online now" : `Last seen ${formatLastSeen(row.last_seen_at)}`}
+              {online ? "Online now" : `Last seen ${formatLastSeen(lastSeenAt)}`}
             </p>
           </div>
 
