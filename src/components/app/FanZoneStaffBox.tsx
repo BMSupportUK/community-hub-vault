@@ -6,6 +6,7 @@ import { useFanProfileTo } from "@/components/app/fan-profile-link";
 import { useFanZoneOnlineUsers } from "@/hooks/use-fan-zone-online";
 import { useLastSeenMap } from "@/hooks/use-last-seen-map";
 import { formatLastSeen } from "@/lib/relative-time";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type StaffMember = {
   user_id: string;
@@ -73,6 +74,64 @@ export function FanZoneStaffBox() {
 
   if (!members || members.length === 0) return null;
 
+  const owners = members.filter((member) => member.role === "admin");
+  const moderators = members.filter((member) => member.role === "boro_fan_zone_moderator");
+  const defaultTab = owners.length > 0 ? "owners" : "moderators";
+
+  const renderStaffCards = (staff: StaffMember[]) => (
+    <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+      {staff.map((m) => {
+        const name = m.fan_alias;
+        const isAdmin = m.role === "admin";
+        const initials = name.slice(0, 2).toUpperCase();
+        const seen = lastSeen[m.user_id] ?? null;
+        // Only Fan Zone presence counts here: staff working in BM Support are
+        // shown as away. `tick` keeps the "last active" text fresh every 30s.
+        void tick;
+        const isOnline = online.has(m.user_id);
+        const seenText = formatLastSeen(seen);
+        return (
+          <li key={`${m.user_id}-${m.role}`} className="min-w-0">
+            <Link
+              to={profileTo}
+              params={{ userId: m.user_id }}
+              aria-label={`View ${name}'s profile`}
+              className="flex h-full min-w-0 items-start gap-2.5 rounded-lg border border-border/60 bg-background/10 px-2.5 py-2.5 transition-colors hover:border-primary/60 hover:bg-background/20"
+            >
+              <div className="relative shrink-0">
+                {m.fan_avatar_url ? (
+                  <img
+                    src={m.fan_avatar_url}
+                    alt=""
+                    className="size-9 rounded-full object-cover ring-2 ring-primary/40"
+                  />
+                ) : (
+                  <div className="grid size-9 place-items-center rounded-full bg-primary text-xs font-bold text-primary-foreground ring-2 ring-primary/40">
+                    {initials}
+                  </div>
+                )}
+                {isAdmin && (
+                  <span className="absolute -bottom-0.5 -right-0.5 grid size-4 place-items-center rounded-full bg-accent ring-2 ring-background">
+                    <Star className="size-2.5 text-accent-foreground" fill="currentColor" />
+                  </span>
+                )}
+              </div>
+              <div className="min-w-0 flex-1 overflow-hidden">
+                <div className="break-words text-sm font-semibold leading-tight">{name}</div>
+                <div className={`mt-0.5 break-words text-[10px] font-bold uppercase ${isAdmin ? "text-accent" : "text-primary"}`}>
+                  {isAdmin ? "Owner" : "Fan Zone Mod"}
+                </div>
+                <div className={`mt-1 break-words text-[10px] font-medium leading-snug ${isOnline ? "text-success" : "text-muted-foreground"}`}>
+                  {isOnline ? "Online" : `Away · last active ${seenText}`}
+                </div>
+              </div>
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
+  );
+
   return (
     <aside className="boro-solid-panel rounded-xl overflow-hidden">
       <div className="px-4 py-3 bg-gradient-to-r from-[#E11B22] to-[#8B0F14] text-white">
@@ -80,59 +139,18 @@ export function FanZoneStaffBox() {
           <Shield className="size-4" /> Fan Zone Staff
         </h3>
       </div>
-      <ul className="p-2 space-y-1.5">
-        {members.map((m) => {
-          const name = m.fan_alias;
-          const isAdmin = m.role === "admin";
-          const initials = name.slice(0, 2).toUpperCase();
-          const seen = lastSeen[m.user_id] ?? null;
-          // Only Fan Zone presence counts here: staff working in BM Support are
-          // shown as away. `tick` keeps the "last active" text fresh every 30s.
-          void tick;
-          const isOnline = online.has(m.user_id);
-          const seenText = formatLastSeen(seen);
-          const inner = (
-            <div className="flex items-center gap-2.5 rounded-lg border border-white/[0.12] bg-white/[0.08] px-2.5 py-2 hover:border-[#E11B22]/60 hover:bg-white/[0.12] transition-colors">
-              <div className="relative shrink-0">
-                {m.fan_avatar_url ? (
-                  <img
-                    src={m.fan_avatar_url}
-                    alt=""
-                    className="size-9 rounded-full object-cover ring-2 ring-[#E11B22]/40"
-                  />
-                ) : (
-                  <div className="size-9 rounded-full bg-gradient-to-br from-[#E11B22] to-[#8B0F14] grid place-items-center text-white text-xs font-bold ring-2 ring-[#E11B22]/40">
-                    {initials}
-                  </div>
-                )}
-                {isAdmin && (
-                  <span className="absolute -bottom-0.5 -right-0.5 size-4 rounded-full bg-amber-400 grid place-items-center ring-2 ring-surface-1">
-                    <Star className="size-2.5 text-amber-900" fill="currentColor" />
-                  </span>
-                )}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="text-sm font-semibold truncate leading-tight">{name}</div>
-                <div className={`text-[10px] uppercase tracking-wider font-bold ${isAdmin ? "text-amber-400" : "text-[#E11B22]"}`}>
-                  {isAdmin ? "Owner" : "Fan Zone Mod"}
-                </div>
-                <div
-                  className={`mt-0.5 text-[10px] font-medium ${isOnline ? "text-emerald-400" : "text-white/55"}`}
-                >
-                  {isOnline ? "Online" : `Away · last active ${seenText}`}
-                </div>
-              </div>
-            </div>
-          );
-          return (
-            <li key={`${m.user_id}-${m.role}`}>
-              <Link to={profileTo} params={{ userId: m.user_id }} aria-label={`View ${name}'s profile`}>
-                {inner}
-              </Link>
-            </li>
-          );
-        })}
-      </ul>
+      <Tabs defaultValue={defaultTab} className="p-2">
+        <TabsList className="grid h-auto w-full grid-cols-2">
+          <TabsTrigger value="owners">Owners ({owners.length})</TabsTrigger>
+          <TabsTrigger value="moderators">Moderators ({moderators.length})</TabsTrigger>
+        </TabsList>
+        <TabsContent value="owners" className="mt-2">
+          {owners.length > 0 ? renderStaffCards(owners) : <p className="px-2 py-4 text-center text-xs text-muted-foreground">No owners listed</p>}
+        </TabsContent>
+        <TabsContent value="moderators" className="mt-2">
+          {moderators.length > 0 ? renderStaffCards(moderators) : <p className="px-2 py-4 text-center text-xs text-muted-foreground">No moderators listed</p>}
+        </TabsContent>
+      </Tabs>
     </aside>
   );
 }

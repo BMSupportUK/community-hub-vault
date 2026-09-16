@@ -16,6 +16,7 @@ import { FanZoneShell } from "./fan-zone";
 import { useAuth } from "@/hooks/use-auth";
 import { useFanZoneMute } from "@/hooks/use-fan-zone-mute";
 import { FanZoneMutedScreen } from "@/components/app/FanZoneMutedScreen";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/fan-zone/")({
   loader: () => listPublicBoards(),
@@ -195,18 +196,22 @@ function GuestForumStats() {
         <h3 className="font-display font-bold text-sm tracking-wide">Forum statistics</h3>
       </div>
       <dl className="divide-y divide-border/60">
-        <StatRow label="Threads" value={stats ? fmt(stats.threads) : "…"} />
-        <StatRow label="Replies" value={stats ? fmt(stats.replies) : "…"} />
-        <StatRow label="Members" value={stats ? fmt(stats.members) : "…"} />
-        <div className="flex items-center justify-between gap-3 px-4 py-2.5 text-sm">
-          <dt className="text-muted-foreground">Latest member:</dt>
-          <dd className="font-semibold text-[#E11B22] truncate">
+        <div className="grid grid-cols-2 divide-x divide-border/60">
+          <StatRow label="Threads" value={stats ? fmt(stats.threads) : "…"} />
+          <StatRow label="Replies" value={stats ? fmt(stats.replies) : "…"} />
+        </div>
+        <div className="grid grid-cols-2 divide-x divide-border/60">
+          <StatRow label="Members" value={stats ? fmt(stats.members) : "…"} />
+          <div className="min-w-0 px-4 py-2.5 text-sm">
+            <dt className="text-muted-foreground">Latest member:</dt>
+            <dd className="mt-0.5 break-words font-semibold text-primary">
             {stats?.latest_member && stats.latest_member_id ? (
               <Link to="/fan-zone/u/$userId" params={{ userId: stats.latest_member_id }} className="hover:underline">
                 {stats.latest_member}
               </Link>
             ) : "—"}
-          </dd>
+            </dd>
+          </div>
         </div>
       </dl>
     </div>
@@ -215,9 +220,9 @@ function GuestForumStats() {
 
 function StatRow({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between gap-3 px-4 py-2.5 text-sm">
+    <div className="min-w-0 px-4 py-2.5 text-sm">
       <dt className="text-muted-foreground">{label}:</dt>
-      <dd className="font-semibold tabular-nums">{value}</dd>
+      <dd className="mt-0.5 font-semibold tabular-nums">{value}</dd>
     </div>
   );
 }
@@ -228,6 +233,39 @@ function GuestStaffBox() {
     void getPublicFanZoneStaff().then(setMembers).catch(() => setMembers([]));
   }, []);
   if (!members || members.length === 0) return null;
+  const owners = members.filter((member) => member.role === "admin");
+  const moderators = members.filter((member) => member.role !== "admin");
+  const defaultTab = owners.length > 0 ? "owners" : "moderators";
+  const renderMembers = (staff: PublicStaffMember[]) => (
+    <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+      {staff.map((m) => (
+        <li key={`${m.user_id}-${m.role}`} className="min-w-0">
+          <Link
+            to="/fan-zone/u/$userId"
+            params={{ userId: m.user_id }}
+            className="flex h-full min-w-0 items-start gap-2.5 rounded-lg border border-border/60 bg-background/10 px-2.5 py-2.5 transition-colors hover:border-primary/60 hover:bg-background/20"
+          >
+            <div className="relative shrink-0">
+              {m.fan_avatar_url ? (
+                <img src={m.fan_avatar_url} alt="" className="size-8 rounded-full object-cover ring-1 ring-border" loading="lazy" />
+              ) : (
+                <div className="grid size-8 place-items-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground">
+                  {m.fan_alias.slice(0, 2).toUpperCase()}
+                </div>
+              )}
+            </div>
+            <div className="min-w-0 flex-1 overflow-hidden">
+              <div className="break-words text-sm font-semibold leading-tight">{m.fan_alias}</div>
+              <div className={`mt-1 flex items-start gap-1 break-words text-[10px] font-bold uppercase ${m.role === "admin" ? "text-accent" : "text-primary"}`}>
+                {m.role === "admin" ? <Star className="mt-0.5 size-3 shrink-0" /> : <Shield className="mt-0.5 size-3 shrink-0" />}
+                <span>{m.role === "admin" ? "Owner" : "Moderator"}</span>
+              </div>
+            </div>
+          </Link>
+        </li>
+      ))}
+    </ul>
+  );
   return (
     <aside className="boro-solid-panel rounded-xl overflow-hidden">
       <div className="px-4 py-3 bg-gradient-to-r from-[#E11B22] to-[#8B0F14] text-white">
@@ -235,39 +273,18 @@ function GuestStaffBox() {
           <Shield className="size-4" /> Fan Zone Staff
         </h3>
       </div>
-      <ul className="p-2 space-y-1.5">
-        {members.map((m) => (
-          <li key={`${m.user_id}-${m.role}`}>
-            <Link
-              to="/fan-zone/u/$userId"
-              params={{ userId: m.user_id }}
-              className="flex items-center gap-2.5 rounded-lg border border-white/[0.12] bg-white/[0.08] px-2.5 py-2 hover:border-[#E11B22]/60 hover:bg-white/[0.12] transition-colors"
-            >
-              <div className="relative shrink-0">
-                {m.fan_avatar_url ? (
-                  <img
-                    src={m.fan_avatar_url}
-                    alt=""
-                    className="size-8 rounded-full object-cover ring-1 ring-white/20"
-                    loading="lazy"
-                  />
-                ) : (
-                  <div className="size-8 rounded-full bg-gradient-to-br from-[#E11B22] to-[#8B0F14] grid place-items-center text-[11px] font-bold text-white">
-                    {m.fan_alias.slice(0, 2).toUpperCase()}
-                  </div>
-                )}
-              </div>
-              <div className="min-w-0">
-                <div className="text-sm font-semibold truncate">{m.fan_alias}</div>
-                <div className="text-[10px] uppercase tracking-wider font-bold text-[#F4B400] flex items-center gap-1">
-                  {m.role === "admin" ? <Star className="size-3" /> : <Shield className="size-3" />}
-                  {m.role === "admin" ? "Owner" : "Moderator"}
-                </div>
-              </div>
-            </Link>
-          </li>
-        ))}
-      </ul>
+      <Tabs defaultValue={defaultTab} className="p-2">
+        <TabsList className="grid h-auto w-full grid-cols-2">
+          <TabsTrigger value="owners">Owners ({owners.length})</TabsTrigger>
+          <TabsTrigger value="moderators">Moderators ({moderators.length})</TabsTrigger>
+        </TabsList>
+        <TabsContent value="owners" className="mt-2">
+          {owners.length > 0 ? renderMembers(owners) : <p className="px-2 py-4 text-center text-xs text-muted-foreground">No owners listed</p>}
+        </TabsContent>
+        <TabsContent value="moderators" className="mt-2">
+          {moderators.length > 0 ? renderMembers(moderators) : <p className="px-2 py-4 text-center text-xs text-muted-foreground">No moderators listed</p>}
+        </TabsContent>
+      </Tabs>
     </aside>
   );
 }

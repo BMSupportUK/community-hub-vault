@@ -607,12 +607,15 @@ function ForumStats({ boards }: { boards: Board[] }) {
         <h3 className="font-display font-bold text-sm tracking-wide">Forum statistics</h3>
       </div>
       <dl className="divide-y divide-border/60">
-        <Row label="Threads" value={fmt(threads)} />
-        <Row label="Replies" value={fmt(messages)} />
-        <Row label="Members" value={memberCount === null ? "…" : fmt(memberCount)} />
-        <div className="flex items-center justify-between gap-3 px-4 py-2.5 text-sm">
-          <dt className="text-muted-foreground">Latest member:</dt>
-          <dd className="font-semibold text-[#E11B22] truncate">
+        <div className="grid grid-cols-2 divide-x divide-border/60">
+          <Row label="Threads" value={fmt(threads)} />
+          <Row label="Replies" value={fmt(messages)} />
+        </div>
+        <div className="grid grid-cols-2 divide-x divide-border/60">
+          <Row label="Members" value={memberCount === null ? "…" : fmt(memberCount)} />
+          <div className="min-w-0 px-4 py-2.5 text-sm">
+            <dt className="text-muted-foreground">Latest member:</dt>
+            <dd className="mt-0.5 break-words font-semibold text-primary">
             {latest ? (
               <Link to="/fanzone/u/$userId" params={{ userId: latest.userId }} className="hover:underline">
                 {latest.name}
@@ -620,7 +623,8 @@ function ForumStats({ boards }: { boards: Board[] }) {
             ) : (
               "—"
             )}
-          </dd>
+            </dd>
+          </div>
         </div>
       </dl>
     </div>
@@ -629,9 +633,9 @@ function ForumStats({ boards }: { boards: Board[] }) {
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between gap-3 px-4 py-2.5 text-sm">
+    <div className="min-w-0 px-4 py-2.5 text-sm">
       <dt className="text-muted-foreground">{label}:</dt>
-      <dd className="font-semibold tabular-nums">{value}</dd>
+      <dd className="mt-0.5 font-semibold tabular-nums">{value}</dd>
     </div>
   );
 }
