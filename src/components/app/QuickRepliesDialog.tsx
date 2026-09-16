@@ -168,7 +168,9 @@ export function QuickRepliesPill({
               <Keyboard className="size-5 text-amber-400" /> Staff quick replies
             </DialogTitle>
             <DialogDescription>
-              Pick a shortcut to drop the sentence into the message bar, or type{" "}
+              {onSend
+                ? "Pick a shortcut, confirm it, and it posts straight into the chatroom. Or type "
+                : "Pick a shortcut to drop the sentence into the message bar, or type "}
               <code className="rounded bg-surface-2 px-1">/code</code> in chat and press space to
               expand it.
             </DialogDescription>
