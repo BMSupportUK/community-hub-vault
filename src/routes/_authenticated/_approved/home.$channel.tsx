@@ -2291,7 +2291,11 @@ function ChannelPage() {
               </div>
               {isModOrAdmin && (
                 <div className="shrink-0 border-b border-border px-1.5 py-1.5">
-                  <QuickRepliesPill onInsert={insertQuickReply} className="w-full justify-center" />
+                  <QuickRepliesPill
+                    onInsert={insertQuickReply}
+                    onSend={(text) => void send(text)}
+                    className="w-full justify-center"
+                  />
                 </div>
               )}
               <div className="flex-1 min-h-0 overflow-hidden">
