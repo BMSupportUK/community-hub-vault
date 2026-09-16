@@ -499,6 +499,13 @@ function PlayerStatsDialog({
                   <span className="font-semibold">Our gameweek total</span>
                   <span className="font-bold tabular-nums text-primary">{ourSeasonPoints} pts</span>
                 </div>
+                <div className="flex items-center justify-between rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 text-sm">
+                  <span className="font-semibold">
+                    Final score awarded{asSub ? " (sub — half points, rounded)" : ""}
+                  </span>
+                  <span className="font-bold tabular-nums text-primary">{finalTotalPoints} pts</span>
+                </div>
+
               </TabsContent>
 
               <TabsContent value="fotmob" className="space-y-3">
