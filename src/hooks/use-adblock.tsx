@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 export type AdBlockStatus = "checking" | "clean" | "blocked";
 
-const STORAGE_KEY = "bm_adblock_state";
+const STORAGE_KEY = "bm_adblock_state_v2";
 const TTL_MS = 5 * 60 * 1000;
 const BAIT_URL = "/api/public/ads/ad-banner-track.js";
 
@@ -85,6 +85,26 @@ async function baitRequestBlocked(): Promise<boolean> {
   }
 }
 
+/** Script-tag bait: blockers cancel the load and fire onerror. */
+async function scriptBaitBlocked(): Promise<boolean> {
+  return new Promise((resolve) => {
+    const s = document.createElement("script");
+    let done = false;
+    const finish = (blocked: boolean) => {
+      if (done) return;
+      done = true;
+      s.remove();
+      resolve(blocked);
+    };
+    s.async = true;
+    s.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?t=${Date.now()}`;
+    s.onload = () => finish(false);
+    s.onerror = () => finish(true);
+    window.setTimeout(() => finish(false), 3000);
+    document.head.appendChild(s);
+  });
+}
+
 /** Cross-origin bait: filter lists block these hosts outright. */
 async function externalBaitBlocked(): Promise<boolean> {
   const urls = [
@@ -116,13 +136,14 @@ function run(force = false): Promise<AdBlockStatus> {
   if (inflight) return inflight;
   inflight = (async () => {
     try {
-      const [elementBlocked, requestBlocked, externalBlocked] = await Promise.all([
+      const [elementBlocked, requestBlocked, externalBlocked, scriptBlocked] = await Promise.all([
         baitElementBlocked(),
         baitRequestBlocked(),
         externalBaitBlocked(),
+        scriptBaitBlocked(),
       ]);
       const status: AdBlockStatus =
-        elementBlocked || requestBlocked || externalBlocked ? "blocked" : "clean";
+        elementBlocked || requestBlocked || externalBlocked || scriptBlocked ? "blocked" : "clean";
       emit(status);
       return status;
     } catch {
