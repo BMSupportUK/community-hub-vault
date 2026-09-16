@@ -278,20 +278,26 @@ export async function fetchFantasyStatsForFixture(
     if (!target) continue;
 
     const appearances = statVal(rp, "appearances");
-    const camePlayed = rp.starter || rp.subbedIn || appearances > 0;
+    const reportedMinutes = statVal(rp, "minutesPlayed");
+    const subbedIn = didSub(rp.subbedIn);
+    const subbedOut = didSub(rp.subbedOut);
+    const camePlayed = rp.starter || subbedIn || appearances > 0 || reportedMinutes > 0;
     if (!camePlayed) continue;
 
     let minutes = 0;
     if (rp.starter) {
-      minutes = rp.subbedOut
+      minutes = subbedOut
         ? Math.min(nowMinute, subOutMinute.get(athleteId) ?? nowMinute)
         : nowMinute;
     } else {
       const inAt = subInMinute.get(athleteId);
-      const cameOff = rp.subbedOut ? Math.min(nowMinute, subOutMinute.get(athleteId) ?? nowMinute) : nowMinute;
+      const cameOff = subbedOut ? Math.min(nowMinute, subOutMinute.get(athleteId) ?? nowMinute) : nowMinute;
       minutes = inAt != null ? Math.max(1, cameOff - inAt) : appearances > 0 ? 1 : 0;
     }
+    // FotMob publishes minutes played directly — prefer it when we have it.
+    if (reportedMinutes > 0) minutes = Math.min(nowMinute, reportedMinutes);
     if (minutes <= 0) continue;
+
 
     // Position-dependent scoring uses OUR stored position, never ESPN's.
     const isKeeper = target.position === "gk";
