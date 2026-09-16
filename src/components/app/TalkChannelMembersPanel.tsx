@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Users, Loader2 } from "lucide-react";
+import { Users, Loader2, Clock, MapPin } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { useTalkChannelPresentUsersInChannel } from "@/hooks/use-talk-channel-presence";
+import { useUserPage } from "@/hooks/use-online-users";
+import { formatLastSeen } from "@/lib/relative-time";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { TalkMemberProfileCard } from "@/components/app/TalkMemberProfileCard";
 import { useRoleFlashMap, roleFlashClass, resolveAvatarUrl } from "@/lib/role-flash";
@@ -216,6 +218,7 @@ function MemberRow({
   const top = highestRole(roles) ?? "member";
   const avatar = resolveAvatarUrl(row.user_id, row.avatar_url, roleFlashMap);
   const roleLabels = roles.map((role) => formatRoleLabel(role)).join(" · ");
+  const currentPage = useUserPage(row.user_id);
 
   return (
     <Popover>
@@ -249,6 +252,16 @@ function MemberRow({
             <span className="block truncate text-[10px] leading-tight text-muted-foreground">
               {roleLabels || "Member"}
             </span>
+            <span className="flex items-center gap-1 truncate text-[10px] leading-tight text-muted-foreground">
+              <Clock className="size-2.5 shrink-0" />
+              Last active {online ? "now" : formatLastSeen(row.last_seen_at)}
+            </span>
+            {currentPage && (
+              <span className="flex items-center gap-1 truncate text-[10px] leading-tight text-muted-foreground">
+                <MapPin className="size-2.5 shrink-0" />
+                {currentPage}
+              </span>
+            )}
           </span>
         </button>
       </PopoverTrigger>
