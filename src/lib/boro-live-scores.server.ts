@@ -1,18 +1,11 @@
 // Server-only live score + cup-fixture syncer for the Boro 26/27 predictions
-// page. We poll ESPN's public scoreboard across the Championship + the
-// domestic cups so live scores and newly-drawn cup ties show up without
-// admin intervention. ESPN is keyless and updates in near real time.
+// page. Every read comes from FotMob (the only match data provider this app
+// uses) so live scores and newly-drawn cup ties show up without admin
+// intervention.
 
-import { espnJson, espnDateParams } from "@/lib/espn-fetch";
+import { fotmobMatchDetails, fotmobTeamData } from "@/lib/fotmob-fetch";
 
-const ESPN_COMPETITIONS: Array<{ slug: string; name: string }> = [
-  { slug: "eng.2", name: "Championship" },
-  { slug: "eng.fa", name: "FA Cup" },
-  { slug: "eng.league_cup", name: "Carabao Cup" },
-  { slug: "eng.trophy", name: "EFL Trophy" },
-];
-
-export type EspnBoroMatch = {
+export type BoroLiveMatch = {
   competition: string;
   home: string;
   away: string;
@@ -25,6 +18,7 @@ export type EspnBoroMatch = {
   awayScore: number | null;
   homeReds: number;
   awayReds: number;
+  matchId: string;
 };
 
 export type BoroFixtureRow = {
@@ -60,137 +54,122 @@ function nameMatches(a: string, b: string) {
   const na = norm(a);
   const nb = norm(b);
   if (na === nb) return true;
-  // Handle "Middlesbrough" vs "Middlesbrough FC" etc — norm already strips
-  // those, but cover short/long names of cup opponents too.
   if (na.includes(nb) || nb.includes(na)) return true;
   return false;
 }
 
-function parseMinute(displayClock?: string, rawClock?: number, state?: string) {
-  if (state !== "in") return { minute: null, minuteAdded: null };
-  const [baseStr, addedStr] = (displayClock ?? "").split("+");
+/** FotMob writes the live clock as "62'" or "45+2'". */
+function parseLiveClock(raw: string | null | undefined) {
+  const text = String(raw ?? "").replace(/[^0-9+]/g, "");
+  if (!text) return { minute: null as number | null, minuteAdded: null as number | null };
+  const [baseStr, addedStr] = text.split("+");
   const base = parseInt(baseStr ?? "", 10);
   const added = parseInt(addedStr ?? "", 10);
-  const minute = Number.isFinite(base)
-    ? base
-    : typeof rawClock === "number" && rawClock > 0
-      ? Math.max(1, Math.ceil(rawClock / 60))
-      : null;
-  return { minute, minuteAdded: Number.isFinite(added) ? added : null };
+  return {
+    minute: Number.isFinite(base) ? base : null,
+    minuteAdded: Number.isFinite(added) ? added : null,
+  };
 }
 
-type EspnJson = {
-  events?: Array<{
-    date?: string;
-    competitions?: Array<{
-      venue?: { fullName?: string };
-      status?: {
-        clock?: number;
-        displayClock?: string;
-        type?: { state?: string; name?: string };
-      };
-      competitors?: Array<{
-        id?: string;
-        homeAway?: string;
-        score?: string;
-        team?: { id?: string; displayName?: string; shortDisplayName?: string };
-      }>;
-      details?: Array<{
-        type?: { id?: string; text?: string };
-        team?: { id?: string };
-      }>;
-    }>;
-  }>;
+const num = (value: unknown) => {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : null;
 };
 
 /**
- * Pull every Middlesbrough match ESPN currently has across the configured
- * competitions for a ±1 day window. Returned matches may be scheduled,
- * in-play or finished.
+ * Every Middlesbrough match FotMob currently lists — league and cups alike.
+ * Matches may be scheduled, in-play or finished. In-play games get a second
+ * request for the live clock and red cards.
  */
-export async function fetchEspnBoroLive(): Promise<EspnBoroMatch[]> {
-  const debug = (globalThis as { __espnDebug?: { ok: number; bad: number; total: number } }).__espnDebug = { ok: 0, bad: 0, total: 0 };
-  // Two date-range snapshots per competition: a tight live window (so an
-  // in-play match is always picked up) and a long forward window for freshly
-  // drawn cup ties. Workers cap each request at 50 subrequests, and the old
-  // month-by-month loop burned all 50 on ESPN alone — every fetch then failed.
+export async function fetchBoroLiveMatches(): Promise<BoroLiveMatch[]> {
+  const data = await fotmobTeamData(15_000);
+  const fixtures: any[] = data?.fixtures?.allFixtures?.fixtures ?? [];
   const now = Date.now();
-  const ranges = [
-    ...espnDateParams(now - 2 * 86_400_000, now + 3 * 86_400_000),
-    ...espnDateParams(now, now + 300 * 86_400_000),
-  ].filter((value, index, all) => all.indexOf(value) === index);
 
-  const urls: Array<{ url: string; competition: string }> = [];
-  for (const c of ESPN_COMPETITIONS) {
-    for (const range of ranges) {
-      urls.push({
-        url: `https://site.api.espn.com/apis/site/v2/sports/soccer/${c.slug}/scoreboard?dates=${range}&limit=400`,
-        competition: c.name,
-      });
-    }
+  const base: BoroLiveMatch[] = [];
+  for (const fixture of fixtures) {
+    const homeName = String(fixture?.home?.name ?? "");
+    const awayName = String(fixture?.away?.name ?? "");
+    if (!homeName || !awayName) continue;
+    if (!isBoro(homeName) && !isBoro(awayName)) continue;
+    const kickoffMs = Date.parse(String(fixture?.status?.utcTime ?? ""));
+    if (!Number.isFinite(kickoffMs)) continue;
+    if (fixture?.status?.cancelled) continue;
+
+    const finished = !!fixture?.status?.finished;
+    const started = !!fixture?.status?.started;
+    base.push({
+      competition: String(fixture?.tournament?.name ?? "Football"),
+      home: homeName,
+      away: awayName,
+      kickoffMs,
+      venue: null,
+      status: finished ? "FINISHED" : started ? "IN_PLAY" : "SCHEDULED",
+      minute: null,
+      minuteAdded: null,
+      homeScore: num(fixture?.home?.score),
+      awayScore: num(fixture?.away?.score),
+      homeReds: 0,
+      awayReds: 0,
+      matchId: String(fixture?.id ?? ""),
+    });
   }
 
-  const responses = await Promise.all(
-    urls.map(({ url, competition }) =>
-      espnJson<EspnJson>(url).then((json) => {
-        debug.total += 1;
-        if (json) debug.ok += 1;
-        else debug.bad += 1;
-        return { json: (json ?? { events: [] }) as EspnJson, competition };
-      }),
-    ),
+  // Only in-play games (and ones that kicked off in the last four hours) need
+  // the detail feed — that keeps the worker well inside its request budget.
+  const needDetail = base.filter(
+    (match) =>
+      match.status === "IN_PLAY" ||
+      (match.status !== "SCHEDULED" &&
+        match.kickoffMs <= now &&
+        match.kickoffMs > now - 4 * 60 * 60 * 1000),
   );
 
-  const byKey = new Map<string, EspnBoroMatch>();
-  for (const { json, competition } of responses) {
-    for (const e of json.events ?? []) {
-      const comp = e.competitions?.[0];
-      if (!comp || !e.date) continue;
-      const home = comp.competitors?.find((c) => c.homeAway === "home");
-      const away = comp.competitors?.find((c) => c.homeAway === "away");
-      const homeName = home?.team?.displayName ?? "";
-      const awayName = away?.team?.displayName ?? "";
-      if (!homeName || !awayName) continue;
-      if (!isBoro(homeName) && !isBoro(awayName)) continue;
-      const state = comp.status?.type?.state ?? "pre";
-      const typeName = comp.status?.type?.name ?? "";
-      const status =
-        state === "post"
-          ? "FINISHED"
-          : state === "in"
-            ? typeName === "STATUS_HALFTIME"
-              ? "PAUSED"
-              : "IN_PLAY"
-            : "SCHEDULED";
-      const parsed = parseMinute(comp.status?.displayClock, comp.status?.clock, state);
-      const homeTeamId = home?.team?.id ?? home?.id ?? "";
-      const awayTeamId = away?.team?.id ?? away?.id ?? "";
+  await Promise.all(
+    needDetail.slice(0, 3).map(async (match) => {
+      if (!match.matchId) return;
+      const detail = await fotmobMatchDetails(match.matchId, 10_000);
+      const status = detail?.header?.status;
+      if (!status) return;
+      const reasonShort = String(status?.reason?.short ?? "").toUpperCase();
+      const finished = !!status?.finished;
+      match.status = finished
+        ? "FINISHED"
+        : status?.started
+          ? reasonShort === "HT"
+            ? "PAUSED"
+            : "IN_PLAY"
+          : "SCHEDULED";
+      if (match.status === "IN_PLAY") {
+        const clock = parseLiveClock(
+          status?.liveTime?.short ?? status?.liveTime?.long ?? reasonShort,
+        );
+        match.minute = clock.minute;
+        match.minuteAdded = clock.minuteAdded;
+      }
+      const teams: any[] = detail?.header?.teams ?? [];
+      match.homeScore = num(teams[0]?.score) ?? match.homeScore;
+      match.awayScore = num(teams[1]?.score) ?? match.awayScore;
+
+      const events: any[] = detail?.content?.matchFacts?.events?.events ?? [];
       let homeReds = 0;
       let awayReds = 0;
-      for (const d of comp.details ?? []) {
-        const txt = d.type?.text ?? "";
-        if (!/red/i.test(txt)) continue;
-        const tid = d.team?.id ?? "";
-        if (tid && tid === homeTeamId) homeReds += 1;
-        else if (tid && tid === awayTeamId) awayReds += 1;
+      for (const event of events) {
+        if (!/red/i.test(String(event?.card ?? ""))) continue;
+        if (event?.isHome) homeReds += 1;
+        else awayReds += 1;
       }
-      const m: EspnBoroMatch = {
-        competition,
-        home: homeName,
-        away: awayName,
-        kickoffMs: new Date(e.date).getTime(),
-        venue: comp.venue?.fullName ?? null,
-        status,
-        minute: parsed.minute,
-        minuteAdded: parsed.minuteAdded,
-        homeScore: home?.score != null && home.score !== "" ? Number(home.score) : null,
-        awayScore: away?.score != null && away.score !== "" ? Number(away.score) : null,
-        homeReds,
-        awayReds,
-      };
-      const key = `${competition}|${e.date}|${norm(homeName)}|${norm(awayName)}`;
-      byKey.set(key, m);
-    }
+      match.homeReds = homeReds;
+      match.awayReds = awayReds;
+
+      const stadium = detail?.content?.matchFacts?.infoBox?.Stadium;
+      if (stadium?.name) match.venue = String(stadium.name);
+    }),
+  );
+
+  const byKey = new Map<string, BoroLiveMatch>();
+  for (const match of base) {
+    byKey.set(`${match.competition}|${match.kickoffMs}|${norm(match.home)}|${norm(match.away)}`, match);
   }
   return [...byKey.values()];
 }
@@ -198,7 +177,7 @@ export async function fetchEspnBoroLive(): Promise<EspnBoroMatch[]> {
 const LEAGUE_RE = /championship|premier league|league one|league two|efl league|sky bet/i;
 
 /**
- * Find an existing boro_fixtures row that corresponds to an ESPN event.
+ * Find an existing boro_fixtures row that corresponds to a FotMob match.
  * We match on opponent + a wide date window so re-scheduled cup ties still
  * line up with whatever the admin/scraper already inserted.
  *
@@ -209,7 +188,7 @@ const LEAGUE_RE = /championship|premier league|league one|league two|efl league|
  */
 export function findBoroFixture(
   fixtures: BoroFixtureRow[],
-  ev: EspnBoroMatch,
+  ev: BoroLiveMatch,
 ): BoroFixtureRow | undefined {
   const sameTeams = fixtures.filter(
     (f) => nameMatches(f.home_team, ev.home) && nameMatches(f.away_team, ev.away),
