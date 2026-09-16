@@ -376,15 +376,17 @@ export const PLAYER_STAT_META: Record<
   yellows: { abbr: "YC", means: "Yellow cards", points: -1 },
   reds: { abbr: "RC", means: "Red cards", points: -3 },
   own_goals: { abbr: "OG", means: "Own goals", points: -2 },
-  bonus: { abbr: "STAR", means: "Star player bonus (3 / 2 / 1 pts for the top three ratings)", points: 1 },
+  // The star award is shown on its own STAR line (3 / 2 / 1 pts), so it must
+  // never carry a per-unit rate — otherwise it gets counted twice.
+  bonus: { abbr: "STAR", means: "Star player bonus (3 / 2 / 1 pts for the top three ratings)" },
 };
 
 /** Points a starter earns per unit of a stat, for the player profile table. */
 /**
  * Our own scoring lines — the things the fantasy game itself awards
- * (appearance, goals, assists, cards, own goals, missed pens). Clean sheets
- * are derived separately. Everything else that scores comes off the FotMob
- * match centre.
+ * (appearance, goals, assists, cards, own goals, missed pens, star award).
+ * Clean sheets are derived separately. Everything else that scores comes off
+ * the FotMob match centre.
  */
 export const OUR_SCORING_STAT_KEYS = [
   "minutes",
@@ -395,7 +397,9 @@ export const OUR_SCORING_STAT_KEYS = [
   "yellows",
   "reds",
   "own_goals",
+  "bonus",
 ] as const;
+
 
 export function isOurScoringStat(key: string): boolean {
   return (OUR_SCORING_STAT_KEYS as readonly string[]).includes(key);
