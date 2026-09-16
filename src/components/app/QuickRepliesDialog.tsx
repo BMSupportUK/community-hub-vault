@@ -74,11 +74,14 @@ export function useQuickReplies(scope: QuickReplyScope = "talk") {
  */
 export function QuickRepliesPill({
   onInsert,
+  onSend,
   className,
   scope = "talk",
   label = "Shortcuts",
 }: {
   onInsert: (text: string) => void;
+  /** When set, confirming a shortcut posts it straight into the room instead of the message bar. */
+  onSend?: (text: string) => void;
   className?: string;
   scope?: QuickReplyScope;
   label?: string;
