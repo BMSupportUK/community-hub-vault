@@ -342,8 +342,38 @@ function PlayerStatsDialog({
   );
   const weeklyPointRows = pointRows;
 
+  /**
+   * The final score exactly as the scoring engine awards it: every line counted
+   * at the full rate, then for a sub the stat points are halved and the whole
+   * match total rounded to the nearest point.
+   */
+  const finalMatchPoints = useMemo(
+    () =>
+      gameweekMatches.map((match) => {
+        const minutes = match.stats.minutes ?? 0;
+        if (minutes <= 0) return 0;
+        let stat = scoringStatKeys(pos)
+          .filter((key) => key !== "minutes")
+          .reduce((sum, key) => {
+            const rate = statPointsPer(key, pos);
+            return sum + (rate == null ? 0 : scoredStatCount(key, match.stats) * rate);
+          }, 0);
+        stat += match.stats.bonus ?? 0;
+        if ((match.stats.goals_conceded ?? 0) === 0) {
+          const csFull = pos === "gk" || pos === "def" ? 4 : pos === "mid" ? 1 : 0;
+          const csShort = pos === "gk" || pos === "def" ? 2 : pos === "mid" ? 0.5 : 0;
+          stat += minutes >= 60 ? csFull : csShort;
+        }
+        const appearance = asSub ? 1 : 2;
+        return Math.round(appearance + (asSub ? stat / 2 : stat));
+      }),
+    [gameweekMatches, pos, asSub],
+  );
+  const finalTotalPoints = finalMatchPoints.reduce((s, p) => s + p, 0);
+
   const ourSeasonPoints = pointRows.reduce((sum, match) => sum + match.ourPoints, 0);
   const fotmobSeasonPoints = pointRows.reduce((sum, match) => sum + match.fotmobPoints, 0);
+
 
   return (
     <Dialog open={!!playerId} onOpenChange={(o) => { if (!o) onClose(); }}>
@@ -469,6 +499,13 @@ function PlayerStatsDialog({
                   <span className="font-semibold">Our gameweek total</span>
                   <span className="font-bold tabular-nums text-primary">{ourSeasonPoints} pts</span>
                 </div>
+                <div className="flex items-center justify-between rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 text-sm">
+                  <span className="font-semibold">
+                    Final score awarded{asSub ? " (sub — half points, rounded)" : ""}
+                  </span>
+                  <span className="font-bold tabular-nums text-primary">{finalTotalPoints} pts</span>
+                </div>
+
               </TabsContent>
 
               <TabsContent value="fotmob" className="space-y-3">
@@ -532,11 +569,11 @@ function PlayerStatsDialog({
                             return (
                               <tr key={k} className="border-b border-border/60">
                                 <td className="py-1.5 pr-2 text-muted-foreground">
-                                  <StatAbbrLabel abbr={meta.abbr} means={meta.means} rate={statPointsPer(k, pos)} />
+                                  <StatAbbrLabel abbr={meta.abbr} means={meta.means} rate={scaleRate(statPointsPer(k, pos))} />
                                 </td>
                                 {gameweekMatches.map((m) => (
                                   <td key={m.fixtureId} className="px-2 py-1.5 text-center tabular-nums">
-                                    {m.stats[k] ?? 0}
+                                    {scoredStatCount(k, m.stats)}
                                   </td>
                                 ))}
                               </tr>
@@ -549,6 +586,13 @@ function PlayerStatsDialog({
                       <span className="font-semibold">FotMob weekly total</span>
                       <span className="font-bold tabular-nums text-primary">{fotmobSeasonPoints} pts</span>
                     </div>
+                    <div className="flex items-center justify-between rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 text-sm">
+                      <span className="font-semibold">
+                        Final score awarded{asSub ? " (sub — half points, rounded)" : ""}
+                      </span>
+                      <span className="font-bold tabular-nums text-primary">{finalTotalPoints} pts</span>
+                    </div>
+
                   </div>
                 )}
               </TabsContent>
