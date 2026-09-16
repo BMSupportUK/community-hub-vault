@@ -613,5 +613,6 @@ function BoardPage() {
         </DialogContent>
       </Dialog>
     </div>
+    </AdBlockGate>
   );
 }
