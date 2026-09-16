@@ -558,6 +558,48 @@ async function createMatchTopic(
   return topic as { id: string; title: string; author_id: string };
 }
 
+/**
+ * Every match day thread carries a match prediction poll (home win / draw /
+ * away win) that closes at kick-off. Added once per thread; a poll that already
+ * exists (including a hand-made one) is left alone.
+ */
+async function ensureMatchPoll(
+  supabaseAdmin: any,
+  topicId: string,
+  authorId: string,
+  fx: FixtureLite,
+): Promise<boolean> {
+  const { data: existing } = await supabaseAdmin
+    .from("forum_polls")
+    .select("id")
+    .eq("topic_id", topicId)
+    .maybeSingle();
+  if (existing?.id) return false;
+
+  const home = titleTeam(fx.home_team);
+  const away = titleTeam(fx.away_team);
+  const ko = Date.parse(fx.kickoff_at);
+  const { data: poll, error } = await supabaseAdmin
+    .from("forum_polls")
+    .insert({
+      topic_id: topicId,
+      question: `${home} v ${away} Match Prediction`,
+      allow_multiple: false,
+      closes_at: Number.isFinite(ko) ? new Date(ko).toISOString() : null,
+      created_by: authorId,
+    })
+    .select("id")
+    .single();
+  if (error || !poll) return false;
+
+  const { error: optErr } = await supabaseAdmin.from("forum_poll_options").insert([
+    { poll_id: poll.id, label: `${home} Win`, sort_order: 0 },
+    { poll_id: poll.id, label: "Draw", sort_order: 1 },
+    { poll_id: poll.id, label: `${away} Win`, sort_order: 2 },
+  ]);
+  return !optErr;
+}
+
 
 
 
@@ -655,6 +697,10 @@ export async function syncBoroMatchThread(opts?: { ignoreWindow?: boolean }): Pr
     if (!topic) skipped.push("could not open a match day thread automatically");
   }
   if (!topic) return { ...base, fixture: label, topic: null, skipped: ["no match day thread for this fixture yet"] };
+
+  // Match prediction poll — added to every match day thread that hasn't got one.
+  await ensureMatchPoll(supabaseAdmin, topic.id, authorId ?? topic.author_id, fx).catch(() => false);
+
 
 
   // FotMob is the only live-data source. It is reachable from the server, so no
