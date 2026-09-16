@@ -223,7 +223,7 @@ function PlayerStatsDialog({
   );
   const pos = (scoringAs ?? (data?.position || "mid")) as FantasyPosition;
   const picked = !!scoringAs && scoringAs !== (data?.position as FantasyPosition | undefined);
-  /** Subs score half of every line — apply it to every rate we display. */
+  /** Subs score half of every line — apply the exact rate with no whole-point rounding. */
   const rateMul = asSub ? 0.5 : 1;
   const scaleRate = (r: number | null) => (r == null ? null : Math.round(r * rateMul * 100) / 100);
   /** FotMob match-centre stats that score for this role, shown in the FotMob tab. */
@@ -342,11 +342,7 @@ function PlayerStatsDialog({
   );
   const weeklyPointRows = pointRows;
 
-  /**
-   * The final score exactly as the scoring engine awards it: every line counted
-   * at the full rate, then for a sub the stat points are halved and the whole
-   * match total rounded to the nearest point.
-   */
+  /** The final score exactly as awarded: appearance plus exact half stat points for a sub. */
   const finalMatchPoints = useMemo(
     () =>
       gameweekMatches.map((match) => {
@@ -365,7 +361,7 @@ function PlayerStatsDialog({
           stat += minutes >= 60 ? csFull : csShort;
         }
         const appearance = asSub ? 1 : 2;
-        return Math.round(appearance + (asSub ? stat / 2 : stat));
+        return appearance + (asSub ? stat / 2 : stat);
       }),
     [gameweekMatches, pos, asSub],
   );
@@ -501,7 +497,7 @@ function PlayerStatsDialog({
                 </div>
                 <div className="flex items-center justify-between rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 text-sm">
                   <span className="font-semibold">
-                    Final score awarded{asSub ? " (sub — half points, rounded)" : ""}
+                    Final score awarded{asSub ? " (sub — exact half points)" : ""}
                   </span>
                   <span className="font-bold tabular-nums text-primary">{finalTotalPoints} pts</span>
                 </div>
@@ -588,7 +584,7 @@ function PlayerStatsDialog({
                     </div>
                     <div className="flex items-center justify-between rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 text-sm">
                       <span className="font-semibold">
-                        Final score awarded{asSub ? " (sub — half points, rounded)" : ""}
+                        Final score awarded{asSub ? " (sub — exact half points)" : ""}
                       </span>
                       <span className="font-bold tabular-nums text-primary">{finalTotalPoints} pts</span>
                     </div>
@@ -3993,7 +3989,7 @@ function ScoringTab() {
           <ScoringBreakdown column="starter" note="Points for players named in your match day 11. A starter who doesn't get on the pitch scores 0. FotMob match stats and the game's own scoring rules are combined once the fixture is finished and all stats and bonuses have been confirmed." />
         </TabsContent>
         <TabsContent value="subs" className="mt-4">
-          <ScoringBreakdown column="sub" note="Points for players who come off your bench: 1 point for getting on, then half points for every match stat. The stat points are added up first, then halved and rounded. Only five subs score — if more than five feature, the five who played the most minutes count, any other sub is locked at 0, and unused subs score 0." />
+          <ScoringBreakdown column="sub" note="Points for players who come off your bench: 1 point for getting on, then exactly half points for every match stat. Half and quarter points are kept and are not rounded. Only five subs score — if more than five feature, the five who played the most minutes count, any other sub is locked at 0, and unused subs score 0." />
         </TabsContent>
       </Tabs>
       <div className="text-sm text-muted-foreground">
