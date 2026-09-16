@@ -8,7 +8,9 @@ import { useAuth } from "@/hooks/use-auth";
 import { isAdminUnlocked } from "@/lib/admin-unlock";
 import { IconRail } from "@/components/app/IconRail";
 import { logMyIp } from "@/lib/ip-log.functions";
-import { useOnlineUsers } from "@/hooks/use-online-users";
+import { useOnlineUsers, setPresencePage } from "@/hooks/use-online-users";
+import { pageLabelForPath } from "@/lib/page-labels";
+
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { isAllowedForFanZoneOnly, isFanZonePath } from "@/lib/fan-zone-nav";
 import { useFanZoneMembershipState } from "@/hooks/use-fan-zone";
@@ -43,8 +45,13 @@ function DeferUntilIdle({ children }: { children: ReactNode }) {
 
 function OnlinePresence() {
   useOnlineUsers();
+  const path = useRouterState({ select: (r) => r.location.pathname });
+  useEffect(() => {
+    setPresencePage(pageLabelForPath(path));
+  }, [path]);
   return null;
 }
+
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async ({ location }) => {

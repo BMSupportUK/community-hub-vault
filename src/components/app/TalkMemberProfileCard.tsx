@@ -10,6 +10,8 @@ import { useRoleFlashMap, resolveAvatarUrl } from "@/lib/role-flash";
 import { formatRoleLabel } from "@/lib/role-label";
 import { sortRolesByPriority } from "@/lib/role-rank";
 import { formatLastSeen } from "@/lib/relative-time";
+import { useUserPage } from "@/hooks/use-online-users";
+
 import { cn } from "@/lib/utils";
 
 export type TalkMemberProfileRow = {
@@ -48,11 +50,13 @@ export function TalkMemberProfileCard({
   selfId: string | null;
 }) {
   const roleFlashMap = useRoleFlashMap();
+  const currentPage = useUserPage(row.user_id);
   const name = row.display_name || row.username || "Member";
   // Boro Fan Zone roles are hidden in Talk Channels; all other roles show.
   const roles = sortRolesByPriority(
     (row.roles ?? []).filter((r) => !r.startsWith("boro_fan_zone_")),
   );
+
 
   return (
     <>
@@ -136,12 +140,29 @@ export function TalkMemberProfileCard({
 
           <div>
             <h4 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+              Last active
+            </h4>
+            <p className="mt-0.5 text-sm">
+              {online ? "Active now" : formatLastSeen(row.last_seen_at)}
+            </p>
+          </div>
+
+          <div>
+            <h4 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+              Currently viewing
+            </h4>
+            <p className="mt-0.5 text-sm">{currentPage ?? "Not in the app"}</p>
+          </div>
+
+          <div>
+            <h4 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
               Status
             </h4>
             <p className="mt-0.5 text-sm">
               {online ? "Online now" : `Last seen ${formatLastSeen(row.last_seen_at)}`}
             </p>
           </div>
+
 
           <MemberAppLogins userId={row.user_id} selfId={selfId} />
         </div>

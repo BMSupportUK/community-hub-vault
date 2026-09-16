@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { User } from "lucide-react";
+import { User, MapPin } from "lucide-react";
+import { useUserPage } from "@/hooks/use-online-users";
+
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Nameplate } from "@/components/app/Nameplate";
@@ -90,7 +92,9 @@ export function ChatMiniProfile({
 
 function MiniProfileCard({ profile }: { profile: ChatMiniProfileData }) {
   const { name, username, avatarUrl, hasAvatar, role, isOnline, lastSeenAt, customStatus, isSelf } = profile;
+  const currentPage = useUserPage(profile.userId);
   const initial = (name || "?").slice(0, 1).toUpperCase();
+
 
   return (
     <>
@@ -142,10 +146,21 @@ function MiniProfileCard({ profile }: { profile: ChatMiniProfileData }) {
               </span>
             )}
           </div>
+          <div className="mt-2 text-xs text-muted-foreground">
+            <span className="font-semibold text-foreground/80">Last active: </span>
+            {isOnline ? "Active now" : formatLastSeen(lastSeenAt)}
+          </div>
+          {currentPage && (
+            <div className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+              <MapPin className="size-3.5 shrink-0" />
+              <span className="truncate">{currentPage}</span>
+            </div>
+          )}
           <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
             <PresenceMiniDot userId={profile.userId} isOnline={isOnline} />
             <span>{isOnline ? "Online now" : `Active ${formatLastSeen(lastSeenAt)}`}</span>
           </div>
+
           {username && (
             <div className="mt-3">
               <Link
