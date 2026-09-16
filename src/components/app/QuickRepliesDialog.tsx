@@ -262,12 +262,13 @@ export function QuickRepliesPill({
                   type="button"
                   size="sm"
                   onClick={() => {
-                    onInsert(confirmUse.body);
+                    if (onSend) onSend(confirmUse.body);
+                    else onInsert(confirmUse.body);
                     setConfirmUse(null);
                     setOpen(false);
                   }}
                 >
-                  Use shortcut
+                  {onSend ? "Yes, send it now" : "Use shortcut"}
                 </Button>
               </div>
             </div>
