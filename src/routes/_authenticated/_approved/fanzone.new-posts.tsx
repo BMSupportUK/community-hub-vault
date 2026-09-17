@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import bgAsset from "@/assets/boro-fan-zone-profile-bg.jpg.asset.json";
 import { fetchForumFeed, FORUM_FEED_PAGE_SIZE, type ForumFeedPost } from "@/lib/forum-feed";
 import { ForumPostFeed, ForumFeedPager } from "@/components/app/ForumPostFeed";
+import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/_approved/fanzone/new-posts")({
   head: () => ({
@@ -21,10 +23,19 @@ export const Route = createFileRoute("/_authenticated/_approved/fanzone/new-post
 });
 
 function NewForumContentPage() {
+  const { user } = useAuth();
   const [page, setPage] = useState(1);
   const [posts, setPosts] = useState<ForumFeedPost[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    void supabase.from("forum_new_content_reads").upsert({
+      user_id: user.id,
+      last_viewed_at: new Date().toISOString(),
+    });
+  }, [user?.id]);
 
   useEffect(() => {
     let cancelled = false;
