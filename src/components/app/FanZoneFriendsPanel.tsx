@@ -58,16 +58,15 @@ export function FanZoneFriendsPanel({ userId }: { userId: string }) {
       };
     };
 
-    const acceptedPairs = new Set(accepted.map((f) => `${f.requester_id}:${f.addressee_id}`));
+    // Accepted = both fans agreed, so it is a mutual match regardless of who
+    // sent the request first. Pending requests stay in the requests list.
     const seen = new Set<string>();
     const list: AcceptedFriend[] = [];
     for (const f of accepted) {
       const shaped = shape(f);
       if (seen.has(shaped.user_id)) continue;
       seen.add(shaped.user_id);
-      const mutual =
-        acceptedPairs.has(`${userId}:${shaped.user_id}`) && acceptedPairs.has(`${shaped.user_id}:${userId}`);
-      list.push({ ...shaped, mutual });
+      list.push({ ...shaped, mutual: true });
     }
 
     setRows(list);

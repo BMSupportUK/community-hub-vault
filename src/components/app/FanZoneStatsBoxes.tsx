@@ -59,13 +59,13 @@ export function FanStatsBox({ userId }: { userId: string }) {
       requester_id: string;
       addressee_id: string;
     }>;
-    const acceptedPairs = new Set(accepted.map((row) => `${row.requester_id}:${row.addressee_id}`));
+    // An accepted friendship means both fans agreed to it (whoever sent the
+    // request), so it always counts as a mutual match. Only pending requests
+    // are one-way, and those are not included here.
     const unique = new Map<string, { friendship_id: string; mutual: boolean }>();
     for (const row of accepted) {
       const otherId = row.requester_id === userId ? row.addressee_id : row.requester_id;
-      const mutual = acceptedPairs.has(`${userId}:${otherId}`) && acceptedPairs.has(`${otherId}:${userId}`);
-      const current = unique.get(otherId);
-      if (!current || (!current.mutual && mutual)) unique.set(otherId, { friendship_id: row.id, mutual });
+      if (!unique.has(otherId)) unique.set(otherId, { friendship_id: row.id, mutual: true });
     }
 
     const ids = [...unique.keys()];
