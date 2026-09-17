@@ -1,4 +1,5 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
+import AdSenseSlot from "@/components/app/AdSenseSlot";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
