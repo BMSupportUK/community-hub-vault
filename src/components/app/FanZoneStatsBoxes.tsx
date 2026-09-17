@@ -158,10 +158,7 @@ export function FanStatsBox({ userId }: { userId: string }) {
           <Item icon={FileText} label="Topics started" value={s.topics} />
           <Item icon={MessageSquare} label="Forum posts" value={s.posts} />
           {!s.friendsHidden ? (
-            <>
-              <FriendItem label="Friends" value={s.friends} list="all" />
-              <FriendItem label="Mutual friends" value={s.mutualFriends} list="mutual" />
-            </>
+            <FriendItem label="Friends" value={s.friends} />
           ) : (
             <Item icon={Users} label="Friends" value="Private" />
           )}
