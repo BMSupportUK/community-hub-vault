@@ -1,49 +1,137 @@
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Loader2, ThumbsUp, ThumbsDown, MessageSquare, FileText, Users, Award } from "lucide-react";
+import { Loader2, ThumbsUp, ThumbsDown, MessageSquare, FileText, Users, Award, UserMinus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { BORO_DEFAULT_AVATAR_URL as boroDefaultAvatar } from "@/lib/boro-default-avatar";
 import { useFanProfileTo } from "@/components/app/fan-profile-link";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
-type Stats = { topics: number; posts: number; friends: number; reactionsReceived: number; friendsHidden: boolean };
+type FriendCard = {
+  user_id: string;
+  fan_alias: string | null;
+  fan_avatar_url: string | null;
+  friendship_id: string;
+  mutual: boolean;
+};
+
+type Stats = {
+  topics: number;
+  posts: number;
+  friends: number;
+  mutualFriends: number;
+  reactionsReceived: number;
+  friendsHidden: boolean;
+  isSelf: boolean;
+};
 
 export function FanStatsBox({ userId }: { userId: string }) {
   const [s, setS] = useState<Stats | null>(null);
+  const [friendCards, setFriendCards] = useState<FriendCard[]>([]);
+  const [openList, setOpenList] = useState<"all" | "mutual" | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+
+  const load = async (cancelled = false) => {
+    const { data: me } = await supabase.auth.getUser();
+    const isSelf = me?.user?.id === userId;
+    const [topicsRes, postsRes, friendsRes, postIdsRes, hideRes] = await Promise.all([
+      supabase.from("forum_topics").select("id", { count: "exact", head: true }).eq("author_id", userId),
+      supabase.from("forum_posts").select("id", { count: "exact", head: true }).eq("author_id", userId),
+      supabase
+        .from("fan_zone_friendships")
+        .select("id, requester_id, addressee_id")
+        .eq("status", "accepted")
+        .or(`requester_id.eq.${userId},addressee_id.eq.${userId}`),
+      supabase.from("forum_posts").select("id").eq("author_id", userId),
+      supabase.rpc("fan_zone_hide_friends", { _ids: [userId] }),
+    ]);
+    const hiddenRow = ((hideRes.data as any[]) ?? [])[0];
+    const friendsHidden = !isSelf && !!hiddenRow?.hide_friends;
+    const accepted = (friendsRes.data ?? []) as Array<{
+      id: string;
+      requester_id: string;
+      addressee_id: string;
+    }>;
+    const acceptedPairs = new Set(accepted.map((row) => `${row.requester_id}:${row.addressee_id}`));
+    const unique = new Map<string, { friendship_id: string; mutual: boolean }>();
+    for (const row of accepted) {
+      const otherId = row.requester_id === userId ? row.addressee_id : row.requester_id;
+      const mutual = acceptedPairs.has(`${userId}:${otherId}`) && acceptedPairs.has(`${otherId}:${userId}`);
+      const current = unique.get(otherId);
+      if (!current || (!current.mutual && mutual)) unique.set(otherId, { friendship_id: row.id, mutual });
+    }
+
+    const ids = [...unique.keys()];
+    let cards: FriendCard[] = [];
+    if (isSelf && ids.length > 0) {
+      const { data: members } = await supabase.rpc("fan_zone_aliases", { _ids: ids });
+      const byId = new Map(((members as any[]) ?? []).map((member: any) => [member.user_id, member]));
+      cards = ids.map((id) => {
+        const member = byId.get(id) as any;
+        const friendship = unique.get(id);
+        return {
+          user_id: id,
+          fan_alias: member?.fan_alias ?? null,
+          fan_avatar_url: member?.fan_avatar_url ?? null,
+          friendship_id: friendship?.friendship_id ?? "",
+          mutual: friendship?.mutual ?? false,
+        };
+      });
+    }
+
+    const postIds = (postIdsRes.data ?? []).map((post: any) => post.id);
+    let total = 0;
+    if (postIds.length) {
+      const { count } = await supabase
+        .from("forum_post_reactions")
+        .select("post_id", { count: "exact", head: true })
+        .in("post_id", postIds)
+        .neq("user_id", userId);
+      total = count ?? 0;
+    }
+    if (cancelled) return;
+    setFriendCards(cards);
+    setS({
+      topics: topicsRes.count ?? 0,
+      posts: postsRes.count ?? 0,
+      friends: unique.size,
+      mutualFriends: [...unique.values()].filter((friend) => friend.mutual).length,
+      reactionsReceived: total,
+      friendsHidden,
+      isSelf,
+    });
+  };
+
   useEffect(() => {
     let cancelled = false;
-    (async () => {
-      const { data: me } = await supabase.auth.getUser();
-      const isSelf = me?.user?.id === userId;
-      const [topicsRes, postsRes, friendsRes, postIdsRes, hideRes] = await Promise.all([
-        supabase.from("forum_topics").select("id", { count: "exact", head: true }).eq("author_id", userId),
-        supabase.from("forum_posts").select("id", { count: "exact", head: true }).eq("author_id", userId),
-        supabase.from("fan_zone_friendships").select("id", { count: "exact", head: true }).eq("status", "accepted").eq("requester_id", userId),
-        supabase.from("forum_posts").select("id").eq("author_id", userId),
-        supabase.rpc("fan_zone_hide_friends", { _ids: [userId] }),
-      ]);
-      const hiddenRow = ((hideRes.data as any[]) ?? [])[0];
-      const friendsHidden = !isSelf && !!hiddenRow?.hide_friends;
-      const postIds = (postIdsRes.data ?? []).map((p: any) => p.id);
-      let total = 0;
-      if (postIds.length) {
-        const { count } = await supabase
-          .from("forum_post_reactions")
-          .select("post_id", { count: "exact", head: true })
-          .in("post_id", postIds)
-          .neq("user_id", userId);
-        total = count ?? 0;
-      }
-      if (cancelled) return;
-      setS({
-        topics: topicsRes.count ?? 0,
-        posts: postsRes.count ?? 0,
-        friends: friendsRes.count ?? 0,
-        reactionsReceived: total,
-        friendsHidden,
-      });
-    })();
-    return () => { cancelled = true; };
+    void load(cancelled);
+    const channel = supabase
+      .channel(`fan-stats-friends:${userId}:${Math.random().toString(36).slice(2)}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "fan_zone_friendships" }, () => void load())
+      .subscribe();
+    return () => {
+      cancelled = true;
+      supabase.removeChannel(channel);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
+
+  const removeFriend = async (friendshipId: string) => {
+    if (!friendshipId) return;
+    setBusy(friendshipId);
+    const { error } = await supabase.from("fan_zone_friendships").delete().eq("id", friendshipId);
+    setBusy(null);
+    if (error) return toast.error("Couldn't remove friend", { description: error.message });
+    toast.success("Friend removed");
+    await load();
+  };
 
   const Item = ({ icon: Icon, label, value }: { icon: any; label: string; value: number | string }) => (
     <div className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5">
@@ -52,6 +140,21 @@ export function FanStatsBox({ userId }: { userId: string }) {
       <div className="font-display text-lg font-black tabular-nums">{value}</div>
     </div>
   );
+
+  const FriendItem = ({ label, value, list }: { label: string; value: number; list: "all" | "mutual" }) => (
+    <Button
+      type="button"
+      variant="ghost"
+      onClick={() => setOpenList(list)}
+      className="h-auto w-full justify-start gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-white hover:bg-white/10 hover:text-white"
+    >
+      <Users className="size-4 shrink-0 text-[#E11B22]" />
+      <span className="flex-1 text-left text-xs font-normal text-white/70">{label}</span>
+      <span className="font-display text-lg font-black tabular-nums">{value}</span>
+    </Button>
+  );
+
+  const visibleCards = openList === "mutual" ? friendCards.filter((friend) => friend.mutual) : friendCards;
 
   return (
     <div className="rounded-2xl border border-[#E11B22]/40 bg-black/55 backdrop-blur-md shadow-2xl text-white p-5">
@@ -62,10 +165,57 @@ export function FanStatsBox({ userId }: { userId: string }) {
         <div className="space-y-2">
           <Item icon={FileText} label="Topics started" value={s.topics} />
           <Item icon={MessageSquare} label="Forum posts" value={s.posts} />
-          {!s.friendsHidden && <Item icon={Users} label="Friends" value={s.friends} />}
+          {!s.friendsHidden && s.isSelf ? (
+            <>
+              <FriendItem label="Friends" value={s.friends} list="all" />
+              <FriendItem label="Mutual friends" value={s.mutualFriends} list="mutual" />
+            </>
+          ) : !s.friendsHidden ? (
+            <Item icon={Users} label="Friends" value={s.friends} />
+          ) : null}
           <Item icon={ThumbsUp} label="Reactions received" value={s.reactionsReceived} />
         </div>
       )}
+
+      <Dialog open={openList !== null} onOpenChange={(open) => !open && setOpenList(null)}>
+        <DialogContent className="boro-theme h-[92vh] w-[96vw] max-w-none gap-0 overflow-hidden border-[#E11B22]/50 bg-[#07070b]/98 p-0 text-white">
+          <DialogHeader className="border-b border-white/10 bg-gradient-to-r from-[#E11B22]/30 to-transparent px-5 py-4 text-left sm:px-7">
+            <DialogTitle className="font-display text-2xl font-black">
+              {openList === "mutual" ? "Mutual friends" : "Friends"} ({visibleCards.length})
+            </DialogTitle>
+            <DialogDescription className="text-sm text-white/70">
+              {openList === "mutual" ? "Fans who have both added each other." : "Everyone connected to this profile."}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="h-[calc(92vh-6.5rem)] overflow-y-auto px-5 py-5 sm:px-7">
+            {visibleCards.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-white/20 p-10 text-center text-sm text-white/60">
+                No {openList === "mutual" ? "mutual friendships" : "friends"} yet.
+              </div>
+            ) : (
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                {visibleCards.map((friend) => (
+                  <div key={friend.user_id} className="flex items-start gap-3 rounded-xl border border-white/15 bg-white/[0.06] p-4">
+                    <img src={friend.fan_avatar_url || boroDefaultAvatar} alt="" className="size-14 shrink-0 rounded-full object-cover ring-2 ring-white/15" />
+                    <div className="min-w-0 flex-1">
+                      <Link to="/fanzone/u/$userId" params={{ userId: friend.user_id }} className="block break-words text-sm font-semibold hover:underline">
+                        {friend.fan_alias || "Boro fan"}
+                      </Link>
+                      <div className="mt-1 text-[11px] font-semibold uppercase text-white/65">
+                        {friend.mutual ? "Mutual friends" : "One-way friend"}
+                      </div>
+                      <Button size="sm" variant="outline" disabled={busy === friend.friendship_id} onClick={() => void removeFriend(friend.friendship_id)} className="mt-3 bg-white/10 text-white">
+                        {busy === friend.friendship_id ? <Loader2 className="mr-1 size-4 animate-spin" /> : <UserMinus className="mr-1 size-4" />}
+                        Remove
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
