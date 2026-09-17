@@ -25,9 +25,12 @@ type Member = { user_id: string; fan_alias: string | null; fan_avatar_url: strin
 export function FanZoneFriendRequestsBox({
   userId,
   compact = false,
+  fullBleed = false,
 }: {
   userId: string;
   compact?: boolean;
+  /** Full-bleed edge-to-edge on phones (rounded card returns from sm up). */
+  fullBleed?: boolean;
 }) {
   const [rows, setRows] = useState<RequestRow[] | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
@@ -138,7 +141,13 @@ export function FanZoneFriendRequestsBox({
   };
 
   return (
-    <div className="rounded-2xl border border-[#E11B22]/40 bg-black/55 backdrop-blur-md shadow-2xl text-white p-5">
+    <div
+      className={
+        fullBleed
+          ? "min-h-[calc(100vh-10rem)] border-y border-[#E11B22]/40 bg-black/55 p-4 text-white shadow-2xl backdrop-blur-md sm:min-h-0 sm:rounded-2xl sm:border sm:p-5"
+          : "rounded-2xl border border-[#E11B22]/40 bg-black/55 backdrop-blur-md shadow-2xl text-white p-5"
+      }
+    >
       <h2 className="font-display text-lg font-bold mb-1 flex items-center gap-2">
         <UserPlus className="size-4 text-[#E11B22]" />
         Friend requests
@@ -158,7 +167,7 @@ export function FanZoneFriendRequestsBox({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search fans by name…"
-          className="border-white/20 bg-white/10 pl-9 text-white placeholder:text-white/45"
+          className="h-11 border-white/20 bg-white/10 pl-9 text-white placeholder:text-white/45 sm:h-9"
         />
       </div>
       {search.trim() && (
@@ -176,7 +185,7 @@ export function FanZoneFriendRequestsBox({
                   size="sm"
                   disabled={busy === m.user_id}
                   onClick={() => void send(m.user_id, m.fan_alias || "Boro fan")}
-                  className="border-0 bg-[#E11B22] text-white hover:bg-[#c11419]"
+                  className="h-10 px-3 border-0 bg-[#E11B22] text-white hover:bg-[#c11419] sm:h-8"
                 >
                   {busy === m.user_id ? <Loader2 className="size-4 animate-spin" /> : <UserPlus className="size-4" />}
                 </Button>
@@ -203,7 +212,7 @@ export function FanZoneFriendRequestsBox({
                   size="sm"
                   disabled={busy === r.id}
                   onClick={() => void accept(r.id)}
-                  className="border-0 bg-emerald-600 text-white hover:bg-emerald-500"
+                  className="h-10 px-3 border-0 bg-emerald-600 text-white hover:bg-emerald-500 sm:h-8"
                 >
                   {busy === r.id ? <Loader2 className="size-4 animate-spin" /> : <UserCheck className="size-4" />}
                 </Button>
@@ -212,7 +221,7 @@ export function FanZoneFriendRequestsBox({
                   variant="outline"
                   disabled={busy === r.id}
                   onClick={() => void drop(r.id, "Friend request declined")}
-                  className="border-white/30 bg-white/10 text-white hover:bg-white/20"
+                  className="h-10 px-3 border-white/30 bg-white/10 text-white hover:bg-white/20 sm:h-8"
                 >
                   <X className="size-4" />
                 </Button>
@@ -231,7 +240,7 @@ export function FanZoneFriendRequestsBox({
                   variant="outline"
                   disabled={busy === r.id}
                   onClick={() => void drop(r.id, "Friend request cancelled")}
-                  className="border-white/30 bg-white/10 text-white hover:bg-white/20"
+                  className="h-10 px-4 border-white/30 bg-white/10 text-white hover:bg-white/20 sm:h-8"
                 >
                   {busy === r.id ? <Loader2 className="size-4 animate-spin" /> : "Cancel"}
                 </Button>
