@@ -107,7 +107,7 @@ export function FanZoneFriendRequestsListener() {
         .eq("id", id)
         .eq("addressee_id", user?.id ?? "");
       if (error) toast.error(error.message);
-      else toast.success(`You and ${current.fan_alias} are now Fan Zone friends`);
+      else toast.success(`You accepted ${current.fan_alias}'s friend request`);
     } else {
       const { error } = await supabase.from("fan_zone_friendships").delete().eq("id", id);
       if (error) toast.error(error.message);
