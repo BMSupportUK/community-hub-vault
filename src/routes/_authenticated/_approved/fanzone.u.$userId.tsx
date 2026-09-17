@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import bgAsset from "@/assets/boro-fan-zone-profile-bg.jpg.asset.json";
 import { FanStatsBox, FanReputationBox } from "@/components/app/FanZoneStatsBoxes";
 import { FanZoneProfileFeedTabs } from "@/components/app/FanZoneProfileFeeds";
+import { FanZoneFriendsPanel } from "@/components/app/FanZoneFriendsPanel";
 import profileMatchHeader from "@/assets/boro-profile-match-header.jpg";
 
 import { FanZoneMuteDialog } from "@/components/app/FanZoneMuteDialog";
@@ -362,6 +363,7 @@ function FanProfilePage() {
         <aside className="space-y-4 lg:sticky lg:top-6 self-start">
           <FanStatsBox userId={userId} />
           <FanReputationBox userId={userId} />
+          {isSelf && <FanZoneFriendsPanel userId={userId} />}
         </aside>
         </div>
       )}
