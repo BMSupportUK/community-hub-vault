@@ -7,7 +7,7 @@
  * While either is empty, a placeholder panel is rendered instead.
  */
 export const ADSENSE_CLIENT_ID = "ca-pub-7730881064868843";
-export const ADSENSE_TOPIC_SLOT = "";
+export const ADSENSE_TOPIC_SLOT = "3497999055";
 
 export const ADSENSE_ENABLED =
   ADSENSE_CLIENT_ID.length > 0 && ADSENSE_TOPIC_SLOT.length > 0;
