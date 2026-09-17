@@ -25,9 +25,12 @@ type Member = { user_id: string; fan_alias: string | null; fan_avatar_url: strin
 export function FanZoneFriendRequestsBox({
   userId,
   compact = false,
+  fullBleed = false,
 }: {
   userId: string;
   compact?: boolean;
+  /** Full-bleed edge-to-edge on phones (rounded card returns from sm up). */
+  fullBleed?: boolean;
 }) {
   const [rows, setRows] = useState<RequestRow[] | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
