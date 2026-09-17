@@ -99,6 +99,7 @@ import { Route as FanZoneBoardTopicRouteImport } from './routes/fan-zone.$board.
 import { Route as FanZoneUUserIdRouteImport } from './routes/fan-zone.u.$userId'
 import { Route as LovableEmailEventsRouteImport } from './routes/lovable/email/events'
 import { Route as AuthenticatedApprovedFanzoneBlocksRouteImport } from './routes/_authenticated/_approved/fanzone.blocks'
+import { Route as AuthenticatedApprovedFanzoneFriendRequestsRouteImport } from './routes/_authenticated/_approved/fanzone.friend-requests'
 import { Route as AuthenticatedApprovedFanzoneMessagesRouteImport } from './routes/_authenticated/_approved/fanzone.messages'
 import { Route as AuthenticatedApprovedFanzoneNewPostsRouteImport } from './routes/_authenticated/_approved/fanzone.new-posts'
 import { Route as AuthenticatedApprovedFanzoneProfileRouteImport } from './routes/_authenticated/_approved/fanzone.profile'
@@ -661,6 +662,12 @@ const AuthenticatedApprovedFanzoneBlocksRoute =
     path: '/fanzone/blocks',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
+const AuthenticatedApprovedFanzoneFriendRequestsRoute =
+  AuthenticatedApprovedFanzoneFriendRequestsRouteImport.update({
+    id: '/fanzone/friend-requests',
+    path: '/fanzone/friend-requests',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
 const AuthenticatedApprovedFanzoneMessagesRoute =
   AuthenticatedApprovedFanzoneMessagesRouteImport.update({
     id: '/fanzone/messages',
@@ -1029,6 +1036,7 @@ export interface FileRoutesByFullPath {
   '/lovable/email/events': typeof LovableEmailEventsRoute
   '/fan-zone/$board/': typeof FanZoneBoardIndexRoute
   '/fanzone/blocks': typeof AuthenticatedApprovedFanzoneBlocksRoute
+  '/fanzone/friend-requests': typeof AuthenticatedApprovedFanzoneFriendRequestsRoute
   '/fanzone/messages': typeof AuthenticatedApprovedFanzoneMessagesRouteWithChildren
   '/fanzone/new-posts': typeof AuthenticatedApprovedFanzoneNewPostsRoute
   '/fanzone/profile': typeof AuthenticatedApprovedFanzoneProfileRoute
@@ -1163,6 +1171,7 @@ export interface FileRoutesByTo {
   '/lovable/email/events': typeof LovableEmailEventsRoute
   '/fan-zone/$board': typeof FanZoneBoardIndexRoute
   '/fanzone/blocks': typeof AuthenticatedApprovedFanzoneBlocksRoute
+  '/fanzone/friend-requests': typeof AuthenticatedApprovedFanzoneFriendRequestsRoute
   '/fanzone/messages': typeof AuthenticatedApprovedFanzoneMessagesRouteWithChildren
   '/fanzone/new-posts': typeof AuthenticatedApprovedFanzoneNewPostsRoute
   '/fanzone/profile': typeof AuthenticatedApprovedFanzoneProfileRoute
@@ -1303,6 +1312,7 @@ export interface FileRoutesById {
   '/lovable/email/events': typeof LovableEmailEventsRoute
   '/fan-zone/$board/': typeof FanZoneBoardIndexRoute
   '/_authenticated/_approved/fanzone/blocks': typeof AuthenticatedApprovedFanzoneBlocksRoute
+  '/_authenticated/_approved/fanzone/friend-requests': typeof AuthenticatedApprovedFanzoneFriendRequestsRoute
   '/_authenticated/_approved/fanzone/messages': typeof AuthenticatedApprovedFanzoneMessagesRouteWithChildren
   '/_authenticated/_approved/fanzone/new-posts': typeof AuthenticatedApprovedFanzoneNewPostsRoute
   '/_authenticated/_approved/fanzone/profile': typeof AuthenticatedApprovedFanzoneProfileRoute
@@ -1442,6 +1452,7 @@ export interface FileRouteTypes {
     | '/lovable/email/events'
     | '/fan-zone/$board/'
     | '/fanzone/blocks'
+    | '/fanzone/friend-requests'
     | '/fanzone/messages'
     | '/fanzone/new-posts'
     | '/fanzone/profile'
@@ -1576,6 +1587,7 @@ export interface FileRouteTypes {
     | '/lovable/email/events'
     | '/fan-zone/$board'
     | '/fanzone/blocks'
+    | '/fanzone/friend-requests'
     | '/fanzone/messages'
     | '/fanzone/new-posts'
     | '/fanzone/profile'
@@ -1715,6 +1727,7 @@ export interface FileRouteTypes {
     | '/lovable/email/events'
     | '/fan-zone/$board/'
     | '/_authenticated/_approved/fanzone/blocks'
+    | '/_authenticated/_approved/fanzone/friend-requests'
     | '/_authenticated/_approved/fanzone/messages'
     | '/_authenticated/_approved/fanzone/new-posts'
     | '/_authenticated/_approved/fanzone/profile'
@@ -2456,6 +2469,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedFanzoneBlocksRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
+    '/_authenticated/_approved/fanzone/friend-requests': {
+      id: '/_authenticated/_approved/fanzone/friend-requests'
+      path: '/fanzone/friend-requests'
+      fullPath: '/fanzone/friend-requests'
+      preLoaderRoute: typeof AuthenticatedApprovedFanzoneFriendRequestsRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
     '/_authenticated/_approved/fanzone/messages': {
       id: '/_authenticated/_approved/fanzone/messages'
       path: '/fanzone/messages'
@@ -2930,6 +2950,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedVpnRoute: typeof AuthenticatedApprovedVpnRoute
   AuthenticatedApprovedWhatToWatchRoute: typeof AuthenticatedApprovedWhatToWatchRoute
   AuthenticatedApprovedFanzoneBlocksRoute: typeof AuthenticatedApprovedFanzoneBlocksRoute
+  AuthenticatedApprovedFanzoneFriendRequestsRoute: typeof AuthenticatedApprovedFanzoneFriendRequestsRoute
   AuthenticatedApprovedFanzoneMessagesRoute: typeof AuthenticatedApprovedFanzoneMessagesRouteWithChildren
   AuthenticatedApprovedFanzoneNewPostsRoute: typeof AuthenticatedApprovedFanzoneNewPostsRoute
   AuthenticatedApprovedFanzoneProfileRoute: typeof AuthenticatedApprovedFanzoneProfileRoute
@@ -3028,6 +3049,8 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
   AuthenticatedApprovedWhatToWatchRoute: AuthenticatedApprovedWhatToWatchRoute,
   AuthenticatedApprovedFanzoneBlocksRoute:
     AuthenticatedApprovedFanzoneBlocksRoute,
+  AuthenticatedApprovedFanzoneFriendRequestsRoute:
+    AuthenticatedApprovedFanzoneFriendRequestsRoute,
   AuthenticatedApprovedFanzoneMessagesRoute:
     AuthenticatedApprovedFanzoneMessagesRouteWithChildren,
   AuthenticatedApprovedFanzoneNewPostsRoute:
