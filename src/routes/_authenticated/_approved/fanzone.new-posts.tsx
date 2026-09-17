@@ -31,14 +31,56 @@ function NewForumContentPage() {
   const [posts, setPosts] = useState<ForumFeedPost[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [since, setSince] = useState<string | null>(null);
+  const [readIds, setReadIds] = useState<Set<string>>(new Set());
 
+  // Load the "last read" marker so brand new posts can flash, and remember
+  // what has already been opened.
   useEffect(() => {
     if (!user?.id) return;
-    void supabase.from("forum_new_content_reads").upsert({
-      user_id: user.id,
-      last_viewed_at: new Date().toISOString(),
-    });
+    let cancelled = false;
+    void (async () => {
+      const { data } = await supabase
+        .from("forum_new_content_reads")
+        .select("last_viewed_at")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (cancelled) return;
+      setSince(data?.last_viewed_at ?? null);
+      setReadIds(getReadNewContentIds(user.id));
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [user?.id]);
+
+  const openPost = (post: ForumFeedPost) => {
+    if (!user?.id) return;
+    setReadIds((prev) => new Set(prev).add(post.id));
+    markNewContentRead(user.id, [post.id]);
+  };
+
+  const markAllRead = () => {
+    if (!user?.id) return;
+    const ids = posts.map((p) => p.id);
+    setReadIds((prev) => {
+      const next = new Set(prev);
+      ids.forEach((id) => next.add(id));
+      return next;
+    });
+    markNewContentRead(user.id, ids);
+    void supabase
+      .from("forum_new_content_reads")
+      .upsert({ user_id: user.id, last_viewed_at: new Date().toISOString() })
+      .then(() => {
+        setSince(new Date().toISOString());
+        window.dispatchEvent(new CustomEvent(NEW_CONTENT_READ_EVENT));
+      });
+  };
+
+  const unreadIds = new Set(
+    posts.filter((p) => since && p.created_at > since && !readIds.has(p.id)).map((p) => p.id),
+  );
 
   useEffect(() => {
     let cancelled = false;
