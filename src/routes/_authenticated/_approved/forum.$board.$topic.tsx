@@ -23,6 +23,7 @@ import { toast } from "sonner";
 import { RotatingAffiliateBanner } from "@/components/app/RotatingAffiliateBanner";
 import { ForumPoll, AddPollToTopic } from "@/components/app/ForumPoll";
 import { BlockUserButton } from "@/components/app/BlockUserButton";
+import { FanZoneAddFriendButton } from "@/components/app/FanZoneAddFriendButton";
 import { censorText, useProfanityWords } from "@/lib/profanity";
 
 export const Route = createFileRoute("/_authenticated/_approved/forum/$board/$topic")({
@@ -163,6 +164,9 @@ function TopicPostArticleComponent({
           >
             {name}
           </Link>
+          {canBlock && currentUserId && (
+            <FanZoneAddFriendButton viewerId={currentUserId} targetId={post.author_id} name={name} />
+          )}
           {canBlock && (
             <BlockUserButton
               targetId={post.author_id}
