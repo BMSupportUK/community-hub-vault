@@ -100,7 +100,6 @@ export function FanZoneFriendsPanel({ userId }: { userId: string }) {
       .eq("addressee_id", userId);
     setBusy(null);
     if (error) return toast.error("Couldn't accept", { description: error.message });
-    toast.success("Friend request accepted");
     void load();
   };
 
