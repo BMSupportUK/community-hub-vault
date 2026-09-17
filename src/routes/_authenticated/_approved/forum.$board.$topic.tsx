@@ -21,6 +21,7 @@ import { useFanZoneMute } from "@/hooks/use-fan-zone-mute";
 import { FanZoneMutedScreen } from "@/components/app/FanZoneMutedScreen";
 import { toast } from "sonner";
 import { RotatingAffiliateBanner } from "@/components/app/RotatingAffiliateBanner";
+import { AdSenseSlot } from "@/components/app/AdSenseSlot";
 import { ForumPoll, AddPollToTopic } from "@/components/app/ForumPoll";
 import { BlockUserButton } from "@/components/app/BlockUserButton";
 import { FanZoneAddFriendButton } from "@/components/app/FanZoneAddFriendButton";
@@ -1136,7 +1137,12 @@ function TopicPage() {
             </TabsList>
 
             <TabsContent value="posts" className="space-y-3 mt-3">
-              {opPost ? renderPost(opPost, 0) : (
+              {opPost ? (
+                <>
+                  {renderPost(opPost, 0)}
+                  <AdSenseSlot />
+                </>
+              ) : (
                 <div className="text-sm text-muted-foreground text-center py-6">No original post.</div>
               )}
             </TabsContent>
@@ -1151,11 +1157,15 @@ function TopicPage() {
 
 
             <TabsContent id="forum-replies-top" value="reply" className="space-y-3 mt-3 scroll-mt-4">
-              {pinnedReplies.map((p) => renderPost(p, 0))}
-              {pageReplies.length === 0 && pinnedReplies.length === 0 ? (
+              {pinnedReplies.length === 0 && pageReplies.length === 0 ? (
                 <div className="text-sm text-muted-foreground text-center py-6">No replies yet.</div>
               ) : (
-                pageReplies.map((p, idx) => renderPost(p, start + idx + 1))
+                <>
+                  {pinnedReplies.slice(0, 1).map((p) => renderPost(p, 0))}
+                  <AdSenseSlot />
+                  {pinnedReplies.slice(1).map((p) => renderPost(p, 0))}
+                  {pageReplies.map((p, idx) => renderPost(p, start + idx + 1))}
+                </>
               )}
 
               {totalPages > 1 && (
