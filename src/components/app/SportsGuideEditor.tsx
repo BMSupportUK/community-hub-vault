@@ -152,17 +152,11 @@ function normalizeSportsGuidePaste(text: string): string {
     if (m && m[1] && m[2]) {
       if (lastWasEventBlock) push("");
       push(m[1].trim().replace(/^(\d{1,2})\.(\d{2}\b)/, "$1:$2"));
-      // Try to split "Event - Channels" or "Event | Channels".
+      // Keep the complete text after the time as the event name. Punctuation
+      // such as colons, dashes and pipes is valid inside titles; channels are
+      // only recognised when they are supplied on their own following line.
       const rest = m[2].trim();
-      const splitIdx = rest.search(/\s+[-–—]\s+|\s*:\s+/);
-      if (splitIdx >= 0) {
-        const evt = rest.slice(0, splitIdx).trim();
-        const ch = rest.slice(splitIdx).replace(/^[\s\-–—:]+/, "").trim();
-        if (evt) push(evt);
-        if (ch) push(ch);
-      } else {
-        push(rest);
-      }
+      push(rest);
       lastWasEventBlock = true;
       continue;
     }

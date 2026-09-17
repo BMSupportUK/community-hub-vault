@@ -914,20 +914,11 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
 
     const nameCell = document.createElement("div");
     nameCell.className = "min-w-0 flex-1";
-    // Detect a channel list (multiple channels separated by · • |) on the
-    // left side of a " : " or " - " separator. The event title always
-    // renders on a single line; channels go on a second line.
+    // Preserve the complete event name. Punctuation such as colons, dashes,
+    // bullets and pipes can be part of a legitimate title and must never be
+    // used on its own to infer that part of the title is a channel.
     let channel = "";
-    let titleText = eventName;
-    const splitMatch = eventName.match(/^\s*(.+?)\s*[:\-–—]\s+(.+)$/);
-    if (splitMatch) {
-      const left = splitMatch[1].trim();
-      const channels = left.split(/\s*[·•|]\s*/).filter(Boolean);
-      if (channels.length > 1) {
-        channel = channels.join(" | ");
-        titleText = splitMatch[2].trim();
-      }
-    }
+    const titleText = eventName;
     if (extraChannelLines.length) {
       const existing = channel ? channel.split(/\s*\|\s*/).filter(Boolean) : [];
       channel = [...existing, ...extraChannelLines].join(" | ");
