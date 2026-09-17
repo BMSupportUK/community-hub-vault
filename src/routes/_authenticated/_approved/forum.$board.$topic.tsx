@@ -164,7 +164,7 @@ function TopicPostArticleComponent({
           >
             {name}
           </Link>
-          {canBlock && (
+          {canBlock && currentUserId && (
             <FanZoneAddFriendButton viewerId={currentUserId} targetId={post.author_id} name={name} />
           )}
           {canBlock && (
