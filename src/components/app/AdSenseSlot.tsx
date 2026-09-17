@@ -27,24 +27,16 @@ function Placeholder({ label }: { label: string }) {
 /**
  * Renders a Google AdSense display unit inside a forum thread.
  * - Before the AdSense account/slot is configured, everyone sees a subtle placeholder.
- * - Staff roles always see the placeholder (keeps moderation views clean and avoids invalid clicks).
- * - Everyone else gets the live ad unit once AdSense is enabled.
+ * - Everyone (staff included) gets the live ad unit once AdSense is enabled.
  */
 function AdSenseSlotComponent() {
-  const { hasAny } = useAuth();
-  const isStaff = hasAny(STAFF_ROLES);
-
   useEffect(() => {
-    if (isStaff || !ADSENSE_ENABLED) return;
+    if (!ADSENSE_ENABLED) return;
     ensureAdSenseScript();
     // Defer the push so the <ins> element is in the DOM first.
     const id = window.setTimeout(pushAd, 50);
     return () => window.clearTimeout(id);
-  }, [isStaff]);
-
-  if (isStaff) {
-    return <Placeholder label="Ad slot — hidden for staff" />;
-  }
+  }, []);
 
   if (!ADSENSE_ENABLED) {
     return <Placeholder label="Sponsored content appears here" />;
