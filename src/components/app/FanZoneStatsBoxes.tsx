@@ -42,13 +42,15 @@ export function FanStatsBox({ userId }: { userId: string }) {
   const load = async (cancelled = false) => {
     const { data: me } = await supabase.auth.getUser();
     const isSelf = me?.user?.id === userId;
-    const [topicsRes, postsRes, friendsRes, postIdsRes, hideRes] = await Promise.all([
+    const [topicsRes, postsRes, friendsRes, postIdsRes, hideRes, aliasRes] = await Promise.all([
       supabase.from("forum_topics").select("id", { count: "exact", head: true }).eq("author_id", userId),
       supabase.from("forum_posts").select("id", { count: "exact", head: true }).eq("author_id", userId),
       supabase.rpc("fan_zone_friend_list", { _target_user_id: userId }),
       supabase.from("forum_posts").select("id").eq("author_id", userId),
       supabase.rpc("fan_zone_hide_friends", { _ids: [userId] }),
+      supabase.rpc("fan_zone_aliases", { _ids: [userId] }),
     ]);
+    const ownerAlias = ((aliasRes.data as any[]) ?? [])[0]?.fan_alias ?? null;
     const hiddenRow = ((hideRes.data as any[]) ?? [])[0];
     const friendsHidden = !isSelf && !!hiddenRow?.hide_friends;
     const accepted = (friendsRes.data ?? []) as Array<{

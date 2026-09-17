@@ -149,7 +149,7 @@ export function FanZoneFriendsPanel({ userId }: { userId: string }) {
                             : "bg-white/10 text-white/75 ring-white/20"
                         }`}
                       >
-                        {r.mutual ? "Mutual friends" : "One-way friend"}
+                        {r.mutual ? "Mutual friends" : `Added by ${ownerAlias || "Boro fan"}`}
                       </span>
                       <div className="mt-3">
                         <Button
