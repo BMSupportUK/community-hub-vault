@@ -204,10 +204,12 @@ export function FanStatsBox({ userId }: { userId: string }) {
                       <div className="mt-1 text-[11px] font-semibold uppercase text-white/65">
                         {friend.mutual ? "Mutual friends" : "One-way friend"}
                       </div>
-                      <Button size="sm" variant="outline" disabled={busy === friend.friendship_id} onClick={() => void removeFriend(friend.friendship_id)} className="mt-3 bg-white/10 text-white">
-                        {busy === friend.friendship_id ? <Loader2 className="mr-1 size-4 animate-spin" /> : <UserMinus className="mr-1 size-4" />}
-                        Remove
-                      </Button>
+                      {s?.isSelf ? (
+                        <Button size="sm" variant="outline" disabled={busy === friend.friendship_id} onClick={() => void removeFriend(friend.friendship_id)} className="mt-3 bg-white/10 text-white">
+                          {busy === friend.friendship_id ? <Loader2 className="mr-1 size-4 animate-spin" /> : <UserMinus className="mr-1 size-4" />}
+                          Remove
+                        </Button>
+                      ) : null}
                     </div>
                   </div>
                 ))}
