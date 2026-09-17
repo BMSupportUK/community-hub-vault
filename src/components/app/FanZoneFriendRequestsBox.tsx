@@ -141,7 +141,13 @@ export function FanZoneFriendRequestsBox({
   };
 
   return (
-    <div className="rounded-2xl border border-[#E11B22]/40 bg-black/55 backdrop-blur-md shadow-2xl text-white p-5">
+    <div
+      className={
+        fullBleed
+          ? "min-h-[calc(100vh-10rem)] border-y border-[#E11B22]/40 bg-black/55 p-4 text-white shadow-2xl backdrop-blur-md sm:min-h-0 sm:rounded-2xl sm:border sm:p-5"
+          : "rounded-2xl border border-[#E11B22]/40 bg-black/55 backdrop-blur-md shadow-2xl text-white p-5"
+      }
+    >
       <h2 className="font-display text-lg font-bold mb-1 flex items-center gap-2">
         <UserPlus className="size-4 text-[#E11B22]" />
         Friend requests
