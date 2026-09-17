@@ -30,18 +30,25 @@ export function FanZoneFriendsPanel({ userId }: { userId: string }) {
   const [openList, setOpenList] = useState<"all" | "mutual" | null>(null);
 
   const load = async () => {
-    const { data: all } = await supabase
-      .from("fan_zone_friendships")
-      .select("id, requester_id, addressee_id, status")
-      .or(`requester_id.eq.${userId},addressee_id.eq.${userId}`);
+    const [{ data: all }, { data: friendList }] = await Promise.all([
+      supabase
+        .from("fan_zone_friendships")
+        .select("id, requester_id, addressee_id, status")
+        .or(`requester_id.eq.${userId},addressee_id.eq.${userId}`),
+      supabase.rpc("fan_zone_friend_list", { _target_user_id: userId }),
+    ]);
     const rowsAll = (all ?? []) as any[];
-    const accepted = rowsAll.filter((f) => f.status === "accepted");
     const pending = rowsAll.filter((f) => f.status !== "accepted");
-    const ids = Array.from(
-      new Set(rowsAll.map((f: any) => (f.requester_id === userId ? f.addressee_id : f.requester_id))),
-    );
+    const accepted = (friendList ?? []) as Array<{
+      friendship_id: string;
+      user_id: string;
+      fan_alias: string | null;
+      fan_avatar_url: string | null;
+      mutual: boolean;
+    }>;
+    const ids = Array.from(new Set(pending.map((f: any) => (f.requester_id === userId ? f.addressee_id : f.requester_id))));
     if (ids.length === 0) {
-      setRows([]);
+      setRows(accepted);
       setRequests([]);
       return;
     }
@@ -58,18 +65,7 @@ export function FanZoneFriendsPanel({ userId }: { userId: string }) {
       };
     };
 
-    // Accepted = both fans agreed, so it is a mutual match regardless of who
-    // sent the request first. Pending requests stay in the requests list.
-    const seen = new Set<string>();
-    const list: AcceptedFriend[] = [];
-    for (const f of accepted) {
-      const shaped = shape(f);
-      if (seen.has(shaped.user_id)) continue;
-      seen.add(shaped.user_id);
-      list.push({ ...shaped, mutual: true });
-    }
-
-    setRows(list);
+    setRows(accepted);
     setRequests(
       pending.map((f: any) => ({
         ...shape(f),

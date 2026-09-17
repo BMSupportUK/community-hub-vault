@@ -182,7 +182,6 @@ function FanProfilePage() {
       .eq("addressee_id", user?.id ?? "");
     setIncomingBusy(false);
     if (error) return toast.error(error.message);
-    toast.success("Friend request accepted");
     void load();
   };
 

@@ -336,15 +336,15 @@ function PrivacyPanel({ userId }: { userId: string }) {
       .from("fan_zone_friendships")
       .select("id, requester_id, addressee_id, status")
       .eq("status", "accepted")
-      .or(`requester_id.eq.${userId},addressee_id.eq.${userId}`);
+      .eq("requester_id", userId);
     const rowsAll = (all ?? []) as any[];
-    const ids = Array.from(new Set(rowsAll.map((f) => (f.requester_id === userId ? f.addressee_id : f.requester_id))));
+    const ids = Array.from(new Set(rowsAll.map((f) => f.addressee_id)));
     if (ids.length === 0) return setFriends([]);
     const { data: members } = await supabase.rpc("fan_zone_aliases", { _ids: ids });
     const byId = new Map(((members as any[]) ?? []).map((m: any) => [m.user_id, m]));
     setFriends(
       rowsAll.map((f) => {
-        const otherId = f.requester_id === userId ? f.addressee_id : f.requester_id;
+        const otherId = f.addressee_id;
         const m = byId.get(otherId) as any;
         return {
           user_id: otherId,

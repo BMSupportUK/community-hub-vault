@@ -18,10 +18,15 @@ export function FanZoneAddFriendButton({ viewerId, targetId, name, className }: 
       .or(
         `and(requester_id.eq.${viewerId},addressee_id.eq.${targetId}),and(requester_id.eq.${targetId},addressee_id.eq.${viewerId})`,
       );
-    const row = (data ?? [])[0] as { status: string; requester_id: string } | undefined;
-    if (!row) return setState("none");
-    if (row.status === "accepted") return setState("accepted");
-    setState(row.requester_id === viewerId ? "outgoing" : "incoming");
+    const rows = (data ?? []) as Array<{ status: string; requester_id: string }>;
+    const mine = rows.find((row) => row.requester_id === viewerId);
+    if (mine?.status === "accepted") return setState("accepted");
+    if (mine) return setState("outgoing");
+    const theirs = rows.find((row) => row.requester_id === targetId);
+    if (theirs?.status === "pending") return setState("incoming");
+    // Their accepted request is only their one-way friendship. The viewer can
+    // still add them independently, which creates a true mutual friendship.
+    setState("none");
   }, [viewerId, targetId]);
 
   useEffect(() => {
