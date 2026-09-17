@@ -114,7 +114,6 @@ export function FanStatsBox({ userId }: { userId: string }) {
       .channel(`fan-stats-friends:${userId}:${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "fan_zone_friendships" }, () => void load())
       .subscribe();
-    return () => { cancelled = true; };
     return () => {
       cancelled = true;
       supabase.removeChannel(channel);
