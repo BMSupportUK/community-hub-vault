@@ -29,6 +29,7 @@ type Stats = {
   mutualFriends: number;
   reactionsReceived: number;
   friendsHidden: boolean;
+  isSelf: boolean;
 };
 
 export function FanStatsBox({ userId }: { userId: string }) {
@@ -104,6 +105,7 @@ export function FanStatsBox({ userId }: { userId: string }) {
       mutualFriends: [...unique.values()].filter((friend) => friend.mutual).length,
       reactionsReceived: total,
       friendsHidden,
+      isSelf,
     });
   };
 
@@ -163,7 +165,7 @@ export function FanStatsBox({ userId }: { userId: string }) {
         <div className="space-y-2">
           <Item icon={FileText} label="Topics started" value={s.topics} />
           <Item icon={MessageSquare} label="Forum posts" value={s.posts} />
-          {!s.friendsHidden && friendCards.length > 0 ? (
+          {!s.friendsHidden && s.isSelf ? (
             <>
               <FriendItem label="Friends" value={s.friends} list="all" />
               <FriendItem label="Mutual friends" value={s.mutualFriends} list="mutual" />
