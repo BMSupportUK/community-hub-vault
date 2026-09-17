@@ -188,6 +188,9 @@ export function buildPresserBlock(fx: FixtureLite, json: any, presser: PresserLi
   const home = norm.home ?? fx.home_team;
   const away = norm.away ?? fx.away_team;
   const parts: string[] = [PRESSER_START];
+  parts.push(
+    `<p><strong>${esc(home)} v ${esc(away)} match day thread.</strong> Follow the build-up, team news and live match updates, and join the discussion with fellow Boro fans.</p>`,
+  );
   if (presser) {
     parts.push(`<div data-fz-prepared="1"><strong>Press conference</strong></div>`);
 
