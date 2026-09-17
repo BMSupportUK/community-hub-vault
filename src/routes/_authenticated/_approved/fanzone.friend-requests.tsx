@@ -84,7 +84,9 @@ function FriendRequestsPage() {
           </p>
         </header>
 
-        <FanZoneFriendRequestsBox userId={user.id} />
+        <div className="-mx-4 sm:mx-0">
+          <FanZoneFriendRequestsBox userId={user.id} fullBleed />
+        </div>
       </div>
     </div>
   );
