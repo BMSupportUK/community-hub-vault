@@ -5,6 +5,7 @@ import { LandingHeader } from "@/components/LandingHeader";
 import welcomeHero from "@/assets/welcome-hero.webp";
 import { MessageSquare, CalendarClock, LifeBuoy, Sparkles } from "lucide-react";
 import { BmSplash } from "@/components/app/BmSplash";
+import AdSenseSlot from "@/components/app/AdSenseSlot";
 
 function pickIcon(title: string) {
   const t = title.toLowerCase();
@@ -126,8 +127,9 @@ function Landing() {
       <LandingHeader />
 
       <main className="flex-1 min-h-0 md:overflow-hidden px-6 py-4 md:py-4 flex flex-col gap-3">
+        <div className="relative max-w-7xl w-full mx-auto flex-1 min-h-0 flex flex-col lg:flex-row gap-3 items-stretch">
         <section
-          className="landing-hero-panel relative max-w-7xl w-full mx-auto rounded-3xl border border-red-900/60 p-4 md:p-6 lg:p-8 pb-16 md:pb-20 flex-1 flex flex-col justify-center"
+          className="landing-hero-panel relative flex-1 min-w-0 rounded-3xl border border-red-900/60 p-4 md:p-6 lg:p-8 pb-16 md:pb-20 flex flex-col justify-center"
           style={{
             background:
               "radial-gradient(1200px 600px at 10% 10%, rgba(248,113,113,0.25), transparent 60%), radial-gradient(900px 500px at 90% 90%, rgba(127,29,29,0.6), transparent 60%), linear-gradient(135deg, #7f1d1d 0%, #991b1b 50%, #450a0a 100%)",
@@ -164,7 +166,12 @@ function Landing() {
               </div>
             </div>
           </div>
-        </section>
+          </section>
+
+          <aside className="hidden lg:flex w-[260px] xl:w-[300px] shrink-0 flex-col self-stretch">
+            <AdSenseSlot slot="topic" />
+          </aside>
+        </div>
 
         <div className="relative max-w-7xl w-full mx-auto -mt-6 md:-mt-7 px-10 md:px-14 grid grid-cols-1 sm:grid-cols-3 gap-3 z-10 items-stretch">
           {boxes.map((b) => (

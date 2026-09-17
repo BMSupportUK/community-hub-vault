@@ -11,6 +11,7 @@ import { useVisitorVpnStatus, refreshVisitorVpn } from "@/hooks/use-visitor-vpn"
 import { assertSignupAllowed } from "@/lib/vpn-public-check.functions";
 import { VpnBlockedDialog } from "@/components/VpnBlockedDialog";
 import { ShieldAlert, Loader2, RefreshCw } from "lucide-react";
+import AdSenseSlot from "@/components/app/AdSenseSlot";
 
 export const Route = createFileRoute("/signup")({
   validateSearch: (search: Record<string, unknown>): { invite?: string } => ({
@@ -163,7 +164,7 @@ function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen w-full grid lg:grid-cols-2 bg-background">
+    <div className="min-h-screen w-full grid lg:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_300px] bg-background">
       {/* Illustration panel */}
       <aside className="relative hidden lg:flex items-center justify-center overflow-hidden bg-gradient-to-br from-fuchsia-700/40 via-violet-600/30 to-blue-700/40 border-r border-border">
         <div className="absolute -top-32 -left-24 size-[28rem] rounded-full bg-fuchsia-600/30 blur-3xl" />
@@ -317,6 +318,14 @@ function SignupPage() {
           </div>
         </div>
       </main>
+
+      {/* Desktop advert sidebar */}
+      <aside className="hidden xl:flex items-start justify-center px-4 py-10 border-l border-border/60">
+        <div className="w-full max-w-[280px]">
+          <AdSenseSlot slot="topic" />
+        </div>
+      </aside>
+
       <VpnBlockedDialog open={vpnDialogOpen} onOpenChange={setVpnDialogOpen} />
     </div>
   );
