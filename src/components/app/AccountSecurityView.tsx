@@ -4,13 +4,14 @@ import { toast } from "sonner";
 import { ShieldCheck, ShieldOff, Loader2, KeyRound, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { ScreenLockSettingsCard } from "@/components/app/ScreenLockSettingsCard";
+import { FanZoneFriendsPrivacyCard } from "@/components/app/FanZoneFriendsPrivacyCard";
 
 
 
 type Factor = { id: string; status: string; friendly_name: string | null };
 
 export function AccountSecurityView({ backTo }: { backTo: "/home" | "/forum" }) {
-  const [tab, setTab] = useState<"2fa" | "lock">("2fa");
+  const [tab, setTab] = useState<"2fa" | "lock" | "privacy">("2fa");
   const [loading, setLoading] = useState(true);
   const [factor, setFactor] = useState<Factor | null>(null);
 
@@ -124,6 +125,7 @@ export function AccountSecurityView({ backTo }: { backTo: "/home" | "/forum" }) 
           {([
             ["2fa", "Two-factor"],
             ["lock", "Screen lock"],
+            ["privacy", "Privacy"],
           ] as const).map(([key, label]) => (
             <button
               key={key}
@@ -244,6 +246,8 @@ export function AccountSecurityView({ backTo }: { backTo: "/home" | "/forum" }) 
         )}
 
         {tab === "lock" && <ScreenLockSettingsCard />}
+
+        {tab === "privacy" && <FanZoneFriendsPrivacyCard />}
       </div>
 
       {removeOpen && factor && (

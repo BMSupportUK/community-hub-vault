@@ -5,19 +5,24 @@ import { supabase } from "@/integrations/supabase/client";
 import { BORO_DEFAULT_AVATAR_URL as boroDefaultAvatar } from "@/lib/boro-default-avatar";
 import { useFanProfileTo } from "@/components/app/fan-profile-link";
 
-type Stats = { topics: number; posts: number; friends: number; reactionsReceived: number };
+type Stats = { topics: number; posts: number; friends: number; reactionsReceived: number; friendsHidden: boolean };
 
 export function FanStatsBox({ userId }: { userId: string }) {
   const [s, setS] = useState<Stats | null>(null);
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const [topicsRes, postsRes, friendsRes, postIdsRes] = await Promise.all([
+      const { data: me } = await supabase.auth.getUser();
+      const isSelf = me?.user?.id === userId;
+      const [topicsRes, postsRes, friendsRes, postIdsRes, hideRes] = await Promise.all([
         supabase.from("forum_topics").select("id", { count: "exact", head: true }).eq("author_id", userId),
         supabase.from("forum_posts").select("id", { count: "exact", head: true }).eq("author_id", userId),
         supabase.from("fan_zone_friendships").select("id", { count: "exact", head: true }).eq("status", "accepted").eq("requester_id", userId),
         supabase.from("forum_posts").select("id").eq("author_id", userId),
+        supabase.rpc("fan_zone_hide_friends", { _ids: [userId] }),
       ]);
+      const hiddenRow = ((hideRes.data as any[]) ?? [])[0];
+      const friendsHidden = !isSelf && !!hiddenRow?.hide_friends;
       const postIds = (postIdsRes.data ?? []).map((p: any) => p.id);
       let total = 0;
       if (postIds.length) {
@@ -34,6 +39,7 @@ export function FanStatsBox({ userId }: { userId: string }) {
         posts: postsRes.count ?? 0,
         friends: friendsRes.count ?? 0,
         reactionsReceived: total,
+        friendsHidden,
       });
     })();
     return () => { cancelled = true; };
@@ -56,7 +62,7 @@ export function FanStatsBox({ userId }: { userId: string }) {
         <div className="space-y-2">
           <Item icon={FileText} label="Topics started" value={s.topics} />
           <Item icon={MessageSquare} label="Forum posts" value={s.posts} />
-          <Item icon={Users} label="Friends" value={s.friends} />
+          {!s.friendsHidden && <Item icon={Users} label="Friends" value={s.friends} />}
           <Item icon={ThumbsUp} label="Reactions received" value={s.reactionsReceived} />
         </div>
       )}
