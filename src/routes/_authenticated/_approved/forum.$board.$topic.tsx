@@ -858,15 +858,24 @@ function TopicPage() {
     setEditingId(null); setEditText("");
   };
   const deletePost = async (p: Post) => {
+    // The first post is the topic itself, so removing it removes the whole thread.
+    if (p.is_op) {
+      if (!confirm("This is the first post — deleting it removes the whole topic and all replies. Continue?")) return;
+      const { data, error } = await supabase.from("forum_topics").delete().eq("id", p.topic_id ?? topic?.id ?? "").select("id");
+      if (error) { toast.error("Couldn't delete", { description: error.message }); return; }
+      if (!data || data.length === 0) {
+        toast.error("Not deleted", { description: "You don't have permission to delete this topic." });
+        return;
+      }
+      toast.success("Topic deleted");
+      void navigate({ to: "/forum/$board", params: { board: slug } });
+      return;
+    }
     if (!confirm("Delete this post?")) return;
     const { data, error } = await supabase.from("forum_posts").delete().eq("id", p.id).select("id");
     if (error) { toast.error("Couldn't delete", { description: error.message }); return; }
     if (!data || data.length === 0) {
-      toast.error("Post not deleted", {
-        description: p.is_op
-          ? "The first post can only be removed by deleting the whole topic."
-          : "You don't have permission to delete this post.",
-      });
+      toast.error("Post not deleted", { description: "You don't have permission to delete this post." });
       return;
     }
     setPosts((current) => current?.filter((row) => row.id !== p.id) ?? current);
@@ -1047,7 +1056,7 @@ function TopicPage() {
         const pageReplies = replies;
         const renderPost = (p: Post, i: number) => {
           const canEdit = !!user && (p.author_id === user.id || isBoardMod);
-          const canDelete = !!user && ((p.author_id === user.id && !p.is_op) || isBoardMod);
+          const canDelete = !!user && (p.author_id === user.id || isBoardMod);
           const canBlock = !!user && p.author_id !== user.id;
           return (
             <TopicPostArticle
