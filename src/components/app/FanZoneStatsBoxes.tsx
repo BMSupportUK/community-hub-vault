@@ -30,6 +30,7 @@ type Stats = {
   reactionsReceived: number;
   friendsHidden: boolean;
   isSelf: boolean;
+  ownerAlias: string | null;
 };
 
 export function FanStatsBox({ userId }: { userId: string }) {
@@ -41,13 +42,15 @@ export function FanStatsBox({ userId }: { userId: string }) {
   const load = async (cancelled = false) => {
     const { data: me } = await supabase.auth.getUser();
     const isSelf = me?.user?.id === userId;
-    const [topicsRes, postsRes, friendsRes, postIdsRes, hideRes] = await Promise.all([
+    const [topicsRes, postsRes, friendsRes, postIdsRes, hideRes, aliasRes] = await Promise.all([
       supabase.from("forum_topics").select("id", { count: "exact", head: true }).eq("author_id", userId),
       supabase.from("forum_posts").select("id", { count: "exact", head: true }).eq("author_id", userId),
       supabase.rpc("fan_zone_friend_list", { _target_user_id: userId }),
       supabase.from("forum_posts").select("id").eq("author_id", userId),
       supabase.rpc("fan_zone_hide_friends", { _ids: [userId] }),
+      supabase.rpc("fan_zone_aliases", { _ids: [userId] }),
     ]);
+    const ownerAlias = ((aliasRes.data as any[]) ?? [])[0]?.fan_alias ?? null;
     const hiddenRow = ((hideRes.data as any[]) ?? [])[0];
     const friendsHidden = !isSelf && !!hiddenRow?.hide_friends;
     const accepted = (friendsRes.data ?? []) as Array<{
@@ -92,6 +95,7 @@ export function FanStatsBox({ userId }: { userId: string }) {
       reactionsReceived: total,
       friendsHidden,
       isSelf,
+      ownerAlias,
     });
   };
 
@@ -188,7 +192,7 @@ export function FanStatsBox({ userId }: { userId: string }) {
                         {friend.fan_alias || "Boro fan"}
                       </Link>
                       <div className="mt-1 text-[11px] font-semibold uppercase text-white/65">
-                        {friend.mutual ? "Mutual friends" : "One-way friend"}
+                        {friend.mutual ? "Mutual friends" : `Added by ${s?.ownerAlias || "Boro fan"}`}
                       </div>
                       {s?.isSelf ? (
                         <Button size="sm" variant="outline" disabled={busy === friend.friendship_id} onClick={() => void removeFriend(friend.friendship_id)} className="mt-3 bg-white/10 text-white">

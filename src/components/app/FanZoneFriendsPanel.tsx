@@ -26,9 +26,13 @@ export function FanZoneFriendsPanel({ userId }: { userId: string }) {
   const [rows, setRows] = useState<AcceptedFriend[] | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [openList, setOpenList] = useState<"all" | "mutual" | null>(null);
+  const [ownerAlias, setOwnerAlias] = useState<string | null>(null);
 
   const load = async () => {
-    const { data: friendList } = await supabase.rpc("fan_zone_friend_list", { _target_user_id: userId });
+    const [{ data: friendList }, { data: aliasRows }] = await Promise.all([
+      supabase.rpc("fan_zone_friend_list", { _target_user_id: userId }),
+      supabase.rpc("fan_zone_aliases", { _ids: [userId] }),
+    ]);
     const accepted = (friendList ?? []) as Array<{
       friendship_id: string;
       user_id: string;
@@ -37,6 +41,7 @@ export function FanZoneFriendsPanel({ userId }: { userId: string }) {
       mutual: boolean;
     }>;
     setRows(accepted);
+    setOwnerAlias(((aliasRows as any[]) ?? [])[0]?.fan_alias ?? null);
   };
 
   useEffect(() => {
@@ -144,7 +149,7 @@ export function FanZoneFriendsPanel({ userId }: { userId: string }) {
                             : "bg-white/10 text-white/75 ring-white/20"
                         }`}
                       >
-                        {r.mutual ? "Mutual friends" : "One-way friend"}
+                        {r.mutual ? "Mutual friends" : `Added by ${ownerAlias || "Boro fan"}`}
                       </span>
                       <div className="mt-3">
                         <Button
