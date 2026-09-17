@@ -328,55 +328,8 @@ function FanProfilePage() {
               matchdayMemory={p.matchday_memory}
             />
 
-            
-
-
-
-
-            {!isSelf && (
-              <div className="flex flex-wrap gap-2 pt-2 border-t border-white/10">
-                <FanFriendButton
-                  rel={friendRel}
-                  busy={friendBusy}
-                  disabled={p.is_blocked_by_me || p.has_blocked_me}
-                  onSend={sendFriendRequest}
-                />
-                {incomingRel.kind === "pending" && (
-                  <Button asChild variant="outline" className="bg-amber-500/15 border-amber-400/40 text-amber-100">
-                    <Link to="/fanzone/friend-requests">
-                      <Clock className="size-4 mr-1" /> Request in inbox
-                    </Link>
-                  </Button>
-                )}
-                <Button
-                  onClick={() => void startDm()}
-                  disabled={busy || p.is_blocked_by_me || p.has_blocked_me}
-                  className="bg-gradient-to-r from-[#E11B22] to-[#8B0F14] hover:from-[#F02B30] hover:to-[#9B1118] border-0 text-white"
-                >
-                  <MessageSquare className="size-4 mr-1" /> Send message
-                </Button>
-                <Button onClick={() => void toggleBlock()} variant="outline" disabled={busy} className="bg-white/10 border-white/30 text-white hover:bg-white/20 hover:text-white">
-                  {p.is_blocked_by_me ? <><ShieldOff className="size-4 mr-1" /> Unblock</> : <><Ban className="size-4 mr-1" /> Block</>}
-                </Button>
-                {canModerate && (
-                  <FanZoneMuteDialog
-                    userId={userId}
-                    alias={p.fan_alias}
-                    mute={theirMute}
-                    onChanged={() => void refreshMute()}
-                  />
-                )}
-                {canModerate && (
-                  <FanZoneBanDialog
-                    userId={userId}
-                    alias={p.fan_alias}
-                    ban={theirBan}
-                    onChanged={() => void refreshBan()}
-                  />
-                )}
-              </div>
-            )}
             {canModerate && theirMute && (
+
               <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
                 Muted until {new Date(theirMute.expires_at).toLocaleString("en-GB")} — “{theirMute.reason}”
               </div>
