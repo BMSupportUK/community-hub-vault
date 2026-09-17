@@ -1,5 +1,4 @@
 import { memo, useEffect } from "react";
-import { useAuth, type AppRole } from "@/hooks/use-auth";
 import {
   ADSENSE_CLIENT_ID,
   ADSENSE_ENABLED,
@@ -7,8 +6,6 @@ import {
   ensureAdSenseScript,
   pushAd,
 } from "@/lib/adsense";
-
-const STAFF_ROLES: AppRole[] = ["admin", "management", "moderator", "staff"];
 
 function Placeholder({ label }: { label: string }) {
   return (
