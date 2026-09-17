@@ -116,22 +116,38 @@ function NewForumContentPage() {
           {total} {tab === "topics" ? "topic" : "reply"}
           {total === 1 ? "" : tab === "topics" ? "s" : "s"} · 20 per page
         </p>
-        <div className="mb-5 mt-4 inline-flex rounded-xl border border-white/15 bg-white/5 p-1">
-          {(["topics", "replies"] as FeedTab[]).map((t) => (
+        <div className="mb-5 mt-4 flex flex-wrap items-center gap-3">
+          <div className="inline-flex rounded-xl border border-white/15 bg-white/5 p-1">
+            {(["topics", "replies"] as FeedTab[]).map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => {
+                  setTab(t);
+                  setPage(1);
+                }}
+                className={`rounded-lg px-4 py-1.5 text-sm font-semibold transition-colors ${
+                  tab === t ? "bg-[#E11B22] text-white" : "text-white/70 hover:text-white"
+                }`}
+              >
+                {t === "topics" ? "New topics" : "Replies"}
+              </button>
+            ))}
+          </div>
+          {unreadIds.size > 0 && (
+            <span className="inline-flex animate-pulse items-center gap-1.5 rounded-full bg-[#E11B22] px-3 py-1 text-xs font-bold text-white">
+              {unreadIds.size} unread — open one to read it
+            </span>
+          )}
+          {unreadIds.size > 0 && (
             <button
-              key={t}
               type="button"
-              onClick={() => {
-                setTab(t);
-                setPage(1);
-              }}
-              className={`rounded-lg px-4 py-1.5 text-sm font-semibold transition-colors ${
-                tab === t ? "bg-[#E11B22] text-white" : "text-white/70 hover:text-white"
-              }`}
+              onClick={markAllRead}
+              className="rounded-lg border border-white/25 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/20"
             >
-              {t === "topics" ? "New topics" : "Replies"}
+              Mark all as read
             </button>
-          ))}
+          )}
         </div>
         <ForumPostFeed
           posts={posts}
@@ -139,6 +155,8 @@ function NewForumContentPage() {
           showAuthor
           empty={tab === "topics" ? "No new topics yet." : "No replies yet."}
           variant="grid"
+          unreadIds={unreadIds}
+          onOpenPost={openPost}
         />
         <ForumFeedPager page={page} total={total} pageSize={FORUM_FEED_PAGE_SIZE} onPage={setPage} />
       </div>
