@@ -27,6 +27,7 @@ import boroBadge from "@/assets/boro-fan-zone-badge.png";
 import boroBg from "@/assets/boro-bg.jpg";
 import { censorText, useProfanityWords } from "@/lib/profanity";
 import { getPublicForumStats } from "@/lib/fan-zone-public.functions";
+import { getReadNewContentIds, NEW_CONTENT_READ_EVENT } from "@/lib/forum-new-content";
 
 export const Route = createFileRoute("/_authenticated/_approved/forum")({
   head: () => ({
