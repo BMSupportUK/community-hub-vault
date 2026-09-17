@@ -92,7 +92,8 @@ export function ForumPostFeed({
             </p>
           </Link>
         </li>
-      ))}
+        );
+      })}
     </ul>
   );
 }
