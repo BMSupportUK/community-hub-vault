@@ -29,6 +29,13 @@
       "when": 1789652306576,
       "tag": "0003_add_directional_fan_zone_friend_list",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1789652381986,
+      "tag": "0004_make_fan_zone_profile_friendship_directional",
+      "breakpoints": true
     }
   ]
 }
