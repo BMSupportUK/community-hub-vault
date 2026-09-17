@@ -50,7 +50,15 @@ export function FanZoneFriendRequestsBox({
       status: string;
     }>;
     const otherOf = (f: (typeof all)[number]) => (f.requester_id === userId ? f.addressee_id : f.requester_id);
-    setRelated(new Set(all.map(otherOf)));
+    // An accepted request sent by the other fan is their one-way friendship.
+    // Keep that fan searchable so this user can independently add them back.
+    setRelated(
+      new Set(
+        all
+          .filter((f) => f.requester_id === userId || f.status !== "accepted")
+          .map(otherOf),
+      ),
+    );
     const pending = all.filter((f) => f.status !== "accepted");
     if (pending.length === 0) {
       setRows([]);

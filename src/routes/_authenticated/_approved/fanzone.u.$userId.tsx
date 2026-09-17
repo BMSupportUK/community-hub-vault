@@ -69,7 +69,6 @@ function FanProfilePage() {
   const [friendRel, setFriendRel] = useState<FanFriendRel>({ kind: "none" });
   const [incomingRel, setIncomingRel] = useState<IncomingRel>({ kind: "none" });
   const [friendBusy, setFriendBusy] = useState(false);
-  const [incomingBusy, setIncomingBusy] = useState(false);
   const [fanPrivate, setFanPrivate] = useState(false);
   const [staffRole, setStaffRole] = useState<FanStaffRole | null>(null);
   const [lastSeen, setLastSeen] = useState<string | null>(null);
@@ -172,20 +171,6 @@ function FanProfilePage() {
     void load();
   };
 
-  const acceptFriendRequest = async () => {
-    if (incomingRel.kind !== "pending") return;
-    setIncomingBusy(true);
-    const { error } = await supabase
-      .from("fan_zone_friendships")
-      .update({ status: "accepted" })
-      .eq("id", incomingRel.id)
-      .eq("addressee_id", user?.id ?? "");
-    setIncomingBusy(false);
-    if (error) return toast.error(error.message);
-    toast.success("Friend request accepted");
-    void load();
-  };
-
   const isSelf = user?.id === userId;
   const isFriend = friendRel.kind === "friends";
 
@@ -222,8 +207,8 @@ function FanProfilePage() {
           </div>
           <h2 className="font-display text-xl font-bold text-white mb-2">This profile is private</h2>
           <p className="text-sm text-white/70">
-            {p.fan_alias} has chosen to keep their Fan Zone profile private. Send a friend request — once accepted, you'll be able
-            to view their full profile.
+            {p.fan_alias} has chosen to keep their Fan Zone profile private. You can send a friend request, but they must also add
+            you before their friends-only profile becomes visible.
           </p>
           {!isSelf && friendRel.kind === "none" && incomingRel.kind === "none" && (
             <Button
@@ -312,9 +297,10 @@ function FanProfilePage() {
                   onSend={sendFriendRequest}
                 />
                 {incomingRel.kind === "pending" && (
-                  <Button onClick={() => void acceptFriendRequest()} disabled={incomingBusy || p.is_blocked_by_me || p.has_blocked_me} className="bg-emerald-600 hover:bg-emerald-500 text-white border-0">
-                    {incomingBusy ? <Loader2 className="size-4 mr-1 animate-spin" /> : <UserCheck className="size-4 mr-1" />}
-                    Accept their request
+                  <Button asChild variant="outline" className="bg-amber-500/15 border-amber-400/40 text-amber-100">
+                    <Link to="/fanzone/friend-requests">
+                      <Clock className="size-4 mr-1" /> Request in inbox
+                    </Link>
                   </Button>
                 )}
                 <Button

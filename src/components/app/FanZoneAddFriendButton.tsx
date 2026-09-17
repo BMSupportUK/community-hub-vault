@@ -18,10 +18,15 @@ export function FanZoneAddFriendButton({ viewerId, targetId, name, className }: 
       .or(
         `and(requester_id.eq.${viewerId},addressee_id.eq.${targetId}),and(requester_id.eq.${targetId},addressee_id.eq.${viewerId})`,
       );
-    const row = (data ?? [])[0] as { status: string; requester_id: string } | undefined;
-    if (!row) return setState("none");
-    if (row.status === "accepted") return setState("accepted");
-    setState(row.requester_id === viewerId ? "outgoing" : "incoming");
+    const rows = (data ?? []) as Array<{ status: string; requester_id: string }>;
+    const mine = rows.find((row) => row.requester_id === viewerId);
+    if (mine?.status === "accepted") return setState("accepted");
+    if (mine) return setState("outgoing");
+    const theirs = rows.find((row) => row.requester_id === targetId);
+    if (theirs?.status === "pending") return setState("incoming");
+    // Their accepted request is only their one-way friendship. The viewer can
+    // still add them independently, which creates a true mutual friendship.
+    setState("none");
   }, [viewerId, targetId]);
 
   useEffect(() => {
@@ -55,19 +60,19 @@ export function FanZoneAddFriendButton({ viewerId, targetId, name, className }: 
     );
   }
 
+  if (state === "incoming") {
+    return (
+      <span
+        className={`${base} cursor-default ${className ?? ""}`}
+        title={`Friend request from ${name} is waiting in your inbox`}
+      >
+        <Clock className="size-3" />
+      </span>
+    );
+  }
+
   const handle = async () => {
     setBusy(true);
-    if (state === "incoming") {
-      const { error } = await supabase
-        .from("fan_zone_friendships")
-        .update({ status: "accepted" })
-        .eq("requester_id", targetId)
-        .eq("addressee_id", viewerId);
-      setBusy(false);
-      if (error) return toast.error("Couldn't accept", { description: error.message });
-      setState("accepted");
-      return;
-    }
     const { error } = await supabase
       .from("fan_zone_friendships")
       .insert({ requester_id: viewerId, addressee_id: targetId });
@@ -82,7 +87,7 @@ export function FanZoneAddFriendButton({ viewerId, targetId, name, className }: 
       disabled={busy}
       onClick={handle}
       className={`${base} ${className ?? ""}`}
-      title={state === "incoming" ? `Accept ${name}'s friend request` : `Send ${name} a friend request`}
+      title={`Send ${name} a friend request`}
     >
       <UserPlus className="size-3" />
     </button>

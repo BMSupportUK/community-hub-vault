@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/dialog";
 
 type FriendRow = { user_id: string; fan_alias: string | null; fan_avatar_url: string | null; friendship_id: string };
-type FanRequestRow = FriendRow & { direction: "incoming" | "outgoing" };
 type AcceptedFriend = FriendRow & { mutual: boolean };
 
 /**
@@ -25,57 +24,19 @@ type AcceptedFriend = FriendRow & { mutual: boolean };
  */
 export function FanZoneFriendsPanel({ userId }: { userId: string }) {
   const [rows, setRows] = useState<AcceptedFriend[] | null>(null);
-  const [requests, setRequests] = useState<FanRequestRow[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [openList, setOpenList] = useState<"all" | "mutual" | null>(null);
 
   const load = async () => {
-    const { data: all } = await supabase
-      .from("fan_zone_friendships")
-      .select("id, requester_id, addressee_id, status")
-      .or(`requester_id.eq.${userId},addressee_id.eq.${userId}`);
-    const rowsAll = (all ?? []) as any[];
-    const accepted = rowsAll.filter((f) => f.status === "accepted");
-    const pending = rowsAll.filter((f) => f.status !== "accepted");
-    const ids = Array.from(
-      new Set(rowsAll.map((f: any) => (f.requester_id === userId ? f.addressee_id : f.requester_id))),
-    );
-    if (ids.length === 0) {
-      setRows([]);
-      setRequests([]);
-      return;
-    }
-    const { data: members } = await supabase.rpc("fan_zone_aliases", { _ids: ids });
-    const byId = new Map(((members as any[]) ?? []).map((m: any) => [m.user_id, m]));
-    const shape = (f: any): FriendRow => {
-      const otherId = f.requester_id === userId ? f.addressee_id : f.requester_id;
-      const m = byId.get(otherId) as any;
-      return {
-        user_id: otherId,
-        fan_alias: m?.fan_alias ?? null,
-        fan_avatar_url: m?.fan_avatar_url ?? null,
-        friendship_id: f.id,
-      };
-    };
-
-    // Accepted = both fans agreed, so it is a mutual match regardless of who
-    // sent the request first. Pending requests stay in the requests list.
-    const seen = new Set<string>();
-    const list: AcceptedFriend[] = [];
-    for (const f of accepted) {
-      const shaped = shape(f);
-      if (seen.has(shaped.user_id)) continue;
-      seen.add(shaped.user_id);
-      list.push({ ...shaped, mutual: true });
-    }
-
-    setRows(list);
-    setRequests(
-      pending.map((f: any) => ({
-        ...shape(f),
-        direction: f.addressee_id === userId ? ("incoming" as const) : ("outgoing" as const),
-      })),
-    );
+    const { data: friendList } = await supabase.rpc("fan_zone_friend_list", { _target_user_id: userId });
+    const accepted = (friendList ?? []) as Array<{
+      friendship_id: string;
+      user_id: string;
+      fan_alias: string | null;
+      fan_avatar_url: string | null;
+      mutual: boolean;
+    }>;
+    setRows(accepted);
   };
 
   useEffect(() => {
@@ -89,18 +50,6 @@ export function FanZoneFriendsPanel({ userId }: { userId: string }) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
-
-  const accept = async (friendshipId: string) => {
-    setBusy(friendshipId);
-    const { error } = await supabase
-      .from("fan_zone_friendships")
-      .update({ status: "accepted" })
-      .eq("id", friendshipId)
-      .eq("addressee_id", userId);
-    setBusy(null);
-    if (error) return toast.error("Couldn't accept", { description: error.message });
-    void load();
-  };
 
   const remove = async (friendshipId: string) => {
     setBusy(friendshipId);
@@ -122,69 +71,6 @@ export function FanZoneFriendsPanel({ userId }: { userId: string }) {
       <p className="text-sm text-white/70 mb-4">
         Your Boro Fan Zone friends. This list is separate from your BM Support friends.
       </p>
-      {requests.length > 0 && (
-        <div className="mb-5 space-y-2">
-          <div className="text-[11px] uppercase tracking-wider font-semibold text-white/70">Friend requests</div>
-          <ul className="space-y-2">
-            {requests.map((r) => (
-              <li
-                key={r.friendship_id}
-                className="flex items-center gap-3 rounded-xl border border-[#E11B22]/40 bg-[#E11B22]/10 p-3"
-              >
-                <img
-                  src={r.fan_avatar_url || boroDefaultAvatar}
-                  alt=""
-                  className="size-10 rounded-full object-cover ring-2 ring-white/10"
-                />
-                <div className="flex-1 min-w-0">
-                  <Link
-                    to="/fanzone/u/$userId"
-                    params={{ userId: r.user_id }}
-                    className="font-semibold text-sm truncate hover:underline block"
-                  >
-                    {r.fan_alias || "Boro fan"}
-                  </Link>
-                  <div className="text-[11px] text-white/60">
-                    {r.direction === "incoming" ? "Wants to be your friend" : "Request sent — awaiting reply"}
-                  </div>
-                </div>
-                {r.direction === "incoming" ? (
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      disabled={busy === r.friendship_id}
-                      onClick={() => void accept(r.friendship_id)}
-                      className="bg-emerald-600 hover:bg-emerald-500 text-white border-0"
-                    >
-                      {busy === r.friendship_id ? <Loader2 className="size-4 animate-spin" /> : "Accept"}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={busy === r.friendship_id}
-                      onClick={() => void remove(r.friendship_id)}
-                      className="bg-white/10 border-white/30 text-white hover:bg-white/20"
-                    >
-                      Decline
-                    </Button>
-                  </div>
-                ) : (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={busy === r.friendship_id}
-                    onClick={() => void remove(r.friendship_id)}
-                    className="bg-white/10 border-white/30 text-white hover:bg-white/20"
-                  >
-                    Cancel
-                  </Button>
-                )}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-
       {rows === null ? (
         <div className="grid place-items-center py-12">
           <Loader2 className="size-5 animate-spin text-white/70" />

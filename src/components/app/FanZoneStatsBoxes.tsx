@@ -44,47 +44,33 @@ export function FanStatsBox({ userId }: { userId: string }) {
     const [topicsRes, postsRes, friendsRes, postIdsRes, hideRes] = await Promise.all([
       supabase.from("forum_topics").select("id", { count: "exact", head: true }).eq("author_id", userId),
       supabase.from("forum_posts").select("id", { count: "exact", head: true }).eq("author_id", userId),
-      supabase
-        .from("fan_zone_friendships")
-        .select("id, requester_id, addressee_id")
-        .eq("status", "accepted")
-        .or(`requester_id.eq.${userId},addressee_id.eq.${userId}`),
+      supabase.rpc("fan_zone_friend_list", { _target_user_id: userId }),
       supabase.from("forum_posts").select("id").eq("author_id", userId),
       supabase.rpc("fan_zone_hide_friends", { _ids: [userId] }),
     ]);
     const hiddenRow = ((hideRes.data as any[]) ?? [])[0];
     const friendsHidden = !isSelf && !!hiddenRow?.hide_friends;
     const accepted = (friendsRes.data ?? []) as Array<{
-      id: string;
-      requester_id: string;
-      addressee_id: string;
+      friendship_id: string;
+      user_id: string;
+      fan_alias: string | null;
+      fan_avatar_url: string | null;
+      mutual: boolean;
     }>;
-    // An accepted friendship means both fans agreed to it (whoever sent the
-    // request), so it always counts as a mutual match. Only pending requests
-    // are one-way, and those are not included here.
     const unique = new Map<string, { friendship_id: string; mutual: boolean }>();
     for (const row of accepted) {
-      const otherId = row.requester_id === userId ? row.addressee_id : row.requester_id;
-      if (!unique.has(otherId)) unique.set(otherId, { friendship_id: row.id, mutual: true });
+      if (!unique.has(row.user_id)) unique.set(row.user_id, { friendship_id: row.friendship_id, mutual: row.mutual });
     }
 
-    const ids = [...unique.keys()];
-    let cards: FriendCard[] = [];
-    if (!friendsHidden && ids.length > 0) {
-      const { data: members } = await supabase.rpc("fan_zone_aliases", { _ids: ids });
-      const byId = new Map(((members as any[]) ?? []).map((member: any) => [member.user_id, member]));
-      cards = ids.map((id) => {
-        const member = byId.get(id) as any;
-        const friendship = unique.get(id);
-        return {
-          user_id: id,
-          fan_alias: member?.fan_alias ?? null,
-          fan_avatar_url: member?.fan_avatar_url ?? null,
-          friendship_id: friendship?.friendship_id ?? "",
-          mutual: friendship?.mutual ?? false,
-        };
-      });
-    }
+    const cards: FriendCard[] = friendsHidden
+      ? []
+      : accepted.map((row) => ({
+          user_id: row.user_id,
+          fan_alias: row.fan_alias,
+          fan_avatar_url: row.fan_avatar_url,
+          friendship_id: row.friendship_id,
+          mutual: row.mutual,
+        }));
 
     const postIds = (postIdsRes.data ?? []).map((post: any) => post.id);
     let total = 0;
