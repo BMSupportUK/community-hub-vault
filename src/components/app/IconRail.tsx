@@ -247,7 +247,9 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     { to: user ? "/forum" : "/fan-zone", label: "Boro Fan Zone", icon: BoroBadgeIcon, show: true },
     { to: "/fanzone/messages", label: "Inbox", icon: MessagesSquare, show: !!user },
     { to: "/admin-fan-zone", label: "Members", icon: Users, show: !!user && canSeeFanZoneMembers },
-    { to: "/fanzone/profile", label: "Fan Zone Profile", icon: UserCircle2, show: !!user },
+    user?.id
+      ? { to: "/fanzone/u/$userId", label: "My Profile", icon: UserCircle2, show: true, params: { userId: user.id } }
+      : { to: "/fanzone/profile", label: "Fan Zone Profile", icon: UserCircle2, show: false },
     { to: "/boro-fantasy", label: "Boro Fantasy", icon: FantasyBenchIcon, show: true },
     ...COMPETITIONS.map((c) => ({
       to: c.to,
