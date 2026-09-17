@@ -2,6 +2,9 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const FORUM_FEED_PAGE_SIZE = 20;
 
+/** Automated match-day bot — its posts are hidden from the New Content feeds. */
+const BORO_MATCHDAY_ACTION_AUTHOR_ID = "91304401-78e5-4907-803e-34da8008a0a4";
+
 export type ForumFeedPost = {
   id: string;
   body: string;
@@ -78,6 +81,7 @@ export async function fetchForumFeed(opts: {
     .order("created_at", { ascending: false })
     .range(from, from + pageSize - 1);
   if (opts.authorId) q = q.eq("author_id", opts.authorId);
+  else q = q.neq("author_id", BORO_MATCHDAY_ACTION_AUTHOR_ID);
   if (opts.kind === "topics") q = q.eq("is_op", true);
   if (opts.kind === "replies") q = q.eq("is_op", false);
 
@@ -153,6 +157,7 @@ export async function fetchForumUnreadCounts(
   const { data } = await supabase
     .from("forum_posts")
     .select("id, is_op")
+    .neq("author_id", BORO_MATCHDAY_ACTION_AUTHOR_ID)
     .gt("created_at", since)
     .order("created_at", { ascending: false })
     .limit(500);
