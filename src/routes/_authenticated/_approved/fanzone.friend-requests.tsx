@@ -30,6 +30,7 @@ export const Route = createFileRoute("/_authenticated/_approved/fanzone/friend-r
 
 function FriendRequestsPage() {
   const { user, hasAny } = useAuth();
+  const navigate = useNavigate();
   const isStaff = hasAny(["admin", "boro_fan_zone_moderator"]);
   const info = useFanZoneMembership(user?.id ?? null);
   const canEnter = isStaff || info?.status === "approved";
@@ -49,15 +50,31 @@ function FriendRequestsPage() {
         }}
         aria-hidden
       />
+      {/* Mobile: sticky full-screen modal header; desktop: back link below */}
+      <div className="sticky top-0 z-20 flex items-center justify-between gap-2 border-b border-white/15 bg-[#050b16]/95 px-4 py-3 backdrop-blur-md sm:hidden">
+        <div className="flex min-w-0 items-center gap-2 text-white">
+          <UserPlus className="size-4 shrink-0 text-[#E11B22]" />
+          <span className="truncate font-display text-sm font-bold">Friend requests</span>
+        </div>
+        <button
+          type="button"
+          aria-label="Close friend requests"
+          onClick={() => navigate({ to: "/fanzone/u/$userId", params: { userId: user.id } })}
+          className="grid size-10 shrink-0 place-items-center rounded-full border border-white/20 bg-white/10 text-white active:bg-white/20"
+        >
+          <X className="size-5" />
+        </button>
+      </div>
+
       <div className="relative z-10 mx-auto w-full max-w-3xl px-4 py-6 sm:px-6 space-y-5">
         <FanZoneNameGate />
-        <Button asChild variant="ghost" size="sm" className="-ml-2 text-white/80 hover:text-white hover:bg-white/10">
+        <Button asChild variant="ghost" size="sm" className="-ml-2 hidden text-white/80 hover:text-white hover:bg-white/10 sm:inline-flex">
           <Link to="/fanzone/u/$userId" params={{ userId: user.id }}>
             <ArrowLeft className="mr-1 size-4" /> Back to my profile
           </Link>
         </Button>
 
-        <header className="rounded-2xl border border-[#E11B22]/40 bg-black/50 p-5 backdrop-blur-md sm:p-7">
+        <header className="hidden rounded-2xl border border-[#E11B22]/40 bg-black/50 p-5 backdrop-blur-md sm:block sm:p-7">
           <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.3em] text-[#E11B22]">
             <UserPlus className="size-3.5" /> Boro Fan Zone
           </div>
