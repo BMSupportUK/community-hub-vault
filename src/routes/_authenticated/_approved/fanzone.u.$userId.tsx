@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import bgAsset from "@/assets/boro-fan-zone-profile-bg.jpg.asset.json";
 import { FanStatsBox, FanReputationBox } from "@/components/app/FanZoneStatsBoxes";
 import { FanZoneProfileFeedTabs } from "@/components/app/FanZoneProfileFeeds";
+import { AdSenseSlot } from "@/components/app/AdSenseSlot";
 
 
 import profileMatchHeader from "@/assets/boro-profile-match-header.jpg";
@@ -327,6 +328,9 @@ function FanProfilePage() {
               favPlayer={p.fav_player}
               matchdayMemory={p.matchday_memory}
             />
+
+            <AdSenseSlot />
+
 
             {canModerate && theirMute && (
               <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
