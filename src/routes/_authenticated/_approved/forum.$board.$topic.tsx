@@ -1056,7 +1056,7 @@ function TopicPage() {
         const pageReplies = replies;
         const renderPost = (p: Post, i: number) => {
           const canEdit = !!user && (p.author_id === user.id || isBoardMod);
-          const canDelete = !!user && ((p.author_id === user.id && !p.is_op) || isBoardMod);
+          const canDelete = !!user && (p.author_id === user.id || isBoardMod);
           const canBlock = !!user && p.author_id !== user.id;
           return (
             <TopicPostArticle
