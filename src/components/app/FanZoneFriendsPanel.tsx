@@ -25,7 +25,8 @@ type AcceptedFriend = FriendRow & { mutual: boolean };
 export function FanZoneFriendsPanel({ userId }: { userId: string }) {
   const [rows, setRows] = useState<AcceptedFriend[] | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
-  const [openList, setOpenList] = useState<"all" | "mutual" | null>(null);
+  const [openList, setOpenList] = useState(false);
+  const [tab, setTab] = useState<"added" | "mutual">("added");
   const [ownerAlias, setOwnerAlias] = useState<string | null>(null);
 
   const load = async () => {
@@ -68,7 +69,7 @@ export function FanZoneFriendsPanel({ userId }: { userId: string }) {
 
   const all = rows ?? [];
   const mutualList = all.filter((r) => r.mutual);
-  const dialogRows = openList === "mutual" ? mutualList : all;
+  const dialogRows = tab === "mutual" ? mutualList : all;
 
   return (
     <div className="rounded-2xl border border-[#E11B22]/40 bg-black/35 backdrop-blur-md shadow-2xl text-white p-5 sm:p-6">
@@ -81,44 +82,55 @@ export function FanZoneFriendsPanel({ userId }: { userId: string }) {
           <Loader2 className="size-5 animate-spin text-white/70" />
         </div>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2">
-          <button
-            type="button"
-            onClick={() => setOpenList("all")}
-            className="rounded-xl border border-white/15 bg-white/5 p-4 text-left transition hover:border-[#E11B22]/60 hover:bg-white/10"
-          >
-            <div className="font-display text-3xl font-black leading-none">{all.length}</div>
-            <div className="mt-1 text-xs uppercase tracking-wider font-semibold text-white/70">Friends</div>
-            <div className="mt-1 text-[11px] text-white/50">Tap the number to see them all</div>
-          </button>
-          <button
-            type="button"
-            onClick={() => setOpenList("mutual")}
-            className="rounded-xl border border-[#E11B22]/45 bg-[#E11B22]/10 p-4 text-left transition hover:border-[#E11B22] hover:bg-[#E11B22]/20"
-          >
-            <div className="font-display text-3xl font-black leading-none">{mutualList.length}</div>
-            <div className="mt-1 text-xs uppercase tracking-wider font-semibold text-white/80">Mutual friends</div>
-            <div className="mt-1 text-[11px] text-white/50">You've both added each other</div>
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => setOpenList(true)}
+          className="w-full rounded-xl border border-white/15 bg-white/5 p-4 text-left transition hover:border-[#E11B22]/60 hover:bg-white/10"
+        >
+          <div className="font-display text-3xl font-black leading-none">{all.length}</div>
+          <div className="mt-1 text-xs uppercase tracking-wider font-semibold text-white/70">Friends</div>
+          <div className="mt-1 text-[11px] text-white/50">Tap the number to see them all</div>
+        </button>
       )}
 
-      <Dialog open={openList !== null} onOpenChange={(o) => !o && setOpenList(null)}>
+      <Dialog open={openList} onOpenChange={(o) => !o && setOpenList(false)}>
         <DialogContent className="boro-theme max-w-none w-[98vw] sm:w-[95vw] h-[92vh] p-0 gap-0 overflow-hidden border-[#E11B22]/50 bg-[#07070b]/98 text-white">
           <DialogHeader className="px-5 sm:px-7 py-4 border-b border-white/10 bg-gradient-to-r from-[#E11B22]/30 to-transparent text-left">
             <DialogTitle className="font-display text-2xl font-black">
-              {openList === "mutual" ? "Mutual friends" : "Friends"} ({dialogRows.length})
+              Friends ({all.length})
             </DialogTitle>
             <DialogDescription className="text-white/70 text-sm">
-              {openList === "mutual"
-                ? "Fans where you've each added the other."
-                : "Everyone you're connected with in the Boro Fan Zone."}
+              Everyone you're connected with in the Boro Fan Zone.
             </DialogDescription>
           </DialogHeader>
-          <div className="h-[calc(92vh-6.5rem)] overflow-y-auto px-5 sm:px-7 py-5">
+          <div className="flex gap-2 px-5 sm:px-7 pt-4">
+            <button
+              type="button"
+              onClick={() => setTab("added")}
+              className={`rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-wider ring-1 transition ${
+                tab === "added"
+                  ? "bg-[#E11B22] text-white ring-[#E11B22]"
+                  : "bg-white/5 text-white/70 ring-white/15 hover:bg-white/10"
+              }`}
+            >
+              Added by {ownerAlias || "you"} ({all.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab("mutual")}
+              className={`rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-wider ring-1 transition ${
+                tab === "mutual"
+                  ? "bg-[#E11B22] text-white ring-[#E11B22]"
+                  : "bg-white/5 text-white/70 ring-white/15 hover:bg-white/10"
+              }`}
+            >
+              Mutual Matches ({mutualList.length})
+            </button>
+          </div>
+          <div className="h-[calc(92vh-10rem)] overflow-y-auto px-5 sm:px-7 py-5">
             {dialogRows.length === 0 ? (
               <div className="rounded-xl border border-dashed border-white/20 p-10 text-center text-sm text-white/60">
-                {openList === "mutual"
+                {tab === "mutual"
                   ? "No mutual friendships yet."
                   : "You have no friends yet. Visit a fan's profile to add them."}
               </div>

@@ -36,7 +36,8 @@ type Stats = {
 export function FanStatsBox({ userId }: { userId: string }) {
   const [s, setS] = useState<Stats | null>(null);
   const [friendCards, setFriendCards] = useState<FriendCard[]>([]);
-  const [openList, setOpenList] = useState<"all" | "mutual" | null>(null);
+  const [openList, setOpenList] = useState(false);
+  const [tab, setTab] = useState<"added" | "mutual">("added");
   const [busy, setBusy] = useState<string | null>(null);
 
   const load = async (cancelled = false) => {
@@ -131,11 +132,11 @@ export function FanStatsBox({ userId }: { userId: string }) {
     </div>
   );
 
-  const FriendItem = ({ label, value, list }: { label: string; value: number; list: "all" | "mutual" }) => (
+  const FriendItem = ({ label, value }: { label: string; value: number }) => (
     <Button
       type="button"
       variant="ghost"
-      onClick={() => setOpenList(list)}
+      onClick={() => setOpenList(true)}
       className="h-auto w-full justify-start gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-white hover:bg-white/10 hover:text-white"
     >
       <Users className="size-4 shrink-0 text-[#E11B22]" />
@@ -144,7 +145,8 @@ export function FanStatsBox({ userId }: { userId: string }) {
     </Button>
   );
 
-  const visibleCards = openList === "mutual" ? friendCards.filter((friend) => friend.mutual) : friendCards;
+  const mutualCards = friendCards.filter((friend) => friend.mutual);
+  const visibleCards = tab === "mutual" ? mutualCards : friendCards;
 
   return (
     <div className="rounded-2xl border border-[#E11B22]/40 bg-black/55 backdrop-blur-md shadow-2xl text-white p-5">
@@ -156,10 +158,7 @@ export function FanStatsBox({ userId }: { userId: string }) {
           <Item icon={FileText} label="Topics started" value={s.topics} />
           <Item icon={MessageSquare} label="Forum posts" value={s.posts} />
           {!s.friendsHidden ? (
-            <>
-              <FriendItem label="Friends" value={s.friends} list="all" />
-              <FriendItem label="Mutual friends" value={s.mutualFriends} list="mutual" />
-            </>
+            <FriendItem label="Friends" value={s.friends} />
           ) : (
             <Item icon={Users} label="Friends" value="Private" />
           )}
@@ -167,20 +166,44 @@ export function FanStatsBox({ userId }: { userId: string }) {
         </div>
       )}
 
-      <Dialog open={openList !== null} onOpenChange={(open) => !open && setOpenList(null)}>
+      <Dialog open={openList} onOpenChange={(open) => !open && setOpenList(false)}>
         <DialogContent className="boro-theme h-[92vh] w-[96vw] max-w-none gap-0 overflow-hidden border-[#E11B22]/50 bg-[#07070b]/98 p-0 text-white">
           <DialogHeader className="border-b border-white/10 bg-gradient-to-r from-[#E11B22]/30 to-transparent px-5 py-4 text-left sm:px-7">
             <DialogTitle className="font-display text-2xl font-black">
-              {openList === "mutual" ? "Mutual friends" : "Friends"} ({visibleCards.length})
+              Friends ({friendCards.length})
             </DialogTitle>
             <DialogDescription className="text-sm text-white/70">
-              {openList === "mutual" ? "Fans who have both added each other." : "Everyone connected to this profile."}
+              Everyone connected to this profile.
             </DialogDescription>
           </DialogHeader>
-          <div className="h-[calc(92vh-6.5rem)] overflow-y-auto px-5 py-5 sm:px-7">
+          <div className="flex gap-2 px-5 pt-4 sm:px-7">
+            <button
+              type="button"
+              onClick={() => setTab("added")}
+              className={`rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-wider ring-1 transition ${
+                tab === "added"
+                  ? "bg-[#E11B22] text-white ring-[#E11B22]"
+                  : "bg-white/5 text-white/70 ring-white/15 hover:bg-white/10"
+              }`}
+            >
+              Added by {s?.ownerAlias || "Boro fan"} ({friendCards.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab("mutual")}
+              className={`rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-wider ring-1 transition ${
+                tab === "mutual"
+                  ? "bg-[#E11B22] text-white ring-[#E11B22]"
+                  : "bg-white/5 text-white/70 ring-white/15 hover:bg-white/10"
+              }`}
+            >
+              Mutual Matches ({mutualCards.length})
+            </button>
+          </div>
+          <div className="h-[calc(92vh-10rem)] overflow-y-auto px-5 py-5 sm:px-7">
             {visibleCards.length === 0 ? (
               <div className="rounded-xl border border-dashed border-white/20 p-10 text-center text-sm text-white/60">
-                No {openList === "mutual" ? "mutual friendships" : "friends"} yet.
+                No {tab === "mutual" ? "mutual friendships" : "friends"} yet.
               </div>
             ) : (
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
