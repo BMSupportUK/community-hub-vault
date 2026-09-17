@@ -7,6 +7,7 @@ import { fetchForumFeed, FORUM_FEED_PAGE_SIZE, type ForumFeedPost } from "@/lib/
 import { ForumPostFeed, ForumFeedPager } from "@/components/app/ForumPostFeed";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
+import { getReadNewContentIds, markNewContentRead, NEW_CONTENT_READ_EVENT } from "@/lib/forum-new-content";
 
 export const Route = createFileRoute("/_authenticated/_approved/fanzone/new-posts")({
   head: () => ({
