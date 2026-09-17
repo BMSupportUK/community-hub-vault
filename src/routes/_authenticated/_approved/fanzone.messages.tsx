@@ -304,6 +304,9 @@ function MessagesLayout() {
               ))}
             </ul>
           )}
+          <div className="border-t border-border/60 p-3">
+            <AdSenseSlot slot="sidebar" />
+          </div>
         </aside>
 
         <section className="rounded-2xl border border-border bg-surface-1/95 backdrop-blur-md shadow-soft min-h-[calc(100vh-9rem)] overflow-hidden">
