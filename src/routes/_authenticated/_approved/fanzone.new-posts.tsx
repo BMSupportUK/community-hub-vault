@@ -40,6 +40,31 @@ function NewForumContentPage() {
   const [loading, setLoading] = useState(true);
   const [since, setSince] = useState<string | null>(null);
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
+  const [counts, setCounts] = useState<{ topics: number; replies: number }>({ topics: 0, replies: 0 });
+
+  // Per-tab unread counters, refreshed live as posts arrive or get read.
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+    const refresh = async () => {
+      const next = await fetchForumUnreadCounts(since, getReadNewContentIds(user.id));
+      if (!cancelled) setCounts(next);
+    };
+    void refresh();
+    const onRead = () => void refresh();
+    window.addEventListener(NEW_CONTENT_READ_EVENT, onRead);
+    const channel = supabase
+      .channel(`fz-new-content-counts-${user.id}`)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "forum_posts" }, () => void refresh())
+      .on("postgres_changes", { event: "DELETE", schema: "public", table: "forum_posts" }, () => void refresh())
+      .subscribe();
+    return () => {
+      cancelled = true;
+      window.removeEventListener(NEW_CONTENT_READ_EVENT, onRead);
+      void supabase.removeChannel(channel);
+    };
+  }, [user?.id, since, readIds]);
+
 
   // Load the "last read" marker so brand new posts can flash, and remember
   // what has already been opened.
