@@ -22,8 +22,11 @@ export const Route = createFileRoute("/_authenticated/_approved/fanzone/new-post
   component: NewForumContentPage,
 });
 
+type FeedTab = "topics" | "replies";
+
 function NewForumContentPage() {
   const { user } = useAuth();
+  const [tab, setTab] = useState<FeedTab>("topics");
   const [page, setPage] = useState(1);
   const [posts, setPosts] = useState<ForumFeedPost[]>([]);
   const [total, setTotal] = useState(0);

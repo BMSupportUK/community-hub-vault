@@ -57,6 +57,7 @@ export async function fetchForumFeed(opts: {
   authorId?: string | null;
   page?: number;
   pageSize?: number;
+  kind?: "all" | "topics" | "replies";
 }): Promise<{ posts: ForumFeedPost[]; total: number }> {
   const page = Math.max(1, opts.page ?? 1);
   const pageSize = opts.pageSize ?? FORUM_FEED_PAGE_SIZE;
@@ -68,6 +69,8 @@ export async function fetchForumFeed(opts: {
     .order("created_at", { ascending: false })
     .range(from, from + pageSize - 1);
   if (opts.authorId) q = q.eq("author_id", opts.authorId);
+  if (opts.kind === "topics") q = q.eq("is_op", true);
+  if (opts.kind === "replies") q = q.eq("is_op", false);
 
   const { data, count } = await q;
   const rows = (data ?? []) as Array<{
