@@ -31,6 +31,15 @@ export const stripForumHtml = (html: string) =>
     .replace(/\s+/g, " ")
     .trim();
 
+function pressConferencePreviewForForumHtml(html: string): string | null {
+  if (/no-press-conference-for-this-game\.jpg/i.test(html)) return "No press conference for this game";
+  if (/awaiting-press-conference\.jpg/i.test(html)) {
+    const alt = html.match(/<img\b[^>]*\balt=["']([^"']+)["'][^>]*>/i)?.[1]?.trim();
+    return alt || "Awaiting press conference";
+  }
+  return null;
+}
+
 function mediaPreviewForForumHtml(html: string): string | null {
   if (YOUTUBE_RE.test(html)) return "YouTube video shared in this topic";
   if (VIMEO_RE.test(html)) return "Vimeo video shared in this topic";
@@ -49,7 +58,7 @@ function isOnlyVideoLinkText(text: string): boolean {
 export function forumPostPreviewText(body: string): string {
   const text = stripForumHtml(body);
   if (text && !isOnlyVideoLinkText(text)) return text;
-  return mediaPreviewForForumHtml(body) ?? "No description added";
+  return pressConferencePreviewForForumHtml(body) ?? mediaPreviewForForumHtml(body) ?? "No description added";
 }
 
 /** Load forum posts newest first, optionally limited to one author. */
