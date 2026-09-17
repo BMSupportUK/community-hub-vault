@@ -5,6 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { FanZoneNameGate } from "@/components/app/FanZoneNamePrompt";
+import AdSenseSlot from "@/components/app/AdSenseSlot";
 import { useFanZoneMembership } from "@/hooks/use-fan-zone";
 import { formatLastSeen } from "@/lib/relative-time";
 import { Button } from "@/components/ui/button";
