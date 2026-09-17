@@ -167,7 +167,7 @@ export function FanZoneFriendRequestsBox({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Search fans by name…"
-          className="border-white/20 bg-white/10 pl-9 text-white placeholder:text-white/45"
+          className="h-11 border-white/20 bg-white/10 pl-9 text-white placeholder:text-white/45 sm:h-9"
         />
       </div>
       {search.trim() && (
