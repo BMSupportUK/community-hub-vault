@@ -16,6 +16,11 @@ export type ForumFeedPost = {
   author_avatar: string | null;
 };
 
+const YOUTUBE_RE = /(?:youtube(?:-nocookie)?\.com|youtu\.be)/i;
+const VIMEO_RE = /vimeo\.com/i;
+const DIRECT_VIDEO_RE = /\.(?:mp4|webm|mov|m4v|ogg)(?:[?#]|$)/i;
+const URL_RE = /https?:\/\/\S+/gi;
+
 export const stripForumHtml = (html: string) =>
   html
     .replace(/<[^>]*>/g, " ")
@@ -25,6 +30,27 @@ export const stripForumHtml = (html: string) =>
     .replace(/&gt;/g, ">")
     .replace(/\s+/g, " ")
     .trim();
+
+function mediaPreviewForForumHtml(html: string): string | null {
+  if (YOUTUBE_RE.test(html)) return "YouTube video shared in this topic";
+  if (VIMEO_RE.test(html)) return "Vimeo video shared in this topic";
+  if (/<(?:video|source)\b/i.test(html) || DIRECT_VIDEO_RE.test(html)) return "Video shared in this topic";
+  return null;
+}
+
+function isOnlyVideoLinkText(text: string): boolean {
+  const urls = text.match(URL_RE) ?? [];
+  if (urls.length === 0) return false;
+  const textWithoutUrls = text.replace(URL_RE, "").replace(/[\s.,;:!()\[\]{}<>-]+/g, "").trim();
+  if (textWithoutUrls.length > 0) return false;
+  return urls.every((url) => YOUTUBE_RE.test(url) || VIMEO_RE.test(url) || DIRECT_VIDEO_RE.test(url));
+}
+
+export function forumPostPreviewText(body: string): string {
+  const text = stripForumHtml(body);
+  if (text && !isOnlyVideoLinkText(text)) return text;
+  return mediaPreviewForForumHtml(body) ?? "No description added";
+}
 
 /** Load forum posts newest first, optionally limited to one author. */
 export async function fetchForumFeed(opts: {

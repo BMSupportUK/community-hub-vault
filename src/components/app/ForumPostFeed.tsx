@@ -3,7 +3,7 @@ import { Loader2, MessageSquare } from "lucide-react";
 import { censorText } from "@/lib/profanity";
 import { RelativeTime } from "@/components/app/RelativeTime";
 import { BORO_DEFAULT_AVATAR_URL as boroDefaultAvatar } from "@/lib/boro-default-avatar";
-import { stripForumHtml, type ForumFeedPost } from "@/lib/forum-feed";
+import { forumPostPreviewText, type ForumFeedPost } from "@/lib/forum-feed";
 
 export function ForumPostFeed({
   posts,
@@ -73,7 +73,7 @@ export function ForumPostFeed({
                   : "mt-1.5 line-clamp-3 text-sm text-white/75 break-words"
               }
             >
-              {censorText(stripForumHtml(p.body)) || "—"}
+              {censorText(forumPostPreviewText(p.body))}
             </p>
           </Link>
         </li>
