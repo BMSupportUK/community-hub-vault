@@ -121,6 +121,8 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
   // LOCKED: side rail chat counter — total people in Talk Channels (staff included).
   // Do not change, restyle, or remove without explicit authorisation. See mem://constraints/chat-counters-locked
   const chatroomCount = useTalkChannelTotalCount();
+  const fanFriendRequests = useFanZoneFriendRequestCount();
+
   const [order, setOrder] = useState<NavOrderMap>(cachedNavOrder);
   const [pagePerms, setPagePerms] = useState<PagePermMap>(cachedPagePerms);
   const dragKey = useRef<string | null>(null);
@@ -249,6 +251,8 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     { to: user ? "/forum" : "/fan-zone", label: "Boro Fan Zone", icon: BoroBadgeIcon, show: true },
     { to: "/fanzone/messages", label: "Inbox", icon: MessagesSquare, show: !!user },
     { to: "/admin-fan-zone", label: "Members", icon: Users, show: !!user && canSeeFanZoneMembers },
+    { to: "/fanzone/friend-requests", label: "Friend requests", icon: UserPlus, show: !!user, badge: fanFriendRequests },
+
     user?.id
       ? { to: "/fanzone/u/$userId", label: "My Profile", icon: UserCircle2, show: true, params: { userId: user.id } }
       : { to: "/fanzone/profile", label: "Fan Zone Profile", icon: UserCircle2, show: false },
