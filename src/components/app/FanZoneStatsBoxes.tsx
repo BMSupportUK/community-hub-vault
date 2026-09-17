@@ -166,20 +166,44 @@ export function FanStatsBox({ userId }: { userId: string }) {
         </div>
       )}
 
-      <Dialog open={openList !== null} onOpenChange={(open) => !open && setOpenList(null)}>
+      <Dialog open={openList} onOpenChange={(open) => !open && setOpenList(false)}>
         <DialogContent className="boro-theme h-[92vh] w-[96vw] max-w-none gap-0 overflow-hidden border-[#E11B22]/50 bg-[#07070b]/98 p-0 text-white">
           <DialogHeader className="border-b border-white/10 bg-gradient-to-r from-[#E11B22]/30 to-transparent px-5 py-4 text-left sm:px-7">
             <DialogTitle className="font-display text-2xl font-black">
-              {openList === "mutual" ? "Mutual friends" : "Friends"} ({visibleCards.length})
+              Friends ({friendCards.length})
             </DialogTitle>
             <DialogDescription className="text-sm text-white/70">
-              {openList === "mutual" ? "Fans who have both added each other." : "Everyone connected to this profile."}
+              Everyone connected to this profile.
             </DialogDescription>
           </DialogHeader>
-          <div className="h-[calc(92vh-6.5rem)] overflow-y-auto px-5 py-5 sm:px-7">
+          <div className="flex gap-2 px-5 pt-4 sm:px-7">
+            <button
+              type="button"
+              onClick={() => setTab("added")}
+              className={`rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-wider ring-1 transition ${
+                tab === "added"
+                  ? "bg-[#E11B22] text-white ring-[#E11B22]"
+                  : "bg-white/5 text-white/70 ring-white/15 hover:bg-white/10"
+              }`}
+            >
+              Added by {s?.ownerAlias || "Boro fan"} ({friendCards.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab("mutual")}
+              className={`rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-wider ring-1 transition ${
+                tab === "mutual"
+                  ? "bg-[#E11B22] text-white ring-[#E11B22]"
+                  : "bg-white/5 text-white/70 ring-white/15 hover:bg-white/10"
+              }`}
+            >
+              Mutual Matches ({mutualCards.length})
+            </button>
+          </div>
+          <div className="h-[calc(92vh-10rem)] overflow-y-auto px-5 py-5 sm:px-7">
             {visibleCards.length === 0 ? (
               <div className="rounded-xl border border-dashed border-white/20 p-10 text-center text-sm text-white/60">
-                No {openList === "mutual" ? "mutual friendships" : "friends"} yet.
+                No {tab === "mutual" ? "mutual friendships" : "friends"} yet.
               </div>
             ) : (
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
