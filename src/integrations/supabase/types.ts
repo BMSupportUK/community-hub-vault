@@ -6133,6 +6133,16 @@ export type Database = {
         Returns: boolean
       }
       fan_zone_default_avatar_url: { Args: never; Returns: string }
+      fan_zone_friend_list: {
+        Args: { _target_user_id: string }
+        Returns: {
+          fan_alias: string
+          fan_avatar_url: string
+          friendship_id: string
+          mutual: boolean
+          user_id: string
+        }[]
+      }
       fan_zone_hide_friends: {
         Args: { _ids: string[] }
         Returns: {
