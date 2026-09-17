@@ -194,7 +194,13 @@ function FanZoneProfilePage() {
                   }}
                 />
                 </div>
+                {!avatarLocked && (
+                  <p className="text-[11px] text-white/60">
+                    JPG or PNG up to 5MB. Press Save changes below to apply your new picture.
+                  </p>
+                )}
               </div>
+
             </div>
 
             <div className="px-5 sm:px-6 py-5 space-y-5">
