@@ -28,6 +28,7 @@ import { FanZonePublicHeader } from "@/components/app/FanZonePublicHeader";
 import { IconRail } from "@/components/app/IconRail";
 import { useAuth } from "@/hooks/use-auth";
 import { FanZoneBanGate } from "@/components/app/FanZoneBanGate";
+import { AdSenseSlot } from "@/components/app/AdSenseSlot";
 import {
   benchRulesFor, COMPETITION_BENCH_RULES, FORMATION_KEYS, POSITION_ORDER,
   POSITION_SHORT, POSITION_LABEL, SCORING_RULES, SQUAD_RULES,
@@ -1172,16 +1173,19 @@ function BoroFantasyPage() {
                 {lbQuery.isLoading ? (
                   <Loading />
                 ) : (
-                  <LeaderboardTable
-                    rows={lbQuery.data ?? []}
-                    gameweeks={state?.gameweeks ?? []}
-                    previousGameweek={prevGwQuery.data}
-                    canRemove={canManageEntrants}
-                    onRemove={async (row) => {
-                      await removeEntrantFn({ data: { entrantId: row.entrantId, isGuest: row.isGuest } });
-                      await qc.invalidateQueries({ queryKey: ["fantasy-leaderboard"] });
-                    }}
-                  />
+                  <div className="space-y-4">
+                    <LeaderboardTable
+                      rows={lbQuery.data ?? []}
+                      gameweeks={state?.gameweeks ?? []}
+                      previousGameweek={prevGwQuery.data}
+                      canRemove={canManageEntrants}
+                      onRemove={async (row) => {
+                        await removeEntrantFn({ data: { entrantId: row.entrantId, isGuest: row.isGuest } });
+                        await qc.invalidateQueries({ queryKey: ["fantasy-leaderboard"] });
+                      }}
+                    />
+                    <AdSenseSlot />
+                  </div>
                 )}
               </TabsContent>
 
@@ -2378,6 +2382,9 @@ function SquadBuilder({
               }}
               gw={gw}
           />
+              <div className="mt-4">
+                <AdSenseSlot />
+              </div>
             </TabsContent>
             <TabsContent value="subs" className="mt-3">
               <BenchPanel
@@ -2413,6 +2420,9 @@ function SquadBuilder({
                 onBenchSlotOpen={(benchIndex) => setPicker({ mode: "bench", benchIndex })}
                 gw={gw}
               />
+              <div className="mt-4">
+                <AdSenseSlot />
+              </div>
             </TabsContent>
           </Tabs>
         </div>
