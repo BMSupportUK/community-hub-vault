@@ -36,6 +36,13 @@
       "when": 1789652381986,
       "tag": "0004_make_fan_zone_profile_friendship_directional",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1789662333573,
+      "tag": "0005_forum_topic_author_can_delete",
+      "breakpoints": true
     }
   ]
 }
