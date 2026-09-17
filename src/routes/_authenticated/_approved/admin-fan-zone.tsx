@@ -1,4 +1,5 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
+import AdSenseSlot from "@/components/app/AdSenseSlot";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ArrowLeft,
@@ -407,7 +408,8 @@ function AdminFanZonePage() {
       className="flex-1 w-full min-w-0 min-h-full self-stretch overflow-y-auto bg-cover bg-center bg-no-repeat bg-fixed"
       style={{ backgroundImage: `linear-gradient(to bottom, rgba(10,8,16,0.78), rgba(10,8,16,0.88)), url(${bgAsset.url})` }}
     >
-      <div className="w-full px-4 sm:px-6 py-6">
+      <div className="w-full px-4 sm:px-6 py-6 xl:flex xl:items-start xl:gap-6">
+        <div className="min-w-0 flex-1">
         <div className="mb-4 flex items-center gap-4 flex-wrap">
           <Link to="/forum" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
             <ArrowLeft className="size-4" /> Back to Boro Fan Zone
@@ -758,6 +760,11 @@ function AdminFanZonePage() {
             Showing <span className="font-medium text-foreground">{filtered.length}</span> {filtered.length === 1 ? "member" : "members"}
           </div>
         </div>
+        </div>
+
+        <aside className="hidden xl:block w-full xl:w-[300px] xl:shrink-0 xl:sticky xl:top-16">
+          <AdSenseSlot slot="sidebar" />
+        </aside>
       </div>
     </main>
   );
