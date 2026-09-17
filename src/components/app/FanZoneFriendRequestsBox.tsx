@@ -115,16 +115,14 @@ export function FanZoneFriendRequestsBox({
       .eq("addressee_id", userId);
     setBusy(null);
     if (error) return toast.error("Couldn't accept", { description: error.message });
-    toast.success("Friend request accepted");
     void load();
   };
 
-  const drop = async (id: string, msg: string) => {
+  const drop = async (id: string, _msg: string) => {
     setBusy(id);
     const { error } = await supabase.from("fan_zone_friendships").delete().eq("id", id);
     setBusy(null);
     if (error) return toast.error("Action failed", { description: error.message });
-    toast.message(msg);
     void load();
   };
 
