@@ -207,8 +207,8 @@ function FanProfilePage() {
           </div>
           <h2 className="font-display text-xl font-bold text-white mb-2">This profile is private</h2>
           <p className="text-sm text-white/70">
-            {p.fan_alias} has chosen to keep their Fan Zone profile private. Send a friend request — once accepted, you'll be able
-            to view their full profile.
+            {p.fan_alias} has chosen to keep their Fan Zone profile private. You can send a friend request, but they must also add
+            you before their friends-only profile becomes visible.
           </p>
           {!isSelf && friendRel.kind === "none" && incomingRel.kind === "none" && (
             <Button
