@@ -894,8 +894,12 @@ function TopicPage() {
   const deleteTopic = async () => {
     if (!topic) return;
     if (!confirm("Delete the entire topic and all replies?")) return;
-    const { error } = await supabase.from("forum_topics").delete().eq("id", topic.id);
+    const { data, error } = await supabase.from("forum_topics").delete().eq("id", topic.id).select("id");
     if (error) { toast.error("Couldn't delete topic", { description: error.message }); return; }
+    if (!data || data.length === 0) {
+      toast.error("Topic not deleted", { description: "You don't have permission to delete this topic." });
+      return;
+    }
     void navigate({ to: "/forum/$board", params: { board: slug } });
   };
 
