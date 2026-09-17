@@ -168,7 +168,7 @@ function MessagesLayout() {
         </Button>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[360px_minmax(0,1fr)]">
+      <div className="grid gap-4 lg:grid-cols-[360px_minmax(0,1fr)_240px]">
         <aside className="rounded-2xl border border-[#E11B22]/30 bg-surface-1/95 backdrop-blur-md shadow-soft overflow-hidden flex flex-col max-h-[calc(100vh-9rem)]">
           <div className="px-4 py-3 border-b border-border/60 flex items-center gap-2">
             <MessageSquare className="size-4 text-[#E11B22]" />
@@ -305,9 +305,6 @@ function MessagesLayout() {
               ))}
             </ul>
           )}
-          <div className="border-t border-border/60 p-3">
-            <AdSenseSlot slot="sidebar" />
-          </div>
         </aside>
 
         <section className="rounded-2xl border border-border bg-surface-1/95 backdrop-blur-md shadow-soft min-h-[calc(100vh-9rem)] overflow-hidden">
@@ -319,6 +316,10 @@ function MessagesLayout() {
             </div>
           )}
         </section>
+
+        <aside className="hidden lg:block rounded-2xl border border-border bg-surface-1/95 backdrop-blur-md shadow-soft p-3 self-start sticky top-4 max-h-[calc(100vh-9rem)] overflow-y-auto">
+          <AdSenseSlot slot="sidebar" />
+        </aside>
       </div>
       </div>
 
