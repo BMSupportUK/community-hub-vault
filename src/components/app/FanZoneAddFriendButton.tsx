@@ -60,19 +60,19 @@ export function FanZoneAddFriendButton({ viewerId, targetId, name, className }: 
     );
   }
 
+  if (state === "incoming") {
+    return (
+      <span
+        className={`${base} cursor-default ${className ?? ""}`}
+        title={`Friend request from ${name} is waiting in your inbox`}
+      >
+        <Clock className="size-3" />
+      </span>
+    );
+  }
+
   const handle = async () => {
     setBusy(true);
-    if (state === "incoming") {
-      const { error } = await supabase
-        .from("fan_zone_friendships")
-        .update({ status: "accepted" })
-        .eq("requester_id", targetId)
-        .eq("addressee_id", viewerId);
-      setBusy(false);
-      if (error) return toast.error("Couldn't accept", { description: error.message });
-      setState("accepted");
-      return;
-    }
     const { error } = await supabase
       .from("fan_zone_friendships")
       .insert({ requester_id: viewerId, addressee_id: targetId });
@@ -87,7 +87,7 @@ export function FanZoneAddFriendButton({ viewerId, targetId, name, className }: 
       disabled={busy}
       onClick={handle}
       className={`${base} ${className ?? ""}`}
-      title={state === "incoming" ? `Accept ${name}'s friend request` : `Send ${name} a friend request`}
+      title={`Send ${name} a friend request`}
     >
       <UserPlus className="size-3" />
     </button>
