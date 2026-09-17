@@ -272,8 +272,13 @@ function BoardPage() {
 
   const deleteTopic = async (t: Topic) => {
     if (!confirm(`Delete topic "${t.title}" and all replies?`)) return;
-    const { error } = await supabase.from("forum_topics").delete().eq("id", t.id);
+    const { data, error } = await supabase.from("forum_topics").delete().eq("id", t.id).select("id");
     if (error) { toast.error("Couldn't delete", { description: error.message }); return; }
+    if (!data || data.length === 0) {
+      toast.error("Topic not deleted", { description: "You don't have permission to delete this topic." });
+      await reloadTopics();
+      return;
+    }
     await reloadTopics();
     toast.success("Topic deleted");
   };
