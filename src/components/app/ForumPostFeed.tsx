@@ -11,12 +11,17 @@ export function ForumPostFeed({
   showAuthor = false,
   empty = "Nothing posted yet.",
   variant = "list",
+  unreadIds,
+  onOpenPost,
 }: {
   posts: ForumFeedPost[];
   loading: boolean;
   showAuthor?: boolean;
   empty?: string;
   variant?: "list" | "grid";
+  /** Ids still unread — these flash a "New — tap to read" flag. */
+  unreadIds?: Set<string>;
+  onOpenPost?: (post: ForumFeedPost) => void;
 }) {
   if (loading) {
     return (
