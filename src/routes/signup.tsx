@@ -11,6 +11,7 @@ import { useVisitorVpnStatus, refreshVisitorVpn } from "@/hooks/use-visitor-vpn"
 import { assertSignupAllowed } from "@/lib/vpn-public-check.functions";
 import { VpnBlockedDialog } from "@/components/VpnBlockedDialog";
 import { ShieldAlert, Loader2, RefreshCw } from "lucide-react";
+import AdSenseSlot from "@/components/app/AdSenseSlot";
 
 export const Route = createFileRoute("/signup")({
   validateSearch: (search: Record<string, unknown>): { invite?: string } => ({
