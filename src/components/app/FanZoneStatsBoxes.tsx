@@ -70,7 +70,7 @@ export function FanStatsBox({ userId }: { userId: string }) {
 
     const ids = [...unique.keys()];
     let cards: FriendCard[] = [];
-    if (isSelf && ids.length > 0) {
+    if (!friendsHidden && ids.length > 0) {
       const { data: members } = await supabase.rpc("fan_zone_aliases", { _ids: ids });
       const byId = new Map(((members as any[]) ?? []).map((member: any) => [member.user_id, member]));
       cards = ids.map((id) => {
@@ -165,14 +165,14 @@ export function FanStatsBox({ userId }: { userId: string }) {
         <div className="space-y-2">
           <Item icon={FileText} label="Topics started" value={s.topics} />
           <Item icon={MessageSquare} label="Forum posts" value={s.posts} />
-          {!s.friendsHidden && s.isSelf ? (
+          {!s.friendsHidden ? (
             <>
               <FriendItem label="Friends" value={s.friends} list="all" />
               <FriendItem label="Mutual friends" value={s.mutualFriends} list="mutual" />
             </>
-          ) : !s.friendsHidden ? (
-            <Item icon={Users} label="Friends" value={s.friends} />
-          ) : null}
+          ) : (
+            <Item icon={Users} label="Friends" value="Private" />
+          )}
           <Item icon={ThumbsUp} label="Reactions received" value={s.reactionsReceived} />
         </div>
       )}
