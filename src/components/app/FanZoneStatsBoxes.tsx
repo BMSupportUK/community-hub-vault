@@ -95,6 +95,7 @@ export function FanStatsBox({ userId }: { userId: string }) {
       reactionsReceived: total,
       friendsHidden,
       isSelf,
+      ownerAlias,
     });
   };
 
@@ -191,7 +192,7 @@ export function FanStatsBox({ userId }: { userId: string }) {
                         {friend.fan_alias || "Boro fan"}
                       </Link>
                       <div className="mt-1 text-[11px] font-semibold uppercase text-white/65">
-                        {friend.mutual ? "Mutual friends" : "One-way friend"}
+                        {friend.mutual ? "Mutual friends" : `Added by ${s?.ownerAlias || "Boro fan"}`}
                       </div>
                       {s?.isSelf ? (
                         <Button size="sm" variant="outline" disabled={busy === friend.friendship_id} onClick={() => void removeFriend(friend.friendship_id)} className="mt-3 bg-white/10 text-white">
