@@ -92,7 +92,7 @@ function FriendRequestsPage() {
             </div>
           </div>
 
-          <aside className="xl:sticky xl:top-6">
+          <aside className="hidden xl:block xl:sticky xl:top-6">
             <AdSenseSlot slot="sidebar" />
           </aside>
         </div>
