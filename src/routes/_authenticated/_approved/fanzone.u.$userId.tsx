@@ -329,8 +329,8 @@ function FanProfilePage() {
             />
 
             {canModerate && theirMute && (
-
               <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+
                 Muted until {new Date(theirMute.expires_at).toLocaleString("en-GB")} — “{theirMute.reason}”
               </div>
             )}
