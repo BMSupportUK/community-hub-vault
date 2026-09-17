@@ -30,6 +30,7 @@ type Stats = {
   reactionsReceived: number;
   friendsHidden: boolean;
   isSelf: boolean;
+  ownerAlias: string | null;
 };
 
 export function FanStatsBox({ userId }: { userId: string }) {
