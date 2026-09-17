@@ -7,7 +7,7 @@ import { useFanZoneMembership } from "@/hooks/use-fan-zone";
 import { getIcon } from "@/components/app/IconPicker";
 import { formatLastSeen } from "@/lib/relative-time";
 import { Button } from "@/components/ui/button";
-import { Ban, BarChart3, UserCog, Search as SearchIcon, ShieldAlert, MailQuestion, ArrowLeftRight } from "lucide-react";
+import { Ban, BarChart3, UserCog, Search as SearchIcon, ShieldAlert, MailQuestion, ArrowLeftRight, Sparkles } from "lucide-react";
 import { isFanZoneOnlyRoles } from "@/lib/fan-zone-nav";
 import { FanZoneStaffBox } from "@/components/app/FanZoneStaffBox";
 import { BoroMatchCentreBox } from "@/components/app/BoroMatchCentreBox";
@@ -64,6 +64,44 @@ function ForumLayout() {
   const { user, hasAny, roles } = useAuth();
   const hasSupportSide = !isFanZoneOnlyRoles((roles ?? []) as string[]);
   const canModerate = hasAny(["admin", "management", "moderator", "boro_fan_zone_moderator"]);
+  const [newForumPosts, setNewForumPosts] = useState(0);
+  useEffect(() => {
+    if (!user?.id) {
+      setNewForumPosts(0);
+      return;
+    }
+    let cancelled = false;
+    const count = async () => {
+      const { data: marker } = await supabase
+        .from("forum_new_content_reads")
+        .select("last_viewed_at")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (!marker?.last_viewed_at) {
+        const viewedAt = new Date().toISOString();
+        await supabase.from("forum_new_content_reads").upsert({ user_id: user.id, last_viewed_at: viewedAt });
+        if (!cancelled) setNewForumPosts(0);
+        return;
+      }
+
+      const { count: unread } = await supabase
+        .from("forum_posts")
+        .select("id", { count: "exact", head: true })
+        .gt("created_at", marker.last_viewed_at);
+      if (!cancelled) setNewForumPosts(unread ?? 0);
+    };
+
+    void count();
+    const channel = supabase
+      .channel(`fz-new-content-pill-${user.id}`)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "forum_posts" }, () => void count())
+      .subscribe();
+    return () => {
+      cancelled = true;
+      void supabase.removeChannel(channel);
+    };
+  }, [user?.id]);
   // Outstanding reports counter — kept live so staff see new ones straight away.
   const [pendingReports, setPendingReports] = useState(0);
   useEffect(() => {
@@ -270,7 +308,13 @@ function ForumLayout() {
               );
             })()}
             <Button asChild size="sm" variant="outline" className="bg-black/40 backdrop-blur border-white/30 text-white hover:bg-black/60 hover:text-white justify-center">
-              <Link to="/fanzone/profile"><UserCog className="size-4 mr-1.5" />Profile &amp; Settings</Link>
+              <Link to="/fanzone/new-posts">
+                <Sparkles className="size-4 mr-1.5" />
+                New Content
+                <span className="ml-1.5 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-[#E11B22] px-1.5 text-[10px] font-bold text-white">
+                  {newForumPosts > 99 ? "99+" : newForumPosts}
+                </span>
+              </Link>
             </Button>
             <Button asChild size="sm" variant="outline" className="bg-black/40 backdrop-blur border-white/30 text-white hover:bg-black/60 hover:text-white justify-center">
               <Link to="/fanzone/blocks"><Ban className="size-4 mr-1.5" />Ignore</Link>

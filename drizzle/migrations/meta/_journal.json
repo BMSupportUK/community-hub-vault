@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1789634252151,
+      "tag": "0000_add_forum_new_content_reads",
+      "breakpoints": true
+    }
+  ]
+}
