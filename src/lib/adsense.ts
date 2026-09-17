@@ -6,7 +6,7 @@
  * account is approved and the ad unit is created in AdSense.
  * While either is empty, a placeholder panel is rendered instead.
  */
-export const ADSENSE_CLIENT_ID = "";
+export const ADSENSE_CLIENT_ID = "ca-pub-7730881064868843";
 export const ADSENSE_TOPIC_SLOT = "";
 
 export const ADSENSE_ENABLED =
