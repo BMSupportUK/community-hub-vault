@@ -9,6 +9,7 @@ import { verifyTurnstile } from "@/lib/turnstile.functions";
 import { checkMyVpnOnLogin } from "@/lib/vpn-login-check.functions";
 import { refreshVpnUserSet } from "@/lib/vpn-flags";
 import { clearScreenLockState } from "@/lib/screen-lock-hash";
+import AdSenseSlot from "@/components/app/AdSenseSlot";
 
 async function getClientIpHint(): Promise<string | null> {
   try {

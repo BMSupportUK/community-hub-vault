@@ -5,6 +5,7 @@ import { LandingHeader } from "@/components/LandingHeader";
 import welcomeHero from "@/assets/welcome-hero.webp";
 import { MessageSquare, CalendarClock, LifeBuoy, Sparkles } from "lucide-react";
 import { BmSplash } from "@/components/app/BmSplash";
+import AdSenseSlot from "@/components/app/AdSenseSlot";
 
 function pickIcon(title: string) {
   const t = title.toLowerCase();
