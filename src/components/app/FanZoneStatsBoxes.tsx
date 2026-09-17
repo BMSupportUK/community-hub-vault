@@ -36,7 +36,8 @@ type Stats = {
 export function FanStatsBox({ userId }: { userId: string }) {
   const [s, setS] = useState<Stats | null>(null);
   const [friendCards, setFriendCards] = useState<FriendCard[]>([]);
-  const [openList, setOpenList] = useState<"all" | "mutual" | null>(null);
+  const [openList, setOpenList] = useState(false);
+  const [tab, setTab] = useState<"added" | "mutual">("added");
   const [busy, setBusy] = useState<string | null>(null);
 
   const load = async (cancelled = false) => {
