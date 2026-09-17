@@ -132,11 +132,11 @@ export function FanStatsBox({ userId }: { userId: string }) {
     </div>
   );
 
-  const FriendItem = ({ label, value, list }: { label: string; value: number; list: "all" | "mutual" }) => (
+  const FriendItem = ({ label, value }: { label: string; value: number }) => (
     <Button
       type="button"
       variant="ghost"
-      onClick={() => setOpenList(list)}
+      onClick={() => setOpenList(true)}
       className="h-auto w-full justify-start gap-3 rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 text-white hover:bg-white/10 hover:text-white"
     >
       <Users className="size-4 shrink-0 text-[#E11B22]" />
@@ -145,7 +145,8 @@ export function FanStatsBox({ userId }: { userId: string }) {
     </Button>
   );
 
-  const visibleCards = openList === "mutual" ? friendCards.filter((friend) => friend.mutual) : friendCards;
+  const mutualCards = friendCards.filter((friend) => friend.mutual);
+  const visibleCards = tab === "mutual" ? mutualCards : friendCards;
 
   return (
     <div className="rounded-2xl border border-[#E11B22]/40 bg-black/55 backdrop-blur-md shadow-2xl text-white p-5">
