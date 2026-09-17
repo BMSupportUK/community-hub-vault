@@ -3,7 +3,13 @@ import { useEffect, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import bgAsset from "@/assets/boro-fan-zone-profile-bg.jpg.asset.json";
-import { fetchForumFeed, FORUM_FEED_PAGE_SIZE, type ForumFeedPost } from "@/lib/forum-feed";
+import {
+  fetchForumFeed,
+  fetchForumUnreadCounts,
+  FORUM_FEED_PAGE_SIZE,
+  type ForumFeedPost,
+} from "@/lib/forum-feed";
+
 import { ForumPostFeed, ForumFeedPager } from "@/components/app/ForumPostFeed";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,6 +40,31 @@ function NewForumContentPage() {
   const [loading, setLoading] = useState(true);
   const [since, setSince] = useState<string | null>(null);
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
+  const [counts, setCounts] = useState<{ topics: number; replies: number }>({ topics: 0, replies: 0 });
+
+  // Per-tab unread counters, refreshed live as posts arrive or get read.
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+    const refresh = async () => {
+      const next = await fetchForumUnreadCounts(since, getReadNewContentIds(user.id));
+      if (!cancelled) setCounts(next);
+    };
+    void refresh();
+    const onRead = () => void refresh();
+    window.addEventListener(NEW_CONTENT_READ_EVENT, onRead);
+    const channel = supabase
+      .channel(`fz-new-content-counts-${user.id}`)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "forum_posts" }, () => void refresh())
+      .on("postgres_changes", { event: "DELETE", schema: "public", table: "forum_posts" }, () => void refresh())
+      .subscribe();
+    return () => {
+      cancelled = true;
+      window.removeEventListener(NEW_CONTENT_READ_EVENT, onRead);
+      void supabase.removeChannel(channel);
+    };
+  }, [user?.id, since, readIds]);
+
 
   // Load the "last read" marker so brand new posts can flash, and remember
   // what has already been opened.
@@ -126,12 +157,22 @@ function NewForumContentPage() {
                   setTab(t);
                   setPage(1);
                 }}
-                className={`rounded-lg px-4 py-1.5 text-sm font-semibold transition-colors ${
+                className={`inline-flex items-center gap-2 rounded-lg px-4 py-1.5 text-sm font-semibold transition-colors ${
                   tab === t ? "bg-[#E11B22] text-white" : "text-white/70 hover:text-white"
                 }`}
               >
                 {t === "topics" ? "New topics" : "Replies"}
+                {counts[t] > 0 && (
+                  <span
+                    className={`animate-pulse rounded-full px-2 py-0.5 text-[11px] font-black leading-none ${
+                      tab === t ? "bg-white text-[#E11B22]" : "bg-[#E11B22] text-white"
+                    }`}
+                  >
+                    {counts[t] > 99 ? "99+" : counts[t]}
+                  </span>
+                )}
               </button>
+
             ))}
           </div>
           {unreadIds.size > 0 && (

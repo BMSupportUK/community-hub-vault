@@ -140,3 +140,28 @@ export async function fetchForumFeed(opts: {
 
   return { posts, total: count ?? posts.length };
 }
+
+/**
+ * Unread counts for the "New content" tabs, split into new topics and replies.
+ * `since` is the fan's last-viewed marker; ids already opened locally are removed.
+ */
+export async function fetchForumUnreadCounts(
+  since: string | null,
+  readIds: Set<string>,
+): Promise<{ topics: number; replies: number }> {
+  if (!since) return { topics: 0, replies: 0 };
+  const { data } = await supabase
+    .from("forum_posts")
+    .select("id, is_op")
+    .gt("created_at", since)
+    .order("created_at", { ascending: false })
+    .limit(500);
+  let topics = 0;
+  let replies = 0;
+  for (const row of (data ?? []) as Array<{ id: string; is_op: boolean }>) {
+    if (readIds.has(row.id)) continue;
+    if (row.is_op) topics += 1;
+    else replies += 1;
+  }
+  return { topics, replies };
+}
