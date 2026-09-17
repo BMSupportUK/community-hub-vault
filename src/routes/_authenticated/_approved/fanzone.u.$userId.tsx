@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import bgAsset from "@/assets/boro-fan-zone-profile-bg.jpg.asset.json";
 import { FanStatsBox, FanReputationBox } from "@/components/app/FanZoneStatsBoxes";
 import { FanZoneProfileFeedTabs } from "@/components/app/FanZoneProfileFeeds";
+import profileMatchHeader from "@/assets/boro-profile-match-header.jpg";
 
 import { FanZoneMuteDialog } from "@/components/app/FanZoneMuteDialog";
 import { FanZoneBanDialog } from "@/components/app/FanZoneBanDialog";
@@ -235,8 +236,18 @@ function FanProfilePage() {
       ) : (
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] items-start">
         <div className="rounded-2xl border border-[#E11B22]/45 bg-black/75 backdrop-blur-md shadow-2xl text-white overflow-hidden min-w-0">
-          <div className="relative bg-gradient-to-br from-[#E11B22] to-[#8B0F14] px-6 py-8 text-white">
-            <div className="flex items-center gap-4">
+          <div className="relative isolate min-h-40 overflow-hidden bg-primary px-6 py-8 text-white">
+            <img
+              src={profileMatchHeader}
+              alt=""
+              width={1536}
+              height={512}
+              className="absolute inset-0 -z-20 size-full object-cover object-[68%_center] sm:object-center"
+              aria-hidden="true"
+            />
+            <div className="absolute inset-0 -z-10 bg-gradient-to-r from-black/90 via-black/70 to-black/20 sm:via-black/55" aria-hidden="true" />
+            <div className="absolute inset-0 -z-10 bg-gradient-to-t from-black/45 via-transparent to-black/15" aria-hidden="true" />
+            <div className="flex min-h-24 items-center gap-4">
               <img src={p.fan_avatar_url} alt={p.fan_alias} className="size-20 rounded-full object-cover ring-4 ring-white/20 shadow-lg" />
               <div className="min-w-0">
                 <div className="text-[10px] uppercase tracking-[0.2em] font-bold opacity-80">Boro Fan Zone</div>
