@@ -168,7 +168,7 @@ function Landing() {
           </div>
           </section>
 
-          <aside className="hidden lg:flex w-[260px] xl:w-[300px] shrink-0 flex-col self-stretch">
+          <aside className="hidden lg:flex w-[260px] xl:w-[300px] shrink-0 flex-col self-start">
             <AdSenseSlot slot="topic" />
           </aside>
         </div>
