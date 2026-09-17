@@ -43,13 +43,23 @@ export function ForumPostFeed({
       : "space-y-2.5";
   return (
     <ul className={listClasses}>
-      {posts.map((p) => (
+      {posts.map((p) => {
+        const unread = unreadIds?.has(p.id) ?? false;
+        return (
         <li key={p.id}>
           <Link
             to="/forum/$board/$topic"
             params={{ board: p.board_slug, topic: p.topic_id }}
-            className="block h-full rounded-xl border border-white/12 bg-white/5 p-3.5 transition-colors hover:border-[#E11B22]/60 hover:bg-white/10"
+            onClick={() => onOpenPost?.(p)}
+            className={`block h-full rounded-xl border p-3.5 transition-colors hover:border-[#E11B22]/60 hover:bg-white/10 ${
+              unread ? "border-[#E11B22]/70 bg-[#E11B22]/10" : "border-white/12 bg-white/5"
+            }`}
           >
+            {unread && (
+              <div className="mb-2 inline-flex animate-pulse items-center gap-1.5 rounded-full bg-[#E11B22] px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                New — tap to read
+              </div>
+            )}
             <div className="flex flex-wrap items-center gap-2 text-[11px] uppercase tracking-wide text-white/55">
               <span className="rounded-full bg-[#E11B22]/25 px-2 py-0.5 font-semibold text-[#FFD3D5]">
                 {p.is_op ? "Topic" : "Reply"}
