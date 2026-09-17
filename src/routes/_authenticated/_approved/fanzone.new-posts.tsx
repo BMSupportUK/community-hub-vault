@@ -3,7 +3,13 @@ import { useEffect, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import bgAsset from "@/assets/boro-fan-zone-profile-bg.jpg.asset.json";
-import { fetchForumFeed, FORUM_FEED_PAGE_SIZE, type ForumFeedPost } from "@/lib/forum-feed";
+import {
+  fetchForumFeed,
+  fetchForumUnreadCounts,
+  FORUM_FEED_PAGE_SIZE,
+  type ForumFeedPost,
+} from "@/lib/forum-feed";
+
 import { ForumPostFeed, ForumFeedPager } from "@/components/app/ForumPostFeed";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
