@@ -44,7 +44,7 @@ function NewForumContentPage() {
     let cancelled = false;
     setLoading(true);
     void (async () => {
-      const res = await fetchForumFeed({ page });
+      const res = await fetchForumFeed({ page, kind: tab });
       if (cancelled) return;
       setPosts(res.posts);
       setTotal(res.total);
@@ -54,7 +54,7 @@ function NewForumContentPage() {
     return () => {
       cancelled = true;
     };
-  }, [page]);
+  }, [page, tab]);
 
   return (
     <div
@@ -69,8 +69,34 @@ function NewForumContentPage() {
           </Link>
         </Button>
         <h1 className="font-display text-2xl font-black text-white sm:text-3xl">New forum content</h1>
-        <p className="mb-5 mt-1 text-sm text-white/70">{total} post{total === 1 ? "" : "s"} · 20 per page</p>
-        <ForumPostFeed posts={posts} loading={loading} showAuthor empty="No forum posts yet." variant="grid" />
+        <p className="mt-1 text-sm text-white/70">
+          {total} {tab === "topics" ? "topic" : "reply"}
+          {total === 1 ? "" : tab === "topics" ? "s" : "s"} · 20 per page
+        </p>
+        <div className="mb-5 mt-4 inline-flex rounded-xl border border-white/15 bg-white/5 p-1">
+          {(["topics", "replies"] as FeedTab[]).map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => {
+                setTab(t);
+                setPage(1);
+              }}
+              className={`rounded-lg px-4 py-1.5 text-sm font-semibold transition-colors ${
+                tab === t ? "bg-[#E11B22] text-white" : "text-white/70 hover:text-white"
+              }`}
+            >
+              {t === "topics" ? "New topics" : "Replies"}
+            </button>
+          ))}
+        </div>
+        <ForumPostFeed
+          posts={posts}
+          loading={loading}
+          showAuthor
+          empty={tab === "topics" ? "No new topics yet." : "No replies yet."}
+          variant="grid"
+        />
         <ForumFeedPager page={page} total={total} pageSize={FORUM_FEED_PAGE_SIZE} onPage={setPage} />
       </div>
     </div>
