@@ -157,12 +157,22 @@ function NewForumContentPage() {
                   setTab(t);
                   setPage(1);
                 }}
-                className={`rounded-lg px-4 py-1.5 text-sm font-semibold transition-colors ${
+                className={`inline-flex items-center gap-2 rounded-lg px-4 py-1.5 text-sm font-semibold transition-colors ${
                   tab === t ? "bg-[#E11B22] text-white" : "text-white/70 hover:text-white"
                 }`}
               >
                 {t === "topics" ? "New topics" : "Replies"}
+                {counts[t] > 0 && (
+                  <span
+                    className={`animate-pulse rounded-full px-2 py-0.5 text-[11px] font-black leading-none ${
+                      tab === t ? "bg-white text-[#E11B22]" : "bg-[#E11B22] text-white"
+                    }`}
+                  >
+                    {counts[t] > 99 ? "99+" : counts[t]}
+                  </span>
+                )}
               </button>
+
             ))}
           </div>
           {unreadIds.size > 0 && (
