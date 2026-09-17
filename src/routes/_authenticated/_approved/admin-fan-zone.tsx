@@ -759,6 +759,11 @@ function AdminFanZonePage() {
             Showing <span className="font-medium text-foreground">{filtered.length}</span> {filtered.length === 1 ? "member" : "members"}
           </div>
         </div>
+        </div>
+
+        <aside className="hidden xl:block w-full xl:w-[300px] xl:shrink-0 xl:sticky xl:top-16">
+          <AdSenseSlot slot="sidebar" />
+        </aside>
       </div>
     </main>
   );
