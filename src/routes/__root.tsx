@@ -115,6 +115,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
     scripts: [
       {
+        // Google AdSense site verification + ad loader (publisher ca-pub-7730881064868843).
+        src: "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7730881064868843",
+        async: true,
+        crossOrigin: "anonymous",
+      },
+      {
         // Runs before the landing page paints: a returning member with a saved
         // sign-in goes straight to the app instead of flashing the welcome page.
         children: `(function(){try{if(location.pathname!=="/")return;var f=false;for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k&&k.indexOf("sb-")===0&&k.indexOf("-auth-token")===k.length-11){f=true;break}}if(!f)return;var s=document.createElement("style");s.textContent="body{visibility:hidden!important;background:#000!important}";document.head.appendChild(s);location.replace("/home")}catch(e){}})();`,

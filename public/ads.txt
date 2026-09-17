@@ -1,3 +1,1 @@
-# Google AdSense — replace ca-pub-XXXXXXXXXXXXXXXX with your publisher ID
-# once your AdSense account is approved. Format:
-# google.com, ca-pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0
+google.com, ca-pub-7730881064868843, DIRECT, f08c47fec0942fa0
