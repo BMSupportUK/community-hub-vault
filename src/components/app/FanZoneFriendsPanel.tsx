@@ -25,7 +25,8 @@ type AcceptedFriend = FriendRow & { mutual: boolean };
 export function FanZoneFriendsPanel({ userId }: { userId: string }) {
   const [rows, setRows] = useState<AcceptedFriend[] | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
-  const [openList, setOpenList] = useState<"all" | "mutual" | null>(null);
+  const [openList, setOpenList] = useState(false);
+  const [tab, setTab] = useState<"added" | "mutual">("added");
   const [ownerAlias, setOwnerAlias] = useState<string | null>(null);
 
   const load = async () => {
@@ -68,7 +69,7 @@ export function FanZoneFriendsPanel({ userId }: { userId: string }) {
 
   const all = rows ?? [];
   const mutualList = all.filter((r) => r.mutual);
-  const dialogRows = openList === "mutual" ? mutualList : all;
+  const dialogRows = tab === "mutual" ? mutualList : all;
 
   return (
     <div className="rounded-2xl border border-[#E11B22]/40 bg-black/35 backdrop-blur-md shadow-2xl text-white p-5 sm:p-6">
