@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useFanZoneMembership } from "@/hooks/use-fan-zone";
 import { FanZoneNameGate } from "@/components/app/FanZoneNamePrompt";
 import { FanZoneFriendRequestsBox } from "@/components/app/FanZoneFriendRequestsBox";
+import AdSenseSlot from "@/components/app/AdSenseSlot";
 import { Button } from "@/components/ui/button";
 import bgAsset from "@/assets/boro-fan-zone-profile-bg.jpg.asset.json";
 
@@ -66,26 +67,34 @@ function FriendRequestsPage() {
         </button>
       </div>
 
-      <div className="relative z-10 mx-auto w-full max-w-3xl px-4 py-6 sm:px-6 space-y-5">
-        <FanZoneNameGate />
-        <Button asChild variant="ghost" size="sm" className="-ml-2 hidden text-white/80 hover:text-white hover:bg-white/10 sm:inline-flex">
-          <Link to="/fanzone/u/$userId" params={{ userId: user.id }}>
-            <ArrowLeft className="mr-1 size-4" /> Back to my profile
-          </Link>
-        </Button>
+      <div className="relative z-10 mx-auto w-full max-w-6xl px-4 py-6 sm:px-6">
+        <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px] items-start">
+          <div className="space-y-5 min-w-0">
+            <FanZoneNameGate />
+            <Button asChild variant="ghost" size="sm" className="-ml-2 hidden text-white/80 hover:text-white hover:bg-white/10 sm:inline-flex">
+              <Link to="/fanzone/u/$userId" params={{ userId: user.id }}>
+                <ArrowLeft className="mr-1 size-4" /> Back to my profile
+              </Link>
+            </Button>
 
-        <header className="hidden rounded-2xl border border-[#E11B22]/40 bg-black/50 p-5 backdrop-blur-md sm:block sm:p-7">
-          <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.3em] text-[#E11B22]">
-            <UserPlus className="size-3.5" /> Boro Fan Zone
+            <header className="hidden rounded-2xl border border-[#E11B22]/40 bg-black/50 p-5 backdrop-blur-md sm:block sm:p-7">
+              <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.3em] text-[#E11B22]">
+                <UserPlus className="size-3.5" /> Boro Fan Zone
+              </div>
+              <h1 className="mt-2 font-display text-3xl font-black text-white sm:text-4xl">Friend requests</h1>
+              <p className="mt-2 max-w-2xl text-sm text-white/70">
+                Requests from other Boro fans, the ones you've sent, and a search box to add new friends.
+              </p>
+            </header>
+
+            <div className="-mx-4 sm:mx-0">
+              <FanZoneFriendRequestsBox userId={user.id} fullBleed />
+            </div>
           </div>
-          <h1 className="mt-2 font-display text-3xl font-black text-white sm:text-4xl">Friend requests</h1>
-          <p className="mt-2 max-w-2xl text-sm text-white/70">
-            Requests from other Boro fans, the ones you've sent, and a search box to add new friends.
-          </p>
-        </header>
 
-        <div className="-mx-4 sm:mx-0">
-          <FanZoneFriendRequestsBox userId={user.id} fullBleed />
+          <aside className="xl:sticky xl:top-6">
+            <AdSenseSlot slot="sidebar" />
+          </aside>
         </div>
       </div>
     </div>

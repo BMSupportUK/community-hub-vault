@@ -2,10 +2,13 @@ import { memo, useEffect } from "react";
 import {
   ADSENSE_CLIENT_ID,
   ADSENSE_ENABLED,
+  ADSENSE_SIDEBAR_SLOT,
   ADSENSE_TOPIC_SLOT,
   ensureAdSenseScript,
   pushAd,
 } from "@/lib/adsense";
+
+export type AdSenseSlotKind = "topic" | "sidebar";
 
 function Placeholder({ label }: { label: string }) {
   return (
@@ -26,16 +29,19 @@ function Placeholder({ label }: { label: string }) {
  * - Before the AdSense account/slot is configured, everyone sees a subtle placeholder.
  * - Everyone (staff included) gets the live ad unit once AdSense is enabled.
  */
-function AdSenseSlotComponent() {
+function AdSenseSlotComponent({ slot = "topic" }: { slot?: AdSenseSlotKind }) {
+  const adSlotId = slot === "sidebar" ? ADSENSE_SIDEBAR_SLOT : ADSENSE_TOPIC_SLOT;
+  const enabled = ADSENSE_ENABLED && adSlotId.length > 0;
+
   useEffect(() => {
-    if (!ADSENSE_ENABLED) return;
+    if (!enabled) return;
     ensureAdSenseScript();
     // Defer the push so the <ins> element is in the DOM first.
     const id = window.setTimeout(pushAd, 50);
     return () => window.clearTimeout(id);
-  }, []);
+  }, [enabled]);
 
-  if (!ADSENSE_ENABLED) {
+  if (!enabled) {
     return <Placeholder label="Sponsored content appears here" />;
   }
 
@@ -48,7 +54,7 @@ function AdSenseSlotComponent() {
         className="adsbygoogle"
         style={{ display: "block", textAlign: "center" }}
         data-ad-client={ADSENSE_CLIENT_ID}
-        data-ad-slot={ADSENSE_TOPIC_SLOT}
+        data-ad-slot={adSlotId}
         data-ad-format="auto"
         data-full-width-responsive="true"
       />

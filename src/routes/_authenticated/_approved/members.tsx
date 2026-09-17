@@ -15,6 +15,7 @@ import { formatLastSeen } from "@/lib/relative-time";
 import { VpnBadge } from "@/lib/vpn-flags";
 import { formatRoleLabel } from "@/lib/role-label";
 import { PresenceDot, PresenceInline } from "@/components/app/PresenceIndicators";
+import AdSenseSlot from "@/components/app/AdSenseSlot";
 
 export const Route = createFileRoute("/_authenticated/_approved/members")({
   component: MembersPage,
@@ -254,7 +255,9 @@ function MembersPage() {
         </div>
       </section>
 
-      {/* Search */}
+      {/* Search + member grid with ad sidebar */}
+      <div className="flex flex-col xl:flex-row items-start">
+      <div className="min-w-0 flex-1 w-full">
       <div className="sticky top-0 z-10 bg-background/80 backdrop-blur border-b border-border px-6 py-3 flex flex-col sm:flex-row sm:items-center gap-3 justify-between">
         <div className="relative max-w-md w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
@@ -403,6 +406,12 @@ function MembersPage() {
             </div>
           );
         })}
+      </div>
+      </div>
+
+      <aside className="w-full xl:w-[300px] xl:shrink-0 xl:sticky xl:top-16 px-6 pb-6">
+        <AdSenseSlot slot="sidebar" />
+      </aside>
       </div>
 
       {resetTarget && (

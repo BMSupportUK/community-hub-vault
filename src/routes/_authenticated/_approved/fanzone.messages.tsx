@@ -5,6 +5,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { FanZoneNameGate } from "@/components/app/FanZoneNamePrompt";
+import AdSenseSlot from "@/components/app/AdSenseSlot";
 import { useFanZoneMembership } from "@/hooks/use-fan-zone";
 import { formatLastSeen } from "@/lib/relative-time";
 import { Button } from "@/components/ui/button";
@@ -304,6 +305,9 @@ function MessagesLayout() {
               ))}
             </ul>
           )}
+          <div className="border-t border-border/60 p-3">
+            <AdSenseSlot slot="sidebar" />
+          </div>
         </aside>
 
         <section className="rounded-2xl border border-border bg-surface-1/95 backdrop-blur-md shadow-soft min-h-[calc(100vh-9rem)] overflow-hidden">
