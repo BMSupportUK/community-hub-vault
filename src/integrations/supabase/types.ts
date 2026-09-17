@@ -2753,6 +2753,21 @@ export type Database = {
           },
         ]
       }
+      forum_new_content_reads: {
+        Row: {
+          last_viewed_at: string
+          user_id: string
+        }
+        Insert: {
+          last_viewed_at?: string
+          user_id: string
+        }
+        Update: {
+          last_viewed_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       forum_poll_options: {
         Row: {
           created_at: string
