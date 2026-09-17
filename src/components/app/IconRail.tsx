@@ -12,6 +12,8 @@ import { UserAvatarMenu } from "@/components/app/UserAvatarMenu";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import mfcBadge from "@/assets/mfc-badge.png.asset.json";
 import { useTalkChannelTotalCount } from "@/hooks/use-talk-channel-presence";
+import { useFanZoneFriendRequestCount } from "@/hooks/use-fan-zone-friend-request-count";
+
 import fantasyBench from "@/assets/boro-fantasy-bench.png.asset.json";
 import sportsGuideIcon from "@/assets/sports-guide-rail.png.asset.json";
 import boroPredictionsGoal from "@/assets/boro-predictions-goal.png.asset.json";
