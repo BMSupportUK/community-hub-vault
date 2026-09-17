@@ -137,9 +137,6 @@ function AdminFanZonePage() {
   type FriendState = { kind: "friends" } | { kind: "outgoing" } | { kind: "incoming"; id: string };
   const [friendByUser, setFriendByUser] = useState<Record<string, FriendState>>({});
   const [friendBusy, setFriendBusy] = useState<string | null>(null);
-  type IncomingReq = { id: string; requester_id: string };
-  const [incomingReqs, setIncomingReqs] = useState<IncomingReq[]>([]);
-  const [reqProfiles, setReqProfiles] = useState<Record<string, Profile>>({});
 
   const loadFriends = async () => {
     if (!user) { setFriendByUser({}); return; }
@@ -148,7 +145,6 @@ function AdminFanZonePage() {
       .select("id, requester_id, addressee_id, status")
       .or(`requester_id.eq.${user.id},addressee_id.eq.${user.id}`);
     const fmap: Record<string, FriendState> = {};
-    const incoming: IncomingReq[] = [];
     for (const f of (data ?? []) as Array<{ id: string; requester_id: string; addressee_id: string; status: string }>) {
       const otherId = f.requester_id === user.id ? f.addressee_id : f.requester_id;
       if (f.status === "accepted") {
@@ -157,21 +153,9 @@ function AdminFanZonePage() {
         fmap[otherId] = { kind: "outgoing" };
       } else {
         fmap[otherId] = { kind: "incoming", id: f.id };
-        if (f.status === "pending") incoming.push({ id: f.id, requester_id: f.requester_id });
       }
     }
     setFriendByUser(fmap);
-    setIncomingReqs(incoming);
-    const missing = incoming.map((i) => i.requester_id).filter((id) => !profiles[id] && !reqProfiles[id]);
-    if (missing.length) {
-      const { data: ps } = await supabase
-        .from("profiles")
-        .select("id, display_name, username, avatar_url")
-        .in("id", missing);
-      const map: Record<string, Profile> = {};
-      (ps ?? []).forEach((p) => (map[(p as Profile).id] = p as Profile));
-      setReqProfiles((prev) => ({ ...prev, ...map }));
-    }
   };
 
   useEffect(() => {
@@ -194,15 +178,6 @@ function AdminFanZonePage() {
     setFriendBusy(null);
     if (error) { toast.error(error.message); return; }
     toast.success("Friend request sent");
-    void loadFriends();
-  };
-
-  const acceptFriendRequest = async (id: string) => {
-    setFriendBusy(id);
-    const { error } = await supabase.from("fan_zone_friendships").update({ status: "accepted" }).eq("id", id);
-    setFriendBusy(null);
-    if (error) { toast.error(error.message); return; }
-    toast.success("Friend request accepted");
     void loadFriends();
   };
 
@@ -534,58 +509,6 @@ function AdminFanZonePage() {
           </div>
         </div>
 
-        {/* Pending friend requests */}
-        {incomingReqs.length > 0 && (
-          <div className="mb-6 rounded-2xl border border-amber-400/30 bg-amber-500/10 backdrop-blur-md shadow-soft p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <UserPlus className="size-4 text-amber-400" />
-              <h2 className="text-sm font-semibold">
-                Pending friend requests ({incomingReqs.length})
-              </h2>
-            </div>
-            <ul className="space-y-2">
-              {incomingReqs.map((req) => {
-                const p = profiles[req.requester_id] ?? reqProfiles[req.requester_id];
-                const name = p?.display_name || p?.username || "Boro Fan";
-                const avatar = p?.avatar_url;
-                return (
-                  <li key={req.id} className="flex items-center justify-between gap-3 rounded-xl bg-card/80 border border-border/60 px-3 py-2 hover:border-amber-400/40 transition-colors">
-                    <div className="flex items-center gap-3 min-w-0">
-                      {avatar ? (
-                        <img src={avatar} alt={name} className="size-9 rounded-full object-cover ring-2 ring-amber-400/30 ring-offset-2 ring-offset-card" />
-                      ) : (
-                        <div className="size-9 rounded-full bg-gradient-to-br from-rose-600 to-amber-600 grid place-items-center text-white text-xs font-bold ring-2 ring-amber-400/30 ring-offset-2 ring-offset-card">
-                          {name.slice(0, 1).toUpperCase()}
-                        </div>
-                      )}
-                      <Link
-                        to="/fanzone/u/$userId"
-                        params={{ userId: req.requester_id }}
-                        className="font-medium hover:text-amber-400 hover:underline truncate transition-colors"
-                      >
-                        {name}
-                      </Link>
-                    </div>
-                    <Button
-                      size="sm"
-                      onClick={() => void acceptFriendRequest(req.id)}
-                      disabled={friendBusy === req.id}
-                      className="bg-emerald-600 hover:bg-emerald-500 text-white"
-                    >
-                      {friendBusy === req.id ? (
-                        <Loader2 className="size-4 animate-spin mr-1.5" />
-                      ) : (
-                        <UserCheck className="size-4 mr-1.5" />
-                      )}
-                      Accept
-                    </Button>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        )}
-
         {/* Table */}
         <div className="rounded-2xl border border-primary/20 bg-card/90 backdrop-blur-xl shadow-glow overflow-hidden">
           <div className="overflow-x-auto">
@@ -734,16 +657,13 @@ function AdminFanZonePage() {
                               <Clock className="size-4" />
                             </span>
                           ) : fs?.kind === "incoming" ? (
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              className="size-8 text-emerald-400 hover:text-emerald-300"
-                              title="Accept friend request"
-                              disabled={friendBusy === fs.id}
-                              onClick={() => acceptFriendRequest(fs.id)}
+                            <Link
+                              to="/fanzone/friend-requests"
+                              className="inline-flex size-8 items-center justify-center rounded-md text-amber-400 hover:text-amber-300"
+                              title="Open friend request inbox"
                             >
-                              {friendBusy === fs.id ? <Loader2 className="size-4 animate-spin" /> : <UserCheck className="size-4" />}
-                            </Button>
+                              <Clock className="size-4" />
+                            </Link>
                           ) : (
                             <Button
                               size="icon"
