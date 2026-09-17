@@ -123,32 +123,56 @@ export async function findPressConference(fx: {
   return null;
 }
 
-/** True when the video is a completed, publicly embeddable recording. */
+/**
+ * True when the video is a completed, publicly embeddable recording.
+ *
+ * The watch page cannot be used for this check: YouTube serves datacenter IPs a
+ * consent redirect or a bot-guard page whose playability status is always
+ * "UNPLAYABLE", which made every real press conference look unavailable. We use
+ * the public oEmbed endpoint (200 only for public, embeddable videos) and treat
+ * the InnerTube live-broadcast metadata as a best-effort "has it finished" hint.
+ */
 async function isFinishedPublicVideo(videoId: string): Promise<boolean> {
-  let html = "";
+  // 1) Public + embeddable?
   try {
-    const res = await fetch(`https://www.youtube.com/watch?v=${videoId}&hl=en`, {
-      headers: {
-        "user-agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36",
-        "accept-language": "en-GB,en;q=0.9",
-      },
-    });
+    const res = await fetch(
+      `https://www.youtube.com/oembed?url=${encodeURIComponent(
+        `https://www.youtube.com/watch?v=${videoId}`,
+      )}&format=json`,
+    );
     if (!res.ok) return false;
-    html = await res.text();
   } catch {
-    // Can't verify — better to show the fixture graphic than a sign-in wall.
     return false;
   }
 
-  if (/"status"\s*:\s*"(LOGIN_REQUIRED|UNPLAYABLE|ERROR)"/.test(html)) return false;
-  if (/"playableInEmbed"\s*:\s*false/.test(html)) return false;
-  if (/"isUpcoming"\s*:\s*true/.test(html)) return false;
-  // Currently live: live details present with no end timestamp.
-  if (/"isLiveNow"\s*:\s*true/.test(html)) return false;
-  if (/"isLiveContent"\s*:\s*true/.test(html) && !/"endTimestamp"/.test(html)) return false;
-  return true;
+  // 2) Still live or not started yet? Best effort only — if we can't tell, we
+  // allow the embed (an ended recording is by far the common case here).
+  try {
+    const res = await fetch(
+      "https://www.youtube.com/youtubei/v1/player?key=AIzaSyAO_FJ2SlqU8Q4STEHLGCilw_Y9_11qcW8",
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          videoId,
+          context: { client: { clientName: "WEB", clientVersion: "2.20240101.00.00", hl: "en" } },
+        }),
+      },
+    );
+    if (!res.ok) return true;
+    const json: any = await res.json();
+    const micro = json?.microformat?.playerMicroformatRenderer ?? {};
+    const live = micro?.liveBroadcastDetails;
+    const details = json?.videoDetails ?? {};
+    if (details.isUpcoming === true) return false;
+    if (live?.isLiveNow === true) return false;
+    if (details.isLiveContent === true && live && !live.endTimestamp) return false;
+    return true;
+  } catch {
+    return true;
+  }
 }
+
 
 
 function decodeXml(s: string): string {
