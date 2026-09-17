@@ -7,6 +7,7 @@ import { fetchForumFeed, FORUM_FEED_PAGE_SIZE, type ForumFeedPost } from "@/lib/
 import { ForumPostFeed, ForumFeedPager } from "@/components/app/ForumPostFeed";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
+import { getReadNewContentIds, markNewContentRead, NEW_CONTENT_READ_EVENT } from "@/lib/forum-new-content";
 
 export const Route = createFileRoute("/_authenticated/_approved/fanzone/new-posts")({
   head: () => ({
@@ -31,14 +32,56 @@ function NewForumContentPage() {
   const [posts, setPosts] = useState<ForumFeedPost[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [since, setSince] = useState<string | null>(null);
+  const [readIds, setReadIds] = useState<Set<string>>(new Set());
 
+  // Load the "last read" marker so brand new posts can flash, and remember
+  // what has already been opened.
   useEffect(() => {
     if (!user?.id) return;
-    void supabase.from("forum_new_content_reads").upsert({
-      user_id: user.id,
-      last_viewed_at: new Date().toISOString(),
-    });
+    let cancelled = false;
+    void (async () => {
+      const { data } = await supabase
+        .from("forum_new_content_reads")
+        .select("last_viewed_at")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (cancelled) return;
+      setSince(data?.last_viewed_at ?? null);
+      setReadIds(getReadNewContentIds(user.id));
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [user?.id]);
+
+  const openPost = (post: ForumFeedPost) => {
+    if (!user?.id) return;
+    setReadIds((prev) => new Set(prev).add(post.id));
+    markNewContentRead(user.id, [post.id]);
+  };
+
+  const markAllRead = () => {
+    if (!user?.id) return;
+    const ids = posts.map((p) => p.id);
+    setReadIds((prev) => {
+      const next = new Set(prev);
+      ids.forEach((id) => next.add(id));
+      return next;
+    });
+    markNewContentRead(user.id, ids);
+    void supabase
+      .from("forum_new_content_reads")
+      .upsert({ user_id: user.id, last_viewed_at: new Date().toISOString() })
+      .then(() => {
+        setSince(new Date().toISOString());
+        window.dispatchEvent(new CustomEvent(NEW_CONTENT_READ_EVENT));
+      });
+  };
+
+  const unreadIds = new Set(
+    posts.filter((p) => since && p.created_at > since && !readIds.has(p.id)).map((p) => p.id),
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -73,22 +116,38 @@ function NewForumContentPage() {
           {total} {tab === "topics" ? "topic" : "reply"}
           {total === 1 ? "" : tab === "topics" ? "s" : "s"} · 20 per page
         </p>
-        <div className="mb-5 mt-4 inline-flex rounded-xl border border-white/15 bg-white/5 p-1">
-          {(["topics", "replies"] as FeedTab[]).map((t) => (
+        <div className="mb-5 mt-4 flex flex-wrap items-center gap-3">
+          <div className="inline-flex rounded-xl border border-white/15 bg-white/5 p-1">
+            {(["topics", "replies"] as FeedTab[]).map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => {
+                  setTab(t);
+                  setPage(1);
+                }}
+                className={`rounded-lg px-4 py-1.5 text-sm font-semibold transition-colors ${
+                  tab === t ? "bg-[#E11B22] text-white" : "text-white/70 hover:text-white"
+                }`}
+              >
+                {t === "topics" ? "New topics" : "Replies"}
+              </button>
+            ))}
+          </div>
+          {unreadIds.size > 0 && (
+            <span className="inline-flex animate-pulse items-center gap-1.5 rounded-full bg-[#E11B22] px-3 py-1 text-xs font-bold text-white">
+              {unreadIds.size} unread — open one to read it
+            </span>
+          )}
+          {unreadIds.size > 0 && (
             <button
-              key={t}
               type="button"
-              onClick={() => {
-                setTab(t);
-                setPage(1);
-              }}
-              className={`rounded-lg px-4 py-1.5 text-sm font-semibold transition-colors ${
-                tab === t ? "bg-[#E11B22] text-white" : "text-white/70 hover:text-white"
-              }`}
+              onClick={markAllRead}
+              className="rounded-lg border border-white/25 bg-white/10 px-3 py-1.5 text-xs font-semibold text-white hover:bg-white/20"
             >
-              {t === "topics" ? "New topics" : "Replies"}
+              Mark all as read
             </button>
-          ))}
+          )}
         </div>
         <ForumPostFeed
           posts={posts}
@@ -96,6 +155,8 @@ function NewForumContentPage() {
           showAuthor
           empty={tab === "topics" ? "No new topics yet." : "No replies yet."}
           variant="grid"
+          unreadIds={unreadIds}
+          onOpenPost={openPost}
         />
         <ForumFeedPager page={page} total={total} pageSize={FORUM_FEED_PAGE_SIZE} onPage={setPage} />
       </div>

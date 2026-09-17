@@ -27,6 +27,7 @@ import boroBadge from "@/assets/boro-fan-zone-badge.png";
 import boroBg from "@/assets/boro-bg.jpg";
 import { censorText, useProfanityWords } from "@/lib/profanity";
 import { getPublicForumStats } from "@/lib/fan-zone-public.functions";
+import { getReadNewContentIds, NEW_CONTENT_READ_EVENT } from "@/lib/forum-new-content";
 
 export const Route = createFileRoute("/_authenticated/_approved/forum")({
   head: () => ({
@@ -85,20 +86,27 @@ function ForumLayout() {
         return;
       }
 
-      const { count: unread } = await supabase
+      const { data: fresh } = await supabase
         .from("forum_posts")
-        .select("id", { count: "exact", head: true })
-        .gt("created_at", marker.last_viewed_at);
-      if (!cancelled) setNewForumPosts(unread ?? 0);
+        .select("id")
+        .gt("created_at", marker.last_viewed_at)
+        .order("created_at", { ascending: false })
+        .limit(200);
+      const read = getReadNewContentIds(user.id);
+      const unread = (fresh ?? []).filter((row) => !read.has(row.id)).length;
+      if (!cancelled) setNewForumPosts(unread);
     };
 
     void count();
+    const onRead = () => void count();
+    window.addEventListener(NEW_CONTENT_READ_EVENT, onRead);
     const channel = supabase
       .channel(`fz-new-content-pill-${user.id}`)
       .on("postgres_changes", { event: "INSERT", schema: "public", table: "forum_posts" }, () => void count())
       .subscribe();
     return () => {
       cancelled = true;
+      window.removeEventListener(NEW_CONTENT_READ_EVENT, onRead);
       void supabase.removeChannel(channel);
     };
   }, [user?.id]);
