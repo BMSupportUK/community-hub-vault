@@ -185,7 +185,7 @@ export function FanZoneFriendRequestsBox({
                   size="sm"
                   disabled={busy === m.user_id}
                   onClick={() => void send(m.user_id, m.fan_alias || "Boro fan")}
-                  className="border-0 bg-[#E11B22] text-white hover:bg-[#c11419]"
+                  className="h-10 px-3 border-0 bg-[#E11B22] text-white hover:bg-[#c11419] sm:h-8"
                 >
                   {busy === m.user_id ? <Loader2 className="size-4 animate-spin" /> : <UserPlus className="size-4" />}
                 </Button>
@@ -212,7 +212,7 @@ export function FanZoneFriendRequestsBox({
                   size="sm"
                   disabled={busy === r.id}
                   onClick={() => void accept(r.id)}
-                  className="border-0 bg-emerald-600 text-white hover:bg-emerald-500"
+                  className="h-10 px-3 border-0 bg-emerald-600 text-white hover:bg-emerald-500 sm:h-8"
                 >
                   {busy === r.id ? <Loader2 className="size-4 animate-spin" /> : <UserCheck className="size-4" />}
                 </Button>
@@ -221,7 +221,7 @@ export function FanZoneFriendRequestsBox({
                   variant="outline"
                   disabled={busy === r.id}
                   onClick={() => void drop(r.id, "Friend request declined")}
-                  className="border-white/30 bg-white/10 text-white hover:bg-white/20"
+                  className="h-10 px-3 border-white/30 bg-white/10 text-white hover:bg-white/20 sm:h-8"
                 >
                   <X className="size-4" />
                 </Button>
@@ -240,7 +240,7 @@ export function FanZoneFriendRequestsBox({
                   variant="outline"
                   disabled={busy === r.id}
                   onClick={() => void drop(r.id, "Friend request cancelled")}
-                  className="border-white/30 bg-white/10 text-white hover:bg-white/20"
+                  className="h-10 px-4 border-white/30 bg-white/10 text-white hover:bg-white/20 sm:h-8"
                 >
                   {busy === r.id ? <Loader2 className="size-4 animate-spin" /> : "Cancel"}
                 </Button>
