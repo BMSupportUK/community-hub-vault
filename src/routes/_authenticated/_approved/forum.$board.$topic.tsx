@@ -859,8 +859,18 @@ function TopicPage() {
   };
   const deletePost = async (p: Post) => {
     if (!confirm("Delete this post?")) return;
-    const { error } = await supabase.from("forum_posts").delete().eq("id", p.id);
+    const { data, error } = await supabase.from("forum_posts").delete().eq("id", p.id).select("id");
     if (error) { toast.error("Couldn't delete", { description: error.message }); return; }
+    if (!data || data.length === 0) {
+      toast.error("Post not deleted", {
+        description: p.is_op
+          ? "The first post can only be removed by deleting the whole topic."
+          : "You don't have permission to delete this post.",
+      });
+      return;
+    }
+    setPosts((current) => current?.filter((row) => row.id !== p.id) ?? current);
+    toast.success("Post deleted");
   };
 
   const openHistory = async (p: Post) => {
