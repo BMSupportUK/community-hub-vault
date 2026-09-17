@@ -1787,6 +1787,7 @@ export type Database = {
           fan_alias: string | null
           fan_avatar_url: string | null
           fav_player: string | null
+          hide_friends: boolean
           is_private: boolean
           matchday_memory: string | null
           note: string | null
@@ -1805,6 +1806,7 @@ export type Database = {
           fan_alias?: string | null
           fan_avatar_url?: string | null
           fav_player?: string | null
+          hide_friends?: boolean
           is_private?: boolean
           matchday_memory?: string | null
           note?: string | null
@@ -1823,6 +1825,7 @@ export type Database = {
           fan_alias?: string | null
           fan_avatar_url?: string | null
           fav_player?: string | null
+          hide_friends?: boolean
           is_private?: boolean
           matchday_memory?: string | null
           note?: string | null
@@ -6130,6 +6133,13 @@ export type Database = {
         Returns: boolean
       }
       fan_zone_default_avatar_url: { Args: never; Returns: string }
+      fan_zone_hide_friends: {
+        Args: { _ids: string[] }
+        Returns: {
+          hide_friends: boolean
+          user_id: string
+        }[]
+      }
       fan_zone_moderator_avatar: { Args: never; Returns: string }
       fan_zone_mute: {
         Args: { _minutes: number; _reason: string; _user_id: string }
@@ -6151,6 +6161,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      fan_zone_set_hide_friends: { Args: { _hide: boolean }; Returns: boolean }
       fan_zone_set_privacy: {
         Args: { _audience?: string; _private: boolean }
         Returns: boolean
