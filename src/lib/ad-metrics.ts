@@ -5,18 +5,15 @@ import { supabase } from "@/integrations/supabase/client";
  * can show per-unit impressions and clicks. Fire-and-forget: a failure here
  * must never affect the page.
  */
-const seen = new Set<string>();
-
 type Args = { kind: "impression" | "click"; slotKey: string; adSlotId: string };
 
+/**
+ * One impression per mounted advert unit: the caller stops observing after the
+ * first sighting, so revisiting the same page later counts again (as it should).
+ */
 export async function recordAdEvent({ kind, slotKey, adSlotId }: Args) {
   if (typeof window === "undefined") return;
   const pagePath = window.location.pathname;
-  if (kind === "impression") {
-    const key = `${slotKey}|${adSlotId}|${pagePath}`;
-    if (seen.has(key)) return; // one impression per slot per page view
-    seen.add(key);
-  }
   try {
     const { data } = await supabase.auth.getSession();
     await supabase.from("ad_events").insert({
