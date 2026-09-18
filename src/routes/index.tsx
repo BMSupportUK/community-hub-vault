@@ -162,7 +162,7 @@ function Landing() {
                   loading="eager"
                   fetchPriority="high"
                   decoding="async"
-                  className="block w-full h-auto max-h-[56vh] [@media(max-height:650px)]:max-h-[240px] object-cover"
+                  className="block w-full h-auto max-h-[56vh] object-cover lg:h-full lg:max-h-none"
                 />
               </div>
             </div>
