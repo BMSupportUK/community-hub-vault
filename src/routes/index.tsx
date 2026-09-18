@@ -129,7 +129,7 @@ function Landing() {
       <main className="flex-1 min-h-0 md:overflow-hidden px-6 py-4 md:py-4 flex flex-col gap-3">
         <div className="relative max-w-7xl w-full mx-auto flex-1 min-h-0 flex flex-col lg:flex-row gap-3 items-stretch">
         <section
-          className="landing-hero-panel relative flex-1 min-w-0 rounded-3xl border border-red-900/60 p-4 md:p-6 lg:p-8 pb-16 md:pb-20 flex flex-col justify-center"
+          className="landing-hero-panel relative flex-1 min-w-0 rounded-3xl border border-red-900/60 p-4 md:p-6 lg:p-8 flex flex-col justify-center"
           style={{
             background:
               "radial-gradient(1200px 600px at 10% 10%, rgba(248,113,113,0.25), transparent 60%), radial-gradient(900px 500px at 90% 90%, rgba(127,29,29,0.6), transparent 60%), linear-gradient(135deg, #7f1d1d 0%, #991b1b 50%, #450a0a 100%)",
@@ -161,20 +161,14 @@ function Landing() {
                   loading="eager"
                   fetchPriority="high"
                   decoding="async"
-                  className="block w-full h-auto max-h-[56vh] object-cover"
+                  className="block w-full h-auto max-h-[46vh] object-cover"
                 />
               </div>
             </div>
           </div>
-          </section>
 
-          <aside className="hidden lg:flex w-[260px] xl:w-[300px] shrink-0 flex-col self-start">
-            <AdSenseSlot slot="topic" />
-          </aside>
-        </div>
-
-        <div className="relative max-w-7xl w-full mx-auto -mt-6 md:-mt-7 px-10 md:px-14 grid grid-cols-1 sm:grid-cols-3 gap-3 z-10 items-stretch">
-          {boxes.map((b) => (
+          <div className="mt-6 md:mt-8 grid grid-cols-1 sm:grid-cols-3 gap-3 items-stretch">
+            {boxes.map((b) => (
             <div
               key={b.id}
               className="landing-feature-card group relative flex items-center gap-4 p-4 rounded-2xl border border-red-400/30 backdrop-blur-md shadow-[0_12px_50px_rgba(127,29,29,0.5)] hover:border-red-300/60 transition-all"
@@ -207,6 +201,12 @@ function Landing() {
               </div>
             </div>
           ))}
+          </div>
+          </section>
+
+          <aside className="hidden lg:flex w-[260px] xl:w-[300px] shrink-0 flex-col self-start">
+            <AdSenseSlot slot="topic" />
+          </aside>
         </div>
       </main>
 
