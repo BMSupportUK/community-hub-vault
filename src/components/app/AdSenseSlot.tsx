@@ -1,4 +1,5 @@
-import { memo, useEffect } from "react";
+import { memo, useEffect, useRef } from "react";
+import { recordAdEvent } from "@/lib/ad-metrics";
 import {
   ADSENSE_CLIENT_ID,
   ADSENSE_ENABLED,
