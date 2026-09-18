@@ -282,7 +282,7 @@ export function ChannelColumn({
       "w-60 bg-surface flex-col",
       inSheet
         ? "flex h-full w-full"
-        : "shrink-0 hidden md:flex border-r border-border sticky top-12 self-start h-[calc(100vh-3rem)]",
+        : "shrink-0 hidden md:flex border-r border-border h-full min-h-0 self-stretch overflow-hidden",
     )}>
       <div className="h-14 flex items-center justify-between px-4 border-b border-border shadow-soft">
         <h2 className="font-display font-semibold text-sm tracking-wide">{title}</h2>
