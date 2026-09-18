@@ -279,5 +279,6 @@ export async function syncLineupSwaps(opts?: { ignoreWindow?: boolean }): Promis
     { id: target['id'], gw_number: target['gw_number'] },
     starterIds,
     players,
+    seasonPoints,
   );
 }
