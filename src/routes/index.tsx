@@ -207,7 +207,7 @@ function Landing() {
           </div>
           </div>
 
-           <aside className="hidden lg:flex w-full shrink-0 flex-col self-start [@media(max-height:650px)]:max-h-full [@media(max-height:650px)]:overflow-hidden">
+           <aside className="hidden lg:flex w-full shrink-0 flex-col [@media(max-height:650px)]:max-h-full [@media(max-height:650px)]:overflow-hidden">
             <AdSenseSlot slot="topic" />
           </aside>
         </div>
