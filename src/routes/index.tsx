@@ -127,9 +127,10 @@ function Landing() {
       <LandingHeader />
 
       <main className="flex-1 min-h-0 md:overflow-hidden px-6 py-4 md:py-4 [@media(max-height:650px)]:py-2 flex flex-col gap-3">
-        <div className="relative max-w-7xl w-full mx-auto flex-1 min-h-0 [@media(max-height:650px)]:h-full [@media(max-height:650px)]:overflow-hidden flex flex-col lg:flex-row gap-3 items-stretch">
+        <div className="relative max-w-7xl w-full mx-auto flex-1 min-h-0 [@media(max-height:650px)]:h-full flex flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_260px] xl:grid-cols-[minmax(0,1fr)_300px] gap-3 items-start">
+          <div className="relative min-w-0 w-full">
         <section
-          className="landing-hero-panel relative flex-1 min-w-0 min-h-0 rounded-3xl border border-red-900/60 p-4 md:p-6 lg:p-8 [@media(max-height:650px)]:p-4 flex flex-col justify-center [@media(max-height:650px)]:justify-start"
+          className="landing-hero-panel relative min-w-0 rounded-3xl border border-red-900/60 p-4 pb-12 md:p-6 md:pb-14 lg:p-8 lg:pb-16 [@media(max-height:650px)]:p-4 [@media(max-height:650px)]:pb-10 flex flex-col justify-center [@media(max-height:650px)]:justify-start"
           style={{
             background:
               "radial-gradient(1200px 600px at 10% 10%, rgba(248,113,113,0.25), transparent 60%), radial-gradient(900px 500px at 90% 90%, rgba(127,29,29,0.6), transparent 60%), linear-gradient(135deg, #7f1d1d 0%, #991b1b 50%, #450a0a 100%)",
@@ -167,7 +168,9 @@ function Landing() {
             </div>
           </div>
 
-          <div className="mt-6 md:mt-8 [@media(max-height:650px)]:mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3 [@media(max-height:650px)]:gap-2 items-stretch">
+          </section>
+
+          <div className="relative z-10 mx-3 md:mx-5 lg:mx-6 -mt-10 [@media(max-height:650px)]:-mt-7 grid grid-cols-1 sm:grid-cols-3 gap-3 [@media(max-height:650px)]:gap-2 items-stretch">
             {boxes.map((b) => (
             <div
               key={b.id}
@@ -202,9 +205,9 @@ function Landing() {
             </div>
           ))}
           </div>
-          </section>
+          </div>
 
-           <aside className="hidden lg:flex w-[260px] xl:w-[300px] shrink-0 flex-col self-start [@media(max-height:650px)]:h-full [@media(max-height:650px)]:overflow-hidden">
+           <aside className="hidden lg:flex w-full shrink-0 flex-col self-start [@media(max-height:650px)]:max-h-full [@media(max-height:650px)]:overflow-hidden">
             <AdSenseSlot slot="topic" />
           </aside>
         </div>
