@@ -136,10 +136,10 @@ function WelcomePage() {
       {/* Hero */}
       <div className="grid min-h-dvh w-full min-w-0 grid-rows-[auto_auto] overflow-x-hidden overflow-y-visible md:h-full md:min-h-0 md:grid-rows-[minmax(0,1fr)_auto] md:overflow-hidden">
       <section className="relative min-h-0 min-w-0 w-full border-b border-border p-4 xl:p-6">
-        <div className="grid min-h-0 min-w-0 w-full gap-4 lg:h-full lg:grid-cols-[minmax(0,1fr)_minmax(220px,300px)] xl:gap-6">
+        <div className="grid min-h-0 min-w-0 w-full grid-cols-[minmax(0,1fr)_220px] gap-4 md:h-full lg:grid-cols-[minmax(0,1fr)_minmax(220px,300px)] xl:gap-6">
           <div className="relative flex min-h-0 min-w-0 flex-col pb-8 lg:pb-10">
             <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600 shadow-2xl">
-              <div className="grid min-h-0 flex-1 gap-5 p-3 pb-12 md:grid-cols-[minmax(0,1.45fr)_minmax(280px,0.75fr)] md:items-stretch md:p-4 md:pb-14 xl:gap-6 xl:p-5 xl:pb-16">
+              <div className="grid min-h-0 flex-1 gap-5 p-3 pb-12 lg:grid-cols-[minmax(0,1.45fr)_minmax(280px,0.75fr)] lg:items-stretch lg:p-4 lg:pb-14 xl:gap-6 xl:p-5 xl:pb-16">
                 <div className="relative min-h-56 min-w-0 overflow-hidden rounded-xl bg-blue-950/30 ring-1 ring-white/10 md:aspect-[16/10] md:self-center xl:aspect-[16/9]">
                   <img
                     src={heroImg}
@@ -188,7 +188,7 @@ function WelcomePage() {
             </div>
           </div>
 
-          <div className="flex min-h-0 w-full flex-col items-center gap-4 lg:items-stretch">
+          <div className="flex min-h-0 w-full flex-col items-stretch gap-4">
             <WorkingStatusBox />
             <SubscriptionDetailsCard />
           </div>
