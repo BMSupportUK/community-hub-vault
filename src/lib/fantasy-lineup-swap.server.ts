@@ -50,12 +50,16 @@ export async function applyLineupSwapsForGameweek(
   gameweek: { id: string; gw_number: number },
   starterIds: string[],
   players: PlayerRow[],
+  seasonPoints?: Map<string, number>,
 ): Promise<LineupSwapResult> {
   const byId = new Map(players.map((p) => [p.id, p]));
   const official = new Set(starterIds);
   const swaps: string[] = [];
   const skipped: string[] = [];
   let squadsChanged = 0;
+  // When several bench players can fill a slot, the highest-scoring one this
+  // season gets the nod first.
+  const pointsOf = (playerId: string) => seasonPoints?.get(playerId) ?? 0;
 
   // A real starting eleven is eleven players. Acting on fewer would treat a
   // starter we failed to read as though he had been left out, and bench him.
