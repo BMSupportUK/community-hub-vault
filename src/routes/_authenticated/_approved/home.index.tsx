@@ -135,58 +135,60 @@ function WelcomePage() {
     <main className="flex-1 min-h-0 min-w-0 w-full overflow-x-hidden overflow-y-visible md:overflow-hidden">
       {/* Hero */}
       <div className="grid min-h-dvh w-full min-w-0 grid-rows-[auto_auto] overflow-x-hidden overflow-y-visible md:h-full md:min-h-0 md:grid-rows-[minmax(0,1fr)_auto] md:overflow-hidden">
-      <section className="relative min-h-0 min-w-0 w-full overflow-hidden border-b border-border">
-        <div className="absolute inset-0 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600" />
-        <div className="relative grid min-h-0 min-w-0 w-full lg:grid-cols-[minmax(0,1fr)_minmax(0,28rem)_minmax(220px,300px)] gap-4 xl:gap-6 p-4 xl:p-6 items-stretch md:h-full">
-          {/* Hero image (left) */}
-          <div className="relative rounded-2xl overflow-hidden ring-1 ring-white/10 shadow-2xl min-h-0 bg-blue-950/30">
-            <img
-              src={heroImg}
-              alt="BM Support — community and support"
-              width={1280}
-              height={832}
-              className="w-full h-full object-contain"
-            />
-            <div className="absolute inset-0 bg-gradient-to-tr from-blue-950/40 via-transparent to-transparent" />
-          </div>
+      <section className="relative min-h-0 min-w-0 w-full border-b border-border p-4 xl:p-6">
+        <div className="grid min-h-0 min-w-0 w-full gap-4 lg:h-full lg:grid-cols-[minmax(0,1fr)_minmax(220px,300px)] xl:gap-6">
+          <div className="relative flex min-h-0 min-w-0 flex-col pb-8 lg:pb-10">
+            <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600 shadow-2xl">
+              <div className="grid min-h-0 flex-1 gap-5 p-3 pb-12 md:grid-cols-[minmax(0,1.45fr)_minmax(280px,0.75fr)] md:items-stretch md:p-4 md:pb-14 xl:gap-6 xl:p-5 xl:pb-16">
+                <div className="relative min-h-56 min-w-0 overflow-hidden rounded-xl bg-blue-950/30 ring-1 ring-white/10">
+                  <img
+                    src={heroImg}
+                    alt="BM Support — community and support"
+                    width={1280}
+                    height={832}
+                    className="h-full w-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-tr from-blue-950/35 via-transparent to-transparent" />
+                </div>
 
-          {/* Text (middle) */}
-          <div className="flex min-w-0 flex-col justify-center text-white">
-            <div className="text-xs uppercase tracking-[0.2em] text-sky-200/80 mb-2">BM Support · Member Hub</div>
-            <h1 className="font-display text-3xl xl:text-5xl font-bold leading-tight">
-              Welcome to BM Support
-            </h1>
-            <p className="mt-3 text-sm xl:text-base text-white/95 max-w-lg">
-              Hey {name} — your all-in-one server for BM Support. Stay connected with the
-              community, manage your account and get help, all in one place.
-            </p>
-            <p className="mt-2 text-white/85 max-w-lg text-xs xl:text-sm">
-              Access community channels, view schedules, get support and explore our
-              services. Everything you need is just one click away.
-            </p>
+                <div className="flex min-w-0 flex-col justify-center text-white">
+                  <div className="mb-2 text-xs uppercase tracking-[0.2em] text-sky-200/80">BM Support · Member Hub</div>
+                  <h1 className="font-display text-3xl font-bold leading-tight xl:text-5xl">
+                    Welcome to BM Support
+                  </h1>
+                  <p className="mt-3 max-w-lg text-sm text-white/95 xl:text-base">
+                    Hey {name} — your all-in-one server for BM Support. Stay connected with the
+                    community, manage your account and get help, all in one place.
+                  </p>
+                  <p className="mt-2 max-w-lg text-xs text-white/85 xl:text-sm">
+                    Access community channels, view schedules, get support and explore our
+                    services. Everything you need is just one click away.
+                  </p>
+                </div>
+              </div>
+            </div>
 
-            <div className="mt-4 flex flex-col items-stretch justify-center gap-2 sm:flex-row">
+            <div className="relative z-10 mx-3 -mt-10 grid grid-cols-1 gap-2 sm:mx-5 sm:grid-cols-2 lg:mx-6">
               {!hasRole("moderator") && (
                 <Link
                   to="/tickets"
-                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl border-2 border-white/40 bg-white/10 backdrop-blur px-3 py-2.5 text-xs font-medium text-white shadow-[0_0_24px_rgba(255,255,255,0.15)] hover:bg-white/20 hover:border-white/60 transition xl:gap-3 xl:px-4 xl:py-3 xl:text-sm"
+                  className="inline-flex min-h-16 items-center justify-center gap-2 rounded-xl border-2 border-white/40 bg-surface/90 px-3 py-2.5 text-xs font-medium text-foreground shadow-[0_12px_30px_rgba(0,0,0,0.3)] backdrop-blur transition hover:border-white/60 hover:bg-surface-2 xl:gap-3 xl:px-4 xl:py-3 xl:text-sm"
                 >
-                  <span className="grid place-items-center size-8 rounded-lg bg-gradient-to-br from-violet-600 to-blue-600 xl:size-9">
+                  <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-violet-600 to-blue-600 xl:size-9">
                     <Headphones className="size-4 text-white" />
                   </span>
-                  <span>
-                    <span className="block text-white">Expert Support</span>
-                    <span className="block text-[10px] text-sky-50/90 xl:text-[11px]">We're always here to help.</span>
+                  <span className="min-w-0">
+                    <span className="block text-foreground">Expert Support</span>
+                    <span className="block text-[10px] text-muted-foreground xl:text-[11px]">We're always here to help.</span>
                   </span>
-                  <span className="size-2 rounded-full bg-emerald-400 shadow-[0_0_12px] shadow-emerald-400/60 xl:ml-2" />
+                  <span className="size-2 shrink-0 rounded-full bg-emerald-400 shadow-[0_0_12px] shadow-emerald-400/60 xl:ml-2" />
                 </Link>
               )}
-              <ServiceStatusPill className="flex-1 justify-center self-stretch gap-2 px-3 py-2.5 text-xs xl:gap-3 xl:px-4 xl:py-3 xl:text-sm [&_.status-copy]:text-[10px] xl:[&_.status-copy]:text-[11px] [&_.status-icon]:size-8 xl:[&_.status-icon]:size-9 [&_.status-dot]:ml-0 xl:[&_.status-dot]:ml-2" />
+              <ServiceStatusPill className="min-h-16 justify-center self-stretch gap-2 bg-surface/90 px-3 py-2.5 text-xs shadow-[0_12px_30px_rgba(0,0,0,0.3)] backdrop-blur xl:gap-3 xl:px-4 xl:py-3 xl:text-sm [&_.status-copy]:text-[10px] xl:[&_.status-copy]:text-[11px] [&_.status-icon]:size-8 xl:[&_.status-icon]:size-9 [&_.status-dot]:ml-0 xl:[&_.status-dot]:ml-2" />
             </div>
           </div>
 
-          {/* Working status + subscription details (right) */}
-          <div className="min-h-0 flex flex-col gap-4 justify-center xl:justify-start">
+          <div className="flex min-h-0 w-full flex-col items-center gap-4 lg:items-stretch">
             <WorkingStatusBox />
             <SubscriptionDetailsCard />
           </div>
