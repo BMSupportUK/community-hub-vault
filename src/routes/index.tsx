@@ -161,20 +161,14 @@ function Landing() {
                   loading="eager"
                   fetchPriority="high"
                   decoding="async"
-                  className="block w-full h-auto max-h-[56vh] object-cover"
+                  className="block w-full h-auto max-h-[46vh] object-cover"
                 />
               </div>
             </div>
           </div>
-          </section>
 
-          <aside className="hidden lg:flex w-[260px] xl:w-[300px] shrink-0 flex-col self-start">
-            <AdSenseSlot slot="topic" />
-          </aside>
-        </div>
-
-        <div className="relative max-w-7xl w-full mx-auto -mt-6 md:-mt-7 px-10 md:px-14 grid grid-cols-1 sm:grid-cols-3 gap-3 z-10 items-stretch">
-          {boxes.map((b) => (
+          <div className="mt-6 md:mt-8 grid grid-cols-1 sm:grid-cols-3 gap-3 items-stretch">
+            {boxes.map((b) => (
             <div
               key={b.id}
               className="landing-feature-card group relative flex items-center gap-4 p-4 rounded-2xl border border-red-400/30 backdrop-blur-md shadow-[0_12px_50px_rgba(127,29,29,0.5)] hover:border-red-300/60 transition-all"
