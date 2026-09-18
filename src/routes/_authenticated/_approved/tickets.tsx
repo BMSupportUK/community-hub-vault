@@ -409,7 +409,7 @@ function TicketsPage() {
 
   return (
     <main className={cn(
-      "flex-1 min-h-0 min-w-0 text-white",
+      "flex h-[calc(100dvh-3.75rem)] max-h-[calc(100dvh-3.75rem)] min-h-0 min-w-0 flex-1 flex-col text-white md:h-full md:max-h-full",
       isChatting ? "overflow-hidden" : "overflow-y-auto"
     )}>
       <div className={cn("relative min-h-full bg-rose-950", isChatting && "h-full min-h-0 overflow-hidden")}>
@@ -1964,9 +1964,9 @@ function TicketDetail({
 
 
   return (
-    <div className="flex-1 flex flex-col lg:flex-row min-h-0">
-      <div className="flex-1 flex flex-col min-h-0">
-      <header className="border-b border-white/20 px-3 sm:px-5 py-2 sm:py-3 space-y-2 sm:space-y-3 bg-white/5 backdrop-blur">
+    <div className="flex h-full max-h-full min-h-0 flex-1 flex-col overflow-hidden lg:flex-row">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+      <header className="shrink-0 border-b border-white/20 px-3 sm:px-5 py-2 sm:py-3 space-y-2 sm:space-y-3 bg-white/5 backdrop-blur">
         <div className="flex flex-wrap sm:flex-nowrap items-start sm:items-center gap-2 sm:gap-3">
           <div className="hidden sm:grid size-9 shrink-0 rounded-lg bg-white/25 place-items-center"><CatIcon className="size-4 text-white" /></div>
           <div className="min-w-0 flex-1">
@@ -2065,7 +2065,7 @@ function TicketDetail({
         onRate={onRate}
       />
 
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-3 sm:px-5 py-3 sm:py-4">
+      <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 sm:px-5 py-3 sm:py-4">
         {messages.map((m) => {
           const name = senderName(m.sender_id);
           const meta = senderMeta[m.sender_id];
@@ -2194,7 +2194,7 @@ function TicketDetail({
         );
       })()}
 
-      <div className="border-t border-white/20 p-2 sm:p-3 bg-white/5 backdrop-blur">
+      <div className="shrink-0 border-t border-white/20 p-2 sm:p-3 bg-white/5 backdrop-blur">
         {ticket.status === "closed" ? (
           <div className="text-center text-xs text-white/80 py-2">This ticket is closed.</div>
         ) : (
