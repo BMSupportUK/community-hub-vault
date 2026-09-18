@@ -409,10 +409,10 @@ function TicketsPage() {
 
   return (
     <main className={cn(
-      "flex-1 overflow-y-auto text-white",
-      isChatting && "overflow-hidden"
+      "flex-1 min-h-0 min-w-0 text-white",
+      isChatting ? "overflow-hidden" : "overflow-y-auto"
     )}>
-      <div className="relative min-h-full bg-rose-950">
+      <div className={cn("relative min-h-full bg-rose-950", isChatting && "h-full min-h-0 overflow-hidden")}>
         {/* Full-page background image */}
         <div className="pointer-events-none absolute inset-0 z-0">
           <img src={ticketsHero} alt="" aria-hidden className="w-full h-full object-cover" />
@@ -427,7 +427,11 @@ function TicketsPage() {
         !isChatting && "mt-6",
         isChatting && "px-0 md:px-0 pb-0 h-full"
       )}>
-        <Tabs value={tab} onValueChange={(v) => setTab(v as "welcome" | "tickets" | "open")}>
+        <Tabs
+          value={tab}
+          onValueChange={(v) => setTab(v as "welcome" | "tickets" | "open")}
+          className={cn(isChatting && "flex h-full min-h-0 flex-col overflow-hidden")}
+        >
           {tab !== "tickets" && (
             <header className="w-full pt-6">
               <div aria-hidden="true" className="mb-6 h-px w-full bg-white/60 shadow-[0_0_12px_rgba(255,255,255,0.55)]" />
@@ -551,10 +555,10 @@ function TicketsPage() {
             </div>
           </TabsContent>
 
-          <TabsContent value="tickets" className={cn("mt-6", isChatting && "mt-0 h-full")}>
+          <TabsContent value="tickets" className={cn("mt-6", isChatting && "mt-0 min-h-0 flex-1 overflow-hidden")}>
             <div className={cn(
               "grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-4",
-              isChatting && "h-[calc(100dvh-4rem)] gap-0 lg:grid-cols-[280px_1fr] grid-rows-[auto_1fr] lg:grid-rows-1"
+              isChatting && "h-full min-h-0 gap-0 overflow-hidden lg:grid-cols-[280px_1fr] grid-rows-[auto_1fr] lg:grid-rows-1"
             )}>
               {/* Left list */}
               <aside className={cn(
@@ -654,8 +658,8 @@ function TicketsPage() {
               <div
                 ref={detailPanelRef}
                 className={cn(
-                  "rounded-2xl bg-gradient-to-br from-violet-600 via-fuchsia-600 to-rose-600 text-white relative overflow-hidden min-h-[600px] flex flex-col scroll-mt-16",
-                  isChatting ? "h-full rounded-none border-y-0 border-r-0" : "h-[calc(100dvh-8rem)]"
+                  "rounded-2xl bg-gradient-to-br from-violet-600 via-fuchsia-600 to-rose-600 text-white relative overflow-hidden flex flex-col scroll-mt-16",
+                  isChatting ? "h-full min-h-0 rounded-none border-y-0 border-r-0" : "min-h-[600px] h-[calc(100dvh-8rem)]"
                 )}
               >
                 <div className="pointer-events-none absolute inset-0 opacity-60" style={{
