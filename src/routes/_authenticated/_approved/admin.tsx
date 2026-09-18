@@ -91,7 +91,7 @@ function AdminDashboard() {
   if (!isAdmin) return <Navigate to="/home" />;
 
   return (
-    <main className="flex-1 h-[calc(100dvh-3.75rem)] max-h-[calc(100dvh-3.75rem)] min-h-0 overflow-y-auto overscroll-contain">
+    <main className="h-full min-h-0 flex-1 overflow-y-auto overscroll-contain">
       <div className="w-full px-4 sm:px-6 py-8">
         <div className="relative rounded-3xl overflow-hidden border border-primary/30 shadow-glow bg-gradient-primary p-6 sm:p-8 mb-6">
           <div className="absolute inset-0 bg-gradient-to-tr from-background/40 via-transparent to-transparent pointer-events-none" />

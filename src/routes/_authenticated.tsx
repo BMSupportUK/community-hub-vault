@@ -77,8 +77,13 @@ function AuthLayout() {
   const search = useRouterState({ select: (r) => r.location.search as Record<string, unknown> });
   const shopTab = typeof search.tab === "string" ? search.tab : undefined;
   const shopView = typeof search.view === "string" ? search.view : undefined;
-  // Screen lock removed — the whole app scrolls naturally on every route.
-  const unlockShell = true;
+  const locksToViewport =
+    path === "/admin" ||
+    path.startsWith("/u/") ||
+    path === "/account-security" ||
+    path === "/fan-zone-security" ||
+    path === "/tickets" ||
+    /^\/home\/[^/]+$/.test(path);
   void shopTab;
   void shopView;
   const logIp = useServerFn(logMyIp);
@@ -93,18 +98,21 @@ function AuthLayout() {
   };
   // Close mobile drawer on route change
   useEffect(() => { setNavOpen(false); }, [path]);
-  // Ensure no leftover viewport lock from previous sessions/routes.
+  // Routes with panel-level scrolling must not make the document itself scroll.
   useLayoutEffect(() => {
     const html = document.documentElement;
     const body = document.body;
-    html.classList.remove("app-shell-locked");
-    html.style.overflow = "";
-    body.style.overflow = "";
-    html.style.height = "";
-    body.style.height = "";
-    body.style.position = "";
-    body.style.width = "";
-  }, [path]);
+    html.style.overflow = locksToViewport ? "hidden" : "";
+    body.style.overflow = locksToViewport ? "hidden" : "";
+    html.style.height = locksToViewport ? "100%" : "";
+    body.style.height = locksToViewport ? "100%" : "";
+    return () => {
+      html.style.overflow = "";
+      body.style.overflow = "";
+      html.style.height = "";
+      body.style.height = "";
+    };
+  }, [locksToViewport]);
 
   useEffect(() => {
     if (loading || isPending || !user?.id || loggedRef.current) return;
@@ -159,9 +167,9 @@ function AuthLayout() {
 
   return (
     <ScreenLockProvider>
-      <div className={unlockShell ? "relative flex min-h-dvh w-full bg-background" : "relative flex min-h-dvh w-full bg-background md:fixed md:inset-0 md:h-dvh md:w-dvw md:overflow-hidden"}>
+      <div className={locksToViewport ? "fixed inset-0 flex h-dvh w-dvw overflow-hidden bg-background" : "relative flex min-h-dvh w-full bg-background"}>
         <IconRail />
-        <div className={unlockShell ? "flex-1 flex flex-col min-w-0 min-h-dvh" : "flex-1 flex flex-col min-w-0 min-h-dvh md:h-full md:min-h-0 md:overflow-hidden"}>
+        <div className={locksToViewport ? "flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden" : "flex min-h-dvh min-w-0 flex-1 flex-col"}>
         {!inFanZone && <header className="h-14 shrink-0 border-b border-border bg-rail/40 backdrop-blur flex items-center justify-between px-2 lg:px-4 gap-1.5 lg:gap-3 overflow-x-auto scrollbar-thin mb-1">
           <div className="flex items-center gap-1.5 lg:gap-2 shrink-0">
             <Sheet open={navOpen} onOpenChange={setNavOpen}>
@@ -246,7 +254,7 @@ function AuthLayout() {
               </DeferUntilIdle>
             </div>
         </header>}
-        <div className={unlockShell ? "flex-1 flex" : "flex-1 flex md:min-h-0 md:overflow-hidden"}>
+        <div className={locksToViewport ? "flex min-h-0 flex-1 overflow-hidden" : "flex flex-1"}>
           <Outlet />
         </div>
         <DeferUntilIdle>
