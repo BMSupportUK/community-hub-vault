@@ -126,10 +126,10 @@ function Landing() {
     <div className="min-h-screen md:h-screen md:overflow-hidden bg-background flex flex-col">
       <LandingHeader />
 
-      <main className="flex-1 min-h-0 md:overflow-hidden px-6 py-4 md:py-4 flex flex-col gap-3">
+      <main className="flex-1 min-h-0 md:overflow-hidden px-6 py-4 md:py-4 [@media(max-height:650px)]:py-2 flex flex-col gap-3">
         <div className="relative max-w-7xl w-full mx-auto flex-1 min-h-0 flex flex-col lg:flex-row gap-3 items-stretch">
         <section
-          className="landing-hero-panel relative flex-1 min-w-0 rounded-3xl border border-red-900/60 p-4 md:p-6 lg:p-8 flex flex-col justify-center"
+          className="landing-hero-panel relative flex-1 min-w-0 rounded-3xl border border-red-900/60 p-4 md:p-6 lg:p-8 [@media(max-height:650px)]:p-4 flex flex-col justify-center"
           style={{
             background:
               "radial-gradient(1200px 600px at 10% 10%, rgba(248,113,113,0.25), transparent 60%), radial-gradient(900px 500px at 90% 90%, rgba(127,29,29,0.6), transparent 60%), linear-gradient(135deg, #7f1d1d 0%, #991b1b 50%, #450a0a 100%)",
@@ -138,14 +138,14 @@ function Landing() {
           }}
         >
           <div className="grid md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] gap-5 md:gap-3 lg:gap-4 items-center w-full">
-            <div className="space-y-5 text-white">
-              <h1 className="font-display text-4xl md:text-6xl lg:text-7xl font-bold tracking-tight leading-[1.05] drop-shadow-[0_2px_20px_rgba(0,0,0,0.5)]">
+            <div className="space-y-5 [@media(max-height:650px)]:space-y-2 text-white">
+              <h1 className="font-display text-4xl md:text-6xl lg:text-7xl [@media(max-height:650px)]:text-4xl font-bold tracking-tight leading-[1.05] drop-shadow-[0_2px_20px_rgba(0,0,0,0.5)]">
                 Welcome to <span className="bg-gradient-to-r from-red-200 via-white to-red-300 bg-clip-text text-transparent">BM Support</span>
               </h1>
-              <p className="text-lg md:text-2xl text-red-50/95 max-w-xl">
+              <p className="text-lg md:text-2xl [@media(max-height:650px)]:text-base text-red-50/95 max-w-xl">
                 Your all-in-one server for BM Support — stay connected, all in one place.
               </p>
-              <p className="text-base md:text-lg text-red-100/80 max-w-xl">
+              <p className="text-base md:text-lg [@media(max-height:650px)]:text-sm [@media(max-height:650px)]:leading-snug text-red-100/80 max-w-xl">
                 Access community channels, manage your time, view schedules, get support, and explore our services. Everything you need is just one click away.
               </p>
             </div>
@@ -161,24 +161,24 @@ function Landing() {
                   loading="eager"
                   fetchPriority="high"
                   decoding="async"
-                  className="block w-full h-auto max-h-[46vh] object-cover"
+                  className="block w-full h-auto max-h-[46vh] [@media(max-height:650px)]:max-h-[185px] object-cover"
                 />
               </div>
             </div>
           </div>
 
-          <div className="mt-6 md:mt-8 grid grid-cols-1 sm:grid-cols-3 gap-3 items-stretch">
+          <div className="mt-6 md:mt-8 [@media(max-height:650px)]:mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3 [@media(max-height:650px)]:gap-2 items-stretch">
             {boxes.map((b) => (
             <div
               key={b.id}
-              className="landing-feature-card group relative flex items-center gap-4 p-4 rounded-2xl border border-red-400/30 backdrop-blur-md shadow-[0_12px_50px_rgba(127,29,29,0.5)] hover:border-red-300/60 transition-all"
+               className="landing-feature-card group relative flex items-center gap-4 [@media(max-height:650px)]:gap-2 p-4 [@media(max-height:650px)]:p-2 rounded-2xl border border-red-400/30 backdrop-blur-md shadow-[0_12px_50px_rgba(127,29,29,0.5)] hover:border-red-300/60 transition-all"
               style={{
                 background:
                   "linear-gradient(135deg, rgba(127,29,29,0.9) 0%, rgba(69,10,10,0.9) 100%)",
               }}
             >
               <div
-                className="landing-feature-icon shrink-0 size-14 rounded-xl grid place-items-center overflow-hidden ring-1 ring-red-300/40 group-hover:ring-red-200/70 transition shadow-inner"
+                 className="landing-feature-icon shrink-0 size-14 [@media(max-height:650px)]:size-10 rounded-xl grid place-items-center overflow-hidden ring-1 ring-red-300/40 group-hover:ring-red-200/70 transition shadow-inner"
                 style={{
                   background:
                     "linear-gradient(135deg, rgba(254,202,202,0.18) 0%, rgba(220,38,38,0.35) 100%)",
@@ -191,13 +191,13 @@ function Landing() {
                 ) : (
                   (() => {
                     const Icon = pickIcon(b.title);
-                    return <Icon className="size-7 text-red-50 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]" strokeWidth={2} />;
+                    return <Icon className="size-7 [@media(max-height:650px)]:size-5 text-red-50 drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]" strokeWidth={2} />;
                   })()
                 )}
               </div>
               <div className="min-w-0">
                 <div className="font-display font-bold text-white text-base leading-tight">{b.title}</div>
-                <p className="text-sm text-red-50/85 mt-1 leading-snug">{b.description}</p>
+                 <p className="text-sm [@media(max-height:650px)]:text-xs text-red-50/85 mt-1 [@media(max-height:650px)]:mt-0.5 leading-snug">{b.description}</p>
               </div>
             </div>
           ))}
@@ -211,7 +211,7 @@ function Landing() {
       </main>
 
       <footer className="border-t border-red-500/20 bg-black/60 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-6 py-3 flex flex-col md:flex-row items-center justify-between gap-3">
+        <div className="max-w-7xl mx-auto px-6 py-3 [@media(max-height:650px)]:py-1.5 flex flex-col md:flex-row items-center justify-between gap-3 [@media(max-height:650px)]:gap-1">
           <p className="text-sm text-red-50/70 order-2 md:order-1">
             © BM Support 2026. All rights reserved.
           </p>
