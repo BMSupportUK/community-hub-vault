@@ -408,11 +408,8 @@ function TicketsPage() {
   const isChatting = selected && tab === "tickets";
 
   return (
-    <main className={cn(
-      "flex h-[calc(100dvh-3.75rem)] max-h-[calc(100dvh-3.75rem)] min-h-0 min-w-0 flex-1 flex-col text-white md:h-full md:max-h-full",
-      isChatting ? "overflow-hidden" : "overflow-y-auto"
-    )}>
-      <div className={cn("relative min-h-full bg-rose-950", isChatting && "h-full min-h-0 overflow-hidden")}>
+    <main className="flex h-full max-h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden text-white">
+      <div className="relative h-full min-h-0 overflow-hidden bg-rose-950">
         {/* Full-page background image */}
         <div className="pointer-events-none absolute inset-0 z-0">
           <img src={ticketsHero} alt="" aria-hidden className="w-full h-full object-cover" />
@@ -423,14 +420,14 @@ function TicketsPage() {
 
       {/* Tabs — hidden when actively chatting on a ticket */}
       <div className={cn(
-        "px-6 md:px-10 pb-10 relative z-10 border-t border-white/20",
-        !isChatting && "mt-6",
+        "relative z-10 flex h-full min-h-0 flex-col border-t border-white/20 px-6 pb-10 md:px-10",
+        !isChatting && "overflow-y-auto pt-6",
         isChatting && "px-0 md:px-0 pb-0 h-full"
       )}>
         <Tabs
           value={tab}
           onValueChange={(v) => setTab(v as "welcome" | "tickets" | "open")}
-          className={cn(isChatting && "flex h-full min-h-0 flex-col overflow-hidden")}
+          className={cn("min-h-0", isChatting ? "flex h-full flex-col overflow-hidden" : "shrink-0")}
         >
           {tab !== "tickets" && (
             <header className="w-full pt-6">
@@ -555,10 +552,10 @@ function TicketsPage() {
             </div>
           </TabsContent>
 
-          <TabsContent value="tickets" className={cn("mt-6", isChatting && "mt-0 min-h-0 flex-1 overflow-hidden")}>
+          <TabsContent value="tickets" className={cn("mt-6", isChatting && "mt-0 flex min-h-0 flex-1 overflow-hidden")}>
             <div className={cn(
               "grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-4",
-              isChatting && "h-full min-h-0 gap-0 overflow-hidden lg:grid-cols-[280px_1fr] grid-rows-[auto_1fr] lg:grid-rows-1"
+              isChatting && "h-full min-h-0 flex-1 gap-0 overflow-hidden lg:grid-cols-[280px_1fr] grid-rows-[auto_1fr] lg:grid-rows-1"
             )}>
               {/* Left list */}
               <aside className={cn(

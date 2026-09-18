@@ -1188,7 +1188,7 @@ function ChannelPage() {
   })();
 
   return (
-    <main className="flex h-[calc(100dvh-3.75rem)] max-h-[calc(100dvh-3.75rem)] min-h-0 min-w-0 flex-1 flex-col overflow-hidden md:h-full md:max-h-full">
+    <main className="flex h-full max-h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
       <header className="h-14 border-b border-border px-5 flex items-center gap-3 shrink-0 relative z-[60]">
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-card/50 border border-primary/30 shadow-[0_0_20px_-4px_color-mix(in_oklab,var(--primary)_35%,transparent),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-xl">
           <Icon className="size-4 text-primary" />
@@ -1466,9 +1466,9 @@ function ChannelPage() {
           </div>
         </div>
       </header>
-      <div className="flex-1 flex min-w-0 min-h-0">
-        <div className="flex-1 flex flex-col min-w-0 min-h-0">
-          <div ref={scrollRef} className="flex-1 overflow-y-auto px-5 py-4 space-y-3 [overflow-anchor:auto]">
+      <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+          <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4 space-y-3 [overflow-anchor:auto]">
             {channel.slug !== "welcome" && channel.slug !== "rules" && (
               <div className="flex items-center gap-2 rounded-lg border border-border bg-surface-2/60 px-3 py-2 text-xs text-muted-foreground">
                 <Trash2 className="size-3.5 text-primary shrink-0" />
@@ -2042,7 +2042,7 @@ function ChannelPage() {
                   })}
           </div>
 
-          <div className="p-4 border-t border-border shrink-0">
+          <div className="shrink-0 border-t border-border bg-background p-4">
             {replyTo && (
               <div className="mb-2 flex items-center gap-2 rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 text-xs">
                 <Reply className="size-3.5 shrink-0 text-primary" />
