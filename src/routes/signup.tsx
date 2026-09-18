@@ -164,7 +164,7 @@ function SignupPage() {
   };
 
   return (
-    <div className="h-dvh max-h-dvh w-full overflow-hidden grid lg:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_300px] bg-background">
+    <div className="fixed inset-0 grid h-dvh w-dvw overflow-hidden bg-background lg:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_300px]">
       {/* Illustration panel */}
       <aside className="relative hidden lg:flex items-center justify-center overflow-hidden bg-gradient-to-br from-fuchsia-700/40 via-violet-600/30 to-blue-700/40 border-r border-border">
         <div className="absolute -top-32 -left-24 size-[28rem] rounded-full bg-fuchsia-600/30 blur-3xl" />
