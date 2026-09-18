@@ -68,23 +68,38 @@ function AdSenseSlotComponent({ slot = "topic" }: { slot?: AdSenseSlotKind }) {
     return <Placeholder label="Sponsored content appears here" />;
   }
 
+  // Only a genuine press-and-release on the advert frame itself counts as a
+  // click — not the label, the padding, or a click-drag that slid away.
+  const pressRef = useRef<{ x: number; y: number } | null>(null);
+  const onAdPointerDown = (e: React.PointerEvent) => {
+    pressRef.current = { x: e.clientX, y: e.clientY };
+  };
+  const onAdPointerUp = (e: React.PointerEvent) => {
+    const start = pressRef.current;
+    pressRef.current = null;
+    if (!start) return;
+    if (Math.abs(e.clientX - start.x) > 8 || Math.abs(e.clientY - start.y) > 8) return;
+    void recordAdEvent({ kind: "click", slotKey: slot, adSlotId });
+  };
+
   return (
     <div
       ref={boxRef}
-      onPointerDown={() => void recordAdEvent({ kind: "click", slotKey: slot, adSlotId })}
       className="hidden md:block rounded-2xl border border-border/60 bg-surface-2/20 px-2 py-2 overflow-hidden"
     >
       <div className="px-2 pb-1 text-[10px] uppercase tracking-[0.25em] text-muted-foreground/70">
         Advertisement
       </div>
-      <ins
-        className="adsbygoogle"
-        style={{ display: "block", textAlign: "center" }}
-        data-ad-client={ADSENSE_CLIENT_ID}
-        data-ad-slot={adSlotId}
-        data-ad-format="auto"
-        data-full-width-responsive="true"
-      />
+      <div onPointerDown={onAdPointerDown} onPointerUp={onAdPointerUp} onPointerCancel={() => (pressRef.current = null)}>
+        <ins
+          className="adsbygoogle"
+          style={{ display: "block", textAlign: "center" }}
+          data-ad-client={ADSENSE_CLIENT_ID}
+          data-ad-slot={adSlotId}
+          data-ad-format="auto"
+          data-full-width-responsive="true"
+        />
+      </div>
     </div>
   );
 }
