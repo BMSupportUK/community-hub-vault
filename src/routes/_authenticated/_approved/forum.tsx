@@ -28,6 +28,7 @@ import boroBg from "@/assets/boro-bg.jpg";
 import { censorText, useProfanityWords } from "@/lib/profanity";
 import { getPublicForumStats } from "@/lib/fan-zone-public.functions";
 import { getReadNewContentIds, NEW_CONTENT_READ_EVENT } from "@/lib/forum-new-content";
+import { fetchForumUnreadCounts } from "@/lib/forum-feed";
 
 export const Route = createFileRoute("/_authenticated/_approved/forum")({
   head: () => ({
