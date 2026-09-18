@@ -127,9 +127,9 @@ function Landing() {
       <LandingHeader />
 
       <main className="flex-1 min-h-0 md:overflow-hidden px-6 py-4 md:py-4 [@media(max-height:650px)]:py-2 flex flex-col gap-3">
-        <div className="relative max-w-7xl w-full mx-auto flex-1 min-h-0 flex flex-col lg:flex-row gap-3 items-stretch">
+        <div className="relative max-w-7xl w-full mx-auto flex-1 min-h-0 [@media(max-height:650px)]:h-full [@media(max-height:650px)]:overflow-hidden flex flex-col lg:flex-row gap-3 items-stretch">
         <section
-          className="landing-hero-panel relative flex-1 min-w-0 rounded-3xl border border-red-900/60 p-4 md:p-6 lg:p-8 [@media(max-height:650px)]:p-4 flex flex-col justify-center"
+          className="landing-hero-panel relative flex-1 min-w-0 min-h-0 rounded-3xl border border-red-900/60 p-4 md:p-6 lg:p-8 [@media(max-height:650px)]:p-4 flex flex-col justify-center [@media(max-height:650px)]:justify-start"
           style={{
             background:
               "radial-gradient(1200px 600px at 10% 10%, rgba(248,113,113,0.25), transparent 60%), radial-gradient(900px 500px at 90% 90%, rgba(127,29,29,0.6), transparent 60%), linear-gradient(135deg, #7f1d1d 0%, #991b1b 50%, #450a0a 100%)",
@@ -204,13 +204,13 @@ function Landing() {
           </div>
           </section>
 
-          <aside className="hidden lg:flex w-[260px] xl:w-[300px] shrink-0 flex-col self-start">
+           <aside className="hidden lg:flex w-[260px] xl:w-[300px] shrink-0 flex-col self-start [@media(max-height:650px)]:h-full [@media(max-height:650px)]:overflow-hidden">
             <AdSenseSlot slot="topic" />
           </aside>
         </div>
       </main>
 
-      <footer className="border-t border-red-500/20 bg-black/60 backdrop-blur-sm">
+      <footer className="border-t border-red-500/20 bg-black/60 backdrop-blur-sm [@media(max-height:650px)]:hidden">
         <div className="max-w-7xl mx-auto px-6 py-3 [@media(max-height:650px)]:py-1.5 flex flex-col md:flex-row items-center justify-between gap-3 [@media(max-height:650px)]:gap-1">
           <p className="text-sm text-red-50/70 order-2 md:order-1">
             © BM Support 2026. All rights reserved.
