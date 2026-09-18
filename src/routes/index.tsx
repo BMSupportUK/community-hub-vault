@@ -127,7 +127,7 @@ function Landing() {
       <LandingHeader />
 
       <main className="flex-1 min-h-0 md:overflow-hidden px-6 py-4 md:py-4 [@media(max-height:650px)]:py-2 flex flex-col gap-3">
-        <div className="relative max-w-7xl w-full mx-auto flex-1 min-h-0 flex flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_260px] xl:grid-cols-[minmax(0,1fr)_300px] lg:grid-rows-[minmax(0,1fr)] gap-3 lg:items-stretch lg:overflow-hidden">
+        <div className="relative w-full mx-auto flex-1 min-h-0 flex flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_260px] xl:grid-cols-[minmax(0,1fr)_300px] lg:grid-rows-[minmax(0,1fr)] gap-3 lg:items-stretch lg:overflow-hidden">
           <div className="relative min-w-0 min-h-0 w-full flex flex-col overflow-hidden">
         <section
           className="landing-hero-panel relative min-w-0 min-h-0 rounded-3xl border border-red-900/60 p-4 pb-12 md:p-6 md:pb-14 lg:p-8 lg:pb-16 [@media(max-height:650px)]:p-4 [@media(max-height:650px)]:pb-10 lg:flex-1 flex flex-col justify-center [@media(max-height:650px)]:justify-start"
@@ -153,7 +153,7 @@ function Landing() {
 
             <div className="relative w-full md:-ml-2 lg:-ml-4 lg:h-full">
               <div className="landing-hero-glow absolute -inset-4 bg-gradient-to-tr from-red-500/40 via-transparent to-blue-500/30 blur-2xl rounded-3xl" aria-hidden />
-              <div className="relative rounded-3xl overflow-hidden border border-white/20 shadow-[0_20px_80px_rgba(0,0,0,0.6)] max-w-[680px] ml-auto lg:h-full">
+              <div className="relative rounded-3xl overflow-hidden border border-white/20 shadow-[0_20px_80px_rgba(0,0,0,0.6)] w-full lg:h-full">
                 <img
                   src={welcomeHero}
                   alt="BM Support hero"
