@@ -50,12 +50,16 @@ export async function applyLineupSwapsForGameweek(
   gameweek: { id: string; gw_number: number },
   starterIds: string[],
   players: PlayerRow[],
+  seasonPoints?: Map<string, number>,
 ): Promise<LineupSwapResult> {
   const byId = new Map(players.map((p) => [p.id, p]));
   const official = new Set(starterIds);
   const swaps: string[] = [];
   const skipped: string[] = [];
   let squadsChanged = 0;
+  // When several bench players can fill a slot, the highest-scoring one this
+  // season gets the nod first.
+  const pointsOf = (playerId: string) => seasonPoints?.get(playerId) ?? 0;
 
   // A real starting eleven is eleven players. Acting on fewer would treat a
   // starter we failed to read as though he had been left out, and bench him.
@@ -99,15 +103,21 @@ export async function applyLineupSwapsForGameweek(
 
     // Match the most constrained positions first. This prevents a flexible
     // dual-position substitute taking a slot that an exact-position substitute
-    // could fill and leaving another valid swap unmatched.
+    // could fill and leaving another valid swap unmatched. Eligible candidates
+    // are tried highest season score first.
     const candidatesFor = (out: PickRow) => {
       const outPlayer = byId.get(out.player_id);
       if (!outPlayer) return [];
       const wanted = slotPosition(out, outPlayer);
-      return ins.filter((candidate) => {
-        const player = byId.get(candidate.player_id);
-        return !!player && eligible(player).includes(wanted);
-      });
+      return ins
+        .filter((candidate) => {
+          const player = byId.get(candidate.player_id);
+          return !!player && eligible(player).includes(wanted);
+        })
+        .sort(
+          (a, b) =>
+            pointsOf(b.player_id) - pointsOf(a.player_id) || a.slot_order - b.slot_order,
+        );
     };
     outs.sort((a, b) => candidatesFor(a).length - candidatesFor(b).length || a.slot_order - b.slot_order);
 
@@ -230,6 +240,16 @@ export async function syncLineupSwaps(opts?: { ignoreWindow?: boolean }): Promis
   if (pErr) return { ok: false, squadsChanged: 0, swaps: [], skipped: [], error: pErr.message };
   const players = (playerRows ?? []) as PlayerRow[];
 
+  // Season totals per player, so the highest-scoring eligible substitute is
+  // swapped in first when more than one bench player fits a slot.
+  const seasonPoints = new Map<string, number>();
+  const { data: statRows } = await supabaseAdmin
+    .from("fantasy_player_stats")
+    .select("player_id, points");
+  for (const row of (statRows ?? []) as Array<{ player_id: string; points: number | null }>) {
+    seasonPoints.set(row.player_id, (seasonPoints.get(row.player_id) ?? 0) + (Number(row.points) || 0));
+  }
+
   // Only the double-checked reader may drive swaps: it reads the official
   // team-sheet graphic with full first names AND cross-checks the eleven
   // against a second, independent source before returning anything. The raw
@@ -259,5 +279,6 @@ export async function syncLineupSwaps(opts?: { ignoreWindow?: boolean }): Promis
     { id: target['id'], gw_number: target['gw_number'] },
     starterIds,
     players,
+    seasonPoints,
   );
 }
