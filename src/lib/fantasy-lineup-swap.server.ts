@@ -103,15 +103,21 @@ export async function applyLineupSwapsForGameweek(
 
     // Match the most constrained positions first. This prevents a flexible
     // dual-position substitute taking a slot that an exact-position substitute
-    // could fill and leaving another valid swap unmatched.
+    // could fill and leaving another valid swap unmatched. Eligible candidates
+    // are tried highest season score first.
     const candidatesFor = (out: PickRow) => {
       const outPlayer = byId.get(out.player_id);
       if (!outPlayer) return [];
       const wanted = slotPosition(out, outPlayer);
-      return ins.filter((candidate) => {
-        const player = byId.get(candidate.player_id);
-        return !!player && eligible(player).includes(wanted);
-      });
+      return ins
+        .filter((candidate) => {
+          const player = byId.get(candidate.player_id);
+          return !!player && eligible(player).includes(wanted);
+        })
+        .sort(
+          (a, b) =>
+            pointsOf(b.player_id) - pointsOf(a.player_id) || a.slot_order - b.slot_order,
+        );
     };
     outs.sort((a, b) => candidatesFor(a).length - candidatesFor(b).length || a.slot_order - b.slot_order);
 
