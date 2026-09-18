@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { ShieldCheck, Lock, KeyRound, ShieldAlert, KeySquare, Globe, Clock, FileText, Loader2, Shield, Star, Filter, Sparkles, LifeBuoy, RefreshCw, Copy, Download, Ban, Tag, Package, Bell, Trophy, MessageSquare, Image as ImageIcon, MonitorPlay, Eye, EyeOff, Landmark } from "lucide-react";
+import { BarChart3, ShieldCheck, Lock, KeyRound, ShieldAlert, KeySquare, Globe, Clock, FileText, Loader2, Shield, Star, Filter, Sparkles, LifeBuoy, RefreshCw, Copy, Download, Ban, Tag, Package, Bell, Trophy, MessageSquare, Image as ImageIcon, MonitorPlay, Eye, EyeOff, Landmark } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -492,6 +492,7 @@ function DashboardBody() {
     { to: "/admin-bank-transfer", label: "Bank transfer", desc: "Set the bank details customers see and grant bank-transfer payment access.", icon: Landmark, adminOnly: true },
     { to: "/install-guides", search: { tab: "app-apk" }, label: "App APK & transfers", desc: "Upload the Android APK and monitor the live 24-hour install links members have requested.", icon: Package },
     { to: "/admin-sounds", label: "Notification sounds", desc: "Play and verify every notification MP3 used across the app, and set volume for this device.", icon: Bell },
+    { to: "/admin-ad-stats", label: "Advert performance", desc: "See how many views and clicks each advert unit gets on bmsupport.uk, by page and by day.", icon: BarChart3 },
   ];
   const tools = allTools
     .filter((t) => !t.adminOnly || isAdminOnly)

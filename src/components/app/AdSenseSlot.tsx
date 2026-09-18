@@ -1,4 +1,5 @@
-import { memo, useEffect } from "react";
+import { memo, useEffect, useRef } from "react";
+import { recordAdEvent } from "@/lib/ad-metrics";
 import {
   ADSENSE_CLIENT_ID,
   ADSENSE_ENABLED,
@@ -33,6 +34,8 @@ function AdSenseSlotComponent({ slot = "topic" }: { slot?: AdSenseSlotKind }) {
   const adSlotId = slot === "sidebar" ? ADSENSE_SIDEBAR_SLOT : ADSENSE_TOPIC_SLOT;
   const enabled = ADSENSE_ENABLED && adSlotId.length > 0;
 
+  const boxRef = useRef<HTMLDivElement | null>(null);
+
   useEffect(() => {
     if (!enabled) return;
     ensureAdSenseScript();
@@ -41,12 +44,36 @@ function AdSenseSlotComponent({ slot = "topic" }: { slot?: AdSenseSlotKind }) {
     return () => window.clearTimeout(id);
   }, [enabled]);
 
+  // Count a view once the unit actually scrolls into sight.
+  useEffect(() => {
+    if (!enabled) return;
+    const el = boxRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            void recordAdEvent({ kind: "impression", slotKey: slot, adSlotId });
+            obs.disconnect();
+          }
+        }
+      },
+      { threshold: 0.4 },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, [enabled, slot, adSlotId]);
+
   if (!enabled) {
     return <Placeholder label="Sponsored content appears here" />;
   }
 
   return (
-    <div className="hidden md:block rounded-2xl border border-border/60 bg-surface-2/20 px-2 py-2 overflow-hidden">
+    <div
+      ref={boxRef}
+      onPointerDown={() => void recordAdEvent({ kind: "click", slotKey: slot, adSlotId })}
+      className="hidden md:block rounded-2xl border border-border/60 bg-surface-2/20 px-2 py-2 overflow-hidden"
+    >
       <div className="px-2 pb-1 text-[10px] uppercase tracking-[0.25em] text-muted-foreground/70">
         Advertisement
       </div>

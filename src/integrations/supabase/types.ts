@@ -47,6 +47,36 @@ export type Database = {
         }
         Relationships: []
       }
+      ad_events: {
+        Row: {
+          ad_slot_id: string
+          created_at: string
+          id: number
+          kind: string
+          page_path: string
+          slot_key: string
+          user_id: string | null
+        }
+        Insert: {
+          ad_slot_id: string
+          created_at?: string
+          id?: number
+          kind: string
+          page_path?: string
+          slot_key: string
+          user_id?: string | null
+        }
+        Update: {
+          ad_slot_id?: string
+          created_at?: string
+          id?: number
+          kind?: string
+          page_path?: string
+          slot_key?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       admin_backup_codes: {
         Row: {
           batch_id: string
@@ -5979,6 +6009,17 @@ export type Database = {
       }
     }
     Functions: {
+      ad_event_stats: {
+        Args: { _days?: number }
+        Returns: {
+          ad_slot_id: string
+          clicks: number
+          day: string
+          impressions: number
+          page_path: string
+          slot_key: string
+        }[]
+      }
       admin_get_user_location_history: {
         Args: { _limit?: number; _user_id: string }
         Returns: {

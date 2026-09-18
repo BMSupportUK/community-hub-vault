@@ -43,6 +43,13 @@
       "when": 1789662333573,
       "tag": "0005_forum_topic_author_can_delete",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789718710426,
+      "tag": "0006_create_ad_events",
+      "breakpoints": true
     }
   ]
 }

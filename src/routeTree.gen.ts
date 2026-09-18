@@ -37,6 +37,7 @@ import { Route as FanZoneIndexRouteImport } from './routes/fan-zone.index'
 import { Route as FanZoneBoardRouteImport } from './routes/fan-zone.$board'
 import { Route as AuthenticatedApprovedAccountSecurityRouteImport } from './routes/_authenticated/_approved/account-security'
 import { Route as AuthenticatedApprovedAdminRouteImport } from './routes/_authenticated/_approved/admin'
+import { Route as AuthenticatedApprovedAdminAdStatsRouteImport } from './routes/_authenticated/_approved/admin-ad-stats'
 import { Route as AuthenticatedApprovedAdminAffiliateBannersRouteImport } from './routes/_authenticated/_approved/admin-affiliate-banners'
 import { Route as AuthenticatedApprovedAdminArchivedTicketsRouteImport } from './routes/_authenticated/_approved/admin-archived-tickets'
 import { Route as AuthenticatedApprovedAdminBankTransferRouteImport } from './routes/_authenticated/_approved/admin-bank-transfer'
@@ -288,6 +289,12 @@ const AuthenticatedApprovedAdminRoute =
   AuthenticatedApprovedAdminRouteImport.update({
     id: '/admin',
     path: '/admin',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedAdminAdStatsRoute =
+  AuthenticatedApprovedAdminAdStatsRouteImport.update({
+    id: '/admin-ad-stats',
+    path: '/admin-ad-stats',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
 const AuthenticatedApprovedAdminAffiliateBannersRoute =
@@ -974,6 +981,7 @@ export interface FileRoutesByFullPath {
   '/fan-zone/': typeof FanZoneIndexRoute
   '/account-security': typeof AuthenticatedApprovedAccountSecurityRoute
   '/admin': typeof AuthenticatedApprovedAdminRoute
+  '/admin-ad-stats': typeof AuthenticatedApprovedAdminAdStatsRoute
   '/admin-affiliate-banners': typeof AuthenticatedApprovedAdminAffiliateBannersRoute
   '/admin-archived-tickets': typeof AuthenticatedApprovedAdminArchivedTicketsRoute
   '/admin-bank-transfer': typeof AuthenticatedApprovedAdminBankTransferRoute
@@ -1110,6 +1118,7 @@ export interface FileRoutesByTo {
   '/fan-zone': typeof FanZoneIndexRoute
   '/account-security': typeof AuthenticatedApprovedAccountSecurityRoute
   '/admin': typeof AuthenticatedApprovedAdminRoute
+  '/admin-ad-stats': typeof AuthenticatedApprovedAdminAdStatsRoute
   '/admin-affiliate-banners': typeof AuthenticatedApprovedAdminAffiliateBannersRoute
   '/admin-archived-tickets': typeof AuthenticatedApprovedAdminArchivedTicketsRoute
   '/admin-bank-transfer': typeof AuthenticatedApprovedAdminBankTransferRoute
@@ -1250,6 +1259,7 @@ export interface FileRoutesById {
   '/fan-zone/': typeof FanZoneIndexRoute
   '/_authenticated/_approved/account-security': typeof AuthenticatedApprovedAccountSecurityRoute
   '/_authenticated/_approved/admin': typeof AuthenticatedApprovedAdminRoute
+  '/_authenticated/_approved/admin-ad-stats': typeof AuthenticatedApprovedAdminAdStatsRoute
   '/_authenticated/_approved/admin-affiliate-banners': typeof AuthenticatedApprovedAdminAffiliateBannersRoute
   '/_authenticated/_approved/admin-archived-tickets': typeof AuthenticatedApprovedAdminArchivedTicketsRoute
   '/_authenticated/_approved/admin-bank-transfer': typeof AuthenticatedApprovedAdminBankTransferRoute
@@ -1390,6 +1400,7 @@ export interface FileRouteTypes {
     | '/fan-zone/'
     | '/account-security'
     | '/admin'
+    | '/admin-ad-stats'
     | '/admin-affiliate-banners'
     | '/admin-archived-tickets'
     | '/admin-bank-transfer'
@@ -1526,6 +1537,7 @@ export interface FileRouteTypes {
     | '/fan-zone'
     | '/account-security'
     | '/admin'
+    | '/admin-ad-stats'
     | '/admin-affiliate-banners'
     | '/admin-archived-tickets'
     | '/admin-bank-transfer'
@@ -1665,6 +1677,7 @@ export interface FileRouteTypes {
     | '/fan-zone/'
     | '/_authenticated/_approved/account-security'
     | '/_authenticated/_approved/admin'
+    | '/_authenticated/_approved/admin-ad-stats'
     | '/_authenticated/_approved/admin-affiliate-banners'
     | '/_authenticated/_approved/admin-archived-tickets'
     | '/_authenticated/_approved/admin-bank-transfer'
@@ -2033,6 +2046,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AuthenticatedApprovedAdminRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/admin-ad-stats': {
+      id: '/_authenticated/_approved/admin-ad-stats'
+      path: '/admin-ad-stats'
+      fullPath: '/admin-ad-stats'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminAdStatsRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
     '/_authenticated/_approved/admin-affiliate-banners': {
@@ -2897,6 +2917,7 @@ const AuthenticatedApprovedFanzoneMessagesRouteWithChildren =
 interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedAccountSecurityRoute: typeof AuthenticatedApprovedAccountSecurityRoute
   AuthenticatedApprovedAdminRoute: typeof AuthenticatedApprovedAdminRoute
+  AuthenticatedApprovedAdminAdStatsRoute: typeof AuthenticatedApprovedAdminAdStatsRoute
   AuthenticatedApprovedAdminAffiliateBannersRoute: typeof AuthenticatedApprovedAdminAffiliateBannersRoute
   AuthenticatedApprovedAdminArchivedTicketsRoute: typeof AuthenticatedApprovedAdminArchivedTicketsRoute
   AuthenticatedApprovedAdminBankTransferRoute: typeof AuthenticatedApprovedAdminBankTransferRoute
@@ -2963,6 +2984,8 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
   AuthenticatedApprovedAccountSecurityRoute:
     AuthenticatedApprovedAccountSecurityRoute,
   AuthenticatedApprovedAdminRoute: AuthenticatedApprovedAdminRoute,
+  AuthenticatedApprovedAdminAdStatsRoute:
+    AuthenticatedApprovedAdminAdStatsRoute,
   AuthenticatedApprovedAdminAffiliateBannersRoute:
     AuthenticatedApprovedAdminAffiliateBannersRoute,
   AuthenticatedApprovedAdminArchivedTicketsRoute:
