@@ -2270,7 +2270,7 @@ function ChannelPage() {
             </div>
           </div>
         </div>
-        <aside className="relative z-0 hidden md:flex md:flex-col w-56 xl:w-64 shrink-0 min-h-0 border-l border-border bg-surface/40">
+        <aside className="relative z-0 hidden h-full max-h-full min-h-0 w-56 shrink-0 overflow-hidden border-l border-border bg-surface/40 md:flex md:flex-col xl:w-64">
           {hideMembersPanel ? (
             <div className="flex-1 min-h-0 overflow-hidden">
               <StaffOnDutySidebar channelId={channel?.id ?? null} />
@@ -2302,7 +2302,7 @@ function ChannelPage() {
                   />
                 </div>
               )}
-              <div className="flex-1 min-h-0 overflow-hidden">
+              <div className="flex h-full max-h-full min-h-0 flex-1 overflow-hidden">
                 {sideTab === "staff" ? (
                   <StaffOnDutySidebar channelId={channel?.id ?? null} />
                 ) : (
