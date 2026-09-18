@@ -129,7 +129,7 @@ function Landing() {
       <main className="flex-1 min-h-0 md:overflow-hidden px-6 py-4 md:py-4 flex flex-col gap-3">
         <div className="relative max-w-7xl w-full mx-auto flex-1 min-h-0 flex flex-col lg:flex-row gap-3 items-stretch">
         <section
-          className="landing-hero-panel relative flex-1 min-w-0 rounded-3xl border border-red-900/60 p-4 md:p-6 lg:p-8 pb-16 md:pb-20 flex flex-col justify-center"
+          className="landing-hero-panel relative flex-1 min-w-0 rounded-3xl border border-red-900/60 p-4 md:p-6 lg:p-8 flex flex-col justify-center"
           style={{
             background:
               "radial-gradient(1200px 600px at 10% 10%, rgba(248,113,113,0.25), transparent 60%), radial-gradient(900px 500px at 90% 90%, rgba(127,29,29,0.6), transparent 60%), linear-gradient(135deg, #7f1d1d 0%, #991b1b 50%, #450a0a 100%)",
