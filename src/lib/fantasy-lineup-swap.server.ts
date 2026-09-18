@@ -240,6 +240,16 @@ export async function syncLineupSwaps(opts?: { ignoreWindow?: boolean }): Promis
   if (pErr) return { ok: false, squadsChanged: 0, swaps: [], skipped: [], error: pErr.message };
   const players = (playerRows ?? []) as PlayerRow[];
 
+  // Season totals per player, so the highest-scoring eligible substitute is
+  // swapped in first when more than one bench player fits a slot.
+  const seasonPoints = new Map<string, number>();
+  const { data: statRows } = await supabaseAdmin
+    .from("fantasy_player_stats")
+    .select("player_id, points");
+  for (const row of (statRows ?? []) as Array<{ player_id: string; points: number | null }>) {
+    seasonPoints.set(row.player_id, (seasonPoints.get(row.player_id) ?? 0) + (Number(row.points) || 0));
+  }
+
   // Only the double-checked reader may drive swaps: it reads the official
   // team-sheet graphic with full first names AND cross-checks the eleven
   // against a second, independent source before returning anything. The raw
