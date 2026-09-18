@@ -95,7 +95,7 @@ function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen w-full grid lg:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_300px] bg-background">
+    <div className="h-dvh max-h-dvh w-full overflow-hidden grid lg:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_300px] bg-background">
       {/* Illustration panel */}
       <aside className="relative hidden lg:flex items-center justify-center overflow-hidden bg-gradient-to-br from-violet-700/40 via-fuchsia-600/30 to-blue-700/40 border-r border-border">
         <div className="absolute -top-32 -left-24 size-[28rem] rounded-full bg-violet-600/30 blur-3xl" />
@@ -119,7 +119,7 @@ function LoginPage() {
       </aside>
 
       {/* Form panel */}
-      <main className="flex items-center justify-center px-4 py-10">
+      <main className="flex min-h-0 flex-col items-center justify-end overflow-y-auto px-4 pt-4 pb-5">
         <div className="w-full min-w-0 max-w-md">
           <Link to="/" className="flex items-center gap-2 justify-center mb-8">
             <div className="size-9 rounded-xl bg-gradient-primary shadow-glow grid place-items-center font-display font-bold text-[13px] text-primary-foreground">BM</div>
