@@ -459,7 +459,7 @@ function ProfilePage() {
 
   if (profileLocked) {
     return (
-      <div className="flex-1 overflow-y-auto bg-gradient-to-br from-[#1a0b2e] via-[#2d1b4e] to-[#1a0b2e]">
+      <div className="flex-1 h-[calc(100dvh-3.75rem)] max-h-[calc(100dvh-3.75rem)] min-h-0 overflow-y-auto overscroll-contain bg-gradient-to-br from-[#1a0b2e] via-[#2d1b4e] to-[#1a0b2e]">
         <header className="px-8 pt-8 pb-6 border-b border-purple-500/30 bg-purple-950/40 backdrop-blur">
           <h1 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 bg-clip-text text-transparent">
             {display}'s Profile
@@ -505,7 +505,7 @@ function ProfilePage() {
 
   return (
     <div className={cn(
-      "relative flex-1 overflow-y-auto",
+      "relative flex-1 h-[calc(100dvh-3.75rem)] max-h-[calc(100dvh-3.75rem)] min-h-0 overflow-y-auto overscroll-contain",
       mainTab === "referrals" || mainTab === "friends" || mainTab === "tickets" || mainTab === "orders"
         ? "bg-[#1a0b2e]"
         : "bg-gradient-to-br from-[#1a0b2e] via-[#2d1b4e] to-[#1a0b2e]",
