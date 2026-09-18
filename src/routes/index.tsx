@@ -138,7 +138,7 @@ function Landing() {
               "0 0 80px rgba(220,38,38,0.35), inset 0 1px 0 rgba(255,255,255,0.06)",
           }}
         >
-          <div className="grid md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] gap-5 md:gap-3 lg:gap-4 items-center lg:items-stretch w-full">
+          <div className="grid md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] gap-5 md:gap-3 lg:gap-4 items-center lg:items-stretch lg:flex-1 w-full">
             <div className="space-y-5 [@media(max-height:650px)]:space-y-2 text-white">
               <h1 className="font-display text-4xl md:text-6xl lg:text-7xl [@media(max-height:650px)]:text-4xl font-bold tracking-tight leading-[1.05] drop-shadow-[0_2px_20px_rgba(0,0,0,0.5)]">
                 Welcome to <span className="bg-gradient-to-r from-red-200 via-white to-red-300 bg-clip-text text-transparent">BM Support</span>
