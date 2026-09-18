@@ -86,15 +86,13 @@ function ForumLayout() {
         return;
       }
 
-      const { data: fresh } = await supabase
-        .from("forum_posts")
-        .select("id")
-        .gt("created_at", marker.last_viewed_at)
-        .order("created_at", { ascending: false })
-        .limit(200);
-      const read = getReadNewContentIds(user.id);
-      const unread = (fresh ?? []).filter((row) => !read.has(row.id)).length;
-      if (!cancelled) setNewForumPosts(unread);
+      // Same rules as the New content page, so the pill never counts posts
+      // that are hidden from the list (e.g. the match-day bot).
+      const { topics, replies } = await fetchForumUnreadCounts(
+        marker.last_viewed_at,
+        getReadNewContentIds(user.id),
+      );
+      if (!cancelled) setNewForumPosts(topics + replies);
     };
 
     void count();
