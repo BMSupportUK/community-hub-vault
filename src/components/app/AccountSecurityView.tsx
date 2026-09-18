@@ -103,7 +103,7 @@ export function AccountSecurityView({ backTo }: { backTo: "/home" | "/forum" }) 
   };
 
   return (
-    <main className="flex-1 overflow-y-auto">
+    <main className="flex-1 h-[calc(100dvh-3.75rem)] max-h-[calc(100dvh-3.75rem)] min-h-0 overflow-y-auto overscroll-contain">
       <section className="relative overflow-hidden border-b border-border">
         <div className="absolute inset-0 bg-gradient-to-br from-indigo-700 via-violet-700 to-fuchsia-700" />
         <div className="relative p-6 md:p-10 text-white">
