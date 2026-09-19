@@ -166,10 +166,11 @@ export function BoroMatchCentreBox() {
   useEffect(() => {
     void load();
     // Keep the card live: poll so the next fixture only rolls over to the
-    // following game once the listed one has actually finished.
+    // following game once the listed one has actually finished. While a match
+    // is in play this drops to 10 seconds so the score never trails.
     const id = window.setInterval(() => {
       void load();
-    }, 60_000);
+    }, 10_000);
     const onVisible = () => {
       if (document.visibilityState === "visible") void load();
     };
