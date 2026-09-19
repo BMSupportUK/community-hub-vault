@@ -178,6 +178,7 @@ function ContactPage() {
           </form>
         )}
         </div>
+        </div>
         <aside className="hidden xl:block w-[300px] shrink-0">
           <div className="xl:sticky xl:top-16">
             <AdSenseSlot slot="sidebar" />
