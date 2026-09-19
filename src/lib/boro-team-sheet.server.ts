@@ -641,18 +641,28 @@ export async function syncBoroTeamSheet(opts?: { ignoreWindow?: boolean }): Prom
     .eq("fixture_id", fx.id);
   const boroAlreadyPosted = (priorSheets ?? []).some((r) => (r.side ?? "boro") === "boro");
   if (boroHits.length === 0 && !boroAlreadyPosted && opponentHits.length > 0) {
+    // Fantasy swaps do not depend on the graphic being captured — the match
+    // feed's confirmed XI is enough — so they must still run here.
+    await runFantasySwaps(skipped);
     return {
       ok: true,
       fixture: label,
       topic: topic.title,
       posted: 0,
-      skipped: ["holding the opposition XI until Boro's line-up is posted"],
+      skipped: [...skipped, "holding the opposition XI until Boro's line-up is posted"],
     };
   }
 
   const hits = [...boroHits, ...opponentHits];
   if (hits.length === 0) {
-    return { ok: true, fixture: label, topic: topic.title, posted: 0, skipped: ["no team sheet posted yet"] };
+    await runFantasySwaps(skipped);
+    return {
+      ok: true,
+      fixture: label,
+      topic: topic.title,
+      posted: 0,
+      skipped: [...skipped, "no team sheet posted yet"],
+    };
   }
 
 
