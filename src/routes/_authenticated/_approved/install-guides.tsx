@@ -819,6 +819,12 @@ function InstallGuidesPage() {
             </div>
           </TabsContent>}
         </Tabs>
+        </div>
+      </div>
+
+      <aside className="hidden xl:block w-full xl:w-[300px] xl:shrink-0 xl:sticky xl:top-16 px-6 pb-6">
+        <AdSenseSlot slot="sidebar" />
+      </aside>
       </div>
 
       {/* Guide viewer — the link is short-lived and view-only */}
