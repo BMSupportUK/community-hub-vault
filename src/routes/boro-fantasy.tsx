@@ -850,18 +850,18 @@ function BoroFantasyPage() {
     void ping();
     const onFocus = () => { void ping(); };
     window.addEventListener("focus", onFocus);
-    const id = window.setInterval(ping, 60_000);
+    const id = window.setInterval(ping, liveActive ? 10_000 : 60_000);
     return () => {
       cancelled = true;
       window.removeEventListener("focus", onFocus);
       window.clearInterval(id);
     };
-  }, [qc]);
+  }, [qc, liveActive]);
   const lbQuery = useQuery<FantasyLeaderboardRow[]>({
     queryKey: ["fantasy-leaderboard", user?.id ?? null],
     queryFn: () => (user ? lbFn({}) : publicLbFn({})),
-    staleTime: 15_000,
-    refetchInterval: 60_000,
+    staleTime: liveActive ? 5_000 : 15_000,
+    refetchInterval: liveActive ? 10_000 : 60_000,
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: true,
     refetchOnMount: "always",
