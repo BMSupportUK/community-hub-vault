@@ -192,11 +192,15 @@ async function fetchTimelineHtml(handle: string): Promise<string | null> {
     const timer = setTimeout(() => controller.abort(), 12_000);
     try {
       const res = await fetch(target.url, { headers: target.headers, signal: controller.signal });
-      if (!res.ok) continue;
+      if (!res.ok) {
+        console.error("[team-sheet] timeline refused", res.status, target.url);
+        continue;
+      }
       const html = await res.text();
       if (html.includes("__NEXT_DATA__")) return html;
-    } catch {
-      // try the next mirror
+      console.error("[team-sheet] timeline had no data", html.length, target.url);
+    } catch (error) {
+      console.error("[team-sheet] timeline failed", String(error), target.url);
     } finally {
       clearTimeout(timer);
     }
