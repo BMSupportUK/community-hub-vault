@@ -115,10 +115,9 @@ function InstallGuidesPage() {
   const canSeeTransfers = hasAny(["admin", "management", "staff"]);
 
   const { tab: tabParam } = Route.useSearch();
-  const [tab, setTab] = useState<string>(() => {
-    if (tabParam) return tabParam;
-    try { return sessionStorage.getItem(IG_TAB_KEY) || "welcome"; } catch { return "welcome"; }
-  });
+  // Opening the guides screen always starts on the Welcome tab (deep links
+  // with an explicit ?tab= still win); we never restore the last viewed tab.
+  const [tab, setTab] = useState<string>(() => tabParam || "welcome");
   useEffect(() => {
     if (tabParam) setTab(tabParam);
   }, [tabParam]);
@@ -198,7 +197,6 @@ function InstallGuidesPage() {
   };
 
   // Persist UI state across screen swaps (route remounts).
-  useEffect(() => { try { sessionStorage.setItem(IG_TAB_KEY, tab); } catch { /* ignore */ } }, [tab]);
   useEffect(() => {
     try {
       if (activeCat) sessionStorage.setItem(IG_CAT_KEY, activeCat);
