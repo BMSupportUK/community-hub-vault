@@ -539,7 +539,7 @@ export async function syncBoroTeamSheet(opts?: { ignoreWindow?: boolean }): Prom
   // retweets are ignored. Boro's XI is always first, the opposition second.
   const timeline = await fetchOfficialTimeline();
   const boroTimeline = pickTeamSheetPosts(timeline, kickoffMs, opponent);
-  const boroHits = boroTimeline.filter((h) => h.side === "boro" && !/^RT\s+@/i.test(h.text));
+  let boroHits = boroTimeline.filter((h) => h.side === "boro" && !/^RT\s+@/i.test(h.text));
   let opponentHits: Array<TeamSheetHit & { side: "opponent" }> = (
     await fetchOpponentTeamSheets(opponent, kickoffMs)
   ).map((h) => ({ ...h, side: "opponent" as const }));
