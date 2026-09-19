@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Check, Shield, Clock, MapPin, Users, Pencil, Plus, Trash2, X, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { LandingHeader } from "@/components/LandingHeader";
+import { AdSenseSlot } from "@/components/app/AdSenseSlot";
 import { useVisitorVpn } from "@/hooks/use-visitor-vpn";
 import { VpnBlockedDialog } from "@/components/VpnBlockedDialog";
 import { ShieldAlert } from "lucide-react";
@@ -124,7 +125,8 @@ function PackagesPage() {
 
       <LandingHeader />
 
-      <main className="flex-1">
+      <div className="flex-1 flex items-start">
+        <main className="flex-1 min-w-0">
         {/* Hero */}
         <section className="px-6 py-16 md:py-24 text-center max-w-4xl mx-auto">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border text-xs text-muted-foreground mb-6">
@@ -255,6 +257,13 @@ function PackagesPage() {
           </div>
         </section>
       </main>
+
+        <aside className="hidden xl:block w-full xl:w-[300px] xl:shrink-0 px-6 py-16">
+          <div className="xl:sticky xl:top-16">
+            <AdSenseSlot slot="sidebar" />
+          </div>
+        </aside>
+      </div>
 
       <footer className="px-8 py-6 border-t border-border text-center text-xs text-muted-foreground">
         BM Support — Middlesbrough, UK & Overseas

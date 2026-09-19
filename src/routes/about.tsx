@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { getPublicRatingSummary } from "@/lib/reviews-public.functions";
 import { LandingHeader } from "@/components/LandingHeader";
+import { AdSenseSlot } from "@/components/app/AdSenseSlot";
 import { useVisitorVpn } from "@/hooks/use-visitor-vpn";
 import { VpnBlockedDialog } from "@/components/VpnBlockedDialog";
 import { ShieldAlert } from "lucide-react";
@@ -146,7 +147,8 @@ function AboutPage() {
 
       <LandingHeader />
 
-      <main className="flex-1">
+      <div className="flex-1 flex items-start">
+        <main className="flex-1 min-w-0">
         <section className="px-6 py-16 md:py-20 max-w-6xl mx-auto">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border text-xs text-muted-foreground mb-6">
             <MapPin className="size-3" /> Middlesbrough, UK & Overseas
@@ -300,6 +302,13 @@ function AboutPage() {
           </div>
         </section>
       </main>
+
+        <aside className="hidden xl:block w-full xl:w-[300px] xl:shrink-0 px-6 py-16">
+          <div className="xl:sticky xl:top-16">
+            <AdSenseSlot slot="sidebar" />
+          </div>
+        </aside>
+      </div>
 
       <footer className="px-8 py-6 border-t border-border text-center text-xs text-muted-foreground">
         BM Support — Middlesbrough, UK & Overseas
