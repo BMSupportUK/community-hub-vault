@@ -41,8 +41,9 @@ export function fotmobTtl(baseMs: number) {
  * shows the last known scores instead of going blank.
  */
 export async function fotmobJson<T = any>(url: string, ttlMs = 20_000): Promise<T | null> {
+  const window = fotmobTtl(ttlMs);
   const hit = cache.get(url);
-  if (hit && Date.now() - hit.at < ttlMs) return hit.value as T;
+  if (hit && Date.now() - hit.at < window) return hit.value as T;
   try {
     const response = await fetch(url, {
       headers: {
