@@ -39,6 +39,14 @@ const DRAFT_KEY = "sports-guide-new-draft";
 // crash/reload instead of being wiped.
 const editDraftKey = (id: string) => `sports-guide-edit-draft-${id}`;
 
+// Must match SG_FOCUS_KEY in sports-guides.tsx — tells the list which card to
+// return to after save/cancel.
+const SG_FOCUS_KEY = "sports-guides-focus-id";
+const focusGuideCard = (id: string | null | undefined) => {
+  if (!id) return;
+  try { sessionStorage.setItem(SG_FOCUS_KEY, id); } catch { /* ignore */ }
+};
+
 const londonDate = (value: string | Date) =>
   new Intl.DateTimeFormat("en-CA", {
     timeZone: "Europe/London",
@@ -401,6 +409,8 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
     try {
       localStorage.removeItem(blogId ? editDraftKey(blogId) : DRAFT_KEY);
     } catch { /* ignore */ }
+    // Cancelling an edit returns to that guide's card, same as saving does.
+    focusGuideCard(editing?.id || blogId);
     navigate({
       to: "/sports-guides",
       search: {
@@ -461,18 +471,33 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
         .maybeSingle();
       payload.sort_order = ((maxRow?.sort_order ?? 0) as number) + 10;
     }
-    const { error } = editing.id
-      ? await supabase.from("sports_blogs").update(payload).eq("id", editing.id)
-      : await supabase.from("sports_blogs").insert({ ...payload, created_by: user?.id ?? null });
-    if (error) {
-      console.error("[SportsGuideEditor] save error", error);
-      toast.error(error.message || "Failed to save blog");
-      return;
+    let savedId = editing.id;
+    if (editing.id) {
+      const { error } = await supabase.from("sports_blogs").update(payload).eq("id", editing.id);
+      if (error) {
+        console.error("[SportsGuideEditor] save error", error);
+        toast.error(error.message || "Failed to save blog");
+        return;
+      }
+    } else {
+      const { data: inserted, error } = await supabase
+        .from("sports_blogs")
+        .insert({ ...payload, created_by: user?.id ?? null })
+        .select("id")
+        .single();
+      if (error) {
+        console.error("[SportsGuideEditor] save error", error);
+        toast.error(error.message || "Failed to save blog");
+        return;
+      }
+      savedId = inserted?.id ?? "";
     }
     try {
       localStorage.removeItem(editing.id ? editDraftKey(editing.id) : DRAFT_KEY);
     } catch { /* ignore */ }
     toast.success(editing.id ? "Blog updated" : "Blog added");
+    // Return to the saved guide's card (works for brand-new guides too).
+    focusGuideCard(savedId);
     navigate({
       to: "/sports-guides",
       search: {
