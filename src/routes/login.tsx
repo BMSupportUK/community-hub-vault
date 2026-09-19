@@ -119,11 +119,10 @@ function LoginPage() {
       </aside>
 
       {/* Form panel */}
-      <main className="flex min-h-0 flex-col items-center overflow-y-auto px-4 pt-4 pb-5">
-        {/* mt-auto pins the form to the bottom, but collapses to 0 when the form
-            is taller than the screen so the top fields stay scrollable. */}
-        <div className="mt-auto w-full min-w-0 max-w-md">
-          <Link to="/" className="flex items-center gap-2 justify-center mb-8">
+      <main className="flex min-h-0 flex-col items-start overflow-y-auto px-4 pt-1 pb-5">
+        {/* Form card starts level with the start of the advert block. */}
+        <div className="mx-auto w-full min-w-0 max-w-md">
+          <Link to="/" className="flex items-center gap-2 justify-center mb-1">
             <div className="size-9 rounded-xl bg-gradient-primary shadow-glow grid place-items-center font-display font-bold text-[13px] text-primary-foreground">BM</div>
             <span className="font-display font-bold text-lg">Support Community</span>
           </Link>
