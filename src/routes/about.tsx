@@ -199,8 +199,8 @@ function AboutPage() {
             ))}
           </div>
 
-          {/* Right: tabs for map + hours */}
-          <div className="min-w-0 order-1 lg:order-none lg:col-start-2 lg:row-start-1">
+          {/* Right: location card lifted alongside the page heading, with CTA immediately below */}
+          <div className="min-w-0 order-1 space-y-8 lg:order-none lg:col-start-2 lg:row-start-1 lg:-mt-40">
             <div className="min-w-0 rounded-2xl border border-border bg-card overflow-hidden">
               <Tabs defaultValue="location">
                 <div className="min-w-0 px-3 sm:px-5 py-4 border-b border-border flex flex-wrap items-center justify-between gap-2">
@@ -223,7 +223,7 @@ function AboutPage() {
                 </div>
 
                 <TabsContent value="location" className="m-0">
-                  <div className="aspect-square w-full relative">
+                  <div className="relative h-[260px] w-full sm:h-[320px]">
                     <iframe
                       title="BM Support — Middlesbrough location"
                       src="https://www.openstreetmap.org/export/embed.html?bbox=-1.2697%2C54.5475%2C-1.1897%2C54.5875&amp;layer=mapnik&amp;marker=54.5742%2C-1.2350"
@@ -290,15 +290,14 @@ function AboutPage() {
                 </TabsContent>
               </Tabs>
             </div>
-          </div>
 
-          {/* CTA: directly under the location card on smaller screens, full width below both columns on desktop */}
-          <div className="order-2 lg:order-none lg:col-start-1 lg:col-span-2 lg:row-start-2 pt-2 lg:pt-12 text-center max-w-3xl mx-auto w-full">
-            <h2 className="font-display text-3xl font-bold mb-4">Ready to get started?</h2>
-            <p className="text-muted-foreground mb-8">Join BM Support to view full pricing and choose the package that fits.</p>
-            <div className="flex items-center justify-center gap-3">
-              <RequestAccessCta />
-              <Link to="/packages" className="px-6 py-3 rounded-md border border-border hover:bg-muted font-medium">See packages</Link>
+            <div className="pt-2 text-center w-full">
+              <h2 className="font-display text-3xl font-bold mb-4">Ready to get started?</h2>
+              <p className="text-muted-foreground mb-8">Join BM Support to view full pricing and choose the package that fits.</p>
+              <div className="flex flex-wrap items-center justify-center gap-3">
+                <RequestAccessCta />
+                <Link to="/packages" className="px-6 py-3 rounded-md border border-border hover:bg-muted font-medium">See packages</Link>
+              </div>
             </div>
           </div>
         </section>
