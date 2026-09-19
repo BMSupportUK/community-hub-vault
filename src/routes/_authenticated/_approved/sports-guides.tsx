@@ -168,10 +168,10 @@ function SportsGuidesPage() {
 
 
   const scrollCardsToTop = () => {
+    // Only reset the guides list scroller. Never scroll the outer page —
+    // that would drag the A–Z bar up into its pinned position on open.
     window.setTimeout(() => {
       scrollerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      listingsTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 0);
   };
 
@@ -1508,7 +1508,7 @@ function SportsGuidesPage() {
               </section>
 
               {activeCategory && !search.trim() && (
-                <aside className="h-fit rounded-2xl border border-purple-500/30 bg-slate-950/75 p-2 backdrop-blur lg:sticky lg:top-4">
+                <aside className="sticky top-2 z-10 h-fit self-start rounded-2xl border border-purple-500/30 bg-slate-950/75 p-2 backdrop-blur lg:top-4">
                   <div className="mb-2 text-center text-[10px] font-bold uppercase tracking-wider text-fuchsia-300/80">A–Z</div>
                   <div
                     className="flex flex-wrap justify-center gap-1 lg:flex-col lg:flex-nowrap lg:items-center"
