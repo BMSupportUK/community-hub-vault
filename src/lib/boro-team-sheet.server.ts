@@ -185,18 +185,26 @@ async function fetchTimelineHtml(handle: string): Promise<string | null> {
       url: `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(timelineUrl)}`,
       headers: { accept: "text/html" },
     },
+    { url: `https://r.jina.ai/${timelineUrl}`, headers: { accept: "text/html", "x-return-format": "html" } },
     { url: `https://proxy.cors.sh/${timelineUrl}`, headers: { accept: "text/html" } },
+    { url: `https://corsproxy.io/?${encodeURIComponent(timelineUrl)}`, headers: { accept: "text/html" } },
   ];
   for (const target of targets) {
+    // X rate-limits repeat reads of the same account, so one refusal must not
+    // end the attempt — each mirror gets its own generous window.
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 12_000);
+    const timer = setTimeout(() => controller.abort(), 25_000);
     try {
       const res = await fetch(target.url, { headers: target.headers, signal: controller.signal });
-      if (!res.ok) continue;
+      if (!res.ok) {
+        console.error("[team-sheet] timeline refused", res.status, target.url);
+        continue;
+      }
       const html = await res.text();
       if (html.includes("__NEXT_DATA__")) return html;
-    } catch {
-      // try the next mirror
+      console.error("[team-sheet] timeline had no data", html.length, target.url);
+    } catch (error) {
+      console.error("[team-sheet] timeline failed", String(error), target.url);
     } finally {
       clearTimeout(timer);
     }
@@ -204,12 +212,17 @@ async function fetchTimelineHtml(handle: string): Promise<string | null> {
   return null;
 }
 
+/** Last readable copy of each account's posts, kept so a rate-limited read
+ * (HTTP 429, which X hands out freely) never looks like "nothing posted". */
+const timelineCache = new Map<string, { at: number; hits: TeamSheetHit[] }>();
+const TIMELINE_CACHE_MS = 45 * 60 * 1000;
+
 export async function fetchOfficialTimeline(handle: string = HANDLE): Promise<TeamSheetHit[]> {
   try {
     const html = await fetchTimelineHtml(handle);
-    if (!html) return [];
+    if (!html) return cachedTimeline(handle);
     const match = html.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
-    if (!match?.[1]) return [];
+    if (!match?.[1]) return cachedTimeline(handle);
     const json = JSON.parse(match[1]) as {
       props?: { pageProps?: { timeline?: { entries?: Array<{ content?: { tweet?: Record<string, unknown> } }> } } };
     };
@@ -230,10 +243,18 @@ export async function fetchOfficialTimeline(handle: string = HANDLE): Promise<Te
         url: `https://x.com/${handle}/status/${id}`,
       });
     }
+    if (hits.length === 0) return cachedTimeline(handle);
+    timelineCache.set(handle, { at: Date.now(), hits });
     return hits;
   } catch {
-    return [];
+    return cachedTimeline(handle);
   }
+}
+
+function cachedTimeline(handle: string): TeamSheetHit[] {
+  const previous = timelineCache.get(handle);
+  if (previous && Date.now() - previous.at < TIMELINE_CACHE_MS) return previous.hits;
+  return [];
 }
 
 /**
@@ -520,7 +541,6 @@ export async function classifyLineupImage(
         ],
         response_format: { type: "json_object" },
       }),
-      signal: AbortSignal.timeout(20_000),
     });
     if (!res.ok) return { isLineup: false, club: "" };
     const payload = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
@@ -560,6 +580,22 @@ export async function findTeamSheetByImage(
     return { ...hit, side: "boro" as const };
   }
   return null;
+}
+
+
+/**
+ * Automatic fantasy substitutions for the confirmed XI. Runs on every pass of
+ * this sync, whether or not a graphic was captured — the match feed's confirmed
+ * line-up is a valid source on its own.
+ */
+async function runFantasySwaps(skipped: string[]): Promise<void> {
+  try {
+    const { syncLineupSwaps } = await import("@/lib/fantasy-lineup-swap.server");
+    const swaps = await syncLineupSwaps();
+    if (swaps.error) skipped.push(`fantasy swaps: ${swaps.error}`);
+  } catch (error) {
+    skipped.push(`fantasy swaps: ${error instanceof Error ? error.message : String(error)}`);
+  }
 }
 
 
@@ -642,18 +678,28 @@ export async function syncBoroTeamSheet(opts?: { ignoreWindow?: boolean }): Prom
     .eq("fixture_id", fx.id);
   const boroAlreadyPosted = (priorSheets ?? []).some((r) => (r.side ?? "boro") === "boro");
   if (boroHits.length === 0 && !boroAlreadyPosted && opponentHits.length > 0) {
+    // Fantasy swaps do not depend on the graphic being captured — the match
+    // feed's confirmed XI is enough — so they must still run here.
+    await runFantasySwaps(skipped);
     return {
       ok: true,
       fixture: label,
       topic: topic.title,
       posted: 0,
-      skipped: ["holding the opposition XI until Boro's line-up is posted"],
+      skipped: [...skipped, "holding the opposition XI until Boro's line-up is posted"],
     };
   }
 
   const hits = [...boroHits, ...opponentHits];
   if (hits.length === 0) {
-    return { ok: true, fixture: label, topic: topic.title, posted: 0, skipped: ["no team sheet posted yet"] };
+    await runFantasySwaps(skipped);
+    return {
+      ok: true,
+      fixture: label,
+      topic: topic.title,
+      posted: 0,
+      skipped: [...skipped, "no team sheet posted yet"],
+    };
   }
 
 
@@ -714,15 +760,7 @@ export async function syncBoroTeamSheet(opts?: { ignoreWindow?: boolean }): Prom
     posted += 1;
   }
 
-  // The official graphic is also the fallback source for fantasy automatic
-  // substitutions when ESPN has not published its structured line-up yet.
-  try {
-    const { syncLineupSwaps } = await import("@/lib/fantasy-lineup-swap.server");
-    const swaps = await syncLineupSwaps();
-    if (swaps.error) skipped.push(`fantasy swaps: ${swaps.error}`);
-  } catch (error) {
-    skipped.push(`fantasy swaps: ${error instanceof Error ? error.message : String(error)}`);
-  }
+  await runFantasySwaps(skipped);
 
   return { ok: true, fixture: label, topic: topic.title, posted, skipped };
 }
