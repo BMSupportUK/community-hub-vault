@@ -39,6 +39,14 @@ const DRAFT_KEY = "sports-guide-new-draft";
 // crash/reload instead of being wiped.
 const editDraftKey = (id: string) => `sports-guide-edit-draft-${id}`;
 
+// Must match SG_FOCUS_KEY in sports-guides.tsx — tells the list which card to
+// return to after save/cancel.
+const SG_FOCUS_KEY = "sports-guides-focus-id";
+const focusGuideCard = (id: string | null | undefined) => {
+  if (!id) return;
+  try { sessionStorage.setItem(SG_FOCUS_KEY, id); } catch { /* ignore */ }
+};
+
 const londonDate = (value: string | Date) =>
   new Intl.DateTimeFormat("en-CA", {
     timeZone: "Europe/London",
@@ -401,6 +409,8 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
     try {
       localStorage.removeItem(blogId ? editDraftKey(blogId) : DRAFT_KEY);
     } catch { /* ignore */ }
+    // Cancelling an edit returns to that guide's card, same as saving does.
+    focusGuideCard(editing?.id || blogId);
     navigate({
       to: "/sports-guides",
       search: {
