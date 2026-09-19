@@ -168,10 +168,10 @@ function SportsGuidesPage() {
 
 
   const scrollCardsToTop = () => {
+    // Only reset the guides list scroller. Never scroll the outer page —
+    // that would drag the A–Z bar up into its pinned position on open.
     window.setTimeout(() => {
       scrollerRef.current?.scrollTo({ top: 0, behavior: "smooth" });
-      window.scrollTo({ top: 0, behavior: "smooth" });
-      listingsTopRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 0);
   };
 
