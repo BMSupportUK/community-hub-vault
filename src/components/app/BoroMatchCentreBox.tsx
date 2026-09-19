@@ -132,9 +132,11 @@ export function BoroMatchCentreBox() {
   const [upcoming, setUpcoming] = useState<NextFixture | null>(null);
 
   const load = async () => {
+    let inPlay = false;
     try {
       const d = await fetchData();
       setData(d);
+      inPlay = !!d?.liveMatch?.inPlay;
     } catch (e) {
       console.error(e);
     } finally {
