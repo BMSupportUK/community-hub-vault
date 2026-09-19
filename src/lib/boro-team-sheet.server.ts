@@ -520,7 +520,6 @@ export async function classifyLineupImage(
         ],
         response_format: { type: "json_object" },
       }),
-      signal: AbortSignal.timeout(20_000),
     });
     if (!res.ok) return { isLineup: false, club: "" };
     const payload = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
