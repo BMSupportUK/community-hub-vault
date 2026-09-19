@@ -84,8 +84,11 @@ const nameMatches = (a: string, b: string) => {
 
 
 async function fotmobJson(url: string, ttlMs: number): Promise<any | null> {
+  // While a match is in play every read is held for seconds, not tens of them.
+  const { fotmobTtl } = await import("@/lib/fotmob-fetch");
+  const window = fotmobTtl(ttlMs);
   const hit = cache.get(url);
-  if (hit && Date.now() - hit.at < ttlMs) return hit.value;
+  if (hit && Date.now() - hit.at < window) return hit.value;
   try {
     const response = await fetch(url, {
       headers: {
