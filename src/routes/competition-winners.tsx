@@ -6,6 +6,7 @@ import { LandingHeader } from "@/components/LandingHeader";
 import { IconRail } from "@/components/app/IconRail";
 import { FanZonePublicHeader } from "@/components/app/FanZonePublicHeader";
 import { useAuth } from "@/hooks/use-auth";
+import { AdSenseSlot } from "@/components/app/AdSenseSlot";
 
 export const Route = createFileRoute("/competition-winners")({
   component: CompetitionWinnersPage,
@@ -146,6 +147,11 @@ function CompetitionWinnersPage() {
         ) : null}
       </div>
       </main>
+      <aside className="hidden xl:block w-full xl:w-[300px] shrink-0 px-6 py-6">
+        <div className="xl:sticky xl:top-16">
+          <AdSenseSlot slot="sidebar" />
+        </div>
+      </aside>
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Send, CheckCircle2 } from "lucide-react";
 import contactBg from "@/assets/contact-bg.jpg";
+import { AdSenseSlot } from "@/components/app/AdSenseSlot";
 
 export const Route = createFileRoute("/contact")({
   component: ContactPage,
@@ -89,7 +90,8 @@ function ContactPage() {
         </Link>
       </header>
 
-      <main className="px-6 py-12 md:py-16 max-w-2xl mx-auto">
+      <main className="px-6 py-12 md:py-16 flex items-start justify-center gap-6">
+        <div className="w-full max-w-2xl min-w-0">
         <div className="rounded-2xl border border-border/50 bg-card/80 backdrop-blur-xl p-6 md:p-10 shadow-2xl">
         <h1 className="font-display text-3xl md:text-4xl font-bold mb-3">Contact Us</h1>
         <p className="text-muted-foreground mb-8">Have a question or need help? Send us a message and we'll get back to you as soon as we can.</p>
@@ -176,6 +178,12 @@ function ContactPage() {
           </form>
         )}
         </div>
+        </div>
+        <aside className="hidden xl:block w-[300px] shrink-0">
+          <div className="xl:sticky xl:top-16">
+            <AdSenseSlot slot="sidebar" />
+          </div>
+        </aside>
       </main>
       </div>
     </div>

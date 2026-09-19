@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { ChevronDown, Pencil, Plus, Trash2, X, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { LandingHeader } from "@/components/LandingHeader";
+import { AdSenseSlot } from "@/components/app/AdSenseSlot";
 
 export const Route = createFileRoute("/faq")({
   component: FaqPage,
@@ -88,7 +89,8 @@ function FaqPage() {
 
       <LandingHeader />
 
-      <main className="flex-1 px-6 py-16 max-w-3xl mx-auto w-full">
+      <div className="flex-1 flex items-start">
+      <main className="flex-1 px-6 py-16 max-w-3xl mx-auto w-full min-w-0">
         <h1 className="font-display text-4xl md:text-5xl font-bold mb-3 text-center">Frequently asked questions</h1>
         <p className="text-muted-foreground text-center mb-10">Everything you need to know about BM Support packages — UK & overseas.</p>
 
@@ -136,6 +138,13 @@ function FaqPage() {
           </Link>
         </div>
       </main>
+
+        <aside className="hidden xl:block w-full xl:w-[300px] xl:shrink-0 px-6 py-16">
+          <div className="xl:sticky xl:top-16">
+            <AdSenseSlot slot="sidebar" />
+          </div>
+        </aside>
+      </div>
 
       <footer className="px-8 py-6 border-t border-border text-center text-xs text-muted-foreground">
         BM Support — Middlesbrough, UK & Overseas
