@@ -41,6 +41,7 @@ function AdSenseSlotComponent({ slot = "topic" }: { slot?: AdSenseSlotKind }) {
   const enabled = ADSENSE_ENABLED && adSlotId.length > 0;
 
   const boxRef = useRef<HTMLDivElement | null>(null);
+  const pressRef = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     if (!enabled) return;
@@ -76,7 +77,6 @@ function AdSenseSlotComponent({ slot = "topic" }: { slot?: AdSenseSlotKind }) {
 
   // Only a genuine press-and-release on the advert frame itself counts as a
   // click — not the label, the padding, or a click-drag that slid away.
-  const pressRef = useRef<{ x: number; y: number } | null>(null);
   const onAdPointerDown = (e: React.PointerEvent) => {
     pressRef.current = { x: e.clientX, y: e.clientY };
   };
@@ -91,18 +91,18 @@ function AdSenseSlotComponent({ slot = "topic" }: { slot?: AdSenseSlotKind }) {
   return (
     <div
       ref={boxRef}
-      className="hidden md:block rounded-2xl border border-border/60 bg-surface-2/20 px-2 py-2 overflow-hidden"
+      className={`hidden md:block rounded-2xl border border-border/60 bg-surface-2/20 px-2 py-2 overflow-hidden ${slot === "home" ? "h-[92px]" : ""}`}
     >
       <div className="px-2 pb-1 text-[10px] uppercase tracking-[0.25em] text-muted-foreground/70">
         Advertisement
       </div>
       <div onPointerDown={onAdPointerDown} onPointerUp={onAdPointerUp} onPointerCancel={() => (pressRef.current = null)}>
         <ins
-          className="adsbygoogle"
+          className={`adsbygoogle ${slot === "home" ? "h-[64px]" : ""}`}
           style={{ display: "block", textAlign: "center" }}
           data-ad-client={ADSENSE_CLIENT_ID}
           data-ad-slot={adSlotId}
-          data-ad-format="auto"
+          data-ad-format={slot === "home" ? "horizontal" : "auto"}
           data-full-width-responsive="true"
         />
       </div>
