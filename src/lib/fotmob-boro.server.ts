@@ -245,6 +245,11 @@ export async function fetchFotmobSummary(input: {
   const status = detail.header.status ?? {};
   const reason = status?.reason?.short ?? status?.reason?.long ?? (status.started ? "Live" : "Scheduled");
   const state = status.finished ? "post" : status.started ? "in" : "pre";
+  if (state === "in") {
+    // In play — every further read uses the short cache window.
+    const { markFotmobLive } = await import("@/lib/fotmob-fetch");
+    markFotmobLive();
+  }
   const competitors = teams.map((team, index) => ({
     homeAway: index === 0 ? "home" : "away",
     team: { id: String(team.id), displayName: team.name, name: team.name },
