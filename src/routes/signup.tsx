@@ -189,7 +189,7 @@ function SignupPage() {
       </aside>
 
       {/* Form panel */}
-      <main className="flex min-h-0 flex-col items-start overflow-y-auto px-4 pt-1 pb-5">
+      <main className="flex min-h-0 flex-col items-start overflow-y-auto px-4 pt-10 pb-5">
         {/* Form card starts level with the start of the advert block. */}
         <div className="mx-auto w-full min-w-0 max-w-md">
           <Link to="/" className="flex items-center gap-2 justify-center mb-1">
