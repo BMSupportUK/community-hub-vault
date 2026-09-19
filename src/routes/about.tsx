@@ -223,7 +223,7 @@ function AboutPage() {
                 </div>
 
                 <TabsContent value="location" className="m-0">
-                  <div className="aspect-square w-full relative">
+                  <div className="relative h-[260px] w-full sm:h-[320px]">
                     <iframe
                       title="BM Support — Middlesbrough location"
                       src="https://www.openstreetmap.org/export/embed.html?bbox=-1.2697%2C54.5475%2C-1.1897%2C54.5875&amp;layer=mapnik&amp;marker=54.5742%2C-1.2350"
