@@ -562,6 +562,22 @@ export async function findTeamSheetByImage(
 }
 
 
+/**
+ * Automatic fantasy substitutions for the confirmed XI. Runs on every pass of
+ * this sync, whether or not a graphic was captured — the match feed's confirmed
+ * line-up is a valid source on its own.
+ */
+async function runFantasySwaps(skipped: string[]): Promise<void> {
+  try {
+    const { syncLineupSwaps } = await import("@/lib/fantasy-lineup-swap.server");
+    const swaps = await syncLineupSwaps();
+    if (swaps.error) skipped.push(`fantasy swaps: ${swaps.error}`);
+  } catch (error) {
+    skipped.push(`fantasy swaps: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+
 export async function syncBoroTeamSheet(opts?: { ignoreWindow?: boolean }): Promise<SyncResult> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { getMatchDayAuthorId } = await import("@/lib/boro-bot-author.server");
