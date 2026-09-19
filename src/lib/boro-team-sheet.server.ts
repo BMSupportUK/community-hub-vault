@@ -552,6 +552,7 @@ export async function findTeamSheetByImage(
     .filter((h) => !isTeaserText(`${h.text}\n${h.altText ?? ""}`))
     .sort((a, b) => b.createdAtMs - a.createdAtMs)
     .slice(0, 8);
+  console.error("[team-sheet] image candidates", candidates.length, !!process.env["LOVABLE_API_KEY"]);
   for (const hit of candidates) {
     const verdict = await classifyLineupImage(hit.images[0]!);
     if (!verdict.isLineup) continue;
