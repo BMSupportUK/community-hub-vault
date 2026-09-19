@@ -149,7 +149,7 @@ function AboutPage() {
 
       <div className="flex-1 flex items-start">
         <main className="flex-1 min-w-0">
-        <section className="px-6 py-16 md:py-20 max-w-6xl mx-auto">
+        <section className="px-6 py-10 md:py-14 max-w-6xl mx-auto">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border text-xs text-muted-foreground mb-6">
             <MapPin className="size-3" /> Middlesbrough, UK & Overseas
           </div>
@@ -162,9 +162,9 @@ function AboutPage() {
 
         </section>
 
-        <section className="px-4 sm:px-6 pb-16 max-w-6xl mx-auto grid lg:grid-cols-2 gap-10">
+        <section className="px-4 sm:px-6 pb-12 max-w-6xl mx-auto grid gap-10 lg:grid-cols-2">
           {/* Left: content */}
-          <div className="min-w-0 space-y-8">
+          <div className="min-w-0 space-y-8 order-3 lg:order-none lg:col-start-1 lg:row-start-1">
             {canEdit && (
               <button
                 onClick={() =>
@@ -200,7 +200,7 @@ function AboutPage() {
           </div>
 
           {/* Right: tabs for map + hours */}
-          <div className="min-w-0">
+          <div className="min-w-0 order-1 lg:order-none lg:col-start-2 lg:row-start-1">
             <div className="min-w-0 rounded-2xl border border-border bg-card overflow-hidden">
               <Tabs defaultValue="location">
                 <div className="min-w-0 px-3 sm:px-5 py-4 border-b border-border flex flex-wrap items-center justify-between gap-2">
@@ -291,14 +291,15 @@ function AboutPage() {
               </Tabs>
             </div>
           </div>
-        </section>
 
-        <section className="px-6 py-16 text-center max-w-3xl mx-auto">
-          <h2 className="font-display text-3xl font-bold mb-4">Ready to get started?</h2>
-          <p className="text-muted-foreground mb-8">Join BM Support to view full pricing and choose the package that fits.</p>
-          <div className="flex items-center justify-center gap-3">
-            <RequestAccessCta />
-            <Link to="/packages" className="px-6 py-3 rounded-md border border-border hover:bg-muted font-medium">See packages</Link>
+          {/* CTA: directly under the location card on smaller screens, full width below both columns on desktop */}
+          <div className="order-2 lg:order-none lg:col-start-1 lg:col-span-2 lg:row-start-2 pt-2 lg:pt-12 text-center max-w-3xl mx-auto w-full">
+            <h2 className="font-display text-3xl font-bold mb-4">Ready to get started?</h2>
+            <p className="text-muted-foreground mb-8">Join BM Support to view full pricing and choose the package that fits.</p>
+            <div className="flex items-center justify-center gap-3">
+              <RequestAccessCta />
+              <Link to="/packages" className="px-6 py-3 rounded-md border border-border hover:bg-muted font-medium">See packages</Link>
+            </div>
           </div>
         </section>
       </main>
