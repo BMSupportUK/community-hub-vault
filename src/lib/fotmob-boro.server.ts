@@ -136,28 +136,50 @@ function displayStat(stat: any): string {
   return String(value);
 }
 
-function playerStats(detail: any, playerId: unknown): Array<{ name: string; displayValue: string }> {
+type MappedStat = { name: string; displayValue: string; value: number; abbreviation: string };
+
+function playerStats(detail: any, playerId: unknown): MappedStat[] {
   const player = detail?.content?.playerStats?.[String(playerId)];
-  const output: Array<{ name: string; displayValue: string }> = [];
-  const names: Record<string, string> = {
-    rating_title: "rating",
-    minutes_played: "minutesPlayed",
-    goals: "totalGoals",
-    assists: "goalAssists",
-    total_shots: "totalShots",
-    ShotsOnTarget: "shotsOnTarget",
-    fouls: "foulsCommitted",
-    was_fouled: "foulsSuffered",
-    yellow_cards: "yellowCards",
-    red_cards: "redCards",
-    saves: "saves",
+  const output: MappedStat[] = [];
+  // name → [our stat name, table abbreviation]
+  const names: Record<string, [string, string]> = {
+    rating_title: ["rating", "RAT"],
+    minutes_played: ["minutesPlayed", "MIN"],
+    goals: ["totalGoals", "G"],
+    assists: ["goalAssists", "A"],
+    total_shots: ["totalShots", "SH"],
+    ShotsOnTarget: ["shotsOnTarget", "SOT"],
+    fouls: ["foulsCommitted", "FC"],
+    was_fouled: ["foulsSuffered", "FS"],
+    yellow_cards: ["yellowCards", "YC"],
+    red_cards: ["redCards", "RC"],
+    saves: ["saves", "SV"],
+    goals_conceded: ["goalsConceded", "GC"],
+    own_goals: ["ownGoals", "OG"],
+    offsides: ["offsides", "OF"],
+    shots_faced: ["shotsFaced", "SHF"],
+    touches: ["touches", "TCH"],
+    accurate_passes: ["accuratePasses", "AC.PASS"],
+    long_balls_accurate: ["accurateLongBalls", "AC.LB"],
+    chances_created: ["bigChancesCreated", "BCC"],
+    duel_won: ["duelsWon", "DUELW"],
+    clearances: ["clearances", "CLR"],
+    interceptions: ["interceptions", "INT"],
   };
   for (const section of player?.stats ?? []) {
     for (const item of Object.values(section?.stats ?? {}) as any[]) {
-      const name = names[String(item?.key ?? "")];
-      if (name && !output.some((entry) => entry.name === name)) {
-        output.push({ name, displayValue: displayStat(item?.stat) });
-      }
+      const mapped = names[String(item?.key ?? "")];
+      if (!mapped) continue;
+      const [name, abbreviation] = mapped;
+      if (output.some((entry) => entry.name === name)) continue;
+      const raw = item?.stat?.value;
+      // Readers score off the numeric value, so always publish one.
+      output.push({
+        name,
+        displayValue: displayStat(item?.stat),
+        value: typeof raw === "number" ? raw : 0,
+        abbreviation,
+      });
     }
   }
   return output;
