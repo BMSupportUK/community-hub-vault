@@ -185,11 +185,15 @@ async function fetchTimelineHtml(handle: string): Promise<string | null> {
       url: `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(timelineUrl)}`,
       headers: { accept: "text/html" },
     },
+    { url: `https://r.jina.ai/${timelineUrl}`, headers: { accept: "text/html", "x-return-format": "html" } },
     { url: `https://proxy.cors.sh/${timelineUrl}`, headers: { accept: "text/html" } },
+    { url: `https://corsproxy.io/?${encodeURIComponent(timelineUrl)}`, headers: { accept: "text/html" } },
   ];
   for (const target of targets) {
+    // X rate-limits repeat reads of the same account, so one refusal must not
+    // end the attempt — each mirror gets its own generous window.
     const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 12_000);
+    const timer = setTimeout(() => controller.abort(), 25_000);
     try {
       const res = await fetch(target.url, { headers: target.headers, signal: controller.signal });
       if (!res.ok) {
@@ -208,12 +212,17 @@ async function fetchTimelineHtml(handle: string): Promise<string | null> {
   return null;
 }
 
+/** Last readable copy of each account's posts, kept so a rate-limited read
+ * (HTTP 429, which X hands out freely) never looks like "nothing posted". */
+const timelineCache = new Map<string, { at: number; hits: TeamSheetHit[] }>();
+const TIMELINE_CACHE_MS = 45 * 60 * 1000;
+
 export async function fetchOfficialTimeline(handle: string = HANDLE): Promise<TeamSheetHit[]> {
   try {
     const html = await fetchTimelineHtml(handle);
-    if (!html) return [];
+    if (!html) return cachedTimeline(handle);
     const match = html.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/);
-    if (!match?.[1]) return [];
+    if (!match?.[1]) return cachedTimeline(handle);
     const json = JSON.parse(match[1]) as {
       props?: { pageProps?: { timeline?: { entries?: Array<{ content?: { tweet?: Record<string, unknown> } }> } } };
     };
@@ -234,10 +243,18 @@ export async function fetchOfficialTimeline(handle: string = HANDLE): Promise<Te
         url: `https://x.com/${handle}/status/${id}`,
       });
     }
+    if (hits.length === 0) return cachedTimeline(handle);
+    timelineCache.set(handle, { at: Date.now(), hits });
     return hits;
   } catch {
-    return [];
+    return cachedTimeline(handle);
   }
+}
+
+function cachedTimeline(handle: string): TeamSheetHit[] {
+  const previous = timelineCache.get(handle);
+  if (previous && Date.now() - previous.at < TIMELINE_CACHE_MS) return previous.hits;
+  return [];
 }
 
 /**
