@@ -10,6 +10,7 @@ import type { MatchDetailDTO } from "@/lib/boro-match-detail.types";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
 import { TeamKit } from "@/lib/boro-team-kits";
 import { londonWeekStart } from "@/lib/boro-match-week";
+import { clubNamesMatch } from "@/lib/club-names";
 
 
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
@@ -309,10 +310,15 @@ export function BoroLiveMatchStrip() {
             // Score + clock come from the Gamecast feed while a game is on —
             // it refreshes every 5s, so the pop-up ticks along with play.
             const feedScore = detailScore(preloadedDetail);
+            // Only treat the feed as reversed when its home side really is the
+            // other club. The two sources spell clubs differently ("Birmingham"
+            // vs "Birmingham City"), so an exact-text compare wrongly flipped
+            // the scoreline onto the wrong team.
             const feedFlipped =
               !!preloadedDetail?.home &&
               !!m.home &&
-              preloadedDetail.home.trim().toLowerCase() !== m.home.trim().toLowerCase();
+              !clubNamesMatch(preloadedDetail.home, m.home) &&
+              clubNamesMatch(preloadedDetail.home, m.away);
             const liveHome = feedScore ? (feedFlipped ? feedScore.away : feedScore.home) : null;
             const liveAway = feedScore ? (feedFlipped ? feedScore.home : feedScore.away) : null;
             const shownHome =
