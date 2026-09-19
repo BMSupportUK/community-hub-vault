@@ -209,12 +209,32 @@ async function fetchFeedStarterIds(
       .maybeSingle();
     if (!fixture?.home_team || !fixture?.away_team || !fixture?.kickoff_at) return null;
 
-    const { getCachedSummaryForFixture } = await import("@/lib/espn-summary-cache.server");
-    const summary = await getCachedSummaryForFixture({
-      home_team: String(fixture.home_team),
-      away_team: String(fixture.away_team),
-      kickoff_at: String(fixture.kickoff_at),
-    });
+    // FotMob is read straight from the server — it publishes the confirmed XI
+    // and bench about an hour before kick-off. The relayed browser cache is only
+    // a fallback now (it is empty unless a fan happens to open the match centre).
+    let summary: any = null;
+    try {
+      const { fetchFotmobSummary } = await import("@/lib/fotmob-boro.server");
+      const live = await fetchFotmobSummary({
+        home: String(fixture.home_team),
+        away: String(fixture.away_team),
+        kickoff: String(fixture.kickoff_at),
+      });
+      // A predicted line-up is not a team sheet.
+      if (live && (live as { _lineupsConfirmed?: boolean })._lineupsConfirmed !== false) {
+        summary = live;
+      }
+    } catch {
+      summary = null;
+    }
+    if (!summary) {
+      const { getCachedSummaryForFixture } = await import("@/lib/espn-summary-cache.server");
+      summary = await getCachedSummaryForFixture({
+        home_team: String(fixture.home_team),
+        away_team: String(fixture.away_team),
+        kickoff_at: String(fixture.kickoff_at),
+      });
+    }
     const rosters: any[] = Array.isArray(summary?.rosters) ? summary.rosters : [];
     const boro = rosters.find((roster: any) =>
       normaliseName(String(roster?.team?.displayName ?? roster?.team?.name ?? "")).includes(

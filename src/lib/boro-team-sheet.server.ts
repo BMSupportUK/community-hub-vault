@@ -489,6 +489,80 @@ export type SyncResult = {
   error?: string;
 };
 
+/**
+ * Looks at a candidate graphic and answers whether it is a starting line-up
+ * team sheet, and whose. Caption wording changes season to season; the picture
+ * does not, so this is the reliable signal when keywords miss.
+ */
+export async function classifyLineupImage(
+  imageUrl: string,
+): Promise<{ isLineup: boolean; club: string }> {
+  const apiKey = process.env["LOVABLE_API_KEY"];
+  if (!apiKey) return { isLineup: false, club: "" };
+  try {
+    const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "google/gemini-2.5-flash",
+        temperature: 0,
+        messages: [
+          {
+            role: "user",
+            content: [
+              {
+                type: "text",
+                text: 'Is this image a football STARTING LINE-UP / team sheet graphic listing a named eleven (optionally with substitutes)? Match photos, score graphics, promos, warm-up pictures and "team news coming soon" teasers are NOT line-ups. Return JSON only: {"isLineup":true|false,"club":"club whose eleven is listed, or empty"}.',
+              },
+              { type: "image_url", image_url: { url: imageUrl } },
+            ],
+          },
+        ],
+        response_format: { type: "json_object" },
+      }),
+      signal: AbortSignal.timeout(20_000),
+    });
+    if (!res.ok) return { isLineup: false, club: "" };
+    const payload = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
+    const raw = payload.choices?.[0]?.message?.content;
+    if (!raw) return { isLineup: false, club: "" };
+    const parsed = JSON.parse(raw) as { isLineup?: unknown; club?: unknown };
+    return {
+      isLineup: parsed.isLineup === true,
+      club: typeof parsed.club === "string" ? parsed.club : "",
+    };
+  } catch {
+    return { isLineup: false, club: "" };
+  }
+}
+
+/**
+ * Image-led search for Boro's own XI graphic: newest first, inside the team
+ * news window, retweets and videos ignored. Stops at the first picture the
+ * reader confirms is Middlesbrough's starting eleven.
+ */
+export async function findTeamSheetByImage(
+  hits: TeamSheetHit[],
+  kickoffMs: number,
+): Promise<(TeamSheetHit & { side: "boro" }) | null> {
+  const from = kickoffMs - WINDOW_BEFORE_MS;
+  const to = kickoffMs + WINDOW_AFTER_MS;
+  const candidates = hits
+    .filter((h) => h.images.length > 0 && h.createdAtMs >= from && h.createdAtMs <= to)
+    .filter((h) => !/^RT\s+@/i.test(h.text))
+    .filter((h) => !isTeaserText(`${h.text}\n${h.altText ?? ""}`))
+    .sort((a, b) => b.createdAtMs - a.createdAtMs)
+    .slice(0, 8);
+  for (const hit of candidates) {
+    const verdict = await classifyLineupImage(hit.images[0]!);
+    if (!verdict.isLineup) continue;
+    if (!BORO_RE.test(verdict.club) && verdict.club.trim() !== "") continue;
+    return { ...hit, side: "boro" as const };
+  }
+  return null;
+}
+
+
 export async function syncBoroTeamSheet(opts?: { ignoreWindow?: boolean }): Promise<SyncResult> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { getMatchDayAuthorId } = await import("@/lib/boro-bot-author.server");
@@ -537,8 +611,9 @@ export async function syncBoroTeamSheet(opts?: { ignoreWindow?: boolean }): Prom
   const kickoffMs = Date.parse(fx.kickoff_at);
   // Each club's own official line-up graphic, read from its own account —
   // retweets are ignored. Boro's XI is always first, the opposition second.
-  const boroTimeline = pickTeamSheetPosts(await fetchOfficialTimeline(), kickoffMs, opponent);
-  const boroHits = boroTimeline.filter((h) => h.side === "boro" && !/^RT\s+@/i.test(h.text));
+  const timeline = await fetchOfficialTimeline();
+  const boroTimeline = pickTeamSheetPosts(timeline, kickoffMs, opponent);
+  let boroHits = boroTimeline.filter((h) => h.side === "boro" && !/^RT\s+@/i.test(h.text));
   let opponentHits: Array<TeamSheetHit & { side: "opponent" }> = (
     await fetchOpponentTeamSheets(opponent, kickoffMs)
   ).map((h) => ({ ...h, side: "opponent" as const }));
@@ -548,6 +623,16 @@ export async function syncBoroTeamSheet(opts?: { ignoreWindow?: boolean }): Prom
     opponentHits = boroTimeline
       .filter((h) => h.side === "opponent")
       .map((h) => ({ ...h, side: "opponent" as const }));
+  }
+
+  // The club regularly announces the XI with no line-up words at all ("In the
+  // red corner 🔴", "Ready to take on the Blues"). Caption matching cannot see
+  // those, so when nothing matched we look AT the pictures and let the image
+  // reader say which one is a starting line-up graphic.
+  if (boroHits.length === 0) {
+    const found = await findTeamSheetByImage(timeline, kickoffMs);
+    if (found) boroHits = [found];
+    else skipped.push("no line-up graphic recognised on the club timeline yet");
   }
   // Boro's XI must always be the first team sheet in the thread. If the
   // opposition publish theirs first, hold it back until Boro's is in.
