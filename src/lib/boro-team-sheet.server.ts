@@ -550,6 +550,16 @@ export async function syncBoroTeamSheet(opts?: { ignoreWindow?: boolean }): Prom
       .filter((h) => h.side === "opponent")
       .map((h) => ({ ...h, side: "opponent" as const }));
   }
+
+  // The club regularly announces the XI with no line-up words at all ("In the
+  // red corner 🔴", "Ready to take on the Blues"). Caption matching cannot see
+  // those, so when nothing matched we look AT the pictures and let the image
+  // reader say which one is a starting line-up graphic.
+  if (boroHits.length === 0) {
+    const found = await findTeamSheetByImage(timeline, kickoffMs);
+    if (found) boroHits = [found];
+    else skipped.push("no line-up graphic recognised on the club timeline yet");
+  }
   // Boro's XI must always be the first team sheet in the thread. If the
   // opposition publish theirs first, hold it back until Boro's is in.
   const { data: priorSheets } = await supabaseAdmin
