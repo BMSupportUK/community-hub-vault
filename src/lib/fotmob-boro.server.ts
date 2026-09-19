@@ -363,7 +363,15 @@ export async function fetchFotmobSummary(input: {
         date: status.utcTime ?? input.kickoff,
         competitors,
         status: {
-          displayClock: state === "in" ? reason : null,
+          // FotMob writes the running clock in liveTime ("62'", "45+2'") and a
+          // word in reason ("HT"). Expose both, plus a numeric clock in seconds,
+          // so half-time is never mistaken for a completed 90 minutes.
+          displayClock:
+            state === "in" ? (status?.liveTime?.short ?? status?.liveTime?.long ?? reason) : null,
+          clock:
+            state === "in" && Number.isFinite(Number(status?.liveTime?.maxTime))
+              ? (Number(status.liveTime.maxTime) + Number(status?.liveTime?.addedTime ?? 0)) * 60
+              : undefined,
           type: { state, completed: !!status.finished, shortDetail: reason, detail: reason, description: reason },
         },
       }],
