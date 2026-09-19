@@ -789,6 +789,10 @@ function BoroFantasyPage() {
   const removeEntrantFn = useServerFn(adminRemoveFantasyEntrant);
   const setGwStatusFn = useServerFn(adminSetFantasyGameweekStatus);
 
+  // True while a Boro match is in play, so points and the leaderboard refresh
+  // every 10 seconds instead of on the slower off-match beat.
+  const [liveActive, setLiveActive] = useState(false);
+
   const stateQuery = useQuery<FantasyStateDTO>({
     queryKey: ["fantasy-state", user?.id ?? null, guest?.guestId ?? null],
     queryFn: () =>
@@ -796,7 +800,7 @@ function BoroFantasyPage() {
         ? stateFn({})
         : publicStateFn({ data: guest ? { email: guest.email, pin: guest.pin } : {} }),
     staleTime: 5_000,
-    refetchInterval: 15_000,
+    refetchInterval: liveActive ? 10_000 : 15_000,
     refetchIntervalInBackground: true,
     refetchOnWindowFocus: true,
   });
