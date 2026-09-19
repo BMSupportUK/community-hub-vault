@@ -567,11 +567,6 @@ export async function findTeamSheetByImage(
 ): Promise<(TeamSheetHit & { side: "boro" }) | null> {
   const from = kickoffMs - WINDOW_BEFORE_MS;
   const to = kickoffMs + WINDOW_AFTER_MS;
-  console.error(
-    "[team-sheet] timeline",
-    hits.length,
-    hits.map((h) => `${new Date(h.createdAtMs).toISOString()}:${h.images.length}`).join(","),
-  );
   const candidates = hits
     .filter((h) => h.images.length > 0 && h.createdAtMs >= from && h.createdAtMs <= to)
     .filter((h) => !/^RT\s+@/i.test(h.text))
