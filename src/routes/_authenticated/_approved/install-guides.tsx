@@ -36,7 +36,6 @@ export const Route = createFileRoute("/_authenticated/_approved/install-guides")
 });
 
 const DRAFT_KEY = "install-guide-new-draft";
-const IG_TAB_KEY = "install-guides-active-tab";
 const IG_CAT_KEY = "install-guides-active-cat";
 const IG_EDIT_KEY = "install-guides-editing";
 const IG_READ_KEY = "install-guides-reading";
