@@ -8,6 +8,7 @@ import { useEffect, useState } from "react";
 import { ServiceStatusPill } from "@/components/app/ServiceStatusPill";
 import { SubscriptionDetailsCard } from "@/components/app/SubscriptionDetailsCard";
 import { WorkingStatusBox } from "@/components/app/WorkingStatusBox";
+import AdSenseSlot from "@/components/app/AdSenseSlot";
 import { useTalkChannelTotalCount } from "@/hooks/use-talk-channel-presence";
 
 export const Route = createFileRoute("/_authenticated/_approved/home/")({
@@ -163,6 +164,9 @@ function WelcomePage() {
                     Access community channels, view schedules, get support and explore our
                     services. Everything you need is just one click away.
                   </p>
+                  <div className="mt-3 max-w-xl">
+                    <AdSenseSlot slot="home" />
+                  </div>
                 </div>
 
                 <div className="relative min-h-56 min-w-0 overflow-hidden rounded-xl bg-blue-950/30 ring-1 ring-white/10 md:h-full">

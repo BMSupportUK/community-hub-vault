@@ -3,13 +3,14 @@ import { recordAdEvent } from "@/lib/ad-metrics";
 import {
   ADSENSE_CLIENT_ID,
   ADSENSE_ENABLED,
+  ADSENSE_HOME_SLOT,
   ADSENSE_SIDEBAR_SLOT,
   ADSENSE_TOPIC_SLOT,
   ensureAdSenseScript,
   pushAd,
 } from "@/lib/adsense";
 
-export type AdSenseSlotKind = "topic" | "sidebar";
+export type AdSenseSlotKind = "topic" | "sidebar" | "home";
 
 function Placeholder({ label }: { label: string }) {
   return (
@@ -31,7 +32,12 @@ function Placeholder({ label }: { label: string }) {
  * - Everyone (staff included) gets the live ad unit once AdSense is enabled.
  */
 function AdSenseSlotComponent({ slot = "topic" }: { slot?: AdSenseSlotKind }) {
-  const adSlotId = slot === "sidebar" ? ADSENSE_SIDEBAR_SLOT : ADSENSE_TOPIC_SLOT;
+  const adSlotId =
+    slot === "sidebar"
+      ? ADSENSE_SIDEBAR_SLOT
+      : slot === "home"
+        ? ADSENSE_HOME_SLOT
+        : ADSENSE_TOPIC_SLOT;
   const enabled = ADSENSE_ENABLED && adSlotId.length > 0;
 
   const boxRef = useRef<HTMLDivElement | null>(null);
