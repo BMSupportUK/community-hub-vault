@@ -214,15 +214,18 @@ function ReadPage() {
         <Button
           variant="ghost"
           className="text-purple-200 hover:text-white hover:bg-purple-800/60"
-          onClick={() =>
+          onClick={() => {
+            // Always return to this guide's card, even if the reader was
+            // opened directly (deep link) rather than from the list.
+            try { sessionStorage.setItem("sports-guides-focus-id", blog?.id ?? id); } catch { /* ignore */ }
             navigate({
               to: "/sports-guides",
               search: {
                 cat: blog?.category_id || undefined,
                 sub: blog?.subcategory || undefined,
               },
-            })
-          }
+            });
+          }}
         >
           <ArrowLeft className="size-4 mr-1" /> Back to guides
         </Button>

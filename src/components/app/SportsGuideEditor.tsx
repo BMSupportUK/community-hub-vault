@@ -471,18 +471,33 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
         .maybeSingle();
       payload.sort_order = ((maxRow?.sort_order ?? 0) as number) + 10;
     }
-    const { error } = editing.id
-      ? await supabase.from("sports_blogs").update(payload).eq("id", editing.id)
-      : await supabase.from("sports_blogs").insert({ ...payload, created_by: user?.id ?? null });
-    if (error) {
-      console.error("[SportsGuideEditor] save error", error);
-      toast.error(error.message || "Failed to save blog");
-      return;
+    let savedId = editing.id;
+    if (editing.id) {
+      const { error } = await supabase.from("sports_blogs").update(payload).eq("id", editing.id);
+      if (error) {
+        console.error("[SportsGuideEditor] save error", error);
+        toast.error(error.message || "Failed to save blog");
+        return;
+      }
+    } else {
+      const { data: inserted, error } = await supabase
+        .from("sports_blogs")
+        .insert({ ...payload, created_by: user?.id ?? null })
+        .select("id")
+        .single();
+      if (error) {
+        console.error("[SportsGuideEditor] save error", error);
+        toast.error(error.message || "Failed to save blog");
+        return;
+      }
+      savedId = inserted?.id ?? "";
     }
     try {
       localStorage.removeItem(editing.id ? editDraftKey(editing.id) : DRAFT_KEY);
     } catch { /* ignore */ }
     toast.success(editing.id ? "Blog updated" : "Blog added");
+    // Return to the saved guide's card (works for brand-new guides too).
+    focusGuideCard(savedId);
     navigate({
       to: "/sports-guides",
       search: {
