@@ -18,6 +18,7 @@ import { useGuideVideoUrl } from "@/hooks/use-guide-video-url";
 import { AppTransferPanel } from "@/components/app/AppTransferPanel";
 import { AppBuildAdmin } from "@/components/app/AppBuildAdmin";
 import { GuideAccessApprovals } from "@/components/app/GuideAccessApprovals";
+import { AdSenseSlot } from "@/components/app/AdSenseSlot";
 
 import { AppTransfersAdmin } from "@/components/app/AppTransfersAdmin";
 import { useServerFn } from "@tanstack/react-start";
@@ -457,10 +458,12 @@ function InstallGuidesPage() {
 
   return (
     <div className="flex-1 overflow-y-auto bg-background text-foreground">
-       <header className="px-4 sm:px-8 pt-8 pb-6 border-b border-border bg-surface/60 backdrop-blur">
-        <h1 className="font-display text-3xl font-bold text-foreground">Install Guides</h1>
-        <p className="text-muted-foreground mt-1">Step-by-step installation walkthroughs and PDF docs</p>
-      </header>
+      <div className="flex items-start">
+        <div className="flex-1 min-w-0">
+          <header className="px-4 sm:px-8 pt-8 pb-6 border-b border-border bg-surface/60 backdrop-blur">
+            <h1 className="font-display text-3xl font-bold text-foreground">Install Guides</h1>
+            <p className="text-muted-foreground mt-1">Step-by-step installation walkthroughs and PDF docs</p>
+          </header>
 
         <div className="px-4 sm:px-8 py-6">
         <Tabs value={tab} onValueChange={setTab} className="w-full">
@@ -816,6 +819,12 @@ function InstallGuidesPage() {
             </div>
           </TabsContent>}
         </Tabs>
+        </div>
+      </div>
+
+      <aside className="hidden xl:block w-full xl:w-[300px] xl:shrink-0 xl:sticky xl:top-16 px-6 pb-6">
+        <AdSenseSlot slot="sidebar" />
+      </aside>
       </div>
 
       {/* Guide viewer — the link is short-lived and view-only */}
