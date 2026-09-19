@@ -132,9 +132,11 @@ export function BoroMatchCentreBox() {
   const [upcoming, setUpcoming] = useState<NextFixture | null>(null);
 
   const load = async () => {
+    let inPlay = false;
     try {
       const d = await fetchData();
       setData(d);
+      inPlay = !!d?.liveMatch?.inPlay;
     } catch (e) {
       console.error(e);
     } finally {
@@ -162,20 +164,28 @@ export function BoroMatchCentreBox() {
     } catch (e) {
       console.error(e);
     }
+    return inPlay;
   };
   useEffect(() => {
-    void load();
-    // Keep the card live: poll so the next fixture only rolls over to the
-    // following game once the listed one has actually finished.
-    const id = window.setInterval(() => {
-      void load();
-    }, 60_000);
+    let cancelled = false;
+    let timer: number | undefined;
+    // Keep the card live: while a match is in play refresh every 10 seconds so
+    // the score never trails; otherwise poll slowly so the next fixture rolls
+    // over once the listed one has actually finished.
+    const run = async () => {
+      const inPlay = await load();
+      if (cancelled) return;
+      if (timer) window.clearTimeout(timer);
+      timer = window.setTimeout(run, inPlay ? 10_000 : 60_000);
+    };
+    void run();
     const onVisible = () => {
-      if (document.visibilityState === "visible") void load();
+      if (document.visibilityState === "visible") void run();
     };
     document.addEventListener("visibilitychange", onVisible);
     return () => {
-      window.clearInterval(id);
+      cancelled = true;
+      if (timer) window.clearTimeout(timer);
       document.removeEventListener("visibilitychange", onVisible);
     };
   }, []);

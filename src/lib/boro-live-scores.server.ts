@@ -164,6 +164,13 @@ export async function fetchBoroLiveMatches(): Promise<BoroLiveMatch[]> {
     }),
   );
 
+  // A live game switches every FotMob read onto the short cache window so the
+  // scoreline, minute and player stats stay within seconds of the real match.
+  if (base.some((m) => m.status === "IN_PLAY" || m.status === "PAUSED")) {
+    const { markFotmobLive } = await import("@/lib/fotmob-fetch");
+    markFotmobLive();
+  }
+
   const byKey = new Map<string, BoroLiveMatch>();
   for (const match of base) {
     byKey.set(`${match.competition}|${match.kickoffMs}|${norm(match.home)}|${norm(match.away)}`, match);

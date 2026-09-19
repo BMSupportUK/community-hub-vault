@@ -84,8 +84,11 @@ const nameMatches = (a: string, b: string) => {
 
 
 async function fotmobJson(url: string, ttlMs: number): Promise<any | null> {
+  // While a match is in play every read is held for seconds, not tens of them.
+  const { fotmobTtl } = await import("@/lib/fotmob-fetch");
+  const window = fotmobTtl(ttlMs);
   const hit = cache.get(url);
-  if (hit && Date.now() - hit.at < ttlMs) return hit.value;
+  if (hit && Date.now() - hit.at < window) return hit.value;
   try {
     const response = await fetch(url, {
       headers: {
@@ -242,6 +245,11 @@ export async function fetchFotmobSummary(input: {
   const status = detail.header.status ?? {};
   const reason = status?.reason?.short ?? status?.reason?.long ?? (status.started ? "Live" : "Scheduled");
   const state = status.finished ? "post" : status.started ? "in" : "pre";
+  if (state === "in") {
+    // In play — every further read uses the short cache window.
+    const { markFotmobLive } = await import("@/lib/fotmob-fetch");
+    markFotmobLive();
+  }
   const competitors = teams.map((team, index) => ({
     homeAway: index === 0 ? "home" : "away",
     team: { id: String(team.id), displayName: team.name, name: team.name },

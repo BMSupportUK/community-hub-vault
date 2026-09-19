@@ -109,7 +109,7 @@ export function BoroLiveMatchStrip() {
         setData(d);
         setNow(Date.now());
         const live = !!d.liveMatch?.inPlay;
-        schedule(live ? 8_000 : 5 * 60_000);
+        schedule(live ? 10_000 : 5 * 60_000);
       } catch (e) {
         console.error(e);
         if (!cancelled) schedule(5 * 60_000);

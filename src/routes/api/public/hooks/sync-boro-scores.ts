@@ -178,11 +178,35 @@ async function syncBoroScores() {
   };
 }
 
+/**
+ * Cron fires this once a minute. When a Boro game is in play one invocation
+ * keeps going, roughly every 10 seconds for just under a minute, so the
+ * database (and with it the fantasy points) tracks the match instead of
+ * trailing it. When nothing is live it does exactly one pass as before.
+ */
+async function runSync() {
+  const PASS_GAP_MS = 10_000;
+  const BUDGET_MS = 50_000;
+  const startedAt = Date.now();
+
+  let result = await syncBoroScores();
+  let passes = 1;
+
+  const { fotmobIsLive } = await import("@/lib/fotmob-fetch");
+  while (fotmobIsLive() && Date.now() - startedAt + PASS_GAP_MS < BUDGET_MS) {
+    await new Promise((resolve) => setTimeout(resolve, PASS_GAP_MS));
+    result = await syncBoroScores();
+    passes += 1;
+  }
+
+  return { ...result, passes };
+}
+
 export const Route = createFileRoute("/api/public/hooks/sync-boro-scores")({
   server: {
     handlers: {
-      GET: async () => Response.json(await syncBoroScores()),
-      POST: async () => Response.json(await syncBoroScores()),
+      GET: async () => Response.json(await runSync()),
+      POST: async () => Response.json(await runSync()),
     },
   },
 });

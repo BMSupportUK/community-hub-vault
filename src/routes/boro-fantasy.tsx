@@ -789,6 +789,10 @@ function BoroFantasyPage() {
   const removeEntrantFn = useServerFn(adminRemoveFantasyEntrant);
   const setGwStatusFn = useServerFn(adminSetFantasyGameweekStatus);
 
+  // True while a Boro match is in play, so points and the leaderboard refresh
+  // every 10 seconds instead of on the slower off-match beat.
+  const [liveActive, setLiveActive] = useState(false);
+
   const stateQuery = useQuery<FantasyStateDTO>({
     queryKey: ["fantasy-state", user?.id ?? null, guest?.guestId ?? null],
     queryFn: () =>
@@ -796,7 +800,7 @@ function BoroFantasyPage() {
         ? stateFn({})
         : publicStateFn({ data: guest ? { email: guest.email, pin: guest.pin } : {} }),
     staleTime: 5_000,
-    refetchInterval: 15_000,
+    refetchInterval: liveActive ? 10_000 : 15_000,
     refetchIntervalInBackground: true,
     refetchOnWindowFocus: true,
   });
@@ -835,6 +839,7 @@ function BoroFantasyPage() {
         const res = await fetch("/api/public/hooks/sync-fantasy-scores", { method: "POST" });
         const json = (await res.json()) as { swaps?: string[]; scored?: unknown[]; live?: unknown[] };
         if (cancelled) return;
+        setLiveActive((json.live?.length ?? 0) > 0);
         if ((json.swaps?.length ?? 0) > 0 || (json.live?.length ?? 0) > 0 || (json.scored?.length ?? 0) > 0) {
           qc.invalidateQueries({ queryKey: ["fantasy-state"] });
           qc.invalidateQueries({ queryKey: ["fantasy-swap-history"] });
@@ -845,18 +850,18 @@ function BoroFantasyPage() {
     void ping();
     const onFocus = () => { void ping(); };
     window.addEventListener("focus", onFocus);
-    const id = window.setInterval(ping, 60_000);
+    const id = window.setInterval(ping, liveActive ? 10_000 : 60_000);
     return () => {
       cancelled = true;
       window.removeEventListener("focus", onFocus);
       window.clearInterval(id);
     };
-  }, [qc]);
+  }, [qc, liveActive]);
   const lbQuery = useQuery<FantasyLeaderboardRow[]>({
     queryKey: ["fantasy-leaderboard", user?.id ?? null],
     queryFn: () => (user ? lbFn({}) : publicLbFn({})),
-    staleTime: 15_000,
-    refetchInterval: 60_000,
+    staleTime: liveActive ? 5_000 : 15_000,
+    refetchInterval: liveActive ? 10_000 : 60_000,
     refetchIntervalInBackground: false,
     refetchOnWindowFocus: true,
     refetchOnMount: "always",
