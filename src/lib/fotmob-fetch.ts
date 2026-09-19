@@ -13,6 +13,28 @@ const cache = new Map<string, CacheEntry>();
 const lastGood = new Map<string, CacheEntry>();
 const LAST_GOOD_MAX_AGE_MS = 15 * 60 * 1000;
 
+// While a Boro match is in play every read is held for a couple of seconds at
+// most, so scores, the minute and player stats never trail the real match by
+// more than about ten seconds. Outside match time the longer holds apply so we
+// don't hammer the feed for nothing.
+const LIVE_TTL_MS = 3_000;
+const LIVE_FLAG_MS = 90_000;
+let liveUntil = 0;
+
+/** Mark a Boro match as in play, which switches every read to the short hold. */
+export function markFotmobLive(ms = LIVE_FLAG_MS) {
+  liveUntil = Math.max(liveUntil, Date.now() + ms);
+}
+
+export function fotmobIsLive() {
+  return Date.now() < liveUntil;
+}
+
+/** Clamp a cache window while a match is live. */
+export function fotmobTtl(baseMs: number) {
+  return fotmobIsLive() ? Math.min(baseMs, LIVE_TTL_MS) : baseMs;
+}
+
 /**
  * Fetch JSON from FotMob with a short in-memory cache. When a request fails we
  * fall back to the most recent good payload (up to 15 minutes old) so the UI
