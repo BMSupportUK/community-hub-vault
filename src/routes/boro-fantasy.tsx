@@ -839,6 +839,7 @@ function BoroFantasyPage() {
         const res = await fetch("/api/public/hooks/sync-fantasy-scores", { method: "POST" });
         const json = (await res.json()) as { swaps?: string[]; scored?: unknown[]; live?: unknown[] };
         if (cancelled) return;
+        setLiveActive((json.live?.length ?? 0) > 0);
         if ((json.swaps?.length ?? 0) > 0 || (json.live?.length ?? 0) > 0 || (json.scored?.length ?? 0) > 0) {
           qc.invalidateQueries({ queryKey: ["fantasy-state"] });
           qc.invalidateQueries({ queryKey: ["fantasy-swap-history"] });
