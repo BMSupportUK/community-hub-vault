@@ -476,50 +476,27 @@ function SportsGuidesPage() {
     setSubFilter(target.subcategory || null);
   }, [blogs]);
 
-  // Timers for the return-to-card scroll live in a ref and are only cleared
-  // on unmount — a normal effect cleanup would cancel them the moment the
-  // list re-filters right after mount (category + sub-section are applied in
-  // the same pass), which is exactly when the scroll is scheduled.
-  const focusTimers = useRef<number[]>([]);
-  useEffect(
-    () => () => {
-      focusTimers.current.forEach((t) => window.clearTimeout(t));
-    },
-    [],
-  );
-
-  const focusRestored = useRef(false);
+  // Return-to-card: while the focus key is set and the target card is actually
+  // rendered (guides tab + its category/sub-section applied), scroll it into
+  // view on every pass until it sticks. No timers — earlier versions scheduled
+  // a scroll that was lost when the list re-filtered right after mount or the
+  // router reset the scroll after the navigation back from the editor.
   useEffect(() => {
-    let dbgId: string | null = null;
-    try { dbgId = sessionStorage.getItem(SG_FOCUS_KEY); } catch { /* ignore */ }
-    (window as any).__sgfocus = [...((window as any).__sgfocus ?? []), { run: true, ref: focusRestored.current, filtered: filtered.length, key: dbgId }];
-    if (focusRestored.current || !filtered.length) return;
     let id: string | null = null;
     try { id = sessionStorage.getItem(SG_FOCUS_KEY); } catch { /* ignore */ }
-    if (!id) return;
-    const targetIndex = filtered.findIndex((b) => b.id === id);
-    (window as any).__sgfocus.push({ targetIndex });
-    if (targetIndex < 0) return;
-    focusRestored.current = true;
-    try { sessionStorage.removeItem(SG_FOCUS_KEY); } catch { /* ignore */ }
-    // Keep retrying until the card is genuinely inside the viewport — layout
-    // (images, sub-section chips) can still be settling on the first pass.
-    let attempts = 0;
-    const scrollToCard = () => {
-      const el = document.querySelector<HTMLElement>(`[data-guide-id="${id}"]`);
-      (window as any).__sgfocus.push({ attempt: attempts, elFound: !!el });
-      if (!el) return;
-      el.scrollIntoView({ behavior: "auto", block: "center" });
-      attempts += 1;
-      const rect = el.getBoundingClientRect();
-      const inView = rect.top >= 0 && rect.bottom <= window.innerHeight;
-      (window as any).__sgfocus.push({ afterTop: rect.top, inView });
-      if (!inView && attempts < 10) {
-        focusTimers.current.push(window.setTimeout(scrollToCard, 200));
-      }
-    };
-    focusTimers.current.push(window.setTimeout(scrollToCard, 120));
-  }, [filtered]);
+    if (!id || tab !== "guides") return;
+    if (!filtered.some((b) => b.id === id)) return;
+    const el = document.querySelector<HTMLElement>(`[data-guide-id="${id}"]`);
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const inView = rect.top >= 0 && rect.bottom <= window.innerHeight;
+    if (!inView) el.scrollIntoView({ behavior: "auto", block: "center" });
+    // Keep the key for a few more passes so late layout shifts (images loading)
+    // can't strand the card off-screen; clear once it's comfortably centred.
+    if (inView) {
+      try { sessionStorage.removeItem(SG_FOCUS_KEY); } catch { /* ignore */ }
+    }
+  }, [filtered, tab, blogs]);
 
   // Search every sports guide category and include a snippet showing where
   // the matching event or term appears.
