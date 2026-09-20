@@ -156,7 +156,7 @@ function LoginPage() {
       {/* Desktop advert sidebar */}
       <aside className="hidden xl:flex items-start justify-center px-4 py-10 border-l border-border/60">
         <div className="w-full max-w-[280px]">
-          <AdSenseSlot slot="topic" />
+          <AdSenseSlot slot="sidebar" />
         </div>
       </aside>
     </div>
