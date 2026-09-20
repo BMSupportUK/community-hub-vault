@@ -476,6 +476,18 @@ function SportsGuidesPage() {
     setSubFilter(target.subcategory || null);
   }, [blogs]);
 
+  // Timers for the return-to-card scroll live in a ref and are only cleared
+  // on unmount — a normal effect cleanup would cancel them the moment the
+  // list re-filters right after mount (category + sub-section are applied in
+  // the same pass), which is exactly when the scroll is scheduled.
+  const focusTimers = useRef<number[]>([]);
+  useEffect(
+    () => () => {
+      focusTimers.current.forEach((t) => window.clearTimeout(t));
+    },
+    [],
+  );
+
   const focusRestored = useRef(false);
   useEffect(() => {
     if (focusRestored.current || !filtered.length) return;
@@ -486,27 +498,21 @@ function SportsGuidesPage() {
     if (targetIndex < 0) return;
     focusRestored.current = true;
     try { sessionStorage.removeItem(SG_FOCUS_KEY); } catch { /* ignore */ }
-    // The navigation back from the editor (and the URL-clean-up replace) can
-    // snap the scroller back to the top AFTER this effect's first pass, so a
-    // single scrollIntoView was getting lost. Scroll instantly and keep
-    // retrying until the card is actually inside the viewport.
+    // Keep retrying until the card is genuinely inside the viewport — layout
+    // (images, sub-section chips) can still be settling on the first pass.
     let attempts = 0;
-    const timers: number[] = [];
     const scrollToCard = () => {
       const el = document.querySelector<HTMLElement>(`[data-guide-id="${id}"]`);
-      console.log("[sg-focus] attempt", attempts, "el:", !!el);
       if (!el) return;
       el.scrollIntoView({ behavior: "auto", block: "center" });
       attempts += 1;
       const rect = el.getBoundingClientRect();
       const inView = rect.top >= 0 && rect.bottom <= window.innerHeight;
-      console.log("[sg-focus] after scroll top:", rect.top, "inView:", inView);
       if (!inView && attempts < 10) {
-        timers.push(window.setTimeout(scrollToCard, 200));
+        focusTimers.current.push(window.setTimeout(scrollToCard, 200));
       }
     };
-    timers.push(window.setTimeout(scrollToCard, 120));
-    return () => timers.forEach((t) => window.clearTimeout(t));
+    focusTimers.current.push(window.setTimeout(scrollToCard, 120));
   }, [filtered]);
 
   // Search every sports guide category and include a snippet showing where
