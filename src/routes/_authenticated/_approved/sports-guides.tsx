@@ -327,7 +327,9 @@ function SportsGuidesPage() {
         setSubFilter(subFromUrl || null);
       }
       // Consume the URL params so future category clicks use defaults.
-      navigate({ to: "/sports-guides", search: {}, replace: true });
+      // resetScroll: false — without it the router snaps the page back to the
+      // top and wipes out the return-to-card scroll.
+      navigate({ to: "/sports-guides", search: {}, replace: true, resetScroll: false });
     }
   }, [catFromUrl, resolvedCatFromUrl, subFromUrl, navigate]);
 
@@ -452,7 +454,6 @@ function SportsGuidesPage() {
   // Remember which guide the user opened (read/edit) so coming back from the
   // editor or reader returns to that card instead of the top of the list.
   const rememberGuide = (id: string) => {
-    focusRestored.current = false;
     try { sessionStorage.setItem(SG_FOCUS_KEY, id); } catch { /* ignore */ }
   };
 
@@ -474,22 +475,27 @@ function SportsGuidesPage() {
     setSubFilter(target.subcategory || null);
   }, [blogs]);
 
-  const focusRestored = useRef(false);
+  // Return-to-card: while the focus key is set and the target card is actually
+  // rendered (guides tab + its category/sub-section applied), scroll it into
+  // view on every pass until it sticks. No timers — earlier versions scheduled
+  // a scroll that was lost when the list re-filtered right after mount or the
+  // router reset the scroll after the navigation back from the editor.
   useEffect(() => {
-    if (focusRestored.current || !filtered.length) return;
     let id: string | null = null;
     try { id = sessionStorage.getItem(SG_FOCUS_KEY); } catch { /* ignore */ }
-    if (!id) return;
-    const targetIndex = filtered.findIndex((b) => b.id === id);
-    if (targetIndex < 0) return;
-    focusRestored.current = true;
-    try { sessionStorage.removeItem(SG_FOCUS_KEY); } catch { /* ignore */ }
-    window.setTimeout(() => {
-      document
-        .querySelector<HTMLElement>(`[data-guide-id="${id}"]`)
-        ?.scrollIntoView({ behavior: "smooth", block: "center" });
-    }, 150);
-  }, [filtered]);
+    if (!id || tab !== "guides") return;
+    if (!filtered.some((b) => b.id === id)) return;
+    const el = document.querySelector<HTMLElement>(`[data-guide-id="${id}"]`);
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const inView = rect.top >= 0 && rect.bottom <= window.innerHeight;
+    if (!inView) el.scrollIntoView({ behavior: "auto", block: "center" });
+    // Keep the key for a few more passes so late layout shifts (images loading)
+    // can't strand the card off-screen; clear once it's comfortably centred.
+    if (inView) {
+      try { sessionStorage.removeItem(SG_FOCUS_KEY); } catch { /* ignore */ }
+    }
+  }, [filtered, tab, blogs]);
 
   // Search every sports guide category and include a snippet showing where
   // the matching event or term appears.
@@ -1298,7 +1304,10 @@ function SportsGuidesPage() {
   return (
     <div
       ref={scrollerRef}
-      className="flex-1 overflow-y-auto relative bg-cover bg-center bg-fixed"
+      // Locked to the screen like Talk/Tickets: without a fixed height this
+      // container grew with its content and the WINDOW scrolled instead, which
+      // broke the sticky A–Z bar and let route navigations reset the scroll.
+      className="flex-1 h-[calc(100dvh-3.75rem)] max-h-[calc(100dvh-3.75rem)] min-h-0 overflow-y-auto overscroll-contain relative bg-cover bg-center bg-fixed"
 
       style={{ backgroundImage: `url(${sportsBg})` }}
     >
@@ -1508,10 +1517,10 @@ function SportsGuidesPage() {
               </section>
 
               {activeCategory && !search.trim() && (
-                <aside className="sticky top-2 z-10 h-fit self-start rounded-2xl border border-purple-500/30 bg-slate-950/75 p-2 backdrop-blur lg:top-4">
+                <aside className="sticky top-2 z-10 flex max-h-[calc(100dvh-5rem)] flex-col self-start overflow-hidden rounded-2xl border border-purple-500/30 bg-slate-950/75 p-2 backdrop-blur lg:top-4">
                   <div className="mb-2 text-center text-[10px] font-bold uppercase tracking-wider text-fuchsia-300/80">A–Z</div>
                   <div
-                    className="flex flex-wrap justify-center gap-1 lg:flex-col lg:flex-nowrap lg:items-center"
+                    className="scrollbar-hide flex min-h-0 flex-wrap justify-center gap-1 overflow-y-auto overscroll-contain lg:flex-col lg:flex-nowrap lg:items-center"
                     aria-label="Jump to guide title by letter"
                   >
                     {Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i)).map((letter) => {
