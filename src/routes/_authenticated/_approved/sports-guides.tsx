@@ -490,11 +490,15 @@ function SportsGuidesPage() {
 
   const focusRestored = useRef(false);
   useEffect(() => {
+    let dbgId: string | null = null;
+    try { dbgId = sessionStorage.getItem(SG_FOCUS_KEY); } catch { /* ignore */ }
+    console.log("[sg-focus] effect run, ref:", focusRestored.current, "filtered:", filtered.length, "key:", dbgId);
     if (focusRestored.current || !filtered.length) return;
     let id: string | null = null;
     try { id = sessionStorage.getItem(SG_FOCUS_KEY); } catch { /* ignore */ }
     if (!id) return;
     const targetIndex = filtered.findIndex((b) => b.id === id);
+    console.log("[sg-focus] targetIndex:", targetIndex);
     if (targetIndex < 0) return;
     focusRestored.current = true;
     try { sessionStorage.removeItem(SG_FOCUS_KEY); } catch { /* ignore */ }
