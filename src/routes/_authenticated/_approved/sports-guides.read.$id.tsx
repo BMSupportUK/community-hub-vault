@@ -220,6 +220,7 @@ function ReadPage() {
             try { sessionStorage.setItem("sports-guides-focus-id", blog?.id ?? id); } catch { /* ignore */ }
             navigate({
               to: "/sports-guides",
+              resetScroll: false,
               search: {
                 cat: blog?.category_id || undefined,
                 sub: blog?.subcategory || undefined,

@@ -327,7 +327,9 @@ function SportsGuidesPage() {
         setSubFilter(subFromUrl || null);
       }
       // Consume the URL params so future category clicks use defaults.
-      navigate({ to: "/sports-guides", search: {}, replace: true });
+      // resetScroll: false — without it the router snaps the page back to the
+      // top and wipes out the return-to-card scroll.
+      navigate({ to: "/sports-guides", search: {}, replace: true, resetScroll: false });
     }
   }, [catFromUrl, resolvedCatFromUrl, subFromUrl, navigate]);
 
