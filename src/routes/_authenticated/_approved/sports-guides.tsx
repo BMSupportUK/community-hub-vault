@@ -494,11 +494,13 @@ function SportsGuidesPage() {
     const timers: number[] = [];
     const scrollToCard = () => {
       const el = document.querySelector<HTMLElement>(`[data-guide-id="${id}"]`);
+      console.log("[sg-focus] attempt", attempts, "el:", !!el);
       if (!el) return;
       el.scrollIntoView({ behavior: "auto", block: "center" });
       attempts += 1;
       const rect = el.getBoundingClientRect();
       const inView = rect.top >= 0 && rect.bottom <= window.innerHeight;
+      console.log("[sg-focus] after scroll top:", rect.top, "inView:", inView);
       if (!inView && attempts < 10) {
         timers.push(window.setTimeout(scrollToCard, 200));
       }
