@@ -507,11 +507,13 @@ function SportsGuidesPage() {
     let attempts = 0;
     const scrollToCard = () => {
       const el = document.querySelector<HTMLElement>(`[data-guide-id="${id}"]`);
+      (window as any).__sgfocus.push({ attempt: attempts, elFound: !!el });
       if (!el) return;
       el.scrollIntoView({ behavior: "auto", block: "center" });
       attempts += 1;
       const rect = el.getBoundingClientRect();
       const inView = rect.top >= 0 && rect.bottom <= window.innerHeight;
+      (window as any).__sgfocus.push({ afterTop: rect.top, inView });
       if (!inView && attempts < 10) {
         focusTimers.current.push(window.setTimeout(scrollToCard, 200));
       }
