@@ -208,7 +208,7 @@ function Landing() {
           </div>
 
            <aside className="hidden lg:flex w-full shrink-0 flex-col [@media(max-height:650px)]:max-h-full [@media(max-height:650px)]:overflow-hidden">
-            <AdSenseSlot slot="topic" />
+            <AdSenseSlot slot="sidebar" />
           </aside>
         </div>
       </main>
