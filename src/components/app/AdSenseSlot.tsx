@@ -91,18 +91,18 @@ function AdSenseSlotComponent({ slot = "topic" }: { slot?: AdSenseSlotKind }) {
   return (
     <div
       ref={boxRef}
-      className={`hidden md:block rounded-2xl border border-border/60 bg-surface-2/20 px-2 py-2 overflow-hidden ${slot === "home" ? "h-[92px]" : ""}`}
+      className={`hidden md:block rounded-2xl border border-border/60 bg-surface-2/20 px-2 py-2 overflow-hidden ${slot === "home" ? "h-[92px]" : slot === "topic" ? "h-[125px]" : ""}`}
     >
       <div className="px-2 pb-1 text-[10px] uppercase tracking-[0.25em] text-muted-foreground/70">
         Advertisement
       </div>
       <div onPointerDown={onAdPointerDown} onPointerUp={onAdPointerUp} onPointerCancel={() => (pressRef.current = null)}>
         <ins
-          className={`adsbygoogle ${slot === "home" ? "h-[64px]" : ""}`}
+          className={`adsbygoogle ${slot === "home" ? "h-[64px]" : slot === "topic" ? "h-[90px]" : ""}`}
           style={{ display: "block", textAlign: "center" }}
           data-ad-client={ADSENSE_CLIENT_ID}
           data-ad-slot={adSlotId}
-          data-ad-format={slot === "home" ? "horizontal" : "auto"}
+          data-ad-format={slot === "home" || slot === "topic" ? "horizontal" : "auto"}
           data-full-width-responsive="true"
         />
       </div>
