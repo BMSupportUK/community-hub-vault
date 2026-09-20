@@ -484,11 +484,25 @@ function SportsGuidesPage() {
     if (targetIndex < 0) return;
     focusRestored.current = true;
     try { sessionStorage.removeItem(SG_FOCUS_KEY); } catch { /* ignore */ }
-    window.setTimeout(() => {
-      document
-        .querySelector<HTMLElement>(`[data-guide-id="${id}"]`)
-        ?.scrollIntoView({ behavior: "smooth", block: "center" });
-    }, 150);
+    // The navigation back from the editor (and the URL-clean-up replace) can
+    // snap the scroller back to the top AFTER this effect's first pass, so a
+    // single scrollIntoView was getting lost. Scroll instantly and keep
+    // retrying until the card is actually inside the viewport.
+    let attempts = 0;
+    const timers: number[] = [];
+    const scrollToCard = () => {
+      const el = document.querySelector<HTMLElement>(`[data-guide-id="${id}"]`);
+      if (!el) return;
+      el.scrollIntoView({ behavior: "auto", block: "center" });
+      attempts += 1;
+      const rect = el.getBoundingClientRect();
+      const inView = rect.top >= 0 && rect.bottom <= window.innerHeight;
+      if (!inView && attempts < 10) {
+        timers.push(window.setTimeout(scrollToCard, 200));
+      }
+    };
+    timers.push(window.setTimeout(scrollToCard, 120));
+    return () => timers.forEach((t) => window.clearTimeout(t));
   }, [filtered]);
 
   // Search every sports guide category and include a snippet showing where
@@ -1508,10 +1522,10 @@ function SportsGuidesPage() {
               </section>
 
               {activeCategory && !search.trim() && (
-                <aside className="sticky top-2 z-10 h-fit self-start rounded-2xl border border-purple-500/30 bg-slate-950/75 p-2 backdrop-blur lg:top-4">
+                <aside className="sticky top-2 z-10 flex max-h-[calc(100dvh-5rem)] flex-col self-start overflow-hidden rounded-2xl border border-purple-500/30 bg-slate-950/75 p-2 backdrop-blur lg:top-4">
                   <div className="mb-2 text-center text-[10px] font-bold uppercase tracking-wider text-fuchsia-300/80">A–Z</div>
                   <div
-                    className="flex flex-wrap justify-center gap-1 lg:flex-col lg:flex-nowrap lg:items-center"
+                    className="scrollbar-hide flex min-h-0 flex-wrap justify-center gap-1 overflow-y-auto overscroll-contain lg:flex-col lg:flex-nowrap lg:items-center"
                     aria-label="Jump to guide title by letter"
                   >
                     {Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i)).map((letter) => {
