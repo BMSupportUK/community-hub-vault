@@ -413,6 +413,9 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
     focusGuideCard(editing?.id || blogId);
     navigate({
       to: "/sports-guides",
+      // Keep the list's scroll position; the focus-key effect scrolls the
+      // card into view and a router scroll-to-top would wipe it out.
+      resetScroll: false,
       search: {
         cat: editing?.category_id || undefined,
         // Always send the guide's own sub-section (blank string when it has
@@ -500,6 +503,7 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
     focusGuideCard(savedId);
     navigate({
       to: "/sports-guides",
+      resetScroll: false,
       search: {
         cat: editing.category_id || undefined,
         sub: payload.subcategory ?? "",
