@@ -1314,7 +1314,10 @@ function SportsGuidesPage() {
   return (
     <div
       ref={scrollerRef}
-      className="flex-1 overflow-y-auto relative bg-cover bg-center bg-fixed"
+      // Locked to the screen like Talk/Tickets: without a fixed height this
+      // container grew with its content and the WINDOW scrolled instead, which
+      // broke the sticky A–Z bar and let route navigations reset the scroll.
+      className="flex-1 h-[calc(100dvh-3.75rem)] max-h-[calc(100dvh-3.75rem)] min-h-0 overflow-y-auto overscroll-contain relative bg-cover bg-center bg-fixed"
 
       style={{ backgroundImage: `url(${sportsBg})` }}
     >
