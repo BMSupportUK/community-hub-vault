@@ -214,6 +214,11 @@ function ShiftsPage() {
 
   // Holiday request state
   const [holForm, setHolForm] = useState({ start: "", end: "", reason: "" });
+  // Holidays sub-tab: booking form vs. request status list
+  const [holTab, setHolTab] = useState<"book" | "status">("book");
+  // Admin rejection: the request being rejected plus the reason typed for the staff member
+  const [rejectHol, setRejectHol] = useState<Holiday | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
 
   // Claim confirmation + booking history
   const [confirmSlot, setConfirmSlot] = useState<Slot | null>(null);
