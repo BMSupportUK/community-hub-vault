@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeader, getRequestIP } from "@tanstack/react-start/server";
 import { fetchProxycheckEntry, proxycheckVerdict } from "./proxycheck.server";
+import { isVpnBypassEmail } from "./vpn-bypass";
 
 
 type VpnCheckInput = { ip?: string };
