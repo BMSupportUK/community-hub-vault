@@ -73,7 +73,7 @@ import {
 import { CreditCard, Ban } from "lucide-react";
 import { getOutOfHoursMessage } from "@/lib/business-hours";
 import { isAdminUnlocked } from "@/lib/admin-unlock";
-import { isDiscountUnlocked } from "@/lib/discount-unlock";
+import { isDiscountUnlocked, clearDiscountUnlock } from "@/lib/discount-unlock";
 import { DiscountCodesGate } from "@/components/app/DiscountCodesGate";
 import { useRouter } from "@tanstack/react-router";
 import { MonitorPlay } from "lucide-react";
