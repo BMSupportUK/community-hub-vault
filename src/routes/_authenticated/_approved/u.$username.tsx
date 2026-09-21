@@ -38,6 +38,7 @@ import { ThemePicker, APP_THEME_OPTIONS } from "@/components/app/ThemePicker";
 import { setPersonalAppTheme, useAppTheme } from "@/hooks/use-app-theme";
 import { useServerFn } from "@tanstack/react-start";
 import { assignReferrer } from "@/lib/referrals.functions";
+import ShiftHistoryPanel from "@/components/app/ShiftHistoryPanel";
 
 export const Route = createFileRoute("/_authenticated/_approved/u/$username")({
   validateSearch: (search: Record<string, unknown>): { tab?: string; edit?: 1 } => ({
@@ -165,8 +166,8 @@ function ProfilePage() {
   const [friends, setFriends] = useState<FriendRow[]>([]);
   const [rel, setRel] = useState<FriendRel>({ kind: "none" });
   const [relBusy, setRelBusy] = useState(false);
-  const initialTab = (["profile","creds","tickets","orders","referrals","friends"].includes(search.tab ?? "") ? search.tab : "profile") as "profile" | "creds" | "tickets" | "orders" | "referrals" | "friends";
-  const allowedTabs = ["profile","creds","tickets","orders","referrals","friends","notifications","theme"] as const;
+  const initialTab = (["profile","creds","tickets","orders","referrals","friends","shifts"].includes(search.tab ?? "") ? search.tab : "profile") as "profile" | "creds" | "tickets" | "orders" | "referrals" | "friends" | "shifts";
+  const allowedTabs = ["profile","creds","tickets","orders","referrals","friends","shifts","notifications","theme"] as const;
   type TabId = typeof allowedTabs[number];
   const initialTabSafe = (allowedTabs.includes((search.tab ?? "") as TabId) ? search.tab : initialTab) as TabId;
   const [mainTab, setMainTab] = useState<TabId>(initialTabSafe);
