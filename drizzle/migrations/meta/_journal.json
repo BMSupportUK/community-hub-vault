@@ -64,6 +64,13 @@
       "when": 1789992716895,
       "tag": "0008_create_shift_bookings",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1789995631565,
+      "tag": "0009_add_holiday_decision_reason",
+      "breakpoints": true
     }
   ]
 }
