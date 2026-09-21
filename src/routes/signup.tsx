@@ -388,6 +388,7 @@ function SignupPage() {
                   <ShieldAlert className="size-4" /> Join BM Support
                 </button>
               ) : (
+                <>
                 <button
                   disabled={busy || !intent || needsReferral}
                   className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-medium shadow-glow hover:opacity-90 disabled:opacity-50 disabled:shadow-none"
@@ -404,6 +405,7 @@ function SignupPage() {
                     Enter your referral code to continue.
                   </p>
                 )}
+                </>
               )}
             </form>
             <div className="text-sm text-muted-foreground text-center mt-6">
