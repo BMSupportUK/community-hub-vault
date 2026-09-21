@@ -24,6 +24,32 @@ interface BreakRow {
   ended_at: string | null;
 }
 
+/** Hourly rota slot a moderator claimed for themselves. */
+interface ClaimedSlot {
+  id: string;
+  shift_date: string;
+  start_time: string;
+  end_time: string;
+  notes: string | null;
+}
+
+function fmtSlotDate(date: string) {
+  return new Date(date + "T00:00:00").toLocaleDateString("en-GB", {
+    weekday: "short",
+    day: "2-digit",
+    month: "short",
+  });
+}
+
+function slotHours(start: string, end: string) {
+  const [sh, sm] = start.split(":").map(Number);
+  const [eh, em] = end.split(":").map(Number);
+  const mins = Math.max(0, (eh! * 60 + em!) - (sh! * 60 + sm!));
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+}
+
 /** Monday 00:00 local time of the week containing `now`. */
 function weekStart(now = new Date()) {
   const d = new Date(now);
@@ -94,6 +120,7 @@ export default function ShiftHistoryPanel({ userId, name }: { userId: string; na
   const [total, setTotal] = useState<number | null>(null);
   // Monday-to-Sunday window; resets automatically when a new week begins.
   const [weekFrom, setWeekFrom] = useState(() => weekStart().getTime());
+  const [claimed, setClaimed] = useState<ClaimedSlot[]>([]);
 
   useEffect(() => {
     const tick = () => {
@@ -105,6 +132,28 @@ export default function ShiftHistoryPanel({ userId, name }: { userId: string; na
   }, []);
 
   const weekTo = weekEnd(new Date(weekFrom)).getTime();
+
+  // Hourly rota slots this person claimed (moderator cover hours).
+  useEffect(() => {
+    let cancelled = false;
+    const iso = (t: number) => {
+      const d = new Date(t);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    };
+    (async () => {
+      const { data } = await supabase
+        .from("shift_slots")
+        .select("id, shift_date, start_time, end_time, notes")
+        .eq("assigned_to", userId)
+        .eq("slot_type", "hourly")
+        .gte("shift_date", iso(weekFrom))
+        .lt("shift_date", iso(weekTo))
+        .order("shift_date", { ascending: false })
+        .order("start_time", { ascending: true });
+      if (!cancelled) setClaimed((data ?? []) as ClaimedSlot[]);
+    })();
+    return () => { cancelled = true; };
+  }, [userId, weekFrom, weekTo]);
 
   const fetchPage = useCallback(
     async (offset: number) => {
@@ -182,10 +231,35 @@ export default function ShiftHistoryPanel({ userId, name }: { userId: string; na
 
   const rangeLabel = fmtRange(new Date(weekFrom), new Date(weekTo));
 
+  const claimedBlock = claimed.length > 0 ? (
+    <div className="rounded-2xl border border-amber-400/40 bg-amber-950/20 p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h4 className="font-semibold text-white">Claimed hours</h4>
+        <span className="text-xs text-amber-200/80">
+          {claimed.length} slot{claimed.length === 1 ? "" : "s"} booked this week
+        </span>
+      </div>
+      <div className="mt-3 grid gap-2 sm:grid-cols-2">
+        {claimed.map((c) => (
+          <div key={c.id} className="flex items-center gap-2 rounded-xl border border-amber-400/30 bg-amber-500/5 px-3 py-2 text-sm text-white">
+            <ClockIcon className="size-4 text-amber-300" />
+            <span className="font-medium">{fmtSlotDate(c.shift_date)}</span>
+            <span className="ml-auto tabular-nums text-amber-100/90">
+              {c.start_time.slice(0, 5)}–{c.end_time.slice(0, 5)} · {slotHours(c.start_time, c.end_time)}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  ) : null;
+
   if (!rows.length) {
     return (
-      <div className="rounded-2xl border border-purple-500/30 bg-purple-950/50 p-8 text-center text-purple-200/80">
-        No shifts recorded this week ({rangeLabel}).
+      <div className="space-y-4">
+        {claimedBlock}
+        <div className="rounded-2xl border border-purple-500/30 bg-purple-950/50 p-8 text-center text-purple-200/80">
+          No clocked-in shifts recorded this week ({rangeLabel}).
+        </div>
       </div>
     );
   }
@@ -201,6 +275,7 @@ export default function ShiftHistoryPanel({ userId, name }: { userId: string; na
         </p>
       </div>
 
+      {claimedBlock}
 
       <div className="grid gap-3 sm:grid-cols-2">
         {rows.map((s) => {
