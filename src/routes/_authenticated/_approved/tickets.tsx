@@ -1193,7 +1193,8 @@ function OfficeHoursPanel() {
                 <div className="flex flex-wrap items-center gap-1.5">
                   {hour.is_closed ? "Closed" : `${formatOfficeTime(hour.open_time)}–${formatOfficeTime(hour.close_time)}`}
                   {!status.isOpen && status.nextDayUK === hour.day_of_week && status.ukOpening && (
-                    <span className="font-semibold text-primary">
+                    <span className="font-semibold text-white">
+
                       Reopens {status.ukOpening} · in <span className="tabular-nums">{status.countdown}</span>
                     </span>
                   )}
@@ -1214,7 +1215,7 @@ function OfficeHoursPanel() {
                     </span>
                   )}
                   {!status.isOpen && status.nextDay === hour.day_of_week && status.countdown && (
-                    <span className="font-semibold text-primary">
+                    <span className="font-semibold text-white">
                       Reopens {status.localOpening} · in <span className="tabular-nums">{status.countdown}</span>
                     </span>
                   )}
