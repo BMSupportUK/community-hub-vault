@@ -150,6 +150,7 @@ function ProfilePage() {
   const isAdmin = hasAny(["admin", "management"]);
   const roleFlashMap = useRoleFlashMap();
   const { format: fmtCurrency } = useCurrency();
+  const locked = useViewportLockable();
   const [now, setNow] = useState(() => Date.now());
   const [profile, setProfile] = useState<ProfileRow | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
