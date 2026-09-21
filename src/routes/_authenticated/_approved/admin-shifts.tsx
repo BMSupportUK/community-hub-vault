@@ -446,7 +446,8 @@ function StaffShiftsPage() {
                 </div>
               ))}
             </section>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
