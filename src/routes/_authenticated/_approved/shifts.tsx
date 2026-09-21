@@ -591,11 +591,28 @@ function ShiftsPage() {
     load();
   };
 
-  const reviewHoliday = async (id: string, status: ReqStatus) => {
-    const { error } = await supabase.from("holiday_requests").update({ status, reviewed_by: user?.id ?? null, reviewed_at: new Date().toISOString() }).eq("id", id);
+  const reviewHoliday = async (id: string, status: ReqStatus, decisionReason?: string | null) => {
+    const { error } = await supabase
+      .from("holiday_requests")
+      .update({
+        status,
+        decision_reason: status === "denied" ? (decisionReason || null) : null,
+        reviewed_by: user?.id ?? null,
+        reviewed_at: new Date().toISOString(),
+      })
+      .eq("id", id);
     if (error) return toast.error(error.message);
     toast.success(`Holiday ${status}`);
     load();
+  };
+
+  /** Reject with the reason typed by the admin — the staff member sees it on their request. */
+  const submitRejection = async () => {
+    if (!rejectHol) return;
+    if (!rejectReason.trim()) return toast.error("Enter a reason for rejecting");
+    await reviewHoliday(rejectHol.id, "denied", rejectReason.trim());
+    setRejectHol(null);
+    setRejectReason("");
   };
 
   const openSwap = async (s: Slot) => {
