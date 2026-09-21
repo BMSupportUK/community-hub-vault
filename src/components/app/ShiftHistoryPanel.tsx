@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Clock as ClockIcon, LogIn, LogOut, CheckCircle2, HelpCircle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { type BreakKind, breakLabel, breakIcon } from "@/lib/breaks";
 
 const PAGE_SIZE = 20;
 const AUTO_OUT_GRACE_MS = 15 * 60 * 1000;
@@ -13,6 +14,14 @@ interface ShiftHistoryRow {
   clock_out: string | null;
   end_prompt_asked_at: string | null;
   still_working_ack_at: string | null;
+}
+
+interface BreakRow {
+  id: string;
+  shift_id: string;
+  kind: BreakKind;
+  started_at: string;
+  ended_at: string | null;
 }
 
 /** Monday 00:00 local time of the week containing `now`. */
