@@ -256,12 +256,19 @@ function SignupPage() {
               <Field label="Display name" value={displayName} onChange={setDisplayName} />
               <Field label="Email" type="email" value={email} onChange={setEmail} />
               {emailTaken && (
-                <p className="flex items-start gap-2 text-xs text-destructive -mt-1">
+                <div className="flex items-start gap-2 text-xs text-destructive -mt-1">
                   <ShieldAlert className="size-3.5 mt-0.5 shrink-0" />
-                  That email address is already signed up — please{" "}
-                  <Link to="/login" className="underline hover:opacity-80">sign in</Link>{" "}
-                  instead.
-                </p>
+                  <span>
+                    That email address is already signed up — please{" "}
+                    <Link
+                      to="/login"
+                      className="inline-flex items-center rounded-md border border-destructive/60 bg-destructive/10 px-2 py-0.5 font-semibold hover:bg-destructive/20"
+                    >
+                      sign in
+                    </Link>{" "}
+                    instead.
+                  </span>
+                </div>
               )}
               <Field label="Password" type="password" value={password} onChange={setPassword} />
               {intent === "bm-support" && (
