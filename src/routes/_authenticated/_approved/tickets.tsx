@@ -1099,7 +1099,17 @@ function officeStatus(hours: OfficeHour[], now: Date, timezone: string) {
     }).format(nextOpening);
     const localOpeningDayName = new Intl.DateTimeFormat("en-GB", { timeZone: timezone, weekday: "short" }).format(nextOpening);
     const localOpeningDay = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(localOpeningDayName);
-    return { isOpen: false, currentDay: londonDay, nextDay: localOpeningDay, countdown, localOpening };
+    const ukOpening = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Europe/London",
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+      timeZoneName: "short",
+    }).format(nextOpening);
+    return { isOpen: false, currentDay: londonDay, nextDay: localOpeningDay, nextDayUK: candidate.day_of_week, countdown, localOpening, ukOpening };
   }
 
   return { isOpen: false, currentDay: londonDay, nextDay: null as number | null, countdown: "", localOpening: "" };
