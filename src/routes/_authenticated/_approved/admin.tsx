@@ -100,8 +100,8 @@ function AdminDashboard() {
               <ShieldCheck className="size-6 text-white" />
             </div>
             <div className="flex-1">
-              <h1 className="font-display text-2xl sm:text-3xl font-bold text-white drop-shadow">Owner Dashboard</h1>
-              <p className="text-sm text-white/85">Server-wide controls — restricted to owner &amp; management.</p>
+              <h1 className="font-display text-2xl sm:text-3xl font-bold text-white drop-shadow">BM Support | Admin Dashboard</h1>
+              <p className="text-sm text-white/85">Server-wide controls — staff can see the sections admin allows them to.</p>
             </div>
           <div className="flex items-center gap-2">
             <Link
