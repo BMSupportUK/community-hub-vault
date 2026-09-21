@@ -320,10 +320,10 @@ function SignupPage() {
         </div>
       </main>
 
-      {/* Desktop advert sidebar */}
-      <aside className="hidden xl:flex items-start justify-center px-4 py-10 border-l border-border/60">
+      {/* Desktop advert sidebar — shrinks to fit short screens instead of clipping */}
+      <aside className="hidden xl:flex min-h-0 items-center justify-center px-4 py-6 border-l border-border/60">
         <div className="w-full max-w-[280px]">
-          <AdSenseSlot slot="sidebar" />
+          <AdSenseSlot slot="sidebar" fitViewport />
         </div>
       </aside>
 
