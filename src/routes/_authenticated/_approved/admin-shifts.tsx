@@ -156,8 +156,8 @@ function StaffShiftsPage() {
   const [breaksByShift, setBreaksByShift] = useState<Record<string, BreakRow[]>>({});
   const [people, setPeople] = useState<Record<string, PersonRow>>({});
   const [rolesByUser, setRolesByUser] = useState<Record<string, string[]>>({});
-  const [role, setRole] = useState<RoleKey>("all");
-  const [weekday, setWeekday] = useState<DayKey>("all");
+  const [role, setRole] = useState<RoleKey>("admin");
+  const [weekday, setWeekday] = useState<DayKey>(new Date().getDay());
 
   const load = useCallback(async (d: number) => {
     setLoading(true);
@@ -214,12 +214,12 @@ function StaffShiftsPage() {
   );
 
   const byWeekday = useMemo(
-    () => (weekday === "all" ? shifts : shifts.filter((s) => new Date(s.clock_in).getDay() === weekday)),
+    () => shifts.filter((s) => new Date(s.clock_in).getDay() === weekday),
     [shifts, weekday],
   );
 
   const byRole = useMemo(
-    () => (role === "all" ? shifts : shifts.filter((s) => primaryRole(s.user_id) === role)),
+    () => shifts.filter((s) => primaryRole(s.user_id) === role),
     [shifts, role, primaryRole],
   );
 
@@ -239,7 +239,7 @@ function StaffShiftsPage() {
   }, [byRole]);
 
   const visible = useMemo(
-    () => (role === "all" ? byWeekday : byWeekday.filter((s) => primaryRole(s.user_id) === role)),
+    () => byWeekday.filter((s) => primaryRole(s.user_id) === role),
     [byWeekday, role, primaryRole],
   );
 
@@ -315,7 +315,7 @@ function StaffShiftsPage() {
 
       <div className="flex flex-wrap gap-2 rounded-2xl border border-border bg-surface-1 p-2">
         {ROLE_TABS.map((t) => {
-          const count = t.key === "all" ? byWeekday.length : (roleCounts[t.key] ?? 0);
+          const count = roleCounts[t.key] ?? 0;
           const active = role === t.key;
           return (
             <button
@@ -343,7 +343,7 @@ function StaffShiftsPage() {
 
       <div className="flex flex-wrap gap-2 rounded-2xl border border-border bg-surface-1 p-2">
         {DAY_TABS.map((t) => {
-          const count = t.key === "all" ? byRole.length : (weekdayCounts[t.key as number] ?? 0);
+          const count = weekdayCounts[t.key] ?? 0;
           const active = weekday === t.key;
           return (
             <button
