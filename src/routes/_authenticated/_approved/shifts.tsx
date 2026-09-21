@@ -283,7 +283,19 @@ function ShiftsPage() {
     setBookings((data ?? []) as Booking[]);
   };
 
-  useEffect(() => { loadBookings(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [user?.id]);
+  /** Swap requests I sent or received, with the slot date resolved. */
+  const loadMySwaps = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("shift_swap_requests")
+      .select("id, requester_id, target_user_id, message, status, created_at, slot:shift_slots(shift_date, start_time, end_time, required_role)")
+      .or(`requester_id.eq.${user.id},target_user_id.eq.${user.id}`)
+      .order("created_at", { ascending: false })
+      .limit(200);
+    setMySwaps((data ?? []) as unknown as MySwap[]);
+  };
+
+  useEffect(() => { loadBookings(); loadMySwaps(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [user?.id]);
 
   useEffect(() => {
     load();
