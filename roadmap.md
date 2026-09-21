@@ -24,7 +24,7 @@
 - [x] Fit the Welcome view within large screens and keep scrolling inside the page
 
 ## Help Desk opening hours
-- [ ] Add UK office and user-local opening times beneath the resolved-ticket message
+- [x] Add UK office and user-local opening times beneath the resolved-ticket message
 
 ## Profile orders
-- [ ] Add Jan–Dec tabs and group this year's orders into their relevant month
+- [x] Add Jan–Dec tabs and group this year's orders into their relevant month
