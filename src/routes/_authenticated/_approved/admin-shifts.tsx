@@ -175,8 +175,8 @@ function StaffShiftsPage() {
   const [role, setRole] = useState<RoleKey>("admin");
   const [weekday, setWeekday] = useState<DayKey>(new Date().getDay());
 
-  const load = useCallback(async (d: number) => {
-    setLoading(true);
+  const load = useCallback(async (d: number, silent = false) => {
+    if (!silent) setLoading(true);
     const from = new Date();
     from.setHours(0, 0, 0, 0);
     from.setDate(from.getDate() - (d - 1));
@@ -238,6 +238,28 @@ function StaffShiftsPage() {
 
   useEffect(() => {
     if (canView) void load(days);
+  }, [canView, days, load]);
+
+  // Keep breaks/shifts live so lunch, break and travelling-home status changes
+  // show without a hard refresh.
+  useEffect(() => {
+    if (!canView) return;
+    const refresh = () => { void load(days, true); };
+    const ch = supabase
+      .channel(`admin-shifts-live-${Math.random().toString(36).slice(2)}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "breaks" }, refresh)
+      .on("postgres_changes", { event: "*", schema: "public", table: "shifts" }, refresh)
+      .subscribe();
+    const poll = setInterval(refresh, 20_000);
+    const onWake = () => { if (document.visibilityState === "visible") refresh(); };
+    window.addEventListener("focus", onWake);
+    document.addEventListener("visibilitychange", onWake);
+    return () => {
+      supabase.removeChannel(ch);
+      clearInterval(poll);
+      window.removeEventListener("focus", onWake);
+      document.removeEventListener("visibilitychange", onWake);
+    };
   }, [canView, days, load]);
 
   const primaryRole = useCallback(
