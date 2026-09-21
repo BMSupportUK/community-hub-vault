@@ -1152,7 +1152,7 @@ function OfficeHoursPanel() {
                 <div className="flex flex-wrap items-center gap-1.5">
                   <span>{OFFICE_DAY_NAMES[hour.day_of_week]}</span>
                   {status.isOpen && status.currentDay === hour.day_of_week && (
-                    <span className="inline-flex rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-bold text-emerald-500 ring-1 ring-emerald-500/35">
+                    <span className="inline-flex rounded-full bg-success/15 px-1.5 py-0.5 text-[10px] font-bold text-success ring-1 ring-emerald-500/35">
                       Open
                     </span>
                   )}
@@ -1170,7 +1170,7 @@ function OfficeHoursPanel() {
                 <div className="flex flex-wrap items-center gap-1.5">
                   <span>{hour.is_closed || !localOpen || !localClose ? "Closed" : `${localFormat.format(localOpen)}–${localFormat.format(localClose)}`}</span>
                   {status.isOpen && status.currentDay === hour.day_of_week && (
-                    <span className="inline-flex rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[10px] font-bold text-emerald-500 ring-1 ring-emerald-500/35">
+                    <span className="inline-flex rounded-full bg-success/15 px-1.5 py-0.5 text-[10px] font-bold text-success ring-1 ring-emerald-500/35">
                       Open
                     </span>
                   )}
