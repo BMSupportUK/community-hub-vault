@@ -192,32 +192,60 @@ function StaffShiftsPage() {
     if (canView) void load(days);
   }, [canView, days, load]);
 
+  const primaryRole = useCallback(
+    (userId: string) => {
+      const mine = rolesByUser[userId] ?? [];
+      return ROLE_ORDER.find((r) => mine.includes(r)) ?? "other";
+    },
+    [rolesByUser],
+  );
+
+  const roleCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const s of shifts) counts[primaryRole(s.user_id)] = (counts[primaryRole(s.user_id)] ?? 0) + 1;
+    return counts;
+  }, [shifts, primaryRole]);
+
+  const visible = useMemo(
+    () => (role === "all" ? shifts : shifts.filter((s) => primaryRole(s.user_id) === role)),
+    [shifts, role, primaryRole],
+  );
+
+  // day -> role -> shifts
   const grouped = useMemo(() => {
-    const map = new Map<string, ShiftRow[]>();
-    for (const s of shifts) {
+    const map = new Map<string, Map<string, ShiftRow[]>>();
+    for (const s of visible) {
       const k = dayKey(s.clock_in);
-      (map.get(k) ?? map.set(k, []).get(k)!).push(s);
+      const byRole = map.get(k) ?? map.set(k, new Map()).get(k)!;
+      const rk = primaryRole(s.user_id);
+      (byRole.get(rk) ?? byRole.set(rk, []).get(rk)!).push(s);
     }
-    return [...map.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1));
-  }, [shifts]);
+    return [...map.entries()]
+      .sort((a, b) => (a[0] < b[0] ? 1 : -1))
+      .map(([key, byRole]) => {
+        const order = [...ROLE_ORDER, "other"];
+        const sections = [...byRole.entries()].sort((a, b) => order.indexOf(a[0] as any) - order.indexOf(b[0] as any));
+        return [key, sections] as const;
+      });
+  }, [visible, primaryRole]);
 
   const totals = useMemo(() => {
     let worked = 0;
     let open = 0;
     let auto = 0;
-    for (const s of shifts) {
+    for (const s of visible) {
       worked += durationMs(s.clock_in, s.clock_out);
       if (!s.clock_out) open += 1;
       if (isAutoOut(s)) auto += 1;
     }
     return {
-      shifts: shifts.length,
-      staff: new Set(shifts.map((s) => s.user_id)).size,
+      shifts: visible.length,
+      staff: new Set(visible.map((s) => s.user_id)).size,
       worked,
       open,
       auto,
     };
-  }, [shifts]);
+  }, [visible]);
 
   if (!canView) return <Navigate to="/admin" />;
 
