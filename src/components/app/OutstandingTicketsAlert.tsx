@@ -23,7 +23,8 @@ export function OutstandingTicketsAlert() {
   const { user, hasAny } = useAuth();
   const navigate = useNavigate();
   const pathname = useLocation({ select: (location) => location.pathname });
-  const isSoundTestPage = pathname === "/admin-sounds";
+  // Never interrupt the shop/orders flow with this dialog — a toast is enough there.
+  const isSoundTestPage = pathname === "/admin-sounds" || pathname.startsWith("/shop");
   const isStaffRole = hasAny(["admin", "management", "staff"]);
   const [open, setOpen] = useState(false);
   const [counts, setCounts] = useState({ open: 0, in_progress: 0, unassigned: 0 });
