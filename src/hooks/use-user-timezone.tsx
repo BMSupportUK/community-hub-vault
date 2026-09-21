@@ -46,9 +46,12 @@ export function useUserTimezone(): string {
       .select("timezone")
       .eq("id", user.id)
       .maybeSingle()
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        // A temporary read failure must not replace the saved timezone with
+        // this browser's detected timezone (often Europe/London).
+        if (error) return;
         const saved = (data as { timezone?: string | null } | null)?.timezone;
-        apply(saved || detected);
+        if (saved) apply(saved);
       });
     const ch = supabase
       .channel(`profile-tz-${user.id}-${Math.random().toString(36).slice(2)}`)
@@ -57,7 +60,7 @@ export function useUserTimezone(): string {
         { event: "UPDATE", schema: "public", table: "profiles", filter: `id=eq.${user.id}` },
         (payload) => {
           const saved = (payload.new as { timezone?: string | null } | null)?.timezone;
-          apply(saved || browserTimezone());
+          if (saved) apply(saved);
         },
       )
       .subscribe();
