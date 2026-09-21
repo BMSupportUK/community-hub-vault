@@ -1461,7 +1461,12 @@ function StatusPill({ status }: { status: ReqStatus }) {
     approved: "bg-emerald-500/20 text-emerald-300 border-emerald-500/40",
     denied: "bg-rose-500/20 text-rose-300 border-rose-500/40",
   };
-  return <span className={cn("text-[11px] px-2 py-0.5 rounded-full border font-semibold uppercase", map[status])}>{status}</span>;
+  const label: Record<ReqStatus, string> = {
+    pending: "Awaiting approval",
+    approved: "Accepted",
+    denied: "Rejected",
+  };
+  return <span className={cn("text-[11px] px-2 py-0.5 rounded-full border font-semibold uppercase whitespace-nowrap", map[status])}>{label[status]}</span>;
 }
 
 const TIMEZONE_PRESETS: { tz: string; label: string }[] = [
