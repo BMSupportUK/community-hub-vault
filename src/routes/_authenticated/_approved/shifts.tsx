@@ -44,6 +44,7 @@ interface Holiday {
   reason: string | null;
   status: ReqStatus;
   created_at: string;
+  decision_reason?: string | null;
 }
 interface Swap {
   id: string;
