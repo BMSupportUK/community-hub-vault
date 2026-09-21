@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Calendar as CalendarIcon, Plus, Trash2, Check, X, Clock, Users, Plane, Repeat, ShieldCheck, Loader2, Zap, Save, Globe, MapPin } from "lucide-react";
+import { Calendar as CalendarIcon, Plus, Trash2, Check, X, Clock, Users, Plane, Repeat, ShieldCheck, Loader2, Zap, Save, Globe, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { addModeratorHours } from "@/lib/moderator-hours.functions";
@@ -56,6 +56,16 @@ interface Swap {
   created_at: string;
 }
 interface Profile { id: string; username: string | null; display_name: string | null; }
+/** A swap request I'm involved in, with the slot's date/time resolved. */
+interface MySwap {
+  id: string;
+  requester_id: string;
+  target_user_id: string | null;
+  message: string | null;
+  status: ReqStatus;
+  created_at: string;
+  slot: { shift_date: string; start_time: string; end_time: string; required_role: string | null } | null;
+}
 /** One entry in a staff member's shift booking history. */
 interface Booking {
   id: string;
@@ -224,6 +234,10 @@ function ShiftsPage() {
   const [confirmSlot, setConfirmSlot] = useState<Slot | null>(null);
   const [claiming, setClaiming] = useState(false);
   const [bookings, setBookings] = useState<Booking[]>([]);
+  // Booking history: sub-tab + the week being viewed
+  const [histTab, setHistTab] = useState<"booked" | "released" | "swaps">("booked");
+  const [histWeek, setHistWeek] = useState<Date>(() => startOfWeek(new Date()));
+  const [mySwaps, setMySwaps] = useState<MySwap[]>([]);
 
   // Swap dialog
   const [swapFor, setSwapFor] = useState<Slot | null>(null);
