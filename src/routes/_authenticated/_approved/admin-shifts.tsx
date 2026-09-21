@@ -143,6 +143,8 @@ function StaffShiftsPage() {
   const [shifts, setShifts] = useState<ShiftRow[]>([]);
   const [breaksByShift, setBreaksByShift] = useState<Record<string, BreakRow[]>>({});
   const [people, setPeople] = useState<Record<string, PersonRow>>({});
+  const [rolesByUser, setRolesByUser] = useState<Record<string, string[]>>({});
+  const [role, setRole] = useState<RoleKey>("all");
 
   const load = useCallback(async (d: number) => {
     setLoading(true);
