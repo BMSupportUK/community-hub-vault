@@ -74,6 +74,10 @@ const CUSTOM_STYLE = "bg-primary/20 text-primary border-primary/40";
 function AdminRolesPage() {
   const { hasAny, user } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
+  const [rolesUnlocked, setRolesUnlocked] = useState(false);
+  useEffect(() => {
+    setRolesUnlocked(isRolesUnlocked(user?.id));
+  }, [user?.id]);
   const [tab, setTab] = useState<"members" | "roles">("members");
   const [rows, setRows] = useState<Row[]>([]);
   const [roleDefs, setRoleDefs] = useState<RoleDef[]>([]);
