@@ -388,9 +388,24 @@ function SignupPage() {
                   <ShieldAlert className="size-4" /> Join BM Support
                 </button>
               ) : (
-                <button disabled={busy || needsReferral} className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-medium shadow-glow hover:opacity-90 disabled:opacity-50">
+                <>
+                <button
+                  disabled={busy || !intent || needsReferral}
+                  className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-medium shadow-glow hover:opacity-90 disabled:opacity-50 disabled:shadow-none"
+                >
                   {busy ? "Creating…" : "Join BM Support"}
                 </button>
+                {!intent && (
+                  <p className="text-xs text-muted-foreground text-center -mt-1">
+                    Choose which part of the site you'd like to register for to continue.
+                  </p>
+                )}
+                {intent === "bm-support" && needsReferral && (
+                  <p className="text-xs text-muted-foreground text-center -mt-1">
+                    Enter your referral code to continue.
+                  </p>
+                )}
+                </>
               )}
             </form>
             <div className="text-sm text-muted-foreground text-center mt-6">
