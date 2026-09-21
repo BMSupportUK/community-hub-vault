@@ -30,6 +30,20 @@ function AdminArchivedTicketsPage() {
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [busy, setBusy] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [month, setMonth] = useState(() => new Date().getMonth());
+
+  const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const thisYear = new Date().getFullYear();
+  const monthCounts = MONTHS.map((_, i) =>
+    rows.filter((t) => {
+      const d = t.archived_at ? new Date(t.archived_at) : null;
+      return d !== null && d.getFullYear() === thisYear && d.getMonth() === i;
+    }).length,
+  );
+  const monthRows = rows.filter((t) => {
+    const d = t.archived_at ? new Date(t.archived_at) : null;
+    return d !== null && d.getFullYear() === thisYear && d.getMonth() === month;
+  });
 
   const load = async () => {
     const { data } = await supabase
@@ -114,8 +128,36 @@ function AdminArchivedTicketsPage() {
             No archived tickets yet.
           </div>
         ) : (
+          <>
+          <div className="mb-4 flex flex-wrap gap-1.5">
+            {MONTHS.map((m, i) => (
+              <button
+                key={m}
+                type="button"
+                onClick={() => setMonth(i)}
+                className={`rounded-full px-3 py-1.5 text-xs font-medium border transition-colors ${
+                  month === i
+                    ? "bg-fuchsia-500/30 border-fuchsia-400/60 text-white"
+                    : "border-purple-500/30 bg-purple-950/40 text-purple-200/80 hover:text-white hover:border-fuchsia-400/40"
+                }`}
+              >
+                {m}
+                {monthCounts[i] > 0 && (
+                  <span className="ml-1.5 rounded-full bg-fuchsia-500/40 px-1.5 py-0.5 text-[10px] text-white">
+                    {monthCounts[i]}
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+          {monthRows.length === 0 ? (
+            <div className="rounded-2xl border border-purple-500/30 bg-purple-950/40 p-10 text-center text-purple-200/80">
+              <LifeBuoy className="size-8 mx-auto mb-3 opacity-60" />
+              No archived tickets in {MONTHS[month]} {thisYear}.
+            </div>
+          ) : (
           <div className="space-y-3">
-            {rows.map((t) => (
+            {monthRows.map((t) => (
               <div
                 key={t.id}
                 className="rounded-2xl border-2 border-purple-500/40 bg-purple-950/40 p-4 shadow-md shadow-purple-900/20"
@@ -158,6 +200,8 @@ function AdminArchivedTicketsPage() {
               </div>
             ))}
           </div>
+          )}
+          </>
         )}
       </div>
     </main>
