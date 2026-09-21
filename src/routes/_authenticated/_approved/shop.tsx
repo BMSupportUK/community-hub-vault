@@ -73,7 +73,7 @@ import {
 import { CreditCard, Ban } from "lucide-react";
 import { getOutOfHoursMessage } from "@/lib/business-hours";
 import { isAdminUnlocked } from "@/lib/admin-unlock";
-import { isDiscountUnlocked } from "@/lib/discount-unlock";
+import { isDiscountUnlocked, clearDiscountUnlock } from "@/lib/discount-unlock";
 import { DiscountCodesGate } from "@/components/app/DiscountCodesGate";
 import { useRouter } from "@tanstack/react-router";
 import { MonitorPlay } from "lucide-react";
@@ -263,6 +263,13 @@ function ShopPage() {
   useEffect(() => {
     setDiscountUnlocked(isAdminOnly && isDiscountUnlocked(user?.id));
   }, [isAdminOnly, user?.id, view]);
+  // Leaving Manage Products / Discount Codes locks the section again.
+  useEffect(() => {
+    if (view !== "admin" && (view as string) !== "discounts") {
+      clearDiscountUnlock(user?.id);
+      setDiscountUnlocked(false);
+    }
+  }, [view, user?.id]);
   const isAdminView =
     (view === "admin" && isAdminOnly) ||
     ((view as string) === "discounts" && isAdminOnly) ||

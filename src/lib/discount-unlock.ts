@@ -19,4 +19,11 @@ export function markDiscountUnlocked(userId: string) {
   } catch {}
 }
 
+export function clearDiscountUnlock(userId: string | undefined | null) {
+  if (!userId || typeof window === "undefined") return;
+  try {
+    sessionStorage.removeItem(DISCOUNT_UNLOCK_KEY(userId));
+  } catch {}
+}
+
 export const DISCOUNT_UNLOCK_TTL_MS = TTL_MS;
