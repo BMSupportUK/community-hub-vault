@@ -1451,6 +1451,32 @@ function ShiftsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Admin rejects a holiday request — the reason is shown to the staff member */}
+      <Dialog open={!!rejectHol} onOpenChange={(o) => { if (!o) { setRejectHol(null); setRejectReason(""); } }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Reject holiday request</DialogTitle></DialogHeader>
+          {rejectHol && (
+            <div className="space-y-3">
+              <div className="text-sm text-muted-foreground">
+                {profName(rejectHol.user_id)} · {rejectHol.start_date} → {rejectHol.end_date}
+              </div>
+              <div>
+                <Label>Reason for rejection</Label>
+                <Textarea
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  placeholder="Tell them why this holiday can't be approved"
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setRejectHol(null); setRejectReason(""); }}>Cancel</Button>
+            <Button className="bg-rose-500/80 text-white hover:bg-rose-500" onClick={submitRejection}>Reject request</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
