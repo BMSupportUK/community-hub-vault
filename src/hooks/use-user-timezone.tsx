@@ -12,7 +12,7 @@ export const browserTimezone = () => {
 
 const cache = new Map<string, string>();
 
-/** Returns the signed-in user's browser-detected timezone and keeps profiles.timezone synced. */
+/** Returns the signed-in user's saved timezone, falling back to the browser timezone. */
 export function useUserTimezone(): string {
   const { user } = useAuth();
   const [tz, setTz] = useState<string>(() => (user && cache.get(user.id)) || browserTimezone());
@@ -28,7 +28,6 @@ export function useUserTimezone(): string {
       cache.set(user.id, next);
       if (active) setTz(next);
     };
-    apply(detected);
     supabase
       .from("profiles")
       .select("timezone")
@@ -36,20 +35,17 @@ export function useUserTimezone(): string {
       .maybeSingle()
       .then(({ data }) => {
         const saved = (data as { timezone?: string | null } | null)?.timezone;
-        if (saved !== detected) {
-          supabase
-            .from("profiles")
-            .update({ timezone: detected })
-            .eq("id", user.id)
-            .then(() => undefined);
-        }
+        apply(saved || detected);
       });
     const ch = supabase
       .channel(`profile-tz-${user.id}-${Math.random().toString(36).slice(2)}`)
       .on(
         "postgres_changes",
         { event: "UPDATE", schema: "public", table: "profiles", filter: `id=eq.${user.id}` },
-        () => apply(browserTimezone()),
+        (payload) => {
+          const saved = (payload.new as { timezone?: string | null } | null)?.timezone;
+          apply(saved || browserTimezone());
+        },
       )
       .subscribe();
     return () => {
