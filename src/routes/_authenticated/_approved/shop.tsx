@@ -2998,12 +2998,14 @@ function OrdersView({
   const completedOrders = monthOrders.filter((o) => o.status === "completed");
   const cancelledOrders = monthOrders.filter((o) => o.status === "cancelled");
 
-  const renderOrderList = (list: Order[]) => (
+  const renderOrderList = (list: Order[]) => {
+  const activeId = selectedId && list.some((o) => o.id === selectedId) ? selectedId : null;
+  return (
     <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-4 min-h-[60vh]">
       <div
         className={cn(
           "grid grid-cols-1 sm:grid-cols-2 gap-3 content-start",
-          selectedId ? "hidden lg:grid" : "",
+          activeId ? "hidden lg:grid" : "",
         )}
       >
         {list.length === 0 && (
