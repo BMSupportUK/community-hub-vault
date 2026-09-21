@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import ticketsHero from "@/assets/tickets-hero.jpg";
+import ticketsEmpty from "@/assets/tickets-empty.png";
 import {
   Ticket as TicketIcon, Plus, Send, Lock, X, LifeBuoy, CreditCard, Bug, Sparkles, UserCog,
   Tv, Film, Circle, CircleDot, Clock4, CheckCircle2, XCircle, ChevronDown, Trash2,
@@ -423,13 +424,18 @@ function TicketsPage() {
     }
   }, [search.id, selected]);
 
+  // Only unresolved tickets belong in the sidebar list — resolved/closed are handled elsewhere.
+  const openTickets = useMemo(
+    () => tickets.filter((t) => t.status !== "resolved" && t.status !== "closed"),
+    [tickets],
+  );
   const groups = useMemo(() => {
     const buckets: Record<Status, Ticket[]> = { open: [], in_progress: [], waiting: [], resolved: [], closed: [] };
-    tickets.forEach((t) => buckets[t.status].push(t));
+    openTickets.forEach((t) => buckets[t.status].push(t));
     return (Object.keys(STATUS_META) as Status[])
       .filter((s) => buckets[s].length)
       .map((s) => ({ label: STATUS_META[s].label }));
-  }, [tickets]);
+  }, [openTickets]);
 
   const setView = (v: "mine" | "all" | "assigned") =>
     navigate({ to: "/tickets", search: { view: v, id: undefined } });
