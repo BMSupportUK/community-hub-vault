@@ -374,7 +374,7 @@ function ShopPage() {
               .filter((g) => g.label === "Owner")
               .map((g) => (
                 <div key={g.label} className="flex items-center gap-1 shrink-0">
-                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70 mr-1 hidden md:inline">
+                  <span className="text-[10px] font-semibold tracking-wider text-muted-foreground/70 mr-1 hidden md:inline whitespace-nowrap">
                     {g.label}
                   </span>
                   {g.items.map((it) => {
