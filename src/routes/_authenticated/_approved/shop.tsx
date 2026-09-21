@@ -417,7 +417,14 @@ function ShopPage() {
             />
           )}
           {view === "admin" && isAdminOnly && adminUnlocked && <AdminProducts />}
-          {(view as string) === "discounts" && isAdminOnly && adminUnlocked && <AdminDiscounts />}
+          {(view as string) === "discounts" &&
+            isAdminOnly &&
+            adminUnlocked &&
+            (discountUnlocked ? (
+              <AdminDiscounts />
+            ) : (
+              <DiscountCodesGate onUnlocked={() => setDiscountUnlocked(true)} />
+            ))}
           {(view === "refund" || view === "multi_room" || view === "triple_room") &&
             (view === "refund" ? (
               <PolicyView policyKey="refund" isAdmin={isAdmin} />
