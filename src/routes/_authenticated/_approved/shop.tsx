@@ -3001,10 +3001,11 @@ function OrdersView({
   const renderOrderList = (list: Order[]) => {
   const activeId = selectedId && list.some((o) => o.id === selectedId) ? selectedId : null;
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-4 min-h-[60vh]">
+    <div className={cn("grid grid-cols-1 gap-4 min-h-[60vh]", activeId && "lg:grid-cols-[1fr_380px]")}>
       <div
         className={cn(
           "grid grid-cols-1 sm:grid-cols-2 gap-3 content-start",
+          !activeId && "lg:grid-cols-3",
           activeId ? "hidden lg:grid" : "",
         )}
       >
@@ -3073,13 +3074,8 @@ function OrdersView({
           </button>
         ))}
       </div>
-      <div
-        className={cn(
-          "rounded-2xl bg-purple-950/40 border border-purple-500/30 backdrop-blur overflow-hidden min-h-[60vh] flex",
-          activeId ? "flex" : "hidden lg:flex",
-        )}
-      >
-        {activeId ? (
+      {activeId && (
+        <div className="rounded-2xl bg-purple-950/40 border border-purple-500/30 backdrop-blur overflow-hidden min-h-[60vh] flex">
           <OrderDetail
             orderId={activeId}
             isAdmin={isAdmin && adminUnlocked}
@@ -3090,12 +3086,8 @@ function OrdersView({
               })
             }
           />
-        ) : (
-          <div className="flex-1 grid place-items-center text-purple-200/70 text-sm p-10 text-center">
-            Select an order card to see all the details and status.
-          </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
   };
