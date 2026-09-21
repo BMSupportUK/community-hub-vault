@@ -75,7 +75,7 @@ function accountTypeLabel(type: string | null | undefined) {
   return type ?? "Single";
 }
 interface DnsRow { id: string; label: string; code: string; notes: string | null; }
-interface TicketRow { id: string; subject: string; status: string; priority: string; created_at: string; updated_at: string; closed_at: string | null; }
+interface TicketRow { id: string; subject: string; status: string; priority: string; created_at: string; updated_at: string; closed_at: string | null; order_id: string | null; }
 interface OrderRow { id: string; total_cents: number; status: string; created_at: string; paid_at: string | null; completed_at: string | null; shipping_name: string | null; discount_code: string | null; }
 interface InviteSummary {
   sent: number;
