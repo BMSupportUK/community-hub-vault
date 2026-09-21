@@ -277,7 +277,7 @@ function AdminRolesPage() {
             <ShieldCheck className="size-5 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="font-display text-2xl font-bold">Members & Roles</h1>
+            <h1 className="font-display text-2xl font-bold">Members &amp; Role Management</h1>
             <p className="text-sm text-muted-foreground">
               Assign roles to members or manage the role list.
             </p>
