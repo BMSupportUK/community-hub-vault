@@ -229,11 +229,11 @@ function AuthLayout() {
             {isAdmin && (
               <Link
                 to="/admin-roles"
-                title="User roles"
+                title="Members & Role Management"
                 className="flex items-center gap-2 rounded-full px-3 py-1.5 bg-surface-2 hover:bg-primary hover:text-primary-foreground text-xs font-medium transition-colors"
               >
                 <ShieldCheck className="size-4" />
-                <span className="hidden xl:inline">User roles</span>
+                <span className="hidden xl:inline">Members &amp; Role Management</span>
               </Link>
             )}
             {user && (

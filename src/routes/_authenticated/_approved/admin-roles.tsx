@@ -19,7 +19,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { isAdminUnlocked } from "@/lib/admin-unlock";
+import { isRolesUnlocked } from "@/lib/roles-unlock";
+import { RolesGate } from "@/components/app/RolesGate";
 import { deleteMember, listMemberEmails } from "@/lib/admin-users.functions";
 import {
   getUserLocationHistory,
@@ -73,6 +74,10 @@ const CUSTOM_STYLE = "bg-primary/20 text-primary border-primary/40";
 function AdminRolesPage() {
   const { hasAny, user } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
+  const [rolesUnlocked, setRolesUnlocked] = useState(false);
+  useEffect(() => {
+    setRolesUnlocked(isRolesUnlocked(user?.id));
+  }, [user?.id]);
   const [tab, setTab] = useState<"members" | "roles">("members");
   const [rows, setRows] = useState<Row[]>([]);
   const [roleDefs, setRoleDefs] = useState<RoleDef[]>([]);
@@ -254,8 +259,8 @@ function AdminRolesPage() {
   };
 
   if (!isAdmin) return <Navigate to="/home" />;
-  if (!isAdminUnlocked(user?.id)) {
-    return <Navigate to="/admin" search={{ next: "/admin-roles" } as never} />;
+  if (!rolesUnlocked) {
+    return <RolesGate onUnlocked={() => setRolesUnlocked(true)} />;
   }
 
   return (
@@ -272,7 +277,7 @@ function AdminRolesPage() {
             <ShieldCheck className="size-5 text-primary-foreground" />
           </div>
           <div>
-            <h1 className="font-display text-2xl font-bold">Members & Roles</h1>
+            <h1 className="font-display text-2xl font-bold">Members &amp; Role Management</h1>
             <p className="text-sm text-muted-foreground">
               Assign roles to members or manage the role list.
             </p>
