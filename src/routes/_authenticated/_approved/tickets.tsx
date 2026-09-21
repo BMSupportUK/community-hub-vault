@@ -1191,13 +1191,14 @@ function OfficeHoursPanel() {
                 </div>
               </div>
               <div className="border-b border-l border-border/50 px-3 py-2 text-muted-foreground">
-                <div className="flex flex-wrap items-center gap-1.5">
-                  {hour.is_closed ? "Closed" : `${formatOfficeTime(hour.open_time)}–${formatOfficeTime(hour.close_time)}`}
+                <div className="flex flex-col gap-1">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {hour.is_closed ? "Closed" : `${formatOfficeTime(hour.open_time)}–${formatOfficeTime(hour.close_time)}`}
+                  </div>
                   {!status.isOpen && status.nextDayUK === hour.day_of_week && status.ukOpening && (
-                    <span className="font-semibold text-white">
-
+                    <div className="font-semibold text-white">
                       Reopens {status.ukOpening}
-                    </span>
+                    </div>
                   )}
                 </div>
               </div>
