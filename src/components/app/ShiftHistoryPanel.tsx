@@ -250,6 +250,25 @@ export default function ShiftHistoryPanel({ userId, name }: { userId: string; na
                 </div>
               </div>
 
+              {(breaksByShift[s.id] ?? []).length > 0 && (
+                <div className="mt-2 space-y-1.5 border-t border-purple-500/20 pt-2 text-sm">
+                  {(breaksByShift[s.id] ?? []).map((b) => {
+                    const BIcon = breakIcon(b.kind);
+                    return (
+                      <div key={b.id} className="flex items-center gap-2 text-purple-100/90">
+                        <BIcon className="size-4 text-amber-300" />
+                        <span className="text-purple-200/70">{breakLabel(b.kind)}</span>
+                        <span className="ml-auto font-medium tabular-nums">
+                          {fmtTime(b.started_at)} · {fmtDuration(b.started_at, b.ended_at)}
+                          {!b.ended_at ? " (ongoing)" : ""}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+
               <div className="mt-3 flex flex-wrap gap-2">
                 {s.end_prompt_asked_at ? (
                   <Pill icon={HelpCircle} label={`Asked “still working?” at ${fmtTime(s.end_prompt_asked_at)}`} tone="info" />
