@@ -16,3 +16,6 @@
 - [x] Add the vertical Google advert beside open ticket conversations
 - [x] Fit the new-ticket form within large screens and move its home button into the top navigation
 - [x] Replace the new-ticket left navigation area with the vertical Google advert
+
+## Talk channels
+- [x] Add the 300×250 Google advert (slot 8133272270) under the service status in the talk channel sidebar
