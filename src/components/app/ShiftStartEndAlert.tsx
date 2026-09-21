@@ -329,7 +329,7 @@ export function ShiftStartEndAlert() {
       .eq("id", openShift.id)
       .is("clock_out", null)
       .maybeSingle();
-    clearFlags(openShift.id);
+    askedAtWrittenRef.current.delete(openShift.id);
     setAskOpen(false);
     setAutoEndAt(null);
     setActive(null);
@@ -373,7 +373,12 @@ export function ShiftStartEndAlert() {
           <AlertDialogCancel
             onClick={() => {
               stillWorkingRef.current.add(openShift.id);
-              writeFlag(stillWorkingKey(openShift.id), "1");
+              {
+                const shiftId = openShift.id;
+                const ackIso = new Date().toISOString();
+                void supabase.from("shifts").update({ still_working_ack_at: ackIso }).eq("id", shiftId);
+                setOpenShift((prev) => (prev && prev.id === shiftId ? { ...prev, still_working_ack_at: ackIso } : prev));
+              }
               setAskOpen(false);
 
               setAutoEndAt(null);
