@@ -42,6 +42,8 @@ function ModerationPage() {
   }
   const [apps, setApps] = useState<AppRow[]>([]);
   const [filter, setFilter] = useState<"pending" | "approved" | "denied">("pending");
+  /** Access requests vs appeals — appeals are flagged with a [APPEAL] prefix on the reason. */
+  const [kind, setKind] = useState<"requests" | "appeals">("requests");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [thread, setThread] = useState<ThreadMsg[]>([]);
   const [reply, setReply] = useState("");
