@@ -659,6 +659,8 @@ function ShiftsPage() {
 
   const myShifts = slots.filter((s) => s.assigned_to === user?.id);
   const pendingHolidays = holidays.filter((h) => h.status === "pending");
+  const myHolidays = holidays.filter((h) => h.user_id === user?.id);
+  const myPendingHolidays = myHolidays.filter((h) => h.status === "pending").length;
   const pendingSwaps = swaps.filter((s) => s.status === "pending");
 
   if (loading) {
