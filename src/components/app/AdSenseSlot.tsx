@@ -31,7 +31,7 @@ function Placeholder({ label }: { label: string }) {
  * - Before the AdSense account/slot is configured, everyone sees a subtle placeholder.
  * - Everyone (staff included) gets the live ad unit once AdSense is enabled.
  */
-function AdSenseSlotComponent({ slot = "topic" }: { slot?: AdSenseSlotKind }) {
+function AdSenseSlotComponent({ slot = "topic", fitViewport = false }: { slot?: AdSenseSlotKind; fitViewport?: boolean }) {
   const adSlotId =
     slot === "sidebar"
       ? ADSENSE_SIDEBAR_SLOT
@@ -39,17 +39,33 @@ function AdSenseSlotComponent({ slot = "topic" }: { slot?: AdSenseSlotKind }) {
         ? ADSENSE_HOME_SLOT
         : ADSENSE_TOPIC_SLOT;
   const enabled = ADSENSE_ENABLED && adSlotId.length > 0;
+  // fitViewport: cap a sidebar unit to the visible screen height so pages
+  // locked to the viewport (sign-in / join) never clip the advert.
+  const sidebarFit = slot === "sidebar" && fitViewport;
 
   const boxRef = useRef<HTMLDivElement | null>(null);
+  const insRef = useRef<HTMLModElement | null>(null);
   const pressRef = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     if (!enabled) return;
     ensureAdSenseScript();
-    // Defer the push so the <ins> element is in the DOM first.
-    const id = window.setTimeout(pushAd, 50);
+    // Defer the push so the <ins> element is in the DOM first. For viewport-fit
+    // sidebars, pick the format from the real screen height right before the
+    // push: AdSense injects height:auto !important once filled, so the only
+    // reliable way to avoid a clipped 600px unit on short screens is to ask
+    // for a shorter rectangle creative up front.
+    const id = window.setTimeout(() => {
+      if (sidebarFit && insRef.current) {
+        insRef.current.setAttribute(
+          "data-ad-format",
+          window.innerHeight < 700 ? "rectangle" : "auto",
+        );
+      }
+      pushAd();
+    }, 50);
     return () => window.clearTimeout(id);
-  }, [enabled]);
+  }, [enabled, sidebarFit]);
 
   // Count a view once the unit actually scrolls into sight.
   useEffect(() => {
@@ -91,14 +107,15 @@ function AdSenseSlotComponent({ slot = "topic" }: { slot?: AdSenseSlotKind }) {
   return (
     <div
       ref={boxRef}
-      className={`hidden md:block rounded-2xl border border-border/60 bg-surface-2/20 px-2 py-2 overflow-hidden ${slot === "home" ? "h-[92px]" : slot === "topic" ? "h-[125px]" : ""}`}
+      className={`hidden md:block rounded-2xl border border-border/60 bg-surface-2/20 px-2 py-2 overflow-hidden ${slot === "home" ? "h-[92px]" : slot === "topic" ? "h-[125px]" : ""} ${sidebarFit ? "flex w-full flex-col" : ""}`}
     >
       <div className="px-2 pb-1 text-[10px] uppercase tracking-[0.25em] text-muted-foreground/70">
         Advertisement
       </div>
-      <div onPointerDown={onAdPointerDown} onPointerUp={onAdPointerUp} onPointerCancel={() => (pressRef.current = null)}>
+      <div className={sidebarFit ? "min-h-0" : undefined} onPointerDown={onAdPointerDown} onPointerUp={onAdPointerUp} onPointerCancel={() => (pressRef.current = null)}>
         <ins
-          className={`adsbygoogle ${slot === "home" ? "h-[64px]" : slot === "topic" ? "h-[90px]" : ""}`}
+          ref={insRef}
+          className={`adsbygoogle ${slot === "home" ? "h-[64px]" : slot === "topic" ? "h-[90px]" : ""} ${sidebarFit ? "w-full" : ""}`}
           style={{ display: "block", textAlign: "center" }}
           data-ad-client={ADSENSE_CLIENT_ID}
           data-ad-slot={adSlotId}
