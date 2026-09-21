@@ -1031,8 +1031,8 @@ function ShiftsPage() {
                       <span className="text-foreground font-semibold">{dayLabel(new Date(b.shift_date))}</span>
                       <span className="font-mono text-primary">{fmtRange(b.shift_date, b.start_time, b.end_time)}</span>
                       {b.required_role && (
-                        <span className={cn("text-[10px] px-2 py-0.5 rounded-full border font-semibold uppercase tracking-wide", roleBadgeClass(b.required_role))}>
-                          {roleLabel(b.required_role)}
+                        <span className={cn("text-[10px] px-2 py-0.5 rounded-full border font-semibold uppercase tracking-wide", roleBadgeClass(b.required_role as ShiftRole))}>
+                          {roleLabel(b.required_role as ShiftRole)}
                         </span>
                       )}
                       <span className="ml-auto text-xs text-muted-foreground">
