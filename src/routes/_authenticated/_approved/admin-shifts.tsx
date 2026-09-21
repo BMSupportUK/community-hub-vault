@@ -328,16 +328,29 @@ function StaffShiftsPage() {
         </div>
       ) : (
         <div className="space-y-6">
-          {grouped.map(([key, rows]) => (
-            <section key={key} className="space-y-3">
+          {grouped.map(([key, sections]) => {
+            const dayRows = sections.flatMap(([, r]) => r);
+            return (
+            <section key={key} className="space-y-4">
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="font-display font-bold">{fmtDayHeading(key)}</h2>
                 <span className="text-xs text-muted-foreground">
-                  {rows.length} shift{rows.length === 1 ? "" : "s"} ·{" "}
-                  {fmtMs(rows.reduce((a, s) => a + durationMs(s.clock_in, s.clock_out), 0))} worked
+                  {dayRows.length} shift{dayRows.length === 1 ? "" : "s"} ·{" "}
+                  {fmtMs(dayRows.reduce((a, s) => a + durationMs(s.clock_in, s.clock_out), 0))} worked
                 </span>
               </div>
-              <div className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-3">
+              {sections.map(([roleKey, rows]) => (
+                <div key={roleKey} className="space-y-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="text-sm font-semibold uppercase tracking-wide text-primary">
+                      {ROLE_LABEL[roleKey] ?? "Other"}
+                    </h3>
+                    <span className="text-xs text-muted-foreground">
+                      {rows.length} shift{rows.length === 1 ? "" : "s"} ·{" "}
+                      {fmtMs(rows.reduce((a, s) => a + durationMs(s.clock_in, s.clock_out), 0))} worked
+                    </span>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-3">
                 {rows.map((s) => {
                   const open = !s.clock_out;
                   const auto = isAutoOut(s);
