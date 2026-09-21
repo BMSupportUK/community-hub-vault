@@ -705,7 +705,6 @@ function ProfilePage() {
                   </div>
                 </div>
                 <InfoCard label="Member since" value={new Date(profile.created_at).toLocaleDateString("en-GB")} />
-                <InfoCard label="Roles" value={sortedRoles.map(formatRoleLabel).join(", ") || "—"} />
                 <InviteCard
                   info={inviteInfo}
                   showStats={isOwner || isAdmin}
