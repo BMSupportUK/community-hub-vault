@@ -260,6 +260,18 @@ function ShopPage() {
   const isAdminOnly = hasRole("admin");
   const adminUnlocked = isAdmin && isAdminUnlocked(user?.id);
   const [discountUnlocked, setDiscountUnlocked] = useState(false);
+  // Shop Orders (every customer's orders) needs a password + PIN confirmation, admin/management only.
+  const ownerOrdersView = view === "orders" && scope === "all" && isAdmin;
+  const [ordersUnlocked, setOrdersUnlocked] = useState(false);
+  useEffect(() => {
+    setOrdersUnlocked(isAdmin && isShopOrdersUnlocked(user?.id));
+  }, [isAdmin, user?.id, view, scope]);
+  useEffect(() => {
+    if (!ownerOrdersView) {
+      clearShopOrdersUnlock(user?.id);
+      setOrdersUnlocked(false);
+    }
+  }, [ownerOrdersView, user?.id]);
   useEffect(() => {
     setDiscountUnlocked(isAdminOnly && isDiscountUnlocked(user?.id));
   }, [isAdminOnly, user?.id, view]);
