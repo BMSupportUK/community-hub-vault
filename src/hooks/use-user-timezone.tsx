@@ -11,6 +11,14 @@ export const browserTimezone = () => {
 };
 
 const cache = new Map<string, string>();
+const USER_TIMEZONE_EVENT = "bm-user-timezone-change";
+
+export function announceUserTimezone(userId: string, timezone: string) {
+  cache.set(userId, timezone);
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent(USER_TIMEZONE_EVENT, { detail: { userId, timezone } }));
+  }
+}
 
 /** Returns the signed-in user's saved timezone, falling back to the browser timezone. */
 export function useUserTimezone(): string {
@@ -28,6 +36,11 @@ export function useUserTimezone(): string {
       cache.set(user.id, next);
       if (active) setTz(next);
     };
+    const onTimezoneChange = (event: Event) => {
+      const detail = (event as CustomEvent<{ userId?: string; timezone?: string }>).detail;
+      if (detail?.userId === user.id && detail.timezone) apply(detail.timezone);
+    };
+    window.addEventListener(USER_TIMEZONE_EVENT, onTimezoneChange);
     supabase
       .from("profiles")
       .select("timezone")
@@ -50,6 +63,7 @@ export function useUserTimezone(): string {
       .subscribe();
     return () => {
       active = false;
+      window.removeEventListener(USER_TIMEZONE_EVENT, onTimezoneChange);
       supabase.removeChannel(ch);
     };
   }, [user]);

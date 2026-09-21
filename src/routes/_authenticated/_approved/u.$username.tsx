@@ -24,7 +24,7 @@ import referralsBg from "@/assets/referrals-bg.jpg";
 import friendsBg from "@/assets/friends-bg.jpg";
 import ticketsBg from "@/assets/tickets-bg.jpg";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { browserTimezone, listTimeZones } from "@/hooks/use-user-timezone";
+import { announceUserTimezone, browserTimezone, listTimeZones } from "@/hooks/use-user-timezone";
 import { Nameplate } from "@/components/app/Nameplate";
 import { NameplatePicker } from "@/components/app/NameplatePicker";
 import { useRoleFlashMap, resolveAvatarUrl, roleFlashClass } from "@/lib/role-flash";
@@ -1954,6 +1954,7 @@ function EditProfileModal({ profile, onClose, onSaved }: { profile: ProfileRow; 
     }).eq("id", user.id);
     setSaving(false);
     if (error) return toast.error(error.message);
+    announceUserTimezone(user.id, timezone || detectedTimezone);
     toast.success("Profile saved");
     if (u !== profile.username) {
       window.location.href = `/u/${u}`;
