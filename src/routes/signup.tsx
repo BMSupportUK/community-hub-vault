@@ -12,7 +12,6 @@ import { assertSignupAllowed } from "@/lib/vpn-public-check.functions";
 import { isVpnBypassEmail } from "@/lib/vpn-bypass";
 import { VpnBlockedDialog } from "@/components/VpnBlockedDialog";
 import { ShieldAlert, Loader2, RefreshCw } from "lucide-react";
-import AdSenseSlot from "@/components/app/AdSenseSlot";
 import { useViewportLockable } from "@/hooks/use-viewport-lock";
 
 export const Route = createFileRoute("/signup")({
@@ -289,56 +288,6 @@ function SignupPage() {
                   </p>
                 </>
               )}
-              <fieldset className="space-y-2">
-                <legend className="text-xs font-medium text-foreground/80 mb-1">
-                  What are you signing up for? <span className="text-destructive">*</span>
-                </legend>
-                <label
-                  className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                    intent === "bm-support"
-                      ? "border-primary bg-primary/10"
-                      : "border-border hover:border-primary/40 hover:bg-muted/30"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="intent"
-                    value="bm-support"
-                    checked={intent === "bm-support"}
-                    onChange={() => setIntent("bm-support")}
-                    className="mt-0.5 accent-primary"
-                    required
-                  />
-                  <span className="text-sm">
-                    <span className="block font-semibold">BM Support</span>
-                    <span className="block text-xs text-muted-foreground">
-                      Customer support, tickets, devices and orders.
-                    </span>
-                  </span>
-                </label>
-                <label
-                  className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                    intent === "fan-zone"
-                      ? "border-primary bg-primary/10"
-                      : "border-border hover:border-primary/40 hover:bg-muted/30"
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="intent"
-                    value="fan-zone"
-                    checked={intent === "fan-zone"}
-                    onChange={() => setIntent("fan-zone")}
-                    className="mt-0.5 accent-primary"
-                  />
-                  <span className="text-sm">
-                    <span className="block font-semibold">Boro Fan Zone (Middlesbrough F.C. Forum)</span>
-                    <span className="block text-xs text-muted-foreground">
-                      Match-day banter, transfer talk and the forum.
-                    </span>
-                  </span>
-                </label>
-              </fieldset>
               <TurnstileWidget onToken={setCaptchaToken} onExpire={() => setCaptchaToken("")} />
 
               {checking && (
@@ -388,10 +337,65 @@ function SignupPage() {
         </div>
       </main>
 
-      {/* Desktop advert sidebar — shrinks to fit short screens instead of clipping */}
-      <aside className="hidden xl:flex min-h-0 items-center justify-center px-4 py-6 border-l border-border/60">
-        <div className="w-full max-w-[280px]">
-          <AdSenseSlot slot="sidebar" fitViewport />
+      {/* Sidebar — which part of the site to register for (advert removed from this page) */}
+      <aside
+        className={`flex min-h-0 flex-col items-center justify-center px-4 pt-2 pb-5 lg:border-l lg:border-border/60 ${
+          lockable ? "overflow-y-auto" : ""
+        }`}
+      >
+        <div className="w-full max-w-md">
+          <div className="bg-surface/80 backdrop-blur-sm border border-border rounded-2xl p-5 sm:p-6 shadow-soft">
+            <fieldset className="space-y-2">
+              <legend className="text-sm font-semibold text-foreground mb-2">
+                Which part of the site would you like to register for?{" "}
+                <span className="text-destructive">*</span>
+              </legend>
+              <label
+                className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                  intent === "bm-support"
+                    ? "border-primary bg-primary/10"
+                    : "border-border hover:border-primary/40 hover:bg-muted/30"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="intent"
+                  value="bm-support"
+                  checked={intent === "bm-support"}
+                  onChange={() => setIntent("bm-support")}
+                  className="mt-0.5 accent-primary"
+                />
+                <span className="text-sm">
+                  <span className="block font-semibold">BM Support</span>
+                  <span className="block text-xs text-muted-foreground">
+                    Customer support, tickets, devices and orders.
+                  </span>
+                </span>
+              </label>
+              <label
+                className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                  intent === "fan-zone"
+                    ? "border-primary bg-primary/10"
+                    : "border-border hover:border-primary/40 hover:bg-muted/30"
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="intent"
+                  value="fan-zone"
+                  checked={intent === "fan-zone"}
+                  onChange={() => setIntent("fan-zone")}
+                  className="mt-0.5 accent-primary"
+                />
+                <span className="text-sm">
+                  <span className="block font-semibold">Boro Fan Zone (Middlesbrough F.C. Forum)</span>
+                  <span className="block text-xs text-muted-foreground">
+                    Match-day banter, transfer talk and the forum.
+                  </span>
+                </span>
+              </label>
+            </fieldset>
+          </div>
         </div>
       </aside>
 
