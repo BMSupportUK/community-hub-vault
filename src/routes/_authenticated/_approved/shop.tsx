@@ -3074,13 +3074,8 @@ function OrdersView({
           </button>
         ))}
       </div>
-      <div
-        className={cn(
-          "rounded-2xl bg-purple-950/40 border border-purple-500/30 backdrop-blur overflow-hidden min-h-[60vh] flex",
-          activeId ? "flex" : "hidden lg:flex",
-        )}
-      >
-        {activeId ? (
+      {activeId && (
+        <div className="rounded-2xl bg-purple-950/40 border border-purple-500/30 backdrop-blur overflow-hidden min-h-[60vh] flex">
           <OrderDetail
             orderId={activeId}
             isAdmin={isAdmin && adminUnlocked}
@@ -3091,12 +3086,8 @@ function OrdersView({
               })
             }
           />
-        ) : (
-          <div className="flex-1 grid place-items-center text-purple-200/70 text-sm p-10 text-center">
-            Select an order card to see all the details and status.
-          </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
   };
