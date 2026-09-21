@@ -53,7 +53,6 @@ interface PersonRow {
 }
 
 const ROLE_TABS = [
-  { key: "all", label: "All roles" },
   { key: "admin", label: "Owner" },
   { key: "management", label: "Management" },
   { key: "staff", label: "Staff" },
@@ -64,7 +63,6 @@ type RoleKey = (typeof ROLE_TABS)[number]["key"];
 
 /** Monday-first weekday tabs; value is the JS getDay() index. */
 const DAY_TABS = [
-  { key: "all" as const, label: "All days" },
   { key: 1, label: "Monday" },
   { key: 2, label: "Tuesday" },
   { key: 3, label: "Wednesday" },
@@ -74,9 +72,9 @@ const DAY_TABS = [
   { key: 0, label: "Sunday" },
 ];
 
-type DayKey = "all" | number;
+type DayKey = number;
 
-const ROLE_ORDER: Exclude<RoleKey, "all">[] = ["admin", "management", "staff", "moderator"];
+const ROLE_ORDER: RoleKey[] = ["admin", "management", "staff", "moderator"];
 
 const ROLE_LABEL: Record<string, string> = {
   admin: "Owner",
