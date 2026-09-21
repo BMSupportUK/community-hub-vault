@@ -59,15 +59,15 @@ function HomeLayout() {
   const hideOutageBox =
     hasAny(["member", "nonsubscriber"]) &&
     !hasAny(["subscriber", "staff", "moderator", "management", "admin"]);
-  const channelFooter = (
-    <div className="space-y-4">
-      {!hideOutageBox && <ServiceStatusBox />}
-      <WorkingStatusBox stackActions />
-    </div>
-  );
   const navigate = useNavigate();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const isHomeIndex = pathname === "/home" || pathname === "/home/";
+  const channelFooter = (
+    <div className="space-y-4">
+      {!hideOutageBox && <ServiceStatusBox />}
+      {isHomeIndex && <WorkingStatusBox stackActions />}
+    </div>
+  );
   const path = useRouterState({ select: (r) => r.location.pathname });
   const [readyPath, setReadyPath] = useState<string | null>(null);
   const channelContentReady = isHomeIndex || readyPath === path;
