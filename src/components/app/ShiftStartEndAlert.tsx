@@ -7,9 +7,23 @@ import { addDaysToDateStr, useTimezone } from "@/hooks/use-timezone";
 import shiftStartAudio from "@/assets/shift-start.mp3";
 import shiftEndAudio from "@/assets/shift-end.mp3";
 import { playSound } from "@/lib/sound";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const WARN_BEFORE = 10 * 60 * 1000; // 10 minutes
 const START_OVERDUE_GRACE = 30 * 60 * 1000; // stop nagging 30 min after shift start
+// Give staff a short window to clock themselves in before we do it for them.
+const AUTO_CLOCK_IN_AFTER = 5 * 60 * 1000; // 5 minutes past the shift start
+// How long after the shift end we wait for an answer before clocking them out.
+const AUTO_CLOCK_OUT_AFTER = 15 * 60 * 1000; // 15 minutes
 
 interface Slot {
   id: string;
