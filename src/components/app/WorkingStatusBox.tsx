@@ -295,11 +295,17 @@ export function WorkingStatusBox({
         <button
           type="button"
           onClick={clockIn}
-          disabled={!hasSlotToday}
-          title={hasSlotToday ? "Sign in" : "No shift on the rota today"}
+          disabled={!canSignIn}
+          title={
+            canSignIn
+              ? "Sign in"
+              : todayWindow
+                ? "Sign-in opens 15 minutes before your shift"
+                : "No shift on the rota today"
+          }
           className={cn(
             "inline-flex items-center justify-center rounded-full border transition-all",
-            hasSlotToday
+            canSignIn
               ? "border-success/30 bg-success/10 text-success hover:bg-success/20"
               : "border-white/10 bg-white/5 text-muted-foreground cursor-not-allowed opacity-60",
             iconButtonClass,
