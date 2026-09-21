@@ -750,13 +750,25 @@ function TicketsPage() {
                   ) : (
                     <div className="flex-1 grid place-items-center p-8">
                       <div className="text-center max-w-sm">
-                        <div className="size-14 rounded-2xl bg-white/20 backdrop-blur grid place-items-center mx-auto mb-4 shadow-lg">
-                          <TicketIcon className="size-6 text-white" />
-                        </div>
-                        <h2 className="font-display text-xl font-bold drop-shadow">Support tickets</h2>
-                        <p className="text-white/85 text-sm mt-2">
-                          {tickets.length === 0 ? "Open your first ticket to get help from the team." : "Select a ticket from the list."}
-                        </p>
+                        {openTickets.length === 0 ? (
+                          <>
+                            <img src={ticketsEmpty} alt="" aria-hidden loading="lazy" width={816} height={816} className="w-44 h-44 object-contain mx-auto mb-2 drop-shadow-xl" />
+                            <h2 className="font-display text-xl font-bold drop-shadow">No open tickets to deal with</h2>
+                            <p className="text-white/85 text-sm mt-2">
+                              {tickets.length === 0
+                                ? "Open your first ticket to get help from the team."
+                                : "Every ticket has been resolved — nothing waiting on you."}
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <div className="size-14 rounded-2xl bg-white/20 backdrop-blur grid place-items-center mx-auto mb-4 shadow-lg">
+                              <TicketIcon className="size-6 text-white" />
+                            </div>
+                            <h2 className="font-display text-xl font-bold drop-shadow">Support tickets</h2>
+                            <p className="text-white/85 text-sm mt-2">Select a ticket from the list.</p>
+                          </>
+                        )}
                       </div>
                     </div>
                   )}
