@@ -5,6 +5,7 @@ import { Hash, Menu } from "lucide-react";
 import { ChannelColumn, type ChannelGroup } from "@/components/app/ChannelColumn";
 import { ServiceStatusBox } from "@/components/app/ServiceStatusBox";
 import { WorkingStatusBox } from "@/components/app/WorkingStatusBox";
+import { AdSenseSlot } from "@/components/app/AdSenseSlot";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -65,6 +66,7 @@ function HomeLayout() {
   const channelFooter = (
     <div className="space-y-4">
       {!hideOutageBox && <ServiceStatusBox />}
+      {!isHomeIndex && <AdSenseSlot slot="talk" />}
       {isHomeIndex && <WorkingStatusBox stackActions />}
     </div>
   );

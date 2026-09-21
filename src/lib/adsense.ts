@@ -10,12 +10,14 @@ export const ADSENSE_CLIENT_ID = "ca-pub-7730881064868843";
 export const ADSENSE_TOPIC_SLOT = "3497999055";
 export const ADSENSE_SIDEBAR_SLOT = "6260280806";
 export const ADSENSE_HOME_SLOT = "1626759005";
+export const ADSENSE_TALK_SLOT = "8133272270";
 
 export const ADSENSE_ENABLED =
   ADSENSE_CLIENT_ID.length > 0 &&
   (ADSENSE_TOPIC_SLOT.length > 0 ||
     ADSENSE_SIDEBAR_SLOT.length > 0 ||
-    ADSENSE_HOME_SLOT.length > 0);
+    ADSENSE_HOME_SLOT.length > 0 ||
+    ADSENSE_TALK_SLOT.length > 0);
 
 declare global {
   interface Window {

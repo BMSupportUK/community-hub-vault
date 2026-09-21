@@ -5,12 +5,13 @@ import {
   ADSENSE_ENABLED,
   ADSENSE_HOME_SLOT,
   ADSENSE_SIDEBAR_SLOT,
+  ADSENSE_TALK_SLOT,
   ADSENSE_TOPIC_SLOT,
   ensureAdSenseScript,
   pushAd,
 } from "@/lib/adsense";
 
-export type AdSenseSlotKind = "topic" | "sidebar" | "home";
+export type AdSenseSlotKind = "topic" | "sidebar" | "home" | "talk";
 
 function Placeholder({ label }: { label: string }) {
   return (
@@ -37,7 +38,9 @@ function AdSenseSlotComponent({ slot = "topic", fitViewport = false }: { slot?: 
       ? ADSENSE_SIDEBAR_SLOT
       : slot === "home"
         ? ADSENSE_HOME_SLOT
-        : ADSENSE_TOPIC_SLOT;
+        : slot === "talk"
+          ? ADSENSE_TALK_SLOT
+          : ADSENSE_TOPIC_SLOT;
   const enabled = ADSENSE_ENABLED && adSlotId.length > 0;
   // fitViewport: cap a sidebar unit to the visible screen height so pages
   // locked to the viewport (sign-in / join) never clip the advert.
@@ -107,7 +110,7 @@ function AdSenseSlotComponent({ slot = "topic", fitViewport = false }: { slot?: 
   return (
     <div
       ref={boxRef}
-      className={`hidden md:block rounded-2xl border border-border/60 bg-surface-2/20 px-2 py-2 overflow-hidden ${slot === "home" ? "h-[92px]" : slot === "topic" ? "h-[125px]" : ""} ${sidebarFit ? "flex w-full flex-col" : ""}`}
+      className={`hidden md:block rounded-2xl border border-border/60 bg-surface-2/20 px-2 py-2 overflow-hidden ${slot === "home" ? "h-[92px]" : slot === "topic" ? "h-[125px]" : ""} ${slot === "talk" ? "min-h-[250px]" : ""} ${sidebarFit ? "flex w-full flex-col" : ""}`}
     >
       <div className="px-2 pb-1 text-[10px] uppercase tracking-[0.25em] text-muted-foreground/70">
         Advertisement
@@ -119,7 +122,7 @@ function AdSenseSlotComponent({ slot = "topic", fitViewport = false }: { slot?: 
           style={{ display: "block", textAlign: "center" }}
           data-ad-client={ADSENSE_CLIENT_ID}
           data-ad-slot={adSlotId}
-          data-ad-format={slot === "home" || slot === "topic" ? "horizontal" : "auto"}
+          data-ad-format={slot === "home" || slot === "topic" ? "horizontal" : slot === "talk" ? "rectangle" : "auto"}
           data-full-width-responsive="true"
         />
       </div>
