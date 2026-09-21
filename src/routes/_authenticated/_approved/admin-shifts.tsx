@@ -52,6 +52,25 @@ interface PersonRow {
   username: string | null;
 }
 
+const ROLE_TABS = [
+  { key: "all", label: "All roles" },
+  { key: "admin", label: "Owner" },
+  { key: "management", label: "Management" },
+  { key: "staff", label: "Staff" },
+  { key: "moderator", label: "Moderator" },
+] as const;
+
+type RoleKey = (typeof ROLE_TABS)[number]["key"];
+
+const ROLE_ORDER: Exclude<RoleKey, "all">[] = ["admin", "management", "staff", "moderator"];
+
+const ROLE_LABEL: Record<string, string> = {
+  admin: "Owner",
+  management: "Management",
+  staff: "Staff",
+  moderator: "Moderator",
+};
+
 function dayKey(iso: string) {
   const d = new Date(iso);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
