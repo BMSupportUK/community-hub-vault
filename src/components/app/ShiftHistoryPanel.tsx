@@ -231,10 +231,35 @@ export default function ShiftHistoryPanel({ userId, name }: { userId: string; na
 
   const rangeLabel = fmtRange(new Date(weekFrom), new Date(weekTo));
 
+  const claimedBlock = claimed.length > 0 ? (
+    <div className="rounded-2xl border border-amber-400/40 bg-amber-950/20 p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h4 className="font-semibold text-white">Claimed hours</h4>
+        <span className="text-xs text-amber-200/80">
+          {claimed.length} slot{claimed.length === 1 ? "" : "s"} booked this week
+        </span>
+      </div>
+      <div className="mt-3 grid gap-2 sm:grid-cols-2">
+        {claimed.map((c) => (
+          <div key={c.id} className="flex items-center gap-2 rounded-xl border border-amber-400/30 bg-amber-500/5 px-3 py-2 text-sm text-white">
+            <ClockIcon className="size-4 text-amber-300" />
+            <span className="font-medium">{fmtSlotDate(c.shift_date)}</span>
+            <span className="ml-auto tabular-nums text-amber-100/90">
+              {c.start_time.slice(0, 5)}–{c.end_time.slice(0, 5)} · {slotHours(c.start_time, c.end_time)}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  ) : null;
+
   if (!rows.length) {
     return (
-      <div className="rounded-2xl border border-purple-500/30 bg-purple-950/50 p-8 text-center text-purple-200/80">
-        No shifts recorded this week ({rangeLabel}).
+      <div className="space-y-4">
+        {claimedBlock}
+        <div className="rounded-2xl border border-purple-500/30 bg-purple-950/50 p-8 text-center text-purple-200/80">
+          No clocked-in shifts recorded this week ({rangeLabel}).
+        </div>
       </div>
     );
   }
@@ -250,6 +275,7 @@ export default function ShiftHistoryPanel({ userId, name }: { userId: string; na
         </p>
       </div>
 
+      {claimedBlock}
 
       <div className="grid gap-3 sm:grid-cols-2">
         {rows.map((s) => {
