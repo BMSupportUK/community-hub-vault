@@ -44,7 +44,7 @@ function AdSenseSlotComponent({ slot = "topic", fitViewport = false }: { slot?: 
   const sidebarFit = slot === "sidebar" && fitViewport;
 
   const boxRef = useRef<HTMLDivElement | null>(null);
-  const insRef = useRef<HTMLElement | null>(null);
+  const insRef = useRef<HTMLModElement | null>(null);
   const pressRef = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
