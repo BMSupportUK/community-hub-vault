@@ -177,8 +177,13 @@ function StaffShiftsPage() {
       const pmap: Record<string, PersonRow> = {};
       for (const p of (pd ?? []) as PersonRow[]) pmap[p.id] = p;
       setPeople(pmap);
+      const { data: rd } = await supabase.from("user_roles").select("user_id, role").in("user_id", userIds);
+      const rmap: Record<string, string[]> = {};
+      for (const r of (rd ?? []) as { user_id: string; role: string }[]) (rmap[r.user_id] ??= []).push(r.role);
+      setRolesByUser(rmap);
     } else {
       setPeople({});
+      setRolesByUser({});
     }
     setLoading(false);
   }, []);
