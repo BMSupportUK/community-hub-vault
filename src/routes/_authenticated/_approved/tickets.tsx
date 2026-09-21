@@ -1194,7 +1194,7 @@ function OfficeHoursPanel() {
                   {hour.is_closed ? "Closed" : `${formatOfficeTime(hour.open_time)}–${formatOfficeTime(hour.close_time)}`}
                   {!status.isOpen && status.nextDayUK === hour.day_of_week && status.ukOpening && (
                     <span className="font-semibold text-primary">
-                      Reopens {status.ukOpening} · in {status.countdown}
+                      Reopens {status.ukOpening} · in <span className="tabular-nums">{status.countdown}</span>
                     </span>
                   )}
                 </div>
@@ -1215,7 +1215,7 @@ function OfficeHoursPanel() {
                   )}
                   {!status.isOpen && status.nextDay === hour.day_of_week && status.countdown && (
                     <span className="font-semibold text-primary">
-                      Reopens {status.localOpening} · in {status.countdown}
+                      Reopens {status.localOpening} · in <span className="tabular-nums">{status.countdown}</span>
                     </span>
                   )}
                 </div>
