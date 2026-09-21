@@ -317,13 +317,41 @@ function StaffShiftsPage() {
 
       <div className="flex flex-wrap gap-2 rounded-2xl border border-border bg-surface-1 p-2">
         {ROLE_TABS.map((t) => {
-          const count = t.key === "all" ? shifts.length : (roleCounts[t.key] ?? 0);
+          const count = t.key === "all" ? byWeekday.length : (roleCounts[t.key] ?? 0);
           const active = role === t.key;
           return (
             <button
               key={t.key}
               type="button"
               onClick={() => setRole(t.key)}
+              className={cn(
+                "inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-sm font-medium transition-colors",
+                active ? "bg-gradient-primary text-white" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+              )}
+            >
+              {t.label}
+              <span
+                className={cn(
+                  "rounded-full px-1.5 text-[11px] tabular-nums",
+                  active ? "bg-white/20" : "bg-muted text-muted-foreground",
+                )}
+              >
+                {count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="flex flex-wrap gap-2 rounded-2xl border border-border bg-surface-1 p-2">
+        {DAY_TABS.map((t) => {
+          const count = t.key === "all" ? byRole.length : (weekdayCounts[t.key as number] ?? 0);
+          const active = weekday === t.key;
+          return (
+            <button
+              key={String(t.key)}
+              type="button"
+              onClick={() => setWeekday(t.key)}
               className={cn(
                 "inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-sm font-medium transition-colors",
                 active ? "bg-gradient-primary text-white" : "text-muted-foreground hover:bg-muted hover:text-foreground",
