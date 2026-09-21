@@ -83,25 +83,25 @@ function ClockPill({
   title?: string;
 }) {
   return (
-    <div className="flex flex-col items-center gap-0.5" title={title}>
-      <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2" title={title}>
+      <div className="flex flex-col items-end leading-tight">
         <span className="hidden text-[10px] uppercase tracking-wide text-muted-foreground sm:inline">
           {sideLabel}
         </span>
-        <div
-          className={`flex items-center gap-2 rounded-full bg-rail/80 ring-1 ${ring} px-3 py-1 font-mono text-sm tabular-nums shadow-soft`}
-        >
-          <span className={text}>{time}</span>
-          <span
-            className={`text-[10px] uppercase tracking-wider rounded-full px-1.5 py-0.5 ${labelBg}`}
-          >
-            {label}
-          </span>
-        </div>
+        <span className="hidden text-[9px] leading-none text-foreground/70 tabular-nums sm:inline">
+          {date}
+        </span>
       </div>
-      <span className="text-[10px] leading-none text-foreground/70 tabular-nums">
-        {date}
-      </span>
+      <div
+        className={`flex items-center gap-2 rounded-full bg-rail/80 ring-1 ${ring} px-3 py-1 font-mono text-sm tabular-nums shadow-soft`}
+      >
+        <span className={text}>{time}</span>
+        <span
+          className={`text-[10px] uppercase tracking-wider rounded-full px-1.5 py-0.5 ${labelBg}`}
+        >
+          {label}
+        </span>
+      </div>
     </div>
   );
 }
