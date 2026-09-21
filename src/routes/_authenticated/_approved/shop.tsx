@@ -263,6 +263,13 @@ function ShopPage() {
   useEffect(() => {
     setDiscountUnlocked(isAdminOnly && isDiscountUnlocked(user?.id));
   }, [isAdminOnly, user?.id, view]);
+  // Leaving Manage Products / Discount Codes locks the section again.
+  useEffect(() => {
+    if (view !== "admin" && (view as string) !== "discounts") {
+      clearDiscountUnlock(user?.id);
+      setDiscountUnlocked(false);
+    }
+  }, [view, user?.id]);
   const isAdminView =
     (view === "admin" && isAdminOnly) ||
     ((view as string) === "discounts" && isAdminOnly) ||
