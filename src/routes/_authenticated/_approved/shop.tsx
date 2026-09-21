@@ -426,14 +426,17 @@ function ShopPage() {
         )}
         <div className="flex min-h-0 min-w-0 flex-1 overflow-visible md:h-full md:max-h-full md:overflow-hidden">
           {view === "store" && <Storefront />}
-          {view === "orders" && (
-            <OrdersView
-              selectedId={id}
-              isAdmin={isAdmin}
-              adminUnlocked={adminUnlocked}
-              initialScope={scope === "all" ? "all" : "mine"}
-            />
-          )}
+          {view === "orders" &&
+            (ownerOrdersView && !ordersUnlocked ? (
+              <ShopOrdersGate onUnlocked={() => setOrdersUnlocked(true)} />
+            ) : (
+              <OrdersView
+                selectedId={id}
+                isAdmin={isAdmin}
+                adminUnlocked={adminUnlocked}
+                initialScope={scope === "all" && isAdmin ? "all" : "mine"}
+              />
+            ))}
           {view === "admin" &&
             isAdminOnly &&
             adminUnlocked &&
