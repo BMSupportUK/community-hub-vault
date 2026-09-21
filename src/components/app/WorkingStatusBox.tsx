@@ -410,6 +410,11 @@ export function WorkingStatusBox({
                 <span className="text-muted-foreground font-medium">Shift</span>
                 <span className="text-muted-foreground italic">Not signed in</span>
               </div>
+              {!hasSlotToday && (
+                <p className="text-xs text-muted-foreground">
+                  You're not on the rota today, so signing in is unavailable.
+                </p>
+              )}
               {nextSlot && (
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-muted-foreground font-medium">Next shift</span>
