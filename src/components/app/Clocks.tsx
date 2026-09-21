@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
 type BusinessHourRow = {
@@ -18,15 +18,9 @@ const DEFAULT_HOURS: BusinessHourRow[] = [
   { day_of_week: 6, is_closed: true, open_time: "09:00", close_time: "17:00" },
 ];
 
-const DAY_MS = 24 * 60 * 60 * 1000;
-
 function parseTimeToMinutes(value: string) {
   const [hour = "0", minute = "0"] = value.split(":");
   return Number(hour) * 60 + Number(minute);
-}
-
-function formatMinutes(value: string) {
-  return value.length >= 5 ? value.slice(0, 5) : value;
 }
 
 function zonedParts(date: Date, tz: string) {
@@ -78,7 +72,7 @@ function zonedDateTimeToDate(
   time: string,
   tz: string,
 ) {
-  const [hour = "0", minute = "0"] = time.split(":").map(Number);
+  const [hour = 0, minute = 0] = time.split(":").map((part) => Number(part));
   let utc = Date.UTC(dateParts.year, dateParts.month - 1, dateParts.day, hour, minute, 0);
 
   for (let i = 0; i < 3; i += 1) {
@@ -154,14 +148,14 @@ function getOfficeStatus(rows: BusinessHourRow[], now: Date, officeTz: string, u
   return { open, nextOpening: null as Date | null, countdown: "", userOpening: "" };
 }
 
-function format(tz: string) {
+function format(tz: string, date = new Date()) {
   return new Intl.DateTimeFormat("en-GB", {
     hour: "2-digit",
     minute: "2-digit",
     second: "2-digit",
     hour12: false,
     timeZone: tz,
-  }).format(new Date());
+  }).format(date);
 }
 
 function abbrev(tz: string) {
@@ -225,7 +219,7 @@ export function Clocks() {
         title={
           officeStatus.open || !officeStatus.nextOpening
             ? `UK office time (${ukTz})`
-            : `Office closed. Opens ${formatMinutes(formatLocalOpening(officeStatus.nextOpening, ukTz))}; your local time ${officeStatus.userOpening}.`
+            : `Office closed. Opens ${formatLocalOpening(officeStatus.nextOpening, ukTz)}; your local time ${officeStatus.userOpening}.`
         }
         status={
           officeStatus.open ? null : (
@@ -259,6 +253,7 @@ function ClockPill({
   text,
   labelBg,
   title,
+  status,
 }: {
   sideLabel: string;
   time: string;
@@ -267,6 +262,7 @@ function ClockPill({
   text: string;
   labelBg: string;
   title?: string;
+  status?: ReactNode;
 }) {
   return (
     <div className="flex items-center gap-2" title={title}>
@@ -282,6 +278,7 @@ function ClockPill({
         >
           {label}
         </span>
+        {status}
       </div>
     </div>
   );
