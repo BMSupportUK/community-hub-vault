@@ -119,7 +119,7 @@ function StatCard({ label, value }: { label: string; value: string }) {
 function StaffShiftsPage() {
   const { hasAny } = useAuth();
   const canView = hasAny(["admin", "management", "staff", "moderator"]);
-  const [days, setDays] = useState(7);
+  const [days, setDays] = useState(0);
   const [loading, setLoading] = useState(true);
   const [shifts, setShifts] = useState<ShiftRow[]>([]);
   const [breaksByShift, setBreaksByShift] = useState<Record<string, BreakRow[]>>({});
