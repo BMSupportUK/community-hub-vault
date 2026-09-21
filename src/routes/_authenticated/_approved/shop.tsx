@@ -3001,10 +3001,11 @@ function OrdersView({
   const renderOrderList = (list: Order[]) => {
   const activeId = selectedId && list.some((o) => o.id === selectedId) ? selectedId : null;
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1fr_380px] gap-4 min-h-[60vh]">
+    <div className={cn("grid grid-cols-1 gap-4 min-h-[60vh]", activeId && "lg:grid-cols-[1fr_380px]")}>
       <div
         className={cn(
           "grid grid-cols-1 sm:grid-cols-2 gap-3 content-start",
+          !activeId && "lg:grid-cols-3",
           activeId ? "hidden lg:grid" : "",
         )}
       >
