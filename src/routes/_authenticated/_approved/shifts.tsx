@@ -55,6 +55,17 @@ interface Swap {
   created_at: string;
 }
 interface Profile { id: string; username: string | null; display_name: string | null; }
+/** One entry in a staff member's shift booking history. */
+interface Booking {
+  id: string;
+  action: string;
+  shift_date: string;
+  start_time: string;
+  end_time: string;
+  slot_type: string | null;
+  required_role: string | null;
+  created_at: string;
+}
 
 /** Roles a rota slot can be reserved for. */
 type ShiftRole = "admin" | "management" | "staff" | "moderator";
@@ -202,6 +213,11 @@ function ShiftsPage() {
 
   // Holiday request state
   const [holForm, setHolForm] = useState({ start: "", end: "", reason: "" });
+
+  // Claim confirmation + booking history
+  const [confirmSlot, setConfirmSlot] = useState<Slot | null>(null);
+  const [claiming, setClaiming] = useState(false);
+  const [bookings, setBookings] = useState<Booking[]>([]);
 
   // Swap dialog
   const [swapFor, setSwapFor] = useState<Slot | null>(null);
