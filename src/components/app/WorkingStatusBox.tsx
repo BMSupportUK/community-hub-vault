@@ -96,7 +96,15 @@ export function WorkingStatusBox({
       );
       setNextSlot(upcoming ?? null);
       // Staff can only sign in on a day they are on the rota — applies to every role.
-      setHasSlotToday(((slots ?? []) as NextSlot[]).some((sl) => sl.shift_date === todayStr));
+      const todays = ((slots ?? []) as NextSlot[]).filter((sl) => sl.shift_date === todayStr);
+      setTodayWindow(
+        todays.length
+          ? {
+              start: todays.map((sl) => sl.start_time).sort()[0],
+              end: todays.map((sl) => sl.end_time).sort().slice(-1)[0],
+            }
+          : null,
+      );
     };
     refresh();
     const ch = supabase
