@@ -42,6 +42,7 @@ function AdminBusinessHours() {
       for (let i = 0; i < 7; i++) {
         full.push(map.get(i) ?? { day_of_week: i, is_closed: i === 0 || i === 6, open_time: "09:00", close_time: "17:00" });
       }
+      full.sort((a, b) => ((a.day_of_week + 6) % 7) - ((b.day_of_week + 6) % 7));
       setRows(full);
     })();
   }, []);
