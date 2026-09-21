@@ -25,6 +25,7 @@ const MentionsBadge = lazy(() => import("@/components/app/MentionsBadge").then((
 const NotificationBell = lazy(() => import("@/components/app/NotificationBell").then((m) => ({ default: m.NotificationBell })));
 const TwoFactorPill = lazy(() => import("@/components/app/TwoFactorBanner").then((m) => ({ default: m.TwoFactorPill })));
 const VpnPill = lazy(() => import("@/components/app/TwoFactorBanner").then((m) => ({ default: m.VpnPill })));
+const Clocks = lazy(() => import("@/components/app/Clocks").then((m) => ({ default: m.Clocks })));
 const LockNowPill = lazy(() => import("@/components/app/ScreenLockProvider").then((m) => ({ default: m.LockNowPill })));
 
 const BreakEndingAlert = lazy(() => import("@/components/app/BreakEndingAlert").then((m) => ({ default: m.BreakEndingAlert })));
@@ -247,6 +248,9 @@ function AuthLayout() {
             )}
           </div>
           <div className="hidden xl:flex flex-1 min-w-0 px-3" />
+            <DeferUntilIdle>
+              <Clocks />
+            </DeferUntilIdle>
             <DeferUntilIdle>
               <LockNowPill />
             </DeferUntilIdle>
