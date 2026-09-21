@@ -2921,6 +2921,13 @@ function OrdersView({
   const [month, setMonth] = useState(() => new Date().getMonth());
   const currentYear = new Date().getFullYear();
   const monthLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const clearSelectedOrder = () => {
+    if (!selectedId) return;
+    navigate({
+      to: "/shop",
+      search: { view: "orders", scope: scope === "all" ? "all" : undefined },
+    });
+  };
   useEffect(() => {
     if (selectedId) {
       const o = orders.find((x) => x.id === selectedId);
