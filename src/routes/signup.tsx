@@ -73,7 +73,7 @@ function SignupPage() {
     setBusy(true);
     // Server-side gate on the real request IP — must pass before any account exists.
     try {
-      const gate = await assertSignupAllowed();
+      const gate = await assertSignupAllowed({ data: { email } });
       if (!gate.allowed) {
         setBusy(false);
         setServerBlock(gate.reason === "vpn" ? "vpn" : "unverified");
