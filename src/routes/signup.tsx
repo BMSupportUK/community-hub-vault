@@ -92,6 +92,18 @@ function SignupPage() {
       setCaptchaToken("");
       return toast.error("Captcha verification failed. Please try again.");
     }
+    // Block emails that already have an account — signUp itself won't tell us.
+    try {
+      const { data: exists, error: existsError } = await supabase.rpc("email_is_account_holder", {
+        _email: email.trim(),
+      });
+      if (!existsError && exists) {
+        setBusy(false);
+        return toast.error("That email address is already signed up — please sign in instead.");
+      }
+    } catch {
+      // If the check fails, fall through to signUp.
+    }
     const { error } = await supabase.auth.signUp({
       email,
       password,
