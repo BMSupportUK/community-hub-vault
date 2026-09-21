@@ -50,6 +50,13 @@
       "when": 1789718710426,
       "tag": "0006_create_ad_events",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1789989540288,
+      "tag": "0007_shifts_end_prompt_state",
+      "breakpoints": true
     }
   ]
 }
