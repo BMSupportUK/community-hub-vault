@@ -38,6 +38,7 @@ import { ThemePicker, APP_THEME_OPTIONS } from "@/components/app/ThemePicker";
 import { setPersonalAppTheme, useAppTheme } from "@/hooks/use-app-theme";
 import { useServerFn } from "@tanstack/react-start";
 import { assignReferrer } from "@/lib/referrals.functions";
+import ShiftHistoryPanel from "@/components/app/ShiftHistoryPanel";
 
 export const Route = createFileRoute("/_authenticated/_approved/u/$username")({
   validateSearch: (search: Record<string, unknown>): { tab?: string; edit?: 1 } => ({
@@ -165,8 +166,8 @@ function ProfilePage() {
   const [friends, setFriends] = useState<FriendRow[]>([]);
   const [rel, setRel] = useState<FriendRel>({ kind: "none" });
   const [relBusy, setRelBusy] = useState(false);
-  const initialTab = (["profile","creds","tickets","orders","referrals","friends"].includes(search.tab ?? "") ? search.tab : "profile") as "profile" | "creds" | "tickets" | "orders" | "referrals" | "friends";
-  const allowedTabs = ["profile","creds","tickets","orders","referrals","friends","notifications","theme"] as const;
+  const initialTab = (["profile","creds","tickets","orders","referrals","friends","shifts"].includes(search.tab ?? "") ? search.tab : "profile") as "profile" | "creds" | "tickets" | "orders" | "referrals" | "friends" | "shifts";
+  const allowedTabs = ["profile","creds","tickets","orders","referrals","friends","shifts","notifications","theme"] as const;
   type TabId = typeof allowedTabs[number];
   const initialTabSafe = (allowedTabs.includes((search.tab ?? "") as TabId) ? search.tab : initialTab) as TabId;
   const [mainTab, setMainTab] = useState<TabId>(initialTabSafe);
@@ -492,12 +493,18 @@ function ProfilePage() {
     );
   }
 
+  // Shift history is only meaningful for staff-side roles, and is visible to the
+  // staff member themselves plus the wider support team.
+  const isStaffProfile = sortedRoles.some((r) => ["admin", "management", "staff", "moderator"].includes(r));
+  const canSeeShifts = isStaffProfile && (isOwner || hasAny(["admin", "management", "staff", "moderator"]));
+
   const tabDefs = [
     { id: "profile", label: "Profile" },
     ...(canSeeCreds ? [{ id: "creds", label: "Credentials" }] : []),
     { id: "tickets", label: `Tickets (${tickets.length})` },
     { id: "orders", label: `Orders (${orders.length})` },
     { id: "friends", label: `Friends (${friends.length})` },
+    ...(canSeeShifts ? [{ id: "shifts", label: "Shift history" }] : []),
     ...(canSeeReferrals ? [{ id: "referrals", label: `Referrals (${referrals.length})` }] : []),
     ...(isOwner ? [{ id: "notifications", label: "Notifications" }] : []),
     ...(isOwner ? [{ id: "theme", label: "Theme" }] : []),
@@ -750,6 +757,13 @@ function ProfilePage() {
               ))}
             </ActivityCardGrid>
           </TabsContent>
+
+          {canSeeShifts && (
+            <TabsContent value="shifts" className="mt-6">
+              <ShiftHistoryPanel userId={profile.id} name={display} />
+            </TabsContent>
+          )}
+
 
           <TabsContent value="friends" className="mt-6">
             <ActivityCard title={isOwner ? "Your friends" : `${display}'s friends`} icon={UserPlus} empty={isOwner ? "No friends yet. Visit a member's profile and send a friend request." : "No friends yet."}>
