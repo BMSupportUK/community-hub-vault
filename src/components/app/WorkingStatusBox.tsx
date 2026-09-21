@@ -45,7 +45,8 @@ export function WorkingStatusBox({
   const [now, setNow] = useState(() => Date.now());
   const [busy, setBusy] = useState(false);
   const [nextSlot, setNextSlot] = useState<NextSlot | null>(null);
-  const [hasSlotToday, setHasSlotToday] = useState(true);
+  // Today's rota window: earliest slot start and latest slot end (HH:MM:SS).
+  const [todayWindow, setTodayWindow] = useState<{ start: string; end: string } | null>(null);
 
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
@@ -95,7 +96,15 @@ export function WorkingStatusBox({
       );
       setNextSlot(upcoming ?? null);
       // Staff can only sign in on a day they are on the rota — applies to every role.
-      setHasSlotToday(((slots ?? []) as NextSlot[]).some((sl) => sl.shift_date === todayStr));
+      const todays = ((slots ?? []) as NextSlot[]).filter((sl) => sl.shift_date === todayStr);
+      setTodayWindow(
+        todays.length
+          ? {
+              start: todays.map((sl) => sl.start_time).sort()[0],
+              end: todays.map((sl) => sl.end_time).sort().slice(-1)[0],
+            }
+          : null,
+      );
     };
     refresh();
     const ch = supabase
@@ -119,10 +128,26 @@ export function WorkingStatusBox({
     };
   }, [user?.id]);
 
+  // Sign-in opens 15 minutes before the rota start time and closes at shift end.
+  const canSignIn = (() => {
+    if (!todayWindow) return false;
+    const [sh, sm] = todayWindow.start.split(":").map(Number);
+    const opensAt = new Date(now);
+    opensAt.setHours(sh, sm - 15, 0, 0);
+    const t = new Date(now);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const nowTime = `${pad(t.getHours())}:${pad(t.getMinutes())}:${pad(t.getSeconds())}`;
+    return now >= opensAt.getTime() && nowTime <= todayWindow.end;
+  })();
+
   const clockIn = async () => {
     if (!user) return;
-    if (!hasSlotToday) {
+    if (!todayWindow) {
       toast.error("You have no shift on the rota today, so you can't sign in.");
+      return;
+    }
+    if (!canSignIn) {
+      toast.error("Sign-in opens 15 minutes before your shift starts.");
       return;
     }
     setBusy(true);
@@ -270,11 +295,17 @@ export function WorkingStatusBox({
         <button
           type="button"
           onClick={clockIn}
-          disabled={!hasSlotToday}
-          title={hasSlotToday ? "Sign in" : "No shift on the rota today"}
+          disabled={!canSignIn}
+          title={
+            canSignIn
+              ? "Sign in"
+              : todayWindow
+                ? "Sign-in opens 15 minutes before your shift"
+                : "No shift on the rota today"
+          }
           className={cn(
             "inline-flex items-center justify-center rounded-full border transition-all",
-            hasSlotToday
+            canSignIn
               ? "border-success/30 bg-success/10 text-success hover:bg-success/20"
               : "border-white/10 bg-white/5 text-muted-foreground cursor-not-allowed opacity-60",
             iconButtonClass,
@@ -410,9 +441,15 @@ export function WorkingStatusBox({
                 <span className="text-muted-foreground font-medium">Shift</span>
                 <span className="text-muted-foreground italic">Not signed in</span>
               </div>
-              {!hasSlotToday && (
+              {!todayWindow && (
                 <p className="text-xs text-muted-foreground">
                   You're not on the rota today, so signing in is unavailable.
+                </p>
+              )}
+              {todayWindow && !canSignIn && (
+                <p className="text-xs text-muted-foreground">
+                  Sign-in opens 15 minutes before your shift starts (
+                  {todayWindow.start.slice(0, 5)}).
                 </p>
               )}
               {nextSlot && (
