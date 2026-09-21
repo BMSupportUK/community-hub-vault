@@ -28,6 +28,10 @@ interface AppRow {
   accessIntent?: "bm-support" | "fan-zone" | null;
 }
 
+/** Appeals are submitted with a [APPEAL] prefix on the reason. */
+const isAppealRow = (a: { reason: string | null }) =>
+  (a.reason ?? "").trim().toUpperCase().startsWith("[APPEAL]");
+
 type MsgStatus = "sending" | "sent" | "failed";
 interface ThreadMsg { id: string; sender_id: string; content: string; created_at: string; status?: MsgStatus }
 
