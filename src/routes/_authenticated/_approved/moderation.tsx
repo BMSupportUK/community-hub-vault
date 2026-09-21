@@ -58,12 +58,18 @@ function ModerationPage() {
   const lastTypingSent = useRef<number>(0);
 
   const load = async () => {
-    const { data: rows } = await supabase
+    const { data: raw } = await supabase
       .from("gate_applications")
-      .select("id, user_id, status, created_at, reason")
+      .select("id, user_id, status, created_at, reviewed_at, reason")
       .eq("status", filter)
       .order("created_at", { ascending: false });
-    if (!rows) return;
+    if (!raw) return;
+    // Decided requests/appeals stay on the list for one month after the decision, then drop off.
+    const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    const rows =
+      filter === "pending"
+        ? raw
+        : raw.filter((r) => new Date(r.reviewed_at ?? r.created_at).getTime() >= cutoff);
     const ids = rows.map((r) => r.user_id);
     const { data: profs } = await supabase.from("profiles").select("id, display_name, username").in("id", ids);
     const profMap = new Map(profs?.map((p) => [p.id, p]) ?? []);
