@@ -596,7 +596,7 @@ function ProfilePage() {
           </TabsList>
 
           {/* Profile */}
-          <TabsContent value="profile" className="mt-6">
+          <TabsContent value="profile" className={paneClass}>
             <div className="grid lg:grid-cols-3 gap-6">
               <section className="lg:col-span-2 rounded-2xl border border-purple-500/30 bg-purple-950/50 backdrop-blur overflow-hidden text-white">
                 <div className="relative w-full aspect-[15/4] bg-purple-950/80" aria-hidden>
@@ -712,7 +712,7 @@ function ProfilePage() {
           </TabsContent>
 
           {canSeeCreds && (
-            <TabsContent value="creds" className="mt-6">
+            <TabsContent value="creds" className={paneClass}>
               <div className="space-y-6">
                 <div className="rounded-2xl overflow-hidden border border-purple-500/30 bg-purple-950/50 backdrop-blur shadow-[0_0_60px_-15px_rgba(168,85,247,0.5)]">
                   <div className="grid md:grid-cols-[1.4fr_1fr]">
@@ -742,7 +742,7 @@ function ProfilePage() {
             </TabsContent>
           )}
 
-          <TabsContent value="tickets" className="mt-6">
+          <TabsContent value="tickets" className={paneClass}>
             <ActivityCardGrid title="Recent tickets" icon={Ticket} empty="No tickets yet" isEmpty={tickets.length === 0}>
               {tickets.map((t) => (
                 <TicketCardItem key={t.id} ticket={t} />
@@ -750,7 +750,7 @@ function ProfilePage() {
             </ActivityCardGrid>
           </TabsContent>
 
-          <TabsContent value="orders" className="mt-6">
+          <TabsContent value="orders" className={paneClass}>
             <ActivityCardGrid title="Recent orders" icon={ShoppingBag} empty="No orders yet" isEmpty={orders.length === 0}>
               {orders.map((o) => (
                 <OrderCardItem key={o.id} order={o} fmtCurrency={fmtCurrency} />
@@ -759,13 +759,13 @@ function ProfilePage() {
           </TabsContent>
 
           {canSeeShifts && (
-            <TabsContent value="shifts" className="mt-6">
+            <TabsContent value="shifts" className={paneClass}>
               <ShiftHistoryPanel userId={profile.id} name={display} />
             </TabsContent>
           )}
 
 
-          <TabsContent value="friends" className="mt-6">
+          <TabsContent value="friends" className={paneClass}>
             <ActivityCard title={isOwner ? "Your friends" : `${display}'s friends`} icon={UserPlus} empty={isOwner ? "No friends yet. Visit a member's profile and send a friend request." : "No friends yet."}>
               {friends.map((f) => (
                 <li key={f.friendship_id} className="flex items-center justify-between gap-3 py-2 text-sm">
@@ -792,7 +792,7 @@ function ProfilePage() {
           </TabsContent>
 
           {canSeeReferrals && (
-            <TabsContent value="referrals" className="mt-6">
+            <TabsContent value="referrals" className={paneClass}>
               <ReferralsPanel
                 referrals={referrals}
                 isOwner={isOwner}
@@ -810,13 +810,13 @@ function ProfilePage() {
           )}
 
           {isOwner && (
-            <TabsContent value="notifications" className="mt-6">
+            <TabsContent value="notifications" className={paneClass}>
               <SoundSettings />
             </TabsContent>
           )}
 
           {isOwner && (
-            <TabsContent value="theme" className="mt-6">
+            <TabsContent value="theme" className={paneClass}>
               <PersonalThemePanel />
             </TabsContent>
           )}
