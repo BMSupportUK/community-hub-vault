@@ -1070,7 +1070,7 @@ function officeStatus(hours: OfficeHour[], now: Date, timezone: string) {
     currentMinutes < toMinutes(today.close_time),
   );
 
-  if (isOpen) return { isOpen: true, countdown: "", localOpening: "" };
+  if (isOpen) return { isOpen: true, currentDay: londonDay, nextDay: null as number | null, countdown: "", localOpening: "" };
 
   for (let offset = 0; offset <= 7; offset += 1) {
     const candidate = hours.find((hour) => hour.day_of_week === (londonDay + offset) % 7);
@@ -1095,10 +1095,10 @@ function officeStatus(hours: OfficeHour[], now: Date, timezone: string) {
       hour12: true,
       timeZoneName: "short",
     }).format(nextOpening);
-    return { isOpen: false, countdown, localOpening };
+    return { isOpen: false, currentDay: londonDay, nextDay: candidate.day_of_week, countdown, localOpening };
   }
 
-  return { isOpen: false, countdown: "", localOpening: "" };
+  return { isOpen: false, currentDay: londonDay, nextDay: null as number | null, countdown: "", localOpening: "" };
 }
 
 function OfficeHoursPanel() {
@@ -1132,23 +1132,9 @@ function OfficeHoursPanel() {
 
   return (
     <section className="mt-6 overflow-hidden rounded-lg border border-border/70 bg-background/30">
-      <div className="flex flex-wrap items-center gap-2 border-b border-border/70 px-4 py-3">
+      <div className="flex items-center gap-2 border-b border-border/70 px-4 py-3">
         <Store className="size-4 shrink-0 text-primary" />
-        <h3 className="mr-auto font-display text-sm font-semibold">Office opening times</h3>
-        <span className={cn(
-          "inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-[11px] font-bold ring-1",
-          status.isOpen
-            ? "bg-success/15 text-success ring-success/35"
-            : "bg-destructive/15 text-destructive ring-destructive/35",
-        )}>
-          {status.isOpen ? "Open" : "Closed"}
-          {!status.isOpen && status.countdown && <span className="font-semibold">· opens in {status.countdown}</span>}
-        </span>
-        {!status.isOpen && status.localOpening && (
-          <span className="w-full text-right text-[11px] text-muted-foreground sm:w-auto">
-            Your local opening: {status.localOpening}
-          </span>
-        )}
+        <h3 className="font-display text-sm font-semibold">Office opening times</h3>
       </div>
       <div className="grid grid-cols-[minmax(5.5rem,0.8fr)_minmax(0,1fr)_minmax(0,1fr)] text-xs sm:text-sm">
         <div className="border-b border-border/70 px-3 py-2 font-semibold text-muted-foreground">Day</div>
@@ -1160,12 +1146,26 @@ function OfficeHoursPanel() {
           const localFormat = new Intl.DateTimeFormat("en-GB", { timeZone: timezone, hour: "numeric", minute: "2-digit", hour12: true });
           return (
             <div key={hour.day_of_week} className="contents">
-              <div className="border-b border-border/50 px-3 py-2 font-medium last:border-b-0">{OFFICE_DAY_NAMES[hour.day_of_week]}</div>
+              <div className="border-b border-border/50 px-3 py-2 font-medium last:border-b-0">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span>{OFFICE_DAY_NAMES[hour.day_of_week]}</span>
+                  {!status.isOpen && status.currentDay === hour.day_of_week && (
+                    <span className="inline-flex rounded-full bg-destructive/15 px-1.5 py-0.5 text-[10px] font-bold text-destructive ring-1 ring-destructive/35">
+                      Closed
+                    </span>
+                  )}
+                </div>
+              </div>
               <div className="border-b border-l border-border/50 px-3 py-2 text-muted-foreground">
                 {hour.is_closed ? "Closed" : `${formatOfficeTime(hour.open_time)}–${formatOfficeTime(hour.close_time)}`}
               </div>
               <div className="border-b border-l border-border/50 px-3 py-2 text-muted-foreground">
-                {hour.is_closed || !localOpen || !localClose ? "Closed" : `${localFormat.format(localOpen)}–${localFormat.format(localClose)}`}
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span>{hour.is_closed || !localOpen || !localClose ? "Closed" : `${localFormat.format(localOpen)}–${localFormat.format(localClose)}`}</span>
+                  {!status.isOpen && status.nextDay === hour.day_of_week && status.countdown && (
+                    <span className="font-semibold text-primary">opens in {status.countdown}</span>
+                  )}
+                </div>
               </div>
             </div>
           );
