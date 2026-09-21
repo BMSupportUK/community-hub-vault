@@ -120,6 +120,7 @@ export default function ShiftHistoryPanel({ userId, name }: { userId: string; na
   const [total, setTotal] = useState<number | null>(null);
   // Monday-to-Sunday window; resets automatically when a new week begins.
   const [weekFrom, setWeekFrom] = useState(() => weekStart().getTime());
+  const [claimed, setClaimed] = useState<ClaimedSlot[]>([]);
 
   useEffect(() => {
     const tick = () => {
@@ -131,6 +132,28 @@ export default function ShiftHistoryPanel({ userId, name }: { userId: string; na
   }, []);
 
   const weekTo = weekEnd(new Date(weekFrom)).getTime();
+
+  // Hourly rota slots this person claimed (moderator cover hours).
+  useEffect(() => {
+    let cancelled = false;
+    const iso = (t: number) => {
+      const d = new Date(t);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    };
+    (async () => {
+      const { data } = await supabase
+        .from("shift_slots")
+        .select("id, shift_date, start_time, end_time, notes")
+        .eq("assigned_to", userId)
+        .eq("slot_type", "hourly")
+        .gte("shift_date", iso(weekFrom))
+        .lt("shift_date", iso(weekTo))
+        .order("shift_date", { ascending: false })
+        .order("start_time", { ascending: true });
+      if (!cancelled) setClaimed((data ?? []) as ClaimedSlot[]);
+    })();
+    return () => { cancelled = true; };
+  }, [userId, weekFrom, weekTo]);
 
   const fetchPage = useCallback(
     async (offset: number) => {
