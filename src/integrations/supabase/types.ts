@@ -4392,6 +4392,45 @@ export type Database = {
         }
         Relationships: []
       }
+      shift_bookings: {
+        Row: {
+          action: string
+          created_at: string
+          end_time: string
+          id: string
+          required_role: string | null
+          shift_date: string
+          slot_id: string | null
+          slot_type: string | null
+          start_time: string
+          user_id: string
+        }
+        Insert: {
+          action?: string
+          created_at?: string
+          end_time: string
+          id?: string
+          required_role?: string | null
+          shift_date: string
+          slot_id?: string | null
+          slot_type?: string | null
+          start_time: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          end_time?: string
+          id?: string
+          required_role?: string | null
+          shift_date?: string
+          slot_id?: string | null
+          slot_type?: string | null
+          start_time?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       shift_slots: {
         Row: {
           assigned_to: string | null

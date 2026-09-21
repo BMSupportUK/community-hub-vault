@@ -57,6 +57,13 @@
       "when": 1789989540288,
       "tag": "0007_shifts_end_prompt_state",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1789992716895,
+      "tag": "0008_create_shift_bookings",
+      "breakpoints": true
     }
   ]
 }
