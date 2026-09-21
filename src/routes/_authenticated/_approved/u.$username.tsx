@@ -1027,7 +1027,79 @@ function fmtShortDate(iso: string) {
   }
 }
 
-function TicketCardItem({ ticket }: { ticket: TicketRow }) {
+const MONTH_LABELS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+// Tickets raised this calendar year, split into month tabs. The underlying
+// query only loads the current year, so the list clears itself each January.
+function TicketMonthsPanel({ tickets, canReopen, onChanged }: { tickets: TicketRow[]; canReopen: boolean; onChanged: () => void }) {
+  const [month, setMonth] = useState(() => new Date().getMonth());
+  const byMonth = useMemo(() => {
+    const buckets: TicketRow[][] = Array.from({ length: 12 }, () => []);
+    for (const t of tickets) {
+      const d = new Date(t.created_at);
+      if (!Number.isNaN(d.getTime())) buckets[d.getMonth()].push(t);
+    }
+    return buckets;
+  }, [tickets]);
+  const current = byMonth[month] ?? [];
+  const year = new Date().getFullYear();
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col gap-4">
+      <div className="flex flex-wrap gap-1.5">
+        {MONTH_LABELS.map((label, i) => {
+          const count = byMonth[i].length;
+          return (
+            <button
+              key={label}
+              type="button"
+              onClick={() => setMonth(i)}
+              className={cn(
+                "rounded-full border px-3 py-1 text-xs font-semibold transition",
+                month === i
+                  ? "border-white/60 bg-white/20 text-white"
+                  : count > 0
+                    ? "border-white/20 bg-white/[0.06] text-white/80 hover:bg-white/[0.12]"
+                    : "border-white/10 bg-white/[0.03] text-white/35 hover:bg-white/[0.06]",
+              )}
+            >
+              {label}
+              {count > 0 && <span className="ml-1 text-[10px] text-amber-100/80">({count})</span>}
+            </button>
+          );
+        })}
+      </div>
+      <ActivityCardGrid
+        title={`${MONTH_LABELS[month]} ${year} tickets`}
+        icon={Ticket}
+        empty={`No tickets in ${MONTH_LABELS[month]} ${year}`}
+        isEmpty={current.length === 0}
+      >
+        {current.map((t) => (
+          <TicketCardItem key={t.id} ticket={t} canReopen={canReopen} onChanged={onChanged} />
+        ))}
+      </ActivityCardGrid>
+    </div>
+  );
+}
+
+function TicketCardItem({ ticket, canReopen = false, onChanged }: { ticket: TicketRow; canReopen?: boolean; onChanged?: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const isClosed = ticket.status === "closed" || ticket.status === "resolved" || !!ticket.closed_at;
+  // Order-related tickets can't be reopened by the member — those go through staff.
+  const showReopen = canReopen && isClosed && !ticket.order_id;
+
+  const reopen = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setBusy(true);
+    const { error } = await supabase.rpc("reopen_own_ticket", { _ticket_id: ticket.id });
+    setBusy(false);
+    if (error) { toast.error(error.message || "Couldn't reopen that ticket"); return; }
+    toast.success("Ticket reopened");
+    onChanged?.();
+  };
+
   return (
     <Link
       to="/tickets"
