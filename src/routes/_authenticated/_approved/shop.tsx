@@ -422,7 +422,14 @@ function ShopPage() {
               initialScope={scope === "all" ? "all" : "mine"}
             />
           )}
-          {view === "admin" && isAdminOnly && adminUnlocked && <AdminProducts />}
+          {view === "admin" &&
+            isAdminOnly &&
+            adminUnlocked &&
+            (discountUnlocked ? (
+              <AdminProducts />
+            ) : (
+              <DiscountCodesGate onUnlocked={() => setDiscountUnlocked(true)} />
+            ))}
           {(view as string) === "discounts" &&
             isAdminOnly &&
             adminUnlocked &&
