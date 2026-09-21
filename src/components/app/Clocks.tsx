@@ -18,6 +18,15 @@ function abbrev(tz: string) {
   return parts.find((p) => p.type === "timeZoneName")?.value ?? tz;
 }
 
+function formatDate(tz: string, date = new Date()) {
+  return new Intl.DateTimeFormat("en-GB", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    timeZone: tz,
+  }).format(date);
+}
+
 export function Clocks() {
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
@@ -33,6 +42,7 @@ export function Clocks() {
       <ClockPill
         sideLabel="Office time"
         time={format(ukTz, now)}
+        date={formatDate(ukTz, now)}
         label={abbrev(ukTz)}
         ring="ring-amber-400/60"
         text="text-amber-300"
@@ -42,6 +52,7 @@ export function Clocks() {
       <ClockPill
         sideLabel="Customer local time"
         time={format(userTz, now)}
+        date={formatDate(userTz, now)}
         label={abbrev(userTz)}
         ring="ring-sky-400/60"
         text="text-sky-300"
@@ -55,6 +66,7 @@ export function Clocks() {
 function ClockPill({
   sideLabel,
   time,
+  date,
   label,
   ring,
   text,
@@ -63,6 +75,7 @@ function ClockPill({
 }: {
   sideLabel: string;
   time: string;
+  date: string;
   label: string;
   ring: string;
   text: string;
@@ -70,20 +83,25 @@ function ClockPill({
   title?: string;
 }) {
   return (
-    <div className="flex items-center gap-2" title={title}>
-      <span className="hidden text-[10px] uppercase tracking-wide text-muted-foreground sm:inline">
-        {sideLabel}
-      </span>
-      <div
-        className={`flex items-center gap-2 rounded-full bg-rail/80 ring-1 ${ring} px-3 py-1 font-mono text-sm tabular-nums shadow-soft`}
-      >
-        <span className={text}>{time}</span>
-        <span
-          className={`text-[10px] uppercase tracking-wider rounded-full px-1.5 py-0.5 ${labelBg}`}
-        >
-          {label}
+    <div className="flex flex-col items-center gap-0.5" title={title}>
+      <div className="flex items-center gap-2">
+        <span className="hidden text-[10px] uppercase tracking-wide text-muted-foreground sm:inline">
+          {sideLabel}
         </span>
+        <div
+          className={`flex items-center gap-2 rounded-full bg-rail/80 ring-1 ${ring} px-3 py-1 font-mono text-sm tabular-nums shadow-soft`}
+        >
+          <span className={text}>{time}</span>
+          <span
+            className={`text-[10px] uppercase tracking-wider rounded-full px-1.5 py-0.5 ${labelBg}`}
+          >
+            {label}
+          </span>
+        </div>
       </div>
+      <span className="text-[10px] leading-none text-foreground/70 tabular-nums">
+        {date}
+      </span>
     </div>
   );
 }
