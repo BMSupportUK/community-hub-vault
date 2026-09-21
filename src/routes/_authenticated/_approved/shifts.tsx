@@ -1140,16 +1140,6 @@ function ShiftsPage() {
                     });
                   }
                 }
-                    key: b.id,
-                    iso: b.shift_date,
-                    when: b.created_at,
-                    badge: want === "claimed" ? "Booked" : "Released",
-                    badgeClass: want === "claimed"
-                      ? "bg-emerald-500/20 border-emerald-400/40 text-emerald-100"
-                      : "bg-rose-500/20 border-rose-400/40 text-rose-100",
-                    range: fmtRange(b.shift_date, b.start_time, b.end_time),
-                    role: b.required_role,
-                  }));
               }
 
               return (
