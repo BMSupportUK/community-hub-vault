@@ -38,6 +38,8 @@ interface OpenShift {
   id: string;
   clock_in: string;
   clock_out: string | null;
+  end_prompt_asked_at: string | null;
+  still_working_ack_at: string | null;
 }
 
 type Stage = "start" | "end";
@@ -103,7 +105,7 @@ export function ShiftStartEndAlert() {
           .order("start_time", { ascending: true }),
         supabase
           .from("shifts")
-          .select("id, clock_in, clock_out")
+          .select("id, clock_in, clock_out, end_prompt_asked_at, still_working_ack_at")
           .eq("user_id", user.id)
           .is("clock_out", null)
           .order("clock_in", { ascending: false })
@@ -272,52 +274,45 @@ export function ShiftStartEndAlert() {
 
   const stillWorkingRef = useRef<Set<string>>(new Set());
   const [askOpen, setAskOpen] = useState(false);
+  const askedAtWrittenRef = useRef<Set<string>>(new Set());
 
-  // Persist the "Yes, still working" answer and the moment the question was
-  // first asked, so a page refresh can't forget it or clock someone out with a
-  // deadline that already passed while the app was closed.
-  const stillWorkingKey = (id: string) => `bm.shift.stillWorking.${id}`;
-  const askedAtKey = (id: string) => `bm.shift.askedAt.${id}`;
-  const readFlag = (key: string): string | null => {
-    try {
-      return window.localStorage.getItem(key);
-    } catch {
-      return null;
-    }
-  };
-  const writeFlag = (key: string, value: string) => {
-    try {
-      window.localStorage.setItem(key, value);
-    } catch {
-      /* storage unavailable */
-    }
-  };
-  const clearFlags = (id: string) => {
-    try {
-      window.localStorage.removeItem(stillWorkingKey(id));
-      window.localStorage.removeItem(askedAtKey(id));
-    } catch {
-      /* storage unavailable */
-    }
-  };
-
+  // The "Yes, still working" answer and the moment the question was first asked
+  // live on the shift row in the database, so a refresh, a restart or another
+  // device all see the same state and nobody gets clocked out without a chance
+  // to answer.
   useEffect(() => {
     if (!openShift || endsAtMs === null || now < endsAtMs) {
       setAskOpen(false);
       setAutoEndAt(null);
       return;
     }
-    if (stillWorkingRef.current.has(openShift.id) || readFlag(stillWorkingKey(openShift.id)) === "1") {
+    if (stillWorkingRef.current.has(openShift.id) || openShift.still_working_ack_at) {
       stillWorkingRef.current.add(openShift.id);
       setAskOpen(false);
       setAutoEndAt(null);
       return;
     }
-    const storedAskedAt = Number(readFlag(askedAtKey(openShift.id)) ?? "");
+    const storedAskedAt = openShift.end_prompt_asked_at ? new Date(openShift.end_prompt_asked_at).getTime() : 0;
     let askedAt = Number.isFinite(storedAskedAt) && storedAskedAt > 0 ? storedAskedAt : 0;
     if (!askedAt) {
       askedAt = Date.now();
-      writeFlag(askedAtKey(openShift.id), String(askedAt));
+      if (!askedAtWrittenRef.current.has(openShift.id)) {
+        askedAtWrittenRef.current.add(openShift.id);
+        const shiftId = openShift.id;
+        const askedAtIso = new Date(askedAt).toISOString();
+        void supabase
+          .from("shifts")
+          .update({ end_prompt_asked_at: askedAtIso })
+          .eq("id", shiftId)
+          .is("end_prompt_asked_at", null)
+          .then(() => {
+            setOpenShift((prev) =>
+              prev && prev.id === shiftId && !prev.end_prompt_asked_at
+                ? { ...prev, end_prompt_asked_at: askedAtIso }
+                : prev,
+            );
+          });
+      }
     }
     setAskOpen(true);
     setAutoEndAt(Math.max(endsAtMs, askedAt) + AUTO_CLOCK_OUT_AFTER);
