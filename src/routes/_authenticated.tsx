@@ -257,12 +257,6 @@ function AuthLayout() {
             <DeferUntilIdle>
               <VpnPill />
             </DeferUntilIdle>
-            <div className="hidden lg:flex items-center gap-2">
-              <DeferUntilIdle>
-                <Clocks />
-              </DeferUntilIdle>
-            </div>
-        </header>}
         <div
           className={
             locksToViewport
