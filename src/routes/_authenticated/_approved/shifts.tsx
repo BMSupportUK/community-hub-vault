@@ -198,7 +198,7 @@ function ShiftsPage() {
   const [savingModHours, setSavingModHours] = useState(false);
 
 
-  const [tab, setTab] = useState("welcome");
+  const [tab, setTab] = useState("rota");
   const [rotaRole, setRotaRole] = useState<"all" | ShiftRole>(() => myRotaRoles[0] ?? "all");
   const [claimedRole, setClaimedRole] = useState<ShiftRole>(() => myRotaRoles[0] ?? "admin");
 
@@ -757,7 +757,6 @@ function ShiftsPage() {
         <Tabs value={tab} onValueChange={setTab} className="w-full">
           <TabsList className="flex flex-wrap gap-1 bg-surface-2 border border-border h-auto p-1">
             {[
-              { v: "welcome", label: "Welcome", Icon: CalendarIcon },
               { v: "rota", label: "Rota", Icon: Users },
               { v: "claimed", label: "Claimed Shifts", Icon: Users },
               { v: "mine", label: "My Shifts", Icon: Clock },
@@ -770,24 +769,6 @@ function ShiftsPage() {
               </TabsTrigger>
             ))}
           </TabsList>
-
-          {/* WELCOME */}
-          <TabsContent value="welcome" className="mt-6">
-            <div className="rounded-2xl bg-surface-2 border border-border p-10 shadow-glow">
-              <h2 className="font-display text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">Welcome to Shifts</h2>
-              <p className="mt-3 text-lg text-foreground max-w-2xl">
-                Browse the upcoming rota, claim open shifts that fit your role, and manage time off — all in one place.
-              </p>
-              <ul className="mt-5 space-y-2 text-foreground/80 max-w-2xl list-disc pl-5">
-                <li><strong>Staff &amp; Management:</strong> claim full shifts on the rota.</li>
-                <li><strong>Moderators:</strong> add your own hours — they default to the business opening hours, and you can change the start and finish.</li>
-                <li>Daily cover: <strong>Owner {ROLE_SHIFT_QUOTA.admin}</strong>, <strong>Management {ROLE_SHIFT_QUOTA.management}</strong>, <strong>Staff {ROLE_SHIFT_QUOTA.staff}</strong> — {DAY_TARGET} shifts in total per day.</li>
-                <li>Need time off? Submit a holiday request. Owner will review.</li>
-                <li>Need to swap a shift? Open the slot and tap <em>Request swap</em>.</li>
-              </ul>
-              <Button className="mt-6 bg-gradient-primary hover:opacity-90 text-white border-0 shadow-soft" onClick={() => setTab("rota")}>Open the rota</Button>
-            </div>
-          </TabsContent>
 
           {/* ROTA */}
           <TabsContent value="rota" className="mt-6">
