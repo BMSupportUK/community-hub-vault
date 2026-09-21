@@ -4,6 +4,7 @@ import { ChevronDown, Pencil, Plus, Trash2, X, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { LandingHeader } from "@/components/LandingHeader";
 import { AdSenseSlot } from "@/components/app/AdSenseSlot";
+import { useViewportLockable } from "@/hooks/use-viewport-lock";
 
 export const Route = createFileRoute("/faq")({
   component: FaqPage,
@@ -27,6 +28,7 @@ interface Faq {
 }
 
 function FaqPage() {
+  const lockable = useViewportLockable();
   const [faqs, setFaqs] = useState<Faq[]>([]);
   const [open, setOpen] = useState<string | null>(null);
   const [canEdit, setCanEdit] = useState(false);
@@ -84,12 +86,12 @@ function FaqPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className={`bg-background flex flex-col ${lockable ? "fixed inset-0 overflow-hidden" : "min-h-dvh"}`}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
 
       <LandingHeader />
 
-      <div className="flex-1 flex items-start">
+      <div className={`flex-1 flex items-start ${lockable ? "min-h-0 overflow-y-auto" : ""}`}>
       <main className="flex-1 px-6 py-16 max-w-3xl mx-auto w-full min-w-0">
         <h1 className="font-display text-4xl md:text-5xl font-bold mb-3 text-center">Frequently asked questions</h1>
         <p className="text-muted-foreground text-center mb-10">Everything you need to know about BM Support packages — UK & overseas.</p>

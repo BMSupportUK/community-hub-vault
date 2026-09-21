@@ -7,6 +7,7 @@ import { IconRail } from "@/components/app/IconRail";
 import { FanZonePublicHeader } from "@/components/app/FanZonePublicHeader";
 import { useAuth } from "@/hooks/use-auth";
 import { AdSenseSlot } from "@/components/app/AdSenseSlot";
+import { useViewportLockable } from "@/hooks/use-viewport-lock";
 
 export const Route = createFileRoute("/competition-winners")({
   component: CompetitionWinnersPage,
@@ -40,6 +41,7 @@ const ACTIVE_ONLY_COMPETITIONS = [
 ] as const;
 
 function CompetitionWinnersPage() {
+  const lockable = useViewportLockable();
   const { user } = useAuth();
   const { data, isLoading } = useCompetitionWinners();
   const summary = data ?? [];
@@ -55,9 +57,9 @@ function CompetitionWinnersPage() {
   ];
 
   return (
-    <div className="flex min-h-dvh bg-background">
+    <div className={`flex bg-background ${lockable ? "fixed inset-0 overflow-hidden" : "min-h-dvh"}`}>
       <IconRail />
-      <main className="min-w-0 flex-1">
+      <main className={`min-w-0 flex-1 ${lockable ? "min-h-0 overflow-y-auto" : ""}`}>
       {!user ? <FanZonePublicHeader /> : <LandingHeader />}
       <div className="mx-auto w-full max-w-5xl px-4 py-6 space-y-8">
         <header className="space-y-1">

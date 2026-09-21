@@ -17,6 +17,7 @@ import { useFanZoneMembershipState } from "@/hooks/use-fan-zone";
 import { BmSplash } from "@/components/app/BmSplash";
 import { screenLockMayBeLocked } from "@/lib/screen-lock-hash";
 import { ScreenLockProvider } from "@/components/app/ScreenLockProvider";
+import { useViewportLockable } from "@/hooks/use-viewport-lock";
 
 
 // Defer non-critical header widgets & alerts so the shell paints immediately.
@@ -77,13 +78,21 @@ function AuthLayout() {
   const search = useRouterState({ select: (r) => r.location.search as Record<string, unknown> });
   const shopTab = typeof search.tab === "string" ? search.tab : undefined;
   const shopView = typeof search.view === "string" ? search.view : undefined;
-  const locksToViewport =
+  const lockable = useViewportLockable();
+  // Chat surfaces pin their composer to the bottom on every device, so they
+  // stay locked to the viewport at any screen size.
+  const chatSurface = path === "/tickets" || /^\/home\/[^/]+$/.test(path);
+  // Pages that run their own internal scrolling panels when locked.
+  const selfScrolling =
+    chatSurface ||
     path === "/admin" ||
     path.startsWith("/u/") ||
     path === "/account-security" ||
     path === "/fan-zone-security" ||
-    path === "/tickets" ||
-    /^\/home\/[^/]+$/.test(path);
+    path === "/sports-guides";
+  // Everything else locks to the viewport on large screens and scrolls
+  // normally on smaller ones.
+  const locksToViewport = chatSurface || lockable;
   void shopTab;
   void shopView;
   const logIp = useServerFn(logMyIp);
@@ -254,7 +263,15 @@ function AuthLayout() {
               </DeferUntilIdle>
             </div>
         </header>}
-        <div className={locksToViewport ? "flex min-h-0 flex-1 overflow-hidden" : "flex flex-1"}>
+        <div
+          className={
+            locksToViewport
+              ? selfScrolling
+                ? "flex min-h-0 flex-1 overflow-hidden"
+                : "flex min-h-0 flex-1 overflow-y-auto"
+              : "flex flex-1"
+          }
+        >
           <Outlet />
         </div>
         <DeferUntilIdle>

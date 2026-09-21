@@ -58,6 +58,7 @@ import {
   getGuestFantasySwapHistory,
 } from "@/lib/fantasy-guest.functions";
 import fantasyBossAsset from "@/assets/fantasy-boss.jpg.asset.json";
+import { useViewportLockable } from "@/hooks/use-viewport-lock";
 
 
 export const Route = createFileRoute("/boro-fantasy")({
@@ -756,6 +757,7 @@ function Loading() {
 }
 
 function BoroFantasyPage() {
+  const lockable = useViewportLockable();
   const { user, hasAny } = useAuth();
   const canManageEntrants = !!user && hasAny(["admin", "management"]);
   const qc = useQueryClient();
@@ -1046,7 +1048,7 @@ function BoroFantasyPage() {
   }, [lbQuery.data, state?.gameweeks]);
 
   return (
-    <div className={user ? "relative isolate min-h-dvh md:h-dvh md:overflow-hidden flex bg-transparent" : "relative isolate min-h-screen flex bg-transparent"}>
+    <div className={user && lockable ? "fixed inset-0 isolate overflow-hidden flex bg-transparent" : "relative isolate min-h-dvh flex bg-transparent"}>
       <img src={riversideBg} alt="" aria-hidden className="pointer-events-none fixed inset-0 z-0 h-screen w-screen object-cover object-center" />
       <div className="pointer-events-none fixed inset-0 z-0" style={{ background: "rgba(2, 6, 14, 0.78)" }} aria-hidden />
       <IconRail />

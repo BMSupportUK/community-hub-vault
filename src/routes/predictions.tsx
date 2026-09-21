@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useViewportLockable } from "@/hooks/use-viewport-lock";
 import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Trophy, Loader2, Lock, Check, Star, Crown, Medal, Award, Pencil, CalendarDays, LogOut, Trash2, Menu } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
@@ -230,6 +231,7 @@ function LockCountdownPill({ lockAtMs }: { lockAtMs: number }) {
 }
 
 function PredictionsPage() {
+  const lockable = useViewportLockable();
   const { user, hasRole } = useAuth();
   const canManage = hasRole("admin") || hasRole("management");
   const [joined, setJoined] = useState<boolean>(false);
@@ -528,7 +530,7 @@ function PredictionsPage() {
 
   return (
     <FixturesFetchedAtContext.Provider value={fixturesAt}>
-    <div className={user ? "min-h-dvh md:h-dvh md:overflow-hidden flex bg-background" : "min-h-dvh flex bg-background"}>
+    <div className={user && lockable ? "fixed inset-0 overflow-hidden flex bg-background" : "min-h-dvh flex bg-background"}>
       <IconRail />
       <main className="relative isolate flex-1 overflow-y-auto min-w-0">
         {!user && (

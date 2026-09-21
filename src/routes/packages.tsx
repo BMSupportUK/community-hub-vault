@@ -8,6 +8,7 @@ import { useVisitorVpn } from "@/hooks/use-visitor-vpn";
 import { VpnBlockedDialog } from "@/components/VpnBlockedDialog";
 import { ShieldAlert } from "lucide-react";
 import { useEffect } from "react";
+import { useViewportLockable } from "@/hooks/use-viewport-lock";
 
 export const Route = createFileRoute("/packages")({
   component: PackagesPage,
@@ -42,6 +43,7 @@ interface Tier {
 }
 
 function PackagesPage() {
+  const lockable = useViewportLockable();
   const [tiers, setTiers] = useState<Tier[]>([]);
   const [canEdit, setCanEdit] = useState(false);
   const [editing, setEditing] = useState<Tier | null>(null);
@@ -120,12 +122,12 @@ function PackagesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className={`bg-background flex flex-col ${lockable ? "fixed inset-0 overflow-hidden" : "min-h-dvh"}`}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(serviceJsonLd) }} />
 
       <LandingHeader />
 
-      <div className="flex-1 flex items-start">
+      <div className={`flex-1 flex items-start ${lockable ? "min-h-0 overflow-y-auto" : ""}`}>
         <main className="flex-1 min-w-0">
         {/* Hero */}
         <section className="px-6 py-16 md:py-24 text-center max-w-4xl mx-auto">

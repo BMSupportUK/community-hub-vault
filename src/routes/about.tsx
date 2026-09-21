@@ -9,6 +9,7 @@ import { AdSenseSlot } from "@/components/app/AdSenseSlot";
 import { useVisitorVpn } from "@/hooks/use-visitor-vpn";
 import { VpnBlockedDialog } from "@/components/VpnBlockedDialog";
 import { ShieldAlert } from "lucide-react";
+import { useViewportLockable } from "@/hooks/use-viewport-lock";
 
 export const Route = createFileRoute("/about")({
   component: AboutPage,
@@ -60,6 +61,7 @@ function formatTime(t: string) {
 }
 
 function AboutPage() {
+  const lockable = useViewportLockable();
   const [sections, setSections] = useState<Section[]>([]);
   const [hours, setHours] = useState<Hour[]>([]);
   const [canEdit, setCanEdit] = useState(false);
@@ -142,12 +144,12 @@ function AboutPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className={`bg-background flex flex-col ${lockable ? "fixed inset-0 overflow-hidden" : "min-h-dvh"}`}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgJsonLd) }} />
 
       <LandingHeader />
 
-      <div className="flex-1 flex items-start">
+      <div className={`flex-1 flex items-start ${lockable ? "min-h-0 overflow-y-auto" : ""}`}>
         <main className="flex-1 min-w-0">
         <section className="px-6 py-10 md:py-14 max-w-6xl mx-auto">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border text-xs text-muted-foreground mb-6">

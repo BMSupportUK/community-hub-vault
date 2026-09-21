@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useViewportLockable } from "@/hooks/use-viewport-lock";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Trophy, Loader2, Lock, Check, Crown, Medal, Award, LogOut, Trash2, Pencil, Star, ArrowLeft } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
@@ -163,6 +164,7 @@ function LockCountdownPill({ lockAtMs }: { lockAtMs: number }) {
 type GuestSession = { guestId: string; email: string; pin: string; displayName: string };
 
 function BoroPredictionsPage() {
+  const lockable = useViewportLockable();
   const { user, hasRole } = useAuth();
   const canManage = hasRole("admin") || hasRole("management");
   const [joined, setJoined] = useState(false);
@@ -346,7 +348,7 @@ function BoroPredictionsPage() {
   }, [fixtures, leaderboard]);
 
   return (
-    <div className={user ? "relative isolate min-h-dvh md:h-dvh md:overflow-hidden flex bg-transparent" : "relative isolate min-h-screen flex bg-transparent"}>
+    <div className={user && lockable ? "fixed inset-0 isolate overflow-hidden flex bg-transparent" : "relative isolate min-h-dvh flex bg-transparent"}>
       <img
         src={riversideBg}
         alt=""
