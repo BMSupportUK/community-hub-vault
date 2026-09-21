@@ -320,6 +320,8 @@ function ModerationPage() {
     roleMentions: [...STAFF_ROLE_TAGS],
   });
 
+  const visibleApps = apps.filter((a) => isAppealRow(a) === (kind === "appeals"));
+
   return (
     <>
       <ChannelColumn
