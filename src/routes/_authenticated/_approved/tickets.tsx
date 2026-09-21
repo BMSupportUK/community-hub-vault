@@ -1210,7 +1210,7 @@ function OfficeHoursPanel() {
                       Open
                     </span>
                   )}
-                  {!status.isOpen && status.userCurrentDay === localOpenDay && (
+                  {!status.isOpen && status.currentDay === hour.day_of_week && (
                     <span className="inline-flex rounded-full bg-destructive/15 px-1.5 py-0.5 text-[10px] font-bold text-destructive ring-1 ring-destructive/35">
                       Closed
                     </span>
@@ -1234,17 +1234,17 @@ function OfficeHoursPanel() {
                 <div className="flex flex-wrap items-center gap-1.5">
                   <span className="text-[11px] text-muted-foreground">{userDate}</span>
                   <span>{hour.is_closed || !localOpen || !localClose ? "Closed" : `${localFormat.format(localOpen)}–${localFormat.format(localClose)}`}</span>
-                  {status.isOpen && status.currentDay === hour.day_of_week && (
+                  {status.isOpen && status.userCurrentDay === localOpenDay && (
                     <span className="inline-flex rounded-full bg-success/15 px-1.5 py-0.5 text-[10px] font-bold text-success ring-1 ring-success/35">
                       Open
                     </span>
                   )}
-                  {!status.isOpen && status.currentDay === hour.day_of_week && (
+                  {!status.isOpen && status.userCurrentDay === localOpenDay && (
                     <span className="inline-flex rounded-full bg-destructive/15 px-1.5 py-0.5 text-[10px] font-bold text-destructive ring-1 ring-destructive/35">
                       Closed
                     </span>
                   )}
-                  {!status.isOpen && status.nextDay === hour.day_of_week && status.countdown && (
+                  {!status.isOpen && status.nextDay === localOpenDay && status.countdown && (
                     <span className="font-semibold text-white">
                       Reopens {status.localOpening} · in <span className="tabular-nums">{status.countdown}</span>
                     </span>
