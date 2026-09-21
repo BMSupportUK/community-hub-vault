@@ -251,6 +251,10 @@ function SignupPage() {
             <h1 className="font-display text-2xl font-bold">Join BM Support</h1>
             <p className="text-sm text-muted-foreground mb-6">A moderator will review your request before you get in.</p>
             <form onSubmit={submit} className="space-y-3">
+              {/* On small screens the registration choice is part of the form; on lg+ it moves to the sidebar */}
+              <div className="lg:hidden">
+                <IntentChoice intent={intent} setIntent={setIntent} />
+              </div>
               <Field label="Display name" value={displayName} onChange={setDisplayName} />
               <Field label="Email" type="email" value={email} onChange={setEmail} />
               {emailTaken && (
@@ -336,64 +340,15 @@ function SignupPage() {
         </div>
       </main>
 
-      {/* Sidebar — which part of the site to register for (advert removed from this page) */}
+      {/* Sidebar — which part of the site to register for (advert removed from this page; lg+ only, small screens show it inside the form) */}
       <aside
-        className={`flex min-h-0 flex-col items-center justify-center px-4 pt-2 pb-5 lg:border-l lg:border-border/60 ${
+        className={`hidden lg:flex min-h-0 flex-col items-center justify-center px-4 pt-2 pb-5 lg:border-l lg:border-border/60 ${
           lockable ? "overflow-y-auto" : ""
         }`}
       >
         <div className="w-full max-w-md">
           <div className="bg-surface/80 backdrop-blur-sm border border-border rounded-2xl p-5 sm:p-6 shadow-soft">
-            <fieldset className="space-y-2">
-              <legend className="text-sm font-semibold text-foreground mb-2">
-                Which part of the site would you like to register for?{" "}
-                <span className="text-destructive">*</span>
-              </legend>
-              <label
-                className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                  intent === "bm-support"
-                    ? "border-primary bg-primary/10"
-                    : "border-border hover:border-primary/40 hover:bg-muted/30"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="intent"
-                  value="bm-support"
-                  checked={intent === "bm-support"}
-                  onChange={() => setIntent("bm-support")}
-                  className="mt-0.5 accent-primary"
-                />
-                <span className="text-sm">
-                  <span className="block font-semibold">BM Support</span>
-                  <span className="block text-xs text-muted-foreground">
-                    Customer support, tickets, devices and orders.
-                  </span>
-                </span>
-              </label>
-              <label
-                className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                  intent === "fan-zone"
-                    ? "border-primary bg-primary/10"
-                    : "border-border hover:border-primary/40 hover:bg-muted/30"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="intent"
-                  value="fan-zone"
-                  checked={intent === "fan-zone"}
-                  onChange={() => setIntent("fan-zone")}
-                  className="mt-0.5 accent-primary"
-                />
-                <span className="text-sm">
-                  <span className="block font-semibold">Boro Fan Zone (Middlesbrough F.C. Forum)</span>
-                  <span className="block text-xs text-muted-foreground">
-                    Match-day banter, transfer talk and the forum.
-                  </span>
-                </span>
-              </label>
-            </fieldset>
+            <IntentChoice intent={intent} setIntent={setIntent} />
           </div>
         </div>
       </aside>
