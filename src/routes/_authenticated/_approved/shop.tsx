@@ -3076,12 +3076,12 @@ function OrdersView({
       <div
         className={cn(
           "rounded-2xl bg-purple-950/40 border border-purple-500/30 backdrop-blur overflow-hidden min-h-[60vh] flex",
-          selectedId ? "flex" : "hidden lg:flex",
+          activeId ? "flex" : "hidden lg:flex",
         )}
       >
-        {selectedId ? (
+        {activeId ? (
           <OrderDetail
-            orderId={selectedId}
+            orderId={activeId}
             isAdmin={isAdmin && adminUnlocked}
             onBack={() =>
               navigate({
@@ -3098,6 +3098,8 @@ function OrdersView({
       </div>
     </div>
   );
+  };
+
 
   return (
     <div
