@@ -215,15 +215,34 @@ function StaffShiftsPage() {
     [rolesByUser],
   );
 
-  const roleCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
-    for (const s of shifts) counts[primaryRole(s.user_id)] = (counts[primaryRole(s.user_id)] ?? 0) + 1;
-    return counts;
-  }, [shifts, primaryRole]);
+  const byWeekday = useMemo(
+    () => (weekday === "all" ? shifts : shifts.filter((s) => new Date(s.clock_in).getDay() === weekday)),
+    [shifts, weekday],
+  );
 
-  const visible = useMemo(
+  const byRole = useMemo(
     () => (role === "all" ? shifts : shifts.filter((s) => primaryRole(s.user_id) === role)),
     [shifts, role, primaryRole],
+  );
+
+  const roleCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const s of byWeekday) counts[primaryRole(s.user_id)] = (counts[primaryRole(s.user_id)] ?? 0) + 1;
+    return counts;
+  }, [byWeekday, primaryRole]);
+
+  const weekdayCounts = useMemo(() => {
+    const counts: Record<number, number> = {};
+    for (const s of byRole) {
+      const d = new Date(s.clock_in).getDay();
+      counts[d] = (counts[d] ?? 0) + 1;
+    }
+    return counts;
+  }, [byRole]);
+
+  const visible = useMemo(
+    () => (role === "all" ? byWeekday : byWeekday.filter((s) => primaryRole(s.user_id) === role)),
+    [byWeekday, role, primaryRole],
   );
 
   // day -> role -> shifts
