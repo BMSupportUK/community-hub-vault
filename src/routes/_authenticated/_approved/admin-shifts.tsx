@@ -175,8 +175,8 @@ function StaffShiftsPage() {
   const [role, setRole] = useState<RoleKey>("admin");
   const [weekday, setWeekday] = useState<DayKey>(new Date().getDay());
 
-  const load = useCallback(async (d: number) => {
-    setLoading(true);
+  const load = useCallback(async (d: number, silent = false) => {
+    if (!silent) setLoading(true);
     const from = new Date();
     from.setHours(0, 0, 0, 0);
     from.setDate(from.getDate() - (d - 1));
@@ -244,7 +244,7 @@ function StaffShiftsPage() {
   // show without a hard refresh.
   useEffect(() => {
     if (!canView) return;
-    const refresh = () => { void load(days); };
+    const refresh = () => { void load(days, true); };
     const ch = supabase
       .channel(`admin-shifts-live-${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "breaks" }, refresh)
