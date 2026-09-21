@@ -62,6 +62,20 @@ const ROLE_TABS = [
 
 type RoleKey = (typeof ROLE_TABS)[number]["key"];
 
+/** Monday-first weekday tabs; value is the JS getDay() index. */
+const DAY_TABS = [
+  { key: "all" as const, label: "All days" },
+  { key: 1, label: "Monday" },
+  { key: 2, label: "Tuesday" },
+  { key: 3, label: "Wednesday" },
+  { key: 4, label: "Thursday" },
+  { key: 5, label: "Friday" },
+  { key: 6, label: "Saturday" },
+  { key: 0, label: "Sunday" },
+];
+
+type DayKey = "all" | number;
+
 const ROLE_ORDER: Exclude<RoleKey, "all">[] = ["admin", "management", "staff", "moderator"];
 
 const ROLE_LABEL: Record<string, string> = {
@@ -145,6 +159,7 @@ function StaffShiftsPage() {
   const [people, setPeople] = useState<Record<string, PersonRow>>({});
   const [rolesByUser, setRolesByUser] = useState<Record<string, string[]>>({});
   const [role, setRole] = useState<RoleKey>("all");
+  const [weekday, setWeekday] = useState<DayKey>("all");
 
   const load = useCallback(async (d: number) => {
     setLoading(true);
@@ -200,15 +215,34 @@ function StaffShiftsPage() {
     [rolesByUser],
   );
 
-  const roleCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
-    for (const s of shifts) counts[primaryRole(s.user_id)] = (counts[primaryRole(s.user_id)] ?? 0) + 1;
-    return counts;
-  }, [shifts, primaryRole]);
+  const byWeekday = useMemo(
+    () => (weekday === "all" ? shifts : shifts.filter((s) => new Date(s.clock_in).getDay() === weekday)),
+    [shifts, weekday],
+  );
 
-  const visible = useMemo(
+  const byRole = useMemo(
     () => (role === "all" ? shifts : shifts.filter((s) => primaryRole(s.user_id) === role)),
     [shifts, role, primaryRole],
+  );
+
+  const roleCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const s of byWeekday) counts[primaryRole(s.user_id)] = (counts[primaryRole(s.user_id)] ?? 0) + 1;
+    return counts;
+  }, [byWeekday, primaryRole]);
+
+  const weekdayCounts = useMemo(() => {
+    const counts: Record<number, number> = {};
+    for (const s of byRole) {
+      const d = new Date(s.clock_in).getDay();
+      counts[d] = (counts[d] ?? 0) + 1;
+    }
+    return counts;
+  }, [byRole]);
+
+  const visible = useMemo(
+    () => (role === "all" ? byWeekday : byWeekday.filter((s) => primaryRole(s.user_id) === role)),
+    [byWeekday, role, primaryRole],
   );
 
   // day -> role -> shifts
@@ -283,13 +317,41 @@ function StaffShiftsPage() {
 
       <div className="flex flex-wrap gap-2 rounded-2xl border border-border bg-surface-1 p-2">
         {ROLE_TABS.map((t) => {
-          const count = t.key === "all" ? shifts.length : (roleCounts[t.key] ?? 0);
+          const count = t.key === "all" ? byWeekday.length : (roleCounts[t.key] ?? 0);
           const active = role === t.key;
           return (
             <button
               key={t.key}
               type="button"
               onClick={() => setRole(t.key)}
+              className={cn(
+                "inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-sm font-medium transition-colors",
+                active ? "bg-gradient-primary text-white" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+              )}
+            >
+              {t.label}
+              <span
+                className={cn(
+                  "rounded-full px-1.5 text-[11px] tabular-nums",
+                  active ? "bg-white/20" : "bg-muted text-muted-foreground",
+                )}
+              >
+                {count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="flex flex-wrap gap-2 rounded-2xl border border-border bg-surface-1 p-2">
+        {DAY_TABS.map((t) => {
+          const count = t.key === "all" ? byRole.length : (weekdayCounts[t.key as number] ?? 0);
+          const active = weekday === t.key;
+          return (
+            <button
+              key={String(t.key)}
+              type="button"
+              onClick={() => setWeekday(t.key)}
               className={cn(
                 "inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-sm font-medium transition-colors",
                 active ? "bg-gradient-primary text-white" : "text-muted-foreground hover:bg-muted hover:text-foreground",
