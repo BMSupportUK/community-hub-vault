@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { Calendar as CalendarIcon, Plus, Trash2, Check, X, Clock, Users, Plane, Repeat, ShieldCheck, Loader2, Zap, Save, Globe, MapPin } from "lucide-react";
+import { Calendar as CalendarIcon, Plus, Trash2, Check, X, Clock, Users, Plane, Repeat, ShieldCheck, Loader2, Zap, Save, Globe, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { addModeratorHours } from "@/lib/moderator-hours.functions";
@@ -56,6 +56,16 @@ interface Swap {
   created_at: string;
 }
 interface Profile { id: string; username: string | null; display_name: string | null; }
+/** A swap request I'm involved in, with the slot's date/time resolved. */
+interface MySwap {
+  id: string;
+  requester_id: string;
+  target_user_id: string | null;
+  message: string | null;
+  status: ReqStatus;
+  created_at: string;
+  slot: { shift_date: string; start_time: string; end_time: string; required_role: string | null } | null;
+}
 /** One entry in a staff member's shift booking history. */
 interface Booking {
   id: string;
@@ -224,6 +234,10 @@ function ShiftsPage() {
   const [confirmSlot, setConfirmSlot] = useState<Slot | null>(null);
   const [claiming, setClaiming] = useState(false);
   const [bookings, setBookings] = useState<Booking[]>([]);
+  // Booking history: sub-tab + the week being viewed
+  const [histTab, setHistTab] = useState<"booked" | "released" | "swaps">("booked");
+  const [histWeek, setHistWeek] = useState<Date>(() => startOfWeek(new Date()));
+  const [mySwaps, setMySwaps] = useState<MySwap[]>([]);
 
   // Swap dialog
   const [swapFor, setSwapFor] = useState<Slot | null>(null);
@@ -269,14 +283,26 @@ function ShiftsPage() {
     setBookings((data ?? []) as Booking[]);
   };
 
-  useEffect(() => { loadBookings(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [user?.id]);
+  /** Swap requests I sent or received, with the slot date resolved. */
+  const loadMySwaps = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("shift_swap_requests")
+      .select("id, requester_id, target_user_id, message, status, created_at, slot:shift_slots(shift_date, start_time, end_time, required_role)")
+      .or(`requester_id.eq.${user.id},target_user_id.eq.${user.id}`)
+      .order("created_at", { ascending: false })
+      .limit(200);
+    setMySwaps((data ?? []) as unknown as MySwap[]);
+  };
+
+  useEffect(() => { loadBookings(); loadMySwaps(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [user?.id]);
 
   useEffect(() => {
     load();
     const ch = supabase.channel("shifts")
       .on("postgres_changes", { event: "*", schema: "public", table: "shift_slots" }, () => load())
       .on("postgres_changes", { event: "*", schema: "public", table: "holiday_requests" }, () => load())
-      .on("postgres_changes", { event: "*", schema: "public", table: "shift_swap_requests" }, () => load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "shift_swap_requests" }, () => { load(); loadMySwaps(); })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1030,45 +1056,162 @@ function ShiftsPage() {
             )}
           </TabsContent>
 
-          {/* HOLIDAYS */}
           {/* BOOKING HISTORY */}
           <TabsContent value="history" className="mt-6">
-            {bookings.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-border p-12 text-center text-muted-foreground bg-surface/40">
-                You haven't booked or released any shifts yet.
-              </div>
-            ) : (
-              <div className="rounded-2xl bg-surface border border-border overflow-hidden">
-                <div className="px-5 py-3 border-b border-border text-sm text-muted-foreground">
-                  Every shift you've booked or released, newest first.
-                </div>
-                <ul className="divide-y divide-border">
-                  {bookings.map((b) => (
-                    <li key={b.id} className="px-5 py-3 flex flex-wrap items-center gap-3">
-                      <span className={cn(
-                        "text-[10px] px-2 py-0.5 rounded-full border font-semibold uppercase tracking-wide",
-                        b.action === "claimed"
+            {(() => {
+              const histEnd = new Date(histWeek); histEnd.setDate(histEnd.getDate() + 6);
+              const inWeek = (iso: string) => iso >= fmtDate(histWeek) && iso <= fmtDate(histEnd);
+              const weekDays = Array.from({ length: 7 }, (_, i) => {
+                const d = new Date(histWeek); d.setDate(d.getDate() + i); return d;
+              });
+
+              type Row = { key: string; iso: string; when: string; badge: string; badgeClass: string; range: string; role: string | null; note?: string };
+              let rows: Row[] = [];
+              if (histTab === "swaps") {
+                rows = mySwaps
+                  .map((s) => {
+                    const iso = s.slot?.shift_date ?? s.created_at.slice(0, 10);
+                    const other = s.requester_id === user?.id ? s.target_user_id : s.requester_id;
+                    return {
+                      key: s.id,
+                      iso,
+                      when: s.created_at,
+                      badge: s.status === "pending" ? "Awaiting" : s.status === "approved" ? "Approved" : "Rejected",
+                      badgeClass: s.status === "pending"
+                        ? "bg-amber-500/20 border-amber-400/40 text-amber-100"
+                        : s.status === "approved"
                           ? "bg-emerald-500/20 border-emerald-400/40 text-emerald-100"
                           : "bg-rose-500/20 border-rose-400/40 text-rose-100",
-                      )}>
-                        {b.action === "claimed" ? "Booked" : "Released"}
-                      </span>
-                      <span className="text-foreground font-semibold">{dayLabel(new Date(b.shift_date))}</span>
-                      <span className="font-mono text-primary">{fmtRange(b.shift_date, b.start_time, b.end_time)}</span>
-                      {b.required_role && (
-                        <span className={cn("text-[10px] px-2 py-0.5 rounded-full border font-semibold uppercase tracking-wide", roleBadgeClass(b.required_role as ShiftRole))}>
-                          {roleLabel(b.required_role as ShiftRole)}
-                        </span>
-                      )}
-                      <span className="ml-auto text-xs text-muted-foreground">
-                        {format(new Date(b.created_at), "d MMM yyyy HH:mm")}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+                      range: s.slot ? fmtRange(iso, s.slot.start_time, s.slot.end_time) : "—",
+                      role: s.slot?.required_role ?? null,
+                      note: `${s.requester_id === user?.id ? "You asked" : `${profName(other)} asked you`}${other && s.requester_id === user?.id ? ` ${profName(other)}` : ""}`,
+                    } as Row;
+                  })
+                  .filter((r) => inWeek(r.iso));
+              } else {
+                const want = histTab === "booked" ? "claimed" : "released";
+                rows = bookings
+                  .filter((b) => b.action === want && inWeek(b.shift_date))
+                  .map((b) => ({
+                    key: b.id,
+                    iso: b.shift_date,
+                    when: b.created_at,
+                    badge: want === "claimed" ? "Booked" : "Released",
+                    badgeClass: want === "claimed"
+                      ? "bg-emerald-500/20 border-emerald-400/40 text-emerald-100"
+                      : "bg-rose-500/20 border-rose-400/40 text-rose-100",
+                    range: fmtRange(b.shift_date, b.start_time, b.end_time),
+                    role: b.required_role,
+                  }));
+              }
+
+              return (
+                <div className="space-y-4">
+                  {/* Week navigator */}
+                  <div className="flex flex-wrap items-center gap-2 rounded-2xl bg-surface border border-border px-4 py-3">
+                    <Button size="sm" variant="outline" onClick={() => setHistWeek((w) => { const n = new Date(w); n.setDate(n.getDate() - 7); return n; })}>
+                      <ChevronLeft className="size-4" /> Previous week
+                    </Button>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button size="sm" variant="outline" className="font-semibold">
+                          <CalendarIcon className="size-4 mr-1.5" />
+                          {format(histWeek, "d MMM")} – {format(histEnd, "d MMM yyyy")}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={histWeek}
+                          onSelect={(d) => { if (d) setHistWeek(startOfWeek(d)); }}
+                          className={cn("p-3 pointer-events-auto")}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                    <Button size="sm" variant="outline" onClick={() => setHistWeek((w) => { const n = new Date(w); n.setDate(n.getDate() + 7); return n; })}>
+                      Next week <ChevronRight className="size-4" />
+                    </Button>
+                    <Button size="sm" variant="ghost" className="ml-auto" onClick={() => setHistWeek(startOfWeek(new Date()))}>This week</Button>
+                  </div>
+
+                  <Tabs value={histTab} onValueChange={(v) => setHistTab(v as typeof histTab)}>
+                    <TabsList className="bg-surface-2 border border-border">
+                      <TabsTrigger value="booked" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                        Bookings
+                      </TabsTrigger>
+                      <TabsTrigger value="released" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                        Released
+                      </TabsTrigger>
+                      <TabsTrigger value="swaps" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                        Swaps
+                      </TabsTrigger>
+                    </TabsList>
+                  </Tabs>
+
+                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+                    {weekDays.slice(0, 5).map((d) => {
+                      const iso = fmtDate(d);
+                      const dayRows = rows.filter((r) => r.iso === iso);
+                      return (
+                        <div key={iso} className="rounded-2xl bg-surface border border-border overflow-hidden">
+                          <div className="px-4 py-2 border-b border-border bg-surface-2 flex items-center justify-between">
+                            <span className="text-foreground font-semibold text-sm">{d.toLocaleDateString("en-GB", { weekday: "long" })}</span>
+                            <span className="text-[11px] text-muted-foreground">{format(d, "d MMM")}</span>
+                          </div>
+                          {dayRows.length === 0 ? (
+                            <div className="px-4 py-6 text-center text-xs text-muted-foreground">Nothing</div>
+                          ) : (
+                            <ul className="divide-y divide-border">
+                              {dayRows.map((r) => (
+                                <li key={r.key} className="px-4 py-3 space-y-1">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className={cn("text-[10px] px-2 py-0.5 rounded-full border font-semibold uppercase tracking-wide", r.badgeClass)}>{r.badge}</span>
+                                    {r.role && (
+                                      <span className={cn("text-[10px] px-2 py-0.5 rounded-full border font-semibold uppercase tracking-wide", roleBadgeClass(r.role as ShiftRole))}>
+                                        {roleLabel(r.role as ShiftRole)}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="font-mono text-primary text-sm break-words">{r.range}</div>
+                                  {r.note && <div className="text-[11px] text-foreground/80 break-words">{r.note}</div>}
+                                  <div className="text-[11px] text-muted-foreground">{format(new Date(r.when), "d MMM HH:mm")}</div>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {(() => {
+                    const weekendRows = rows.filter((r) => {
+                      const dow = new Date(`${r.iso}T00:00:00`).getDay();
+                      return dow === 0 || dow === 6;
+                    });
+                    if (weekendRows.length === 0) return null;
+                    return (
+                      <div className="rounded-2xl bg-surface border border-border overflow-hidden">
+                        <div className="px-4 py-2 border-b border-border bg-surface-2 text-foreground font-semibold text-sm">Weekend</div>
+                        <ul className="divide-y divide-border">
+                          {weekendRows.map((r) => (
+                            <li key={r.key} className="px-4 py-3 flex flex-wrap items-center gap-3">
+                              <span className={cn("text-[10px] px-2 py-0.5 rounded-full border font-semibold uppercase tracking-wide", r.badgeClass)}>{r.badge}</span>
+                              <span className="text-foreground font-semibold">{dayLabel(new Date(`${r.iso}T00:00:00`))}</span>
+                              <span className="font-mono text-primary">{r.range}</span>
+                              {r.note && <span className="text-[11px] text-foreground/80">{r.note}</span>}
+                              <span className="ml-auto text-xs text-muted-foreground">{format(new Date(r.when), "d MMM HH:mm")}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    );
+                  })()}
+                </div>
+              );
+            })()}
           </TabsContent>
+
 
           <TabsContent value="holidays" className="mt-6 space-y-6">
             <Tabs value={holTab} onValueChange={(v) => setHolTab(v as "book" | "status")}>
