@@ -29,6 +29,16 @@ const placeIcon = (place: number) =>
 const placeLabel = (place: number) =>
   place === 1 ? "1st place" : place === 2 ? "2nd place" : `${place}rd place`;
 
+const ACTIVE_ONLY_COMPETITIONS = [
+  {
+    key: "boroFantasy",
+    railLabel: "Boro Fantasy",
+    title: "MFC Fantasy Manager",
+    description: "Build your Middlesbrough squad, score points each gameweek and climb the leaderboard.",
+    to: "/boro-fantasy",
+  },
+] as const;
+
 function CompetitionWinnersPage() {
   const { user } = useAuth();
   const { data, isLoading } = useCompetitionWinners();
@@ -37,9 +47,12 @@ function CompetitionWinnersPage() {
   const finished = COMPETITIONS.filter(
     (c) => summary.find((s) => s.competition === c.key)?.finished,
   );
-  const running = COMPETITIONS.filter(
-    (c) => !summary.find((s) => s.competition === c.key)?.finished,
-  );
+  const running = [
+    ...COMPETITIONS.filter(
+      (c) => !summary.find((s) => s.competition === c.key)?.finished,
+    ),
+    ...ACTIVE_ONLY_COMPETITIONS,
+  ];
 
   return (
     <div className="flex min-h-dvh bg-background">
