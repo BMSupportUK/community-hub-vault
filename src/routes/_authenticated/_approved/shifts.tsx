@@ -693,6 +693,7 @@ function ShiftsPage() {
               { v: "rota", label: "Rota", Icon: Users },
               { v: "claimed", label: "Claimed Shifts", Icon: Users },
               { v: "mine", label: "My Shifts", Icon: Clock },
+              { v: "history", label: "Booking History", Icon: Clock },
               { v: "holidays", label: "Holidays", Icon: Plane },
               ...(isAdmin ? [{ v: "requests", label: "Requests", Icon: ShieldCheck }, { v: "manage", label: "Manage Rota", Icon: Plus }] : []),
             ].map(({ v, label, Icon }) => (
@@ -1005,6 +1006,45 @@ function ShiftsPage() {
           </TabsContent>
 
           {/* HOLIDAYS */}
+          {/* BOOKING HISTORY */}
+          <TabsContent value="history" className="mt-6">
+            {bookings.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-border p-12 text-center text-muted-foreground bg-surface/40">
+                You haven't booked or released any shifts yet.
+              </div>
+            ) : (
+              <div className="rounded-2xl bg-surface border border-border overflow-hidden">
+                <div className="px-5 py-3 border-b border-border text-sm text-muted-foreground">
+                  Every shift you've booked or released, newest first.
+                </div>
+                <ul className="divide-y divide-border">
+                  {bookings.map((b) => (
+                    <li key={b.id} className="px-5 py-3 flex flex-wrap items-center gap-3">
+                      <span className={cn(
+                        "text-[10px] px-2 py-0.5 rounded-full border font-semibold uppercase tracking-wide",
+                        b.action === "claimed"
+                          ? "bg-emerald-500/20 border-emerald-400/40 text-emerald-100"
+                          : "bg-rose-500/20 border-rose-400/40 text-rose-100",
+                      )}>
+                        {b.action === "claimed" ? "Booked" : "Released"}
+                      </span>
+                      <span className="text-foreground font-semibold">{dayLabel(new Date(b.shift_date))}</span>
+                      <span className="font-mono text-primary">{fmtRange(b.shift_date, b.start_time, b.end_time)}</span>
+                      {b.required_role && (
+                        <span className={cn("text-[10px] px-2 py-0.5 rounded-full border font-semibold uppercase tracking-wide", roleBadgeClass(b.required_role))}>
+                          {roleLabel(b.required_role)}
+                        </span>
+                      )}
+                      <span className="ml-auto text-xs text-muted-foreground">
+                        {format(new Date(b.created_at), "d MMM yyyy HH:mm")}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </TabsContent>
+
           <TabsContent value="holidays" className="mt-6 space-y-6">
             <div className="rounded-2xl bg-surface border border-border p-5">
               <h3 className="font-display text-lg font-semibold text-foreground mb-3">Request holiday</h3>
