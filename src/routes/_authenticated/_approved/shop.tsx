@@ -75,6 +75,8 @@ import { getOutOfHoursMessage } from "@/lib/business-hours";
 import { isAdminUnlocked } from "@/lib/admin-unlock";
 import { isDiscountUnlocked, clearDiscountUnlock } from "@/lib/discount-unlock";
 import { DiscountCodesGate } from "@/components/app/DiscountCodesGate";
+import { ShopOrdersGate } from "@/components/app/ShopOrdersGate";
+import { isShopOrdersUnlocked, clearShopOrdersUnlock } from "@/lib/shop-orders-unlock";
 import { useRouter } from "@tanstack/react-router";
 import { MonitorPlay } from "lucide-react";
 import { AppDemosView } from "@/components/app/AppDemos";
@@ -260,6 +262,18 @@ function ShopPage() {
   const isAdminOnly = hasRole("admin");
   const adminUnlocked = isAdmin && isAdminUnlocked(user?.id);
   const [discountUnlocked, setDiscountUnlocked] = useState(false);
+  // Shop Orders (every customer's orders) needs a password + PIN confirmation, admin/management only.
+  const ownerOrdersView = view === "orders" && scope === "all" && isAdmin;
+  const [ordersUnlocked, setOrdersUnlocked] = useState(false);
+  useEffect(() => {
+    setOrdersUnlocked(isAdmin && isShopOrdersUnlocked(user?.id));
+  }, [isAdmin, user?.id, view, scope]);
+  useEffect(() => {
+    if (!ownerOrdersView) {
+      clearShopOrdersUnlock(user?.id);
+      setOrdersUnlocked(false);
+    }
+  }, [ownerOrdersView, user?.id]);
   useEffect(() => {
     setDiscountUnlocked(isAdminOnly && isDiscountUnlocked(user?.id));
   }, [isAdminOnly, user?.id, view]);
@@ -414,14 +428,17 @@ function ShopPage() {
         )}
         <div className="flex min-h-0 min-w-0 flex-1 overflow-visible md:h-full md:max-h-full md:overflow-hidden">
           {view === "store" && <Storefront />}
-          {view === "orders" && (
-            <OrdersView
-              selectedId={id}
-              isAdmin={isAdmin}
-              adminUnlocked={adminUnlocked}
-              initialScope={scope === "all" ? "all" : "mine"}
-            />
-          )}
+          {view === "orders" &&
+            (ownerOrdersView && !ordersUnlocked ? (
+              <ShopOrdersGate onUnlocked={() => setOrdersUnlocked(true)} />
+            ) : (
+              <OrdersView
+                selectedId={id}
+                isAdmin={isAdmin}
+                adminUnlocked={adminUnlocked}
+                initialScope={scope === "all" && isAdmin ? "all" : "mine"}
+              />
+            ))}
           {view === "admin" &&
             isAdminOnly &&
             adminUnlocked &&
@@ -3152,7 +3169,7 @@ function OrdersView({
       />
       <header className="relative px-6 md:px-8 pt-8 pb-6 border-b border-purple-500/30 bg-purple-950/40 backdrop-blur">
         <h1 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 bg-clip-text text-transparent">
-          {scope === "all" ? "Shop Owner · Orders" : "Your Orders"}
+          {scope === "all" ? "BM Support | Shop Orders" : "Your Orders"}
         </h1>
         <p className="text-purple-200/80 mt-1">
           Every order in one place — full details, live status, and direct chat with our team.
