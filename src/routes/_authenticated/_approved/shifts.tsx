@@ -238,6 +238,8 @@ function ShiftsPage() {
   const [histTab, setHistTab] = useState<"booked" | "released" | "swaps">("booked");
   const [histWeek, setHistWeek] = useState<Date>(() => startOfWeek(new Date()));
   const [mySwaps, setMySwaps] = useState<MySwap[]>([]);
+  // Slots currently booked to me in the history week (catches bookings made before the log existed).
+  const [myBookedSlots, setMyBookedSlots] = useState<Slot[]>([]);
 
   // Swap dialog
   const [swapFor, setSwapFor] = useState<Slot | null>(null);
