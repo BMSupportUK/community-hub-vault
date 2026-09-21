@@ -30,6 +30,20 @@ function AdminArchivedTicketsPage() {
   const [profiles, setProfiles] = useState<Record<string, Profile>>({});
   const [busy, setBusy] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [month, setMonth] = useState(() => new Date().getMonth());
+
+  const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const thisYear = new Date().getFullYear();
+  const monthCounts = MONTHS.map((_, i) =>
+    rows.filter((t) => {
+      const d = t.archived_at ? new Date(t.archived_at) : null;
+      return d !== null && d.getFullYear() === thisYear && d.getMonth() === i;
+    }).length,
+  );
+  const monthRows = rows.filter((t) => {
+    const d = t.archived_at ? new Date(t.archived_at) : null;
+    return d !== null && d.getFullYear() === thisYear && d.getMonth() === month;
+  });
 
   const load = async () => {
     const { data } = await supabase
