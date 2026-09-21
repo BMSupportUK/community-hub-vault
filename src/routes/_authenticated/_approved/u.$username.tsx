@@ -586,8 +586,8 @@ function ProfilePage() {
         </p>
       </header>
 
-      <div className="px-8 py-6">
-        <Tabs value={mainTab} onValueChange={(v) => setMainTab(v as typeof mainTab)} className="w-full">
+      <div className={cn("px-8 py-6", locked && "flex min-h-0 flex-1 flex-col overflow-hidden")}>
+        <Tabs value={mainTab} onValueChange={(v) => setMainTab(v as typeof mainTab)} className={cn("w-full", locked && "flex min-h-0 flex-1 flex-col")}>
           <TabsList className="flex flex-wrap h-auto bg-purple-950/60 border border-purple-500/30">
             {tabDefs.map((t) => (
               <TabsTrigger
