@@ -428,8 +428,10 @@ function StaffShiftsPage() {
                       </p>
                     </div>
                   );
-                })}
-              </div>
+                 })}
+                  </div>
+                </div>
+              ))}
             </section>
           ))}
         </div>
