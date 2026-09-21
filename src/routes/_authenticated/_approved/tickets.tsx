@@ -661,10 +661,14 @@ function TicketsPage() {
                 </div>
 
                 <div className="space-y-3">
-                  {tickets.length === 0 && (
-                    <div className="text-xs text-white/70 px-2 py-3 text-center">No tickets yet.</div>
-                  )}
-                  {groups.map((g) => (
+                  {openTickets.length === 0 ? (
+                    <div className="flex flex-col items-center px-2 py-4 text-center">
+                      <img src={ticketsEmpty} alt="" aria-hidden loading="lazy" width={816} height={816} className="w-32 h-32 object-contain drop-shadow-lg" />
+                      <p className="mt-2 text-sm font-semibold text-white">No open tickets to deal with</p>
+                      <p className="mt-1 text-xs text-white/70">You're all caught up — every ticket has been resolved.</p>
+                    </div>
+                  ) : (
+                  groups.map((g) => (
                     <div key={g.label}>
                       <div className="px-2 pb-1 text-[10px] font-semibold uppercase tracking-wider text-white/70 flex items-center gap-1">
                         <ChevronDown className="size-3" />{g.label}
