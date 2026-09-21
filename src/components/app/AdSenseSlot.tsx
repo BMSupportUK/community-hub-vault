@@ -44,15 +44,28 @@ function AdSenseSlotComponent({ slot = "topic", fitViewport = false }: { slot?: 
   const sidebarFit = slot === "sidebar" && fitViewport;
 
   const boxRef = useRef<HTMLDivElement | null>(null);
+  const insRef = useRef<HTMLElement | null>(null);
   const pressRef = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     if (!enabled) return;
     ensureAdSenseScript();
-    // Defer the push so the <ins> element is in the DOM first.
-    const id = window.setTimeout(pushAd, 50);
+    // Defer the push so the <ins> element is in the DOM first. For viewport-fit
+    // sidebars, pick the format from the real screen height right before the
+    // push: AdSense injects height:auto !important once filled, so the only
+    // reliable way to avoid a clipped 600px unit on short screens is to ask
+    // for a shorter rectangle creative up front.
+    const id = window.setTimeout(() => {
+      if (sidebarFit && insRef.current) {
+        insRef.current.setAttribute(
+          "data-ad-format",
+          window.innerHeight < 700 ? "rectangle" : "auto",
+        );
+      }
+      pushAd();
+    }, 50);
     return () => window.clearTimeout(id);
-  }, [enabled]);
+  }, [enabled, sidebarFit]);
 
   // Count a view once the unit actually scrolls into sight.
   useEffect(() => {
