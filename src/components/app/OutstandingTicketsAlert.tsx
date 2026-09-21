@@ -79,7 +79,6 @@ export function OutstandingTicketsAlert() {
               "New support ticket";
             toast.info(subject, { description: "A new support ticket was just opened." });
             playSound(ticketAudio, { label: "ticket-new", gain: 2.0 });
-            setOpen(true);
           }
         },
       )
