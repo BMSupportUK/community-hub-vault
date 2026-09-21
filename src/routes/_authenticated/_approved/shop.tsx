@@ -3184,6 +3184,7 @@ function MyOrdersTab({ onOpenOrder }: { onOpenOrder: (id: string) => void }) {
   const [tickets, setTickets] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<"processing" | "completed" | "cancelled">("processing");
+  const [month, setMonth] = useState(() => new Date().getMonth());
 
   useEffect(() => {
     if (!user) {
@@ -3224,11 +3225,24 @@ function MyOrdersTab({ onOpenOrder }: { onOpenOrder: (id: string) => void }) {
     };
   }, [user?.id]);
 
-  const processingOrders = orders.filter((o) =>
+  const monthLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const monthCounts = useMemo(() => {
+    const counts = Array.from({ length: 12 }, () => 0);
+    for (const order of orders) {
+      const date = new Date(order.created_at);
+      if (!Number.isNaN(date.getTime())) counts[date.getMonth()] += 1;
+    }
+    return counts;
+  }, [orders]);
+  const monthOrders = useMemo(
+    () => orders.filter((order) => new Date(order.created_at).getMonth() === month),
+    [orders, month],
+  );
+  const processingOrders = monthOrders.filter((o) =>
     ["pending", "processing", "paid"].includes(o.status),
   );
-  const completedOrders = orders.filter((o) => o.status === "completed");
-  const cancelledOrders = orders.filter((o) => o.status === "cancelled");
+  const completedOrders = monthOrders.filter((o) => o.status === "completed");
+  const cancelledOrders = monthOrders.filter((o) => o.status === "cancelled");
 
   const renderOrderCards = (list: Order[]) =>
     loading ? (
@@ -3301,6 +3315,20 @@ function MyOrdersTab({ onOpenOrder }: { onOpenOrder: (id: string) => void }) {
       </header>
 
       <div className="relative px-4 md:px-6 py-6">
+        <div className="mb-4 flex max-w-full gap-1.5 overflow-x-auto pb-1 scrollbar-hide" aria-label="Order month">
+          {monthLabels.map((label, index) => (
+            <Button
+              key={label}
+              type="button"
+              size="sm"
+              variant={month === index ? "default" : "outline"}
+              onClick={() => setMonth(index)}
+              className="h-8 shrink-0 px-3 text-xs"
+            >
+              {label}{monthCounts[index] > 0 ? ` (${monthCounts[index]})` : ""}
+            </Button>
+          ))}
+        </div>
         <Tabs
           value={tab}
           onValueChange={(v) => setTab(v as "processing" | "completed" | "cancelled")}

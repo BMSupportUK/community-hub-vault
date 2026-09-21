@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import {
   Pencil, Camera, Loader2, ShieldCheck, Clock as ClockIcon,
-  Coffee, UtensilsCrossed, Ticket, ShoppingBag, Eye, EyeOff,
+  Coffee, UtensilsCrossed, Ticket, Eye, EyeOff,
   Lock, KeyRound, Copy, Check, Globe, Calendar, StickyNote, AtSign,
   Trophy, Gift, X as XIcon, UserPlus, Plus, Trash2, Smartphone,
   MapPin,
@@ -13,7 +13,6 @@ import { useLiveLastSeen } from "@/hooks/use-live-last-seen";
 import { formatLastSeen } from "@/lib/relative-time";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
-import { useCurrency } from "@/hooks/use-currency";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import profileHeader from "@/assets/profile-header.jpg";
@@ -24,7 +23,6 @@ import tvLoginIllustration from "@/assets/tv-login-illustration.jpg";
 import referralsBg from "@/assets/referrals-bg.jpg";
 import friendsBg from "@/assets/friends-bg.jpg";
 import ticketsBg from "@/assets/tickets-bg.jpg";
-import ordersBg from "@/assets/orders-bg.jpg";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { browserTimezone, listTimeZones } from "@/hooks/use-user-timezone";
 import { Nameplate } from "@/components/app/Nameplate";
@@ -76,7 +74,6 @@ function accountTypeLabel(type: string | null | undefined) {
 }
 interface DnsRow { id: string; label: string; code: string; notes: string | null; }
 interface TicketRow { id: string; subject: string; status: string; priority: string; created_at: string; updated_at: string; closed_at: string | null; order_id: string | null; }
-interface OrderRow { id: string; total_cents: number; status: string; created_at: string; paid_at: string | null; completed_at: string | null; shipping_name: string | null; discount_code: string | null; }
 interface InviteSummary {
   sent: number;
   used: number;
@@ -149,7 +146,6 @@ function ProfilePage() {
   const { user: viewer, hasAny } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
   const roleFlashMap = useRoleFlashMap();
-  const { format: fmtCurrency } = useCurrency();
   const locked = useViewportLockable();
   const [now, setNow] = useState(() => Date.now());
   const [profile, setProfile] = useState<ProfileRow | null>(null);
@@ -157,7 +153,6 @@ function ProfilePage() {
   const [shift, setShift] = useState<ShiftRow | null>(null);
   const [breakRow, setBreakRow] = useState<BreakRow | null>(null);
   const [tickets, setTickets] = useState<TicketRow[]>([]);
-  const [orders, setOrders] = useState<OrderRow[]>([]);
   const [inviteInfo, setInviteInfo] = useState<InviteSummary | null>(null);
   const [referrals, setReferrals] = useState<ReferralRow[]>([]);
   const [creatingInvite, setCreatingInvite] = useState(false);
@@ -168,8 +163,8 @@ function ProfilePage() {
   const [friends, setFriends] = useState<FriendRow[]>([]);
   const [rel, setRel] = useState<FriendRel>({ kind: "none" });
   const [relBusy, setRelBusy] = useState(false);
-  const initialTab = (["profile","creds","tickets","orders","referrals","friends","shifts"].includes(search.tab ?? "") ? search.tab : "profile") as "profile" | "creds" | "tickets" | "orders" | "referrals" | "friends" | "shifts";
-  const allowedTabs = ["profile","creds","tickets","orders","referrals","friends","shifts","notifications","theme"] as const;
+  const initialTab = (["profile","creds","tickets","referrals","friends","shifts"].includes(search.tab ?? "") ? search.tab : "profile") as "profile" | "creds" | "tickets" | "referrals" | "friends" | "shifts";
+  const allowedTabs = ["profile","creds","tickets","referrals","friends","shifts","notifications","theme"] as const;
   type TabId = typeof allowedTabs[number];
   const initialTabSafe = (allowedTabs.includes((search.tab ?? "") as TabId) ? search.tab : initialTab) as TabId;
   const [mainTab, setMainTab] = useState<TabId>(initialTabSafe);
@@ -216,20 +211,18 @@ function ProfilePage() {
     if (!p) { setProfile(null); setLoading(false); return; }
     setProfile(p as ProfileRow);
 
-    const [{ data: r }, { data: s }, { data: b }, { data: tk }, { data: od }] = await Promise.all([
+    const [{ data: r }, { data: s }, { data: b }, { data: tk }] = await Promise.all([
       supabase.from("user_roles").select("role").eq("user_id", p.id),
       supabase.from("shifts").select("*").eq("user_id", p.id).is("clock_out", null).order("clock_in", { ascending: true }).limit(1).maybeSingle(),
       supabase.from("breaks").select("*").eq("user_id", p.id).is("ended_at", null).order("started_at", { ascending: false }).limit(1).maybeSingle(),
       // Tickets are kept on the profile for the current calendar year only — at
       // the turn of the year the profile list clears itself.
       supabase.from("tickets").select("id, subject, status, priority, created_at, updated_at, closed_at, order_id").eq("user_id", p.id).gte("created_at", `${new Date().getFullYear()}-01-01T00:00:00.000Z`).order("created_at", { ascending: false }).limit(500),
-      supabase.from("orders").select("id, total_cents, status, created_at, paid_at, completed_at, shipping_name, discount_code").eq("user_id", p.id).gte("created_at", `${new Date().getFullYear()}-01-01T00:00:00.000Z`).order("created_at", { ascending: false }).limit(500),
     ]);
     setRoles((r ?? []).map((x: any) => x.role as AppRole));
     setShift((s as ShiftRow) ?? null);
     setBreakRow((b as BreakRow) ?? null);
     setTickets((tk ?? []) as TicketRow[]);
-    setOrders((od ?? []) as OrderRow[]);
 
     // Invite info — visible to the profile owner and admins; for others we only show invitedBy
     const [{ data: sentInv }, { data: invitedRow }] = await Promise.all([
@@ -506,7 +499,6 @@ function ProfilePage() {
     { id: "profile", label: "Profile" },
     ...(canSeeCreds ? [{ id: "creds", label: "Credentials" }] : []),
     { id: "tickets", label: `Tickets (${tickets.length})` },
-    { id: "orders", label: `Orders (${orders.length})` },
     { id: "friends", label: `Friends (${friends.length})` },
     ...(canSeeShifts ? [{ id: "shifts", label: "Shift history" }] : []),
     ...(canSeeReferrals ? [{ id: "referrals", label: `Referrals (${referrals.length})` }] : []),
@@ -522,7 +514,7 @@ function ProfilePage() {
     <div className={cn(
       "relative h-full min-h-0 flex-1 overscroll-contain",
       locked ? "flex flex-col overflow-hidden" : "overflow-y-auto",
-      mainTab === "referrals" || mainTab === "friends" || mainTab === "tickets" || mainTab === "orders"
+      mainTab === "referrals" || mainTab === "friends" || mainTab === "tickets"
         ? "bg-[#1a0b2e]"
         : "bg-gradient-to-br from-[#1a0b2e] via-[#2d1b4e] to-[#1a0b2e]",
     )}>
@@ -562,19 +554,6 @@ function ProfilePage() {
           />
           <div className="absolute inset-0 bg-gradient-to-b from-[#1a0b2e]/45 via-[#1a0b2e]/30 to-[#1a0b2e]/55" />
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,rgba(59,130,246,0.18),transparent_65%)]" />
-          <div className="absolute inset-0" style={{ background: "rgba(5, 10, 20, 0.35)" }} />
-        </div>
-      )}
-      {mainTab === "orders" && (
-        <div className="pointer-events-none absolute inset-0 z-0">
-          <img
-            src={ordersBg}
-            alt=""
-            aria-hidden
-            className="absolute inset-0 h-full w-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#1a0b2e]/45 via-[#1a0b2e]/30 to-[#1a0b2e]/55" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,rgba(16,185,129,0.18),transparent_65%)]" />
           <div className="absolute inset-0" style={{ background: "rgba(5, 10, 20, 0.35)" }} />
         </div>
       )}
@@ -684,7 +663,7 @@ function ProfilePage() {
                   </div>
                   <p className="text-sm text-purple-100/90">
                     {isOwner
-                      ? "Use the tabs to update your profile, view your credentials, track tickets and orders, and manage your invites."
+                      ? "Use the tabs to update your profile, view your credentials, track tickets, and manage your invites."
                       : "Browse the tabs to see this member's profile, recent activity, and shared information."}
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2">
@@ -752,10 +731,6 @@ function ProfilePage() {
 
           <TabsContent value="tickets" className={paneClass}>
             <TicketMonthsPanel tickets={tickets} canReopen={isOwner} onChanged={load} />
-          </TabsContent>
-
-          <TabsContent value="orders" className={paneClass}>
-            <OrderMonthsPanel orders={orders} fmtCurrency={fmtCurrency} />
           </TabsContent>
 
           {canSeeShifts && (
@@ -1127,90 +1102,6 @@ function TicketCardItem({ ticket, canReopen = false, onChanged }: { ticket: Tick
         >
           {busy ? "Reopening…" : "Reopen ticket"}
         </button>
-      )}
-    </Link>
-  );
-}
-
-function OrderMonthsPanel({ orders, fmtCurrency }: { orders: OrderRow[]; fmtCurrency: (cents: number) => string }) {
-  const [month, setMonth] = useState(() => new Date().getMonth());
-  const byMonth = useMemo(() => {
-    const buckets: OrderRow[][] = Array.from({ length: 12 }, () => []);
-    for (const order of orders) {
-      const date = new Date(order.created_at);
-      if (!Number.isNaN(date.getTime())) buckets[date.getMonth()].push(order);
-    }
-    return buckets;
-  }, [orders]);
-  const current = byMonth[month] ?? [];
-  const year = new Date().getFullYear();
-
-  return (
-    <div className="flex min-h-0 flex-1 flex-col gap-4">
-      <div className="flex flex-wrap gap-1.5">
-        {MONTH_LABELS.map((label, index) => {
-          const count = byMonth[index].length;
-          return (
-            <button
-              key={label}
-              type="button"
-              onClick={() => setMonth(index)}
-              className={cn(
-                "rounded-full border px-3 py-1 text-xs font-semibold transition",
-                month === index
-                  ? "border-white/60 bg-white/20 text-white"
-                  : count > 0
-                    ? "border-white/20 bg-white/[0.06] text-white/80 hover:bg-white/[0.12]"
-                    : "border-white/10 bg-white/[0.03] text-white/35 hover:bg-white/[0.06]",
-              )}
-            >
-              {label}
-              {count > 0 && <span className="ml-1 text-[10px] text-amber-100/80">({count})</span>}
-            </button>
-          );
-        })}
-      </div>
-      <ActivityCardGrid
-        title={`${MONTH_LABELS[month]} ${year} orders`}
-        icon={ShoppingBag}
-        empty={`No orders in ${MONTH_LABELS[month]} ${year}`}
-        isEmpty={current.length === 0}
-      >
-        {current.map((order) => (
-          <OrderCardItem key={order.id} order={order} fmtCurrency={fmtCurrency} />
-        ))}
-      </ActivityCardGrid>
-    </div>
-  );
-}
-
-function OrderCardItem({ order, fmtCurrency }: { order: OrderRow; fmtCurrency: (cents: number) => string }) {
-  return (
-    <Link
-      to="/shop"
-      search={{ view: "orders", id: order.id }}
-      className="group rounded-xl border border-white/15 bg-white/[0.06] hover:bg-white/[0.1] hover:border-white/30 transition p-4 flex flex-col gap-2 text-left"
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-amber-100/80">
-          <ShoppingBag className="size-3.5" /> Order #{order.id.slice(0, 8)}
-        </div>
-        <span className={cn("text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border", statusToneClass(order.status))}>
-          {order.status.replace(/_/g, " ")}
-        </span>
-      </div>
-      <p className="font-display text-lg font-bold text-white">{fmtCurrency(order.total_cents)}</p>
-      <div className="flex items-center justify-between text-[11px] text-white/60">
-        <span>Placed {fmtShortDate(order.created_at)}</span>
-        {order.discount_code && (
-          <span className="text-amber-200/80">Code: {order.discount_code}</span>
-        )}
-      </div>
-      {order.paid_at && (
-        <div className="text-[11px] text-emerald-200/80">Paid {fmtShortDate(order.paid_at)}</div>
-      )}
-      {order.completed_at && (
-        <div className="text-[11px] text-emerald-200/80">Completed {fmtShortDate(order.completed_at)}</div>
       )}
     </Link>
   );
