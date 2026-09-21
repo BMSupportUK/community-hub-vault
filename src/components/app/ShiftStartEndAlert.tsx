@@ -131,7 +131,7 @@ export function ShiftStartEndAlert() {
       if (autoClockedRef.current.has(slot.id)) continue;
       const { startsAt, endsAt } = shiftWindowToUtcMs(slot.shift_date, slot.start_time, slot.end_time);
       if (isNaN(startsAt) || isNaN(endsAt)) continue;
-      if (now >= startsAt && now < endsAt) {
+      if (now >= startsAt + AUTO_CLOCK_IN_AFTER && now < endsAt) {
         autoClockedRef.current.add(slot.id);
         (async () => {
           const { data: existing } = await supabase
