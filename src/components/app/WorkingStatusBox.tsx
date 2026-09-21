@@ -121,6 +121,10 @@ export function WorkingStatusBox({
 
   const clockIn = async () => {
     if (!user) return;
+    if (!hasSlotToday) {
+      toast.error("You have no shift on the rota today, so you can't sign in.");
+      return;
+    }
     setBusy(true);
     const { error } = await supabase.from("shifts").insert({ user_id: user.id });
     setBusy(false);
