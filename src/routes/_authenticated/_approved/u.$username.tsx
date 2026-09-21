@@ -510,9 +510,14 @@ function ProfilePage() {
     ...(isOwner ? [{ id: "theme", label: "Theme" }] : []),
   ];
 
+  // On genuinely large screens the profile stays inside the viewport: the
+  // heading and tab bar are fixed and only the active panel scrolls.
+  const paneClass = cn("mt-6", locked && "min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1");
+
   return (
     <div className={cn(
-      "relative h-full min-h-0 flex-1 overflow-y-auto overscroll-contain",
+      "relative h-full min-h-0 flex-1 overscroll-contain",
+      locked ? "flex flex-col overflow-hidden" : "overflow-y-auto",
       mainTab === "referrals" || mainTab === "friends" || mainTab === "tickets" || mainTab === "orders"
         ? "bg-[#1a0b2e]"
         : "bg-gradient-to-br from-[#1a0b2e] via-[#2d1b4e] to-[#1a0b2e]",
