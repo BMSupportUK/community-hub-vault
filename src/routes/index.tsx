@@ -141,14 +141,14 @@ function Landing() {
           }}
         >
           <div className="grid md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] gap-5 md:gap-3 lg:gap-4 items-center lg:items-stretch lg:flex-1 w-full">
-            <div className="space-y-5 [@media(max-height:650px)]:space-y-2 text-white">
-              <h1 className="font-display text-4xl md:text-6xl lg:text-7xl [@media(max-height:650px)]:text-4xl font-bold tracking-tight leading-[1.05] drop-shadow-[0_2px_20px_rgba(0,0,0,0.5)]">
+            <div className="space-y-4 sm:space-y-5 [@media(max-height:650px)]:space-y-2 text-white">
+              <h1 className="font-display text-[1.75rem] leading-[1.1] sm:text-5xl md:text-6xl lg:text-7xl [@media(max-height:650px)]:text-3xl font-bold tracking-tight sm:leading-[1.05] drop-shadow-[0_2px_20px_rgba(0,0,0,0.5)] max-w-[16ch] sm:max-w-none">
                 Welcome to <span className="bg-gradient-to-r from-red-200 via-white to-red-300 bg-clip-text text-transparent">BM Support</span>
               </h1>
-              <p className="text-lg md:text-2xl [@media(max-height:650px)]:text-base text-red-50/95 max-w-xl">
+              <p className="text-base sm:text-lg md:text-2xl [@media(max-height:650px)]:text-base font-medium text-red-50/95 max-w-xl">
                 Your all-in-one server for BM Support — stay connected, all in one place.
               </p>
-              <p className="text-base md:text-lg [@media(max-height:650px)]:text-sm [@media(max-height:650px)]:leading-snug text-red-100/80 max-w-xl">
+              <p className="text-sm sm:text-base md:text-lg [@media(max-height:650px)]:text-sm leading-relaxed [@media(max-height:650px)]:leading-snug text-red-100/80 max-w-xl">
                 Access community channels, manage your time, view schedules, get support, and explore our services. Everything you need is just one click away.
               </p>
             </div>
@@ -215,7 +215,7 @@ function Landing() {
         </div>
       </main>
 
-      <footer className="border-t border-red-500/20 bg-black/60 backdrop-blur-sm [@media(max-height:650px)]:hidden">
+      <footer className="shrink-0 border-t border-red-500/20 bg-black/60 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-6 py-3 [@media(max-height:650px)]:py-1.5 flex flex-col md:flex-row items-center justify-between gap-3 [@media(max-height:650px)]:gap-1">
           <p className="text-sm text-red-50/70 order-2 md:order-1">
             © BM Support 2026. All rights reserved.
