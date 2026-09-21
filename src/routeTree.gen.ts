@@ -130,6 +130,7 @@ import { Route as ApiPublicHooksNotifyRouteImport } from './routes/api/public/ho
 import { Route as ApiPublicHooksNowpaymentsRouteImport } from './routes/api/public/hooks/nowpayments'
 import { Route as ApiPublicHooksRefreshStreamingPricesRouteImport } from './routes/api/public/hooks/refresh-streaming-prices'
 import { Route as ApiPublicHooksRefreshStreamingStockRouteImport } from './routes/api/public/hooks/refresh-streaming-stock'
+import { Route as ApiPublicHooksRotaAutofillRouteImport } from './routes/api/public/hooks/rota-autofill'
 import { Route as ApiPublicHooksScheduledRemindersRouteImport } from './routes/api/public/hooks/scheduled-reminders'
 import { Route as ApiPublicHooksSquareInvoiceRouteImport } from './routes/api/public/hooks/square-invoice'
 import { Route as ApiPublicHooksStaffNotificationPushRouteImport } from './routes/api/public/hooks/staff-notification-push'
@@ -848,6 +849,12 @@ const ApiPublicHooksRefreshStreamingStockRoute =
     path: '/api/public/hooks/refresh-streaming-stock',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksRotaAutofillRoute =
+  ApiPublicHooksRotaAutofillRouteImport.update({
+    id: '/api/public/hooks/rota-autofill',
+    path: '/api/public/hooks/rota-autofill',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksScheduledRemindersRoute =
   ApiPublicHooksScheduledRemindersRouteImport.update({
     id: '/api/public/hooks/scheduled-reminders',
@@ -1080,6 +1087,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/nowpayments': typeof ApiPublicHooksNowpaymentsRoute
   '/api/public/hooks/refresh-streaming-prices': typeof ApiPublicHooksRefreshStreamingPricesRoute
   '/api/public/hooks/refresh-streaming-stock': typeof ApiPublicHooksRefreshStreamingStockRoute
+  '/api/public/hooks/rota-autofill': typeof ApiPublicHooksRotaAutofillRoute
   '/api/public/hooks/scheduled-reminders': typeof ApiPublicHooksScheduledRemindersRoute
   '/api/public/hooks/square-invoice': typeof ApiPublicHooksSquareInvoiceRoute
   '/api/public/hooks/staff-notification-push': typeof ApiPublicHooksStaffNotificationPushRoute
@@ -1217,6 +1225,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/nowpayments': typeof ApiPublicHooksNowpaymentsRoute
   '/api/public/hooks/refresh-streaming-prices': typeof ApiPublicHooksRefreshStreamingPricesRoute
   '/api/public/hooks/refresh-streaming-stock': typeof ApiPublicHooksRefreshStreamingStockRoute
+  '/api/public/hooks/rota-autofill': typeof ApiPublicHooksRotaAutofillRoute
   '/api/public/hooks/scheduled-reminders': typeof ApiPublicHooksScheduledRemindersRoute
   '/api/public/hooks/square-invoice': typeof ApiPublicHooksSquareInvoiceRoute
   '/api/public/hooks/staff-notification-push': typeof ApiPublicHooksStaffNotificationPushRoute
@@ -1360,6 +1369,7 @@ export interface FileRoutesById {
   '/api/public/hooks/nowpayments': typeof ApiPublicHooksNowpaymentsRoute
   '/api/public/hooks/refresh-streaming-prices': typeof ApiPublicHooksRefreshStreamingPricesRoute
   '/api/public/hooks/refresh-streaming-stock': typeof ApiPublicHooksRefreshStreamingStockRoute
+  '/api/public/hooks/rota-autofill': typeof ApiPublicHooksRotaAutofillRoute
   '/api/public/hooks/scheduled-reminders': typeof ApiPublicHooksScheduledRemindersRoute
   '/api/public/hooks/square-invoice': typeof ApiPublicHooksSquareInvoiceRoute
   '/api/public/hooks/staff-notification-push': typeof ApiPublicHooksStaffNotificationPushRoute
@@ -1502,6 +1512,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/nowpayments'
     | '/api/public/hooks/refresh-streaming-prices'
     | '/api/public/hooks/refresh-streaming-stock'
+    | '/api/public/hooks/rota-autofill'
     | '/api/public/hooks/scheduled-reminders'
     | '/api/public/hooks/square-invoice'
     | '/api/public/hooks/staff-notification-push'
@@ -1639,6 +1650,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/nowpayments'
     | '/api/public/hooks/refresh-streaming-prices'
     | '/api/public/hooks/refresh-streaming-stock'
+    | '/api/public/hooks/rota-autofill'
     | '/api/public/hooks/scheduled-reminders'
     | '/api/public/hooks/square-invoice'
     | '/api/public/hooks/staff-notification-push'
@@ -1781,6 +1793,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/nowpayments'
     | '/api/public/hooks/refresh-streaming-prices'
     | '/api/public/hooks/refresh-streaming-stock'
+    | '/api/public/hooks/rota-autofill'
     | '/api/public/hooks/scheduled-reminders'
     | '/api/public/hooks/square-invoice'
     | '/api/public/hooks/staff-notification-push'
@@ -1848,6 +1861,7 @@ export interface RootRouteChildren {
   ApiPublicHooksNowpaymentsRoute: typeof ApiPublicHooksNowpaymentsRoute
   ApiPublicHooksRefreshStreamingPricesRoute: typeof ApiPublicHooksRefreshStreamingPricesRoute
   ApiPublicHooksRefreshStreamingStockRoute: typeof ApiPublicHooksRefreshStreamingStockRoute
+  ApiPublicHooksRotaAutofillRoute: typeof ApiPublicHooksRotaAutofillRoute
   ApiPublicHooksScheduledRemindersRoute: typeof ApiPublicHooksScheduledRemindersRoute
   ApiPublicHooksSquareInvoiceRoute: typeof ApiPublicHooksSquareInvoiceRoute
   ApiPublicHooksStaffNotificationPushRoute: typeof ApiPublicHooksStaffNotificationPushRoute
@@ -2712,6 +2726,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksRefreshStreamingStockRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/rota-autofill': {
+      id: '/api/public/hooks/rota-autofill'
+      path: '/api/public/hooks/rota-autofill'
+      fullPath: '/api/public/hooks/rota-autofill'
+      preLoaderRoute: typeof ApiPublicHooksRotaAutofillRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/scheduled-reminders': {
       id: '/api/public/hooks/scheduled-reminders'
       path: '/api/public/hooks/scheduled-reminders'
@@ -3213,6 +3234,7 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicHooksRefreshStreamingPricesRoute,
   ApiPublicHooksRefreshStreamingStockRoute:
     ApiPublicHooksRefreshStreamingStockRoute,
+  ApiPublicHooksRotaAutofillRoute: ApiPublicHooksRotaAutofillRoute,
   ApiPublicHooksScheduledRemindersRoute: ApiPublicHooksScheduledRemindersRoute,
   ApiPublicHooksSquareInvoiceRoute: ApiPublicHooksSquareInvoiceRoute,
   ApiPublicHooksStaffNotificationPushRoute:
