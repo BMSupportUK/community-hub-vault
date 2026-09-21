@@ -1090,6 +1090,8 @@ function officeStatus(hours: OfficeHour[], now: Date, timezone: string) {
     const localOpening = new Intl.DateTimeFormat("en-GB", {
       timeZone: timezone,
       weekday: "short",
+      day: "numeric",
+      month: "short",
       hour: "numeric",
       minute: "2-digit",
       hour12: true,
