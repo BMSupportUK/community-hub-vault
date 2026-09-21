@@ -14,3 +14,5 @@
 ## Support tickets
 - [x] Keep the ticket list and conversation fitted within large screens
 - [x] Add the vertical Google advert beside open ticket conversations
+- [x] Fit the new-ticket form within large screens and move its home button into the top navigation
+- [x] Replace the new-ticket left navigation area with the vertical Google advert

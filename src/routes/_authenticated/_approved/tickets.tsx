@@ -433,6 +433,7 @@ function TicketsPage() {
       <div className={cn(
         "relative z-10 flex h-full min-h-0 flex-col border-t border-white/20 px-6 pb-10 md:px-10",
         !isChatting && "overflow-y-auto pt-6",
+        tab === "open" && "lg:overflow-hidden",
         isChatting && "px-0 md:px-0 pb-0 h-full"
       )}>
         <Tabs
@@ -441,6 +442,7 @@ function TicketsPage() {
           className={cn(
             "min-h-0",
             isChatting ? "flex h-full flex-col overflow-hidden" : "shrink-0",
+            tab === "open" && "lg:flex lg:h-full lg:flex-col lg:overflow-hidden",
             tab === "tickets" && "lg:flex lg:h-full lg:flex-col lg:overflow-hidden",
           )}
         >
@@ -448,6 +450,15 @@ function TicketsPage() {
             <header className="w-full pt-6">
               <div aria-hidden="true" className="mb-6 h-px w-full bg-white/60 shadow-[0_0_12px_rgba(255,255,255,0.55)]" />
               <div className="flex flex-wrap items-center justify-center gap-3 md:gap-4 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-[0_0_50px_-12px_rgba(244,63,94,0.35)] p-3 md:p-4">
+                <button
+                  type="button"
+                  onClick={() => { setCreating(false); setTab("welcome"); navigate({ to: "/tickets", search: { id: undefined, view } }); }}
+                  className="grid size-10 shrink-0 place-items-center rounded-xl border border-white/15 bg-black/20 text-white/70 shadow-inner transition-colors hover:bg-white/10 hover:text-white"
+                  title="Back to welcome"
+                  aria-label="Back to welcome"
+                >
+                  <Home className="size-4" />
+                </button>
                 <TabsList className="bg-black/20 border border-white/15 rounded-2xl shadow-inner">
                   <TabsTrigger
                     value="welcome"
@@ -524,31 +535,25 @@ function TicketsPage() {
             </div>
           </TabsContent>
 
-          <TabsContent value="open" className={cn("mt-6", isChatting && "mt-0 h-full")}>
+          <TabsContent value="open" className={cn("mt-6 lg:flex lg:min-h-0 lg:flex-1 lg:overflow-hidden", isChatting && "mt-0 h-full")}>
             <div className={cn(
-              "grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-4",
+              "grid grid-cols-1 gap-4 lg:h-full lg:min-h-0 lg:flex-1 lg:grid-cols-[300px_minmax(0,1fr)]",
               isChatting && "h-full min-h-0 gap-0 lg:grid-cols-[280px_1fr] grid-rows-[auto_1fr] lg:grid-rows-1"
             )}>
               <aside className={cn(
-                "rounded-2xl bg-rose-950/50 border border-rose-500/30 p-4 h-fit backdrop-blur space-y-3",
+                "hidden rounded-2xl border border-rose-500/30 bg-rose-950/50 p-4 backdrop-blur lg:flex lg:h-full lg:min-h-0 lg:flex-col",
                 isChatting && "rounded-none border-y-0 border-l-0 h-full overflow-y-auto hidden lg:block"
               )}>
-                <div className="flex gap-1 bg-white/10 p-1 rounded-lg text-xs">
-                  <button
-                    onClick={() => { setCreating(false); setTab("welcome"); navigate({ to: "/tickets", search: { id: undefined, view } }); }}
-                    className="flex items-center justify-center gap-1 px-2 py-1 rounded-md text-white/70 hover:text-white hover:bg-white/10 transition-colors"
-                    title="Back to welcome"
-                  >
-                    <Home className="size-3" />
-                  </button>
+                <div className="min-h-[250px] flex-1 overflow-hidden [&>div]:h-full">
+                  <AdSenseSlot slot="sidebar" fitViewport />
                 </div>
               </aside>
 
               <div
                 ref={detailPanelRef}
                 className={cn(
-                  "rounded-2xl bg-gradient-to-br from-violet-600 via-fuchsia-600 to-rose-600 text-white relative overflow-hidden min-h-[600px] flex flex-col scroll-mt-16",
-                  isChatting ? "h-full rounded-none border-y-0 border-r-0" : "h-[calc(100dvh-8rem)]"
+                  "relative flex min-h-[600px] flex-col overflow-hidden rounded-2xl bg-gradient-to-br from-violet-600 via-fuchsia-600 to-rose-600 text-white scroll-mt-16 lg:h-full lg:min-h-0",
+                  isChatting ? "h-full rounded-none border-y-0 border-r-0" : ""
                 )}
               >
                 <div className="pointer-events-none absolute inset-0 opacity-60" style={{
