@@ -4478,21 +4478,27 @@ export type Database = {
           clock_in: string
           clock_out: string | null
           created_at: string
+          end_prompt_asked_at: string | null
           id: string
+          still_working_ack_at: string | null
           user_id: string
         }
         Insert: {
           clock_in?: string
           clock_out?: string | null
           created_at?: string
+          end_prompt_asked_at?: string | null
           id?: string
+          still_working_ack_at?: string | null
           user_id: string
         }
         Update: {
           clock_in?: string
           clock_out?: string | null
           created_at?: string
+          end_prompt_asked_at?: string | null
           id?: string
+          still_working_ack_at?: string | null
           user_id?: string
         }
         Relationships: []
