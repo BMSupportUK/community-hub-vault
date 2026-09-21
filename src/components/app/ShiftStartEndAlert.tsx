@@ -334,9 +334,11 @@ export function ShiftStartEndAlert() {
       .eq("id", openShift.id)
       .is("clock_out", null)
       .maybeSingle();
+    clearFlags(openShift.id);
     setAskOpen(false);
     setAutoEndAt(null);
     setActive(null);
+
     if (!stillOpen) return;
     await supabase
       .from("shifts")
