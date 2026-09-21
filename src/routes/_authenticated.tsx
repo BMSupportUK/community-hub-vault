@@ -206,11 +206,11 @@ function AuthLayout() {
             {isAdmin && (
               <Link
                 to="/moderation"
-                title="Moderation"
+                title="BM Support | Access Requests"
                 className="flex items-center gap-2 rounded-full px-3 py-1.5 bg-surface-2 hover:bg-primary hover:text-primary-foreground text-xs font-medium transition-colors"
               >
                 <Shield className="size-4" />
-                <span className="hidden xl:inline">Moderation</span>
+                <span className="hidden xl:inline">BM Support | Access Requests</span>
                 <DeferUntilIdle><ModerationPendingBadge /></DeferUntilIdle>
               </Link>
             )}

@@ -28,6 +28,10 @@ interface AppRow {
   accessIntent?: "bm-support" | "fan-zone" | null;
 }
 
+/** Appeals are submitted with a [APPEAL] prefix on the reason. */
+const isAppealRow = (a: { reason: string | null }) =>
+  (a.reason ?? "").trim().toUpperCase().startsWith("[APPEAL]");
+
 type MsgStatus = "sending" | "sent" | "failed";
 interface ThreadMsg { id: string; sender_id: string; content: string; created_at: string; status?: MsgStatus }
 
@@ -42,6 +46,8 @@ function ModerationPage() {
   }
   const [apps, setApps] = useState<AppRow[]>([]);
   const [filter, setFilter] = useState<"pending" | "approved" | "denied">("pending");
+  /** Access requests vs appeals — appeals are flagged with a [APPEAL] prefix on the reason. */
+  const [kind, setKind] = useState<"requests" | "appeals">("requests");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [thread, setThread] = useState<ThreadMsg[]>([]);
   const [reply, setReply] = useState("");
@@ -56,12 +62,18 @@ function ModerationPage() {
   const lastTypingSent = useRef<number>(0);
 
   const load = async () => {
-    const { data: rows } = await supabase
+    const { data: raw } = await supabase
       .from("gate_applications")
-      .select("id, user_id, status, created_at, reason")
+      .select("id, user_id, status, created_at, reviewed_at, reason")
       .eq("status", filter)
       .order("created_at", { ascending: false });
-    if (!rows) return;
+    if (!raw) return;
+    // Decided requests/appeals stay on the list for one month after the decision, then drop off.
+    const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    const rows =
+      filter === "pending"
+        ? raw
+        : raw.filter((r) => new Date(r.reviewed_at ?? r.created_at).getTime() >= cutoff);
     const ids = rows.map((r) => r.user_id);
     const { data: profs } = await supabase.from("profiles").select("id, display_name, username").in("id", ids);
     const profMap = new Map(profs?.map((p) => [p.id, p]) ?? []);
@@ -308,10 +320,12 @@ function ModerationPage() {
     roleMentions: [...STAFF_ROLE_TAGS],
   });
 
+  const visibleApps = apps.filter((a) => isAppealRow(a) === (kind === "appeals"));
+
   return (
     <>
       <ChannelColumn
-        title="Moderation"
+        title="BM Support | Access Requests"
         groups={[{
           label: "Queue",
           items: [
@@ -320,11 +334,28 @@ function ModerationPage() {
         }]}
       />
       <main className="flex-1 flex flex-col">
-        <header className="h-14 border-b border-border px-5 flex items-center gap-2 bg-gradient-to-r from-primary/10 via-fuchsia-500/5 to-accent/10">
+        <header className="min-h-14 border-b border-border px-5 py-2 flex flex-wrap items-center gap-2 bg-gradient-to-r from-primary/10 via-fuchsia-500/5 to-accent/10">
           <div className="size-7 rounded-lg bg-gradient-primary grid place-items-center shadow-glow">
             <Shield className="size-4 text-primary-foreground" />
           </div>
-          <h1 className="font-display font-semibold">access requests</h1>
+          <h1 className="font-display font-semibold">BM Support | Access Requests</h1>
+          <div className="flex gap-1 bg-surface-2 p-1 rounded-lg">
+            {([
+              { key: "requests", label: "Access Requests" },
+              { key: "appeals", label: "Appeals" },
+            ] as const).map((t) => (
+              <button
+                key={t.key}
+                onClick={() => { setKind(t.key); setExpandedId(null); }}
+                className={`px-3 py-1 text-xs rounded-md font-medium ${kind === t.key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                {t.label}
+                <span className="ml-1.5 opacity-70">
+                  {apps.filter((a) => isAppealRow(a) === (t.key === "appeals")).length}
+                </span>
+              </button>
+            ))}
+          </div>
           <div className="ml-auto flex gap-1 bg-surface-2 p-1 rounded-lg">
             {(["pending", "approved", "denied"] as const).map((s) => (
               <button
@@ -337,10 +368,13 @@ function ModerationPage() {
         </header>
         <div className="flex-1 overflow-y-auto p-6 flex gap-6 items-start">
           <div className="flex-1 min-w-0 space-y-3">
-            {apps.length === 0 && (
-              <div className="text-center text-sm text-muted-foreground py-12">No {filter} requests.</div>
+            {visibleApps.length === 0 && (
+              <div className="text-center text-sm text-muted-foreground py-12">
+                No {filter} {kind === "appeals" ? "appeals" : "requests"}.
+                {filter !== "pending" && " Decided items are kept for one month."}
+              </div>
             )}
-            {apps.map((a) => {
+            {visibleApps.map((a) => {
               const expanded = expandedId === a.id;
               const name = a.profile?.display_name ?? a.profile?.username ?? "User";
               const isAppeal = (a.reason ?? "").trim().toUpperCase().startsWith("[APPEAL]");
