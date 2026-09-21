@@ -441,9 +441,15 @@ export function WorkingStatusBox({
                 <span className="text-muted-foreground font-medium">Shift</span>
                 <span className="text-muted-foreground italic">Not signed in</span>
               </div>
-              {!hasSlotToday && (
+              {!todayWindow && (
                 <p className="text-xs text-muted-foreground">
                   You're not on the rota today, so signing in is unavailable.
+                </p>
+              )}
+              {todayWindow && !canSignIn && (
+                <p className="text-xs text-muted-foreground">
+                  Sign-in opens 15 minutes before your shift starts (
+                  {todayWindow.start.slice(0, 5)}).
                 </p>
               )}
               {nextSlot && (
