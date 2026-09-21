@@ -254,8 +254,8 @@ function AdminRolesPage() {
   };
 
   if (!isAdmin) return <Navigate to="/home" />;
-  if (!isAdminUnlocked(user?.id)) {
-    return <Navigate to="/admin" search={{ next: "/admin-roles" } as never} />;
+  if (!rolesUnlocked) {
+    return <RolesGate onUnlocked={() => setRolesUnlocked(true)} />;
   }
 
   return (
