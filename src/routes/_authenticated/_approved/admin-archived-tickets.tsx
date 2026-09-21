@@ -200,6 +200,8 @@ function AdminArchivedTicketsPage() {
               </div>
             ))}
           </div>
+          )}
+          </>
         )}
       </div>
     </main>
