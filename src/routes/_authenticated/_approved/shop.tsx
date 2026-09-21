@@ -3147,7 +3147,10 @@ function OrdersView({
               type="button"
               size="sm"
               variant={month === index ? "default" : "outline"}
-              onClick={() => setMonth(index)}
+              onClick={() => {
+                setMonth(index);
+                clearSelectedOrder();
+              }}
               className="h-8 shrink-0 px-3 text-xs"
             >
               {label}{monthCounts[index] > 0 ? ` (${monthCounts[index]})` : ""}
@@ -3156,7 +3159,10 @@ function OrdersView({
         </div>
         <Tabs
           value={ordersTab}
-          onValueChange={(v) => setOrdersTab(v as "processing" | "completed" | "cancelled")}
+          onValueChange={(v) => {
+            setOrdersTab(v as "processing" | "completed" | "cancelled");
+            clearSelectedOrder();
+          }}
           className="w-full"
         >
           <div className="flex flex-wrap items-center justify-between gap-3">
