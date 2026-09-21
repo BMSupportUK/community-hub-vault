@@ -123,13 +123,30 @@ export default function ShiftHistoryPanel({ userId, name }: { userId: string; na
   );
 
 
+  const fetchBreaks = useCallback(async (shiftIds: string[]) => {
+    if (shiftIds.length === 0) return {} as Record<string, BreakRow[]>;
+    const { data } = await supabase
+      .from("breaks")
+      .select("id, shift_id, kind, started_at, ended_at")
+      .in("shift_id", shiftIds)
+      .order("started_at", { ascending: true });
+    const map: Record<string, BreakRow[]> = {};
+    for (const b of (data ?? []) as BreakRow[]) {
+      (map[b.shift_id] ??= []).push(b);
+    }
+    return map;
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setRows([]);
-    fetchPage(0).then(({ rows: first, count }) => {
+    setBreaksByShift({});
+    fetchPage(0).then(async ({ rows: first, count }) => {
+      const bmap = await fetchBreaks(first.map((r) => r.id));
       if (cancelled) return;
       setRows(first);
+      setBreaksByShift(bmap);
       setTotal(count);
       setHasMore(first.length === PAGE_SIZE && count > first.length);
       setLoading(false);
@@ -137,11 +154,13 @@ export default function ShiftHistoryPanel({ userId, name }: { userId: string; na
     return () => {
       cancelled = true;
     };
-  }, [fetchPage]);
+  }, [fetchPage, fetchBreaks]);
 
   const loadMore = async () => {
     setLoadingMore(true);
     const { rows: next, count } = await fetchPage(rows.length);
+    const bmap = await fetchBreaks(next.map((r) => r.id));
+    setBreaksByShift((prev) => ({ ...prev, ...bmap }));
     setRows((prev) => {
       const seen = new Set(prev.map((r) => r.id));
       const merged = [...prev, ...next.filter((r) => !seen.has(r.id))];
