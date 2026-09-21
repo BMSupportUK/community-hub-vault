@@ -240,6 +240,28 @@ function StaffShiftsPage() {
     if (canView) void load(days);
   }, [canView, days, load]);
 
+  // Keep breaks/shifts live so lunch, break and travelling-home status changes
+  // show without a hard refresh.
+  useEffect(() => {
+    if (!canView) return;
+    const refresh = () => { void load(days); };
+    const ch = supabase
+      .channel(`admin-shifts-live-${Math.random().toString(36).slice(2)}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "breaks" }, refresh)
+      .on("postgres_changes", { event: "*", schema: "public", table: "shifts" }, refresh)
+      .subscribe();
+    const poll = setInterval(refresh, 20_000);
+    const onWake = () => { if (document.visibilityState === "visible") refresh(); };
+    window.addEventListener("focus", onWake);
+    document.addEventListener("visibilitychange", onWake);
+    return () => {
+      supabase.removeChannel(ch);
+      clearInterval(poll);
+      window.removeEventListener("focus", onWake);
+      document.removeEventListener("visibilitychange", onWake);
+    };
+  }, [canView, days, load]);
+
   const primaryRole = useCallback(
     (userId: string) => {
       const mine = rolesByUser[userId] ?? [];
