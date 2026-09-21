@@ -45,6 +45,7 @@ export function WorkingStatusBox({
   const [now, setNow] = useState(() => Date.now());
   const [busy, setBusy] = useState(false);
   const [nextSlot, setNextSlot] = useState<NextSlot | null>(null);
+  const [hasSlotToday, setHasSlotToday] = useState(true);
 
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
