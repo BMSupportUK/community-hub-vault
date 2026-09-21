@@ -262,34 +262,95 @@ export function ShiftStartEndAlert() {
     );
   }, [active, now, shiftWindowToUtcMs]);
 
-  // Auto-end shift 30s after the "shift has ended" warning appears
-  useEffect(() => {
-    if (!active || active.stage !== "end") { setAutoEndAt(null); return; }
-    const { endsAt: e } = shiftWindowToUtcMs(active.slot.shift_date, active.slot.start_time, active.slot.end_time);
-    if (isNaN(e) || Date.now() < e) { setAutoEndAt(null); return; }
-    if (!openShift) { setAutoEndAt(null); return; }
-    const target = Date.now() + 30_000;
-    setAutoEndAt(target);
-    const t = setTimeout(async () => {
-      if (autoEndedRef.current.has(openShift.id)) return;
-      autoEndedRef.current.add(openShift.id);
-      const { data: stillOpen } = await supabase
-        .from("shifts")
-        .select("id")
-        .eq("id", openShift.id)
-        .is("clock_out", null)
-        .maybeSingle();
-      if (!stillOpen) { setActive(null); setAutoEndAt(null); return; }
-      await supabase
-        .from("shifts")
-        .update({ clock_out: new Date(e).toISOString() })
-        .eq("id", openShift.id);
-      setActive(null);
-      setAutoEndAt(null);
-    }, 30_000);
-    return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [active, openShift?.id]);
+  // End of shift: ask if they're still working, and clock them out
+  // automatically 15 minutes after the shift end if there's no answer.
+  const endsAtMs = useMemo(() => {
+    if (!active || active.stage !== "end") return null;
+    const { endsAt } = shiftWindowToUtcMs(active.slot.shift_date, active.slot.start_time, active.slot.end_time);
+    return isNaN(endsAt) ? null : endsAt;
+  }, [active, shiftWindowToUtcMs]);
 
-  return null;
+  const stillWorkingRef = useRef<Set<string>>(new Set());
+  const [askOpen, setAskOpen] = useState(false);
+
+  useEffect(() => {
+    if (!openShift || endsAtMs === null || now < endsAtMs) {
+      setAskOpen(false);
+      setAutoEndAt(null);
+      return;
+    }
+    if (stillWorkingRef.current.has(openShift.id)) {
+      setAskOpen(false);
+      setAutoEndAt(null);
+      return;
+    }
+    setAskOpen(true);
+    setAutoEndAt(endsAtMs + AUTO_CLOCK_OUT_AFTER);
+  }, [openShift, endsAtMs, now]);
+
+  const clockOut = async (at: number) => {
+    if (!openShift) return;
+    if (autoEndedRef.current.has(openShift.id)) return;
+    autoEndedRef.current.add(openShift.id);
+    const { data: stillOpen } = await supabase
+      .from("shifts")
+      .select("id")
+      .eq("id", openShift.id)
+      .is("clock_out", null)
+      .maybeSingle();
+    setAskOpen(false);
+    setAutoEndAt(null);
+    setActive(null);
+    if (!stillOpen) return;
+    await supabase
+      .from("shifts")
+      .update({ clock_out: new Date(at).toISOString() })
+      .eq("id", openShift.id);
+  };
+
+  // Fire the automatic clock-out once the 15 minutes are up.
+  useEffect(() => {
+    if (!openShift || autoEndAt === null || endsAtMs === null) return;
+    if (now < autoEndAt) return;
+    void clockOut(autoEndAt);
+    toast.info("Your shift was automatically clocked out 15 minutes after it ended.");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [now, autoEndAt, openShift?.id, endsAtMs]);
+
+  if (!askOpen || !openShift || autoEndAt === null) return null;
+  const remaining = autoEndAt - now;
+
+  return (
+    <AlertDialog open onOpenChange={(o) => { if (!o) setAskOpen(false); }}>
+      <AlertDialogContent className="border-amber-500/60">
+        <AlertDialogHeader>
+          <div className="mx-auto mb-2 grid place-items-center size-14 rounded-full bg-amber-500/15 text-amber-500">
+            <StopCircle className="size-7" />
+          </div>
+          <AlertDialogTitle className="text-center text-xl">Are you still working?</AlertDialogTitle>
+          <AlertDialogDescription className="text-center">
+            Your shift has ended. If you don't answer, you'll be clocked out automatically in{" "}
+            <span className="font-semibold text-amber-500 inline-flex items-center gap-1">
+              <Clock className="size-3.5" /> {fmtCountdown(remaining)}
+            </span>
+            .
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter className="sm:justify-center gap-2">
+          <AlertDialogCancel
+            onClick={() => {
+              stillWorkingRef.current.add(openShift.id);
+              setAskOpen(false);
+              setAutoEndAt(null);
+            }}
+          >
+            Yes, still working
+          </AlertDialogCancel>
+          <AlertDialogAction onClick={() => void clockOut(Date.now())}>
+            Clock out now
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
 }
