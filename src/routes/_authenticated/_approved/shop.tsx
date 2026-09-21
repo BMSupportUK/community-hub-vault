@@ -2940,6 +2940,21 @@ function OrdersView({
     const { data } = await q;
     const rows = (data ?? []) as Order[];
     setOrders(rows);
+    const userIds = Array.from(new Set(rows.map((o) => o.user_id).filter(Boolean)));
+    if (userIds.length > 0) {
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("id,username,display_name")
+        .in("id", userIds);
+      const map: Record<string, string> = {};
+      (profs ?? []).forEach((p: any) => {
+        const name = p.display_name || p.username;
+        if (name) map[p.id] = name;
+      });
+      setBuyerNames(map);
+    } else {
+      setBuyerNames({});
+    }
     if (rows.length > 0) {
       const ids = rows.map((o) => o.id);
       const { data: pays } = await supabase
