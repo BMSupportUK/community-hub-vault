@@ -1183,7 +1183,7 @@ function OfficeHoursPanel() {
         : "grid grid-cols-[minmax(5.5rem,0.8fr)_minmax(0,1fr)] text-xs sm:text-sm"}>
         <div className="border-b border-border/70 px-3 py-2 font-semibold text-muted-foreground">Day</div>
         <div className="border-b border-l border-border/70 px-3 py-2 font-semibold">UK office</div>
-        <div className="border-b border-l border-border/70 px-3 py-2 font-semibold">{timezoneLabel}</div>
+        {showUserColumn && <div className="border-b border-l border-border/70 px-3 py-2 font-semibold">{timezoneLabel}</div>}
         {[...hours].sort((a, b) => ((a.day_of_week + 6) % 7) - ((b.day_of_week + 6) % 7)).map((hour) => {
           const localOpen = hour.is_closed ? null : londonTimeToDate(hour.day_of_week, hour.open_time);
           const localClose = hour.is_closed ? null : londonTimeToDate(hour.day_of_week, hour.close_time);
