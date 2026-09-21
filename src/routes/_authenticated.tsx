@@ -21,7 +21,6 @@ import { useViewportLockable } from "@/hooks/use-viewport-lock";
 
 
 // Defer non-critical header widgets & alerts so the shell paints immediately.
-const Clocks = lazy(() => import("@/components/app/Clocks").then((m) => ({ default: m.Clocks })));
 const MentionsBadge = lazy(() => import("@/components/app/MentionsBadge").then((m) => ({ default: m.MentionsBadge })));
 const NotificationBell = lazy(() => import("@/components/app/NotificationBell").then((m) => ({ default: m.NotificationBell })));
 const TwoFactorPill = lazy(() => import("@/components/app/TwoFactorBanner").then((m) => ({ default: m.TwoFactorPill })));
