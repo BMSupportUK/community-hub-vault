@@ -75,7 +75,7 @@ function accountTypeLabel(type: string | null | undefined) {
   return type ?? "Single";
 }
 interface DnsRow { id: string; label: string; code: string; notes: string | null; }
-interface TicketRow { id: string; subject: string; status: string; priority: string; created_at: string; updated_at: string; closed_at: string | null; }
+interface TicketRow { id: string; subject: string; status: string; priority: string; created_at: string; updated_at: string; closed_at: string | null; order_id: string | null; }
 interface OrderRow { id: string; total_cents: number; status: string; created_at: string; paid_at: string | null; completed_at: string | null; shipping_name: string | null; discount_code: string | null; }
 interface InviteSummary {
   sent: number;
@@ -220,7 +220,9 @@ function ProfilePage() {
       supabase.from("user_roles").select("role").eq("user_id", p.id),
       supabase.from("shifts").select("*").eq("user_id", p.id).is("clock_out", null).order("clock_in", { ascending: true }).limit(1).maybeSingle(),
       supabase.from("breaks").select("*").eq("user_id", p.id).is("ended_at", null).order("started_at", { ascending: false }).limit(1).maybeSingle(),
-      supabase.from("tickets").select("id, subject, status, priority, created_at, updated_at, closed_at").eq("user_id", p.id).order("created_at", { ascending: false }).limit(5),
+      // Tickets are kept on the profile for the current calendar year only — at
+      // the turn of the year the profile list clears itself.
+      supabase.from("tickets").select("id, subject, status, priority, created_at, updated_at, closed_at, order_id").eq("user_id", p.id).gte("created_at", `${new Date().getFullYear()}-01-01T00:00:00.000Z`).order("created_at", { ascending: false }).limit(500),
       supabase.from("orders").select("id, total_cents, status, created_at, paid_at, completed_at, shipping_name, discount_code").eq("user_id", p.id).order("created_at", { ascending: false }).limit(5),
     ]);
     setRoles((r ?? []).map((x: any) => x.role as AppRole));
@@ -749,11 +751,7 @@ function ProfilePage() {
           )}
 
           <TabsContent value="tickets" className={paneClass}>
-            <ActivityCardGrid title="Recent tickets" icon={Ticket} empty="No tickets yet" isEmpty={tickets.length === 0}>
-              {tickets.map((t) => (
-                <TicketCardItem key={t.id} ticket={t} />
-              ))}
-            </ActivityCardGrid>
+            <TicketMonthsPanel tickets={tickets} canReopen={isOwner} onChanged={load} />
           </TabsContent>
 
           <TabsContent value="orders" className={paneClass}>
@@ -1029,7 +1027,79 @@ function fmtShortDate(iso: string) {
   }
 }
 
-function TicketCardItem({ ticket }: { ticket: TicketRow }) {
+const MONTH_LABELS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+// Tickets raised this calendar year, split into month tabs. The underlying
+// query only loads the current year, so the list clears itself each January.
+function TicketMonthsPanel({ tickets, canReopen, onChanged }: { tickets: TicketRow[]; canReopen: boolean; onChanged: () => void }) {
+  const [month, setMonth] = useState(() => new Date().getMonth());
+  const byMonth = useMemo(() => {
+    const buckets: TicketRow[][] = Array.from({ length: 12 }, () => []);
+    for (const t of tickets) {
+      const d = new Date(t.created_at);
+      if (!Number.isNaN(d.getTime())) buckets[d.getMonth()].push(t);
+    }
+    return buckets;
+  }, [tickets]);
+  const current = byMonth[month] ?? [];
+  const year = new Date().getFullYear();
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col gap-4">
+      <div className="flex flex-wrap gap-1.5">
+        {MONTH_LABELS.map((label, i) => {
+          const count = byMonth[i].length;
+          return (
+            <button
+              key={label}
+              type="button"
+              onClick={() => setMonth(i)}
+              className={cn(
+                "rounded-full border px-3 py-1 text-xs font-semibold transition",
+                month === i
+                  ? "border-white/60 bg-white/20 text-white"
+                  : count > 0
+                    ? "border-white/20 bg-white/[0.06] text-white/80 hover:bg-white/[0.12]"
+                    : "border-white/10 bg-white/[0.03] text-white/35 hover:bg-white/[0.06]",
+              )}
+            >
+              {label}
+              {count > 0 && <span className="ml-1 text-[10px] text-amber-100/80">({count})</span>}
+            </button>
+          );
+        })}
+      </div>
+      <ActivityCardGrid
+        title={`${MONTH_LABELS[month]} ${year} tickets`}
+        icon={Ticket}
+        empty={`No tickets in ${MONTH_LABELS[month]} ${year}`}
+        isEmpty={current.length === 0}
+      >
+        {current.map((t) => (
+          <TicketCardItem key={t.id} ticket={t} canReopen={canReopen} onChanged={onChanged} />
+        ))}
+      </ActivityCardGrid>
+    </div>
+  );
+}
+
+function TicketCardItem({ ticket, canReopen = false, onChanged }: { ticket: TicketRow; canReopen?: boolean; onChanged?: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const isClosed = ticket.status === "closed" || ticket.status === "resolved" || !!ticket.closed_at;
+  // Order-related tickets can't be reopened by the member — those go through staff.
+  const showReopen = canReopen && isClosed && !ticket.order_id;
+
+  const reopen = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setBusy(true);
+    const { error } = await supabase.rpc("reopen_own_ticket", { _ticket_id: ticket.id });
+    setBusy(false);
+    if (error) { toast.error(error.message || "Couldn't reopen that ticket"); return; }
+    toast.success("Ticket reopened");
+    onChanged?.();
+  };
+
   return (
     <Link
       to="/tickets"
@@ -1051,6 +1121,16 @@ function TicketCardItem({ ticket }: { ticket: TicketRow }) {
       </div>
       {ticket.closed_at && (
         <div className="text-[11px] text-emerald-200/80">Closed {fmtShortDate(ticket.closed_at)}</div>
+      )}
+      {showReopen && (
+        <button
+          type="button"
+          onClick={reopen}
+          disabled={busy}
+          className="mt-1 self-start rounded-full border border-amber-300/50 bg-amber-300/10 px-3 py-1 text-[11px] font-semibold text-amber-100 hover:bg-amber-300/20 disabled:opacity-50"
+        >
+          {busy ? "Reopening…" : "Reopen ticket"}
+        </button>
       )}
     </Link>
   );
