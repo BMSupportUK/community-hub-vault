@@ -3076,8 +3076,13 @@ function OrdersView({
                 </span>
               </div>
             </div>
-            <div className="font-display font-bold text-lg text-purple-50">
-              {fmt(o.total_cents)}
+            <div className="flex items-baseline justify-between gap-2">
+              <div className="font-display font-bold text-lg text-purple-50">
+                {fmt(o.total_cents)}
+              </div>
+              <div className="truncate text-[11px] text-purple-100/80">
+                {buyerNames[o.user_id] ?? o.shipping_name ?? "Guest"}
+              </div>
             </div>
             <div className="text-[11px] text-purple-200/60">
               {new Date(o.created_at).toLocaleString("en-GB")}
