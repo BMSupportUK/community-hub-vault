@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import { checkVisitorVpn } from "@/lib/vpn-public-check.functions";
+import { supabase } from "@/integrations/supabase/client";
+import { isVpnBypassEmail } from "@/lib/vpn-bypass";
 
 export type VisitorVpnStatus = "checking" | "protected" | "unprotected" | "unavailable";
 
@@ -99,9 +101,29 @@ export function refreshVisitorVpn(): Promise<VisitorVpnStatus> {
   return refresh(true);
 }
 
+/** True when the signed-in account is allowed to use the site with a VPN connected. */
+export function useVpnBypass() {
+  const [bypass, setBypass] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    void supabase.auth.getSession().then(({ data }) => {
+      if (alive) setBypass(isVpnBypassEmail(data.session?.user?.email ?? null));
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      setBypass(isVpnBypassEmail(session?.user?.email ?? null));
+    });
+    return () => {
+      alive = false;
+      sub.subscription.unsubscribe();
+    };
+  }, []);
+  return bypass;
+}
+
 export function useVisitorVpn() {
   const status = useVisitorVpnStatus();
-  return status === "protected";
+  const bypass = useVpnBypass();
+  return !bypass && status === "protected";
 }
 
 export function useVisitorVpnStatus() {

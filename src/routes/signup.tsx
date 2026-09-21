@@ -9,6 +9,7 @@ import { TurnstileWidget } from "@/components/app/TurnstileWidget";
 import { verifyTurnstile } from "@/lib/turnstile.functions";
 import { useVisitorVpnStatus, refreshVisitorVpn } from "@/hooks/use-visitor-vpn";
 import { assertSignupAllowed } from "@/lib/vpn-public-check.functions";
+import { isVpnBypassEmail } from "@/lib/vpn-bypass";
 import { VpnBlockedDialog } from "@/components/VpnBlockedDialog";
 import { ShieldAlert, Loader2, RefreshCw } from "lucide-react";
 import AdSenseSlot from "@/components/app/AdSenseSlot";
@@ -41,8 +42,10 @@ function SignupPage() {
   const [rechecking, setRechecking] = useState(false);
   const [serverBlock, setServerBlock] = useState<"vpn" | "unverified" | null>(null);
 
-  const checking = vpnStatus === "checking" || rechecking;
-  const blocked = vpnStatus === "protected" || vpnStatus === "unavailable" || !!serverBlock;
+  const bypass = isVpnBypassEmail(email);
+  const checking = !bypass && (vpnStatus === "checking" || rechecking);
+  const blocked =
+    !bypass && (vpnStatus === "protected" || vpnStatus === "unavailable" || !!serverBlock);
   const blockedForVpn = vpnStatus === "protected" || serverBlock === "vpn";
   const needsReferral = intent === "bm-support" && !inviteCode.trim();
 
@@ -70,7 +73,7 @@ function SignupPage() {
     setBusy(true);
     // Server-side gate on the real request IP — must pass before any account exists.
     try {
-      const gate = await assertSignupAllowed();
+      const gate = await assertSignupAllowed({ data: { email } });
       if (!gate.allowed) {
         setBusy(false);
         setServerBlock(gate.reason === "vpn" ? "vpn" : "unverified");

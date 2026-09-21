@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeader, getRequestIP } from "@tanstack/react-start/server";
 import { fetchProxycheckEntry, proxycheckVerdict } from "./proxycheck.server";
+import { isVpnBypassEmail } from "./vpn-bypass";
 
 
 type VpnCheckInput = { ip?: string };
@@ -134,8 +135,15 @@ export const checkVisitorVpn = createServerFn({ method: "POST" })
  * A positive flag OR an unverifiable lookup both block the sign-up.
  * Local/private IPs are allowed so preview testing still works.
  */
-export const assertSignupAllowed = createServerFn({ method: "POST" }).handler(
-  async (): Promise<{ allowed: boolean; reason: "clean" | "vpn" | "unverified" }> => {
+export const assertSignupAllowed = createServerFn({ method: "POST" })
+  .inputValidator((raw: unknown): { email?: string } => {
+    const input = raw && typeof raw === "object" ? (raw as Record<string, unknown>) : {};
+    return { email: typeof input.email === "string" ? input.email : undefined };
+  })
+  .handler(
+  async ({ data }): Promise<{ allowed: boolean; reason: "clean" | "vpn" | "unverified" }> => {
+    // Allowlisted accounts may continue with a VPN connected.
+    if (isVpnBypassEmail(data.email)) return { allowed: true, reason: "clean" };
     const headerCandidate =
       getRequestHeader("cf-connecting-ip") ??
       getRequestHeader("x-real-ip") ??
