@@ -378,7 +378,9 @@ export function ShiftStartEndAlert() {
           <AlertDialogCancel
             onClick={() => {
               stillWorkingRef.current.add(openShift.id);
+              writeFlag(stillWorkingKey(openShift.id), "1");
               setAskOpen(false);
+
               setAutoEndAt(null);
             }}
           >
