@@ -111,6 +111,15 @@ function Pill({
   );
 }
 
+const DAY_LABELS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+const DAY_SHORT = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+/** Index (0=Monday) of the day a timestamp falls on, in local time. */
+function dayIndexOfIso(iso: string) {
+  const d = new Date(iso);
+  return (d.getDay() + 6) % 7;
+}
+
 export default function ShiftHistoryPanel({ userId, name }: { userId: string; name: string }) {
   const [rows, setRows] = useState<ShiftHistoryRow[]>([]);
   const [breaksByShift, setBreaksByShift] = useState<Record<string, BreakRow[]>>({});
@@ -121,6 +130,8 @@ export default function ShiftHistoryPanel({ userId, name }: { userId: string; na
   // Monday-to-Sunday window; resets automatically when a new week begins.
   const [weekFrom, setWeekFrom] = useState(() => weekStart().getTime());
   const [claimed, setClaimed] = useState<ClaimedSlot[]>([]);
+  // Selected day tab (0 = Monday). Defaults to today, clamped inside the week.
+  const [selectedDay, setSelectedDay] = useState(() => Math.min((new Date().getDay() + 6) % 7, 6));
 
   useEffect(() => {
     const tick = () => {
@@ -231,25 +242,39 @@ export default function ShiftHistoryPanel({ userId, name }: { userId: string; na
 
   const rangeLabel = fmtRange(new Date(weekFrom), new Date(weekTo));
 
+  // Shifts and claimed hours for the selected day tab.
+  const filteredRows = rows.filter((r) => dayIndexOfIso(r.clock_in) === selectedDay);
+  const dayCounts = DAY_LABELS.map(
+    (_, i) => rows.filter((r) => dayIndexOfIso(r.clock_in) === i).length,
+  );
+  const selectedDate = new Date(weekFrom);
+  selectedDate.setDate(selectedDate.getDate() + selectedDay);
+  const selectedDateIso = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, "0")}-${String(selectedDate.getDate()).padStart(2, "0")}`;
+  const dayClaimed = claimed.filter((c) => c.shift_date === selectedDateIso);
+
   const claimedBlock = claimed.length > 0 ? (
     <div className="rounded-2xl border border-amber-400/40 bg-amber-950/20 p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h4 className="font-semibold text-white">Claimed hours</h4>
+        <h4 className="font-semibold text-white">Claimed hours — {DAY_LABELS[selectedDay]}</h4>
         <span className="text-xs text-amber-200/80">
-          {claimed.length} slot{claimed.length === 1 ? "" : "s"} booked this week
+          {dayClaimed.length} slot{dayClaimed.length === 1 ? "" : "s"} booked
         </span>
       </div>
-      <div className="mt-3 grid gap-2 sm:grid-cols-2">
-        {claimed.map((c) => (
-          <div key={c.id} className="flex items-center gap-2 rounded-xl border border-amber-400/30 bg-amber-500/5 px-3 py-2 text-sm text-white">
-            <ClockIcon className="size-4 text-amber-300" />
-            <span className="font-medium">{fmtSlotDate(c.shift_date)}</span>
-            <span className="ml-auto tabular-nums text-amber-100/90">
-              {c.start_time.slice(0, 5)}–{c.end_time.slice(0, 5)} · {slotHours(c.start_time, c.end_time)}
-            </span>
-          </div>
-        ))}
-      </div>
+      {dayClaimed.length > 0 ? (
+        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+          {dayClaimed.map((c) => (
+            <div key={c.id} className="flex items-center gap-2 rounded-xl border border-amber-400/30 bg-amber-500/5 px-3 py-2 text-sm text-white">
+              <ClockIcon className="size-4 text-amber-300" />
+              <span className="font-medium">{fmtSlotDate(c.shift_date)}</span>
+              <span className="ml-auto tabular-nums text-amber-100/90">
+                {c.start_time.slice(0, 5)}–{c.end_time.slice(0, 5)} · {slotHours(c.start_time, c.end_time)}
+              </span>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="mt-3 text-sm text-amber-200/70">No hours booked for this day.</p>
+      )}
     </div>
   ) : null;
 
@@ -275,10 +300,40 @@ export default function ShiftHistoryPanel({ userId, name }: { userId: string; na
         </p>
       </div>
 
+      <div className="flex flex-wrap gap-1.5 rounded-2xl border border-purple-500/30 bg-purple-950/50 p-1.5">
+        {DAY_SHORT.map((label, i) => {
+          const isToday = (new Date().getDay() + 6) % 7 === i;
+          return (
+            <button
+              key={label}
+              type="button"
+              onClick={() => setSelectedDay(i)}
+              className={cn(
+                "flex-1 min-w-[64px] rounded-xl px-2 py-2 text-sm font-medium transition-colors",
+                selectedDay === i
+                  ? "bg-purple-500/40 text-white shadow-[0_0_20px_-8px_rgba(168,85,247,0.8)]"
+                  : "text-purple-200/70 hover:bg-purple-500/20 hover:text-white",
+              )}
+            >
+              <span className="block">{label}</span>
+              <span className={cn("block text-[10px] font-normal", dayCounts[i] > 0 ? "text-amber-300" : "text-purple-300/40")}>
+                {dayCounts[i]} shift{dayCounts[i] === 1 ? "" : "s"}
+                {isToday ? " ·" : ""}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
       {claimedBlock}
 
+      {filteredRows.length === 0 ? (
+        <div className="rounded-2xl border border-purple-500/30 bg-purple-950/50 p-8 text-center text-purple-200/80">
+          No shifts on {DAY_LABELS[selectedDay]} this week.
+        </div>
+      ) : (
       <div className="grid gap-3 sm:grid-cols-2">
-        {rows.map((s) => {
+        {filteredRows.map((s) => {
           const open = !s.clock_out;
           const acked = !!s.still_working_ack_at;
           const autoOut =
@@ -360,6 +415,8 @@ export default function ShiftHistoryPanel({ userId, name }: { userId: string; na
           );
         })}
       </div>
+      )}
+
 
       {hasMore && (
         <div className="flex justify-center pt-1">
