@@ -751,11 +751,7 @@ function ProfilePage() {
           )}
 
           <TabsContent value="tickets" className={paneClass}>
-            <ActivityCardGrid title="Recent tickets" icon={Ticket} empty="No tickets yet" isEmpty={tickets.length === 0}>
-              {tickets.map((t) => (
-                <TicketCardItem key={t.id} ticket={t} />
-              ))}
-            </ActivityCardGrid>
+            <TicketMonthsPanel tickets={tickets} canReopen={isOwner} onChanged={load} />
           </TabsContent>
 
           <TabsContent value="orders" className={paneClass}>
