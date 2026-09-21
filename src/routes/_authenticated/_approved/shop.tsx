@@ -3202,7 +3202,10 @@ function OrdersView({
                   Mine
                 </button>
                 <button
-                  onClick={() => setScope("all")}
+                  onClick={() => {
+                    setScope("all");
+                    clearSelectedOrder();
+                  }}
                   className={cn(
                     "px-3 py-1 rounded text-purple-100",
                     scope === "all" && "bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white",
