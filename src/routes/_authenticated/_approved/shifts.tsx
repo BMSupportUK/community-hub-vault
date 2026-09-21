@@ -1120,6 +1120,36 @@ function ShiftsPage() {
                     range: fmtRange(b.shift_date, b.start_time, b.end_time),
                     role: b.required_role,
                   }));
+                // Add slots currently booked to me that have no matching log entry
+                // (bookings made before the history log existed).
+                if (histTab === "booked") {
+                  const logged = new Set(bookings.filter((b) => b.action === "claimed").map((b) => `${b.shift_date}|${b.start_time}|${b.end_time}`));
+                  const released = new Set(bookings.filter((b) => b.action === "released").map((b) => `${b.shift_date}|${b.start_time}|${b.end_time}`));
+                  for (const s of myBookedSlots) {
+                    const k = `${s.shift_date}|${s.start_time}|${s.end_time}`;
+                    if (logged.has(k) || released.has(k)) continue;
+                    rows.push({
+                      key: `slot-${s.id}`,
+                      iso: s.shift_date,
+                      when: `${s.shift_date}T00:00:00`,
+                      badge: "Booked",
+                      badgeClass: "bg-emerald-500/20 border-emerald-400/40 text-emerald-100",
+                      range: fmtRange(s.shift_date, s.start_time, s.end_time),
+                      role: s.required_role,
+                      note: "Currently booked",
+                    });
+                  }
+                }
+                    key: b.id,
+                    iso: b.shift_date,
+                    when: b.created_at,
+                    badge: want === "claimed" ? "Booked" : "Released",
+                    badgeClass: want === "claimed"
+                      ? "bg-emerald-500/20 border-emerald-400/40 text-emerald-100"
+                      : "bg-rose-500/20 border-rose-400/40 text-rose-100",
+                    range: fmtRange(b.shift_date, b.start_time, b.end_time),
+                    role: b.required_role,
+                  }));
               }
 
               return (
