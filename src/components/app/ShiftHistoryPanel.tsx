@@ -151,10 +151,12 @@ export default function ShiftHistoryPanel({ userId, name }: { userId: string; na
     );
   }
 
+  const rangeLabel = fmtRange(new Date(weekFrom), new Date(weekTo));
+
   if (!rows.length) {
     return (
       <div className="rounded-2xl border border-purple-500/30 bg-purple-950/50 p-8 text-center text-purple-200/80">
-        No shifts recorded yet.
+        No shifts recorded this week ({rangeLabel}).
       </div>
     );
   }
@@ -166,9 +168,10 @@ export default function ShiftHistoryPanel({ userId, name }: { userId: string; na
           {name}&apos;s shift history
         </h3>
         <p className="text-xs text-purple-200/70">
-          {total ?? rows.length} shift{(total ?? rows.length) === 1 ? "" : "s"} recorded · newest first
+          This week ({rangeLabel}) · {total ?? rows.length} shift{(total ?? rows.length) === 1 ? "" : "s"} · newest first
         </p>
       </div>
+
 
       <div className="grid gap-3 sm:grid-cols-2">
         {rows.map((s) => {
