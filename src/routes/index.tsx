@@ -132,7 +132,7 @@ function Landing() {
         <div className="relative w-full mx-auto flex-1 min-h-0 flex flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_260px] xl:grid-cols-[minmax(0,1fr)_300px] lg:grid-rows-[minmax(0,1fr)] gap-3 lg:items-stretch lg:overflow-hidden">
           <div className="relative min-w-0 min-h-0 w-full flex flex-col overflow-hidden">
         <section
-          className="landing-hero-panel relative min-w-0 min-h-0 rounded-3xl border border-red-900/60 p-4 pb-12 md:p-6 md:pb-14 lg:p-8 lg:pb-16 [@media(max-height:650px)]:p-4 [@media(max-height:650px)]:pb-10 lg:flex-1 flex flex-col justify-center [@media(max-height:650px)]:justify-start"
+          className="landing-hero-panel relative min-w-0 min-h-0 rounded-3xl border border-red-900/60 p-4 pb-12 md:p-6 md:pb-14 lg:p-8 lg:pb-16 [@media(max-height:650px)]:p-4 [@media(max-height:650px)]:pb-10 lg:flex-1 flex flex-col justify-center"
           style={{
             background:
               "radial-gradient(1200px 600px at 10% 10%, rgba(248,113,113,0.25), transparent 60%), radial-gradient(900px 500px at 90% 90%, rgba(127,29,29,0.6), transparent 60%), linear-gradient(135deg, #7f1d1d 0%, #991b1b 50%, #450a0a 100%)",
@@ -140,15 +140,15 @@ function Landing() {
               "0 0 80px rgba(220,38,38,0.35), inset 0 1px 0 rgba(255,255,255,0.06)",
           }}
         >
-          <div className="grid md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] gap-5 md:gap-3 lg:gap-4 items-center lg:items-stretch lg:flex-1 w-full">
-            <div className="space-y-4 sm:space-y-5 [@media(max-height:650px)]:space-y-2 text-white">
-              <h1 className="font-display text-[1.75rem] leading-[1.1] sm:text-5xl md:text-6xl lg:text-7xl [@media(max-height:650px)]:text-3xl font-bold tracking-tight sm:leading-[1.05] drop-shadow-[0_2px_20px_rgba(0,0,0,0.5)] max-w-[16ch] sm:max-w-none">
+          <div className="grid md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] gap-5 md:gap-3 lg:gap-4 items-center lg:items-stretch lg:flex-1 min-h-0 w-full">
+            <div className="flex min-h-0 flex-col justify-center space-y-4 sm:space-y-5 [@media(max-height:650px)]:space-y-2 text-white">
+              <h1 className="font-display text-[clamp(1.7rem,min(5.5vw,7vh),4.5rem)] leading-[1.08] font-bold tracking-tight drop-shadow-[0_2px_20px_rgba(0,0,0,0.5)] max-w-[16ch] sm:max-w-none">
                 Welcome to <span className="bg-gradient-to-r from-red-200 via-white to-red-300 bg-clip-text text-transparent">BM Support</span>
               </h1>
-              <p className="text-base sm:text-lg md:text-2xl [@media(max-height:650px)]:text-base font-medium text-red-50/95 max-w-xl">
+              <p className="text-[clamp(1rem,min(2.2vw,2.6vh),1.5rem)] font-medium text-red-50/95 max-w-xl">
                 Your all-in-one server for BM Support — stay connected, all in one place.
               </p>
-              <p className="text-sm sm:text-base md:text-lg [@media(max-height:650px)]:text-sm leading-relaxed [@media(max-height:650px)]:leading-snug text-red-100/80 max-w-xl">
+              <p className="text-[clamp(0.85rem,min(1.6vw,2vh),1.125rem)] leading-relaxed text-red-100/80 max-w-xl">
                 Access community channels, manage your time, view schedules, get support, and explore our services. Everything you need is just one click away.
               </p>
             </div>
