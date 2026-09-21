@@ -1196,7 +1196,7 @@ function OfficeHoursPanel() {
                   {!status.isOpen && status.nextDayUK === hour.day_of_week && status.ukOpening && (
                     <span className="font-semibold text-white">
 
-                      Reopens {status.ukOpening} · in <span className="tabular-nums">{status.countdown}</span>
+                      Reopens {status.ukOpening}
                     </span>
                   )}
                 </div>
