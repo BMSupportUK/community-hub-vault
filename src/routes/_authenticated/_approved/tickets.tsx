@@ -1222,6 +1222,7 @@ function OfficeHoursPanel() {
                   )}
                 </div>
               </div>
+              {showUserColumn && (
               <div className="border-b border-l border-border/50 px-3 py-2 text-muted-foreground">
                 <div className="flex flex-wrap items-center gap-1.5">
                   <span className="text-[11px] text-muted-foreground">{userDate}</span>
@@ -1243,6 +1244,7 @@ function OfficeHoursPanel() {
                   )}
                 </div>
               </div>
+              )}
             </div>
           );
         })}
