@@ -2900,6 +2900,7 @@ function OrdersView({
   initialScope: "mine" | "all";
 }) {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [buyerNames, setBuyerNames] = useState<Record<string, string>>({});
   const [cryptoOrderIds, setCryptoOrderIds] = useState<Set<string>>(new Set());
   const [cryptoPendingIds, setCryptoPendingIds] = useState<Set<string>>(new Set());
   const [scope, setScope] = useState<"mine" | "all">(
