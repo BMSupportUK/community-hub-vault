@@ -2900,6 +2900,7 @@ function OrdersView({
   initialScope: "mine" | "all";
 }) {
   const [orders, setOrders] = useState<Order[]>([]);
+  const [buyerNames, setBuyerNames] = useState<Record<string, string>>({});
   const [cryptoOrderIds, setCryptoOrderIds] = useState<Set<string>>(new Set());
   const [cryptoPendingIds, setCryptoPendingIds] = useState<Set<string>>(new Set());
   const [scope, setScope] = useState<"mine" | "all">(
@@ -2939,6 +2940,21 @@ function OrdersView({
     const { data } = await q;
     const rows = (data ?? []) as Order[];
     setOrders(rows);
+    const userIds = Array.from(new Set(rows.map((o) => o.user_id).filter(Boolean)));
+    if (userIds.length > 0) {
+      const { data: profs } = await supabase
+        .from("profiles")
+        .select("id,username,display_name")
+        .in("id", userIds);
+      const map: Record<string, string> = {};
+      (profs ?? []).forEach((p: any) => {
+        const name = p.display_name || p.username;
+        if (name) map[p.id] = name;
+      });
+      setBuyerNames(map);
+    } else {
+      setBuyerNames({});
+    }
     if (rows.length > 0) {
       const ids = rows.map((o) => o.id);
       const { data: pays } = await supabase
@@ -3060,8 +3076,13 @@ function OrdersView({
                 </span>
               </div>
             </div>
-            <div className="font-display font-bold text-lg text-purple-50">
-              {fmt(o.total_cents)}
+            <div className="flex items-baseline justify-between gap-2">
+              <div className="font-display font-bold text-lg text-purple-50">
+                {fmt(o.total_cents)}
+              </div>
+              <div className="truncate text-[11px] text-purple-100/80">
+                {buyerNames[o.user_id] ?? o.shipping_name ?? "Guest"}
+              </div>
             </div>
             <div className="text-[11px] text-purple-200/60">
               {new Date(o.created_at).toLocaleString("en-GB")}
@@ -3309,8 +3330,13 @@ function MyOrdersTab({ onOpenOrder }: { onOpenOrder: (id: string) => void }) {
                   {o.status}
                 </span>
               </div>
-              <div className="font-display font-bold text-lg text-purple-50">
-                {fmt(o.total_cents)}
+              <div className="flex items-baseline justify-between gap-2">
+                <div className="font-display font-bold text-lg text-purple-50">
+                  {fmt(o.total_cents)}
+                </div>
+                {o.shipping_name && (
+                  <div className="truncate text-[11px] text-purple-100/80">{o.shipping_name}</div>
+                )}
               </div>
               <div className="text-[11px] text-purple-200/60">
                 {new Date(o.created_at).toLocaleString("en-GB")}
