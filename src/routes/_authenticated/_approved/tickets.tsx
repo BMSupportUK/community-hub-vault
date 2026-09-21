@@ -711,8 +711,7 @@ function TicketsPage() {
                         })}
                       </div>
                     </div>
-                  ))
-                  ) : null}
+                  ))}
                 </div>
               </aside>
 
