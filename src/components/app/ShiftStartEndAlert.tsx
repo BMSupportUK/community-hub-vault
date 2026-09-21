@@ -273,20 +273,56 @@ export function ShiftStartEndAlert() {
   const stillWorkingRef = useRef<Set<string>>(new Set());
   const [askOpen, setAskOpen] = useState(false);
 
+  // Persist the "Yes, still working" answer and the moment the question was
+  // first asked, so a page refresh can't forget it or clock someone out with a
+  // deadline that already passed while the app was closed.
+  const stillWorkingKey = (id: string) => `bm.shift.stillWorking.${id}`;
+  const askedAtKey = (id: string) => `bm.shift.askedAt.${id}`;
+  const readFlag = (key: string): string | null => {
+    try {
+      return window.localStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  };
+  const writeFlag = (key: string, value: string) => {
+    try {
+      window.localStorage.setItem(key, value);
+    } catch {
+      /* storage unavailable */
+    }
+  };
+  const clearFlags = (id: string) => {
+    try {
+      window.localStorage.removeItem(stillWorkingKey(id));
+      window.localStorage.removeItem(askedAtKey(id));
+    } catch {
+      /* storage unavailable */
+    }
+  };
+
   useEffect(() => {
     if (!openShift || endsAtMs === null || now < endsAtMs) {
       setAskOpen(false);
       setAutoEndAt(null);
       return;
     }
-    if (stillWorkingRef.current.has(openShift.id)) {
+    if (stillWorkingRef.current.has(openShift.id) || readFlag(stillWorkingKey(openShift.id)) === "1") {
+      stillWorkingRef.current.add(openShift.id);
       setAskOpen(false);
       setAutoEndAt(null);
       return;
     }
+    const storedAskedAt = Number(readFlag(askedAtKey(openShift.id)) ?? "");
+    let askedAt = Number.isFinite(storedAskedAt) && storedAskedAt > 0 ? storedAskedAt : 0;
+    if (!askedAt) {
+      askedAt = Date.now();
+      writeFlag(askedAtKey(openShift.id), String(askedAt));
+    }
     setAskOpen(true);
-    setAutoEndAt(endsAtMs + AUTO_CLOCK_OUT_AFTER);
+    setAutoEndAt(Math.max(endsAtMs, askedAt) + AUTO_CLOCK_OUT_AFTER);
   }, [openShift, endsAtMs, now]);
+
 
   const clockOut = async (at: number) => {
     if (!openShift) return;
