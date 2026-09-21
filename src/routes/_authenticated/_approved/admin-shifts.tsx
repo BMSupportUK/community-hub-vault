@@ -109,6 +109,12 @@ function fmtDayHeading(key: string) {
   return label;
 }
 
+function slotMins(start: string, end: string) {
+  const [sh, sm] = start.split(":").map(Number);
+  const [eh, em] = end.split(":").map(Number);
+  return Math.max(0, (eh! * 60 + em!) - (sh! * 60 + sm!));
+}
+
 function fmtTime(iso: string) {
   return new Date(iso).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
 }
@@ -290,6 +296,16 @@ function StaffShiftsPage() {
       });
   }, [visible, primaryRole]);
 
+  // Claimed moderator hours for the selected weekday, grouped by day.
+  const claimedByDay = useMemo(() => {
+    const map = new Map<string, ClaimedSlotRow[]>();
+    for (const c of claimedSlots) {
+      if (new Date(c.shift_date + "T00:00:00").getDay() !== weekday) continue;
+      (map.get(c.shift_date) ?? map.set(c.shift_date, []).get(c.shift_date)!).push(c);
+    }
+    return [...map.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1));
+  }, [claimedSlots, weekday]);
+
   const totals = useMemo(() => {
     let worked = 0;
     let open = 0;
@@ -404,6 +420,54 @@ function StaffShiftsPage() {
         <StatCard label="Hours worked" value={fmtMs(totals.worked)} />
         <StatCard label="Still on shift" value={totals.open.toLocaleString("en-GB")} />
         <StatCard label="Auto clocked out" value={totals.auto.toLocaleString("en-GB")} />
+      </div>
+
+      <div className="rounded-2xl border border-amber-400/40 bg-amber-500/5 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="font-display font-bold inline-flex items-center gap-2">
+            <ClockIcon className="size-4 text-amber-400" /> Moderator claimed hours
+          </h2>
+          <span className="text-xs text-muted-foreground">
+            {claimedByDay.reduce((a, [, rows]) => a + rows.length, 0)} slot
+            {claimedByDay.reduce((a, [, rows]) => a + rows.length, 0) === 1 ? "" : "s"} booked
+          </span>
+        </div>
+        {claimedByDay.length === 0 ? (
+          <p className="mt-2 text-sm text-muted-foreground">No moderator hours claimed on this day.</p>
+        ) : (
+          <div className="mt-3 space-y-4">
+            {claimedByDay.map(([date, rows]) => (
+              <div key={date} className="space-y-2">
+                <h3 className="text-sm font-semibold uppercase tracking-wide text-primary">{fmtDayHeading(date)}</h3>
+                <div className="grid gap-2 sm:grid-cols-2 2xl:grid-cols-3">
+                  {rows.map((c) => {
+                    const p = people[c.user_id];
+                    const mins = slotMins(c.start_time, c.end_time);
+                    return (
+                      <div key={c.id} className="flex items-center gap-2 rounded-xl border border-amber-400/30 bg-surface-1 px-3 py-2 text-sm">
+                        {p?.username ? (
+                          <Link
+                            to="/u/$username"
+                            params={{ username: p.username }}
+                            search={{ tab: "shifts" } as any}
+                            className="font-medium truncate hover:text-primary"
+                          >
+                            {nameOf(c.user_id)}
+                          </Link>
+                        ) : (
+                          <span className="font-medium truncate">{nameOf(c.user_id)}</span>
+                        )}
+                        <span className="ml-auto tabular-nums text-muted-foreground">
+                          {c.start_time.slice(0, 5)}–{c.end_time.slice(0, 5)} · {fmtMs(mins * 60_000)}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {loading ? (
