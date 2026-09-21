@@ -1083,9 +1083,9 @@ function officeStatus(hours: OfficeHour[], now: Date, timezone: string) {
     const minutes = Math.floor((totalSeconds % 3_600) / 60);
     const seconds = totalSeconds % 60;
     const countdown = days > 0
-      ? `${days}d ${remainingHours}h`
+      ? `${days}d ${remainingHours}h ${minutes}m ${seconds.toString().padStart(2, "0")}s`
       : remainingHours > 0
-        ? `${remainingHours}h ${minutes}m`
+        ? `${remainingHours}h ${minutes}m ${seconds.toString().padStart(2, "0")}s`
         : `${minutes}m ${seconds.toString().padStart(2, "0")}s`;
     const localOpening = new Intl.DateTimeFormat("en-GB", {
       timeZone: timezone,
@@ -1129,13 +1129,22 @@ function OfficeHoursPanel() {
         .then(({ data }) => setHours((data ?? []) as OfficeHour[]));
     };
     loadHours();
-    const timer = window.setInterval(() => setNow(new Date()), 1000);
+    const tick = () => setNow(new Date());
+    const timer = window.setInterval(tick, 1000);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        tick();
+        loadHours();
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
     const channel = supabase
       .channel("ticket-office-hours-live")
       .on("postgres_changes", { event: "*", schema: "public", table: "business_hours" }, loadHours)
       .subscribe();
     return () => {
       window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", onVisible);
       void supabase.removeChannel(channel);
     };
   }, []);
@@ -1185,7 +1194,7 @@ function OfficeHoursPanel() {
                   {hour.is_closed ? "Closed" : `${formatOfficeTime(hour.open_time)}–${formatOfficeTime(hour.close_time)}`}
                   {!status.isOpen && status.nextDayUK === hour.day_of_week && status.ukOpening && (
                     <span className="font-semibold text-primary">
-                      Reopens {status.ukOpening} · in {status.countdown}
+                      Reopens {status.ukOpening} · in <span className="tabular-nums">{status.countdown}</span>
                     </span>
                   )}
                 </div>
@@ -1206,7 +1215,7 @@ function OfficeHoursPanel() {
                   )}
                   {!status.isOpen && status.nextDay === hour.day_of_week && status.countdown && (
                     <span className="font-semibold text-primary">
-                      Reopens {status.localOpening} · in {status.countdown}
+                      Reopens {status.localOpening} · in <span className="tabular-nums">{status.countdown}</span>
                     </span>
                   )}
                 </div>
