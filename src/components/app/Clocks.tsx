@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useUserTimezone } from "@/hooks/use-user-timezone";
 
 function format(tz: string, date = new Date()) {
   return new Intl.DateTimeFormat("en-GB", {
@@ -29,12 +30,18 @@ function formatDate(tz: string, date = new Date()) {
 
 export function Clocks() {
   const [now, setNow] = useState(() => new Date());
+  const userTz = useUserTimezone();
+
   useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), 1000);
-    return () => clearInterval(id);
+    const tick = () => setNow(new Date());
+    const id = window.setInterval(tick, 1000);
+    document.addEventListener("visibilitychange", tick);
+    return () => {
+      window.clearInterval(id);
+      document.removeEventListener("visibilitychange", tick);
+    };
   }, []);
 
-  const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
   const ukTz = "Europe/London"; // auto handles BST / GMT
 
   return (
