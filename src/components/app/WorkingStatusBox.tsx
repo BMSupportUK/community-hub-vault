@@ -128,10 +128,26 @@ export function WorkingStatusBox({
     };
   }, [user?.id]);
 
+  // Sign-in opens 15 minutes before the rota start time and closes at shift end.
+  const canSignIn = (() => {
+    if (!todayWindow) return false;
+    const [sh, sm] = todayWindow.start.split(":").map(Number);
+    const opensAt = new Date(now);
+    opensAt.setHours(sh, sm - 15, 0, 0);
+    const t = new Date(now);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    const nowTime = `${pad(t.getHours())}:${pad(t.getMinutes())}:${pad(t.getSeconds())}`;
+    return now >= opensAt.getTime() && nowTime <= todayWindow.end;
+  })();
+
   const clockIn = async () => {
     if (!user) return;
-    if (!hasSlotToday) {
+    if (!todayWindow) {
       toast.error("You have no shift on the rota today, so you can't sign in.");
+      return;
+    }
+    if (!canSignIn) {
+      toast.error("Sign-in opens 15 minutes before your shift starts.");
       return;
     }
     setBusy(true);
