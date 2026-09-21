@@ -1122,6 +1122,16 @@ function TicketCardItem({ ticket, canReopen = false, onChanged }: { ticket: Tick
       {ticket.closed_at && (
         <div className="text-[11px] text-emerald-200/80">Closed {fmtShortDate(ticket.closed_at)}</div>
       )}
+      {showReopen && (
+        <button
+          type="button"
+          onClick={reopen}
+          disabled={busy}
+          className="mt-1 self-start rounded-full border border-amber-300/50 bg-amber-300/10 px-3 py-1 text-[11px] font-semibold text-amber-100 hover:bg-amber-300/20 disabled:opacity-50"
+        >
+          {busy ? "Reopening…" : "Reopen ticket"}
+        </button>
+      )}
     </Link>
   );
 }
