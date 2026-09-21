@@ -3189,7 +3189,10 @@ function OrdersView({
             {isAdmin && adminUnlocked && (
               <div className="flex bg-purple-950/60 border border-purple-500/30 rounded-md p-0.5 text-[11px]">
                 <button
-                  onClick={() => setScope("mine")}
+                  onClick={() => {
+                    setScope("mine");
+                    clearSelectedOrder();
+                  }}
                   className={cn(
                     "px-3 py-1 rounded text-purple-100",
                     scope === "mine" &&
