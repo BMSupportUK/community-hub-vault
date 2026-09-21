@@ -251,6 +251,20 @@ function ShiftsPage() {
     setLoading(false);
   };
 
+  /** My booking history, newest first. */
+  const loadBookings = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("shift_bookings")
+      .select("id, action, shift_date, start_time, end_time, slot_type, required_role, created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(100);
+    setBookings((data ?? []) as Booking[]);
+  };
+
+  useEffect(() => { loadBookings(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [user?.id]);
+
   useEffect(() => {
     load();
     const ch = supabase.channel("shifts")
