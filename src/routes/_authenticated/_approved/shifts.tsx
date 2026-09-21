@@ -1069,43 +1069,69 @@ function ShiftsPage() {
           </TabsContent>
 
           <TabsContent value="holidays" className="mt-6 space-y-6">
-            <div className="rounded-2xl bg-surface border border-border p-5">
-              <h3 className="font-display text-lg font-semibold text-foreground mb-3">Request holiday</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div>
-                  <Label className="text-muted-foreground">Start</Label>
-                  <Input type="date" value={holForm.start} onChange={(e) => setHolForm({ ...holForm, start: e.target.value })} className="bg-surface-2 border-border text-foreground" />
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">End</Label>
-                  <Input type="date" value={holForm.end} onChange={(e) => setHolForm({ ...holForm, end: e.target.value })} className="bg-surface-2 border-border text-foreground" />
-                </div>
-                <div className="md:col-span-3">
-                  <Label className="text-muted-foreground">Reason (optional)</Label>
-                  <Textarea value={holForm.reason} onChange={(e) => setHolForm({ ...holForm, reason: e.target.value })} className="bg-surface-2 border-border text-foreground" />
-                </div>
-              </div>
-              <Button className="mt-4 bg-gradient-primary text-white" onClick={submitHoliday}><Plane className="size-4 mr-1" /> Submit request</Button>
-            </div>
+            <Tabs value={holTab} onValueChange={(v) => setHolTab(v as "book" | "status")}>
+              <TabsList className="bg-surface-2 border border-border">
+                <TabsTrigger value="book" className="data-[state=active]:bg-gradient-primary data-[state=active]:text-white">
+                  <Plane className="size-4 mr-1" /> Book holiday
+                </TabsTrigger>
+                <TabsTrigger value="status" className="data-[state=active]:bg-gradient-primary data-[state=active]:text-white">
+                  <Check className="size-4 mr-1" /> My requests
+                  {myPendingHolidays > 0 && (
+                    <span className="ml-2 rounded-full bg-amber-500/25 text-amber-100 px-2 py-0.5 text-[11px]">{myPendingHolidays}</span>
+                  )}
+                </TabsTrigger>
+              </TabsList>
 
-            <div className="rounded-2xl bg-surface border border-border overflow-hidden">
-              <div className="px-5 py-3 border-b border-border text-foreground font-semibold">My holiday requests</div>
-              {holidays.filter((h) => h.user_id === user?.id).length === 0 ? (
-                <div className="px-5 py-6 text-sm text-muted-foreground">No requests yet.</div>
-              ) : (
-                <ul className="divide-y divide-border">
-                  {holidays.filter((h) => h.user_id === user?.id).map((h) => (
-                    <li key={h.id} className="px-5 py-3 flex items-center gap-3">
-                      <div className="flex-1">
-                        <div className="text-foreground">{h.start_date} → {h.end_date}</div>
-                        {h.reason && <div className="text-xs text-muted-foreground">{h.reason}</div>}
-                      </div>
-                      <StatusPill status={h.status} />
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+              <TabsContent value="book" className="mt-4">
+                <div className="rounded-2xl bg-surface border border-border p-5">
+                  <h3 className="font-display text-lg font-semibold text-foreground mb-3">Request holiday</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div>
+                      <Label className="text-muted-foreground">Start</Label>
+                      <Input type="date" value={holForm.start} onChange={(e) => setHolForm({ ...holForm, start: e.target.value })} className="bg-surface-2 border-border text-foreground" />
+                    </div>
+                    <div>
+                      <Label className="text-muted-foreground">End</Label>
+                      <Input type="date" value={holForm.end} onChange={(e) => setHolForm({ ...holForm, end: e.target.value })} className="bg-surface-2 border-border text-foreground" />
+                    </div>
+                    <div className="md:col-span-3">
+                      <Label className="text-muted-foreground">Reason (optional)</Label>
+                      <Textarea value={holForm.reason} onChange={(e) => setHolForm({ ...holForm, reason: e.target.value })} className="bg-surface-2 border-border text-foreground" />
+                    </div>
+                  </div>
+                  <Button className="mt-4 bg-gradient-primary text-white" onClick={submitHoliday}><Plane className="size-4 mr-1" /> Submit request</Button>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="status" className="mt-4">
+                <div className="rounded-2xl bg-surface border border-border overflow-hidden">
+                  <div className="px-5 py-3 border-b border-border text-foreground font-semibold">
+                    Awaiting approval, accepted or rejected
+                  </div>
+                  {myHolidays.length === 0 ? (
+                    <div className="px-5 py-6 text-sm text-muted-foreground">No requests yet.</div>
+                  ) : (
+                    <ul className="divide-y divide-border">
+                      {myHolidays.map((h) => (
+                        <li key={h.id} className="px-5 py-3 flex items-start gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="text-foreground">{h.start_date} → {h.end_date}</div>
+                            {h.reason && <div className="text-xs text-muted-foreground break-words">{h.reason}</div>}
+                            {h.status === "denied" && (
+                              <div className="mt-2 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-xs text-rose-100 break-words">
+                                <span className="font-semibold">Reason for rejection: </span>
+                                {h.decision_reason?.trim() || "No reason given."}
+                              </div>
+                            )}
+                          </div>
+                          <StatusPill status={h.status} />
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </TabsContent>
+            </Tabs>
           </TabsContent>
 
           {/* ADMIN REQUESTS */}
