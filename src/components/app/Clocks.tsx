@@ -226,7 +226,14 @@ export function Clocks() {
             <span className="inline-flex items-center gap-1 rounded-full bg-destructive/15 px-1.5 py-0.5 text-[10px] font-bold uppercase text-destructive ring-1 ring-destructive/35">
               Closed
               {officeStatus.countdown && (
-                <span className="normal-case text-destructive/85">opens in {officeStatus.countdown}</span>
+                <>
+                  <span className="normal-case text-destructive/85">opens in {officeStatus.countdown}</span>
+                  {officeStatus.userOpening && (
+                    <span className="hidden normal-case text-destructive/75 2xl:inline">
+                      {officeStatus.userOpening}
+                    </span>
+                  )}
+                </>
               )}
             </span>
           )
