@@ -1090,6 +1090,8 @@ function officeStatus(hours: OfficeHour[], now: Date, timezone: string) {
     const localOpening = new Intl.DateTimeFormat("en-GB", {
       timeZone: timezone,
       weekday: "short",
+      day: "numeric",
+      month: "short",
       hour: "numeric",
       minute: "2-digit",
       hour12: true,
@@ -1146,11 +1148,16 @@ function OfficeHoursPanel() {
           const localOpen = hour.is_closed ? null : londonTimeToDate(hour.day_of_week, hour.open_time);
           const localClose = hour.is_closed ? null : londonTimeToDate(hour.day_of_week, hour.close_time);
           const localFormat = new Intl.DateTimeFormat("en-GB", { timeZone: timezone, hour: "numeric", minute: "2-digit", hour12: true });
+          const officeDate = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", day: "numeric", month: "short" })
+            .format(londonTimeToDate(hour.day_of_week, hour.is_closed ? "00:00" : hour.open_time));
+          const userDate = new Intl.DateTimeFormat("en-GB", { timeZone: timezone, day: "numeric", month: "short" })
+            .format(localOpen ?? londonTimeToDate(hour.day_of_week, "00:00"));
           return (
             <div key={hour.day_of_week} className="contents">
               <div className="border-b border-border/50 px-3 py-2 font-medium last:border-b-0">
                 <div className="flex flex-wrap items-center gap-1.5">
                   <span>{OFFICE_DAY_NAMES[hour.day_of_week]}</span>
+                  <span className="text-[11px] font-normal text-muted-foreground">{officeDate}</span>
                   {status.isOpen && status.currentDay === hour.day_of_week && (
                     <span className="inline-flex rounded-full bg-success/15 px-1.5 py-0.5 text-[10px] font-bold text-success ring-1 ring-success/35">
                       Open
@@ -1168,6 +1175,7 @@ function OfficeHoursPanel() {
               </div>
               <div className="border-b border-l border-border/50 px-3 py-2 text-muted-foreground">
                 <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-[11px] text-muted-foreground">{userDate}</span>
                   <span>{hour.is_closed || !localOpen || !localClose ? "Closed" : `${localFormat.format(localOpen)}–${localFormat.format(localClose)}`}</span>
                   {status.isOpen && status.currentDay === hour.day_of_week && (
                     <span className="inline-flex rounded-full bg-success/15 px-1.5 py-0.5 text-[10px] font-bold text-success ring-1 ring-success/35">
