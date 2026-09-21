@@ -29,7 +29,13 @@ type Shift = { id: string; clock_in: string };
 type Break = { id: string; kind: BreakKind; started_at: string };
 type NextSlot = { id: string; shift_date: string; start_time: string; end_time: string };
 
-export function WorkingStatusBox({ stackActions = false }: { stackActions?: boolean } = {}) {
+export function WorkingStatusBox({
+  stackActions = false,
+  variant = "card",
+}: {
+  stackActions?: boolean;
+  variant?: "card" | "header";
+} = {}) {
   const { user, roles } = useAuth();
   const dnd = useDndStatus(user?.id);
   const notifyShift = useServerFn(sendShiftEventPush);
@@ -138,11 +144,11 @@ export function WorkingStatusBox({ stackActions = false }: { stackActions?: bool
   };
 
   const startBreak = async (kind: BreakKind) => {
-    if (!shift || brk) return;
+    if (!user || !shift || brk) return;
     setBusy(true);
     const { error } = await supabase
       .from("breaks")
-      .insert({ shift_id: shift.id, user_id: user!.id, kind });
+      .insert({ shift_id: shift.id, user_id: user.id, kind });
     setBusy(false);
     if (error) return toast.error(error.message);
     toast.success(kind === "lunch" ? "Lunch started" : "Break started");
@@ -176,8 +182,8 @@ export function WorkingStatusBox({ stackActions = false }: { stackActions?: bool
     user.email?.split("@")[0] ||
     "User";
 
-  // DND overrides all other status — show a dedicated DND card.
-  if (dnd?.active) {
+  // DND overrides the card status, while the talk-channel header keeps its controls available.
+  if (dnd?.active && variant === "card") {
     const until = dnd.endsAt
       ? dnd.endsAt.toLocaleString("en-GB", {
           weekday: "short",
@@ -246,9 +252,11 @@ export function WorkingStatusBox({ stackActions = false }: { stackActions?: bool
       .padStart(2, "0")}:${(s % 60).toString().padStart(2, "0")}`;
   };
 
-  const ActionIcons = () => {
+  const ActionIcons = ({ compact = false }: { compact?: boolean }) => {
+    const iconButtonClass = compact ? "size-8" : "size-10";
+    const iconClass = compact ? "size-4" : "size-5";
     if (busy) {
-      return <Loader2 className="size-5 animate-spin text-muted-foreground" />;
+      return <Loader2 className={cn(iconClass, "animate-spin text-muted-foreground")} />;
     }
     if (!shift) {
       return (
@@ -256,9 +264,9 @@ export function WorkingStatusBox({ stackActions = false }: { stackActions?: bool
           type="button"
           onClick={clockIn}
           title="Sign in"
-          className="inline-flex items-center justify-center size-10 rounded-full border border-success/30 bg-success/10 text-success hover:bg-success/20 transition-all"
+          className={cn("inline-flex items-center justify-center rounded-full border border-success/30 bg-success/10 text-success hover:bg-success/20 transition-all", iconButtonClass)}
         >
-          <LogIn className="size-5" />
+          <LogIn className={iconClass} />
         </button>
       );
     }
@@ -268,41 +276,64 @@ export function WorkingStatusBox({ stackActions = false }: { stackActions?: bool
           type="button"
           onClick={endBreak}
           title="End break"
-          className="inline-flex items-center justify-center size-10 rounded-full border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-all"
+          className={cn("inline-flex items-center justify-center rounded-full border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-all", iconButtonClass)}
         >
-          <PlayCircle className="size-5" />
+          <PlayCircle className={iconClass} />
         </button>
       );
     }
     return (
-      <div className="flex items-center gap-3">
+      <div className={cn("flex items-center", compact ? "gap-1" : "gap-3")}>
         <button
           type="button"
           onClick={() => startBreak("break")}
           title="Take a break"
-          className="inline-flex items-center justify-center size-10 rounded-full border border-warning/30 bg-warning/10 text-warning hover:bg-warning/20 transition-all"
+          className={cn("inline-flex items-center justify-center rounded-full border border-warning/30 bg-warning/10 text-warning hover:bg-warning/20 transition-all", iconButtonClass)}
         >
-          <Coffee className="size-5" />
+          <Coffee className={iconClass} />
         </button>
         <button
           type="button"
           onClick={() => startBreak("lunch")}
           title="Start lunch"
-          className="inline-flex items-center justify-center size-10 rounded-full border border-accent/30 bg-accent/10 text-accent hover:bg-accent/20 transition-all"
+          className={cn("inline-flex items-center justify-center rounded-full border border-accent/30 bg-accent/10 text-accent hover:bg-accent/20 transition-all", iconButtonClass)}
         >
-          <UtensilsCrossed className="size-5" />
+          <UtensilsCrossed className={iconClass} />
         </button>
         <button
           type="button"
           onClick={clockOut}
           title="Sign out"
-          className="inline-flex items-center justify-center size-10 rounded-full border border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/20 transition-all"
+          className={cn("inline-flex items-center justify-center rounded-full border border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/20 transition-all", iconButtonClass)}
         >
-          <LogOut className="size-5" />
+          <LogOut className={iconClass} />
         </button>
       </div>
     );
   };
+
+  if (variant === "header") {
+    return (
+      <div className="flex shrink-0 items-center gap-1 border-r border-border/70 pr-2" aria-label="Working status controls">
+        <ActionIcons compact />
+        <Link
+          to="/clock"
+          title="Clock page"
+          className="inline-flex size-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition hover:bg-surface-2 hover:text-foreground"
+        >
+          <Clock className="size-4" />
+        </Link>
+        <Link
+          to="/shifts"
+          title="Shifts"
+          className="inline-flex size-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition hover:bg-surface-2 hover:text-foreground"
+        >
+          <Calendar className="size-4" />
+        </Link>
+        <DndDialogButton className="inline-flex size-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition hover:bg-surface-2 hover:text-foreground" />
+      </div>
+    );
+  }
 
   return (
     <section className="px-2 pt-4">
