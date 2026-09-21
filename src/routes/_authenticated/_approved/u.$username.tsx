@@ -758,6 +758,13 @@ function ProfilePage() {
             </ActivityCardGrid>
           </TabsContent>
 
+          {canSeeShifts && (
+            <TabsContent value="shifts" className="mt-6">
+              <ShiftHistoryPanel userId={profile.id} name={isOwner ? "Your" : display} />
+            </TabsContent>
+          )}
+
+
           <TabsContent value="friends" className="mt-6">
             <ActivityCard title={isOwner ? "Your friends" : `${display}'s friends`} icon={UserPlus} empty={isOwner ? "No friends yet. Visit a member's profile and send a friend request." : "No friends yet."}>
               {friends.map((f) => (
