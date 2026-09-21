@@ -378,20 +378,40 @@ function ShiftsPage() {
         return toast.error(`Your role covers ${myQuota} shift${myQuota === 1 ? "" : "s"} per day`);
       }
     }
-    const { error } = await supabase.from("shift_slots").update({ assigned_to: user.id }).eq("id", s.id).is("assigned_to", null);
+    const { data, error } = await supabase
+      .from("shift_slots")
+      .update({ assigned_to: user.id })
+      .eq("id", s.id)
+      .is("assigned_to", null)
+      .select("id");
     if (error) {
       if ((error as any).code === "23505") return toast.error("You're already on another shift at this time");
       return toast.error(error.message);
     }
-    toast.success("Shift claimed");
+    if (!data || data.length === 0) {
+      load();
+      return toast.error("Someone else booked that shift first");
+    }
+    toast.success(`Shift booked — ${dayLabel(new Date(s.shift_date))}, ${fmtRange(s.shift_date, s.start_time, s.end_time)}`);
+    await logBooking(s, "claimed");
     load();
   };
 
   const release = async (s: Slot) => {
     if (!user) return;
-    const { error } = await supabase.from("shift_slots").update({ assigned_to: null }).eq("id", s.id).eq("assigned_to", user.id);
+    const { data, error } = await supabase
+      .from("shift_slots")
+      .update({ assigned_to: null })
+      .eq("id", s.id)
+      .eq("assigned_to", user.id)
+      .select("id");
     if (error) return toast.error(error.message);
+    if (!data || data.length === 0) {
+      load();
+      return toast.error("That shift is no longer yours to release");
+    }
     toast.success("Shift released");
+    await logBooking(s, "released");
     load();
   };
 
