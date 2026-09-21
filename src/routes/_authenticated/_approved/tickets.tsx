@@ -1164,7 +1164,7 @@ function OfficeHoursPanel() {
         <div className="border-b border-border/70 px-3 py-2 font-semibold text-muted-foreground">Day</div>
         <div className="border-b border-l border-border/70 px-3 py-2 font-semibold">UK office</div>
         <div className="border-b border-l border-border/70 px-3 py-2 font-semibold">{timezoneLabel}</div>
-        {hours.map((hour) => {
+        {[...hours].sort((a, b) => ((a.day_of_week + 6) % 7) - ((b.day_of_week + 6) % 7)).map((hour) => {
           const localOpen = hour.is_closed ? null : londonTimeToDate(hour.day_of_week, hour.open_time);
           const localClose = hour.is_closed ? null : londonTimeToDate(hour.day_of_week, hour.close_time);
           const localFormat = new Intl.DateTimeFormat("en-GB", { timeZone: timezone, hour: "numeric", minute: "2-digit", hour12: true });
