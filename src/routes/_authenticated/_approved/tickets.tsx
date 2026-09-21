@@ -9,7 +9,7 @@ import ticketsHero from "@/assets/tickets-hero.jpg";
 import {
   Ticket as TicketIcon, Plus, Send, Lock, X, LifeBuoy, CreditCard, Bug, Sparkles, UserCog,
   Tv, Film, Circle, CircleDot, Clock4, CheckCircle2, XCircle, ChevronDown, Trash2,
-  Paperclip, FileText, Star, HelpCircle, Ban, Home, Pencil, Check, Forward,
+  Paperclip, FileText, Star, HelpCircle, Ban, Home, Pencil, Check, Forward, Store,
 
 } from "lucide-react";
 import { toast } from "sonner";
@@ -557,6 +557,7 @@ function TicketsPage() {
                   <p className="mt-5 text-rose-200/80 max-w-2xl text-sm">
                     Once your ticket is resolved, leave a rating so we know how we did.
                   </p>
+                  <OfficeHoursPanel />
                 </div>
                 <div className="w-full lg:w-auto lg:max-w-md shrink-0 [&>div]:px-0 [&>div]:pt-0">
                   <StaffOnDutyStrip variant="tickets" hideRoles={["moderator"]} />
@@ -983,6 +984,89 @@ function NewTicketForm({
         </div>
       </form>
     </>
+  );
+}
+
+type OfficeHour = {
+  day_of_week: number;
+  open_time: string;
+  close_time: string;
+  is_closed: boolean;
+};
+
+const OFFICE_DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+function timeZoneOffsetMs(date: Date, timeZone: string) {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone,
+    year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", second: "2-digit", hourCycle: "h23",
+  }).formatToParts(date);
+  const values = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return Date.UTC(Number(values.year), Number(values.month) - 1, Number(values.day), Number(values.hour), Number(values.minute), Number(values.second)) - date.getTime();
+}
+
+function londonTimeToDate(dayOfWeek: number, time: string) {
+  const now = new Date();
+  const londonDay = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", weekday: "short" }).format(now);
+  const currentDay = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(londonDay);
+  const base = new Date(now.getTime() + ((dayOfWeek - currentDay + 7) % 7) * 86_400_000);
+  const dateParts = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/London", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(base);
+  const dateValues = Object.fromEntries(dateParts.map((part) => [part.type, part.value]));
+  const [hours, minutes] = time.split(":").map(Number);
+  const wallClock = Date.UTC(Number(dateValues.year), Number(dateValues.month) - 1, Number(dateValues.day), hours, minutes);
+  const firstPass = new Date(wallClock);
+  return new Date(wallClock - timeZoneOffsetMs(firstPass, "Europe/London"));
+}
+
+function formatOfficeTime(time: string) {
+  const [hours, minutes] = time.split(":").map(Number);
+  return new Intl.DateTimeFormat("en-GB", { hour: "numeric", minute: "2-digit", hour12: true }).format(new Date(2000, 0, 1, hours, minutes));
+}
+
+function OfficeHoursPanel() {
+  const timezone = useUserTimezone();
+  const [hours, setHours] = useState<OfficeHour[]>([]);
+
+  useEffect(() => {
+    supabase
+      .from("business_hours")
+      .select("day_of_week, open_time, close_time, is_closed")
+      .order("day_of_week")
+      .then(({ data }) => setHours((data ?? []) as OfficeHour[]));
+  }, []);
+
+  if (hours.length === 0) return null;
+  const timezoneLabel = timezone.replaceAll("_", " ").replace("/", " / ");
+
+  return (
+    <section className="mt-6 overflow-hidden rounded-lg border border-border/70 bg-background/30">
+      <div className="flex items-center gap-2 border-b border-border/70 px-4 py-3">
+        <Store className="size-4 text-primary" />
+        <h3 className="font-display text-sm font-semibold">Office opening times</h3>
+      </div>
+      <div className="grid grid-cols-[minmax(5.5rem,0.8fr)_minmax(0,1fr)_minmax(0,1fr)] text-xs sm:text-sm">
+        <div className="border-b border-border/70 px-3 py-2 font-semibold text-muted-foreground">Day</div>
+        <div className="border-b border-l border-border/70 px-3 py-2 font-semibold">UK office</div>
+        <div className="border-b border-l border-border/70 px-3 py-2 font-semibold">{timezoneLabel}</div>
+        {hours.map((hour) => {
+          const localOpen = hour.is_closed ? null : londonTimeToDate(hour.day_of_week, hour.open_time);
+          const localClose = hour.is_closed ? null : londonTimeToDate(hour.day_of_week, hour.close_time);
+          const localFormat = new Intl.DateTimeFormat("en-GB", { timeZone: timezone, hour: "numeric", minute: "2-digit", hour12: true });
+          return (
+            <div key={hour.day_of_week} className="contents">
+              <div className="border-b border-border/50 px-3 py-2 font-medium last:border-b-0">{OFFICE_DAY_NAMES[hour.day_of_week]}</div>
+              <div className="border-b border-l border-border/50 px-3 py-2 text-muted-foreground">
+                {hour.is_closed ? "Closed" : `${formatOfficeTime(hour.open_time)}–${formatOfficeTime(hour.close_time)}`}
+              </div>
+              <div className="border-b border-l border-border/50 px-3 py-2 text-muted-foreground">
+                {hour.is_closed || !localOpen || !localClose ? "Closed" : `${localFormat.format(localOpen)}–${localFormat.format(localClose)}`}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
   );
 }
 

@@ -223,7 +223,7 @@ function ProfilePage() {
       // Tickets are kept on the profile for the current calendar year only — at
       // the turn of the year the profile list clears itself.
       supabase.from("tickets").select("id, subject, status, priority, created_at, updated_at, closed_at, order_id").eq("user_id", p.id).gte("created_at", `${new Date().getFullYear()}-01-01T00:00:00.000Z`).order("created_at", { ascending: false }).limit(500),
-      supabase.from("orders").select("id, total_cents, status, created_at, paid_at, completed_at, shipping_name, discount_code").eq("user_id", p.id).order("created_at", { ascending: false }).limit(5),
+      supabase.from("orders").select("id, total_cents, status, created_at, paid_at, completed_at, shipping_name, discount_code").eq("user_id", p.id).gte("created_at", `${new Date().getFullYear()}-01-01T00:00:00.000Z`).order("created_at", { ascending: false }).limit(500),
     ]);
     setRoles((r ?? []).map((x: any) => x.role as AppRole));
     setShift((s as ShiftRow) ?? null);
@@ -755,11 +755,7 @@ function ProfilePage() {
           </TabsContent>
 
           <TabsContent value="orders" className={paneClass}>
-            <ActivityCardGrid title="Recent orders" icon={ShoppingBag} empty="No orders yet" isEmpty={orders.length === 0}>
-              {orders.map((o) => (
-                <OrderCardItem key={o.id} order={o} fmtCurrency={fmtCurrency} />
-              ))}
-            </ActivityCardGrid>
+            <OrderMonthsPanel orders={orders} fmtCurrency={fmtCurrency} />
           </TabsContent>
 
           {canSeeShifts && (
@@ -1133,6 +1129,58 @@ function TicketCardItem({ ticket, canReopen = false, onChanged }: { ticket: Tick
         </button>
       )}
     </Link>
+  );
+}
+
+function OrderMonthsPanel({ orders, fmtCurrency }: { orders: OrderRow[]; fmtCurrency: (cents: number) => string }) {
+  const [month, setMonth] = useState(() => new Date().getMonth());
+  const byMonth = useMemo(() => {
+    const buckets: OrderRow[][] = Array.from({ length: 12 }, () => []);
+    for (const order of orders) {
+      const date = new Date(order.created_at);
+      if (!Number.isNaN(date.getTime())) buckets[date.getMonth()].push(order);
+    }
+    return buckets;
+  }, [orders]);
+  const current = byMonth[month] ?? [];
+  const year = new Date().getFullYear();
+
+  return (
+    <div className="flex min-h-0 flex-1 flex-col gap-4">
+      <div className="flex flex-wrap gap-1.5">
+        {MONTH_LABELS.map((label, index) => {
+          const count = byMonth[index].length;
+          return (
+            <button
+              key={label}
+              type="button"
+              onClick={() => setMonth(index)}
+              className={cn(
+                "rounded-full border px-3 py-1 text-xs font-semibold transition",
+                month === index
+                  ? "border-white/60 bg-white/20 text-white"
+                  : count > 0
+                    ? "border-white/20 bg-white/[0.06] text-white/80 hover:bg-white/[0.12]"
+                    : "border-white/10 bg-white/[0.03] text-white/35 hover:bg-white/[0.06]",
+              )}
+            >
+              {label}
+              {count > 0 && <span className="ml-1 text-[10px] text-amber-100/80">({count})</span>}
+            </button>
+          );
+        })}
+      </div>
+      <ActivityCardGrid
+        title={`${MONTH_LABELS[month]} ${year} orders`}
+        icon={ShoppingBag}
+        empty={`No orders in ${MONTH_LABELS[month]} ${year}`}
+        isEmpty={current.length === 0}
+      >
+        {current.map((order) => (
+          <OrderCardItem key={order.id} order={order} fmtCurrency={fmtCurrency} />
+        ))}
+      </ActivityCardGrid>
+    </div>
   );
 }
 
