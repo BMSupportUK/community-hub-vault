@@ -87,6 +87,7 @@ function Pill({
 
 export default function ShiftHistoryPanel({ userId, name }: { userId: string; name: string }) {
   const [rows, setRows] = useState<ShiftHistoryRow[]>([]);
+  const [breaksByShift, setBreaksByShift] = useState<Record<string, BreakRow[]>>({});
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
