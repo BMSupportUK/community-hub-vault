@@ -82,6 +82,19 @@ export default function ShiftHistoryPanel({ userId, name }: { userId: string; na
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [total, setTotal] = useState<number | null>(null);
+  // Monday-to-Sunday window; resets automatically when a new week begins.
+  const [weekFrom, setWeekFrom] = useState(() => weekStart().getTime());
+
+  useEffect(() => {
+    const tick = () => {
+      const current = weekStart().getTime();
+      setWeekFrom((prev) => (prev === current ? prev : current));
+    };
+    const t = setInterval(tick, 60_000);
+    return () => clearInterval(t);
+  }, []);
+
+  const weekTo = weekEnd(new Date(weekFrom)).getTime();
 
   const fetchPage = useCallback(
     async (offset: number) => {
@@ -89,13 +102,16 @@ export default function ShiftHistoryPanel({ userId, name }: { userId: string; na
         .from("shifts")
         .select("id, clock_in, clock_out, end_prompt_asked_at, still_working_ack_at", { count: "exact" })
         .eq("user_id", userId)
+        .gte("clock_in", new Date(weekFrom).toISOString())
+        .lt("clock_in", new Date(weekTo).toISOString())
         .order("clock_in", { ascending: false })
         .range(offset, offset + PAGE_SIZE - 1);
       if (error) return { rows: [] as ShiftHistoryRow[], count: 0 };
       return { rows: (data ?? []) as ShiftHistoryRow[], count: count ?? 0 };
     },
-    [userId],
+    [userId, weekFrom, weekTo],
   );
+
 
   useEffect(() => {
     let cancelled = false;
