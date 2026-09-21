@@ -3442,6 +3442,7 @@ function OrderDetailImpl({
   const textRef = useRef("");
   const [credsOpen, setCredsOpen] = useState(false);
   const [linkedTicketId, setLinkedTicketId] = useState<string | null>(null);
+  const [customerHandle, setCustomerHandle] = useState<string | null>(null);
   const [checkPhase, setCheckPhase] = useState<PayCheckPhase | null>(null);
 
   // Look up the support ticket that was opened for this order so we can
