@@ -220,7 +220,9 @@ function ProfilePage() {
       supabase.from("user_roles").select("role").eq("user_id", p.id),
       supabase.from("shifts").select("*").eq("user_id", p.id).is("clock_out", null).order("clock_in", { ascending: true }).limit(1).maybeSingle(),
       supabase.from("breaks").select("*").eq("user_id", p.id).is("ended_at", null).order("started_at", { ascending: false }).limit(1).maybeSingle(),
-      supabase.from("tickets").select("id, subject, status, priority, created_at, updated_at, closed_at").eq("user_id", p.id).order("created_at", { ascending: false }).limit(5),
+      // Tickets are kept on the profile for the current calendar year only — at
+      // the turn of the year the profile list clears itself.
+      supabase.from("tickets").select("id, subject, status, priority, created_at, updated_at, closed_at, order_id").eq("user_id", p.id).gte("created_at", `${new Date().getFullYear()}-01-01T00:00:00.000Z`).order("created_at", { ascending: false }).limit(500),
       supabase.from("orders").select("id, total_cents, status, created_at, paid_at, completed_at, shipping_name, discount_code").eq("user_id", p.id).order("created_at", { ascending: false }).limit(5),
     ]);
     setRoles((r ?? []).map((x: any) => x.role as AppRole));
