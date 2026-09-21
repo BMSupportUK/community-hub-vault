@@ -3473,6 +3473,24 @@ function OrderDetailImpl({
     setOrder(o as Order | null);
     setItems(it ?? []);
     setMsgs(m ?? []);
+    // Who placed the order — shown next to the total. Registered customers
+    // get their profile handle; guests fall back to their shipping name/email.
+    const ord = o as Order | null;
+    if (ord?.user_id) {
+      const { data: p } = await supabase
+        .from("profiles")
+        .select("username,display_name")
+        .eq("id", ord.user_id)
+        .maybeSingle();
+      const prof = p as { username: string | null; display_name: string | null } | null;
+      setCustomerHandle(
+        prof?.username
+          ? `@${prof.username}`
+          : (prof?.display_name ?? ord.shipping_name ?? null),
+      );
+    } else {
+      setCustomerHandle(ord?.shipping_name ?? null);
+    }
   };
   useEffect(() => {
     load();
