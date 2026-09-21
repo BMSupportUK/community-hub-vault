@@ -411,7 +411,7 @@ export function StreamingDevicesPage() {
 
   return (
     <div
-      className="relative flex-1 overflow-visible md:overflow-y-auto md:scrollbar-hide bg-cover bg-center bg-no-repeat bg-fixed"
+      className="relative flex-1 overflow-visible md:h-full md:min-h-0 md:overflow-y-auto md:scrollbar-hide bg-cover bg-center bg-no-repeat bg-fixed"
       style={{ backgroundImage: `url(${tvLoginIllustration})` }}
     >
       <div

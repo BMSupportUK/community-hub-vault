@@ -1822,20 +1822,20 @@ function Storefront() {
                 onOpenOrder={(id) => navigate({ to: "/shop", search: { view: "orders", id } })}
               />
             </TabsContent>
-            <TabsContent value="streaming_devices" className="mt-3 min-h-0 flex-1 overflow-visible md:overflow-hidden -mx-3 sm:-mx-5">
+            <TabsContent value="streaming_devices" className="mt-3 min-h-0 flex-1 overflow-visible md:flex md:h-full md:flex-col md:overflow-hidden -mx-3 sm:-mx-5">
               <Suspense fallback={<ShopLazyFallback />}>
                 <StreamingDevicesPage />
               </Suspense>
             </TabsContent>
-            <TabsContent value="app_demos" className="mt-3 min-h-0 flex-1 overflow-visible md:overflow-hidden -mx-3 sm:-mx-5">
+            <TabsContent value="app_demos" className="mt-3 min-h-0 flex-1 overflow-visible md:flex md:h-full md:flex-col md:overflow-hidden -mx-3 sm:-mx-5">
               <AppDemosView />
             </TabsContent>
-            <TabsContent value="reviews" className="mt-3 min-h-0 flex-1 overflow-visible md:overflow-hidden -mx-3 sm:-mx-5">
+            <TabsContent value="reviews" className="mt-3 min-h-0 flex-1 overflow-visible md:flex md:h-full md:flex-col md:overflow-hidden -mx-3 sm:-mx-5">
               <Suspense fallback={<ShopLazyFallback />}>
                 <ReviewsPage />
               </Suspense>
             </TabsContent>
-            <TabsContent value="vpn" className="mt-3 min-h-0 flex-1 overflow-visible md:overflow-hidden -mx-3 sm:-mx-5">
+            <TabsContent value="vpn" className="mt-3 min-h-0 flex-1 overflow-visible md:flex md:h-full md:flex-col md:overflow-hidden -mx-3 sm:-mx-5">
               <VpnGuideView />
             </TabsContent>
           </Tabs>

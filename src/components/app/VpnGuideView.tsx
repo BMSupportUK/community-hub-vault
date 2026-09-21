@@ -8,7 +8,7 @@ const PROTON_REF_URL =
 export function VpnGuideView({ standalone = false }: { standalone?: boolean }) {
   const outerClass = standalone
     ? "flex-1 flex min-w-0 bg-cover bg-center bg-no-repeat bg-fixed relative"
-    : "relative flex min-w-0 rounded-2xl overflow-visible md:overflow-hidden bg-cover bg-center";
+    : "relative flex min-w-0 rounded-2xl overflow-visible md:h-full md:min-h-0 md:flex-1 md:overflow-hidden bg-cover bg-center";
   return (
     <div className={outerClass} style={{ backgroundImage: `url(${hackerBg})` }}>
       <div className="absolute inset-0 bg-background/70 backdrop-blur-sm pointer-events-none" aria-hidden />
