@@ -45,6 +45,7 @@ export function WorkingStatusBox({
   const [now, setNow] = useState(() => Date.now());
   const [busy, setBusy] = useState(false);
   const [nextSlot, setNextSlot] = useState<NextSlot | null>(null);
+  const [hasSlotToday, setHasSlotToday] = useState(true);
 
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
@@ -93,6 +94,8 @@ export function WorkingStatusBox({
         (sl) => sl.shift_date > todayStr || sl.end_time > nowTime,
       );
       setNextSlot(upcoming ?? null);
+      // Staff can only sign in on a day they are on the rota — applies to every role.
+      setHasSlotToday(((slots ?? []) as NextSlot[]).some((sl) => sl.shift_date === todayStr));
     };
     refresh();
     const ch = supabase
@@ -118,6 +121,10 @@ export function WorkingStatusBox({
 
   const clockIn = async () => {
     if (!user) return;
+    if (!hasSlotToday) {
+      toast.error("You have no shift on the rota today, so you can't sign in.");
+      return;
+    }
     setBusy(true);
     const { error } = await supabase.from("shifts").insert({ user_id: user.id });
     setBusy(false);
@@ -263,8 +270,15 @@ export function WorkingStatusBox({
         <button
           type="button"
           onClick={clockIn}
-          title="Sign in"
-          className={cn("inline-flex items-center justify-center rounded-full border border-success/30 bg-success/10 text-success hover:bg-success/20 transition-all", iconButtonClass)}
+          disabled={!hasSlotToday}
+          title={hasSlotToday ? "Sign in" : "No shift on the rota today"}
+          className={cn(
+            "inline-flex items-center justify-center rounded-full border transition-all",
+            hasSlotToday
+              ? "border-success/30 bg-success/10 text-success hover:bg-success/20"
+              : "border-white/10 bg-white/5 text-muted-foreground cursor-not-allowed opacity-60",
+            iconButtonClass,
+          )}
         >
           <LogIn className={iconClass} />
         </button>
@@ -396,6 +410,11 @@ export function WorkingStatusBox({
                 <span className="text-muted-foreground font-medium">Shift</span>
                 <span className="text-muted-foreground italic">Not signed in</span>
               </div>
+              {!hasSlotToday && (
+                <p className="text-xs text-muted-foreground">
+                  You're not on the rota today, so signing in is unavailable.
+                </p>
+              )}
               {nextSlot && (
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-muted-foreground font-medium">Next shift</span>
