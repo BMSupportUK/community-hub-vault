@@ -1151,6 +1151,11 @@ function OfficeHoursPanel() {
               <div className="border-b border-border/50 px-3 py-2 font-medium last:border-b-0">
                 <div className="flex flex-wrap items-center gap-1.5">
                   <span>{OFFICE_DAY_NAMES[hour.day_of_week]}</span>
+                  {status.isOpen && status.currentDay === hour.day_of_week && (
+                    <span className="inline-flex rounded-full bg-success/15 px-1.5 py-0.5 text-[10px] font-bold text-success ring-1 ring-success/35">
+                      Open
+                    </span>
+                  )}
                   {!status.isOpen && status.currentDay === hour.day_of_week && (
                     <span className="inline-flex rounded-full bg-destructive/15 px-1.5 py-0.5 text-[10px] font-bold text-destructive ring-1 ring-destructive/35">
                       Closed
@@ -1164,6 +1169,11 @@ function OfficeHoursPanel() {
               <div className="border-b border-l border-border/50 px-3 py-2 text-muted-foreground">
                 <div className="flex flex-wrap items-center gap-1.5">
                   <span>{hour.is_closed || !localOpen || !localClose ? "Closed" : `${localFormat.format(localOpen)}–${localFormat.format(localClose)}`}</span>
+                  {status.isOpen && status.currentDay === hour.day_of_week && (
+                    <span className="inline-flex rounded-full bg-success/15 px-1.5 py-0.5 text-[10px] font-bold text-success ring-1 ring-success/35">
+                      Open
+                    </span>
+                  )}
                   {!status.isOpen && status.currentDay === hour.day_of_week && (
                     <span className="inline-flex rounded-full bg-destructive/15 px-1.5 py-0.5 text-[10px] font-bold text-destructive ring-1 ring-destructive/35">
                       Closed
