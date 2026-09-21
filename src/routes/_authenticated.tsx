@@ -196,11 +196,11 @@ function AuthLayout() {
             {isAdmin && (
               <Link
                 to="/admin"
-                title="Owner dashboard"
+                title="BM Support | Admin Panel"
                 className="flex items-center gap-2 rounded-full px-3 py-1.5 bg-surface-2 hover:bg-primary hover:text-primary-foreground text-xs font-medium transition-colors"
               >
                 <LayoutDashboard className="size-4" />
-                <span className="hidden xl:inline">Owner dashboard</span>
+                <span className="hidden xl:inline">BM Support | Admin Panel</span>
               </Link>
             )}
             {isAdmin && (
