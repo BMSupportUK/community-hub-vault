@@ -15,6 +15,27 @@ interface ShiftHistoryRow {
   still_working_ack_at: string | null;
 }
 
+/** Monday 00:00 local time of the week containing `now`. */
+function weekStart(now = new Date()) {
+  const d = new Date(now);
+  const dow = (d.getDay() + 6) % 7; // 0 = Monday
+  d.setDate(d.getDate() - dow);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function weekEnd(now = new Date()) {
+  const d = weekStart(now);
+  d.setDate(d.getDate() + 7);
+  return d;
+}
+
+function fmtRange(start: Date, end: Date) {
+  const opts: Intl.DateTimeFormatOptions = { day: "2-digit", month: "short" };
+  const last = new Date(end.getTime() - 1);
+  return `${start.toLocaleDateString("en-GB", opts)} – ${last.toLocaleDateString("en-GB", { ...opts, year: "numeric" })}`;
+}
+
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-GB", { weekday: "short", day: "2-digit", month: "short", year: "numeric" });
 }
@@ -22,6 +43,7 @@ function fmtDate(iso: string) {
 function fmtTime(iso: string) {
   return new Date(iso).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
 }
+
 
 function fmtDuration(startIso: string, endIso: string | null) {
   const end = endIso ? new Date(endIso).getTime() : Date.now();
@@ -60,6 +82,19 @@ export default function ShiftHistoryPanel({ userId, name }: { userId: string; na
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [total, setTotal] = useState<number | null>(null);
+  // Monday-to-Sunday window; resets automatically when a new week begins.
+  const [weekFrom, setWeekFrom] = useState(() => weekStart().getTime());
+
+  useEffect(() => {
+    const tick = () => {
+      const current = weekStart().getTime();
+      setWeekFrom((prev) => (prev === current ? prev : current));
+    };
+    const t = setInterval(tick, 60_000);
+    return () => clearInterval(t);
+  }, []);
+
+  const weekTo = weekEnd(new Date(weekFrom)).getTime();
 
   const fetchPage = useCallback(
     async (offset: number) => {
@@ -67,13 +102,16 @@ export default function ShiftHistoryPanel({ userId, name }: { userId: string; na
         .from("shifts")
         .select("id, clock_in, clock_out, end_prompt_asked_at, still_working_ack_at", { count: "exact" })
         .eq("user_id", userId)
+        .gte("clock_in", new Date(weekFrom).toISOString())
+        .lt("clock_in", new Date(weekTo).toISOString())
         .order("clock_in", { ascending: false })
         .range(offset, offset + PAGE_SIZE - 1);
       if (error) return { rows: [] as ShiftHistoryRow[], count: 0 };
       return { rows: (data ?? []) as ShiftHistoryRow[], count: count ?? 0 };
     },
-    [userId],
+    [userId, weekFrom, weekTo],
   );
+
 
   useEffect(() => {
     let cancelled = false;
@@ -113,10 +151,12 @@ export default function ShiftHistoryPanel({ userId, name }: { userId: string; na
     );
   }
 
+  const rangeLabel = fmtRange(new Date(weekFrom), new Date(weekTo));
+
   if (!rows.length) {
     return (
       <div className="rounded-2xl border border-purple-500/30 bg-purple-950/50 p-8 text-center text-purple-200/80">
-        No shifts recorded yet.
+        No shifts recorded this week ({rangeLabel}).
       </div>
     );
   }
@@ -128,9 +168,10 @@ export default function ShiftHistoryPanel({ userId, name }: { userId: string; na
           {name}&apos;s shift history
         </h3>
         <p className="text-xs text-purple-200/70">
-          {total ?? rows.length} shift{(total ?? rows.length) === 1 ? "" : "s"} recorded · newest first
+          This week ({rangeLabel}) · {total ?? rows.length} shift{(total ?? rows.length) === 1 ? "" : "s"} · newest first
         </p>
       </div>
+
 
       <div className="grid gap-3 sm:grid-cols-2">
         {rows.map((s) => {
