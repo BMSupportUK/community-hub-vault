@@ -347,6 +347,22 @@ function ShiftsPage() {
     return p?.display_name || p?.username || "User";
   };
 
+  /** Record a claim/release in the booking history. */
+  const logBooking = async (s: Slot, action: "claimed" | "released") => {
+    if (!user) return;
+    await supabase.from("shift_bookings").insert({
+      slot_id: s.id,
+      user_id: user.id,
+      action,
+      shift_date: s.shift_date,
+      start_time: s.start_time,
+      end_time: s.end_time,
+      slot_type: s.slot_type,
+      required_role: s.required_role,
+    });
+    loadBookings();
+  };
+
   const claim = async (s: Slot) => {
     if (!user) return;
     if (s.required_role && !isAdmin && !roles.includes(s.required_role as AppRole)) {
@@ -771,7 +787,7 @@ function ShiftsPage() {
                                     <div className="flex items-center gap-1">
                                       {!taken && canPick && shiftNotStarted && (
                                         ((s.slot_type === "hourly" && (isMod || isAdmin)) || (s.slot_type === "shift" && isStaffOrAdmin)) && (
-                                          <button onClick={() => claim(s)} className="px-2 py-0.5 rounded bg-gradient-primary text-white font-semibold">Claim</button>
+                                          <button onClick={() => setConfirmSlot(s)} className="px-2 py-0.5 rounded bg-gradient-primary text-white font-semibold">Claim</button>
                                         )
                                       )}
                                       {mine && (
