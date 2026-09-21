@@ -71,6 +71,13 @@
       "when": 1789995631565,
       "tag": "0009_add_holiday_decision_reason",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1790015000564,
+      "tag": "0010_reopen_own_ticket",
+      "breakpoints": true
     }
   ]
 }
