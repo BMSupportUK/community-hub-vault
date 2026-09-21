@@ -757,7 +757,6 @@ function ShiftsPage() {
         <Tabs value={tab} onValueChange={setTab} className="w-full">
           <TabsList className="flex flex-wrap gap-1 bg-surface-2 border border-border h-auto p-1">
             {[
-              { v: "welcome", label: "Welcome", Icon: CalendarIcon },
               { v: "rota", label: "Rota", Icon: Users },
               { v: "claimed", label: "Claimed Shifts", Icon: Users },
               { v: "mine", label: "My Shifts", Icon: Clock },
