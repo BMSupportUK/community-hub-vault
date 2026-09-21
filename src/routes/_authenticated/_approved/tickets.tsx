@@ -1095,7 +1095,9 @@ function officeStatus(hours: OfficeHour[], now: Date, timezone: string) {
       hour12: true,
       timeZoneName: "short",
     }).format(nextOpening);
-    return { isOpen: false, currentDay: londonDay, nextDay: candidate.day_of_week, countdown, localOpening };
+    const localOpeningDayName = new Intl.DateTimeFormat("en-GB", { timeZone: timezone, weekday: "short" }).format(nextOpening);
+    const localOpeningDay = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(localOpeningDayName);
+    return { isOpen: false, currentDay: londonDay, nextDay: localOpeningDay, countdown, localOpening };
   }
 
   return { isOpen: false, currentDay: londonDay, nextDay: null as number | null, countdown: "", localOpening: "" };
@@ -1163,7 +1165,9 @@ function OfficeHoursPanel() {
                 <div className="flex flex-wrap items-center gap-1.5">
                   <span>{hour.is_closed || !localOpen || !localClose ? "Closed" : `${localFormat.format(localOpen)}–${localFormat.format(localClose)}`}</span>
                   {!status.isOpen && status.nextDay === hour.day_of_week && status.countdown && (
-                    <span className="font-semibold text-primary">opens in {status.countdown}</span>
+                    <span className="font-semibold text-primary">
+                      Reopens {status.localOpening} · in {status.countdown}
+                    </span>
                   )}
                 </div>
               </div>
