@@ -1070,7 +1070,7 @@ function officeStatus(hours: OfficeHour[], now: Date, timezone: string) {
     currentMinutes < toMinutes(today.close_time),
   );
 
-  if (isOpen) return { isOpen: true, currentDay: londonDay, nextDay: null as number | null, countdown: "", localOpening: "" };
+  if (isOpen) return { isOpen: true, currentDay: londonDay, nextDay: null as number | null, nextDayUK: null as number | null, countdown: "", localOpening: "", ukOpening: "" };
 
   for (let offset = 0; offset <= 7; offset += 1) {
     const candidate = hours.find((hour) => hour.day_of_week === (londonDay + offset) % 7);
@@ -1112,7 +1112,7 @@ function officeStatus(hours: OfficeHour[], now: Date, timezone: string) {
     return { isOpen: false, currentDay: londonDay, nextDay: localOpeningDay, nextDayUK: candidate.day_of_week, countdown, localOpening, ukOpening };
   }
 
-  return { isOpen: false, currentDay: londonDay, nextDay: null as number | null, countdown: "", localOpening: "" };
+  return { isOpen: false, currentDay: londonDay, nextDay: null as number | null, nextDayUK: null as number | null, countdown: "", localOpening: "", ukOpening: "" };
 }
 
 function OfficeHoursPanel() {
