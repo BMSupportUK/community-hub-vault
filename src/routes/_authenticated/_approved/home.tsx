@@ -5,6 +5,7 @@ import { Hash, Menu } from "lucide-react";
 import { ChannelColumn, type ChannelGroup } from "@/components/app/ChannelColumn";
 import { ServiceStatusBox } from "@/components/app/ServiceStatusBox";
 import { WorkingStatusBox } from "@/components/app/WorkingStatusBox";
+import { AdSenseSlot } from "@/components/app/AdSenseSlot";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
