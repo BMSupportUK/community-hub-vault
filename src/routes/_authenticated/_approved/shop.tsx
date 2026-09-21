@@ -257,6 +257,10 @@ function ShopPage() {
   // Product & discount management is restricted to admin only (not management).
   const isAdminOnly = hasRole("admin");
   const adminUnlocked = isAdmin && isAdminUnlocked(user?.id);
+  const [discountUnlocked, setDiscountUnlocked] = useState(false);
+  useEffect(() => {
+    setDiscountUnlocked(isAdminOnly && isDiscountUnlocked(user?.id));
+  }, [isAdminOnly, user?.id, view]);
   const isAdminView =
     (view === "admin" && isAdminOnly) ||
     ((view as string) === "discounts" && isAdminOnly) ||
