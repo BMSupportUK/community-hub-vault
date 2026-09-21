@@ -62,6 +62,20 @@ const ROLE_TABS = [
 
 type RoleKey = (typeof ROLE_TABS)[number]["key"];
 
+/** Monday-first weekday tabs; value is the JS getDay() index. */
+const DAY_TABS = [
+  { key: "all" as const, label: "All days" },
+  { key: 1, label: "Monday" },
+  { key: 2, label: "Tuesday" },
+  { key: 3, label: "Wednesday" },
+  { key: 4, label: "Thursday" },
+  { key: 5, label: "Friday" },
+  { key: 6, label: "Saturday" },
+  { key: 0, label: "Sunday" },
+];
+
+type DayKey = "all" | number;
+
 const ROLE_ORDER: Exclude<RoleKey, "all">[] = ["admin", "management", "staff", "moderator"];
 
 const ROLE_LABEL: Record<string, string> = {
@@ -145,6 +159,7 @@ function StaffShiftsPage() {
   const [people, setPeople] = useState<Record<string, PersonRow>>({});
   const [rolesByUser, setRolesByUser] = useState<Record<string, string[]>>({});
   const [role, setRole] = useState<RoleKey>("all");
+  const [weekday, setWeekday] = useState<DayKey>("all");
 
   const load = useCallback(async (d: number) => {
     setLoading(true);
