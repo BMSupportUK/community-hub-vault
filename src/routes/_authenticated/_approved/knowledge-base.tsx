@@ -21,6 +21,16 @@ import { toast } from "sonner";
 import kbHero from "@/assets/knowledge-base-hero.jpg";
 
 export const Route = createFileRoute("/_authenticated/_approved/knowledge-base")({
+  head: () => ({
+    meta: [
+      { title: "Knowledge Base — BM Support" },
+      { name: "description", content: "BM Support guides, answers and help articles." },
+      { property: "og:title", content: "Knowledge Base — BM Support" },
+      { property: "og:description", content: "BM Support guides, answers and help articles." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   component: KnowledgeBasePage,
 });
 
@@ -387,7 +397,7 @@ function KnowledgeBasePage() {
     const stats = ratingStats[reading.id];
     const mine = myRatingFor(reading.id);
     return (
-      <main className="flex-1 overflow-y-auto bg-background">
+      <main className="min-h-0 flex-1 overflow-y-auto bg-background">
         <div className="max-w-3xl mx-auto px-6 py-8">
           <button onClick={() => { setReading(null); scrollBackToArticle(); }} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-6">
             <ArrowLeft className="size-4" /> Back to knowledge base
@@ -443,17 +453,17 @@ function KnowledgeBasePage() {
   }
 
   return (
-    <main className="flex-1 overflow-y-auto bg-background">
-      <header className="relative px-8 pt-8 pb-6 border-b border-border bg-surface-2/40 backdrop-blur">
+    <main className="min-h-0 flex-1 overflow-y-auto bg-background">
+      <header className="relative px-4 py-5 sm:px-8 lg:py-4 border-b border-border bg-surface-2/40 backdrop-blur">
         <h1 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 bg-clip-text text-transparent leading-[1.2] pb-1">
           Knowledge Base
         </h1>
         <p className="text-muted-foreground mt-1">Guides, answers and how-tos — all in one place.</p>
       </header>
 
-      <div className="px-8 py-6">
+      <div className="px-4 py-5 sm:px-8 lg:py-4">
         <Tabs value={tab} onValueChange={setTab} className="w-full">
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-6 lg:mb-4">
             <TabsList className={`grid ${isMod ? "grid-cols-3" : "grid-cols-2"} max-w-2xl bg-surface-2/60 border border-border`}>
               <TabsTrigger value="welcome">Welcome</TabsTrigger>
               <TabsTrigger value="guides">Guides</TabsTrigger>
@@ -469,7 +479,7 @@ function KnowledgeBasePage() {
           {/* WELCOME */}
           <TabsContent value="welcome" className="mt-0">
             <div
-              className="relative overflow-hidden rounded-2xl border border-border p-10 shadow-lg grid md:grid-cols-[1fr_auto] gap-8 items-center"
+              className="relative overflow-hidden rounded-2xl border border-border p-6 sm:p-8 lg:p-6 shadow-lg grid md:grid-cols-[1fr_auto] gap-6 lg:gap-8 items-center"
               style={{ background: "var(--gradient-primary)" }}
             >
               <div className="relative z-10">
@@ -491,21 +501,21 @@ function KnowledgeBasePage() {
                 alt="Knowledge base illustration"
                 width={420}
                 height={420}
-                className="relative z-10 w-56 md:w-80 h-auto rounded-2xl shadow-xl ring-1 ring-white/20 justify-self-end"
+                className="relative z-10 w-56 md:w-72 lg:w-60 h-auto rounded-2xl shadow-xl ring-1 ring-white/20 justify-self-end"
               />
             </div>
 
             {!loading && categories.length > 0 && (
-              <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="mt-6 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {categories.map((c) => {
                   const list = articles.filter((a) => a.category_id === c.id && (isMod || a.published));
                   return (
                     <button
                       key={c.id}
                       onClick={() => { setActiveCat(c.id); setTab("guides"); }}
-                      className="text-left rounded-2xl border border-border bg-surface-2/40 hover:bg-surface-2/70 hover:border-primary/50 hover:shadow-glow p-5 transition-all"
+                      className="text-left rounded-2xl border border-border bg-surface-2/40 hover:bg-surface-2/70 hover:border-primary/50 hover:shadow-glow p-5 lg:p-4 transition-all"
                     >
-                      <div className="size-11 rounded-xl grid place-items-center mb-4" style={{ background: "var(--gradient-primary)" }}>
+                      <div className="size-11 rounded-xl grid place-items-center mb-4 lg:mb-2" style={{ background: "var(--gradient-primary)" }}>
                         <BookOpen className="size-5 text-primary-foreground" />
                       </div>
                       <h3 className="font-display font-bold text-lg mb-1">{c.name}</h3>
