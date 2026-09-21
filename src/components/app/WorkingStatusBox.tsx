@@ -45,7 +45,8 @@ export function WorkingStatusBox({
   const [now, setNow] = useState(() => Date.now());
   const [busy, setBusy] = useState(false);
   const [nextSlot, setNextSlot] = useState<NextSlot | null>(null);
-  const [hasSlotToday, setHasSlotToday] = useState(true);
+  // Today's rota window: earliest slot start and latest slot end (HH:MM:SS).
+  const [todayWindow, setTodayWindow] = useState<{ start: string; end: string } | null>(null);
 
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
