@@ -3442,6 +3442,7 @@ function OrderDetailImpl({
   const textRef = useRef("");
   const [credsOpen, setCredsOpen] = useState(false);
   const [linkedTicketId, setLinkedTicketId] = useState<string | null>(null);
+  const [customerHandle, setCustomerHandle] = useState<string | null>(null);
   const [checkPhase, setCheckPhase] = useState<PayCheckPhase | null>(null);
 
   // Look up the support ticket that was opened for this order so we can
@@ -3472,6 +3473,24 @@ function OrderDetailImpl({
     setOrder(o as Order | null);
     setItems(it ?? []);
     setMsgs(m ?? []);
+    // Who placed the order — shown next to the total. Registered customers
+    // get their profile handle; guests fall back to their shipping name/email.
+    const ord = o as Order | null;
+    if (ord?.user_id) {
+      const { data: p } = await supabase
+        .from("profiles")
+        .select("username,display_name")
+        .eq("id", ord.user_id)
+        .maybeSingle();
+      const prof = p as { username: string | null; display_name: string | null } | null;
+      setCustomerHandle(
+        prof?.username
+          ? `@${prof.username}`
+          : (prof?.display_name ?? ord.shipping_name ?? null),
+      );
+    } else {
+      setCustomerHandle(ord?.shipping_name ?? null);
+    }
   };
   useEffect(() => {
     load();
@@ -4151,9 +4170,16 @@ function OrderDetailImpl({
                   )}
                 </div>
               ))}
-              <div className="flex justify-between pt-2 border-t border-border font-display font-bold">
+              <div className="flex justify-between items-baseline pt-2 border-t border-border font-display font-bold">
                 <span>Total</span>
-                <span>{fmt(order.total_cents)}</span>
+                <span className="flex items-baseline gap-2">
+                  {customerHandle && (
+                    <span className="text-xs font-normal text-muted-foreground">
+                      Placed by {customerHandle}
+                    </span>
+                  )}
+                  <span>{fmt(order.total_cents)}</span>
+                </span>
               </div>
             </div>
           </div>
