@@ -338,7 +338,7 @@ function ShopPage() {
     ...(isAdmin && adminUnlocked
       ? [
           {
-            label: "Owner",
+            label: "Admin | Shop Orders",
             items: [
               ...(isAdminOnly
                 ? [
@@ -358,13 +358,6 @@ function ShopPage() {
                     },
                   ]
                 : []),
-              {
-                to: "/shop",
-                label: "Shop Owner",
-                icon: Receipt,
-                active: view === "orders" && scope === "all",
-                onClick: () => go({ view: "orders", scope: "all" }),
-              },
             ],
           } as ChannelGroup,
         ]
@@ -381,7 +374,7 @@ function ShopPage() {
               .filter((g) => g.label === "Owner")
               .map((g) => (
                 <div key={g.label} className="flex items-center gap-1 shrink-0">
-                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70 mr-1 hidden md:inline">
+                  <span className="text-[10px] font-semibold tracking-wider text-muted-foreground/70 mr-1 hidden md:inline whitespace-nowrap">
                     {g.label}
                   </span>
                   {g.items.map((it) => {
