@@ -1329,6 +1329,45 @@ function ShiftsPage() {
         </DialogContent>
       </Dialog>
 
+      {/* Claim confirmation */}
+      <Dialog open={!!confirmSlot} onOpenChange={(o) => { if (!o && !claiming) setConfirmSlot(null); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Book this shift?</DialogTitle></DialogHeader>
+          {confirmSlot && (
+            <div className="space-y-2 text-sm">
+              <div className="text-foreground font-semibold">{dayLabel(new Date(confirmSlot.shift_date))}</div>
+              <div className="font-mono text-primary">{fmtRange(confirmSlot.shift_date, confirmSlot.start_time, confirmSlot.end_time)}</div>
+              <div className="text-xs text-muted-foreground uppercase">
+                {confirmSlot.slot_type === "hourly" ? "Hourly" : "Full shift"}
+                {confirmSlot.required_role ? ` · ${roleLabel(confirmSlot.required_role)}` : ""}
+              </div>
+              {confirmSlot.notes && <div className="text-muted-foreground">{confirmSlot.notes}</div>}
+              <p className="text-muted-foreground pt-1">
+                This shift will be added to your rota. You can release it any time before it starts.
+              </p>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" disabled={claiming} onClick={() => setConfirmSlot(null)}>Cancel</Button>
+            <Button
+              disabled={claiming}
+              onClick={async () => {
+                if (!confirmSlot) return;
+                setClaiming(true);
+                try {
+                  await claim(confirmSlot);
+                  setConfirmSlot(null);
+                } finally {
+                  setClaiming(false);
+                }
+              }}
+            >
+              {claiming ? <><Loader2 className="size-4 mr-2 animate-spin" /> Booking…</> : "Confirm booking"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={!!swapFor} onOpenChange={(o) => { if (!o) setSwapFor(null); }}>
         <DialogContent>
           <DialogHeader><DialogTitle>Request shift swap</DialogTitle></DialogHeader>
