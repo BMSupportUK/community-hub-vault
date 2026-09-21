@@ -760,7 +760,7 @@ function ProfilePage() {
 
           {canSeeShifts && (
             <TabsContent value="shifts" className="mt-6">
-              <ShiftHistoryPanel userId={profile.id} name={isOwner ? "Your" : display} />
+              <ShiftHistoryPanel userId={profile.id} name={display} />
             </TabsContent>
           )}
 
