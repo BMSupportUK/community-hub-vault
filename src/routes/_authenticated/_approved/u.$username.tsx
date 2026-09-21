@@ -493,12 +493,18 @@ function ProfilePage() {
     );
   }
 
+  // Shift history is only meaningful for staff-side roles, and is visible to the
+  // staff member themselves plus the wider support team.
+  const isStaffProfile = sortedRoles.some((r) => ["admin", "management", "staff", "moderator"].includes(r));
+  const canSeeShifts = isStaffProfile && (isOwner || hasAny(["admin", "management", "staff", "moderator"]));
+
   const tabDefs = [
     { id: "profile", label: "Profile" },
     ...(canSeeCreds ? [{ id: "creds", label: "Credentials" }] : []),
     { id: "tickets", label: `Tickets (${tickets.length})` },
     { id: "orders", label: `Orders (${orders.length})` },
     { id: "friends", label: `Friends (${friends.length})` },
+    ...(canSeeShifts ? [{ id: "shifts", label: "Shift history" }] : []),
     ...(canSeeReferrals ? [{ id: "referrals", label: `Referrals (${referrals.length})` }] : []),
     ...(isOwner ? [{ id: "notifications", label: "Notifications" }] : []),
     ...(isOwner ? [{ id: "theme", label: "Theme" }] : []),
