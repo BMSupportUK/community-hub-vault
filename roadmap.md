@@ -27,4 +27,4 @@
 - [x] Add UK office and user-local opening times beneath the resolved-ticket message
 
 ## Store orders
-- [ ] Remove Orders from profiles and group Store order history by Jan–Dec
+- [x] Remove Orders from profiles and group Store order history by Jan–Dec
