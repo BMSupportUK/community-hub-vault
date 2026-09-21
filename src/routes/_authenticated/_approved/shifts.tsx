@@ -55,6 +55,17 @@ interface Swap {
   created_at: string;
 }
 interface Profile { id: string; username: string | null; display_name: string | null; }
+/** One entry in a staff member's shift booking history. */
+interface Booking {
+  id: string;
+  action: string;
+  shift_date: string;
+  start_time: string;
+  end_time: string;
+  slot_type: string | null;
+  required_role: string | null;
+  created_at: string;
+}
 
 /** Roles a rota slot can be reserved for. */
 type ShiftRole = "admin" | "management" | "staff" | "moderator";
@@ -203,6 +214,11 @@ function ShiftsPage() {
   // Holiday request state
   const [holForm, setHolForm] = useState({ start: "", end: "", reason: "" });
 
+  // Claim confirmation + booking history
+  const [confirmSlot, setConfirmSlot] = useState<Slot | null>(null);
+  const [claiming, setClaiming] = useState(false);
+  const [bookings, setBookings] = useState<Booking[]>([]);
+
   // Swap dialog
   const [swapFor, setSwapFor] = useState<Slot | null>(null);
   const [swapMsg, setSwapMsg] = useState("");
@@ -234,6 +250,20 @@ function ShiftsPage() {
     }
     setLoading(false);
   };
+
+  /** My booking history, newest first. */
+  const loadBookings = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from("shift_bookings")
+      .select("id, action, shift_date, start_time, end_time, slot_type, required_role, created_at")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(100);
+    setBookings((data ?? []) as Booking[]);
+  };
+
+  useEffect(() => { loadBookings(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [user?.id]);
 
   useEffect(() => {
     load();
@@ -347,6 +377,22 @@ function ShiftsPage() {
     return p?.display_name || p?.username || "User";
   };
 
+  /** Record a claim/release in the booking history. */
+  const logBooking = async (s: Slot, action: "claimed" | "released") => {
+    if (!user) return;
+    await supabase.from("shift_bookings").insert({
+      slot_id: s.id,
+      user_id: user.id,
+      action,
+      shift_date: s.shift_date,
+      start_time: s.start_time,
+      end_time: s.end_time,
+      slot_type: s.slot_type,
+      required_role: s.required_role,
+    });
+    loadBookings();
+  };
+
   const claim = async (s: Slot) => {
     if (!user) return;
     if (s.required_role && !isAdmin && !roles.includes(s.required_role as AppRole)) {
@@ -362,20 +408,40 @@ function ShiftsPage() {
         return toast.error(`Your role covers ${myQuota} shift${myQuota === 1 ? "" : "s"} per day`);
       }
     }
-    const { error } = await supabase.from("shift_slots").update({ assigned_to: user.id }).eq("id", s.id).is("assigned_to", null);
+    const { data, error } = await supabase
+      .from("shift_slots")
+      .update({ assigned_to: user.id })
+      .eq("id", s.id)
+      .is("assigned_to", null)
+      .select("id");
     if (error) {
       if ((error as any).code === "23505") return toast.error("You're already on another shift at this time");
       return toast.error(error.message);
     }
-    toast.success("Shift claimed");
+    if (!data || data.length === 0) {
+      load();
+      return toast.error("Someone else booked that shift first");
+    }
+    toast.success(`Shift booked — ${dayLabel(new Date(s.shift_date))}, ${fmtRange(s.shift_date, s.start_time, s.end_time)}`);
+    await logBooking(s, "claimed");
     load();
   };
 
   const release = async (s: Slot) => {
     if (!user) return;
-    const { error } = await supabase.from("shift_slots").update({ assigned_to: null }).eq("id", s.id).eq("assigned_to", user.id);
+    const { data, error } = await supabase
+      .from("shift_slots")
+      .update({ assigned_to: null })
+      .eq("id", s.id)
+      .eq("assigned_to", user.id)
+      .select("id");
     if (error) return toast.error(error.message);
+    if (!data || data.length === 0) {
+      load();
+      return toast.error("That shift is no longer yours to release");
+    }
     toast.success("Shift released");
+    await logBooking(s, "released");
     load();
   };
 
@@ -627,6 +693,7 @@ function ShiftsPage() {
               { v: "rota", label: "Rota", Icon: Users },
               { v: "claimed", label: "Claimed Shifts", Icon: Users },
               { v: "mine", label: "My Shifts", Icon: Clock },
+              { v: "history", label: "Booking History", Icon: Clock },
               { v: "holidays", label: "Holidays", Icon: Plane },
               ...(isAdmin ? [{ v: "requests", label: "Requests", Icon: ShieldCheck }, { v: "manage", label: "Manage Rota", Icon: Plus }] : []),
             ].map(({ v, label, Icon }) => (
@@ -771,7 +838,7 @@ function ShiftsPage() {
                                     <div className="flex items-center gap-1">
                                       {!taken && canPick && shiftNotStarted && (
                                         ((s.slot_type === "hourly" && (isMod || isAdmin)) || (s.slot_type === "shift" && isStaffOrAdmin)) && (
-                                          <button onClick={() => claim(s)} className="px-2 py-0.5 rounded bg-gradient-primary text-white font-semibold">Claim</button>
+                                          <button onClick={() => setConfirmSlot(s)} className="px-2 py-0.5 rounded bg-gradient-primary text-white font-semibold">Claim</button>
                                         )
                                       )}
                                       {mine && (
@@ -939,6 +1006,45 @@ function ShiftsPage() {
           </TabsContent>
 
           {/* HOLIDAYS */}
+          {/* BOOKING HISTORY */}
+          <TabsContent value="history" className="mt-6">
+            {bookings.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-border p-12 text-center text-muted-foreground bg-surface/40">
+                You haven't booked or released any shifts yet.
+              </div>
+            ) : (
+              <div className="rounded-2xl bg-surface border border-border overflow-hidden">
+                <div className="px-5 py-3 border-b border-border text-sm text-muted-foreground">
+                  Every shift you've booked or released, newest first.
+                </div>
+                <ul className="divide-y divide-border">
+                  {bookings.map((b) => (
+                    <li key={b.id} className="px-5 py-3 flex flex-wrap items-center gap-3">
+                      <span className={cn(
+                        "text-[10px] px-2 py-0.5 rounded-full border font-semibold uppercase tracking-wide",
+                        b.action === "claimed"
+                          ? "bg-emerald-500/20 border-emerald-400/40 text-emerald-100"
+                          : "bg-rose-500/20 border-rose-400/40 text-rose-100",
+                      )}>
+                        {b.action === "claimed" ? "Booked" : "Released"}
+                      </span>
+                      <span className="text-foreground font-semibold">{dayLabel(new Date(b.shift_date))}</span>
+                      <span className="font-mono text-primary">{fmtRange(b.shift_date, b.start_time, b.end_time)}</span>
+                      {b.required_role && (
+                        <span className={cn("text-[10px] px-2 py-0.5 rounded-full border font-semibold uppercase tracking-wide", roleBadgeClass(b.required_role as ShiftRole))}>
+                          {roleLabel(b.required_role as ShiftRole)}
+                        </span>
+                      )}
+                      <span className="ml-auto text-xs text-muted-foreground">
+                        {format(new Date(b.created_at), "d MMM yyyy HH:mm")}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </TabsContent>
+
           <TabsContent value="holidays" className="mt-6 space-y-6">
             <div className="rounded-2xl bg-surface border border-border p-5">
               <h3 className="font-display text-lg font-semibold text-foreground mb-3">Request holiday</h3>
@@ -1218,6 +1324,45 @@ function ShiftsPage() {
             <Button variant="outline" className="bg-surface border-border text-foreground" onClick={() => setModHoursDay(null)}>Cancel</Button>
             <Button className="bg-gradient-primary text-white border-0" disabled={savingModHours} onClick={saveModHours}>
               {savingModHours ? <Loader2 className="size-4 mr-2 animate-spin" /> : null}Add to rota
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Claim confirmation */}
+      <Dialog open={!!confirmSlot} onOpenChange={(o) => { if (!o && !claiming) setConfirmSlot(null); }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Book this shift?</DialogTitle></DialogHeader>
+          {confirmSlot && (
+            <div className="space-y-2 text-sm">
+              <div className="text-foreground font-semibold">{dayLabel(new Date(confirmSlot.shift_date))}</div>
+              <div className="font-mono text-primary">{fmtRange(confirmSlot.shift_date, confirmSlot.start_time, confirmSlot.end_time)}</div>
+              <div className="text-xs text-muted-foreground uppercase">
+                {confirmSlot.slot_type === "hourly" ? "Hourly" : "Full shift"}
+                {confirmSlot.required_role ? ` · ${roleLabel(confirmSlot.required_role)}` : ""}
+              </div>
+              {confirmSlot.notes && <div className="text-muted-foreground">{confirmSlot.notes}</div>}
+              <p className="text-muted-foreground pt-1">
+                This shift will be added to your rota. You can release it any time before it starts.
+              </p>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" disabled={claiming} onClick={() => setConfirmSlot(null)}>Cancel</Button>
+            <Button
+              disabled={claiming}
+              onClick={async () => {
+                if (!confirmSlot) return;
+                setClaiming(true);
+                try {
+                  await claim(confirmSlot);
+                  setConfirmSlot(null);
+                } finally {
+                  setClaiming(false);
+                }
+              }}
+            >
+              {claiming ? <><Loader2 className="size-4 mr-2 animate-spin" /> Booking…</> : "Confirm booking"}
             </Button>
           </DialogFooter>
         </DialogContent>
