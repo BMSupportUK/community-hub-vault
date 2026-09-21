@@ -1147,17 +1147,20 @@ function ShiftsPage() {
                   <ul className="divide-y divide-border">
                     {holidays.map((h) => (
                       <li key={h.id} className="px-5 py-3 flex items-center gap-3">
-                        <div className="flex-1">
-                          <div className="text-foreground"><strong>{profName(h.user_id)}</strong> · {h.start_date} → {h.end_date}</div>
-                          {h.reason && <div className="text-xs text-muted-foreground">{h.reason}</div>}
-                        </div>
-                        <StatusPill status={h.status} />
-                        {h.status === "pending" && (
-                          <div className="flex gap-1">
-                            <Button size="sm" className="bg-emerald-500/30 text-emerald-100 hover:bg-emerald-500/50 border-0" onClick={() => reviewHoliday(h.id, "approved")}><Check className="size-3.5" /></Button>
-                            <Button size="sm" className="bg-rose-500/30 text-rose-100 hover:bg-rose-500/50 border-0" onClick={() => reviewHoliday(h.id, "denied")}><X className="size-3.5" /></Button>
-                          </div>
-                        )}
+                         <div className="flex-1">
+                           <div className="text-foreground"><strong>{profName(h.user_id)}</strong> · {h.start_date} → {h.end_date}</div>
+                           {h.reason && <div className="text-xs text-muted-foreground">{h.reason}</div>}
+                           {h.status === "denied" && h.decision_reason && (
+                             <div className="text-xs text-rose-200 mt-1">Rejected: {h.decision_reason}</div>
+                           )}
+                         </div>
+                         <StatusPill status={h.status} />
+                         {h.status === "pending" && (
+                           <div className="flex gap-1">
+                             <Button size="sm" className="bg-emerald-500/30 text-emerald-100 hover:bg-emerald-500/50 border-0" onClick={() => reviewHoliday(h.id, "approved")}><Check className="size-3.5" /></Button>
+                             <Button size="sm" className="bg-rose-500/30 text-rose-100 hover:bg-rose-500/50 border-0" onClick={() => { setRejectHol(h); setRejectReason(""); }}><X className="size-3.5" /></Button>
+                           </div>
+                         )}
                       </li>
                     ))}
                   </ul>
