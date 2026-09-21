@@ -338,7 +338,7 @@ function ShopPage() {
     ...(isAdmin && adminUnlocked
       ? [
           {
-            label: "Owner",
+            label: "Admin | Shop Orders",
             items: [
               ...(isAdminOnly
                 ? [
@@ -358,13 +358,6 @@ function ShopPage() {
                     },
                   ]
                 : []),
-              {
-                to: "/shop",
-                label: "Shop Owner",
-                icon: Receipt,
-                active: view === "orders" && scope === "all",
-                onClick: () => go({ view: "orders", scope: "all" }),
-              },
             ],
           } as ChannelGroup,
         ]
