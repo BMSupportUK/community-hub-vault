@@ -217,12 +217,12 @@ function AuthLayout() {
             {isAdmin && (
               <button
                 type="button"
-                title="Sales chats"
+                title="BM Support | Shop Orders"
                 className="flex items-center gap-2 rounded-full px-3 py-1.5 bg-surface-2 hover:bg-primary hover:text-primary-foreground text-xs font-medium transition-colors"
                 onClick={openSalesChats}
               >
                 <Receipt className="size-4" />
-                <span className="hidden xl:inline">Shop Owner</span>
+                <span className="hidden xl:inline">BM Support | Shop Orders</span>
                 <DeferUntilIdle><PendingOrdersBadge /></DeferUntilIdle>
               </button>
             )}
