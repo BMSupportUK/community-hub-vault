@@ -19,7 +19,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { isAdminUnlocked } from "@/lib/admin-unlock";
+import { isRolesUnlocked } from "@/lib/roles-unlock";
+import { RolesGate } from "@/components/app/RolesGate";
 import { deleteMember, listMemberEmails } from "@/lib/admin-users.functions";
 import {
   getUserLocationHistory,
