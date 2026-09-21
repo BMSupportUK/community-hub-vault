@@ -1046,26 +1046,109 @@ function formatOfficeTime(time: string) {
   return new Intl.DateTimeFormat("en-GB", { hour: "numeric", minute: "2-digit", hour12: true }).format(new Date(2000, 0, 1, hours, minutes));
 }
 
+function officeStatus(hours: OfficeHour[], now: Date, timezone: string) {
+  const londonDayName = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", weekday: "short" }).format(now);
+  const londonDay = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(londonDayName);
+  const londonParts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/London",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hourCycle: "h23",
+  }).formatToParts(now);
+  const value = (type: string) => Number(londonParts.find((part) => part.type === type)?.value ?? 0);
+  const currentMinutes = value("hour") * 60 + value("minute") + value("second") / 60;
+  const today = hours.find((hour) => hour.day_of_week === londonDay);
+  const toMinutes = (time: string) => {
+    const [hour = 0, minute = 0] = time.split(":").map(Number);
+    return hour * 60 + minute;
+  };
+  const isOpen = Boolean(
+    today &&
+    !today.is_closed &&
+    currentMinutes >= toMinutes(today.open_time) &&
+    currentMinutes < toMinutes(today.close_time),
+  );
+
+  if (isOpen) return { isOpen: true, countdown: "", localOpening: "" };
+
+  for (let offset = 0; offset <= 7; offset += 1) {
+    const candidate = hours.find((hour) => hour.day_of_week === (londonDay + offset) % 7);
+    if (!candidate || candidate.is_closed) continue;
+    if (offset === 0 && toMinutes(candidate.open_time) <= currentMinutes) continue;
+    const nextOpening = londonTimeToDate(candidate.day_of_week, candidate.open_time);
+    const totalSeconds = Math.max(0, Math.floor((nextOpening.getTime() - now.getTime()) / 1000));
+    const days = Math.floor(totalSeconds / 86_400);
+    const remainingHours = Math.floor((totalSeconds % 86_400) / 3_600);
+    const minutes = Math.floor((totalSeconds % 3_600) / 60);
+    const seconds = totalSeconds % 60;
+    const countdown = days > 0
+      ? `${days}d ${remainingHours}h`
+      : remainingHours > 0
+        ? `${remainingHours}h ${minutes}m`
+        : `${minutes}m ${seconds.toString().padStart(2, "0")}s`;
+    const localOpening = new Intl.DateTimeFormat("en-GB", {
+      timeZone: timezone,
+      weekday: "short",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+      timeZoneName: "short",
+    }).format(nextOpening);
+    return { isOpen: false, countdown, localOpening };
+  }
+
+  return { isOpen: false, countdown: "", localOpening: "" };
+}
+
 function OfficeHoursPanel() {
   const timezone = useUserTimezone();
   const [hours, setHours] = useState<OfficeHour[]>([]);
+  const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
-    supabase
-      .from("business_hours")
-      .select("day_of_week, open_time, close_time, is_closed")
-      .order("day_of_week")
-      .then(({ data }) => setHours((data ?? []) as OfficeHour[]));
+    const loadHours = () => {
+      void supabase
+        .from("business_hours")
+        .select("day_of_week, open_time, close_time, is_closed")
+        .order("day_of_week")
+        .then(({ data }) => setHours((data ?? []) as OfficeHour[]));
+    };
+    loadHours();
+    const timer = window.setInterval(() => setNow(new Date()), 1000);
+    const channel = supabase
+      .channel("ticket-office-hours-live")
+      .on("postgres_changes", { event: "*", schema: "public", table: "business_hours" }, loadHours)
+      .subscribe();
+    return () => {
+      window.clearInterval(timer);
+      void supabase.removeChannel(channel);
+    };
   }, []);
 
   if (hours.length === 0) return null;
   const timezoneLabel = timezone.replaceAll("_", " ").replace("/", " / ");
+  const status = officeStatus(hours, now, timezone);
 
   return (
     <section className="mt-6 overflow-hidden rounded-lg border border-border/70 bg-background/30">
-      <div className="flex items-center gap-2 border-b border-border/70 px-4 py-3">
-        <Store className="size-4 text-primary" />
-        <h3 className="font-display text-sm font-semibold">Office opening times</h3>
+      <div className="flex flex-wrap items-center gap-2 border-b border-border/70 px-4 py-3">
+        <Store className="size-4 shrink-0 text-primary" />
+        <h3 className="mr-auto font-display text-sm font-semibold">Office opening times</h3>
+        <span className={cn(
+          "inline-flex items-center gap-1.5 rounded-full px-2 py-1 text-[11px] font-bold ring-1",
+          status.isOpen
+            ? "bg-success/15 text-success ring-success/35"
+            : "bg-destructive/15 text-destructive ring-destructive/35",
+        )}>
+          {status.isOpen ? "Open" : "Closed"}
+          {!status.isOpen && status.countdown && <span className="font-semibold">· opens in {status.countdown}</span>}
+        </span>
+        {!status.isOpen && status.localOpening && (
+          <span className="w-full text-right text-[11px] text-muted-foreground sm:w-auto">
+            Your local opening: {status.localOpening}
+          </span>
+        )}
       </div>
       <div className="grid grid-cols-[minmax(5.5rem,0.8fr)_minmax(0,1fr)_minmax(0,1fr)] text-xs sm:text-sm">
         <div className="border-b border-border/70 px-3 py-2 font-semibold text-muted-foreground">Day</div>
