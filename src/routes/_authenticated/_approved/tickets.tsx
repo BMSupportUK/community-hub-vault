@@ -1164,6 +1164,11 @@ function OfficeHoursPanel() {
               <div className="border-b border-l border-border/50 px-3 py-2 text-muted-foreground">
                 <div className="flex flex-wrap items-center gap-1.5">
                   <span>{hour.is_closed || !localOpen || !localClose ? "Closed" : `${localFormat.format(localOpen)}–${localFormat.format(localClose)}`}</span>
+                  {!status.isOpen && status.currentDay === hour.day_of_week && (
+                    <span className="inline-flex rounded-full bg-destructive/15 px-1.5 py-0.5 text-[10px] font-bold text-destructive ring-1 ring-destructive/35">
+                      Closed
+                    </span>
+                  )}
                   {!status.isOpen && status.nextDay === hour.day_of_week && status.countdown && (
                     <span className="font-semibold text-primary">
                       Reopens {status.localOpening} · in {status.countdown}
