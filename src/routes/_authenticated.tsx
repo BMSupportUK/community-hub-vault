@@ -257,6 +257,7 @@ function AuthLayout() {
             <DeferUntilIdle>
               <VpnPill />
             </DeferUntilIdle>
+        </header>}
         <div
           className={
             locksToViewport
