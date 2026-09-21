@@ -52,6 +52,25 @@ interface PersonRow {
   username: string | null;
 }
 
+const ROLE_TABS = [
+  { key: "all", label: "All roles" },
+  { key: "admin", label: "Owner" },
+  { key: "management", label: "Management" },
+  { key: "staff", label: "Staff" },
+  { key: "moderator", label: "Moderator" },
+] as const;
+
+type RoleKey = (typeof ROLE_TABS)[number]["key"];
+
+const ROLE_ORDER: Exclude<RoleKey, "all">[] = ["admin", "management", "staff", "moderator"];
+
+const ROLE_LABEL: Record<string, string> = {
+  admin: "Owner",
+  management: "Management",
+  staff: "Staff",
+  moderator: "Moderator",
+};
+
 function dayKey(iso: string) {
   const d = new Date(iso);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -124,6 +143,8 @@ function StaffShiftsPage() {
   const [shifts, setShifts] = useState<ShiftRow[]>([]);
   const [breaksByShift, setBreaksByShift] = useState<Record<string, BreakRow[]>>({});
   const [people, setPeople] = useState<Record<string, PersonRow>>({});
+  const [rolesByUser, setRolesByUser] = useState<Record<string, string[]>>({});
+  const [role, setRole] = useState<RoleKey>("all");
 
   const load = useCallback(async (d: number) => {
     setLoading(true);
@@ -156,8 +177,13 @@ function StaffShiftsPage() {
       const pmap: Record<string, PersonRow> = {};
       for (const p of (pd ?? []) as PersonRow[]) pmap[p.id] = p;
       setPeople(pmap);
+      const { data: rd } = await supabase.from("user_roles").select("user_id, role").in("user_id", userIds);
+      const rmap: Record<string, string[]> = {};
+      for (const r of (rd ?? []) as { user_id: string; role: string }[]) (rmap[r.user_id] ??= []).push(r.role);
+      setRolesByUser(rmap);
     } else {
       setPeople({});
+      setRolesByUser({});
     }
     setLoading(false);
   }, []);
@@ -166,32 +192,60 @@ function StaffShiftsPage() {
     if (canView) void load(days);
   }, [canView, days, load]);
 
+  const primaryRole = useCallback(
+    (userId: string) => {
+      const mine = rolesByUser[userId] ?? [];
+      return ROLE_ORDER.find((r) => mine.includes(r)) ?? "other";
+    },
+    [rolesByUser],
+  );
+
+  const roleCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const s of shifts) counts[primaryRole(s.user_id)] = (counts[primaryRole(s.user_id)] ?? 0) + 1;
+    return counts;
+  }, [shifts, primaryRole]);
+
+  const visible = useMemo(
+    () => (role === "all" ? shifts : shifts.filter((s) => primaryRole(s.user_id) === role)),
+    [shifts, role, primaryRole],
+  );
+
+  // day -> role -> shifts
   const grouped = useMemo(() => {
-    const map = new Map<string, ShiftRow[]>();
-    for (const s of shifts) {
+    const map = new Map<string, Map<string, ShiftRow[]>>();
+    for (const s of visible) {
       const k = dayKey(s.clock_in);
-      (map.get(k) ?? map.set(k, []).get(k)!).push(s);
+      const byRole = map.get(k) ?? map.set(k, new Map()).get(k)!;
+      const rk = primaryRole(s.user_id);
+      (byRole.get(rk) ?? byRole.set(rk, []).get(rk)!).push(s);
     }
-    return [...map.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1));
-  }, [shifts]);
+    return [...map.entries()]
+      .sort((a, b) => (a[0] < b[0] ? 1 : -1))
+      .map(([key, byRole]) => {
+        const order = [...ROLE_ORDER, "other"];
+        const sections = [...byRole.entries()].sort((a, b) => order.indexOf(a[0] as any) - order.indexOf(b[0] as any));
+        return [key, sections] as const;
+      });
+  }, [visible, primaryRole]);
 
   const totals = useMemo(() => {
     let worked = 0;
     let open = 0;
     let auto = 0;
-    for (const s of shifts) {
+    for (const s of visible) {
       worked += durationMs(s.clock_in, s.clock_out);
       if (!s.clock_out) open += 1;
       if (isAutoOut(s)) auto += 1;
     }
     return {
-      shifts: shifts.length,
-      staff: new Set(shifts.map((s) => s.user_id)).size,
+      shifts: visible.length,
+      staff: new Set(visible.map((s) => s.user_id)).size,
       worked,
       open,
       auto,
     };
-  }, [shifts]);
+  }, [visible]);
 
   if (!canView) return <Navigate to="/admin" />;
 
@@ -227,6 +281,34 @@ function StaffShiftsPage() {
         don&apos;t have to open each profile.
       </p>
 
+      <div className="flex flex-wrap gap-2 rounded-2xl border border-border bg-surface-1 p-2">
+        {ROLE_TABS.map((t) => {
+          const count = t.key === "all" ? shifts.length : (roleCounts[t.key] ?? 0);
+          const active = role === t.key;
+          return (
+            <button
+              key={t.key}
+              type="button"
+              onClick={() => setRole(t.key)}
+              className={cn(
+                "inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-sm font-medium transition-colors",
+                active ? "bg-gradient-primary text-white" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+              )}
+            >
+              {t.label}
+              <span
+                className={cn(
+                  "rounded-full px-1.5 text-[11px] tabular-nums",
+                  active ? "bg-white/20" : "bg-muted text-muted-foreground",
+                )}
+              >
+                {count}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
         <StatCard label="Shifts" value={totals.shifts.toLocaleString("en-GB")} />
         <StatCard label="Staff" value={totals.staff.toLocaleString("en-GB")} />
@@ -246,16 +328,29 @@ function StaffShiftsPage() {
         </div>
       ) : (
         <div className="space-y-6">
-          {grouped.map(([key, rows]) => (
-            <section key={key} className="space-y-3">
+          {grouped.map(([key, sections]) => {
+            const dayRows = sections.flatMap(([, r]) => r);
+            return (
+            <section key={key} className="space-y-4">
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="font-display font-bold">{fmtDayHeading(key)}</h2>
                 <span className="text-xs text-muted-foreground">
-                  {rows.length} shift{rows.length === 1 ? "" : "s"} ·{" "}
-                  {fmtMs(rows.reduce((a, s) => a + durationMs(s.clock_in, s.clock_out), 0))} worked
+                  {dayRows.length} shift{dayRows.length === 1 ? "" : "s"} ·{" "}
+                  {fmtMs(dayRows.reduce((a, s) => a + durationMs(s.clock_in, s.clock_out), 0))} worked
                 </span>
               </div>
-              <div className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-3">
+              {sections.map(([roleKey, rows]) => (
+                <div key={roleKey} className="space-y-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h3 className="text-sm font-semibold uppercase tracking-wide text-primary">
+                      {ROLE_LABEL[roleKey] ?? "Other"}
+                    </h3>
+                    <span className="text-xs text-muted-foreground">
+                      {rows.length} shift{rows.length === 1 ? "" : "s"} ·{" "}
+                      {fmtMs(rows.reduce((a, s) => a + durationMs(s.clock_in, s.clock_out), 0))} worked
+                    </span>
+                  </div>
+                  <div className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-3">
                 {rows.map((s) => {
                   const open = !s.clock_out;
                   const auto = isAutoOut(s);
@@ -346,10 +441,13 @@ function StaffShiftsPage() {
                       </p>
                     </div>
                   );
-                })}
-              </div>
+                 })}
+                  </div>
+                </div>
+              ))}
             </section>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>
