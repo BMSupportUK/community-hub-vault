@@ -10,3 +10,7 @@
 - [x] Appeal form on ban screen + inbox in moderation centre with email replies
 - [x] Log every appeal submission in the moderation log (who appealed, current status)
 - [x] After a ban is lifted, show a "Continue to the Fan Zone" button instead of auto-redirecting
+
+## Support tickets
+- [x] Keep the ticket list and conversation fitted within large screens
+- [x] Add the vertical Google advert beside open ticket conversations
