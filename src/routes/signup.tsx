@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate, redirect } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Field } from "./login";
@@ -41,6 +41,31 @@ function SignupPage() {
   const [vpnDialogOpen, setVpnDialogOpen] = useState(false);
   const [rechecking, setRechecking] = useState(false);
   const [serverBlock, setServerBlock] = useState<"vpn" | "unverified" | null>(null);
+  const [emailTaken, setEmailTaken] = useState(false);
+
+  // Live check: warn as soon as a registered email is entered, before submitting.
+  useEffect(() => {
+    const trimmed = email.trim();
+    if (!trimmed || !trimmed.includes("@") || !trimmed.includes(".")) {
+      setEmailTaken(false);
+      return;
+    }
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      try {
+        const { data: exists, error } = await supabase.rpc("email_is_account_holder", {
+          _email: trimmed,
+        });
+        if (!cancelled && !error) setEmailTaken(exists === true);
+      } catch {
+        if (!cancelled) setEmailTaken(false);
+      }
+    }, 500);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [email]);
 
   const bypass = isVpnBypassEmail(email);
   const checking = !bypass && (vpnStatus === "checking" || rechecking);
