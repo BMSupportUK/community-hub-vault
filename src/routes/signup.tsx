@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate, redirect } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Field } from "./login";
@@ -41,6 +41,31 @@ function SignupPage() {
   const [vpnDialogOpen, setVpnDialogOpen] = useState(false);
   const [rechecking, setRechecking] = useState(false);
   const [serverBlock, setServerBlock] = useState<"vpn" | "unverified" | null>(null);
+  const [emailTaken, setEmailTaken] = useState(false);
+
+  // Live check: warn as soon as a registered email is entered, before submitting.
+  useEffect(() => {
+    const trimmed = email.trim();
+    if (!trimmed || !trimmed.includes("@") || !trimmed.includes(".")) {
+      setEmailTaken(false);
+      return;
+    }
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      try {
+        const { data: exists, error } = await supabase.rpc("email_is_account_holder", {
+          _email: trimmed,
+        });
+        if (!cancelled && !error) setEmailTaken(exists === true);
+      } catch {
+        if (!cancelled) setEmailTaken(false);
+      }
+    }, 500);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [email]);
 
   const bypass = isVpnBypassEmail(email);
   const checking = !bypass && (vpnStatus === "checking" || rechecking);
@@ -91,6 +116,10 @@ function SignupPage() {
       setBusy(false);
       setCaptchaToken("");
       return toast.error("Captcha verification failed. Please try again.");
+    }
+    if (emailTaken) {
+      setBusy(false);
+      return toast.error("That email address is already signed up — please sign in instead.");
     }
     // Block emails that already have an account — signUp itself won't tell us.
     try {
@@ -226,6 +255,14 @@ function SignupPage() {
             <form onSubmit={submit} className="space-y-3">
               <Field label="Display name" value={displayName} onChange={setDisplayName} />
               <Field label="Email" type="email" value={email} onChange={setEmail} />
+              {emailTaken && (
+                <p className="flex items-start gap-2 text-xs text-destructive -mt-1">
+                  <ShieldAlert className="size-3.5 mt-0.5 shrink-0" />
+                  That email address is already signed up — please{" "}
+                  <Link to="/login" className="underline hover:opacity-80">sign in</Link>{" "}
+                  instead.
+                </p>
+              )}
               <Field label="Password" type="password" value={password} onChange={setPassword} />
               {intent === "bm-support" && (
                 <>
