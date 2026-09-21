@@ -170,16 +170,16 @@ function SignupPage() {
         <div className="absolute -top-32 -left-24 size-[28rem] rounded-full bg-fuchsia-600/30 blur-3xl" />
         <div className="absolute -bottom-32 -right-24 size-[28rem] rounded-full bg-blue-600/30 blur-3xl" />
         <div className="absolute top-1/3 right-10 size-72 rounded-full bg-violet-500/20 blur-3xl" />
-        <div className="relative z-10 max-w-lg px-10 text-center">
+        <div className="relative z-10 flex max-h-full max-w-lg flex-col items-center justify-center px-10 py-6 text-center">
           <img
             src={signupIllustration}
             alt="Illustration of a person creating a new account on a computer"
             width={1024}
             height={1024}
             loading="lazy"
-            className="w-full h-auto drop-shadow-[0_25px_60px_rgba(217,70,239,0.45)]"
+            className="h-auto max-h-[45vh] w-auto max-w-full drop-shadow-[0_25px_60px_rgba(217,70,239,0.45)]"
           />
-          <h2 className="font-display text-2xl font-bold mt-6 text-foreground">
+          <h2 className="font-display text-2xl font-bold mt-4 text-foreground">
             Join the community
           </h2>
           <p className="text-sm text-muted-foreground mt-2">

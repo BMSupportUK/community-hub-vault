@@ -101,15 +101,15 @@ function LoginPage() {
         <div className="absolute -top-32 -left-24 size-[28rem] rounded-full bg-violet-600/30 blur-3xl" />
         <div className="absolute -bottom-32 -right-24 size-[28rem] rounded-full bg-blue-600/30 blur-3xl" />
         <div className="absolute top-1/3 right-10 size-72 rounded-full bg-fuchsia-500/20 blur-3xl" />
-        <div className="relative z-10 max-w-lg px-10 text-center">
+        <div className="relative z-10 flex max-h-full max-w-lg flex-col items-center justify-center px-10 py-6 text-center">
           <img
             src={loginIllustration}
             alt="Illustration of a person signing into their account on a laptop"
             width={1024}
             height={1024}
-            className="w-full h-auto drop-shadow-[0_25px_60px_rgba(139,92,246,0.45)]"
+            className="h-auto max-h-[45vh] w-auto max-w-full drop-shadow-[0_25px_60px_rgba(139,92,246,0.45)]"
           />
-          <h2 className="font-display text-2xl font-bold mt-6 text-foreground">
+          <h2 className="font-display text-2xl font-bold mt-4 text-foreground">
             Welcome back to the community
           </h2>
           <p className="text-sm text-muted-foreground mt-2">
