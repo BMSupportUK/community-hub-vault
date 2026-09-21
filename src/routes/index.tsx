@@ -6,6 +6,7 @@ import welcomeHero from "@/assets/welcome-hero.webp";
 import { MessageSquare, CalendarClock, LifeBuoy, Sparkles } from "lucide-react";
 import { BmSplash } from "@/components/app/BmSplash";
 import AdSenseSlot from "@/components/app/AdSenseSlot";
+import { useViewportLockable } from "@/hooks/use-viewport-lock";
 
 function pickIcon(title: string) {
   const t = title.toLowerCase();
@@ -73,6 +74,7 @@ interface HeroBox {
 }
 
 function Landing() {
+  const lockable = useViewportLockable();
   const [redirectingToLogin, setRedirectingToLogin] = useState(() => isAndroidAppShell());
   // Compute on the very first client render so a returning member never sees a
   // frame of the marketing page before the splash.
@@ -123,10 +125,10 @@ function Landing() {
 
 
   return (
-    <div className="min-h-screen md:h-screen md:overflow-hidden bg-background flex flex-col">
+    <div className={`bg-background flex flex-col ${lockable ? "fixed inset-0 overflow-hidden" : "min-h-dvh"}`}>
       <LandingHeader />
 
-      <main className="flex-1 min-h-0 md:overflow-hidden px-6 py-4 md:py-4 [@media(max-height:650px)]:py-2 flex flex-col gap-3">
+      <main className={`flex-1 min-h-0 ${lockable ? "overflow-hidden" : ""} px-6 py-4 md:py-4 [@media(max-height:650px)]:py-2 flex flex-col gap-3`}>
         <div className="relative w-full mx-auto flex-1 min-h-0 flex flex-col lg:grid lg:grid-cols-[minmax(0,1fr)_260px] xl:grid-cols-[minmax(0,1fr)_300px] lg:grid-rows-[minmax(0,1fr)] gap-3 lg:items-stretch lg:overflow-hidden">
           <div className="relative min-w-0 min-h-0 w-full flex flex-col overflow-hidden">
         <section

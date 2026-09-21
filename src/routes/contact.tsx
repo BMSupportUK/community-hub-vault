@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, Send, CheckCircle2 } from "lucide-react";
 import contactBg from "@/assets/contact-bg.jpg";
 import { AdSenseSlot } from "@/components/app/AdSenseSlot";
+import { useViewportLockable } from "@/hooks/use-viewport-lock";
 
 export const Route = createFileRoute("/contact")({
   component: ContactPage,
@@ -24,6 +25,7 @@ const ContactSchema = z.object({
 });
 
 function ContactPage() {
+  const lockable = useViewportLockable();
   const [form, setForm] = useState({ name: "", email: "", subject: "", message: "", website: "" });
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -75,11 +77,11 @@ function ContactPage() {
 
   return (
     <div
-      className="min-h-screen bg-background bg-cover bg-center bg-no-repeat relative"
+      className={`bg-background bg-cover bg-center bg-no-repeat ${lockable ? "fixed inset-0 overflow-hidden" : "relative min-h-dvh"}`}
       style={{ backgroundImage: `url(${contactBg})` }}
     >
       <div className="absolute inset-0 bg-background/45 backdrop-blur-[2px]" aria-hidden="true" />
-      <div className="relative z-10">
+      <div className={`relative z-10 ${lockable ? "flex h-full min-h-0 flex-col" : ""}`}>
       <header className="px-8 py-5 flex items-center justify-between border-b border-border/40 bg-background/30 backdrop-blur-md">
         <Link to="/" className="flex items-center gap-2">
           <div className="size-9 rounded-xl bg-gradient-to-br from-violet-600 to-blue-600 shadow-[0_0_30px_rgba(220,38,38,0.6)] grid place-items-center font-display font-bold text-[13px] text-white">BM</div>
@@ -90,7 +92,7 @@ function ContactPage() {
         </Link>
       </header>
 
-      <main className="px-6 py-12 md:py-16 flex items-start justify-center gap-6">
+      <main className={`px-6 py-12 md:py-16 flex items-start justify-center gap-6 ${lockable ? "min-h-0 flex-1 overflow-y-auto" : ""}`}>
         <div className="w-full max-w-2xl min-w-0">
         <div className="rounded-2xl border border-border/50 bg-card/80 backdrop-blur-xl p-6 md:p-10 shadow-2xl">
         <h1 className="font-display text-3xl md:text-4xl font-bold mb-3">Contact Us</h1>

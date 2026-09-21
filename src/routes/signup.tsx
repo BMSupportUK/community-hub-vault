@@ -12,6 +12,7 @@ import { assertSignupAllowed } from "@/lib/vpn-public-check.functions";
 import { VpnBlockedDialog } from "@/components/VpnBlockedDialog";
 import { ShieldAlert, Loader2, RefreshCw } from "lucide-react";
 import AdSenseSlot from "@/components/app/AdSenseSlot";
+import { useViewportLockable } from "@/hooks/use-viewport-lock";
 
 export const Route = createFileRoute("/signup")({
   validateSearch: (search: Record<string, unknown>): { invite?: string } => ({
@@ -25,6 +26,7 @@ export const Route = createFileRoute("/signup")({
 });
 
 function SignupPage() {
+  const lockable = useViewportLockable();
   const navigate = useNavigate();
   const { invite: inviteFromUrl } = Route.useSearch();
   const [email, setEmail] = useState("");
@@ -164,7 +166,14 @@ function SignupPage() {
   };
 
   return (
-    <div className="fixed inset-0 grid h-dvh w-dvw overflow-hidden bg-background lg:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_300px]">
+    <div
+      className={
+        (lockable
+          ? "fixed inset-0 grid h-dvh w-dvw overflow-hidden"
+          : "grid min-h-dvh w-full") +
+        " bg-background lg:grid-cols-2 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_300px]"
+      }
+    >
       {/* Illustration panel */}
       <aside className="relative hidden lg:flex items-center justify-center overflow-hidden bg-gradient-to-br from-fuchsia-700/40 via-violet-600/30 to-blue-700/40 border-r border-border">
         <div className="absolute -top-32 -left-24 size-[28rem] rounded-full bg-fuchsia-600/30 blur-3xl" />
@@ -189,7 +198,7 @@ function SignupPage() {
       </aside>
 
       {/* Form panel */}
-      <main className="flex min-h-0 flex-col items-start overflow-y-auto px-4 pt-10 pb-5">
+      <main className={`flex min-h-0 flex-col items-start px-4 pt-10 pb-5 ${lockable ? "overflow-y-auto" : ""}`}>
         {/* Form card starts level with the start of the advert block. */}
         <div className="mx-auto w-full min-w-0 max-w-md">
           <Link to="/" className="flex items-center gap-2 justify-center mb-1">
