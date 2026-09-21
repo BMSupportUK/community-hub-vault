@@ -19,3 +19,6 @@
 
 ## Talk channels
 - [x] Add the 300×250 Google advert (slot 8133272270) under the service status in the talk channel sidebar
+
+## Knowledge Base
+- [x] Fit the Welcome view within large screens and keep scrolling inside the page
