@@ -1,12 +1,12 @@
-# Help Desk opening hours
+# Move monthly orders into the Store
 
-## Build
-- Read the existing business opening hours used elsewhere on the site.
-- Add a storefront opening-hours block beneath the resolved-ticket message.
-- Show two columns: UK office times and the equivalent times in the signed-in user’s timezone.
-- Keep closed days clearly marked and preserve daylight-saving conversion.
-- Fit the block within the existing Help Desk screen on desktop and mobile.
+## Changes
+- Remove the Orders tab, order count, background, data loading, and order-only display code from user profiles.
+- Add Jan–Dec selectors inside **Store → My Orders**.
+- Show only the selected month’s orders while preserving the existing Processing, Completed, and Cancelled sections and order actions.
+- Default to the current month and display counts on months containing orders.
 
-## Verify
-- Check the Help Desk visually at desktop and small-screen sizes.
-- Confirm the page remains scrollable where needed and the project builds cleanly.
+## Verification
+- Confirm profiles no longer show an Orders tab.
+- Confirm Store → My Orders groups orders by purchase month and existing order links still work.
+- Check desktop and small-screen layouts and ensure the preview remains error-free.
