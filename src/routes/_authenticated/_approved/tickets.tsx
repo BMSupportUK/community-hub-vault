@@ -385,7 +385,37 @@ function TicketsPage() {
     })();
   }, [isStaff]);
 
-  const selected = useMemo(() => tickets.find((t) => t.id === search.id) ?? null, [tickets, search.id]);
+  // Deep-linked ticket that isn't in the current list (archived, or outside the active view)
+  const [extraTicket, setExtraTicket] = useState<Ticket | null>(null);
+  useEffect(() => {
+    if (!user || !search.id) { setExtraTicket(null); return; }
+    if (tickets.some((t) => t.id === search.id)) { setExtraTicket(null); return; }
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.from("tickets").select("*").eq("id", search.id!).maybeSingle();
+      if (cancelled) return;
+      if (!data) { setExtraTicket(null); return; }
+      const t = data as Ticket;
+      setExtraTicket(t);
+      const ids = [t.user_id, t.assigned_to].filter(Boolean) as string[];
+      if (ids.length) {
+        const { data: profs } = await supabase.from("profiles").select("id, display_name, username").in("id", ids);
+        if (cancelled) return;
+        setProfiles((prev) => {
+          const m = new Map(prev);
+          (profs ?? []).forEach((p) => m.set(p.id, p as never));
+          return m;
+        });
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, search.id, tickets]);
+
+  const selected = useMemo(
+    () => tickets.find((t) => t.id === search.id) ?? (extraTicket && extraTicket.id === search.id ? extraTicket : null),
+    [tickets, extraTicket, search.id],
+  );
   const detailPanelRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (search.id && selected) {
