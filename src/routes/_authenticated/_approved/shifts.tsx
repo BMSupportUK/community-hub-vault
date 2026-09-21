@@ -238,6 +238,8 @@ function ShiftsPage() {
   const [histTab, setHistTab] = useState<"booked" | "released" | "swaps">("booked");
   const [histWeek, setHistWeek] = useState<Date>(() => startOfWeek(new Date()));
   const [mySwaps, setMySwaps] = useState<MySwap[]>([]);
+  // Slots currently booked to me in the history week (catches bookings made before the log existed).
+  const [myBookedSlots, setMyBookedSlots] = useState<Slot[]>([]);
 
   // Swap dialog
   const [swapFor, setSwapFor] = useState<Slot | null>(null);
@@ -296,6 +298,21 @@ function ShiftsPage() {
   };
 
   useEffect(() => { loadBookings(); loadMySwaps(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [user?.id]);
+
+  // Load the slots already booked to me for the history week, so bookings made
+  // before the history log existed still show under Bookings.
+  useEffect(() => {
+    if (!user) return;
+    const end = new Date(histWeek); end.setDate(end.getDate() + 7);
+    supabase
+      .from("shift_slots")
+      .select("id, shift_date, start_time, end_time, slot_type, assigned_to, notes, required_role")
+      .eq("assigned_to", user.id)
+      .gte("shift_date", fmtDate(histWeek))
+      .lt("shift_date", fmtDate(end))
+      .then(({ data }) => setMyBookedSlots((data ?? []) as unknown as Slot[]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, histWeek.getTime()]);
 
   useEffect(() => {
     load();
@@ -1103,6 +1120,26 @@ function ShiftsPage() {
                     range: fmtRange(b.shift_date, b.start_time, b.end_time),
                     role: b.required_role,
                   }));
+                // Add slots currently booked to me that have no matching log entry
+                // (bookings made before the history log existed).
+                if (histTab === "booked") {
+                  const logged = new Set(bookings.filter((b) => b.action === "claimed").map((b) => `${b.shift_date}|${b.start_time}|${b.end_time}`));
+                  const released = new Set(bookings.filter((b) => b.action === "released").map((b) => `${b.shift_date}|${b.start_time}|${b.end_time}`));
+                  for (const s of myBookedSlots) {
+                    const k = `${s.shift_date}|${s.start_time}|${s.end_time}`;
+                    if (logged.has(k) || released.has(k)) continue;
+                    rows.push({
+                      key: `slot-${s.id}`,
+                      iso: s.shift_date,
+                      when: `${s.shift_date}T00:00:00`,
+                      badge: "Booked",
+                      badgeClass: "bg-emerald-500/20 border-emerald-400/40 text-emerald-100",
+                      range: fmtRange(s.shift_date, s.start_time, s.end_time),
+                      role: s.required_role,
+                      note: "Currently booked",
+                    });
+                  }
+                }
               }
 
               return (
