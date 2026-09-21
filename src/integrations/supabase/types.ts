@@ -3200,6 +3200,7 @@ export type Database = {
       holiday_requests: {
         Row: {
           created_at: string
+          decision_reason: string | null
           end_date: string
           id: string
           reason: string | null
@@ -3212,6 +3213,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          decision_reason?: string | null
           end_date: string
           id?: string
           reason?: string | null
@@ -3224,6 +3226,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          decision_reason?: string | null
           end_date?: string
           id?: string
           reason?: string | null

@@ -44,6 +44,7 @@ interface Holiday {
   reason: string | null;
   status: ReqStatus;
   created_at: string;
+  decision_reason?: string | null;
 }
 interface Swap {
   id: string;
@@ -213,6 +214,11 @@ function ShiftsPage() {
 
   // Holiday request state
   const [holForm, setHolForm] = useState({ start: "", end: "", reason: "" });
+  // Holidays sub-tab: booking form vs. request status list
+  const [holTab, setHolTab] = useState<"book" | "status">("book");
+  // Admin rejection: the request being rejected plus the reason typed for the staff member
+  const [rejectHol, setRejectHol] = useState<Holiday | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
 
   // Claim confirmation + booking history
   const [confirmSlot, setConfirmSlot] = useState<Slot | null>(null);
@@ -585,11 +591,28 @@ function ShiftsPage() {
     load();
   };
 
-  const reviewHoliday = async (id: string, status: ReqStatus) => {
-    const { error } = await supabase.from("holiday_requests").update({ status, reviewed_by: user?.id ?? null, reviewed_at: new Date().toISOString() }).eq("id", id);
+  const reviewHoliday = async (id: string, status: ReqStatus, decisionReason?: string | null) => {
+    const { error } = await supabase
+      .from("holiday_requests")
+      .update({
+        status,
+        decision_reason: status === "denied" ? (decisionReason || null) : null,
+        reviewed_by: user?.id ?? null,
+        reviewed_at: new Date().toISOString(),
+      })
+      .eq("id", id);
     if (error) return toast.error(error.message);
     toast.success(`Holiday ${status}`);
     load();
+  };
+
+  /** Reject with the reason typed by the admin — the staff member sees it on their request. */
+  const submitRejection = async () => {
+    if (!rejectHol) return;
+    if (!rejectReason.trim()) return toast.error("Enter a reason for rejecting");
+    await reviewHoliday(rejectHol.id, "denied", rejectReason.trim());
+    setRejectHol(null);
+    setRejectReason("");
   };
 
   const openSwap = async (s: Slot) => {
@@ -636,6 +659,8 @@ function ShiftsPage() {
 
   const myShifts = slots.filter((s) => s.assigned_to === user?.id);
   const pendingHolidays = holidays.filter((h) => h.status === "pending");
+  const myHolidays = holidays.filter((h) => h.user_id === user?.id);
+  const myPendingHolidays = myHolidays.filter((h) => h.status === "pending").length;
   const pendingSwaps = swaps.filter((s) => s.status === "pending");
 
   if (loading) {
@@ -1046,43 +1071,69 @@ function ShiftsPage() {
           </TabsContent>
 
           <TabsContent value="holidays" className="mt-6 space-y-6">
-            <div className="rounded-2xl bg-surface border border-border p-5">
-              <h3 className="font-display text-lg font-semibold text-foreground mb-3">Request holiday</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div>
-                  <Label className="text-muted-foreground">Start</Label>
-                  <Input type="date" value={holForm.start} onChange={(e) => setHolForm({ ...holForm, start: e.target.value })} className="bg-surface-2 border-border text-foreground" />
-                </div>
-                <div>
-                  <Label className="text-muted-foreground">End</Label>
-                  <Input type="date" value={holForm.end} onChange={(e) => setHolForm({ ...holForm, end: e.target.value })} className="bg-surface-2 border-border text-foreground" />
-                </div>
-                <div className="md:col-span-3">
-                  <Label className="text-muted-foreground">Reason (optional)</Label>
-                  <Textarea value={holForm.reason} onChange={(e) => setHolForm({ ...holForm, reason: e.target.value })} className="bg-surface-2 border-border text-foreground" />
-                </div>
-              </div>
-              <Button className="mt-4 bg-gradient-primary text-white" onClick={submitHoliday}><Plane className="size-4 mr-1" /> Submit request</Button>
-            </div>
+            <Tabs value={holTab} onValueChange={(v) => setHolTab(v as "book" | "status")}>
+              <TabsList className="bg-surface-2 border border-border">
+                <TabsTrigger value="book" className="data-[state=active]:bg-gradient-primary data-[state=active]:text-white">
+                  <Plane className="size-4 mr-1" /> Book holiday
+                </TabsTrigger>
+                <TabsTrigger value="status" className="data-[state=active]:bg-gradient-primary data-[state=active]:text-white">
+                  <Check className="size-4 mr-1" /> My requests
+                  {myPendingHolidays > 0 && (
+                    <span className="ml-2 rounded-full bg-amber-500/25 text-amber-100 px-2 py-0.5 text-[11px]">{myPendingHolidays}</span>
+                  )}
+                </TabsTrigger>
+              </TabsList>
 
-            <div className="rounded-2xl bg-surface border border-border overflow-hidden">
-              <div className="px-5 py-3 border-b border-border text-foreground font-semibold">My holiday requests</div>
-              {holidays.filter((h) => h.user_id === user?.id).length === 0 ? (
-                <div className="px-5 py-6 text-sm text-muted-foreground">No requests yet.</div>
-              ) : (
-                <ul className="divide-y divide-border">
-                  {holidays.filter((h) => h.user_id === user?.id).map((h) => (
-                    <li key={h.id} className="px-5 py-3 flex items-center gap-3">
-                      <div className="flex-1">
-                        <div className="text-foreground">{h.start_date} → {h.end_date}</div>
-                        {h.reason && <div className="text-xs text-muted-foreground">{h.reason}</div>}
-                      </div>
-                      <StatusPill status={h.status} />
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+              <TabsContent value="book" className="mt-4">
+                <div className="rounded-2xl bg-surface border border-border p-5">
+                  <h3 className="font-display text-lg font-semibold text-foreground mb-3">Request holiday</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div>
+                      <Label className="text-muted-foreground">Start</Label>
+                      <Input type="date" value={holForm.start} onChange={(e) => setHolForm({ ...holForm, start: e.target.value })} className="bg-surface-2 border-border text-foreground" />
+                    </div>
+                    <div>
+                      <Label className="text-muted-foreground">End</Label>
+                      <Input type="date" value={holForm.end} onChange={(e) => setHolForm({ ...holForm, end: e.target.value })} className="bg-surface-2 border-border text-foreground" />
+                    </div>
+                    <div className="md:col-span-3">
+                      <Label className="text-muted-foreground">Reason (optional)</Label>
+                      <Textarea value={holForm.reason} onChange={(e) => setHolForm({ ...holForm, reason: e.target.value })} className="bg-surface-2 border-border text-foreground" />
+                    </div>
+                  </div>
+                  <Button className="mt-4 bg-gradient-primary text-white" onClick={submitHoliday}><Plane className="size-4 mr-1" /> Submit request</Button>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="status" className="mt-4">
+                <div className="rounded-2xl bg-surface border border-border overflow-hidden">
+                  <div className="px-5 py-3 border-b border-border text-foreground font-semibold">
+                    Awaiting approval, accepted or rejected
+                  </div>
+                  {myHolidays.length === 0 ? (
+                    <div className="px-5 py-6 text-sm text-muted-foreground">No requests yet.</div>
+                  ) : (
+                    <ul className="divide-y divide-border">
+                      {myHolidays.map((h) => (
+                        <li key={h.id} className="px-5 py-3 flex items-start gap-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="text-foreground">{h.start_date} → {h.end_date}</div>
+                            {h.reason && <div className="text-xs text-muted-foreground break-words">{h.reason}</div>}
+                            {h.status === "denied" && (
+                              <div className="mt-2 rounded-lg border border-rose-500/30 bg-rose-500/10 px-3 py-2 text-xs text-rose-100 break-words">
+                                <span className="font-semibold">Reason for rejection: </span>
+                                {h.decision_reason?.trim() || "No reason given."}
+                              </div>
+                            )}
+                          </div>
+                          <StatusPill status={h.status} />
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </TabsContent>
+            </Tabs>
           </TabsContent>
 
           {/* ADMIN REQUESTS */}
@@ -1096,17 +1147,20 @@ function ShiftsPage() {
                   <ul className="divide-y divide-border">
                     {holidays.map((h) => (
                       <li key={h.id} className="px-5 py-3 flex items-center gap-3">
-                        <div className="flex-1">
-                          <div className="text-foreground"><strong>{profName(h.user_id)}</strong> · {h.start_date} → {h.end_date}</div>
-                          {h.reason && <div className="text-xs text-muted-foreground">{h.reason}</div>}
-                        </div>
-                        <StatusPill status={h.status} />
-                        {h.status === "pending" && (
-                          <div className="flex gap-1">
-                            <Button size="sm" className="bg-emerald-500/30 text-emerald-100 hover:bg-emerald-500/50 border-0" onClick={() => reviewHoliday(h.id, "approved")}><Check className="size-3.5" /></Button>
-                            <Button size="sm" className="bg-rose-500/30 text-rose-100 hover:bg-rose-500/50 border-0" onClick={() => reviewHoliday(h.id, "denied")}><X className="size-3.5" /></Button>
-                          </div>
-                        )}
+                         <div className="flex-1">
+                           <div className="text-foreground"><strong>{profName(h.user_id)}</strong> · {h.start_date} → {h.end_date}</div>
+                           {h.reason && <div className="text-xs text-muted-foreground">{h.reason}</div>}
+                           {h.status === "denied" && h.decision_reason && (
+                             <div className="text-xs text-rose-200 mt-1">Rejected: {h.decision_reason}</div>
+                           )}
+                         </div>
+                         <StatusPill status={h.status} />
+                         {h.status === "pending" && (
+                           <div className="flex gap-1">
+                             <Button size="sm" className="bg-emerald-500/30 text-emerald-100 hover:bg-emerald-500/50 border-0" onClick={() => reviewHoliday(h.id, "approved")}><Check className="size-3.5" /></Button>
+                             <Button size="sm" className="bg-rose-500/30 text-rose-100 hover:bg-rose-500/50 border-0" onClick={() => { setRejectHol(h); setRejectReason(""); }}><X className="size-3.5" /></Button>
+                           </div>
+                         )}
                       </li>
                     ))}
                   </ul>
@@ -1397,6 +1451,32 @@ function ShiftsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Admin rejects a holiday request — the reason is shown to the staff member */}
+      <Dialog open={!!rejectHol} onOpenChange={(o) => { if (!o) { setRejectHol(null); setRejectReason(""); } }}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Reject holiday request</DialogTitle></DialogHeader>
+          {rejectHol && (
+            <div className="space-y-3">
+              <div className="text-sm text-muted-foreground">
+                {profName(rejectHol.user_id)} · {rejectHol.start_date} → {rejectHol.end_date}
+              </div>
+              <div>
+                <Label>Reason for rejection</Label>
+                <Textarea
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                  placeholder="Tell them why this holiday can't be approved"
+                />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setRejectHol(null); setRejectReason(""); }}>Cancel</Button>
+            <Button className="bg-rose-500/80 text-white hover:bg-rose-500" onClick={submitRejection}>Reject request</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -1407,7 +1487,12 @@ function StatusPill({ status }: { status: ReqStatus }) {
     approved: "bg-emerald-500/20 text-emerald-300 border-emerald-500/40",
     denied: "bg-rose-500/20 text-rose-300 border-rose-500/40",
   };
-  return <span className={cn("text-[11px] px-2 py-0.5 rounded-full border font-semibold uppercase", map[status])}>{status}</span>;
+  const label: Record<ReqStatus, string> = {
+    pending: "Awaiting approval",
+    approved: "Accepted",
+    denied: "Rejected",
+  };
+  return <span className={cn("text-[11px] px-2 py-0.5 rounded-full border font-semibold uppercase whitespace-nowrap", map[status])}>{label[status]}</span>;
 }
 
 const TIMEZONE_PRESETS: { tz: string; label: string }[] = [

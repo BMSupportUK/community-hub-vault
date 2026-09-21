@@ -1,0 +1,1 @@
+ALTER TABLE public.holiday_requests ADD COLUMN IF NOT EXISTS decision_reason TEXT;
