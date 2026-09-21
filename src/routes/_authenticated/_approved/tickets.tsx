@@ -1153,6 +1153,24 @@ function OfficeHoursPanel() {
   if (hours.length === 0) return null;
   const timezoneLabel = timezone.replaceAll("_", " ").replace("/", " / ");
   const status = officeStatus(hours, now, timezone);
+  // Only show the user-timezone column when the visitor's timezone actually
+  // produces different opening times or dates from the UK office.
+  const showUserColumn = (() => {
+    const fmt = (tz: string) =>
+      new Intl.DateTimeFormat("en-GB", {
+        timeZone: tz,
+        weekday: "short", day: "numeric", month: "short",
+        hour: "numeric", minute: "2-digit", hour12: true,
+      });
+    const officeFmt = fmt("Europe/London");
+    const userFmt = fmt(timezone);
+    return [...hours].some((hour) => {
+      if (hour.is_closed) return false;
+      const open = londonTimeToDate(hour.day_of_week, hour.open_time);
+      const close = londonTimeToDate(hour.day_of_week, hour.close_time);
+      return officeFmt.format(open) !== userFmt.format(open) || officeFmt.format(close) !== userFmt.format(close);
+    });
+  })();
 
   return (
     <section className="mt-6 overflow-hidden rounded-lg border border-border/70 bg-background/30">
@@ -1160,7 +1178,9 @@ function OfficeHoursPanel() {
         <Store className="size-4 shrink-0 text-primary" />
         <h3 className="font-display text-sm font-semibold">Office opening times</h3>
       </div>
-      <div className="grid grid-cols-[minmax(5.5rem,0.8fr)_minmax(0,1fr)_minmax(0,1fr)] text-xs sm:text-sm">
+      <div className={showUserColumn
+        ? "grid grid-cols-[minmax(5.5rem,0.8fr)_minmax(0,1fr)_minmax(0,1fr)] text-xs sm:text-sm"
+        : "grid grid-cols-[minmax(5.5rem,0.8fr)_minmax(0,1fr)] text-xs sm:text-sm"}>
         <div className="border-b border-border/70 px-3 py-2 font-semibold text-muted-foreground">Day</div>
         <div className="border-b border-l border-border/70 px-3 py-2 font-semibold">UK office</div>
         <div className="border-b border-l border-border/70 px-3 py-2 font-semibold">{timezoneLabel}</div>
