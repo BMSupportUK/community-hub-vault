@@ -42,6 +42,7 @@ export function Clocks() {
       <ClockPill
         sideLabel="Office time"
         time={format(ukTz, now)}
+        date={formatDate(ukTz, now)}
         label={abbrev(ukTz)}
         ring="ring-amber-400/60"
         text="text-amber-300"
@@ -51,6 +52,7 @@ export function Clocks() {
       <ClockPill
         sideLabel="Customer local time"
         time={format(userTz, now)}
+        date={formatDate(userTz, now)}
         label={abbrev(userTz)}
         ring="ring-sky-400/60"
         text="text-sky-300"
