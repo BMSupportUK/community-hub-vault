@@ -31,7 +31,7 @@ type Row = {
   start_time: string;
   end_time: string;
   slot_type: "shift" | "hourly";
-  required_role: string;
+  required_role: "admin" | "management" | "staff" | "moderator";
   notes: string;
   created_by: null;
 };
