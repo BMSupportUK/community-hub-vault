@@ -24,6 +24,32 @@ interface BreakRow {
   ended_at: string | null;
 }
 
+/** Hourly rota slot a moderator claimed for themselves. */
+interface ClaimedSlot {
+  id: string;
+  shift_date: string;
+  start_time: string;
+  end_time: string;
+  notes: string | null;
+}
+
+function fmtSlotDate(date: string) {
+  return new Date(date + "T00:00:00").toLocaleDateString("en-GB", {
+    weekday: "short",
+    day: "2-digit",
+    month: "short",
+  });
+}
+
+function slotHours(start: string, end: string) {
+  const [sh, sm] = start.split(":").map(Number);
+  const [eh, em] = end.split(":").map(Number);
+  const mins = Math.max(0, (eh! * 60 + em!) - (sh! * 60 + sm!));
+  const h = Math.floor(mins / 60);
+  const m = mins % 60;
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+}
+
 /** Monday 00:00 local time of the week containing `now`. */
 function weekStart(now = new Date()) {
   const d = new Date(now);
