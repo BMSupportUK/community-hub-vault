@@ -38,7 +38,9 @@ function AdSenseSlotComponent({ slot = "topic", fitViewport = false }: { slot?: 
       ? ADSENSE_SIDEBAR_SLOT
       : slot === "home"
         ? ADSENSE_HOME_SLOT
-        : ADSENSE_TOPIC_SLOT;
+        : slot === "talk"
+          ? ADSENSE_TALK_SLOT
+          : ADSENSE_TOPIC_SLOT;
   const enabled = ADSENSE_ENABLED && adSlotId.length > 0;
   // fitViewport: cap a sidebar unit to the visible screen height so pages
   // locked to the viewport (sign-in / join) never clip the advert.
