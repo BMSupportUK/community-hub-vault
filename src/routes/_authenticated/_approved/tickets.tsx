@@ -39,6 +39,7 @@ import { StaffOnDutyStrip } from "@/components/app/StaffOnDutyStrip";
 import { Nameplate } from "@/components/app/Nameplate";
 import { QuickRepliesPill } from "@/components/app/QuickRepliesDialog";
 import { useChannelJump } from "@/components/app/ChannelJump";
+import AdSenseSlot from "@/components/app/AdSenseSlot";
 import {
   applyOrderToCredential,
   createCredentialForOrder,
@@ -54,6 +55,16 @@ export const Route = createFileRoute("/_authenticated/_approved/tickets")({
     id: typeof s.id === "string" ? s.id : undefined,
     view: (s.view === "mine" || s.view === "all" || s.view === "assigned") ? s.view : undefined,
     new2fa: s.new2fa === 1 || s.new2fa === "1" ? 1 : undefined,
+  }),
+  head: () => ({
+    meta: [
+      { title: "Support Tickets | BM Support" },
+      { name: "description", content: "Open and manage BM Support help requests and order support conversations." },
+      { property: "og:title", content: "Support Tickets | BM Support" },
+      { property: "og:description", content: "Open and manage BM Support help requests and order support conversations." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
   }),
   component: TicketsPage,
 });
@@ -427,7 +438,11 @@ function TicketsPage() {
         <Tabs
           value={tab}
           onValueChange={(v) => setTab(v as "welcome" | "tickets" | "open")}
-          className={cn("min-h-0", isChatting ? "flex h-full flex-col overflow-hidden" : "shrink-0")}
+          className={cn(
+            "min-h-0",
+            isChatting ? "flex h-full flex-col overflow-hidden" : "shrink-0",
+            tab === "tickets" && "lg:flex lg:h-full lg:flex-col lg:overflow-hidden",
+          )}
         >
           {tab !== "tickets" && (
             <header className="w-full pt-6">
@@ -552,14 +567,17 @@ function TicketsPage() {
             </div>
           </TabsContent>
 
-          <TabsContent value="tickets" className={cn("mt-6", isChatting && "mt-0 flex min-h-0 flex-1 overflow-hidden")}>
+          <TabsContent value="tickets" className={cn(
+            "mt-6 lg:flex lg:min-h-0 lg:flex-1 lg:overflow-hidden",
+            isChatting && "mt-0 flex min-h-0 flex-1 overflow-hidden",
+          )}>
             <div className={cn(
-              "grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-4",
+              "grid grid-cols-1 lg:h-full lg:min-h-0 lg:flex-1 lg:grid-cols-[300px_minmax(0,1fr)] gap-4",
               isChatting && "h-full min-h-0 flex-1 gap-0 overflow-hidden lg:grid-cols-[280px_1fr] grid-rows-[auto_1fr] lg:grid-rows-1"
             )}>
               {/* Left list */}
               <aside className={cn(
-                "rounded-2xl bg-rose-950/50 border border-rose-500/30 p-4 h-fit backdrop-blur space-y-3",
+                "rounded-2xl bg-rose-950/50 border border-rose-500/30 p-4 h-fit backdrop-blur space-y-3 lg:max-h-full lg:overflow-y-auto",
                 isChatting && "rounded-none border-y-0 border-l-0 h-full overflow-y-auto hidden lg:block"
               )}>
                 {isChatting && (
@@ -655,8 +673,8 @@ function TicketsPage() {
               <div
                 ref={detailPanelRef}
                 className={cn(
-                  "rounded-2xl bg-gradient-to-br from-violet-600 via-fuchsia-600 to-rose-600 text-white relative overflow-hidden flex flex-col scroll-mt-16",
-                  isChatting ? "h-full min-h-0 rounded-none border-y-0 border-r-0" : "min-h-[600px] h-[calc(100dvh-8rem)]"
+                  "rounded-2xl bg-gradient-to-br from-violet-600 via-fuchsia-600 to-rose-600 text-white relative overflow-hidden flex flex-col scroll-mt-16 lg:h-full lg:min-h-0",
+                  isChatting ? "h-full min-h-0 rounded-none border-y-0 border-r-0" : "min-h-[600px]"
                 )}
               >
                 <div className="pointer-events-none absolute inset-0 opacity-60" style={{
@@ -2239,12 +2257,17 @@ function TicketDetail({
         )}
       </div>
       </div>
-      {linkedOrder && (
-        <aside className="hidden lg:flex flex-col w-80 shrink-0 min-h-0 max-h-full border-l border-white/20 bg-white/5 backdrop-blur overflow-y-auto overscroll-contain p-4 pb-10">
-          <div className="text-[10px] uppercase tracking-wider text-white/70 mb-2">Order</div>
-          {orderPanelInner}
-        </aside>
-      )}
+      <aside className="hidden lg:flex w-[260px] xl:w-[300px] shrink-0 min-h-0 max-h-full flex-col gap-4 border-l border-white/20 bg-white/5 p-3 backdrop-blur">
+        {linkedOrder && (
+          <div className="min-h-0 max-h-[48%] shrink-0 overflow-y-auto overscroll-contain pb-2">
+            <div className="mb-2 text-[10px] uppercase tracking-wider text-white/70">Order</div>
+            {orderPanelInner}
+          </div>
+        )}
+        <div className="min-h-[250px] flex-1 overflow-hidden [&>div]:h-full">
+          <AdSenseSlot slot="sidebar" fitViewport />
+        </div>
+      </aside>
     </div>
   );
 }
