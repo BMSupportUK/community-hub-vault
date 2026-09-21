@@ -5,12 +5,13 @@ import {
   ADSENSE_ENABLED,
   ADSENSE_HOME_SLOT,
   ADSENSE_SIDEBAR_SLOT,
+  ADSENSE_TALK_SLOT,
   ADSENSE_TOPIC_SLOT,
   ensureAdSenseScript,
   pushAd,
 } from "@/lib/adsense";
 
-export type AdSenseSlotKind = "topic" | "sidebar" | "home";
+export type AdSenseSlotKind = "topic" | "sidebar" | "home" | "talk";
 
 function Placeholder({ label }: { label: string }) {
   return (
