@@ -299,6 +299,21 @@ function ShiftsPage() {
 
   useEffect(() => { loadBookings(); loadMySwaps(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [user?.id]);
 
+  // Load the slots already booked to me for the history week, so bookings made
+  // before the history log existed still show under Bookings.
+  useEffect(() => {
+    if (!user) return;
+    const end = new Date(histWeek); end.setDate(end.getDate() + 7);
+    supabase
+      .from("shift_slots")
+      .select("id, shift_date, start_time, end_time, slot_type, assigned_to, notes, required_role")
+      .eq("assigned_to", user.id)
+      .gte("shift_date", fmtDate(histWeek))
+      .lt("shift_date", fmtDate(end))
+      .then(({ data }) => setMyBookedSlots((data ?? []) as unknown as Slot[]));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, histWeek.getTime()]);
+
   useEffect(() => {
     load();
     const ch = supabase.channel("shifts")
