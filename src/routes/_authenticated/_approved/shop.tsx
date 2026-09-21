@@ -4170,9 +4170,16 @@ function OrderDetailImpl({
                   )}
                 </div>
               ))}
-              <div className="flex justify-between pt-2 border-t border-border font-display font-bold">
+              <div className="flex justify-between items-baseline pt-2 border-t border-border font-display font-bold">
                 <span>Total</span>
-                <span>{fmt(order.total_cents)}</span>
+                <span className="flex items-baseline gap-2">
+                  {customerHandle && (
+                    <span className="text-xs font-normal text-muted-foreground">
+                      Placed by {customerHandle}
+                    </span>
+                  )}
+                  <span>{fmt(order.total_cents)}</span>
+                </span>
               </div>
             </div>
           </div>
