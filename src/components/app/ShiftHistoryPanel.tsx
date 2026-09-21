@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Clock as ClockIcon, LogIn, LogOut, CheckCircle2, HelpCircle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { type BreakKind, breakLabel, breakIcon } from "@/lib/breaks";
 
 const PAGE_SIZE = 20;
 const AUTO_OUT_GRACE_MS = 15 * 60 * 1000;
@@ -13,6 +14,14 @@ interface ShiftHistoryRow {
   clock_out: string | null;
   end_prompt_asked_at: string | null;
   still_working_ack_at: string | null;
+}
+
+interface BreakRow {
+  id: string;
+  shift_id: string;
+  kind: BreakKind;
+  started_at: string;
+  ended_at: string | null;
 }
 
 /** Monday 00:00 local time of the week containing `now`. */
@@ -78,6 +87,7 @@ function Pill({
 
 export default function ShiftHistoryPanel({ userId, name }: { userId: string; name: string }) {
   const [rows, setRows] = useState<ShiftHistoryRow[]>([]);
+  const [breaksByShift, setBreaksByShift] = useState<Record<string, BreakRow[]>>({});
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
@@ -113,13 +123,30 @@ export default function ShiftHistoryPanel({ userId, name }: { userId: string; na
   );
 
 
+  const fetchBreaks = useCallback(async (shiftIds: string[]) => {
+    if (shiftIds.length === 0) return {} as Record<string, BreakRow[]>;
+    const { data } = await supabase
+      .from("breaks")
+      .select("id, shift_id, kind, started_at, ended_at")
+      .in("shift_id", shiftIds)
+      .order("started_at", { ascending: true });
+    const map: Record<string, BreakRow[]> = {};
+    for (const b of (data ?? []) as BreakRow[]) {
+      (map[b.shift_id] ??= []).push(b);
+    }
+    return map;
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setRows([]);
-    fetchPage(0).then(({ rows: first, count }) => {
+    setBreaksByShift({});
+    fetchPage(0).then(async ({ rows: first, count }) => {
+      const bmap = await fetchBreaks(first.map((r) => r.id));
       if (cancelled) return;
       setRows(first);
+      setBreaksByShift(bmap);
       setTotal(count);
       setHasMore(first.length === PAGE_SIZE && count > first.length);
       setLoading(false);
@@ -127,11 +154,13 @@ export default function ShiftHistoryPanel({ userId, name }: { userId: string; na
     return () => {
       cancelled = true;
     };
-  }, [fetchPage]);
+  }, [fetchPage, fetchBreaks]);
 
   const loadMore = async () => {
     setLoadingMore(true);
     const { rows: next, count } = await fetchPage(rows.length);
+    const bmap = await fetchBreaks(next.map((r) => r.id));
+    setBreaksByShift((prev) => ({ ...prev, ...bmap }));
     setRows((prev) => {
       const seen = new Set(prev.map((r) => r.id));
       const merged = [...prev, ...next.filter((r) => !seen.has(r.id))];
@@ -220,6 +249,25 @@ export default function ShiftHistoryPanel({ userId, name }: { userId: string; na
                   <span className="ml-auto font-medium">{s.clock_out ? fmtTime(s.clock_out) : "—"}</span>
                 </div>
               </div>
+
+              {(breaksByShift[s.id] ?? []).length > 0 && (
+                <div className="mt-2 space-y-1.5 border-t border-purple-500/20 pt-2 text-sm">
+                  {(breaksByShift[s.id] ?? []).map((b) => {
+                    const BIcon = breakIcon(b.kind);
+                    return (
+                      <div key={b.id} className="flex items-center gap-2 text-purple-100/90">
+                        <BIcon className="size-4 text-amber-300" />
+                        <span className="text-purple-200/70">{breakLabel(b.kind)}</span>
+                        <span className="ml-auto font-medium tabular-nums">
+                          {fmtTime(b.started_at)} · {fmtDuration(b.started_at, b.ended_at)}
+                          {!b.ended_at ? " (ongoing)" : ""}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
 
               <div className="mt-3 flex flex-wrap gap-2">
                 {s.end_prompt_asked_at ? (
