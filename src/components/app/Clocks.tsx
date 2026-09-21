@@ -18,6 +18,15 @@ function abbrev(tz: string) {
   return parts.find((p) => p.type === "timeZoneName")?.value ?? tz;
 }
 
+function formatDate(tz: string, date = new Date()) {
+  return new Intl.DateTimeFormat("en-GB", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    timeZone: tz,
+  }).format(date);
+}
+
 export function Clocks() {
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
