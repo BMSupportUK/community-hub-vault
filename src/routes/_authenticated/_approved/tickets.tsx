@@ -459,7 +459,8 @@ function TicketsPage() {
       <div className="relative h-full min-h-0 overflow-hidden bg-rose-950">
         {/* Full-page background image */}
         <div className="pointer-events-none absolute inset-0 z-0">
-          <img src={ticketsHero} alt="" aria-hidden className="w-full h-full object-cover" />
+          <img src={ticketsHero} alt="" aria-hidden className="w-full h-full object-cover brightness-[0.45]" />
+          <div className="absolute inset-0 bg-black/30" />
           <div className="absolute inset-0 bg-gradient-to-br from-rose-700/85 via-fuchsia-700/75 to-violet-800/85" />
           <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-b from-transparent to-rose-950" />
         </div>
