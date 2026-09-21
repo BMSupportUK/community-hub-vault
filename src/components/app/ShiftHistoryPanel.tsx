@@ -15,6 +15,27 @@ interface ShiftHistoryRow {
   still_working_ack_at: string | null;
 }
 
+/** Monday 00:00 local time of the week containing `now`. */
+function weekStart(now = new Date()) {
+  const d = new Date(now);
+  const dow = (d.getDay() + 6) % 7; // 0 = Monday
+  d.setDate(d.getDate() - dow);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function weekEnd(now = new Date()) {
+  const d = weekStart(now);
+  d.setDate(d.getDate() + 7);
+  return d;
+}
+
+function fmtRange(start: Date, end: Date) {
+  const opts: Intl.DateTimeFormatOptions = { day: "2-digit", month: "short" };
+  const last = new Date(end.getTime() - 1);
+  return `${start.toLocaleDateString("en-GB", opts)} – ${last.toLocaleDateString("en-GB", { ...opts, year: "numeric" })}`;
+}
+
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-GB", { weekday: "short", day: "2-digit", month: "short", year: "numeric" });
 }
@@ -22,6 +43,7 @@ function fmtDate(iso: string) {
 function fmtTime(iso: string) {
   return new Date(iso).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
 }
+
 
 function fmtDuration(startIso: string, endIso: string | null) {
   const end = endIso ? new Date(endIso).getTime() : Date.now();
