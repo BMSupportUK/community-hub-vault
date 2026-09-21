@@ -12,10 +12,25 @@ export const browserTimezone = () => {
 
 const cache = new Map<string, string>();
 const USER_TIMEZONE_EVENT = "bm-user-timezone-change";
+const storageKey = (userId: string) => `bm-user-timezone:${userId}`;
+
+function storedTimezone(userId: string): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    return window.localStorage.getItem(storageKey(userId));
+  } catch {
+    return null;
+  }
+}
 
 export function announceUserTimezone(userId: string, timezone: string) {
   cache.set(userId, timezone);
   if (typeof window !== "undefined") {
+    try {
+      window.localStorage.setItem(storageKey(userId), timezone);
+    } catch {
+      /* Storage can be unavailable in private browsing. */
+    }
     window.dispatchEvent(new CustomEvent(USER_TIMEZONE_EVENT, { detail: { userId, timezone } }));
   }
 }
@@ -23,7 +38,9 @@ export function announceUserTimezone(userId: string, timezone: string) {
 /** Returns the signed-in user's saved timezone, falling back to the browser timezone. */
 export function useUserTimezone(): string {
   const { user } = useAuth();
-  const [tz, setTz] = useState<string>(() => (user && cache.get(user.id)) || browserTimezone());
+  const [tz, setTz] = useState<string>(() =>
+    (user && (cache.get(user.id) || storedTimezone(user.id))) || browserTimezone(),
+  );
 
   useEffect(() => {
     const detected = browserTimezone();
@@ -34,6 +51,11 @@ export function useUserTimezone(): string {
     let active = true;
     const apply = (next: string) => {
       cache.set(user.id, next);
+      try {
+        window.localStorage.setItem(storageKey(user.id), next);
+      } catch {
+        /* Storage can be unavailable in private browsing. */
+      }
       if (active) setTz(next);
     };
     const onTimezoneChange = (event: Event) => {
