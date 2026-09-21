@@ -26,5 +26,5 @@
 ## Help Desk opening hours
 - [x] Add UK office and user-local opening times beneath the resolved-ticket message
 
-## Profile orders
-- [x] Add Jan–Dec tabs and group this year's orders into their relevant month
+## Store orders
+- [ ] Remove Orders from profiles and group Store order history by Jan–Dec
