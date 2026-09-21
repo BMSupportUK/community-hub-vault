@@ -25,6 +25,67 @@ export const Route = createFileRoute("/signup")({
   component: SignupPage,
 });
 
+function IntentChoice({
+  intent,
+  setIntent,
+}: {
+  intent: "bm-support" | "fan-zone" | "";
+  setIntent: (v: "bm-support" | "fan-zone") => void;
+}) {
+  return (
+    <fieldset className="space-y-2">
+      <legend className="text-sm font-semibold text-foreground mb-2">
+        Which part of the site would you like to register for?{" "}
+        <span className="text-destructive">*</span>
+      </legend>
+      <label
+        className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+          intent === "bm-support"
+            ? "border-primary bg-primary/10"
+            : "border-border hover:border-primary/40 hover:bg-muted/30"
+        }`}
+      >
+        <input
+          type="radio"
+          name="intent"
+          value="bm-support"
+          checked={intent === "bm-support"}
+          onChange={() => setIntent("bm-support")}
+          className="mt-0.5 accent-primary"
+        />
+        <span className="text-sm">
+          <span className="block font-semibold">BM Support</span>
+          <span className="block text-xs text-muted-foreground">
+            Customer support, tickets, devices and orders.
+          </span>
+        </span>
+      </label>
+      <label
+        className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+          intent === "fan-zone"
+            ? "border-primary bg-primary/10"
+            : "border-border hover:border-primary/40 hover:bg-muted/30"
+        }`}
+      >
+        <input
+          type="radio"
+          name="intent"
+          value="fan-zone"
+          checked={intent === "fan-zone"}
+          onChange={() => setIntent("fan-zone")}
+          className="mt-0.5 accent-primary"
+        />
+        <span className="text-sm">
+          <span className="block font-semibold">Boro Fan Zone (Middlesbrough F.C. Forum)</span>
+          <span className="block text-xs text-muted-foreground">
+            Match-day banter, transfer talk and the forum.
+          </span>
+        </span>
+      </label>
+    </fieldset>
+  );
+}
+
 function SignupPage() {
   const lockable = useViewportLockable();
   const navigate = useNavigate();
