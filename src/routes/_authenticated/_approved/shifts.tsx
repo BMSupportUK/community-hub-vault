@@ -302,7 +302,7 @@ function ShiftsPage() {
     const ch = supabase.channel("shifts")
       .on("postgres_changes", { event: "*", schema: "public", table: "shift_slots" }, () => load())
       .on("postgres_changes", { event: "*", schema: "public", table: "holiday_requests" }, () => load())
-      .on("postgres_changes", { event: "*", schema: "public", table: "shift_swap_requests" }, () => load())
+      .on("postgres_changes", { event: "*", schema: "public", table: "shift_swap_requests" }, () => { load(); loadMySwaps(); })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
