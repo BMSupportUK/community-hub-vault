@@ -29,7 +29,7 @@ const EXACT: Record<string, string> = {
   "/fanzone/profile": "Fan Zone Profile",
   "/fanzone/blocks": "Fan Zone Ignore list",
   "/admin-fan-zone": "Fan Zone Members",
-  "/moderation": "Fan Zone Moderation",
+  "/moderation": "BM Support | Access Requests",
   "/login": "Sign in",
   "/signup": "Sign up",
 };
