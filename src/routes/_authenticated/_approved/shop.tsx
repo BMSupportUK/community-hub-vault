@@ -73,6 +73,8 @@ import {
 import { CreditCard, Ban } from "lucide-react";
 import { getOutOfHoursMessage } from "@/lib/business-hours";
 import { isAdminUnlocked } from "@/lib/admin-unlock";
+import { isDiscountUnlocked } from "@/lib/discount-unlock";
+import { DiscountCodesGate } from "@/components/app/DiscountCodesGate";
 import { useRouter } from "@tanstack/react-router";
 import { MonitorPlay } from "lucide-react";
 import { AppDemosView } from "@/components/app/AppDemos";
@@ -257,6 +259,10 @@ function ShopPage() {
   // Product & discount management is restricted to admin only (not management).
   const isAdminOnly = hasRole("admin");
   const adminUnlocked = isAdmin && isAdminUnlocked(user?.id);
+  const [discountUnlocked, setDiscountUnlocked] = useState(false);
+  useEffect(() => {
+    setDiscountUnlocked(isAdminOnly && isDiscountUnlocked(user?.id));
+  }, [isAdminOnly, user?.id, view]);
   const isAdminView =
     (view === "admin" && isAdminOnly) ||
     ((view as string) === "discounts" && isAdminOnly) ||
@@ -417,7 +423,14 @@ function ShopPage() {
             />
           )}
           {view === "admin" && isAdminOnly && adminUnlocked && <AdminProducts />}
-          {(view as string) === "discounts" && isAdminOnly && adminUnlocked && <AdminDiscounts />}
+          {(view as string) === "discounts" &&
+            isAdminOnly &&
+            adminUnlocked &&
+            (discountUnlocked ? (
+              <AdminDiscounts />
+            ) : (
+              <DiscountCodesGate onUnlocked={() => setDiscountUnlocked(true)} />
+            ))}
           {(view === "refund" || view === "multi_room" || view === "triple_room") &&
             (view === "refund" ? (
               <PolicyView policyKey="refund" isAdmin={isAdmin} />
