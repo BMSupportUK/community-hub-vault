@@ -39,6 +39,7 @@ import { setPersonalAppTheme, useAppTheme } from "@/hooks/use-app-theme";
 import { useServerFn } from "@tanstack/react-start";
 import { assignReferrer } from "@/lib/referrals.functions";
 import ShiftHistoryPanel from "@/components/app/ShiftHistoryPanel";
+import { useViewportLockable } from "@/hooks/use-viewport-lock";
 
 export const Route = createFileRoute("/_authenticated/_approved/u/$username")({
   validateSearch: (search: Record<string, unknown>): { tab?: string; edit?: 1 } => ({
@@ -149,6 +150,7 @@ function ProfilePage() {
   const isAdmin = hasAny(["admin", "management"]);
   const roleFlashMap = useRoleFlashMap();
   const { format: fmtCurrency } = useCurrency();
+  const locked = useViewportLockable();
   const [now, setNow] = useState(() => Date.now());
   const [profile, setProfile] = useState<ProfileRow | null>(null);
   const [roles, setRoles] = useState<AppRole[]>([]);
@@ -510,9 +512,14 @@ function ProfilePage() {
     ...(isOwner ? [{ id: "theme", label: "Theme" }] : []),
   ];
 
+  // On genuinely large screens the profile stays inside the viewport: the
+  // heading and tab bar are fixed and only the active panel scrolls.
+  const paneClass = cn("mt-6", locked && "min-h-0 flex-1 overflow-y-auto overscroll-contain pr-1");
+
   return (
     <div className={cn(
-      "relative h-full min-h-0 flex-1 overflow-y-auto overscroll-contain",
+      "relative h-full min-h-0 flex-1 overscroll-contain",
+      locked ? "flex flex-col overflow-hidden" : "overflow-y-auto",
       mainTab === "referrals" || mainTab === "friends" || mainTab === "tickets" || mainTab === "orders"
         ? "bg-[#1a0b2e]"
         : "bg-gradient-to-br from-[#1a0b2e] via-[#2d1b4e] to-[#1a0b2e]",
@@ -569,7 +576,7 @@ function ProfilePage() {
           <div className="absolute inset-0" style={{ background: "rgba(5, 10, 20, 0.35)" }} />
         </div>
       )}
-      <div className="relative z-10">
+      <div className={cn("relative z-10", locked && "flex min-h-0 flex-1 flex-col overflow-hidden")}>
       <header className="px-8 pt-8 pb-6 border-b border-purple-500/30 bg-purple-950/40 backdrop-blur">
         <h1 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 bg-clip-text text-transparent">
           {isOwner ? "Your Profile" : `${display}'s Profile`}
@@ -581,8 +588,8 @@ function ProfilePage() {
         </p>
       </header>
 
-      <div className="px-8 py-6">
-        <Tabs value={mainTab} onValueChange={(v) => setMainTab(v as typeof mainTab)} className="w-full">
+      <div className={cn("px-8 py-6", locked && "flex min-h-0 flex-1 flex-col overflow-hidden")}>
+        <Tabs value={mainTab} onValueChange={(v) => setMainTab(v as typeof mainTab)} className={cn("w-full", locked && "flex min-h-0 flex-1 flex-col")}>
           <TabsList className="flex flex-wrap h-auto bg-purple-950/60 border border-purple-500/30">
             {tabDefs.map((t) => (
               <TabsTrigger
@@ -596,7 +603,7 @@ function ProfilePage() {
           </TabsList>
 
           {/* Profile */}
-          <TabsContent value="profile" className="mt-6">
+          <TabsContent value="profile" className={paneClass}>
             <div className="grid lg:grid-cols-3 gap-6">
               <section className="lg:col-span-2 rounded-2xl border border-purple-500/30 bg-purple-950/50 backdrop-blur overflow-hidden text-white">
                 <div className="relative w-full aspect-[15/4] bg-purple-950/80" aria-hidden>
@@ -712,7 +719,7 @@ function ProfilePage() {
           </TabsContent>
 
           {canSeeCreds && (
-            <TabsContent value="creds" className="mt-6">
+            <TabsContent value="creds" className={paneClass}>
               <div className="space-y-6">
                 <div className="rounded-2xl overflow-hidden border border-purple-500/30 bg-purple-950/50 backdrop-blur shadow-[0_0_60px_-15px_rgba(168,85,247,0.5)]">
                   <div className="grid md:grid-cols-[1.4fr_1fr]">
@@ -742,7 +749,7 @@ function ProfilePage() {
             </TabsContent>
           )}
 
-          <TabsContent value="tickets" className="mt-6">
+          <TabsContent value="tickets" className={paneClass}>
             <ActivityCardGrid title="Recent tickets" icon={Ticket} empty="No tickets yet" isEmpty={tickets.length === 0}>
               {tickets.map((t) => (
                 <TicketCardItem key={t.id} ticket={t} />
@@ -750,7 +757,7 @@ function ProfilePage() {
             </ActivityCardGrid>
           </TabsContent>
 
-          <TabsContent value="orders" className="mt-6">
+          <TabsContent value="orders" className={paneClass}>
             <ActivityCardGrid title="Recent orders" icon={ShoppingBag} empty="No orders yet" isEmpty={orders.length === 0}>
               {orders.map((o) => (
                 <OrderCardItem key={o.id} order={o} fmtCurrency={fmtCurrency} />
@@ -759,13 +766,13 @@ function ProfilePage() {
           </TabsContent>
 
           {canSeeShifts && (
-            <TabsContent value="shifts" className="mt-6">
+            <TabsContent value="shifts" className={paneClass}>
               <ShiftHistoryPanel userId={profile.id} name={display} />
             </TabsContent>
           )}
 
 
-          <TabsContent value="friends" className="mt-6">
+          <TabsContent value="friends" className={paneClass}>
             <ActivityCard title={isOwner ? "Your friends" : `${display}'s friends`} icon={UserPlus} empty={isOwner ? "No friends yet. Visit a member's profile and send a friend request." : "No friends yet."}>
               {friends.map((f) => (
                 <li key={f.friendship_id} className="flex items-center justify-between gap-3 py-2 text-sm">
@@ -792,7 +799,7 @@ function ProfilePage() {
           </TabsContent>
 
           {canSeeReferrals && (
-            <TabsContent value="referrals" className="mt-6">
+            <TabsContent value="referrals" className={paneClass}>
               <ReferralsPanel
                 referrals={referrals}
                 isOwner={isOwner}
@@ -810,13 +817,13 @@ function ProfilePage() {
           )}
 
           {isOwner && (
-            <TabsContent value="notifications" className="mt-6">
+            <TabsContent value="notifications" className={paneClass}>
               <SoundSettings />
             </TabsContent>
           )}
 
           {isOwner && (
-            <TabsContent value="theme" className="mt-6">
+            <TabsContent value="theme" className={paneClass}>
               <PersonalThemePanel />
             </TabsContent>
           )}
