@@ -535,8 +535,21 @@ function QueueRow({
     if (action === "import" && !category) return toast.error("Pick a category");
     setBusy(action);
     try {
-      await resolveFn({ data: { id: item.id, action, category: category || undefined, subcategory, title, time } });
-      toast.success(action === "import" ? "Imported as draft" : "Discarded");
+      await resolveFn({
+        data: {
+          id: item.id,
+          action,
+          category: category || undefined,
+          subcategories,
+          title,
+          time,
+        },
+      });
+      toast.success(
+        action === "import"
+          ? `Imported as draft${subcategories.length > 1 ? ` in ${subcategories.length} subcategories` : ""}`
+          : "Discarded",
+      );
       onResolved();
     } catch (e: any) {
       toast.error(e.message ?? "Failed");
