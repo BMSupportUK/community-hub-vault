@@ -84,7 +84,10 @@ function isOfficeOpen(hours: OfficeHour[], now: Date, holidays: BankHolidayMap =
 
 // Shared opening-hours panel: live summary cards + the full weekly table.
 // Used by the header dialog and embedded directly on the tickets page.
-export function OfficeHoursSchedule({ channelName = "office-hours-live" }: { channelName?: string }) {
+export function OfficeHoursSchedule({
+  channelName = "office-hours-live",
+  layout = "table",
+}: { channelName?: string; layout?: "table" | "compact" }) {
   const timezone = useUserTimezone();
   const holidays = useUkBankHolidays();
   const [hours, setHours] = useState<OfficeHour[]>([]);
