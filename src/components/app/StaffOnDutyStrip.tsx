@@ -368,29 +368,6 @@ export function StaffOnDutyStrip({
 
   const clockedInIds = useMemo(() => new Set(shifts.map((s) => s.user_id)), [shifts]);
 
-  /** Next rota slot — only once the current shift has ended. Same stacked
-   *  UK-office / your-time panel as the working-status shift display. */
-  const renderNextShift = (userId: string) => {
-    // While the member is clocked in / mid-shift, the next slot is noise.
-    if (clockedInIds.has(userId)) return null;
-    const slot = nextShifts[userId];
-    if (!slot) return null;
-
-    const { date: ukDate, time: ukTime } = londonNow(now);
-    const running =
-      slot.shift_date === ukDate && slot.start_time <= ukTime && slot.end_time > ukTime;
-
-    return (
-      <div className="mt-2">
-        <NextShiftPanel
-          slot={{ id: userId, ...slot }}
-          heading={running ? "Shift today" : "Next shift"}
-          tone="amber"
-        />
-      </div>
-    );
-  };
-
   /** Seed row for the shared Talk member card; the card refetches full details. */
   const talkFallbackRow = (userId: string): Omit<TalkMemberProfileRow, "user_id"> => {
     const p = profiles[userId];
