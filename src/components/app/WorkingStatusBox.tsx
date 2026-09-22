@@ -101,10 +101,9 @@ export function WorkingStatusBox({
         setBrk(null);
       }
       // Next claimed rota slot (today, still to come — or any future day).
-      const today = new Date();
-      const pad = (n: number) => String(n).padStart(2, "0");
-      const todayStr = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
-      const nowTime = `${pad(today.getHours())}:${pad(today.getMinutes())}:00`;
+      const london = londonNow();
+      const todayStr = london.date;
+      const nowTime = london.time;
       const { data: slots } = await supabase
         .from("shift_slots")
         .select("id,shift_date,start_time,end_time")
