@@ -576,23 +576,26 @@ function EventRow({
 function QueueRow({
   item,
   time,
+  zone,
   selected,
   onSelect,
   onZoneApply,
 }: {
   item: QueueItem;
   time: string | null;
+  zone: TimeZoneChoice | null;
   selected: boolean;
   onSelect: () => void;
-  onZoneApply: (dual: string, zone: "gmt" | "et") => void;
+  onZoneApply: (shown: string, zone: "gmt" | "et") => void;
 }) {
   const ev = item.parsed_event ?? {};
 
   // Telegram blocks arrive whole with no time pulled out — fall back to the
   // first clock time written inside the post itself.
-  const zoneSource = time ?? firstClockIn(String(ev.raw ?? item.raw_text ?? ""));
+  const zoneSource = firstClockIn(String(ev.raw ?? item.raw_text ?? "")) ?? time;
   const zoneDate = ev.date ?? firstDateIn(String(ev.raw ?? item.raw_text ?? ""));
-  const needsZone = !hasBothZones(time) && parseClockTime(zoneSource) !== null;
+  // Always offer the choice so a wrong pick can be changed before importing.
+  const needsZone = parseClockTime(zoneSource) !== null;
 
   return (
     <Card
@@ -611,31 +614,23 @@ function QueueRow({
       </div>
       {needsZone && (
         <div className="flex flex-wrap items-center gap-2" onClick={(e) => e.stopPropagation()}>
-          <span className="text-[11px] text-muted-foreground">Start time in this post is:</span>
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-7 px-2 text-xs"
-            onClick={() => {
-              const dual = buildDualTime(zoneSource, zoneDate, "gmt");
-              if (!dual) return toast.error("Couldn't read the time on this post");
-              onZoneApply(dual, "gmt");
-            }}
-          >
-            <Clock className="size-3" /> UK
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-7 px-2 text-xs"
-            onClick={() => {
-              const dual = buildDualTime(zoneSource, zoneDate, "et");
-              if (!dual) return toast.error("Couldn't read the time on this post");
-              onZoneApply(dual, "et");
-            }}
-          >
-            <Clock className="size-3" /> ET
-          </Button>
+          <span className="text-[11px] text-muted-foreground">Start times in this post are:</span>
+          {(["gmt", "et"] as const).map((z) => (
+            <Button
+              key={z}
+              size="sm"
+              variant={zone === z ? "default" : "outline"}
+              className="h-7 px-2 text-xs"
+              onClick={() => {
+                const shown = toSingleZoneTime(zoneSource, zoneDate, z);
+                if (!shown) return toast.error("Couldn't read the time on this post");
+                onZoneApply(shown, z);
+              }}
+            >
+              <Clock className="size-3" /> {z === "gmt" ? "UK" : "ET"}
+            </Button>
+          ))}
+          {zone && <span className="text-[11px] text-muted-foreground">Tap the other button to change it</span>}
         </div>
       )}
       {!selected && (
