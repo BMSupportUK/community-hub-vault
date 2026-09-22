@@ -186,14 +186,31 @@ export function EmailHtmlEditor({ value, onChange, placeholders }: Props) {
           >
             <Minus className="size-4" />
           </Button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(ev) => {
+              const file = ev.target.files?.[0];
+              ev.target.value = "";
+              if (file) void upload(file);
+            }}
+          />
           <Button
             type="button"
-            size="icon"
+            size="sm"
             variant="ghost"
-            title="Image"
-            onClick={() => wrap('<img src="https://bmsupport.uk/logo.png" alt="" width="140" style="display:block" />')}
+            title="Upload an image"
+            disabled={uploading}
+            onClick={() => fileRef.current?.click()}
           >
-            <Image className="size-4" />
+            {uploading ? (
+              <Loader2 className="mr-2 size-4 animate-spin" />
+            ) : (
+              <Upload className="mr-2 size-4" />
+            )}
+            Upload image
           </Button>
           {placeholders?.length ? (
             <>
