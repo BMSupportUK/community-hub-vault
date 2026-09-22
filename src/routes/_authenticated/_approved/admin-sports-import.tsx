@@ -31,6 +31,7 @@ type Cat = { id: string; name: string; parent_id: string | null; sort_order: num
 type Sub = { category_id: string; name: string; sort_order: number; is_default: boolean };
 type QueueDraft = {
   category: string;
+  group?: string;
   destinationCategory: string;
   subcategories: string[];
   title: string;
@@ -660,33 +661,42 @@ function QueueSetup({
     ? cats.filter((category) => category.parent_id === selectedCategory.id)
     : [];
   const directSubs = draft.category ? subsByCatName.get(draft.category) ?? [] : [];
+  // Box 2: the groups inside the chosen category (e.g. Rugby → Rugby League / Rugby Union,
+  // Football → Mens / Women). When a category has no groups of its own, its own
+  // sub categories act as the choices.
   const subChoices = childCategories.length > 0
-    ? childCategories.map((category) => ({ name: category.name, destinationCategory: category.name, subcategory: null }))
+    ? childCategories.map((category) => ({ name: category.name, destinationCategory: category.name, isGroup: true }))
     : directSubs.map((subcategory) => ({
         name: subcategory.name,
         destinationCategory: draft.category,
-        subcategory: subcategory.name,
+        isGroup: false,
       }));
+  const chosenChoice = subChoices.find((choice) => choice.name === (draft.group || draft.subcategories[0]));
+  // Box 3: when the chosen group has its own sub categories, list them too.
+  const groupSubs = chosenChoice?.isGroup ? subsByCatName.get(chosenChoice.name) ?? [] : [];
   const selectedSubcategory = draft.subcategories[0] ?? "";
+  const readyForGuides = Boolean(
+    draft.destinationCategory && (groupSubs.length === 0 || selectedSubcategory),
+  );
   // Guide names already used inside the chosen category.
   const guidesFn = useServerFn(listGuidesInCategory);
   const [guides, setGuides] = useState<{ id: string; title: string; subcategory: string | null }[]>([]);
   const [loadingGuides, setLoadingGuides] = useState(false);
   useEffect(() => {
-    if (!draft.destinationCategory || !selectedSubcategory) { setGuides([]); return; }
+    if (!readyForGuides) { setGuides([]); return; }
     let alive = true;
     setLoadingGuides(true);
     guidesFn({
       data: {
         category: draft.destinationCategory,
-        subcategory: childCategories.length > 0 ? null : selectedSubcategory,
+        subcategory: selectedSubcategory || null,
       },
     })
       .then((d: any) => { if (alive) setGuides(d.guides ?? []); })
       .catch(() => { if (alive) setGuides([]); })
       .finally(() => { if (alive) setLoadingGuides(false); });
     return () => { alive = false; };
-  }, [draft.destinationCategory, selectedSubcategory]);
+  }, [draft.destinationCategory, selectedSubcategory, readyForGuides]);
 
   const run = async (action: "import" | "discard") => {
     if (!item) return;
@@ -699,7 +709,7 @@ function QueueSetup({
           id: item.id,
           action,
           category: draft.destinationCategory || undefined,
-          subcategories: draft.guideId || childCategories.length > 0 ? [] : draft.subcategories,
+          subcategories: draft.guideId ? [] : draft.subcategories,
           title: draft.title,
           guideId: draft.guideId ?? undefined,
           time: draft.time,
@@ -745,7 +755,7 @@ function QueueSetup({
               <button
                 key={c.id}
                 type="button"
-                onClick={() => setDraft({ ...draft, category: c.name, destinationCategory: "", subcategories: [], guideId: null })}
+                onClick={() => setDraft({ ...draft, category: c.name, group: "", destinationCategory: "", subcategories: [], guideId: null })}
                 className={`flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm transition ${
                   on ? "bg-primary/10 font-medium text-primary" : "hover:bg-muted/60"
                 }`}
@@ -767,15 +777,18 @@ function QueueSetup({
         {subChoices.length > 0 ? (
           <div className="max-h-64 space-y-1.5 overflow-y-auto pr-1">
             {subChoices.map((choice) => {
-              const on = selectedSubcategory === choice.name;
+              const on = choice.isGroup
+                ? draft.group === choice.name
+                : selectedSubcategory === choice.name;
               return (
                 <button
                   key={choice.name}
                   type="button"
                   onClick={() => setDraft({
                     ...draft,
+                    group: choice.isGroup ? choice.name : "",
                     destinationCategory: choice.destinationCategory,
-                    subcategories: [choice.name],
+                    subcategories: choice.isGroup ? [] : [choice.name],
                     guideId: null,
                   })}
                   className={`flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left text-sm transition ${
@@ -797,9 +810,37 @@ function QueueSetup({
         )}
       </div>
 
+      {groupSubs.length > 0 && (
+        <div className="space-y-1.5">
+          <span className="text-[11px] font-medium text-muted-foreground">
+            2b · The sub categories in {draft.group}
+          </span>
+          <div className="max-h-56 space-y-1.5 overflow-y-auto pr-1">
+            {groupSubs.map((sub) => {
+              const on = selectedSubcategory === sub.name;
+              return (
+                <button
+                  key={sub.name}
+                  type="button"
+                  onClick={() => setDraft({ ...draft, subcategories: [sub.name], guideId: null })}
+                  className={`flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left text-sm transition ${
+                    on
+                      ? "border-primary bg-primary/10 font-medium text-primary"
+                      : "border-border bg-card hover:bg-muted/60"
+                  }`}
+                >
+                  <span className="truncate">{sub.name}</span>
+                  <span className="text-xs">{on ? "✓" : ""}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="space-y-1.5">
         <span className="text-[11px] font-medium text-muted-foreground">3 · The name of the guide we created</span>
-        {!selectedSubcategory ? (
+        {!readyForGuides ? (
           <p className="text-[11px] text-muted-foreground">Pick a sub category first.</p>
         ) : loadingGuides ? (
           <p className="flex items-center gap-2 text-[11px] text-muted-foreground">
