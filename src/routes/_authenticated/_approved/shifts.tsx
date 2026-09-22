@@ -1069,6 +1069,11 @@ function ShiftsPage() {
                       )}
                     </div>
                     <div className="font-mono text-primary mt-1">{fmtRange(s.shift_date, s.start_time, s.end_time)}</div>
+                    {deviceRange(s.shift_date, s.start_time, s.end_time) && (
+                      <div className="text-[11px] text-accent-foreground/90 mt-0.5">
+                        Your time ({browserTz}): <span className="font-mono">{deviceRange(s.shift_date, s.start_time, s.end_time)}</span>
+                      </div>
+                    )}
                     <div className="text-xs text-muted-foreground mt-1 uppercase">{s.slot_type}</div>
                     {s.notes && <div className="text-sm text-muted-foreground mt-2">{s.notes}</div>}
                     {(() => {
