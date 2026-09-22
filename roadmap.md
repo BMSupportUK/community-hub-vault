@@ -1,7 +1,7 @@
 # Roadmap
 
 ## Current
-- [ ] Telegram → Sports Guide importer: webhook receiver, queue ingestion with AI category guesses, Review Queue source filter + approve-all, webhook registration (telegram connector linked; bot created by user via @BotFather)
+- [x] Telegram → Sports Guide importer: imported listings save as drafts and open directly in the guide editor for date entry
 
 ## Done (recent)
 - [x] Header clocks + office-hours dialog, live dates, England public holiday closures

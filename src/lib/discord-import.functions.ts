@@ -359,6 +359,8 @@ export const resolveQueueItem = createServerFn({ method: "POST" })
     if (!item) throw new Error("Queue item not found");
     if (item.status !== "pending") throw new Error("Already resolved");
 
+    const guideIds: string[] = [];
+
     if (data.action === "import") {
       if (!data.category) throw new Error("Category required to import");
       const { data: cat, error: cErr } = await supabaseAdmin
@@ -389,9 +391,14 @@ export const resolveQueueItem = createServerFn({ method: "POST" })
           .join("");
         const { error: updateErr } = await supabaseAdmin
           .from("sports_blogs")
-          .update({ body: `${existingBody}${separator}${safeBlock}`, updated_at: new Date().toISOString() })
+          .update({
+            body: `${existingBody}${separator}${safeBlock}`,
+            published: false,
+            updated_at: new Date().toISOString(),
+          })
           .eq("id", data.guideId);
         if (updateErr) throw new Error(updateErr.message);
+        guideIds.push(data.guideId);
       } else {
       // One draft per chosen subcategory (none chosen → a single draft
       // straight under the category).
@@ -411,8 +418,12 @@ export const resolveQueueItem = createServerFn({ method: "POST" })
           created_by: userId,
         })),
       );
-      const { error: insErr } = await supabaseAdmin.from("sports_blogs").insert(rows);
+       const { data: inserted, error: insErr } = await supabaseAdmin
+         .from("sports_blogs")
+         .insert(rows)
+         .select("id");
       if (insErr) throw new Error(insErr.message);
+       guideIds.push(...(inserted ?? []).map((row: { id: string }) => row.id));
       }
     }
 
@@ -426,7 +437,7 @@ export const resolveQueueItem = createServerFn({ method: "POST" })
       .eq("id", data.id);
     if (upErr) throw new Error(upErr.message);
 
-    return { ok: true };
+    return { ok: true, guideIds };
   });
 
 /**
