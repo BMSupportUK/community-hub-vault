@@ -341,6 +341,12 @@ export function StaffOnDutyStrip({
 
   const daneShift = allOrderedShifts.find((s) => isDaneJProfile(profiles[s.user_id]));
   const orderedShifts = allOrderedShifts.filter((s) => !isDaneJProfile(profiles[s.user_id]));
+  // TEMP arrow test — remove before finishing.
+  const __arrowTest = typeof window !== "undefined" && window.location.search.includes("__arrowtest");
+  const orderedShiftsForRender = __arrowTest
+    ? Array.from({ length: 6 }, (_, i) => ({ id: `test-${i}`, user_id: `test-${i}`, clock_in: new Date().toISOString() }))
+    : orderedShifts;
+
 
   const allVisibleOffDuty = useMemo(
     () => offDuty.filter((p) => !hideRoles.includes(p.role) && (!allowedIds || allowedIds.has(p.id))),
