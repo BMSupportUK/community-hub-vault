@@ -475,7 +475,7 @@ export function Clocks() {
           <span className="font-mono text-sm font-semibold tabular-nums text-foreground">{officeTime}</span>
           <span className="text-[10px] text-muted-foreground">{officeDate}</span>
         </div>
-        <div aria-hidden="true" className="mx-0.5 h-8 w-px shrink-0 self-center bg-border/70" />
+        <div aria-hidden="true" className="mx-1 h-9 w-[3px] shrink-0 self-center rounded-full bg-primary shadow-[0_0_12px_var(--color-primary)]" />
         <div className="flex min-w-0 flex-col leading-tight">
           <span className="text-[10px] font-medium text-muted-foreground">Your time</span>
           <span className="font-mono text-sm font-semibold tabular-nums text-foreground">{headerTime}</span>
