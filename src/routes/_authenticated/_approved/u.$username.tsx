@@ -508,9 +508,11 @@ function ProfilePage() {
   // staff member themselves plus the wider support team.
   const isStaffProfile = sortedRoles.some((r) => ["admin", "management", "staff", "moderator"].includes(r));
   const canSeeShifts = isStaffProfile && (isOwner || hasAny(["admin", "management", "staff", "moderator"]));
+  const canSeeSubscription = isStaffProfile && isOwner && hasAssignedCreds;
 
   const tabDefs = [
     { id: "profile", label: "Profile" },
+    ...(canSeeSubscription ? [{ id: "subscription", label: "Subscription" }] : []),
     ...(canSeeCreds ? [{ id: "creds", label: "Credentials" }] : []),
     { id: "tickets", label: `Tickets (${tickets.length})` },
     { id: "friends", label: `Friends (${friends.length})` },
