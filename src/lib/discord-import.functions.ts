@@ -336,6 +336,8 @@ const ResolveInput = z.object({
   category: z.string().max(100).optional(),
   subcategory: z.string().max(100).nullable().optional(),
   title: z.string().max(500).optional(),
+  /** Staff-confirmed kick-off time, e.g. "19:45 GMT · 14:45 EDT". */
+  time: z.string().max(100).nullable().optional(),
 });
 
 export const resolveQueueItem = createServerFn({ method: "POST" })
@@ -363,7 +365,8 @@ export const resolveQueueItem = createServerFn({ method: "POST" })
         .maybeSingle();
       if (cErr) throw new Error(cErr.message);
       if (!cat) throw new Error("Category not found");
-      const ev: any = item.parsed_event ?? {};
+      const ev: any = { ...((item.parsed_event ?? {}) as Record<string, unknown>) };
+      if (data.time !== undefined) ev.time = data.time;
       const title = data.title ?? ev.title ?? "Untitled";
       const coverUrl = await ensureSportCover((cat as any).id, data.category, data.subcategory ?? null);
       const { error: insErr } = await supabaseAdmin.from("sports_blogs").insert({
