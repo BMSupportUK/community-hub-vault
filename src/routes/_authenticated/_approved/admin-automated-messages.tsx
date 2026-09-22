@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { clearAutomatedMessageCache } from "@/lib/automated-messages";
+import { EmailHtmlEditor } from "@/components/app/EmailHtmlEditor";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-automated-messages")({
   component: AdminAutomatedMessagesPage,
