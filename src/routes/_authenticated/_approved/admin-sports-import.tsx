@@ -560,10 +560,13 @@ function QueueRow({
 
   return (
     <Card className="p-3 space-y-2">
-      <Input value={title} onChange={(e) => setTitle(e.target.value)} className="font-medium" />
+      {ev.raw && <pre className="text-xs bg-muted/50 rounded p-2 whitespace-pre-wrap break-words max-h-24 overflow-auto">{ev.raw}</pre>}
       <div className="text-xs text-muted-foreground">
         {[ev.date, time].filter(Boolean).join(" · ")}
         {Array.isArray(ev.channels) && ev.channels.length > 0 && <> · {ev.channels.join(" • ")}</>}
+        {item.source === "telegram" && (
+          <>{ev.date || time || (Array.isArray(ev.channels) && ev.channels.length > 0) ? " · " : ""}via Telegram{item.forwarded_from ? ` · forwarded from ${item.forwarded_from}` : ""}</>
+        )}
       </div>
       {needsZone && (
         <div className="flex flex-wrap items-center gap-2">
@@ -576,23 +579,20 @@ function QueueRow({
           </Button>
         </div>
       )}
-      {item.source === "telegram" && (
-        <div className="text-[11px] text-muted-foreground">
-          via Telegram{item.forwarded_from ? ` · forwarded from ${item.forwarded_from}` : ""}
-        </div>
-      )}
-      {ev.raw && <pre className="text-xs bg-muted/50 rounded p-2 whitespace-pre-wrap break-words max-h-24 overflow-auto">{ev.raw}</pre>}
-      <Select value={category} onValueChange={(v) => { setCategory(v); setSubcategories([]); }}>
-        <SelectTrigger><SelectValue placeholder="Category" /></SelectTrigger>
-        <SelectContent>
-          {cats.map((c) => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
-        </SelectContent>
-      </Select>
+      <div className="space-y-1">
+        <span className="text-[11px] font-medium text-muted-foreground">1 · Category</span>
+        <Select value={category} onValueChange={(v) => { setCategory(v); setSubcategories([]); }}>
+          <SelectTrigger><SelectValue placeholder="Pick a category" /></SelectTrigger>
+          <SelectContent>
+            {cats.map((c) => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
       {subs.length > 0 && (
         <div className="space-y-1.5">
           <div className="flex items-center justify-between gap-2">
-            <span className="text-[11px] text-muted-foreground">
-              Subcategories {subcategories.length > 0 && `· ${subcategories.length} selected`}
+            <span className="text-[11px] font-medium text-muted-foreground">
+              2 · Sub Category{subcategories.length > 0 && ` · ${subcategories.length} selected`}
             </span>
             <div className="flex gap-1">
               <Button
@@ -638,6 +638,10 @@ function QueueRow({
           </div>
         </div>
       )}
+      <div className="space-y-1">
+        <span className="text-[11px] font-medium text-muted-foreground">3 · Name of the guide</span>
+        <Input value={title} onChange={(e) => setTitle(e.target.value)} className="font-medium" placeholder="Name of the guide" />
+      </div>
       <div className="flex justify-end gap-2">
         <Button variant="outline" size="sm" onClick={() => run("discard")} disabled={busy !== null}>
           {busy === "discard" ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
