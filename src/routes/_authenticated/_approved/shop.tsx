@@ -2955,7 +2955,7 @@ function OrdersView({
     "processing",
   );
   const [month, setMonth] = useState(() => new Date().getMonth());
-  const currentYear = new Date().getFullYear();
+  const [year, setYear] = useState(() => new Date().getFullYear());
   const monthLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const clearSelectedOrder = () => {
     if (!selectedId) return;
@@ -2970,12 +2970,13 @@ function OrdersView({
       if (o) {
         setOrdersTab(tabForStatus(o.status));
         const createdAt = new Date(o.created_at);
-        if (!Number.isNaN(createdAt.getTime()) && createdAt.getFullYear() === currentYear) {
+        if (!Number.isNaN(createdAt.getTime())) {
+          setYear(createdAt.getFullYear());
           setMonth(createdAt.getMonth());
         }
       }
     }
-  }, [selectedId, orders, currentYear]);
+  }, [selectedId, orders]);
 
   const load = async () => {
     let q = supabase.from("orders").select("*").order("created_at", { ascending: false });
@@ -3041,9 +3042,18 @@ function OrdersView({
     };
   }, [scope, user?.id, adminUnlocked]);
 
+  const availableYears = Array.from(
+    new Set(
+      orders
+        .map((order) => new Date(order.created_at))
+        .filter((d) => !Number.isNaN(d.getTime()))
+        .map((d) => d.getFullYear())
+        .concat(new Date().getFullYear()),
+    ),
+  ).sort((a, b) => b - a);
   const currentYearOrders = orders.filter((order) => {
     const createdAt = new Date(order.created_at);
-    return !Number.isNaN(createdAt.getTime()) && createdAt.getFullYear() === currentYear;
+    return !Number.isNaN(createdAt.getTime()) && createdAt.getFullYear() === year;
   });
   const monthCounts = monthLabels.map(
     (_, index) => currentYearOrders.filter((order) => new Date(order.created_at).getMonth() === index).length,
@@ -3176,6 +3186,25 @@ function OrdersView({
       </header>
 
       <div className="relative px-4 md:px-8 py-6">
+        {availableYears.length > 1 && (
+          <div className="mb-2 flex max-w-full gap-1.5 overflow-x-auto pb-1 scrollbar-hide" aria-label="Order year">
+            {availableYears.map((y) => (
+              <Button
+                key={y}
+                type="button"
+                size="sm"
+                variant={year === y ? "default" : "outline"}
+                onClick={() => {
+                  setYear(y);
+                  clearSelectedOrder();
+                }}
+                className="h-8 shrink-0 px-3 text-xs"
+              >
+                {y}
+              </Button>
+            ))}
+          </div>
+        )}
         <div className="mb-4 flex max-w-full gap-1.5 overflow-x-auto pb-1 scrollbar-hide" aria-label="Order month">
           {monthLabels.map((label, index) => (
             <Button
@@ -3291,7 +3320,7 @@ function MyOrdersTab({ onOpenOrder }: { onOpenOrder: (id: string) => void }) {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<"processing" | "completed" | "cancelled">("processing");
   const [month, setMonth] = useState(() => new Date().getMonth());
-  const currentYear = new Date().getFullYear();
+  const [year, setYear] = useState(() => new Date().getFullYear());
 
   useEffect(() => {
     if (!user) {
@@ -3333,20 +3362,33 @@ function MyOrdersTab({ onOpenOrder }: { onOpenOrder: (id: string) => void }) {
   }, [user?.id]);
 
   const monthLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const availableYears = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          orders
+            .map((order) => new Date(order.created_at))
+            .filter((d) => !Number.isNaN(d.getTime()))
+            .map((d) => d.getFullYear())
+            .concat(new Date().getFullYear()),
+        ),
+      ).sort((a, b) => b - a),
+    [orders],
+  );
   const monthCounts = useMemo(() => {
     const counts = Array.from({ length: 12 }, () => 0);
     for (const order of orders) {
       const date = new Date(order.created_at);
-      if (!Number.isNaN(date.getTime()) && date.getFullYear() === currentYear) counts[date.getMonth()] += 1;
+      if (!Number.isNaN(date.getTime()) && date.getFullYear() === year) counts[date.getMonth()] += 1;
     }
     return counts;
-  }, [orders, currentYear]);
+  }, [orders, year]);
   const monthOrders = useMemo(
     () => orders.filter((order) => {
       const date = new Date(order.created_at);
-      return date.getFullYear() === currentYear && date.getMonth() === month;
+      return date.getFullYear() === year && date.getMonth() === month;
     }),
-    [orders, month, currentYear],
+    [orders, month, year],
   );
   const processingOrders = monthOrders.filter((o) =>
     ["pending", "processing", "paid"].includes(o.status),
@@ -3430,6 +3472,22 @@ function MyOrdersTab({ onOpenOrder }: { onOpenOrder: (id: string) => void }) {
       </header>
 
       <div className="relative px-4 md:px-6 py-6">
+        {availableYears.length > 1 && (
+          <div className="mb-2 flex max-w-full gap-1.5 overflow-x-auto pb-1 scrollbar-hide" aria-label="Order year">
+            {availableYears.map((y) => (
+              <Button
+                key={y}
+                type="button"
+                size="sm"
+                variant={year === y ? "default" : "outline"}
+                onClick={() => setYear(y)}
+                className="h-8 shrink-0 px-3 text-xs"
+              >
+                {y}
+              </Button>
+            ))}
+          </div>
+        )}
         <div className="mb-4 flex max-w-full gap-1.5 overflow-x-auto pb-1 scrollbar-hide" aria-label="Order month">
           {monthLabels.map((label, index) => (
             <Button

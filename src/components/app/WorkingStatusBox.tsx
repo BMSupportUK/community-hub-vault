@@ -29,6 +29,28 @@ type Shift = { id: string; clock_in: string };
 type Break = { id: string; kind: BreakKind; started_at: string };
 type NextSlot = { id: string; shift_date: string; start_time: string; end_time: string };
 
+// Rota dates/times are UK office wall-clock, so always compare against London,
+// never the staff member's device timezone.
+function londonNow(at: number | Date = Date.now()) {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/London",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).formatToParts(new Date(at));
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "00";
+  const hour = get("hour") === "24" ? "00" : get("hour");
+  return {
+    date: `${get("year")}-${get("month")}-${get("day")}`,
+    time: `${hour}:${get("minute")}:${get("second")}`,
+    minutes: Number(hour) * 60 + Number(get("minute")),
+  };
+}
+
 export function WorkingStatusBox({
   stackActions = false,
   variant = "card",
@@ -79,10 +101,9 @@ export function WorkingStatusBox({
         setBrk(null);
       }
       // Next claimed rota slot (today, still to come — or any future day).
-      const today = new Date();
-      const pad = (n: number) => String(n).padStart(2, "0");
-      const todayStr = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
-      const nowTime = `${pad(today.getHours())}:${pad(today.getMinutes())}:00`;
+      const london = londonNow();
+      const todayStr = london.date;
+      const nowTime = london.time;
       const { data: slots } = await supabase
         .from("shift_slots")
         .select("id,shift_date,start_time,end_time")
@@ -129,15 +150,13 @@ export function WorkingStatusBox({
   }, [user?.id]);
 
   // Sign-in opens 15 minutes before the rota start time and closes at shift end.
+  // Compared in UK office time so staff on other device timezones get the same window.
   const canSignIn = (() => {
     if (!todayWindow) return false;
     const [sh, sm] = todayWindow.start.split(":").map(Number);
-    const opensAt = new Date(now);
-    opensAt.setHours(sh, sm - 15, 0, 0);
-    const t = new Date(now);
-    const pad = (n: number) => String(n).padStart(2, "0");
-    const nowTime = `${pad(t.getHours())}:${pad(t.getMinutes())}:${pad(t.getSeconds())}`;
-    return now >= opensAt.getTime() && nowTime <= todayWindow.end;
+    const { time: nowTime, minutes: nowMinutes } = londonNow(now);
+    const opensAtMinutes = sh * 60 + sm - 15;
+    return nowMinutes >= opensAtMinutes && nowTime <= todayWindow.end;
   })();
 
   const clockIn = async () => {
