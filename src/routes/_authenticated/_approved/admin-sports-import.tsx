@@ -457,14 +457,19 @@ function AdminSportsImportPage() {
                           q.id === selectedId
                             ? draft.time
                             : stored ?? (q.parsed_event?.time ? String(q.parsed_event.time) : null);
+                        const zone =
+                          q.id === selectedId
+                            ? draft.sourceZone
+                            : sourceZoneStore.current.get(q.id) ?? null;
                         return (
                           <QueueRow
                             key={q.id}
                             item={q}
                             time={t}
+                            zone={zone}
                             selected={selectedId === q.id}
                             onSelect={() => selectItem(q)}
-                            onZoneApply={(dual, zone) => applyZoneToItem(q.id, dual, zone)}
+                            onZoneApply={(shown, z) => applyZoneToItem(q.id, shown, z)}
                           />
                         );
                       })}
