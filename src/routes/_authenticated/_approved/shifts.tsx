@@ -169,7 +169,27 @@ function useLocalDisplayTz(rotaTz: string) {
   };
   const fmtRange = (dateStr: string, start: string, end: string) =>
     `${fmtTime(dateStr, start)}–${fmtTime(dateStr, end)}`;
-  return { localMode, toggle, browserTz, fmtTime, fmtRange };
+  // Always-on device-time line: shows the shift in the viewer's device timezone.
+  // Returns null when the device already matches the rota zone, or when the
+  // main range is already being shown in local time.
+  const inBrowserTz = (dateStr: string, timeStr: string) => {
+    const ms = zonedWallTimeToUtcMs(dateStr, timeStr, rotaTz);
+    if (isNaN(ms)) return null;
+    return new Intl.DateTimeFormat("en-GB", {
+      timeZone: browserTz,
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).format(new Date(ms));
+  };
+  const deviceRange = (dateStr: string, start: string, end: string) => {
+    if (localMode || browserTz === rotaTz) return null;
+    const a = inBrowserTz(dateStr, start);
+    const b = inBrowserTz(dateStr, end);
+    if (!a || !b) return null;
+    return `${a}–${b}`;
+  };
+  return { localMode, toggle, browserTz, fmtTime, fmtRange, deviceRange };
 }
 
 function ShiftsPage() {
