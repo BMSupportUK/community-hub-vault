@@ -169,7 +169,27 @@ function useLocalDisplayTz(rotaTz: string) {
   };
   const fmtRange = (dateStr: string, start: string, end: string) =>
     `${fmtTime(dateStr, start)}–${fmtTime(dateStr, end)}`;
-  return { localMode, toggle, browserTz, fmtTime, fmtRange };
+  // Always-on device-time line: shows the shift in the viewer's device timezone.
+  // Returns null when the device already matches the rota zone, or when the
+  // main range is already being shown in local time.
+  const inBrowserTz = (dateStr: string, timeStr: string) => {
+    const ms = zonedWallTimeToUtcMs(dateStr, timeStr, rotaTz);
+    if (isNaN(ms)) return null;
+    return new Intl.DateTimeFormat("en-GB", {
+      timeZone: browserTz,
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).format(new Date(ms));
+  };
+  const deviceRange = (dateStr: string, start: string, end: string) => {
+    if (localMode || browserTz === rotaTz) return null;
+    const a = inBrowserTz(dateStr, start);
+    const b = inBrowserTz(dateStr, end);
+    if (!a || !b) return null;
+    return `${a}–${b}`;
+  };
+  return { localMode, toggle, browserTz, fmtTime, fmtRange, deviceRange };
 }
 
 function ShiftsPage() {
@@ -177,7 +197,7 @@ function ShiftsPage() {
   const isAdmin = hasAny(["admin", "management"]);
   const isStaffOrAdmin = hasAny(["admin", "management", "staff"]);
   const { toUtcMs, tz } = useTimezone();
-  const { localMode, toggle: toggleLocalTz, browserTz, fmtRange } = useLocalDisplayTz(tz);
+  const { localMode, toggle: toggleLocalTz, browserTz, fmtRange, deviceRange } = useLocalDisplayTz(tz);
   const isMod = hasRole("moderator");
   const canPick = isStaffOrAdmin || isMod;
   // Daily block-shift quota: Owner 2, Management 1, Staff 3.
@@ -885,6 +905,11 @@ function ShiftsPage() {
                                     <div className="font-mono text-foreground">{fmtRange(s.shift_date, s.start_time, s.end_time)}</div>
                                     <span className={cn("text-[10px] px-1.5 py-0.5 rounded uppercase font-semibold", s.slot_type === "hourly" ? "bg-accent/30 text-accent-foreground" : "bg-primary/30 text-foreground")}>{s.slot_type === "hourly" ? "hourly" : "shift"}</span>
                                   </div>
+                                  {deviceRange(s.shift_date, s.start_time, s.end_time) && (
+                                    <div className="text-[10px] text-accent-foreground/90 mt-0.5">
+                                      Your time: <span className="font-mono">{deviceRange(s.shift_date, s.start_time, s.end_time)}</span>
+                                    </div>
+                                  )}
                                   {s.notes && <div className="text-muted-foreground mt-0.5">{s.notes}</div>}
                                   <div className="mt-1.5 flex items-center justify-between gap-1">
                                     <div className="text-muted-foreground truncate">{taken ? profName(s.assigned_to) : "Open"}</div>
@@ -989,6 +1014,11 @@ function ShiftsPage() {
                       {ds.map((s) => (
                         <div key={s.id} className={cn("rounded-lg p-2 border text-xs", s.assigned_to === user?.id ? "bg-primary/20 border-primary/50" : "bg-surface-2 border-border")}>
                           <div className="font-mono text-foreground">{fmtRange(s.shift_date, s.start_time, s.end_time)}</div>
+                          {deviceRange(s.shift_date, s.start_time, s.end_time) && (
+                            <div className="text-[10px] text-accent-foreground/90 mt-0.5">
+                              Your time: <span className="font-mono">{deviceRange(s.shift_date, s.start_time, s.end_time)}</span>
+                            </div>
+                          )}
                           <div className="text-muted-foreground truncate mt-0.5">{profName(s.assigned_to)}</div>
                         </div>
                       ))}
@@ -1039,6 +1069,11 @@ function ShiftsPage() {
                       )}
                     </div>
                     <div className="font-mono text-primary mt-1">{fmtRange(s.shift_date, s.start_time, s.end_time)}</div>
+                    {deviceRange(s.shift_date, s.start_time, s.end_time) && (
+                      <div className="text-[11px] text-accent-foreground/90 mt-0.5">
+                        Your time ({browserTz}): <span className="font-mono">{deviceRange(s.shift_date, s.start_time, s.end_time)}</span>
+                      </div>
+                    )}
                     <div className="text-xs text-muted-foreground mt-1 uppercase">{s.slot_type}</div>
                     {s.notes && <div className="text-sm text-muted-foreground mt-2">{s.notes}</div>}
                     {(() => {
@@ -1067,7 +1102,7 @@ function ShiftsPage() {
                 const d = new Date(histWeek); d.setDate(d.getDate() + i); return d;
               });
 
-              type Row = { key: string; iso: string; when: string; badge: string; badgeClass: string; range: string; role: string | null; note?: string };
+              type Row = { key: string; iso: string; when: string; badge: string; badgeClass: string; range: string; localRange?: string | null; role: string | null; note?: string };
               let rows: Row[] = [];
               if (histTab === "swaps") {
                 rows = mySwaps
@@ -1085,6 +1120,7 @@ function ShiftsPage() {
                           ? "bg-emerald-500/20 border-emerald-400/40 text-emerald-100"
                           : "bg-rose-500/20 border-rose-400/40 text-rose-100",
                       range: s.slot ? fmtRange(iso, s.slot.start_time, s.slot.end_time) : "—",
+                      localRange: s.slot ? deviceRange(iso, s.slot.start_time, s.slot.end_time) : null,
                       role: s.slot?.required_role ?? null,
                       note: `${s.requester_id === user?.id ? "You asked" : `${profName(other)} asked you`}${other && s.requester_id === user?.id ? ` ${profName(other)}` : ""}`,
                     } as Row;
@@ -1103,6 +1139,7 @@ function ShiftsPage() {
                       ? "bg-emerald-500/20 border-emerald-400/40 text-emerald-100"
                       : "bg-rose-500/20 border-rose-400/40 text-rose-100",
                     range: fmtRange(b.shift_date, b.start_time, b.end_time),
+                    localRange: deviceRange(b.shift_date, b.start_time, b.end_time),
                     role: b.required_role,
                   }));
                 // Add slots currently booked to me that have no matching log entry
@@ -1120,6 +1157,7 @@ function ShiftsPage() {
                       badge: "Booked",
                       badgeClass: "bg-emerald-500/20 border-emerald-400/40 text-emerald-100",
                       range: fmtRange(s.shift_date, s.start_time, s.end_time),
+                      localRange: deviceRange(s.shift_date, s.start_time, s.end_time),
                       role: s.required_role,
                       note: "Currently booked",
                     });
@@ -1195,6 +1233,11 @@ function ShiftsPage() {
                                     )}
                                   </div>
                                   <div className="font-mono text-primary text-sm break-words">{r.range}</div>
+                                  {r.localRange && (
+                                    <div className="text-[11px] text-accent-foreground/90">
+                                      Your time: <span className="font-mono">{r.localRange}</span>
+                                    </div>
+                                  )}
                                   {r.note && <div className="text-[11px] text-foreground/80 break-words">{r.note}</div>}
                                   <div className="text-[11px] text-muted-foreground">{format(new Date(r.when), "d MMM HH:mm")}</div>
                                 </li>
@@ -1221,6 +1264,7 @@ function ShiftsPage() {
                               <span className={cn("text-[10px] px-2 py-0.5 rounded-full border font-semibold uppercase tracking-wide", r.badgeClass)}>{r.badge}</span>
                               <span className="text-foreground font-semibold">{dayLabel(new Date(`${r.iso}T00:00:00`))}</span>
                               <span className="font-mono text-primary">{r.range}</span>
+                              {r.localRange && <span className="text-[11px] text-accent-foreground/90">your time <span className="font-mono">{r.localRange}</span></span>}
                               {r.note && <span className="text-[11px] text-foreground/80">{r.note}</span>}
                               <span className="ml-auto text-xs text-muted-foreground">{format(new Date(r.when), "d MMM HH:mm")}</span>
                             </li>
