@@ -1,4 +1,4 @@
-import { createFileRoute, Navigate, Link } from "@tanstack/react-router";
+import { createFileRoute, Navigate, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
@@ -655,6 +655,7 @@ function QueueSetup({
   onResolved: () => void;
   resolveFn: (args: any) => Promise<any>;
 }) {
+  const navigate = useNavigate();
   const [busy, setBusy] = useState<"import" | "discard" | null>(null);
   const selectedCategory = cats.find((category) => category.name === draft.category);
   const childCategories = selectedCategory
@@ -704,7 +705,7 @@ function QueueSetup({
     if (action === "import" && !draft.guideId && !draft.title.trim()) return toast.error("Pick the guide this post goes into");
     setBusy(action);
     try {
-      await resolveFn({
+      const result = await resolveFn({
         data: {
           id: item.id,
           action,
@@ -717,11 +718,18 @@ function QueueSetup({
       });
       toast.success(
         action === "import"
-          ? draft.guideId ? "Added to the selected guide as a draft" : "Saved as a draft — add the date, then publish"
+          ? "Saved as a draft — add the date, then publish"
           : "Discarded",
       );
       onDone();
       onResolved();
+      const editorId = action === "import" ? result.guideIds?.[0] : undefined;
+      if (editorId) {
+        await navigate({
+          to: "/sports-guides/$id/edit",
+          params: { id: editorId },
+        });
+      }
     } catch (e: any) {
       toast.error(e.message ?? "Failed");
     } finally {
