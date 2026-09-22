@@ -79,9 +79,9 @@ function AuthLayout() {
   const shopTab = typeof search.tab === "string" ? search.tab : undefined;
   const shopView = typeof search.view === "string" ? search.view : undefined;
   const lockable = useViewportLockable();
-  // Chat surfaces pin their composer to the bottom on every device, so they
-  // stay locked to the viewport at any screen size.
-  const chatSurface = path === "/tickets" || /^\/home\/[^/]+$/.test(path);
+  // Chat surfaces pin their composer to the bottom, but only on large
+  // screens — on smaller screens the whole page scrolls like any other.
+  const chatSurface = lockable && (path === "/tickets" || /^\/home\/[^/]+$/.test(path));
   // Pages that run their own internal scrolling panels when locked.
   const selfScrolling =
     chatSurface ||
