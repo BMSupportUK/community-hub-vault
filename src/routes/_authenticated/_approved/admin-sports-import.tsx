@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { ArrowLeft, Loader2, Sparkles, Send, Trash2, Inbox, Wand2, Clock } from "lucide-react";
-import { buildDualTime, firstClockIn, firstDateIn, hasBothZones, parseClockTime, type TimeZoneChoice } from "@/lib/import-time";
+import { firstClockIn, firstDateIn, hasBothZones, parseClockTime, toSingleZoneTime, type TimeZoneChoice } from "@/lib/import-time";
 import { parseSportsListingBlock } from "@/lib/sports-listing-format";
 import {
   parseDiscordPaste,
@@ -104,11 +104,11 @@ function AdminSportsImportPage() {
     setDraft({ category: "", destinationCategory: "", subcategories: [], title: "", time: null, sourceZone: null, guideId: null });
   };
 
-  const applyZoneToItem = (itemId: string, dual: string, zone: "gmt" | "et") => {
-    timeStore.current.set(itemId, dual);
+  const applyZoneToItem = (itemId: string, shown: string, zone: "gmt" | "et") => {
+    timeStore.current.set(itemId, shown);
     sourceZoneStore.current.set(itemId, zone);
-    if (itemId === selectedId) setDraft((d) => ({ ...d, time: dual, sourceZone: zone }));
-    toast.success(`Time set from ${zone === "gmt" ? "UK" : "ET"} — ${dual}`);
+    if (itemId === selectedId) setDraft((d) => ({ ...d, time: shown, sourceZone: zone }));
+    toast.success(`Times shown in ${zone === "gmt" ? "UK" : "ET"} time — ${shown}`);
   };
 
   useEffect(() => {
