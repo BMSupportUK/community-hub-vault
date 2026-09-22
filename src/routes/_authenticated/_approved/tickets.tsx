@@ -1107,6 +1107,20 @@ function OfficeHoursPanel() {
   }, []);
 
   if (hours.length === 0) return null;
+  // Only show the "Your time" block when the user's timezone gives different
+  // dates/times from the UK office for at least one opening window.
+  const tzFormatter = (tz: string) => new Intl.DateTimeFormat("en-GB", {
+    timeZone: tz,
+    weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: false,
+  });
+  const showUserColumn = [...hours].some((hour) => {
+    if (hour.is_closed) return false;
+    const uk = tzFormatter("Europe/London");
+    const local = tzFormatter(timezone);
+    const openD = londonTimeToDate(hour.day_of_week, hour.open_time);
+    const closeD = londonTimeToDate(hour.day_of_week, hour.close_time);
+    return uk.format(openD) !== local.format(openD) || uk.format(closeD) !== local.format(closeD);
+  });
   const timezoneLabel = timezone.replaceAll("_", " ").replace("/", " / ");
   const open = isOfficeOpen(hours, now);
   const currentDateTime = (timeZone: string) => new Intl.DateTimeFormat("en-GB", {
@@ -1136,22 +1150,26 @@ function OfficeHoursPanel() {
         <Store className="size-4 shrink-0 text-primary" />
         <h3 className="font-display text-sm font-semibold">Office opening times</h3>
       </div>
-      <div className="grid grid-cols-[minmax(5.5rem,0.8fr)_minmax(0,1fr)_minmax(0,1fr)] text-xs sm:text-sm">
+      <div className={cn("grid text-xs sm:text-sm", showUserColumn
+        ? "grid-cols-[minmax(5.5rem,0.8fr)_minmax(0,1fr)_minmax(0,1fr)]"
+        : "grid-cols-[minmax(5.5rem,0.8fr)_minmax(0,1fr)]")}>
         <div className="border-b border-border/70 px-3 py-2 font-semibold text-muted-foreground">Office date</div>
-        <div className="border-b border-l border-border/70 px-3 py-2 font-semibold">
+        <div className="border-b border-border/70 px-3 py-2 font-semibold">
           <div>UK office</div>
           <div className="mt-1 flex flex-wrap items-center gap-1.5">
             <span className="font-mono text-[11px] font-normal tabular-nums text-foreground">{currentDateTime("Europe/London")}</span>
             {statusPill}
           </div>
         </div>
-        <div className="border-b border-l border-border/70 px-3 py-2 font-semibold">
-          <div>Your time · {timezoneLabel}</div>
-          <div className="mt-1 flex flex-wrap items-center gap-1.5">
-            <span className="font-mono text-[11px] font-normal tabular-nums text-foreground">{currentDateTime(timezone)}</span>
-            {statusPill}
+        {showUserColumn && (
+          <div className="border-b border-l border-border/70 px-3 py-2 font-semibold">
+            <div>Your time · {timezoneLabel}</div>
+            <div className="mt-1 flex flex-wrap items-center gap-1.5">
+              <span className="font-mono text-[11px] font-normal tabular-nums text-foreground">{currentDateTime(timezone)}</span>
+              {statusPill}
+            </div>
           </div>
-        </div>
+        )}
         {[...hours].sort((a, b) => ((a.day_of_week + 6) % 7) - ((b.day_of_week + 6) % 7)).map((hour) => {
           const localOpen = hour.is_closed ? null : londonTimeToDate(hour.day_of_week, hour.open_time);
           const localClose = hour.is_closed ? null : londonTimeToDate(hour.day_of_week, hour.close_time);
@@ -1173,12 +1191,14 @@ function OfficeHoursPanel() {
               <div className="border-b border-l border-border/50 px-3 py-2 text-muted-foreground">
                 {hour.is_closed ? "Closed" : `${formatOfficeTime(hour.open_time)}–${formatOfficeTime(hour.close_time)}`}
               </div>
-              <div className="border-b border-l border-border/50 px-3 py-2 text-muted-foreground">
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <span className="text-[11px] text-muted-foreground">{userDate}</span>
-                  <span>{hour.is_closed || !localOpen || !localClose ? "Closed" : `${localFormat.format(localOpen)}–${localFormat.format(localClose)}`}</span>
+              {showUserColumn && (
+                <div className="border-b border-l border-border/50 px-3 py-2 text-muted-foreground">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-[11px] text-muted-foreground">{userDate}</span>
+                    <span>{hour.is_closed || !localOpen || !localClose ? "Closed" : `${localFormat.format(localOpen)}–${localFormat.format(localClose)}`}</span>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           );
         })}
