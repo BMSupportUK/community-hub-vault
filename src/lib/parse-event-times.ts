@@ -787,14 +787,9 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
         break;
       }
     }
-    // If subsequent matches exist, their text becomes a caption.
+    // A second matched clock is an alternate-zone copy of the same start
+    // time, not card content. Never print it beneath the channel chips.
     let caption = "";
-    if (matches.length > 1) {
-      caption = matches
-        .slice(1)
-        .map((mx) => text.slice(mx.start, mx.end))
-        .join(" · ");
-    }
 
     // Absorb following leaf lines as name/caption even when the editor wrapped
     // them in extra containers. Stop cleanly at the next time or date heading.
