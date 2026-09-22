@@ -137,13 +137,12 @@ function AdminAutomatedMessagesPage() {
                     onChange={(ev) => patch(row.key, { subject: ev.target.value })}
                   />
                   <label className="mt-3 block text-xs font-medium text-muted-foreground">
-                    Email wording — leave blank to keep the designed email as it is
+                    Email content — plain wording or full HTML
                   </label>
-                  <Textarea
-                    className="mt-1 min-h-28"
-                    placeholder="Leave empty to use the standard designed email."
+                  <EmailHtmlEditor
                     value={row.body}
-                    onChange={(ev) => patch(row.key, { body: ev.target.value })}
+                    placeholders={row.placeholders}
+                    onChange={(next) => patch(row.key, { body: next })}
                   />
                 </>
               ) : (
