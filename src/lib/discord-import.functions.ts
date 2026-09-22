@@ -480,3 +480,36 @@ export const listCategoriesWithSubs = createServerFn({ method: "GET" })
       subcategories: subs ?? [],
     };
   });
+/**
+ * Existing sports guide names inside a category, so staff can post a
+ * listing under a guide they already use instead of typing a new name.
+ */
+export const listGuidesInCategory = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ category: z.string().max(100) }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertStaff(supabase, userId);
+    const { data: cat } = await supabaseAdmin
+      .from("sports_categories")
+      .select("id")
+      .eq("name", data.category)
+      .maybeSingle();
+    if (!cat) return { guides: [] as { title: string; subcategory: string | null }[] };
+    const { data: rows, error } = await supabaseAdmin
+      .from("sports_blogs")
+      .select("title, subcategory, created_at")
+      .eq("category_id", (cat as any).id)
+      .order("created_at", { ascending: false })
+      .limit(300);
+    if (error) throw new Error(error.message);
+    const seen = new Set<string>();
+    const guides: { title: string; subcategory: string | null }[] = [];
+    for (const r of (rows ?? []) as any[]) {
+      const key = `${r.title}::${r.subcategory ?? ""}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      guides.push({ title: r.title, subcategory: r.subcategory ?? null });
+    }
+    return { guides };
+  });
