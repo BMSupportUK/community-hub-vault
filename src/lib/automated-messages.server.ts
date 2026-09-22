@@ -53,8 +53,34 @@ export async function getEmailOverride(name: string): Promise<EmailOverride> {
   return { subject: row?.subject?.trim() || null, body: row?.body?.trim() || null };
 }
 
+/** True when the admin-supplied body is hand-written HTML rather than plain wording. */
+export function looksLikeHtml(body: string) {
+  return /<\s*(html|body|div|table|p|a|h1|h2|h3|span|img|br|td|tr|center|section)\b|<!doctype/i.test(body);
+}
+
+/** Plain-text fallback derived from an HTML body (for the text/plain part). */
+export function htmlToText(html: string) {
+  return html
+    .replace(/<\s*(style|script)[\s\S]*?<\/\s*\1\s*>/gi, "")
+    .replace(/<\s*br\s*\/?\s*>/gi, "\n")
+    .replace(/<\s*\/\s*(p|div|tr|h1|h2|h3|li)\s*>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 /** Simple branded HTML/text pair used when an admin supplies their own wording. */
 export function renderOverrideEmail(bodyText: string) {
+  if (looksLikeHtml(bodyText)) {
+    const html = /<\s*html/i.test(bodyText)
+      ? bodyText
+      : `<!doctype html><html><body style="background:#ffffff;font-family:Arial,sans-serif">${bodyText}</body></html>`;
+    return { html, text: htmlToText(bodyText) };
+  }
   const paragraphs = bodyText
     .split(/\n{2,}/)
     .map((p) => `<p style="font-size:14px;color:#444;line-height:1.6;margin:0 0 12px">${p

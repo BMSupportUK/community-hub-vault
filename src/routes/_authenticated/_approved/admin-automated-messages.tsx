@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { clearAutomatedMessageCache } from "@/lib/automated-messages";
+import { EmailHtmlEditor } from "@/components/app/EmailHtmlEditor";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-automated-messages")({
   component: AdminAutomatedMessagesPage,
@@ -137,13 +138,12 @@ function AdminAutomatedMessagesPage() {
                     onChange={(ev) => patch(row.key, { subject: ev.target.value })}
                   />
                   <label className="mt-3 block text-xs font-medium text-muted-foreground">
-                    Email wording — leave blank to keep the designed email as it is
+                    Email content — plain wording or full HTML
                   </label>
-                  <Textarea
-                    className="mt-1 min-h-28"
-                    placeholder="Leave empty to use the standard designed email."
+                  <EmailHtmlEditor
                     value={row.body}
-                    onChange={(ev) => patch(row.key, { body: ev.target.value })}
+                    placeholders={row.placeholders}
+                    onChange={(next) => patch(row.key, { body: next })}
                   />
                 </>
               ) : (
