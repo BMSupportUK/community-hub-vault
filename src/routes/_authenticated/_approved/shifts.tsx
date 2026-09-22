@@ -205,6 +205,24 @@ function useLocalDisplayTz(rotaTz: string) {
   return { localMode, toggle, browserTz, fmtTime, fmtRange, deviceRange };
 }
 
+type DeviceRangeInfo = { text: string; startDate: string | null; endDate: string | null; crossesDay: boolean } | null;
+
+// "Your time" line with a "+1 day" chip carrying both dates when the shift
+// crosses midnight in the viewer's device timezone.
+function DeviceRangeLine({ info, label, className }: { info: DeviceRangeInfo; label: string; className?: string }) {
+  if (!info) return null;
+  return (
+    <div className={cn("text-accent-foreground/90", className)}>
+      {label}: <span className="font-mono">{info.text}</span>
+      {info.crossesDay && (
+        <span className="ml-1 inline-flex items-center gap-1 rounded-full bg-primary/15 px-1.5 py-px align-middle text-[9px] font-bold uppercase tracking-wide text-primary ring-1 ring-primary/30">
+          +1 day · {info.startDate} → {info.endDate}
+        </span>
+      )}
+    </div>
+  );
+}
+
 function ShiftsPage() {
   const { user, hasAny, hasRole, roles } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
