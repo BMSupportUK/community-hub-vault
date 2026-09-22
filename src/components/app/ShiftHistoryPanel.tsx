@@ -293,16 +293,8 @@ export default function ShiftHistoryPanel({ userId, name }: { userId: string; na
     </div>
   ) : null;
 
-  if (!rows.length) {
-    return (
-      <div className="space-y-4">
-        {claimedBlock}
-        <div className="rounded-2xl border border-purple-500/30 bg-purple-950/50 p-8 text-center text-purple-200/80">
-          No clocked-in shifts recorded this week ({rangeLabel}).
-        </div>
-      </div>
-    );
-  }
+  const todayIndex = (new Date().getDay() + 6) % 7;
+  const weekLabel = weekOffset === 0 ? "This week" : weekOffset === -1 ? "Last week" : `${Math.abs(weekOffset)} weeks ago`;
 
   return (
     <div className="space-y-4">
@@ -311,13 +303,52 @@ export default function ShiftHistoryPanel({ userId, name }: { userId: string; na
           {name}&apos;s shift history
         </h3>
         <p className="text-xs text-purple-200/70">
-          This week ({rangeLabel}) · {total ?? rows.length} shift{(total ?? rows.length) === 1 ? "" : "s"} · newest first
+          {weekLabel} ({rangeLabel}) · {total ?? rows.length} shift{(total ?? rows.length) === 1 ? "" : "s"} · newest first
         </p>
+      </div>
+
+      <div className="flex items-center gap-2 rounded-2xl border border-purple-500/30 bg-purple-950/50 p-2">
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => goWeek(-1)}
+          className="border-purple-500/40 bg-purple-900/40 text-white hover:bg-purple-800/60"
+        >
+          <ChevronLeft className="size-4" />
+          <span className="hidden sm:inline">Previous week</span>
+        </Button>
+        <div className="flex-1 text-center">
+          <p className="flex items-center justify-center gap-1.5 text-sm font-semibold text-white">
+            <CalendarDays className="size-4 text-purple-300" />
+            {rangeLabel}
+          </p>
+          <p className="text-[11px] text-purple-200/70">{weekLabel}</p>
+        </div>
+        {weekOffset < 0 ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => goWeek(1)}
+            className="border-purple-500/40 bg-purple-900/40 text-white hover:bg-purple-800/60"
+          >
+            <span className="hidden sm:inline">Next week</span>
+            <ChevronRight className="size-4" />
+          </Button>
+        ) : (
+          <Button type="button" variant="outline" size="sm" disabled className="border-purple-500/20 bg-purple-900/20 text-purple-300/50">
+            <span className="hidden sm:inline">Next week</span>
+            <ChevronRight className="size-4" />
+          </Button>
+        )}
       </div>
 
       <div className="flex flex-wrap gap-1.5 rounded-2xl border border-purple-500/30 bg-purple-950/50 p-1.5">
         {DAY_SHORT.map((label, i) => {
-          const isToday = (new Date().getDay() + 6) % 7 === i;
+          const isToday = weekOffset === 0 && todayIndex === i;
+          const dayDate = new Date(weekFrom);
+          dayDate.setDate(dayDate.getDate() + i);
           return (
             <button
               key={label}
@@ -328,12 +359,16 @@ export default function ShiftHistoryPanel({ userId, name }: { userId: string; na
                 selectedDay === i
                   ? "bg-purple-500/40 text-white shadow-[0_0_20px_-8px_rgba(168,85,247,0.8)]"
                   : "text-purple-200/70 hover:bg-purple-500/20 hover:text-white",
+                isToday && selectedDay !== i ? "ring-1 ring-amber-400/50" : "",
               )}
             >
               <span className="block">{label}</span>
+              <span className="block text-[11px] font-semibold tabular-nums text-white/85">
+                {dayDate.toLocaleDateString("en-GB", { day: "2-digit", month: "short" })}
+              </span>
               <span className={cn("block text-[10px] font-normal", dayCounts[i] > 0 ? "text-amber-300" : "text-purple-300/40")}>
                 {dayCounts[i]} shift{dayCounts[i] === 1 ? "" : "s"}
-                {isToday ? " ·" : ""}
+                {isToday ? " · today" : ""}
               </span>
             </button>
           );
