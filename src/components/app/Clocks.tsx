@@ -293,11 +293,30 @@ export function Clocks() {
                       <div className={cn(cell, "border-l border-border/50")}>
                         {closed || !localOpen || !localClose ? (
                           <span className="font-medium text-destructive">Closed</span>
-                        ) : (
+                        ) : userOpenDate === userCloseDate ? (
                           <>
                             <span className="font-mono tabular-nums text-foreground">{localFormat.format(localOpen)}–{localFormat.format(localClose)}</span>
-                            <div className="mt-0.5 text-[11px] text-muted-foreground">{userDate}</div>
+                            <div className="mt-0.5 text-[11px] text-muted-foreground">{userOpenDate}</div>
                           </>
+                        ) : (
+                          // Crosses midnight: show start and end as two stacked
+                          // blocks with a "+1 day" divider so it reads as one
+                          // continuous window spanning two dates.
+                          <div className="space-y-1">
+                            <div className="flex items-baseline justify-between gap-2">
+                              <span className="font-mono tabular-nums text-foreground">{localFormat.format(localOpen)}</span>
+                              <span className="text-[11px] text-muted-foreground">{userOpenDate}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5 text-primary">
+                              <span className="h-px flex-1 bg-primary/30" />
+                              <span className="rounded-full bg-primary/15 px-1.5 py-px text-[9px] font-bold uppercase tracking-wide ring-1 ring-primary/30">+1 day</span>
+                              <span className="h-px flex-1 bg-primary/30" />
+                            </div>
+                            <div className="flex items-baseline justify-between gap-2">
+                              <span className="font-mono tabular-nums text-foreground">{localFormat.format(localClose)}</span>
+                              <span className="text-[11px] text-muted-foreground">{userCloseDate}</span>
+                            </div>
+                          </div>
                         )}
                       </div>
                     )}
