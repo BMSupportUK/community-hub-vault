@@ -11,6 +11,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { ArrowLeft, Loader2, Sparkles, Send, Trash2, Inbox, Wand2, Clock } from "lucide-react";
 import { buildDualTime, firstClockIn, firstDateIn, hasBothZones, parseClockTime } from "@/lib/import-time";
+import { parseSportsListingBlock, type TimeZoneChoice } from "@/lib/sports-listing-format";
 import {
   parseDiscordPaste,
   importParsedEvents,
@@ -36,6 +37,7 @@ type QueueDraft = {
   subcategories: string[];
   title: string;
   time: string | null;
+  sourceZone: TimeZoneChoice | null;
   guideId: string | null;
 };
 type QueueItem = {
@@ -76,13 +78,15 @@ function AdminSportsImportPage() {
   const [bulkSubcategory, setBulkSubcategory] = useState<string | null>(null);
   // The three setup boxes live in the sidebar: tap a post, then work the sidebar.
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [draft, setDraft] = useState<QueueDraft>({ category: "", destinationCategory: "", subcategories: [], title: "", time: null, guideId: null });
+  const [draft, setDraft] = useState<QueueDraft>({ category: "", destinationCategory: "", subcategories: [], title: "", time: null, sourceZone: null, guideId: null });
   const timeStore = useRef<Map<string, string | null>>(new Map());
+  const sourceZoneStore = useRef<Map<string, TimeZoneChoice | null>>(new Map());
 
   const selectItem = (q: QueueItem) => {
     if (selectedId === q.id) return;
     const ev = q.parsed_event ?? {};
     const stored = timeStore.current.get(q.id);
+    const storedZone = sourceZoneStore.current.get(q.id);
     setSelectedId(q.id);
     setDraft({
       category: String(ev.suggested_category ?? ""),
@@ -90,18 +94,20 @@ function AdminSportsImportPage() {
       subcategories: ev.suggested_subcategory ? [String(ev.suggested_subcategory)] : [],
       title: String(ev.title ?? ""),
       time: stored ?? (ev.time ? String(ev.time) : null),
+      sourceZone: storedZone ?? null,
       guideId: null,
     });
   };
 
   const clearSelection = () => {
     setSelectedId(null);
-    setDraft({ category: "", destinationCategory: "", subcategories: [], title: "", time: null, guideId: null });
+    setDraft({ category: "", destinationCategory: "", subcategories: [], title: "", time: null, sourceZone: null, guideId: null });
   };
 
   const applyZoneToItem = (itemId: string, dual: string, zone: "gmt" | "et") => {
     timeStore.current.set(itemId, dual);
-    if (itemId === selectedId) setDraft((d) => ({ ...d, time: dual }));
+    sourceZoneStore.current.set(itemId, zone);
+    if (itemId === selectedId) setDraft((d) => ({ ...d, time: dual, sourceZone: zone }));
     toast.success(`Time set from ${zone === "gmt" ? "UK" : "ET"} — ${dual}`);
   };
 
@@ -714,6 +720,7 @@ function QueueSetup({
           title: draft.title,
           guideId: draft.guideId ?? undefined,
           time: draft.time,
+          sourceZone: draft.sourceZone ?? undefined,
         },
       });
       toast.success(
@@ -753,6 +760,8 @@ function QueueSetup({
         <p className="text-[11px] font-medium text-muted-foreground">Setting up</p>
         <p className="truncate text-sm font-medium">{draft.title || "Untitled post"}</p>
       </div>
+
+      <ListingPreview raw={String(item.parsed_event?.raw ?? item.raw_text ?? "")} sourceZone={draft.sourceZone} />
 
       <div className="space-y-1.5">
         <span className="text-[11px] font-medium text-muted-foreground">1 · Category names we have</span>
