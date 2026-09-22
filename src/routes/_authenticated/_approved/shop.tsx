@@ -3320,7 +3320,7 @@ function MyOrdersTab({ onOpenOrder }: { onOpenOrder: (id: string) => void }) {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<"processing" | "completed" | "cancelled">("processing");
   const [month, setMonth] = useState(() => new Date().getMonth());
-  const currentYear = new Date().getFullYear();
+  const [year, setYear] = useState(() => new Date().getFullYear());
 
   useEffect(() => {
     if (!user) {
