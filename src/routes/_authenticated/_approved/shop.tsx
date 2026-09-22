@@ -3472,6 +3472,22 @@ function MyOrdersTab({ onOpenOrder }: { onOpenOrder: (id: string) => void }) {
       </header>
 
       <div className="relative px-4 md:px-6 py-6">
+        {availableYears.length > 1 && (
+          <div className="mb-2 flex max-w-full gap-1.5 overflow-x-auto pb-1 scrollbar-hide" aria-label="Order year">
+            {availableYears.map((y) => (
+              <Button
+                key={y}
+                type="button"
+                size="sm"
+                variant={year === y ? "default" : "outline"}
+                onClick={() => setYear(y)}
+                className="h-8 shrink-0 px-3 text-xs"
+              >
+                {y}
+              </Button>
+            ))}
+          </div>
+        )}
         <div className="mb-4 flex max-w-full gap-1.5 overflow-x-auto pb-1 scrollbar-hide" aria-label="Order month">
           {monthLabels.map((label, index) => (
             <Button
