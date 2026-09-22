@@ -127,22 +127,37 @@ export default function ShiftHistoryPanel({ userId, name }: { userId: string; na
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [total, setTotal] = useState<number | null>(null);
-  // Monday-to-Sunday window; resets automatically when a new week begins.
-  const [weekFrom, setWeekFrom] = useState(() => weekStart().getTime());
+  // Monday-to-Sunday window, navigable: 0 = this week, -1 = last week, etc.
+  const [currentWeek, setCurrentWeek] = useState(() => weekStart().getTime());
+  const [weekOffset, setWeekOffset] = useState(0);
   const [claimed, setClaimed] = useState<ClaimedSlot[]>([]);
-  // Selected day tab (0 = Monday). Defaults to today, clamped inside the week.
+  // Selected day tab (0 = Monday). Defaults to today for the current week.
   const [selectedDay, setSelectedDay] = useState(() => Math.min((new Date().getDay() + 6) % 7, 6));
 
   useEffect(() => {
     const tick = () => {
       const current = weekStart().getTime();
-      setWeekFrom((prev) => (prev === current ? prev : current));
+      setCurrentWeek((prev) => (prev === current ? prev : current));
     };
     const t = setInterval(tick, 60_000);
     return () => clearInterval(t);
   }, []);
 
+  const weekFrom = (() => {
+    const d = new Date(currentWeek);
+    d.setDate(d.getDate() + weekOffset * 7);
+    d.setHours(0, 0, 0, 0);
+    return d.getTime();
+  })();
   const weekTo = weekEnd(new Date(weekFrom)).getTime();
+
+  const goWeek = (delta: number) => {
+    setWeekOffset((prev) => {
+      const next = Math.min(0, prev + delta);
+      if (next !== prev) setSelectedDay(next === 0 ? Math.min((new Date().getDay() + 6) % 7, 6) : 0);
+      return next;
+    });
+  };
 
   // Hourly rota slots this person claimed (moderator cover hours).
   useEffect(() => {
