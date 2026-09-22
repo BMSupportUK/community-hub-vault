@@ -413,6 +413,32 @@ export function StaffOnDutyStrip({
       day: "numeric",
       month: "short",
     });
+    const { date: ukDate, time: ukTime } = londonNow(now);
+    const running =
+      slot.shift_date === ukDate && slot.start_time <= ukTime && slot.end_time > ukTime;
+    const heading = running ? "Shift today" : "Next shift";
+
+    // Same shift shown in the viewer's own device timezone when it differs from UK.
+    let deviceLine: string | null = null;
+    const tz = browserTimezone();
+    if (tz !== "Europe/London") {
+      const { startsAt, endsAt } = shiftWindowToUtcMs(
+        slot.shift_date,
+        slot.start_time,
+        slot.end_time,
+        "Europe/London",
+      );
+      const fmtDate = (ms: number) =>
+        new Intl.DateTimeFormat("en-GB", { timeZone: tz, day: "numeric", month: "short" }).format(ms);
+      const fmtTime = (ms: number) =>
+        new Intl.DateTimeFormat("en-GB", { timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false }).format(ms);
+      const sd = fmtDate(startsAt);
+      const ed = fmtDate(endsAt);
+      deviceLine =
+        sd === ed
+          ? `Your time: ${sd} ${fmtTime(startsAt)}–${fmtTime(endsAt)}`
+          : `Your time: ${sd} ${fmtTime(startsAt)} – ${ed} ${fmtTime(endsAt)}`;
+    }
     return (
       <div className="mt-2 rounded-md border border-amber-300/30 bg-amber-500/15 px-2 py-1.5 shadow-[0_0_10px_rgba(245,158,11,0.15)]">
         <div className="flex items-start gap-1.5">
