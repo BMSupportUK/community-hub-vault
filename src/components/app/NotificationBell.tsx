@@ -338,12 +338,12 @@ export function NotificationBell() {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <button
-          className="relative size-9 rounded-xl flex items-center justify-center bg-surface-2 text-muted-foreground hover:bg-primary hover:text-primary-foreground hover:rounded-xl transition-all"
+          className="relative size-11 shrink-0 rounded-lg flex items-center justify-center bg-surface-2 text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-all"
           title="Notifications"
         >
-          <Bell className="size-4" />
+          <Bell className="size-5" />
           {unread.length > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-destructive text-destructive-foreground text-[9px] font-bold grid place-items-center ring-2 ring-rail">
+            <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-destructive text-destructive-foreground text-[10px] font-bold grid place-items-center ring-2 ring-rail">
               {unread.length > 99 ? "99+" : unread.length}
             </span>
           )}
