@@ -335,6 +335,8 @@ const ResolveInput = z.object({
   action: z.enum(["import", "discard"]),
   category: z.string().max(100).optional(),
   subcategory: z.string().max(100).nullable().optional(),
+  /** Post the same listing under several subcategories at once. */
+  subcategories: z.array(z.string().max(100)).max(100).optional(),
   title: z.string().max(500).optional(),
   /** Staff-confirmed kick-off time, e.g. "19:45 GMT · 14:45 EDT". */
   time: z.string().max(100).nullable().optional(),
