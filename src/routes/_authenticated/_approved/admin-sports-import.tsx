@@ -513,7 +513,9 @@ function QueueRow({
   const ev = item.parsed_event ?? {};
   const [title, setTitle] = useState<string>(String(ev.title ?? ""));
   const [category, setCategory] = useState<string>(String(ev.suggested_category ?? ""));
-  const [subcategory, setSubcategory] = useState<string | null>(ev.suggested_subcategory ?? null);
+  const [subcategories, setSubcategories] = useState<string[]>(
+    ev.suggested_subcategory ? [String(ev.suggested_subcategory)] : [],
+  );
   const [busy, setBusy] = useState<"import" | "discard" | null>(null);
   const [time, setTime] = useState<string | null>(ev.time ?? null);
   const subs = category ? subsByCatName.get(category) ?? [] : [];
@@ -533,8 +535,21 @@ function QueueRow({
     if (action === "import" && !category) return toast.error("Pick a category");
     setBusy(action);
     try {
-      await resolveFn({ data: { id: item.id, action, category: category || undefined, subcategory, title, time } });
-      toast.success(action === "import" ? "Imported as draft" : "Discarded");
+      await resolveFn({
+        data: {
+          id: item.id,
+          action,
+          category: category || undefined,
+          subcategories,
+          title,
+          time,
+        },
+      });
+      toast.success(
+        action === "import"
+          ? `Imported as draft${subcategories.length > 1 ? ` in ${subcategories.length} subcategories` : ""}`
+          : "Discarded",
+      );
       onResolved();
     } catch (e: any) {
       toast.error(e.message ?? "Failed");
@@ -567,25 +582,62 @@ function QueueRow({
         </div>
       )}
       {ev.raw && <pre className="text-xs bg-muted/50 rounded p-2 whitespace-pre-wrap break-words max-h-24 overflow-auto">{ev.raw}</pre>}
-      <div className="grid grid-cols-2 gap-2">
-        <Select value={category} onValueChange={(v) => { setCategory(v); setSubcategory(null); }}>
-          <SelectTrigger><SelectValue placeholder="Category" /></SelectTrigger>
-          <SelectContent>
-            {cats.map((c) => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Select
-          value={subcategory ?? "__none"}
-          onValueChange={(v) => setSubcategory(v === "__none" ? null : v)}
-          disabled={subs.length === 0}
-        >
-          <SelectTrigger><SelectValue placeholder={subs.length === 0 ? "—" : "Subcategory"} /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="__none">— None —</SelectItem>
-            {subs.map((s) => <SelectItem key={s.name} value={s.name}>{s.name}{s.is_default ? " ★" : ""}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      </div>
+      <Select value={category} onValueChange={(v) => { setCategory(v); setSubcategories([]); }}>
+        <SelectTrigger><SelectValue placeholder="Category" /></SelectTrigger>
+        <SelectContent>
+          {cats.map((c) => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+        </SelectContent>
+      </Select>
+      {subs.length > 0 && (
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[11px] text-muted-foreground">
+              Subcategories {subcategories.length > 0 && `· ${subcategories.length} selected`}
+            </span>
+            <div className="flex gap-1">
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-6 px-2 text-[11px]"
+                onClick={() => setSubcategories(subs.map((s) => s.name))}
+              >
+                Select all
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-6 px-2 text-[11px]"
+                onClick={() => setSubcategories([])}
+              >
+                Clear
+              </Button>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {subs.map((s) => {
+              const on = subcategories.includes(s.name);
+              return (
+                <button
+                  key={s.name}
+                  type="button"
+                  onClick={() =>
+                    setSubcategories((prev) =>
+                      prev.includes(s.name) ? prev.filter((n) => n !== s.name) : [...prev, s.name],
+                    )
+                  }
+                  className={`rounded-full px-2.5 py-1 text-[11px] ring-1 transition ${
+                    on
+                      ? "bg-primary text-primary-foreground ring-primary"
+                      : "bg-muted/50 text-muted-foreground ring-border hover:text-foreground"
+                  }`}
+                >
+                  {s.name}{s.is_default ? " ★" : ""}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
       <div className="flex justify-end gap-2">
         <Button variant="outline" size="sm" onClick={() => run("discard")} disabled={busy !== null}>
           {busy === "discard" ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
