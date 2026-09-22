@@ -338,6 +338,7 @@ const ResolveInput = z.object({
   /** Post the same listing under several subcategories at once. */
   subcategories: z.array(z.string().max(100)).max(100).optional(),
   title: z.string().max(500).optional(),
+  guideId: z.string().uuid().optional(),
   /** Staff-confirmed kick-off time, e.g. "19:45 GMT · 14:45 EDT". */
   time: z.string().max(100).nullable().optional(),
 });
@@ -370,6 +371,28 @@ export const resolveQueueItem = createServerFn({ method: "POST" })
       const ev: any = { ...((item.parsed_event ?? {}) as Record<string, unknown>) };
       if (data.time !== undefined) ev.time = data.time;
       const title = data.title ?? ev.title ?? "Untitled";
+      const importedBody = buildBody(ev);
+      if (data.guideId) {
+        const { data: guide, error: guideErr } = await supabaseAdmin
+          .from("sports_blogs")
+          .select("id, category_id, body")
+          .eq("id", data.guideId)
+          .eq("category_id", (cat as any).id)
+          .maybeSingle();
+        if (guideErr) throw new Error(guideErr.message);
+        if (!guide) throw new Error("That guide is not in the selected category");
+        const existingBody = String((guide as any).body ?? "").trim();
+        const separator = existingBody ? "<div><br></div>" : "";
+        const safeBlock = importedBody
+          .split("\n")
+          .map((line) => `<div>${line.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;") || "<br>"}</div>`)
+          .join("");
+        const { error: updateErr } = await supabaseAdmin
+          .from("sports_blogs")
+          .update({ body: `${existingBody}${separator}${safeBlock}`, updated_at: new Date().toISOString() })
+          .eq("id", data.guideId);
+        if (updateErr) throw new Error(updateErr.message);
+      } else {
       // One draft per chosen subcategory (none chosen → a single draft
       // straight under the category).
       const chosenSubs: (string | null)[] =
@@ -390,6 +413,7 @@ export const resolveQueueItem = createServerFn({ method: "POST" })
       );
       const { error: insErr } = await supabaseAdmin.from("sports_blogs").insert(rows);
       if (insErr) throw new Error(insErr.message);
+      }
     }
 
     const { error: upErr } = await supabaseAdmin
@@ -472,7 +496,7 @@ export const listCategoriesWithSubs = createServerFn({ method: "GET" })
     const { supabase, userId } = context;
     await assertStaff(supabase, userId);
     const [{ data: cats }, { data: subs }] = await Promise.all([
-      supabaseAdmin.from("sports_categories").select("id, name").order("name"),
+      supabaseAdmin.from("sports_categories").select("id, name, parent_id, sort_order").order("sort_order"),
       supabaseAdmin.from("sports_subcategories").select("category_id, name, sort_order, is_default").order("sort_order"),
     ]);
     return {
@@ -486,7 +510,10 @@ export const listCategoriesWithSubs = createServerFn({ method: "GET" })
  */
 export const listGuidesInCategory = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: unknown) => z.object({ category: z.string().max(100) }).parse(input))
+  .inputValidator((input: unknown) => z.object({
+    category: z.string().max(100),
+    subcategory: z.string().max(100).nullable().optional(),
+  }).parse(input))
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     await assertStaff(supabase, userId);
@@ -496,20 +523,22 @@ export const listGuidesInCategory = createServerFn({ method: "POST" })
       .eq("name", data.category)
       .maybeSingle();
     if (!cat) return { guides: [] as { title: string; subcategory: string | null }[] };
-    const { data: rows, error } = await supabaseAdmin
+    let query = supabaseAdmin
       .from("sports_blogs")
-      .select("title, subcategory, created_at")
+      .select("id, title, subcategory, created_at")
       .eq("category_id", (cat as any).id)
       .order("created_at", { ascending: false })
       .limit(300);
+    if (data.subcategory) query = query.eq("subcategory", data.subcategory);
+    const { data: rows, error } = await query;
     if (error) throw new Error(error.message);
     const seen = new Set<string>();
-    const guides: { title: string; subcategory: string | null }[] = [];
+    const guides: { id: string; title: string; subcategory: string | null }[] = [];
     for (const r of (rows ?? []) as any[]) {
       const key = `${r.title}::${r.subcategory ?? ""}`;
       if (seen.has(key)) continue;
       seen.add(key);
-      guides.push({ title: r.title, subcategory: r.subcategory ?? null });
+      guides.push({ id: r.id, title: r.title, subcategory: r.subcategory ?? null });
     }
     return { guides };
   });
