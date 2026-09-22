@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { routeEvent } from "./discord-sport-keywords";
+import { formatSportsListingBlock, plainListingToHtml } from "./sports-listing-format";
 
 const STAFF_ROLES = ["admin", "management", "moderator"] as const;
 
@@ -148,14 +149,21 @@ const ImportInput = z.object({
     .max(500),
 });
 
-function buildBody(ev: { time?: string | null; date?: string | null; channels?: string[]; raw?: string }) {
+function buildBody(ev: { time?: string | null; date?: string | null; channels?: string[]; raw?: string }, sourceZone?: "gmt" | "et" | null) {
+  const formatted = formatSportsListingBlock({
+    raw: ev.raw,
+    date: ev.date,
+    time: ev.time,
+    channels: ev.channels,
+    sourceZone,
+  });
+  if (formatted) return formatted;
+
   const parts: string[] = [];
   if (ev.date) parts.push(ev.date);
   if (ev.time) parts.push(ev.time);
-  if (ev.channels && ev.channels.length) parts.push(ev.channels.join(" • "));
-  // Telegram posts must always remain intact. Previously, choosing UK/ET
-  // added `time`, which prevented the original listing from being included.
   if (ev.raw) parts.push(ev.raw);
+  if (ev.channels && ev.channels.length) parts.push(ev.channels.join(" • "));
   return parts.join("\n");
 }
 
@@ -270,7 +278,7 @@ export const importParsedEvents = createServerFn({ method: "POST" })
           subcategory: e.subcategory ?? null,
           title: e.title,
           excerpt: e.time ? `${e.date ? e.date + " · " : ""}${e.time}` : (e.date ?? null),
-          body: buildBody(e),
+          body: plainListingToHtml(buildBody(e)),
           image_url: coverMap.get(coverKey) ?? null,
           published: false,
           created_by: userId,
@@ -343,6 +351,8 @@ const ResolveInput = z.object({
   guideId: z.string().uuid().optional(),
   /** Staff-confirmed kick-off time, e.g. "19:45 GMT · 14:45 EDT". */
   time: z.string().max(100).nullable().optional(),
+  /** Which zone bare start times in the raw post belong to. */
+  sourceZone: z.enum(["gmt", "et"]).optional(),
 });
 
 export const resolveQueueItem = createServerFn({ method: "POST" })
@@ -375,7 +385,7 @@ export const resolveQueueItem = createServerFn({ method: "POST" })
       const ev: any = { ...((item.parsed_event ?? {}) as Record<string, unknown>) };
       if (data.time !== undefined) ev.time = data.time;
       const title = data.title ?? ev.title ?? "Untitled";
-      const importedBody = buildBody(ev);
+      const importedBody = buildBody(ev, data.sourceZone ?? null);
       if (data.guideId) {
         const { data: guide, error: guideErr } = await supabaseAdmin
           .from("sports_blogs")
@@ -387,10 +397,7 @@ export const resolveQueueItem = createServerFn({ method: "POST" })
         if (!guide) throw new Error("That guide is not in the selected category");
         const existingBody = String((guide as any).body ?? "").trim();
         const separator = existingBody ? "<div><br></div>" : "";
-        const safeBlock = importedBody
-          .split("\n")
-          .map((line) => `<div>${line.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;") || "<br>"}</div>`)
-          .join("");
+        const safeBlock = plainListingToHtml(importedBody);
         const { error: updateErr } = await supabaseAdmin
           .from("sports_blogs")
           .update({
@@ -414,7 +421,7 @@ export const resolveQueueItem = createServerFn({ method: "POST" })
           subcategory: sub,
           title,
           excerpt: ev.time ? `${ev.date ? ev.date + " · " : ""}${ev.time}` : (ev.date ?? null),
-          body: buildBody(ev),
+          body: plainListingToHtml(buildBody(ev, data.sourceZone ?? null)),
           image_url: await ensureSportCover((cat as any).id, data.category!, sub),
           published: false,
           created_by: userId,
@@ -484,7 +491,7 @@ export const approveAllSuggested = createServerFn({ method: "POST" })
           subcategory: sub,
           title: ev.title ?? "Untitled",
           excerpt: ev.time ? `${ev.date ? ev.date + " · " : ""}${ev.time}` : (ev.date ?? null),
-          body: buildBody(ev),
+          body: plainListingToHtml(buildBody(ev)),
           image_url: coverUrl,
           published: false,
           created_by: userId,
