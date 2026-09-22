@@ -865,7 +865,12 @@ function ShiftsPage() {
                     <div className="space-y-3 flex-1">
                       {daySlots.length === 0 && <div className="text-xs text-muted-foreground italic">No slots</div>}
                       {(["admin", "management", "staff", "moderator"] as ShiftRole[]).map((grp) => {
-                        const groupSlots = groups[grp] ?? [];
+                        const groupSlots = (groups[grp] ?? []).slice().sort((a, b) => {
+                          const aOpen = a.assigned_to ? 0 : 1;
+                          const bOpen = b.assigned_to ? 0 : 1;
+                          if (aOpen !== bOpen) return aOpen - bOpen; // filled first, open/claimable last
+                          return a.start_time.localeCompare(b.start_time) || a.end_time.localeCompare(b.end_time);
+                        });
                         if (groupSlots.length === 0) return null;
                         return (
                           <div key={grp} className="space-y-2">
