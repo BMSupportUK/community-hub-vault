@@ -524,7 +524,10 @@ export function WorkingStatusBox({
 
   if (variant === "header") {
     return (
-      <div className="flex shrink-0 items-center gap-1 border-r border-border/70 pr-2" aria-label="Working status controls">
+      <div className="flex shrink-0 items-center gap-1.5 border-r border-border/70 pr-2" aria-label="Staff Shift Controls">
+        <span className="font-display text-[10px] font-bold tracking-wider uppercase text-muted-foreground whitespace-nowrap hidden lg:inline">
+          Staff Shift Controls
+        </span>
         <ActionIcons compact />
         <Link
           to="/clock"
