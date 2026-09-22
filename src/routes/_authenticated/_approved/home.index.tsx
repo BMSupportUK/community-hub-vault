@@ -204,7 +204,8 @@ function WelcomePage() {
 
           <div className="flex min-h-0 w-full flex-col items-stretch gap-4">
             <WorkingStatusBox />
-            <SubscriptionDetailsCard />
+            {/* Staff accounts see their subscription box on their profile instead. */}
+            {!isStaffAccount && <SubscriptionDetailsCard />}
           </div>
         </div>
       </section>
