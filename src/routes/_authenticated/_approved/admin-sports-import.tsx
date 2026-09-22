@@ -9,7 +9,8 @@ import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { ArrowLeft, Loader2, Sparkles, Send, Trash2, Inbox, Wand2 } from "lucide-react";
+import { ArrowLeft, Loader2, Sparkles, Send, Trash2, Inbox, Wand2, Clock } from "lucide-react";
+import { buildDualTime, hasBothZones, parseClockTime } from "@/lib/import-time";
 import {
   parseDiscordPaste,
   importParsedEvents,
@@ -476,13 +477,25 @@ function QueueRow({
   const [category, setCategory] = useState<string>(String(ev.suggested_category ?? ""));
   const [subcategory, setSubcategory] = useState<string | null>(ev.suggested_subcategory ?? null);
   const [busy, setBusy] = useState<"import" | "discard" | null>(null);
+  const [time, setTime] = useState<string | null>(ev.time ?? null);
   const subs = category ? subsByCatName.get(category) ?? [] : [];
+
+  // Only offer the zone buttons when the post lists a single time without
+  // both zones spelled out — and only when we can actually read the clock.
+  const needsZone = !hasBothZones(time) && parseClockTime(time) !== null;
+
+  const applyZone = (zone: "gmt" | "et") => {
+    const dual = buildDualTime(ev.time ?? time, ev.date, zone);
+    if (!dual) return toast.error("Couldn't read the time on this post");
+    setTime(dual);
+    toast.success(`Time set from ${zone.toUpperCase()} — ${dual}`);
+  };
 
   const run = async (action: "import" | "discard") => {
     if (action === "import" && !category) return toast.error("Pick a category");
     setBusy(action);
     try {
-      await resolveFn({ data: { id: item.id, action, category: category || undefined, subcategory, title } });
+      await resolveFn({ data: { id: item.id, action, category: category || undefined, subcategory, title, time } });
       toast.success(action === "import" ? "Imported as draft" : "Discarded");
       onResolved();
     } catch (e: any) {
@@ -496,9 +509,20 @@ function QueueRow({
     <Card className="p-3 space-y-2">
       <Input value={title} onChange={(e) => setTitle(e.target.value)} className="font-medium" />
       <div className="text-xs text-muted-foreground">
-        {[ev.date, ev.time].filter(Boolean).join(" · ")}
+        {[ev.date, time].filter(Boolean).join(" · ")}
         {Array.isArray(ev.channels) && ev.channels.length > 0 && <> · {ev.channels.join(" • ")}</>}
       </div>
+      {needsZone && (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[11px] text-muted-foreground">Time listed is:</span>
+          <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => applyZone("gmt")}>
+            <Clock className="size-3" /> GMT
+          </Button>
+          <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => applyZone("et")}>
+            <Clock className="size-3" /> ET
+          </Button>
+        </div>
+      )}
       {item.source === "telegram" && (
         <div className="text-[11px] text-muted-foreground">
           via Telegram{item.forwarded_from ? ` · forwarded from ${item.forwarded_from}` : ""}
