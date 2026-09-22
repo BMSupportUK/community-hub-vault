@@ -1,8 +1,8 @@
 // Kick-off time handling for the Sports Guide importer.
 //
 // Listing posts usually give ONE time in ONE zone ("19:45", "8pm ET").
-// Staff tell us which zone that is and we render both, UK first:
-//   "19:45 GMT · 14:45 ET"
+// Staff tell us which zone the incoming listing uses. Imported guide content
+// is normalised to UK time; the reader can then add the viewer's local time.
 
 export type TimeZoneChoice = "gmt" | "et";
 
@@ -194,6 +194,25 @@ export function buildZoneTime(
   const instant = wallTimeToInstant(day, clock, tz);
   const label = source === "gmt" ? ukLabel(instant) : etLabel(instant);
   return `${formatInZone(instant, tz)} ${label}`;
+}
+
+/**
+ * Interpret the listed clock in the selected source zone, then save it as UK
+ * time. ET is an import setting only and must not become an extra card time.
+ */
+export function sourceTimeToUk(
+  time: string | null | undefined,
+  date: string | null | undefined,
+  source: TimeZoneChoice,
+): string | null {
+  const clock = parseClockTime(time);
+  if (!clock) return null;
+  const day = parseListingDate(date) ?? (() => {
+    const now = new Date();
+    return { y: now.getFullYear(), m: now.getMonth(), d: now.getDate() };
+  })();
+  const instant = wallTimeToInstant(day, clock, source === "gmt" ? UK_TZ : ET_TZ);
+  return `${formatInZone(instant, UK_TZ)} ${ukLabel(instant)}`;
 }
 
 /**
