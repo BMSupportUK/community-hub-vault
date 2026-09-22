@@ -436,6 +436,26 @@ function EventRow({
           <Trash2 className="size-4" />
         </Button>
       </div>
+      {!hasBothZones(event.time) && parseClockTime(event.time) !== null && (
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[11px] text-muted-foreground">Time listed is:</span>
+          {(["gmt", "et"] as const).map((z) => (
+            <Button
+              key={z}
+              size="sm"
+              variant="outline"
+              className="h-7 px-2 text-xs"
+              onClick={() => {
+                const dual = buildDualTime(event.time, event.date, z);
+                if (!dual) return toast.error("Couldn't read the time on this post");
+                onChange({ time: dual });
+              }}
+            >
+              <Clock className="size-3" /> {z.toUpperCase()}
+            </Button>
+          ))}
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-2">
         <Select value={event.category ?? ""} onValueChange={(v) => onChange({ category: v, subcategory: null })}>
           <SelectTrigger><SelectValue placeholder="Category" /></SelectTrigger>
