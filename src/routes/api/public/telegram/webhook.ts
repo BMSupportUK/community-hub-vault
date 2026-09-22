@@ -35,9 +35,9 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
       POST: async ({ request }) => {
         // Two bots can feed this endpoint: the dedicated sports bot (its own
         // token) and the shared connector bot. Accept either signature.
-        const keys = [process.env.TELEGRAM_SPORTS_BOT_TOKEN, process.env.TELEGRAM_API_KEY].filter(
-          (k): k is string => Boolean(k),
-        );
+        const keys = [process.env.TELEGRAM_SPORTS_BOT_TOKEN, process.env.TELEGRAM_API_KEY]
+          .map((k) => k?.trim())
+          .filter((k): k is string => Boolean(k));
         if (keys.length === 0) return new Response("Not configured", { status: 500 });
 
         const actual = request.headers.get("X-Telegram-Bot-Api-Secret-Token") ?? "";
