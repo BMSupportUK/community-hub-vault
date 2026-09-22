@@ -158,11 +158,6 @@ export function Clocks() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <div className="flex items-center gap-2">
-        {/* Live clock showing the visitor's own device time and date */}
-        <div className="hidden sm:flex flex-col items-end leading-tight">
-          <span className="font-mono text-sm font-semibold tabular-nums text-foreground">{headerTime}</span>
-          <span className="text-[10px] text-muted-foreground">{headerDate}</span>
-        </div>
         <DialogTrigger asChild>
           <button
             type="button"
@@ -178,6 +173,12 @@ export function Clocks() {
             <Building2 className="size-4" />
           </button>
         </DialogTrigger>
+        {/* Live device clock, deliberately positioned after the office icon. */}
+        <div className="flex min-w-0 flex-col leading-tight">
+          <span className="text-[10px] font-medium text-muted-foreground">Your time</span>
+          <span className="font-mono text-sm font-semibold tabular-nums text-foreground">{headerTime}</span>
+          <span className="text-[10px] text-muted-foreground">{headerDate}</span>
+        </div>
       </div>
       <DialogContent className="max-w-lg">
         <DialogHeader>
