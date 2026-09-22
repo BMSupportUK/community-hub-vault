@@ -235,17 +235,29 @@ export function OfficeHoursSchedule({
                       <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Your time</div>
                       {closed || !localOpen || !localClose ? (
                         <div className="font-medium text-destructive">Closed</div>
-                      ) : (
-                        <div className="grid grid-cols-2 gap-1.5 font-mono tabular-nums text-foreground">
-                          <div className="min-w-0">
-                            <div className="whitespace-nowrap text-sm leading-none">{localFormat.format(localOpen)}</div>
-                            <div className="mt-1 whitespace-nowrap text-[10px] leading-none text-muted-foreground">{userOpenDate}</div>
-                          </div>
-                          <div className="min-w-0">
-                            <div className="whitespace-nowrap text-sm leading-none">{localFormat.format(localClose)}</div>
-                            <div className="mt-1 whitespace-nowrap text-[10px] leading-none text-muted-foreground">{userCloseDate}</div>
-                          </div>
-                        </div>
+                       ) : userOpenDate === userCloseDate ? (
+                         <div className="mt-1 rounded-md bg-muted/60 px-2 py-1.5 ring-1 ring-border/60">
+                           <div className="whitespace-nowrap font-mono text-sm font-semibold tabular-nums text-foreground">
+                             {localFormat.format(localOpen)}–{localFormat.format(localClose)}
+                           </div>
+                           <div className="mt-1 whitespace-nowrap text-[10px] font-medium leading-none text-muted-foreground">{userOpenDate}</div>
+                         </div>
+                       ) : (
+                         <div className="mt-1 space-y-1.5">
+                           <div className="rounded-md bg-muted/60 px-2 py-1.5 ring-1 ring-border/60">
+                             <div className="whitespace-nowrap font-mono text-sm font-semibold leading-none tabular-nums text-foreground">{localFormat.format(localOpen)}</div>
+                             <div className="mt-1 whitespace-nowrap text-[10px] font-medium leading-none text-muted-foreground">{userOpenDate}</div>
+                           </div>
+                           <div className="flex items-center gap-1 text-primary">
+                             <span className="h-px min-w-1 flex-1 bg-primary/35" />
+                             <span className="shrink-0 rounded-full bg-primary/15 px-1.5 py-px text-[8px] font-bold uppercase ring-1 ring-primary/30">+1 day</span>
+                             <span className="h-px min-w-1 flex-1 bg-primary/35" />
+                           </div>
+                           <div className="rounded-md bg-muted/60 px-2 py-1.5 ring-1 ring-border/60">
+                             <div className="whitespace-nowrap font-mono text-sm font-semibold leading-none tabular-nums text-foreground">{localFormat.format(localClose)}</div>
+                             <div className="mt-1 whitespace-nowrap text-[10px] font-medium leading-none text-muted-foreground">{userCloseDate}</div>
+                           </div>
+                         </div>
                       )}
                     </div>
                   )}
