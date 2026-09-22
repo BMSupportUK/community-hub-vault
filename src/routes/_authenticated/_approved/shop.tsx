@@ -3042,9 +3042,18 @@ function OrdersView({
     };
   }, [scope, user?.id, adminUnlocked]);
 
+  const availableYears = Array.from(
+    new Set(
+      orders
+        .map((order) => new Date(order.created_at))
+        .filter((d) => !Number.isNaN(d.getTime()))
+        .map((d) => d.getFullYear())
+        .concat(new Date().getFullYear()),
+    ),
+  ).sort((a, b) => b - a);
   const currentYearOrders = orders.filter((order) => {
     const createdAt = new Date(order.created_at);
-    return !Number.isNaN(createdAt.getTime()) && createdAt.getFullYear() === currentYear;
+    return !Number.isNaN(createdAt.getTime()) && createdAt.getFullYear() === year;
   });
   const monthCounts = monthLabels.map(
     (_, index) => currentYearOrders.filter((order) => new Date(order.created_at).getMonth() === index).length,
