@@ -370,17 +370,25 @@ export const resolveQueueItem = createServerFn({ method: "POST" })
       const ev: any = { ...((item.parsed_event ?? {}) as Record<string, unknown>) };
       if (data.time !== undefined) ev.time = data.time;
       const title = data.title ?? ev.title ?? "Untitled";
-      const coverUrl = await ensureSportCover((cat as any).id, data.category, data.subcategory ?? null);
-      const { error: insErr } = await supabaseAdmin.from("sports_blogs").insert({
-        category_id: (cat as any).id,
-        subcategory: data.subcategory ?? null,
-        title,
-        excerpt: ev.time ? `${ev.date ? ev.date + " · " : ""}${ev.time}` : (ev.date ?? null),
-        body: buildBody(ev),
-        image_url: coverUrl,
-        published: false,
-        created_by: userId,
-      });
+      // One draft per chosen subcategory (none chosen → a single draft
+      // straight under the category).
+      const chosenSubs: (string | null)[] =
+        data.subcategories && data.subcategories.length > 0
+          ? Array.from(new Set(data.subcategories))
+          : [data.subcategory ?? null];
+      const rows = await Promise.all(
+        chosenSubs.map(async (sub) => ({
+          category_id: (cat as any).id,
+          subcategory: sub,
+          title,
+          excerpt: ev.time ? `${ev.date ? ev.date + " · " : ""}${ev.time}` : (ev.date ?? null),
+          body: buildBody(ev),
+          image_url: await ensureSportCover((cat as any).id, data.category!, sub),
+          published: false,
+          created_by: userId,
+        })),
+      );
+      const { error: insErr } = await supabaseAdmin.from("sports_blogs").insert(rows);
       if (insErr) throw new Error(insErr.message);
     }
 
