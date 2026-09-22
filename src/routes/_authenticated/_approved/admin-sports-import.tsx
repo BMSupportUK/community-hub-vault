@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { ArrowLeft, Loader2, Sparkles, Send, Trash2, Inbox, Wand2, Clock } from "lucide-react";
-import { buildDualTime, hasBothZones, parseClockTime } from "@/lib/import-time";
+import { buildDualTime, firstClockIn, firstDateIn, hasBothZones, parseClockTime } from "@/lib/import-time";
 import {
   parseDiscordPaste,
   importParsedEvents,
@@ -520,15 +520,20 @@ function QueueRow({
   const [time, setTime] = useState<string | null>(ev.time ?? null);
   const subs = category ? subsByCatName.get(category) ?? [] : [];
 
-  // Only offer the zone buttons when the post lists a single time without
+  // Telegram blocks arrive whole with no time pulled out — fall back to the
+  // first clock time written inside the post itself.
+  const zoneSource = time ?? firstClockIn(String(ev.raw ?? item.raw_text ?? ""));
+  const zoneDate = ev.date ?? firstDateIn(String(ev.raw ?? item.raw_text ?? ""));
+
+  // Offer the zone buttons whenever the post lists a single time without
   // both zones spelled out — and only when we can actually read the clock.
-  const needsZone = !hasBothZones(time) && parseClockTime(time) !== null;
+  const needsZone = !hasBothZones(time) && parseClockTime(zoneSource) !== null;
 
   const applyZone = (zone: "gmt" | "et") => {
-    const dual = buildDualTime(ev.time ?? time, ev.date, zone);
+    const dual = buildDualTime(zoneSource, zoneDate, zone);
     if (!dual) return toast.error("Couldn't read the time on this post");
     setTime(dual);
-    toast.success(`Time set from ${zone.toUpperCase()} — ${dual}`);
+    toast.success(`Time set from ${zone === "gmt" ? "UK" : "ET"} — ${dual}`);
   };
 
   const run = async (action: "import" | "discard") => {
@@ -570,9 +575,9 @@ function QueueRow({
       </div>
       {needsZone && (
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[11px] text-muted-foreground">Time listed is:</span>
+          <span className="text-[11px] text-muted-foreground">Start time in this post is:</span>
           <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => applyZone("gmt")}>
-            <Clock className="size-3" /> GMT
+            <Clock className="size-3" /> UK
           </Button>
           <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => applyZone("et")}>
             <Clock className="size-3" /> ET
