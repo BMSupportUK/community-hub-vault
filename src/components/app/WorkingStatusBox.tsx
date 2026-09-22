@@ -179,10 +179,15 @@ export function NextShiftPanel({
   );
 
   return (
-    <div className="rounded-xl border border-primary/30 bg-primary/5 p-2.5">
-      <div className="mb-2 flex items-center gap-1.5 text-primary">
+    <div
+      className={cn(
+        "rounded-xl border p-2.5",
+        amber ? "border-amber-300/30 bg-amber-500/15 shadow-[0_0_10px_rgba(245,158,11,0.15)]" : "border-primary/30 bg-primary/5",
+      )}
+    >
+      <div className={cn("mb-2 flex items-center gap-1.5", amber ? "text-amber-300" : "text-primary")}>
         <Calendar className="size-3.5" />
-        <span className="text-xs font-bold uppercase tracking-wide">Next shift</span>
+        <span className="text-xs font-bold uppercase tracking-wide">{heading}</span>
       </div>
       {/* Stacked full-width rows — side-by-side columns overflow in narrow panels. */}
       <div className="grid gap-2">
