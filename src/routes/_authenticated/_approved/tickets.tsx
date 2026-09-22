@@ -558,7 +558,7 @@ function TicketsPage() {
                 <div className="min-w-0 flex-1">
                   <h2 className="font-display text-2xl md:text-3xl font-bold">Welcome to the Help Desk</h2>
                   <p className="mt-3 text-rose-100/90 max-w-2xl">
-                    Account questions, billing, Live TV or Movies & Series issues — we've got you
+                    Account questions, billing, or any other help needed to solve issues — we've got you
                     covered. Open a ticket and we'll respond as soon as a staff member is on duty.
                   </p>
                   <p className="mt-5 text-rose-200/80 max-w-2xl text-sm">
