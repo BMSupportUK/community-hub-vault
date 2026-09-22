@@ -134,7 +134,12 @@ export function NextShiftPanel({
     crosses: boolean;
     accent?: boolean;
   }) => (
-    <div className="h-full rounded-lg bg-surface/60 px-2.5 py-2 ring-1 ring-border/60">
+    <div
+      className={cn(
+        "h-full rounded-lg px-2.5 py-2",
+        amber ? "bg-amber-500/10 ring-1 ring-amber-300/25" : "bg-surface/60 ring-1 ring-border/60",
+      )}
+    >
       <div
         className={cn(
           "truncate text-[10px] font-semibold uppercase tracking-wide",
