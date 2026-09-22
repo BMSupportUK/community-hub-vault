@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { preserveEmailLineBreaks } from "@/lib/email-html";
 import {
   Code2,
   Eye,
@@ -60,10 +61,12 @@ export function EmailHtmlEditor({ value, onChange, placeholders }: Props) {
   const ref = useRef<HTMLTextAreaElement>(null);
 
   const previewDoc = useMemo(
-    () =>
-      /<\s*html/i.test(value)
-        ? value
-        : `<!doctype html><html><body style="margin:0;background:#ffffff;font-family:Arial,sans-serif">${value}</body></html>`,
+    () => {
+      const html = preserveEmailLineBreaks(value);
+      return /<\s*html/i.test(html)
+        ? html
+        : `<!doctype html><html><body style="margin:0;background:#ffffff;font-family:Arial,sans-serif">${html}</body></html>`;
+    },
     [value],
   );
 

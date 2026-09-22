@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { preserveEmailLineBreaks } from "@/lib/email-html";
 
 /**
  * Server-side access to the editable automated messages and email overrides
@@ -76,9 +77,10 @@ export function htmlToText(html: string) {
 /** Simple branded HTML/text pair used when an admin supplies their own wording. */
 export function renderOverrideEmail(bodyText: string) {
   if (looksLikeHtml(bodyText)) {
-    const html = /<\s*html/i.test(bodyText)
-      ? bodyText
-      : `<!doctype html><html><body style="background:#ffffff;font-family:Arial,sans-serif">${bodyText}</body></html>`;
+    const lineBrokenHtml = preserveEmailLineBreaks(bodyText);
+    const html = /<\s*html/i.test(lineBrokenHtml)
+      ? lineBrokenHtml
+      : `<!doctype html><html><body style="background:#ffffff;font-family:Arial,sans-serif">${lineBrokenHtml}</body></html>`;
     return { html, text: htmlToText(bodyText) };
   }
   const paragraphs = bodyText
