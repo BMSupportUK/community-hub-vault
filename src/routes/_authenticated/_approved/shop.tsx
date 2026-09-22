@@ -3362,20 +3362,33 @@ function MyOrdersTab({ onOpenOrder }: { onOpenOrder: (id: string) => void }) {
   }, [user?.id]);
 
   const monthLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const availableYears = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          orders
+            .map((order) => new Date(order.created_at))
+            .filter((d) => !Number.isNaN(d.getTime()))
+            .map((d) => d.getFullYear())
+            .concat(new Date().getFullYear()),
+        ),
+      ).sort((a, b) => b - a),
+    [orders],
+  );
   const monthCounts = useMemo(() => {
     const counts = Array.from({ length: 12 }, () => 0);
     for (const order of orders) {
       const date = new Date(order.created_at);
-      if (!Number.isNaN(date.getTime()) && date.getFullYear() === currentYear) counts[date.getMonth()] += 1;
+      if (!Number.isNaN(date.getTime()) && date.getFullYear() === year) counts[date.getMonth()] += 1;
     }
     return counts;
-  }, [orders, currentYear]);
+  }, [orders, year]);
   const monthOrders = useMemo(
     () => orders.filter((order) => {
       const date = new Date(order.created_at);
-      return date.getFullYear() === currentYear && date.getMonth() === month;
+      return date.getFullYear() === year && date.getMonth() === month;
     }),
-    [orders, month, currentYear],
+    [orders, month, year],
   );
   const processingOrders = monthOrders.filter((o) =>
     ["pending", "processing", "paid"].includes(o.status),
