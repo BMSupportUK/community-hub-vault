@@ -1014,6 +1014,11 @@ function ShiftsPage() {
                       {ds.map((s) => (
                         <div key={s.id} className={cn("rounded-lg p-2 border text-xs", s.assigned_to === user?.id ? "bg-primary/20 border-primary/50" : "bg-surface-2 border-border")}>
                           <div className="font-mono text-foreground">{fmtRange(s.shift_date, s.start_time, s.end_time)}</div>
+                          {deviceRange(s.shift_date, s.start_time, s.end_time) && (
+                            <div className="text-[10px] text-accent-foreground/90 mt-0.5">
+                              Your time: <span className="font-mono">{deviceRange(s.shift_date, s.start_time, s.end_time)}</span>
+                            </div>
+                          )}
                           <div className="text-muted-foreground truncate mt-0.5">{profName(s.assigned_to)}</div>
                         </div>
                       ))}
