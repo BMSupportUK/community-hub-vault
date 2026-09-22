@@ -4002,9 +4002,7 @@ function OrderDetailImpl({
     if (busy) return;
     setBusy(true);
     try {
-      await sendSystem(
-        `🛠️ We are currently setting up your account. Your login details will appear in the Credentials section of your profile soon.`,
-      );
+      await sendSystem(await getAutomatedMessage("order_setting_up_account"));
 
 
 
@@ -4024,9 +4022,9 @@ function OrderDetailImpl({
     setBusy(true);
     try {
       const handle = order.existing_username ? ` for “${order.existing_username}”` : "";
-      await sendSystem(
-        `🔄 Your subscription${handle} is being updated. You'll receive confirmation once the extension is complete.`,
-      );
+      await sendSystem(await getAutomatedMessage("order_subscription_updating", {
+        account_handle: handle,
+      }));
       toast.success("Customer notified");
     } finally {
       setBusy(false);
@@ -4050,7 +4048,7 @@ function OrderDetailImpl({
         toast.error(error.message);
         return;
       }
-      await sendSystem(`🎉 Order complete — thank you for your business!`);
+      await sendSystem(await getAutomatedMessage("order_sale_completed"));
       toast.success("Sale completed");
     } finally {
       setBusy(false);
@@ -4069,12 +4067,12 @@ function OrderDetailImpl({
     setBusy(true);
     try {
       const result = await cancelOrderAndSquareInvoiceRpc({ data: { orderId } });
-      await sendSystem(
-        `🚫 Order cancelled by ${order.user_id === user?.id ? "customer" : "staff"}.`,
-      );
+      await sendSystem(await getAutomatedMessage("order_cancelled", {
+        cancelled_by: order.user_id === user?.id ? "customer" : "staff",
+      }));
       toast.success("Order cancelled");
       if (result.invoiceCancelled) {
-        await sendSystem(`🚫 Square invoice cancelled.`);
+        await sendSystem(await getAutomatedMessage("order_invoice_cancelled"));
       } else if (result.invoiceError && !/No Square invoice|PAID/i.test(result.invoiceError)) {
         toast.warning("Order cancelled, but the Square invoice could not be cancelled automatically.");
       }
