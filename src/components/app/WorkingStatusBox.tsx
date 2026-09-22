@@ -24,6 +24,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { sendShiftEventPush, sendBreakEventPush } from "@/lib/push.functions";
 import { toast } from "sonner";
 import { formatRoleLabel } from "@/lib/role-label";
+import { browserTimezone } from "@/hooks/use-user-timezone";
+import { shiftWindowToUtcMs } from "@/hooks/use-timezone";
 
 type Shift = { id: string; clock_in: string };
 type Break = { id: string; kind: BreakKind; started_at: string };
