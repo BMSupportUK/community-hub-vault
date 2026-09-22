@@ -100,7 +100,58 @@ const CATEGORY_RENAMES: Record<string, string> = {
   "Daily Sports & PPV": "Daily Sports & PPV Events",
 };
 
+/** First meaningful line of a post, used as the queue item's heading. */
+function postHeading(text: string): string {
+  const line = text
+    .split("\n")
+    .map((l) => l.replace(/[*_`#>]+/g, "").trim())
+    .find((l) => l.replace(/[^A-Za-z0-9]/g, "").length > 1);
+  return (line || "Telegram listing").slice(0, 300);
+}
+
+/**
+ * Queues a forwarded Telegram post as ONE block, exactly as sent — no AI
+ * splitting and no category guess. Staff pick the category in the queue.
+ */
 export async function ingestTelegramPost(opts: {
+  text: string;
+  sourceRef: string;
+  forwardedFrom: string | null;
+}): Promise<{ queued: number }> {
+  const text = opts.text.trim();
+  if (!text) return { queued: 0 };
+
+  const sourceRef = opts.sourceRef.slice(0, 400);
+  const { data: existing, error: selErr } = await supabaseAdmin
+    .from("discord_import_queue")
+    .select("id")
+    .eq("source_ref", sourceRef)
+    .limit(1);
+  if (selErr) throw new Error(selErr.message);
+  if ((existing ?? []).length > 0) return { queued: 0 };
+
+  const { error } = await supabaseAdmin.from("discord_import_queue").insert({
+    raw_text: text,
+    parsed_event: {
+      title: postHeading(text),
+      time: null,
+      date: null,
+      channels: [],
+      raw: text,
+      suggested_category: null,
+      suggested_subcategory: null,
+    } as any,
+    status: "pending",
+    source: "telegram",
+    source_ref: sourceRef,
+    forwarded_from: opts.forwardedFrom,
+  } as any);
+  if (error) throw new Error(error.message);
+  return { queued: 1 };
+}
+
+/** @deprecated AI splitting is no longer used for Telegram posts. */
+async function ingestTelegramPostSplit(opts: {
   text: string;
   sourceRef: string;
   forwardedFrom: string | null;
