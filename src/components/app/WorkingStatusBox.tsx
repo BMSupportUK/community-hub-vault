@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import {
   CircleDot,
   Briefcase,
@@ -10,6 +10,7 @@ import {
   Loader2,
   Calendar,
   Clock,
+  ArrowRight,
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
