@@ -153,7 +153,9 @@ function buildBody(ev: { time?: string | null; date?: string | null; channels?: 
   if (ev.date) parts.push(ev.date);
   if (ev.time) parts.push(ev.time);
   if (ev.channels && ev.channels.length) parts.push(ev.channels.join(" • "));
-  if (parts.length === 0 && ev.raw) parts.push(ev.raw);
+  // Telegram posts must always remain intact. Previously, choosing UK/ET
+  // added `time`, which prevented the original listing from being included.
+  if (ev.raw) parts.push(ev.raw);
   return parts.join("\n");
 }
 
