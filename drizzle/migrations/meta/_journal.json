@@ -85,6 +85,13 @@
       "when": 1790066935024,
       "tag": "0011_create_automated_messages",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1790067643590,
+      "tag": "0012_automated_messages_sales_and_emails",
+      "breakpoints": true
     }
   ]
 }

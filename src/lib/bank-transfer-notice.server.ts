@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { getAutomatedMessageServer } from "@/lib/automated-messages.server";
 
 type Input = {
   orderId: string;
@@ -41,11 +42,16 @@ export async function postBankTransferReportedNotice(
   }).format(new Date());
 
   const content =
-    `🏦 Bank transfer reported by the customer for order #${orderId.slice(0, 8)} — £${(amountCents / 100).toFixed(2)} GBP.` +
-    `\nPayment reference: ${reference}` +
-    `\nReported: ${stamp} (UK time)` +
-    `\n\n⏳ Awaiting verification — please check the bank account and confirm the payment on this order once the funds have landed.` +
-    `\n\n(${marker})`;
+    (await getAutomatedMessageServer(
+      "order_bank_transfer_reported",
+      {
+        order_short: orderId.slice(0, 8),
+        total: `£${(amountCents / 100).toFixed(2)} GBP`,
+        reference: reference,
+        reported_at: stamp,
+      },
+      `🏦 Bank transfer reported by the customer for order #${orderId.slice(0, 8)} — £${(amountCents / 100).toFixed(2)} GBP.\nPayment reference: ${reference}`,
+    )) + `\n\n(${marker})`;
 
   try {
     await supabaseAdmin.from("order_messages").insert({
