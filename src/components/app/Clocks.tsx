@@ -266,7 +266,6 @@ export function Clocks() {
                 const userDateFormat = new Intl.DateTimeFormat("en-GB", { timeZone: timezone, day: "numeric", month: "short" });
                 const userOpenDate = userDateFormat.format(localOpen ?? londonTimeToDate(hour.day_of_week, "00:00"));
                 const userCloseDate = localClose ? userDateFormat.format(localClose) : userOpenDate;
-                const userDate = userOpenDate === userCloseDate ? userOpenDate : `${userOpenDate}–${userCloseDate}`;
                 const cell = cn("border-t border-border/50 px-3 py-2.5", isToday && "bg-primary/10");
                 return (
                   <div key={hour.day_of_week} className="contents">
