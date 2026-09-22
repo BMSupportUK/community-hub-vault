@@ -1018,18 +1018,15 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
       const secondDate = document.createElement("span");
       secondDate.className = "block w-full text-center text-[11px] md:text-xs font-bold uppercase tracking-wider text-white leading-tight mb-0.5";
       secondDate.textContent = m.localDate;
-      const secondRow = document.createElement("span");
-      secondRow.className = "flex w-full min-w-0 items-baseline justify-center gap-1.5";
       const secondTime = document.createElement("span");
-      secondTime.className = "font-bold text-sm tabular-nums";
+      secondTime.className = "block w-full text-center font-bold text-sm tabular-nums leading-tight";
       secondTime.textContent = m.localTime;
       const secondZone = document.createElement("span");
-      secondZone.className = "min-w-0 truncate text-[10px] uppercase tracking-wide text-white/80";
+      secondZone.className = "block w-full text-center text-[10px] uppercase tracking-wide text-white/80 leading-tight";
       secondZone.textContent = m.localZone;
-      secondRow.appendChild(secondTime);
-      secondRow.appendChild(secondZone);
       secondPill.appendChild(secondDate);
-      secondPill.appendChild(secondRow);
+      secondPill.appendChild(secondTime);
+      secondPill.appendChild(secondZone);
       pillsRow.appendChild(secondPill);
     }
 
