@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { ArrowLeft, Loader2, Sparkles, Send, Trash2, Inbox, Wand2, Clock } from "lucide-react";
-import { buildDualTime, firstClockIn, firstDateIn, hasBothZones, parseClockTime, type TimeZoneChoice } from "@/lib/import-time";
+import { firstClockIn, firstDateIn, parseClockTime, toSingleZoneTime, type TimeZoneChoice } from "@/lib/import-time";
 import { parseSportsListingBlock } from "@/lib/sports-listing-format";
 import {
   parseDiscordPaste,
@@ -104,11 +104,11 @@ function AdminSportsImportPage() {
     setDraft({ category: "", destinationCategory: "", subcategories: [], title: "", time: null, sourceZone: null, guideId: null });
   };
 
-  const applyZoneToItem = (itemId: string, dual: string, zone: "gmt" | "et") => {
-    timeStore.current.set(itemId, dual);
+  const applyZoneToItem = (itemId: string, shown: string, zone: "gmt" | "et") => {
+    timeStore.current.set(itemId, shown);
     sourceZoneStore.current.set(itemId, zone);
-    if (itemId === selectedId) setDraft((d) => ({ ...d, time: dual, sourceZone: zone }));
-    toast.success(`Time set from ${zone === "gmt" ? "UK" : "ET"} — ${dual}`);
+    if (itemId === selectedId) setDraft((d) => ({ ...d, time: shown, sourceZone: zone }));
+    toast.success(`Times shown in ${zone === "gmt" ? "UK" : "ET"} time — ${shown}`);
   };
 
   useEffect(() => {
@@ -457,14 +457,19 @@ function AdminSportsImportPage() {
                           q.id === selectedId
                             ? draft.time
                             : stored ?? (q.parsed_event?.time ? String(q.parsed_event.time) : null);
+                        const zone =
+                          q.id === selectedId
+                            ? draft.sourceZone
+                            : sourceZoneStore.current.get(q.id) ?? null;
                         return (
                           <QueueRow
                             key={q.id}
                             item={q}
                             time={t}
+                            zone={zone}
                             selected={selectedId === q.id}
                             onSelect={() => selectItem(q)}
-                            onZoneApply={(dual, zone) => applyZoneToItem(q.id, dual, zone)}
+                            onZoneApply={(shown, z) => applyZoneToItem(q.id, shown, z)}
                           />
                         );
                       })}
@@ -525,7 +530,7 @@ function EventRow({
           <Trash2 className="size-4" />
         </Button>
       </div>
-      {!hasBothZones(event.time) && parseClockTime(event.time) !== null && (
+      {parseClockTime(event.time) !== null && (
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-[11px] text-muted-foreground">Time listed is:</span>
           {(["gmt", "et"] as const).map((z) => (
@@ -535,12 +540,12 @@ function EventRow({
               variant="outline"
               className="h-7 px-2 text-xs"
               onClick={() => {
-                const dual = buildDualTime(event.time, event.date, z);
-                if (!dual) return toast.error("Couldn't read the time on this post");
-                onChange({ time: dual });
+                const shown = toSingleZoneTime(event.time, event.date, z);
+                if (!shown) return toast.error("Couldn't read the time on this post");
+                onChange({ time: shown });
               }}
             >
-              <Clock className="size-3" /> {z.toUpperCase()}
+              <Clock className="size-3" /> {z === "gmt" ? "UK" : "ET"}
             </Button>
           ))}
         </div>
@@ -571,23 +576,26 @@ function EventRow({
 function QueueRow({
   item,
   time,
+  zone,
   selected,
   onSelect,
   onZoneApply,
 }: {
   item: QueueItem;
   time: string | null;
+  zone: TimeZoneChoice | null;
   selected: boolean;
   onSelect: () => void;
-  onZoneApply: (dual: string, zone: "gmt" | "et") => void;
+  onZoneApply: (shown: string, zone: "gmt" | "et") => void;
 }) {
   const ev = item.parsed_event ?? {};
 
   // Telegram blocks arrive whole with no time pulled out — fall back to the
   // first clock time written inside the post itself.
-  const zoneSource = time ?? firstClockIn(String(ev.raw ?? item.raw_text ?? ""));
+  const zoneSource = firstClockIn(String(ev.raw ?? item.raw_text ?? "")) ?? time;
   const zoneDate = ev.date ?? firstDateIn(String(ev.raw ?? item.raw_text ?? ""));
-  const needsZone = !hasBothZones(time) && parseClockTime(zoneSource) !== null;
+  // Always offer the choice so a wrong pick can be changed before importing.
+  const needsZone = parseClockTime(zoneSource) !== null;
 
   return (
     <Card
@@ -606,31 +614,23 @@ function QueueRow({
       </div>
       {needsZone && (
         <div className="flex flex-wrap items-center gap-2" onClick={(e) => e.stopPropagation()}>
-          <span className="text-[11px] text-muted-foreground">Start time in this post is:</span>
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-7 px-2 text-xs"
-            onClick={() => {
-              const dual = buildDualTime(zoneSource, zoneDate, "gmt");
-              if (!dual) return toast.error("Couldn't read the time on this post");
-              onZoneApply(dual, "gmt");
-            }}
-          >
-            <Clock className="size-3" /> UK
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-7 px-2 text-xs"
-            onClick={() => {
-              const dual = buildDualTime(zoneSource, zoneDate, "et");
-              if (!dual) return toast.error("Couldn't read the time on this post");
-              onZoneApply(dual, "et");
-            }}
-          >
-            <Clock className="size-3" /> ET
-          </Button>
+          <span className="text-[11px] text-muted-foreground">Start times in this post are:</span>
+          {(["gmt", "et"] as const).map((z) => (
+            <Button
+              key={z}
+              size="sm"
+              variant={zone === z ? "default" : "outline"}
+              className="h-7 px-2 text-xs"
+              onClick={() => {
+                const shown = toSingleZoneTime(zoneSource, zoneDate, z);
+                if (!shown) return toast.error("Couldn't read the time on this post");
+                onZoneApply(shown, z);
+              }}
+            >
+              <Clock className="size-3" /> {z === "gmt" ? "UK" : "ET"}
+            </Button>
+          ))}
+          {zone && <span className="text-[11px] text-muted-foreground">Tap the other button to change it</span>}
         </div>
       )}
       {!selected && (
@@ -932,8 +932,8 @@ function ListingPreview({ raw, sourceZone }: { raw: string; sourceZone: TimeZone
       </div>
       <div className="max-h-60 space-y-2 overflow-y-auto pr-1">
         {events.map((event, index) => {
-          const converted = sourceZone && !hasBothZones(event.time)
-            ? buildDualTime(event.time, event.date, sourceZone)
+          const converted = sourceZone
+            ? toSingleZoneTime(event.time, event.date, sourceZone)
             : null;
           return (
             <div key={`${event.time}-${event.title}-${index}`} className="rounded-md border border-border bg-card/70 p-2">

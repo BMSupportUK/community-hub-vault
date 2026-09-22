@@ -1,4 +1,4 @@
-import { buildDualTime, hasBothZones, parseClockTime, parseListingDate, type TimeZoneChoice } from "./import-time";
+import { parseClockTime, parseListingDate, toSingleZoneTime, type TimeZoneChoice } from "./import-time";
 
 export type SportsListingEvent = {
   date: string | null;
@@ -221,8 +221,8 @@ export function sortSportsListingEvents(events: SportsListingEvent[]): SportsLis
 }
 
 function eventTimeForOutput(event: SportsListingEvent, input: ListingInput): string {
-  if (input.sourceZone && !hasBothZones(event.time)) {
-    const converted = buildDualTime(event.time, event.date ?? input.date ?? undefined, input.sourceZone);
+  if (input.sourceZone) {
+    const converted = toSingleZoneTime(event.time, event.date ?? input.date ?? undefined, input.sourceZone);
     if (converted) return converted;
   }
   return event.time;
