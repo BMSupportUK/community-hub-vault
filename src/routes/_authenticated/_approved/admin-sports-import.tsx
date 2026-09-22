@@ -16,6 +16,7 @@ import {
   queueUnmatched,
   listImportQueue,
   resolveQueueItem,
+  approveAllSuggested,
   listCategoriesWithSubs,
   type RoutedEvent,
 } from "@/lib/discord-import.functions";
@@ -34,6 +35,8 @@ type QueueItem = {
   suggested_subcategory: string | null;
   status: string;
   created_at: string;
+  source?: string;
+  forwarded_from?: string | null;
 };
 
 function AdminSportsImportPage() {
@@ -55,6 +58,9 @@ function AdminSportsImportPage() {
   const [subs, setSubs] = useState<Sub[]>([]);
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [loadingQueue, setLoadingQueue] = useState(true);
+  const [queueFilter, setQueueFilter] = useState<"all" | "telegram" | "paste">("all");
+  const [approvingAll, setApprovingAll] = useState(false);
+  const approveAllFn = useServerFn(approveAllSuggested);
   const [bulkCategory, setBulkCategory] = useState<string>("");
   const [bulkSubcategory, setBulkSubcategory] = useState<string | null>(null);
 
@@ -72,6 +78,22 @@ function AdminSportsImportPage() {
     listFn().then((d) => setQueue(d.items as QueueItem[]))
       .catch((e) => toast.error(e.message))
       .finally(() => setLoadingQueue(false));
+  };
+
+  const visibleQueue = queue.filter((q) => queueFilter === "all" || (q.source ?? "paste") === queueFilter);
+  const suggestedCount = queue.filter((q) => q.parsed_event?.suggested_category).length;
+
+  const onApproveAll = async () => {
+    setApprovingAll(true);
+    try {
+      const r = await approveAllFn();
+      toast.success(`Imported ${r.imported} suggested event(s) as drafts${r.skipped ? ` · ${r.skipped} still need a category` : ""}`);
+      refreshQueue();
+    } catch (e: any) {
+      toast.error(e.message ?? "Approve-all failed");
+    } finally {
+      setApprovingAll(false);
+    }
   };
 
   const subsByCatName = useMemo(() => {
@@ -299,17 +321,38 @@ function AdminSportsImportPage() {
           </TabsContent>
 
           <TabsContent value="queue" className="space-y-3">
+            <div className="flex flex-wrap items-center gap-2">
+              {(["all", "telegram", "paste"] as const).map((f) => (
+                <Button
+                  key={f}
+                  size="sm"
+                  variant={queueFilter === f ? "default" : "outline"}
+                  onClick={() => setQueueFilter(f)}
+                >
+                  {f === "all" ? "All" : f === "telegram" ? "Telegram" : "Pasted"}
+                  <span className="ml-1.5 text-xs opacity-80">
+                    {f === "all" ? queue.length : queue.filter((q) => (q.source ?? "paste") === f).length}
+                  </span>
+                </Button>
+              ))}
+              <div className="flex-1" />
+              <Button size="sm" variant="secondary" onClick={onApproveAll} disabled={approvingAll || suggestedCount === 0}>
+                {approvingAll ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+                Approve all suggested ({suggestedCount})
+              </Button>
+            </div>
             {loadingQueue ? (
               <div className="grid place-items-center py-10 text-muted-foreground">
                 <Loader2 className="size-5 animate-spin" />
               </div>
-            ) : queue.length === 0 ? (
+            ) : visibleQueue.length === 0 ? (
               <Card className="p-10 grid place-items-center text-center text-muted-foreground gap-2">
                 <Inbox className="size-8" />
-                <p>Review queue is empty.</p>
+                <p>{queue.length === 0 ? "Review queue is empty." : "Nothing from this source."}</p>
+                <p className="text-xs">Forward a listings post to your Telegram bot and it will appear here.</p>
               </Card>
             ) : (
-              queue.map((q) => (
+              visibleQueue.map((q) => (
                 <QueueRow
                   key={q.id}
                   item={q}
@@ -397,8 +440,8 @@ function QueueRow({
 }) {
   const ev = item.parsed_event ?? {};
   const [title, setTitle] = useState<string>(String(ev.title ?? ""));
-  const [category, setCategory] = useState<string>("");
-  const [subcategory, setSubcategory] = useState<string | null>(null);
+  const [category, setCategory] = useState<string>(String(ev.suggested_category ?? ""));
+  const [subcategory, setSubcategory] = useState<string | null>(ev.suggested_subcategory ?? null);
   const [busy, setBusy] = useState<"import" | "discard" | null>(null);
   const subs = category ? subsByCatName.get(category) ?? [] : [];
 
@@ -423,6 +466,11 @@ function QueueRow({
         {[ev.date, ev.time].filter(Boolean).join(" · ")}
         {Array.isArray(ev.channels) && ev.channels.length > 0 && <> · {ev.channels.join(" • ")}</>}
       </div>
+      {item.source === "telegram" && (
+        <div className="text-[11px] text-muted-foreground">
+          via Telegram{item.forwarded_from ? ` · forwarded from ${item.forwarded_from}` : ""}
+        </div>
+      )}
       {ev.raw && <pre className="text-xs bg-muted/50 rounded p-2 whitespace-pre-wrap break-words max-h-24 overflow-auto">{ev.raw}</pre>}
       <div className="grid grid-cols-2 gap-2">
         <Select value={category} onValueChange={(v) => { setCategory(v); setSubcategory(null); }}>

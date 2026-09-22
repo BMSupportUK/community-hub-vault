@@ -1340,11 +1340,14 @@ export type Database = {
         Row: {
           created_at: string
           created_by: string | null
+          forwarded_from: string | null
           id: string
           parsed_event: Json
           raw_text: string
           resolved_at: string | null
           resolved_by: string | null
+          source: string
+          source_ref: string | null
           status: string
           suggested_category_id: string | null
           suggested_subcategory: string | null
@@ -1352,11 +1355,14 @@ export type Database = {
         Insert: {
           created_at?: string
           created_by?: string | null
+          forwarded_from?: string | null
           id?: string
           parsed_event: Json
           raw_text: string
           resolved_at?: string | null
           resolved_by?: string | null
+          source?: string
+          source_ref?: string | null
           status?: string
           suggested_category_id?: string | null
           suggested_subcategory?: string | null
@@ -1364,11 +1370,14 @@ export type Database = {
         Update: {
           created_at?: string
           created_by?: string | null
+          forwarded_from?: string | null
           id?: string
           parsed_event?: Json
           raw_text?: string
           resolved_at?: string | null
           resolved_by?: string | null
+          source?: string
+          source_ref?: string | null
           status?: string
           suggested_category_id?: string | null
           suggested_subcategory?: string | null
@@ -5245,6 +5254,27 @@ export type Database = {
           id?: string
           metadata?: Json | null
           reason?: string
+        }
+        Relationships: []
+      }
+      telegram_sports_sources: {
+        Row: {
+          created_at: string
+          label: string | null
+          telegram_user_id: number
+          telegram_username: string | null
+        }
+        Insert: {
+          created_at?: string
+          label?: string | null
+          telegram_user_id: number
+          telegram_username?: string | null
+        }
+        Update: {
+          created_at?: string
+          label?: string | null
+          telegram_user_id?: number
+          telegram_username?: string | null
         }
         Relationships: []
       }

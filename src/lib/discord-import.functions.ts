@@ -322,7 +322,7 @@ export const listImportQueue = createServerFn({ method: "GET" })
     await assertStaff(supabase, userId);
     const { data, error } = await supabaseAdmin
       .from("discord_import_queue")
-      .select("id, raw_text, parsed_event, suggested_category_id, suggested_subcategory, status, created_at")
+      .select("id, raw_text, parsed_event, suggested_category_id, suggested_subcategory, status, created_at, source, forwarded_from")
       .eq("status", "pending")
       .order("created_at", { ascending: false })
       .limit(500);
@@ -390,6 +390,67 @@ export const resolveQueueItem = createServerFn({ method: "POST" })
     if (upErr) throw new Error(upErr.message);
 
     return { ok: true };
+  });
+
+/**
+ * Imports every pending queue item that has an AI category suggestion,
+ * using the suggested category/subcategory. Items without a suggestion
+ * stay pending for manual review.
+ */
+export const approveAllSuggested = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    await assertStaff(supabase, userId);
+
+    const { data: items, error } = await supabaseAdmin
+      .from("discord_import_queue")
+      .select("id, parsed_event")
+      .eq("status", "pending")
+      .limit(500);
+    if (error) throw new Error(error.message);
+
+    const ready = (items ?? []).filter((it: any) => it.parsed_event?.suggested_category);
+    if (ready.length === 0) return { imported: 0, skipped: (items ?? []).length };
+
+    const names = Array.from(new Set(ready.map((it: any) => String(it.parsed_event.suggested_category))));
+    const { data: cats, error: catErr } = await supabaseAdmin
+      .from("sports_categories")
+      .select("id, name")
+      .in("name", names);
+    if (catErr) throw new Error(catErr.message);
+    const catMap = new Map<string, string>((cats ?? []).map((c: any) => [c.name, c.id]));
+
+    let imported = 0;
+    for (const it of ready as any[]) {
+      const ev = it.parsed_event ?? {};
+      const catId = catMap.get(String(ev.suggested_category));
+      if (!catId) continue;
+      const sub = ev.suggested_subcategory ?? null;
+      try {
+        const coverUrl = await ensureSportCover(catId, String(ev.suggested_category), sub);
+        const { error: insErr } = await supabaseAdmin.from("sports_blogs").insert({
+          category_id: catId,
+          subcategory: sub,
+          title: ev.title ?? "Untitled",
+          excerpt: ev.time ? `${ev.date ? ev.date + " · " : ""}${ev.time}` : (ev.date ?? null),
+          body: buildBody(ev),
+          image_url: coverUrl,
+          published: false,
+          created_by: userId,
+        });
+        if (insErr) continue;
+        await supabaseAdmin
+          .from("discord_import_queue")
+          .update({ status: "imported", resolved_at: new Date().toISOString(), resolved_by: userId })
+          .eq("id", it.id);
+        imported++;
+      } catch {
+        // Leave failed rows pending for manual handling.
+      }
+    }
+
+    return { imported, skipped: (items ?? []).length - imported };
   });
 
 export const listCategoriesWithSubs = createServerFn({ method: "GET" })
