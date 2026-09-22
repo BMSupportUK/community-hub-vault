@@ -346,19 +346,19 @@ export function OfficeHoursSchedule({
                       <div className="mt-0.5 text-[11px] text-muted-foreground">{userOpenDate}</div>
                     </>
                   ) : (
-                    <div className="space-y-1">
-                      <div className="flex items-baseline justify-between gap-2">
-                        <span className="font-mono tabular-nums text-foreground">{localFormat.format(localOpen)}</span>
-                        <span className="text-[11px] text-muted-foreground">{userOpenDate}</span>
+                    <div className="space-y-1.5">
+                      <div className="rounded-md bg-muted/60 px-2 py-1.5 ring-1 ring-border/60">
+                        <div className="font-mono text-sm font-semibold tabular-nums text-foreground">{localFormat.format(localOpen)}</div>
+                        <div className="mt-0.5 text-[11px] font-medium text-muted-foreground">{userOpenDate}</div>
                       </div>
                       <div className="flex items-center gap-1.5 text-primary">
                         <span className="h-px flex-1 bg-primary/30" />
                         <span className="rounded-full bg-primary/15 px-1.5 py-px text-[9px] font-bold uppercase tracking-wide ring-1 ring-primary/30">+1 day</span>
                         <span className="h-px flex-1 bg-primary/30" />
                       </div>
-                      <div className="flex items-baseline justify-between gap-2">
-                        <span className="font-mono tabular-nums text-foreground">{localFormat.format(localClose)}</span>
-                        <span className="text-[11px] text-muted-foreground">{userCloseDate}</span>
+                      <div className="rounded-md bg-muted/60 px-2 py-1.5 ring-1 ring-border/60">
+                        <div className="font-mono text-sm font-semibold tabular-nums text-foreground">{localFormat.format(localClose)}</div>
+                        <div className="mt-0.5 text-[11px] font-medium text-muted-foreground">{userCloseDate}</div>
                       </div>
                     </div>
                   )}
