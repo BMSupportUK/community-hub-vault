@@ -27,9 +27,9 @@ export const Route = createFileRoute("/_authenticated/_approved/admin-sports-imp
   component: AdminSportsImportPage,
 });
 
-type Cat = { id: string; name: string };
+type Cat = { id: string; name: string; parent_id: string | null; sort_order: number };
 type Sub = { category_id: string; name: string; sort_order: number; is_default: boolean };
-type QueueDraft = { category: string; subcategories: string[]; title: string; time: string | null };
+type QueueDraft = { category: string; subcategories: string[]; title: string; time: string | null; guideId: string | null };
 type QueueItem = {
   id: string;
   raw_text: string;
@@ -68,7 +68,7 @@ function AdminSportsImportPage() {
   const [bulkSubcategory, setBulkSubcategory] = useState<string | null>(null);
   // The three setup boxes live in the sidebar: tap a post, then work the sidebar.
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [draft, setDraft] = useState<QueueDraft>({ category: "", subcategories: [], title: "", time: null });
+  const [draft, setDraft] = useState<QueueDraft>({ category: "", subcategories: [], title: "", time: null, guideId: null });
   const timeStore = useRef<Map<string, string | null>>(new Map());
 
   const selectItem = (q: QueueItem) => {
@@ -81,12 +81,13 @@ function AdminSportsImportPage() {
       subcategories: ev.suggested_subcategory ? [String(ev.suggested_subcategory)] : [],
       title: String(ev.title ?? ""),
       time: stored ?? (ev.time ? String(ev.time) : null),
+      guideId: null,
     });
   };
 
   const clearSelection = () => {
     setSelectedId(null);
-    setDraft({ category: "", subcategories: [], title: "", time: null });
+    setDraft({ category: "", subcategories: [], title: "", time: null, guideId: null });
   };
 
   const applyZoneToItem = (itemId: string, dual: string, zone: "gmt" | "et") => {
