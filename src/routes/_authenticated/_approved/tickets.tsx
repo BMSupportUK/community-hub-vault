@@ -1047,11 +1047,9 @@ function formatOfficeTime(time: string) {
   return new Intl.DateTimeFormat("en-GB", { hour: "numeric", minute: "2-digit", hour12: true }).format(new Date(2000, 0, 1, hours, minutes));
 }
 
-function officeStatus(hours: OfficeHour[], now: Date, timezone: string) {
+function isOfficeOpen(hours: OfficeHour[], now: Date) {
   const londonDayName = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", weekday: "short" }).format(now);
   const londonDay = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(londonDayName);
-  const userDayName = new Intl.DateTimeFormat("en-GB", { timeZone: timezone, weekday: "short" }).format(now);
-  const userCurrentDay = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(userDayName);
   const londonParts = new Intl.DateTimeFormat("en-GB", {
     timeZone: "Europe/London",
     hour: "2-digit",
@@ -1066,56 +1064,12 @@ function officeStatus(hours: OfficeHour[], now: Date, timezone: string) {
     const [hour = 0, minute = 0] = time.split(":").map(Number);
     return hour * 60 + minute;
   };
-  const isOpen = Boolean(
+  return Boolean(
     today &&
     !today.is_closed &&
     currentMinutes >= toMinutes(today.open_time) &&
     currentMinutes < toMinutes(today.close_time),
   );
-
-  if (isOpen) return { isOpen: true, currentDay: londonDay, userCurrentDay, nextDay: null as number | null, nextDayUK: null as number | null, countdown: "", localOpening: "", ukOpening: "" };
-
-  for (let offset = 0; offset <= 7; offset += 1) {
-    const candidate = hours.find((hour) => hour.day_of_week === (londonDay + offset) % 7);
-    if (!candidate || candidate.is_closed) continue;
-    if (offset === 0 && toMinutes(candidate.open_time) <= currentMinutes) continue;
-    const nextOpening = londonTimeToDate(candidate.day_of_week, candidate.open_time);
-    const totalSeconds = Math.max(0, Math.floor((nextOpening.getTime() - now.getTime()) / 1000));
-    const days = Math.floor(totalSeconds / 86_400);
-    const remainingHours = Math.floor((totalSeconds % 86_400) / 3_600);
-    const minutes = Math.floor((totalSeconds % 3_600) / 60);
-    const seconds = totalSeconds % 60;
-    const countdown = days > 0
-      ? `${days}d ${remainingHours}h ${minutes}m ${seconds.toString().padStart(2, "0")}s`
-      : remainingHours > 0
-        ? `${remainingHours}h ${minutes}m ${seconds.toString().padStart(2, "0")}s`
-        : `${minutes}m ${seconds.toString().padStart(2, "0")}s`;
-    const localOpening = new Intl.DateTimeFormat("en-GB", {
-      timeZone: timezone,
-      weekday: "short",
-      day: "numeric",
-      month: "short",
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-      timeZoneName: "short",
-    }).format(nextOpening);
-    const localOpeningDayName = new Intl.DateTimeFormat("en-GB", { timeZone: timezone, weekday: "short" }).format(nextOpening);
-    const localOpeningDay = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(localOpeningDayName);
-    const ukOpening = new Intl.DateTimeFormat("en-GB", {
-      timeZone: "Europe/London",
-      weekday: "short",
-      day: "numeric",
-      month: "short",
-      hour: "numeric",
-      minute: "2-digit",
-      hour12: true,
-      timeZoneName: "short",
-    }).format(nextOpening);
-    return { isOpen: false, currentDay: londonDay, userCurrentDay, nextDay: localOpeningDay, nextDayUK: candidate.day_of_week, countdown, localOpening, ukOpening };
-  }
-
-  return { isOpen: false, currentDay: londonDay, userCurrentDay, nextDay: null as number | null, nextDayUK: null as number | null, countdown: "", localOpening: "", ukOpening: "" };
 }
 
 function OfficeHoursPanel() {
@@ -1154,38 +1108,26 @@ function OfficeHoursPanel() {
 
   if (hours.length === 0) return null;
   const timezoneLabel = timezone.replaceAll("_", " ").replace("/", " / ");
-  const status = officeStatus(hours, now, timezone);
-  // Only show the user-timezone column when the visitor's timezone actually
-  // produces different opening times or dates from the UK office.
-  const showUserColumn = (() => {
-    const fmt = (tz: string) =>
-      new Intl.DateTimeFormat("en-GB", {
-        timeZone: tz,
-        weekday: "short", day: "numeric", month: "short",
-        hour: "numeric", minute: "2-digit", hour12: true,
-      });
-    const officeFmt = fmt("Europe/London");
-    const userFmt = fmt(timezone);
-    return [...hours].some((hour) => {
-      if (hour.is_closed) return false;
-      const open = londonTimeToDate(hour.day_of_week, hour.open_time);
-      const close = londonTimeToDate(hour.day_of_week, hour.close_time);
-      return officeFmt.format(open) !== userFmt.format(open) || officeFmt.format(close) !== userFmt.format(close);
-    });
-  })();
+  const open = isOfficeOpen(hours, now);
 
   return (
     <section className="mt-6 overflow-hidden rounded-lg border border-border/70 bg-background/30">
       <div className="flex items-center gap-2 border-b border-border/70 px-4 py-3">
         <Store className="size-4 shrink-0 text-primary" />
         <h3 className="font-display text-sm font-semibold">Office opening times</h3>
+        <span className={cn(
+          "ml-auto inline-flex rounded-full px-2 py-1 text-[10px] font-bold ring-1",
+          open
+            ? "bg-success/15 text-success ring-success/35"
+            : "bg-destructive/15 text-destructive ring-destructive/35",
+        )}>
+          {open ? "Open" : "Closed"}
+        </span>
       </div>
-      <div className={showUserColumn
-        ? "grid grid-cols-[minmax(5.5rem,0.8fr)_minmax(0,1fr)_minmax(0,1fr)] text-xs sm:text-sm"
-        : "grid grid-cols-[minmax(5.5rem,0.8fr)_minmax(0,1fr)] text-xs sm:text-sm"}>
-        <div className="border-b border-border/70 px-3 py-2 font-semibold text-muted-foreground">Day</div>
+      <div className="grid grid-cols-[minmax(5.5rem,0.8fr)_minmax(0,1fr)_minmax(0,1fr)] text-xs sm:text-sm">
+        <div className="border-b border-border/70 px-3 py-2 font-semibold text-muted-foreground">Office date</div>
         <div className="border-b border-l border-border/70 px-3 py-2 font-semibold">UK office</div>
-        {showUserColumn && <div className="border-b border-l border-border/70 px-3 py-2 font-semibold">{timezoneLabel}</div>}
+        <div className="border-b border-l border-border/70 px-3 py-2 font-semibold">Your time · {timezoneLabel}</div>
         {[...hours].sort((a, b) => ((a.day_of_week + 6) % 7) - ((b.day_of_week + 6) % 7)).map((hour) => {
           const localOpen = hour.is_closed ? null : londonTimeToDate(hour.day_of_week, hour.open_time);
           const localClose = hour.is_closed ? null : londonTimeToDate(hour.day_of_week, hour.close_time);
@@ -1196,62 +1138,23 @@ function OfficeHoursPanel() {
           const userOpenDate = userDateFormat.format(localOpen ?? londonTimeToDate(hour.day_of_week, "00:00"));
           const userCloseDate = localClose ? userDateFormat.format(localClose) : userOpenDate;
           const userDate = userOpenDate === userCloseDate ? userOpenDate : `${userOpenDate}–${userCloseDate}`;
-          const localOpenDayName = new Intl.DateTimeFormat("en-GB", { timeZone: timezone, weekday: "short" })
-            .format(localOpen ?? londonTimeToDate(hour.day_of_week, "00:00"));
-          const localOpenDay = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(localOpenDayName);
           return (
             <div key={hour.day_of_week} className="contents">
               <div className="border-b border-border/50 px-3 py-2 font-medium last:border-b-0">
                 <div className="flex flex-wrap items-center gap-1.5">
                   <span>{OFFICE_DAY_NAMES[hour.day_of_week]}</span>
                   <span className="text-[11px] font-normal text-muted-foreground">{officeDate}</span>
-                  {status.isOpen && status.currentDay === hour.day_of_week && (
-                    <span className="inline-flex rounded-full bg-success/15 px-1.5 py-0.5 text-[10px] font-bold text-success ring-1 ring-success/35">
-                      Open
-                    </span>
-                  )}
-                  {!status.isOpen && status.currentDay === hour.day_of_week && (
-                    <span className="inline-flex rounded-full bg-destructive/15 px-1.5 py-0.5 text-[10px] font-bold text-destructive ring-1 ring-destructive/35">
-                      Closed
-                    </span>
-                  )}
                 </div>
               </div>
               <div className="border-b border-l border-border/50 px-3 py-2 text-muted-foreground">
-                <div className="flex flex-col gap-1">
-                  <div className="flex flex-wrap items-center gap-1.5">
-                    {hour.is_closed ? "Closed" : `${formatOfficeTime(hour.open_time)}–${formatOfficeTime(hour.close_time)}`}
-                  </div>
-                  {!status.isOpen && status.nextDayUK === hour.day_of_week && status.ukOpening && (
-                    <div className="font-semibold text-white">
-                      Reopens {status.ukOpening}
-                    </div>
-                  )}
-                </div>
+                {hour.is_closed ? "Closed" : `${formatOfficeTime(hour.open_time)}–${formatOfficeTime(hour.close_time)}`}
               </div>
-              {showUserColumn && (
               <div className="border-b border-l border-border/50 px-3 py-2 text-muted-foreground">
                 <div className="flex flex-wrap items-center gap-1.5">
                   <span className="text-[11px] text-muted-foreground">{userDate}</span>
                   <span>{hour.is_closed || !localOpen || !localClose ? "Closed" : `${localFormat.format(localOpen)}–${localFormat.format(localClose)}`}</span>
-                  {status.isOpen && status.userCurrentDay === localOpenDay && (
-                    <span className="inline-flex rounded-full bg-success/15 px-1.5 py-0.5 text-[10px] font-bold text-success ring-1 ring-success/35">
-                      Open
-                    </span>
-                  )}
-                  {!status.isOpen && status.userCurrentDay === localOpenDay && (
-                    <span className="inline-flex rounded-full bg-destructive/15 px-1.5 py-0.5 text-[10px] font-bold text-destructive ring-1 ring-destructive/35">
-                      Closed
-                    </span>
-                  )}
-                  {!status.isOpen && status.nextDay === localOpenDay && status.countdown && (
-                    <span className="font-semibold text-white">
-                      Reopens {status.localOpening} · in <span className="tabular-nums">{status.countdown}</span>
-                    </span>
-                  )}
                 </div>
               </div>
-              )}
             </div>
           );
         })}
