@@ -470,8 +470,8 @@ function TicketsPage() {
 
       {/* Tabs — hidden when actively chatting on a ticket */}
       <div className={cn(
-        "relative z-10 flex h-full min-h-0 flex-col border-t border-white/20 px-6 pb-10 md:px-10",
-        !isChatting && "overflow-y-auto pt-6",
+        "relative z-10 flex h-full min-h-0 flex-col border-t border-white/20 px-6 pb-4 md:px-10",
+        !isChatting && "overflow-y-auto pt-3",
         tab === "open" && "lg:overflow-hidden",
         isChatting && "px-0 md:px-0 pb-0 h-full"
       )}>
@@ -486,9 +486,9 @@ function TicketsPage() {
           )}
         >
           {tab !== "tickets" && (
-            <header className="w-full pt-6">
-              <div aria-hidden="true" className="mb-6 h-px w-full bg-white/60 shadow-[0_0_12px_rgba(255,255,255,0.55)]" />
-              <div className="flex flex-wrap items-center justify-center gap-3 md:gap-4 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-[0_0_50px_-12px_rgba(244,63,94,0.35)] p-3 md:p-4">
+            <header className="w-full pt-3">
+              <div aria-hidden="true" className="mb-4 h-px w-full bg-white/60 shadow-[0_0_12px_rgba(255,255,255,0.55)]" />
+              <div className="flex flex-wrap items-center justify-center gap-2.5 md:gap-3 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-[0_0_50px_-12px_rgba(244,63,94,0.35)] p-2.5 md:p-3">
                 <button
                   type="button"
                   onClick={() => { setCreating(false); setTab("welcome"); navigate({ to: "/tickets", search: { id: undefined, view } }); }}
@@ -554,18 +554,18 @@ function TicketsPage() {
           )}
 
 
-          <TabsContent value="welcome" className="mt-6">
-            <div className="rounded-2xl bg-gradient-to-br from-rose-600/30 via-fuchsia-600/20 to-violet-700/30 border border-rose-500/30 p-5 md:p-6 lg:p-8 shadow-[0_0_60px_-15px_rgba(244,63,94,0.4)]">
+          <TabsContent value="welcome" className="mt-4">
+            <div className="rounded-2xl bg-gradient-to-br from-rose-600/30 via-fuchsia-600/20 to-violet-700/30 border border-rose-500/30 p-4 md:p-5 lg:p-6 shadow-[0_0_60px_-15px_rgba(244,63,94,0.4)]">
               {/* Intro sits beside the duty strip so the week of hours below can
                   use the full width and show every day at once. */}
-              <div className="flex flex-col lg:flex-row lg:items-start gap-5 lg:gap-8">
+              <div className="flex flex-col lg:flex-row lg:items-start gap-4 lg:gap-6">
                 <div className="min-w-0 flex-1">
                   <h2 className="font-display text-2xl md:text-3xl font-bold">Welcome to the Help Desk</h2>
-                  <p className="mt-3 text-base md:text-lg text-rose-100/90 max-w-3xl">
+                  <p className="mt-2 text-base md:text-lg text-rose-100/90 max-w-3xl">
                     Account questions, billing, or any other help needed to solve issues — we've got you
                     covered. Open a ticket and we'll respond as soon as a staff member is on duty.
                   </p>
-                  <p className="mt-3 text-rose-200/80 max-w-3xl text-sm md:text-base">
+                  <p className="mt-2 text-rose-200/80 max-w-3xl text-sm md:text-base">
                     Once your ticket is resolved, leave a rating so we know how we did.
                   </p>
                 </div>
@@ -1016,10 +1016,10 @@ function NewTicketForm({
 function OfficeHoursPanel() {
   return (
     <section className="mt-6 overflow-hidden rounded-lg border border-border/70 bg-background/30">
-      <div className="flex items-center gap-2 border-b border-border/70 px-4 py-3">
+      <div className="flex items-center gap-2 border-b border-border/70 px-4 py-2.5">
         <Building2 className="size-4 shrink-0 text-primary" />
-        <h3 className="font-display text-sm font-semibold">Support Open Times</h3>
-        <span className="ml-auto text-[11px] text-muted-foreground">Our UK support hours, with your local times alongside.</span>
+        <h3 className="font-display text-base font-semibold">Support Open Times</h3>
+        <span className="ml-auto text-xs text-muted-foreground">Our UK support hours, with your local times alongside.</span>
       </div>
       <div className="px-4 py-3">
         <OfficeHoursSchedule channelName="ticket-office-hours-live" layout="compact" />
