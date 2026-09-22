@@ -240,11 +240,10 @@ export function StaffOnDutyStrip({
         });
       setOffDuty(off);
 
-      // Next claimed rota slot per staff member (today onwards).
-      const d = new Date();
-      const pad = (n: number) => String(n).padStart(2, "0");
-      const todayStr = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-      const nowTime = `${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
+      // Next claimed rota slot per staff member (today onwards). Rota times are UK
+      // office wall-clock, so compare against London — never the viewer's device
+      // clock, which can already be on the next day and skip today's shift.
+      const { date: todayStr, time: nowTime } = londonNow();
       const { data: slots } = await supabase
         .from("shift_slots")
         .select("assigned_to,shift_date,start_time,end_time")
@@ -260,7 +259,10 @@ export function StaffOnDutyStrip({
         end_time: string;
       }>) {
         if (!sl.assigned_to || nextMap[sl.assigned_to]) continue;
-        const upcoming = sl.shift_date > todayStr || sl.start_time > nowTime;
+        // A shift still running (or starting later) in UK time is the relevant one.
+        const endsAfterNow =
+          sl.end_time > sl.start_time ? sl.end_time > nowTime : true; // crosses midnight
+        const upcoming = sl.shift_date > todayStr || sl.start_time > nowTime || endsAfterNow;
         if (!upcoming) continue;
         nextMap[sl.assigned_to] = {
           shift_date: sl.shift_date,
