@@ -200,27 +200,25 @@ function useLocalDisplayTz(rotaTz: string) {
     const startDate = browserDate(dateStr, start);
     const endDate = browserDate(dateStr, end);
     const crossesDay = Boolean(startDate && endDate && startDate !== endDate);
-    return { text: `${a}–${b}`, startDate, endDate, crossesDay };
+    return { text: `${a}–${b}`, startTime: a, endTime: b, startDate, endDate, crossesDay };
   };
   return { localMode, toggle, browserTz, fmtTime, fmtRange, deviceRange };
 }
 
-type DeviceRangeInfo = { text: string; startDate: string | null; endDate: string | null; crossesDay: boolean } | null;
+type DeviceRangeInfo = { text: string; startTime: string; endTime: string; startDate: string | null; endDate: string | null; crossesDay: boolean } | null;
 
 // "Your time" line with a "+1 day" chip carrying both dates when the shift
 // crosses midnight in the viewer's device timezone.
 function DeviceRangeLine({ info, label, className }: { info: DeviceRangeInfo; label: string; className?: string }) {
   if (!info) return null;
+  // Date comes before each time so the day is clear at a glance, e.g.
+  // "Your time: 24 Sept 16:00 – 25 Sept 02:00" when it crosses midnight.
+  const range = info.crossesDay
+    ? `${info.startDate} ${info.startTime} – ${info.endDate} ${info.endTime}`
+    : `${info.startDate ? `${info.startDate} ` : ""}${info.text}`;
   return (
     <div className={cn("text-accent-foreground/90", className)}>
-      <div>
-        {label}: <span className="font-mono whitespace-nowrap">{info.text}</span>
-      </div>
-      {info.crossesDay && (
-        <div className="mt-0.5 inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-primary/15 px-1.5 py-px text-[9px] font-bold uppercase tracking-wide text-primary ring-1 ring-primary/30">
-          {info.startDate} → {info.endDate}
-        </div>
-      )}
+      {label}: <span className="font-mono">{range}</span>
     </div>
   );
 }
