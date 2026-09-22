@@ -29,7 +29,14 @@ export const Route = createFileRoute("/_authenticated/_approved/admin-sports-imp
 
 type Cat = { id: string; name: string; parent_id: string | null; sort_order: number };
 type Sub = { category_id: string; name: string; sort_order: number; is_default: boolean };
-type QueueDraft = { category: string; subcategories: string[]; title: string; time: string | null; guideId: string | null };
+type QueueDraft = {
+  category: string;
+  destinationCategory: string;
+  subcategories: string[];
+  title: string;
+  time: string | null;
+  guideId: string | null;
+};
 type QueueItem = {
   id: string;
   raw_text: string;
@@ -68,7 +75,7 @@ function AdminSportsImportPage() {
   const [bulkSubcategory, setBulkSubcategory] = useState<string | null>(null);
   // The three setup boxes live in the sidebar: tap a post, then work the sidebar.
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [draft, setDraft] = useState<QueueDraft>({ category: "", subcategories: [], title: "", time: null, guideId: null });
+  const [draft, setDraft] = useState<QueueDraft>({ category: "", destinationCategory: "", subcategories: [], title: "", time: null, guideId: null });
   const timeStore = useRef<Map<string, string | null>>(new Map());
 
   const selectItem = (q: QueueItem) => {
@@ -78,6 +85,7 @@ function AdminSportsImportPage() {
     setSelectedId(q.id);
     setDraft({
       category: String(ev.suggested_category ?? ""),
+      destinationCategory: String(ev.suggested_category ?? ""),
       subcategories: ev.suggested_subcategory ? [String(ev.suggested_subcategory)] : [],
       title: String(ev.title ?? ""),
       time: stored ?? (ev.time ? String(ev.time) : null),
@@ -87,7 +95,7 @@ function AdminSportsImportPage() {
 
   const clearSelection = () => {
     setSelectedId(null);
-    setDraft({ category: "", subcategories: [], title: "", time: null, guideId: null });
+    setDraft({ category: "", destinationCategory: "", subcategories: [], title: "", time: null, guideId: null });
   };
 
   const applyZoneToItem = (itemId: string, dual: string, zone: "gmt" | "et") => {
@@ -647,40 +655,59 @@ function QueueSetup({
   resolveFn: (args: any) => Promise<any>;
 }) {
   const [busy, setBusy] = useState<"import" | "discard" | null>(null);
-  const subs = draft.category ? subsByCatName.get(draft.category) ?? [] : [];
+  const selectedCategory = cats.find((category) => category.name === draft.category);
+  const childCategories = selectedCategory
+    ? cats.filter((category) => category.parent_id === selectedCategory.id)
+    : [];
+  const directSubs = draft.category ? subsByCatName.get(draft.category) ?? [] : [];
+  const subChoices = childCategories.length > 0
+    ? childCategories.map((category) => ({ name: category.name, destinationCategory: category.name, subcategory: null }))
+    : directSubs.map((subcategory) => ({
+        name: subcategory.name,
+        destinationCategory: draft.category,
+        subcategory: subcategory.name,
+      }));
+  const selectedSubcategory = draft.subcategories[0] ?? "";
   // Guide names already used inside the chosen category.
   const guidesFn = useServerFn(listGuidesInCategory);
-  const [guides, setGuides] = useState<{ title: string; subcategory: string | null }[]>([]);
+  const [guides, setGuides] = useState<{ id: string; title: string; subcategory: string | null }[]>([]);
   const [loadingGuides, setLoadingGuides] = useState(false);
   useEffect(() => {
-    if (!draft.category) { setGuides([]); return; }
+    if (!draft.destinationCategory || !selectedSubcategory) { setGuides([]); return; }
     let alive = true;
     setLoadingGuides(true);
-    guidesFn({ data: { category: draft.category } })
+    guidesFn({
+      data: {
+        category: draft.destinationCategory,
+        subcategory: childCategories.length > 0 ? null : selectedSubcategory,
+      },
+    })
       .then((d: any) => { if (alive) setGuides(d.guides ?? []); })
       .catch(() => { if (alive) setGuides([]); })
       .finally(() => { if (alive) setLoadingGuides(false); });
     return () => { alive = false; };
-  }, [draft.category]);
+  }, [draft.destinationCategory, selectedSubcategory]);
 
   const run = async (action: "import" | "discard") => {
     if (!item) return;
-    if (action === "import" && !draft.category) return toast.error("Pick a category");
+    if (action === "import" && !draft.destinationCategory) return toast.error("Pick a category and sub category");
+    if (action === "import" && !draft.guideId && !draft.title.trim()) return toast.error("Pick the guide this post goes into");
     setBusy(action);
     try {
       await resolveFn({
         data: {
           id: item.id,
           action,
-          category: draft.category || undefined,
-          subcategories: draft.subcategories,
+          category: draft.destinationCategory || undefined,
+          subcategories: draft.guideId || childCategories.length > 0 ? [] : draft.subcategories,
           title: draft.title,
+          guideId: draft.guideId ?? undefined,
           time: draft.time,
         },
       });
       toast.success(
         action === "import"
-          ? `Posted live to the guide${draft.subcategories.length > 1 ? ` in ${draft.subcategories.length} subcategories` : ""}`
+          ? draft.guideId ? "Added to the selected guide" : "Posted live to the guide"
           : "Discarded",
       );
       onDone();
@@ -712,13 +739,13 @@ function QueueSetup({
       <div className="space-y-1.5">
         <span className="text-[11px] font-medium text-muted-foreground">1 · Category names we have</span>
         <div className="max-h-44 divide-y divide-border overflow-y-auto rounded-lg border border-border">
-          {cats.map((c) => {
+          {cats.filter((c) => !c.parent_id).map((c) => {
             const on = draft.category === c.name;
             return (
               <button
                 key={c.id}
                 type="button"
-                onClick={() => setDraft({ ...draft, category: c.name, subcategories: [] })}
+                onClick={() => setDraft({ ...draft, category: c.name, destinationCategory: "", subcategories: [], guideId: null })}
                 className={`flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm transition ${
                   on ? "bg-primary/10 font-medium text-primary" : "hover:bg-muted/60"
                 }`}
@@ -734,52 +761,30 @@ function QueueSetup({
       <div className="space-y-1.5">
         <div className="flex items-center justify-between gap-2">
           <span className="text-[11px] font-medium text-muted-foreground">
-            2 · The sub categories we have{draft.subcategories.length > 0 && ` · ${draft.subcategories.length} selected`}
+            2 · The sub categories we have
           </span>
-          {subs.length > 0 && (
-            <div className="flex gap-1">
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-6 px-2 text-[11px]"
-                onClick={() => setDraft({ ...draft, subcategories: subs.map((s) => s.name) })}
-              >
-                Select all
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-6 px-2 text-[11px]"
-                onClick={() => setDraft({ ...draft, subcategories: [] })}
-              >
-                Clear
-              </Button>
-            </div>
-          )}
         </div>
-        {subs.length > 0 ? (
+        {subChoices.length > 0 ? (
           <div className="max-h-64 space-y-1.5 overflow-y-auto pr-1">
-            {subs.map((s) => {
-              const on = draft.subcategories.includes(s.name);
+            {subChoices.map((choice) => {
+              const on = selectedSubcategory === choice.name;
               return (
                 <button
-                  key={s.name}
+                  key={choice.name}
                   type="button"
-                  onClick={() =>
-                    setDraft({
-                      ...draft,
-                      subcategories: on
-                        ? draft.subcategories.filter((n) => n !== s.name)
-                        : [...draft.subcategories, s.name],
-                    })
-                  }
+                  onClick={() => setDraft({
+                    ...draft,
+                    destinationCategory: choice.destinationCategory,
+                    subcategories: [choice.name],
+                    guideId: null,
+                  })}
                   className={`flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left text-sm transition ${
                     on
                       ? "border-primary bg-primary/10 font-medium text-primary"
                       : "border-border bg-card hover:bg-muted/60"
                   }`}
                 >
-                  <span className="truncate">{s.name}{s.is_default ? " ★" : ""}</span>
+                  <span className="truncate">{choice.name}</span>
                   <span className="text-xs">{on ? "✓" : ""}</span>
                 </button>
               );
@@ -787,28 +792,28 @@ function QueueSetup({
           </div>
         ) : (
           <p className="text-[11px] text-muted-foreground">
-            {draft.category ? "No subcategories in this category." : "Pick a category first."}
+            {draft.category ? "No sub categories are set up in this category." : "Pick a category first."}
           </p>
         )}
       </div>
 
       <div className="space-y-1.5">
         <span className="text-[11px] font-medium text-muted-foreground">3 · The name of the guide we created</span>
-        {!draft.category ? (
-          <p className="text-[11px] text-muted-foreground">Pick a category first.</p>
+        {!selectedSubcategory ? (
+          <p className="text-[11px] text-muted-foreground">Pick a sub category first.</p>
         ) : loadingGuides ? (
           <p className="flex items-center gap-2 text-[11px] text-muted-foreground">
-            <Loader2 className="size-3 animate-spin" /> Loading guides in {draft.category}…
+            <Loader2 className="size-3 animate-spin" /> Loading existing guides…
           </p>
         ) : guides.length > 0 ? (
           <div className="max-h-48 divide-y divide-border overflow-y-auto rounded-lg border border-border">
             {guides.map((g) => {
-              const on = draft.title === g.title;
+              const on = draft.guideId === g.id;
               return (
                 <button
-                  key={`${g.title}::${g.subcategory ?? ""}`}
+                  key={g.id}
                   type="button"
-                  onClick={() => setDraft({ ...draft, title: g.title })}
+                  onClick={() => setDraft({ ...draft, title: g.title, guideId: g.id })}
                   className={`flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm transition ${
                     on ? "bg-primary/10 font-medium text-primary" : "hover:bg-muted/60"
                   }`}
@@ -825,11 +830,11 @@ function QueueSetup({
             })}
           </div>
         ) : (
-          <p className="text-[11px] text-muted-foreground">No guides in {draft.category} yet.</p>
+          <p className="text-[11px] text-muted-foreground">No guides have been created here yet.</p>
         )}
         <Input
           value={draft.title}
-          onChange={(e) => setDraft({ ...draft, title: e.target.value })}
+          onChange={(e) => setDraft({ ...draft, title: e.target.value, guideId: null })}
           className="font-medium"
           placeholder="Or type a new guide name"
         />
@@ -840,7 +845,7 @@ function QueueSetup({
           {busy === "discard" ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
           Discard
         </Button>
-        <Button size="sm" onClick={() => run("import")} disabled={busy !== null || !draft.category}>
+        <Button size="sm" onClick={() => run("import")} disabled={busy !== null || !draft.destinationCategory || (!draft.guideId && !draft.title.trim())}>
           {busy === "import" ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
           Import
         </Button>
