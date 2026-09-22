@@ -182,6 +182,7 @@ export function WorkingStatusBox({
   const [nextSlot, setNextSlot] = useState<NextSlot | null>(null);
   // Today's rota window: earliest slot start and latest slot end (HH:MM:SS).
   const [todayWindow, setTodayWindow] = useState<{ start: string; end: string } | null>(null);
+  const [hadShiftToday, setHadShiftToday] = useState(false);
 
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
@@ -230,13 +231,17 @@ export function WorkingStatusBox({
       );
       setNextSlot(upcoming ?? null);
       // Staff can only sign in on a day they are on the rota — applies to every role.
+      // Use THEIR next shift today (first one that hasn't ended yet) so the
+      // sign-in gate and message match each person's actual start time, not
+      // just the earliest slot of the day.
       const todays = ((slots ?? []) as NextSlot[]).filter((sl) => sl.shift_date === todayStr);
+      const upcomingToday = todays
+        .filter((sl) => sl.end_time > nowTime)
+        .sort((a, b) => a.start_time.localeCompare(b.start_time))[0];
+      setHadShiftToday(todays.length > 0);
       setTodayWindow(
-        todays.length
-          ? {
-              start: todays.map((sl) => sl.start_time).sort()[0],
-              end: todays.map((sl) => sl.end_time).sort().slice(-1)[0],
-            }
+        upcomingToday
+          ? { start: upcomingToday.start_time, end: upcomingToday.end_time }
           : null,
       );
     };
