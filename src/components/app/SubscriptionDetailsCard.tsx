@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { CalendarClock, ChevronDown } from "lucide-react";
+import { CalendarClock } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Link } from "@tanstack/react-router";
 
 interface CredRow {
   id: string;
@@ -19,25 +18,6 @@ export function SubscriptionDetailsCard() {
   const { user } = useAuth();
   const [creds, setCreds] = useState<CredRow[]>([]);
   const [loaded, setLoaded] = useState(false);
-  const [username, setUsername] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!user?.id) {
-      setUsername(null);
-      return;
-    }
-    let active = true;
-    supabase
-      .from("profiles")
-      .select("username")
-      .eq("id", user.id)
-      .maybeSingle()
-      .then(({ data }) => {
-        if (!active) return;
-        setUsername(data?.username ?? null);
-      });
-    return () => { active = false; };
-  }, [user?.id]);
 
   useEffect(() => {
     if (!user) {
@@ -132,17 +112,6 @@ export function SubscriptionDetailsCard() {
           <p className="text-xs text-white/85 mt-1">
             {hasCreds ? `${creds.length} active account${creds.length === 1 ? "" : "s"}` : "No accounts assigned"}
           </p>
-          <Link
-            to={username ? "/u/$username" : "/profile"}
-            params={username ? { username } : undefined}
-            search={username ? { tab: "creds" } : undefined}
-            className={cn(
-              "mt-3 inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider border transition shadow-[0_0_16px_rgba(16,185,129,0.45)]",
-              "bg-emerald-500/90 border-emerald-300/70 hover:bg-emerald-400 text-white"
-            )}
-          >
-            View Details <ChevronDown className="size-3" />
-          </Link>
         </div>
       </div>
 
