@@ -180,8 +180,8 @@ function AuthLayout() {
       <div className={locksToViewport ? "fixed inset-0 flex h-dvh w-dvw overflow-hidden bg-background" : "relative flex min-h-dvh w-full bg-background"}>
         <IconRail />
         <div className={locksToViewport ? "flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden" : "flex min-h-dvh min-w-0 flex-1 flex-col"}>
-        {!inFanZone && <header className="h-14 shrink-0 border-b border-border bg-rail/40 backdrop-blur flex items-center justify-between px-2 lg:px-4 gap-1.5 lg:gap-3 overflow-x-auto scrollbar-thin mb-1">
-          <div className="flex items-center gap-1.5 lg:gap-2 shrink-0">
+{!inFanZone && <header className="h-14 shrink-0 border-b border-border bg-rail/40 backdrop-blur flex items-center justify-between px-2 lg:px-4 gap-1.5 lg:gap-3 overflow-hidden mb-1">
+          <div className="flex items-center gap-1.5 lg:gap-2 min-w-0 flex-1">
             <Sheet open={navOpen} onOpenChange={setNavOpen}>
               <SheetTrigger
                 className="md:hidden inline-flex items-center justify-center size-9 rounded-md hover:bg-surface-2 text-muted-foreground"
