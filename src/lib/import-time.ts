@@ -143,7 +143,24 @@ export function buildDualTime(
   })();
 
   const instant = wallTimeToInstant(day, clock, source === "gmt" ? UK_TZ : ET_TZ);
-  const uk = `${formatInZone(instant, UK_TZ)} ${ukLabel(instant)}`;
-  const et = `${formatInZone(instant, ET_TZ)} ${etLabel(instant)}`;
+
+  // When the conversion crosses midnight, spell out the day so nobody
+  // reads an 8pm US card as an 8pm UK one.
+  const dayNote = (timeZone: string) => {
+    const shown = dayNumberInZone(instant, timeZone);
+    const listed = day.d;
+    if (shown === listed) return "";
+    const nextDay = new Date(Date.UTC(day.y, day.m, day.d + 1)).getUTCDate();
+    return shown === nextDay ? " (next day)" : " (previous day)";
+  };
+
+  const uk = `${formatInZone(instant, UK_TZ)} ${ukLabel(instant)}${dayNote(UK_TZ)}`;
+  const et = `${formatInZone(instant, ET_TZ)} ${etLabel(instant)}${dayNote(ET_TZ)}`;
   return `${uk} · ${et}`;
+}
+
+function dayNumberInZone(instant: number, timeZone: string): number {
+  return Number(
+    new Intl.DateTimeFormat("en-GB", { timeZone, day: "numeric" }).format(new Date(instant)),
+  );
 }
