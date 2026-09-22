@@ -569,7 +569,7 @@ function TicketsPage() {
                     Once your ticket is resolved, leave a rating so we know how we did.
                   </p>
                 </div>
-                <div className="w-full lg:w-auto lg:max-w-md shrink-0 [&>div]:px-0 [&>div]:pt-0">
+                <div className="w-full lg:w-auto lg:max-w-2xl shrink-0 [&>div]:px-0 [&>div]:pt-0">
                   <StaffOnDutyStrip variant="tickets" hideRoles={["moderator"]} />
                 </div>
               </div>
