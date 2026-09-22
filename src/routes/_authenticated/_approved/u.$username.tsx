@@ -170,6 +170,13 @@ function ProfilePage() {
   const initialTabSafe = (allowedTabs.includes((search.tab ?? "") as TabId) ? search.tab : initialTab) as TabId;
   const [mainTab, setMainTab] = useState<TabId>(initialTabSafe);
 
+  // Keep the active tab in sync with the ?tab= search param so links that point
+  // at a specific tab work even when this page is already mounted.
+  useEffect(() => {
+    const t = search.tab;
+    if (t && allowedTabs.includes(t as TabId)) setMainTab(t as TabId);
+  }, [search.tab]);
+
   const isOwner = !!profile && !!viewer && profile.id === viewer.id;
   const canSeeCreds = isOwner || isAdmin;
   // Staff accounts don't get the subscription box on the home page; they see it
