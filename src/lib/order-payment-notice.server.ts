@@ -1,4 +1,5 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { getAutomatedMessageServer } from "@/lib/automated-messages.server";
 
 type NoticeInput = {
   orderId: string;
@@ -65,13 +66,19 @@ export async function postOrderPaymentReceivedNotice(input: NoticeInput): Promis
   }).format(paidAtDate);
 
   const content =
-    `✅ Payment received via ${provider} for order #${orderId.slice(0, 8)} — £${(totalCents / 100).toFixed(2)} GBP.` +
-    `\nPayment date: ${paidStamp} (UK time)` +
-    (input.reference ? `\nPurchase ref: ${input.reference}` : "") +
-    (input.receiptUrl ? `\nReceipt: ${input.receiptUrl}` : "") +
-    (itemLines.length ? `\n\n🛒 Items:\n${itemLines.join("\n")}` : "") +
-    `\n\n🙏 Thank you for your payment — we really appreciate your custom. Your order is now being processed and we'll update you on this ticket.` +
-    `\n\n(${marker})`;
+    (await getAutomatedMessageServer(
+      "order_payment_received",
+      {
+        provider: String(provider),
+        order_short: orderId.slice(0, 8),
+        total: `£${(totalCents / 100).toFixed(2)} GBP`,
+        paid_at: paidStamp,
+        reference: input.reference ? `\nPurchase ref: ${input.reference}` : "",
+        receipt: input.receiptUrl ? `\nReceipt: ${input.receiptUrl}` : "",
+        items: itemLines.length ? `\n\n🛒 Items:\n${itemLines.join("\n")}` : "",
+      },
+      `✅ Payment received via ${provider} for order #${orderId.slice(0, 8)} — £${(totalCents / 100).toFixed(2)} GBP.`,
+    )) + `\n\n(${marker})`;
 
   try {
     await supabaseAdmin.from("order_messages").insert({

@@ -72,6 +72,7 @@ import {
 } from "@/lib/nowpayments.functions";
 import { CreditCard, Ban } from "lucide-react";
 import { getOutOfHoursMessage } from "@/lib/business-hours";
+import { getAutomatedMessage } from "@/lib/automated-messages";
 import { isAdminUnlocked } from "@/lib/admin-unlock";
 import { isDiscountUnlocked, clearDiscountUnlock } from "@/lib/discount-unlock";
 import { DiscountCodesGate } from "@/components/app/DiscountCodesGate";
@@ -1508,26 +1509,23 @@ function Storefront() {
           newTicketId = ticket.id;
           const ownedLogins = info.owned_logins ?? [];
           const kind = info.purchase_kind ?? (info.customer_type === "existing" ? "renewal" : "new");
-          const ticketBody = [
-            `🧾 New order placed`,
-            `Order ID: ${order.id}`,
-            `Order type: ${
-              kind === "renewal"
-                ? `🔁 Renewal — login: ${info.existing_username.trim() || "(not specified)"}`
-                : kind === "additional"
-                  ? `➕ Additional account — create a BRAND NEW login (do not renew an existing account)`
-                  : `🆕 New customer`
-            }`,
-            ...(ownedLogins.length > 0 && kind === "renewal"
-              ? [`Existing accounts on file: ${ownedLogins.join(", ")}`]
-              : []),
-
-            `Adult content access: ${info.wants_adult_content ? "Yes" : "No"}`,
-            ``,
-            `Items:`,
-            itemLines,
-          ].join("\n");
-
+          const orderType =
+            kind === "renewal"
+              ? `🔁 Renewal — login: ${info.existing_username.trim() || "(not specified)"}`
+              : kind === "additional"
+                ? `➕ Additional account — create a BRAND NEW login (do not renew an existing account)`
+                : `🆕 New customer`;
+          const ticketBody = await getAutomatedMessage("order_placed_ticket", {
+            order_id: String(order.id),
+            order_short: String(order.id).slice(0, 8),
+            order_type: orderType,
+            existing_accounts:
+              ownedLogins.length > 0 && kind === "renewal"
+                ? `\nExisting accounts on file: ${ownedLogins.join(", ")}`
+                : "",
+            adult_access: info.wants_adult_content ? "Yes" : "No",
+            items: itemLines,
+          });
 
           await supabase.from("ticket_messages").insert({
             ticket_id: ticket.id,
@@ -1535,9 +1533,10 @@ function Storefront() {
             content: ticketBody,
           } as never);
           const bankAccess: any = await getMyBankTransferAccess({}).catch(() => null);
-          const payMsg = bankAccess?.allowed
-            ? `🏦 How would you like to pay for this order (${fmt(finalTotal)})?\n\nYour account is set up for bank transfer.\n\nStep 1 — Click the "Pay" button in the order panel on the right-hand sidebar at the top of this ticket, then press "Show bank details" and send the payment quoting the reference shown.\n\nStep 2 — Once you've sent the transfer, press "I've paid by bank transfer" so our team can check the account and confirm your order.`
-            : `💳 How would you like to pay for this order (${fmt(finalTotal)})?\n\nStep 1 — Click the "Pay" button in the order panel on the right-hand sidebar at the top of this ticket, then choose your payment method: Square (card / Apple Pay / Google Pay), Stripe (card), or USDT (crypto).\n\nStep 2 — Once you've sent payment, press the "I've paid" button so we can check Stripe and Square and confirm your order. If paying by Crypto please post a screenshot of the crypto transaction so our team can match it against our payment records and mark the order as paid.`;
+          const payMsg = await getAutomatedMessage(
+            bankAccess?.allowed ? "order_pay_bank" : "order_pay_card",
+            { total: fmt(finalTotal) },
+          );
           await supabase.from("ticket_messages").insert({
             ticket_id: ticket.id,
             sender_id: user.id,
