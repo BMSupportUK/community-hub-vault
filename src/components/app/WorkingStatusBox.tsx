@@ -531,7 +531,14 @@ export function WorkingStatusBox({
             canSignIn
               ? "Sign in"
               : todayWindow
-                ? "Sign-in opens 15 minutes before your shift"
+                ? `Shift starts ${todayWindow.start.slice(0, 5)} UK — sign-in opens at ${(() => {
+                    const [sh, sm] = todayWindow.start.split(":").map(Number);
+                    const m = sh * 60 + sm - 15;
+                    const mm = ((m % 1440) + 1440) % 1440;
+                    return `${Math.floor(mm / 60)
+                      .toString()
+                      .padStart(2, "0")}:${(mm % 60).toString().padStart(2, "0")}`;
+                  })()}`
                 : "No shift on the rota today"
           }
           className={cn(
