@@ -575,9 +575,9 @@ function QueueRow({
       </div>
       {needsZone && (
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[11px] text-muted-foreground">Time listed is:</span>
+          <span className="text-[11px] text-muted-foreground">Start time in this post is:</span>
           <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => applyZone("gmt")}>
-            <Clock className="size-3" /> GMT
+            <Clock className="size-3" /> UK
           </Button>
           <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => applyZone("et")}>
             <Clock className="size-3" /> ET
