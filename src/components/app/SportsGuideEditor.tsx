@@ -296,7 +296,9 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
         // dropped so editing starts from the still-relevant fixtures.
         let restoredBody = rawBody;
         let prunedExpired = false;
-        if (rawBody) {
+        // Imported listings intentionally open unpublished so staff can add
+        // the date. Never prune an unpublished draft before that edit.
+        if (rawBody && row.published) {
           try {
             const pruned = pruneExpiredGuideEvents(rawBody);
             if (pruned !== rawBody) {
