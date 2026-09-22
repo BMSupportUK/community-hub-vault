@@ -18,7 +18,6 @@ import { type BreakKind, BREAK_LIMITS as STAFF_BREAK_LIMITS, breakLabel, breakIc
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import noStaffOnlineImg from "@/assets/no-staff-online.png";
 import { useTalkChannelPresentUsers, useTalkChannelPresentUsersInChannel } from "@/hooks/use-talk-channel-presence";
-import { NextShiftPanel } from "@/components/app/WorkingStatusBox";
 
 type StaffShift = { id: string; user_id: string; clock_in: string };
 type StaffBreak = { id: string; shift_id: string; user_id: string; kind: BreakKind; started_at: string };
@@ -171,7 +170,6 @@ export function StaffOnDutyStrip({
   const [breaks, setBreaks] = useState<StaffBreak[]>([]);
   const [profiles, setProfiles] = useState<Record<string, StaffProfile>>({});
   const [offDuty, setOffDuty] = useState<Array<StaffProfile & { role: string }>>([]);
-  const [nextShifts, setNextShifts] = useState<Record<string, { shift_date: string; start_time: string; end_time: string }>>({});
   const [now, setNow] = useState(() => Date.now());
   const [selfId, setSelfId] = useState<string | null>(null);
   const [dutyTab, setDutyTab] = useState<"on" | "off">("on");
@@ -261,41 +259,9 @@ export function StaffOnDutyStrip({
         });
       setOffDuty(off);
 
-      // Next claimed rota slot per staff member (today onwards). Rota times are UK
-      // office wall-clock, so compare against London — never the viewer's device
-      // clock, which can already be on the next day and skip today's shift.
-      const { date: todayStr, time: nowTime } = londonNow();
-      const { data: slots } = await supabase
-        .from("shift_slots")
-        .select("assigned_to,shift_date,start_time,end_time")
-        .in("assigned_to", ids)
-        .gte("shift_date", todayStr)
-        .order("shift_date")
-        .order("start_time");
-      const nextMap: Record<string, { shift_date: string; start_time: string; end_time: string }> = {};
-      for (const sl of (slots ?? []) as Array<{
-        assigned_to: string | null;
-        shift_date: string;
-        start_time: string;
-        end_time: string;
-      }>) {
-        if (!sl.assigned_to || nextMap[sl.assigned_to]) continue;
-        // A shift still running (or starting later) in UK time is the relevant one.
-        const endsAfterNow =
-          sl.end_time > sl.start_time ? sl.end_time > nowTime : true; // crosses midnight
-        const upcoming = sl.shift_date > todayStr || sl.start_time > nowTime || endsAfterNow;
-        if (!upcoming) continue;
-        nextMap[sl.assigned_to] = {
-          shift_date: sl.shift_date,
-          start_time: sl.start_time,
-          end_time: sl.end_time,
-        };
-      }
-      setNextShifts(nextMap);
     } else {
       setProfiles({});
       setOffDuty([]);
-      setNextShifts({});
     }
   };
 
