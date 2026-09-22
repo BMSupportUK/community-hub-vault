@@ -68,7 +68,7 @@ function unique(values: string[]): string[] {
 
 function splitChannelLine(line: string): string[] {
   const withoutLabel = line.replace(/^channels?\s*[:|-]\s*/i, "").trim();
-  return unique(withoutLabel.split(/\s*(?:\||·|•|,|;|\/\/|\s[-–—]\s)\s*/));
+  return unique(withoutLabel.split(/\s*(?:\||·|•|,|;|\/\/|\/|\s[-–—]\s)\s*|\s+(?:\+|&|and)\s+/i));
 }
 
 export function isLikelyChannelLabel(value: string): boolean {
@@ -89,7 +89,7 @@ function splitTitleAndInlineChannels(rest: string): { title: string; channels: s
   if (pipeParts.length > 1) {
     const [first, ...remaining] = pipeParts;
     const title = first?.trim() || "Event";
-    return { title, channels: unique(remaining) };
+    return { title, channels: unique(remaining.flatMap(splitChannelLine)) };
   }
 
   const dash = clean.match(/^(.+?)\s[-–—]\s(.+)$/);
