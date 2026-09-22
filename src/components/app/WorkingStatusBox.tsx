@@ -53,6 +53,33 @@ function londonNow(at: number | Date = Date.now()) {
   };
 }
 
+// "Sign-in opens…" line — shows the person's own shift start in UK office time
+// and, when their device is in another timezone, their local start time too.
+function SignInOpensNote({ win }: { win: { start: string; end: string } }) {
+  const [deviceTz, setDeviceTz] = useState(() => browserTimezone());
+  useEffect(() => {
+    const id = window.setInterval(() => setDeviceTz(browserTimezone()), 30_000);
+    return () => window.clearInterval(id);
+  }, []);
+  const ukStart = win.start.slice(0, 5);
+  let deviceText: string | null = null;
+  if (deviceTz !== "Europe/London") {
+    const { startsAt } = shiftWindowToUtcMs(londonNow().date, win.start, win.end, "Europe/London");
+    deviceText = new Intl.DateTimeFormat("en-GB", {
+      timeZone: deviceTz,
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).format(startsAt);
+  }
+  return (
+    <p className="text-xs text-muted-foreground">
+      Sign-in opens 15 minutes before your shift starts ({ukStart} UK
+      {deviceText ? ` · ${deviceText} your time` : ""}).
+    </p>
+  );
+}
+
 // Rota wall-clock (UK) converted into the viewer's device timezone. When the
 // shift crosses midnight locally, start and end are listed as separate days.
 function NextShiftPanel({ slot }: { slot: NextSlot }) {
@@ -182,6 +209,7 @@ export function WorkingStatusBox({
   const [nextSlot, setNextSlot] = useState<NextSlot | null>(null);
   // Today's rota window: earliest slot start and latest slot end (HH:MM:SS).
   const [todayWindow, setTodayWindow] = useState<{ start: string; end: string } | null>(null);
+  const [hadShiftToday, setHadShiftToday] = useState(false);
 
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
@@ -230,13 +258,17 @@ export function WorkingStatusBox({
       );
       setNextSlot(upcoming ?? null);
       // Staff can only sign in on a day they are on the rota — applies to every role.
+      // Use THEIR next shift today (first one that hasn't ended yet) so the
+      // sign-in gate and message match each person's actual start time, not
+      // just the earliest slot of the day.
       const todays = ((slots ?? []) as NextSlot[]).filter((sl) => sl.shift_date === todayStr);
+      const upcomingToday = todays
+        .filter((sl) => sl.end_time > nowTime)
+        .sort((a, b) => a.start_time.localeCompare(b.start_time))[0];
+      setHadShiftToday(todays.length > 0);
       setTodayWindow(
-        todays.length
-          ? {
-              start: todays.map((sl) => sl.start_time).sort()[0],
-              end: todays.map((sl) => sl.end_time).sort().slice(-1)[0],
-            }
+        upcomingToday
+          ? { start: upcomingToday.start_time, end: upcomingToday.end_time }
           : null,
       );
     };
@@ -573,17 +605,17 @@ export function WorkingStatusBox({
                 <span className="text-muted-foreground font-medium">Shift</span>
                 <span className="text-muted-foreground italic">Not signed in</span>
               </div>
-              {!todayWindow && (
+              {!todayWindow && !hadShiftToday && (
                 <p className="text-xs text-muted-foreground">
                   You're not on the rota today, so signing in is unavailable.
                 </p>
               )}
-              {todayWindow && !canSignIn && (
+              {!todayWindow && hadShiftToday && (
                 <p className="text-xs text-muted-foreground">
-                  Sign-in opens 15 minutes before your shift starts (
-                  {todayWindow.start.slice(0, 5)}).
+                  Today's shift has ended — your next shift is below.
                 </p>
               )}
+              {todayWindow && !canSignIn && <SignInOpensNote win={todayWindow} />}
               {nextSlot && <NextShiftPanel slot={nextSlot} />}
             </>
           )}
