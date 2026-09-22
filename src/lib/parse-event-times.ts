@@ -1000,18 +1000,15 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     const firstDate = document.createElement("span");
     firstDate.className = "block w-full text-center text-[11px] md:text-xs font-bold uppercase tracking-wider text-fuchsia-200 leading-tight mb-0.5";
     firstDate.textContent = ukDate;
-    const firstRow = document.createElement("span");
-    firstRow.className = "flex w-full min-w-0 items-baseline justify-center gap-1.5";
     const firstTime = document.createElement("span");
-    firstTime.className = "font-bold text-sm tabular-nums";
+    firstTime.className = "block w-full text-center font-bold text-sm tabular-nums leading-tight";
     firstTime.textContent = ukTime;
     const firstZone = document.createElement("span");
-    firstZone.className = "min-w-0 truncate text-[10px] uppercase tracking-wide text-purple-200/60";
+    firstZone.className = "block w-full text-center text-[10px] uppercase tracking-wide text-purple-200/60 leading-tight";
     firstZone.textContent = ukZone;
-    firstRow.appendChild(firstTime);
-    firstRow.appendChild(firstZone);
     firstPill.appendChild(firstDate);
-    firstPill.appendChild(firstRow);
+    firstPill.appendChild(firstTime);
+    firstPill.appendChild(firstZone);
     pillsRow.appendChild(firstPill);
 
     if (localDiffers) {
