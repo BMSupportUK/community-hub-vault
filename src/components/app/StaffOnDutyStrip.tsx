@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { CircleDot, CalendarClock, ChevronLeft, ChevronRight, Clock, MapPin } from "lucide-react";
+import { CircleDot, ChevronLeft, ChevronRight, Clock, MapPin } from "lucide-react";
 import { useUserPage } from "@/hooks/use-online-users";
 
 import { supabase } from "@/integrations/supabase/client";
