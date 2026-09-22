@@ -186,6 +186,34 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
   return events;
 }
 
+function eventSortValue(event: SportsListingEvent, index: number): number {
+  const clock = parseClockTime(event.time);
+  if (!clock) return Number.MAX_SAFE_INTEGER - 10_000 + index;
+  return clock.hour * 60 + clock.minute;
+}
+
+/**
+ * Keep each imported listing as time → event → channels, ordered by start
+ * time. Equal kick-off times retain the source channel order.
+ */
+export function sortSportsListingEvents(events: SportsListingEvent[]): SportsListingEvent[] {
+  return events
+    .map((event, index) => ({ event, index }))
+    .sort((a, b) => {
+      const aDate = parseListingDate(a.event.date);
+      const bDate = parseListingDate(b.event.date);
+      if (aDate && bDate) {
+        const dateDifference = Date.UTC(aDate.y, aDate.m, aDate.d) - Date.UTC(bDate.y, bDate.m, bDate.d);
+        if (dateDifference !== 0) return dateDifference;
+      }
+      if (aDate && !bDate) return -1;
+      if (!aDate && bDate) return 1;
+      const timeDifference = eventSortValue(a.event, a.index) - eventSortValue(b.event, b.index);
+      return timeDifference || a.index - b.index;
+    })
+    .map(({ event }) => event);
+}
+
 function eventTimeForOutput(event: SportsListingEvent, input: ListingInput): string {
   if (input.sourceZone && !hasBothZones(event.time)) {
     const converted = buildDualTime(event.time, event.date ?? input.date ?? undefined, input.sourceZone);
@@ -195,7 +223,7 @@ function eventTimeForOutput(event: SportsListingEvent, input: ListingInput): str
 }
 
 export function formatSportsListingBlock(input: ListingInput): string | null {
-  const events = parseSportsListingBlock(input.raw);
+  const events = sortSportsListingEvents(parseSportsListingBlock(input.raw));
   if (!events.length) return null;
 
   const out: string[] = [];
@@ -218,6 +246,12 @@ export function formatSportsListingBlock(input: ListingInput): string | null {
   }
 
   return out.join("\n").trim();
+}
+
+/** Rebuild an existing guide plus a new import into one sorted event list. */
+export function mergeSportsListingBlocks(existing: string, incoming: string, input: Omit<ListingInput, "raw">): string | null {
+  const combined = [existing, incoming].filter((value) => value.trim()).join("\n");
+  return formatSportsListingBlock({ ...input, raw: combined });
 }
 
 export function escapeListingHtml(value: string): string {
