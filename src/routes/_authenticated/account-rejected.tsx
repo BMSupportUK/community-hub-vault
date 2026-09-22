@@ -49,11 +49,11 @@ function AccountRejectedPage() {
         </div>
 
         <h1 className="font-display text-4xl md:text-5xl font-extrabold text-white tracking-tight">
-          Account Rejected
+          Account Not Activated
         </h1>
         <p className="mt-3 text-fuchsia-100/85 text-base max-w-md">
-          Your account has been reviewed and rejected by our team. If you believe this decision
-          was made in error, you can open an appeal and a moderator will take another look.
+          Sorry, we can't activate your account at the moment. If you think this is unfair,
+          please open an appeal and a member of our team will take another look.
         </p>
 
         <div className="mt-8 flex flex-col sm:flex-row items-center gap-3">

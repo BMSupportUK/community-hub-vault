@@ -403,13 +403,13 @@ function GatePage() {
         </div>
 
         <h1 className="font-display text-4xl md:text-5xl font-extrabold text-white tracking-tight">
-          {status === "denied" ? "Access Denied" : status === "approved" ? "Access Granted" : "Access Required"}
+          {status === "denied" ? "Account Not Activated" : status === "approved" ? "Access Granted" : "Access Required"}
         </h1>
         <p className="mt-3 text-red-200/90 text-base max-w-md">
           {status === "approved"
             ? "Welcome aboard. Refreshing your access…"
             : status === "denied"
-            ? "Your request was denied. Contact an owner if you believe this is a mistake."
+            ? "Sorry, we can't activate your account at the moment. If you think this is unfair, please open an appeal."
             : `Your account is awaiting approval for ${intentLabel}.`}
         </p>
 
