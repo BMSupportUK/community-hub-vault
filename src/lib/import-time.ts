@@ -125,6 +125,22 @@ function etLabel(instant: number): string {
   return name === "EDT" ? "EDT" : "EST";
 }
 
+/** First clock time found anywhere in a block of text ("19:45", "8pm"). */
+export function firstClockIn(text: string | null | undefined): string | null {
+  if (!text) return null;
+  const m = text.match(/\d{1,2}[:.]\d{2}\s*(?:am|pm)?/i) ?? text.match(/\b\d{1,2}\s*(?:am|pm)\b/i);
+  return m ? m[0] : null;
+}
+
+/** First calendar date found anywhere in a block of text. */
+export function firstDateIn(text: string | null | undefined): string | null {
+  if (!text) return null;
+  for (const line of text.split("\n")) {
+    if (parseListingDate(line)) return line.trim();
+  }
+  return null;
+}
+
 /**
  * Builds a "19:45 GMT · 14:45 EDT" style label from a single listed time,
  * given which zone that listed time belongs to. Returns null when the time

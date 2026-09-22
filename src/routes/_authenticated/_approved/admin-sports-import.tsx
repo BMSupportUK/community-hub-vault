@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { ArrowLeft, Loader2, Sparkles, Send, Trash2, Inbox, Wand2, Clock } from "lucide-react";
-import { buildDualTime, hasBothZones, parseClockTime } from "@/lib/import-time";
+import { buildDualTime, firstClockIn, firstDateIn, hasBothZones, parseClockTime } from "@/lib/import-time";
 import {
   parseDiscordPaste,
   importParsedEvents,
