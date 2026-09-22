@@ -379,7 +379,7 @@ export default function ShiftHistoryPanel({ userId, name }: { userId: string; na
 
       {filteredRows.length === 0 ? (
         <div className="rounded-2xl border border-purple-500/30 bg-purple-950/50 p-8 text-center text-purple-200/80">
-          No shifts on {DAY_LABELS[selectedDay]} this week.
+          No shifts on {DAY_LABELS[selectedDay]} ({selectedDate.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}).
         </div>
       ) : (
       <div className="grid gap-3 sm:grid-cols-2">
