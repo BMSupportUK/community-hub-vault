@@ -127,6 +127,13 @@ export function Clocks() {
   });
   const timezoneLabel = timezone.replaceAll("_", " ").replace("/", " / ");
   const officeOpen = isOfficeOpen(hours, now);
+  // Header clock: the visitor's own device time + date, ticking live.
+  const headerTime = new Intl.DateTimeFormat("en-GB", {
+    hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
+  }).format(now);
+  const headerDate = new Intl.DateTimeFormat("en-GB", {
+    weekday: "short", day: "numeric", month: "short",
+  }).format(now);
   const currentDateTime = (tz: string) => new Intl.DateTimeFormat("en-GB", {
     timeZone: tz,
     weekday: "short",
