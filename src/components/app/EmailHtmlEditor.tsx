@@ -6,7 +6,6 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   Code2,
   Eye,
-  Type,
   Bold,
   Italic,
   Link2,
@@ -15,6 +14,7 @@ import {
   Minus,
   Loader2,
   Upload,
+  Sparkles,
 } from "lucide-react";
 
 const IMAGE_BASE = "https://bmsupport.uk/api/public/email-image";
@@ -30,15 +30,32 @@ const STARTER_HTML = `<div style="max-width:560px;margin:0 auto;padding:24px;fon
 const looksLikeHtml = (body: string) =>
   /<\s*(html|body|div|table|p|a|h1|h2|h3|span|img|br|td|tr|center|section)\b|<!doctype/i.test(body);
 
+/** Wrap any legacy plain wording in simple HTML so every email stays HTML-only. */
+const toHtml = (body: string) => {
+  const trimmed = body.trim();
+  if (!trimmed) return "";
+  if (looksLikeHtml(trimmed)) return body;
+  const paragraphs = trimmed
+    .split(/\n{2,}/)
+    .map(
+      (p) =>
+        `  <p style="font-size:14px;color:#444;line-height:1.6;margin:0 0 12px">${p
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/\n/g, "<br />")}</p>`,
+    )
+    .join("\n");
+  return `<div style="max-width:560px;margin:0 auto;padding:24px;font-family:Arial,sans-serif">\n${paragraphs}\n</div>`;
+};
+
 interface Props {
   value: string;
   onChange: (next: string) => void;
   placeholders?: string[] | null;
 }
 
-/** Email body editor: plain wording, or a built-in HTML editor with live preview. */
+/** HTML-only email body editor with a toolbar, image upload and live preview. */
 export function EmailHtmlEditor({ value, onChange, placeholders }: Props) {
-  const [html, setHtml] = useState(() => looksLikeHtml(value));
   const [view, setView] = useState<"code" | "preview">("code");
   const ref = useRef<HTMLTextAreaElement>(null);
 
@@ -92,52 +109,45 @@ export function EmailHtmlEditor({ value, onChange, placeholders }: Props) {
     toast.success("Image uploaded");
   };
 
+  const isPlain = value.trim().length > 0 && !looksLikeHtml(value);
+
   return (
     <div className="mt-1">
       <div className="mb-2 flex flex-wrap items-center gap-2">
         <Button
           type="button"
           size="sm"
-          variant={html ? "outline" : "default"}
-          onClick={() => setHtml(false)}
+          variant={view === "code" ? "secondary" : "ghost"}
+          onClick={() => setView("code")}
         >
-          <Type className="mr-2 size-4" /> Wording
+          <Code2 className="mr-2 size-4" /> HTML
         </Button>
         <Button
           type="button"
           size="sm"
-          variant={html ? "default" : "outline"}
-          onClick={() => {
-            setHtml(true);
-            if (!value.trim()) onChange(STARTER_HTML);
-          }}
+          variant={view === "preview" ? "secondary" : "ghost"}
+          onClick={() => setView("preview")}
         >
-          <Code2 className="mr-2 size-4" /> HTML editor
+          <Eye className="mr-2 size-4" /> Preview
         </Button>
-        {html ? (
-          <>
-            <span className="mx-1 h-5 w-px bg-border" />
-            <Button
-              type="button"
-              size="sm"
-              variant={view === "code" ? "secondary" : "ghost"}
-              onClick={() => setView("code")}
-            >
-              <Code2 className="mr-2 size-4" /> Code
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant={view === "preview" ? "secondary" : "ghost"}
-              onClick={() => setView("preview")}
-            >
-              <Eye className="mr-2 size-4" /> Preview
-            </Button>
-          </>
+        <span className="mx-1 h-5 w-px bg-border" />
+        <Button
+          type="button"
+          size="sm"
+          variant="ghost"
+          title="Insert a starter layout"
+          onClick={() => onChange(value.trim() ? value : STARTER_HTML)}
+        >
+          <Sparkles className="mr-2 size-4" /> Starter layout
+        </Button>
+        {isPlain ? (
+          <Button type="button" size="sm" variant="outline" onClick={() => onChange(toHtml(value))}>
+            Convert to HTML
+          </Button>
         ) : null}
       </div>
 
-      {html && view === "code" ? (
+      {view === "code" ? (
         <div className="mb-2 flex flex-wrap items-center gap-1">
           <Button type="button" size="icon" variant="ghost" title="Bold" onClick={() => wrap("<strong>", "</strong>")}>
             <Bold className="size-4" />
@@ -225,7 +235,7 @@ export function EmailHtmlEditor({ value, onChange, placeholders }: Props) {
         </div>
       ) : null}
 
-      {html && view === "preview" ? (
+      {view === "preview" ? (
         <iframe
           title="Email preview"
           className="h-96 w-full rounded-lg border border-border bg-white"
@@ -235,22 +245,17 @@ export function EmailHtmlEditor({ value, onChange, placeholders }: Props) {
       ) : (
         <Textarea
           ref={ref}
-          className={html ? "min-h-64 font-mono text-xs" : "min-h-28"}
-          placeholder={
-            html
-              ? "Paste or write the email HTML here."
-              : "Leave empty to use the standard designed email."
-          }
+          className="min-h-64 font-mono text-xs"
+          placeholder="Write the email HTML here. Leave empty to use the standard designed email."
           value={value}
           onChange={(ev) => onChange(ev.target.value)}
-          spellCheck={!html}
+          spellCheck={false}
         />
       )}
 
       <p className="mt-1 text-xs text-muted-foreground">
-        {html
-          ? "Your HTML replaces the designed email exactly as written. Leave it empty to go back to the standard design."
-          : "Plain wording is wrapped in the standard branded layout. Leave blank to keep the designed email as it is."}
+        All emails are sent as HTML. Your HTML replaces the designed email exactly as written — leave it empty to keep
+        the standard design.
       </p>
     </div>
   );
