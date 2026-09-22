@@ -217,8 +217,8 @@ function DeviceRangeLine({ info, label, className }: { info: DeviceRangeInfo; la
         {label}: <span className="font-mono whitespace-nowrap">{info.text}</span>
       </div>
       {info.crossesDay && (
-        <div className="mt-0.5 inline-flex max-w-full items-center gap-1 rounded-full bg-primary/15 px-1.5 py-px text-[9px] font-bold uppercase tracking-wide text-primary ring-1 ring-primary/30">
-          +1 day · {info.startDate} → {info.endDate}
+        <div className="mt-0.5 inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-primary/15 px-1.5 py-px text-[9px] font-bold uppercase tracking-wide text-primary ring-1 ring-primary/30">
+          {info.startDate} → {info.endDate}
         </div>
       )}
     </div>
