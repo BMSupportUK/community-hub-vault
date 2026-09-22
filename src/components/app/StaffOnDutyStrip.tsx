@@ -402,67 +402,25 @@ export function StaffOnDutyStrip({
 
   const clockedInIds = useMemo(() => new Set(shifts.map((s) => s.user_id)), [shifts]);
 
-  /** Next rota slot — only once the current shift has ended. */
+  /** Next rota slot — only once the current shift has ended. Same stacked
+   *  UK-office / your-time panel as the working-status shift display. */
   const renderNextShift = (userId: string) => {
     // While the member is clocked in / mid-shift, the next slot is noise.
     if (clockedInIds.has(userId)) return null;
     const slot = nextShifts[userId];
     if (!slot) return null;
 
-    const label = new Date(`${slot.shift_date}T00:00:00`).toLocaleDateString("en-GB", {
-      weekday: "short",
-      day: "numeric",
-      month: "short",
-    });
     const { date: ukDate, time: ukTime } = londonNow(now);
     const running =
       slot.shift_date === ukDate && slot.start_time <= ukTime && slot.end_time > ukTime;
-    const heading = running ? "Shift today" : "Next shift";
 
-    // Same shift shown in the viewer's own device timezone when it differs from UK.
-    let deviceLine: string | null = null;
-    const tz = browserTimezone();
-    if (tz !== "Europe/London") {
-      const { startsAt, endsAt } = shiftWindowToUtcMs(
-        slot.shift_date,
-        slot.start_time,
-        slot.end_time,
-        "Europe/London",
-      );
-      const fmtDate = (ms: number) =>
-        new Intl.DateTimeFormat("en-GB", { timeZone: tz, day: "numeric", month: "short" }).format(ms);
-      const fmtTime = (ms: number) =>
-        new Intl.DateTimeFormat("en-GB", { timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false }).format(ms);
-      const sd = fmtDate(startsAt);
-      const ed = fmtDate(endsAt);
-      deviceLine =
-        sd === ed
-          ? `Your time: ${sd} ${fmtTime(startsAt)}–${fmtTime(endsAt)}`
-          : `Your time: ${sd} ${fmtTime(startsAt)} – ${ed} ${fmtTime(endsAt)}`;
-    }
     return (
-      <div className="mt-2 rounded-md border border-amber-300/30 bg-amber-500/15 px-2 py-1.5 shadow-[0_0_10px_rgba(245,158,11,0.15)]">
-        <div className="flex items-start gap-1.5">
-          <CalendarClock className="mt-0.5 size-3.5 shrink-0 text-amber-300" />
-          <div className="min-w-0 flex-1">
-            <div className="text-[10px] font-semibold uppercase tracking-wider text-amber-200">{heading}</div>
-            {isSidebar ? (
-              <>
-                <div className="text-[11px] font-semibold leading-tight text-white">{label}</div>
-                <div className="text-[13px] font-bold leading-tight text-white mt-0.5">
-                  {slot.start_time.slice(0, 5)} – {slot.end_time.slice(0, 5)}
-                </div>
-              </>
-            ) : (
-              <div className="text-[11px] font-semibold leading-tight text-white">
-                {label} · {slot.start_time.slice(0, 5)}–{slot.end_time.slice(0, 5)}
-              </div>
-            )}
-            {deviceLine && (
-              <div className="mt-0.5 text-[10px] leading-tight text-amber-100/90">{deviceLine}</div>
-            )}
-          </div>
-        </div>
+      <div className="mt-2">
+        <NextShiftPanel
+          slot={{ id: userId, ...slot }}
+          heading={running ? "Shift today" : "Next shift"}
+          tone="amber"
+        />
       </div>
     );
   };
