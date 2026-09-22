@@ -114,6 +114,7 @@ import { Route as AuthenticatedApprovedSportsGuidesNewRouteImport } from './rout
 import { Route as AuthenticatedApprovedUUsernameRouteImport } from './routes/_authenticated/_approved/u.$username'
 import { Route as ApiPublicATokenRouteImport } from './routes/api/public/a/$token'
 import { Route as ApiPublicAdsAdBannerTrackRouteImport } from './routes/api/public/ads/ad-banner-track'
+import { Route as ApiPublicEmailImageNameRouteImport } from './routes/api/public/email-image/$name'
 import { Route as ApiPublicHooksBackupCredentialsRouteImport } from './routes/api/public/hooks/backup-credentials'
 import { Route as ApiPublicHooksBackupOrdersRouteImport } from './routes/api/public/hooks/backup-orders'
 import { Route as ApiPublicHooksBoroFetchFixturesRouteImport } from './routes/api/public/hooks/boro-fetch-fixtures'
@@ -755,6 +756,11 @@ const ApiPublicAdsAdBannerTrackRoute =
     path: '/api/public/ads/ad-banner-track',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicEmailImageNameRoute = ApiPublicEmailImageNameRouteImport.update({
+  id: '/api/public/email-image/$name',
+  path: '/api/public/email-image/$name',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicHooksBackupCredentialsRoute =
   ApiPublicHooksBackupCredentialsRouteImport.update({
     id: '/api/public/hooks/backup-credentials',
@@ -1078,6 +1084,7 @@ export interface FileRoutesByFullPath {
   '/u/$username': typeof AuthenticatedApprovedUUsernameRoute
   '/api/public/a/$token': typeof ApiPublicATokenRoute
   '/api/public/ads/ad-banner-track': typeof ApiPublicAdsAdBannerTrackRoute
+  '/api/public/email-image/$name': typeof ApiPublicEmailImageNameRoute
   '/api/public/hooks/backup-credentials': typeof ApiPublicHooksBackupCredentialsRoute
   '/api/public/hooks/backup-orders': typeof ApiPublicHooksBackupOrdersRoute
   '/api/public/hooks/boro-fetch-fixtures': typeof ApiPublicHooksBoroFetchFixturesRoute
@@ -1217,6 +1224,7 @@ export interface FileRoutesByTo {
   '/u/$username': typeof AuthenticatedApprovedUUsernameRoute
   '/api/public/a/$token': typeof ApiPublicATokenRoute
   '/api/public/ads/ad-banner-track': typeof ApiPublicAdsAdBannerTrackRoute
+  '/api/public/email-image/$name': typeof ApiPublicEmailImageNameRoute
   '/api/public/hooks/backup-credentials': typeof ApiPublicHooksBackupCredentialsRoute
   '/api/public/hooks/backup-orders': typeof ApiPublicHooksBackupOrdersRoute
   '/api/public/hooks/boro-fetch-fixtures': typeof ApiPublicHooksBoroFetchFixturesRoute
@@ -1362,6 +1370,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/u/$username': typeof AuthenticatedApprovedUUsernameRoute
   '/api/public/a/$token': typeof ApiPublicATokenRoute
   '/api/public/ads/ad-banner-track': typeof ApiPublicAdsAdBannerTrackRoute
+  '/api/public/email-image/$name': typeof ApiPublicEmailImageNameRoute
   '/api/public/hooks/backup-credentials': typeof ApiPublicHooksBackupCredentialsRoute
   '/api/public/hooks/backup-orders': typeof ApiPublicHooksBackupOrdersRoute
   '/api/public/hooks/boro-fetch-fixtures': typeof ApiPublicHooksBoroFetchFixturesRoute
@@ -1506,6 +1515,7 @@ export interface FileRouteTypes {
     | '/u/$username'
     | '/api/public/a/$token'
     | '/api/public/ads/ad-banner-track'
+    | '/api/public/email-image/$name'
     | '/api/public/hooks/backup-credentials'
     | '/api/public/hooks/backup-orders'
     | '/api/public/hooks/boro-fetch-fixtures'
@@ -1645,6 +1655,7 @@ export interface FileRouteTypes {
     | '/u/$username'
     | '/api/public/a/$token'
     | '/api/public/ads/ad-banner-track'
+    | '/api/public/email-image/$name'
     | '/api/public/hooks/backup-credentials'
     | '/api/public/hooks/backup-orders'
     | '/api/public/hooks/boro-fetch-fixtures'
@@ -1789,6 +1800,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/u/$username'
     | '/api/public/a/$token'
     | '/api/public/ads/ad-banner-track'
+    | '/api/public/email-image/$name'
     | '/api/public/hooks/backup-credentials'
     | '/api/public/hooks/backup-orders'
     | '/api/public/hooks/boro-fetch-fixtures'
@@ -1857,6 +1869,7 @@ export interface RootRouteChildren {
   LovableEmailEventsRoute: typeof LovableEmailEventsRoute
   ApiPublicATokenRoute: typeof ApiPublicATokenRoute
   ApiPublicAdsAdBannerTrackRoute: typeof ApiPublicAdsAdBannerTrackRoute
+  ApiPublicEmailImageNameRoute: typeof ApiPublicEmailImageNameRoute
   ApiPublicHooksBackupCredentialsRoute: typeof ApiPublicHooksBackupCredentialsRoute
   ApiPublicHooksBackupOrdersRoute: typeof ApiPublicHooksBackupOrdersRoute
   ApiPublicHooksBoroFetchFixturesRoute: typeof ApiPublicHooksBoroFetchFixturesRoute
@@ -2627,6 +2640,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicAdsAdBannerTrackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/email-image/$name': {
+      id: '/api/public/email-image/$name'
+      path: '/api/public/email-image/$name'
+      fullPath: '/api/public/email-image/$name'
+      preLoaderRoute: typeof ApiPublicEmailImageNameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/backup-credentials': {
       id: '/api/public/hooks/backup-credentials'
       path: '/api/public/hooks/backup-credentials'
@@ -3235,6 +3255,7 @@ const rootRouteChildren: RootRouteChildren = {
   LovableEmailEventsRoute: LovableEmailEventsRoute,
   ApiPublicATokenRoute: ApiPublicATokenRoute,
   ApiPublicAdsAdBannerTrackRoute: ApiPublicAdsAdBannerTrackRoute,
+  ApiPublicEmailImageNameRoute: ApiPublicEmailImageNameRoute,
   ApiPublicHooksBackupCredentialsRoute: ApiPublicHooksBackupCredentialsRoute,
   ApiPublicHooksBackupOrdersRoute: ApiPublicHooksBackupOrdersRoute,
   ApiPublicHooksBoroFetchFixturesRoute: ApiPublicHooksBoroFetchFixturesRoute,
