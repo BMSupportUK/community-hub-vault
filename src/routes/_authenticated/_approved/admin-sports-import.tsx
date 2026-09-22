@@ -911,3 +911,54 @@ function QueueSetup({
     </Card>
   );
 }
+
+function ListingPreview({ raw, sourceZone }: { raw: string; sourceZone: TimeZoneChoice | null }) {
+  const events = useMemo(() => parseSportsListingBlock(raw), [raw]);
+  if (!events.length) {
+    return (
+      <div className="rounded-lg border border-border bg-muted/30 p-3 text-xs text-muted-foreground">
+        No event cards recognised yet. The original block will still be kept in the editor.
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2 rounded-lg border border-border bg-muted/20 p-3">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[11px] font-medium text-muted-foreground">Recognised event cards</span>
+        <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+          {events.length}
+        </span>
+      </div>
+      <div className="max-h-60 space-y-2 overflow-y-auto pr-1">
+        {events.map((event, index) => {
+          const converted = sourceZone && !hasBothZones(event.time)
+            ? buildDualTime(event.time, event.date, sourceZone)
+            : null;
+          return (
+            <div key={`${event.time}-${event.title}-${index}`} className="rounded-md border border-border bg-card/70 p-2">
+              <div className="flex items-start gap-2">
+                <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold text-primary">
+                  {String(index + 1).padStart(2, "0")}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-semibold text-foreground">{converted ?? event.time}</p>
+                  <p className="break-words text-sm font-medium leading-snug">{event.title}</p>
+                  {event.channels.length > 0 && (
+                    <div className="mt-1 flex flex-wrap gap-1">
+                      {event.channels.map((channel) => (
+                        <span key={channel} className="rounded-full border border-border bg-background px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                          {channel}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}

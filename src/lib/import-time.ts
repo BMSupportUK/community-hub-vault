@@ -69,8 +69,8 @@ export function parseListingDate(date: string | null | undefined): { y: number; 
       return { y: m[3] ? Number(m[3]) : new Date().getFullYear(), m: monthIdx, d: Number(m[2]) };
     }
   }
-  // "03/10/2026" (UK order)
-  m = t.match(/(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
+  // "03/10/2026", "03-10-2026", "03.10.2026" (UK order)
+  m = t.match(/(\d{1,2})[-/.](\d{1,2})[-/.](\d{2,4})/);
   if (m) {
     const year = Number(m[3]);
     return { y: year < 100 ? 2000 + year : year, m: Number(m[2]) - 1, d: Number(m[1]) };

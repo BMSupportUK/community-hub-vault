@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { HtmlEditor } from "@/components/ui/html-editor";
 import { toast } from "sonner";
 import { pruneExpiredGuideEvents } from "@/lib/prune-expired-guide-events";
+import { formatSportsListingBlock, plainListingToHtml } from "@/lib/sports-listing-format";
 
 type Category = { id: string; name: string; parent_id?: string | null };
 type Subcategory = { id: string; category_id: string; name: string; sort_order: number; is_default: boolean };
@@ -129,6 +130,9 @@ const isTimeOnlyLine = (s: string) =>
  *   ...next event
  */
 function normalizeSportsGuidePaste(text: string): string {
+  const formattedListing = formatSportsListingBlock({ raw: text });
+  if (formattedListing) return plainListingToHtml(formattedListing);
+
   const rawLines = text.replace(/\r\n?/g, "\n").split("\n");
   const lines = rawLines.map((l) => l.replace(/\s+/g, " ").trim()).filter(Boolean);
   const out: string[] = [];
