@@ -157,21 +157,28 @@ export function Clocks() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <button
-          type="button"
-          aria-label="Office opening hours"
-          title="Office opening hours"
-          className={cn(
-            "inline-flex size-9 items-center justify-center rounded-full bg-rail/80 ring-1 shadow-soft transition-colors",
-            officeOpen
-              ? "ring-success/50 text-success hover:bg-success/15"
-              : "ring-destructive/50 text-destructive hover:bg-destructive/15",
-          )}
-        >
-          <Building2 className="size-4" />
-        </button>
-      </DialogTrigger>
+      <div className="flex items-center gap-2">
+        {/* Live clock showing the visitor's own device time and date */}
+        <div className="hidden sm:flex flex-col items-end leading-tight">
+          <span className="font-mono text-sm font-semibold tabular-nums text-foreground">{headerTime}</span>
+          <span className="text-[10px] text-muted-foreground">{headerDate}</span>
+        </div>
+        <DialogTrigger asChild>
+          <button
+            type="button"
+            aria-label="Office opening hours"
+            title="Office opening hours"
+            className={cn(
+              "inline-flex size-9 items-center justify-center rounded-full bg-rail/80 ring-1 shadow-soft transition-colors",
+              officeOpen
+                ? "ring-success/50 text-success hover:bg-success/15"
+                : "ring-destructive/50 text-destructive hover:bg-destructive/15",
+            )}
+          >
+            <Building2 className="size-4" />
+          </button>
+        </DialogTrigger>
+      </div>
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle className="font-display flex items-center gap-2">
