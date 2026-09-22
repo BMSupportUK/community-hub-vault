@@ -352,6 +352,39 @@ export type Database = {
           },
         ]
       }
+      automated_messages: {
+        Row: {
+          body: string
+          description: string
+          key: string
+          label: string
+          placeholders: string[]
+          sort_order: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          body: string
+          description?: string
+          key: string
+          label: string
+          placeholders?: string[]
+          sort_order?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          body?: string
+          description?: string
+          key?: string
+          label?: string
+          placeholders?: string[]
+          sort_order?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       bank_transfer_details: {
         Row: {
           account_name: string

@@ -27,6 +27,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { verifyTurnstile } from "@/lib/turnstile.functions";
 import { TurnstileWidget } from "@/components/app/TurnstileWidget";
 import { getOutOfHoursMessage } from "@/lib/business-hours";
+import { getAutomatedMessage } from "@/lib/automated-messages";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useRoleFlashMap, resolveAvatarUrl, roleFlashClass } from "@/lib/role-flash";
@@ -893,8 +894,7 @@ function NewTicketForm({
       await supabase.from("ticket_messages").insert({
         ticket_id: t.id,
         sender_id: user!.id,
-        content:
-          "🔒 This ticket is private to the **Owner and Management team**.\n\nNo other staff or moderators can see or reply to this conversation. A member of management will respond as soon as possible.",
+        content: await getAutomatedMessage("ticket_owner_management"),
         is_internal: false,
       });
     }
