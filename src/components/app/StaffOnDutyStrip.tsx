@@ -635,6 +635,7 @@ export function StaffOnDutyStrip({
             <span className="size-2 rounded-full bg-emerald-400 animate-pulse" /> live
           </div>
         </div>
+        )}
       </div>
     );
   }
