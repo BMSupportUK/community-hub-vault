@@ -268,7 +268,6 @@ export function OfficeHoursSchedule({ channelName = "office-hours-live" }: { cha
 }
 
 export function Clocks() {
-  const timezone = useUserTimezone();
   const holidays = useUkBankHolidays();
   const [open, setOpen] = useState(false);
   const [hours, setHours] = useState<OfficeHour[]>([]);
