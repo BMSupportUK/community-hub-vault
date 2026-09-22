@@ -660,33 +660,42 @@ function QueueSetup({
     ? cats.filter((category) => category.parent_id === selectedCategory.id)
     : [];
   const directSubs = draft.category ? subsByCatName.get(draft.category) ?? [] : [];
+  // Box 2: the groups inside the chosen category (e.g. Rugby → Rugby League / Rugby Union,
+  // Football → Mens / Women). When a category has no groups of its own, its own
+  // sub categories act as the choices.
   const subChoices = childCategories.length > 0
-    ? childCategories.map((category) => ({ name: category.name, destinationCategory: category.name, subcategory: null }))
+    ? childCategories.map((category) => ({ name: category.name, destinationCategory: category.name, isGroup: true }))
     : directSubs.map((subcategory) => ({
         name: subcategory.name,
         destinationCategory: draft.category,
-        subcategory: subcategory.name,
+        isGroup: false,
       }));
+  const chosenChoice = subChoices.find((choice) => choice.name === (draft.group || draft.subcategories[0]));
+  // Box 3: when the chosen group has its own sub categories, list them too.
+  const groupSubs = chosenChoice?.isGroup ? subsByCatName.get(chosenChoice.name) ?? [] : [];
   const selectedSubcategory = draft.subcategories[0] ?? "";
+  const readyForGuides = Boolean(
+    draft.destinationCategory && (groupSubs.length === 0 || selectedSubcategory),
+  );
   // Guide names already used inside the chosen category.
   const guidesFn = useServerFn(listGuidesInCategory);
   const [guides, setGuides] = useState<{ id: string; title: string; subcategory: string | null }[]>([]);
   const [loadingGuides, setLoadingGuides] = useState(false);
   useEffect(() => {
-    if (!draft.destinationCategory || !selectedSubcategory) { setGuides([]); return; }
+    if (!readyForGuides) { setGuides([]); return; }
     let alive = true;
     setLoadingGuides(true);
     guidesFn({
       data: {
         category: draft.destinationCategory,
-        subcategory: childCategories.length > 0 ? null : selectedSubcategory,
+        subcategory: selectedSubcategory || null,
       },
     })
       .then((d: any) => { if (alive) setGuides(d.guides ?? []); })
       .catch(() => { if (alive) setGuides([]); })
       .finally(() => { if (alive) setLoadingGuides(false); });
     return () => { alive = false; };
-  }, [draft.destinationCategory, selectedSubcategory]);
+  }, [draft.destinationCategory, selectedSubcategory, readyForGuides]);
 
   const run = async (action: "import" | "discard") => {
     if (!item) return;
