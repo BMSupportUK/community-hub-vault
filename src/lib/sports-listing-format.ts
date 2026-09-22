@@ -1,4 +1,4 @@
-import { parseClockTime, parseListingDate, toSingleZoneTime, type TimeZoneChoice } from "./import-time";
+import { parseClockTime, parseListingDate, sourceTimeToUk, type TimeZoneChoice } from "./import-time";
 
 export type SportsListingEvent = {
   date: string | null;
@@ -222,7 +222,7 @@ export function sortSportsListingEvents(events: SportsListingEvent[]): SportsLis
 
 function eventTimeForOutput(event: SportsListingEvent, input: ListingInput): string {
   if (input.sourceZone) {
-    const converted = toSingleZoneTime(event.time, event.date ?? input.date ?? undefined, input.sourceZone);
+    const converted = sourceTimeToUk(event.time, event.date ?? input.date ?? undefined, input.sourceZone);
     if (converted) return converted;
   }
   return event.time;

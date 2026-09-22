@@ -787,14 +787,9 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
         break;
       }
     }
-    // If subsequent matches exist, their text becomes a caption.
+    // A second matched clock is an alternate-zone copy of the same start
+    // time, not card content. Never print it beneath the channel chips.
     let caption = "";
-    if (matches.length > 1) {
-      caption = matches
-        .slice(1)
-        .map((mx) => text.slice(mx.start, mx.end))
-        .join(" · ");
-    }
 
     // Absorb following leaf lines as name/caption even when the editor wrapped
     // them in extra containers. Stop cleanly at the next time or date heading.
@@ -975,89 +970,71 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     header.appendChild(nameCell);
     block.appendChild(header);
 
-    // Pills row: fixed two-column grid so pill positions stay aligned on every row.
+    // Time row. ET is only an import/source interpretation and is never shown
+    // as an additional card time. Show UK first, then the viewer's local time
+    // only when its date, time, or zone genuinely differs.
     const pillsRow = document.createElement("div");
-    pillsRow.className = "mt-auto grid w-full grid-cols-2 gap-2 pl-0 md:pl-[3.25rem]";
+    pillsRow.className = "mt-auto grid w-full grid-cols-1 gap-2 pl-0 md:pl-[3.25rem]";
     block.appendChild(pillsRow);
 
-    // For US-source guides (ET/EST/EDT, or a numeric GMT-4/GMT-5 fallback
-    // abbreviation) show British time first, with the original source time
-    // second. Otherwise keep source-first, local-second.
-    const isEtSource =
-      m.sourceIanaZone === "America/New_York";
+    const ukDate = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Europe/London",
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }).format(new Date(m.utcMs));
+    const ukTime = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Europe/London",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).format(new Date(m.utcMs));
+    const ukZone = tzAbbrev(m.utcMs, "Europe/London") || "UK";
+    const localDiffers = m.localDate !== ukDate || m.localTime !== ukTime || m.localZone !== ukZone;
+    if (localDiffers) pillsRow.classList.replace("grid-cols-1", "grid-cols-2");
 
-    const ukDate = isEtSource
-      ? new Intl.DateTimeFormat("en-GB", {
-          timeZone: "Europe/London",
-          weekday: "long",
-          day: "numeric",
-          month: "long",
-          year: "numeric",
-        }).format(new Date(m.utcMs))
-      : null;
-    const ukTime = isEtSource
-      ? new Intl.DateTimeFormat("en-GB", {
-          timeZone: "Europe/London",
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: false,
-        }).format(new Date(m.utcMs))
-      : null;
-    const ukZone = isEtSource ? tzAbbrev(m.utcMs, "Europe/London") || "UK" : null;
-
-    // First pill: British time for ET sources, otherwise the source time.
     const firstPill = document.createElement("span");
     firstPill.setAttribute("data-tz-pill", "1");
-    firstPill.className = isEtSource
-      ? "inline-flex w-full min-w-0 max-w-full flex-col items-center justify-center px-3 py-1.5 rounded-lg bg-fuchsia-600 text-white shadow-[0_0_15px_rgba(192,38,211,0.25)]"
-      : "inline-flex w-full min-w-0 max-w-full flex-col items-center justify-center px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-purple-100/80";
+    firstPill.className = "inline-flex w-full min-w-0 max-w-full flex-col items-center justify-center px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-purple-100/80";
     const firstDate = document.createElement("span");
-    firstDate.className = isEtSource
-      ? "block w-full text-center text-[11px] md:text-xs font-bold uppercase tracking-wider text-white leading-tight mb-0.5"
-      : "block w-full text-center text-[11px] md:text-xs font-bold uppercase tracking-wider text-fuchsia-200 leading-tight mb-0.5";
-    firstDate.textContent = isEtSource ? ukDate : m.sourceDate;
+    firstDate.className = "block w-full text-center text-[11px] md:text-xs font-bold uppercase tracking-wider text-fuchsia-200 leading-tight mb-0.5";
+    firstDate.textContent = ukDate;
     const firstRow = document.createElement("span");
     firstRow.className = "flex w-full min-w-0 items-baseline justify-center gap-1.5";
     const firstTime = document.createElement("span");
     firstTime.className = "font-bold text-sm tabular-nums";
-    firstTime.textContent = isEtSource ? ukTime : m.sourceTime;
+    firstTime.textContent = ukTime;
     const firstZone = document.createElement("span");
-    firstZone.className = isEtSource
-      ? "min-w-0 truncate text-[10px] uppercase tracking-wide text-white/80"
-      : "min-w-0 truncate text-[10px] uppercase tracking-wide text-purple-200/60";
-    firstZone.textContent = isEtSource ? ukZone : m.sourceZone;
+    firstZone.className = "min-w-0 truncate text-[10px] uppercase tracking-wide text-purple-200/60";
+    firstZone.textContent = ukZone;
     firstRow.appendChild(firstTime);
     firstRow.appendChild(firstZone);
     firstPill.appendChild(firstDate);
     firstPill.appendChild(firstRow);
     pillsRow.appendChild(firstPill);
 
-    // Second pill: source time for ET sources, otherwise the viewer's local time.
-    const secondPill = document.createElement("span");
-    secondPill.setAttribute("data-tz-pill", "1");
-    secondPill.className = isEtSource
-      ? "inline-flex w-full min-w-0 max-w-full flex-col items-center justify-center px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-purple-100/80"
-      : "inline-flex w-full min-w-0 max-w-full flex-col items-center justify-center px-3 py-1.5 rounded-lg bg-fuchsia-600 text-white shadow-[0_0_15px_rgba(192,38,211,0.25)]";
-    const secondDate = document.createElement("span");
-    secondDate.className = isEtSource
-      ? "block w-full text-center text-[11px] md:text-xs font-bold uppercase tracking-wider text-fuchsia-200 leading-tight mb-0.5"
-      : "block w-full text-center text-[11px] md:text-xs font-bold uppercase tracking-wider text-white leading-tight mb-0.5";
-    secondDate.textContent = isEtSource ? m.sourceDate : m.localDate;
-    const secondRow = document.createElement("span");
-    secondRow.className = "flex w-full min-w-0 items-baseline justify-center gap-1.5";
-    const secondTime = document.createElement("span");
-    secondTime.className = "font-bold text-sm tabular-nums";
-    secondTime.textContent = isEtSource ? m.sourceTime : m.localTime;
-    const secondZone = document.createElement("span");
-    secondZone.className = isEtSource
-      ? "min-w-0 truncate text-[10px] uppercase tracking-wide text-purple-200/60"
-      : "min-w-0 truncate text-[10px] uppercase tracking-wide text-white/80";
-    secondZone.textContent = isEtSource ? m.sourceZone : m.localZone;
-    secondRow.appendChild(secondTime);
-    secondRow.appendChild(secondZone);
-    secondPill.appendChild(secondDate);
-    secondPill.appendChild(secondRow);
-    pillsRow.appendChild(secondPill);
+    if (localDiffers) {
+      const secondPill = document.createElement("span");
+      secondPill.setAttribute("data-tz-pill", "1");
+      secondPill.className = "inline-flex w-full min-w-0 max-w-full flex-col items-center justify-center px-3 py-1.5 rounded-lg bg-fuchsia-600 text-white shadow-[0_0_15px_rgba(192,38,211,0.25)]";
+      const secondDate = document.createElement("span");
+      secondDate.className = "block w-full text-center text-[11px] md:text-xs font-bold uppercase tracking-wider text-white leading-tight mb-0.5";
+      secondDate.textContent = m.localDate;
+      const secondRow = document.createElement("span");
+      secondRow.className = "flex w-full min-w-0 items-baseline justify-center gap-1.5";
+      const secondTime = document.createElement("span");
+      secondTime.className = "font-bold text-sm tabular-nums";
+      secondTime.textContent = m.localTime;
+      const secondZone = document.createElement("span");
+      secondZone.className = "min-w-0 truncate text-[10px] uppercase tracking-wide text-white/80";
+      secondZone.textContent = m.localZone;
+      secondRow.appendChild(secondTime);
+      secondRow.appendChild(secondZone);
+      secondPill.appendChild(secondDate);
+      secondPill.appendChild(secondRow);
+      pillsRow.appendChild(secondPill);
+    }
 
     // Keep transformed content to two text lines plus the time pills.
   }
