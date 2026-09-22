@@ -53,6 +53,33 @@ function londonNow(at: number | Date = Date.now()) {
   };
 }
 
+// "Sign-in opens…" line — shows the person's own shift start in UK office time
+// and, when their device is in another timezone, their local start time too.
+function SignInOpensNote({ win }: { win: { start: string; end: string } }) {
+  const [deviceTz, setDeviceTz] = useState(() => browserTimezone());
+  useEffect(() => {
+    const id = window.setInterval(() => setDeviceTz(browserTimezone()), 30_000);
+    return () => window.clearInterval(id);
+  }, []);
+  const ukStart = win.start.slice(0, 5);
+  let deviceText: string | null = null;
+  if (deviceTz !== "Europe/London") {
+    const { startsAt } = shiftWindowToUtcMs(londonNow().date, win.start, win.end, "Europe/London");
+    deviceText = new Intl.DateTimeFormat("en-GB", {
+      timeZone: deviceTz,
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).format(startsAt);
+  }
+  return (
+    <p className="text-xs text-muted-foreground">
+      Sign-in opens 15 minutes before your shift starts ({ukStart} UK
+      {deviceText ? ` · ${deviceText} your time` : ""}).
+    </p>
+  );
+}
+
 // Rota wall-clock (UK) converted into the viewer's device timezone. When the
 // shift crosses midnight locally, start and end are listed as separate days.
 function NextShiftPanel({ slot }: { slot: NextSlot }) {
@@ -578,17 +605,17 @@ export function WorkingStatusBox({
                 <span className="text-muted-foreground font-medium">Shift</span>
                 <span className="text-muted-foreground italic">Not signed in</span>
               </div>
-              {!todayWindow && (
+              {!todayWindow && !hadShiftToday && (
                 <p className="text-xs text-muted-foreground">
                   You're not on the rota today, so signing in is unavailable.
                 </p>
               )}
-              {todayWindow && !canSignIn && (
+              {!todayWindow && hadShiftToday && (
                 <p className="text-xs text-muted-foreground">
-                  Sign-in opens 15 minutes before your shift starts (
-                  {todayWindow.start.slice(0, 5)}).
+                  Today's shift has ended — your next shift is below.
                 </p>
               )}
+              {todayWindow && !canSignIn && <SignInOpensNote win={todayWindow} />}
               {nextSlot && <NextShiftPanel slot={nextSlot} />}
             </>
           )}
