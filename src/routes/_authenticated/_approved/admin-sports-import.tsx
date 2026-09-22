@@ -83,6 +83,26 @@ function AdminSportsImportPage() {
   const visibleQueue = queue.filter((q) => queueFilter === "all" || (q.source ?? "paste") === queueFilter);
   const suggestedCount = queue.filter((q) => q.parsed_event?.suggested_category).length;
 
+  const NEEDS_CATEGORY = "Needs a category";
+  // Every post sits under its suggested category heading, so staff can see at a
+  // glance what landed where; anything unmatched comes first.
+  const groupedQueue = useMemo(() => {
+    const map = new Map<string, QueueItem[]>();
+    for (const q of visibleQueue) {
+      const cat = q.parsed_event?.suggested_category as string | undefined;
+      const sub = q.parsed_event?.suggested_subcategory as string | undefined;
+      const key = cat ? (sub ? `${cat} › ${sub}` : cat) : NEEDS_CATEGORY;
+      const arr = map.get(key) ?? [];
+      arr.push(q);
+      map.set(key, arr);
+    }
+    return Array.from(map.entries()).sort(([a], [b]) => {
+      if (a === NEEDS_CATEGORY) return -1;
+      if (b === NEEDS_CATEGORY) return 1;
+      return a.localeCompare(b);
+    });
+  }, [visibleQueue]);
+
   const onApproveAll = async () => {
     setApprovingAll(true);
     try {
@@ -352,15 +372,28 @@ function AdminSportsImportPage() {
                 <p className="text-xs">Forward a listings post to your Telegram bot and it will appear here.</p>
               </Card>
             ) : (
-              visibleQueue.map((q) => (
-                <QueueRow
-                  key={q.id}
-                  item={q}
-                  cats={cats}
-                  subsByCatName={subsByCatName}
-                  onResolved={refreshQueue}
-                  resolveFn={resolveFn}
-                />
+              groupedQueue.map(([groupName, items]) => (
+                <section key={groupName} className="space-y-2">
+                  <div className="flex items-center gap-2 pt-1">
+                    <h2 className="font-display text-sm font-bold uppercase tracking-wide text-muted-foreground">
+                      {groupName}
+                    </h2>
+                    <span className="px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground text-xs">
+                      {items.length}
+                    </span>
+                    <div className="h-px flex-1 bg-border" />
+                  </div>
+                  {items.map((q) => (
+                    <QueueRow
+                      key={q.id}
+                      item={q}
+                      cats={cats}
+                      subsByCatName={subsByCatName}
+                      onResolved={refreshQueue}
+                      resolveFn={resolveFn}
+                    />
+                  ))}
+                </section>
               ))
             )}
           </TabsContent>
