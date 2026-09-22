@@ -166,7 +166,7 @@ function AdminSportsImportPage() {
     setApprovingAll(true);
     try {
       const r = await approveAllFn();
-      toast.success(`Imported ${r.imported} suggested event(s) — now live in the guide${r.skipped ? ` · ${r.skipped} still need a category` : ""}`);
+      toast.success(`Imported ${r.imported} suggested event(s) — saved as drafts, add the dates then publish${r.skipped ? ` · ${r.skipped} still need a category` : ""}`);
       refreshQueue();
     } catch (e: any) {
       toast.error(e.message ?? "Approve-all failed");
@@ -717,7 +717,7 @@ function QueueSetup({
       });
       toast.success(
         action === "import"
-          ? draft.guideId ? "Added to the selected guide" : "Posted live to the guide"
+          ? draft.guideId ? "Added to the selected guide as a draft" : "Saved as a draft — add the date, then publish"
           : "Discarded",
       );
       onDone();
