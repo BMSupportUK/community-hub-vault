@@ -1102,7 +1102,7 @@ function ShiftsPage() {
                 const d = new Date(histWeek); d.setDate(d.getDate() + i); return d;
               });
 
-              type Row = { key: string; iso: string; when: string; badge: string; badgeClass: string; range: string; role: string | null; note?: string };
+              type Row = { key: string; iso: string; when: string; badge: string; badgeClass: string; range: string; localRange?: string | null; role: string | null; note?: string };
               let rows: Row[] = [];
               if (histTab === "swaps") {
                 rows = mySwaps
@@ -1120,6 +1120,7 @@ function ShiftsPage() {
                           ? "bg-emerald-500/20 border-emerald-400/40 text-emerald-100"
                           : "bg-rose-500/20 border-rose-400/40 text-rose-100",
                       range: s.slot ? fmtRange(iso, s.slot.start_time, s.slot.end_time) : "—",
+                      localRange: s.slot ? deviceRange(iso, s.slot.start_time, s.slot.end_time) : null,
                       role: s.slot?.required_role ?? null,
                       note: `${s.requester_id === user?.id ? "You asked" : `${profName(other)} asked you`}${other && s.requester_id === user?.id ? ` ${profName(other)}` : ""}`,
                     } as Row;
@@ -1138,6 +1139,7 @@ function ShiftsPage() {
                       ? "bg-emerald-500/20 border-emerald-400/40 text-emerald-100"
                       : "bg-rose-500/20 border-rose-400/40 text-rose-100",
                     range: fmtRange(b.shift_date, b.start_time, b.end_time),
+                    localRange: deviceRange(b.shift_date, b.start_time, b.end_time),
                     role: b.required_role,
                   }));
                 // Add slots currently booked to me that have no matching log entry
@@ -1155,6 +1157,7 @@ function ShiftsPage() {
                       badge: "Booked",
                       badgeClass: "bg-emerald-500/20 border-emerald-400/40 text-emerald-100",
                       range: fmtRange(s.shift_date, s.start_time, s.end_time),
+                      localRange: deviceRange(s.shift_date, s.start_time, s.end_time),
                       role: s.required_role,
                       note: "Currently booked",
                     });
@@ -1230,6 +1233,11 @@ function ShiftsPage() {
                                     )}
                                   </div>
                                   <div className="font-mono text-primary text-sm break-words">{r.range}</div>
+                                  {r.localRange && (
+                                    <div className="text-[11px] text-accent-foreground/90">
+                                      Your time: <span className="font-mono">{r.localRange}</span>
+                                    </div>
+                                  )}
                                   {r.note && <div className="text-[11px] text-foreground/80 break-words">{r.note}</div>}
                                   <div className="text-[11px] text-muted-foreground">{format(new Date(r.when), "d MMM HH:mm")}</div>
                                 </li>
@@ -1256,6 +1264,7 @@ function ShiftsPage() {
                               <span className={cn("text-[10px] px-2 py-0.5 rounded-full border font-semibold uppercase tracking-wide", r.badgeClass)}>{r.badge}</span>
                               <span className="text-foreground font-semibold">{dayLabel(new Date(`${r.iso}T00:00:00`))}</span>
                               <span className="font-mono text-primary">{r.range}</span>
+                              {r.localRange && <span className="text-[11px] text-accent-foreground/90">your time <span className="font-mono">{r.localRange}</span></span>}
                               {r.note && <span className="text-[11px] text-foreground/80">{r.note}</span>}
                               <span className="ml-auto text-xs text-muted-foreground">{format(new Date(r.when), "d MMM HH:mm")}</span>
                             </li>
