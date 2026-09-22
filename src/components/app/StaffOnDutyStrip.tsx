@@ -366,8 +366,6 @@ export function StaffOnDutyStrip({
   };
 
 
-  const clockedInIds = useMemo(() => new Set(shifts.map((s) => s.user_id)), [shifts]);
-
   /** Seed row for the shared Talk member card; the card refetches full details. */
   const talkFallbackRow = (userId: string): Omit<TalkMemberProfileRow, "user_id"> => {
     const p = profiles[userId];
@@ -445,7 +443,7 @@ export function StaffOnDutyStrip({
 
 
             <DndCountdown userId={s.user_id} compact className="mt-1" />
-            {renderNextShift(s.user_id)}
+
 
           </div>
         </div>
@@ -530,7 +528,7 @@ export function StaffOnDutyStrip({
 
 
             <DndCountdown userId={p.id} compact className="mt-1" />
-            {renderNextShift(p.id)}
+
           </div>
         </div>
       </div>
