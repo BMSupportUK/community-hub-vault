@@ -475,6 +475,7 @@ function DashboardBody() {
     { to: "/admin-business-hours", label: "Business hours", desc: "Set opening hours per day. Auto-replies when orders or tickets open out of hours.", icon: Clock },
     { to: "/admin-nameplates", label: "Nameplates", desc: "Manage the catalog of decorative nameplates and assign them to members.", icon: Sparkles },
     { to: "/admin-notifications", label: "Telegram alerts", desc: "Send a Telegram message when a new signup, ticket or sale comes in.", icon: Bell },
+    { to: "/admin-automated-messages", label: "Automated messages & emails", desc: "Edit the wording of every message and email the system sends on its own.", icon: MessageSquare, adminOnly: true },
     { to: "/admin-ticket-categories", label: "Ticket categories", desc: "Edit the names and descriptions of support ticket categories.", icon: LifeBuoy },
     { to: "/admin-archived-tickets", label: "Archived tickets", desc: "Browse and restore tickets auto-archived 7 days after closing.", icon: LifeBuoy },
     { to: "/admin-fan-zone", label: "Boro Fan Zone", desc: "Approve, reject or revoke fan-zone access for Middlesbrough F.C. supporters.", icon: Trophy },
