@@ -82,7 +82,16 @@ function SignInOpensNote({ win }: { win: { start: string; end: string } }) {
 
 // Rota wall-clock (UK) converted into the viewer's device timezone. When the
 // shift crosses midnight locally, start and end are listed as separate days.
-function NextShiftPanel({ slot }: { slot: NextSlot }) {
+export function NextShiftPanel({
+  slot,
+  heading = "Next shift",
+  tone = "primary",
+}: {
+  slot: NextSlot;
+  heading?: string;
+  tone?: "primary" | "amber";
+}) {
+  const amber = tone === "amber";
   const [deviceTz, setDeviceTz] = useState(() => browserTimezone());
   useEffect(() => {
     const id = window.setInterval(() => setDeviceTz(browserTimezone()), 30_000);
@@ -125,11 +134,16 @@ function NextShiftPanel({ slot }: { slot: NextSlot }) {
     crosses: boolean;
     accent?: boolean;
   }) => (
-    <div className="h-full rounded-lg bg-surface/60 px-2.5 py-2 ring-1 ring-border/60">
+    <div
+      className={cn(
+        "h-full rounded-lg px-2.5 py-2",
+        amber ? "bg-amber-500/10 ring-1 ring-amber-300/25" : "bg-surface/60 ring-1 ring-border/60",
+      )}
+    >
       <div
         className={cn(
           "truncate text-[10px] font-semibold uppercase tracking-wide",
-          accent ? "text-primary" : "text-muted-foreground",
+          amber ? (accent ? "text-amber-200" : "text-amber-100/70") : accent ? "text-primary" : "text-muted-foreground",
         )}
         title={label}
       >
@@ -137,21 +151,25 @@ function NextShiftPanel({ slot }: { slot: NextSlot }) {
       </div>
       {/* Two aligned columns: date on the left, time on the right, never wrapping. */}
       <div className="mt-1.5 grid grid-cols-[1fr_auto] items-center gap-x-2 gap-y-1">
-        <span className="whitespace-nowrap text-[10px] leading-tight text-muted-foreground">{startDate}</span>
-        <span className="whitespace-nowrap font-mono text-[13px] font-semibold leading-tight tabular-nums text-foreground">
+        <span className={cn("whitespace-nowrap text-[10px] leading-tight", amber ? "text-amber-100/80" : "text-muted-foreground")}>
+          {startDate}
+        </span>
+        <span className={cn("whitespace-nowrap font-mono text-[13px] font-semibold leading-tight tabular-nums", amber ? "text-white" : "text-foreground")}>
           {crosses ? startTime : `${startTime}–${endTime}`}
         </span>
         {crosses && (
           <>
             <div className="col-span-2 flex items-center gap-1.5">
-              <span className="h-px flex-1 bg-border/70" />
-              <span className="whitespace-nowrap text-[9px] uppercase tracking-wider text-muted-foreground">
+              <span className={cn("h-px flex-1", amber ? "bg-amber-300/30" : "bg-border/70")} />
+              <span className={cn("whitespace-nowrap text-[9px] uppercase tracking-wider", amber ? "text-amber-100/70" : "text-muted-foreground")}>
                 next day
               </span>
-              <span className="h-px flex-1 bg-border/70" />
+              <span className={cn("h-px flex-1", amber ? "bg-amber-300/30" : "bg-border/70")} />
             </div>
-            <span className="whitespace-nowrap text-[10px] leading-tight text-muted-foreground">{endDate}</span>
-            <span className="whitespace-nowrap font-mono text-[13px] font-semibold leading-tight tabular-nums text-foreground">
+            <span className={cn("whitespace-nowrap text-[10px] leading-tight", amber ? "text-amber-100/80" : "text-muted-foreground")}>
+              {endDate}
+            </span>
+            <span className={cn("whitespace-nowrap font-mono text-[13px] font-semibold leading-tight tabular-nums", amber ? "text-white" : "text-foreground")}>
               {endTime}
             </span>
           </>
@@ -161,10 +179,15 @@ function NextShiftPanel({ slot }: { slot: NextSlot }) {
   );
 
   return (
-    <div className="rounded-xl border border-primary/30 bg-primary/5 p-2.5">
-      <div className="mb-2 flex items-center gap-1.5 text-primary">
+    <div
+      className={cn(
+        "rounded-xl border p-2.5",
+        amber ? "border-amber-300/30 bg-amber-500/15 shadow-[0_0_10px_rgba(245,158,11,0.15)]" : "border-primary/30 bg-primary/5",
+      )}
+    >
+      <div className={cn("mb-2 flex items-center gap-1.5", amber ? "text-amber-300" : "text-primary")}>
         <Calendar className="size-3.5" />
-        <span className="text-xs font-bold uppercase tracking-wide">Next shift</span>
+        <span className="text-xs font-bold uppercase tracking-wide">{heading}</span>
       </div>
       {/* Stacked full-width rows — side-by-side columns overflow in narrow panels. */}
       <div className="grid gap-2">
