@@ -129,15 +129,15 @@ export function MentionsBadge() {
       <DialogTrigger asChild>
         <button
           title={count > 0 ? `${count} unread mention${count === 1 ? "" : "s"}` : "Mentions"}
-          className={`relative size-9 rounded-xl flex items-center justify-center transition-all ${
+          className={`relative size-11 shrink-0 rounded-lg flex items-center justify-center transition-all ${
             count > 0
               ? "bg-gradient-to-br from-indigo-500/30 to-fuchsia-500/30 text-indigo-200 hover:from-indigo-500/50 hover:to-fuchsia-500/50"
-              : "bg-surface-2 text-muted-foreground hover:bg-primary hover:text-primary-foreground hover:rounded-xl"
+              : "bg-surface-2 text-muted-foreground hover:bg-primary hover:text-primary-foreground"
           } ${pulse ? "ring-2 ring-indigo-400/70 animate-pulse" : ""}`}
         >
-          <AtSign className="size-4" />
+          <AtSign className="size-5" />
           {count > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-indigo-500 text-white text-[9px] font-bold grid place-items-center ring-2 ring-rail">
+            <span className="absolute -top-1 -right-1 min-w-[20px] h-5 px-1 rounded-full bg-indigo-500 text-white text-[10px] font-bold grid place-items-center ring-2 ring-rail">
               {count > 99 ? "99+" : count}
             </span>
           )}
