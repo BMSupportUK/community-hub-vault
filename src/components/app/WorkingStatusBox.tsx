@@ -51,6 +51,113 @@ function londonNow(at: number | Date = Date.now()) {
   };
 }
 
+// Rota wall-clock (UK) converted into the viewer's device timezone. When the
+// shift crosses midnight locally, start and end are listed as separate days.
+function NextShiftPanel({ slot }: { slot: NextSlot }) {
+  const [deviceTz, setDeviceTz] = useState(() => browserTimezone());
+  useEffect(() => {
+    const id = window.setInterval(() => setDeviceTz(browserTimezone()), 30_000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  const { startsAt, endsAt } = shiftWindowToUtcMs(
+    slot.shift_date,
+    slot.start_time,
+    slot.end_time,
+    "Europe/London",
+  );
+  const fmtDate = (ms: number, tz: string) =>
+    new Intl.DateTimeFormat("en-GB", { timeZone: tz, weekday: "short", day: "numeric", month: "short" }).format(ms);
+  const fmtTime = (ms: number, tz: string) =>
+    new Intl.DateTimeFormat("en-GB", { timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false }).format(ms);
+
+  const ukDate = fmtDate(startsAt, "Europe/London");
+  const ukEndDate = fmtDate(endsAt, "Europe/London");
+  const ukCrosses = ukDate !== ukEndDate;
+  const showDevice = deviceTz !== "Europe/London";
+  const devStartDate = fmtDate(startsAt, deviceTz);
+  const devEndDate = fmtDate(endsAt, deviceTz);
+  const devCrosses = devStartDate !== devEndDate;
+
+  const Row = ({
+    label,
+    startDate,
+    endDate,
+    startTime,
+    endTime,
+    crosses,
+    accent,
+  }: {
+    label: string;
+    startDate: string;
+    endDate: string;
+    startTime: string;
+    endTime: string;
+    crosses: boolean;
+    accent?: boolean;
+  }) => (
+    <div className="rounded-lg bg-surface/60 px-2.5 py-2 ring-1 ring-border/60">
+      <div className={cn("text-[10px] uppercase tracking-wide font-semibold", accent ? "text-primary" : "text-muted-foreground")}>
+        {label}
+      </div>
+      {crosses ? (
+        <div className="mt-1 space-y-1">
+          <div className="flex items-baseline justify-between gap-2">
+            <span className="text-[11px] text-muted-foreground">{startDate}</span>
+            <span className="font-mono font-semibold tabular-nums text-foreground">{startTime}</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="h-px flex-1 bg-border/70" />
+            <span className="text-[9px] uppercase tracking-wider text-muted-foreground">next day</span>
+            <span className="h-px flex-1 bg-border/70" />
+          </div>
+          <div className="flex items-baseline justify-between gap-2">
+            <span className="text-[11px] text-muted-foreground">{endDate}</span>
+            <span className="font-mono font-semibold tabular-nums text-foreground">{endTime}</span>
+          </div>
+        </div>
+      ) : (
+        <div className="mt-1 flex items-baseline justify-between gap-2">
+          <span className="text-[11px] text-muted-foreground">{startDate}</span>
+          <span className="font-mono font-semibold tabular-nums text-foreground">
+            {startTime}–{endTime}
+          </span>
+        </div>
+      )}
+    </div>
+  );
+
+  return (
+    <div className="rounded-xl border border-primary/30 bg-primary/5 p-2.5">
+      <div className="mb-2 flex items-center gap-1.5 text-primary">
+        <Calendar className="size-3.5" />
+        <span className="text-xs font-bold uppercase tracking-wide">Next shift</span>
+      </div>
+      <div className="grid gap-2 sm:grid-cols-2">
+        <Row
+          label="UK office"
+          startDate={ukDate}
+          endDate={ukEndDate}
+          startTime={slot.start_time.slice(0, 5)}
+          endTime={slot.end_time.slice(0, 5)}
+          crosses={ukCrosses}
+        />
+        {showDevice && (
+          <Row
+            accent
+            label={`Your time · ${deviceTz.split("/").pop()?.replace(/_/g, " ")}`}
+            startDate={devStartDate}
+            endDate={devEndDate}
+            startTime={fmtTime(startsAt, deviceTz)}
+            endTime={fmtTime(endsAt, deviceTz)}
+            crosses={devCrosses}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function WorkingStatusBox({
   stackActions = false,
   variant = "card",
