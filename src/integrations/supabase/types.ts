@@ -355,31 +355,40 @@ export type Database = {
       automated_messages: {
         Row: {
           body: string
+          category: string
+          channel: string
           description: string
           key: string
           label: string
           placeholders: string[]
           sort_order: number
+          subject: string | null
           updated_at: string
           updated_by: string | null
         }
         Insert: {
           body: string
+          category?: string
+          channel?: string
           description?: string
           key: string
           label: string
           placeholders?: string[]
           sort_order?: number
+          subject?: string | null
           updated_at?: string
           updated_by?: string | null
         }
         Update: {
           body?: string
+          category?: string
+          channel?: string
           description?: string
           key?: string
           label?: string
           placeholders?: string[]
           sort_order?: number
+          subject?: string | null
           updated_at?: string
           updated_by?: string | null
         }
