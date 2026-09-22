@@ -126,7 +126,7 @@ function AdminSportsImportPage() {
     setApprovingAll(true);
     try {
       const r = await approveAllFn();
-      toast.success(`Imported ${r.imported} suggested event(s) as drafts${r.skipped ? ` · ${r.skipped} still need a category` : ""}`);
+      toast.success(`Imported ${r.imported} suggested event(s) — now live in the guide${r.skipped ? ` · ${r.skipped} still need a category` : ""}`);
       refreshQueue();
     } catch (e: any) {
       toast.error(e.message ?? "Approve-all failed");
@@ -547,7 +547,7 @@ function QueueRow({
       });
       toast.success(
         action === "import"
-          ? `Imported as draft${subcategories.length > 1 ? ` in ${subcategories.length} subcategories` : ""}`
+          ? `Posted live to the guide${subcategories.length > 1 ? ` in ${subcategories.length} subcategories` : ""}`
           : "Discarded",
       );
       onResolved();
