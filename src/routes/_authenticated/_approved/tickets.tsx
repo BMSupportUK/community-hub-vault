@@ -1109,25 +1109,49 @@ function OfficeHoursPanel() {
   if (hours.length === 0) return null;
   const timezoneLabel = timezone.replaceAll("_", " ").replace("/", " / ");
   const open = isOfficeOpen(hours, now);
+  const currentDateTime = (timeZone: string) => new Intl.DateTimeFormat("en-GB", {
+    timeZone,
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).format(now);
+  const statusPill = (
+    <span className={cn(
+      "inline-flex shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ring-1",
+      open
+        ? "bg-success/15 text-success ring-success/35"
+        : "bg-destructive/15 text-destructive ring-destructive/35",
+    )}>
+      {open ? "Open" : "Closed"}
+    </span>
+  );
 
   return (
     <section className="mt-6 overflow-hidden rounded-lg border border-border/70 bg-background/30">
       <div className="flex items-center gap-2 border-b border-border/70 px-4 py-3">
         <Store className="size-4 shrink-0 text-primary" />
         <h3 className="font-display text-sm font-semibold">Office opening times</h3>
-        <span className={cn(
-          "ml-auto inline-flex rounded-full px-2 py-1 text-[10px] font-bold ring-1",
-          open
-            ? "bg-success/15 text-success ring-success/35"
-            : "bg-destructive/15 text-destructive ring-destructive/35",
-        )}>
-          {open ? "Open" : "Closed"}
-        </span>
       </div>
       <div className="grid grid-cols-[minmax(5.5rem,0.8fr)_minmax(0,1fr)_minmax(0,1fr)] text-xs sm:text-sm">
         <div className="border-b border-border/70 px-3 py-2 font-semibold text-muted-foreground">Office date</div>
-        <div className="border-b border-l border-border/70 px-3 py-2 font-semibold">UK office</div>
-        <div className="border-b border-l border-border/70 px-3 py-2 font-semibold">Your time · {timezoneLabel}</div>
+        <div className="border-b border-l border-border/70 px-3 py-2 font-semibold">
+          <div>UK office</div>
+          <div className="mt-1 flex flex-wrap items-center gap-1.5">
+            <span className="font-mono text-[11px] font-normal tabular-nums text-foreground">{currentDateTime("Europe/London")}</span>
+            {statusPill}
+          </div>
+        </div>
+        <div className="border-b border-l border-border/70 px-3 py-2 font-semibold">
+          <div>Your time · {timezoneLabel}</div>
+          <div className="mt-1 flex flex-wrap items-center gap-1.5">
+            <span className="font-mono text-[11px] font-normal tabular-nums text-foreground">{currentDateTime(timezone)}</span>
+            {statusPill}
+          </div>
+        </div>
         {[...hours].sort((a, b) => ((a.day_of_week + 6) % 7) - ((b.day_of_week + 6) % 7)).map((hour) => {
           const localOpen = hour.is_closed ? null : londonTimeToDate(hour.day_of_week, hour.open_time);
           const localClose = hour.is_closed ? null : londonTimeToDate(hour.day_of_week, hour.close_time);
