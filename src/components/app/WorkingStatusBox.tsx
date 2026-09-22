@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import {
   CircleDot,
   Briefcase,
@@ -10,6 +10,7 @@ import {
   Loader2,
   Calendar,
   Clock,
+  ArrowRight,
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
@@ -136,44 +137,86 @@ export function NextShiftPanel({
   }) => (
     <div
       className={cn(
-        "h-full rounded-lg px-2.5 py-2",
+        "rounded-lg px-2.5 py-2",
         amber ? "bg-amber-500/10 ring-1 ring-amber-300/25" : "bg-surface/60 ring-1 ring-border/60",
       )}
     >
-      <div
-        className={cn(
-          "truncate text-[10px] font-semibold uppercase tracking-wide",
-          amber ? (accent ? "text-amber-200" : "text-amber-100/70") : accent ? "text-primary" : "text-muted-foreground",
-        )}
-        title={label}
-      >
-        {label}
-      </div>
-      {/* Two aligned columns: date on the left, time on the right, never wrapping. */}
-      <div className="mt-1.5 grid grid-cols-[1fr_auto] items-center gap-x-2 gap-y-1">
-        <span className={cn("whitespace-nowrap text-[10px] leading-tight", amber ? "text-amber-100/80" : "text-muted-foreground")}>
-          {startDate}
-        </span>
-        <span className={cn("whitespace-nowrap font-mono text-[13px] font-semibold leading-tight tabular-nums", amber ? "text-white" : "text-foreground")}>
-          {crosses ? startTime : `${startTime}–${endTime}`}
-        </span>
+      <div className="flex items-center justify-between gap-2">
+        <div
+          className={cn(
+            "truncate text-[10px] font-semibold uppercase tracking-wide",
+            amber
+              ? accent
+                ? "text-amber-200"
+                : "text-amber-100/70"
+              : accent
+                ? "text-primary"
+                : "text-muted-foreground",
+          )}
+          title={label}
+        >
+          {label}
+        </div>
         {crosses && (
-          <>
-            <div className="col-span-2 flex items-center gap-1.5">
-              <span className={cn("h-px flex-1", amber ? "bg-amber-300/30" : "bg-border/70")} />
-              <span className={cn("whitespace-nowrap text-[9px] uppercase tracking-wider", amber ? "text-amber-100/70" : "text-muted-foreground")}>
-                next day
-              </span>
-              <span className={cn("h-px flex-1", amber ? "bg-amber-300/30" : "bg-border/70")} />
-            </div>
-            <span className={cn("whitespace-nowrap text-[10px] leading-tight", amber ? "text-amber-100/80" : "text-muted-foreground")}>
-              {endDate}
-            </span>
-            <span className={cn("whitespace-nowrap font-mono text-[13px] font-semibold leading-tight tabular-nums", amber ? "text-white" : "text-foreground")}>
-              {endTime}
-            </span>
-          </>
+          <span
+            className={cn(
+              "shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider",
+              amber ? "bg-amber-400/20 text-amber-100" : "bg-primary/15 text-primary",
+            )}
+          >
+            Overnight
+          </span>
         )}
+      </div>
+
+      {/* Starts → ends, each with its own date so a two-day shift reads plainly. */}
+      <div className="mt-2 flex items-stretch gap-2">
+        {(
+          [
+            { tag: "Starts", date: startDate, time: startTime },
+            { tag: "Ends", date: crosses ? endDate : undefined, time: endTime },
+          ] as const
+        ).map((leg, i) => (
+          <Fragment key={leg.tag}>
+            {i === 1 && (
+              <div
+                className={cn(
+                  "flex items-center",
+                  amber ? "text-amber-100/60" : "text-muted-foreground",
+                )}
+                aria-hidden
+              >
+                <ArrowRight className="size-3.5" />
+              </div>
+            )}
+            <div className="min-w-0 flex-1">
+              <div
+                className={cn(
+                  "text-[9px] font-semibold uppercase tracking-wider",
+                  amber ? "text-amber-100/60" : "text-muted-foreground",
+                )}
+              >
+                {leg.tag}
+              </div>
+              <div
+                className={cn(
+                  "whitespace-nowrap font-mono text-[15px] font-bold leading-tight tabular-nums",
+                  amber ? "text-white" : "text-foreground",
+                )}
+              >
+                {leg.time}
+              </div>
+              <div
+                className={cn(
+                  "truncate text-[10px] leading-tight",
+                  amber ? "text-amber-100/80" : "text-muted-foreground",
+                )}
+              >
+                {leg.date ?? (i === 1 ? "same day" : startDate)}
+              </div>
+            </div>
+          </Fragment>
+        ))}
       </div>
     </div>
   );
