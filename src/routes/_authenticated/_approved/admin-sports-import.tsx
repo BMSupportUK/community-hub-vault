@@ -755,7 +755,7 @@ function QueueSetup({
               <button
                 key={c.id}
                 type="button"
-                onClick={() => setDraft({ ...draft, category: c.name, destinationCategory: "", subcategories: [], guideId: null })}
+                onClick={() => setDraft({ ...draft, category: c.name, group: "", destinationCategory: "", subcategories: [], guideId: null })}
                 className={`flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm transition ${
                   on ? "bg-primary/10 font-medium text-primary" : "hover:bg-muted/60"
                 }`}
@@ -777,15 +777,18 @@ function QueueSetup({
         {subChoices.length > 0 ? (
           <div className="max-h-64 space-y-1.5 overflow-y-auto pr-1">
             {subChoices.map((choice) => {
-              const on = selectedSubcategory === choice.name;
+              const on = choice.isGroup
+                ? draft.group === choice.name
+                : selectedSubcategory === choice.name;
               return (
                 <button
                   key={choice.name}
                   type="button"
                   onClick={() => setDraft({
                     ...draft,
+                    group: choice.isGroup ? choice.name : "",
                     destinationCategory: choice.destinationCategory,
-                    subcategories: [choice.name],
+                    subcategories: choice.isGroup ? [] : [choice.name],
                     guideId: null,
                   })}
                   className={`flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left text-sm transition ${
@@ -807,9 +810,37 @@ function QueueSetup({
         )}
       </div>
 
+      {groupSubs.length > 0 && (
+        <div className="space-y-1.5">
+          <span className="text-[11px] font-medium text-muted-foreground">
+            2b · The sub categories in {draft.group}
+          </span>
+          <div className="max-h-56 space-y-1.5 overflow-y-auto pr-1">
+            {groupSubs.map((sub) => {
+              const on = selectedSubcategory === sub.name;
+              return (
+                <button
+                  key={sub.name}
+                  type="button"
+                  onClick={() => setDraft({ ...draft, subcategories: [sub.name], guideId: null })}
+                  className={`flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left text-sm transition ${
+                    on
+                      ? "border-primary bg-primary/10 font-medium text-primary"
+                      : "border-border bg-card hover:bg-muted/60"
+                  }`}
+                >
+                  <span className="truncate">{sub.name}</span>
+                  <span className="text-xs">{on ? "✓" : ""}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="space-y-1.5">
         <span className="text-[11px] font-medium text-muted-foreground">3 · The name of the guide we created</span>
-        {!selectedSubcategory ? (
+        {!readyForGuides ? (
           <p className="text-[11px] text-muted-foreground">Pick a sub category first.</p>
         ) : loadingGuides ? (
           <p className="flex items-center gap-2 text-[11px] text-muted-foreground">
