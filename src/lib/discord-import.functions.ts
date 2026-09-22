@@ -270,7 +270,7 @@ export const importParsedEvents = createServerFn({ method: "POST" })
           excerpt: e.time ? `${e.date ? e.date + " · " : ""}${e.time}` : (e.date ?? null),
           body: buildBody(e),
           image_url: coverMap.get(coverKey) ?? null,
-          published: true,
+          published: false,
           created_by: userId,
         };
       })
@@ -407,7 +407,7 @@ export const resolveQueueItem = createServerFn({ method: "POST" })
           excerpt: ev.time ? `${ev.date ? ev.date + " · " : ""}${ev.time}` : (ev.date ?? null),
           body: buildBody(ev),
           image_url: await ensureSportCover((cat as any).id, data.category!, sub),
-          published: true,
+          published: false,
           created_by: userId,
         })),
       );
@@ -473,7 +473,7 @@ export const approveAllSuggested = createServerFn({ method: "POST" })
           excerpt: ev.time ? `${ev.date ? ev.date + " · " : ""}${ev.time}` : (ev.date ?? null),
           body: buildBody(ev),
           image_url: coverUrl,
-          published: true,
+          published: false,
           created_by: userId,
         });
         if (insErr) continue;
@@ -527,6 +527,7 @@ export const listGuidesInCategory = createServerFn({ method: "POST" })
       .from("sports_blogs")
       .select("id, title, subcategory, created_at")
       .eq("category_id", (cat as any).id)
+      .order("sort_order", { ascending: true })
       .order("created_at", { ascending: false })
       .limit(300);
     if (data.subcategory) query = query.eq("subcategory", data.subcategory);
