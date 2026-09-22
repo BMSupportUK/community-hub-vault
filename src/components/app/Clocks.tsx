@@ -90,12 +90,23 @@ export function Clocks() {
   const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
-    const tick = () => setNow(new Date());
-    const id = window.setInterval(tick, 1000);
-    document.addEventListener("visibilitychange", tick);
+    // Self-correcting tick: schedule each update on the exact next second
+    // boundary so browser timer throttling can never leave the clock stale,
+    // and re-read the device clock whenever the tab regains focus.
+    let timer = 0;
+    const tick = () => {
+      setNow(new Date());
+      const delay = 1000 - (Date.now() % 1000) + 20;
+      timer = window.setTimeout(tick, delay);
+    };
+    tick();
+    const onFocus = () => setNow(new Date());
+    document.addEventListener("visibilitychange", onFocus);
+    window.addEventListener("focus", onFocus);
     return () => {
-      window.clearInterval(id);
-      document.removeEventListener("visibilitychange", tick);
+      window.clearTimeout(timer);
+      document.removeEventListener("visibilitychange", onFocus);
+      window.removeEventListener("focus", onFocus);
     };
   }, []);
 
