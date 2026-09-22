@@ -560,12 +560,12 @@ function TicketsPage() {
                   use the full width and show every day at once. */}
               <div className="flex flex-col lg:flex-row lg:items-start gap-5 lg:gap-8">
                 <div className="min-w-0 flex-1">
-                  <h2 className="font-display text-xl md:text-2xl font-bold">Welcome to the Help Desk</h2>
-                  <p className="mt-2 text-sm text-rose-100/90 max-w-2xl">
+                  <h2 className="font-display text-2xl md:text-3xl font-bold">Welcome to the Help Desk</h2>
+                  <p className="mt-3 text-base md:text-lg text-rose-100/90 max-w-3xl">
                     Account questions, billing, or any other help needed to solve issues — we've got you
                     covered. Open a ticket and we'll respond as soon as a staff member is on duty.
                   </p>
-                  <p className="mt-2 text-rose-200/80 max-w-2xl text-xs">
+                  <p className="mt-3 text-rose-200/80 max-w-3xl text-sm md:text-base">
                     Once your ticket is resolved, leave a rating so we know how we did.
                   </p>
                 </div>
