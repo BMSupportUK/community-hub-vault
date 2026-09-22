@@ -444,7 +444,7 @@ export function StaffOnDutyStrip({
         <div className="flex items-start gap-1.5">
           <CalendarClock className="mt-0.5 size-3.5 shrink-0 text-amber-300" />
           <div className="min-w-0 flex-1">
-            <div className="text-[10px] font-semibold uppercase tracking-wider text-amber-200">Next shift</div>
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-amber-200">{heading}</div>
             {isSidebar ? (
               <>
                 <div className="text-[11px] font-semibold leading-tight text-white">{label}</div>
@@ -456,6 +456,9 @@ export function StaffOnDutyStrip({
               <div className="text-[11px] font-semibold leading-tight text-white">
                 {label} · {slot.start_time.slice(0, 5)}–{slot.end_time.slice(0, 5)}
               </div>
+            )}
+            {deviceLine && (
+              <div className="mt-0.5 text-[10px] leading-tight text-amber-100/90">{deviceLine}</div>
             )}
           </div>
         </div>
