@@ -98,34 +98,38 @@ function NextShiftPanel({ slot }: { slot: NextSlot }) {
     crosses: boolean;
     accent?: boolean;
   }) => (
-    <div className="rounded-lg bg-surface/60 px-2.5 py-2 ring-1 ring-border/60">
-      <div className={cn("text-[10px] uppercase tracking-wide font-semibold", accent ? "text-primary" : "text-muted-foreground")}>
+    <div className="h-full rounded-lg bg-surface/60 px-2.5 py-2 ring-1 ring-border/60">
+      <div
+        className={cn(
+          "truncate text-[10px] font-semibold uppercase tracking-wide",
+          accent ? "text-primary" : "text-muted-foreground",
+        )}
+        title={label}
+      >
         {label}
       </div>
-      {crosses ? (
-        <div className="mt-1 space-y-1">
-          <div className="flex items-baseline justify-between gap-2">
-            <span className="text-[11px] text-muted-foreground">{startDate}</span>
-            <span className="font-mono font-semibold tabular-nums text-foreground">{startTime}</span>
-          </div>
-          <div className="flex items-center gap-1.5">
-            <span className="h-px flex-1 bg-border/70" />
-            <span className="text-[9px] uppercase tracking-wider text-muted-foreground">next day</span>
-            <span className="h-px flex-1 bg-border/70" />
-          </div>
-          <div className="flex items-baseline justify-between gap-2">
-            <span className="text-[11px] text-muted-foreground">{endDate}</span>
-            <span className="font-mono font-semibold tabular-nums text-foreground">{endTime}</span>
-          </div>
-        </div>
-      ) : (
-        <div className="mt-1 flex items-baseline justify-between gap-2">
-          <span className="text-[11px] text-muted-foreground">{startDate}</span>
-          <span className="font-mono font-semibold tabular-nums text-foreground">
-            {startTime}–{endTime}
-          </span>
-        </div>
-      )}
+      {/* Two aligned columns: date on the left, time on the right, never wrapping. */}
+      <div className="mt-1.5 grid grid-cols-[1fr_auto] items-center gap-x-2 gap-y-1">
+        <span className="whitespace-nowrap text-[10px] leading-tight text-muted-foreground">{startDate}</span>
+        <span className="whitespace-nowrap font-mono text-[13px] font-semibold leading-tight tabular-nums text-foreground">
+          {crosses ? startTime : `${startTime}–${endTime}`}
+        </span>
+        {crosses && (
+          <>
+            <div className="col-span-2 flex items-center gap-1.5">
+              <span className="h-px flex-1 bg-border/70" />
+              <span className="whitespace-nowrap text-[9px] uppercase tracking-wider text-muted-foreground">
+                next day
+              </span>
+              <span className="h-px flex-1 bg-border/70" />
+            </div>
+            <span className="whitespace-nowrap text-[10px] leading-tight text-muted-foreground">{endDate}</span>
+            <span className="whitespace-nowrap font-mono text-[13px] font-semibold leading-tight tabular-nums text-foreground">
+              {endTime}
+            </span>
+          </>
+        )}
+      </div>
     </div>
   );
 
