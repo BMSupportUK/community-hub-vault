@@ -28,7 +28,6 @@ import { Route as PredictionsRouteImport } from './routes/predictions'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as AuthenticatedApprovedRouteImport } from './routes/_authenticated/_approved'
-import { Route as AuthenticatedAccountRejectedRouteImport } from './routes/_authenticated/account-rejected'
 import { Route as AuthenticatedBannedRouteImport } from './routes/_authenticated/banned'
 import { Route as AuthenticatedFanZonePendingRouteImport } from './routes/_authenticated/fan-zone-pending'
 import { Route as AuthenticatedGateRouteImport } from './routes/_authenticated/gate'
@@ -246,12 +245,6 @@ const AuthenticatedApprovedRoute = AuthenticatedApprovedRouteImport.update({
   id: '/_approved',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedAccountRejectedRoute =
-  AuthenticatedAccountRejectedRouteImport.update({
-    id: '/account-rejected',
-    path: '/account-rejected',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
 const AuthenticatedBannedRoute = AuthenticatedBannedRouteImport.update({
   id: '/banned',
   path: '/banned',
@@ -999,7 +992,6 @@ export interface FileRoutesByFullPath {
   '/predictions': typeof PredictionsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
-  '/account-rejected': typeof AuthenticatedAccountRejectedRoute
   '/banned': typeof AuthenticatedBannedRoute
   '/fan-zone-pending': typeof AuthenticatedFanZonePendingRoute
   '/gate': typeof AuthenticatedGateRoute
@@ -1141,7 +1133,6 @@ export interface FileRoutesByTo {
   '/predictions': typeof PredictionsRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
-  '/account-rejected': typeof AuthenticatedAccountRejectedRoute
   '/banned': typeof AuthenticatedBannedRoute
   '/fan-zone-pending': typeof AuthenticatedFanZonePendingRoute
   '/gate': typeof AuthenticatedGateRoute
@@ -1285,7 +1276,6 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/_authenticated/_approved': typeof AuthenticatedApprovedRouteWithChildren
-  '/_authenticated/account-rejected': typeof AuthenticatedAccountRejectedRoute
   '/_authenticated/banned': typeof AuthenticatedBannedRoute
   '/_authenticated/fan-zone-pending': typeof AuthenticatedFanZonePendingRoute
   '/_authenticated/gate': typeof AuthenticatedGateRoute
@@ -1430,7 +1420,6 @@ export interface FileRouteTypes {
     | '/predictions'
     | '/reset-password'
     | '/signup'
-    | '/account-rejected'
     | '/banned'
     | '/fan-zone-pending'
     | '/gate'
@@ -1572,7 +1561,6 @@ export interface FileRouteTypes {
     | '/predictions'
     | '/reset-password'
     | '/signup'
-    | '/account-rejected'
     | '/banned'
     | '/fan-zone-pending'
     | '/gate'
@@ -1715,7 +1703,6 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signup'
     | '/_authenticated/_approved'
-    | '/_authenticated/account-rejected'
     | '/_authenticated/banned'
     | '/_authenticated/fan-zone-pending'
     | '/_authenticated/gate'
@@ -2036,13 +2023,6 @@ declare module '@tanstack/react-router' {
       path: ''
       fullPath: '/'
       preLoaderRoute: typeof AuthenticatedApprovedRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/account-rejected': {
-      id: '/_authenticated/account-rejected'
-      path: '/account-rejected'
-      fullPath: '/account-rejected'
-      preLoaderRoute: typeof AuthenticatedAccountRejectedRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/banned': {
@@ -3180,7 +3160,6 @@ const AuthenticatedApprovedRouteWithChildren =
 
 interface AuthenticatedRouteChildren {
   AuthenticatedApprovedRoute: typeof AuthenticatedApprovedRouteWithChildren
-  AuthenticatedAccountRejectedRoute: typeof AuthenticatedAccountRejectedRoute
   AuthenticatedBannedRoute: typeof AuthenticatedBannedRoute
   AuthenticatedFanZonePendingRoute: typeof AuthenticatedFanZonePendingRoute
   AuthenticatedGateRoute: typeof AuthenticatedGateRoute
@@ -3188,7 +3167,6 @@ interface AuthenticatedRouteChildren {
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedApprovedRoute: AuthenticatedApprovedRouteWithChildren,
-  AuthenticatedAccountRejectedRoute: AuthenticatedAccountRejectedRoute,
   AuthenticatedBannedRoute: AuthenticatedBannedRoute,
   AuthenticatedFanZonePendingRoute: AuthenticatedFanZonePendingRoute,
   AuthenticatedGateRoute: AuthenticatedGateRoute,

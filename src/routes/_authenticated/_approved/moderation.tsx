@@ -239,7 +239,7 @@ function ModerationPage() {
           application_id: app.id,
           sender_id: user!.id,
           content:
-            "❌ Your application has been rejected.\n\nThis conversation is now closed. If you believe this is a mistake, you can submit an appeal from your rejected screen using the reference: APPEAL",
+            "❌ Your application has been rejected.\n\nThis conversation is now closed. If you believe this is a mistake, you can open an appeal from this page using the reference: APPEAL",
         } as never).select("id, sender_id, content, created_at").single();
         if (deniedMsg) {
           const msg = deniedMsg as ThreadMsg;
@@ -251,7 +251,7 @@ function ModerationPage() {
           await ch.send({ type: "broadcast", event: "message", payload: msg });
           supabase.removeChannel(ch);
         }
-        // Remove pending role, add rejected role so user is sent to /account-rejected
+        // Remove pending role, add rejected role so the gate shows the not-activated state
         await supabase.from("user_roles").delete().eq("user_id", app.user_id).eq("role", "pending");
         const { error: e2 } = await supabase.from("user_roles").insert({ user_id: app.user_id, role: "rejected" });
         if (e2 && !e2.message.includes("duplicate")) toast.error(e2.message);
