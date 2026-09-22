@@ -19,6 +19,7 @@ const ZONE = "GMT|UTC|UK|BST|ET|EST|EDT|CT|CST|CDT|MT|MST|MDT|PT|PST|PDT|CET|CES
 const TIME_SOURCE = String.raw`\d{1,2}(?::|\.)\d{2}\s*(?:am|pm|a\.m\.|p\.m\.)?|\d{1,2}\s*(?:am|pm|a\.m\.|p\.m\.)`;
 const TIME_WITH_ZONE_SOURCE = String.raw`(?:${TIME_SOURCE})(?:\s*(?:${ZONE}))?`;
 const TIME_ONLY_RE = new RegExp(`^\\s*(${TIME_WITH_ZONE_SOURCE})\\s*$`, "i");
+const DUAL_TIME_ONLY_RE = new RegExp(`^\\s*(${TIME_WITH_ZONE_SOURCE}\\s*(?:·|\\||/)\\s*${TIME_WITH_ZONE_SOURCE})\\s*$`, "i");
 const TIME_FIRST_RE = new RegExp(`^\\s*(${TIME_WITH_ZONE_SOURCE})\\s*(?:[-–—:|·•]\\s*)?(.+?)\\s*$`, "i");
 const LEADING_ZONE_TIME_RE = new RegExp(`^\\s*(${ZONE})\\s+(${TIME_SOURCE})\\s*(?:[-–—:|·•]\\s*)?(.+?)\\s*$`, "i");
 const CHANNEL_TIME_RE = new RegExp(`^\\s*(.{2,70}?)\\s*(?:\\||·|•|[-–—])\\s*(${TIME_WITH_ZONE_SOURCE})\\s+(.+?)\\s*$`, "i");
@@ -100,6 +101,11 @@ function splitTitleAndInlineChannels(rest: string): { title: string; channels: s
 }
 
 function detectEvent(line: string, date: string | null): SportsListingEvent | null {
+  const dualTimeOnly = line.match(DUAL_TIME_ONLY_RE);
+  if (dualTimeOnly && dualTimeOnly[1]) {
+    return { date, time: normalizeTime(dualTimeOnly[1]), title: "", channels: [] };
+  }
+
   const leadingZone = line.match(LEADING_ZONE_TIME_RE);
   if (leadingZone && leadingZone[1] && leadingZone[2] && leadingZone[3]) {
     const split = splitTitleAndInlineChannels(leadingZone[3]);
@@ -226,6 +232,10 @@ export function formatSportsListingBlock(input: ListingInput): string | null {
   const events = sortSportsListingEvents(parseSportsListingBlock(input.raw));
   if (!events.length) return null;
 
+  return formatSportsListingEvents(events, input);
+}
+
+function formatSportsListingEvents(events: SportsListingEvent[], input: ListingInput): string {
   const out: string[] = [];
   let lastDate: string | null = null;
   for (const event of events) {
@@ -250,8 +260,11 @@ export function formatSportsListingBlock(input: ListingInput): string | null {
 
 /** Rebuild an existing guide plus a new import into one sorted event list. */
 export function mergeSportsListingBlocks(existing: string, incoming: string, input: Omit<ListingInput, "raw">): string | null {
-  const combined = [existing, incoming].filter((value) => value.trim()).join("\n");
-  return formatSportsListingBlock({ ...input, raw: combined });
+  const events = sortSportsListingEvents([
+    ...parseSportsListingBlock(existing),
+    ...parseSportsListingBlock(incoming),
+  ]);
+  return events.length ? formatSportsListingEvents(events, input) : null;
 }
 
 export function escapeListingHtml(value: string): string {
