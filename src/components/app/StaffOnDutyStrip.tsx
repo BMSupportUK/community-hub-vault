@@ -16,6 +16,7 @@ import {
 } from "@/components/app/TalkMemberProfileCard";
 import { type BreakKind, BREAK_LIMITS as STAFF_BREAK_LIMITS, breakLabel, breakIcon } from "@/lib/breaks";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import noStaffOnlineImg from "@/assets/no-staff-online.png";
 import { useTalkChannelPresentUsers, useTalkChannelPresentUsersInChannel } from "@/hooks/use-talk-channel-presence";
 
 type StaffShift = { id: string; user_id: string; clock_in: string };
@@ -546,9 +547,46 @@ export function StaffOnDutyStrip({
 
   if (isTickets) {
     return (
-      <div className="px-4 pt-4">
+      <div className="px-4 pt-4 space-y-3">
+        {/* Owner gets its own box, separate from the staff box. */}
+        {(daneShift || daneOff) && (
+          <div className="rounded-xl border border-amber-200/30 p-3 shadow-lg relative overflow-hidden bg-gradient-to-r from-amber-600/40 via-orange-500/30 to-amber-600/40 backdrop-blur">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-amber-200 mb-1.5">
+              Owner
+            </div>
+            <div className="flex flex-wrap gap-2 min-w-0">
+              {daneShift ? renderOnDutyCard(daneShift) : renderOffDutyCard(daneOff!)}
+            </div>
+          </div>
+        )}
+
+        {/* Staff box: only rendered while at least one staff member is signed in
+            and on duty. Otherwise a "no staff online" sign is shown. */}
+        {orderedShifts.length === 0 ? (
+          <div className="rounded-xl border border-white/15 p-4 shadow-lg relative overflow-hidden bg-gradient-to-r from-violet-600/40 via-fuchsia-600/40 to-blue-600/40 backdrop-blur">
+            <div className="flex items-center gap-4">
+              <img
+                src={noStaffOnlineImg}
+                alt=""
+                loading="lazy"
+                width={816}
+                height={816}
+                className="size-20 sm:size-24 shrink-0 rounded-xl object-cover"
+              />
+              <div className="min-w-0">
+                <div className="text-sm font-bold uppercase tracking-wider text-white">No staff online</div>
+                <p className="mt-1 text-xs text-white/80">
+                  Our team is currently offline — this may be outside of our opening hours.
+                  Open a ticket and we'll get back to you as soon as someone is on duty.
+                </p>
+                <div className="flex items-center gap-1 text-[10px] text-white/80 mt-2">
+                  <span className="size-2 rounded-full bg-emerald-400 animate-pulse" /> live
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : (
         <div className="rounded-xl border border-white/15 p-3 shadow-lg relative overflow-hidden bg-gradient-to-r from-violet-600/40 via-fuchsia-600/40 to-blue-600/40 backdrop-blur">
-          {daneSection}
           <Tabs value={dutyTab} onValueChange={(v) => setDutyTab(v as "on" | "off")}>
 
             <TabsList className="w-full bg-white/10 border border-white/20 p-1 mb-2 flex-wrap h-auto gap-1">
@@ -597,6 +635,7 @@ export function StaffOnDutyStrip({
             <span className="size-2 rounded-full bg-emerald-400 animate-pulse" /> live
           </div>
         </div>
+        )}
       </div>
     );
   }
