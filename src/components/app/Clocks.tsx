@@ -423,6 +423,18 @@ export function Clocks() {
   }, []);
 
   const officeOpen = isOfficeOpen(hours, now, holidays);
+  // Office clock: UK office time (BST/GMT) ticking live, shown before the
+  // visitor's own device clock.
+  const officeFormatter = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/London",
+    hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
+  });
+  const officeDateFormatter = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/London",
+    weekday: "short", day: "numeric", month: "short",
+  });
+  const officeTime = officeFormatter.format(now);
+  const officeDate = officeDateFormatter.format(now);
   // Header clock: the visitor's own device time + date, ticking live.
   const headerTime = new Intl.DateTimeFormat("en-GB", {
     hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
@@ -449,7 +461,13 @@ export function Clocks() {
             <Building2 className="size-4" />
           </button>
         </DialogTrigger>
-        {/* Live device clock, deliberately positioned after the office icon. */}
+        {/* Live UK office clock (BST/GMT), deliberately positioned before the device clock. */}
+        <div className="flex min-w-0 flex-col leading-tight">
+          <span className="text-[10px] font-medium text-muted-foreground">Office Time</span>
+          <span className="font-mono text-sm font-semibold tabular-nums text-foreground">{officeTime}</span>
+          <span className="text-[10px] text-muted-foreground">{officeDate}</span>
+        </div>
+        {/* Live device clock, deliberately positioned after the office clock. */}
         <div className="flex min-w-0 flex-col leading-tight">
           <span className="text-[10px] font-medium text-muted-foreground">Your time</span>
           <span className="font-mono text-sm font-semibold tabular-nums text-foreground">{headerTime}</span>
