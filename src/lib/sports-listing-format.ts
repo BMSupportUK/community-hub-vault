@@ -19,6 +19,7 @@ const ZONE = "GMT|UTC|UK|BST|ET|EST|EDT|CT|CST|CDT|MT|MST|MDT|PT|PST|PDT|CET|CES
 const TIME_SOURCE = String.raw`\d{1,2}(?::|\.)\d{2}\s*(?:am|pm|a\.m\.|p\.m\.)?|\d{1,2}\s*(?:am|pm|a\.m\.|p\.m\.)`;
 const TIME_WITH_ZONE_SOURCE = String.raw`(?:${TIME_SOURCE})(?:\s*(?:${ZONE}))?`;
 const TIME_ONLY_RE = new RegExp(`^\\s*(${TIME_WITH_ZONE_SOURCE})\\s*$`, "i");
+const DUAL_TIME_ONLY_RE = new RegExp(`^\\s*(${TIME_WITH_ZONE_SOURCE}\\s*(?:·|\\||/)\\s*${TIME_WITH_ZONE_SOURCE})\\s*$`, "i");
 const TIME_FIRST_RE = new RegExp(`^\\s*(${TIME_WITH_ZONE_SOURCE})\\s*(?:[-–—:|·•]\\s*)?(.+?)\\s*$`, "i");
 const LEADING_ZONE_TIME_RE = new RegExp(`^\\s*(${ZONE})\\s+(${TIME_SOURCE})\\s*(?:[-–—:|·•]\\s*)?(.+?)\\s*$`, "i");
 const CHANNEL_TIME_RE = new RegExp(`^\\s*(.{2,70}?)\\s*(?:\\||·|•|[-–—])\\s*(${TIME_WITH_ZONE_SOURCE})\\s+(.+?)\\s*$`, "i");
@@ -100,6 +101,11 @@ function splitTitleAndInlineChannels(rest: string): { title: string; channels: s
 }
 
 function detectEvent(line: string, date: string | null): SportsListingEvent | null {
+  const dualTimeOnly = line.match(DUAL_TIME_ONLY_RE);
+  if (dualTimeOnly && dualTimeOnly[1]) {
+    return { date, time: normalizeTime(dualTimeOnly[1]), title: "", channels: [] };
+  }
+
   const leadingZone = line.match(LEADING_ZONE_TIME_RE);
   if (leadingZone && leadingZone[1] && leadingZone[2] && leadingZone[3]) {
     const split = splitTitleAndInlineChannels(leadingZone[3]);
@@ -186,6 +192,34 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
   return events;
 }
 
+function eventSortValue(event: SportsListingEvent, index: number): number {
+  const clock = parseClockTime(event.time);
+  if (!clock) return Number.MAX_SAFE_INTEGER - 10_000 + index;
+  return clock.hour * 60 + clock.minute;
+}
+
+/**
+ * Keep each imported listing as time → event → channels, ordered by start
+ * time. Equal kick-off times retain the source channel order.
+ */
+export function sortSportsListingEvents(events: SportsListingEvent[]): SportsListingEvent[] {
+  return events
+    .map((event, index) => ({ event, index }))
+    .sort((a, b) => {
+      const aDate = parseListingDate(a.event.date);
+      const bDate = parseListingDate(b.event.date);
+      if (aDate && bDate) {
+        const dateDifference = Date.UTC(aDate.y, aDate.m, aDate.d) - Date.UTC(bDate.y, bDate.m, bDate.d);
+        if (dateDifference !== 0) return dateDifference;
+      }
+      if (aDate && !bDate) return -1;
+      if (!aDate && bDate) return 1;
+      const timeDifference = eventSortValue(a.event, a.index) - eventSortValue(b.event, b.index);
+      return timeDifference || a.index - b.index;
+    })
+    .map(({ event }) => event);
+}
+
 function eventTimeForOutput(event: SportsListingEvent, input: ListingInput): string {
   if (input.sourceZone && !hasBothZones(event.time)) {
     const converted = buildDualTime(event.time, event.date ?? input.date ?? undefined, input.sourceZone);
@@ -195,9 +229,13 @@ function eventTimeForOutput(event: SportsListingEvent, input: ListingInput): str
 }
 
 export function formatSportsListingBlock(input: ListingInput): string | null {
-  const events = parseSportsListingBlock(input.raw);
+  const events = sortSportsListingEvents(parseSportsListingBlock(input.raw));
   if (!events.length) return null;
 
+  return formatSportsListingEvents(events, input);
+}
+
+function formatSportsListingEvents(events: SportsListingEvent[], input: ListingInput): string {
   const out: string[] = [];
   let lastDate: string | null = null;
   for (const event of events) {
@@ -218,6 +256,15 @@ export function formatSportsListingBlock(input: ListingInput): string | null {
   }
 
   return out.join("\n").trim();
+}
+
+/** Rebuild an existing guide plus a new import into one sorted event list. */
+export function mergeSportsListingBlocks(existing: string, incoming: string, input: Omit<ListingInput, "raw">): string | null {
+  const events = sortSportsListingEvents([
+    ...parseSportsListingBlock(existing),
+    ...parseSportsListingBlock(incoming),
+  ]);
+  return events.length ? formatSportsListingEvents(events, input) : null;
 }
 
 export function escapeListingHtml(value: string): string {

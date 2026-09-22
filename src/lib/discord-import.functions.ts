@@ -3,7 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { routeEvent } from "./discord-sport-keywords";
-import { formatSportsListingBlock, plainListingToHtml } from "./sports-listing-format";
+import { formatSportsListingBlock, mergeSportsListingBlocks, plainListingToHtml } from "./sports-listing-format";
 
 const STAFF_ROLES = ["admin", "management", "moderator"] as const;
 
@@ -396,12 +396,17 @@ export const resolveQueueItem = createServerFn({ method: "POST" })
         if (guideErr) throw new Error(guideErr.message);
         if (!guide) throw new Error("That guide is not in the selected category");
         const existingBody = String((guide as any).body ?? "").trim();
-        const separator = existingBody ? "<div><br></div>" : "";
-        const safeBlock = plainListingToHtml(importedBody);
+        const sortedBody = mergeSportsListingBlocks(existingBody, importedBody, {
+          date: ev.date,
+          time: ev.time,
+          channels: ev.channels,
+          sourceZone: data.sourceZone ?? null,
+        });
+        const safeBody = plainListingToHtml(sortedBody ?? [existingBody, importedBody].filter(Boolean).join("\n\n"));
         const { error: updateErr } = await supabaseAdmin
           .from("sports_blogs")
           .update({
-            body: `${existingBody}${separator}${safeBlock}`,
+            body: safeBody,
             published: false,
             updated_at: new Date().toISOString(),
           })
