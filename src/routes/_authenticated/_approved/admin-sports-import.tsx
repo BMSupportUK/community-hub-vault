@@ -646,6 +646,20 @@ function QueueSetup({
 }) {
   const [busy, setBusy] = useState<"import" | "discard" | null>(null);
   const subs = draft.category ? subsByCatName.get(draft.category) ?? [] : [];
+  // Guide names already used inside the chosen category.
+  const guidesFn = useServerFn(listGuidesInCategory);
+  const [guides, setGuides] = useState<{ title: string; subcategory: string | null }[]>([]);
+  const [loadingGuides, setLoadingGuides] = useState(false);
+  useEffect(() => {
+    if (!draft.category) { setGuides([]); return; }
+    let alive = true;
+    setLoadingGuides(true);
+    guidesFn({ data: { category: draft.category } })
+      .then((d: any) => { if (alive) setGuides(d.guides ?? []); })
+      .catch(() => { if (alive) setGuides([]); })
+      .finally(() => { if (alive) setLoadingGuides(false); });
+    return () => { alive = false; };
+  }, [draft.category]);
 
   const run = async (action: "import" | "discard") => {
     if (!item) return;
