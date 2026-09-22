@@ -31,6 +31,8 @@ function WelcomePage() {
   // without explicit authorisation. See mem://constraints/chat-counters-locked
   const chatroomCount = useTalkChannelTotalCount();
   const canManage = hasRole("admin") || hasRole("management");
+  const isStaffAccount =
+    hasRole("admin") || hasRole("management") || hasRole("staff") || hasRole("moderator");
   const fallbackName = (user?.email ?? "there").split("@")[0];
   const [displayName, setDisplayName] = useState<string>(fallbackName);
   const name = displayName;
@@ -204,7 +206,8 @@ function WelcomePage() {
 
           <div className="flex min-h-0 w-full flex-col items-stretch gap-4">
             <WorkingStatusBox />
-            <SubscriptionDetailsCard />
+            {/* Staff accounts see their subscription box on their profile instead. */}
+            {!isStaffAccount && <SubscriptionDetailsCard />}
           </div>
         </div>
       </section>

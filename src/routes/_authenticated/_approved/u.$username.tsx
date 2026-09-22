@@ -37,6 +37,7 @@ import { setPersonalAppTheme, useAppTheme } from "@/hooks/use-app-theme";
 import { useServerFn } from "@tanstack/react-start";
 import { assignReferrer } from "@/lib/referrals.functions";
 import ShiftHistoryPanel from "@/components/app/ShiftHistoryPanel";
+import { SubscriptionDetailsCard } from "@/components/app/SubscriptionDetailsCard";
 import { useViewportLockable } from "@/hooks/use-viewport-lock";
 
 export const Route = createFileRoute("/_authenticated/_approved/u/$username")({
@@ -163,14 +164,28 @@ function ProfilePage() {
   const [friends, setFriends] = useState<FriendRow[]>([]);
   const [rel, setRel] = useState<FriendRel>({ kind: "none" });
   const [relBusy, setRelBusy] = useState(false);
-  const initialTab = (["profile","creds","tickets","referrals","friends","shifts"].includes(search.tab ?? "") ? search.tab : "profile") as "profile" | "creds" | "tickets" | "referrals" | "friends" | "shifts";
-  const allowedTabs = ["profile","creds","tickets","referrals","friends","shifts","notifications","theme"] as const;
+  const initialTab = (["profile","creds","tickets","referrals","friends","shifts","subscription"].includes(search.tab ?? "") ? search.tab : "profile") as "profile" | "creds" | "tickets" | "referrals" | "friends" | "shifts" | "subscription";
+  const allowedTabs = ["profile","creds","tickets","referrals","friends","shifts","notifications","theme","subscription"] as const;
   type TabId = typeof allowedTabs[number];
   const initialTabSafe = (allowedTabs.includes((search.tab ?? "") as TabId) ? search.tab : initialTab) as TabId;
   const [mainTab, setMainTab] = useState<TabId>(initialTabSafe);
 
   const isOwner = !!profile && !!viewer && profile.id === viewer.id;
   const canSeeCreds = isOwner || isAdmin;
+  // Staff accounts don't get the subscription box on the home page; they see it
+  // here instead, but only when login credentials have been assigned to them.
+  const [hasAssignedCreds, setHasAssignedCreds] = useState(false);
+  useEffect(() => {
+    if (!profile?.id) { setHasAssignedCreds(false); return; }
+    let active = true;
+    supabase
+      .from("app_credentials")
+      .select("id")
+      .eq("owner_id", profile.id)
+      .limit(1)
+      .then(({ data }) => { if (active) setHasAssignedCreds((data ?? []).length > 0); });
+    return () => { active = false; };
+  }, [profile?.id]);
   const canSeeReferrals = isOwner || isAdmin;
 
   useEffect(() => {
@@ -494,9 +509,11 @@ function ProfilePage() {
   // staff member themselves plus the wider support team.
   const isStaffProfile = sortedRoles.some((r) => ["admin", "management", "staff", "moderator"].includes(r));
   const canSeeShifts = isStaffProfile && (isOwner || hasAny(["admin", "management", "staff", "moderator"]));
+  const canSeeSubscription = isStaffProfile && isOwner && hasAssignedCreds;
 
   const tabDefs = [
     { id: "profile", label: "Profile" },
+    ...(canSeeSubscription ? [{ id: "subscription", label: "Subscription" }] : []),
     ...(canSeeCreds ? [{ id: "creds", label: "Credentials" }] : []),
     { id: "tickets", label: `Tickets (${tickets.length})` },
     { id: "friends", label: `Friends (${friends.length})` },
@@ -725,6 +742,14 @@ function ProfilePage() {
                     </div>
                   </div>
                 </div>
+              </div>
+            </TabsContent>
+          )}
+
+          {canSeeSubscription && (
+            <TabsContent value="subscription" className={paneClass}>
+              <div className="max-w-md">
+                <SubscriptionDetailsCard />
               </div>
             </TabsContent>
           )}
