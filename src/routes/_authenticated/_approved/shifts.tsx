@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { addModeratorHours } from "@/lib/moderator-hours.functions";
 import { useTimezone, zonedWallTimeToUtcMs } from "@/hooks/use-timezone";
+import { useUserTimezone } from "@/hooks/use-user-timezone";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -142,10 +143,8 @@ function isDayPastOrStarted(d: Date) {
 }
 
 const LOCAL_TZ_KEY = "shifts_display_local_tz_v1";
-const BROWSER_TZ =
-  typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : "UTC";
-
 function useLocalDisplayTz(rotaTz: string) {
+  const browserTz = useUserTimezone();
   const [localMode, setLocalMode] = useState<boolean>(() => {
     if (typeof window === "undefined") return false;
     return localStorage.getItem(LOCAL_TZ_KEY) === "1";
@@ -158,11 +157,11 @@ function useLocalDisplayTz(rotaTz: string) {
     });
   };
   const fmtTime = (dateStr: string, timeStr: string) => {
-    if (!localMode || BROWSER_TZ === rotaTz) return timeStr.slice(0, 5);
+    if (!localMode || browserTz === rotaTz) return timeStr.slice(0, 5);
     const ms = zonedWallTimeToUtcMs(dateStr, timeStr, rotaTz);
     if (isNaN(ms)) return timeStr.slice(0, 5);
     return new Intl.DateTimeFormat("en-GB", {
-      timeZone: BROWSER_TZ,
+      timeZone: browserTz,
       hour: "2-digit",
       minute: "2-digit",
       hour12: false,
@@ -170,7 +169,7 @@ function useLocalDisplayTz(rotaTz: string) {
   };
   const fmtRange = (dateStr: string, start: string, end: string) =>
     `${fmtTime(dateStr, start)}–${fmtTime(dateStr, end)}`;
-  return { localMode, toggle, browserTz: BROWSER_TZ, fmtTime, fmtRange };
+  return { localMode, toggle, browserTz, fmtTime, fmtRange };
 }
 
 function ShiftsPage() {
@@ -743,7 +742,7 @@ function ShiftsPage() {
               </span>
               <span className="text-[10px] opacity-80">
                 {localMode ? browserTz : tz}
-                {localMode && BROWSER_TZ !== tz && ` · rota ${tz}`}
+                {localMode && browserTz !== tz && ` · rota ${tz}`}
               </span>
             </div>
           </button>
