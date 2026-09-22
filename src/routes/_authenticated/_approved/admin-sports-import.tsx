@@ -513,7 +513,9 @@ function QueueRow({
   const ev = item.parsed_event ?? {};
   const [title, setTitle] = useState<string>(String(ev.title ?? ""));
   const [category, setCategory] = useState<string>(String(ev.suggested_category ?? ""));
-  const [subcategory, setSubcategory] = useState<string | null>(ev.suggested_subcategory ?? null);
+  const [subcategories, setSubcategories] = useState<string[]>(
+    ev.suggested_subcategory ? [String(ev.suggested_subcategory)] : [],
+  );
   const [busy, setBusy] = useState<"import" | "discard" | null>(null);
   const [time, setTime] = useState<string | null>(ev.time ?? null);
   const subs = category ? subsByCatName.get(category) ?? [] : [];
