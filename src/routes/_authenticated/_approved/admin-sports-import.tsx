@@ -19,6 +19,7 @@ import {
   resolveQueueItem,
   approveAllSuggested,
   listCategoriesWithSubs,
+  listGuidesInCategory,
   type RoutedEvent,
 } from "@/lib/discord-import.functions";
 
