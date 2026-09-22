@@ -11,6 +11,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import {
+  bankHolidayName,
+  londonDateKey,
+  useUkBankHolidays,
+  type BankHolidayMap,
+} from "@/lib/uk-bank-holidays";
 
 type OfficeHour = {
   day_of_week: number;
