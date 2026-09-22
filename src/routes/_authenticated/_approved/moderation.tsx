@@ -239,7 +239,7 @@ function ModerationPage() {
           application_id: app.id,
           sender_id: user!.id,
           content:
-            "❌ Your application has been rejected.\n\nThis conversation is now closed. If you believe this is a mistake, you can submit an appeal from your rejected screen using the reference: APPEAL",
+            "❌ Your application has been rejected.\n\nThis conversation is now closed. If you believe this is a mistake, you can open an appeal from this page using the reference: APPEAL",
         } as never).select("id, sender_id, content, created_at").single();
         if (deniedMsg) {
           const msg = deniedMsg as ThreadMsg;

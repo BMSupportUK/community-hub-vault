@@ -157,9 +157,10 @@ function AuthLayout() {
     return <Navigate to="/banned" />;
   }
 
-  // Rejected users are locked to /account-rejected
-  if (isRejected && !path.startsWith("/account-rejected")) {
-    return <Navigate to="/account-rejected" />;
+  // Rejected users stay in the security gate, which shows the
+  // "Account Not Activated" state with the option to appeal.
+  if (isRejected && !path.startsWith("/gate")) {
+    return <Navigate to="/gate" />;
   }
 
   // Pending users are locked to their waiting room

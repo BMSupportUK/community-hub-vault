@@ -49,7 +49,6 @@ export function isFanZoneOnlyRoles(roles: readonly string[]): boolean {
 const FAN_ZONE_ONLY_ALLOWED = [
   "/account-security",
   "/fan-zone-security",
-  "/account-rejected",
   "/banned",
   "/gate",
   "/fan-zone-pending",
