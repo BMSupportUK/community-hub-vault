@@ -58,12 +58,30 @@ export async function sendTemplateEmail(
 
   const templateData = options.templateData ?? {}
   const element = React.createElement(template.component, templateData)
-  const html = await render(element)
-  const text = await render(element, { plainText: true })
-  const subject =
+  let html = await render(element)
+  let text = await render(element, { plainText: true })
+  let subject =
     typeof template.subject === 'function'
       ? template.subject(templateData)
       : template.subject
+
+  // Admin-editable wording (admin dashboard -> Automated messages & emails).
+  try {
+    const { getEmailOverride, fillPlaceholders, renderOverrideEmail } = await import(
+      '@/lib/automated-messages.server'
+    )
+    const stringData: Record<string, string> = {}
+    for (const [k, v] of Object.entries(templateData)) stringData[k] = v == null ? '' : String(v)
+    const override = await getEmailOverride(templateName)
+    if (override.subject) subject = fillPlaceholders(override.subject, stringData)
+    if (override.body) {
+      const rendered = renderOverrideEmail(fillPlaceholders(override.body, stringData))
+      html = rendered.html
+      text = rendered.text
+    }
+  } catch {
+    /* fall back to the designed template */
+  }
 
   try {
     await sendLovableEmail(
