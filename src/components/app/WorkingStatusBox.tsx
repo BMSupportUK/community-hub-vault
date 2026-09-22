@@ -471,21 +471,7 @@ export function WorkingStatusBox({
                   {todayWindow.start.slice(0, 5)}).
                 </p>
               )}
-              {nextSlot && (
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-muted-foreground font-medium">Next shift</span>
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/15 px-2.5 py-1 font-semibold tabular-nums text-primary ring-1 ring-primary/40">
-                    <Calendar className="size-3.5" />
-                    {new Date(`${nextSlot.shift_date}T00:00:00`).toLocaleDateString("en-GB", {
-                      weekday: "short",
-                      day: "numeric",
-                      month: "short",
-                    })}
-                    {" · "}
-                    {nextSlot.start_time.slice(0, 5)}–{nextSlot.end_time.slice(0, 5)}
-                  </span>
-                </div>
-              )}
+              {nextSlot && <NextShiftPanel slot={nextSlot} />}
             </>
           )}
           {brk && (
