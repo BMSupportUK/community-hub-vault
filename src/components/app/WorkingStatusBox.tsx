@@ -143,7 +143,7 @@ export function NextShiftPanel({
       <div
         className={cn(
           "truncate text-[10px] font-semibold uppercase tracking-wide",
-          accent ? "text-primary" : "text-muted-foreground",
+          amber ? (accent ? "text-amber-200" : "text-amber-100/70") : accent ? "text-primary" : "text-muted-foreground",
         )}
         title={label}
       >
