@@ -936,11 +936,7 @@ function ShiftsPage() {
                                     <div className="font-mono text-foreground">{fmtRange(s.shift_date, s.start_time, s.end_time)}</div>
                                     <span className={cn("text-[10px] px-1.5 py-0.5 rounded uppercase font-semibold", s.slot_type === "hourly" ? "bg-accent/30 text-accent-foreground" : "bg-primary/30 text-foreground")}>{s.slot_type === "hourly" ? "hourly" : "shift"}</span>
                                   </div>
-                                  {deviceRange(s.shift_date, s.start_time, s.end_time) && (
-                                    <div className="text-[10px] text-accent-foreground/90 mt-0.5">
-                                      Your time: <span className="font-mono">{deviceRange(s.shift_date, s.start_time, s.end_time)}</span>
-                                    </div>
-                                  )}
+                                  <DeviceRangeLine info={deviceRange(s.shift_date, s.start_time, s.end_time)} label="Your time" className="text-[10px] mt-0.5" />
                                   {s.notes && <div className="text-muted-foreground mt-0.5">{s.notes}</div>}
                                   <div className="mt-1.5 flex items-center justify-between gap-1">
                                     <div className="text-muted-foreground truncate">{taken ? profName(s.assigned_to) : "Open"}</div>
@@ -1045,11 +1041,7 @@ function ShiftsPage() {
                       {ds.map((s) => (
                         <div key={s.id} className={cn("rounded-lg p-2 border text-xs", s.assigned_to === user?.id ? "bg-primary/20 border-primary/50" : "bg-surface-2 border-border")}>
                           <div className="font-mono text-foreground">{fmtRange(s.shift_date, s.start_time, s.end_time)}</div>
-                          {deviceRange(s.shift_date, s.start_time, s.end_time) && (
-                            <div className="text-[10px] text-accent-foreground/90 mt-0.5">
-                              Your time: <span className="font-mono">{deviceRange(s.shift_date, s.start_time, s.end_time)}</span>
-                            </div>
-                          )}
+                          <DeviceRangeLine info={deviceRange(s.shift_date, s.start_time, s.end_time)} label="Your time" className="text-[10px] mt-0.5" />
                           <div className="text-muted-foreground truncate mt-0.5">{profName(s.assigned_to)}</div>
                         </div>
                       ))}
@@ -1100,11 +1092,7 @@ function ShiftsPage() {
                       )}
                     </div>
                     <div className="font-mono text-primary mt-1">{fmtRange(s.shift_date, s.start_time, s.end_time)}</div>
-                    {deviceRange(s.shift_date, s.start_time, s.end_time) && (
-                      <div className="text-[11px] text-accent-foreground/90 mt-0.5">
-                        Your time ({browserTz}): <span className="font-mono">{deviceRange(s.shift_date, s.start_time, s.end_time)}</span>
-                      </div>
-                    )}
+                    <DeviceRangeLine info={deviceRange(s.shift_date, s.start_time, s.end_time)} label={`Your time (${browserTz})`} className="text-[11px] mt-0.5" />
                     <div className="text-xs text-muted-foreground mt-1 uppercase">{s.slot_type}</div>
                     {s.notes && <div className="text-sm text-muted-foreground mt-2">{s.notes}</div>}
                     {(() => {
