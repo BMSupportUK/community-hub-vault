@@ -386,6 +386,7 @@ export function OfficeHoursSchedule({
 
 export function Clocks() {
   const holidays = useUkBankHolidays();
+  const timezone = useUserTimezone();
   const [open, setOpen] = useState(false);
   const [hours, setHours] = useState<OfficeHour[]>([]);
   const [now, setNow] = useState(() => new Date());
@@ -443,13 +444,17 @@ export function Clocks() {
   });
   const officeTime = officeFormatter.format(now);
   const officeDate = officeDateFormatter.format(now);
-  // Header clock: the visitor's own device time + date, ticking live.
+  // Header clock: the visitor's own device time + date, ticking live — but
+  // only shown when the device actually reads a different time to the office.
   const headerTime = new Intl.DateTimeFormat("en-GB", {
+    timeZone: timezone,
     hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
   }).format(now);
   const headerDate = new Intl.DateTimeFormat("en-GB", {
+    timeZone: timezone,
     weekday: "short", day: "numeric", month: "short",
   }).format(now);
+  const showUserClock = headerTime !== officeTime || headerDate !== officeDate;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -475,12 +480,16 @@ export function Clocks() {
           <span className="font-mono text-sm font-semibold tabular-nums text-foreground">{officeTime}</span>
           <span className="text-[10px] text-muted-foreground">{officeDate}</span>
         </div>
-        <div aria-hidden="true" className="mx-1 h-9 w-[3px] shrink-0 self-center rounded-full bg-primary shadow-[0_0_12px_var(--color-primary)]" />
-        <div className="flex min-w-0 flex-col leading-tight">
-          <span className="text-[10px] font-medium text-muted-foreground">Your time</span>
-          <span className="font-mono text-sm font-semibold tabular-nums text-foreground">{headerTime}</span>
-          <span className="text-[10px] text-muted-foreground">{headerDate}</span>
-        </div>
+        {showUserClock && (
+          <>
+            <div aria-hidden="true" className="mx-1 h-9 w-[3px] shrink-0 self-center rounded-full bg-primary shadow-[0_0_12px_var(--color-primary)]" />
+            <div className="flex min-w-0 flex-col leading-tight">
+              <span className="text-[10px] font-medium text-muted-foreground">Your time</span>
+              <span className="font-mono text-sm font-semibold tabular-nums text-foreground">{headerTime}</span>
+              <span className="text-[10px] text-muted-foreground">{headerDate}</span>
+            </div>
+          </>
+        )}
       </div>
       <DialogContent className="top-4 max-h-[94vh] translate-y-0 overflow-y-auto sm:top-8 sm:max-w-3xl">
         <DialogHeader>
