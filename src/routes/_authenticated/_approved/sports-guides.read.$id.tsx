@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { annotateTimesInEl } from "@/lib/parse-event-times";
 import { PagedGrid, PaginationBar } from "@/lib/paginate-by-height";
+import { useUserTimezone } from "@/hooks/use-user-timezone";
 
 export const Route = createFileRoute("/_authenticated/_approved/sports-guides/read/$id")({
   component: ReadPage,
@@ -33,6 +34,7 @@ function ReadPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const viewerTz = useUserTimezone();
   const stageRef = useRef<HTMLDivElement | null>(null);
   const [blog, setBlog] = useState<Blog | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -54,9 +56,6 @@ function ReadPage() {
   // without a zone are interpreted in ET.
   const defaultSourceZone =
     blog && /^\s*flosports\b/i.test(blog.title) ? "ET" : "GMT";
-  const viewerTz =
-    (typeof Intl !== "undefined" && Intl.DateTimeFormat().resolvedOptions().timeZone) || "UTC";
-
   useEffect(() => {
     (async () => {
       const [{ data: b, error }, { data: cats }] = await Promise.all([
