@@ -18,6 +18,8 @@ import { type BreakKind, BREAK_LIMITS as STAFF_BREAK_LIMITS, breakLabel, breakIc
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import noStaffOnlineImg from "@/assets/no-staff-online.png";
 import { useTalkChannelPresentUsers, useTalkChannelPresentUsersInChannel } from "@/hooks/use-talk-channel-presence";
+import { browserTimezone } from "@/hooks/use-user-timezone";
+import { shiftWindowToUtcMs } from "@/hooks/use-timezone";
 
 type StaffShift = { id: string; user_id: string; clock_in: string };
 type StaffBreak = { id: string; shift_id: string; user_id: string; kind: BreakKind; started_at: string };
@@ -127,6 +129,26 @@ function ScrollableCardRow({ children, className }: { children: React.ReactNode;
 }
 
 
+
+// Rota dates/times are UK office wall-clock, so always compare against London.
+function londonNow(at: number | Date = Date.now()) {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/London",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).formatToParts(new Date(at));
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "00";
+  const hour = get("hour") === "24" ? "00" : get("hour");
+  return {
+    date: `${get("year")}-${get("month")}-${get("day")}`,
+    time: `${hour}:${get("minute")}:${get("second")}`,
+  };
+}
 
 const ROLE_ORDER = ["admin", "management", "staff", "moderator"] as const;
 const OFF_ORDER = ["admin", "management", "staff", "moderator"] as const;
@@ -240,11 +262,10 @@ export function StaffOnDutyStrip({
         });
       setOffDuty(off);
 
-      // Next claimed rota slot per staff member (today onwards).
-      const d = new Date();
-      const pad = (n: number) => String(n).padStart(2, "0");
-      const todayStr = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-      const nowTime = `${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
+      // Next claimed rota slot per staff member (today onwards). Rota times are UK
+      // office wall-clock, so compare against London — never the viewer's device
+      // clock, which can already be on the next day and skip today's shift.
+      const { date: todayStr, time: nowTime } = londonNow();
       const { data: slots } = await supabase
         .from("shift_slots")
         .select("assigned_to,shift_date,start_time,end_time")
@@ -260,7 +281,10 @@ export function StaffOnDutyStrip({
         end_time: string;
       }>) {
         if (!sl.assigned_to || nextMap[sl.assigned_to]) continue;
-        const upcoming = sl.shift_date > todayStr || sl.start_time > nowTime;
+        // A shift still running (or starting later) in UK time is the relevant one.
+        const endsAfterNow =
+          sl.end_time > sl.start_time ? sl.end_time > nowTime : true; // crosses midnight
+        const upcoming = sl.shift_date > todayStr || sl.start_time > nowTime || endsAfterNow;
         if (!upcoming) continue;
         nextMap[sl.assigned_to] = {
           shift_date: sl.shift_date,
@@ -391,12 +415,38 @@ export function StaffOnDutyStrip({
       day: "numeric",
       month: "short",
     });
+    const { date: ukDate, time: ukTime } = londonNow(now);
+    const running =
+      slot.shift_date === ukDate && slot.start_time <= ukTime && slot.end_time > ukTime;
+    const heading = running ? "Shift today" : "Next shift";
+
+    // Same shift shown in the viewer's own device timezone when it differs from UK.
+    let deviceLine: string | null = null;
+    const tz = browserTimezone();
+    if (tz !== "Europe/London") {
+      const { startsAt, endsAt } = shiftWindowToUtcMs(
+        slot.shift_date,
+        slot.start_time,
+        slot.end_time,
+        "Europe/London",
+      );
+      const fmtDate = (ms: number) =>
+        new Intl.DateTimeFormat("en-GB", { timeZone: tz, day: "numeric", month: "short" }).format(ms);
+      const fmtTime = (ms: number) =>
+        new Intl.DateTimeFormat("en-GB", { timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false }).format(ms);
+      const sd = fmtDate(startsAt);
+      const ed = fmtDate(endsAt);
+      deviceLine =
+        sd === ed
+          ? `Your time: ${sd} ${fmtTime(startsAt)}–${fmtTime(endsAt)}`
+          : `Your time: ${sd} ${fmtTime(startsAt)} – ${ed} ${fmtTime(endsAt)}`;
+    }
     return (
       <div className="mt-2 rounded-md border border-amber-300/30 bg-amber-500/15 px-2 py-1.5 shadow-[0_0_10px_rgba(245,158,11,0.15)]">
         <div className="flex items-start gap-1.5">
           <CalendarClock className="mt-0.5 size-3.5 shrink-0 text-amber-300" />
           <div className="min-w-0 flex-1">
-            <div className="text-[10px] font-semibold uppercase tracking-wider text-amber-200">Next shift</div>
+            <div className="text-[10px] font-semibold uppercase tracking-wider text-amber-200">{heading}</div>
             {isSidebar ? (
               <>
                 <div className="text-[11px] font-semibold leading-tight text-white">{label}</div>
@@ -408,6 +458,9 @@ export function StaffOnDutyStrip({
               <div className="text-[11px] font-semibold leading-tight text-white">
                 {label} · {slot.start_time.slice(0, 5)}–{slot.end_time.slice(0, 5)}
               </div>
+            )}
+            {deviceLine && (
+              <div className="mt-0.5 text-[10px] leading-tight text-amber-100/90">{deviceLine}</div>
             )}
           </div>
         </div>
