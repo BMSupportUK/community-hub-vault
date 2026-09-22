@@ -10,19 +10,14 @@ import ticketsEmpty from "@/assets/tickets-empty.png";
 import {
   Ticket as TicketIcon, Plus, Send, Lock, X, LifeBuoy, CreditCard, Bug, Sparkles, UserCog,
   Tv, Film, Circle, CircleDot, Clock4, CheckCircle2, XCircle, ChevronDown, Trash2,
-  Paperclip, FileText, Star, HelpCircle, Ban, Home, Pencil, Check, Forward, Store,
+  Paperclip, FileText, Star, HelpCircle, Ban, Home, Pencil, Check, Forward, Building2,
 
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { MentionText, useMentionAutocomplete } from "@/components/app/mentions";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
-import {
-  bankHolidayName,
-  londonDateKey,
-  useUkBankHolidays,
-  type BankHolidayMap,
-} from "@/lib/uk-bank-holidays";
+import { OfficeHoursSchedule } from "@/components/app/Clocks";
 import { useServerFn } from "@tanstack/react-start";
 import { verifyTurnstile } from "@/lib/turnstile.functions";
 import { TurnstileWidget } from "@/components/app/TurnstileWidget";
