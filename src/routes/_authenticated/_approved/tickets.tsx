@@ -555,23 +555,25 @@ function TicketsPage() {
 
 
           <TabsContent value="welcome" className="mt-6">
-            <div className="rounded-2xl bg-gradient-to-br from-rose-600/30 via-fuchsia-600/20 to-violet-700/30 border border-rose-500/30 p-6 md:p-8 lg:p-10 shadow-[0_0_60px_-15px_rgba(244,63,94,0.4)]">
-              <div className="flex flex-col lg:flex-row lg:items-start gap-6 lg:gap-8">
+            <div className="rounded-2xl bg-gradient-to-br from-rose-600/30 via-fuchsia-600/20 to-violet-700/30 border border-rose-500/30 p-5 md:p-6 lg:p-8 shadow-[0_0_60px_-15px_rgba(244,63,94,0.4)]">
+              {/* Intro sits beside the duty strip so the week of hours below can
+                  use the full width and show every day at once. */}
+              <div className="flex flex-col lg:flex-row lg:items-start gap-5 lg:gap-8">
                 <div className="min-w-0 flex-1">
-                  <h2 className="font-display text-2xl md:text-3xl font-bold">Welcome to the Help Desk</h2>
-                  <p className="mt-3 text-rose-100/90 max-w-2xl">
+                  <h2 className="font-display text-xl md:text-2xl font-bold">Welcome to the Help Desk</h2>
+                  <p className="mt-2 text-sm text-rose-100/90 max-w-2xl">
                     Account questions, billing, or any other help needed to solve issues — we've got you
                     covered. Open a ticket and we'll respond as soon as a staff member is on duty.
                   </p>
-                  <p className="mt-5 text-rose-200/80 max-w-2xl text-sm">
+                  <p className="mt-2 text-rose-200/80 max-w-2xl text-xs">
                     Once your ticket is resolved, leave a rating so we know how we did.
                   </p>
-                  <OfficeHoursPanel />
                 </div>
                 <div className="w-full lg:w-auto lg:max-w-md shrink-0 [&>div]:px-0 [&>div]:pt-0">
                   <StaffOnDutyStrip variant="tickets" hideRoles={["moderator"]} />
                 </div>
               </div>
+              <OfficeHoursPanel />
             </div>
           </TabsContent>
 
@@ -1016,11 +1018,11 @@ function OfficeHoursPanel() {
     <section className="mt-6 overflow-hidden rounded-lg border border-border/70 bg-background/30">
       <div className="flex items-center gap-2 border-b border-border/70 px-4 py-3">
         <Building2 className="size-4 shrink-0 text-primary" />
-        <h3 className="font-display text-sm font-semibold">Office opening times</h3>
-        <span className="ml-auto text-[11px] text-muted-foreground">Our UK office hours, with your local times alongside.</span>
+        <h3 className="font-display text-sm font-semibold">Support Open Times</h3>
+        <span className="ml-auto text-[11px] text-muted-foreground">Our UK support hours, with your local times alongside.</span>
       </div>
       <div className="px-4 py-3">
-        <OfficeHoursSchedule channelName="ticket-office-hours-live" />
+        <OfficeHoursSchedule channelName="ticket-office-hours-live" layout="compact" />
       </div>
     </section>
   );

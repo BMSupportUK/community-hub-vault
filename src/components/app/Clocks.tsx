@@ -84,7 +84,10 @@ function isOfficeOpen(hours: OfficeHour[], now: Date, holidays: BankHolidayMap =
 
 // Shared opening-hours panel: live summary cards + the full weekly table.
 // Used by the header dialog and embedded directly on the tickets page.
-export function OfficeHoursSchedule({ channelName = "office-hours-live" }: { channelName?: string }) {
+export function OfficeHoursSchedule({
+  channelName = "office-hours-live",
+  layout = "table",
+}: { channelName?: string; layout?: "table" | "compact" }) {
   const timezone = useUserTimezone();
   const holidays = useUkBankHolidays();
   const [hours, setHours] = useState<OfficeHour[]>([]);
@@ -154,6 +157,104 @@ export function OfficeHoursSchedule({ channelName = "office-hours-live" }: { cha
   if (hours.length === 0) {
     return <p className="py-6 text-center text-sm text-muted-foreground">Loading opening hours…</p>;
   }
+
+  const orderedDays = [...hours].sort((a, b) => ((a.day_of_week + 6) % 7) - ((b.day_of_week + 6) % 7));
+
+  if (layout === "compact") {
+    // Wide layout: every day gets its own column so the whole week is visible
+    // at a glance, with no internal scrolling.
+    return (
+      <div className="space-y-3">
+        <div className={cn("grid gap-2", showUserColumn ? "sm:grid-cols-2" : "grid-cols-1")}>
+          <div className="flex items-center justify-between gap-2 rounded-lg border border-border/70 bg-muted/30 px-3 py-2">
+            <div className="min-w-0">
+              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">UK office</div>
+              <div className="font-mono text-sm font-semibold tabular-nums text-foreground">{currentDateTime(ukTz)}</div>
+            </div>
+            {statusPill}
+          </div>
+          {showUserColumn && (
+            <div className="flex items-center justify-between gap-2 rounded-lg border border-primary/30 bg-primary/10 px-3 py-2">
+              <div className="min-w-0">
+                <div className="truncate text-[10px] font-semibold uppercase tracking-wide text-muted-foreground" title={timezoneLabel}>
+                  Your time · {timezoneLabel}
+                </div>
+                <div className="font-mono text-sm font-semibold tabular-nums text-foreground">{currentDateTime(timezone)}</div>
+              </div>
+              {statusPill}
+            </div>
+          )}
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
+          {orderedDays.map((hour) => {
+            const rowDate = londonTimeToDate(hour.day_of_week, "12:00");
+            const holidayName = holidays[londonDateKey(rowDate)] ?? null;
+            const closed = hour.is_closed || Boolean(holidayName);
+            const isToday = new Intl.DateTimeFormat("en-GB", { timeZone: ukTz, weekday: "short" }).format(now)
+              === ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][hour.day_of_week];
+            const localOpen = closed ? null : londonTimeToDate(hour.day_of_week, hour.open_time);
+            const localClose = closed ? null : londonTimeToDate(hour.day_of_week, hour.close_time);
+            const localFormat = new Intl.DateTimeFormat("en-GB", { timeZone: timezone, hour: "numeric", minute: "2-digit", hour12: true });
+            const officeDate = new Intl.DateTimeFormat("en-GB", { timeZone: ukTz, day: "numeric", month: "short" })
+              .format(londonTimeToDate(hour.day_of_week, closed ? "00:00" : hour.open_time));
+            const userDateFormat = new Intl.DateTimeFormat("en-GB", { timeZone: timezone, day: "numeric", month: "short" });
+            const userOpenDate = userDateFormat.format(localOpen ?? londonTimeToDate(hour.day_of_week, "00:00"));
+            const userCloseDate = localClose ? userDateFormat.format(localClose) : userOpenDate;
+            return (
+              <div
+                key={hour.day_of_week}
+                className={cn(
+                  "flex flex-col gap-1.5 rounded-lg border px-2.5 py-2 text-xs",
+                  isToday ? "border-primary/50 bg-primary/10" : "border-border/70 bg-muted/20",
+                )}
+              >
+                <div className="flex items-baseline justify-between gap-1">
+                  <span className="font-semibold text-foreground">{OFFICE_DAY_NAMES[hour.day_of_week]}</span>
+                  {isToday && (
+                    <span className="rounded-full bg-primary px-1.5 py-px text-[9px] font-bold uppercase text-primary-foreground">Today</span>
+                  )}
+                </div>
+                <div className="text-[10px] text-muted-foreground">{officeDate}</div>
+                <div className="border-t border-border/50 pt-1.5">
+                  <div className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">UK</div>
+                  {closed ? (
+                    <div className="font-medium text-destructive">Closed</div>
+                  ) : (
+                    <div className="font-mono text-[11px] tabular-nums text-foreground">
+                      {formatOfficeTime(hour.open_time)}<br />{formatOfficeTime(hour.close_time)}
+                    </div>
+                  )}
+                  {holidayName && <div className="mt-0.5 text-[10px] text-muted-foreground">{holidayName}</div>}
+                </div>
+                {showUserColumn && (
+                  <div className="border-t border-border/50 pt-1.5">
+                    <div className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">Your time</div>
+                    {closed || !localOpen || !localClose ? (
+                      <div className="font-medium text-destructive">Closed</div>
+                    ) : (
+                      <div className="font-mono text-[11px] leading-snug tabular-nums text-foreground">
+                        <div>
+                          <span className="text-[10px] text-muted-foreground">{userOpenDate}</span>{" "}
+                          {localFormat.format(localOpen)}
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-muted-foreground">{userCloseDate}</span>{" "}
+                          {localFormat.format(localClose)}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
+
+
 
   return (
     <div className="space-y-3">
