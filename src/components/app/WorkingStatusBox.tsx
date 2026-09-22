@@ -137,7 +137,7 @@ export function NextShiftPanel({
   }) => (
     <div
       className={cn(
-        "rounded-lg px-2.5 py-2",
+        "rounded-lg px-2.5 py-1.5",
         amber ? "bg-amber-500/10 ring-1 ring-amber-300/25" : "bg-surface/60 ring-1 ring-border/60",
       )}
     >
