@@ -236,18 +236,14 @@ export function OfficeHoursSchedule({
                       {closed || !localOpen || !localClose ? (
                         <div className="font-medium text-destructive">Closed</div>
                       ) : (
-                        <div className="font-mono text-sm leading-snug tabular-nums text-foreground">
-                          <div>
-                            {userOpenDate !== officeDate && (
-                              <span className="text-[11px] text-muted-foreground">{userOpenDate}</span>
-                            )}{" "}
-                            {localFormat.format(localOpen)}
+                        <div className="grid grid-cols-2 gap-1.5 font-mono tabular-nums text-foreground">
+                          <div className="min-w-0">
+                            <div className="whitespace-nowrap text-sm leading-none">{localFormat.format(localOpen)}</div>
+                            <div className="mt-1 whitespace-nowrap text-[10px] leading-none text-muted-foreground">{userOpenDate}</div>
                           </div>
-                          <div>
-                            {userCloseDate !== officeDate && (
-                              <span className="text-[11px] text-muted-foreground">{userCloseDate}</span>
-                            )}{" "}
-                            {localFormat.format(localClose)}
+                          <div className="min-w-0">
+                            <div className="whitespace-nowrap text-sm leading-none">{localFormat.format(localClose)}</div>
+                            <div className="mt-1 whitespace-nowrap text-[10px] leading-none text-muted-foreground">{userCloseDate}</div>
                           </div>
                         </div>
                       )}
