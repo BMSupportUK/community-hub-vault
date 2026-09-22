@@ -12,6 +12,16 @@ import { EmailHtmlEditor } from "@/components/app/EmailHtmlEditor";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-automated-messages")({
   component: AdminAutomatedMessagesPage,
+  head: () => ({
+    meta: [
+      { title: "Automated Messages & Emails | BM Support" },
+      { name: "description", content: "Manage BM Support account, sales, ticket, and app email wording." },
+      { property: "og:title", content: "Automated Messages & Emails | BM Support" },
+      { property: "og:description", content: "Manage BM Support account, sales, ticket, and app email wording." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
 });
 
 interface Row {
@@ -25,6 +35,8 @@ interface Row {
   placeholders: string[] | null;
   sort_order: number;
 }
+
+const CATEGORY_ORDER = ["Account setup", "Sales", "Support tickets", "Emails"];
 
 function AdminAutomatedMessagesPage() {
   const { hasAny } = useAuth();
@@ -48,9 +60,11 @@ function AdminAutomatedMessagesPage() {
   }, [isAdmin]);
 
   const categories = useMemo(() => {
-    const seen: string[] = [];
-    for (const r of rows) if (!seen.includes(r.category)) seen.push(r.category);
-    return seen;
+    const available = new Set(rows.map((row) => row.category));
+    return [
+      ...CATEGORY_ORDER.filter((category) => available.has(category)),
+      ...Array.from(available).filter((category) => !CATEGORY_ORDER.includes(category)).sort(),
+    ];
   }, [rows]);
 
   useEffect(() => {
@@ -89,8 +103,8 @@ function AdminAutomatedMessagesPage() {
 
       <h1 className="text-2xl font-bold">Automated messages &amp; emails</h1>
       <p className="mt-1 text-sm text-muted-foreground">
-        Every message and email the system sends on its own — support tickets, sales and orders, and
-        all emails. Change the wording any time; it applies straight away. Keep the{" "}
+        Every message and email the system sends on its own — account setup, sales, support tickets,
+        and all remaining emails. Change the wording any time; it applies straight away. Keep the{" "}
         {"{placeholder}"} tags so details like names, totals and links still fill themselves in.
       </p>
 

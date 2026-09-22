@@ -1448,10 +1448,11 @@ function TicketDetail({
     if (!linkedOrder || orderBusy) return;
     setOrderBusy(true);
     try {
+      const message = await getAutomatedMessage("order_bank_transfer_received", {
+        total: (linkedOrder.total_cents / 100).toLocaleString("en-GB", { style: "currency", currency: "GBP" }),
+      });
       await confirmBankTransferFn({ data: { orderId: linkedOrder.id } });
-      await postTicketSystem(
-        `✅ Bank transfer received — your payment of ${(linkedOrder.total_cents / 100).toLocaleString("en-GB", { style: "currency", currency: "GBP" })} has landed in our account and your order is now marked as paid.\n\n🙏 Thank you for the transfer — we really appreciate it. We'll get your account sorted and keep you updated here.`,
-      );
+      await postTicketSystem(message);
       await loadLinkedOrder();
       toast.success("Bank transfer confirmed");
     } catch (e: any) {
@@ -1467,9 +1468,7 @@ function TicketDetail({
     }
     setOrderBusy(true);
     try {
-      await postTicketSystem(
-        `🛠️ We are currently setting up your account. Your login details will appear in the Credentials section of your profile soon.`,
-      );
+      await postTicketSystem(await getAutomatedMessage("order_setting_up_account"));
 
       toast.success("Customer notified");
     } finally { setOrderBusy(false); }
@@ -1482,9 +1481,9 @@ function TicketDetail({
       const profileLink = linkedOrderUsername
         ? `\n\n🔗 [Click here to view your Credentials](${window.location.origin}/u/${linkedOrderUsername}?tab=creds)`
         : "";
-      await postTicketSystem(
-        `🟢 Your account is now set up and ready to use! Your login details are available in the Credentials section of your profile.${profileLink}`,
-      );
+      await postTicketSystem(await getAutomatedMessage("order_account_setup_done", {
+        profile_link: profileLink,
+      }));
       toast.success("Account setup confirmed");
     } finally { setOrderBusy(false); }
   };
@@ -1499,9 +1498,9 @@ function TicketDetail({
     setOrderBusy(true);
     try {
       const handle = linkedOrder.existing_username ? ` for “${linkedOrder.existing_username}”` : "";
-      await postTicketSystem(
-        `🔄 Your subscription${handle} is being updated. You'll receive confirmation once the extension is complete.`,
-      );
+      await postTicketSystem(await getAutomatedMessage("order_subscription_updating", {
+        account_handle: handle,
+      }));
       toast.success("Customer notified");
     } finally { setOrderBusy(false); }
   };
@@ -1545,9 +1544,7 @@ function TicketDetail({
           }
         }
       }
-      await postTicketSystem(
-        `🎉 Your account has been upgraded — thank you for your business! We really appreciate it.`,
-      );
+      await postTicketSystem(await getAutomatedMessage("order_sale_completed"));
       toast.success("Sale completed");
       await loadLinkedOrder();
       await applyRenewal();
@@ -1600,11 +1597,16 @@ function TicketDetail({
     toast.success(
       `${res.created ? "Account created" : res.accountLabel}: ${res.months} month${res.months === 1 ? "" : "s"} → expires ${expiry}`,
     );
-    await postTicketSystem(
-      res.created
-        ? `🆕 Account set up — ${res.accountLabel} (${res.accountTypeLabel}), ${res.months} month${res.months === 1 ? "" : "s"}, expires ${expiry}. Your login details are in My Account.`
-        : `📅 Subscription updated — ${res.accountLabel} (${res.accountTypeLabel}) now runs for a further ${res.months} month${res.months === 1 ? "" : "s"} and expires on ${expiry}.`,
-    );
+    await postTicketSystem(await getAutomatedMessage(
+      res.created ? "order_account_created" : "order_subscription_extended",
+      {
+        account_label: res.accountLabel,
+        account_type: res.accountTypeLabel,
+        months: String(res.months),
+        month_suffix: res.months === 1 ? "" : "s",
+        expiry,
+      },
+    ));
   };
 
   const submitNewCredential = async () => {
@@ -1645,12 +1647,12 @@ function TicketDetail({
     setOrderBusy(true);
     try {
       const result = await cancelOrderAndSquareInvoiceRpc({ data: { orderId: linkedOrder.id } });
-      await postTicketSystem(
-        `🚫 Order cancelled by ${linkedOrder.user_id === currentUserId ? "customer" : "staff"}.`
-      );
+      await postTicketSystem(await getAutomatedMessage("order_cancelled", {
+        cancelled_by: linkedOrder.user_id === currentUserId ? "customer" : "staff",
+      }));
       toast.success("Order cancelled");
       if (result.invoiceCancelled) {
-        await postTicketSystem(`🚫 Square invoice cancelled.`);
+        await postTicketSystem(await getAutomatedMessage("order_invoice_cancelled"));
       } else if (result.invoiceError && !/No Square invoice|PAID/i.test(result.invoiceError)) {
         toast.warning("Order cancelled, but the Square invoice could not be cancelled automatically.");
       }
@@ -1671,9 +1673,9 @@ function TicketDetail({
       if (res.paid) {
         setPayCheckPhase("confirmed");
         if (res.status === "paid") {
-          await postTicketSystem(
-            `✅ Payment received${res.provider ? ` via ${res.provider}` : ""} — thank you! Your order is now marked as paid.`,
-          );
+          await postTicketSystem(await getAutomatedMessage("order_payment_confirmed", {
+            provider: res.provider ? ` via ${res.provider}` : "",
+          }));
         }
         toast.success(res.detail || "Payment confirmed — order marked paid");
       } else {
