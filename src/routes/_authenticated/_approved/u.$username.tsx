@@ -745,6 +745,14 @@ function ProfilePage() {
             </TabsContent>
           )}
 
+          {canSeeSubscription && (
+            <TabsContent value="subscription" className={paneClass}>
+              <div className="max-w-md">
+                <SubscriptionDetailsCard />
+              </div>
+            </TabsContent>
+          )}
+
           <TabsContent value="tickets" className={paneClass}>
             <TicketMonthsPanel tickets={tickets} canReopen={isOwner} onChanged={load} />
           </TabsContent>
