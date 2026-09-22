@@ -2970,12 +2970,13 @@ function OrdersView({
       if (o) {
         setOrdersTab(tabForStatus(o.status));
         const createdAt = new Date(o.created_at);
-        if (!Number.isNaN(createdAt.getTime()) && createdAt.getFullYear() === currentYear) {
+        if (!Number.isNaN(createdAt.getTime())) {
+          setYear(createdAt.getFullYear());
           setMonth(createdAt.getMonth());
         }
       }
     }
-  }, [selectedId, orders, currentYear]);
+  }, [selectedId, orders]);
 
   const load = async () => {
     let q = supabase.from("orders").select("*").order("created_at", { ascending: false });
