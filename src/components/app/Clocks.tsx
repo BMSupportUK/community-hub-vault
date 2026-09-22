@@ -164,22 +164,22 @@ export function OfficeHoursSchedule({
     // Wide layout: every day gets its own column so the whole week is visible
     // at a glance, with no internal scrolling.
     return (
-      <div className="space-y-3">
+      <div className="space-y-2">
         <div className={cn("grid gap-2", showUserColumn ? "sm:grid-cols-2" : "grid-cols-1")}>
           <div className="flex items-center justify-between gap-2 rounded-lg border border-border/70 bg-muted/30 px-3 py-2">
             <div className="min-w-0">
-              <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">UK office</div>
-              <div className="font-mono text-sm font-semibold tabular-nums text-foreground">{currentDateTime(ukTz)}</div>
+              <div className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">UK office</div>
+              <div className="font-mono text-base font-semibold tabular-nums text-foreground">{currentDateTime(ukTz)}</div>
             </div>
             {statusPill}
           </div>
           {showUserColumn && (
             <div className="flex items-center justify-between gap-2 rounded-lg border border-primary/30 bg-primary/10 px-3 py-2">
               <div className="min-w-0">
-                <div className="truncate text-[10px] font-semibold uppercase tracking-wide text-muted-foreground" title={timezoneLabel}>
+                <div className="truncate text-xs font-semibold uppercase tracking-wide text-muted-foreground" title={timezoneLabel}>
                   Your time · {timezoneLabel}
                 </div>
-                <div className="font-mono text-sm font-semibold tabular-nums text-foreground">{currentDateTime(timezone)}</div>
+                <div className="font-mono text-base font-semibold tabular-nums text-foreground">{currentDateTime(timezone)}</div>
               </div>
               {statusPill}
             </div>
@@ -205,47 +205,51 @@ export function OfficeHoursSchedule({
               <div
                 key={hour.day_of_week}
                 className={cn(
-                  "flex flex-col gap-1.5 rounded-lg border px-2.5 py-2 text-xs",
+                  "flex flex-col gap-1 rounded-lg border px-2.5 py-2 text-sm",
                   isToday ? "border-primary/50 bg-primary/10" : "border-border/70 bg-muted/20",
                 )}
               >
                 <div className="flex items-baseline justify-between gap-1">
                   <span className="font-semibold text-foreground">{OFFICE_DAY_NAMES[hour.day_of_week]}</span>
                   {isToday && (
-                    <span className="rounded-full bg-primary px-1.5 py-px text-[9px] font-bold uppercase text-primary-foreground">Today</span>
+                    <span className="rounded-full bg-primary px-1.5 py-px text-[10px] font-bold uppercase text-primary-foreground">Today</span>
                   )}
                 </div>
-                <div className="text-[10px] text-muted-foreground">{officeDate}</div>
-                <div className="border-t border-border/50 pt-1.5">
-                  <div className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">UK</div>
-                  {closed ? (
-                    <div className="font-medium text-destructive">Closed</div>
-                  ) : (
-                    <div className="font-mono text-[11px] tabular-nums text-foreground">
-                      {formatOfficeTime(hour.open_time)}<br />{formatOfficeTime(hour.close_time)}
-                    </div>
-                  )}
-                  {holidayName && <div className="mt-0.5 text-[10px] text-muted-foreground">{holidayName}</div>}
-                </div>
-                {showUserColumn && (
-                  <div className="border-t border-border/50 pt-1.5">
-                    <div className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">Your time</div>
-                    {closed || !localOpen || !localClose ? (
+                <div className="text-xs text-muted-foreground">{officeDate}</div>
+                {/* UK hours and your local times sit side by side so the whole
+                    week still fits the screen without scrolling. */}
+                <div className={cn("border-t border-border/50 pt-1.5", showUserColumn && "grid grid-cols-2 gap-1.5")}>
+                  <div>
+                    <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">UK</div>
+                    {closed ? (
                       <div className="font-medium text-destructive">Closed</div>
                     ) : (
-                      <div className="font-mono text-[11px] leading-snug tabular-nums text-foreground">
-                        <div>
-                          <span className="text-[10px] text-muted-foreground">{userOpenDate}</span>{" "}
-                          {localFormat.format(localOpen)}
-                        </div>
-                        <div>
-                          <span className="text-[10px] text-muted-foreground">{userCloseDate}</span>{" "}
-                          {localFormat.format(localClose)}
-                        </div>
+                      <div className="font-mono text-sm tabular-nums text-foreground">
+                        {formatOfficeTime(hour.open_time)}<br />{formatOfficeTime(hour.close_time)}
                       </div>
                     )}
+                    {holidayName && <div className="mt-0.5 text-xs text-muted-foreground">{holidayName}</div>}
                   </div>
-                )}
+                  {showUserColumn && (
+                    <div className="min-w-0">
+                      <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">Your time</div>
+                      {closed || !localOpen || !localClose ? (
+                        <div className="font-medium text-destructive">Closed</div>
+                      ) : (
+                        <div className="font-mono text-sm leading-snug tabular-nums text-foreground">
+                          <div>
+                            <span className="text-[11px] text-muted-foreground">{userOpenDate}</span>{" "}
+                            {localFormat.format(localOpen)}
+                          </div>
+                          <div>
+                            <span className="text-[11px] text-muted-foreground">{userCloseDate}</span>{" "}
+                            {localFormat.format(localClose)}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             );
           })}
