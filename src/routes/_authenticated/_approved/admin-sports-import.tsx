@@ -530,7 +530,7 @@ function EventRow({
           <Trash2 className="size-4" />
         </Button>
       </div>
-      {!hasBothZones(event.time) && parseClockTime(event.time) !== null && (
+      {parseClockTime(event.time) !== null && (
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-[11px] text-muted-foreground">Time listed is:</span>
           {(["gmt", "et"] as const).map((z) => (
@@ -540,12 +540,12 @@ function EventRow({
               variant="outline"
               className="h-7 px-2 text-xs"
               onClick={() => {
-                const dual = buildDualTime(event.time, event.date, z);
-                if (!dual) return toast.error("Couldn't read the time on this post");
-                onChange({ time: dual });
+                const shown = toSingleZoneTime(event.time, event.date, z);
+                if (!shown) return toast.error("Couldn't read the time on this post");
+                onChange({ time: shown });
               }}
             >
-              <Clock className="size-3" /> {z.toUpperCase()}
+              <Clock className="size-3" /> {z === "gmt" ? "UK" : "ET"}
             </Button>
           ))}
         </div>
@@ -932,8 +932,8 @@ function ListingPreview({ raw, sourceZone }: { raw: string; sourceZone: TimeZone
       </div>
       <div className="max-h-60 space-y-2 overflow-y-auto pr-1">
         {events.map((event, index) => {
-          const converted = sourceZone && !hasBothZones(event.time)
-            ? buildDualTime(event.time, event.date, sourceZone)
+          const converted = sourceZone
+            ? toSingleZoneTime(event.time, event.date, sourceZone)
             : null;
           return (
             <div key={`${event.time}-${event.title}-${index}`} className="rounded-md border border-border bg-card/70 p-2">
