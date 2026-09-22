@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
-import { CircleDot, CalendarClock, Clock, MapPin } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { CircleDot, CalendarClock, ChevronLeft, ChevronRight, Clock, MapPin } from "lucide-react";
 import { useUserPage } from "@/hooks/use-online-users";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -61,6 +61,67 @@ function ViewingLine({ userId }: { userId: string }) {
     <div className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground min-w-0">
       <MapPin className="size-3 shrink-0" />
       <span className="truncate">{page}</span>
+    </div>
+  );
+}
+
+/** Horizontal, arrow-scrolled card row: cards slide sideways when more staff
+ *  are on duty than fit in the box. Arrows appear only when there is
+ *  something to scroll towards. */
+function ScrollableCardRow({ children, className }: { children: React.ReactNode; className?: string }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [canLeft, setCanLeft] = useState(false);
+  const [canRight, setCanRight] = useState(false);
+
+  const update = () => {
+    const el = ref.current;
+    if (!el) return;
+    setCanLeft(el.scrollLeft > 4);
+    setCanRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+  };
+
+  useEffect(() => {
+    update();
+    const el = ref.current;
+    if (!el) return;
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  });
+
+  const nudge = (dir: number) => {
+    ref.current?.scrollBy({ left: dir * 280, behavior: "smooth" });
+  };
+
+  return (
+    <div className="relative min-w-0">
+      <div
+        ref={ref}
+        onScroll={update}
+        className={cn("flex gap-2 overflow-x-auto pb-1", className)}
+      >
+        {children}
+      </div>
+      {canLeft && (
+        <button
+          type="button"
+          aria-label="Scroll staff left"
+          onClick={() => nudge(-1)}
+          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 size-7 rounded-full bg-black/60 border border-white/30 text-white flex items-center justify-center shadow-lg hover:bg-black/80 transition-colors"
+        >
+          <ChevronLeft className="size-4" />
+        </button>
+      )}
+      {canRight && (
+        <button
+          type="button"
+          aria-label="Scroll staff right"
+          onClick={() => nudge(1)}
+          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 size-7 rounded-full bg-black/60 border border-white/30 text-white flex items-center justify-center shadow-lg hover:bg-black/80 transition-colors"
+        >
+          <ChevronRight className="size-4" />
+        </button>
+      )}
     </div>
   );
 }
@@ -380,7 +441,7 @@ export function StaffOnDutyStrip({
       <div
         className={cn(
           "rounded-lg p-2.5 border backdrop-blur transition-colors min-w-0",
-          isTickets ? "w-full sm:w-[260px]" : "w-full",
+          isTickets ? "w-full sm:w-[260px] shrink-0" : "w-full",
           onBreak
             ? (over ? "bg-red-500/30 border-red-300/60" : "bg-amber-300/30 border-amber-200/60")
             : "bg-emerald-400/25 border-emerald-200/50",
@@ -440,7 +501,7 @@ export function StaffOnDutyStrip({
         userId={s.user_id}
         online={mp.isOnline}
         fallback={talkFallbackRow(s.user_id)}
-        className="block w-full"
+        className={cn("block", isTickets ? "shrink-0" : "w-full")}
       >
         {card}
       </TalkMemberMiniProfile>
@@ -464,7 +525,7 @@ export function StaffOnDutyStrip({
             : inChat
               ? "bg-emerald-400/10 border-emerald-200/30"
               : "border-white/15 bg-white/5",
-          isTickets ? "w-full sm:w-[260px]" : "w-full",
+          isTickets ? "w-full sm:w-[260px] shrink-0" : "w-full",
         )}
       >
         <div className="flex items-center gap-2 min-w-0">
@@ -524,7 +585,7 @@ export function StaffOnDutyStrip({
         userId={p.id}
         online={mp.isOnline}
         fallback={talkFallbackRow(p.id)}
-        className="block w-full"
+        className={cn("block", isTickets ? "shrink-0" : "w-full")}
       >
         {card}
       </TalkMemberMiniProfile>
@@ -548,94 +609,98 @@ export function StaffOnDutyStrip({
   if (isTickets) {
     return (
       <div className="px-4 pt-4 space-y-3">
-        {/* Owner gets its own box, separate from the staff box. */}
-        {(daneShift || daneOff) && (
-          <div className="rounded-xl border border-amber-200/30 p-3 shadow-lg relative overflow-hidden bg-gradient-to-r from-amber-600/40 via-orange-500/30 to-amber-600/40 backdrop-blur">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-amber-200 mb-1.5">
-              Owner
+        {/* Owner card and staff box sit side by side on wide screens,
+            stacking underneath each other on narrow ones. */}
+        <div className="flex flex-col md:flex-row items-stretch gap-3">
+          {/* Owner gets its own box, separate from the staff box. */}
+          {(daneShift || daneOff) && (
+            <div className="rounded-xl border border-amber-200/30 p-3 shadow-lg relative overflow-hidden bg-gradient-to-r from-amber-600/40 via-orange-500/30 to-amber-600/40 backdrop-blur md:w-[292px] shrink-0">
+              <div className="text-[10px] font-bold uppercase tracking-wider text-amber-200 mb-1.5">
+                Owner
+              </div>
+              <div className="flex flex-wrap gap-2 min-w-0">
+                {daneShift ? renderOnDutyCard(daneShift) : renderOffDutyCard(daneOff!)}
+              </div>
             </div>
-            <div className="flex flex-wrap gap-2 min-w-0">
-              {daneShift ? renderOnDutyCard(daneShift) : renderOffDutyCard(daneOff!)}
-            </div>
-          </div>
-        )}
+          )}
 
-        {/* Staff box: only rendered while at least one staff member is signed in
-            and on duty. Otherwise a "no staff online" sign is shown. */}
-        {orderedShifts.length === 0 ? (
-          <div className="rounded-xl border border-white/15 p-4 shadow-lg relative overflow-hidden bg-gradient-to-r from-violet-600/40 via-fuchsia-600/40 to-blue-600/40 backdrop-blur">
-            <div className="flex items-center gap-4">
-              <img
-                src={noStaffOnlineImg}
-                alt=""
-                loading="lazy"
-                width={816}
-                height={816}
-                className="size-20 sm:size-24 shrink-0 rounded-xl object-cover"
-              />
-              <div className="min-w-0">
-                <div className="text-sm font-bold uppercase tracking-wider text-white">No staff online</div>
-                <p className="mt-1 text-xs text-white/80">
-                  Our team is currently offline — this may be outside of our opening hours.
-                  Open a ticket and we'll get back to you as soon as someone is on duty.
-                </p>
-                <div className="flex items-center gap-1 text-[10px] text-white/80 mt-2">
-                  <span className="size-2 rounded-full bg-emerald-400 animate-pulse" /> live
+          {/* Staff box: only rendered while at least one staff member is signed in
+              and on duty. Otherwise a "no staff online" sign is shown. */}
+          {orderedShifts.length === 0 ? (
+            <div className="rounded-xl border border-white/15 p-4 shadow-lg relative overflow-hidden bg-gradient-to-r from-violet-600/40 via-fuchsia-600/40 to-blue-600/40 backdrop-blur flex-1 min-w-0">
+              <div className="flex items-center gap-4">
+                <img
+                  src={noStaffOnlineImg}
+                  alt=""
+                  loading="lazy"
+                  width={816}
+                  height={816}
+                  className="size-20 sm:size-24 shrink-0 rounded-xl object-cover"
+                />
+                <div className="min-w-0">
+                  <div className="text-sm font-bold uppercase tracking-wider text-white">No staff online</div>
+                  <p className="mt-1 text-xs text-white/80">
+                    Our team is currently offline — this may be outside of our opening hours.
+                    Open a ticket and we'll get back to you as soon as someone is on duty.
+                  </p>
+                  <div className="flex items-center gap-1 text-[10px] text-white/80 mt-2">
+                    <span className="size-2 rounded-full bg-emerald-400 animate-pulse" /> live
+                  </div>
                 </div>
               </div>
             </div>
+          ) : (
+          <div className="rounded-xl border border-white/15 p-3 shadow-lg relative overflow-hidden bg-gradient-to-r from-violet-600/40 via-fuchsia-600/40 to-blue-600/40 backdrop-blur flex-1 min-w-0">
+            <Tabs value={dutyTab} onValueChange={(v) => setDutyTab(v as "on" | "off")}>
+
+              <TabsList className="w-full bg-white/10 border border-white/20 p-1 mb-2 flex-wrap h-auto gap-1">
+                <TabsTrigger
+                  value="on"
+                  className="flex-1 min-w-0 text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-white/80 data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500/80 data-[state=active]:to-teal-500/80 data-[state=active]:text-white data-[state=active]:shadow px-1.5 sm:px-3"
+                >
+                  <span className="truncate">Staff on duty · {orderedShifts.length}</span>
+                </TabsTrigger>
+                <TabsTrigger
+                  value="off"
+                  className="flex-1 min-w-0 text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-white/80 data-[state=active]:bg-gradient-to-r data-[state=active]:from-white/25 data-[state=active]:to-white/15 data-[state=active]:text-white data-[state=active]:shadow px-1.5 sm:px-3"
+                >
+                  <span className="truncate">Off duty · {visibleOffDuty.length}</span>
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="on" className="mt-0 min-w-0">
+                {orderedShifts.length === 0 ? (
+                  <div className="rounded-lg p-2.5 border border-white/20 bg-white/10 text-white/80 text-xs flex items-center gap-2 w-full">
+                    <CircleDot className="size-3.5 opacity-60 shrink-0" />
+                    <span>No staff currently on duty</span>
+                  </div>
+                ) : (
+                  <ScrollableCardRow>
+                    {orderedShifts.map((s) => renderOnDutyCard(s))}
+                  </ScrollableCardRow>
+                )}
+              </TabsContent>
+
+              <TabsContent value="off" className="mt-0 min-w-0">
+                {visibleOffDuty.length === 0 ? (
+                  <div className="rounded-lg p-2.5 border border-white/20 bg-white/10 text-white/80 text-xs flex items-center gap-2 w-full">
+                    <CircleDot className="size-3.5 opacity-60 shrink-0" />
+                    <span>All staff are on duty</span>
+                  </div>
+                ) : (
+                  <ScrollableCardRow>
+                    {visibleOffDuty.map((p) => renderOffDutyCard(p))}
+                  </ScrollableCardRow>
+                )}
+              </TabsContent>
+            </Tabs>
+
+            <div className="flex items-center justify-end gap-1 text-[10px] text-white/80 mt-2">
+              <span className="size-2 rounded-full bg-emerald-400 animate-pulse" /> live
+            </div>
           </div>
-        ) : (
-        <div className="rounded-xl border border-white/15 p-3 shadow-lg relative overflow-hidden bg-gradient-to-r from-violet-600/40 via-fuchsia-600/40 to-blue-600/40 backdrop-blur">
-          <Tabs value={dutyTab} onValueChange={(v) => setDutyTab(v as "on" | "off")}>
-
-            <TabsList className="w-full bg-white/10 border border-white/20 p-1 mb-2 flex-wrap h-auto gap-1">
-              <TabsTrigger
-                value="on"
-                className="flex-1 min-w-0 text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-white/80 data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500/80 data-[state=active]:to-teal-500/80 data-[state=active]:text-white data-[state=active]:shadow px-1.5 sm:px-3"
-              >
-                <span className="truncate">Staff on duty · {orderedShifts.length}</span>
-              </TabsTrigger>
-              <TabsTrigger
-                value="off"
-                className="flex-1 min-w-0 text-[10px] sm:text-xs font-semibold uppercase tracking-wider text-white/80 data-[state=active]:bg-gradient-to-r data-[state=active]:from-white/25 data-[state=active]:to-white/15 data-[state=active]:text-white data-[state=active]:shadow px-1.5 sm:px-3"
-              >
-                <span className="truncate">Off duty · {visibleOffDuty.length}</span>
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="on" className="mt-0 min-w-0">
-              {orderedShifts.length === 0 ? (
-                <div className="rounded-lg p-2.5 border border-white/20 bg-white/10 text-white/80 text-xs flex items-center gap-2 w-full">
-                  <CircleDot className="size-3.5 opacity-60 shrink-0" />
-                  <span>No staff currently on duty</span>
-                </div>
-              ) : (
-                <div className="flex flex-wrap gap-2 min-w-0">
-                  {orderedShifts.map((s) => renderOnDutyCard(s))}
-                </div>
-              )}
-            </TabsContent>
-
-            <TabsContent value="off" className="mt-0 min-w-0">
-              {visibleOffDuty.length === 0 ? (
-                <div className="rounded-lg p-2.5 border border-white/20 bg-white/10 text-white/80 text-xs flex items-center gap-2 w-full">
-                  <CircleDot className="size-3.5 opacity-60 shrink-0" />
-                  <span>All staff are on duty</span>
-                </div>
-              ) : (
-                <div className="flex flex-wrap gap-2 min-w-0">
-                  {visibleOffDuty.map((p) => renderOffDutyCard(p))}
-                </div>
-              )}
-            </TabsContent>
-          </Tabs>
-
-          <div className="flex items-center justify-end gap-1 text-[10px] text-white/80 mt-2">
-            <span className="size-2 rounded-full bg-emerald-400 animate-pulse" /> live
-          </div>
+          )}
         </div>
-        )}
       </div>
     );
   }
