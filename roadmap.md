@@ -1,31 +1,11 @@
-- [x] Make BM Support friendships one-way (requester lists accepted friend only)
-- [x] Make Boro Fan Zone friendships one-way (requester lists accepted friend only)
-- [x] Show a guest-safe side rail and dedicated header across the public Boro Fan Zone
-- [x] Replace duplicate Fan Zone header links with the live online counter
-- [x] Keep the Fan Zone staff directory names current and deduplicate accounts
-- [x] Add a board-index link before the current-board link inside forum topics
-- [x] Quote the full original post when replying to a forum post
+# Roadmap
 
-## Fan Zone appeals
-- [x] Appeal form on ban screen + inbox in moderation centre with email replies
-- [x] Log every appeal submission in the moderation log (who appealed, current status)
-- [x] After a ban is lifted, show a "Continue to the Fan Zone" button instead of auto-redirecting
+## Current
+- [ ] Telegram → Sports Guide importer: webhook receiver, queue ingestion with AI category guesses, Review Queue source filter + approve-all, webhook registration (telegram connector linked; bot created by user via @BotFather)
 
-## Support tickets
-- [x] Keep the ticket list and conversation fitted within large screens
-- [x] Add the vertical Google advert beside open ticket conversations
-- [x] Fit the new-ticket form within large screens and move its home button into the top navigation
-- [x] Replace the new-ticket left navigation area with the vertical Google advert
-- [x] Show open tickets only, with a digital-illustration empty state and "Select a ticket from the list" only when open tickets exist
-
-## Talk channels
-- [x] Add the 300×250 Google advert (slot 8133272270) under the service status in the talk channel sidebar
-
-## Knowledge Base
-- [x] Fit the Welcome view within large screens and keep scrolling inside the page
-
-## Help Desk opening hours
-- [x] Add UK office and user-local opening times beneath the resolved-ticket message
-
-## Store orders
-- [x] Remove Orders from profiles and group Store order history by Jan–Dec
+## Done (recent)
+- [x] Header clocks + office-hours dialog, live dates, England public holiday closures
+- [x] Automated messages & emails admin section (Account setup / Sales / Support tickets / Emails), HTML-only email editor with secure image upload
+- [x] Account Not Activated screen inside security gate only, with appeal
+- [x] Store orders: buyer name beside price, details-on-demand, month/status tabs, no auto-tickets
+- [x] Password+PIN gates: Discount Codes, Manage Products, Members & Role Management, Shop Orders
