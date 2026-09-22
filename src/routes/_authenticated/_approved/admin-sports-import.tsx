@@ -1,5 +1,5 @@
 import { createFileRoute, Navigate, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,7 @@ export const Route = createFileRoute("/_authenticated/_approved/admin-sports-imp
 
 type Cat = { id: string; name: string };
 type Sub = { category_id: string; name: string; sort_order: number; is_default: boolean };
+type QueueDraft = { category: string; subcategories: string[]; title: string; time: string | null };
 type QueueItem = {
   id: string;
   raw_text: string;
@@ -64,6 +65,34 @@ function AdminSportsImportPage() {
   const approveAllFn = useServerFn(approveAllSuggested);
   const [bulkCategory, setBulkCategory] = useState<string>("");
   const [bulkSubcategory, setBulkSubcategory] = useState<string | null>(null);
+  // The three setup boxes live in the sidebar: tap a post, then work the sidebar.
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [draft, setDraft] = useState<QueueDraft>({ category: "", subcategories: [], title: "", time: null });
+  const timeStore = useRef<Map<string, string | null>>(new Map());
+
+  const selectItem = (q: QueueItem) => {
+    if (selectedId === q.id) return;
+    const ev = q.parsed_event ?? {};
+    const stored = timeStore.current.get(q.id);
+    setSelectedId(q.id);
+    setDraft({
+      category: String(ev.suggested_category ?? ""),
+      subcategories: ev.suggested_subcategory ? [String(ev.suggested_subcategory)] : [],
+      title: String(ev.title ?? ""),
+      time: stored ?? (ev.time ? String(ev.time) : null),
+    });
+  };
+
+  const clearSelection = () => {
+    setSelectedId(null);
+    setDraft({ category: "", subcategories: [], title: "", time: null });
+  };
+
+  const applyZoneToItem = (itemId: string, dual: string, zone: "gmt" | "et") => {
+    timeStore.current.set(itemId, dual);
+    if (itemId === selectedId) setDraft((d) => ({ ...d, time: dual }));
+    toast.success(`Time set from ${zone === "gmt" ? "UK" : "ET"} — ${dual}`);
+  };
 
   useEffect(() => {
     if (!isStaff) return;
@@ -380,41 +409,66 @@ function AdminSportsImportPage() {
                 Approve all suggested ({suggestedCount})
               </Button>
             </div>
-            {loadingQueue ? (
-              <div className="grid place-items-center py-10 text-muted-foreground">
-                <Loader2 className="size-5 animate-spin" />
-              </div>
-            ) : visibleQueue.length === 0 ? (
-              <Card className="p-10 grid place-items-center text-center text-muted-foreground gap-2">
-                <Inbox className="size-8" />
-                <p>{queue.length === 0 ? "Review queue is empty." : "Nothing from this source."}</p>
-                <p className="text-xs">Forward a listings post to your Telegram bot and it will appear here.</p>
-              </Card>
-            ) : (
-              groupedQueue.map(([groupName, items]) => (
-                <section key={groupName} className="space-y-2">
-                  <div className="flex items-center gap-2 pt-1">
-                    <h2 className="font-display text-sm font-bold uppercase tracking-wide text-muted-foreground">
-                      {groupName}
-                    </h2>
-                    <span className="px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground text-xs">
-                      {items.length}
-                    </span>
-                    <div className="h-px flex-1 bg-border" />
+
+            <div className="flex flex-col-reverse gap-4 lg:flex-row lg:items-start">
+              <div className="min-w-0 flex-1 space-y-3">
+                {loadingQueue ? (
+                  <div className="grid place-items-center py-10 text-muted-foreground">
+                    <Loader2 className="size-5 animate-spin" />
                   </div>
-                  {items.map((q) => (
-                    <QueueRow
-                      key={q.id}
-                      item={q}
-                      cats={cats}
-                      subsByCatName={subsByCatName}
-                      onResolved={refreshQueue}
-                      resolveFn={resolveFn}
-                    />
-                  ))}
-                </section>
-              ))
-            )}
+                ) : visibleQueue.length === 0 ? (
+                  <Card className="p-10 grid place-items-center text-center text-muted-foreground gap-2">
+                    <Inbox className="size-8" />
+                    <p>{queue.length === 0 ? "Review queue is empty." : "Nothing from this source."}</p>
+                    <p className="text-xs">Forward a listings post to your Telegram bot and it will appear here.</p>
+                  </Card>
+                ) : (
+                  groupedQueue.map(([groupName, items]) => (
+                    <section key={groupName} className="space-y-2">
+                      <div className="flex items-center gap-2 pt-1">
+                        <h2 className="font-display text-sm font-bold uppercase tracking-wide text-muted-foreground">
+                          {groupName}
+                        </h2>
+                        <span className="px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground text-xs">
+                          {items.length}
+                        </span>
+                        <div className="h-px flex-1 bg-border" />
+                      </div>
+                      {items.map((q) => {
+                        const stored = timeStore.current.get(q.id);
+                        const t =
+                          q.id === selectedId
+                            ? draft.time
+                            : stored ?? (q.parsed_event?.time ? String(q.parsed_event.time) : null);
+                        return (
+                          <QueueRow
+                            key={q.id}
+                            item={q}
+                            time={t}
+                            selected={selectedId === q.id}
+                            onSelect={() => selectItem(q)}
+                            onZoneApply={(dual, zone) => applyZoneToItem(q.id, dual, zone)}
+                          />
+                        );
+                      })}
+                    </section>
+                  ))
+                )}
+              </div>
+
+              <aside className="w-full shrink-0 lg:sticky lg:top-6 lg:w-[340px]">
+                <QueueSetup
+                  item={visibleQueue.find((q) => q.id === selectedId) ?? null}
+                  cats={cats}
+                  subsByCatName={subsByCatName}
+                  draft={draft}
+                  setDraft={setDraft}
+                  onDone={clearSelection}
+                  onResolved={refreshQueue}
+                  resolveFn={resolveFn}
+                />
+              </aside>
+            </div>
           </TabsContent>
         </Tabs>
       </div>
@@ -499,73 +553,33 @@ function EventRow({
 
 function QueueRow({
   item,
-  cats,
-  subsByCatName,
-  onResolved,
-  resolveFn,
+  time,
+  selected,
+  onSelect,
+  onZoneApply,
 }: {
   item: QueueItem;
-  cats: Cat[];
-  subsByCatName: Map<string, Sub[]>;
-  onResolved: () => void;
-  resolveFn: (args: any) => Promise<any>;
+  time: string | null;
+  selected: boolean;
+  onSelect: () => void;
+  onZoneApply: (dual: string, zone: "gmt" | "et") => void;
 }) {
   const ev = item.parsed_event ?? {};
-  const [title, setTitle] = useState<string>(String(ev.title ?? ""));
-  const [category, setCategory] = useState<string>(String(ev.suggested_category ?? ""));
-  const [subcategories, setSubcategories] = useState<string[]>(
-    ev.suggested_subcategory ? [String(ev.suggested_subcategory)] : [],
-  );
-  const [busy, setBusy] = useState<"import" | "discard" | null>(null);
-  const [time, setTime] = useState<string | null>(ev.time ?? null);
-  const subs = category ? subsByCatName.get(category) ?? [] : [];
 
   // Telegram blocks arrive whole with no time pulled out — fall back to the
   // first clock time written inside the post itself.
   const zoneSource = time ?? firstClockIn(String(ev.raw ?? item.raw_text ?? ""));
   const zoneDate = ev.date ?? firstDateIn(String(ev.raw ?? item.raw_text ?? ""));
-
-  // Offer the zone buttons whenever the post lists a single time without
-  // both zones spelled out — and only when we can actually read the clock.
   const needsZone = !hasBothZones(time) && parseClockTime(zoneSource) !== null;
 
-  const applyZone = (zone: "gmt" | "et") => {
-    const dual = buildDualTime(zoneSource, zoneDate, zone);
-    if (!dual) return toast.error("Couldn't read the time on this post");
-    setTime(dual);
-    toast.success(`Time set from ${zone === "gmt" ? "UK" : "ET"} — ${dual}`);
-  };
-
-  const run = async (action: "import" | "discard") => {
-    if (action === "import" && !category) return toast.error("Pick a category");
-    setBusy(action);
-    try {
-      await resolveFn({
-        data: {
-          id: item.id,
-          action,
-          category: category || undefined,
-          subcategories,
-          title,
-          time,
-        },
-      });
-      toast.success(
-        action === "import"
-          ? `Posted live to the guide${subcategories.length > 1 ? ` in ${subcategories.length} subcategories` : ""}`
-          : "Discarded",
-      );
-      onResolved();
-    } catch (e: any) {
-      toast.error(e.message ?? "Failed");
-    } finally {
-      setBusy(null);
-    }
-  };
-
   return (
-    <Card className="p-3 space-y-2">
-      {ev.raw && <pre className="text-xs bg-muted/50 rounded p-2 whitespace-pre-wrap break-words max-h-24 overflow-auto">{ev.raw}</pre>}
+    <Card
+      onClick={onSelect}
+      className={`cursor-pointer space-y-2 p-3 transition ${
+        selected ? "ring-2 ring-primary" : "hover:ring-1 hover:ring-primary/40"
+      }`}
+    >
+      {ev.raw && <pre className="max-h-24 overflow-auto whitespace-pre-wrap break-words rounded bg-muted/50 p-2 text-xs">{ev.raw}</pre>}
       <div className="text-xs text-muted-foreground">
         {[ev.date, time].filter(Boolean).join(" · ")}
         {Array.isArray(ev.channels) && ev.channels.length > 0 && <> · {ev.channels.join(" • ")}</>}
@@ -574,37 +588,145 @@ function QueueRow({
         )}
       </div>
       {needsZone && (
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2" onClick={(e) => e.stopPropagation()}>
           <span className="text-[11px] text-muted-foreground">Start time in this post is:</span>
-          <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => applyZone("gmt")}>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 px-2 text-xs"
+            onClick={() => {
+              const dual = buildDualTime(zoneSource, zoneDate, "gmt");
+              if (!dual) return toast.error("Couldn't read the time on this post");
+              onZoneApply(dual, "gmt");
+            }}
+          >
             <Clock className="size-3" /> UK
           </Button>
-          <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => applyZone("et")}>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 px-2 text-xs"
+            onClick={() => {
+              const dual = buildDualTime(zoneSource, zoneDate, "et");
+              if (!dual) return toast.error("Couldn't read the time on this post");
+              onZoneApply(dual, "et");
+            }}
+          >
             <Clock className="size-3" /> ET
           </Button>
         </div>
       )}
-      <div className="space-y-1">
-        <span className="text-[11px] font-medium text-muted-foreground">1 · Category</span>
-        <Select value={category} onValueChange={(v) => { setCategory(v); setSubcategories([]); }}>
-          <SelectTrigger><SelectValue placeholder="Pick a category" /></SelectTrigger>
-          <SelectContent>
-            {cats.map((c) => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
-          </SelectContent>
-        </Select>
+      {!selected && (
+        <p className="text-[11px] text-primary/80">Tap to set it up in the sidebar →</p>
+      )}
+    </Card>
+  );
+}
+
+// The sidebar: 1 · categories we have, 2 · subcategories we have,
+// 3 · the name of the guide — then the import buttons underneath.
+function QueueSetup({
+  item,
+  cats,
+  subsByCatName,
+  draft,
+  setDraft,
+  onDone,
+  onResolved,
+  resolveFn,
+}: {
+  item: QueueItem | null;
+  cats: Cat[];
+  subsByCatName: Map<string, Sub[]>;
+  draft: QueueDraft;
+  setDraft: (d: QueueDraft) => void;
+  onDone: () => void;
+  onResolved: () => void;
+  resolveFn: (args: any) => Promise<any>;
+}) {
+  const [busy, setBusy] = useState<"import" | "discard" | null>(null);
+  const subs = draft.category ? subsByCatName.get(draft.category) ?? [] : [];
+
+  const run = async (action: "import" | "discard") => {
+    if (!item) return;
+    if (action === "import" && !draft.category) return toast.error("Pick a category");
+    setBusy(action);
+    try {
+      await resolveFn({
+        data: {
+          id: item.id,
+          action,
+          category: draft.category || undefined,
+          subcategories: draft.subcategories,
+          title: draft.title,
+          time: draft.time,
+        },
+      });
+      toast.success(
+        action === "import"
+          ? `Posted live to the guide${draft.subcategories.length > 1 ? ` in ${draft.subcategories.length} subcategories` : ""}`
+          : "Discarded",
+      );
+      onDone();
+      onResolved();
+    } catch (e: any) {
+      toast.error(e.message ?? "Failed");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  if (!item) {
+    return (
+      <Card className="space-y-2 p-6 text-center text-muted-foreground">
+        <Inbox className="mx-auto size-6" />
+        <p className="text-sm">Pick a post from the queue to set it up here.</p>
+        <p className="text-xs">Category → subcategories → name of the guide.</p>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="space-y-3 p-4">
+      <div className="min-w-0">
+        <p className="text-[11px] font-medium text-muted-foreground">Setting up</p>
+        <p className="truncate text-sm font-medium">{draft.title || "Untitled post"}</p>
       </div>
-      {subs.length > 0 && (
-        <div className="space-y-1.5">
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[11px] font-medium text-muted-foreground">
-              2 · Sub Category{subcategories.length > 0 && ` · ${subcategories.length} selected`}
-            </span>
+
+      <div className="space-y-1.5">
+        <span className="text-[11px] font-medium text-muted-foreground">1 · Category names we have</span>
+        <div className="max-h-44 divide-y divide-border overflow-y-auto rounded-lg border border-border">
+          {cats.map((c) => {
+            const on = draft.category === c.name;
+            return (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => setDraft({ ...draft, category: c.name, subcategories: [] })}
+                className={`flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm transition ${
+                  on ? "bg-primary/10 font-medium text-primary" : "hover:bg-muted/60"
+                }`}
+              >
+                <span className="truncate">{c.name}</span>
+                {on && <span className="text-xs">✓</span>}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="space-y-1.5">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-[11px] font-medium text-muted-foreground">
+            2 · The sub categories we have{draft.subcategories.length > 0 && ` · ${draft.subcategories.length} selected`}
+          </span>
+          {subs.length > 0 && (
             <div className="flex gap-1">
               <Button
                 size="sm"
                 variant="outline"
                 className="h-6 px-2 text-[11px]"
-                onClick={() => setSubcategories(subs.map((s) => s.name))}
+                onClick={() => setDraft({ ...draft, subcategories: subs.map((s) => s.name) })}
               >
                 Select all
               </Button>
@@ -612,23 +734,28 @@ function QueueRow({
                 size="sm"
                 variant="ghost"
                 className="h-6 px-2 text-[11px]"
-                onClick={() => setSubcategories([])}
+                onClick={() => setDraft({ ...draft, subcategories: [] })}
               >
                 Clear
               </Button>
             </div>
-          </div>
+          )}
+        </div>
+        {subs.length > 0 ? (
           <div className="flex flex-wrap gap-1.5">
             {subs.map((s) => {
-              const on = subcategories.includes(s.name);
+              const on = draft.subcategories.includes(s.name);
               return (
                 <button
                   key={s.name}
                   type="button"
                   onClick={() =>
-                    setSubcategories((prev) =>
-                      prev.includes(s.name) ? prev.filter((n) => n !== s.name) : [...prev, s.name],
-                    )
+                    setDraft({
+                      ...draft,
+                      subcategories: on
+                        ? draft.subcategories.filter((n) => n !== s.name)
+                        : [...draft.subcategories, s.name],
+                    })
                   }
                   className={`rounded-full px-2.5 py-1 text-[11px] ring-1 transition ${
                     on
@@ -641,18 +768,29 @@ function QueueRow({
               );
             })}
           </div>
-        </div>
-      )}
-      <div className="space-y-1">
-        <span className="text-[11px] font-medium text-muted-foreground">3 · Name of the guide</span>
-        <Input value={title} onChange={(e) => setTitle(e.target.value)} className="font-medium" placeholder="Name of the guide" />
+        ) : (
+          <p className="text-[11px] text-muted-foreground">
+            {draft.category ? "No subcategories in this category." : "Pick a category first."}
+          </p>
+        )}
       </div>
+
+      <div className="space-y-1">
+        <span className="text-[11px] font-medium text-muted-foreground">3 · The name of the guide we created</span>
+        <Input
+          value={draft.title}
+          onChange={(e) => setDraft({ ...draft, title: e.target.value })}
+          className="font-medium"
+          placeholder="Name of the guide"
+        />
+      </div>
+
       <div className="flex justify-end gap-2">
         <Button variant="outline" size="sm" onClick={() => run("discard")} disabled={busy !== null}>
           {busy === "discard" ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
           Discard
         </Button>
-        <Button size="sm" onClick={() => run("import")} disabled={busy !== null || !category}>
+        <Button size="sm" onClick={() => run("import")} disabled={busy !== null || !draft.category}>
           {busy === "import" ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
           Import
         </Button>
