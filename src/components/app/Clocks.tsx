@@ -11,6 +11,12 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import {
+  bankHolidayName,
+  londonDateKey,
+  useUkBankHolidays,
+  type BankHolidayMap,
+} from "@/lib/uk-bank-holidays";
 
 type OfficeHour = {
   day_of_week: number;
@@ -49,7 +55,9 @@ function formatOfficeTime(time: string) {
   return new Intl.DateTimeFormat("en-GB", { hour: "numeric", minute: "2-digit", hour12: true }).format(new Date(2000, 0, 1, hours, minutes));
 }
 
-function isOfficeOpen(hours: OfficeHour[], now: Date) {
+function isOfficeOpen(hours: OfficeHour[], now: Date, holidays: BankHolidayMap = {}) {
+  // England & Wales public holidays close the office regardless of the weekly hours.
+  if (bankHolidayName(holidays, now)) return false;
   const londonDayName = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", weekday: "short" }).format(now);
   const londonDay = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(londonDayName);
   const londonParts = new Intl.DateTimeFormat("en-GB", {
@@ -76,6 +84,7 @@ function isOfficeOpen(hours: OfficeHour[], now: Date) {
 
 export function Clocks() {
   const timezone = useUserTimezone();
+  const holidays = useUkBankHolidays();
   const [open, setOpen] = useState(false);
   const [hours, setHours] = useState<OfficeHour[]>([]);
   const [now, setNow] = useState(() => new Date());
@@ -126,7 +135,7 @@ export function Clocks() {
     return uk.format(openD) !== local.format(openD) || uk.format(closeD) !== local.format(closeD);
   });
   const timezoneLabel = timezone.replaceAll("_", " ").replace("/", " / ");
-  const officeOpen = isOfficeOpen(hours, now);
+  const officeOpen = isOfficeOpen(hours, now, holidays);
   // Header clock: the visitor's own device time + date, ticking live.
   const headerTime = new Intl.DateTimeFormat("en-GB", {
     hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
@@ -215,11 +224,14 @@ export function Clocks() {
               </div>
             )}
             {[...hours].sort((a, b) => ((a.day_of_week + 6) % 7) - ((b.day_of_week + 6) % 7)).map((hour) => {
-              const localOpen = hour.is_closed ? null : londonTimeToDate(hour.day_of_week, hour.open_time);
-              const localClose = hour.is_closed ? null : londonTimeToDate(hour.day_of_week, hour.close_time);
+              const rowDate = londonTimeToDate(hour.day_of_week, "12:00");
+              const holidayName = holidays[londonDateKey(rowDate)] ?? null;
+              const closed = hour.is_closed || Boolean(holidayName);
+              const localOpen = closed ? null : londonTimeToDate(hour.day_of_week, hour.open_time);
+              const localClose = closed ? null : londonTimeToDate(hour.day_of_week, hour.close_time);
               const localFormat = new Intl.DateTimeFormat("en-GB", { timeZone: timezone, hour: "numeric", minute: "2-digit", hour12: true });
               const officeDate = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", day: "numeric", month: "short" })
-                .format(londonTimeToDate(hour.day_of_week, hour.is_closed ? "00:00" : hour.open_time));
+                .format(londonTimeToDate(hour.day_of_week, closed ? "00:00" : hour.open_time));
               const userDateFormat = new Intl.DateTimeFormat("en-GB", { timeZone: timezone, day: "numeric", month: "short" });
               const userOpenDate = userDateFormat.format(localOpen ?? londonTimeToDate(hour.day_of_week, "00:00"));
               const userCloseDate = localClose ? userDateFormat.format(localClose) : userOpenDate;
@@ -233,13 +245,16 @@ export function Clocks() {
                     </div>
                   </div>
                   <div className="border-b border-l border-border/50 px-3 py-2 text-muted-foreground">
-                    {hour.is_closed ? "Closed" : `${formatOfficeTime(hour.open_time)}–${formatOfficeTime(hour.close_time)}`}
+                    {closed ? "Closed" : `${formatOfficeTime(hour.open_time)}–${formatOfficeTime(hour.close_time)}`}
+                    {holidayName && (
+                      <div className="text-[11px] text-muted-foreground">{holidayName} (public holiday)</div>
+                    )}
                   </div>
                   {showUserColumn && (
                     <div className="border-b border-l border-border/50 px-3 py-2 text-muted-foreground">
                       <div className="flex flex-wrap items-center gap-1.5">
                         <span className="text-[11px] text-muted-foreground">{userDate}</span>
-                        <span>{hour.is_closed || !localOpen || !localClose ? "Closed" : `${localFormat.format(localOpen)}–${localFormat.format(localClose)}`}</span>
+                        <span>{closed || !localOpen || !localClose ? "Closed" : `${localFormat.format(localOpen)}–${localFormat.format(localClose)}`}</span>
                       </div>
                     </div>
                   )}
