@@ -151,21 +151,25 @@ export function NextShiftPanel({
       </div>
       {/* Two aligned columns: date on the left, time on the right, never wrapping. */}
       <div className="mt-1.5 grid grid-cols-[1fr_auto] items-center gap-x-2 gap-y-1">
-        <span className="whitespace-nowrap text-[10px] leading-tight text-muted-foreground">{startDate}</span>
-        <span className="whitespace-nowrap font-mono text-[13px] font-semibold leading-tight tabular-nums text-foreground">
+        <span className={cn("whitespace-nowrap text-[10px] leading-tight", amber ? "text-amber-100/80" : "text-muted-foreground")}>
+          {startDate}
+        </span>
+        <span className={cn("whitespace-nowrap font-mono text-[13px] font-semibold leading-tight tabular-nums", amber ? "text-white" : "text-foreground")}>
           {crosses ? startTime : `${startTime}–${endTime}`}
         </span>
         {crosses && (
           <>
             <div className="col-span-2 flex items-center gap-1.5">
-              <span className="h-px flex-1 bg-border/70" />
-              <span className="whitespace-nowrap text-[9px] uppercase tracking-wider text-muted-foreground">
+              <span className={cn("h-px flex-1", amber ? "bg-amber-300/30" : "bg-border/70")} />
+              <span className={cn("whitespace-nowrap text-[9px] uppercase tracking-wider", amber ? "text-amber-100/70" : "text-muted-foreground")}>
                 next day
               </span>
-              <span className="h-px flex-1 bg-border/70" />
+              <span className={cn("h-px flex-1", amber ? "bg-amber-300/30" : "bg-border/70")} />
             </div>
-            <span className="whitespace-nowrap text-[10px] leading-tight text-muted-foreground">{endDate}</span>
-            <span className="whitespace-nowrap font-mono text-[13px] font-semibold leading-tight tabular-nums text-foreground">
+            <span className={cn("whitespace-nowrap text-[10px] leading-tight", amber ? "text-amber-100/80" : "text-muted-foreground")}>
+              {endDate}
+            </span>
+            <span className={cn("whitespace-nowrap font-mono text-[13px] font-semibold leading-tight tabular-nums", amber ? "text-white" : "text-foreground")}>
               {endTime}
             </span>
           </>
