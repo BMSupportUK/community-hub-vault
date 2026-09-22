@@ -386,6 +386,7 @@ export function OfficeHoursSchedule({
 
 export function Clocks() {
   const holidays = useUkBankHolidays();
+  const timezone = useUserTimezone();
   const [open, setOpen] = useState(false);
   const [hours, setHours] = useState<OfficeHour[]>([]);
   const [now, setNow] = useState(() => new Date());
