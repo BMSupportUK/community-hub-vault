@@ -171,6 +171,20 @@ function ProfilePage() {
 
   const isOwner = !!profile && !!viewer && profile.id === viewer.id;
   const canSeeCreds = isOwner || isAdmin;
+  // Staff accounts don't get the subscription box on the home page; they see it
+  // here instead, but only when login credentials have been assigned to them.
+  const [hasAssignedCreds, setHasAssignedCreds] = useState(false);
+  useEffect(() => {
+    if (!profile?.id) { setHasAssignedCreds(false); return; }
+    let active = true;
+    supabase
+      .from("app_credentials")
+      .select("id")
+      .eq("owner_id", profile.id)
+      .limit(1)
+      .then(({ data }) => { if (active) setHasAssignedCreds((data ?? []).length > 0); });
+    return () => { active = false; };
+  }, [profile?.id]);
   const canSeeReferrals = isOwner || isAdmin;
 
   useEffect(() => {
