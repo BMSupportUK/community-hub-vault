@@ -575,14 +575,12 @@ function ShiftsPage() {
 
   const addSlot = async () => {
     if (!newSlot.date) return toast.error("Date required");
-    let start = newSlot.start, end = newSlot.end, notes = newSlot.notes;
+    const start = newSlot.start, end = newSlot.end;
     if (newSlot.type === "shift") {
       const p = presets.find((pp) => pp.id === newSlot.presetId);
       if (!p) return toast.error("Pick a block preset");
       const dow = new Date(newSlot.date + "T00:00:00").getDay();
       if (!p.days.includes(dow)) return toast.error(`${p.label} can't be used on this day`);
-      start = p.start; end = p.end;
-      notes = notes || p.label;
     } else if (!start || !end) {
       return toast.error("Start and end required");
     }
@@ -592,7 +590,7 @@ function ShiftsPage() {
       end_time: end,
       slot_type: newSlot.type,
       required_role: newSlot.type === "hourly" ? "moderator" : newSlot.role,
-      notes: notes || null,
+      notes: newSlot.notes.trim() || null,
       created_by: user?.id ?? null,
     });
     if (error) {
@@ -608,7 +606,7 @@ function ShiftsPage() {
     if (!date) return toast.error("Pick a date");
     const { error } = await supabase.from("shift_slots").insert({
       shift_date: date, start_time: preset.start, end_time: preset.end,
-      slot_type: "shift", required_role: role, notes: preset.label, created_by: user?.id ?? null,
+      slot_type: "shift", required_role: role, notes: null, created_by: user?.id ?? null,
     });
     if (error) {
       if ((error as any).code === "23505") return toast.error(`${preset.label} already exists for this date`);
@@ -629,7 +627,7 @@ function ShiftsPage() {
           Array.from({ length: ROLE_SHIFT_QUOTA[role] ?? 0 }, () => ({
             shift_date: fmtDate(d), start_time: p.start, end_time: p.end,
             slot_type: "shift" as SlotType, required_role: role,
-            notes: `${p.label} — ${roleLabel(role)}`, created_by: user?.id ?? null,
+            notes: null, created_by: user?.id ?? null,
           })),
         );
       }) as any[];
