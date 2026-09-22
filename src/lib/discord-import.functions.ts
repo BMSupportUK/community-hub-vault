@@ -270,7 +270,7 @@ export const importParsedEvents = createServerFn({ method: "POST" })
           excerpt: e.time ? `${e.date ? e.date + " · " : ""}${e.time}` : (e.date ?? null),
           body: buildBody(e),
           image_url: coverMap.get(coverKey) ?? null,
-          published: false,
+          published: true,
           created_by: userId,
         };
       })
@@ -384,7 +384,7 @@ export const resolveQueueItem = createServerFn({ method: "POST" })
           excerpt: ev.time ? `${ev.date ? ev.date + " · " : ""}${ev.time}` : (ev.date ?? null),
           body: buildBody(ev),
           image_url: await ensureSportCover((cat as any).id, data.category!, sub),
-          published: false,
+          published: true,
           created_by: userId,
         })),
       );
@@ -449,7 +449,7 @@ export const approveAllSuggested = createServerFn({ method: "POST" })
           excerpt: ev.time ? `${ev.date ? ev.date + " · " : ""}${ev.time}` : (ev.date ?? null),
           body: buildBody(ev),
           image_url: coverUrl,
-          published: false,
+          published: true,
           created_by: userId,
         });
         if (insErr) continue;
