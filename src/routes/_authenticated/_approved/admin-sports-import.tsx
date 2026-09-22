@@ -31,6 +31,7 @@ type Cat = { id: string; name: string; parent_id: string | null; sort_order: num
 type Sub = { category_id: string; name: string; sort_order: number; is_default: boolean };
 type QueueDraft = {
   category: string;
+  group?: string;
   destinationCategory: string;
   subcategories: string[];
   title: string;
@@ -708,7 +709,7 @@ function QueueSetup({
           id: item.id,
           action,
           category: draft.destinationCategory || undefined,
-          subcategories: draft.guideId || childCategories.length > 0 ? [] : draft.subcategories,
+          subcategories: draft.guideId ? [] : draft.subcategories,
           title: draft.title,
           guideId: draft.guideId ?? undefined,
           time: draft.time,
