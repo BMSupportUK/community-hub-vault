@@ -58,7 +58,7 @@ function ViewingLine({ userId }: { userId: string }) {
   const page = useUserPage(userId);
   if (!page) return null;
   return (
-    <div className="mt-1 flex items-center gap-1 text-[10px] text-muted-foreground min-w-0">
+    <div className="mt-1 flex items-center gap-1 text-[10px] font-medium text-white/85 min-w-0">
       <MapPin className="size-3 shrink-0" />
       <span className="truncate">{page}</span>
     </div>
@@ -520,7 +520,7 @@ export function StaffOnDutyStrip({
               ) : inChat ? (
                 <div className="text-[10px] font-semibold text-emerald-500">Off duty but chatting</div>
               ) : (
-                <div className="text-[10px] text-muted-foreground">Off duty</div>
+                <div className="text-[10px] font-semibold text-amber-300">Off duty</div>
               )}
             </div>
             <ViewingLine userId={p.id} />
