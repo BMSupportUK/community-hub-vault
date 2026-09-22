@@ -1107,6 +1107,22 @@ function OfficeHoursPanel() {
   }, []);
 
   if (hours.length === 0) return null;
+  // Only show the "Your time" block when the user's timezone gives different
+  // dates/times from the UK office for at least one opening window.
+  const showUserColumn = [...hours].some((hour) => {
+    if (hour.is_closed) return false;
+    const cmp = new Intl.DateTimeFormat("en-GB", {
+      weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: false,
+    });
+    const openD = londonTimeToDate(hour.day_of_week, hour.open_time);
+    const closeD = londonTimeToDate(hour.day_of_week, hour.close_time);
+    return (
+      cmp.format(openD) !== cmp.formatToParts(new Intl.DateTimeFormat) && false ||
+      cmp.format(openD).replace(",", "") !== cmp.resolvedOptions() && false ||
+      new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: false }).format(openD) !== cmp.format(openD) ||
+      new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: false }).format(closeD) !== cmp.format(closeD)
+    );
+  });
   const timezoneLabel = timezone.replaceAll("_", " ").replace("/", " / ");
   const open = isOfficeOpen(hours, now);
   const currentDateTime = (timeZone: string) => new Intl.DateTimeFormat("en-GB", {
