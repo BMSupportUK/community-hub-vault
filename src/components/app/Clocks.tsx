@@ -444,13 +444,17 @@ export function Clocks() {
   });
   const officeTime = officeFormatter.format(now);
   const officeDate = officeDateFormatter.format(now);
-  // Header clock: the visitor's own device time + date, ticking live.
+  // Header clock: the visitor's own device time + date, ticking live — but
+  // only shown when the device actually reads a different time to the office.
   const headerTime = new Intl.DateTimeFormat("en-GB", {
+    timeZone: timezone,
     hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false,
   }).format(now);
   const headerDate = new Intl.DateTimeFormat("en-GB", {
+    timeZone: timezone,
     weekday: "short", day: "numeric", month: "short",
   }).format(now);
+  const showUserClock = headerTime !== officeTime || headerDate !== officeDate;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
