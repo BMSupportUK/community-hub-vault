@@ -1018,11 +1018,11 @@ function OfficeHoursPanel() {
     <section className="mt-6 overflow-hidden rounded-lg border border-border/70 bg-background/30">
       <div className="flex items-center gap-2 border-b border-border/70 px-4 py-3">
         <Building2 className="size-4 shrink-0 text-primary" />
-        <h3 className="font-display text-sm font-semibold">Office opening times</h3>
-        <span className="ml-auto text-[11px] text-muted-foreground">Our UK office hours, with your local times alongside.</span>
+        <h3 className="font-display text-sm font-semibold">Support Open Times</h3>
+        <span className="ml-auto text-[11px] text-muted-foreground">Our UK support hours, with your local times alongside.</span>
       </div>
       <div className="px-4 py-3">
-        <OfficeHoursSchedule channelName="ticket-office-hours-live" />
+        <OfficeHoursSchedule channelName="ticket-office-hours-live" layout="compact" />
       </div>
     </section>
   );
