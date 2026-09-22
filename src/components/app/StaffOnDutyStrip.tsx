@@ -401,9 +401,9 @@ export function StaffOnDutyStrip({
             : "bg-emerald-400/25 border-emerald-200/50",
         )}
       >
-        <div className="flex items-center gap-2 min-w-0">
+        <div className="flex items-start gap-2 min-w-0">
           <div className="relative shrink-0">
-            <img src={resolveAvatarUrl(s.user_id, p?.avatar_url, roleFlashMap)} alt={name} className="size-8 rounded-full object-cover ring-2 ring-white/40" />
+            <img src={resolveAvatarUrl(s.user_id, p?.avatar_url, roleFlashMap)} alt={name} className="size-9 rounded-full object-cover ring-2 ring-white/40" />
             <PresenceDot
               userId={s.user_id}
               baseClass={onBreak ? (over ? "bg-red-500" : "bg-amber-400") : "bg-emerald-500"}
@@ -414,7 +414,7 @@ export function StaffOnDutyStrip({
             <Nameplate
               id={p?.equipped_nameplate_id}
               className={cn(
-                "flex flex-col justify-center w-full rounded-md px-2 py-1 shadow-sm isolate",
+                "flex flex-col justify-center w-full min-h-9 rounded-md px-2 py-1 shadow-sm isolate",
                 isTickets ? "pr-2" : "pr-12",
               )}
             >
@@ -482,13 +482,13 @@ export function StaffOnDutyStrip({
           isTickets ? "w-full sm:w-[260px] shrink-0" : "w-full",
         )}
       >
-        <div className="flex items-center gap-2 min-w-0">
+        <div className="flex items-start gap-2 min-w-0">
           <div className="relative shrink-0">
             <img
               src={resolveAvatarUrl(p.id, p.avatar_url, roleFlashMap)}
               alt={name}
               className={cn(
-                "size-8 rounded-full object-cover",
+                "size-9 rounded-full object-cover",
                 dane || inChat ? "ring-2 ring-white/40" : "ring-2 ring-white/20 opacity-70 grayscale",
               )}
             />
@@ -502,7 +502,7 @@ export function StaffOnDutyStrip({
             <Nameplate
               id={p.equipped_nameplate_id}
               className={cn(
-                "flex flex-col justify-center w-full rounded-md px-2 py-1 shadow-sm isolate",
+                "flex flex-col justify-center w-full min-h-9 rounded-md px-2 py-1 shadow-sm isolate",
                 dane || inChat ? "" : "opacity-80",
                 isTickets ? "pr-2" : "pr-12",
               )}
