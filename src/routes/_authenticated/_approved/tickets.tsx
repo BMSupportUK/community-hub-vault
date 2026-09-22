@@ -470,8 +470,8 @@ function TicketsPage() {
 
       {/* Tabs — hidden when actively chatting on a ticket */}
       <div className={cn(
-        "relative z-10 flex h-full min-h-0 flex-col border-t border-white/20 px-6 pb-10 md:px-10",
-        !isChatting && "overflow-y-auto pt-6",
+        "relative z-10 flex h-full min-h-0 flex-col border-t border-white/20 px-6 pb-4 md:px-10",
+        !isChatting && "overflow-y-auto pt-3",
         tab === "open" && "lg:overflow-hidden",
         isChatting && "px-0 md:px-0 pb-0 h-full"
       )}>
@@ -486,9 +486,9 @@ function TicketsPage() {
           )}
         >
           {tab !== "tickets" && (
-            <header className="w-full pt-6">
-              <div aria-hidden="true" className="mb-6 h-px w-full bg-white/60 shadow-[0_0_12px_rgba(255,255,255,0.55)]" />
-              <div className="flex flex-wrap items-center justify-center gap-3 md:gap-4 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-[0_0_50px_-12px_rgba(244,63,94,0.35)] p-3 md:p-4">
+            <header className="w-full pt-3">
+              <div aria-hidden="true" className="mb-4 h-px w-full bg-white/60 shadow-[0_0_12px_rgba(255,255,255,0.55)]" />
+              <div className="flex flex-wrap items-center justify-center gap-2.5 md:gap-3 rounded-3xl bg-white/10 backdrop-blur-xl border border-white/20 shadow-[0_0_50px_-12px_rgba(244,63,94,0.35)] p-2.5 md:p-3">
                 <button
                   type="button"
                   onClick={() => { setCreating(false); setTab("welcome"); navigate({ to: "/tickets", search: { id: undefined, view } }); }}

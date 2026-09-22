@@ -238,11 +238,15 @@ export function OfficeHoursSchedule({
                       ) : (
                         <div className="font-mono text-sm leading-snug tabular-nums text-foreground">
                           <div>
-                            <span className="text-[11px] text-muted-foreground">{userOpenDate}</span>{" "}
+                            {userOpenDate !== officeDate && (
+                              <span className="text-[11px] text-muted-foreground">{userOpenDate}</span>
+                            )}{" "}
                             {localFormat.format(localOpen)}
                           </div>
                           <div>
-                            <span className="text-[11px] text-muted-foreground">{userCloseDate}</span>{" "}
+                            {userCloseDate !== officeDate && (
+                              <span className="text-[11px] text-muted-foreground">{userCloseDate}</span>
+                            )}{" "}
                             {localFormat.format(localClose)}
                           </div>
                         </div>
