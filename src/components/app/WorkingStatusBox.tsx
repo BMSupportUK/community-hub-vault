@@ -150,15 +150,13 @@ export function WorkingStatusBox({
   }, [user?.id]);
 
   // Sign-in opens 15 minutes before the rota start time and closes at shift end.
+  // Compared in UK office time so staff on other device timezones get the same window.
   const canSignIn = (() => {
     if (!todayWindow) return false;
     const [sh, sm] = todayWindow.start.split(":").map(Number);
-    const opensAt = new Date(now);
-    opensAt.setHours(sh, sm - 15, 0, 0);
-    const t = new Date(now);
-    const pad = (n: number) => String(n).padStart(2, "0");
-    const nowTime = `${pad(t.getHours())}:${pad(t.getMinutes())}:${pad(t.getSeconds())}`;
-    return now >= opensAt.getTime() && nowTime <= todayWindow.end;
+    const { time: nowTime, minutes: nowMinutes } = londonNow(now);
+    const opensAtMinutes = sh * 60 + sm - 15;
+    return nowMinutes >= opensAtMinutes && nowTime <= todayWindow.end;
   })();
 
   const clockIn = async () => {
