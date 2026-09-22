@@ -2955,7 +2955,7 @@ function OrdersView({
     "processing",
   );
   const [month, setMonth] = useState(() => new Date().getMonth());
-  const currentYear = new Date().getFullYear();
+  const [year, setYear] = useState(() => new Date().getFullYear());
   const monthLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
   const clearSelectedOrder = () => {
     if (!selectedId) return;
