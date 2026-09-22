@@ -365,7 +365,7 @@ export const resolveQueueItem = createServerFn({ method: "POST" })
         .maybeSingle();
       if (cErr) throw new Error(cErr.message);
       if (!cat) throw new Error("Category not found");
-      const ev: any = { ...(item.parsed_event ?? {}) };
+      const ev: any = { ...((item.parsed_event ?? {}) as Record<string, unknown>) };
       if (data.time !== undefined) ev.time = data.time;
       const title = data.title ?? ev.title ?? "Untitled";
       const coverUrl = await ensureSportCover((cat as any).id, data.category, data.subcategory ?? null);
