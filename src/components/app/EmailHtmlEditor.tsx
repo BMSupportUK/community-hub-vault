@@ -65,6 +65,33 @@ export function EmailHtmlEditor({ value, onChange, placeholders }: Props) {
     });
   };
 
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const upload = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please choose an image file");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Images must be 5MB or smaller");
+      return;
+    }
+    setUploading(true);
+    const ext = (file.name.split(".").pop() ?? "png").replace(/[^a-z0-9]/gi, "").toLowerCase();
+    const name = `${crypto.randomUUID()}.${ext || "png"}`;
+    const { error } = await supabase.storage
+      .from("email-assets")
+      .upload(name, file, { contentType: file.type, upsert: false });
+    setUploading(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    wrap(`<img src="${IMAGE_BASE}/${name}" alt="" width="560" style="display:block;max-width:100%" />`);
+    toast.success("Image uploaded");
+  };
+
   return (
     <div className="mt-1">
       <div className="mb-2 flex flex-wrap items-center gap-2">
