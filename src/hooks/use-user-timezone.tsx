@@ -10,86 +10,57 @@ export const browserTimezone = () => {
   }
 };
 
-const cache = new Map<string, string>();
 const USER_TIMEZONE_EVENT = "bm-user-timezone-change";
-const storageKey = (userId: string) => `bm-user-timezone:${userId}`;
-
-function storedTimezone(userId: string): string | null {
-  if (typeof window === "undefined") return null;
-  try {
-    return window.localStorage.getItem(storageKey(userId));
-  } catch {
-    return null;
-  }
-}
+const syncedTimezone = new Map<string, string>();
 
 export function announceUserTimezone(userId: string, timezone: string) {
-  cache.set(userId, timezone);
   if (typeof window !== "undefined") {
-    try {
-      window.localStorage.setItem(storageKey(userId), timezone);
-    } catch {
-      /* Storage can be unavailable in private browsing. */
-    }
     window.dispatchEvent(new CustomEvent(USER_TIMEZONE_EVENT, { detail: { userId, timezone } }));
   }
 }
 
-/** Returns the signed-in user's saved timezone, falling back to the browser timezone. */
+/** Returns the browser's current timezone and follows system timezone changes live. */
 export function useUserTimezone(): string {
   const { user } = useAuth();
-  const [tz, setTz] = useState<string>(() =>
-    (user && (cache.get(user.id) || storedTimezone(user.id))) || browserTimezone(),
-  );
+  const [tz, setTz] = useState("UTC");
 
   useEffect(() => {
-    const detected = browserTimezone();
-    if (!user) {
-      setTz(detected);
-      return;
-    }
-    let active = true;
-    const apply = (next: string) => {
-      cache.set(user.id, next);
-      try {
-        window.localStorage.setItem(storageKey(user.id), next);
-      } catch {
-        /* Storage can be unavailable in private browsing. */
+    const syncDetectedTimezone = () => {
+      const detected = browserTimezone();
+      setTz((current) => current === detected ? current : detected);
+
+      if (user && syncedTimezone.get(user.id) !== detected) {
+        syncedTimezone.set(user.id, detected);
+        void supabase
+          .from("profiles")
+          .update({ timezone: detected })
+          .eq("id", user.id)
+          .then(({ error }) => {
+            if (error) syncedTimezone.delete(user.id);
+          });
+        announceUserTimezone(user.id, detected);
       }
-      if (active) setTz(next);
     };
+
     const onTimezoneChange = (event: Event) => {
       const detail = (event as CustomEvent<{ userId?: string; timezone?: string }>).detail;
-      if (detail?.userId === user.id && detail.timezone) apply(detail.timezone);
+      if ((!user || detail?.userId === user.id) && detail?.timezone) setTz(detail.timezone);
     };
+
+    syncDetectedTimezone();
     window.addEventListener(USER_TIMEZONE_EVENT, onTimezoneChange);
-    supabase
-      .from("profiles")
-      .select("timezone")
-      .eq("id", user.id)
-      .maybeSingle()
-      .then(({ data, error }) => {
-        // A temporary read failure must not replace the saved timezone with
-        // this browser's detected timezone (often Europe/London).
-        if (error) return;
-        const saved = (data as { timezone?: string | null } | null)?.timezone;
-        if (saved) apply(saved);
-      });
-    const ch = supabase
-      .channel(`profile-tz-${user.id}-${Math.random().toString(36).slice(2)}`)
-      .on(
-        "postgres_changes",
-        { event: "UPDATE", schema: "public", table: "profiles", filter: `id=eq.${user.id}` },
-        (payload) => {
-          const saved = (payload.new as { timezone?: string | null } | null)?.timezone;
-          if (saved) apply(saved);
-        },
-      )
-      .subscribe();
+    const timer = window.setInterval(syncDetectedTimezone, 1000);
+    const onVisible = () => {
+      if (document.visibilityState === "visible") syncDetectedTimezone();
+    };
+    window.addEventListener("focus", syncDetectedTimezone);
+    document.addEventListener("visibilitychange", onVisible);
+
     return () => {
-      active = false;
+      window.clearInterval(timer);
       window.removeEventListener(USER_TIMEZONE_EVENT, onTimezoneChange);
-      supabase.removeChannel(ch);
+      window.removeEventListener("focus", syncDetectedTimezone);
+      document.removeEventListener("visibilitychange", onVisible);
     };
   }, [user]);
 

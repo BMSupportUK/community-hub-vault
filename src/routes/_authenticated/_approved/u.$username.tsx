@@ -24,7 +24,7 @@ import referralsBg from "@/assets/referrals-bg.jpg";
 import friendsBg from "@/assets/friends-bg.jpg";
 import ticketsBg from "@/assets/tickets-bg.jpg";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { announceUserTimezone, browserTimezone, listTimeZones } from "@/hooks/use-user-timezone";
+import { useUserTimezone } from "@/hooks/use-user-timezone";
 import { Nameplate } from "@/components/app/Nameplate";
 import { NameplatePicker } from "@/components/app/NameplatePicker";
 import { useRoleFlashMap, resolveAvatarUrl, roleFlashClass } from "@/lib/role-flash";
@@ -1912,9 +1912,7 @@ function EditProfileModal({ profile, onClose, onSaved }: { profile: ProfileRow; 
   const [customStatus, setCustomStatus] = useState(profile.custom_status ?? "");
   const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url);
   const [isPrivate, setIsPrivate] = useState<boolean>(!!profile.is_private);
-  const detectedTimezone = browserTimezone();
-  const [timezone, setTimezone] = useState<string>(profile.timezone ?? detectedTimezone);
-  const tzOptions = useMemo(() => listTimeZones(), []);
+  const detectedTimezone = useUserTimezone();
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -1950,11 +1948,10 @@ function EditProfileModal({ profile, onClose, onSaved }: { profile: ProfileRow; 
       custom_status: customStatus.trim() || null,
       avatar_url: avatarUrl,
       is_private: isPrivate,
-      timezone: timezone || null,
+      timezone: detectedTimezone,
     }).eq("id", user.id);
     setSaving(false);
     if (error) return toast.error(error.message);
-    announceUserTimezone(user.id, timezone || detectedTimezone);
     toast.success("Profile saved");
     if (u !== profile.username) {
       window.location.href = `/u/${u}`;
@@ -2001,26 +1998,11 @@ function EditProfileModal({ profile, onClose, onSaved }: { profile: ProfileRow; 
           <HtmlEditor value={bio} onChange={setBio} placeholder="Tell us about yourself…" />
         </Field>
         <Field label="Timezone">
-          {profile.timezone !== detectedTimezone && (
-            <button
-              type="button"
-              onClick={() => setTimezone(detectedTimezone)}
-              className="mb-2 text-xs font-medium text-primary hover:text-primary/80"
-            >
-              Use detected timezone: {detectedTimezone.replace(/_/g, " ")}
-            </button>
-          )}
-          <select
-            value={timezone}
-            onChange={(e) => setTimezone(e.target.value)}
-            className="w-full px-3 py-2 rounded-lg bg-surface-2 border border-border text-sm"
-          >
-            {tzOptions.map((z: string) => (
-              <option key={z} value={z}>{z.replace(/_/g, " ")}</option>
-            ))}
-          </select>
+          <div className="w-full px-3 py-2 rounded-lg bg-surface-2 border border-border text-sm">
+            {detectedTimezone.replace(/_/g, " ")}
+          </div>
           <span className="block text-[11px] text-muted-foreground mt-1">
-            Detected from your browser and used for expiry dates, Away status, and local times.
+            Set automatically from your browser and updated whenever your device timezone changes.
           </span>
         </Field>
         <label className="flex items-start gap-3 mb-3 p-3 rounded-lg bg-surface-2 border border-border cursor-pointer">
