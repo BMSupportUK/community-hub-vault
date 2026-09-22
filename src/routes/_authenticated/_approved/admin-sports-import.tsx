@@ -10,8 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { ArrowLeft, Loader2, Sparkles, Send, Trash2, Inbox, Wand2, Clock } from "lucide-react";
-import { buildDualTime, firstClockIn, firstDateIn, hasBothZones, parseClockTime } from "@/lib/import-time";
-import { parseSportsListingBlock, type TimeZoneChoice } from "@/lib/sports-listing-format";
+import { buildDualTime, firstClockIn, firstDateIn, hasBothZones, parseClockTime, type TimeZoneChoice } from "@/lib/import-time";
+import { parseSportsListingBlock } from "@/lib/sports-listing-format";
 import {
   parseDiscordPaste,
   importParsedEvents,
