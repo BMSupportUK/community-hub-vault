@@ -166,7 +166,8 @@ function NextShiftPanel({ slot }: { slot: NextSlot }) {
         <Calendar className="size-3.5" />
         <span className="text-xs font-bold uppercase tracking-wide">Next shift</span>
       </div>
-      <div className="grid gap-2 sm:grid-cols-2">
+      {/* Stacked full-width rows — side-by-side columns overflow in narrow panels. */}
+      <div className="grid gap-2">
         <Row
           label="UK office"
           startDate={ukDate}
