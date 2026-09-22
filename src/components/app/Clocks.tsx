@@ -295,9 +295,8 @@ export function Clocks() {
     };
   }, []);
 
-  // Load opening hours when the dialog opens (and refresh while it stays open).
+  // Load opening hours for the icon's open/closed status, kept live.
   useEffect(() => {
-    if (!open) return;
     const loadHours = () => {
       void supabase
         .from("business_hours")
@@ -307,30 +306,14 @@ export function Clocks() {
     };
     loadHours();
     const channel = supabase
-      .channel("header-office-hours-live")
+      .channel("header-office-hours-status")
       .on("postgres_changes", { event: "*", schema: "public", table: "business_hours" }, loadHours)
       .subscribe();
     return () => {
       void supabase.removeChannel(channel);
     };
-  }, [open]);
+  }, []);
 
-  const ukTz = "Europe/London"; // auto handles BST / GMT
-  const tzFormatter = (tz: string) => new Intl.DateTimeFormat("en-GB", {
-    timeZone: tz,
-    weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit", hour12: false,
-  });
-  // Only show the "Your time" column when the customer's timezone gives
-  // different dates/times from the UK office for at least one opening window.
-  const showUserColumn = hours.some((hour) => {
-    if (hour.is_closed) return false;
-    const uk = tzFormatter("Europe/London");
-    const local = tzFormatter(timezone);
-    const openD = londonTimeToDate(hour.day_of_week, hour.open_time);
-    const closeD = londonTimeToDate(hour.day_of_week, hour.close_time);
-    return uk.format(openD) !== local.format(openD) || uk.format(closeD) !== local.format(closeD);
-  });
-  const timezoneLabel = timezone.replaceAll("_", " ").replace("/", " / ");
   const officeOpen = isOfficeOpen(hours, now, holidays);
   // Header clock: the visitor's own device time + date, ticking live.
   const headerTime = new Intl.DateTimeFormat("en-GB", {
@@ -339,26 +322,6 @@ export function Clocks() {
   const headerDate = new Intl.DateTimeFormat("en-GB", {
     weekday: "short", day: "numeric", month: "short",
   }).format(now);
-  const currentDateTime = (tz: string) => new Intl.DateTimeFormat("en-GB", {
-    timeZone: tz,
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-    second: "2-digit",
-    hour12: false,
-  }).format(now);
-  const statusPill = (
-    <span className={cn(
-      "inline-flex shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ring-1",
-      officeOpen
-        ? "bg-success/15 text-success ring-success/35"
-        : "bg-destructive/15 text-destructive ring-destructive/35",
-    )}>
-      {officeOpen ? "Open" : "Closed"}
-    </span>
-  );
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
