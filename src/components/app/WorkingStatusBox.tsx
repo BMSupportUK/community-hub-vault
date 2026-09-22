@@ -491,6 +491,7 @@ export function WorkingStatusBox({
               </p>
             )}
             {!dnd.note && !until && <p className="text-muted-foreground">Notifications muted.</p>}
+            {nextSlot && <NextShiftPanel slot={nextSlot} />}
           </div>
         </div>
       </section>
