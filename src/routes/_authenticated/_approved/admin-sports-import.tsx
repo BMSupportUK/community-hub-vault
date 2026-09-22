@@ -1,5 +1,5 @@
 import { createFileRoute, Navigate, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -28,6 +28,7 @@ export const Route = createFileRoute("/_authenticated/_approved/admin-sports-imp
 
 type Cat = { id: string; name: string };
 type Sub = { category_id: string; name: string; sort_order: number; is_default: boolean };
+type QueueDraft = { category: string; subcategories: string[]; title: string; time: string | null };
 type QueueItem = {
   id: string;
   raw_text: string;
@@ -64,6 +65,34 @@ function AdminSportsImportPage() {
   const approveAllFn = useServerFn(approveAllSuggested);
   const [bulkCategory, setBulkCategory] = useState<string>("");
   const [bulkSubcategory, setBulkSubcategory] = useState<string | null>(null);
+  // The three setup boxes live in the sidebar: tap a post, then work the sidebar.
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [draft, setDraft] = useState<QueueDraft>({ category: "", subcategories: [], title: "", time: null });
+  const timeStore = useRef<Map<string, string | null>>(new Map());
+
+  const selectItem = (q: QueueItem) => {
+    if (selectedId === q.id) return;
+    const ev = q.parsed_event ?? {};
+    const stored = timeStore.current.get(q.id);
+    setSelectedId(q.id);
+    setDraft({
+      category: String(ev.suggested_category ?? ""),
+      subcategories: ev.suggested_subcategory ? [String(ev.suggested_subcategory)] : [],
+      title: String(ev.title ?? ""),
+      time: stored ?? (ev.time ? String(ev.time) : null),
+    });
+  };
+
+  const clearSelection = () => {
+    setSelectedId(null);
+    setDraft({ category: "", subcategories: [], title: "", time: null });
+  };
+
+  const applyZoneToItem = (itemId: string, dual: string, zone: "gmt" | "et") => {
+    timeStore.current.set(itemId, dual);
+    if (itemId === selectedId) setDraft((d) => ({ ...d, time: dual }));
+    toast.success(`Time set from ${zone === "gmt" ? "UK" : "ET"} — ${dual}`);
+  };
 
   useEffect(() => {
     if (!isStaff) return;
