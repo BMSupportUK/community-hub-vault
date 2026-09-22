@@ -49,7 +49,9 @@ function formatOfficeTime(time: string) {
   return new Intl.DateTimeFormat("en-GB", { hour: "numeric", minute: "2-digit", hour12: true }).format(new Date(2000, 0, 1, hours, minutes));
 }
 
-function isOfficeOpen(hours: OfficeHour[], now: Date) {
+function isOfficeOpen(hours: OfficeHour[], now: Date, holidays: BankHolidayMap = {}) {
+  // England & Wales public holidays close the office regardless of the weekly hours.
+  if (bankHolidayName(holidays, now)) return false;
   const londonDayName = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", weekday: "short" }).format(now);
   const londonDay = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(londonDayName);
   const londonParts = new Intl.DateTimeFormat("en-GB", {
