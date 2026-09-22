@@ -197,20 +197,20 @@ function AuthLayout() {
               <Link
                 to="/admin"
                 title="Admin | Admin Panel"
-                className="flex min-w-0 shrink items-center gap-2 rounded-full px-3 py-1.5 bg-surface-2 hover:bg-primary hover:text-primary-foreground text-xs font-medium transition-colors"
+                className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-3 py-1.5 bg-surface-2 hover:bg-primary hover:text-primary-foreground text-xs font-medium transition-colors"
               >
                 <LayoutDashboard className="size-4" />
-                <span className="hidden xl:inline truncate">Admin | Admin Panel</span>
+                <span className="hidden xl:inline">Admin | Admin Panel</span>
               </Link>
             )}
             {isAdmin && (
               <Link
                 to="/moderation"
                 title="Admin | Access Requests"
-                className="flex min-w-0 shrink items-center gap-2 rounded-full px-3 py-1.5 bg-surface-2 hover:bg-primary hover:text-primary-foreground text-xs font-medium transition-colors"
+                className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-3 py-1.5 bg-surface-2 hover:bg-primary hover:text-primary-foreground text-xs font-medium transition-colors"
               >
                 <Shield className="size-4" />
-                <span className="hidden xl:inline truncate">Admin | Access Requests</span>
+                <span className="hidden xl:inline">Admin | Access Requests</span>
                 <DeferUntilIdle><ModerationPendingBadge /></DeferUntilIdle>
               </Link>
             )}
@@ -218,11 +218,11 @@ function AuthLayout() {
               <button
                 type="button"
                 title="Admin | Shop Orders"
-                className="flex min-w-0 shrink items-center gap-2 rounded-full px-3 py-1.5 bg-surface-2 hover:bg-primary hover:text-primary-foreground text-xs font-medium transition-colors"
+                className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-3 py-1.5 bg-surface-2 hover:bg-primary hover:text-primary-foreground text-xs font-medium transition-colors"
                 onClick={openSalesChats}
               >
                 <Receipt className="size-4" />
-                <span className="hidden xl:inline truncate">Admin | Shop Orders</span>
+                <span className="hidden xl:inline">Admin | Shop Orders</span>
                 <DeferUntilIdle><PendingOrdersBadge /></DeferUntilIdle>
               </button>
             )}
@@ -230,10 +230,10 @@ function AuthLayout() {
               <Link
                 to="/admin-roles"
                 title="Members & Role Management"
-                className="flex min-w-0 shrink items-center gap-2 rounded-full px-3 py-1.5 bg-surface-2 hover:bg-primary hover:text-primary-foreground text-xs font-medium transition-colors"
+                className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-3 py-1.5 bg-surface-2 hover:bg-primary hover:text-primary-foreground text-xs font-medium transition-colors"
               >
                 <ShieldCheck className="size-4" />
-                <span className="hidden xl:inline truncate">Members &amp; Role Management</span>
+                <span className="hidden xl:inline">Members &amp; Role Management</span>
               </Link>
             )}
             {user && (
