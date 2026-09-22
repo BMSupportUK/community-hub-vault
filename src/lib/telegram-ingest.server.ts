@@ -4,6 +4,15 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 // Server-only module (called from the Telegram webhook route). Forwarded
 // listing posts are queued verbatim as one block; staff pick the category.
 
+/** First meaningful line of a post, used as the queue item's heading. */
+function postHeading(text: string): string {
+  const line = text
+    .split("\n")
+    .map((l) => l.replace(/[*_`#>]+/g, "").trim())
+    .find((l) => l.replace(/[^A-Za-z0-9]/g, "").length > 1);
+  return (line || "Telegram listing").slice(0, 300);
+}
+
 export async function ingestTelegramPost(opts: {
   text: string;
   sourceRef: string;
