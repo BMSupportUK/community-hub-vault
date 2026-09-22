@@ -92,6 +92,13 @@
       "when": 1790067643590,
       "tag": "0012_automated_messages_sales_and_emails",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1790069233772,
+      "tag": "0013_email_assets_storage_policies",
+      "breakpoints": true
     }
   ]
 }
