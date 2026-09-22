@@ -74,12 +74,30 @@ function AdminSportsImportPage() {
     refreshQueue();
   }, [isStaff]);
 
-  const refreshQueue = () => {
-    setLoadingQueue(true);
+  const refreshQueue = (silent = false) => {
+    if (!silent) setLoadingQueue(true);
     listFn().then((d) => setQueue(d.items as QueueItem[]))
-      .catch((e) => toast.error(e.message))
-      .finally(() => setLoadingQueue(false));
+      .catch((e) => { if (!silent) toast.error(e.message); })
+      .finally(() => { if (!silent) setLoadingQueue(false); });
   };
+
+  // Forwarded posts arrive in the background, so the queue keeps itself
+  // up to date — quietly every 10s and whenever the tab regains focus.
+  useEffect(() => {
+    if (!isStaff) return;
+    const tick = () => {
+      if (typeof document !== "undefined" && document.hidden) return;
+      refreshQueue(true);
+    };
+    const id = window.setInterval(tick, 10_000);
+    window.addEventListener("focus", tick);
+    document.addEventListener("visibilitychange", tick);
+    return () => {
+      window.clearInterval(id);
+      window.removeEventListener("focus", tick);
+      document.removeEventListener("visibilitychange", tick);
+    };
+  }, [isStaff]);
 
   const visibleQueue = queue.filter((q) => queueFilter === "all" || (q.source ?? "paste") === queueFilter);
   const suggestedCount = queue.filter((q) => q.parsed_event?.suggested_category).length;
