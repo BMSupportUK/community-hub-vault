@@ -77,7 +77,6 @@ export function isLikelyChannelLabel(value: string): boolean {
   if (/\b(?:league|cup|trophy|championship|premier|serie|liga|bundesliga)\b/i.test(text) && !/\d/.test(text)) return false;
   if (/^(?:EFL)\s*\d{1,3}\b/i.test(text)) return true;
   if (/\b(?:sky|tnt|bt|espn|dazn|cbs|fox|nbc|abc|itv|bbc|bein|viaplay|premier\s+sports|eurosport|fubo|peacock|paramount|amazon|apple|arena|supersport|sportsnet|tsn|optus|stan|setanta|flow|flo|racing\s*tv|channel|sports?|hd|uhd|feed)\b/i.test(text)) return true;
-  if (/^[A-Z]{2,}(?:\s*[A-Z0-9+&/-]+){0,4}\s*\d{1,3}$/i.test(text)) return true;
   return false;
 }
 
