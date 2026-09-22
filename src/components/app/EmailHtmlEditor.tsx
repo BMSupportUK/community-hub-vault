@@ -1,7 +1,23 @@
 import { useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Code2, Eye, Type, Bold, Italic, Link2, Heading1, MousePointerClick, Minus, Image } from "lucide-react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  Code2,
+  Eye,
+  Type,
+  Bold,
+  Italic,
+  Link2,
+  Heading1,
+  MousePointerClick,
+  Minus,
+  Loader2,
+  Upload,
+} from "lucide-react";
+
+const IMAGE_BASE = "https://bmsupport.uk/api/public/email-image";
 
 const STARTER_HTML = `<div style="max-width:560px;margin:0 auto;padding:24px;font-family:Arial,sans-serif">
   <h1 style="font-size:22px;color:#111;margin:0 0 12px">Heading</h1>
@@ -47,6 +63,33 @@ export function EmailHtmlEditor({ value, onChange, placeholders }: Props) {
       const pos = start + before.length + selected.length;
       el.setSelectionRange(pos, pos);
     });
+  };
+
+  const fileRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+
+  const upload = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please choose an image file");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Images must be 5MB or smaller");
+      return;
+    }
+    setUploading(true);
+    const ext = (file.name.split(".").pop() ?? "png").replace(/[^a-z0-9]/gi, "").toLowerCase();
+    const name = `${crypto.randomUUID()}.${ext || "png"}`;
+    const { error } = await supabase.storage
+      .from("email-assets")
+      .upload(name, file, { contentType: file.type, upsert: false });
+    setUploading(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    wrap(`<img src="${IMAGE_BASE}/${name}" alt="" width="560" style="display:block;max-width:100%" />`);
+    toast.success("Image uploaded");
   };
 
   return (
@@ -143,14 +186,31 @@ export function EmailHtmlEditor({ value, onChange, placeholders }: Props) {
           >
             <Minus className="size-4" />
           </Button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(ev) => {
+              const file = ev.target.files?.[0];
+              ev.target.value = "";
+              if (file) void upload(file);
+            }}
+          />
           <Button
             type="button"
-            size="icon"
+            size="sm"
             variant="ghost"
-            title="Image"
-            onClick={() => wrap('<img src="https://bmsupport.uk/logo.png" alt="" width="140" style="display:block" />')}
+            title="Upload an image"
+            disabled={uploading}
+            onClick={() => fileRef.current?.click()}
           >
-            <Image className="size-4" />
+            {uploading ? (
+              <Loader2 className="mr-2 size-4 animate-spin" />
+            ) : (
+              <Upload className="mr-2 size-4" />
+            )}
+            Upload image
           </Button>
           {placeholders?.length ? (
             <>
