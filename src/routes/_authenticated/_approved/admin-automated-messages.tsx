@@ -12,6 +12,16 @@ import { EmailHtmlEditor } from "@/components/app/EmailHtmlEditor";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-automated-messages")({
   component: AdminAutomatedMessagesPage,
+  head: () => ({
+    meta: [
+      { title: "Automated Messages & Emails | BM Support" },
+      { name: "description", content: "Manage BM Support account, sales, ticket, and app email wording." },
+      { property: "og:title", content: "Automated Messages & Emails | BM Support" },
+      { property: "og:description", content: "Manage BM Support account, sales, ticket, and app email wording." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
 });
 
 interface Row {
