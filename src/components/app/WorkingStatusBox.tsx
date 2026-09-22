@@ -29,6 +29,28 @@ type Shift = { id: string; clock_in: string };
 type Break = { id: string; kind: BreakKind; started_at: string };
 type NextSlot = { id: string; shift_date: string; start_time: string; end_time: string };
 
+// Rota dates/times are UK office wall-clock, so always compare against London,
+// never the staff member's device timezone.
+function londonNow(at: number | Date = Date.now()) {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/London",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
+  }).formatToParts(new Date(at));
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "00";
+  const hour = get("hour") === "24" ? "00" : get("hour");
+  return {
+    date: `${get("year")}-${get("month")}-${get("day")}`,
+    time: `${hour}:${get("minute")}:${get("second")}`,
+    minutes: Number(hour) * 60 + Number(get("minute")),
+  };
+}
+
 export function WorkingStatusBox({
   stackActions = false,
   variant = "card",
