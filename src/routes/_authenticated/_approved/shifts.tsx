@@ -182,14 +182,47 @@ function useLocalDisplayTz(rotaTz: string) {
       hour12: false,
     }).format(new Date(ms));
   };
+  const browserDate = (dateStr: string, timeStr: string) => {
+    const ms = zonedWallTimeToUtcMs(dateStr, timeStr, rotaTz);
+    if (isNaN(ms)) return null;
+    return new Intl.DateTimeFormat("en-GB", {
+      timeZone: browserTz,
+      day: "numeric",
+      month: "short",
+    }).format(new Date(ms));
+  };
+  // Device-time range plus dates when the shift crosses midnight locally.
   const deviceRange = (dateStr: string, start: string, end: string) => {
     if (localMode || browserTz === rotaTz) return null;
     const a = inBrowserTz(dateStr, start);
     const b = inBrowserTz(dateStr, end);
     if (!a || !b) return null;
-    return `${a}–${b}`;
+    const startDate = browserDate(dateStr, start);
+    const endDate = browserDate(dateStr, end);
+    const crossesDay = Boolean(startDate && endDate && startDate !== endDate);
+    return { text: `${a}–${b}`, startDate, endDate, crossesDay };
   };
   return { localMode, toggle, browserTz, fmtTime, fmtRange, deviceRange };
+}
+
+type DeviceRangeInfo = { text: string; startDate: string | null; endDate: string | null; crossesDay: boolean } | null;
+
+// "Your time" line with a "+1 day" chip carrying both dates when the shift
+// crosses midnight in the viewer's device timezone.
+function DeviceRangeLine({ info, label, className }: { info: DeviceRangeInfo; label: string; className?: string }) {
+  if (!info) return null;
+  return (
+    <div className={cn("text-accent-foreground/90", className)}>
+      <div>
+        {label}: <span className="font-mono whitespace-nowrap">{info.text}</span>
+      </div>
+      {info.crossesDay && (
+        <div className="mt-0.5 inline-flex items-center gap-1 whitespace-nowrap rounded-full bg-primary/15 px-1.5 py-px text-[9px] font-bold uppercase tracking-wide text-primary ring-1 ring-primary/30">
+          {info.startDate} → {info.endDate}
+        </div>
+      )}
+    </div>
+  );
 }
 
 function ShiftsPage() {
@@ -905,11 +938,7 @@ function ShiftsPage() {
                                     <div className="font-mono text-foreground">{fmtRange(s.shift_date, s.start_time, s.end_time)}</div>
                                     <span className={cn("text-[10px] px-1.5 py-0.5 rounded uppercase font-semibold", s.slot_type === "hourly" ? "bg-accent/30 text-accent-foreground" : "bg-primary/30 text-foreground")}>{s.slot_type === "hourly" ? "hourly" : "shift"}</span>
                                   </div>
-                                  {deviceRange(s.shift_date, s.start_time, s.end_time) && (
-                                    <div className="text-[10px] text-accent-foreground/90 mt-0.5">
-                                      Your time: <span className="font-mono">{deviceRange(s.shift_date, s.start_time, s.end_time)}</span>
-                                    </div>
-                                  )}
+                                  <DeviceRangeLine info={deviceRange(s.shift_date, s.start_time, s.end_time)} label="Your time" className="text-[10px] mt-0.5" />
                                   {s.notes && <div className="text-muted-foreground mt-0.5">{s.notes}</div>}
                                   <div className="mt-1.5 flex items-center justify-between gap-1">
                                     <div className="text-muted-foreground truncate">{taken ? profName(s.assigned_to) : "Open"}</div>
@@ -1014,11 +1043,7 @@ function ShiftsPage() {
                       {ds.map((s) => (
                         <div key={s.id} className={cn("rounded-lg p-2 border text-xs", s.assigned_to === user?.id ? "bg-primary/20 border-primary/50" : "bg-surface-2 border-border")}>
                           <div className="font-mono text-foreground">{fmtRange(s.shift_date, s.start_time, s.end_time)}</div>
-                          {deviceRange(s.shift_date, s.start_time, s.end_time) && (
-                            <div className="text-[10px] text-accent-foreground/90 mt-0.5">
-                              Your time: <span className="font-mono">{deviceRange(s.shift_date, s.start_time, s.end_time)}</span>
-                            </div>
-                          )}
+                          <DeviceRangeLine info={deviceRange(s.shift_date, s.start_time, s.end_time)} label="Your time" className="text-[10px] mt-0.5" />
                           <div className="text-muted-foreground truncate mt-0.5">{profName(s.assigned_to)}</div>
                         </div>
                       ))}
@@ -1069,11 +1094,7 @@ function ShiftsPage() {
                       )}
                     </div>
                     <div className="font-mono text-primary mt-1">{fmtRange(s.shift_date, s.start_time, s.end_time)}</div>
-                    {deviceRange(s.shift_date, s.start_time, s.end_time) && (
-                      <div className="text-[11px] text-accent-foreground/90 mt-0.5">
-                        Your time ({browserTz}): <span className="font-mono">{deviceRange(s.shift_date, s.start_time, s.end_time)}</span>
-                      </div>
-                    )}
+                    <DeviceRangeLine info={deviceRange(s.shift_date, s.start_time, s.end_time)} label={`Your time (${browserTz})`} className="text-[11px] mt-0.5" />
                     <div className="text-xs text-muted-foreground mt-1 uppercase">{s.slot_type}</div>
                     {s.notes && <div className="text-sm text-muted-foreground mt-2">{s.notes}</div>}
                     {(() => {
@@ -1102,7 +1123,7 @@ function ShiftsPage() {
                 const d = new Date(histWeek); d.setDate(d.getDate() + i); return d;
               });
 
-              type Row = { key: string; iso: string; when: string; badge: string; badgeClass: string; range: string; localRange?: string | null; role: string | null; note?: string };
+              type Row = { key: string; iso: string; when: string; badge: string; badgeClass: string; range: string; localRange?: DeviceRangeInfo; role: string | null; note?: string };
               let rows: Row[] = [];
               if (histTab === "swaps") {
                 rows = mySwaps
@@ -1233,11 +1254,7 @@ function ShiftsPage() {
                                     )}
                                   </div>
                                   <div className="font-mono text-primary text-sm break-words">{r.range}</div>
-                                  {r.localRange && (
-                                    <div className="text-[11px] text-accent-foreground/90">
-                                      Your time: <span className="font-mono">{r.localRange}</span>
-                                    </div>
-                                  )}
+                                  <DeviceRangeLine info={r.localRange ?? null} label="Your time" className="text-[11px]" />
                                   {r.note && <div className="text-[11px] text-foreground/80 break-words">{r.note}</div>}
                                   <div className="text-[11px] text-muted-foreground">{format(new Date(r.when), "d MMM HH:mm")}</div>
                                 </li>
@@ -1264,7 +1281,7 @@ function ShiftsPage() {
                               <span className={cn("text-[10px] px-2 py-0.5 rounded-full border font-semibold uppercase tracking-wide", r.badgeClass)}>{r.badge}</span>
                               <span className="text-foreground font-semibold">{dayLabel(new Date(`${r.iso}T00:00:00`))}</span>
                               <span className="font-mono text-primary">{r.range}</span>
-                              {r.localRange && <span className="text-[11px] text-accent-foreground/90">your time <span className="font-mono">{r.localRange}</span></span>}
+                              <DeviceRangeLine info={r.localRange ?? null} label="your time" className="text-[11px]" />
                               {r.note && <span className="text-[11px] text-foreground/80">{r.note}</span>}
                               <span className="ml-auto text-xs text-muted-foreground">{format(new Date(r.when), "d MMM HH:mm")}</span>
                             </li>
