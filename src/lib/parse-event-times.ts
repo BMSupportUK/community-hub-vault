@@ -1,4 +1,5 @@
 import { zonedWallTimeToUtcMs, dateInTimeZone } from "@/hooks/use-timezone";
+import { isLikelyChannelLabel } from "@/lib/sports-listing-format";
 
 // Abbreviation -> IANA zone. IANA zones already handle DST correctly.
 const ZONE_MAP: Record<string, string> = {
@@ -563,7 +564,7 @@ function startsWithScheduleTime(
   if (parseLeadingGuideDate(text)) return true;
   const first = matches[0];
   const prefix = cleanEventTitleText(text.slice(0, first.start));
-  return !prefix || isWeekdayOnly(prefix) || isDateOnlyText(prefix) || !hasMeaningfulTextOutsideMatches(text, [first]);
+  return !prefix || isWeekdayOnly(prefix) || isDateOnlyText(prefix) || isLikelyChannelLabel(prefix) || !hasMeaningfulTextOutsideMatches(text, [first]);
 }
 
 function isWeekdayOnly(text: string): boolean {
@@ -750,8 +751,15 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     }
 
     const m = matches[0];
-    // Derive event name = text with the matched time substring removed.
-    let eventName = cleanEventTitleText(text.slice(0, m.start) + " " + text.slice(m.end));
+    // Derive event name = text with the matched time substring removed. Some
+    // feeds put the channel before the time ("EFL 01 | 19:00 Fixture"). Keep
+    // that prefix as this event's channel instead of folding it into the title.
+    const leadingText = cleanEventTitleText(text.slice(0, m.start));
+    const trailingText = cleanEventTitleText(text.slice(m.end));
+    const leadingChannel = isLikelyChannelLabel(leadingText) ? leadingText : "";
+    let eventName = leadingChannel
+      ? trailingText
+      : cleanEventTitleText(text.slice(0, m.start) + " " + text.slice(m.end));
     if (isWeekdayOnly(eventName)) eventName = "";
     let previousTitleBlock: HTMLElement | null = null;
     if (!eventName) {
@@ -917,7 +925,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     // Preserve the complete event name. Punctuation such as colons, dashes,
     // bullets and pipes can be part of a legitimate title and must never be
     // used on its own to infer that part of the title is a channel.
-    let channel = "";
+    let channel = leadingChannel;
     const titleText = eventName;
     if (extraChannelLines.length) {
       const existing = channel ? channel.split(/\s*\|\s*/).filter(Boolean) : [];
