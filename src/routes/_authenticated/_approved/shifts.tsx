@@ -182,12 +182,25 @@ function useLocalDisplayTz(rotaTz: string) {
       hour12: false,
     }).format(new Date(ms));
   };
+  const browserDate = (dateStr: string, timeStr: string) => {
+    const ms = zonedWallTimeToUtcMs(dateStr, timeStr, rotaTz);
+    if (isNaN(ms)) return null;
+    return new Intl.DateTimeFormat("en-GB", {
+      timeZone: browserTz,
+      day: "numeric",
+      month: "short",
+    }).format(new Date(ms));
+  };
+  // Device-time range plus dates when the shift crosses midnight locally.
   const deviceRange = (dateStr: string, start: string, end: string) => {
     if (localMode || browserTz === rotaTz) return null;
     const a = inBrowserTz(dateStr, start);
     const b = inBrowserTz(dateStr, end);
     if (!a || !b) return null;
-    return `${a}–${b}`;
+    const startDate = browserDate(dateStr, start);
+    const endDate = browserDate(dateStr, end);
+    const crossesDay = Boolean(startDate && endDate && startDate !== endDate);
+    return { text: `${a}–${b}`, startDate, endDate, crossesDay };
   };
   return { localMode, toggle, browserTz, fmtTime, fmtRange, deviceRange };
 }
