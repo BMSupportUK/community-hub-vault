@@ -37,6 +37,7 @@ import { setPersonalAppTheme, useAppTheme } from "@/hooks/use-app-theme";
 import { useServerFn } from "@tanstack/react-start";
 import { assignReferrer } from "@/lib/referrals.functions";
 import ShiftHistoryPanel from "@/components/app/ShiftHistoryPanel";
+import { SubscriptionDetailsCard } from "@/components/app/SubscriptionDetailsCard";
 import { useViewportLockable } from "@/hooks/use-viewport-lock";
 
 export const Route = createFileRoute("/_authenticated/_approved/u/$username")({
