@@ -82,7 +82,16 @@ function SignInOpensNote({ win }: { win: { start: string; end: string } }) {
 
 // Rota wall-clock (UK) converted into the viewer's device timezone. When the
 // shift crosses midnight locally, start and end are listed as separate days.
-function NextShiftPanel({ slot }: { slot: NextSlot }) {
+export function NextShiftPanel({
+  slot,
+  heading = "Next shift",
+  tone = "primary",
+}: {
+  slot: NextSlot;
+  heading?: string;
+  tone?: "primary" | "amber";
+}) {
+  const amber = tone === "amber";
   const [deviceTz, setDeviceTz] = useState(() => browserTimezone());
   useEffect(() => {
     const id = window.setInterval(() => setDeviceTz(browserTimezone()), 30_000);
