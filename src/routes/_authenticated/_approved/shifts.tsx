@@ -1121,7 +1121,7 @@ function ShiftsPage() {
                 const d = new Date(histWeek); d.setDate(d.getDate() + i); return d;
               });
 
-              type Row = { key: string; iso: string; when: string; badge: string; badgeClass: string; range: string; localRange?: string | null; role: string | null; note?: string };
+              type Row = { key: string; iso: string; when: string; badge: string; badgeClass: string; range: string; localRange?: DeviceRangeInfo; role: string | null; note?: string };
               let rows: Row[] = [];
               if (histTab === "swaps") {
                 rows = mySwaps
@@ -1252,11 +1252,7 @@ function ShiftsPage() {
                                     )}
                                   </div>
                                   <div className="font-mono text-primary text-sm break-words">{r.range}</div>
-                                  {r.localRange && (
-                                    <div className="text-[11px] text-accent-foreground/90">
-                                      Your time: <span className="font-mono">{r.localRange}</span>
-                                    </div>
-                                  )}
+                                  <DeviceRangeLine info={r.localRange ?? null} label="Your time" className="text-[11px]" />
                                   {r.note && <div className="text-[11px] text-foreground/80 break-words">{r.note}</div>}
                                   <div className="text-[11px] text-muted-foreground">{format(new Date(r.when), "d MMM HH:mm")}</div>
                                 </li>
@@ -1283,7 +1279,7 @@ function ShiftsPage() {
                               <span className={cn("text-[10px] px-2 py-0.5 rounded-full border font-semibold uppercase tracking-wide", r.badgeClass)}>{r.badge}</span>
                               <span className="text-foreground font-semibold">{dayLabel(new Date(`${r.iso}T00:00:00`))}</span>
                               <span className="font-mono text-primary">{r.range}</span>
-                              {r.localRange && <span className="text-[11px] text-accent-foreground/90">your time <span className="font-mono">{r.localRange}</span></span>}
+                              <DeviceRangeLine info={r.localRange ?? null} label="your time" className="text-[11px]" />
                               {r.note && <span className="text-[11px] text-foreground/80">{r.note}</span>}
                               <span className="ml-auto text-xs text-muted-foreground">{format(new Date(r.when), "d MMM HH:mm")}</span>
                             </li>
