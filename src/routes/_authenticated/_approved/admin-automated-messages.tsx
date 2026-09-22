@@ -138,7 +138,7 @@ function AdminAutomatedMessagesPage() {
                     onChange={(ev) => patch(row.key, { subject: ev.target.value })}
                   />
                   <label className="mt-3 block text-xs font-medium text-muted-foreground">
-                    Email content — plain wording or full HTML
+                    Email content — HTML
                   </label>
                   <EmailHtmlEditor
                     value={row.body}
