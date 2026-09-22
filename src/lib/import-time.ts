@@ -175,6 +175,46 @@ export function buildDualTime(
   return `${uk} · ${et}`;
 }
 
+/**
+ * Labels a listed time in ONE zone only — the zone staff picked before the
+ * import ("19:45 BST" or "14:45 EDT"). Guides show a single time, never both.
+ */
+export function buildZoneTime(
+  time: string | null | undefined,
+  date: string | null | undefined,
+  source: TimeZoneChoice,
+): string | null {
+  const clock = parseClockTime(time);
+  if (!clock) return null;
+  const day = parseListingDate(date) ?? (() => {
+    const now = new Date();
+    return { y: now.getFullYear(), m: now.getMonth(), d: now.getDate() };
+  })();
+  const tz = source === "gmt" ? UK_TZ : ET_TZ;
+  const instant = wallTimeToInstant(day, clock, tz);
+  const label = source === "gmt" ? ukLabel(instant) : etLabel(instant);
+  return `${formatInZone(instant, tz)} ${label}`;
+}
+
+/**
+ * Reduces any time text (including an older "19:45 GMT · 14:45 EDT" label)
+ * down to the single chosen zone.
+ */
+export function toSingleZoneTime(
+  time: string | null | undefined,
+  date: string | null | undefined,
+  source: TimeZoneChoice,
+): string | null {
+  if (!time) return null;
+  const parts = time.split(/\s*(?:·|\||\/)\s*/).filter(Boolean);
+  if (parts.length > 1) {
+    const want = source === "gmt" ? /\b(gmt|bst|uk)\b/i : /\b(et|est|edt|eastern)\b/i;
+    const hit = parts.find((p) => want.test(p));
+    if (hit) return hit.trim();
+  }
+  return buildZoneTime(time, date, source);
+}
+
 function dayNumberInZone(instant: number, timeZone: string): number {
   return Number(
     new Intl.DateTimeFormat("en-GB", { timeZone, day: "numeric" }).format(new Date(instant)),
