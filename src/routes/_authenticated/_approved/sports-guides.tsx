@@ -108,7 +108,7 @@ function SportsGuidesPage() {
   const [search, setSearch] = useState("");
   // Search only kicks in from three letters up, and only looks at event
   // listings inside guide bodies (never guide names/descriptions).
-  const searchQuery = activeSearch;
+  const searchQuery = search.trim();
   const activeSearch = searchQuery.length >= SG_MIN_SEARCH ? searchQuery : "";
   const [resultsOpen, setResultsOpen] = useState(true);
   const [subFilter, setSubFilter] = useState<string | null>(null);
