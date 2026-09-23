@@ -122,7 +122,7 @@ function detectEvent(line: string, date: string | null): SportsListingEvent | nu
       date,
       time: normalizeTime(numberedChannel[2]),
       title: split.title,
-      channels: unique([numberedChannel[1], ...split.channels]),
+      channels: unique([`Channel ${numberedChannel[1]}`, ...split.channels]),
     };
   }
 
