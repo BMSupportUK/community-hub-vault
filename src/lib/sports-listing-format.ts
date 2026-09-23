@@ -57,6 +57,11 @@ function isNoiseLine(line: string): boolean {
   return /^(?:fixtures?|listings?|streams?|schedule|today'?s?\s+sport|live\s+sport|events?|channels?|coverage|please note|auto[-\s]?delete|posted by)\b/i.test(line);
 }
 
+/** Boilerplate that must never become a title or a channel. */
+function isAlwaysNoiseLine(line: string): boolean {
+  return /^(?:please\s+(?:update|refresh|check)|update\s+your\s+playlist|today'?s\s+live\s+events|all\s+times?\b.*\b(?:uk|gmt|bst|et)\b)/i.test(line);
+}
+
 function isDateLine(line: string): boolean {
   return DATE_ONLY_RE.test(line) && parseListingDate(line) !== null;
 }
