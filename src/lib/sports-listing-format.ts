@@ -24,6 +24,13 @@ const TIME_FIRST_RE = new RegExp(`^\\s*(${TIME_WITH_ZONE_SOURCE})\\s*(?:[-–—
 const LEADING_ZONE_TIME_RE = new RegExp(`^\\s*(${ZONE})\\s+(${TIME_SOURCE})\\s*(?:[-–—:|·•]\\s*)?(.+?)\\s*$`, "i");
 const CHANNEL_TIME_RE = new RegExp(`^\\s*(.{2,70}?)\\s*(?:\\||·|•|[-–—])\\s*(${TIME_WITH_ZONE_SOURCE})\\s+(.+?)\\s*$`, "i");
 const CHANNEL_SPACE_TIME_RE = new RegExp(`^\\s*([A-Za-z][A-Za-z0-9 +&'/.:-]{1,42}\\d{1,3})\\s+(${TIME_WITH_ZONE_SOURCE})\\s+(.+?)\\s*$`, "i");
+// Provider dumps put the title on its own line and the slot underneath:
+// "- 23-09-2026 8:30 PM until 24-09-2026 12:00 AM - PEACOCK 8 HD"
+const DATE_SOURCE = String.raw`\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4}`;
+const DATE_TIME_SPAN_RE = new RegExp(
+  `^\\s*(${DATE_SOURCE})\\s+(${TIME_WITH_ZONE_SOURCE})\\s+(?:until|till|to|[-–—])\\s+(?:${DATE_SOURCE}\\s+)?(?:${TIME_WITH_ZONE_SOURCE})\\s*(?:[-–—|·•]\\s*(.+?))?\\s*$`,
+  "i",
+);
 const DATE_ONLY_RE = new RegExp(
   `^\\s*(?:(?:${ZONE})\\s+)?(?:(?:mon|tue|wed|thu|fri|sat|sun)[a-z]*\\b[\\s,]+)?(?:\\d{4}[-/.]\\d{1,2}[-/.]\\d{1,2}|\\d{1,2}[-/.]\\d{1,2}[-/.](?:\\d{2}|\\d{4})|\\d{1,2}(?:st|nd|rd|th)?\\s+[a-z]+(?:\\s+(?:\\d{2}|\\d{4}))?|[a-z]+\\s+\\d{1,2}(?:st|nd|rd|th)?(?:,?\\s+(?:\\d{2}|\\d{4}))?)(?:\\s+(?:${ZONE}))?\\s*$`,
   "i",
@@ -117,6 +124,16 @@ function splitTitleAndInlineChannels(rest: string): { title: string; channels: s
 }
 
 function detectEvent(line: string, date: string | null): SportsListingEvent | null {
+  const span = line.match(DATE_TIME_SPAN_RE);
+  if (span && span[1] && span[2]) {
+    return {
+      date: span[1],
+      time: normalizeTime(span[2]),
+      title: "",
+      channels: span[3] ? splitChannelLine(span[3]) : [],
+    };
+  }
+
   const numberedChannel = line.match(CHANNEL_NUMBER_TIME_RE);
   if (numberedChannel && numberedChannel[1] && numberedChannel[2] && numberedChannel[3]) {
     const split = splitTitleAndInlineChannels(numberedChannel[3]);
@@ -167,7 +184,9 @@ function detectEvent(line: string, date: string | null): SportsListingEvent | nu
 function finalized(event: SportsListingEvent): SportsListingEvent | null {
   const title = event.title.replace(/\s+/g, " ").trim();
   if (!parseClockTime(event.time)) return null;
-  if (!title || isLikelyChannelLabel(title)) return null;
+  if (!title) return null;
+  // A channel-looking title is only junk when we have no channel of our own.
+  if (!event.channels.length && isLikelyChannelLabel(title)) return null;
   return { ...event, title, channels: unique(event.channels) };
 }
 
@@ -184,18 +203,23 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
   const events: SportsListingEvent[] = [];
   let currentDate: string | null = null;
   let current: SportsListingEvent | null = null;
+  // Provider dumps name the programme on the line above its time slot.
+  let previousPlainLine: string | null = null;
+  let titleCameFromAbove = false;
 
   const flush = () => {
     if (!current) return;
     const done = finalized(current);
     if (done) events.push(done);
     current = null;
+    titleCameFromAbove = false;
   };
 
   for (const line of lines) {
     if (isDateLine(line)) {
       flush();
       currentDate = line;
+      previousPlainLine = null;
       continue;
     }
     if (isAlwaysNoiseLine(line)) continue;
@@ -205,12 +229,26 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
     if (detected) {
       flush();
       current = detected;
+      if (!current.title && previousPlainLine) {
+        current.title = previousPlainLine;
+        titleCameFromAbove = true;
+      }
+      previousPlainLine = null;
       continue;
     }
 
-    if (!current) continue;
+    if (!current) {
+      previousPlainLine = line;
+      continue;
+    }
     if (!current.title) {
       current.title = line;
+      continue;
+    }
+    if (titleCameFromAbove) {
+      // In this format the next plain line names the following programme.
+      flush();
+      previousPlainLine = line;
       continue;
     }
     current.channels.push(...splitChannelLine(line));
