@@ -430,6 +430,15 @@ function QueueRow({
           {zone && <span className="text-[11px] text-muted-foreground">Tap the other button to change it</span>}
         </div>
       )}
+      {splitCount > 1 && (
+        <div className="flex flex-wrap items-center gap-2" onClick={(e) => e.stopPropagation()}>
+          <Button size="sm" variant="outline" className="h-7 px-2 text-xs" disabled={splitting} onClick={onSplit}>
+            {splitting ? <Loader2 className="size-3 animate-spin" /> : <Scissors className="size-3" />}
+            Split into {splitCount} single events
+          </Button>
+          <span className="text-[11px] text-muted-foreground">Pick a guide for each event separately</span>
+        </div>
+      )}
       {!selected && (
         <p className="text-[11px] text-primary/80">Tap to set it up in the sidebar →</p>
       )}
