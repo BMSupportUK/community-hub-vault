@@ -19,7 +19,11 @@ const ZONE = "GMT|UTC|UK|BST|ET|EST|EDT|CT|CST|CDT|MT|MST|MDT|PT|PST|PDT|CET|CES
 const TIME_SOURCE = String.raw`\d{1,2}(?::|\.)\d{2}\s*(?:am|pm|a\.m\.|p\.m\.)?|\d{1,2}\s*(?:am|pm|a\.m\.|p\.m\.)`;
 const TIME_WITH_ZONE_SOURCE = String.raw`(?:${TIME_SOURCE})(?:\s*(?:${ZONE}))?`;
 const TIME_ONLY_RE = new RegExp(`^\\s*(${TIME_WITH_ZONE_SOURCE})\\s*$`, "i");
-const DUAL_TIME_ONLY_RE = new RegExp(`^\\s*(${TIME_WITH_ZONE_SOURCE}\\s*(?:·|\\||/)\\s*${TIME_WITH_ZONE_SOURCE})\\s*$`, "i");
+const WEEKDAY_HINT_SOURCE = String.raw`(?:mon|tue|wed|thu|fri|sat|sun)(?:day)?`;
+const DUAL_TIME_ONLY_RE = new RegExp(
+  `^\\s*(${TIME_WITH_ZONE_SOURCE}(?:\\s+${WEEKDAY_HINT_SOURCE})?\\s*(?:·|\\||/)\\s*${TIME_WITH_ZONE_SOURCE}(?:\\s+${WEEKDAY_HINT_SOURCE})?)\\s*$`,
+  "i",
+);
 const TIME_FIRST_RE = new RegExp(`^\\s*(${TIME_WITH_ZONE_SOURCE})\\s*(?:[-–—:|·•]\\s*)?(.+?)\\s*$`, "i");
 const LEADING_ZONE_TIME_RE = new RegExp(`^\\s*(${ZONE})\\s+(${TIME_SOURCE})\\s*(?:[-–—:|·•]\\s*)?(.+?)\\s*$`, "i");
 const CHANNEL_TIME_RE = new RegExp(`^\\s*(.{2,70}?)\\s*(?:\\||·|•|[-–—])\\s*(${TIME_WITH_ZONE_SOURCE})\\s+(.+?)\\s*$`, "i");
@@ -264,7 +268,11 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
     if (detected) {
       flush();
       current = detected;
-      if (!current.title && previousPlainLine) {
+      // A title-above-time layout is specific to provider slot rows such as
+      // "23-09-2026 8:30 PM until ...". For ordinary and dual-zone listings,
+      // the line above is commonly the post heading (for example
+      // "BILLIE JEAN KING CUP"), while the real event title follows the time.
+      if (!current.title && previousPlainLine && DATE_TIME_SPAN_RE.test(line)) {
         current.title = previousPlainLine;
         titleCameFromAbove = true;
       }
