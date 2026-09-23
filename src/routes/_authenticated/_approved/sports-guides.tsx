@@ -103,6 +103,10 @@ function SportsGuidesPage() {
   const [tab, setTab] = useState<string>("welcome");
   const [activeCat, setActiveCat] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  // Search only kicks in from three letters up, and only looks at event
+  // listings inside guide bodies (never guide names/descriptions).
+  const searchQuery = search.trim();
+  const activeSearch = searchQuery.length >= SG_MIN_SEARCH ? searchQuery : "";
   const [resultsOpen, setResultsOpen] = useState(true);
   const [subFilter, setSubFilter] = useState<string | null>(null);
   const [openSubcategoryPopupFor, setOpenSubcategoryPopupFor] = useState<string | null>(null);
