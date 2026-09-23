@@ -992,11 +992,17 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     }).format(new Date(m.utcMs));
     const ukZone = tzAbbrev(m.utcMs, "Europe/London") || "UK";
     const localDiffers = m.localDate !== ukDate || m.localTime !== ukTime || m.localZone !== ukZone;
-    if (localDiffers) pillsRow.classList.replace("grid-cols-1", "grid-cols-2");
+    if (localDiffers) {
+      pillsRow.classList.replace("grid-cols-1", "grid-cols-2");
+    } else {
+      // Single time pill: centre it rather than stretching across the card.
+      pillsRow.classList.remove("grid", "grid-cols-1");
+      pillsRow.classList.add("flex", "justify-center");
+    }
 
     const firstPill = document.createElement("span");
     firstPill.setAttribute("data-tz-pill", "1");
-    firstPill.className = "inline-flex w-full min-w-0 max-w-full flex-col items-center justify-center px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-purple-100/80";
+    firstPill.className = `inline-flex ${localDiffers ? "w-full" : "w-auto min-w-[9rem]"} min-w-0 max-w-full flex-col items-center justify-center px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-purple-100/80`;
     const firstDate = document.createElement("span");
     firstDate.className = "block w-full text-center text-[11px] md:text-xs font-bold uppercase tracking-wider text-fuchsia-200 leading-tight mb-0.5";
     firstDate.textContent = ukDate;
