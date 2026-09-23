@@ -3,7 +3,13 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { routeEvent } from "./discord-sport-keywords";
-import { formatSportsListingBlock, mergeSportsListingBlocks, plainListingToHtml } from "./sports-listing-format";
+import {
+  formatSportsListingBlock,
+  mergeSportsListingBlocks,
+  parseSportsListingBlock,
+  plainListingToHtml,
+  sortSportsListingEvents,
+} from "./sports-listing-format";
 
 const STAFF_ROLES = ["admin", "management", "moderator"] as const;
 
