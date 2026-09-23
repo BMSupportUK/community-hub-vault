@@ -467,15 +467,7 @@ function ShopPage() {
               <StreamingDevicesPage />
             </Suspense>
           )}
-          {view === "app_demos" && (
-            <div
-              className="relative flex-1 flex min-w-0 bg-cover bg-center bg-no-repeat bg-fixed overflow-visible md:overflow-hidden"
-              style={{ backgroundImage: `url(${tvLoginIllustration})` }}
-            >
-              <div aria-hidden className="pointer-events-none absolute inset-0" style={{ background: "rgba(2, 5, 12, 0.82)" }} />
-              <AppDemosView />
-            </div>
-          )}
+          {view === "app_demos" && <AppDemosView />}
         </div>
       </div>
   );
