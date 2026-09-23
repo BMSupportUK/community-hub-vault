@@ -197,6 +197,14 @@ function splitChannelLine(line: string): string[] {
   return unique(expanded);
 }
 
+/**
+ * Normalise the complete channel list together so a prefix can carry across
+ * parser-produced entries as well as across text on one line.
+ */
+function normalizeChannels(channels: string[]): string[] {
+  return channels.length ? splitChannelLine(channels.join(" | ")) : [];
+}
+
 export function isLikelyChannelLabel(value: string): boolean {
   const text = value.replace(/\s+/g, " ").trim();
   if (!text || text.length > 70) return false;
@@ -395,7 +403,7 @@ function finalized(event: SportsListingEvent): SportsListingEvent | null {
   if (new RegExp(`^\\/?\\s*${TIME_WITH_ZONE_SOURCE}\\s*$`, "i").test(title)) return null;
   // A channel-looking title is only junk when we have no channel of our own.
   if (!event.channels.length && isLikelyChannelLabel(title)) return null;
-  return { ...event, title, channels: unique(event.channels) };
+  return { ...event, title, channels: normalizeChannels(event.channels) };
 }
 
 export type ListingSection = { name: string; raw: string };
@@ -636,7 +644,7 @@ function formatSportsListingEvents(events: SportsListingEvent[], input: ListingI
 
     out.push(eventTimeForOutput(event, input));
     out.push(event.title);
-    const channels = unique([...(event.channels ?? []), ...((input.channels ?? []).filter(Boolean))]);
+    const channels = normalizeChannels([...(event.channels ?? []), ...((input.channels ?? []).filter(Boolean))]);
     if (channels.length) out.push(channels.join(" | "));
   }
 
