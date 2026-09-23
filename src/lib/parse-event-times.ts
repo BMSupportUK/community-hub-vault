@@ -1,5 +1,5 @@
 import { zonedWallTimeToUtcMs, dateInTimeZone } from "@/hooks/use-timezone";
-import { isLikelyChannelLabel } from "@/lib/sports-listing-format";
+import { isLikelyChannelLabel, normalizeSportsEventTitle } from "@/lib/sports-listing-format";
 
 // Abbreviation -> IANA zone. IANA zones already handle DST correctly.
 const ZONE_MAP: Record<string, string> = {
@@ -148,13 +148,13 @@ function shouldIgnoreBareSecondsMatch(text: string, start: number, end: number):
 }
 
 function cleanEventTitleText(value: string): string {
-  return value
+  return normalizeSportsEventTitle(value
     .replace(/\b\d{1,2}:\d{2}:\d{2}\b\s*$/g, " ")
     .replace(/\b\d{4}-\d{1,2}-\d{1,2}\b/g, " ")
     .replace(/(^|\s):\d{2}\b/g, " ")
     .replace(/\s+/g, " ")
     .replace(/^[\s\-–—:·•|]+|[\s\-–—:·•|]+$/g, "")
-    .trim();
+    .trim());
 }
 
 function isDateOnlyText(value: string): boolean {

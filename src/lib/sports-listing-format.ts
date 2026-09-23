@@ -225,6 +225,14 @@ function normalizeChannels(channels: string[]): string[] {
   return channels.length ? splitChannelLine(channels.join(" | ")) : [];
 }
 
+export function normalizeSportsEventTitle(value: string): string {
+  return value
+    .replace(/\s+/g, " ")
+    .replace(/\s+(?:x|vs\.?|v\.?)\s+/gi, " & ")
+    .replace(/\s*&\s*/g, " & ")
+    .trim();
+}
+
 export function isLikelyChannelLabel(value: string): boolean {
   const text = value.replace(/\s+/g, " ").trim();
   if (!text || text.length > 70) return false;
@@ -506,7 +514,7 @@ function detectEvent(line: string, date: string | null): SportsListingEvent | nu
 }
 
 function finalized(event: SportsListingEvent): SportsListingEvent | null {
-  const title = event.title.replace(/\s+/g, " ").trim();
+  const title = normalizeSportsEventTitle(event.title);
   if (!parseClockTime(event.time)) return null;
   if (!title) return null;
   // Never preserve the second half of a dual-zone kick-off as an event name.
