@@ -115,6 +115,17 @@ function splitTitleAndInlineChannels(rest: string): { title: string; channels: s
 }
 
 function detectEvent(line: string, date: string | null): SportsListingEvent | null {
+  const numberedChannel = line.match(CHANNEL_NUMBER_TIME_RE);
+  if (numberedChannel && numberedChannel[1] && numberedChannel[2] && numberedChannel[3]) {
+    const split = splitTitleAndInlineChannels(numberedChannel[3]);
+    return {
+      date,
+      time: normalizeTime(numberedChannel[2]),
+      title: split.title,
+      channels: unique([numberedChannel[1], ...split.channels]),
+    };
+  }
+
   const dualTimeOnly = line.match(DUAL_TIME_ONLY_RE);
   if (dualTimeOnly && dualTimeOnly[1]) {
     return { date, time: normalizeTime(dualTimeOnly[1]), title: "", channels: [] };
