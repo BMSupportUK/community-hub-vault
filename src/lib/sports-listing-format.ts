@@ -184,7 +184,9 @@ function detectEvent(line: string, date: string | null): SportsListingEvent | nu
 function finalized(event: SportsListingEvent): SportsListingEvent | null {
   const title = event.title.replace(/\s+/g, " ").trim();
   if (!parseClockTime(event.time)) return null;
-  if (!title || isLikelyChannelLabel(title)) return null;
+  if (!title) return null;
+  // A channel-looking title is only junk when we have no channel of our own.
+  if (!event.channels.length && isLikelyChannelLabel(title)) return null;
   return { ...event, title, channels: unique(event.channels) };
 }
 
@@ -201,6 +203,8 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
   const events: SportsListingEvent[] = [];
   let currentDate: string | null = null;
   let current: SportsListingEvent | null = null;
+  // Provider dumps name the programme on the line above its time slot.
+  let previousPlainLine: string | null = null;
 
   const flush = () => {
     if (!current) return;
@@ -213,6 +217,7 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
     if (isDateLine(line)) {
       flush();
       currentDate = line;
+      previousPlainLine = null;
       continue;
     }
     if (isAlwaysNoiseLine(line)) continue;
@@ -222,10 +227,15 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
     if (detected) {
       flush();
       current = detected;
+      if (!current.title && previousPlainLine) current.title = previousPlainLine;
+      previousPlainLine = null;
       continue;
     }
 
-    if (!current) continue;
+    if (!current) {
+      previousPlainLine = line;
+      continue;
+    }
     if (!current.title) {
       current.title = line;
       continue;
