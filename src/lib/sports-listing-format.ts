@@ -162,7 +162,55 @@ function splitTitleAndInlineChannels(rest: string): { title: string; channels: s
   return { title: clean, channels: [] };
 }
 
+/**
+ * League feeds write one row per fixture as
+ * "LOI 1 | Dundalk v Wexford // UK Wed 23 Sep 7:30pm // ET Wed 23 Sep 2:30pm".
+ * Keep the channel, the fixture and the UK kick-off only; the competition
+ * heading above the row ("IRE | League of Ireland") is not an event.
+ */
+const SLASH_ZONE_SEGMENT_RE = new RegExp(`^(${ZONE})\\b\\s*(.+)$`, "i");
+
+function detectSlashZonedEvent(line: string, date: string | null): SportsListingEvent | null {
+  if (!line.includes("//")) return null;
+  const segments = line.split(/\s*\/\/\s*/).map((part) => part.trim()).filter(Boolean);
+  if (segments.length < 2) return null;
+
+  const head = segments[0];
+  if (!head) return null;
+
+  const zoned = segments
+    .slice(1)
+    .map((segment) => segment.match(SLASH_ZONE_SEGMENT_RE))
+    .filter((match): match is RegExpMatchArray => Boolean(match?.[1] && match?.[2]));
+  if (!zoned.length) return null;
+
+  const chosen = zoned.find((match) => /^(?:uk|gmt|bst)$/i.test(match[1]!)) ?? zoned[0]!;
+  const zone = chosen[1]!;
+  const rest = chosen[2]!;
+  const time = rest.match(new RegExp(`(${TIME_SOURCE})`, "i"))?.[1];
+  if (!time) return null;
+
+  const parsedDate = parseListingDate(rest.replace(new RegExp(`${TIME_SOURCE}`, "gi"), " "));
+  const eventDate = parsedDate
+    ? formatListingDate(new Date(Date.UTC(parsedDate.y, parsedDate.m, parsedDate.d)))
+    : date;
+
+  const parts = head.split(/\s*(?:\||·|•)\s*/).map((part) => part.trim()).filter(Boolean);
+  const titlePart = parts.find((part) => /\bv(?:s|ersus)?\b/i.test(part)) ?? parts[parts.length - 1] ?? head;
+  const channels = unique(parts.filter((part) => part !== titlePart));
+
+  return {
+    date: eventDate,
+    time: normalizeTime(`${time} ${zone}`),
+    title: titlePart,
+    channels,
+  };
+}
+
 function detectEvent(line: string, date: string | null): SportsListingEvent | null {
+  const slashZoned = detectSlashZonedEvent(line, date);
+  if (slashZoned) return slashZoned;
+
   const span = line.match(DATE_TIME_SPAN_RE);
   if (span && span[1] && span[2]) {
     return {
