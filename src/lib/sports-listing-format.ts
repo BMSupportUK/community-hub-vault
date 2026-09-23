@@ -205,12 +205,14 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
   let current: SportsListingEvent | null = null;
   // Provider dumps name the programme on the line above its time slot.
   let previousPlainLine: string | null = null;
+  let titleCameFromAbove = false;
 
   const flush = () => {
     if (!current) return;
     const done = finalized(current);
     if (done) events.push(done);
     current = null;
+    titleCameFromAbove = false;
   };
 
   for (const line of lines) {
@@ -227,7 +229,10 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
     if (detected) {
       flush();
       current = detected;
-      if (!current.title && previousPlainLine) current.title = previousPlainLine;
+      if (!current.title && previousPlainLine) {
+        current.title = previousPlainLine;
+        titleCameFromAbove = true;
+      }
       previousPlainLine = null;
       continue;
     }
@@ -238,6 +243,12 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
     }
     if (!current.title) {
       current.title = line;
+      continue;
+    }
+    if (titleCameFromAbove) {
+      // In this format the next plain line names the following programme.
+      flush();
+      previousPlainLine = line;
       continue;
     }
     current.channels.push(...splitChannelLine(line));
