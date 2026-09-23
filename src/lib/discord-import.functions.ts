@@ -411,7 +411,7 @@ export const splitQueueItem = createServerFn({ method: "POST" })
 
     const raw = String((item.parsed_event as any)?.raw ?? item.raw_text ?? "");
     const events = sortSportsListingEvents(parseSportsListingBlock(raw));
-    if (events.length < 2) throw new Error("Couldn't find more than one event in this post");
+    if (!events.length) throw new Error("Couldn't read any events in this post");
 
     const rows = events.map((e, i) => ({
       raw_text: [e.date, [e.time, e.title].filter(Boolean).join(" "), e.channels.join(" • ")]
