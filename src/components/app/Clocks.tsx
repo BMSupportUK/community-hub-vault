@@ -304,8 +304,8 @@ export function OfficeHoursSchedule({
       <div className={cn(
         "rounded-lg border border-border/70 text-xs sm:text-sm",
         showUserColumn
-          ? "grid grid-cols-[7.5rem_minmax(0,1fr)_minmax(0,1fr)]"
-          : "grid grid-cols-[7.5rem_minmax(0,1fr)]",
+          ? "grid grid-cols-[8.5rem_minmax(0,1fr)_minmax(0,1fr)] sm:grid-cols-[10rem_minmax(0,1fr)_minmax(0,1fr)]"
+          : "grid grid-cols-[8.5rem_minmax(0,1fr)] sm:grid-cols-[10rem_minmax(0,1fr)]",
       )}>
         <div className="bg-muted/40 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">Day</div>
         <div className="border-l border-border/70 bg-muted/40 px-3 py-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">UK office</div>
@@ -330,13 +330,13 @@ export function OfficeHoursSchedule({
           return (
             <div key={hour.day_of_week} className="contents">
               <div className={cn(cell, "font-semibold text-foreground")}>
-                <div className="flex items-center gap-1.5">
-                  <span>{OFFICE_DAY_NAMES[hour.day_of_week]}</span>
+                <div>{OFFICE_DAY_NAMES[hour.day_of_week]}</div>
+                <div className="mt-0.5 flex flex-wrap items-center gap-1.5">
+                  <span className="text-[11px] font-normal text-muted-foreground">{officeDate}</span>
                   {isToday && (
-                    <span className="rounded-full bg-primary px-1.5 py-px text-[9px] font-bold uppercase tracking-wide text-primary-foreground">Today</span>
+                    <span className="shrink-0 rounded-full bg-primary px-1.5 py-px text-[9px] font-bold uppercase tracking-wide text-primary-foreground">Today</span>
                   )}
                 </div>
-                <div className="mt-0.5 text-[11px] font-normal text-muted-foreground">{officeDate}</div>
               </div>
               <div className={cn(cell, "border-l border-border/50")}>
                 {closed ? (
@@ -491,7 +491,7 @@ export function Clocks() {
           </>
         )}
       </div>
-      <DialogContent className="top-4 max-h-[94vh] translate-y-0 overflow-y-auto sm:top-8 sm:max-w-3xl">
+      <DialogContent className="top-1/2 max-h-[90vh] -translate-y-1/2 overflow-y-auto sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle className="font-display flex items-center gap-2">
             <Building2 className="size-4 text-primary" />
