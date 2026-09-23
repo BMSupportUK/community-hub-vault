@@ -4,7 +4,7 @@ import { ArrowLeft, BarChart3, Loader2, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { ADSENSE_SIDEBAR_SLOT, ADSENSE_TOPIC_SLOT } from "@/lib/adsense";
+import { ADSENSE_SIDEBAR_SLOT, ADSENSE_TOPIC_SLOT, ADSENSE_WELCOME_SLOT } from "@/lib/adsense";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-ad-stats")({
   component: AdStatsPage,
@@ -32,6 +32,7 @@ type Row = {
 const UNIT_NAMES: Record<string, string> = {
   [ADSENSE_TOPIC_SLOT]: "In-page advert",
   [ADSENSE_SIDEBAR_SLOT]: "Sidebar advert",
+  [ADSENSE_WELCOME_SLOT]: "Sports guide welcome advert",
 };
 
 const RANGES = [
