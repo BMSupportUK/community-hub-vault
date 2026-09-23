@@ -1407,10 +1407,10 @@ function SportsGuidesPage() {
                               >
                                 <div className="text-[10px] uppercase tracking-wider text-fuchsia-300/80 mb-1">{cat?.name ?? "Guide"}</div>
                                 <div className="font-semibold text-sm text-purple-50 leading-snug">
-                                  <Highlight text={blog.title} query={search} />
+                                  <Highlight text={blog.title} query={activeSearch} />
                                 </div>
                                 <div className="mt-1 text-xs text-purple-200/80 leading-relaxed">
-                                  <Highlight text={snippet} query={search} />
+                                  <Highlight text={snippet} query={activeSearch} />
                                 </div>
                               </button>
                             );
@@ -1600,10 +1600,10 @@ function SportsGuidesPage() {
                                 {cat?.name ?? "Guide"}
                               </div>
                               <div className="font-semibold text-sm text-purple-50 leading-snug">
-                                <Highlight text={blog.title} query={search} />
+                                <Highlight text={blog.title} query={activeSearch} />
                               </div>
                               <div className="mt-1 text-xs text-purple-200/80 leading-relaxed">
-                                <Highlight text={snippet} query={search} />
+                                <Highlight text={snippet} query={activeSearch} />
                               </div>
                             </button>
                           );
