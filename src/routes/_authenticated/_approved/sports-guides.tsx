@@ -1886,8 +1886,8 @@ function SportsGuidesPage() {
               </button>
             )}
           </TabsContent>
-        </Tabs>
-      </div>
+        </div>
+      </Tabs>
 
       <Dialog open={headingDialogOpen} onOpenChange={setHeadingDialogOpen}>
         <DialogContent className="bg-slate-950 border border-fuchsia-500/40 text-purple-50 sm:max-w-md">
