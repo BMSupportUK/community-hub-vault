@@ -260,9 +260,7 @@ function ReadPage() {
               {blog.title}
             </h1>
             {blog.image_url ? (
-              <div className="shrink-0 flex items-center justify-center gap-3">
-                <AdSenseSlot slot="home" />
-                <div className="relative flex-1 min-w-0 h-32 sm:h-40 lg:h-48 rounded-2xl overflow-hidden border border-purple-500/30 bg-purple-950/60">
+              <div className="relative shrink-0 w-full h-32 sm:h-40 lg:h-48 rounded-2xl overflow-hidden border border-purple-500/30 bg-purple-950/60">
                   <img
                     src={blog.image_url}
                     alt=""
@@ -274,9 +272,17 @@ function ReadPage() {
                     alt={blog.title}
                     className="absolute inset-0 w-full h-full object-contain"
                   />
+                  <div className="absolute inset-y-0 left-3 z-10 hidden xl:flex w-[468px] items-center">
+                    <div className="w-[468px]">
+                      <AdSenseSlot slot="home" />
+                    </div>
+                  </div>
+                  <div className="absolute inset-y-0 right-3 z-10 hidden xl:flex w-[468px] items-center">
+                    <div className="w-[468px]">
+                      <AdSenseSlot slot="home" />
+                    </div>
+                  </div>
                 </div>
-                <AdSenseSlot slot="home" />
-              </div>
             ) : null}
             {blog.refresh_notice && (
               <div className="flex items-start gap-2 rounded-xl border border-amber-400/40 bg-amber-500/10 px-3 py-2 text-amber-100">
