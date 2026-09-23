@@ -147,8 +147,9 @@ function detectEvent(line: string, date: string | null): SportsListingEvent | nu
 
   const dualTimeOnly = line.match(DUAL_TIME_ONLY_RE);
   if (dualTimeOnly && dualTimeOnly[1]) {
-    return { date, time: normalizeTime(dualTimeOnly[1]), title: "", channels: [] };
+    return { date, time: pickPrimaryTime(dualTimeOnly[1]), title: "", channels: [] };
   }
+
 
   const leadingZone = line.match(LEADING_ZONE_TIME_RE);
   if (leadingZone && leadingZone[1] && leadingZone[2] && leadingZone[3]) {
