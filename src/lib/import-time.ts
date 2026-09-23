@@ -239,3 +239,18 @@ function dayNumberInZone(instant: number, timeZone: string): number {
     new Intl.DateTimeFormat("en-GB", { timeZone, day: "numeric" }).format(new Date(instant)),
   );
 }
+
+/**
+ * Real instant for a listed UK date/time, used to auto-clear guide entries a
+ * fixed number of hours after their start time. Returns null when either the
+ * date or the clock can't be read.
+ */
+export function ukListingInstant(
+  date: string | null | undefined,
+  time: string | null | undefined,
+): number | null {
+  const clock = parseClockTime(time);
+  const day = parseListingDate(date);
+  if (!clock || !day) return null;
+  return wallTimeToInstant(day, clock, UK_TZ);
+}
