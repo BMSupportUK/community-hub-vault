@@ -1002,7 +1002,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
 
     const firstPill = document.createElement("span");
     firstPill.setAttribute("data-tz-pill", "1");
-    firstPill.className = `inline-flex ${localDiffers ? "w-full" : "w-auto min-w-[9rem]"} min-w-0 max-w-full flex-col items-center justify-center px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-purple-100/80`;
+    firstPill.className = `inline-flex ${localDiffers ? "w-full min-w-0" : "w-auto min-w-[9rem]"} max-w-full flex-col items-center justify-center px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-purple-100/80`;
     const firstDate = document.createElement("span");
     firstDate.className = "block w-full text-center text-[11px] md:text-xs font-bold uppercase tracking-wider text-fuchsia-200 leading-tight mb-0.5";
     firstDate.textContent = ukDate;
