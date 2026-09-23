@@ -1,6 +1,8 @@
 import { createFileRoute, useNavigate, Outlet, useChildMatches } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState, type DragEvent as ReactDragEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { pruneStaleSportsGuides } from "@/lib/sports-guide-prune.functions";
 import { Plus, Search, Pencil, Trash2, ImageIcon, GripVertical, X, ChevronDown, ChevronRight, ArrowUp, ArrowDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -194,9 +196,16 @@ function SportsGuidesPage() {
 
 
   const queryKey = ["sports-guides-data", user?.id ?? "anon"] as const;
+  const prune = useServerFn(pruneStaleSportsGuides);
   const dataQuery = useQuery({
     queryKey,
     queryFn: async () => {
+      // Clear entries more than 10 hours past their start time before reading.
+      try {
+        await prune({});
+      } catch {
+        /* never block the guides list on the tidy-up */
+      }
       const [{ data: cats }, { data: bs }, { data: subs }, { data: rs }, { data: prof }] = await Promise.all([
         supabase.from("sports_categories").select("*").order("sort_order"),
         supabase.from("sports_blogs").select("*").order("sort_order").order("created_at", { ascending: false }),
