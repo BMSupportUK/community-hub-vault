@@ -75,6 +75,16 @@ function normalizeTime(time: string): string {
   return time.replace(/^(\d{1,2})\.(\d{2}\b)/, "$1:$2").replace(/\s+/g, " ").trim();
 }
 
+/**
+ * "5:00pm UK / 12:00pm ET" — keep one time only: the UK one when the post
+ * gives it, otherwise the first listed.
+ */
+function pickPrimaryTime(value: string): string {
+  const parts = value.split(/\s*(?:·|\||\/)\s*/).map((part) => part.trim()).filter(Boolean);
+  const uk = parts.find((part) => /\b(?:uk|gmt|bst)\b/i.test(part));
+  return normalizeTime(uk ?? parts[0] ?? value);
+}
+
 function unique(values: string[]): string[] {
   const out: string[] = [];
   const seen = new Set<string>();
