@@ -175,7 +175,24 @@ function unique(values: string[]): string[] {
 
 function splitChannelLine(line: string): string[] {
   const withoutLabel = line.replace(/^channels?\s*[:|-]\s*/i, "").trim();
-  return unique(withoutLabel.split(/\s*(?:\||·|•|,|;|\/\/|\/|\s[-–—]\s)\s*|\s+(?:\+|&|and)\s+/i));
+  const parts = withoutLabel.split(/\s*(?:\||·|•|,|;|\/\/|\/|\s[-–—]\s)\s*|\s+(?:\+|&|and)\s+/i);
+  let numberedPrefix: string | null = null;
+
+  const expanded = parts.map((part) => {
+    const clean = part.trim();
+    const prefixedNumber = clean.match(/^(.*?\D\s*)(\d{1,3})$/);
+    if (prefixedNumber?.[1]) {
+      numberedPrefix = prefixedNumber[1].trimEnd();
+      return clean;
+    }
+    if (numberedPrefix && /^\d{1,3}$/.test(clean)) {
+      return `${numberedPrefix} ${clean}`;
+    }
+    numberedPrefix = null;
+    return clean;
+  });
+
+  return unique(expanded);
 }
 
 export function isLikelyChannelLabel(value: string): boolean {
