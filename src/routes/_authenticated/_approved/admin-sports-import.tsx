@@ -994,7 +994,7 @@ function QueueSetup({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setStep(groupSubs.length > 0 && chosenChoice?.isGroup ? 3 : 2)}
+              onClick={() => setStep(subChoices.length === 0 ? 1 : groupSubs.length > 0 && chosenChoice?.isGroup ? 3 : 2)}
             >
               <ArrowLeft className="size-4" /> Back
             </Button>
