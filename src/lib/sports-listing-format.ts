@@ -224,7 +224,9 @@ function detectSlashZonedEvent(line: string, date: string | null): SportsListing
     ? formatListingDate(new Date(Date.UTC(parsedDate.y, parsedDate.m, parsedDate.d)))
     : date;
 
-  const parts = head.split(/\s*(?:\||·|•)\s*/).map((part) => part.trim()).filter(Boolean);
+  // Some providers separate the channel from the fixture with a spaced colon
+  // ("Stan 01 : Singapore: Day 3 - WTA 500") instead of a pipe.
+  const parts = head.split(/\s*(?:\||·|•)\s*|\s+:\s+/).map((part) => part.trim()).filter(Boolean);
   const titlePart = parts.find((part) => /\bv(?:s|ersus)?\b/i.test(part)) ?? parts[parts.length - 1] ?? head;
   const channels = unique(parts.filter((part) => part !== titlePart));
 
