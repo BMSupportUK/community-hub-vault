@@ -189,6 +189,7 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
       currentDate = line;
       continue;
     }
+    if (isAlwaysNoiseLine(line)) continue;
     if (isNoiseLine(line) && !current) continue;
 
     const detected = detectEvent(line, currentDate);
