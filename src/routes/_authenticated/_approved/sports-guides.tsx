@@ -527,8 +527,6 @@ function SportsGuidesPage() {
     }
     return out;
   }, [blogs, activeSearch]);
-    return out;
-  }, [blogs, search]);
 
   const activeCategory = categories.find((c) => c.id === activeCat);
 
