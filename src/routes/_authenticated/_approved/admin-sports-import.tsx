@@ -885,10 +885,10 @@ function QueueSetup({
         </div>
       )}
 
-      {groupSubs.length > 0 && (
+      {step === 3 && groupSubs.length > 0 && (
         <div className="space-y-1.5">
           <span className="text-[11px] font-medium text-muted-foreground">
-            2b · The sub categories in {draft.group}
+            Step 3 · The sub categories in {draft.group}
           </span>
           <div className="max-h-56 space-y-1.5 overflow-y-auto pr-1">
             {groupSubs.map((sub) => {
@@ -909,6 +909,14 @@ function QueueSetup({
                 </button>
               );
             })}
+          </div>
+          <div className="flex items-center justify-between gap-2 pt-1">
+            <Button variant="outline" size="sm" onClick={() => setStep(2)}>
+              <ArrowLeft className="size-4" /> Back
+            </Button>
+            <Button size="sm" onClick={() => setStep(4)} disabled={!selectedSubcategory}>
+              OK <Check className="size-4" />
+            </Button>
           </div>
         </div>
       )}
