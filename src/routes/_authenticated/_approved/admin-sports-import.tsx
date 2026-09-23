@@ -253,14 +253,14 @@ function AdminSportsImportPage() {
 
           <TabsContent value="queue" className="space-y-3">
             <div className="flex flex-wrap items-center gap-2">
-              {(["all", "telegram", "paste"] as const).map((f) => (
+              {(["all", "paste"] as const).map((f) => (
                 <Button
                   key={f}
                   size="sm"
                   variant={queueFilter === f ? "default" : "outline"}
                   onClick={() => setQueueFilter(f)}
                 >
-                  {f === "all" ? "All" : f === "telegram" ? "Telegram" : "Pasted"}
+                  {f === "all" ? "All" : "Pasted"}
                   <span className="ml-1.5 text-xs opacity-80">
                     {f === "all" ? queue.length : queue.filter((q) => (q.source ?? "paste") === f).length}
                   </span>
@@ -283,7 +283,7 @@ function AdminSportsImportPage() {
                   <Card className="p-10 grid place-items-center text-center text-muted-foreground gap-2">
                     <Inbox className="size-8" />
                     <p>{queue.length === 0 ? "Review queue is empty." : "Nothing from this source."}</p>
-                    <p className="text-xs">Forward a listings post to your Telegram bot and it will appear here.</p>
+                    <p className="text-xs">Copy a listings post and paste it into the Paste &amp; Import tab — it will appear here.</p>
                   </Card>
                 ) : (
                   groupedQueue.map(([groupName, items]) => (
@@ -344,80 +344,6 @@ function AdminSportsImportPage() {
   );
 }
 
-function EventRow({
-  event,
-  cats,
-  subsByCatName,
-  onChange,
-  onRemove,
-}: {
-  event: RoutedEvent;
-  cats: Cat[];
-  subsByCatName: Map<string, Sub[]>;
-  onChange: (patch: Partial<RoutedEvent>) => void;
-  onRemove: () => void;
-}) {
-  const subs = event.category ? subsByCatName.get(event.category) ?? [] : [];
-  return (
-    <div className="rounded-lg border border-border p-3 space-y-2 bg-card/50">
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex-1 min-w-0">
-          <Input
-            value={event.title}
-            onChange={(e) => onChange({ title: e.target.value })}
-            className="font-medium"
-          />
-          <div className="text-xs text-muted-foreground mt-1 truncate">
-            {[event.date, event.time].filter(Boolean).join(" · ")}
-            {event.channels.length > 0 && <> · {event.channels.join(" • ")}</>}
-          </div>
-        </div>
-        <Button size="icon" variant="ghost" onClick={onRemove}>
-          <Trash2 className="size-4" />
-        </Button>
-      </div>
-      {parseClockTime(event.time) !== null && (
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[11px] text-muted-foreground">Time listed is:</span>
-          {(["gmt", "et"] as const).map((z) => (
-            <Button
-              key={z}
-              size="sm"
-              variant="outline"
-              className="h-7 px-2 text-xs"
-              onClick={() => {
-                const shown = toSingleZoneTime(event.time, event.date, z);
-                if (!shown) return toast.error("Couldn't read the time on this post");
-                onChange({ time: shown });
-              }}
-            >
-              <Clock className="size-3" /> {z === "gmt" ? "UK" : "ET"}
-            </Button>
-          ))}
-        </div>
-      )}
-      <div className="grid grid-cols-2 gap-2">
-        <Select value={event.category ?? ""} onValueChange={(v) => onChange({ category: v, subcategory: null })}>
-          <SelectTrigger><SelectValue placeholder="Category" /></SelectTrigger>
-          <SelectContent>
-            {cats.map((c) => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Select
-          value={event.subcategory ?? "__none"}
-          onValueChange={(v) => onChange({ subcategory: v === "__none" ? null : v })}
-          disabled={subs.length === 0}
-        >
-          <SelectTrigger><SelectValue placeholder={subs.length === 0 ? "—" : "Subcategory"} /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="__none">— None —</SelectItem>
-            {subs.map((s) => <SelectItem key={s.name} value={s.name}>{s.name}{s.is_default ? " ★" : ""}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      </div>
-    </div>
-  );
-}
 
 function QueueRow({
   item,
@@ -436,7 +362,7 @@ function QueueRow({
 }) {
   const ev = item.parsed_event ?? {};
 
-  // Telegram blocks arrive whole with no time pulled out — fall back to the
+  // Queued posts arrive whole with no time pulled out — fall back to the
   // first clock time written inside the post itself.
   const zoneSource = firstClockIn(String(ev.raw ?? item.raw_text ?? "")) ?? time;
   const zoneDate = ev.date ?? firstDateIn(String(ev.raw ?? item.raw_text ?? ""));
