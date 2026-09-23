@@ -768,69 +768,122 @@ function QueueSetup({
 
       <ListingPreview raw={String(item.parsed_event?.raw ?? item.raw_text ?? "")} sourceZone={draft.sourceZone} />
 
-      <div className="space-y-1.5">
-        <span className="text-[11px] font-medium text-muted-foreground">1 · Category names we have</span>
-        <div className="max-h-44 divide-y divide-border overflow-y-auto rounded-lg border border-border">
-          {cats.filter((c) => !c.parent_id).map((c) => {
-            const on = draft.category === c.name;
-            return (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => setDraft({ ...draft, category: c.name, group: "", destinationCategory: "", subcategories: [], guideId: null })}
-                className={`flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm transition ${
-                  on ? "bg-primary/10 font-medium text-primary" : "hover:bg-muted/60"
-                }`}
-              >
-                <span className="truncate">{c.name}</span>
-                {on && <span className="text-xs">✓</span>}
-              </button>
-            );
-          })}
+      {(step > 1 || step > 2 || step > 3) && (
+        <div className="flex flex-wrap items-center gap-1.5">
+          {step > 1 && draft.category && (
+            <button
+              type="button"
+              onClick={() => setStep(1)}
+              className="flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary transition hover:bg-primary/20"
+            >
+              <Check className="size-3" strokeWidth={3} />
+              {draft.category}
+            </button>
+          )}
+          {step > 2 && chosenChoice && (
+            <button
+              type="button"
+              onClick={() => setStep(2)}
+              className="flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary transition hover:bg-primary/20"
+            >
+              <Check className="size-3" strokeWidth={3} />
+              {chosenChoice.name}
+            </button>
+          )}
+          {step > 3 && groupSubs.length > 0 && selectedSubcategory && (
+            <button
+              type="button"
+              onClick={() => setStep(3)}
+              className="flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary transition hover:bg-primary/20"
+            >
+              <Check className="size-3" strokeWidth={3} />
+              {selectedSubcategory}
+            </button>
+          )}
         </div>
-      </div>
+      )}
 
-      <div className="space-y-1.5">
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-[11px] font-medium text-muted-foreground">
-            2 · The sub categories we have
-          </span>
-        </div>
-        {subChoices.length > 0 ? (
-          <div className="max-h-64 space-y-1.5 overflow-y-auto pr-1">
-            {subChoices.map((choice) => {
-              const on = choice.isGroup
-                ? draft.group === choice.name
-                : selectedSubcategory === choice.name;
+      {step === 1 && (
+        <div className="space-y-1.5">
+          <span className="text-[11px] font-medium text-muted-foreground">Step 1 · Category names we have</span>
+          <div className="max-h-44 divide-y divide-border overflow-y-auto rounded-lg border border-border">
+            {cats.filter((c) => !c.parent_id).map((c) => {
+              const on = draft.category === c.name;
               return (
                 <button
-                  key={choice.name}
+                  key={c.id}
                   type="button"
-                  onClick={() => setDraft({
-                    ...draft,
-                    group: choice.isGroup ? choice.name : "",
-                    destinationCategory: choice.destinationCategory,
-                    subcategories: choice.isGroup ? [] : [choice.name],
-                    guideId: null,
-                  })}
-                  className={`flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left text-sm transition ${
-                    on
-                      ? "border-primary bg-primary/10 font-medium text-primary"
-                      : "border-border bg-card hover:bg-muted/60"
+                  onClick={() => setDraft({ ...draft, category: c.name, group: "", destinationCategory: "", subcategories: [], guideId: null })}
+                  className={`flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm transition ${
+                    on ? "bg-primary/10 font-medium text-primary" : "hover:bg-muted/60"
                   }`}
                 >
-                  <span className="truncate">{choice.name}</span>
-                  <span className="text-xs">{on ? "✓" : ""}</span>
+                  <span className="truncate">{c.name}</span>
+                  {on && <span className="text-xs">✓</span>}
                 </button>
               );
             })}
           </div>
-        ) : (
-          <p className="text-[11px] text-muted-foreground">
-            {draft.category ? "No sub categories are set up in this category." : "Pick a category first."}
-          </p>
-        )}
-      </div>
+          <div className="flex items-center justify-between gap-2 pt-1">
+            <span />
+            <Button size="sm" onClick={() => setStep(2)} disabled={!draft.category}>
+              OK <Check className="size-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {step === 2 && (
+        <div className="space-y-1.5">
+          <span className="text-[11px] font-medium text-muted-foreground">Step 2 · The sub categories we have</span>
+          {subChoices.length > 0 ? (
+            <div className="max-h-64 space-y-1.5 overflow-y-auto pr-1">
+              {subChoices.map((choice) => {
+                const on = choice.isGroup
+                  ? draft.group === choice.name
+                  : selectedSubcategory === choice.name;
+                return (
+                  <button
+                    key={choice.name}
+                    type="button"
+                    onClick={() => setDraft({
+                      ...draft,
+                      group: choice.isGroup ? choice.name : "",
+                      destinationCategory: choice.destinationCategory,
+                      subcategories: choice.isGroup ? [] : [choice.name],
+                      guideId: null,
+                    })}
+                    className={`flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left text-sm transition ${
+                      on
+                        ? "border-primary bg-primary/10 font-medium text-primary"
+                        : "border-border bg-card hover:bg-muted/60"
+                    }`}
+                  >
+                    <span className="truncate">{choice.name}</span>
+                    <span className="text-xs">{on ? "✓" : ""}</span>
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-[11px] text-muted-foreground">
+              {draft.category ? "No sub categories are set up in this category." : "Pick a category first."}
+            </p>
+          )}
+          <div className="flex items-center justify-between gap-2 pt-1">
+            <Button variant="outline" size="sm" onClick={() => setStep(1)}>
+              <ArrowLeft className="size-4" /> Back
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => setStep(groupSubs.length > 0 && chosenChoice?.isGroup ? 3 : 4)}
+              disabled={!chosenChoice}
+            >
+              OK <Check className="size-4" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       {groupSubs.length > 0 && (
         <div className="space-y-1.5">
