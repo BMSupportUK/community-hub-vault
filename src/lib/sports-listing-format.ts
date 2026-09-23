@@ -164,6 +164,17 @@ function detectEvent(line: string, date: string | null): SportsListingEvent | nu
     };
   }
 
+  const numberedTrailingTime = line.match(CHANNEL_NUMBER_TITLE_TIME_RE);
+  if (numberedTrailingTime && numberedTrailingTime[1] && numberedTrailingTime[2] && numberedTrailingTime[3]) {
+    const split = splitTitleAndInlineChannels(numberedTrailingTime[2]);
+    return {
+      date,
+      time: normalizeTime(numberedTrailingTime[3]),
+      title: split.title,
+      channels: unique([`Channel ${numberedTrailingTime[1]}`, ...split.channels]),
+    };
+  }
+
   const dualTimeOnly = line.match(DUAL_TIME_ONLY_RE);
   if (dualTimeOnly && dualTimeOnly[1]) {
     return { date, time: pickPrimaryTime(dualTimeOnly[1]), title: "", channels: [] };
