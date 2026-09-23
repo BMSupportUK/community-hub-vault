@@ -890,8 +890,15 @@ function QueueSetup({
             </Button>
             <Button
               size="sm"
-              onClick={() => setStep(groupSubs.length > 0 && chosenChoice?.isGroup ? 3 : 4)}
-              disabled={!chosenChoice}
+              onClick={() => {
+                if (subChoices.length === 0) {
+                  setDraft({ ...draft, group: "", destinationCategory: draft.category, subcategories: [], guideId: null });
+                  setStep(4);
+                  return;
+                }
+                setStep(groupSubs.length > 0 && chosenChoice?.isGroup ? 3 : 4);
+              }}
+              disabled={subChoices.length > 0 && !chosenChoice}
             >
               OK <Check className="size-4" />
             </Button>
