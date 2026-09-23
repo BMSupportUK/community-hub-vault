@@ -224,7 +224,9 @@ function detectSlashZonedEvent(line: string, date: string | null): SportsListing
     ? formatListingDate(new Date(Date.UTC(parsedDate.y, parsedDate.m, parsedDate.d)))
     : date;
 
-  const parts = head.split(/\s*(?:\||·|•)\s*/).map((part) => part.trim()).filter(Boolean);
+  // Some providers separate the channel from the fixture with a spaced colon
+  // ("Stan 01 : Singapore: Day 3 - WTA 500") instead of a pipe.
+  const parts = head.split(/\s*(?:\||·|•)\s*|\s+:\s+/).map((part) => part.trim()).filter(Boolean);
   const titlePart = parts.find((part) => /\bv(?:s|ersus)?\b/i.test(part)) ?? parts[parts.length - 1] ?? head;
   const channels = unique(parts.filter((part) => part !== titlePart));
 
@@ -321,6 +323,53 @@ function finalized(event: SportsListingEvent): SportsListingEvent | null {
   // A channel-looking title is only junk when we have no channel of our own.
   if (!event.channels.length && isLikelyChannelLabel(title)) return null;
   return { ...event, title, channels: unique(event.channels) };
+}
+
+export type ListingSection = { name: string; raw: string };
+
+/**
+ * One pasted post can carry several providers, each with its own guide:
+ * "**MONOMAX**" rows followed by "**STAN Sport**" rows. Detect those headings
+ * so the post can be filed as one import per provider.
+ */
+function isSectionHeading(rawLine: string): boolean {
+  const trimmed = rawLine.trim();
+  if (!trimmed) return false;
+  const bold = /^(?:\*{2,}|__)(.+?)(?:\*{2,}|__)$/.test(trimmed);
+  const text = cleanLine(trimmed);
+  if (!text || text.length > 48) return false;
+  if (text.includes("//")) return false;
+  if (/\d{1,2}\s*[:.]\s*\d{2}/.test(text)) return false;
+  if (isDateLine(text) || listingDateFromLine(text)) return false;
+  if (detectEvent(text, null)) return false;
+  const upper = text === text.toUpperCase() && /[A-Za-z]/.test(text);
+  return bold || upper;
+}
+
+function listingLines(raw: string): string[] {
+  return raw
+    .replace(/<br\s*\/?\s*>/gi, "\n")
+    .replace(/<\/div>/gi, "\n")
+    .replace(/<[^>]+>/g, " ")
+    .split("\n");
+}
+
+export function splitListingSections(raw: string | null | undefined): ListingSection[] {
+  if (!raw) return [];
+  const sections: ListingSection[] = [];
+  let current: ListingSection | null = null;
+
+  for (const line of listingLines(raw)) {
+    if (isSectionHeading(line)) {
+      current = { name: cleanLine(line), raw: "" };
+      sections.push(current);
+      continue;
+    }
+    if (current) current.raw += `${line}\n`;
+  }
+
+  const filled = sections.filter((section) => parseSportsListingBlock(section.raw).length > 0);
+  return filled.length >= 2 ? filled : [];
 }
 
 export function parseSportsListingBlock(raw: string | null | undefined): SportsListingEvent[] {
