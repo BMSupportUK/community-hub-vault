@@ -820,8 +820,8 @@ function InstallGuidesPage() {
               </div>
             </div>
           </TabsContent>}
-        </Tabs>
         </div>
+        </Tabs>
       </div>
 
       <aside className="hidden xl:block w-full xl:w-[300px] xl:shrink-0 xl:sticky xl:top-16 px-6 pb-6">
