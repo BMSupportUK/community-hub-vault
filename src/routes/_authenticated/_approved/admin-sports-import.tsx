@@ -826,7 +826,21 @@ function QueueSetup({
           </div>
           <div className="flex items-center justify-between gap-2 pt-1">
             <span />
-            <Button size="sm" onClick={() => setStep(2)} disabled={!draft.category}>
+            <Button
+              size="sm"
+              onClick={() => {
+                // Some categories (e.g. Sports Passes, Daily Sports) have no
+                // sub categories at all — skip straight to the guide list
+                // instead of stalling on an empty step 2.
+                if (subChoices.length === 0) {
+                  setDraft({ ...draft, group: "", destinationCategory: draft.category, subcategories: [], guideId: null });
+                  setStep(4);
+                } else {
+                  setStep(2);
+                }
+              }}
+              disabled={!draft.category}
+            >
               OK <Check className="size-4" />
             </Button>
           </div>
@@ -876,8 +890,15 @@ function QueueSetup({
             </Button>
             <Button
               size="sm"
-              onClick={() => setStep(groupSubs.length > 0 && chosenChoice?.isGroup ? 3 : 4)}
-              disabled={!chosenChoice}
+              onClick={() => {
+                if (subChoices.length === 0) {
+                  setDraft({ ...draft, group: "", destinationCategory: draft.category, subcategories: [], guideId: null });
+                  setStep(4);
+                  return;
+                }
+                setStep(groupSubs.length > 0 && chosenChoice?.isGroup ? 3 : 4);
+              }}
+              disabled={subChoices.length > 0 && !chosenChoice}
             >
               OK <Check className="size-4" />
             </Button>
@@ -925,7 +946,7 @@ function QueueSetup({
         <div className="space-y-1.5">
           <span className="text-[11px] font-medium text-muted-foreground">Step 4 · The name of the guide we are importing into</span>
           {!readyForGuides ? (
-            <p className="text-[11px] text-muted-foreground">Pick a sub category first.</p>
+            <p className="text-[11px] text-muted-foreground">Pick a category first.</p>
           ) : loadingGuides ? (
             <p className="flex items-center gap-2 text-[11px] text-muted-foreground">
               <Loader2 className="size-3 animate-spin" /> Loading existing guides…
@@ -973,7 +994,7 @@ function QueueSetup({
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setStep(groupSubs.length > 0 && chosenChoice?.isGroup ? 3 : 2)}
+              onClick={() => setStep(subChoices.length === 0 ? 1 : groupSubs.length > 0 && chosenChoice?.isGroup ? 3 : 2)}
             >
               <ArrowLeft className="size-4" /> Back
             </Button>
