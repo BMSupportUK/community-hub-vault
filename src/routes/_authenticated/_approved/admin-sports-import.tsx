@@ -57,6 +57,7 @@ function AdminSportsImportPage() {
   const setupDiscordFn = useServerFn(setupDiscordBot);
   const listFn = useServerFn(listImportQueue);
   const resolveFn = useServerFn(resolveQueueItem);
+  const splitFn = useServerFn(splitQueueItem);
   const catsFn = useServerFn(listCategoriesWithSubs);
 
   const [text, setText] = useState("");
