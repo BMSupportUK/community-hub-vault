@@ -455,10 +455,10 @@ function InstallGuidesPage() {
   };
 
   return (
-    <div className="flex-1 overflow-y-auto bg-background text-foreground">
-      <div className="flex items-start">
-        <div className="flex-1 min-w-0">
-        <Tabs value={tab} onValueChange={setTab} className="w-full">
+    <div className="flex h-full min-h-0 flex-1 overflow-hidden bg-background text-foreground">
+      <div className="flex h-full min-h-0 flex-1 items-start">
+        <div className="h-full min-h-0 min-w-0 flex-1">
+        <Tabs value={tab} onValueChange={setTab} className="flex h-full min-h-0 w-full flex-col">
           <header className="px-4 sm:px-8 pt-8 pb-6 border-b border-border bg-surface/60 backdrop-blur">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div className="min-w-0">
@@ -487,7 +487,7 @@ function InstallGuidesPage() {
             </div>
           </header>
 
-        <div className="relative isolate overflow-hidden px-4 py-6 sm:px-8">
+        <div className="relative isolate min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-8">
           {(tab === "get-app" || tab === "transfers") && (
             <>
               <img
