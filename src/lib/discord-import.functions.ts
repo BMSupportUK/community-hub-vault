@@ -382,6 +382,65 @@ export const queuePastedPost = createServerFn({ method: "POST" })
     return { queued: 1 };
   });
 
+/**
+ * Splits one queued post into a separate queue item per event, so a
+ * multi-sport listing can be filed into a different guide per event.
+ * The original post is removed from the queue once split.
+ */
+export const splitQueueItem = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertStaff(supabase, userId);
+
+    const { data: item, error: getErr } = await supabaseAdmin
+      .from("discord_import_queue")
+      .select("id, raw_text, parsed_event, status, source, source_ref, forwarded_from")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (getErr) throw new Error(getErr.message);
+    if (!item) throw new Error("Queue item not found");
+    if (item.status !== "pending") throw new Error("Already resolved");
+
+    const raw = String((item.parsed_event as any)?.raw ?? item.raw_text ?? "");
+    const events = sortSportsListingEvents(parseSportsListingBlock(raw));
+    if (events.length < 2) throw new Error("Couldn't find more than one event in this post");
+
+    const rows = events.map((e, i) => ({
+      raw_text: [e.date, [e.time, e.title].filter(Boolean).join(" "), e.channels.join(" • ")]
+        .filter(Boolean)
+        .join("\n"),
+      parsed_event: {
+        title: e.title,
+        time: e.time || null,
+        date: e.date || null,
+        channels: e.channels,
+        raw: [e.date, [e.time, e.title].filter(Boolean).join(" "), e.channels.join(" • ")]
+          .filter(Boolean)
+          .join("\n"),
+        suggested_category: null,
+        suggested_subcategory: null,
+      } as any,
+      status: "pending",
+      source: item.source ?? "paste",
+      source_ref: `${item.source_ref ?? `split:${item.id}`}#${i + 1}`,
+      forwarded_from: item.forwarded_from ?? null,
+      created_by: userId,
+    }));
+
+    const { error: insErr } = await supabaseAdmin.from("discord_import_queue").insert(rows as any);
+    if (insErr) throw new Error(insErr.message);
+
+    const { error: delErr } = await supabaseAdmin
+      .from("discord_import_queue")
+      .update({ status: "discarded" } as any)
+      .eq("id", item.id);
+    if (delErr) throw new Error(delErr.message);
+
+    return { created: rows.length };
+  });
+
 const QueueInput = z.object({
   events: z
     .array(
