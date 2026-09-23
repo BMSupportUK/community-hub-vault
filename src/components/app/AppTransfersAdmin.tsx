@@ -256,6 +256,7 @@ export function AppTransfersAdmin() {
       />
       <div className="pointer-events-none fixed inset-0 bg-background/60" />
       <div className="relative space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h3 className="font-display text-lg font-semibold text-foreground">App transfers</h3>
           <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
@@ -337,6 +338,7 @@ export function AppTransfersAdmin() {
           {renderList(groups.pending, "Nothing pending or failed.")}
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 }
