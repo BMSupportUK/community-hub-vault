@@ -92,7 +92,7 @@ function isDateLine(line: string): boolean {
 function listingDateFromLine(line: string): string | null {
   if (isDateLine(line)) return line;
   const embedded = line.match(
-    /\b((?:mon|tue|wed|thu|fri|sat|sun)(?:day)?[\s,]+\d{1,2}(?:st|nd|rd|th)?\s+[a-z]+(?:\s+(?:\d{2}|\d{4}))?)\s*$/i,
+    /\b((?:mon(?:day)?|tue(?:sday)?|wed(?:nesday)?|thu(?:rsday)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?)[\s,]+\d{1,2}(?:st|nd|rd|th)?\s+[a-z]+(?:\s+(?:\d{2}|\d{4}))?)\s*$/i,
   )?.[1];
   if (!embedded) return null;
   const parsed = parseListingDate(embedded);
