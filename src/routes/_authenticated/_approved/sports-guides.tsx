@@ -509,30 +509,24 @@ function SportsGuidesPage() {
     }
   }, [filtered, tab, blogs]);
 
-  // Search every sports guide category and include a snippet showing where
-  // the matching event or term appears.
+  // Search event listings across every sports guide category (guide names and
+  // descriptions are deliberately excluded) and show a snippet of the match.
   const searchResults = useMemo(() => {
-    const q = search.trim();
+    const q = activeSearch;
     if (!q) return [] as { blog: Blog; snippet: string }[];
     const out: { blog: Blog; snippet: string }[] = [];
     for (const b of blogs) {
-      const title = b.title ?? "";
-      const excerpt = b.excerpt ?? "";
-      const bodyText = guideSearchText(b.body);
-      const haystacks = [title, excerpt, bodyText];
-      let snippet = "";
-      for (const h of haystacks) {
-        if (matchesGuideSearch(h, q)) {
-          const firstTerm = q.toLocaleLowerCase().split(/\s+/).find(Boolean) ?? "";
-          const i = Math.max(0, h.toLocaleLowerCase().indexOf(firstTerm));
-          const start = Math.max(0, i - 40);
-          const end = Math.min(h.length, i + firstTerm.length + 100);
-          snippet = (start > 0 ? "…" : "") + h.slice(start, end) + (end < h.length ? "…" : "");
-          break;
-        }
-      }
-      if (snippet) out.push({ blog: b, snippet });
+      const h = guideSearchText(b.body);
+      if (!matchesGuideSearch(h, q)) continue;
+      const firstTerm = q.toLocaleLowerCase().split(/\s+/).find(Boolean) ?? "";
+      const i = Math.max(0, h.toLocaleLowerCase().indexOf(firstTerm));
+      const start = Math.max(0, i - 40);
+      const end = Math.min(h.length, i + firstTerm.length + 100);
+      const snippet = (start > 0 ? "…" : "") + h.slice(start, end) + (end < h.length ? "…" : "");
+      if (snippet.trim()) out.push({ blog: b, snippet });
     }
+    return out;
+  }, [blogs, activeSearch]);
     return out;
   }, [blogs, search]);
 
