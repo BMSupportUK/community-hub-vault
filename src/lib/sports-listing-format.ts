@@ -84,6 +84,22 @@ function isDateLine(line: string): boolean {
   return DATE_ONLY_RE.test(line) && parseListingDate(line) !== null;
 }
 
+/**
+ * Some multi-sport posts put the shared date after a section title, for
+ * example "OTHER SPORT: WEDNESDAY 23 SEPTEMBER". Keep only the date portion
+ * so every split event retains the day without importing the section title.
+ */
+function listingDateFromLine(line: string): string | null {
+  if (isDateLine(line)) return line;
+  const embedded = line.match(
+    /\b((?:mon(?:day)?|tue(?:sday)?|wed(?:nesday)?|thu(?:rsday)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?)[\s,]+\d{1,2}(?:st|nd|rd|th)?\s+[a-z]+(?:\s+(?:\d{2}|\d{4}))?)\s*$/i,
+  )?.[1];
+  if (!embedded) return null;
+  const parsed = parseListingDate(embedded);
+  if (!parsed) return null;
+  return formatListingDate(new Date(Date.UTC(parsed.y, parsed.m, parsed.d)));
+}
+
 function normalizeTime(time: string): string {
   return time.replace(/^(\d{1,2})\.(\d{2}\b)/, "$1:$2").replace(/\s+/g, " ").trim();
 }
@@ -255,9 +271,10 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
   };
 
   for (const line of lines) {
-    if (isDateLine(line)) {
+    const listingDate = listingDateFromLine(line);
+    if (listingDate) {
       flush();
-      currentDate = line;
+      currentDate = listingDate;
       previousPlainLine = null;
       continue;
     }

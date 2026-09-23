@@ -2,6 +2,7 @@
 
 ## Current
 - [x] Telegram → Sports Guide importer: imported listings save as drafts and open directly in the guide editor for date entry
+- [x] Greyhound import: retain a shared date embedded in a multi-sport heading and repair the affected draft
 
 ## Done (recent)
 - [x] Header clocks + office-hours dialog, live dates, England public holiday closures
