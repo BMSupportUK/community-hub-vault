@@ -27,10 +27,9 @@ export const pruneStaleSportsGuides = createServerFn({ method: "POST" }).handler
     const fallback = stamp ? Date.parse(stamp) : null;
     const next = pruneStaleSportsListingHtml(row.body, now, Number.isFinite(fallback) ? fallback : null);
     if (next === null) continue;
-    const { error: upErr } = await supabaseAdmin
-      .from("sports_blogs")
-      .update({ body: next })
-      .eq("id", row.id);
+    // Auto-clear is housekeeping, not an edit — keep updated_at so the guide
+    // doesn't suddenly reappear as unread.
+    const { error: upErr } = await supabaseAdmin.rpc("prune_sports_blog_body", { _id: row.id, _body: next });
     if (!upErr) cleared += 1;
   }
   return { cleared, skipped: false };

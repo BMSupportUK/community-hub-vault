@@ -98,12 +98,10 @@ function SportsGuidesPage() {
   const navigate = useNavigate();
   const { cat: catFromUrl, sub: subFromUrl, welcome: welcomeFromUrl } = Route.useSearch();
   const canManageCategories = hasAny(["admin", "management", "staff"]);
-  const [tab, setTab] = useState<string>(() => {
-    try { return sessionStorage.getItem("sports-guides-active-tab") || "welcome"; } catch { return "welcome"; }
-  });
-  const [activeCat, setActiveCat] = useState<string | null>(() => {
-    try { return sessionStorage.getItem("sports-guides-active-cat"); } catch { return null; }
-  });
+  // Always open on Welcome with no category picked. Guides only appear once the
+  // visitor clicks a category (returning from a guide uses the ?cat= param).
+  const [tab, setTab] = useState<string>("welcome");
+  const [activeCat, setActiveCat] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [resultsOpen, setResultsOpen] = useState(true);
   const [subFilter, setSubFilter] = useState<string | null>(null);
