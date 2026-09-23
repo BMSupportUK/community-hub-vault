@@ -1,4 +1,4 @@
-import { parseClockTime, parseListingDate, sourceTimeToUk, type TimeZoneChoice } from "./import-time";
+import { parseClockTime, parseListingDate, sourceTimeToUk, ukListingInstant, type TimeZoneChoice } from "./import-time";
 
 export type SportsListingEvent = {
   date: string | null;
@@ -447,4 +447,36 @@ export function plainListingToHtml(value: string): string {
     .split("\n")
     .map((line) => `<div>${line.trim() ? escapeListingHtml(line) : "<br>"}</div>`)
     .join("");
+}
+
+/** Guide entries clear this many hours after their start time. */
+export const GUIDE_STALE_HOURS = 10;
+
+/**
+ * Drops guide entries whose start time passed more than GUIDE_STALE_HOURS ago
+ * and rebuilds the remaining listing. Returns the new HTML body, or null when
+ * nothing needs changing (including bodies that aren't plain listings).
+ */
+export function pruneStaleSportsListingHtml(
+  html: string | null | undefined,
+  nowMs: number = Date.now(),
+): string | null {
+  if (!html || !html.trim()) return null;
+  // Only plain time/event/channel listings are safe to rebuild.
+  if (/data-link-preview|<img|<iframe|<video|<table/i.test(html)) return null;
+
+  const events = parseSportsListingBlock(html);
+  if (!events.length) return null;
+
+  const cutoff = GUIDE_STALE_HOURS * 60 * 60 * 1000;
+  const kept = events.filter((event) => {
+    const instant = ukListingInstant(event.date, event.time);
+    if (instant === null) return true;
+    return nowMs - instant <= cutoff;
+  });
+  if (kept.length === events.length) return null;
+  if (!kept.length) return "";
+  return plainListingToHtml(
+    formatSportsListingEvents(sortSportsListingEvents(kept), { channels: [] }),
+  );
 }
