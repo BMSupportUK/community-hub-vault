@@ -14,6 +14,7 @@ import { firstClockIn, firstDateIn, parseClockTime, toSingleZoneTime, type TimeZ
 import { parseSportsListingBlock } from "@/lib/sports-listing-format";
 import {
   queuePastedPost,
+  setupDiscordBot,
   listImportQueue,
   resolveQueueItem,
   approveAllSuggested,
@@ -53,12 +54,14 @@ function AdminSportsImportPage() {
   const { hasAny } = useAuth();
   const isStaff = hasAny(["admin", "management", "moderator"]);
   const queuePasteFn = useServerFn(queuePastedPost);
+  const setupDiscordFn = useServerFn(setupDiscordBot);
   const listFn = useServerFn(listImportQueue);
   const resolveFn = useServerFn(resolveQueueItem);
   const catsFn = useServerFn(listCategoriesWithSubs);
 
   const [text, setText] = useState("");
   const [queueing, setQueueing] = useState(false);
+  const [settingUpDiscord, setSettingUpDiscord] = useState(false);
   const [cats, setCats] = useState<Cat[]>([]);
   const [subs, setSubs] = useState<Sub[]>([]);
   const [queue, setQueue] = useState<QueueItem[]>([]);
