@@ -30,26 +30,22 @@ const DATE_ONLY_RE = new RegExp(
 );
 
 function cleanLine(line: string): string {
-  return stripListIndex(
-    line
-      .replace(/\r/g, "")
-      .replace(/[*_`#>]+/g, "")
-      .replace(/^[\s•·●○▪▫■□★☆✅☑️-]+/u, "")
-      .replace(/\s+/g, " ")
-      .trim(),
-  );
+  return line
+    .replace(/\r/g, "")
+    .replace(/[*_`#>]+/g, "")
+    .replace(/^[\s•·●○▪▫■□★☆✅☑️-]+/u, "")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 /**
- * Telegram listings number each row ("01 |   19:45 KDM Trophy"). Drop that
- * index so the row parses as a normal time-first event line — but only when a
- * clock time follows, so real channel numbers ("EFL 01 | 19:00 ...") survive.
+ * Daily listings lead each row with the channel number ("01 | 00:00 Trackside
+ * Live!"). Keep that number as the event's channel.
  */
-const LIST_INDEX_RE = new RegExp(`^\\d{1,3}\\s*[|).:\\-–—]\\s*(?=(?:${TIME_WITH_ZONE_SOURCE})\\b)`, "i");
-
-function stripListIndex(line: string): string {
-  return line.replace(LIST_INDEX_RE, "").trim();
-}
+const CHANNEL_NUMBER_TIME_RE = new RegExp(
+  `^\\s*(\\d{1,3})\\s*[|).:\\-–—]\\s*(${TIME_WITH_ZONE_SOURCE})\\s+(.+?)\\s*$`,
+  "i",
+);
 
 function isNoiseLine(line: string): boolean {
   if (!line) return true;
