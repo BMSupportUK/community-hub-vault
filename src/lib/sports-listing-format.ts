@@ -296,6 +296,7 @@ function detectSlashZonedEvent(line: string, date: string | null): SportsListing
  * "Stan 01 : Singapore: Day 3 - WTA 500 start:2026-09-23 05:59:29 stop:...".
  */
 const PROVIDER_STAMP_RE = /\bstart:\s*(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::\d{2})?/i;
+const NAMED_PROVIDER_STAMP_HEAD_RE = /^([a-z][a-z0-9 +&'./-]*?)\s*:\s*(\d{1,3})\s+name\s*:\s*(.+)$/i;
 
 function detectStampedEvent(line: string, date: string | null): SportsListingEvent | null {
   const stamp = line.match(PROVIDER_STAMP_RE);
@@ -309,8 +310,34 @@ function detectStampedEvent(line: string, date: string | null): SportsListingEve
   if (!head) return null;
 
   const [, y, m, d, hh, mm] = stamp;
+  // Provider timestamps are UTC instants. Convert both their date and clock to
+  // UK office time here; treating "00:50" as a London wall clock loses the BST
+  // hour and can also leave a late-night event on the wrong day.
   const when = new Date(Date.UTC(Number(y), Number(m) - 1, Number(d), Number(hh), Number(mm)));
-  const eventDate = formatListingDate(new Date(Date.UTC(Number(y), Number(m) - 1, Number(d))));
+  const ukParts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/London",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).formatToParts(when);
+  const ukPart = (type: string) => Number(ukParts.find((part) => part.type === type)?.value ?? "0");
+  const eventDate = formatListingDate(new Date(Date.UTC(ukPart("year"), ukPart("month") - 1, ukPart("day"))));
+  const ukZone = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", timeZoneName: "short" })
+    .formatToParts(when)
+    .find((part) => part.type === "timeZoneName")?.value === "BST" ? "BST" : "GMT";
+
+  const namedProvider = head.match(NAMED_PROVIDER_STAMP_HEAD_RE);
+  if (namedProvider?.[1] && namedProvider[2] && namedProvider[3]) {
+    return {
+      date: eventDate || date,
+      time: `${String(ukPart("hour") % 24).padStart(2, "0")}:${String(ukPart("minute")).padStart(2, "0")} ${ukZone}`,
+      title: namedProvider[3].trim(),
+      channels: [`${namedProvider[1].trim()} ${namedProvider[2]}`],
+    };
+  }
 
   const parts = head.split(/\s*(?:\||·|•)\s*|\s+:\s+/).map((part) => part.trim()).filter(Boolean);
   const channels = parts.filter((part) => isLikelyChannelLabel(part));
@@ -318,7 +345,7 @@ function detectStampedEvent(line: string, date: string | null): SportsListingEve
 
   return {
     date: eventDate || date,
-    time: normalizeTime(`${String(when.getUTCHours()).padStart(2, "0")}:${String(when.getUTCMinutes()).padStart(2, "0")} GMT`),
+    time: `${String(ukPart("hour") % 24).padStart(2, "0")}:${String(ukPart("minute")).padStart(2, "0")} ${ukZone}`,
     title,
     channels: unique(channels),
   };
