@@ -107,6 +107,7 @@ interface RailItem {
   badgeVariant?: "alert" | "online";
   search?: Record<string, string>;
   params?: Record<string, string>;
+  resetSportsGuides?: boolean;
 }
 
 export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
@@ -236,7 +237,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     { to: "/tickets", label: "Tickets", icon: Ticket, show: !hasRole("moderator") },
     { to: "/shop", label: "Shop", icon: ShoppingCart, show: true },
     { to: "/install-guides", label: "Install Guides & BM App Store", icon: Wrench, show: true },
-    { to: "/sports-guides", label: "Sports guides", icon: SportsGuideIcon, show: true, search: { welcome: "true" } },
+    { to: "/sports-guides", label: "Sports guides", icon: SportsGuideIcon, show: true, search: { welcome: "true" }, resetSportsGuides: true },
     { to: "/knowledge-base", label: "Knowledge base", icon: BookOpen, show: true },
     { to: "/what-to-watch", label: "What to Watch", icon: Popcorn, show: true },
     { to: "/leaderboard", label: "Referrals", icon: Trophy, show: true },
@@ -350,7 +351,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
             onDrop={() => reorder(i.to)}
             className={cn("relative z-10 shrink-0", isAdmin ? "cursor-grab active:cursor-grabbing" : undefined)}
           >
-            <RailIcon to={i.to} label={i.label} Icon={i.icon} active={active} badge={i.badge} badgeVariant={i.badgeVariant} draggable={isAdmin} search={i.search} params={i.params} />
+            <RailIcon to={i.to} label={i.label} Icon={i.icon} active={active} badge={i.badge} badgeVariant={i.badgeVariant} draggable={isAdmin} search={i.search} params={i.params} resetSportsGuides={i.resetSportsGuides} />
           </div>
         );
       })}
@@ -376,6 +377,7 @@ function RailIcon({
   draggable,
   search,
   params,
+  resetSportsGuides,
 }: {
   to: string;
   label: string;
@@ -387,6 +389,7 @@ function RailIcon({
   draggable?: boolean;
   search?: Record<string, string>;
   params?: Record<string, string>;
+  resetSportsGuides?: boolean;
 }) {
   return (
     <TooltipProvider delayDuration={150}>
@@ -399,6 +402,14 @@ function RailIcon({
             aria-label={label}
              title={label}
             draggable={false}
+            onClick={() => {
+              if (!resetSportsGuides) return;
+              try {
+                sessionStorage.removeItem("sports-guides-active-tab");
+                sessionStorage.removeItem("sports-guides-active-cat");
+              } catch { /* ignore */ }
+              window.dispatchEvent(new Event("sports-guides:show-welcome"));
+            }}
             onDragStart={draggable ? undefined : (e) => e.preventDefault()}
             className={cn(
               "group relative z-10 size-[52px] rounded-2xl flex items-center justify-center transition-all duration-200",
