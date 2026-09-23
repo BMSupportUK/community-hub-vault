@@ -24,6 +24,52 @@ export type ParsedEvent = {
   raw: string;
 };
 
+// ── Discord bot one-time setup ────────────────────────────────────
+// Staff-only. Registers the "Send to Sports Guide" message context-menu
+// command on the user's own Discord application and points Discord's
+// interaction webhook at this app. Safe to re-run (Discord upserts by name).
+
+const DISCORD_API = "https://discord.com/api/v10";
+
+export const setupDiscordBot = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    await assertStaff(supabase, userId);
+
+    const token = process.env.DISCORD_BOT_TOKEN?.trim();
+    if (!token) throw new Error("DISCORD_BOT_TOKEN is not saved yet");
+    if (!process.env.DISCORD_APP_PUBLIC_KEY?.trim()) throw new Error("DISCORD_APP_PUBLIC_KEY is not saved yet");
+
+    const headers = { Authorization: `Bot ${token}`, "Content-Type": "application/json" };
+
+    // Point Discord at our interactions endpoint (published site URL).
+    const endpointUrl = "https://community-hub-vault.lovable.app/api/public/discord/interactions";
+    const patch = await fetch(`${DISCORD_API}/applications/@me`, {
+      method: "PATCH",
+      headers,
+      body: JSON.stringify({ interactions_endpoint_url: endpointUrl }),
+    });
+    if (!patch.ok) {
+      const t = await patch.text();
+      throw new Error(`Couldn't set the interactions URL (${patch.status}): ${t.slice(0, 200)}`);
+    }
+    const app: any = await patch.json();
+
+    // Register the global message context-menu command (type 3 = message).
+    const reg = await fetch(`${DISCORD_API}/applications/${app.id}/commands`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ name: "Send to Sports Guide", type: 3 }),
+    });
+    if (!reg.ok && reg.status !== 409) {
+      const t = await reg.text();
+      throw new Error(`Couldn't register the command (${reg.status}): ${t.slice(0, 200)}`);
+    }
+
+    return { ok: true, application: app.name ?? app.id, endpointUrl };
+  });
+
 export type RoutedEvent = ParsedEvent & {
   category: string | null;
   subcategory: string | null;
