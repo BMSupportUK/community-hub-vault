@@ -805,7 +805,7 @@ export function escapeListingHtml(value: string): string {
 }
 
 export function plainListingToHtml(value: string): string {
-  return value
+  return decodeListingEntities(value)
     .split("\n")
     .map((line) => `<div>${line.trim() ? escapeListingHtml(line) : "<br>"}</div>`)
     .join("");
