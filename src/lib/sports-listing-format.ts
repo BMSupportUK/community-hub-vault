@@ -433,7 +433,9 @@ export function mergeSportsListingBlocks(existing: string, incoming: string, inp
     ...parseSportsListingBlock(existing),
     ...parseSportsListingBlock(incoming),
   ]);
-  return events.length ? formatSportsListingEvents(events, input) : null;
+  // Each parsed event already owns its channels. Re-applying the incoming
+  // event's channels here incorrectly adds them to every older guide entry.
+  return events.length ? formatSportsListingEvents(events, { ...input, channels: [] }) : null;
 }
 
 export function escapeListingHtml(value: string): string {
