@@ -174,7 +174,12 @@ export function AppDemosView() {
     try {
       let videoPath = draft.video_path ?? "";
       let posterPath = draft.poster_path ?? null;
-      if (draft._videoFile) videoPath = await uploadFile(draft._videoFile, "video");
+      if (draft._videoFile) {
+        setCompressPct(0);
+        const compressed = await compressVideoFile(draft._videoFile, (_stage, pct) => setCompressPct(pct));
+        setCompressPct(null);
+        videoPath = await uploadFile(compressed, "video");
+      }
       if (draft._posterFile) posterPath = await uploadFile(draft._posterFile, "poster");
 
       if (draft.id) {
@@ -214,6 +219,7 @@ export function AppDemosView() {
       toast.error(e instanceof Error ? e.message : "Failed to save");
     } finally {
       setSaving(false);
+      setCompressPct(null);
     }
   };
 
