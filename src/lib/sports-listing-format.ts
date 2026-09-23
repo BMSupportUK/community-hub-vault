@@ -77,6 +77,16 @@ const CHANNEL_NUMBER_TITLE_TIME_RE = new RegExp(
   "i",
 );
 
+/**
+ * Named feeds number their channels after the feed name and then dash into the
+ * kick-off: "NHL | 01 - 7pm Maple Leafs at Senators". Keep "NHL 01" as the
+ * channel, the clock as the kick-off and the rest as the fixture.
+ */
+const CHANNEL_NAME_NUMBER_TIME_RE = new RegExp(
+  `^\\s*([A-Za-z][A-Za-z0-9 +&'./]{1,30}?)\\s*[|)]\\s*(\\d{1,3})\\s*[-–—|:•·]\\s*(${TIME_WITH_ZONE_SOURCE})\\s+(.+?)\\s*$`,
+  "i",
+);
+
 function isNoiseLine(line: string): boolean {
   if (!line) return true;
   if (parseClockTime(line)) return false;
@@ -328,6 +338,18 @@ function detectEvent(line: string, date: string | null): SportsListingEvent | nu
       time: normalizeTime(span[2]),
       title: "",
       channels: span[3] ? splitChannelLine(span[3]) : [],
+    };
+  }
+
+  const namedNumbered = line.match(CHANNEL_NAME_NUMBER_TIME_RE);
+  if (namedNumbered && namedNumbered[1] && namedNumbered[2] && namedNumbered[3] && namedNumbered[4]) {
+    const lead = pickPrimaryTimePart(namedNumbered[3]);
+    const split = splitTitleAndInlineChannels(namedNumbered[4]);
+    return {
+      date: resolveWeekdayDate(date, lead.weekday),
+      time: lead.time,
+      title: split.title,
+      channels: unique([`${namedNumbered[1].trim()} ${namedNumbered[2]}`, ...split.channels]),
     };
   }
 
