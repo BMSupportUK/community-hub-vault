@@ -27,6 +27,32 @@ function verifyDiscordSignature(publicKeyHex: string, signature: string, timesta
   }
 }
 
+/** Pull text out of a message: plain content, forwarded snapshots, or embeds. */
+function extractMessageText(message: any): string {
+  if (!message) return "";
+  const parts: string[] = [];
+
+  const collect = (m: any) => {
+    if (!m) return;
+    if (typeof m.content === "string" && m.content.trim()) parts.push(m.content.trim());
+    for (const e of m.embeds ?? []) {
+      if (e?.title) parts.push(String(e.title).trim());
+      if (e?.description) parts.push(String(e.description).trim());
+      for (const f of e?.fields ?? []) {
+        const chunk = [f?.name, f?.value].filter(Boolean).join("\n").trim();
+        if (chunk) parts.push(chunk);
+      }
+      if (e?.footer?.text) parts.push(String(e.footer.text).trim());
+    }
+    // Forwarded messages carry their original content here
+    for (const snap of m.message_snapshots ?? []) collect(snap?.message);
+    if (m.referenced_message) collect(m.referenced_message);
+  };
+
+  collect(message);
+  return parts.join("\n\n").trim();
+}
+
 /** First meaningful line of a post, used as the queue item's heading. */
 function postHeading(text: string): string {
   const line = text
@@ -62,13 +88,17 @@ export const Route = createFileRoute("/api/public/discord/interactions")({
         if (interaction?.type === 2 && interaction?.data?.type === 3) {
           const targetId: string | undefined = interaction.data.target_id;
           const message = targetId ? interaction.data.resolved?.messages?.[targetId] : null;
-          const text: string = (message?.content ?? "").trim();
+          const text: string = extractMessageText(message);
           const channelName: string | null = interaction.channel?.name ?? null;
 
           if (!text) {
             return Response.json({
               type: 4,
-              data: { content: "That message has no text to import.", flags: 64 },
+              data: {
+                content:
+                  "I couldn't read any text on that message. If it's an image or a bot card with no text, copy the listings and use Paste & Import instead.",
+                flags: 64,
+              },
             });
           }
 
