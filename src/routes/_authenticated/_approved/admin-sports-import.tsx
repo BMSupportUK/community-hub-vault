@@ -826,7 +826,21 @@ function QueueSetup({
           </div>
           <div className="flex items-center justify-between gap-2 pt-1">
             <span />
-            <Button size="sm" onClick={() => setStep(2)} disabled={!draft.category}>
+            <Button
+              size="sm"
+              onClick={() => {
+                // Some categories (e.g. Sports Passes, Daily Sports) have no
+                // sub categories at all — skip straight to the guide list
+                // instead of stalling on an empty step 2.
+                if (subChoices.length === 0) {
+                  setDraft({ ...draft, group: "", destinationCategory: draft.category, subcategories: [], guideId: null });
+                  setStep(4);
+                } else {
+                  setStep(2);
+                }
+              }}
+              disabled={!draft.category}
+            >
               OK <Check className="size-4" />
             </Button>
           </div>
