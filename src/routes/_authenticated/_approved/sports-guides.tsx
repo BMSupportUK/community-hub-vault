@@ -36,6 +36,9 @@ function escapeRegExp(s: string) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+const SG_MIN_SEARCH = 3;
+
+
 function guideSearchText(value: string | null | undefined) {
   if (!value) return "";
   const textarea = document.createElement("textarea");
@@ -103,6 +106,10 @@ function SportsGuidesPage() {
   const [tab, setTab] = useState<string>("welcome");
   const [activeCat, setActiveCat] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  // Search only kicks in from three letters up, and only looks at event
+  // listings inside guide bodies (never guide names/descriptions).
+  const searchQuery = search.trim();
+  const activeSearch = searchQuery.length >= SG_MIN_SEARCH ? searchQuery : "";
   const [resultsOpen, setResultsOpen] = useState(true);
   const [subFilter, setSubFilter] = useState<string | null>(null);
   const [openSubcategoryPopupFor, setOpenSubcategoryPopupFor] = useState<string | null>(null);
@@ -412,17 +419,15 @@ function SportsGuidesPage() {
   }, [activeCat, subsByCat]);
 
   const filtered = useMemo(() => {
-    const q = search.trim();
+    const q = activeSearch;
     return blogs.filter((b) => {
       if (!q && activeCat && b.category_id !== activeCat) return false;
       if (!q && activeCat && subsByCat[activeCat]?.length && subFilter && b.subcategory !== subFilter) return false;
       if (!q) return true;
-      return matchesGuideSearch(
-        [b.title, b.excerpt, guideSearchText(b.body)].filter(Boolean).join(" "),
-        q,
-      );
+      // Events only — guide titles/descriptions are not searched.
+      return matchesGuideSearch(guideSearchText(b.body), q);
     });
-  }, [blogs, activeCat, search, subFilter, subsByCat]);
+  }, [blogs, activeCat, activeSearch, subFilter, subsByCat]);
 
   // A–Z jump map: first visible guide whose title starts with each letter.
   const azMap = useMemo(() => {
@@ -504,32 +509,24 @@ function SportsGuidesPage() {
     }
   }, [filtered, tab, blogs]);
 
-  // Search every sports guide category and include a snippet showing where
-  // the matching event or term appears.
+  // Search event listings across every sports guide category (guide names and
+  // descriptions are deliberately excluded) and show a snippet of the match.
   const searchResults = useMemo(() => {
-    const q = search.trim();
+    const q = activeSearch;
     if (!q) return [] as { blog: Blog; snippet: string }[];
     const out: { blog: Blog; snippet: string }[] = [];
     for (const b of blogs) {
-      const title = b.title ?? "";
-      const excerpt = b.excerpt ?? "";
-      const bodyText = guideSearchText(b.body);
-      const haystacks = [title, excerpt, bodyText];
-      let snippet = "";
-      for (const h of haystacks) {
-        if (matchesGuideSearch(h, q)) {
-          const firstTerm = q.toLocaleLowerCase().split(/\s+/).find(Boolean) ?? "";
-          const i = Math.max(0, h.toLocaleLowerCase().indexOf(firstTerm));
-          const start = Math.max(0, i - 40);
-          const end = Math.min(h.length, i + firstTerm.length + 100);
-          snippet = (start > 0 ? "…" : "") + h.slice(start, end) + (end < h.length ? "…" : "");
-          break;
-        }
-      }
-      if (snippet) out.push({ blog: b, snippet });
+      const h = guideSearchText(b.body);
+      if (!matchesGuideSearch(h, q)) continue;
+      const firstTerm = q.toLocaleLowerCase().split(/\s+/).find(Boolean) ?? "";
+      const i = Math.max(0, h.toLocaleLowerCase().indexOf(firstTerm));
+      const start = Math.max(0, i - 40);
+      const end = Math.min(h.length, i + firstTerm.length + 100);
+      const snippet = (start > 0 ? "…" : "") + h.slice(start, end) + (end < h.length ? "…" : "");
+      if (snippet.trim()) out.push({ blog: b, snippet });
     }
     return out;
-  }, [blogs, search]);
+  }, [blogs, activeSearch]);
 
   const activeCategory = categories.find((c) => c.id === activeCat);
 
@@ -1348,7 +1345,7 @@ function SportsGuidesPage() {
                     <Input
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
-                      placeholder="Search all sports guides..."
+                      placeholder="Search events (3+ letters)..."
                       className="h-11 border-0 bg-transparent text-base font-medium text-white placeholder:text-purple-200/60 focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
                     />
                     {search && (
@@ -1361,6 +1358,11 @@ function SportsGuidesPage() {
                       </button>
                     )}
                   </div>
+                  {searchQuery.length > 0 && !activeSearch && (
+                    <div className="absolute left-0 top-full mt-1 text-[11px] font-medium text-fuchsia-200/80">
+                      Keep typing — enter at least {SG_MIN_SEARCH} letters to search events.
+                    </div>
+                  )}
                 </div>
                   {isMod && (
                     <Button onClick={openNew} className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0 shrink-0">
@@ -1369,7 +1371,7 @@ function SportsGuidesPage() {
                   )}
                 </div>
 
-                {search.trim() ? (
+                {activeSearch ? (
                   <div className="rounded-2xl bg-purple-950/60 border border-purple-500/30 backdrop-blur overflow-hidden">
                     <button
                       onClick={() => setResultsOpen((v) => !v)}
@@ -1403,10 +1405,10 @@ function SportsGuidesPage() {
                               >
                                 <div className="text-[10px] uppercase tracking-wider text-fuchsia-300/80 mb-1">{cat?.name ?? "Guide"}</div>
                                 <div className="font-semibold text-sm text-purple-50 leading-snug">
-                                  <Highlight text={blog.title} query={search} />
+                                  <Highlight text={blog.title} query={activeSearch} />
                                 </div>
                                 <div className="mt-1 text-xs text-purple-200/80 leading-relaxed">
-                                  <Highlight text={snippet} query={search} />
+                                  <Highlight text={snippet} query={activeSearch} />
                                 </div>
                               </button>
                             );
@@ -1435,7 +1437,7 @@ function SportsGuidesPage() {
           </TabsContent>
 
           <TabsContent value="guides" className="mt-6">
-            <div className={`relative grid grid-cols-1 gap-6 ${search.trim() ? "lg:grid-cols-[minmax(0,1fr)_320px]" : activeCategory ? "lg:grid-cols-[minmax(0,1fr)_56px]" : ""}`}>
+            <div className={`relative grid grid-cols-1 gap-6 ${activeSearch ? "lg:grid-cols-[minmax(0,1fr)_320px]" : activeCategory ? "lg:grid-cols-[minmax(0,1fr)_56px]" : ""}`}>
 
               {activeCategory && activeCategory.slug !== "sports-passes" && (
                 <Dialog
@@ -1473,7 +1475,7 @@ function SportsGuidesPage() {
 
 
               <section ref={listingsTopRef}>
-                {activeCategory && !search.trim() && (
+                {activeCategory && !activeSearch && (
                   <div className="mb-4 flex flex-wrap items-center gap-3">
                     <h2 className="font-display text-xl font-bold text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.85)]">
                       <span className="bg-gradient-to-r from-fuchsia-300 to-sky-300 bg-clip-text text-transparent">{activeCategory.name}</span>{" "}Guides
@@ -1490,7 +1492,7 @@ function SportsGuidesPage() {
                   </div>
                 )}
 
-                {activeCategory?.slug === "sports-passes" && activeCat && (subsByCat[activeCat]?.length ?? 0) > 0 && !search.trim() && (
+                {activeCategory?.slug === "sports-passes" && activeCat && (subsByCat[activeCat]?.length ?? 0) > 0 && !activeSearch && (
                   <div className="mb-4 grid gap-2 rounded-xl border border-fuchsia-500/30 bg-purple-950/65 p-3 sm:grid-cols-2 xl:grid-cols-3">
                     {(subsByCat[activeCat] ?? []).map((sub) => {
                       const count = blogs.filter((b) => b.category_id === activeCat && b.subcategory === sub.name).length;
@@ -1522,7 +1524,7 @@ function SportsGuidesPage() {
                 )}
               </section>
 
-              {activeCategory && !search.trim() && (
+              {activeCategory && !activeSearch && (
                 <aside className="sticky top-2 z-10 flex max-h-[calc(100dvh-5rem)] flex-col self-start overflow-hidden rounded-2xl border border-purple-500/30 bg-slate-950/75 p-2 backdrop-blur lg:top-4">
                   <div className="mb-2 text-center text-[10px] font-bold uppercase tracking-wider text-fuchsia-300/80">A–Z</div>
                   <div
@@ -1560,7 +1562,7 @@ function SportsGuidesPage() {
                 </aside>
               )}
 
-              {search.trim() && (
+              {activeSearch && (
                 <aside className="rounded-2xl bg-purple-950/60 border border-purple-500/30 backdrop-blur h-fit lg:sticky lg:top-4 overflow-hidden">
                   <button
                     onClick={() => setResultsOpen((v) => !v)}
@@ -1596,10 +1598,10 @@ function SportsGuidesPage() {
                                 {cat?.name ?? "Guide"}
                               </div>
                               <div className="font-semibold text-sm text-purple-50 leading-snug">
-                                <Highlight text={blog.title} query={search} />
+                                <Highlight text={blog.title} query={activeSearch} />
                               </div>
                               <div className="mt-1 text-xs text-purple-200/80 leading-relaxed">
-                                <Highlight text={snippet} query={search} />
+                                <Highlight text={snippet} query={activeSearch} />
                               </div>
                             </button>
                           );
