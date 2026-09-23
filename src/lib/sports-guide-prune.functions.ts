@@ -17,13 +17,15 @@ export const pruneStaleSportsGuides = createServerFn({ method: "POST" }).handler
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data, error } = await supabaseAdmin
     .from("sports_blogs")
-    .select("id, body")
+    .select("id, body, updated_at, created_at")
     .not("body", "is", null);
   if (error || !data) return { cleared: 0, skipped: false };
 
   let cleared = 0;
-  for (const row of data as { id: string; body: string | null }[]) {
-    const next = pruneStaleSportsListingHtml(row.body, now);
+  for (const row of data as { id: string; body: string | null; updated_at: string | null; created_at: string | null }[]) {
+    const stamp = row.updated_at ?? row.created_at;
+    const fallback = stamp ? Date.parse(stamp) : null;
+    const next = pruneStaleSportsListingHtml(row.body, now, Number.isFinite(fallback) ? fallback : null);
     if (next === null) continue;
     const { error: upErr } = await supabaseAdmin
       .from("sports_blogs")

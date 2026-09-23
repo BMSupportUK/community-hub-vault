@@ -46,6 +46,8 @@ function cleanLine(line: string): string {
     .replace(/[*_`#>]+/g, "")
     .replace(/^[\s•·●○▪▫■□★☆✅☑️-]+/u, "")
     .replace(/\s+/g, " ")
+    // Some posts end the date line with a full stop ("Sunday 20-09-26.").
+    .replace(/[.,;:]+$/, "")
     .trim();
 }
 
@@ -601,6 +603,8 @@ export const GUIDE_STALE_HOURS = 10;
 export function pruneStaleSportsListingHtml(
   html: string | null | undefined,
   nowMs: number = Date.now(),
+  // Listings that never wrote a date age from the day the guide last changed.
+  fallbackDateMs?: number | null,
 ): string | null {
   if (!html || !html.trim()) return null;
   // Only plain time/event/channel listings are safe to rebuild.
@@ -610,8 +614,9 @@ export function pruneStaleSportsListingHtml(
   if (!events.length) return null;
 
   const cutoff = GUIDE_STALE_HOURS * 60 * 60 * 1000;
+  const fallbackDate = typeof fallbackDateMs === "number" ? importDayListingDate(fallbackDateMs) : null;
   const kept = events.filter((event) => {
-    const instant = ukListingInstant(event.date, event.time);
+    const instant = ukListingInstant(event.date ?? fallbackDate, event.time);
     if (instant === null) return true;
     return nowMs - instant <= cutoff;
   });
