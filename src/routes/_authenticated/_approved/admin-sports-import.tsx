@@ -921,54 +921,65 @@ function QueueSetup({
         </div>
       )}
 
-      <div className="space-y-1.5">
-        <span className="text-[11px] font-medium text-muted-foreground">3 · The name of the guide we created</span>
-        {!readyForGuides ? (
-          <p className="text-[11px] text-muted-foreground">Pick a sub category first.</p>
-        ) : loadingGuides ? (
-          <p className="flex items-center gap-2 text-[11px] text-muted-foreground">
-            <Loader2 className="size-3 animate-spin" /> Loading existing guides…
-          </p>
-        ) : guides.length > 0 ? (
-          <div className="max-h-48 divide-y divide-border overflow-y-auto rounded-lg border border-border">
-            {guides.map((g) => {
-              const on = draft.guideId === g.id;
-              return (
-                <button
-                  key={g.id}
-                  type="button"
-                  onClick={() => setDraft({ ...draft, title: g.title, guideId: g.id })}
-                  className={`flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm transition ${
-                    on ? "bg-primary/10 font-medium text-primary" : "hover:bg-muted/60"
-                  }`}
-                >
-                  <span className="flex min-w-0 items-center gap-2">
-                    {on && (
-                      <span className="grid size-4 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
-                        <Check className="size-3" strokeWidth={3} />
-                      </span>
-                    )}
-                    <span className="min-w-0">
-                      <span className="block truncate">{g.title}</span>
-                      {g.subcategory && (
-                        <span className="block truncate text-[10px] text-muted-foreground">{g.subcategory}</span>
+      {step === 4 && (
+        <div className="space-y-1.5">
+          <span className="text-[11px] font-medium text-muted-foreground">Step 4 · The name of the guide we are importing into</span>
+          {!readyForGuides ? (
+            <p className="text-[11px] text-muted-foreground">Pick a sub category first.</p>
+          ) : loadingGuides ? (
+            <p className="flex items-center gap-2 text-[11px] text-muted-foreground">
+              <Loader2 className="size-3 animate-spin" /> Loading existing guides…
+            </p>
+          ) : guides.length > 0 ? (
+            <div className="max-h-48 divide-y divide-border overflow-y-auto rounded-lg border border-border">
+              {guides.map((g) => {
+                const on = draft.guideId === g.id;
+                return (
+                  <button
+                    key={g.id}
+                    type="button"
+                    onClick={() => setDraft({ ...draft, title: g.title, guideId: g.id })}
+                    className={`flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm transition ${
+                      on ? "bg-primary/10 font-medium text-primary" : "hover:bg-muted/60"
+                    }`}
+                  >
+                    <span className="flex min-w-0 items-center gap-2">
+                      {on && (
+                        <span className="grid size-4 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
+                          <Check className="size-3" strokeWidth={3} />
+                        </span>
                       )}
+                      <span className="min-w-0">
+                        <span className="block truncate">{g.title}</span>
+                        {g.subcategory && (
+                          <span className="block truncate text-[10px] text-muted-foreground">{g.subcategory}</span>
+                        )}
+                      </span>
                     </span>
-                  </span>
-                </button>
-              );
-            })}
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-[11px] text-muted-foreground">No guides have been created here yet.</p>
+          )}
+          <Input
+            value={draft.title}
+            onChange={(e) => setDraft({ ...draft, title: e.target.value, guideId: null })}
+            className="font-medium"
+            placeholder="Or type a new guide name"
+          />
+          <div className="flex items-center justify-between gap-2 pt-1">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setStep(groupSubs.length > 0 && chosenChoice?.isGroup ? 3 : 2)}
+            >
+              <ArrowLeft className="size-4" /> Back
+            </Button>
           </div>
-        ) : (
-          <p className="text-[11px] text-muted-foreground">No guides have been created here yet.</p>
-        )}
-        <Input
-          value={draft.title}
-          onChange={(e) => setDraft({ ...draft, title: e.target.value, guideId: null })}
-          className="font-medium"
-          placeholder="Or type a new guide name"
-        />
-      </div>
+        </div>
+      )}
 
       <div className="flex justify-end gap-2">
         <Button variant="outline" size="sm" onClick={() => run("discard")} disabled={busy !== null}>
