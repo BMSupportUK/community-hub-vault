@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { listAppTransfers, deleteAppTransferAdmin } from "@/lib/app-transfer.functions";
 import { useAuth } from "@/hooks/use-auth";
+import downloadIllustration from "@/assets/app-download-illustration.jpg";
 
 type Transfer = Awaited<ReturnType<typeof listAppTransfers>>[number];
 
