@@ -43,8 +43,10 @@ export const setupDiscordBot = createServerFn({ method: "POST" })
 
     const headers = { Authorization: `Bot ${token}`, "Content-Type": "application/json" };
 
-    // Point Discord at our interactions endpoint (published site URL).
-    const endpointUrl = "https://community-hub-vault.lovable.app/api/public/discord/interactions";
+    // Point Discord at our interactions endpoint. The preview address serves
+    // the latest build; after publishing, re-run setup to switch Discord to
+    // the published address.
+    const endpointUrl = "https://project--5e1fe153-4c10-4ade-8c98-e355fcdea791-dev.lovable.app/api/public/discord/interactions";
     const patch = await fetch(`${DISCORD_API}/applications/@me`, {
       method: "PATCH",
       headers,
