@@ -244,7 +244,7 @@ export function AppTransfersAdmin() {
     );
 
   return (
-    <div className="relative space-y-4">
+    <div className="relative isolate min-h-full overflow-hidden">
       <img
         src={downloadIllustration}
         alt=""
@@ -252,10 +252,10 @@ export function AppTransfersAdmin() {
         loading="lazy"
         width={1920}
         height={1088}
-        className="pointer-events-none fixed inset-0 h-full w-full object-cover opacity-[0.14]"
+        className="pointer-events-none absolute inset-0 z-0 h-full w-full object-cover opacity-[0.14]"
       />
-      <div className="pointer-events-none fixed inset-0 bg-background/60" />
-      <div className="relative space-y-4">
+      <div className="pointer-events-none absolute inset-0 z-0 bg-background/60" />
+      <div className="relative z-10 space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h3 className="font-display text-lg font-semibold text-foreground">App transfers</h3>
