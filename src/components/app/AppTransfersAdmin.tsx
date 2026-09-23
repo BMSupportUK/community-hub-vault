@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Loader2, Trash2, RefreshCw, Smartphone } from "lucide-react";
+import { Loader2, Trash2, RefreshCw, Smartphone, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -158,17 +158,59 @@ export function AppTransfersAdmin() {
     staleTime: 0,
   });
 
+  // Week calendar: offset 0 = this week (Mon–Sun); negative = previous weeks.
+  const [weekOffset, setWeekOffset] = useState(0);
+  const todayIdx = (new Date().getDay() + 6) % 7;
+  const [dayIdx, setDayIdx] = useState(todayIdx);
+  const weekStart = useMemo(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() - ((d.getDay() + 6) % 7) + weekOffset * 7);
+    return d;
+  }, [weekOffset]);
+  const days = useMemo(
+    () =>
+      Array.from({ length: 7 }, (_, i) => {
+        const d = new Date(weekStart);
+        d.setDate(d.getDate() + i);
+        return d;
+      }),
+    [weekStart],
+  );
+  const dayCounts = useMemo(
+    () =>
+      days.map((d) => {
+        const end = new Date(d);
+        end.setDate(end.getDate() + 1);
+        return (transfers ?? []).filter((t) => {
+          const at = new Date(t.issuedAt);
+          return at >= d && at < end;
+        }).length;
+      }),
+    [days, transfers],
+  );
+  const changeWeek = (next: number) => {
+    setWeekOffset(next);
+    setDayIdx(next === 0 ? todayIdx : 0);
+  };
+  const weekLabel = `${days[0].toLocaleDateString(undefined, { day: "numeric", month: "short" })} – ${days[6].toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}`;
+
   const groups = useMemo(() => {
     const active: Transfer[] = [];
     const completed: Transfer[] = [];
     const pending: Transfer[] = [];
+    const start = days[dayIdx];
+    const end = new Date(start);
+    end.setDate(end.getDate() + 1);
     for (const t of transfers ?? []) {
+      const at = new Date(t.issuedAt);
+      if (at < start || at >= end) continue;
       if (t.status === "completed") completed.push(t);
       else if (!t.expired) active.push(t);
       else pending.push(t);
     }
     return { active, completed, pending };
-  }, [transfers]);
+  }, [transfers, days, dayIdx]);
 
   const onDelete = async (id: string) => {
     setBusyId(id);
@@ -223,6 +265,47 @@ export function AppTransfersAdmin() {
           )}
           Refresh
         </Button>
+      </div>
+
+      <div className="rounded-2xl border border-border bg-card/60 p-3 space-y-3">
+        <div className="flex items-center justify-between gap-2">
+          <Button size="icon" variant="secondary" aria-label="Previous week" onClick={() => changeWeek(weekOffset - 1)}>
+            <ChevronLeft className="size-4" />
+          </Button>
+          <div className="text-center">
+            <p className="text-sm font-semibold text-foreground">{weekLabel}</p>
+            <p className="text-[11px] text-muted-foreground">
+              {weekOffset === 0 ? "This week" : `${-weekOffset} week${weekOffset === -1 ? "" : "s"} ago`}
+            </p>
+          </div>
+          <Button size="icon" variant="secondary" aria-label="Next week" disabled={weekOffset >= 0} onClick={() => changeWeek(weekOffset + 1)}>
+            <ChevronRight className="size-4" />
+          </Button>
+        </div>
+        <div className="grid grid-cols-7 gap-1.5">
+          {days.map((d, i) => {
+            const active = i === dayIdx;
+            const isToday = weekOffset === 0 && i === todayIdx;
+            return (
+              <button
+                key={i}
+                type="button"
+                onClick={() => setDayIdx(i)}
+                className={`rounded-xl border px-1 py-1.5 text-center transition-colors ${active ? "border-primary bg-primary text-primary-foreground" : "border-border bg-surface/60 text-foreground hover:bg-surface"}`}
+              >
+                <span className="block text-xs font-semibold">
+                  {d.toLocaleDateString(undefined, { weekday: "short" })}
+                </span>
+                <span className="block text-[11px] opacity-80">
+                  {d.toLocaleDateString(undefined, { day: "numeric", month: "short" })}
+                </span>
+                <span className="block text-[10px] opacity-80">
+                  {isToday ? "Today · " : ""}{dayCounts[i]}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       <Tabs defaultValue="active" className="w-full">
