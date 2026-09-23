@@ -639,12 +639,38 @@ export function importDayListingDate(nowMs: number = Date.now()): string {
   return formatListingDate(new Date(Date.UTC(today.y, today.m, today.d)));
 }
 
+/**
+ * Convert every event to UK time before sorting, moving the date with it.
+ * "7pm" on an ET listing is 00:00 UK the next day, so the event must land on
+ * the following day rather than staying on the listing's date.
+ */
+function convertEventsToUk(events: SportsListingEvent[], input: ListingInput): SportsListingEvent[] {
+  return events.map((event) => {
+    const labelled = UK_LABELLED_TIME_RE.test(event.time ?? "");
+    const zone: TimeZoneChoice | null = labelled ? "gmt" : (input.sourceZone ?? null);
+    if (!zone) return event;
+    const date = event.date ?? input.date ?? null;
+    const parts = sourceTimeToUkParts(event.time, date ?? undefined, zone);
+    if (!parts) return event;
+
+    let nextDate = date;
+    if (parts.dayShift !== 0 && date) {
+      const day = parseListingDate(date);
+      if (day) nextDate = formatListingDate(new Date(Date.UTC(day.y, day.m, day.d + parts.dayShift)));
+    }
+    return { ...event, time: parts.time, date: nextDate };
+  });
+}
+
 export function formatSportsListingBlock(input: ListingInput): string | null {
   const parsed = parseSportsListingBlock(input.raw);
   // No date written anywhere in the post: date it from the import day rather
   // than leaving the guide dateless for someone to fill in afterwards.
   const base = parsed.some((event) => event.date) ? input.date : (input.date ?? importDayListingDate());
-  const events = sortSportsListingEvents(applyImplicitDateRollover(parsed, base));
+  const dated = applyImplicitDateRollover(parsed, base);
+  const events = sortSportsListingEvents(
+    convertEventsToUk(dated, { ...input, date: base ?? input.date }),
+  );
   if (!events.length) return null;
 
   return formatSportsListingEvents(events, { ...input, date: base ?? input.date });
