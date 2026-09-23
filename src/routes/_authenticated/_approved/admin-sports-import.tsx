@@ -375,6 +375,8 @@ function QueueRow({
   time,
   zone,
   selected,
+  splitting,
+  onSplit,
   onSelect,
   onZoneApply,
 }: {
@@ -382,6 +384,8 @@ function QueueRow({
   time: string | null;
   zone: TimeZoneChoice | null;
   selected: boolean;
+  splitting: boolean;
+  onSplit: () => void;
   onSelect: () => void;
   onZoneApply: (shown: string, zone: "gmt" | "et") => void;
 }) {
@@ -393,6 +397,10 @@ function QueueRow({
   const zoneDate = ev.date ?? firstDateIn(String(ev.raw ?? item.raw_text ?? ""));
   // Always offer the choice so a wrong pick can be changed before importing.
   const needsZone = parseClockTime(zoneSource) !== null;
+  const splitCount = useMemo(
+    () => parseSportsListingBlock(String(ev.raw ?? item.raw_text ?? "")).length,
+    [ev.raw, item.raw_text],
+  );
 
   return (
     <Card
