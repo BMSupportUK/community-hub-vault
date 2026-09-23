@@ -632,7 +632,9 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
       continue;
     }
     if (!current.title) {
-      current.title = line;
+      const split = splitTitleAndInlineChannels(line);
+      current.title = split.title;
+      current.channels.push(...split.channels);
       continue;
     }
     if (titleCameFromAbove) {
