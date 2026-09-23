@@ -105,8 +105,8 @@ function ReadPage() {
     if (typeof document === "undefined") return [];
     const wrap = document.createElement("div");
     wrap.innerHTML = sanitizeRichHtml(blog.body);
-    // Link-only guides (e.g. ESPN+) should show a compact clickable bubble
-    // styled like the channel chips, not a full-width preview card.
+    // Link-only notes should show a compact clickable bubble styled like the
+    // channel chips, not a full-width preview card.
     wrap.querySelectorAll<HTMLElement>("[data-link-preview]").forEach((el) => {
       const url = el.getAttribute("data-link-preview") ?? "";
       if (!url) return;

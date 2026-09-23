@@ -16,7 +16,7 @@ export type RouteRule = {
 // doesn't get pulled into Football/Rugby/etc.
 export const ROUTE_RULES: RouteRule[] = [
   // ── Sports Passes ─────────────────────────────────────────────
-  { keywords: ["sky sports pass", "tnt sports pass", "peacock pass", "dazn pass", "season pass", "sports pass"], category: "Sports Passes" },
+  { keywords: ["espn+", "espn plus", "sky sports pass", "tnt sports pass", "peacock pass", "dazn pass", "season pass", "sports pass"], category: "Sports Passes" },
 
   // ── UFC / MMA ─────────────────────────────────────────────────
   { keywords: ["ufc", "mma", "bellator", " pfl"], category: "UFC" },
