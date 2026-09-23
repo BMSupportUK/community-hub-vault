@@ -109,9 +109,38 @@ function normalizeTime(time: string): string {
  * gives it, otherwise the first listed.
  */
 function pickPrimaryTime(value: string): string {
+  return pickPrimaryTimePart(value).time;
+}
+
+const WEEKDAY_NAMES = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+const TRAILING_WEEKDAY_RE = new RegExp(`\\s+(${WEEKDAY_HINT_SOURCE})\\s*$`, "i");
+
+/**
+ * "12:00am UK THU / 7:00pm ET WED" — keep the UK kick-off and remember the
+ * weekday the post attached to it, so the event lands on Thursday rather than
+ * the heading's Wednesday.
+ */
+function pickPrimaryTimePart(value: string): { time: string; weekday: number | null } {
   const parts = value.split(/\s*(?:·|\||\/)\s*/).map((part) => part.trim()).filter(Boolean);
-  const uk = parts.find((part) => /\b(?:uk|gmt|bst)\b/i.test(part));
-  return normalizeTime(uk ?? parts[0] ?? value);
+  const chosen = parts.find((part) => /\b(?:uk|gmt|bst)\b/i.test(part)) ?? parts[0] ?? value;
+  const hint = chosen.match(TRAILING_WEEKDAY_RE)?.[1];
+  const weekday = hint ? WEEKDAY_NAMES.indexOf(hint.slice(0, 3).toLowerCase()) : -1;
+  return {
+    time: normalizeTime(chosen.replace(TRAILING_WEEKDAY_RE, "")),
+    weekday: weekday >= 0 ? weekday : null,
+  };
+}
+
+/** Move a listing date forward to the next occurrence of the given weekday. */
+function dateOnWeekday(dateLabel: string | null, weekday: number | null): string | null {
+  if (!dateLabel || weekday === null) return dateLabel;
+  const parsed = parseListingDate(dateLabel);
+  if (!parsed) return dateLabel;
+  const date = new Date(Date.UTC(parsed.y, parsed.m, parsed.d));
+  const delta = (weekday - date.getUTCDay() + 7) % 7;
+  if (!delta) return dateLabel;
+  date.setUTCDate(date.getUTCDate() + delta);
+  return formatListingDate(date);
 }
 
 function unique(values: string[]): string[] {
@@ -245,7 +274,8 @@ function detectEvent(line: string, date: string | null): SportsListingEvent | nu
 
   const dualTimeOnly = line.match(DUAL_TIME_ONLY_RE);
   if (dualTimeOnly && dualTimeOnly[1]) {
-    return { date, time: pickPrimaryTime(dualTimeOnly[1]), title: "", channels: [] };
+    const primary = pickPrimaryTimePart(dualTimeOnly[1]);
+    return { date: dateOnWeekday(date, primary.weekday), time: primary.time, title: "", channels: [] };
   }
 
 
