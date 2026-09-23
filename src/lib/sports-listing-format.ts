@@ -654,6 +654,14 @@ export const GUIDE_STALE_HOURS = 10;
  * and rebuilds the remaining listing. Returns the new HTML body, or null when
  * nothing needs changing (including bodies that aren't plain listings).
  */
+/** Compare two listing bodies ignoring wrapper markup and blank-line noise. */
+function normalizeListingBody(html: string): string {
+  return listingLines(html)
+    .map((line) => line.replace(/\s+/g, " ").trim())
+    .filter(Boolean)
+    .join("\n");
+}
+
 export function pruneStaleSportsListingHtml(
   html: string | null | undefined,
   nowMs: number = Date.now(),
@@ -675,6 +683,15 @@ export function pruneStaleSportsListingHtml(
     return nowMs - instant <= cutoff;
   });
   if (kept.length === events.length) return null;
+
+  // Rebuilding drops anything that is not a time/event/channel row, so only
+  // touch bodies that are exactly what our own formatter produces. Guides with
+  // staff-written notes, headings or wording are left untouched.
+  const roundTrip = plainListingToHtml(
+    formatSportsListingEvents(sortSportsListingEvents(events), { channels: [] }),
+  );
+  if (normalizeListingBody(roundTrip) !== normalizeListingBody(html)) return null;
+
   if (!kept.length) return "";
   return plainListingToHtml(
     formatSportsListingEvents(sortSportsListingEvents(kept), { channels: [] }),
