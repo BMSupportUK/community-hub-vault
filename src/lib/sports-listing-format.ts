@@ -56,6 +56,15 @@ const CHANNEL_NUMBER_TIME_RE = new RegExp(
   "i",
 );
 
+/**
+ * Same daily rows, but with the kick-off time at the end of the line instead of
+ * the start ("07 | MMA: IBC 05 10:00").
+ */
+const CHANNEL_NUMBER_TITLE_TIME_RE = new RegExp(
+  `^\\s*(\\d{1,3})\\s*[|)]\\s*(.+?)\\s*[-–—|·•]?\\s*(${TIME_WITH_ZONE_SOURCE})\\s*$`,
+  "i",
+);
+
 function isNoiseLine(line: string): boolean {
   if (!line) return true;
   if (parseClockTime(line)) return false;
