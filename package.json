@@ -19,6 +19,8 @@
     "@capacitor/local-notifications": "^8.0.0",
     "@capacitor/push-notifications": "^8.1.1",
     "@cloudflare/vite-plugin": "^1.25.5",
+    "@ffmpeg/ffmpeg": "^0.12.15",
+    "@ffmpeg/util": "^0.12.2",
     "@fontsource/inter": "^5.2.8",
     "@fontsource/space-grotesk": "^5.2.10",
     "@hookform/resolvers": "^5.2.2",
@@ -51,6 +53,7 @@
     "@radix-ui/react-toggle-group": "^1.1.11",
     "@radix-ui/react-tooltip": "^1.2.8",
     "@react-email/components": "^1.0.12",
+    "@react-email/render": "^2.0.10",
     "@stripe/react-stripe-js": "6.2.0",
     "@stripe/stripe-js": "9.2.0",
     "@supabase/supabase-js": "^2.105.4",
@@ -91,8 +94,7 @@
     "vaul": "^1.1.2",
     "vite-tsconfig-paths": "^6.0.2",
     "web-push": "^3.6.7",
-    "zod": "^3.24.2",
-    "@react-email/render": "^2.0.10"
+    "zod": "^3.24.2"
   },
   "devDependencies": {
     "@capacitor/android": "^8.3.4",

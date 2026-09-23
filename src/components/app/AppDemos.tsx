@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Upload, Play, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { compressVideoFile } from "@/lib/compress-video";
 
 const CATEGORIES = [
   { key: "official_server", label: "Official Service App" },
@@ -127,6 +128,7 @@ export function AppDemosView() {
   const [loading, setLoading] = useState(true);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [saving, setSaving] = useState(false);
+  const [compressPct, setCompressPct] = useState<number | null>(null);
   const [activeCat, setActiveCat] = useState<CategoryKey>("official_server");
   const [playing, setPlaying] = useState<Demo | null>(null);
 
@@ -172,7 +174,12 @@ export function AppDemosView() {
     try {
       let videoPath = draft.video_path ?? "";
       let posterPath = draft.poster_path ?? null;
-      if (draft._videoFile) videoPath = await uploadFile(draft._videoFile, "video");
+      if (draft._videoFile) {
+        setCompressPct(0);
+        const compressed = await compressVideoFile(draft._videoFile, (_stage, pct) => setCompressPct(pct));
+        setCompressPct(null);
+        videoPath = await uploadFile(compressed, "video");
+      }
       if (draft._posterFile) posterPath = await uploadFile(draft._posterFile, "poster");
 
       if (draft.id) {
@@ -212,6 +219,7 @@ export function AppDemosView() {
       toast.error(e instanceof Error ? e.message : "Failed to save");
     } finally {
       setSaving(false);
+      setCompressPct(null);
     }
   };
 
@@ -350,7 +358,8 @@ export function AppDemosView() {
           <DialogFooter>
             <Button variant="outline" disabled={saving} onClick={() => setDraft(null)}>Cancel</Button>
             <Button onClick={save} disabled={saving}>
-              {saving ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />} Save
+              {saving ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
+              {saving && compressPct !== null ? `Compressing… ${compressPct}%` : "Save"}
             </Button>
           </DialogFooter>
         </DialogContent>
