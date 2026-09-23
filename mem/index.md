@@ -16,3 +16,4 @@ Boro score predictions = Championship (league) fixtures ONLY. Never let cup ties
 - [Page permissions](mem://features/page-permissions) — page_permissions semantics, `_approved` route guard and side-rail gating
 - [Boro predictions league-only](mem://constraints/boro-predictions-league-only) — Championship-only predictor: filters, upsert guards and DB trigger that must stay
 
+- [Sports import formats](mem://features/sports-import-formats) — Tennis TV/MLS "@ date time - Comp :Channel" rows; verify with Bun + DB
