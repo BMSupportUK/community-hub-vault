@@ -36,6 +36,9 @@ function escapeRegExp(s: string) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+const SG_MIN_SEARCH = 3;
+
+
 function guideSearchText(value: string | null | undefined) {
   if (!value) return "";
   const textarea = document.createElement("textarea");
