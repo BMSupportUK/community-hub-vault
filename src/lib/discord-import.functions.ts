@@ -556,6 +556,23 @@ export const listImportQueue = createServerFn({ method: "GET" })
     return { items: data ?? [] };
   });
 
+export const deleteQueueItems = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ ids: z.array(z.string().uuid()).min(1).max(500) }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertStaff(supabase, userId);
+    const { error, count } = await supabaseAdmin
+      .from("discord_import_queue")
+      .delete({ count: "exact" })
+      .in("id", data.ids)
+      .eq("status", "pending");
+    if (error) throw new Error(error.message);
+    return { deleted: count ?? 0 };
+  });
+
 const ResolveInput = z.object({
   id: z.string().uuid(),
   action: z.enum(["import", "discard"]),

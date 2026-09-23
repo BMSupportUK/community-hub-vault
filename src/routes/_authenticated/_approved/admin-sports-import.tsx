@@ -17,6 +17,7 @@ import {
   setupDiscordBot,
   listImportQueue,
   resolveQueueItem,
+  deleteQueueItems,
   splitQueueItem,
   splitQueueItemByProvider,
   approveAllSuggested,
@@ -73,6 +74,7 @@ function AdminSportsImportPage() {
   const [queueFilter, setQueueFilter] = useState<"all" | "paste">("all");
   const [approvingAll, setApprovingAll] = useState(false);
   const approveAllFn = useServerFn(approveAllSuggested);
+  const deleteFn = useServerFn(deleteQueueItems);
   // The three setup boxes live in the sidebar: tap a post, then work the sidebar.
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [splittingId, setSplittingId] = useState<string | null>(null);
@@ -192,6 +194,23 @@ function AdminSportsImportPage() {
       return a.localeCompare(b);
     });
   }, [visibleQueue]);
+
+  const [deletingAll, setDeletingAll] = useState(false);
+  const onDeleteAll = async () => {
+    const ids = visibleQueue.map((q) => q.id);
+    if (!ids.length) return;
+    if (!window.confirm(`Delete ${ids.length} import(s)? This can't be undone.`)) return;
+    setDeletingAll(true);
+    try {
+      const r = await deleteFn({ data: { ids } });
+      toast.success(`Deleted ${r.deleted} import(s)`);
+      refreshQueue();
+    } catch (e: any) {
+      toast.error(e.message ?? "Delete failed");
+    } finally {
+      setDeletingAll(false);
+    }
+  };
 
   const onApproveAll = async () => {
     setApprovingAll(true);
@@ -324,6 +343,10 @@ function AdminSportsImportPage() {
                 </Button>
               ))}
               <div className="flex-1" />
+              <Button size="sm" variant="destructive" onClick={onDeleteAll} disabled={deletingAll || visibleQueue.length === 0}>
+                {deletingAll ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
+                Delete all shown ({visibleQueue.length})
+              </Button>
               <Button size="sm" variant="secondary" onClick={onApproveAll} disabled={approvingAll || suggestedCount === 0}>
                 {approvingAll ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
                 Approve all suggested ({suggestedCount})
@@ -617,7 +640,7 @@ function QueueSetup({
       toast.success(
         action === "import"
           ? "Saved as a draft with its dates filled in — check it over, then publish"
-          : "Discarded",
+          : "Import deleted",
       );
       onDone();
       onResolved();
@@ -891,7 +914,7 @@ function QueueSetup({
       <div className="flex justify-end gap-2">
         <Button variant="outline" size="sm" onClick={() => run("discard")} disabled={busy !== null}>
           {busy === "discard" ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
-          Discard
+          Delete import
         </Button>
         <Button size="sm" onClick={() => run("import")} disabled={busy !== null || !draft.destinationCategory || (!draft.guideId && !draft.title.trim())}>
           {busy === "import" ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
