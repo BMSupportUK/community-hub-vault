@@ -113,6 +113,7 @@ import { Route as AuthenticatedApprovedSportsGuidesNewRouteImport } from './rout
 import { Route as AuthenticatedApprovedUUsernameRouteImport } from './routes/_authenticated/_approved/u.$username'
 import { Route as ApiPublicATokenRouteImport } from './routes/api/public/a/$token'
 import { Route as ApiPublicAdsAdBannerTrackRouteImport } from './routes/api/public/ads/ad-banner-track'
+import { Route as ApiPublicDiscordInteractionsRouteImport } from './routes/api/public/discord/interactions'
 import { Route as ApiPublicEmailImageNameRouteImport } from './routes/api/public/email-image/$name'
 import { Route as ApiPublicHooksBackupCredentialsRouteImport } from './routes/api/public/hooks/backup-credentials'
 import { Route as ApiPublicHooksBackupOrdersRouteImport } from './routes/api/public/hooks/backup-orders'
@@ -750,6 +751,12 @@ const ApiPublicAdsAdBannerTrackRoute =
     path: '/api/public/ads/ad-banner-track',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicDiscordInteractionsRoute =
+  ApiPublicDiscordInteractionsRouteImport.update({
+    id: '/api/public/discord/interactions',
+    path: '/api/public/discord/interactions',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicEmailImageNameRoute = ApiPublicEmailImageNameRouteImport.update({
   id: '/api/public/email-image/$name',
   path: '/api/public/email-image/$name',
@@ -1083,6 +1090,7 @@ export interface FileRoutesByFullPath {
   '/u/$username': typeof AuthenticatedApprovedUUsernameRoute
   '/api/public/a/$token': typeof ApiPublicATokenRoute
   '/api/public/ads/ad-banner-track': typeof ApiPublicAdsAdBannerTrackRoute
+  '/api/public/discord/interactions': typeof ApiPublicDiscordInteractionsRoute
   '/api/public/email-image/$name': typeof ApiPublicEmailImageNameRoute
   '/api/public/hooks/backup-credentials': typeof ApiPublicHooksBackupCredentialsRoute
   '/api/public/hooks/backup-orders': typeof ApiPublicHooksBackupOrdersRoute
@@ -1223,6 +1231,7 @@ export interface FileRoutesByTo {
   '/u/$username': typeof AuthenticatedApprovedUUsernameRoute
   '/api/public/a/$token': typeof ApiPublicATokenRoute
   '/api/public/ads/ad-banner-track': typeof ApiPublicAdsAdBannerTrackRoute
+  '/api/public/discord/interactions': typeof ApiPublicDiscordInteractionsRoute
   '/api/public/email-image/$name': typeof ApiPublicEmailImageNameRoute
   '/api/public/hooks/backup-credentials': typeof ApiPublicHooksBackupCredentialsRoute
   '/api/public/hooks/backup-orders': typeof ApiPublicHooksBackupOrdersRoute
@@ -1369,6 +1378,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/u/$username': typeof AuthenticatedApprovedUUsernameRoute
   '/api/public/a/$token': typeof ApiPublicATokenRoute
   '/api/public/ads/ad-banner-track': typeof ApiPublicAdsAdBannerTrackRoute
+  '/api/public/discord/interactions': typeof ApiPublicDiscordInteractionsRoute
   '/api/public/email-image/$name': typeof ApiPublicEmailImageNameRoute
   '/api/public/hooks/backup-credentials': typeof ApiPublicHooksBackupCredentialsRoute
   '/api/public/hooks/backup-orders': typeof ApiPublicHooksBackupOrdersRoute
@@ -1514,6 +1524,7 @@ export interface FileRouteTypes {
     | '/u/$username'
     | '/api/public/a/$token'
     | '/api/public/ads/ad-banner-track'
+    | '/api/public/discord/interactions'
     | '/api/public/email-image/$name'
     | '/api/public/hooks/backup-credentials'
     | '/api/public/hooks/backup-orders'
@@ -1654,6 +1665,7 @@ export interface FileRouteTypes {
     | '/u/$username'
     | '/api/public/a/$token'
     | '/api/public/ads/ad-banner-track'
+    | '/api/public/discord/interactions'
     | '/api/public/email-image/$name'
     | '/api/public/hooks/backup-credentials'
     | '/api/public/hooks/backup-orders'
@@ -1799,6 +1811,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/u/$username'
     | '/api/public/a/$token'
     | '/api/public/ads/ad-banner-track'
+    | '/api/public/discord/interactions'
     | '/api/public/email-image/$name'
     | '/api/public/hooks/backup-credentials'
     | '/api/public/hooks/backup-orders'
@@ -1869,6 +1882,7 @@ export interface RootRouteChildren {
   LovableEmailEventsRoute: typeof LovableEmailEventsRoute
   ApiPublicATokenRoute: typeof ApiPublicATokenRoute
   ApiPublicAdsAdBannerTrackRoute: typeof ApiPublicAdsAdBannerTrackRoute
+  ApiPublicDiscordInteractionsRoute: typeof ApiPublicDiscordInteractionsRoute
   ApiPublicEmailImageNameRoute: typeof ApiPublicEmailImageNameRoute
   ApiPublicHooksBackupCredentialsRoute: typeof ApiPublicHooksBackupCredentialsRoute
   ApiPublicHooksBackupOrdersRoute: typeof ApiPublicHooksBackupOrdersRoute
@@ -2634,6 +2648,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicAdsAdBannerTrackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/discord/interactions': {
+      id: '/api/public/discord/interactions'
+      path: '/api/public/discord/interactions'
+      fullPath: '/api/public/discord/interactions'
+      preLoaderRoute: typeof ApiPublicDiscordInteractionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/email-image/$name': {
       id: '/api/public/email-image/$name'
       path: '/api/public/email-image/$name'
@@ -3254,6 +3275,7 @@ const rootRouteChildren: RootRouteChildren = {
   LovableEmailEventsRoute: LovableEmailEventsRoute,
   ApiPublicATokenRoute: ApiPublicATokenRoute,
   ApiPublicAdsAdBannerTrackRoute: ApiPublicAdsAdBannerTrackRoute,
+  ApiPublicDiscordInteractionsRoute: ApiPublicDiscordInteractionsRoute,
   ApiPublicEmailImageNameRoute: ApiPublicEmailImageNameRoute,
   ApiPublicHooksBackupCredentialsRoute: ApiPublicHooksBackupCredentialsRoute,
   ApiPublicHooksBackupOrdersRoute: ApiPublicHooksBackupOrdersRoute,
