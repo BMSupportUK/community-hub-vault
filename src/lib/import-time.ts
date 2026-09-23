@@ -254,3 +254,19 @@ export function ukListingInstant(
   if (!clock || !day) return null;
   return wallTimeToInstant(day, clock, UK_TZ);
 }
+
+/**
+ * Today's date in the UK office zone as {y,m,d}. Used when a listing post
+ * carries no date of its own, so imports can date themselves instead of
+ * waiting for someone to type the date in by hand.
+ */
+export function ukTodayParts(nowMs: number = Date.now()): { y: number; m: number; d: number } {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: UK_TZ,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date(nowMs));
+  const get = (type: string) => Number(parts.find((p) => p.type === type)?.value ?? "0");
+  return { y: get("year"), m: get("month") - 1, d: get("day") };
+}
