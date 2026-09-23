@@ -361,22 +361,28 @@ const AT_DATE_TIME_CHANNEL_RE = new RegExp(
     DATE_SOURCE +
     String.raw`)(?:,?\s+\d{4})?)\s+(\d{1,2}(?::\d{2})?\s*(?:am|pm|a\.m\.|p\.m\.)?(?:\s*(?:` +
     ZONE +
-    String.raw`))?)\s*[:|·•]\s*(.+?)\s*$`,
+    String.raw`))?)(?:\s+[-–—]\s+([^:|·•]+?))?\s*[:|·•]\s*(.+?)\s*$`,
   "i",
 );
 
 function detectAtSlotEvent(line: string, date: string | null): SportsListingEvent | null {
   const match = line.match(AT_DATE_TIME_CHANNEL_RE);
-  if (!match?.[1] || !match[2] || !match[3] || !match[4]) return null;
+  if (!match?.[1] || !match[2] || !match[3] || !match[5]) return null;
   const parsed = parseListingDate(match[2]);
   if (!parsed) return null;
   const clock = parseClockTime(match[3]);
   if (!clock) return null;
+  // "13:40 PM" style rows: already 24h, drop the stray meridiem.
+  const rawTime = /^\s*(1[3-9]|2[0-3])[:.]\d{2}\s*[ap]\.?m\.?/i.test(match[3])
+    ? match[3].replace(/\s*[ap]\.?m\.?/i, "")
+    : match[3];
+  const competition = match[4]?.trim();
+  const title = competition ? `${match[1].trim()} - ${competition}` : match[1].trim();
   return {
     date: formatListingDate(new Date(Date.UTC(parsed.y, parsed.m, parsed.d))),
-    time: normalizeTime(match[3]),
-    title: match[1].trim(),
-    channels: splitChannelLine(match[4]),
+    time: normalizeTime(rawTime),
+    title,
+    channels: splitChannelLine(match[5].replace(/\s+/g, " ")),
   };
 }
 
