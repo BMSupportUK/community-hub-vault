@@ -239,7 +239,7 @@ function ReadPage() {
         {loading || !blog ? (
           <div className="px-6 py-12 text-center text-purple-200/70">Loading…</div>
         ) : (
-          <article className="flex-1 min-h-0 w-full max-w-none mx-auto px-3 sm:px-6 py-6 flex flex-col gap-4 overflow-hidden">
+          <article className="flex-1 min-h-0 w-full max-w-none mx-auto px-3 sm:px-6 py-4 flex flex-col gap-3 overflow-hidden">
             <div className="flex flex-wrap gap-2">
               <span className="text-xs px-2 py-1 rounded-md bg-fuchsia-500/30 text-white font-semibold border border-fuchsia-400/50">
                 {(() => {
@@ -259,9 +259,8 @@ function ReadPage() {
               {blog.title}
             </h1>
             {blog.image_url && (
-              <div className="shrink-0 relative w-full h-32 sm:h-40 lg:h-48 rounded-2xl overflow-hidden border border-purple-500/30 bg-purple-950/60">
-                <img src={blog.image_url} alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-cover blur-xl scale-110 opacity-50" />
-                <img src={blog.image_url} alt={blog.title} className="relative z-10 w-full h-full object-contain" />
+              <div className="shrink-0 relative w-full aspect-[3/1] rounded-2xl overflow-hidden border border-purple-500/30 bg-purple-950/60">
+                <img src={blog.image_url} alt={blog.title} className="absolute inset-0 w-full h-full object-cover" />
               </div>
             )}
             {blog.refresh_notice && (
