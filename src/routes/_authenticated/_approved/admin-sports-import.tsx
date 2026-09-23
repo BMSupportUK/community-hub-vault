@@ -339,6 +339,8 @@ function AdminSportsImportPage() {
                             time={t}
                             zone={zone}
                             selected={selectedId === q.id}
+                            splitting={splittingId === q.id}
+                            onSplit={() => splitItem(q.id)}
                             onSelect={() => selectItem(q)}
                             onZoneApply={(shown, z) => applyZoneToItem(q.id, shown, z)}
                           />
