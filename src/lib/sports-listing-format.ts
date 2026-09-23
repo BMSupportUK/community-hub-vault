@@ -57,6 +57,16 @@ function cleanLine(line: string): string {
     .trim();
 }
 
+function decodeListingEntities(value: string): string {
+  return value
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'");
+}
+
 /**
  * Daily listings lead each row with the channel number ("01 | 00:00 Trackside
  * Live!"). Keep that number as the event's channel.
@@ -530,7 +540,7 @@ function isSectionHeading(rawLine: string): boolean {
 }
 
 function listingLines(raw: string): string[] {
-  return raw
+  return decodeListingEntities(raw)
     .replace(/<br\s*\/?\s*>/gi, "\n")
     .replace(/<\/div>/gi, "\n")
     .replace(/<[^>]+>/g, " ")
