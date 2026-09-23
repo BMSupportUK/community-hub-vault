@@ -1436,7 +1436,7 @@ function SportsGuidesPage() {
                     </p>
                   </div>
                 )}
-                {!activeSearch && <AdSenseSlot slot="welcome" className="mt-6" />}
+                {!activeSearch && <div className="mt-6"><AdSenseSlot slot="welcome" /></div>}
               </div>
               <div className="relative lg:sticky lg:top-4 h-fit">{categoryNav}</div>
             </div>
