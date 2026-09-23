@@ -419,17 +419,15 @@ function SportsGuidesPage() {
   }, [activeCat, subsByCat]);
 
   const filtered = useMemo(() => {
-    const q = search.trim();
+    const q = activeSearch;
     return blogs.filter((b) => {
       if (!q && activeCat && b.category_id !== activeCat) return false;
       if (!q && activeCat && subsByCat[activeCat]?.length && subFilter && b.subcategory !== subFilter) return false;
       if (!q) return true;
-      return matchesGuideSearch(
-        [b.title, b.excerpt, guideSearchText(b.body)].filter(Boolean).join(" "),
-        q,
-      );
+      // Events only — guide titles/descriptions are not searched.
+      return matchesGuideSearch(guideSearchText(b.body), q);
     });
-  }, [blogs, activeCat, search, subFilter, subsByCat]);
+  }, [blogs, activeCat, activeSearch, subFilter, subsByCat]);
 
   // A–Z jump map: first visible guide whose title starts with each letter.
   const azMap = useMemo(() => {
