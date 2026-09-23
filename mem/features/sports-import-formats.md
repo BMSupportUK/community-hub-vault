@@ -1,0 +1,13 @@
+---
+name: sports import formats
+description: Provider sports listing row formats and verification expectations for imports
+type: feature
+---
+Sports imports must keep channel labels separate from event names.
+
+Known formats:
+- Tennis TV / MLS style: `Event @ Sep 23 9:30 PM - Competition :Channel 01` means event title is before `@`, optional competition is appended, and the text after `:` is the channel.
+- Provider timestamp style: `MLB 01 : Nationals x Tigers start:2026-09-23 18:10:00 stop:...` means `MLB 01` is the channel and `Nationals x Tigers` is the event.
+- Named provider timestamp style: `wnba: 1 name: New York Liberty x Atlanta Dream start:...` means `WNBA 1` is the channel and the `name:` value is the event.
+
+Before claiming an import fix, verify the parser with Bun against the real post format and check the stored guide body in the database.

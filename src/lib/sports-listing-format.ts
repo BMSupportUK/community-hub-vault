@@ -221,6 +221,7 @@ export function isLikelyChannelLabel(value: string): boolean {
   if (/\b(?:v|vs|versus)\b/i.test(text)) return false;
   if (/\b(?:league|cup|trophy|championship|premier|serie|liga|bundesliga)\b/i.test(text) && !/\d/.test(text)) return false;
   if (/^(?:EFL)\s*\d{1,3}\b/i.test(text)) return true;
+  if (/^(?:MLB|NHL|MLS|WNBA|NBA|NFL)\s*\d{1,3}\b/i.test(text)) return true;
   if (/\b(?:sky|tnt|bt|espn|dazn|cbs|fox|nbc|abc|itv|bbc|bein|viaplay|premier\s+sports|eurosport|fubo|peacock|paramount|amazon|apple|arena|supersport|sportsnet|tsn|optus|stan|setanta|flow|flo|racing\s*tv|channel|sports?|hd|uhd|feed)\b/i.test(text)) return true;
   return false;
 }
@@ -237,6 +238,9 @@ function splitTitleAndInlineChannels(rest: string): { title: string; channels: s
   }
 
   const dash = clean.match(/^(.+?)\s[-–—]\s(.+)$/);
+  if (dash && dash[1] && dash[2] && isLikelyChannelLabel(dash[1])) {
+    return { title: dash[2].trim(), channels: splitChannelLine(dash[1]) };
+  }
   if (dash && dash[1] && dash[2] && isLikelyChannelLabel(dash[2])) {
     return { title: dash[1].trim(), channels: splitChannelLine(dash[2]) };
   }
@@ -297,6 +301,7 @@ function detectSlashZonedEvent(line: string, date: string | null): SportsListing
  */
 const PROVIDER_STAMP_RE = /\bstart:\s*(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::\d{2})?/i;
 const NAMED_PROVIDER_STAMP_HEAD_RE = /^([a-z][a-z0-9 +&'./-]*?)\s*:\s*(\d{1,3})\s+name\s*:\s*(.+)$/i;
+const PROVIDER_CHANNEL_STAMP_HEAD_RE = /^([a-z][a-z0-9 +&'./-]*?\s+\d{1,3})\s*:\s*(.+)$/i;
 
 function detectStampedEvent(line: string, date: string | null): SportsListingEvent | null {
   const stamp = line.match(PROVIDER_STAMP_RE);
@@ -336,6 +341,16 @@ function detectStampedEvent(line: string, date: string | null): SportsListingEve
       time: `${String(ukPart("hour") % 24).padStart(2, "0")}:${String(ukPart("minute")).padStart(2, "0")} ${ukZone}`,
       title: namedProvider[3].trim(),
       channels: [`${namedProvider[1].trim()} ${namedProvider[2]}`],
+    };
+  }
+
+  const providerChannel = head.match(PROVIDER_CHANNEL_STAMP_HEAD_RE);
+  if (providerChannel?.[1] && providerChannel[2] && isLikelyChannelLabel(providerChannel[1])) {
+    return {
+      date: eventDate || date,
+      time: `${String(ukPart("hour") % 24).padStart(2, "0")}:${String(ukPart("minute")).padStart(2, "0")} ${ukZone}`,
+      title: providerChannel[2].trim(),
+      channels: splitChannelLine(providerChannel[1]),
     };
   }
 
