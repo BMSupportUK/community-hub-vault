@@ -6669,6 +6669,10 @@ export type Database = {
         Args: { _duration_seconds: number; _reason?: string; _user_id: string }
         Returns: string
       }
+      prune_sports_blog_body: {
+        Args: { _body: string; _id: string }
+        Returns: undefined
+      }
       reassign_ticket: {
         Args: { _ticket_id: string; _to_user: string }
         Returns: undefined
