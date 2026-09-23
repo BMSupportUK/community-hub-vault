@@ -448,6 +448,64 @@ export const splitQueueItem = createServerFn({ method: "POST" })
     return { created: rows.length };
   });
 
+// One pasted post can hold several providers ("MONOMAX" then "STAN Sport"),
+// each of which has its own guide. Split it into one queue item per provider
+// so each block can be filed against the right guide.
+export const splitQueueItemByProvider = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ id: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertStaff(supabase, userId);
+
+    const { data: item, error: getErr } = await supabaseAdmin
+      .from("discord_import_queue")
+      .select("id, raw_text, parsed_event, status, source, source_ref, forwarded_from")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (getErr) throw new Error(getErr.message);
+    if (!item) throw new Error("Queue item not found");
+    if (item.status !== "pending") throw new Error("Already resolved");
+
+    const raw = String((item.parsed_event as any)?.raw ?? item.raw_text ?? "");
+    const sections = splitListingSections(raw);
+    if (sections.length < 2) throw new Error("Only one listing name found in this post");
+
+    const rows = sections.map((section, i) => {
+      const events = sortSportsListingEvents(parseSportsListingBlock(section.raw));
+      const first = events[0];
+      const body = `${section.name}\n${section.raw.trim()}`;
+      return {
+        raw_text: body,
+        parsed_event: {
+          title: section.name,
+          time: first?.time ?? null,
+          date: first?.date ?? null,
+          channels: [],
+          raw: body,
+          suggested_category: null,
+          suggested_subcategory: null,
+        } as any,
+        status: "pending",
+        source: item.source ?? "paste",
+        source_ref: `${item.source_ref ?? `provider:${item.id}`}#${i + 1}`,
+        forwarded_from: item.forwarded_from ?? null,
+        created_by: userId,
+      };
+    });
+
+    const { error: insErr } = await supabaseAdmin.from("discord_import_queue").insert(rows as any);
+    if (insErr) throw new Error(insErr.message);
+
+    const { error: delErr } = await supabaseAdmin
+      .from("discord_import_queue")
+      .update({ status: "discarded" } as any)
+      .eq("id", item.id);
+    if (delErr) throw new Error(delErr.message);
+
+    return { created: rows.length };
+  });
+
 const QueueInput = z.object({
   events: z
     .array(
