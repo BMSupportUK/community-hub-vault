@@ -358,7 +358,8 @@ export function AppDemosView() {
           <DialogFooter>
             <Button variant="outline" disabled={saving} onClick={() => setDraft(null)}>Cancel</Button>
             <Button onClick={save} disabled={saving}>
-              {saving ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />} Save
+              {saving ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
+              {saving && compressPct !== null ? `Compressing… ${compressPct}%` : "Save"}
             </Button>
           </DialogFooter>
         </DialogContent>
