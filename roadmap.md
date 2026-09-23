@@ -5,6 +5,7 @@
 - [x] Greyhound import: retain a shared date embedded in a multi-sport heading and repair the affected draft
 
 ## Done (recent)
+- [x] Sports guide imports: use `&` as the event matchup separator and keep ampersands from double-escaping
 - [x] Header clocks + office-hours dialog, live dates, England public holiday closures
 - [x] Automated messages & emails admin section (Account setup / Sales / Support tickets / Emails), HTML-only email editor with secure image upload
 - [x] Account Not Activated screen inside security gate only, with appeal
