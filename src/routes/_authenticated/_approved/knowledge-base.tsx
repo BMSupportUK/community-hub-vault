@@ -709,8 +709,8 @@ function KnowledgeBasePage() {
             </TabsContent>
           )}
 
-        </Tabs>
       </div>
+      </Tabs>
 
       {editing && <ArticleEditor editing={editing} setEditing={setEditing} onClose={closeEditor} categories={categories} onSave={saveArticle} userId={user?.id ?? null} />}
 
