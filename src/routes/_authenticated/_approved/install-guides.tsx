@@ -487,7 +487,7 @@ function InstallGuidesPage() {
             </div>
           </header>
 
-        <div className="relative isolate min-h-[calc(100vh-10rem)] overflow-hidden px-4 py-6 sm:px-8">
+        <div className="relative isolate overflow-hidden px-4 py-6 sm:px-8">
           {(tab === "get-app" || tab === "transfers") && (
             <>
               <img
