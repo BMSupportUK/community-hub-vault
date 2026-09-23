@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { ArrowLeft, Loader2, Sparkles, Send, Trash2, Inbox, Clock, Check } from "lucide-react";
+import { ArrowLeft, Loader2, Sparkles, Send, Trash2, Inbox, Clock, Check, Scissors } from "lucide-react";
 import { firstClockIn, firstDateIn, parseClockTime, toSingleZoneTime, type TimeZoneChoice } from "@/lib/import-time";
 import { parseSportsListingBlock } from "@/lib/sports-listing-format";
 import {
@@ -17,6 +17,7 @@ import {
   setupDiscordBot,
   listImportQueue,
   resolveQueueItem,
+  splitQueueItem,
   approveAllSuggested,
   listCategoriesWithSubs,
   listGuidesInCategory,
@@ -57,6 +58,7 @@ function AdminSportsImportPage() {
   const setupDiscordFn = useServerFn(setupDiscordBot);
   const listFn = useServerFn(listImportQueue);
   const resolveFn = useServerFn(resolveQueueItem);
+  const splitFn = useServerFn(splitQueueItem);
   const catsFn = useServerFn(listCategoriesWithSubs);
 
   const [text, setText] = useState("");
@@ -71,6 +73,7 @@ function AdminSportsImportPage() {
   const approveAllFn = useServerFn(approveAllSuggested);
   // The three setup boxes live in the sidebar: tap a post, then work the sidebar.
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [splittingId, setSplittingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<QueueDraft>({ category: "", destinationCategory: "", subcategories: [], title: "", time: null, sourceZone: null, guideId: null });
   const timeStore = useRef<Map<string, string | null>>(new Map());
   const sourceZoneStore = useRef<Map<string, TimeZoneChoice | null>>(new Map());
@@ -118,6 +121,18 @@ function AdminSportsImportPage() {
     listFn().then((d) => setQueue(d.items as QueueItem[]))
       .catch((e) => { if (!silent) toast.error(e.message); })
       .finally(() => { if (!silent) setLoadingQueue(false); });
+  };
+
+  const splitItem = (itemId: string) => {
+    setSplittingId(itemId);
+    splitFn({ data: { id: itemId } })
+      .then((r: any) => {
+        toast.success(`Split into ${r.created} single events`);
+        if (itemId === selectedId) clearSelection();
+        refreshQueue(true);
+      })
+      .catch((e: any) => toast.error(e.message))
+      .finally(() => setSplittingId(null));
   };
 
   // Forwarded posts arrive in the background, so the queue keeps itself
@@ -339,6 +354,8 @@ function AdminSportsImportPage() {
                             time={t}
                             zone={zone}
                             selected={selectedId === q.id}
+                            splitting={splittingId === q.id}
+                            onSplit={() => splitItem(q.id)}
                             onSelect={() => selectItem(q)}
                             onZoneApply={(shown, z) => applyZoneToItem(q.id, shown, z)}
                           />
@@ -375,6 +392,8 @@ function QueueRow({
   time,
   zone,
   selected,
+  splitting,
+  onSplit,
   onSelect,
   onZoneApply,
 }: {
@@ -382,6 +401,8 @@ function QueueRow({
   time: string | null;
   zone: TimeZoneChoice | null;
   selected: boolean;
+  splitting: boolean;
+  onSplit: () => void;
   onSelect: () => void;
   onZoneApply: (shown: string, zone: "gmt" | "et") => void;
 }) {
@@ -393,6 +414,10 @@ function QueueRow({
   const zoneDate = ev.date ?? firstDateIn(String(ev.raw ?? item.raw_text ?? ""));
   // Always offer the choice so a wrong pick can be changed before importing.
   const needsZone = parseClockTime(zoneSource) !== null;
+  const splitCount = useMemo(
+    () => parseSportsListingBlock(String(ev.raw ?? item.raw_text ?? "")).length,
+    [ev.raw, item.raw_text],
+  );
 
   return (
     <Card
@@ -428,6 +453,15 @@ function QueueRow({
             </Button>
           ))}
           {zone && <span className="text-[11px] text-muted-foreground">Tap the other button to change it</span>}
+        </div>
+      )}
+      {splitCount > 1 && (
+        <div className="flex flex-wrap items-center gap-2" onClick={(e) => e.stopPropagation()}>
+          <Button size="sm" variant="outline" className="h-7 px-2 text-xs" disabled={splitting} onClick={onSplit}>
+            {splitting ? <Loader2 className="size-3 animate-spin" /> : <Scissors className="size-3" />}
+            Split into {splitCount} single events
+          </Button>
+          <span className="text-[11px] text-muted-foreground">Pick a guide for each event separately</span>
         </div>
       )}
       {!selected && (
