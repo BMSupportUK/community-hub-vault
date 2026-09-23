@@ -454,27 +454,32 @@ function KnowledgeBasePage() {
 
   return (
     <main className="min-h-0 flex-1 overflow-y-auto bg-background">
-      <header className="relative px-4 py-5 sm:px-8 lg:py-4 border-b border-border bg-surface-2/40 backdrop-blur">
-        <h1 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 bg-clip-text text-transparent leading-[1.2] pb-1">
-          Knowledge Base
-        </h1>
-        <p className="text-muted-foreground mt-1">Guides, answers and how-tos — all in one place.</p>
-      </header>
+      <Tabs value={tab} onValueChange={setTab} className="w-full">
+        <header className="relative px-4 py-5 sm:px-8 lg:py-4 border-b border-border bg-surface-2/40 backdrop-blur">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="min-w-0">
+              <h1 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 bg-clip-text text-transparent leading-[1.2] pb-1">
+                Knowledge Base
+              </h1>
+              <p className="text-muted-foreground mt-1">Guides, answers and how-tos — all in one place.</p>
+            </div>
+            <TabsList className="flex max-w-full flex-none flex-wrap h-auto gap-1 rounded-full border border-border bg-surface-2/60 p-1">
+              <TabsTrigger value="welcome" className="shrink-0 rounded-full">Welcome</TabsTrigger>
+              <TabsTrigger value="guides" className="shrink-0 rounded-full">Guides</TabsTrigger>
+              {isMod && <TabsTrigger value="categories" className="shrink-0 rounded-full">Categories</TabsTrigger>}
+            </TabsList>
+          </div>
+        </header>
 
       <div className="px-4 py-5 sm:px-8 lg:py-4">
-        <Tabs value={tab} onValueChange={setTab} className="w-full">
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-6 lg:mb-4">
-            <TabsList className={`grid ${isMod ? "grid-cols-3" : "grid-cols-2"} max-w-2xl bg-surface-2/60 border border-border`}>
-              <TabsTrigger value="welcome">Welcome</TabsTrigger>
-              <TabsTrigger value="guides">Guides</TabsTrigger>
-              {isMod && <TabsTrigger value="categories">Categories</TabsTrigger>}
-            </TabsList>
-            {isMod && tab === "guides" && (
+          {isMod && tab === "guides" && (
+            <div className="flex justify-end mb-6 lg:mb-4">
               <Button onClick={openNewArticle} className="gap-1.5">
                 <Plus className="size-4" /> New article
               </Button>
-            )}
-          </div>
+            </div>
+          )}
+
 
           {/* WELCOME */}
           <TabsContent value="welcome" className="mt-0">
@@ -704,8 +709,8 @@ function KnowledgeBasePage() {
             </TabsContent>
           )}
 
-        </Tabs>
       </div>
+      </Tabs>
 
       {editing && <ArticleEditor editing={editing} setEditing={setEditing} onClose={closeEditor} categories={categories} onSave={saveArticle} userId={user?.id ?? null} />}
 
