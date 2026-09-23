@@ -946,7 +946,7 @@ function QueueSetup({
         <div className="space-y-1.5">
           <span className="text-[11px] font-medium text-muted-foreground">Step 4 · The name of the guide we are importing into</span>
           {!readyForGuides ? (
-            <p className="text-[11px] text-muted-foreground">Pick a sub category first.</p>
+            <p className="text-[11px] text-muted-foreground">Pick a category first.</p>
           ) : loadingGuides ? (
             <p className="flex items-center gap-2 text-[11px] text-muted-foreground">
               <Loader2 className="size-3 animate-spin" /> Loading existing guides…
