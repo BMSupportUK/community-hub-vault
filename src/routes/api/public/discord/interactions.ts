@@ -88,13 +88,17 @@ export const Route = createFileRoute("/api/public/discord/interactions")({
         if (interaction?.type === 2 && interaction?.data?.type === 3) {
           const targetId: string | undefined = interaction.data.target_id;
           const message = targetId ? interaction.data.resolved?.messages?.[targetId] : null;
-          const text: string = (message?.content ?? "").trim();
+          const text: string = extractMessageText(message);
           const channelName: string | null = interaction.channel?.name ?? null;
 
           if (!text) {
             return Response.json({
               type: 4,
-              data: { content: "That message has no text to import.", flags: 64 },
+              data: {
+                content:
+                  "I couldn't read any text on that message. If it's an image or a bot card with no text, copy the listings and use Paste & Import instead.",
+                flags: 64,
+              },
             });
           }
 
