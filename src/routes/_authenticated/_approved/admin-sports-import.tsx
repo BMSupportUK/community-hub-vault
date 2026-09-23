@@ -663,6 +663,11 @@ function QueueSetup({
 }) {
   const navigate = useNavigate();
   const [busy, setBusy] = useState<"import" | "discard" | null>(null);
+  // Wizard flow: the boxes follow each other — pick in one, tap OK, the next
+  // box opens. Back reopens the previous box.
+  const [step, setStep] = useState(1);
+  const itemKey = item?.id ?? null;
+  useEffect(() => { setStep(1); }, [itemKey]);
   const selectedCategory = cats.find((category) => category.name === draft.category);
   const childCategories = selectedCategory
     ? cats.filter((category) => category.parent_id === selectedCategory.id)
