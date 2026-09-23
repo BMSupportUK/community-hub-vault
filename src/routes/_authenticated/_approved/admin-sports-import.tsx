@@ -216,7 +216,7 @@ function AdminSportsImportPage() {
             </div>
             <div>
               <h1 className="font-display text-2xl sm:text-3xl font-bold text-white">Sports Guide Importer</h1>
-              <p className="text-sm text-white/85">Paste Discord listings — AI splits them into events and routes to your categories.</p>
+              <p className="text-sm text-white/85">Paste a listings post — it lands in the review queue as one block, ready to file into a guide.</p>
             </div>
           </div>
         </header>
@@ -231,88 +231,24 @@ function AdminSportsImportPage() {
 
           <TabsContent value="paste" className="space-y-4">
             <Card className="p-4 space-y-3">
-              <label className="text-sm font-medium">Paste from Discord</label>
+              <label className="text-sm font-medium">Paste a listings post</label>
               <Textarea
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 rows={10}
-                placeholder={"Copy one or more messages from a Discord sports channel and paste here.\n\nExample:\nSaturday 1 January 2026\n19:45 GMT\nManchester United vs Liverpool\nSky Sports Main Event"}
+                placeholder={"Copy a listings post from your sports channel and paste it here.\n\nIt goes into the review queue as one block — nothing is split — then you pick the category, sub categories and guide there."}
                 className="font-mono text-sm"
               />
               <div className="flex flex-wrap gap-2">
-                <Button onClick={onParse} disabled={parsing || !text.trim()}>
-                  {parsing ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
-                  {parsing ? "Parsing…" : "Parse with AI"}
+                <Button onClick={onQueuePaste} disabled={queueing || !text.trim()}>
+                  {queueing ? <Loader2 className="size-4 animate-spin" /> : <Inbox className="size-4" />}
+                  {queueing ? "Adding…" : "Add to review queue"}
                 </Button>
-                <Button variant="outline" onClick={() => { setText(""); setMatched([]); setUnmatched([]); }}>
+                <Button variant="outline" onClick={() => setText("")}>
                   Clear
                 </Button>
               </div>
             </Card>
-
-            {(matched.length > 0 || unmatched.length > 0) && (
-              <>
-                <Card className="p-4 space-y-3">
-                  <div className="flex flex-wrap items-end gap-2">
-                    <div className="flex-1 min-w-[180px]">
-                      <label className="text-xs text-muted-foreground">Default category</label>
-                      <Select value={bulkCategory} onValueChange={(v) => { setBulkCategory(v); setBulkSubcategory(null); }}>
-                        <SelectTrigger><SelectValue placeholder="Pick a category" /></SelectTrigger>
-                        <SelectContent>
-                          {cats.map((c) => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="flex-1 min-w-[180px]">
-                      <label className="text-xs text-muted-foreground">Default subcategory</label>
-                      <Select
-                        value={bulkSubcategory ?? "__none"}
-                        onValueChange={(v) => setBulkSubcategory(v === "__none" ? null : v)}
-                        disabled={bulkSubs.length === 0}
-                      >
-                        <SelectTrigger><SelectValue placeholder={bulkSubs.length === 0 ? "—" : "Pick a subcategory"} /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="__none">— None —</SelectItem>
-                          {bulkSubs.map((s) => <SelectItem key={s.name} value={s.name}>{s.name}{s.is_default ? " ★" : ""}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <Button variant="secondary" onClick={applyBulkToAll} disabled={!bulkCategory}>
-                      <Wand2 className="size-4" />
-                      Apply to all
-                    </Button>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Pick once and hit “Apply to all”, or set per-event below. AI category suggestions are ignored.
-                  </p>
-                </Card>
-
-                <Card className="p-4 space-y-3">
-                  <h2 className="font-display text-lg">Events ({matched.length + unmatched.length})</h2>
-                  {[...matched, ...unmatched].map((e, i) => {
-                    const inMatched = i < matched.length;
-                    const localIdx = inMatched ? i : i - matched.length;
-                    return (
-                      <EventRow
-                        key={i}
-                        event={e}
-                        cats={cats}
-                        subsByCatName={subsByCatName}
-                        onChange={(p) => (inMatched ? updateMatched(localIdx, p) : updateUnmatched(localIdx, p))}
-                        onRemove={() => (inMatched ? removeMatched(localIdx) : removeUnmatched(localIdx))}
-                      />
-                    );
-                  })}
-                </Card>
-
-                <div className="flex justify-end">
-                  <Button size="lg" onClick={onImportAll} disabled={importing}>
-                    {importing ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
-                    Import all
-                  </Button>
-                </div>
-              </>
-            )}
           </TabsContent>
 
           <TabsContent value="queue" className="space-y-3">
