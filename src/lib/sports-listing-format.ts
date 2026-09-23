@@ -323,6 +323,53 @@ function finalized(event: SportsListingEvent): SportsListingEvent | null {
   return { ...event, title, channels: unique(event.channels) };
 }
 
+export type ListingSection = { name: string; raw: string };
+
+/**
+ * One pasted post can carry several providers, each with its own guide:
+ * "**MONOMAX**" rows followed by "**STAN Sport**" rows. Detect those headings
+ * so the post can be filed as one import per provider.
+ */
+function isSectionHeading(rawLine: string): boolean {
+  const trimmed = rawLine.trim();
+  if (!trimmed) return false;
+  const bold = /^(?:\*{2,}|__)(.+?)(?:\*{2,}|__)$/.test(trimmed);
+  const text = cleanLine(trimmed);
+  if (!text || text.length > 48) return false;
+  if (text.includes("//")) return false;
+  if (/\d{1,2}\s*[:.]\s*\d{2}/.test(text)) return false;
+  if (isDateLine(text) || listingDateFromLine(text)) return false;
+  if (detectEvent(text, null)) return false;
+  const upper = text === text.toUpperCase() && /[A-Za-z]/.test(text);
+  return bold || upper;
+}
+
+function listingLines(raw: string): string[] {
+  return raw
+    .replace(/<br\s*\/?\s*>/gi, "\n")
+    .replace(/<\/div>/gi, "\n")
+    .replace(/<[^>]+>/g, " ")
+    .split("\n");
+}
+
+export function splitListingSections(raw: string | null | undefined): ListingSection[] {
+  if (!raw) return [];
+  const sections: ListingSection[] = [];
+  let current: ListingSection | null = null;
+
+  for (const line of listingLines(raw)) {
+    if (isSectionHeading(line)) {
+      current = { name: cleanLine(line), raw: "" };
+      sections.push(current);
+      continue;
+    }
+    if (current) current.raw += `${line}\n`;
+  }
+
+  const filled = sections.filter((section) => parseSportsListingBlock(section.raw).length > 0);
+  return filled.length >= 2 ? filled : [];
+}
+
 export function parseSportsListingBlock(raw: string | null | undefined): SportsListingEvent[] {
   if (!raw) return [];
   const lines = raw
