@@ -397,11 +397,25 @@ function eventTimeForOutput(event: SportsListingEvent, input: ListingInput): str
   return event.time;
 }
 
+/**
+ * Date a listing post should fall under when it never writes one: the day it
+ * is imported, in UK office time. Times that run backwards after this are
+ * rolled onto the following day by applyImplicitDateRollover.
+ */
+export function importDayListingDate(nowMs: number = Date.now()): string {
+  const today = ukTodayParts(nowMs);
+  return formatListingDate(new Date(Date.UTC(today.y, today.m, today.d)));
+}
+
 export function formatSportsListingBlock(input: ListingInput): string | null {
-  const events = sortSportsListingEvents(applyImplicitDateRollover(parseSportsListingBlock(input.raw), input.date));
+  const parsed = parseSportsListingBlock(input.raw);
+  // No date written anywhere in the post: date it from the import day rather
+  // than leaving the guide dateless for someone to fill in afterwards.
+  const base = parsed.some((event) => event.date) ? input.date : (input.date ?? importDayListingDate());
+  const events = sortSportsListingEvents(applyImplicitDateRollover(parsed, base));
   if (!events.length) return null;
 
-  return formatSportsListingEvents(events, input);
+  return formatSportsListingEvents(events, { ...input, date: base ?? input.date });
 }
 
 function formatSportsListingEvents(events: SportsListingEvent[], input: ListingInput): string {
