@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { sanitizeRichHtml } from "@/lib/sanitize-html";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
+import AdSenseSlot from "@/components/app/AdSenseSlot";
 import { toast } from "sonner";
 import { annotateTimesInEl } from "@/lib/parse-event-times";
 import { PagedGrid, PaginationBar } from "@/lib/paginate-by-height";
