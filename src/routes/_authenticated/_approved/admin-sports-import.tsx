@@ -663,6 +663,11 @@ function QueueSetup({
 }) {
   const navigate = useNavigate();
   const [busy, setBusy] = useState<"import" | "discard" | null>(null);
+  // Wizard flow: the boxes follow each other — pick in one, tap OK, the next
+  // box opens. Back reopens the previous box.
+  const [step, setStep] = useState(1);
+  const itemKey = item?.id ?? null;
+  useEffect(() => { setStep(1); }, [itemKey]);
   const selectedCategory = cats.find((category) => category.name === draft.category);
   const childCategories = selectedCategory
     ? cats.filter((category) => category.parent_id === selectedCategory.id)
@@ -763,74 +768,127 @@ function QueueSetup({
 
       <ListingPreview raw={String(item.parsed_event?.raw ?? item.raw_text ?? "")} sourceZone={draft.sourceZone} />
 
-      <div className="space-y-1.5">
-        <span className="text-[11px] font-medium text-muted-foreground">1 · Category names we have</span>
-        <div className="max-h-44 divide-y divide-border overflow-y-auto rounded-lg border border-border">
-          {cats.filter((c) => !c.parent_id).map((c) => {
-            const on = draft.category === c.name;
-            return (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => setDraft({ ...draft, category: c.name, group: "", destinationCategory: "", subcategories: [], guideId: null })}
-                className={`flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm transition ${
-                  on ? "bg-primary/10 font-medium text-primary" : "hover:bg-muted/60"
-                }`}
-              >
-                <span className="truncate">{c.name}</span>
-                {on && <span className="text-xs">✓</span>}
-              </button>
-            );
-          })}
+      {(step > 1 || step > 2 || step > 3) && (
+        <div className="flex flex-wrap items-center gap-1.5">
+          {step > 1 && draft.category && (
+            <button
+              type="button"
+              onClick={() => setStep(1)}
+              className="flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary transition hover:bg-primary/20"
+            >
+              <Check className="size-3" strokeWidth={3} />
+              {draft.category}
+            </button>
+          )}
+          {step > 2 && chosenChoice && (
+            <button
+              type="button"
+              onClick={() => setStep(2)}
+              className="flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary transition hover:bg-primary/20"
+            >
+              <Check className="size-3" strokeWidth={3} />
+              {chosenChoice.name}
+            </button>
+          )}
+          {step > 3 && groupSubs.length > 0 && selectedSubcategory && (
+            <button
+              type="button"
+              onClick={() => setStep(3)}
+              className="flex items-center gap-1 rounded-full border border-primary/40 bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary transition hover:bg-primary/20"
+            >
+              <Check className="size-3" strokeWidth={3} />
+              {selectedSubcategory}
+            </button>
+          )}
         </div>
-      </div>
+      )}
 
-      <div className="space-y-1.5">
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-[11px] font-medium text-muted-foreground">
-            2 · The sub categories we have
-          </span>
-        </div>
-        {subChoices.length > 0 ? (
-          <div className="max-h-64 space-y-1.5 overflow-y-auto pr-1">
-            {subChoices.map((choice) => {
-              const on = choice.isGroup
-                ? draft.group === choice.name
-                : selectedSubcategory === choice.name;
+      {step === 1 && (
+        <div className="space-y-1.5">
+          <span className="text-[11px] font-medium text-muted-foreground">Step 1 · Category names we have</span>
+          <div className="max-h-44 divide-y divide-border overflow-y-auto rounded-lg border border-border">
+            {cats.filter((c) => !c.parent_id).map((c) => {
+              const on = draft.category === c.name;
               return (
                 <button
-                  key={choice.name}
+                  key={c.id}
                   type="button"
-                  onClick={() => setDraft({
-                    ...draft,
-                    group: choice.isGroup ? choice.name : "",
-                    destinationCategory: choice.destinationCategory,
-                    subcategories: choice.isGroup ? [] : [choice.name],
-                    guideId: null,
-                  })}
-                  className={`flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left text-sm transition ${
-                    on
-                      ? "border-primary bg-primary/10 font-medium text-primary"
-                      : "border-border bg-card hover:bg-muted/60"
+                  onClick={() => setDraft({ ...draft, category: c.name, group: "", destinationCategory: "", subcategories: [], guideId: null })}
+                  className={`flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm transition ${
+                    on ? "bg-primary/10 font-medium text-primary" : "hover:bg-muted/60"
                   }`}
                 >
-                  <span className="truncate">{choice.name}</span>
-                  <span className="text-xs">{on ? "✓" : ""}</span>
+                  <span className="truncate">{c.name}</span>
+                  {on && <span className="text-xs">✓</span>}
                 </button>
               );
             })}
           </div>
-        ) : (
-          <p className="text-[11px] text-muted-foreground">
-            {draft.category ? "No sub categories are set up in this category." : "Pick a category first."}
-          </p>
-        )}
-      </div>
+          <div className="flex items-center justify-between gap-2 pt-1">
+            <span />
+            <Button size="sm" onClick={() => setStep(2)} disabled={!draft.category}>
+              OK <Check className="size-4" />
+            </Button>
+          </div>
+        </div>
+      )}
 
-      {groupSubs.length > 0 && (
+      {step === 2 && (
+        <div className="space-y-1.5">
+          <span className="text-[11px] font-medium text-muted-foreground">Step 2 · The sub categories we have</span>
+          {subChoices.length > 0 ? (
+            <div className="max-h-64 space-y-1.5 overflow-y-auto pr-1">
+              {subChoices.map((choice) => {
+                const on = choice.isGroup
+                  ? draft.group === choice.name
+                  : selectedSubcategory === choice.name;
+                return (
+                  <button
+                    key={choice.name}
+                    type="button"
+                    onClick={() => setDraft({
+                      ...draft,
+                      group: choice.isGroup ? choice.name : "",
+                      destinationCategory: choice.destinationCategory,
+                      subcategories: choice.isGroup ? [] : [choice.name],
+                      guideId: null,
+                    })}
+                    className={`flex w-full items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left text-sm transition ${
+                      on
+                        ? "border-primary bg-primary/10 font-medium text-primary"
+                        : "border-border bg-card hover:bg-muted/60"
+                    }`}
+                  >
+                    <span className="truncate">{choice.name}</span>
+                    <span className="text-xs">{on ? "✓" : ""}</span>
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-[11px] text-muted-foreground">
+              {draft.category ? "No sub categories are set up in this category." : "Pick a category first."}
+            </p>
+          )}
+          <div className="flex items-center justify-between gap-2 pt-1">
+            <Button variant="outline" size="sm" onClick={() => setStep(1)}>
+              <ArrowLeft className="size-4" /> Back
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => setStep(groupSubs.length > 0 && chosenChoice?.isGroup ? 3 : 4)}
+              disabled={!chosenChoice}
+            >
+              OK <Check className="size-4" />
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {step === 3 && groupSubs.length > 0 && (
         <div className="space-y-1.5">
           <span className="text-[11px] font-medium text-muted-foreground">
-            2b · The sub categories in {draft.group}
+            Step 3 · The sub categories in {draft.group}
           </span>
           <div className="max-h-56 space-y-1.5 overflow-y-auto pr-1">
             {groupSubs.map((sub) => {
@@ -852,57 +910,76 @@ function QueueSetup({
               );
             })}
           </div>
+          <div className="flex items-center justify-between gap-2 pt-1">
+            <Button variant="outline" size="sm" onClick={() => setStep(2)}>
+              <ArrowLeft className="size-4" /> Back
+            </Button>
+            <Button size="sm" onClick={() => setStep(4)} disabled={!selectedSubcategory}>
+              OK <Check className="size-4" />
+            </Button>
+          </div>
         </div>
       )}
 
-      <div className="space-y-1.5">
-        <span className="text-[11px] font-medium text-muted-foreground">3 · The name of the guide we created</span>
-        {!readyForGuides ? (
-          <p className="text-[11px] text-muted-foreground">Pick a sub category first.</p>
-        ) : loadingGuides ? (
-          <p className="flex items-center gap-2 text-[11px] text-muted-foreground">
-            <Loader2 className="size-3 animate-spin" /> Loading existing guides…
-          </p>
-        ) : guides.length > 0 ? (
-          <div className="max-h-48 divide-y divide-border overflow-y-auto rounded-lg border border-border">
-            {guides.map((g) => {
-              const on = draft.guideId === g.id;
-              return (
-                <button
-                  key={g.id}
-                  type="button"
-                  onClick={() => setDraft({ ...draft, title: g.title, guideId: g.id })}
-                  className={`flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm transition ${
-                    on ? "bg-primary/10 font-medium text-primary" : "hover:bg-muted/60"
-                  }`}
-                >
-                  <span className="flex min-w-0 items-center gap-2">
-                    {on && (
-                      <span className="grid size-4 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
-                        <Check className="size-3" strokeWidth={3} />
-                      </span>
-                    )}
-                    <span className="min-w-0">
-                      <span className="block truncate">{g.title}</span>
-                      {g.subcategory && (
-                        <span className="block truncate text-[10px] text-muted-foreground">{g.subcategory}</span>
+      {step === 4 && (
+        <div className="space-y-1.5">
+          <span className="text-[11px] font-medium text-muted-foreground">Step 4 · The name of the guide we are importing into</span>
+          {!readyForGuides ? (
+            <p className="text-[11px] text-muted-foreground">Pick a sub category first.</p>
+          ) : loadingGuides ? (
+            <p className="flex items-center gap-2 text-[11px] text-muted-foreground">
+              <Loader2 className="size-3 animate-spin" /> Loading existing guides…
+            </p>
+          ) : guides.length > 0 ? (
+            <div className="max-h-48 divide-y divide-border overflow-y-auto rounded-lg border border-border">
+              {guides.map((g) => {
+                const on = draft.guideId === g.id;
+                return (
+                  <button
+                    key={g.id}
+                    type="button"
+                    onClick={() => setDraft({ ...draft, title: g.title, guideId: g.id })}
+                    className={`flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm transition ${
+                      on ? "bg-primary/10 font-medium text-primary" : "hover:bg-muted/60"
+                    }`}
+                  >
+                    <span className="flex min-w-0 items-center gap-2">
+                      {on && (
+                        <span className="grid size-4 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
+                          <Check className="size-3" strokeWidth={3} />
+                        </span>
                       )}
+                      <span className="min-w-0">
+                        <span className="block truncate">{g.title}</span>
+                        {g.subcategory && (
+                          <span className="block truncate text-[10px] text-muted-foreground">{g.subcategory}</span>
+                        )}
+                      </span>
                     </span>
-                  </span>
-                </button>
-              );
-            })}
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-[11px] text-muted-foreground">No guides have been created here yet.</p>
+          )}
+          <Input
+            value={draft.title}
+            onChange={(e) => setDraft({ ...draft, title: e.target.value, guideId: null })}
+            className="font-medium"
+            placeholder="Or type a new guide name"
+          />
+          <div className="flex items-center justify-between gap-2 pt-1">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setStep(groupSubs.length > 0 && chosenChoice?.isGroup ? 3 : 2)}
+            >
+              <ArrowLeft className="size-4" /> Back
+            </Button>
           </div>
-        ) : (
-          <p className="text-[11px] text-muted-foreground">No guides have been created here yet.</p>
-        )}
-        <Input
-          value={draft.title}
-          onChange={(e) => setDraft({ ...draft, title: e.target.value, guideId: null })}
-          className="font-medium"
-          placeholder="Or type a new guide name"
-        />
-      </div>
+        </div>
+      )}
 
       <div className="flex justify-end gap-2">
         <Button variant="outline" size="sm" onClick={() => run("discard")} disabled={busy !== null}>
