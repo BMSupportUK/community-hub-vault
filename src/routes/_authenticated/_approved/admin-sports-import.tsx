@@ -9,19 +9,16 @@ import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { ArrowLeft, Loader2, Sparkles, Send, Trash2, Inbox, Wand2, Clock, Check } from "lucide-react";
+import { ArrowLeft, Loader2, Sparkles, Send, Trash2, Inbox, Clock, Check } from "lucide-react";
 import { firstClockIn, firstDateIn, parseClockTime, toSingleZoneTime, type TimeZoneChoice } from "@/lib/import-time";
 import { parseSportsListingBlock } from "@/lib/sports-listing-format";
 import {
-  parseDiscordPaste,
-  importParsedEvents,
-  queueUnmatched,
+  queuePastedPost,
   listImportQueue,
   resolveQueueItem,
   approveAllSuggested,
   listCategoriesWithSubs,
   listGuidesInCategory,
-  type RoutedEvent,
 } from "@/lib/discord-import.functions";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-sports-import")({
@@ -55,27 +52,20 @@ type QueueItem = {
 function AdminSportsImportPage() {
   const { hasAny } = useAuth();
   const isStaff = hasAny(["admin", "management", "moderator"]);
-  const parseFn = useServerFn(parseDiscordPaste);
-  const importFn = useServerFn(importParsedEvents);
-  const queueFn = useServerFn(queueUnmatched);
+  const queuePasteFn = useServerFn(queuePastedPost);
   const listFn = useServerFn(listImportQueue);
   const resolveFn = useServerFn(resolveQueueItem);
   const catsFn = useServerFn(listCategoriesWithSubs);
 
   const [text, setText] = useState("");
-  const [parsing, setParsing] = useState(false);
-  const [importing, setImporting] = useState(false);
-  const [matched, setMatched] = useState<RoutedEvent[]>([]);
-  const [unmatched, setUnmatched] = useState<RoutedEvent[]>([]);
+  const [queueing, setQueueing] = useState(false);
   const [cats, setCats] = useState<Cat[]>([]);
   const [subs, setSubs] = useState<Sub[]>([]);
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [loadingQueue, setLoadingQueue] = useState(true);
-  const [queueFilter, setQueueFilter] = useState<"all" | "telegram" | "paste">("all");
+  const [queueFilter, setQueueFilter] = useState<"all" | "paste">("all");
   const [approvingAll, setApprovingAll] = useState(false);
   const approveAllFn = useServerFn(approveAllSuggested);
-  const [bulkCategory, setBulkCategory] = useState<string>("");
-  const [bulkSubcategory, setBulkSubcategory] = useState<string | null>(null);
   // The three setup boxes live in the sidebar: tap a post, then work the sidebar.
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [draft, setDraft] = useState<QueueDraft>({ category: "", destinationCategory: "", subcategories: [], title: "", time: null, sourceZone: null, guideId: null });
@@ -194,101 +184,21 @@ function AdminSportsImportPage() {
     return map;
   }, [cats, subs]);
 
-  const bulkSubs = bulkCategory ? subsByCatName.get(bulkCategory) ?? [] : [];
-
   if (!isStaff) return <Navigate to="/home" />;
 
-  const onParse = async () => {
+  const onQueuePaste = async () => {
     const t = text.trim();
-    if (!t) return toast.error("Paste some Discord messages first");
-    setParsing(true);
-    setMatched([]);
-    setUnmatched([]);
+    if (!t) return toast.error("Paste a listings post first");
+    setQueueing(true);
     try {
-      const res = await parseFn({ data: { text: t } });
-      // Ignore AI category routing — strip suggestions and merge into one list.
-      // If a bulk default is set, pre-fill every row with it.
-      const all = [...(res.matched as RoutedEvent[]), ...(res.unmatched as RoutedEvent[])].map((e) => ({
-        ...e,
-        category: bulkCategory || null,
-        subcategory: bulkCategory ? bulkSubcategory : null,
-      }));
-      setMatched([]);
-      setUnmatched(all);
-      const total = all.length;
-      if (total === 0) toast.error("No events found in the pasted text");
-      else toast.success(`Found ${total} event(s) — pick a category for each (or use the bulk picker)`);
-    } catch (e: any) {
-      toast.error(e.message ?? "Parse failed");
-    } finally {
-      setParsing(false);
-    }
-  };
-
-  const updateMatched = (idx: number, patch: Partial<RoutedEvent>) =>
-    setMatched((prev) => prev.map((e, i) => (i === idx ? { ...e, ...patch } : e)));
-
-  const updateUnmatched = (idx: number, patch: Partial<RoutedEvent>) =>
-    setUnmatched((prev) => prev.map((e, i) => (i === idx ? { ...e, ...patch } : e)));
-
-  const removeMatched = (idx: number) => setMatched((prev) => prev.filter((_, i) => i !== idx));
-  const removeUnmatched = (idx: number) => setUnmatched((prev) => prev.filter((_, i) => i !== idx));
-
-  const applyBulkToAll = () => {
-    if (!bulkCategory) return toast.error("Pick a category first");
-    setMatched((prev) => prev.map((e) => ({ ...e, category: bulkCategory, subcategory: bulkSubcategory })));
-    setUnmatched((prev) => prev.map((e) => ({ ...e, category: bulkCategory, subcategory: bulkSubcategory })));
-    toast.success(`Applied ${bulkCategory}${bulkSubcategory ? ` › ${bulkSubcategory}` : ""} to all events`);
-  };
-
-  const onImportAll = async () => {
-    setImporting(true);
-    try {
-      // 1) Import everything with a category set
-      const toImport = [...matched, ...unmatched].filter((e) => e.category);
-      let inserted = 0;
-      if (toImport.length) {
-        const r = await importFn({
-          data: {
-            events: toImport.map((e) => ({
-              title: e.title,
-              time: e.time,
-              date: e.date,
-              channels: e.channels,
-              raw: e.raw,
-              category: e.category!,
-              subcategory: e.subcategory ?? null,
-            })),
-          },
-        });
-        inserted = r.inserted;
-      }
-      // 2) Queue anything still without a category
-      const toQueue = unmatched.filter((e) => !e.category);
-      let queued = 0;
-      if (toQueue.length) {
-        const r = await queueFn({
-          data: {
-            events: toQueue.map((e) => ({
-              title: e.title,
-              time: e.time,
-              date: e.date,
-              channels: e.channels,
-              raw: e.raw,
-            })),
-          },
-        });
-        queued = r.queued;
-      }
-      toast.success(`Imported ${inserted} • Queued ${queued} for review`);
-      setMatched([]);
-      setUnmatched([]);
+      await queuePasteFn({ data: { text: t } });
+      toast.success("Added to the review queue — pick a category and guide there");
       setText("");
       refreshQueue();
     } catch (e: any) {
-      toast.error(e.message ?? "Import failed");
+      toast.error(e.message ?? "Couldn't queue the post");
     } finally {
-      setImporting(false);
+      setQueueing(false);
     }
   };
 
