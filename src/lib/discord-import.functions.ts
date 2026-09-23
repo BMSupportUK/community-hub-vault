@@ -9,6 +9,7 @@ import {
   parseSportsListingBlock,
   plainListingToHtml,
   sortSportsListingEvents,
+  splitListingSections,
 } from "./sports-listing-format";
 
 const STAFF_ROLES = ["admin", "management", "moderator"] as const;
