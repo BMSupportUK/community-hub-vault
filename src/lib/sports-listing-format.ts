@@ -330,7 +330,7 @@ export type ListingSection = { name: string; raw: string };
  * "**MONOMAX**" rows followed by "**STAN Sport**" rows. Detect those headings
  * so the post can be filed as one import per provider.
  */
-function isSectionHeading(rawLine: string): boolean {
+export function isSectionHeading(rawLine: string): boolean {
   const trimmed = rawLine.trim();
   if (!trimmed) return false;
   const bold = /^(?:\*{2,}|__)(.+?)(?:\*{2,}|__)$/.test(trimmed);
