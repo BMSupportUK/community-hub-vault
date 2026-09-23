@@ -569,7 +569,7 @@ export function splitListingSections(raw: string | null | undefined): ListingSec
 
 export function parseSportsListingBlock(raw: string | null | undefined): SportsListingEvent[] {
   if (!raw) return [];
-  const lines = raw
+  const lines = decodeListingEntities(raw)
     .replace(/<br\s*\/?\s*>/gi, "\n")
     .replace(/<\/div>/gi, "\n")
     .replace(/<[^>]+>/g, " ")
