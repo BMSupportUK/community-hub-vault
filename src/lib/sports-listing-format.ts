@@ -42,8 +42,10 @@ function cleanLine(line: string): string {
  * Daily listings lead each row with the channel number ("01 | 00:00 Trackside
  * Live!"). Keep that number as the event's channel.
  */
+// Only "|" or ")" count as the channel-number separator — using ":" or "." here
+// would read a kick-off time like "8:00pm UK / 3:00pm ET" as "channel 8".
 const CHANNEL_NUMBER_TIME_RE = new RegExp(
-  `^\\s*(\\d{1,3})\\s*[|).:\\-–—]\\s*(${TIME_WITH_ZONE_SOURCE})\\s+(.+?)\\s*$`,
+  `^\\s*(\\d{1,3})\\s*[|)]\\s*(${TIME_WITH_ZONE_SOURCE})\\s+(.+?)\\s*$`,
   "i",
 );
 
