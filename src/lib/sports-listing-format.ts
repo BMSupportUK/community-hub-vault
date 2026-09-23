@@ -366,7 +366,13 @@ function applyImplicitDateRollover(events: SportsListingEvent[], fallbackDate?: 
   });
 }
 
+/** Times that already name a UK zone are never reinterpreted as ET. */
+const UK_LABELLED_TIME_RE = /\b(uk|gmt|bst)\b/i;
+
 function eventTimeForOutput(event: SportsListingEvent, input: ListingInput): string {
+  if (UK_LABELLED_TIME_RE.test(event.time ?? "")) {
+    return sourceTimeToUk(event.time, event.date ?? input.date ?? undefined, "gmt") ?? event.time;
+  }
   if (input.sourceZone) {
     const converted = sourceTimeToUk(event.time, event.date ?? input.date ?? undefined, input.sourceZone);
     if (converted) return converted;
