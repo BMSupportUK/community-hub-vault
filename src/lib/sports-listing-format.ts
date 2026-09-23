@@ -321,6 +321,43 @@ export function sortSportsListingEvents(events: SportsListingEvent[]): SportsLis
     .map(({ event }) => event);
 }
 
+function ordinal(day: number): string {
+  const mod100 = day % 100;
+  if (mod100 >= 11 && mod100 <= 13) return `${day}th`;
+  if (day % 10 === 1) return `${day}st`;
+  if (day % 10 === 2) return `${day}nd`;
+  if (day % 10 === 3) return `${day}rd`;
+  return `${day}th`;
+}
+
+function formatListingDate(date: Date): string {
+  const weekday = new Intl.DateTimeFormat("en-GB", { timeZone: "UTC", weekday: "long" }).format(date);
+  const month = new Intl.DateTimeFormat("en-GB", { timeZone: "UTC", month: "long" }).format(date);
+  return `${weekday}, ${ordinal(date.getUTCDate())} ${month}`;
+}
+
+/**
+ * Daily channel lists may omit the second date and simply continue after
+ * midnight (for example 23:00, 23:00, 4AM). Preserve that source order and
+ * move entries after the clock rolls backwards onto the following date.
+ */
+function applyImplicitDateRollover(events: SportsListingEvent[], fallbackDate?: string | null): SportsListingEvent[] {
+  const base = parseListingDate(fallbackDate);
+  if (!base || events.some((event) => event.date)) return events;
+
+  let dayOffset = 0;
+  let previousMinutes: number | null = null;
+  return events.map((event) => {
+    const clock = parseClockTime(event.time);
+    const minutes = clock ? clock.hour * 60 + clock.minute : null;
+    if (minutes !== null && previousMinutes !== null && minutes < previousMinutes) dayOffset += 1;
+    if (minutes !== null) previousMinutes = minutes;
+
+    const date = new Date(Date.UTC(base.y, base.m, base.d + dayOffset));
+    return { ...event, date: formatListingDate(date) };
+  });
+}
+
 function eventTimeForOutput(event: SportsListingEvent, input: ListingInput): string {
   if (input.sourceZone) {
     const converted = sourceTimeToUk(event.time, event.date ?? input.date ?? undefined, input.sourceZone);
@@ -330,7 +367,7 @@ function eventTimeForOutput(event: SportsListingEvent, input: ListingInput): str
 }
 
 export function formatSportsListingBlock(input: ListingInput): string | null {
-  const events = sortSportsListingEvents(parseSportsListingBlock(input.raw));
+  const events = sortSportsListingEvents(applyImplicitDateRollover(parseSportsListingBlock(input.raw), input.date));
   if (!events.length) return null;
 
   return formatSportsListingEvents(events, input);
