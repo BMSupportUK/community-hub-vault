@@ -240,7 +240,43 @@ function detectSlashZonedEvent(line: string, date: string | null): SportsListing
   };
 }
 
+/**
+ * Provider rows carry the slot as a UTC stamp instead of a clock time:
+ * "Stan 01 : Singapore: Day 3 - WTA 500 start:2026-09-23 05:59:29 stop:...".
+ */
+const PROVIDER_STAMP_RE = /\bstart:\s*(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::\d{2})?/i;
+
+function detectStampedEvent(line: string, date: string | null): SportsListingEvent | null {
+  const stamp = line.match(PROVIDER_STAMP_RE);
+  if (!stamp) return null;
+  const head = line
+    .replace(/\b(?:start|stop):\s*\d{4}-\d{2}-\d{2}[ T]\d{2}:\d{2}(?::\d{2})?/gi, " ")
+    .replace(/\bstatus:\S+/gi, " ")
+    .replace(/\s+/g, " ")
+    .replace(/[-–—|·•:\s]+$/, "")
+    .trim();
+  if (!head) return null;
+
+  const [, y, m, d, hh, mm] = stamp;
+  const when = new Date(Date.UTC(Number(y), Number(m) - 1, Number(d), Number(hh), Number(mm)));
+  const eventDate = formatListingDate(new Date(Date.UTC(Number(y), Number(m) - 1, Number(d))));
+
+  const parts = head.split(/\s*(?:\||·|•)\s*|\s+:\s+/).map((part) => part.trim()).filter(Boolean);
+  const channels = parts.filter((part) => isLikelyChannelLabel(part));
+  const title = parts.filter((part) => !channels.includes(part)).join(" - ") || head;
+
+  return {
+    date: eventDate || date,
+    time: normalizeTime(`${String(when.getUTCHours()).padStart(2, "0")}:${String(when.getUTCMinutes()).padStart(2, "0")} GMT`),
+    title,
+    channels: unique(channels),
+  };
+}
+
 function detectEvent(line: string, date: string | null): SportsListingEvent | null {
+  const stamped = detectStampedEvent(line, date);
+  if (stamped) return stamped;
+
   const slashZoned = detectSlashZonedEvent(line, date);
   if (slashZoned) return slashZoned;
 
@@ -370,7 +406,9 @@ export function splitListingSections(raw: string | null | undefined): ListingSec
     if (current) current.raw += `${line}\n`;
   }
 
-  const filled = sections.filter((section) => parseSportsListingBlock(section.raw).length > 0);
+  // A provider counts even when its own rows need extra work later, so long
+  // as it wrote something under its name.
+  const filled = sections.filter((section) => section.raw.split("\n").some((line) => cleanLine(line)));
   return filled.length >= 2 ? filled : [];
 }
 
