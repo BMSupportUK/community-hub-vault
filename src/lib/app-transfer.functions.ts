@@ -363,12 +363,6 @@ export const listAppTransfers = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     await requireStaffView(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const cutoff = new Date(Date.now() - 24 * 3_600_000).toISOString();
-    await supabaseAdmin
-      .from("app_transfers")
-      .delete()
-      .eq("last_download_status", "completed")
-      .lt("last_download_at", cutoff);
     const { data } = await supabaseAdmin
       .from("app_transfers")
       .select(
