@@ -19,6 +19,7 @@ import { AppTransferPanel } from "@/components/app/AppTransferPanel";
 import { AppBuildAdmin } from "@/components/app/AppBuildAdmin";
 import { GuideAccessApprovals } from "@/components/app/GuideAccessApprovals";
 import { AdSenseSlot } from "@/components/app/AdSenseSlot";
+import downloadIllustration from "@/assets/app-download-illustration.jpg";
 
 import { AppTransfersAdmin } from "@/components/app/AppTransfersAdmin";
 import { useServerFn } from "@tanstack/react-start";
@@ -486,7 +487,21 @@ function InstallGuidesPage() {
             </div>
           </header>
 
-        <div className="px-4 sm:px-8 py-6">
+        <div className="relative isolate min-h-[calc(100vh-10rem)] overflow-hidden px-4 py-6 sm:px-8">
+          {(tab === "get-app" || tab === "transfers") && (
+            <>
+              <img
+                src={downloadIllustration}
+                alt=""
+                aria-hidden
+                loading="eager"
+                width={1920}
+                height={1024}
+                className="pointer-events-none absolute inset-0 -z-20 size-full object-cover object-center opacity-70"
+              />
+              <div className="pointer-events-none absolute inset-0 -z-10 bg-background/25" aria-hidden />
+            </>
+          )}
 
 
           {canManageGuides && (
@@ -506,7 +521,7 @@ function InstallGuidesPage() {
 
           {canSeeAppTab && (
             <TabsContent value="get-app" className="mt-6">
-              <div className="max-w-4xl">
+              <div className="max-w-4xl rounded-lg bg-background/35 p-4 backdrop-blur-[1px]">
                 <AppTransferPanel onUploadClick={canManageApps ? () => setTab("app-apk") : undefined} />
               </div>
             </TabsContent>
@@ -515,7 +530,7 @@ function InstallGuidesPage() {
 
           {canSeeTransfers && (
             <TabsContent value="transfers" className="mt-6">
-              <div className="max-w-5xl">
+              <div className="max-w-5xl rounded-lg bg-background/35 p-4 backdrop-blur-[1px]">
                 <AppTransfersAdmin />
               </div>
             </TabsContent>

@@ -11,7 +11,6 @@ import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Upload, Play, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { compressVideoFile } from "@/lib/compress-video";
-import downloadIllustration from "@/assets/app-download-illustration.jpg";
 
 const CATEGORIES = [
   { key: "official_server", label: "Official Service App" },
@@ -238,18 +237,8 @@ export function AppDemosView() {
   };
 
   return (
-    <main className="relative isolate flex-1 overflow-hidden md:h-full md:min-h-0">
-      <img
-        src={downloadIllustration}
-        alt=""
-        aria-hidden
-        loading="eager"
-        width={1920}
-        height={1024}
-        className="pointer-events-none absolute inset-0 z-0 h-full w-full object-cover opacity-30"
-      />
-      <div className="pointer-events-none absolute inset-0 z-0 bg-background/45 backdrop-blur-[1px]" />
-      <div className="relative z-10 h-full overflow-y-auto scrollbar-hide">
+    <main className="flex-1 overflow-hidden md:h-full md:min-h-0">
+      <div className="h-full overflow-y-auto scrollbar-hide">
       <div className="max-w-6xl mx-auto px-4 md:px-6 py-6 space-y-6">
         <header className="flex items-start justify-between gap-3 flex-wrap">
           <div>
