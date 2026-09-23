@@ -521,7 +521,7 @@ function InstallGuidesPage() {
 
           {canSeeAppTab && (
             <TabsContent value="get-app" className="mt-6">
-              <div className="max-w-4xl rounded-lg bg-background/35 p-4 backdrop-blur-[1px]">
+              <div className="max-w-5xl">
                 <AppTransferPanel onUploadClick={canManageApps ? () => setTab("app-apk") : undefined} />
               </div>
             </TabsContent>
