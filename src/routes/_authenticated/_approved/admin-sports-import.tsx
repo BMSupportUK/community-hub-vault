@@ -455,15 +455,25 @@ function QueueRow({
           {zone && <span className="text-[11px] text-muted-foreground">Tap the other button to change it</span>}
         </div>
       )}
-      {splitCount > 1 && (
-        <div className="flex flex-wrap items-center gap-2" onClick={(e) => e.stopPropagation()}>
-          <Button size="sm" variant="outline" className="h-7 px-2 text-xs" disabled={splitting} onClick={onSplit}>
-            {splitting ? <Loader2 className="size-3 animate-spin" /> : <Scissors className="size-3" />}
-            Split into {splitCount} single events
-          </Button>
-          <span className="text-[11px] text-muted-foreground">Pick a guide for each event separately</span>
-        </div>
-      )}
+      {/* Splitting is offered on every queued post, whatever the sport, so any
+          listing can be filed one event at a time. */}
+      <div className="flex flex-wrap items-center gap-2" onClick={(e) => e.stopPropagation()}>
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-7 px-2 text-xs"
+          disabled={splitting || splitCount < 1}
+          onClick={onSplit}
+        >
+          {splitting ? <Loader2 className="size-3 animate-spin" /> : <Scissors className="size-3" />}
+          {splitCount > 1 ? `Split into ${splitCount} single events` : "Split into single events"}
+        </Button>
+        <span className="text-[11px] text-muted-foreground">
+          {splitCount < 1
+            ? "No events read from this post yet"
+            : "Pick a guide for each event separately"}
+        </span>
+      </div>
       {!selected && (
         <p className="text-[11px] text-primary/80">Tap to set it up in the sidebar →</p>
       )}
