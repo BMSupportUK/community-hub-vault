@@ -120,6 +120,18 @@ function AdminSportsImportPage() {
       .finally(() => { if (!silent) setLoadingQueue(false); });
   };
 
+  const splitItem = (itemId: string) => {
+    setSplittingId(itemId);
+    splitFn({ data: { id: itemId } })
+      .then((r: any) => {
+        toast.success(`Split into ${r.created} single events`);
+        if (itemId === selectedId) clearSelection();
+        refreshQueue(true);
+      })
+      .catch((e: any) => toast.error(e.message))
+      .finally(() => setSplittingId(null));
+  };
+
   // Forwarded posts arrive in the background, so the queue keeps itself
   // up to date — quietly every 10s and whenever the tab regains focus.
   useEffect(() => {
