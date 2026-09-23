@@ -18,13 +18,17 @@ type ListingInput = {
 const ZONE = "GMT|UTC|UK|BST|ET|EST|EDT|CT|CST|CDT|MT|MST|MDT|PT|PST|PDT|CET|CEST|AEST|AEDT|JST|IST";
 const TIME_SOURCE = String.raw`\d{1,2}(?::|\.)\d{2}\s*(?:am|pm|a\.m\.|p\.m\.)?|\d{1,2}\s*(?:am|pm|a\.m\.|p\.m\.)`;
 const TIME_WITH_ZONE_SOURCE = String.raw`(?:${TIME_SOURCE})(?:\s*(?:${ZONE}))?`;
-const TIME_ONLY_RE = new RegExp(`^\\s*(${TIME_WITH_ZONE_SOURCE})\\s*$`, "i");
 const WEEKDAY_HINT_SOURCE = String.raw`(?:mon|tue|wed|thu|fri|sat|sun)(?:day)?`;
+// A single kick-off may still name the day it belongs to ("12:00am UK THU").
+const TIME_ONLY_RE = new RegExp(`^\\s*(${TIME_WITH_ZONE_SOURCE}(?:\\s+${WEEKDAY_HINT_SOURCE})?)\\s*$`, "i");
 const DUAL_TIME_ONLY_RE = new RegExp(
   `^\\s*(${TIME_WITH_ZONE_SOURCE}(?:\\s+${WEEKDAY_HINT_SOURCE})?\\s*(?:·|\\||/)\\s*${TIME_WITH_ZONE_SOURCE}(?:\\s+${WEEKDAY_HINT_SOURCE})?)\\s*$`,
   "i",
 );
-const TIME_FIRST_RE = new RegExp(`^\\s*(${TIME_WITH_ZONE_SOURCE})\\s*(?:[-–—:|·•]\\s*)?(.+?)\\s*$`, "i");
+const TIME_FIRST_RE = new RegExp(
+  `^\\s*(${TIME_WITH_ZONE_SOURCE}(?:\\s+${WEEKDAY_HINT_SOURCE})?)\\s*(?:[-–—:|·•]\\s*)?(.+?)\\s*$`,
+  "i",
+);
 const LEADING_ZONE_TIME_RE = new RegExp(`^\\s*(${ZONE})\\s+(${TIME_SOURCE})\\s*(?:[-–—:|·•]\\s*)?(.+?)\\s*$`, "i");
 const CHANNEL_TIME_RE = new RegExp(`^\\s*(.{2,70}?)\\s*(?:\\||·|•|[-–—])\\s*(${TIME_WITH_ZONE_SOURCE})\\s+(.+?)\\s*$`, "i");
 const CHANNEL_SPACE_TIME_RE = new RegExp(`^\\s*([A-Za-z][A-Za-z0-9 +&'/.:-]{1,42}\\d{1,3})\\s+(${TIME_WITH_ZONE_SOURCE})\\s+(.+?)\\s*$`, "i");
@@ -143,6 +147,16 @@ function dateOnWeekday(dateLabel: string | null, weekday: number | null): string
   if (!delta) return dateLabel;
   date.setUTCDate(date.getUTCDate() + delta);
   return formatListingDate(date);
+}
+
+/**
+ * A listing whose only day marker is the weekday on the kick-off ("12:00am UK
+ * THU") still belongs on that weekday, counting from the post's heading date
+ * or, when it has none, from the import day.
+ */
+function resolveWeekdayDate(date: string | null, weekday: number | null): string | null {
+  if (weekday === null) return date;
+  return dateOnWeekday(date ?? importDayListingDate(), weekday);
 }
 
 function unique(values: string[]): string[] {
@@ -315,7 +329,7 @@ function detectEvent(line: string, date: string | null): SportsListingEvent | nu
   const dualTimeOnly = line.match(DUAL_TIME_ONLY_RE);
   if (dualTimeOnly && dualTimeOnly[1]) {
     const primary = pickPrimaryTimePart(dualTimeOnly[1]);
-    return { date: dateOnWeekday(date, primary.weekday), time: primary.time, title: "", channels: [] };
+    return { date: resolveWeekdayDate(date, primary.weekday), time: primary.time, title: "", channels: [] };
   }
 
 
@@ -338,13 +352,15 @@ function detectEvent(line: string, date: string | null): SportsListingEvent | nu
 
   const timeOnly = line.match(TIME_ONLY_RE);
   if (timeOnly && timeOnly[1]) {
-    return { date, time: normalizeTime(timeOnly[1]), title: "", channels: [] };
+    const only = pickPrimaryTimePart(timeOnly[1]);
+    return { date: resolveWeekdayDate(date, only.weekday), time: only.time, title: "", channels: [] };
   }
 
   const timeFirst = line.match(TIME_FIRST_RE);
   if (timeFirst && timeFirst[1] && timeFirst[2]) {
     const split = splitTitleAndInlineChannels(timeFirst[2]);
-    return { date, time: normalizeTime(timeFirst[1]), title: split.title, channels: split.channels };
+    const lead = pickPrimaryTimePart(timeFirst[1]);
+    return { date: resolveWeekdayDate(date, lead.weekday), time: lead.time, title: split.title, channels: split.channels };
   }
 
   return null;
