@@ -14,6 +14,7 @@ import { firstClockIn, firstDateIn, parseClockTime, toSingleZoneTime, type TimeZ
 import { parseSportsListingBlock } from "@/lib/sports-listing-format";
 import {
   queuePastedPost,
+  setupDiscordBot,
   listImportQueue,
   resolveQueueItem,
   approveAllSuggested,
@@ -53,12 +54,14 @@ function AdminSportsImportPage() {
   const { hasAny } = useAuth();
   const isStaff = hasAny(["admin", "management", "moderator"]);
   const queuePasteFn = useServerFn(queuePastedPost);
+  const setupDiscordFn = useServerFn(setupDiscordBot);
   const listFn = useServerFn(listImportQueue);
   const resolveFn = useServerFn(resolveQueueItem);
   const catsFn = useServerFn(listCategoriesWithSubs);
 
   const [text, setText] = useState("");
   const [queueing, setQueueing] = useState(false);
+  const [settingUpDiscord, setSettingUpDiscord] = useState(false);
   const [cats, setCats] = useState<Cat[]>([]);
   const [subs, setSubs] = useState<Sub[]>([]);
   const [queue, setQueue] = useState<QueueItem[]>([]);
@@ -214,10 +217,32 @@ function AdminSportsImportPage() {
             <div className="size-12 rounded-2xl bg-white/15 backdrop-blur grid place-items-center ring-1 ring-white/20">
               <Sparkles className="size-6 text-white" />
             </div>
-            <div>
+            <div className="flex-1 min-w-0">
               <h1 className="font-display text-2xl sm:text-3xl font-bold text-white">Sports Guide Importer</h1>
               <p className="text-sm text-white/85">Paste a listings post — it lands in the review queue as one block, ready to file into a guide.</p>
             </div>
+            {isStaff && (
+              <Button
+                variant="secondary"
+                size="sm"
+                className="shrink-0"
+                disabled={settingUpDiscord}
+                onClick={async () => {
+                  setSettingUpDiscord(true);
+                  try {
+                    const r = await setupDiscordFn({});
+                    toast.success(`Discord connected — right-click any post in your server → Apps → Send to Sports Guide. (${r.application})`);
+                  } catch (e: any) {
+                    toast.error(e.message ?? "Discord setup failed");
+                  } finally {
+                    setSettingUpDiscord(false);
+                  }
+                }}
+              >
+                {settingUpDiscord ? <Loader2 className="size-4 animate-spin" /> : <Inbox className="size-4" />}
+                {settingUpDiscord ? "Connecting…" : "Connect Discord bot"}
+              </Button>
+            )}
           </div>
         </header>
 
