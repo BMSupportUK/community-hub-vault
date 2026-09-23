@@ -147,8 +147,8 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
 
   return (
     <>
-      <article className="rounded-2xl border border-violet-500/30 bg-violet-950/40 overflow-hidden flex flex-col group hover:shadow-[0_0_30px_-10px_rgba(217,70,239,0.6)] transition-all">
-        <div className="aspect-[16/10] bg-violet-900/50 relative overflow-hidden">
+      <article className="rounded-2xl border border-border/70 bg-surface overflow-hidden flex flex-col group shadow-soft hover:shadow-[0_0_30px_-10px_rgba(217,70,239,0.6)] hover:border-violet-500/40 transition-all">
+        <div className="aspect-[16/10] bg-black/70 relative overflow-hidden">
           {build.videoPath && videoUrl ? (
             <video
               src={videoUrl}
@@ -322,7 +322,7 @@ function RequestAccessPanel() {
   };
 
   return (
-    <section className="rounded-2xl border border-violet-500/30 bg-violet-950/40 p-6">
+    <section className="rounded-2xl border border-border/80 bg-background/90 p-6 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.7)] backdrop-blur-xl">
       <h3 className="font-display text-lg font-semibold text-foreground flex items-center gap-2">
         <Lock className="size-5 text-violet-300" /> Download Link
       </h3>
@@ -386,7 +386,7 @@ export function AppTransferPanel({ onUploadClick }: { onUploadClick?: () => void
 
   if (!builds || builds.length === 0) {
     return (
-      <section className="rounded-2xl border border-violet-500/30 bg-violet-950/40 p-6">
+      <section className="rounded-2xl border border-border/80 bg-background/90 p-6 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.7)] backdrop-blur-xl">
         <h3 className="font-display text-lg font-semibold text-foreground flex items-center gap-2">
           <Smartphone className="size-5 text-violet-300" /> Get the App
         </h3>
@@ -407,18 +407,26 @@ export function AppTransferPanel({ onUploadClick }: { onUploadClick?: () => void
   }
 
   return (
-    <section className="space-y-4">
-      <div>
-        <h3 className="font-display text-lg font-semibold text-foreground flex items-center gap-2">
-          <Smartphone className="size-5 text-violet-300" /> Get the App
-        </h3>
-        <p className="text-sm text-muted-foreground mt-1">
-          Install our apps on your Amazon Fire Stick or Android device using a secure link that only
-          works for 24 hours. Each app has its own link.
-        </p>
+    <section className="overflow-hidden rounded-2xl border border-border/80 bg-background/90 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.7)] backdrop-blur-xl">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-5 py-4">
+        <div className="flex items-center gap-3">
+          <span className="grid size-10 place-items-center rounded-xl bg-gradient-primary text-primary-foreground shadow-glow">
+            <Smartphone className="size-5" />
+          </span>
+          <div>
+            <h3 className="font-display text-lg font-semibold text-foreground">Get the App</h3>
+            <p className="text-xs text-muted-foreground">
+              Secure 24-hour install links for your Fire Stick or Android device — each app has its own link.
+            </p>
+          </div>
+        </div>
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/40 bg-emerald-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-300">
+          <ShieldCheck className="size-3" /> Secure links
+        </span>
       </div>
+      <div className="p-5">
       <Tabs defaultValue={firstTab} className="w-full">
-        <TabsList className="flex h-auto flex-wrap justify-start gap-1 bg-violet-950/40 p-1">
+        <TabsList className="flex h-auto flex-wrap justify-start gap-1 bg-surface-2/80 p-1">
           {APP_BUILD_CATEGORIES.map((c) => (
             <TabsTrigger key={c.key} value={c.key} className="whitespace-normal text-xs sm:text-sm">
               {c.label}
@@ -429,7 +437,10 @@ export function AppTransferPanel({ onUploadClick }: { onUploadClick?: () => void
         {APP_BUILD_CATEGORIES.map((c) => (
           <TabsContent key={c.key} value={c.key} className="mt-4">
             {(grouped[c.key] ?? []).length === 0 ? (
-              <p className="text-sm text-muted-foreground">No apps in this section yet.</p>
+              <div className="grid place-items-center rounded-xl border border-dashed border-border/70 bg-surface/60 px-6 py-12 text-center">
+                <Smartphone className="size-8 text-muted-foreground/50" />
+                <p className="mt-2 text-sm text-muted-foreground">No apps in this section yet.</p>
+              </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
                 {(grouped[c.key] ?? []).map((b) => (
@@ -440,6 +451,7 @@ export function AppTransferPanel({ onUploadClick }: { onUploadClick?: () => void
           </TabsContent>
         ))}
       </Tabs>
+      </div>
     </section>
   );
 }
