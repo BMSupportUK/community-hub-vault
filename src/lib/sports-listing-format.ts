@@ -196,6 +196,10 @@ function finalized(event: SportsListingEvent): SportsListingEvent | null {
   const title = event.title.replace(/\s+/g, " ").trim();
   if (!parseClockTime(event.time)) return null;
   if (!title) return null;
+  // Never preserve the second half of a dual-zone kick-off as an event name.
+  // This also removes malformed entries left in an existing guide by an older
+  // import, such as "/ 12:00pm ET", when the guide is merged on re-import.
+  if (new RegExp(`^\\/?\\s*${TIME_WITH_ZONE_SOURCE}\\s*$`, "i").test(title)) return null;
   // A channel-looking title is only junk when we have no channel of our own.
   if (!event.channels.length && isLikelyChannelLabel(title)) return null;
   return { ...event, title, channels: unique(event.channels) };
