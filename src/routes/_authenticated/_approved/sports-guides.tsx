@@ -196,9 +196,16 @@ function SportsGuidesPage() {
 
 
   const queryKey = ["sports-guides-data", user?.id ?? "anon"] as const;
+  const prune = useServerFn(pruneStaleSportsGuides);
   const dataQuery = useQuery({
     queryKey,
     queryFn: async () => {
+      // Clear entries more than 10 hours past their start time before reading.
+      try {
+        await prune({});
+      } catch {
+        /* never block the guides list on the tidy-up */
+      }
       const [{ data: cats }, { data: bs }, { data: subs }, { data: rs }, { data: prof }] = await Promise.all([
         supabase.from("sports_categories").select("*").order("sort_order"),
         supabase.from("sports_blogs").select("*").order("sort_order").order("created_at", { ascending: false }),
