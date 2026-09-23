@@ -56,6 +56,15 @@ const CHANNEL_NUMBER_TIME_RE = new RegExp(
   "i",
 );
 
+/**
+ * Same daily rows, but with the kick-off time at the end of the line instead of
+ * the start ("07 | MMA: IBC 05 10:00").
+ */
+const CHANNEL_NUMBER_TITLE_TIME_RE = new RegExp(
+  `^\\s*(\\d{1,3})\\s*[|)]\\s*(.+?)\\s*[-–—|·•]?\\s*(${TIME_WITH_ZONE_SOURCE})\\s*$`,
+  "i",
+);
+
 function isNoiseLine(line: string): boolean {
   if (!line) return true;
   if (parseClockTime(line)) return false;
@@ -152,6 +161,17 @@ function detectEvent(line: string, date: string | null): SportsListingEvent | nu
       time: normalizeTime(numberedChannel[2]),
       title: split.title,
       channels: unique([`Channel ${numberedChannel[1]}`, ...split.channels]),
+    };
+  }
+
+  const numberedTrailingTime = line.match(CHANNEL_NUMBER_TITLE_TIME_RE);
+  if (numberedTrailingTime && numberedTrailingTime[1] && numberedTrailingTime[2] && numberedTrailingTime[3]) {
+    const split = splitTitleAndInlineChannels(numberedTrailingTime[2]);
+    return {
+      date,
+      time: normalizeTime(numberedTrailingTime[3]),
+      title: split.title,
+      channels: unique([`Channel ${numberedTrailingTime[1]}`, ...split.channels]),
     };
   }
 
