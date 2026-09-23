@@ -108,7 +108,7 @@ function SportsGuidesPage() {
   const [search, setSearch] = useState("");
   // Search only kicks in from three letters up, and only looks at event
   // listings inside guide bodies (never guide names/descriptions).
-  const searchQuery = search.trim();
+  const searchQuery = activeSearch;
   const activeSearch = searchQuery.length >= SG_MIN_SEARCH ? searchQuery : "";
   const [resultsOpen, setResultsOpen] = useState(true);
   const [subFilter, setSubFilter] = useState<string | null>(null);
@@ -1368,7 +1368,7 @@ function SportsGuidesPage() {
                   )}
                 </div>
 
-                {search.trim() ? (
+                {activeSearch ? (
                   <div className="rounded-2xl bg-purple-950/60 border border-purple-500/30 backdrop-blur overflow-hidden">
                     <button
                       onClick={() => setResultsOpen((v) => !v)}
@@ -1434,7 +1434,7 @@ function SportsGuidesPage() {
           </TabsContent>
 
           <TabsContent value="guides" className="mt-6">
-            <div className={`relative grid grid-cols-1 gap-6 ${search.trim() ? "lg:grid-cols-[minmax(0,1fr)_320px]" : activeCategory ? "lg:grid-cols-[minmax(0,1fr)_56px]" : ""}`}>
+            <div className={`relative grid grid-cols-1 gap-6 ${activeSearch ? "lg:grid-cols-[minmax(0,1fr)_320px]" : activeCategory ? "lg:grid-cols-[minmax(0,1fr)_56px]" : ""}`}>
 
               {activeCategory && activeCategory.slug !== "sports-passes" && (
                 <Dialog
@@ -1472,7 +1472,7 @@ function SportsGuidesPage() {
 
 
               <section ref={listingsTopRef}>
-                {activeCategory && !search.trim() && (
+                {activeCategory && !activeSearch && (
                   <div className="mb-4 flex flex-wrap items-center gap-3">
                     <h2 className="font-display text-xl font-bold text-white drop-shadow-[0_2px_6px_rgba(0,0,0,0.85)]">
                       <span className="bg-gradient-to-r from-fuchsia-300 to-sky-300 bg-clip-text text-transparent">{activeCategory.name}</span>{" "}Guides
@@ -1489,7 +1489,7 @@ function SportsGuidesPage() {
                   </div>
                 )}
 
-                {activeCategory?.slug === "sports-passes" && activeCat && (subsByCat[activeCat]?.length ?? 0) > 0 && !search.trim() && (
+                {activeCategory?.slug === "sports-passes" && activeCat && (subsByCat[activeCat]?.length ?? 0) > 0 && !activeSearch && (
                   <div className="mb-4 grid gap-2 rounded-xl border border-fuchsia-500/30 bg-purple-950/65 p-3 sm:grid-cols-2 xl:grid-cols-3">
                     {(subsByCat[activeCat] ?? []).map((sub) => {
                       const count = blogs.filter((b) => b.category_id === activeCat && b.subcategory === sub.name).length;
@@ -1521,7 +1521,7 @@ function SportsGuidesPage() {
                 )}
               </section>
 
-              {activeCategory && !search.trim() && (
+              {activeCategory && !activeSearch && (
                 <aside className="sticky top-2 z-10 flex max-h-[calc(100dvh-5rem)] flex-col self-start overflow-hidden rounded-2xl border border-purple-500/30 bg-slate-950/75 p-2 backdrop-blur lg:top-4">
                   <div className="mb-2 text-center text-[10px] font-bold uppercase tracking-wider text-fuchsia-300/80">A–Z</div>
                   <div
@@ -1559,7 +1559,7 @@ function SportsGuidesPage() {
                 </aside>
               )}
 
-              {search.trim() && (
+              {activeSearch && (
                 <aside className="rounded-2xl bg-purple-950/60 border border-purple-500/30 backdrop-blur h-fit lg:sticky lg:top-4 overflow-hidden">
                   <button
                     onClick={() => setResultsOpen((v) => !v)}
