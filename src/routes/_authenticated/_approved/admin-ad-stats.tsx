@@ -32,6 +32,7 @@ type Row = {
 const UNIT_NAMES: Record<string, string> = {
   [ADSENSE_TOPIC_SLOT]: "In-page advert",
   [ADSENSE_SIDEBAR_SLOT]: "Sidebar advert",
+  [ADSENSE_WELCOME_SLOT]: "Sports guide welcome advert",
 };
 
 const RANGES = [
