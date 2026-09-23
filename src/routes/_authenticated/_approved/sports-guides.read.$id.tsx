@@ -258,6 +258,12 @@ function ReadPage() {
             <h1 className="font-display text-2xl md:text-3xl font-bold text-white">
               {blog.title}
             </h1>
+            {blog.image_url && (
+              <div className="shrink-0 relative w-full h-32 sm:h-40 lg:h-48 rounded-2xl overflow-hidden border border-purple-500/30 bg-purple-950/60">
+                <img src={blog.image_url} alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-cover blur-xl scale-110 opacity-50" />
+                <img src={blog.image_url} alt={blog.title} className="relative z-10 w-full h-full object-contain" />
+              </div>
+            )}
             {blog.refresh_notice && (
               <div className="flex items-start gap-2 rounded-xl border border-amber-400/40 bg-amber-500/10 px-3 py-2 text-amber-100">
                 <RefreshCw className="size-4 shrink-0 mt-0.5" />
@@ -269,7 +275,6 @@ function ReadPage() {
                 These are not guaranteed and no reports allowed to source.
               </div>
             )}
-            {/* Header image intentionally hidden in the reader per user request. */}
             {blog.excerpt && (
               <p className="text-base text-purple-100/80 italic line-clamp-2">{blog.excerpt}</p>
             )}
@@ -286,12 +291,6 @@ function ReadPage() {
                     <div key={`bi-${i}`} dangerouslySetInnerHTML={{ __html: html }} />
                   )}
                 />
-              </div>
-            )}
-            {blog.image_url && (
-              <div className="shrink-0 relative w-full h-32 sm:h-40 lg:h-48 rounded-2xl overflow-hidden border border-purple-500/30 bg-purple-950/60">
-                <img src={blog.image_url} alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-cover blur-xl scale-110 opacity-50" />
-                <img src={blog.image_url} alt={blog.title} className="relative z-10 w-full h-full object-contain" />
               </div>
             )}
           </article>
