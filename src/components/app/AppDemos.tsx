@@ -35,6 +35,31 @@ type Draft = Partial<Demo> & { _videoFile?: File | null; _posterFile?: File | nu
 
 const BUCKET = "app-demos";
 
+const signedUrlCache = new Map<string, Promise<string | null>>();
+function getSignedUrl(path: string) {
+  let p = signedUrlCache.get(path);
+  if (!p) {
+    p = supabase.storage.from(BUCKET).createSignedUrl(path, 3600).then(({ data }) => data?.signedUrl ?? null);
+    signedUrlCache.set(path, p);
+    setTimeout(() => signedUrlCache.delete(path), 50 * 60 * 1000);
+  }
+  return p;
+}
+
+const warmed = new Set<string>();
+function warmVideo(path: string) {
+  if (warmed.has(path)) return;
+  warmed.add(path);
+  getSignedUrl(path).then((url) => {
+    if (!url) return;
+    const v = document.createElement("video");
+    v.preload = "auto";
+    v.muted = true;
+    v.src = url;
+    v.load();
+  });
+}
+
 function useSignedUrl(path: string | null | undefined) {
   const [url, setUrl] = useState<string | null>(null);
   useEffect(() => {
@@ -43,8 +68,8 @@ function useSignedUrl(path: string | null | undefined) {
       setUrl(null);
       return;
     }
-    supabase.storage.from(BUCKET).createSignedUrl(path, 3600).then(({ data }) => {
-      if (!cancel) setUrl(data?.signedUrl ?? null);
+    getSignedUrl(path).then((u) => {
+      if (!cancel) setUrl(u);
     });
     return () => {
       cancel = true;
@@ -55,11 +80,17 @@ function useSignedUrl(path: string | null | undefined) {
 
 function DemoCard({ demo, isAdmin, onEdit, onDelete, onPlay }: { demo: Demo; isAdmin: boolean; onEdit: () => void; onDelete: () => void; onPlay: () => void }) {
   const posterUrl = useSignedUrl(demo.poster_path);
+  useEffect(() => {
+    void getSignedUrl(demo.video_path);
+  }, [demo.video_path]);
   return (
     <div className="rounded-xl border border-border bg-surface overflow-hidden shadow-soft">
       <button
         type="button"
         onClick={onPlay}
+        onPointerEnter={() => warmVideo(demo.video_path)}
+        onFocus={() => warmVideo(demo.video_path)}
+        onTouchStart={() => warmVideo(demo.video_path)}
         className="relative aspect-video w-full bg-black grid place-items-center group overflow-hidden"
       >
         {posterUrl && (
@@ -369,6 +400,7 @@ function PlayerDialog({ demo, onClose }: { demo: Demo | null; onClose: () => voi
                   disableRemotePlayback
                   onContextMenu={(e) => e.preventDefault()}
                   autoPlay
+                  preload="auto"
                   playsInline
                   className="w-full h-full object-contain bg-black"
                 />
