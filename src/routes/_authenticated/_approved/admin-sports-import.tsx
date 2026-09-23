@@ -640,7 +640,7 @@ function QueueSetup({
       toast.success(
         action === "import"
           ? "Saved as a draft with its dates filled in — check it over, then publish"
-          : "Discarded",
+          : "Import deleted",
       );
       onDone();
       onResolved();
@@ -914,7 +914,7 @@ function QueueSetup({
       <div className="flex justify-end gap-2">
         <Button variant="outline" size="sm" onClick={() => run("discard")} disabled={busy !== null}>
           {busy === "discard" ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
-          Discard
+          Delete import
         </Button>
         <Button size="sm" onClick={() => run("import")} disabled={busy !== null || !draft.destinationCategory || (!draft.guideId && !draft.title.trim())}>
           {busy === "import" ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
