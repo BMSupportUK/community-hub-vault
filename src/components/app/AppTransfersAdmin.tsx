@@ -250,7 +250,7 @@ export function AppTransfersAdmin() {
           <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
             <span className="inline-flex size-2 rounded-full bg-emerald-400 animate-pulse" />
             Live install links, who requested them and how far each download has got. Completed
-            transfers are removed automatically 24 hours after a successful download.
+            transfers are kept, so you can look back at every download.
           </p>
         </div>
         <Button
@@ -320,7 +320,7 @@ export function AppTransfersAdmin() {
           {renderList(groups.active, "No live app transfers right now.")}
         </TabsContent>
         <TabsContent value="completed" className="mt-4">
-          {renderList(groups.completed, "No completed downloads in the last 24 hours.")}
+          {renderList(groups.completed, "No completed downloads on this day.")}
         </TabsContent>
         <TabsContent value="pending" className="mt-4">
           {renderList(groups.pending, "Nothing pending or failed.")}
