@@ -703,7 +703,6 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     return position & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
   });
 
-  let rowIndex = 0;
   let currentSourceDate: string | null = null;
   let currentSourceDateLabel: string | null = null;
   for (const [blockIndex, block] of blocks.entries()) {
@@ -892,9 +891,6 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
 
     if (!eventName) eventName = "Event";
 
-    rowIndex += 1;
-    const number = String(rowIndex).padStart(2, "0");
-
     // Preserve original markup so we can restore on re-run.
     block.dataset.tzOriginal = block.innerHTML;
     block.dataset.tzPrevClass = block.className;
@@ -906,14 +902,9 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
 
     block.innerHTML = "";
 
-    // Header row: number + (event name / channel)
+    // Header row: event name and channel details use the full card width.
     const header = document.createElement("div");
-    header.className = "flex min-w-0 items-start gap-3";
-    const numCell = document.createElement("span");
-    numCell.className =
-      "font-display text-2xl font-bold text-purple-200/60 group-hover:text-fuchsia-400 tabular-nums w-10 shrink-0 leading-none pt-0.5";
-    numCell.textContent = number;
-    header.appendChild(numCell);
+    header.className = "flex min-w-0 items-start";
 
     const nameCell = document.createElement("div");
     nameCell.className = "min-w-0 flex-1";
@@ -974,7 +965,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     // as an additional card time. Show UK first, then the viewer's local time
     // only when its date, time, or zone genuinely differs.
     const pillsRow = document.createElement("div");
-    pillsRow.className = "mt-auto grid w-full grid-cols-1 gap-2 pl-0 md:pl-[3.25rem]";
+    pillsRow.className = "mt-auto grid w-full grid-cols-1 gap-2";
     block.appendChild(pillsRow);
 
     const ukDate = new Intl.DateTimeFormat("en-GB", {
@@ -1039,7 +1030,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     // Keep transformed content to two text lines plus the time pills.
   }
 
-  // Sort all transformed event rows by earliest source time and renumber.
+  // Sort all transformed event rows by earliest source time.
   const eventRows = Array.from(
     root.querySelectorAll<HTMLElement>("[data-tz-row][data-tz-utc]"),
   );
@@ -1090,10 +1081,5 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
       root.insertBefore(el, placeholder);
     }
     placeholder.remove();
-    sorted.forEach((el, idx) => {
-      // Number cell is the first span inside the header row.
-      const numCell = el.querySelector(":scope > div > span");
-      if (numCell) numCell.textContent = String(idx + 1).padStart(2, "0");
-    });
   }
 }
