@@ -351,7 +351,39 @@ function detectStampedEvent(line: string, date: string | null): SportsListingEve
   };
 }
 
+/**
+ * Season-pass rows put the fixture first, then the slot after an "@" and the
+ * channel after a colon:
+ * "Seattle Sounders FC vs Real Salt Lake @ Sep 23 9:30 PM :MLS  01".
+ */
+const AT_DATE_TIME_CHANNEL_RE = new RegExp(
+  String.raw`^\s*(.+?)\s*@\s*((?:[a-z]{3,9}\.?\s+\d{1,2}(?:st|nd|rd|th)?|\d{1,2}(?:st|nd|rd|th)?\s+[a-z]{3,9}\.?|` +
+    DATE_SOURCE +
+    String.raw`)(?:,?\s+\d{4})?)\s+(\d{1,2}(?::\d{2})?\s*(?:am|pm|a\.m\.|p\.m\.)?(?:\s*(?:` +
+    ZONE +
+    String.raw`))?)\s*[:|·•]\s*(.+?)\s*$`,
+  "i",
+);
+
+function detectAtSlotEvent(line: string, date: string | null): SportsListingEvent | null {
+  const match = line.match(AT_DATE_TIME_CHANNEL_RE);
+  if (!match?.[1] || !match[2] || !match[3] || !match[4]) return null;
+  const parsed = parseListingDate(match[2]);
+  if (!parsed) return null;
+  const clock = parseClockTime(match[3]);
+  if (!clock) return null;
+  return {
+    date: formatListingDate(new Date(Date.UTC(parsed.y, parsed.m, parsed.d))),
+    time: normalizeTime(match[3]),
+    title: match[1].trim(),
+    channels: splitChannelLine(match[4]),
+  };
+}
+
 function detectEvent(line: string, date: string | null): SportsListingEvent | null {
+  const atSlot = detectAtSlotEvent(line, date);
+  if (atSlot) return atSlot;
+
   const stamped = detectStampedEvent(line, date);
   if (stamped) return stamped;
 
