@@ -216,6 +216,38 @@ export function sourceTimeToUk(
 }
 
 /**
+ * Same conversion as sourceTimeToUk, but also reports how many days the UK
+ * clock moved: a 7pm ET kick-off is midnight UK the FOLLOWING day, so the
+ * event has to be re-dated as well as re-timed.
+ */
+export function sourceTimeToUkParts(
+  time: string | null | undefined,
+  date: string | null | undefined,
+  source: TimeZoneChoice,
+): { time: string; dayShift: number } | null {
+  const clock = parseClockTime(time);
+  if (!clock) return null;
+  const day = parseListingDate(date) ?? (() => {
+    const now = new Date();
+    return { y: now.getFullYear(), m: now.getMonth(), d: now.getDate() };
+  })();
+  const instant = wallTimeToInstant(day, clock, source === "gmt" ? UK_TZ : ET_TZ);
+  const ukDay = dateNumbersInZone(instant, UK_TZ);
+  const listedUtc = Date.UTC(day.y, day.m, day.d);
+  const ukUtc = Date.UTC(ukDay.y, ukDay.m, ukDay.d);
+  const dayShift = Math.round((ukUtc - listedUtc) / 86_400_000);
+  return { time: `${formatInZone(instant, UK_TZ)} ${ukLabel(instant)}`, dayShift };
+}
+
+function dateNumbersInZone(instant: number, timeZone: string): { y: number; m: number; d: number } {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone, year: "numeric", month: "2-digit", day: "2-digit",
+  }).formatToParts(new Date(instant));
+  const get = (type: string) => Number(parts.find((p) => p.type === type)?.value ?? "0");
+  return { y: get("year"), m: get("month") - 1, d: get("day") };
+}
+
+/**
  * Reduces any time text (including an older "19:45 GMT · 14:45 EDT" label)
  * down to the single chosen zone.
  */
