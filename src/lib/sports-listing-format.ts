@@ -368,6 +368,7 @@ export function splitListingSections(raw: string | null | undefined): ListingSec
 
   console.log("DBG", JSON.stringify(sections));
   const filled = sections.filter((section) => parseSportsListingBlock(section.raw).length > 0);
+  console.log("DBG2", sections.map((s) => parseSportsListingBlock(s.raw).length));
   return filled.length >= 2 ? filled : [];
 }
 
