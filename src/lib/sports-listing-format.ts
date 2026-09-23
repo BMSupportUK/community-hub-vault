@@ -18,7 +18,9 @@ type ListingInput = {
 const ZONE = "GMT|UTC|UK|BST|ET|EST|EDT|CT|CST|CDT|MT|MST|MDT|PT|PST|PDT|CET|CEST|AEST|AEDT|JST|IST";
 const TIME_SOURCE = String.raw`\d{1,2}(?::|\.)\d{2}\s*(?:am|pm|a\.m\.|p\.m\.)?|\d{1,2}\s*(?:am|pm|a\.m\.|p\.m\.)`;
 const TIME_WITH_ZONE_SOURCE = String.raw`(?:${TIME_SOURCE})(?:\s*(?:${ZONE}))?`;
-const WEEKDAY_HINT_SOURCE = String.raw`(?:mon|tue|wed|thu|fri|sat|sun)(?:day)?`;
+// Accept the short labels providers actually use (TUE/TUES, WED/WEDS,
+// THU/THURS) as well as full weekday names.
+const WEEKDAY_HINT_SOURCE = String.raw`(?:mon(?:day)?|tue(?:s(?:day)?)?|wed(?:s|nesday)?|thu(?:rs(?:day)?)?|fri(?:day)?|sat(?:urday)?|sun(?:day)?)`;
 // A single kick-off may still name the day it belongs to ("12:00am UK THU").
 const TIME_ONLY_RE = new RegExp(`^\\s*(${TIME_WITH_ZONE_SOURCE}(?:\\s+${WEEKDAY_HINT_SOURCE})?)\\s*$`, "i");
 const DUAL_TIME_ONLY_RE = new RegExp(
