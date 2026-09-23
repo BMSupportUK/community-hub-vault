@@ -124,6 +124,16 @@ function splitTitleAndInlineChannels(rest: string): { title: string; channels: s
 }
 
 function detectEvent(line: string, date: string | null): SportsListingEvent | null {
+  const span = line.match(DATE_TIME_SPAN_RE);
+  if (span && span[1] && span[2]) {
+    return {
+      date: span[1],
+      time: normalizeTime(span[2]),
+      title: "",
+      channels: span[3] ? splitChannelLine(span[3]) : [],
+    };
+  }
+
   const numberedChannel = line.match(CHANNEL_NUMBER_TIME_RE);
   if (numberedChannel && numberedChannel[1] && numberedChannel[2] && numberedChannel[3]) {
     const split = splitTitleAndInlineChannels(numberedChannel[3]);
