@@ -357,10 +357,7 @@ function postHeading(text: string): string {
   return (line || "Pasted listing").slice(0, 300);
 }
 
-/**
- * Queues a pasted listings post as ONE whole block (no splitting), exactly
- * like a forwarded post — staff then pick the category/guide in the queue.
- */
+/** Queue one review item per named listing section in a pasted post. */
 export const queuePastedPost = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => z.object({ text: z.string().min(1).max(50_000) }).parse(input))
@@ -369,24 +366,30 @@ export const queuePastedPost = createServerFn({ method: "POST" })
     await assertStaff(supabase, userId);
     const text = data.text.trim();
     if (!text) throw new Error("Nothing to queue");
-    const { error } = await supabaseAdmin.from("discord_import_queue").insert({
-      raw_text: text,
+    const sections = splitListingSections(text);
+    const blocks = sections.length > 1
+      ? sections.map((section) => ({ title: section.name, raw: `${section.name}\n${section.raw.trim()}` }))
+      : [{ title: postHeading(text), raw: text }];
+    const sourceRef = `paste:${userId}:${Date.now()}`;
+    const rows = blocks.map((block, index) => ({
+      raw_text: block.raw,
       parsed_event: {
-        title: postHeading(text),
+        title: block.title,
         time: null,
         date: null,
         channels: [],
-        raw: text,
+        raw: block.raw,
         suggested_category: null,
         suggested_subcategory: null,
       } as any,
       status: "pending",
       source: "paste",
-      source_ref: `paste:${userId}:${Date.now()}`,
+      source_ref: blocks.length > 1 ? `${sourceRef}#${index + 1}` : sourceRef,
       created_by: userId,
-    } as any);
+    }));
+    const { error } = await supabaseAdmin.from("discord_import_queue").insert(rows as any);
     if (error) throw new Error(error.message);
-    return { queued: 1 };
+    return { queued: rows.length };
   });
 
 /**

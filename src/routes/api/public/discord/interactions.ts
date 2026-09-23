@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createPublicKey, verify as cryptoVerify } from "crypto";
+import { splitListingSections } from "@/lib/sports-listing-format";
 
 // Receives Discord interaction webhooks. We register a MESSAGE context-menu
 // command ("Send to Sports Guide") on the user's own bot; right-clicking a
@@ -118,27 +119,37 @@ export const Route = createFileRoute("/api/public/discord/interactions")({
               });
             }
 
-            const { error } = await supabaseAdmin.from("discord_import_queue").insert({
-              raw_text: text.slice(0, 50_000),
+            const sections = splitListingSections(text);
+            const blocks = sections.length > 1
+              ? sections.map((section) => ({ title: section.name, raw: `${section.name}\n${section.raw.trim()}` }))
+              : [{ title: postHeading(text), raw: text.slice(0, 50_000) }];
+            const rows = blocks.map((block, index) => ({
+              raw_text: block.raw.slice(0, 50_000),
               parsed_event: {
-                title: postHeading(text),
+                title: block.title,
                 time: null,
                 date: null,
                 channels: [],
-                raw: text,
+                raw: block.raw.slice(0, 50_000),
                 suggested_category: null,
                 suggested_subcategory: null,
               } as any,
               status: "pending",
               source: "discord",
-              source_ref: sourceRef,
+              source_ref: blocks.length > 1 ? `${sourceRef}#${index + 1}` : sourceRef,
               forwarded_from: channelName ? `#${channelName}` : "Discord",
-            } as any);
+            }));
+            const { error } = await supabaseAdmin.from("discord_import_queue").insert(rows as any);
             if (error) throw new Error(error.message);
 
             return Response.json({
               type: 4,
-              data: { content: "✅ Added to the Sports Guide review queue.", flags: 64 },
+              data: {
+                content: blocks.length > 1
+                  ? `✅ Split into ${blocks.length} listings and added to the Sports Guide review queue.`
+                  : "✅ Added to the Sports Guide review queue.",
+                flags: 64,
+              },
             });
           } catch (e) {
             console.error("discord ingest failed:", e);
