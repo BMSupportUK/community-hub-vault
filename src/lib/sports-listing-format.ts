@@ -274,7 +274,8 @@ function detectEvent(line: string, date: string | null): SportsListingEvent | nu
 
   const dualTimeOnly = line.match(DUAL_TIME_ONLY_RE);
   if (dualTimeOnly && dualTimeOnly[1]) {
-    return { date, time: pickPrimaryTime(dualTimeOnly[1]), title: "", channels: [] };
+    const primary = pickPrimaryTimePart(dualTimeOnly[1]);
+    return { date: dateOnWeekday(date, primary.weekday), time: primary.time, title: "", channels: [] };
   }
 
 
