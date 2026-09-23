@@ -293,6 +293,47 @@ export const importParsedEvents = createServerFn({ method: "POST" })
     return { inserted: rows.length, skipped: data.events.length - rows.length };
   });
 
+/** First meaningful line of a post, used as the queue item's heading. */
+function postHeading(text: string): string {
+  const line = text
+    .split("\n")
+    .map((l) => l.replace(/[*_`#>]+/g, "").trim())
+    .find((l) => l.replace(/[^A-Za-z0-9]/g, "").length > 1);
+  return (line || "Pasted listing").slice(0, 300);
+}
+
+/**
+ * Queues a pasted listings post as ONE whole block (no splitting), exactly
+ * like a forwarded post — staff then pick the category/guide in the queue.
+ */
+export const queuePastedPost = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) => z.object({ text: z.string().min(1).max(50_000) }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertStaff(supabase, userId);
+    const text = data.text.trim();
+    if (!text) throw new Error("Nothing to queue");
+    const { error } = await supabaseAdmin.from("discord_import_queue").insert({
+      raw_text: text,
+      parsed_event: {
+        title: postHeading(text),
+        time: null,
+        date: null,
+        channels: [],
+        raw: text,
+        suggested_category: null,
+        suggested_subcategory: null,
+      } as any,
+      status: "pending",
+      source: "paste",
+      source_ref: `paste:${userId}:${Date.now()}`,
+      created_by: userId,
+    } as any);
+    if (error) throw new Error(error.message);
+    return { queued: 1 };
+  });
+
 const QueueInput = z.object({
   events: z
     .array(

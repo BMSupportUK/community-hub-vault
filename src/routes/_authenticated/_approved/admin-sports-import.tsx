@@ -9,19 +9,16 @@ import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { ArrowLeft, Loader2, Sparkles, Send, Trash2, Inbox, Wand2, Clock, Check } from "lucide-react";
+import { ArrowLeft, Loader2, Sparkles, Send, Trash2, Inbox, Clock, Check } from "lucide-react";
 import { firstClockIn, firstDateIn, parseClockTime, toSingleZoneTime, type TimeZoneChoice } from "@/lib/import-time";
 import { parseSportsListingBlock } from "@/lib/sports-listing-format";
 import {
-  parseDiscordPaste,
-  importParsedEvents,
-  queueUnmatched,
+  queuePastedPost,
   listImportQueue,
   resolveQueueItem,
   approveAllSuggested,
   listCategoriesWithSubs,
   listGuidesInCategory,
-  type RoutedEvent,
 } from "@/lib/discord-import.functions";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-sports-import")({
@@ -55,27 +52,20 @@ type QueueItem = {
 function AdminSportsImportPage() {
   const { hasAny } = useAuth();
   const isStaff = hasAny(["admin", "management", "moderator"]);
-  const parseFn = useServerFn(parseDiscordPaste);
-  const importFn = useServerFn(importParsedEvents);
-  const queueFn = useServerFn(queueUnmatched);
+  const queuePasteFn = useServerFn(queuePastedPost);
   const listFn = useServerFn(listImportQueue);
   const resolveFn = useServerFn(resolveQueueItem);
   const catsFn = useServerFn(listCategoriesWithSubs);
 
   const [text, setText] = useState("");
-  const [parsing, setParsing] = useState(false);
-  const [importing, setImporting] = useState(false);
-  const [matched, setMatched] = useState<RoutedEvent[]>([]);
-  const [unmatched, setUnmatched] = useState<RoutedEvent[]>([]);
+  const [queueing, setQueueing] = useState(false);
   const [cats, setCats] = useState<Cat[]>([]);
   const [subs, setSubs] = useState<Sub[]>([]);
   const [queue, setQueue] = useState<QueueItem[]>([]);
   const [loadingQueue, setLoadingQueue] = useState(true);
-  const [queueFilter, setQueueFilter] = useState<"all" | "telegram" | "paste">("all");
+  const [queueFilter, setQueueFilter] = useState<"all" | "paste">("all");
   const [approvingAll, setApprovingAll] = useState(false);
   const approveAllFn = useServerFn(approveAllSuggested);
-  const [bulkCategory, setBulkCategory] = useState<string>("");
-  const [bulkSubcategory, setBulkSubcategory] = useState<string | null>(null);
   // The three setup boxes live in the sidebar: tap a post, then work the sidebar.
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [draft, setDraft] = useState<QueueDraft>({ category: "", destinationCategory: "", subcategories: [], title: "", time: null, sourceZone: null, guideId: null });
@@ -194,101 +184,21 @@ function AdminSportsImportPage() {
     return map;
   }, [cats, subs]);
 
-  const bulkSubs = bulkCategory ? subsByCatName.get(bulkCategory) ?? [] : [];
-
   if (!isStaff) return <Navigate to="/home" />;
 
-  const onParse = async () => {
+  const onQueuePaste = async () => {
     const t = text.trim();
-    if (!t) return toast.error("Paste some Discord messages first");
-    setParsing(true);
-    setMatched([]);
-    setUnmatched([]);
+    if (!t) return toast.error("Paste a listings post first");
+    setQueueing(true);
     try {
-      const res = await parseFn({ data: { text: t } });
-      // Ignore AI category routing — strip suggestions and merge into one list.
-      // If a bulk default is set, pre-fill every row with it.
-      const all = [...(res.matched as RoutedEvent[]), ...(res.unmatched as RoutedEvent[])].map((e) => ({
-        ...e,
-        category: bulkCategory || null,
-        subcategory: bulkCategory ? bulkSubcategory : null,
-      }));
-      setMatched([]);
-      setUnmatched(all);
-      const total = all.length;
-      if (total === 0) toast.error("No events found in the pasted text");
-      else toast.success(`Found ${total} event(s) — pick a category for each (or use the bulk picker)`);
-    } catch (e: any) {
-      toast.error(e.message ?? "Parse failed");
-    } finally {
-      setParsing(false);
-    }
-  };
-
-  const updateMatched = (idx: number, patch: Partial<RoutedEvent>) =>
-    setMatched((prev) => prev.map((e, i) => (i === idx ? { ...e, ...patch } : e)));
-
-  const updateUnmatched = (idx: number, patch: Partial<RoutedEvent>) =>
-    setUnmatched((prev) => prev.map((e, i) => (i === idx ? { ...e, ...patch } : e)));
-
-  const removeMatched = (idx: number) => setMatched((prev) => prev.filter((_, i) => i !== idx));
-  const removeUnmatched = (idx: number) => setUnmatched((prev) => prev.filter((_, i) => i !== idx));
-
-  const applyBulkToAll = () => {
-    if (!bulkCategory) return toast.error("Pick a category first");
-    setMatched((prev) => prev.map((e) => ({ ...e, category: bulkCategory, subcategory: bulkSubcategory })));
-    setUnmatched((prev) => prev.map((e) => ({ ...e, category: bulkCategory, subcategory: bulkSubcategory })));
-    toast.success(`Applied ${bulkCategory}${bulkSubcategory ? ` › ${bulkSubcategory}` : ""} to all events`);
-  };
-
-  const onImportAll = async () => {
-    setImporting(true);
-    try {
-      // 1) Import everything with a category set
-      const toImport = [...matched, ...unmatched].filter((e) => e.category);
-      let inserted = 0;
-      if (toImport.length) {
-        const r = await importFn({
-          data: {
-            events: toImport.map((e) => ({
-              title: e.title,
-              time: e.time,
-              date: e.date,
-              channels: e.channels,
-              raw: e.raw,
-              category: e.category!,
-              subcategory: e.subcategory ?? null,
-            })),
-          },
-        });
-        inserted = r.inserted;
-      }
-      // 2) Queue anything still without a category
-      const toQueue = unmatched.filter((e) => !e.category);
-      let queued = 0;
-      if (toQueue.length) {
-        const r = await queueFn({
-          data: {
-            events: toQueue.map((e) => ({
-              title: e.title,
-              time: e.time,
-              date: e.date,
-              channels: e.channels,
-              raw: e.raw,
-            })),
-          },
-        });
-        queued = r.queued;
-      }
-      toast.success(`Imported ${inserted} • Queued ${queued} for review`);
-      setMatched([]);
-      setUnmatched([]);
+      await queuePasteFn({ data: { text: t } });
+      toast.success("Added to the review queue — pick a category and guide there");
       setText("");
       refreshQueue();
     } catch (e: any) {
-      toast.error(e.message ?? "Import failed");
+      toast.error(e.message ?? "Couldn't queue the post");
     } finally {
-      setImporting(false);
+      setQueueing(false);
     }
   };
 
@@ -306,7 +216,7 @@ function AdminSportsImportPage() {
             </div>
             <div>
               <h1 className="font-display text-2xl sm:text-3xl font-bold text-white">Sports Guide Importer</h1>
-              <p className="text-sm text-white/85">Paste Discord listings — AI splits them into events and routes to your categories.</p>
+              <p className="text-sm text-white/85">Paste a listings post — it lands in the review queue as one block, ready to file into a guide.</p>
             </div>
           </div>
         </header>
@@ -321,100 +231,36 @@ function AdminSportsImportPage() {
 
           <TabsContent value="paste" className="space-y-4">
             <Card className="p-4 space-y-3">
-              <label className="text-sm font-medium">Paste from Discord</label>
+              <label className="text-sm font-medium">Paste a listings post</label>
               <Textarea
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 rows={10}
-                placeholder={"Copy one or more messages from a Discord sports channel and paste here.\n\nExample:\nSaturday 1 January 2026\n19:45 GMT\nManchester United vs Liverpool\nSky Sports Main Event"}
+                placeholder={"Copy a listings post from your sports channel and paste it here.\n\nIt goes into the review queue as one block — nothing is split — then you pick the category, sub categories and guide there."}
                 className="font-mono text-sm"
               />
               <div className="flex flex-wrap gap-2">
-                <Button onClick={onParse} disabled={parsing || !text.trim()}>
-                  {parsing ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
-                  {parsing ? "Parsing…" : "Parse with AI"}
+                <Button onClick={onQueuePaste} disabled={queueing || !text.trim()}>
+                  {queueing ? <Loader2 className="size-4 animate-spin" /> : <Inbox className="size-4" />}
+                  {queueing ? "Adding…" : "Add to review queue"}
                 </Button>
-                <Button variant="outline" onClick={() => { setText(""); setMatched([]); setUnmatched([]); }}>
+                <Button variant="outline" onClick={() => setText("")}>
                   Clear
                 </Button>
               </div>
             </Card>
-
-            {(matched.length > 0 || unmatched.length > 0) && (
-              <>
-                <Card className="p-4 space-y-3">
-                  <div className="flex flex-wrap items-end gap-2">
-                    <div className="flex-1 min-w-[180px]">
-                      <label className="text-xs text-muted-foreground">Default category</label>
-                      <Select value={bulkCategory} onValueChange={(v) => { setBulkCategory(v); setBulkSubcategory(null); }}>
-                        <SelectTrigger><SelectValue placeholder="Pick a category" /></SelectTrigger>
-                        <SelectContent>
-                          {cats.map((c) => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="flex-1 min-w-[180px]">
-                      <label className="text-xs text-muted-foreground">Default subcategory</label>
-                      <Select
-                        value={bulkSubcategory ?? "__none"}
-                        onValueChange={(v) => setBulkSubcategory(v === "__none" ? null : v)}
-                        disabled={bulkSubs.length === 0}
-                      >
-                        <SelectTrigger><SelectValue placeholder={bulkSubs.length === 0 ? "—" : "Pick a subcategory"} /></SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="__none">— None —</SelectItem>
-                          {bulkSubs.map((s) => <SelectItem key={s.name} value={s.name}>{s.name}{s.is_default ? " ★" : ""}</SelectItem>)}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <Button variant="secondary" onClick={applyBulkToAll} disabled={!bulkCategory}>
-                      <Wand2 className="size-4" />
-                      Apply to all
-                    </Button>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Pick once and hit “Apply to all”, or set per-event below. AI category suggestions are ignored.
-                  </p>
-                </Card>
-
-                <Card className="p-4 space-y-3">
-                  <h2 className="font-display text-lg">Events ({matched.length + unmatched.length})</h2>
-                  {[...matched, ...unmatched].map((e, i) => {
-                    const inMatched = i < matched.length;
-                    const localIdx = inMatched ? i : i - matched.length;
-                    return (
-                      <EventRow
-                        key={i}
-                        event={e}
-                        cats={cats}
-                        subsByCatName={subsByCatName}
-                        onChange={(p) => (inMatched ? updateMatched(localIdx, p) : updateUnmatched(localIdx, p))}
-                        onRemove={() => (inMatched ? removeMatched(localIdx) : removeUnmatched(localIdx))}
-                      />
-                    );
-                  })}
-                </Card>
-
-                <div className="flex justify-end">
-                  <Button size="lg" onClick={onImportAll} disabled={importing}>
-                    {importing ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
-                    Import all
-                  </Button>
-                </div>
-              </>
-            )}
           </TabsContent>
 
           <TabsContent value="queue" className="space-y-3">
             <div className="flex flex-wrap items-center gap-2">
-              {(["all", "telegram", "paste"] as const).map((f) => (
+              {(["all", "paste"] as const).map((f) => (
                 <Button
                   key={f}
                   size="sm"
                   variant={queueFilter === f ? "default" : "outline"}
                   onClick={() => setQueueFilter(f)}
                 >
-                  {f === "all" ? "All" : f === "telegram" ? "Telegram" : "Pasted"}
+                  {f === "all" ? "All" : "Pasted"}
                   <span className="ml-1.5 text-xs opacity-80">
                     {f === "all" ? queue.length : queue.filter((q) => (q.source ?? "paste") === f).length}
                   </span>
@@ -437,7 +283,7 @@ function AdminSportsImportPage() {
                   <Card className="p-10 grid place-items-center text-center text-muted-foreground gap-2">
                     <Inbox className="size-8" />
                     <p>{queue.length === 0 ? "Review queue is empty." : "Nothing from this source."}</p>
-                    <p className="text-xs">Forward a listings post to your Telegram bot and it will appear here.</p>
+                    <p className="text-xs">Copy a listings post and paste it into the Paste &amp; Import tab — it will appear here.</p>
                   </Card>
                 ) : (
                   groupedQueue.map(([groupName, items]) => (
@@ -498,80 +344,6 @@ function AdminSportsImportPage() {
   );
 }
 
-function EventRow({
-  event,
-  cats,
-  subsByCatName,
-  onChange,
-  onRemove,
-}: {
-  event: RoutedEvent;
-  cats: Cat[];
-  subsByCatName: Map<string, Sub[]>;
-  onChange: (patch: Partial<RoutedEvent>) => void;
-  onRemove: () => void;
-}) {
-  const subs = event.category ? subsByCatName.get(event.category) ?? [] : [];
-  return (
-    <div className="rounded-lg border border-border p-3 space-y-2 bg-card/50">
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex-1 min-w-0">
-          <Input
-            value={event.title}
-            onChange={(e) => onChange({ title: e.target.value })}
-            className="font-medium"
-          />
-          <div className="text-xs text-muted-foreground mt-1 truncate">
-            {[event.date, event.time].filter(Boolean).join(" · ")}
-            {event.channels.length > 0 && <> · {event.channels.join(" • ")}</>}
-          </div>
-        </div>
-        <Button size="icon" variant="ghost" onClick={onRemove}>
-          <Trash2 className="size-4" />
-        </Button>
-      </div>
-      {parseClockTime(event.time) !== null && (
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[11px] text-muted-foreground">Time listed is:</span>
-          {(["gmt", "et"] as const).map((z) => (
-            <Button
-              key={z}
-              size="sm"
-              variant="outline"
-              className="h-7 px-2 text-xs"
-              onClick={() => {
-                const shown = toSingleZoneTime(event.time, event.date, z);
-                if (!shown) return toast.error("Couldn't read the time on this post");
-                onChange({ time: shown });
-              }}
-            >
-              <Clock className="size-3" /> {z === "gmt" ? "UK" : "ET"}
-            </Button>
-          ))}
-        </div>
-      )}
-      <div className="grid grid-cols-2 gap-2">
-        <Select value={event.category ?? ""} onValueChange={(v) => onChange({ category: v, subcategory: null })}>
-          <SelectTrigger><SelectValue placeholder="Category" /></SelectTrigger>
-          <SelectContent>
-            {cats.map((c) => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Select
-          value={event.subcategory ?? "__none"}
-          onValueChange={(v) => onChange({ subcategory: v === "__none" ? null : v })}
-          disabled={subs.length === 0}
-        >
-          <SelectTrigger><SelectValue placeholder={subs.length === 0 ? "—" : "Subcategory"} /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="__none">— None —</SelectItem>
-            {subs.map((s) => <SelectItem key={s.name} value={s.name}>{s.name}{s.is_default ? " ★" : ""}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      </div>
-    </div>
-  );
-}
 
 function QueueRow({
   item,
@@ -590,7 +362,7 @@ function QueueRow({
 }) {
   const ev = item.parsed_event ?? {};
 
-  // Telegram blocks arrive whole with no time pulled out — fall back to the
+  // Queued posts arrive whole with no time pulled out — fall back to the
   // first clock time written inside the post itself.
   const zoneSource = firstClockIn(String(ev.raw ?? item.raw_text ?? "")) ?? time;
   const zoneDate = ev.date ?? firstDateIn(String(ev.raw ?? item.raw_text ?? ""));
