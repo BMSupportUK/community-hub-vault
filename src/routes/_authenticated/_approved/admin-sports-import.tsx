@@ -71,6 +71,7 @@ function AdminSportsImportPage() {
   const approveAllFn = useServerFn(approveAllSuggested);
   // The three setup boxes live in the sidebar: tap a post, then work the sidebar.
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [splittingId, setSplittingId] = useState<string | null>(null);
   const [draft, setDraft] = useState<QueueDraft>({ category: "", destinationCategory: "", subcategories: [], title: "", time: null, sourceZone: null, guideId: null });
   const timeStore = useRef<Map<string, string | null>>(new Map());
   const sourceZoneStore = useRef<Map<string, TimeZoneChoice | null>>(new Map());
