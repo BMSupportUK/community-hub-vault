@@ -2,7 +2,16 @@ import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Loader2, Trash2, RefreshCw, Smartphone, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  Loader2,
+  Trash2,
+  RefreshCw,
+  Smartphone,
+  ChevronLeft,
+  ChevronRight,
+  Inbox,
+  Link2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -16,6 +25,13 @@ const STATUS_LABEL: Record<string, string> = {
   completed: "Completed",
   incomplete: "Stopped before finishing",
 };
+
+function statusAccent(status: string | null) {
+  if (status === "completed") return "bg-emerald-400";
+  if (status === "downloading") return "bg-sky-400";
+  if (status === "incomplete") return "bg-amber-400";
+  return "bg-muted-foreground/40";
+}
 
 function statusClasses(status: string | null) {
   if (status === "completed") return "border-emerald-500/40 bg-emerald-500/15 text-emerald-300";
@@ -48,54 +64,53 @@ function TransferCard({
         : 0;
 
   return (
-    <div className="rounded-2xl border border-border bg-card p-4 flex flex-col gap-1.5">
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <h4 className="font-semibold text-sm text-foreground truncate">{t.member}</h4>
-          <p className="text-xs text-muted-foreground truncate">
-            {t.username ? `@${t.username}` : "username unknown"}
-          </p>
+    <div className="relative overflow-hidden rounded-xl border border-border bg-surface/80 shadow-sm transition-colors hover:border-primary/40">
+      <span
+        aria-hidden
+        className={`absolute inset-y-0 left-0 w-1 ${statusAccent(t.status)}`}
+      />
+      <div className="flex flex-col gap-2 p-4 pl-5">
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <h4 className="truncate text-sm font-semibold text-foreground">{t.member}</h4>
+            <p className="truncate text-xs text-muted-foreground">
+              {t.username ? `@${t.username}` : "username unknown"}
+            </p>
+          </div>
+          <span
+            className={`shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-semibold ${statusClasses(t.status)}`}
+          >
+            {t.status ? (STATUS_LABEL[t.status] ?? t.status) : t.expired ? "Expired unused" : "Not started"}
+          </span>
         </div>
-        <span
-          className={`shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-semibold ${statusClasses(t.status)}`}
-        >
-          {t.status ? (STATUS_LABEL[t.status] ?? t.status) : t.expired ? "Expired unused" : "Not started"}
-        </span>
-      </div>
 
-      <p className="flex items-center gap-1.5 text-xs text-foreground/85">
-        <Smartphone className="size-3.5 text-violet-300 shrink-0" />
-        <span className="truncate">{t.appName}</span>
-      </p>
-      <p className="text-xs text-muted-foreground break-all">
-        Link code: <span className="font-mono text-foreground/85">{t.token}</span>
-      </p>
-
-      <p className="text-xs text-muted-foreground">
-        Link issued {new Date(t.issuedAt).toLocaleString()}
-      </p>
-      <p className="text-xs text-muted-foreground">
-        {t.expired ? "Expired" : "Expires"} {new Date(t.expiresAt).toLocaleString()}
-      </p>
-      {t.startedAt && (
-        <p className="text-xs text-muted-foreground">
-          Download started {new Date(t.startedAt).toLocaleString()}
+        <p className="flex items-center gap-1.5 text-xs font-medium text-foreground/90">
+          <Smartphone className="size-3.5 shrink-0 text-violet-300" />
+          <span className="truncate">{t.appName}</span>
         </p>
-      )}
-      {t.lastDownloadAt && (
-        <p className="text-xs text-muted-foreground">
-          Last activity {new Date(t.lastDownloadAt).toLocaleString()}
-        </p>
-      )}
-      <p className="text-xs text-muted-foreground">Downloads started: {t.downloads}</p>
 
-      {(t.device || t.userAgent) && (
-        <div className="text-xs text-muted-foreground">
-          <p className="truncate">
-            <span className="font-medium text-foreground/80">Device:</span>{" "}
-            {t.device || "Unknown device"}
-            {t.ip ? ` \u00b7 ${t.ip}` : ""}
+        <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <Link2 className="size-3.5 shrink-0" />
+          <span className="sr-only">Link code</span>
+          <span className="rounded-md border border-border bg-background/60 px-1.5 py-0.5 font-mono text-[11px] text-foreground/90 select-all">
+            {t.token}
+          </span>
+        </p>
+
+        <div className="space-y-0.5 border-t border-border/60 pt-2 text-[11px] text-muted-foreground">
+          <p>Link issued {new Date(t.issuedAt).toLocaleString()}</p>
+          <p>
+            {t.expired ? "Expired" : "Expires"} {new Date(t.expiresAt).toLocaleString()}
           </p>
+          {t.startedAt && <p>Download started {new Date(t.startedAt).toLocaleString()}</p>}
+          {t.lastDownloadAt && <p>Last activity {new Date(t.lastDownloadAt).toLocaleString()}</p>}
+          <p>Downloads started: {t.downloads}</p>
+          {(t.device || t.ip) && (
+            <p className="truncate">
+              <span className="font-medium text-foreground/80">Device:</span> {t.device || "Unknown device"}
+              {t.ip ? ` · ${t.ip}` : ""}
+            </p>
+          )}
           {t.userAgent && (
             <details className="mt-0.5">
               <summary className="cursor-pointer text-[11px] text-muted-foreground/80 hover:text-foreground">
@@ -105,38 +120,38 @@ function TransferCard({
             </details>
           )}
         </div>
-      )}
 
-      {t.status && (
-        <div className="mt-1 space-y-1">
-          <Progress value={pct} className="h-2" />
-          <p className="text-[11px] text-muted-foreground">
-            {pct}%
-            {t.totalBytes
-              ? ` · ${mb(t.bytes)} of ${mb(t.totalBytes)}`
-              : t.bytes
-                ? ` · ${mb(t.bytes)}`
-                : ""}
-          </p>
-        </div>
-      )}
+        {t.status && (
+          <div className="space-y-1">
+            <Progress value={pct} className="h-2" />
+            <p className="text-[11px] font-medium text-foreground/80">
+              {pct}%
+              {t.totalBytes
+                ? ` · ${mb(t.bytes)} of ${mb(t.totalBytes)}`
+                : t.bytes
+                  ? ` · ${mb(t.bytes)}`
+                  : ""}
+            </p>
+          </div>
+        )}
 
-      {canDelete && (
-        <Button
-          size="sm"
-          variant="secondary"
-          className="mt-2 self-start"
-          disabled={busy}
-          onClick={() => onDelete(t.id)}
-        >
-          {busy ? (
-            <Loader2 className="size-4 mr-1 animate-spin" />
-          ) : (
-            <Trash2 className="size-4 mr-1" />
-          )}
-          Delete
-        </Button>
-      )}
+        {canDelete && (
+          <Button
+            size="sm"
+            variant="secondary"
+            className="mt-1 self-start"
+            disabled={busy}
+            onClick={() => onDelete(t.id)}
+          >
+            {busy ? (
+              <Loader2 className="size-4 mr-1 animate-spin" />
+            ) : (
+              <Trash2 className="size-4 mr-1" />
+            )}
+            Delete
+          </Button>
+        )}
+      </div>
     </div>
   );
 }
@@ -227,7 +242,10 @@ export function AppTransfersAdmin() {
 
   const renderList = (list: Transfer[], empty: string) =>
     !list.length ? (
-      <p className="text-sm text-muted-foreground">{empty}</p>
+      <div className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border/70 bg-surface/40 px-4 py-10 text-center">
+        <Inbox className="size-8 text-muted-foreground/50" />
+        <p className="text-sm text-muted-foreground">{empty}</p>
+      </div>
     ) : (
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {list.map((t) => (
@@ -243,19 +261,31 @@ export function AppTransfersAdmin() {
     );
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h3 className="font-display text-lg font-semibold text-foreground">App transfers</h3>
-          <p className="flex items-center gap-1.5 text-sm text-muted-foreground">
-            <span className="inline-flex size-2 rounded-full bg-emerald-400 animate-pulse" />
-            Live install links, who requested them and how far each download has got. Completed
-            transfers are kept, so you can look back at every download.
-          </p>
+    <div className="overflow-hidden rounded-2xl border border-border/80 bg-background/90 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.7)] backdrop-blur-xl">
+      {/* Header */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-gradient-to-r from-primary/15 via-primary/5 to-transparent px-5 py-4">
+        <div className="flex min-w-0 items-center gap-3">
+          <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/30">
+            <Smartphone className="size-5" />
+          </div>
+          <div className="min-w-0">
+            <h3 className="font-display flex items-center gap-2 text-lg font-semibold text-foreground">
+              App transfers
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-300">
+                <span className="size-1.5 animate-pulse rounded-full bg-emerald-400" />
+                Live
+              </span>
+            </h3>
+            <p className="truncate text-xs text-muted-foreground">
+              Live install links, who requested them and how far each download has got. Completed
+              transfers are kept, so you can look back at every download.
+            </p>
+          </div>
         </div>
         <Button
           size="sm"
           variant="secondary"
+          className="shrink-0"
           onClick={() => queryClient.invalidateQueries({ queryKey: ["app-transfers-admin"] })}
         >
           {isFetching ? (
@@ -267,65 +297,84 @@ export function AppTransfersAdmin() {
         </Button>
       </div>
 
-      <div className="rounded-2xl border border-border bg-card/60 p-3 space-y-3">
-        <div className="flex items-center justify-between gap-2">
-          <Button size="icon" variant="secondary" aria-label="Previous week" onClick={() => changeWeek(weekOffset - 1)}>
-            <ChevronLeft className="size-4" />
-          </Button>
-          <div className="text-center">
-            <p className="text-sm font-semibold text-foreground">{weekLabel}</p>
-            <p className="text-[11px] text-muted-foreground">
-              {weekOffset === 0 ? "This week" : `${-weekOffset} week${weekOffset === -1 ? "" : "s"} ago`}
-            </p>
+      <div className="space-y-4 p-5">
+        {/* Week calendar */}
+        <div className="space-y-3 rounded-xl border border-border bg-surface/80 p-3 shadow-inner">
+          <div className="flex items-center justify-between gap-2">
+            <Button
+              size="icon"
+              variant="secondary"
+              className="rounded-lg"
+              aria-label="Previous week"
+              onClick={() => changeWeek(weekOffset - 1)}
+            >
+              <ChevronLeft className="size-4" />
+            </Button>
+            <div className="text-center">
+              <p className="text-sm font-semibold text-foreground">{weekLabel}</p>
+              <p className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                {weekOffset === 0 ? "This week" : `${-weekOffset} week${weekOffset === -1 ? "" : "s"} ago`}
+              </p>
+            </div>
+            <Button
+              size="icon"
+              variant="secondary"
+              className="rounded-lg"
+              aria-label="Next week"
+              disabled={weekOffset >= 0}
+              onClick={() => changeWeek(weekOffset + 1)}
+            >
+              <ChevronRight className="size-4" />
+            </Button>
           </div>
-          <Button size="icon" variant="secondary" aria-label="Next week" disabled={weekOffset >= 0} onClick={() => changeWeek(weekOffset + 1)}>
-            <ChevronRight className="size-4" />
-          </Button>
+          <div className="grid grid-cols-7 gap-1.5">
+            {days.map((d, i) => {
+              const active = i === dayIdx;
+              const isToday = weekOffset === 0 && i === todayIdx;
+              return (
+                <button
+                  key={i}
+                  type="button"
+                  onClick={() => setDayIdx(i)}
+                  className={`rounded-lg border px-1 py-1.5 text-center transition-all ${active ? "border-primary bg-primary text-primary-foreground shadow-md shadow-primary/30" : isToday ? "border-primary/50 bg-surface text-foreground hover:bg-primary/10" : "border-border bg-surface/60 text-foreground hover:bg-surface"}`}
+                >
+                  <span className="block text-xs font-semibold">
+                    {d.toLocaleDateString(undefined, { weekday: "short" })}
+                  </span>
+                  <span className="block text-[11px] opacity-80">
+                    {d.toLocaleDateString(undefined, { day: "numeric", month: "short" })}
+                  </span>
+                  <span
+                    className={`mx-auto mt-0.5 block w-fit rounded-full px-1.5 text-[10px] font-semibold ${active ? "bg-primary-foreground/20" : "bg-primary/15"}`}
+                  >
+                    {isToday ? "Today · " : ""}
+                    {dayCounts[i]}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
-        <div className="grid grid-cols-7 gap-1.5">
-          {days.map((d, i) => {
-            const active = i === dayIdx;
-            const isToday = weekOffset === 0 && i === todayIdx;
-            return (
-              <button
-                key={i}
-                type="button"
-                onClick={() => setDayIdx(i)}
-                className={`rounded-xl border px-1 py-1.5 text-center transition-colors ${active ? "border-primary bg-primary text-primary-foreground" : "border-border bg-surface/60 text-foreground hover:bg-surface"}`}
-              >
-                <span className="block text-xs font-semibold">
-                  {d.toLocaleDateString(undefined, { weekday: "short" })}
-                </span>
-                <span className="block text-[11px] opacity-80">
-                  {d.toLocaleDateString(undefined, { day: "numeric", month: "short" })}
-                </span>
-                <span className="block text-[10px] opacity-80">
-                  {isToday ? "Today · " : ""}{dayCounts[i]}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
 
-      <Tabs defaultValue="active" className="w-full">
-        <TabsList className="flex-wrap h-auto">
-          <TabsTrigger value="active">Active transfers ({groups.active.length})</TabsTrigger>
-          <TabsTrigger value="completed">Completed ({groups.completed.length})</TabsTrigger>
-          <TabsTrigger value="pending">
-            Pending or failed ({groups.pending.length})
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value="active" className="mt-4">
-          {renderList(groups.active, "No live app transfers right now.")}
-        </TabsContent>
-        <TabsContent value="completed" className="mt-4">
-          {renderList(groups.completed, "No completed downloads on this day.")}
-        </TabsContent>
-        <TabsContent value="pending" className="mt-4">
-          {renderList(groups.pending, "Nothing pending or failed.")}
-        </TabsContent>
-      </Tabs>
+        <Tabs defaultValue="active" className="w-full">
+          <TabsList className="flex-wrap h-auto">
+            <TabsTrigger value="active">Active transfers ({groups.active.length})</TabsTrigger>
+            <TabsTrigger value="completed">Completed ({groups.completed.length})</TabsTrigger>
+            <TabsTrigger value="pending">
+              Pending or failed ({groups.pending.length})
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="active" className="mt-4">
+            {renderList(groups.active, "No live app transfers right now.")}
+          </TabsContent>
+          <TabsContent value="completed" className="mt-4">
+            {renderList(groups.completed, "No completed downloads on this day.")}
+          </TabsContent>
+          <TabsContent value="pending" className="mt-4">
+            {renderList(groups.pending, "Nothing pending or failed.")}
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
 }

@@ -530,7 +530,7 @@ function InstallGuidesPage() {
 
           {canSeeTransfers && (
             <TabsContent value="transfers" className="mt-6">
-              <div className="max-w-5xl rounded-lg bg-background/35 p-4 backdrop-blur-[1px]">
+              <div className="max-w-5xl">
                 <AppTransfersAdmin />
               </div>
             </TabsContent>
