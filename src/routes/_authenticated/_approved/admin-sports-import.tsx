@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { ArrowLeft, Loader2, Sparkles, Send, Trash2, Inbox, Wand2, Clock } from "lucide-react";
+import { ArrowLeft, Loader2, Sparkles, Send, Trash2, Inbox, Wand2, Clock, Check } from "lucide-react";
 import { firstClockIn, firstDateIn, parseClockTime, toSingleZoneTime, type TimeZoneChoice } from "@/lib/import-time";
 import { parseSportsListingBlock } from "@/lib/sports-listing-format";
 import {
@@ -876,13 +876,19 @@ function QueueSetup({
                     on ? "bg-primary/10 font-medium text-primary" : "hover:bg-muted/60"
                   }`}
                 >
-                  <span className="min-w-0">
-                    <span className="block truncate">{g.title}</span>
-                    {g.subcategory && (
-                      <span className="block truncate text-[10px] text-muted-foreground">{g.subcategory}</span>
+                  <span className="flex min-w-0 items-center gap-2">
+                    {on && (
+                      <span className="grid size-4 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
+                        <Check className="size-3" strokeWidth={3} />
+                      </span>
                     )}
+                    <span className="min-w-0">
+                      <span className="block truncate">{g.title}</span>
+                      {g.subcategory && (
+                        <span className="block truncate text-[10px] text-muted-foreground">{g.subcategory}</span>
+                      )}
+                    </span>
                   </span>
-                  {on && <span className="text-xs">✓</span>}
                 </button>
               );
             })}
