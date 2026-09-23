@@ -1315,22 +1315,26 @@ function SportsGuidesPage() {
 
       style={{ backgroundImage: `url(${sportsBg})` }}
     >
-      <header className="relative px-8 pt-8 pb-6 border-b border-purple-500/30 bg-purple-950/40 backdrop-blur">
-        <h1 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 bg-clip-text text-transparent">Sports Guide</h1>
-        <p className="text-purple-200/80 mt-1">Explore guides and news from all major sports</p>
-      </header>
+      <Tabs value={tab} onValueChange={handleTabChange} className="w-full">
+        <header className="relative px-8 pt-8 pb-6 border-b border-purple-500/30 bg-purple-950/40 backdrop-blur">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div className="min-w-0">
+              <h1 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 bg-clip-text text-transparent">Sports Guide</h1>
+              <p className="text-purple-200/80 mt-1">Explore guides and news from all major sports</p>
+            </div>
+            <TabsList className="flex flex-none rounded-full border border-purple-500/30 bg-purple-950/60 p-1">
+              <TabsTrigger value="welcome" className="rounded-full data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Welcome</TabsTrigger>
+              {activeCat && (
+                <TabsTrigger value="guides" className="rounded-full data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Guides</TabsTrigger>
+              )}
+              {canManageCategories && (
+                <TabsTrigger value="categories" className="rounded-full data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Categories</TabsTrigger>
+              )}
+            </TabsList>
+          </div>
+        </header>
 
       <div className="relative px-8 py-6">
-        <Tabs value={tab} onValueChange={handleTabChange} className="w-full">
-          <TabsList className={`grid ${activeCat ? (canManageCategories ? "grid-cols-3" : "grid-cols-2") : (canManageCategories ? "grid-cols-2" : "grid-cols-1")} max-w-2xl bg-purple-950/60 border border-purple-500/30`}>
-            <TabsTrigger value="welcome" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Welcome</TabsTrigger>
-            {activeCat && (
-              <TabsTrigger value="guides" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Guides</TabsTrigger>
-            )}
-            {canManageCategories && (
-              <TabsTrigger value="categories" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Categories</TabsTrigger>
-            )}
-          </TabsList>
 
           <TabsContent value="welcome" className="mt-6">
             <div className="relative grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_260px]">
@@ -1882,8 +1886,8 @@ function SportsGuidesPage() {
               </button>
             )}
           </TabsContent>
-        </Tabs>
-      </div>
+        </div>
+      </Tabs>
 
       <Dialog open={headingDialogOpen} onOpenChange={setHeadingDialogOpen}>
         <DialogContent className="bg-slate-950 border border-fuchsia-500/40 text-purple-50 sm:max-w-md">
