@@ -288,6 +288,12 @@ function ReadPage() {
                 />
               </div>
             )}
+            {blog.image_url && (
+              <div className="shrink-0 relative w-full h-32 sm:h-40 lg:h-48 rounded-2xl overflow-hidden border border-purple-500/30 bg-purple-950/60">
+                <img src={blog.image_url} alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-cover blur-xl scale-110 opacity-50" />
+                <img src={blog.image_url} alt={blog.title} className="relative z-10 w-full h-full object-contain" />
+              </div>
+            )}
           </article>
         )}
         {pageCount > 1 && (
