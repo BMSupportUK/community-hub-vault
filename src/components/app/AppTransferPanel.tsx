@@ -147,8 +147,8 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
 
   return (
     <>
-      <article className="rounded-2xl border border-violet-500/30 bg-violet-950/40 overflow-hidden flex flex-col group hover:shadow-[0_0_30px_-10px_rgba(217,70,239,0.6)] transition-all">
-        <div className="aspect-[16/10] bg-violet-900/50 relative overflow-hidden">
+      <article className="rounded-2xl border border-border/70 bg-surface overflow-hidden flex flex-col group shadow-soft hover:shadow-[0_0_30px_-10px_rgba(217,70,239,0.6)] hover:border-violet-500/40 transition-all">
+        <div className="aspect-[16/10] bg-black/70 relative overflow-hidden">
           {build.videoPath && videoUrl ? (
             <video
               src={videoUrl}
@@ -322,7 +322,7 @@ function RequestAccessPanel() {
   };
 
   return (
-    <section className="rounded-2xl border border-violet-500/30 bg-violet-950/40 p-6">
+    <section className="rounded-2xl border border-border/80 bg-background/90 p-6 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.7)] backdrop-blur-xl">
       <h3 className="font-display text-lg font-semibold text-foreground flex items-center gap-2">
         <Lock className="size-5 text-violet-300" /> Download Link
       </h3>
@@ -386,7 +386,7 @@ export function AppTransferPanel({ onUploadClick }: { onUploadClick?: () => void
 
   if (!builds || builds.length === 0) {
     return (
-      <section className="rounded-2xl border border-violet-500/30 bg-violet-950/40 p-6">
+      <section className="rounded-2xl border border-border/80 bg-background/90 p-6 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.7)] backdrop-blur-xl">
         <h3 className="font-display text-lg font-semibold text-foreground flex items-center gap-2">
           <Smartphone className="size-5 text-violet-300" /> Get the App
         </h3>
