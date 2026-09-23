@@ -57,6 +57,16 @@ function cleanLine(line: string): string {
     .trim();
 }
 
+function decodeListingEntities(value: string): string {
+  return value
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;|&apos;/gi, "'");
+}
+
 /**
  * Daily listings lead each row with the channel number ("01 | 00:00 Trackside
  * Live!"). Keep that number as the event's channel.
@@ -213,6 +223,14 @@ function splitChannelLine(line: string): string[] {
  */
 function normalizeChannels(channels: string[]): string[] {
   return channels.length ? splitChannelLine(channels.join(" | ")) : [];
+}
+
+export function normalizeSportsEventTitle(value: string): string {
+  return value
+    .replace(/\s+/g, " ")
+    .replace(/\s+(?:x|vs\.?|v\.?)\s+/gi, " & ")
+    .replace(/\s*&\s*/g, " & ")
+    .trim();
 }
 
 export function isLikelyChannelLabel(value: string): boolean {
@@ -496,7 +514,7 @@ function detectEvent(line: string, date: string | null): SportsListingEvent | nu
 }
 
 function finalized(event: SportsListingEvent): SportsListingEvent | null {
-  const title = event.title.replace(/\s+/g, " ").trim();
+  const title = normalizeSportsEventTitle(event.title);
   if (!parseClockTime(event.time)) return null;
   if (!title) return null;
   // Never preserve the second half of a dual-zone kick-off as an event name.
@@ -530,7 +548,7 @@ function isSectionHeading(rawLine: string): boolean {
 }
 
 function listingLines(raw: string): string[] {
-  return raw
+  return decodeListingEntities(raw)
     .replace(/<br\s*\/?\s*>/gi, "\n")
     .replace(/<\/div>/gi, "\n")
     .replace(/<[^>]+>/g, " ")
@@ -559,7 +577,7 @@ export function splitListingSections(raw: string | null | undefined): ListingSec
 
 export function parseSportsListingBlock(raw: string | null | undefined): SportsListingEvent[] {
   if (!raw) return [];
-  const lines = raw
+  const lines = decodeListingEntities(raw)
     .replace(/<br\s*\/?\s*>/gi, "\n")
     .replace(/<\/div>/gi, "\n")
     .replace(/<[^>]+>/g, " ")
@@ -614,7 +632,9 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
       continue;
     }
     if (!current.title) {
-      current.title = line;
+      const split = splitTitleAndInlineChannels(line);
+      current.title = split.title;
+      current.channels.push(...split.channels);
       continue;
     }
     if (titleCameFromAbove) {
@@ -795,7 +815,7 @@ export function escapeListingHtml(value: string): string {
 }
 
 export function plainListingToHtml(value: string): string {
-  return value
+  return decodeListingEntities(value)
     .split("\n")
     .map((line) => `<div>${line.trim() ? escapeListingHtml(line) : "<br>"}</div>`)
     .join("");
