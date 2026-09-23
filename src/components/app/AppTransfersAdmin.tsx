@@ -8,6 +8,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { listAppTransfers, deleteAppTransferAdmin } from "@/lib/app-transfer.functions";
 import { useAuth } from "@/hooks/use-auth";
+import downloadIllustration from "@/assets/app-download-illustration.jpg";
 
 type Transfer = Awaited<ReturnType<typeof listAppTransfers>>[number];
 
@@ -243,7 +244,18 @@ export function AppTransfersAdmin() {
     );
 
   return (
-    <div className="space-y-4">
+    <div className="relative space-y-4">
+      <img
+        src={downloadIllustration}
+        alt=""
+        aria-hidden
+        loading="lazy"
+        width={1920}
+        height={1088}
+        className="pointer-events-none fixed inset-0 h-full w-full object-cover opacity-[0.14]"
+      />
+      <div className="pointer-events-none fixed inset-0 bg-background/60" />
+      <div className="relative space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h3 className="font-display text-lg font-semibold text-foreground">App transfers</h3>
@@ -326,6 +338,7 @@ export function AppTransfersAdmin() {
           {renderList(groups.pending, "Nothing pending or failed.")}
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 }
