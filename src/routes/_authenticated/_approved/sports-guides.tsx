@@ -1347,7 +1347,7 @@ function SportsGuidesPage() {
                     <Input
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
-                      placeholder="Search all sports guides..."
+                      placeholder="Search events (3+ letters)..."
                       className="h-11 border-0 bg-transparent text-base font-medium text-white placeholder:text-purple-200/60 focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
                     />
                     {search && (
@@ -1360,6 +1360,11 @@ function SportsGuidesPage() {
                       </button>
                     )}
                   </div>
+                  {searchQuery.length > 0 && !activeSearch && (
+                    <div className="absolute left-0 top-full mt-1 text-[11px] font-medium text-fuchsia-200/80">
+                      Keep typing — enter at least {SG_MIN_SEARCH} letters to search events.
+                    </div>
+                  )}
                 </div>
                   {isMod && (
                     <Button onClick={openNew} className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0 shrink-0">
