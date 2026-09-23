@@ -159,6 +159,10 @@ function SportsGuidesPage() {
     if (welcomeFromUrl) {
       setTab("welcome");
       setActiveCat(null);
+      setSubFilter(null);
+      setSearch("");
+      setOpenGroups([]);
+      scrollerRef.current?.scrollTo({ top: 0, behavior: "auto" });
       try {
         sessionStorage.removeItem("sports-guides-active-tab");
         sessionStorage.removeItem("sports-guides-active-cat");
@@ -166,6 +170,21 @@ function SportsGuidesPage() {
       navigate({ to: "/sports-guides", search: {}, replace: true });
     }
   }, [welcomeFromUrl, navigate]);
+
+  // The rail remains mounted while this page is open, so a repeated click on
+  // its already-active icon needs a direct reset as well as URL navigation.
+  useEffect(() => {
+    const showWelcome = () => {
+      setTab("welcome");
+      setActiveCat(null);
+      setSubFilter(null);
+      setSearch("");
+      setOpenGroups([]);
+      scrollerRef.current?.scrollTo({ top: 0, behavior: "auto" });
+    };
+    window.addEventListener("sports-guides:show-welcome", showWelcome);
+    return () => window.removeEventListener("sports-guides:show-welcome", showWelcome);
+  }, []);
 
   // The Guides tab only exists once a category has been picked — never auto-select one.
   const handleTabChange = (value: string) => {
