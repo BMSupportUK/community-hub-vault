@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { sanitizeRichHtml } from "@/lib/sanitize-html";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
+import AdSenseSlot from "@/components/app/AdSenseSlot";
 import { toast } from "sonner";
 import { annotateTimesInEl } from "@/lib/parse-event-times";
 import { PagedGrid, PaginationBar } from "@/lib/paginate-by-height";
@@ -258,11 +259,25 @@ function ReadPage() {
             <h1 className="font-display text-2xl md:text-3xl font-bold text-white">
               {blog.title}
             </h1>
-            {blog.image_url && (
-              <div className="shrink-0 relative w-full aspect-[3/1] rounded-2xl overflow-hidden border border-purple-500/30 bg-purple-950/60">
-                <img src={blog.image_url} alt={blog.title} className="absolute inset-0 w-full h-full object-cover" />
+            {blog.image_url ? (
+              <div className="shrink-0 flex items-center justify-center gap-3">
+                <AdSenseSlot slot="home" />
+                <div className="relative flex-1 min-w-0 h-32 sm:h-40 lg:h-48 rounded-2xl overflow-hidden border border-purple-500/30 bg-purple-950/60">
+                  <img
+                    src={blog.image_url}
+                    alt=""
+                    aria-hidden
+                    className="absolute inset-0 w-full h-full object-cover opacity-30 blur-md scale-110"
+                  />
+                  <img
+                    src={blog.image_url}
+                    alt={blog.title}
+                    className="absolute inset-0 w-full h-full object-contain"
+                  />
+                </div>
+                <AdSenseSlot slot="home" />
               </div>
-            )}
+            ) : null}
             {blog.refresh_notice && (
               <div className="flex items-start gap-2 rounded-xl border border-amber-400/40 bg-amber-500/10 px-3 py-2 text-amber-100">
                 <RefreshCw className="size-4 shrink-0 mt-0.5" />
