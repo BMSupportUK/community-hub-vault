@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Upload, Play, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { compressVideoFile } from "@/lib/compress-video";
 
 const CATEGORIES = [
   { key: "official_server", label: "Official Service App" },
@@ -127,6 +128,7 @@ export function AppDemosView() {
   const [loading, setLoading] = useState(true);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [saving, setSaving] = useState(false);
+  const [compressPct, setCompressPct] = useState<number | null>(null);
   const [activeCat, setActiveCat] = useState<CategoryKey>("official_server");
   const [playing, setPlaying] = useState<Demo | null>(null);
 
