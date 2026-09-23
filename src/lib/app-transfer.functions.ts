@@ -369,7 +369,7 @@ export const listAppTransfers = createServerFn({ method: "GET" })
         "id, user_id, build_id, token, issued_at, expires_at, download_count, last_download_at, last_download_status, last_download_started_at, last_download_bytes, last_download_total_bytes, last_download_device, last_download_user_agent, last_download_ip",
       )
       .order("issued_at", { ascending: false })
-      .limit(200);
+      .limit(2000);
     const rows = data ?? [];
     const buildIds = [...new Set(rows.map((r) => r.build_id).filter(Boolean) as string[])];
     const appNames = new Map<string, string>();
