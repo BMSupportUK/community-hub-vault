@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
+import AdSenseSlot from "@/components/app/AdSenseSlot";
 import sportsBgAsset from "@/assets/sports-bg.jpg.asset.json";
 const sportsBg = sportsBgAsset.url;
 const SG_FOCUS_KEY = "sports-guides-focus-id";
