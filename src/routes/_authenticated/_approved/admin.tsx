@@ -542,6 +542,8 @@ function DashboardBody() {
         <VpnBackfillCard />
       </aside>
     </div>
+        </>
+      )}
     </div>
   );
 }
