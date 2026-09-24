@@ -436,7 +436,7 @@ function DashboardBody() {
   const { hasRole } = useAuth();
   const isAdminOnly = hasRole("admin");
   const canSeePins = isAdminOnly || hasRole("management");
-  const [tab, setTab] = useState<"tools" | "staff-pins" | "backup-codes">("tools");
+  const [tab, setTab] = useState<"tools" | "staff-pins" | "backup-codes" | "theme">("tools");
 
 
 
@@ -484,30 +484,37 @@ function DashboardBody() {
     .filter((t) => !t.adminOnly || isAdminOnly)
     .sort((a, b) => a.label.localeCompare(b.label, "en-GB", { sensitivity: "base" }));
 
+  const tabs = ([
+    ["tools", "Owner tools", false],
+    ["staff-pins", "Staff PINs", true],
+    ["backup-codes", "Backup codes", true],
+    ["theme", "Theme", false],
+  ] as const).filter(([, , pinOnly]) => !pinOnly || canSeePins);
+
+  const letters = Array.from(new Set(tools.map((t) => t.label[0].toUpperCase())));
+
+  const jumpTo = (letter: string) => {
+    document.getElementById(`tool-letter-${letter}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   return (
     <div className="space-y-6">
-      {canSeePins ? (
-        <div className="inline-flex p-1 rounded-xl bg-surface-2 border border-border">
-          {([
-            ["tools", "Owner tools"],
-            ["staff-pins", "Staff PINs"],
-            ["backup-codes", "Backup codes"],
-          ] as const).map(([key, label]) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => setTab(key)}
-              className={`px-4 h-9 rounded-lg text-sm font-medium transition-colors ${
-                tab === key
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
-      ) : null}
+      <div className="inline-flex flex-wrap p-1 rounded-xl bg-surface-2 border border-border">
+        {tabs.map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setTab(key)}
+            className={`px-4 h-9 rounded-lg text-sm font-medium transition-colors ${
+              tab === key
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
 
       {tab === "staff-pins" && canSeePins ? (
         <StaffPinAdminCard />
@@ -515,18 +522,25 @@ function DashboardBody() {
         <div className="max-w-2xl">
           <RecoveryCodes />
         </div>
+      ) : tab === "theme" ? (
+        <div className="max-w-2xl">
+          <ThemePickerCard />
+        </div>
       ) : (
-        <>
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px] items-start">
+    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px] items-start">
       <section className="min-w-0">
         <h2 className="font-display text-sm uppercase tracking-wide text-muted-foreground mb-3">Owner tools</h2>
         <div className="grid sm:grid-cols-2 2xl:grid-cols-3 gap-3">
-          {tools.map((t) => (
+          {tools.map((t, i) => {
+            const letter = t.label[0].toUpperCase();
+            const first = i === 0 || tools[i - 1].label[0].toUpperCase() !== letter;
+            return (
             <Link
               key={`${t.to}-${t.label}`}
+              id={first ? `tool-letter-${letter}` : undefined}
               to={t.to}
               search={t.search as any}
-              className="group relative rounded-2xl border border-border bg-surface-1 p-4 hover:border-primary hover:shadow-glow transition-all overflow-hidden"
+              className="group relative scroll-mt-4 rounded-2xl border border-border bg-surface-1 p-4 hover:border-primary hover:shadow-glow transition-all overflow-hidden"
             >
               <div className="absolute inset-x-0 top-0 h-1 bg-gradient-accent opacity-0 group-hover:opacity-100 transition-opacity" />
               <div className="flex items-center gap-3 mb-2">
@@ -537,16 +551,43 @@ function DashboardBody() {
               </div>
               <p className="text-xs text-muted-foreground">{t.desc}</p>
             </Link>
-          ))}
+            );
+          })}
         </div>
       </section>
 
       <aside className="min-w-0 space-y-4 xl:sticky xl:top-4 xl:self-start">
-        <ThemePickerCard />
+        <div className="rounded-2xl border border-border bg-surface-1 p-4">
+          <h3 className="font-display text-sm uppercase tracking-wide text-muted-foreground mb-3">Tools A–Z</h3>
+          <div className="flex flex-wrap gap-1.5 mb-3">
+            {letters.map((l) => (
+              <button
+                key={l}
+                type="button"
+                onClick={() => jumpTo(l)}
+                className="size-8 rounded-lg bg-surface-2 border border-border text-sm font-bold hover:bg-primary hover:text-primary-foreground transition-colors"
+              >
+                {l}
+              </button>
+            ))}
+          </div>
+          <ul className="max-h-[50vh] overflow-y-auto space-y-0.5 pr-1">
+            {tools.map((t) => (
+              <li key={`az-${t.to}-${t.label}`}>
+                <Link
+                  to={t.to}
+                  search={t.search as any}
+                  className="block rounded-md px-2 py-1 text-sm text-muted-foreground hover:bg-surface-2 hover:text-foreground truncate"
+                >
+                  {t.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
         <VpnBackfillCard />
       </aside>
     </div>
-        </>
       )}
     </div>
   );
