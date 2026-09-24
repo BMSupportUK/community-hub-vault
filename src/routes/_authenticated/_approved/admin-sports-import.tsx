@@ -223,6 +223,7 @@ function AdminSportsImportPage() {
   const [combiningEspn, setCombiningEspn] = useState(false);
   const [mergeChannels, setMergeChannels] = useState<string[]>([]);
   const [newChannel, setNewChannel] = useState("");
+  const [showChannels, setShowChannels] = useState(false);
   const [savingChannels, setSavingChannels] = useState(false);
   useEffect(() => {
     getMergeChannelsFn()
