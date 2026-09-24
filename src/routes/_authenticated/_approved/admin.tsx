@@ -486,8 +486,32 @@ function DashboardBody() {
 
   return (
     <div className="space-y-6">
-      {isAdminOnly || hasRole("management") ? <StaffPinAdminCard /> : null}
+      {canSeePins ? (
+        <div className="inline-flex p-1 rounded-xl bg-surface-2 border border-border">
+          {([
+            ["tools", "Owner tools"],
+            ["staff-pins", "Staff PINs"],
+          ] as const).map(([key, label]) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setTab(key)}
+              className={`px-4 h-9 rounded-lg text-sm font-medium transition-colors ${
+                tab === key
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      ) : null}
 
+      {tab === "staff-pins" && canSeePins ? (
+        <StaffPinAdminCard />
+      ) : (
+        <>
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px] items-start">
       <section className="min-w-0">
         <h2 className="font-display text-sm uppercase tracking-wide text-muted-foreground mb-3">Owner tools</h2>
