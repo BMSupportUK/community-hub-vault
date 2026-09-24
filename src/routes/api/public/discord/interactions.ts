@@ -120,9 +120,11 @@ export const Route = createFileRoute("/api/public/discord/interactions")({
             }
 
             const sections = splitListingSections(text);
-            // ESPN+ posts always stay together as a single import.
-            const isEspnPlus = /espn\s*(\+|plus)/i.test(text);
-            const blocks = sections.length > 1 && !isEspnPlus
+            // Only posts that list numbered ESPN+ channels ("ESPN+ 01",
+            // "ESPN PLUS 2", ...) stay together as a single import. Any other
+            // post mentioning ESPN+ still splits per section like normal.
+            const isNumberedEspnPlus = /espn\s*(?:\+|plus)\s*\d{1,3}\b/i.test(text);
+            const blocks = sections.length > 1 && !isNumberedEspnPlus
               ? sections.map((section) => ({ title: section.name, raw: `${section.name}\n${section.raw.trim()}` }))
               : [{ title: postHeading(text), raw: text.slice(0, 50_000) }];
             const rows = blocks.map((block, index) => ({
