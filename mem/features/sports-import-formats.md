@@ -5,6 +5,7 @@ type: feature
 ---
 Sports imports must keep channel labels separate from event names.
 Event titles must use `&` as the matchup separator. Normalize imported `x`, `v`, `v.` and `vs` separators to `&` while leaving channels separate.
+Any event without its own day or date always uses today's UK date. Never infer tomorrow merely because its clock is earlier than the previous event; only an explicit day/date may move it.
 
 Known formats:
 - Tennis TV / MLS style: `Event @ Sep 23 9:30 PM - Competition :Channel 01` means event title is before `@`, optional competition is appended, and the text after `:` is the channel.
