@@ -237,7 +237,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     { to: "/tickets", label: "Tickets", icon: Ticket, show: !hasRole("moderator") },
     { to: "/shop", label: "Shop", icon: ShoppingCart, show: true },
     { to: "/install-guides", label: "Install Guides & BM App Store", icon: Wrench, show: true },
-    { to: "/sports-guides", label: "Sports guides", icon: SportsGuideIcon, show: true, search: { welcome: "true" }, resetSportsGuides: true },
+    { to: "/sports-guides", label: "Sports guides", icon: SportsGuideIcon, show: true, resetSportsGuides: true },
     { to: "/knowledge-base", label: "Knowledge base", icon: BookOpen, show: true },
     { to: "/what-to-watch", label: "What to Watch", icon: Popcorn, show: true },
     { to: "/leaderboard", label: "Referrals", icon: Trophy, show: true },
@@ -391,6 +391,8 @@ function RailIcon({
   params?: Record<string, string>;
   resetSportsGuides?: boolean;
 }) {
+  const navigate = useNavigate();
+
   return (
     <TooltipProvider delayDuration={150}>
       <Tooltip>
@@ -402,13 +404,17 @@ function RailIcon({
             aria-label={label}
              title={label}
             draggable={false}
-            onClick={() => {
+            onClick={(event) => {
               if (!resetSportsGuides) return;
+              event.preventDefault();
               try {
                 sessionStorage.removeItem("sports-guides-active-tab");
                 sessionStorage.removeItem("sports-guides-active-cat");
               } catch { /* ignore */ }
-              window.dispatchEvent(new Event("sports-guides:show-welcome"));
+              void navigate({
+                to: "/sports-guides",
+                search: { welcome: true, reset: String(Date.now()) },
+              });
             }}
             onDragStart={draggable ? undefined : (e) => e.preventDefault()}
             className={cn(
