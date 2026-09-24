@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { ArrowLeft, Loader2, Sparkles, Send, Trash2, Inbox, Clock, Check, Scissors } from "lucide-react";
+import { ArrowLeft, Loader2, Sparkles, Send, Trash2, Inbox, Clock, Check, Scissors, Settings2, X } from "lucide-react";
 import { firstClockIn, firstDateIn, parseClockTime, toSingleZoneTime, type TimeZoneChoice } from "@/lib/import-time";
 import { parseSportsListingBlock, splitListingSections } from "@/lib/sports-listing-format";
 import {
@@ -21,6 +21,8 @@ import {
   splitQueueItem,
   splitQueueItemByProvider,
   combineQueueItems,
+  getMergeChannels,
+  saveMergeChannels,
   approveAllSuggested,
   listCategoriesWithSubs,
   listGuidesInCategory,
