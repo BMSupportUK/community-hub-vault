@@ -120,7 +120,9 @@ export const Route = createFileRoute("/api/public/discord/interactions")({
             }
 
             const sections = splitListingSections(text);
-            const blocks = sections.length > 1
+            // ESPN+ posts always stay together as a single import.
+            const isEspnPlus = /espn\s*(\+|plus)/i.test(text);
+            const blocks = sections.length > 1 && !isEspnPlus
               ? sections.map((section) => ({ title: section.name, raw: `${section.name}\n${section.raw.trim()}` }))
               : [{ title: postHeading(text), raw: text.slice(0, 50_000) }];
             const rows = blocks.map((block, index) => ({
