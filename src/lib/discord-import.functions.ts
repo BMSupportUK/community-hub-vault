@@ -370,10 +370,9 @@ export const queuePastedPost = createServerFn({ method: "POST" })
     await assertStaff(supabase, userId);
     const text = data.text.trim();
     if (!text) throw new Error("Nothing to queue");
-    const sections = splitListingSections(text);
-    const blocks = sections.length > 1
-      ? sections.map((section) => ({ title: section.name, raw: `${section.name}\n${section.raw.trim()}` }))
-      : [{ title: postHeading(text), raw: text }];
+    // Never auto-split: a pasted post arrives as ONE pending import. Staff
+    // decide whether to split it, in the importer.
+    const blocks = [{ title: postHeading(text), raw: text }];
     const sourceRef = `paste:${userId}:${Date.now()}`;
     const rows = blocks.map((block, index) => ({
       raw_text: block.raw,
