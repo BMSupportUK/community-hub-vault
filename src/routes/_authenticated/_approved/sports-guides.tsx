@@ -162,6 +162,8 @@ function SportsGuidesPage() {
       setSubFilter(null);
       setSearch("");
       setOpenGroups([]);
+      setSubDialogFor(null);
+      setOpenSubcategoryPopupFor(null);
       scrollerRef.current?.scrollTo({ top: 0, behavior: "auto" });
       try {
         sessionStorage.removeItem("sports-guides-active-tab");
@@ -180,6 +182,8 @@ function SportsGuidesPage() {
       setSubFilter(null);
       setSearch("");
       setOpenGroups([]);
+      setSubDialogFor(null);
+      setOpenSubcategoryPopupFor(null);
       scrollerRef.current?.scrollTo({ top: 0, behavior: "auto" });
     };
     window.addEventListener("sports-guides:show-welcome", showWelcome);
