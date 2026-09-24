@@ -13,3 +13,5 @@ Known formats:
 - Named provider timestamp style: `wnba: 1 name: New York Liberty x Atlanta Dream start:...` means `WNBA 1` is the channel and the `name:` value is the event.
 
 Before claiming an import fix, verify the parser with Bun against the real post format and check the stored guide body in the database.
+- Channel-first pipe style: `Rugby Pass 01 | Ultimate Sevens Rugby - London Grand Final 17:30` → channel before `|`, event after, trailing clock is the time. `VIP | Provider` lines are headings, not events.
+Every new format: add it here, Bun-test raw AND round-trip, then repair the draft — never make the user report it twice.

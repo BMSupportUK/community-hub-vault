@@ -604,7 +604,17 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
     .replace(/<[^>]+>/g, " ")
     .split("\n")
     .map(cleanLine)
-    .filter(Boolean);
+    .filter(Boolean)
+    // "Rugby Pass 01 | Ultimate Sevens Rugby - London Grand Final 17:30"
+    // (channel | event trailing-time) → time / event / channel rows.
+    .flatMap((line) => {
+      const m = line.match(
+        new RegExp(String.raw`^([A-Za-z][A-Za-z+&' ]*?\s\d{1,3}(?:\s*HD)?)\s*\|\s*(.+?)\s+(${TIME_SOURCE})\s*$`, "i"),
+      );
+      return m ? [m[3], m[2].trim(), m[1].trim()] : [line];
+    })
+    // "VIP | Rugby Pass" headers are post headings, not events.
+    .filter((line) => !/^vip\s*\|/i.test(line));
 
   const events: SportsListingEvent[] = [];
   let currentDate: string | null = null;
