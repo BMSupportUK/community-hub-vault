@@ -482,6 +482,7 @@ function DashboardBody() {
 
   return (
     <div className="space-y-6">
+      {isAdminOnly || hasRole("management") ? <StaffPinAdminCard /> : null}
 
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px] items-start">
       <section className="min-w-0">
