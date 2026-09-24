@@ -207,12 +207,14 @@ const ImportInput = z.object({
 });
 
 function buildBody(ev: { time?: string | null; date?: string | null; channels?: string[]; raw?: string }, sourceZone?: "gmt" | "et" | null) {
+  // Flosports (Flo College, Flo Racing…) always publishes in US Eastern time.
+  const zone = sourceZone ?? (/\bflo\s?(?:college|racing|sports|football|hockey|wrestling)\b/i.test(ev.raw ?? "") ? "et" : null);
   const formatted = formatSportsListingBlock({
     raw: ev.raw,
     date: ev.date,
     time: ev.time,
     channels: ev.channels,
-    sourceZone,
+    sourceZone: zone,
   });
   if (formatted) return formatted;
 
