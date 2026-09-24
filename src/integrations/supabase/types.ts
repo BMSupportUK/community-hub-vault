@@ -4969,6 +4969,36 @@ export type Database = {
         }
         Relationships: []
       }
+      staff_pin_reset_requests: {
+        Row: {
+          id: string
+          reason: string | null
+          requested_at: string
+          resolved_at: string | null
+          resolved_by: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          reason?: string | null
+          requested_at?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          reason?: string | null
+          requested_at?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       staff_quick_replies: {
         Row: {
           body: string
@@ -5659,21 +5689,30 @@ export type Database = {
       vault_pins: {
         Row: {
           created_at: string
+          issued_at: string | null
+          issued_by: string | null
           must_change: boolean
+          pin_enc: string | null
           pin_hash: string
           updated_at: string
           user_id: string
         }
         Insert: {
           created_at?: string
+          issued_at?: string | null
+          issued_by?: string | null
           must_change?: boolean
+          pin_enc?: string | null
           pin_hash: string
           updated_at?: string
           user_id: string
         }
         Update: {
           created_at?: string
+          issued_at?: string | null
+          issued_by?: string | null
           must_change?: boolean
+          pin_enc?: string | null
           pin_hash?: string
           updated_at?: string
           user_id?: string
@@ -6734,6 +6773,15 @@ export type Database = {
           p_months: number
         }
         Returns: string
+      }
+      staff_pin_check: {
+        Args: { p_pin: string; p_user: string }
+        Returns: boolean
+      }
+      staff_pin_reveal: { Args: { p_user: string }; Returns: string }
+      staff_pin_set: {
+        Args: { p_by: string; p_pin: string; p_user: string }
+        Returns: undefined
       }
       submit_appeal: { Args: { p_reason: string }; Returns: Json }
       submit_content_report: {

@@ -113,6 +113,13 @@
       "when": 1790187064316,
       "tag": "0015_prune_sports_blog_body_without_unread",
       "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1790239946299,
+      "tag": "0016_staff_pins",
+      "breakpoints": true
     }
   ]
 }
