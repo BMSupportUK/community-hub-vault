@@ -1025,6 +1025,10 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
       pillsRow.appendChild(secondPill);
     }
 
+    // Event name and channels sit beneath the start time.
+    header.appendChild(nameCell);
+    block.appendChild(header);
+
     // Keep transformed content to two text lines plus the time pills.
   }
 
