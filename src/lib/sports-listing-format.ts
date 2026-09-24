@@ -240,6 +240,14 @@ export function isLikelyChannelLabel(value: string): boolean {
   if (!text || text.length > 70) return false;
   if (/\b(?:v|vs|versus)\b/i.test(text)) return false;
   if (/\b(?:league|cup|trophy|championship|premier|serie|liga|bundesliga)\b/i.test(text) && !/\d/.test(text)) return false;
+  // Provider feeds frequently use an unfamiliar name followed by a channel
+  // number ("Coupang 1", "MonoMax 7", "Ten 2"). Treat that compact shape as
+  // a channel without maintaining a provider allow-list. Exclude common event
+  // labels so titles such as "Formula 1" can still sit above their start time.
+  if (
+    /^(?:[A-Za-z][A-Za-z0-9+.'-]*\s+){1,3}\d{1,3}$/i.test(text) &&
+    !/\b(?:formula|round|race|practice|qualifying|session|stage|day|match|game)\b/i.test(text)
+  ) return true;
   if (/^(?:EFL)\s*\d{1,3}\b/i.test(text)) return true;
   if (/^(?:MLB|NHL|MLS|WNBA|NBA|NFL)\s*\d{1,3}\b/i.test(text)) return true;
   if (/\b(?:sky|tnt|bt|espn|dazn|cbs|fox|nbc|abc|itv|bbc|bein|viaplay|premier\s+sports|eurosport|fubo|peacock|paramount|amazon|apple|arena|supersport|sportsnet|tsn|optus|stan|setanta|flow|flo|racing\s*tv|channel|sports?|hd|uhd|feed)\b/i.test(text)) return true;
