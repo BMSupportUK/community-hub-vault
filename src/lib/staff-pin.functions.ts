@@ -132,7 +132,7 @@ export const issueStaffPin = createServerFn({ method: "POST" })
       kind: "mention",
       title: `${by} issued you a new staff PIN`,
       body: "Open your profile's Staff PIN tab and enter your password to view it.",
-      link_path: "/profile?tab=staff-pin",
+      link_path: "/profile",
       source_type: "staff_pin",
     } as any);
     return { ok: true };
