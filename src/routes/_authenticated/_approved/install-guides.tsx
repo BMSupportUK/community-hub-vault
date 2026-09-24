@@ -1108,7 +1108,7 @@ function IllustratedHero({ image, title, text, children }: { image: string; titl
           <h2 className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-4xl font-bold text-foreground leading-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]">{title}</h2>
           <p className="mt-4 lg:mt-2 text-base sm:text-lg lg:text-base text-foreground/90 drop-shadow">{text}</p>
         </div>
-        <div className="mt-6 lg:mt-4 min-h-0 flex-1 overflow-y-auto rounded-2xl border border-border bg-surface/80 p-4 shadow-lg backdrop-blur-md sm:p-6">
+        <div className="mt-6 lg:mt-4 min-h-0 flex-1 overflow-y-auto rounded-2xl border border-border bg-surface/80 p-4 shadow-lg backdrop-blur-md sm:p-6 lg:p-4">
           {children}
         </div>
       </div>
