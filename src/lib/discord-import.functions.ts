@@ -852,3 +852,49 @@ export const combineQueueItems = createServerFn({ method: "POST" })
     if (delErr) throw new Error(delErr.message);
     return { combined: items.length, id: first.id };
   });
+
+// ── Mergeable channel names (Merge Listings button) ───────────────
+// Staff-configurable list of channel/provider names whose split queue
+// posts can be joined back into a single import. Stored in app_settings
+// under the "merge_channels" key: { channels: string[] }.
+
+const MERGE_CHANNELS_KEY = "merge_channels";
+
+export const getMergeChannels = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { supabase, userId } = context;
+    await assertStaff(supabase, userId);
+    const { data, error } = await supabaseAdmin
+      .from("app_settings")
+      .select("value")
+      .eq("key", MERGE_CHANNELS_KEY)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    const channels = Array.isArray((data as any)?.value?.channels)
+      ? (data as any).value.channels.map((c: unknown) => String(c)).filter((c: string) => c.trim())
+      : [];
+    return { channels };
+  });
+
+export const saveMergeChannels = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ channels: z.array(z.string().trim().min(1).max(60)).max(50) }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertStaff(supabase, userId);
+    const seen = new Set<string>();
+    const channels = data.channels.filter((c) => {
+      const k = c.toLowerCase();
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+    const { error } = await supabaseAdmin
+      .from("app_settings")
+      .upsert({ key: MERGE_CHANNELS_KEY, value: { channels }, updated_at: new Date().toISOString() } as any);
+    if (error) throw new Error(error.message);
+    return { channels };
+  });
