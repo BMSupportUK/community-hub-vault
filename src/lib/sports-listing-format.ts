@@ -16,7 +16,9 @@ type ListingInput = {
 };
 
 const ZONE = "GMT|UTC|UK|BST|ET|EST|EDT|CT|CST|CDT|MT|MST|MDT|PT|PST|PDT|CET|CEST|AEST|AEDT|JST|IST";
-const TIME_SOURCE = String.raw`\d{1,2}(?::|\.)\d{2}\s*(?:am|pm|a\.m\.|p\.m\.)?|\d{1,2}\s*(?:am|pm|a\.m\.|p\.m\.)`;
+// Posts are typed by hand, so tolerate the common am/pm typos ("12:15an",
+// "7:30pn") when the meridiem follows a hh:mm clock.
+const TIME_SOURCE = String.raw`\d{1,2}(?::|\.)\d{2}\s*(?:am|pm|an|pn|a\.m\.|p\.m\.)?|\d{1,2}\s*(?:am|pm|a\.m\.|p\.m\.)`;
 const TIME_WITH_ZONE_SOURCE = String.raw`(?:${TIME_SOURCE})(?:\s*(?:${ZONE}))?`;
 // Accept the short labels providers actually use (TUE/TUES, WED/WEDS,
 // THU/THURS) as well as full weekday names.
