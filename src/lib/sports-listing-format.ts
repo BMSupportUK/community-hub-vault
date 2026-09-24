@@ -632,6 +632,7 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
       }
       flush();
       current = detected;
+      lastChannelWasPlain = null;
       // A title-above-time layout is specific to provider slot rows such as
       // "23-09-2026 8:30 PM until ...". For ordinary and dual-zone listings,
       // the line above is commonly the post heading (for example
