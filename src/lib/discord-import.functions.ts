@@ -801,3 +801,54 @@ export const listGuidesInCategory = createServerFn({ method: "POST" })
     }
     return { guides };
   });
+
+/**
+ * Merge several pending queue posts (e.g. an ESPN+ listing that Discord
+ * delivered as two messages) into one import. Posts are joined oldest first
+ * so an event name at the end of one message stays directly above the time
+ * line that opens the next message.
+ */
+export const combineQueueItems = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ ids: z.array(z.string().uuid()).min(2).max(200) }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertStaff(supabase, userId);
+    const { data: rows, error } = await supabaseAdmin
+      .from("discord_import_queue")
+      .select("id, raw_text, parsed_event, created_at, source_ref")
+      .in("id", data.ids)
+      .eq("status", "pending")
+      .order("created_at", { ascending: true })
+      .order("source_ref", { ascending: true });
+    if (error) throw new Error(error.message);
+    const items = rows ?? [];
+    if (items.length < 2) throw new Error("Need at least two pending listings to combine");
+    const texts = items.map((r: any) => String(r.parsed_event?.raw ?? r.raw_text ?? "").replace(/\s+$/, ""));
+    const heading = (texts[0].split("\n").find((l) => l.trim()) ?? "").trim();
+    const merged = texts
+      .map((t, i) => {
+        if (i === 0 || !heading) return t;
+        const lines = t.split("\n");
+        const idx = lines.findIndex((l) => l.trim());
+        if (idx >= 0 && lines[idx].trim() === heading) lines.splice(idx, 1);
+        return lines.join("\n").replace(/^\s*\n/, "");
+      })
+      .join("\n")
+      .slice(0, 50_000);
+    const first: any = items[0];
+    const { error: upErr } = await supabaseAdmin
+      .from("discord_import_queue")
+      .update({
+        raw_text: merged,
+        parsed_event: { ...(first.parsed_event ?? {}), raw: merged, title: "ESPN+" },
+      } as any)
+      .eq("id", first.id);
+    if (upErr) throw new Error(upErr.message);
+    const rest = items.slice(1).map((r: any) => r.id);
+    const { error: delErr } = await supabaseAdmin.from("discord_import_queue").delete().in("id", rest);
+    if (delErr) throw new Error(delErr.message);
+    return { combined: items.length, id: first.id };
+  });
