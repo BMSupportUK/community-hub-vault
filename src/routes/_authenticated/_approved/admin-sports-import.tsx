@@ -450,6 +450,44 @@ function AdminSportsImportPage() {
               </Button>
             </div>
 
+            {showChannels && (
+              <Card className="p-3 space-y-2">
+                <p className="text-sm font-medium">Merge channels</p>
+                <p className="text-xs text-muted-foreground">
+                  Pending posts mentioning any of these names are picked up by the Merge Listings button and joined into one import.
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {mergeChannels.length === 0 && <span className="text-xs text-muted-foreground">No channels yet.</span>}
+                  {mergeChannels.map((c) => (
+                    <span key={c} className="inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs">
+                      {c}
+                      <button
+                        type="button"
+                        className="text-muted-foreground hover:text-foreground"
+                        onClick={() => onRemoveChannel(c)}
+                        disabled={savingChannels}
+                        aria-label={`Remove ${c}`}
+                      >
+                        <X className="size-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <Input
+                    value={newChannel}
+                    onChange={(e) => setNewChannel(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && onAddChannel()}
+                    placeholder="Channel name, e.g. ESPN+"
+                    className="h-8 max-w-xs text-sm"
+                  />
+                  <Button size="sm" variant="secondary" onClick={onAddChannel} disabled={savingChannels || !newChannel.trim()}>
+                    {savingChannels ? <Loader2 className="size-4 animate-spin" /> : "Add"}
+                  </Button>
+                </div>
+              </Card>
+            )}
+
             <div className="flex flex-col-reverse gap-4 lg:flex-row lg:items-start">
               <div className="min-w-0 flex-1 space-y-3">
                 {loadingQueue ? (
