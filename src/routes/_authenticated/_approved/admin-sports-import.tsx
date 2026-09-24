@@ -434,7 +434,10 @@ function AdminSportsImportPage() {
               <div className="flex-1" />
               <Button size="sm" variant="outline" onClick={onCombineEspn} disabled={combiningEspn || espnItems.length < 2}>
                 {combiningEspn ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
-                Combine ESPN listings ({espnItems.length})
+                Merge Listings ({espnItems.length})
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => setShowChannels((v) => !v)} title="Manage merge channels">
+                <Settings2 className="size-4" />
               </Button>
               <Button size="sm" variant="destructive" onClick={onDeleteAll} disabled={deletingAll || visibleQueue.length === 0}>
                 {deletingAll ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
