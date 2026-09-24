@@ -79,6 +79,8 @@ export function BankTransferAdminCard() {
   }, [isOwner]);
 
   if (!isOwner) return null;
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+
 
   const doSave = async () => {
     setBusy(true);
@@ -170,7 +172,20 @@ export function BankTransferAdminCard() {
         </div>
       ) : (
         <>
-          <div className="space-y-2">
+          <div className="flex flex-wrap gap-2">
+            {([["details", "Bank details"], ["customers", `Bank transfer customers (${grants.length})`]] as const).map(([k, label]) => (
+              <button
+                key={k}
+                type="button"
+                onClick={() => setView(k)}
+                className={`px-4 py-1.5 rounded-full text-sm font-medium border transition ${view === k ? "bg-primary text-primary-foreground border-primary" : "bg-surface-2 border-border text-muted-foreground hover:text-foreground"}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          {view === "details" && (
+          <div className="space-y-2 max-w-2xl">
             <input
               className={input}
               placeholder="Account name"
@@ -226,8 +241,10 @@ export function BankTransferAdminCard() {
               Save bank details
             </button>
           </div>
+          )}
 
-          <div className="pt-2 border-t border-border space-y-2">
+          {view === "customers" && (
+          <div className="space-y-2">
             <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
               Customers allowed to pay by bank transfer
             </div>
@@ -265,13 +282,13 @@ export function BankTransferAdminCard() {
             {grants.length === 0 ? (
               <p className="text-xs text-muted-foreground">No customers have bank transfer access yet.</p>
             ) : (
-              <ul className="space-y-2">
+              <ul className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 w-full">
                 {grants.map((g) => {
                   const expired = g.expires_at ? new Date(g.expires_at) < new Date() : false;
                   return (
                     <li
                       key={g.id}
-                      className="flex items-center justify-between gap-2 rounded-lg border border-border bg-surface-2 px-3 py-2"
+                      className="flex items-center justify-between gap-2 rounded-xl border border-border bg-surface-2 p-4"
                     >
                       <div className="min-w-0">
                         <div className="text-sm font-medium truncate">{names[g.user_id] ?? "Unknown"}</div>
@@ -295,6 +312,7 @@ export function BankTransferAdminCard() {
               </ul>
             )}
           </div>
+          )}
         </>
       )}
     </section>
