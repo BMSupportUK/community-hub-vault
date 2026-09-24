@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import { ArrowLeft, Loader2, Sparkles, Send, Trash2, Inbox, Clock, Check, Scissors } from "lucide-react";
+import { ArrowLeft, Loader2, Sparkles, Send, Trash2, Inbox, Clock, Check, Scissors, Settings2, X } from "lucide-react";
 import { firstClockIn, firstDateIn, parseClockTime, toSingleZoneTime, type TimeZoneChoice } from "@/lib/import-time";
 import { parseSportsListingBlock, splitListingSections } from "@/lib/sports-listing-format";
 import {
@@ -21,6 +21,8 @@ import {
   splitQueueItem,
   splitQueueItemByProvider,
   combineQueueItems,
+  getMergeChannels,
+  saveMergeChannels,
   approveAllSuggested,
   listCategoriesWithSubs,
   listGuidesInCategory,
@@ -216,30 +218,87 @@ function AdminSportsImportPage() {
   };
 
   const combineFn = useServerFn(combineQueueItems);
+  const getMergeChannelsFn = useServerFn(getMergeChannels);
+  const saveMergeChannelsFn = useServerFn(saveMergeChannels);
   const [combiningEspn, setCombiningEspn] = useState(false);
+  const [mergeChannels, setMergeChannels] = useState<string[]>([]);
+  const [newChannel, setNewChannel] = useState("");
+  const [showChannels, setShowChannels] = useState(false);
+  const [savingChannels, setSavingChannels] = useState(false);
+  useEffect(() => {
+    getMergeChannelsFn()
+      .then((r) => setMergeChannels(r.channels))
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const channelMatchers = useMemo(
+    () =>
+      mergeChannels
+        .map((c) => c.trim())
+        .filter(Boolean)
+        .map((c) => ({ name: c, re: new RegExp(c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i") })),
+    [mergeChannels],
+  );
+  const matchChannel = (q: QueueItem) => {
+    const text = String(q.parsed_event?.raw ?? q.raw_text ?? "");
+    return channelMatchers.find((c) => c.re.test(text))?.name ?? null;
+  };
   const espnItems = useMemo(
     () =>
       queue
-        .filter((q) => q.status === "pending" && /espn/i.test(String(q.parsed_event?.raw ?? q.raw_text ?? "")))
+        .filter((q) => q.status === "pending" && matchChannel(q) !== null)
         .sort((a, b) => a.created_at.localeCompare(b.created_at)),
-    [queue],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [queue, channelMatchers],
   );
   const onCombineEspn = async () => {
     if (espnItems.length < 2) return;
     const list = espnItems
       .map((q, i) => `${i + 1}. ${String(q.parsed_event?.raw ?? q.raw_text ?? "").trim().split("\n").filter((l) => l.trim()).slice(0, 2).join(" / ").slice(0, 90)}`)
       .join("\n");
-    if (!window.confirm(`Are all the ESPN listings in the queue?\n\n${list}\n\nThese ${espnItems.length} posts will be joined (oldest first) into 1 import.`)) return;
+    if (!window.confirm(`Are all the listings in the queue?\n\n${list}\n\nThese ${espnItems.length} posts will be joined (oldest first) into 1 import.`)) return;
     setCombiningEspn(true);
     try {
-      const r = await combineFn({ data: { ids: espnItems.map((q) => q.id) } });
-      toast.success(`Combined ${r.combined} ESPN listings into 1 import`);
+      const title = matchChannel(espnItems[0]) ?? "ESPN+";
+      const r = await combineFn({ data: { ids: espnItems.map((q) => q.id), title } });
+      toast.success(`Merged ${r.combined} listings into 1 import`);
       clearSelection();
       refreshQueue(true);
     } catch (e: any) {
-      toast.error(e.message ?? "Combine failed");
+      toast.error(e.message ?? "Merge failed");
     } finally {
       setCombiningEspn(false);
+    }
+  };
+  const onAddChannel = async () => {
+    const name = newChannel.trim();
+    if (!name) return;
+    if (mergeChannels.some((c) => c.toLowerCase() === name.toLowerCase())) {
+      toast.error("That channel is already listed");
+      return;
+    }
+    setSavingChannels(true);
+    try {
+      const r = await saveMergeChannelsFn({ data: { channels: [...mergeChannels, name] } });
+      setMergeChannels(r.channels);
+      setNewChannel("");
+      toast.success(`Added "${name}" to merge channels`);
+    } catch (e: any) {
+      toast.error(e.message ?? "Save failed");
+    } finally {
+      setSavingChannels(false);
+    }
+  };
+  const onRemoveChannel = async (name: string) => {
+    setSavingChannels(true);
+    try {
+      const r = await saveMergeChannelsFn({ data: { channels: mergeChannels.filter((c) => c !== name) } });
+      setMergeChannels(r.channels);
+      toast.success(`Removed "${name}"`);
+    } catch (e: any) {
+      toast.error(e.message ?? "Save failed");
+    } finally {
+      setSavingChannels(false);
     }
   };
 
@@ -376,7 +435,10 @@ function AdminSportsImportPage() {
               <div className="flex-1" />
               <Button size="sm" variant="outline" onClick={onCombineEspn} disabled={combiningEspn || espnItems.length < 2}>
                 {combiningEspn ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
-                Combine ESPN listings ({espnItems.length})
+                Merge Listings ({espnItems.length})
+              </Button>
+              <Button size="sm" variant="ghost" onClick={() => setShowChannels((v) => !v)} title="Manage merge channels">
+                <Settings2 className="size-4" />
               </Button>
               <Button size="sm" variant="destructive" onClick={onDeleteAll} disabled={deletingAll || visibleQueue.length === 0}>
                 {deletingAll ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
@@ -387,6 +449,44 @@ function AdminSportsImportPage() {
                 Approve all suggested ({suggestedCount})
               </Button>
             </div>
+
+            {showChannels && (
+              <Card className="p-3 space-y-2">
+                <p className="text-sm font-medium">Merge channels</p>
+                <p className="text-xs text-muted-foreground">
+                  Pending posts mentioning any of these names are picked up by the Merge Listings button and joined into one import.
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {mergeChannels.length === 0 && <span className="text-xs text-muted-foreground">No channels yet.</span>}
+                  {mergeChannels.map((c) => (
+                    <span key={c} className="inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs">
+                      {c}
+                      <button
+                        type="button"
+                        className="text-muted-foreground hover:text-foreground"
+                        onClick={() => onRemoveChannel(c)}
+                        disabled={savingChannels}
+                        aria-label={`Remove ${c}`}
+                      >
+                        <X className="size-3" />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+                <div className="flex gap-2">
+                  <Input
+                    value={newChannel}
+                    onChange={(e) => setNewChannel(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && onAddChannel()}
+                    placeholder="Channel name, e.g. ESPN+"
+                    className="h-8 max-w-xs text-sm"
+                  />
+                  <Button size="sm" variant="secondary" onClick={onAddChannel} disabled={savingChannels || !newChannel.trim()}>
+                    {savingChannels ? <Loader2 className="size-4 animate-spin" /> : "Add"}
+                  </Button>
+                </div>
+              </Card>
+            )}
 
             <div className="flex flex-col-reverse gap-4 lg:flex-row lg:items-start">
               <div className="min-w-0 flex-1 space-y-3">
