@@ -872,3 +872,28 @@ export function pruneStaleSportsListingHtml(
     formatSportsListingEvents(sortSportsListingEvents(kept), { channels: [] }),
   );
 }
+
+/**
+ * The date written in a post's headline (e.g. "Thursday 24 September" above
+ * the listings). Used so split-off listings keep the original post's date.
+ */
+export function headlineListingDate(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  const lines = decodeListingEntities(raw)
+    .replace(/<br\s*\/?\s*>/gi, "\n")
+    .replace(/<[^>]+>/g, " ")
+    .split("\n")
+    .map(cleanLine)
+    .filter(Boolean)
+    .slice(0, 6);
+  for (const line of lines) {
+    const date = listingDateFromLine(line);
+    if (date) return date;
+  }
+  return null;
+}
+
+/** True when a block already carries its own date line. */
+export function listingBlockHasDate(raw: string): boolean {
+  return raw.split("\n").map(cleanLine).some((line) => !!line && listingDateFromLine(line) !== null);
+}

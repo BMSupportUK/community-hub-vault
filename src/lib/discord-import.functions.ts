@@ -10,6 +10,8 @@ import {
   plainListingToHtml,
   sortSportsListingEvents,
   splitListingSections,
+  headlineListingDate,
+  listingBlockHasDate,
 } from "./sports-listing-format";
 
 const STAFF_ROLES = ["admin", "management", "moderator"] as const;
@@ -414,7 +416,8 @@ export const splitQueueItem = createServerFn({ method: "POST" })
     if (item.status !== "pending") throw new Error("Already resolved");
 
     const raw = String((item.parsed_event as any)?.raw ?? item.raw_text ?? "");
-    const events = sortSportsListingEvents(parseSportsListingBlock(raw));
+    const headDate = headlineListingDate(raw);
+    const events = sortSportsListingEvents(parseSportsListingBlock(raw)).map((e) => ({ ...e, date: e.date || headDate }));
     if (!events.length) throw new Error("Couldn't read any events in this post");
 
     const rows = events.map((e, i) => ({
@@ -474,10 +477,14 @@ export const splitQueueItemByProvider = createServerFn({ method: "POST" })
     const sections = splitListingSections(raw);
     if (sections.length < 2) throw new Error("Only one listing name found in this post");
 
+    const headDate = headlineListingDate(raw);
     const rows = sections.map((section, i) => {
-      const events = sortSportsListingEvents(parseSportsListingBlock(section.raw));
+      const sectionRaw = headDate && !listingBlockHasDate(section.raw)
+        ? `${headDate}\n${section.raw.trim()}`
+        : section.raw.trim();
+      const events = sortSportsListingEvents(parseSportsListingBlock(sectionRaw));
       const first = events[0];
-      const body = `${section.name}\n${section.raw.trim()}`;
+      const body = `${section.name}\n${sectionRaw}`;
       return {
         raw_text: body,
         parsed_event: {
