@@ -216,30 +216,86 @@ function AdminSportsImportPage() {
   };
 
   const combineFn = useServerFn(combineQueueItems);
+  const getMergeChannelsFn = useServerFn(getMergeChannels);
+  const saveMergeChannelsFn = useServerFn(saveMergeChannels);
   const [combiningEspn, setCombiningEspn] = useState(false);
+  const [mergeChannels, setMergeChannels] = useState<string[]>([]);
+  const [newChannel, setNewChannel] = useState("");
+  const [savingChannels, setSavingChannels] = useState(false);
+  useEffect(() => {
+    getMergeChannelsFn()
+      .then((r) => setMergeChannels(r.channels))
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const channelMatchers = useMemo(
+    () =>
+      mergeChannels
+        .map((c) => c.trim())
+        .filter(Boolean)
+        .map((c) => ({ name: c, re: new RegExp(c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i") })),
+    [mergeChannels],
+  );
+  const matchChannel = (q: QueueItem) => {
+    const text = String(q.parsed_event?.raw ?? q.raw_text ?? "");
+    return channelMatchers.find((c) => c.re.test(text))?.name ?? null;
+  };
   const espnItems = useMemo(
     () =>
       queue
-        .filter((q) => q.status === "pending" && /espn/i.test(String(q.parsed_event?.raw ?? q.raw_text ?? "")))
+        .filter((q) => q.status === "pending" && matchChannel(q) !== null)
         .sort((a, b) => a.created_at.localeCompare(b.created_at)),
-    [queue],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [queue, channelMatchers],
   );
   const onCombineEspn = async () => {
     if (espnItems.length < 2) return;
     const list = espnItems
       .map((q, i) => `${i + 1}. ${String(q.parsed_event?.raw ?? q.raw_text ?? "").trim().split("\n").filter((l) => l.trim()).slice(0, 2).join(" / ").slice(0, 90)}`)
       .join("\n");
-    if (!window.confirm(`Are all the ESPN listings in the queue?\n\n${list}\n\nThese ${espnItems.length} posts will be joined (oldest first) into 1 import.`)) return;
+    if (!window.confirm(`Are all the listings in the queue?\n\n${list}\n\nThese ${espnItems.length} posts will be joined (oldest first) into 1 import.`)) return;
     setCombiningEspn(true);
     try {
-      const r = await combineFn({ data: { ids: espnItems.map((q) => q.id) } });
-      toast.success(`Combined ${r.combined} ESPN listings into 1 import`);
+      const title = matchChannel(espnItems[0]) ?? "ESPN+";
+      const r = await combineFn({ data: { ids: espnItems.map((q) => q.id), title } });
+      toast.success(`Merged ${r.combined} listings into 1 import`);
       clearSelection();
       refreshQueue(true);
     } catch (e: any) {
-      toast.error(e.message ?? "Combine failed");
+      toast.error(e.message ?? "Merge failed");
     } finally {
       setCombiningEspn(false);
+    }
+  };
+  const onAddChannel = async () => {
+    const name = newChannel.trim();
+    if (!name) return;
+    if (mergeChannels.some((c) => c.toLowerCase() === name.toLowerCase())) {
+      toast.error("That channel is already listed");
+      return;
+    }
+    setSavingChannels(true);
+    try {
+      const r = await saveMergeChannelsFn({ data: { channels: [...mergeChannels, name] } });
+      setMergeChannels(r.channels);
+      setNewChannel("");
+      toast.success(`Added "${name}" to merge channels`);
+    } catch (e: any) {
+      toast.error(e.message ?? "Save failed");
+    } finally {
+      setSavingChannels(false);
+    }
+  };
+  const onRemoveChannel = async (name: string) => {
+    setSavingChannels(true);
+    try {
+      const r = await saveMergeChannelsFn({ data: { channels: mergeChannels.filter((c) => c !== name) } });
+      setMergeChannels(r.channels);
+      toast.success(`Removed "${name}"`);
+    } catch (e: any) {
+      toast.error(e.message ?? "Save failed");
+    } finally {
+      setSavingChannels(false);
     }
   };
 
