@@ -119,17 +119,10 @@ export const Route = createFileRoute("/api/public/discord/interactions")({
               });
             }
 
-            const sections = splitListingSections(text);
-            // Only posts that list numbered ESPN+ channels ("ESPN+ 01",
-            // "ESPN PLUS 2", ...) stay together as a single import. Posts
-            // listing numbered ESPN HD channels ("ESPN 1 HD", "ESPN 2 HD", ...)
-            // must split into separate imports like any other listing.
-            const hasEspnHdChannels = /espn\s*\d{1,3}\s*hd\b/i.test(text);
-            const isNumberedEspnPlus =
-              !hasEspnHdChannels && /espn\s*(?:\+|plus)\s*\d{1,3}\b/i.test(text);
-            const blocks = sections.length > 1 && !isNumberedEspnPlus
-              ? sections.map((section) => ({ title: section.name, raw: `${section.name}\n${section.raw.trim()}` }))
-              : [{ title: postHeading(text), raw: text.slice(0, 50_000) }];
+            // Never auto-split: every Discord post arrives as ONE pending import.
+            // The admin decides whether to split it inside the importer.
+            void splitListingSections;
+            const blocks = [{ title: postHeading(text), raw: text.slice(0, 50_000) }];
             const rows = blocks.map((block, index) => ({
               raw_text: block.raw.slice(0, 50_000),
               parsed_event: {
