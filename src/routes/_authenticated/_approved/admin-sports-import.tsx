@@ -236,32 +236,54 @@ function AdminSportsImportPage() {
       mergeChannels
         .map((c) => c.trim())
         .filter(Boolean)
-        .map((c) => ({ name: c, re: new RegExp(c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i") })),
+        .map((c) => ({
+          name: c,
+          // Only treat the name as this post's channel when it appears as a
+          // channel label: at the start of a line, or followed by a channel
+          // number (e.g. "ESPN+ 01"). A passing mention anywhere in the body
+          // must not pull an unrelated provider's post into the merge.
+          re: new RegExp(
+            `(?:^[\\s*_>#-]*|\\|\\s*)${c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b|\\b${c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*\\d{1,3}\\b`,
+            "im",
+          ),
+        })),
     [mergeChannels],
   );
   const matchChannel = (q: QueueItem) => {
     const text = String(q.parsed_event?.raw ?? q.raw_text ?? "");
     return channelMatchers.find((c) => c.re.test(text))?.name ?? null;
   };
-  const espnItems = useMemo(
-    () =>
-      queue
-        .filter((q) => q.status === "pending" && matchChannel(q) !== null)
-        .sort((a, b) => a.created_at.localeCompare(b.created_at)),
+  // Group pending posts by the channel they belong to, so posts from two
+  // different providers are never welded into one import.
+  const mergeGroups = useMemo(() => {
+    const groups = new Map<string, QueueItem[]>();
+    for (const q of queue) {
+      if (q.status !== "pending") continue;
+      const name = matchChannel(q);
+      if (!name) continue;
+      const list = groups.get(name) ?? [];
+      list.push(q);
+      groups.set(name, list);
+    }
+    return [...groups.entries()]
+      .map(([name, items]) => ({
+        name,
+        items: items.slice().sort((a, b) => a.created_at.localeCompare(b.created_at)),
+      }))
+      .filter((g) => g.items.length >= 2)
+      .sort((a, b) => a.name.localeCompare(b.name));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [queue, channelMatchers],
-  );
-  const onCombineEspn = async () => {
-    if (espnItems.length < 2) return;
-    const list = espnItems
+  }, [queue, channelMatchers]);
+  const onCombineChannel = async (name: string, items: QueueItem[]) => {
+    if (items.length < 2) return;
+    const list = items
       .map((q, i) => `${i + 1}. ${String(q.parsed_event?.raw ?? q.raw_text ?? "").trim().split("\n").filter((l) => l.trim()).slice(0, 2).join(" / ").slice(0, 90)}`)
       .join("\n");
-    if (!window.confirm(`Are all the listings in the queue?\n\n${list}\n\nThese ${espnItems.length} posts will be joined (oldest first) into 1 import.`)) return;
+    if (!window.confirm(`Are all the ${name} listings in the queue?\n\n${list}\n\nThese ${items.length} ${name} posts will be joined (oldest first) into 1 import.`)) return;
     setCombiningEspn(true);
     try {
-      const title = matchChannel(espnItems[0]) ?? "ESPN+";
-      const r = await combineFn({ data: { ids: espnItems.map((q) => q.id), title } });
-      toast.success(`Merged ${r.combined} listings into 1 import`);
+      const r = await combineFn({ data: { ids: items.map((q) => q.id), title: name } });
+      toast.success(`Merged ${r.combined} ${name} listings into 1 import`);
       clearSelection();
       refreshQueue(true);
     } catch (e: any) {
@@ -433,10 +455,25 @@ function AdminSportsImportPage() {
                 </Button>
               ))}
               <div className="flex-1" />
-              <Button size="sm" variant="outline" onClick={onCombineEspn} disabled={combiningEspn || espnItems.length < 2}>
-                {combiningEspn ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
-                Merge Listings ({espnItems.length})
-              </Button>
+              {mergeGroups.length === 0 ? (
+                <Button size="sm" variant="outline" disabled>
+                  <Sparkles className="size-4" />
+                  Merge Listings (0)
+                </Button>
+              ) : (
+                mergeGroups.map((g) => (
+                  <Button
+                    key={g.name}
+                    size="sm"
+                    variant="outline"
+                    onClick={() => onCombineChannel(g.name, g.items)}
+                    disabled={combiningEspn}
+                  >
+                    {combiningEspn ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
+                    Merge {g.name} ({g.items.length})
+                  </Button>
+                ))
+              )}
               <Button size="sm" variant="ghost" onClick={() => setShowChannels((v) => !v)} title="Manage merge channels">
                 <Settings2 className="size-4" />
               </Button>
