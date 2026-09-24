@@ -42,6 +42,7 @@ export function BankTransferAdminCard() {
   const grant = useServerFn(grantBankTransfer);
   const revoke = useServerFn(revokeBankTransfer);
 
+  const [view, setView] = useState<"details" | "customers">("details");
   const [form, setForm] = useState(blank);
   const [grants, setGrants] = useState<Grant[]>([]);
   const [names, setNames] = useState<Record<string, string>>({});
@@ -79,7 +80,6 @@ export function BankTransferAdminCard() {
   }, [isOwner]);
 
   if (!isOwner) return null;
-  // eslint-disable-next-line react-hooks/rules-of-hooks
 
 
   const doSave = async () => {
