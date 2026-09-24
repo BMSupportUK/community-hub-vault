@@ -762,7 +762,13 @@ function formatListingDate(date: Date): string {
  */
 function applyImplicitDateRollover(events: SportsListingEvent[], fallbackDate?: string | null): SportsListingEvent[] {
   const base = parseListingDate(fallbackDate);
-  if (!base || events.some((event) => event.date)) return events;
+  if (!base) return events;
+  // Some events carry their own day ("6:00am UK Fri"): any event with no day
+  // or date of its own is presumed to be on the listing/import day.
+  if (events.some((event) => event.date)) {
+    const fallback = formatListingDate(new Date(Date.UTC(base.y, base.m, base.d)));
+    return events.map((event) => (event.date ? event : { ...event, date: fallback }));
+  }
 
   let dayOffset = 0;
   let previousMinutes: number | null = null;
@@ -828,7 +834,7 @@ export function formatSportsListingBlock(input: ListingInput): string | null {
   const parsed = parseSportsListingBlock(input.raw);
   // No date written anywhere in the post: date it from the import day rather
   // than leaving the guide dateless for someone to fill in afterwards.
-  const base = parsed.some((event) => event.date) ? input.date : (input.date ?? importDayListingDate());
+  const base = input.date ?? importDayListingDate();
   const dated = applyImplicitDateRollover(parsed, base);
   const events = sortSportsListingEvents(
     convertEventsToUk(dated, { ...input, date: base ?? input.date }),
