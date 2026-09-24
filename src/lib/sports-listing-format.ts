@@ -638,10 +638,19 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
       // channel to be one of our known broadcasters. This covers short or
       // unfamiliar channel names such as "Ten 2" while still keeping an
       // all-caps post heading above a time-first listing out of the title.
+      // Guard: in a normal time → event → channel listing, the line above the
+      // next clock is the previous event's channel. If the line BELOW the
+      // clock is a matchup ("A & B", "A v B") and the line above isn't, the
+      // line above is a channel, not a title.
+      const MATCHUP_RE = /\s(?:&|v|vs|v\.|x|-)\s/i;
+      const below = lines[li + 1] ?? "";
+      const belowIsTitle = Boolean(below) && !detectEvent(below, currentDate) && MATCHUP_RE.test(below);
+      const aboveIsTitle = Boolean(above) && MATCHUP_RE.test(above ?? "");
       const titleAboveTime = Boolean(
         !detected.title &&
         above &&
         !isLikelyChannelLabel(above) &&
+        !(belowIsTitle && !aboveIsTitle) &&
         (lastChannelWasPlain || above !== above.toUpperCase()),
       );
       if (titleAboveTime && above) {
