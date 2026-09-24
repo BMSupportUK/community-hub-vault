@@ -491,6 +491,7 @@ function DashboardBody() {
           {([
             ["tools", "Owner tools"],
             ["staff-pins", "Staff PINs"],
+            ["backup-codes", "Backup codes"],
           ] as const).map(([key, label]) => (
             <button
               key={key}
