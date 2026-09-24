@@ -1,6 +1,7 @@
 # Roadmap
 
 ## Current
+- [x] NFL Game Pass import: ignore the provider header and read channel, fixture and trailing time from each listing row
 - [x] Sports imports: events without their own day or date always use today's UK date; never infer tomorrow from clock order
 - [x] Telegram → Sports Guide importer: imported listings save as drafts and open directly in the guide editor for date entry
 - [x] Greyhound import: retain a shared date embedded in a multi-sport heading and repair the affected draft

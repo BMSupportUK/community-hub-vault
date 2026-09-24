@@ -36,6 +36,13 @@ const TIME_FIRST_RE = new RegExp(
 const LEADING_ZONE_TIME_RE = new RegExp(`^\\s*(${ZONE})\\s+(${TIME_SOURCE})\\s*(?:[-–—:|·•]\\s*)?(.+?)\\s*$`, "i");
 const CHANNEL_TIME_RE = new RegExp(`^\\s*(.{2,70}?)\\s*(?:\\||·|•|[-–—])\\s*(${TIME_WITH_ZONE_SOURCE})\\s+(.+?)\\s*$`, "i");
 const CHANNEL_SPACE_TIME_RE = new RegExp(`^\\s*([A-Za-z][A-Za-z0-9 +&'/.:-]{1,42}\\d{1,3})\\s+(${TIME_WITH_ZONE_SOURCE})\\s+(.+?)\\s*$`, "i");
+// Game-pass rows put the channel first, then the fixture, with the start time
+// at the end: "NFL01: Falcons @ Packers 01:15". The provider header above it
+// ("US | NFL Sunday Ticket") is context only and must never become the event.
+const CHANNEL_COLON_TITLE_TIME_RE = new RegExp(
+  `^\\s*([A-Za-z][A-Za-z0-9 +&'./-]*?\\d{1,3})\\s*:\\s*(.+?)\\s+(${TIME_WITH_ZONE_SOURCE})\\s*$`,
+  "i",
+);
 // Provider dumps put the title on its own line and the slot underneath:
 // "- 23-09-2026 8:30 PM until 24-09-2026 12:00 AM - PEACOCK 8 HD"
 const DATE_SOURCE = String.raw`\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4}`;
@@ -230,7 +237,7 @@ function normalizeChannels(channels: string[]): string[] {
 export function normalizeSportsEventTitle(value: string): string {
   return value
     .replace(/\s+/g, " ")
-    .replace(/\s+(?:x|vs\.?|v\.?)\s+/gi, " & ")
+    .replace(/\s+(?:x|vs\.?|v\.?|@)\s+/gi, " & ")
     .replace(/\s*&\s*/g, " & ")
     .trim();
 }
@@ -438,6 +445,21 @@ function detectEvent(line: string, date: string | null): SportsListingEvent | nu
       time: normalizeTime(piped[2].replace(".", ":")),
       title: normalizeSportsEventTitle(piped[3].trim()),
       channels: [piped[1].trim().replace(/\s+/g, " ")],
+    };
+  }
+
+  const channelColonTrailingTime = line.match(CHANNEL_COLON_TITLE_TIME_RE);
+  if (
+    channelColonTrailingTime?.[1] &&
+    channelColonTrailingTime[2] &&
+    channelColonTrailingTime[3] &&
+    isLikelyChannelLabel(channelColonTrailingTime[1])
+  ) {
+    return {
+      date,
+      time: normalizeTime(channelColonTrailingTime[3]),
+      title: normalizeSportsEventTitle(channelColonTrailingTime[2]),
+      channels: [channelColonTrailingTime[1].replace(/^(NFL)(\d+)$/i, "$1 $2")],
     };
   }
 
