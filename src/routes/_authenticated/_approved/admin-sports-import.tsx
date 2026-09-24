@@ -93,7 +93,9 @@ function AdminSportsImportPage() {
       category: String(ev.suggested_category ?? ""),
       destinationCategory: String(ev.suggested_category ?? ""),
       subcategories: ev.suggested_subcategory ? [String(ev.suggested_subcategory)] : [],
-      title: String(ev.title ?? ""),
+      // Leave the guide name empty so nothing looks pre-selected — the admin
+      // types a name or explicitly picks a guide from the list.
+      title: "",
       time: stored ?? (ev.time ? String(ev.time) : null),
       sourceZone: storedZone ?? null,
       guideId: null,
