@@ -571,19 +571,6 @@ function DashboardBody() {
               </button>
             ))}
           </div>
-          <ul className="max-h-[50vh] overflow-y-auto space-y-0.5 pr-1">
-            {tools.map((t) => (
-              <li key={`az-${t.to}-${t.label}`}>
-                <Link
-                  to={t.to}
-                  search={t.search as any}
-                  className="block rounded-md px-2 py-1 text-sm text-muted-foreground hover:bg-surface-2 hover:text-foreground truncate"
-                >
-                  {t.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
         </div>
         <VpnBackfillCard />
       </aside>
