@@ -488,22 +488,6 @@ function InstallGuidesPage() {
           </header>
 
         <div className="relative isolate min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-8">
-          {(tab === "get-app" || tab === "transfers") && (
-            <>
-              <img
-                src={downloadIllustration}
-                alt=""
-                aria-hidden
-                loading="eager"
-                width={1920}
-                height={1024}
-                className="pointer-events-none absolute inset-0 -z-20 size-full object-cover object-center opacity-70"
-              />
-              <div className="pointer-events-none absolute inset-0 -z-10 bg-background/25" aria-hidden />
-            </>
-          )}
-
-
           {canManageGuides && (
             <TabsContent value="approvals" className="mt-6">
               <div className="max-w-5xl space-y-4">
@@ -518,21 +502,27 @@ function InstallGuidesPage() {
             </TabsContent>
           )}
 
-
           {canSeeAppTab && (
             <TabsContent value="get-app" className="mt-6">
-              <div className="max-w-5xl">
+              <IllustratedHero
+                image={downloadIllustration}
+                title="Download the BM Support Apps"
+                text="Get the BM Support apps onto your Fire Stick, Android box or phone in a few simple steps."
+              >
                 <AppTransferPanel onUploadClick={canManageApps ? () => setTab("app-apk") : undefined} />
-              </div>
+              </IllustratedHero>
             </TabsContent>
           )}
 
-
           {canSeeTransfers && (
             <TabsContent value="transfers" className="mt-6">
-              <div className="max-w-5xl">
+              <IllustratedHero
+                image={downloadIllustration}
+                title="App Transfers"
+                text="Send apps straight to customers' devices and keep track of every transfer by week."
+              >
                 <AppTransfersAdmin />
-              </div>
+              </IllustratedHero>
             </TabsContent>
           )}
 
