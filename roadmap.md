@@ -1,6 +1,12 @@
 # Roadmap
 
 ## Current
+- [x] MLB Extra Innings: repair draft from dated source; stop old rows carrying into new schedule
+- [x] Guides: stop adding an extra hour to times
+- [x] Setanta Sports + Flosports College imports
+- [x] Investigate random sign-outs
+- [x] Sports guide categories: sub categories step through in the sidebar (back + home icons), no pop-up
+- [x] Install guides: Transfers + Get the BM Support Apps use Welcome layout, keep illustration
 - [x] NFL Game Pass import: ignore the provider header and read channel, fixture and trailing time from each listing row
 - [x] Sports imports: events without their own day or date always use today's UK date; never infer tomorrow from clock order
 - [x] Telegram → Sports Guide importer: imported listings save as drafts and open directly in the guide editor for date entry

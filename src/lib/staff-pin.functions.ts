@@ -22,7 +22,9 @@ async function checkPassword(email: string, password: string): Promise<boolean> 
   });
   const { data, error } = await client.auth.signInWithPassword({ email, password });
   if (error || !data.session) return false;
-  await client.auth.signOut().catch(() => {});
+  // Only drop this throwaway check session. A default (global) sign-out
+  // revokes every session on the account and logs the user out everywhere.
+  await client.auth.signOut({ scope: "local" }).catch(() => {});
   return true;
 }
 

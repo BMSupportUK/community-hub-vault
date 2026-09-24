@@ -350,24 +350,11 @@ function detectStampedEvent(line: string, date: string | null): SportsListingEve
   if (!head) return null;
 
   const [, y, m, d, hh, mm] = stamp;
-  // Provider timestamps are UTC instants. Convert both their date and clock to
-  // UK office time here; treating "00:50" as a London wall clock loses the BST
-  // hour and can also leave a late-night event on the wrong day.
-  const when = new Date(Date.UTC(Number(y), Number(m) - 1, Number(d), Number(hh), Number(mm)));
-  const ukParts = new Intl.DateTimeFormat("en-GB", {
-    timeZone: "Europe/London",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false,
-  }).formatToParts(when);
-  const ukPart = (type: string) => Number(ukParts.find((part) => part.type === type)?.value ?? "0");
-  const eventDate = formatListingDate(new Date(Date.UTC(ukPart("year"), ukPart("month") - 1, ukPart("day"))));
-  const ukZone = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", timeZoneName: "short" })
-    .formatToParts(when)
-    .find((part) => part.type === "timeZoneName")?.value === "BST" ? "BST" : "GMT";
+  // Provider stamps are already UK wall-clock times (Setanta "19:10" is the
+  // 19:15 BST tip-off). Never shift them by the BST hour.
+  const eventDate = formatListingDate(new Date(Date.UTC(Number(y), Number(m) - 1, Number(d))));
+  const ukPart = (type: string) => (type === "hour" ? Number(hh) : type === "minute" ? Number(mm) : 0);
+  const ukZone = "UK";
 
   const namedProvider = head.match(NAMED_PROVIDER_STAMP_HEAD_RE);
   if (namedProvider?.[1] && namedProvider[2] && namedProvider[3]) {
@@ -376,6 +363,17 @@ function detectStampedEvent(line: string, date: string | null): SportsListingEve
       time: `${String(ukPart("hour") % 24).padStart(2, "0")}:${String(ukPart("minute")).padStart(2, "0")} ${ukZone}`,
       title: namedProvider[3].trim(),
       channels: [`${namedProvider[1].trim()} ${namedProvider[2]}`],
+    };
+  }
+
+  // "Setanta: 1: Panathinaikos - Paris" → channel "Setanta 1".
+  const colonNumbered = head.match(/^([a-z][a-z0-9 +&'./-]*?)\s*:\s*(\d{1,3})\s*:\s*(.+)$/i);
+  if (colonNumbered?.[1] && colonNumbered[2] && colonNumbered[3]) {
+    return {
+      date: eventDate || date,
+      time: `${String(ukPart("hour") % 24).padStart(2, "0")}:${String(ukPart("minute")).padStart(2, "0")} ${ukZone}`,
+      title: normalizeSportsEventTitle(colonNumbered[3].trim().replace(/\s+-\s+/, " & ")),
+      channels: [`${colonNumbered[1].trim()} ${colonNumbered[2]}`],
     };
   }
 

@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState, type DragEvent as ReactDragEvent 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { pruneStaleSportsGuides } from "@/lib/sports-guide-prune.functions";
-import { Plus, Search, Pencil, Trash2, ImageIcon, GripVertical, X, ChevronDown, ChevronRight, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, ImageIcon, GripVertical, X, ChevronDown, ChevronRight, ArrowUp, ArrowDown, ArrowLeft, Home } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -1025,7 +1025,7 @@ function SportsGuidesPage() {
                     Drop the guide on a heading or category to move it there
                   </div>
                 )}
-                <div className="space-y-1">
+                <div className={subDialogFor ? "hidden" : "space-y-1"}>
                   {topCategories.map((top) => {
                     const kids = childrenByParent[top.id] ?? [];
                     const heading = kids.length > 0;
@@ -1175,44 +1175,49 @@ function SportsGuidesPage() {
                    })}
                 </div>
 
-              </aside>
-
-              <Dialog open={!!subDialogFor} onOpenChange={(o) => { if (!o) setSubDialogFor(null); }}>
-                <DialogContent className="max-w-[calc(100vw-2rem)] sm:max-w-2xl lg:max-w-4xl xl:max-w-6xl 2xl:max-w-7xl border-fuchsia-500/40 bg-purple-950/95 backdrop-blur">
+              {subDialogFor && (
+                <div>
                   {(() => {
                   const parent = categories.find((c) => c.id === subDialogFor);
                   const children = childrenByParent[subDialogFor ?? ""] ?? [];
                   const guideSubcategories = subsByCat[subDialogFor ?? ""] ?? [];
                   const grandParent = parent?.parent_id ? categories.find((c) => c.id === parent.parent_id) : null;
+                  let root = parent;
+                  while (root?.parent_id) root = categories.find((c) => c.id === root!.parent_id);
                   return (
                     <>
-                      <DialogHeader>
-                        <DialogTitle className="flex items-center justify-between gap-2 text-purple-100">
-                          <span>{parent?.name ?? "Sub-categories"}</span>
-                          <span className="flex shrink-0 items-center gap-1">
-                            {grandParent && (
-                              <button
-                                type="button"
-                                onClick={() => setSubDialogFor(grandParent.id)}
-                                className="rounded-full border border-fuchsia-400/50 bg-fuchsia-600/20 px-2.5 py-1 text-[11px] font-bold uppercase text-fuchsia-100 hover:bg-fuchsia-600/40"
-                              >
-                                Back to {grandParent.name}
-                              </button>
-                            )}
-                            {canManageCategories && parent && (
-                              <button
-                                type="button"
-                                onClick={() => addChildCategory(parent.id)}
-                                title="Add sub-category"
-                                className="p-1 rounded-md text-purple-200/70 hover:text-white hover:bg-fuchsia-600/60"
-                              >
-                                <Plus className="size-4" />
-                              </button>
-                            )}
-                          </span>
-                        </DialogTitle>
-                      </DialogHeader>
-                      <div className="grid max-h-[60vh] gap-1 overflow-y-auto sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
+                      <div className="mb-2 flex items-center gap-1 text-purple-100">
+                        <button
+                          type="button"
+                          onClick={() => setSubDialogFor(grandParent?.id ?? null)}
+                          title="Back"
+                          aria-label="Back"
+                          className="shrink-0 rounded-md p-1.5 text-fuchsia-100 hover:bg-fuchsia-600/40"
+                        >
+                          <ArrowLeft className="size-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setSubDialogFor(root && root.id !== parent?.id ? root.id : null)}
+                          title={root && root.id !== parent?.id ? `Back to ${root.name}` : "All categories"}
+                          aria-label="Home"
+                          className="shrink-0 rounded-md p-1.5 text-fuchsia-100 hover:bg-fuchsia-600/40"
+                        >
+                          <Home className="size-4" />
+                        </button>
+                        <span className="min-w-0 flex-1 truncate px-1 text-sm font-bold">{parent?.name ?? "Sub-categories"}</span>
+                        {canManageCategories && parent && (
+                          <button
+                            type="button"
+                            onClick={() => addChildCategory(parent.id)}
+                            title="Add sub-category"
+                            className="p-1 rounded-md text-purple-200/70 hover:text-white hover:bg-fuchsia-600/60"
+                          >
+                            <Plus className="size-4" />
+                          </button>
+                        )}
+                      </div>
+                      <div className="grid max-h-[70vh] gap-1 overflow-y-auto">
 
                         {children.map((child) => {
                           const active = child.id === activeCat;
@@ -1320,8 +1325,9 @@ function SportsGuidesPage() {
                     </>
                   );
                   })()}
-                </DialogContent>
-              </Dialog>
+                </div>
+              )}
+              </aside>
     </>
   );
 

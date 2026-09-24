@@ -488,22 +488,6 @@ function InstallGuidesPage() {
           </header>
 
         <div className="relative isolate min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-8">
-          {(tab === "get-app" || tab === "transfers") && (
-            <>
-              <img
-                src={downloadIllustration}
-                alt=""
-                aria-hidden
-                loading="eager"
-                width={1920}
-                height={1024}
-                className="pointer-events-none absolute inset-0 -z-20 size-full object-cover object-center opacity-70"
-              />
-              <div className="pointer-events-none absolute inset-0 -z-10 bg-background/25" aria-hidden />
-            </>
-          )}
-
-
           {canManageGuides && (
             <TabsContent value="approvals" className="mt-6">
               <div className="max-w-5xl space-y-4">
@@ -518,21 +502,27 @@ function InstallGuidesPage() {
             </TabsContent>
           )}
 
-
           {canSeeAppTab && (
             <TabsContent value="get-app" className="mt-6">
-              <div className="max-w-5xl">
+              <IllustratedHero
+                image={downloadIllustration}
+                title="Download the BM Support Apps"
+                text="Get the BM Support apps onto your Fire Stick, Android box or phone in a few simple steps."
+              >
                 <AppTransferPanel onUploadClick={canManageApps ? () => setTab("app-apk") : undefined} />
-              </div>
+              </IllustratedHero>
             </TabsContent>
           )}
 
-
           {canSeeTransfers && (
             <TabsContent value="transfers" className="mt-6">
-              <div className="max-w-5xl">
+              <IllustratedHero
+                image={downloadIllustration}
+                title="App Transfers"
+                text="Send apps straight to customers' devices and keep track of every transfer by week."
+              >
                 <AppTransfersAdmin />
-              </div>
+              </IllustratedHero>
             </TabsContent>
           )}
 
@@ -1103,5 +1093,23 @@ function SecureGuideVideo({
       playsInline
       className="w-full max-h-[80vh] bg-black"
     />
+  );
+}
+
+/** Same framed hero as the Welcome tab, with the tab's own content beneath. */
+function IllustratedHero({ image, title, text, children }: { image: string; title: string; text: string; children: import("react").ReactNode }) {
+  return (
+    <div className="space-y-6">
+      <div className="relative overflow-hidden rounded-2xl border border-border shadow-glow min-h-[34vh] lg:min-h-[40vh]">
+        <img src={image} alt="" aria-hidden width={1920} height={1024} className="absolute inset-0 h-full w-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/70 to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
+        <div className="relative p-6 sm:p-10 md:p-14 max-w-2xl">
+          <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-foreground leading-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]">{title}</h2>
+          <p className="mt-4 text-base sm:text-lg text-foreground/90 drop-shadow">{text}</p>
+        </div>
+      </div>
+      <div className="max-w-5xl">{children}</div>
+    </div>
   );
 }
