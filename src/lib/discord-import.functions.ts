@@ -81,6 +81,23 @@ export const setupDiscordBot = createServerFn({ method: "POST" })
     return { ok: true, application: app.name ?? app.id, endpointUrl };
   });
 
+export const getDiscordStatus = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    await assertStaff(context.supabase, context.userId);
+    const token = process.env.DISCORD_BOT_TOKEN?.trim();
+    if (!token) return { connected: false, application: null as string | null };
+    try {
+      const r = await fetch(`${DISCORD_API}/applications/@me`, { headers: { Authorization: `Bot ${token}` } });
+      if (!r.ok) return { connected: false, application: null as string | null };
+      const app: any = await r.json();
+      const connected = typeof app.interactions_endpoint_url === "string" && app.interactions_endpoint_url.includes("/api/public/discord/interactions");
+      return { connected, application: (app.name ?? app.id ?? null) as string | null };
+    } catch {
+      return { connected: false, application: null as string | null };
+    }
+  });
+
 export type RoutedEvent = ParsedEvent & {
   category: string | null;
   subcategory: string | null;
