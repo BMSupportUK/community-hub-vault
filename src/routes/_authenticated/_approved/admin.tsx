@@ -435,6 +435,10 @@ function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () 
 function DashboardBody() {
   const { hasRole } = useAuth();
   const isAdminOnly = hasRole("admin");
+  const canSeePins = isAdminOnly || hasRole("management");
+  const [tab, setTab] = useState<"tools" | "staff-pins">("tools");
+
+
 
 
 
