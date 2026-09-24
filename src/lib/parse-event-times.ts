@@ -958,14 +958,12 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
         nameCell.appendChild(sec);
       }
     }
-    header.appendChild(nameCell);
-    block.appendChild(header);
-
-    // Time row. ET is only an import/source interpretation and is never shown
-    // as an additional card time. Show UK first, then the viewer's local time
-    // only when its date, time, or zone genuinely differs.
+    // Time row goes at the TOP of the card: start time first, then the event
+    // name, then the channels. ET is only an import/source interpretation and
+    // is never shown as an additional card time. Show UK first, then the
+    // viewer's local time only when its date, time, or zone genuinely differs.
     const pillsRow = document.createElement("div");
-    pillsRow.className = "mt-auto grid w-full grid-cols-1 gap-2";
+    pillsRow.className = "grid w-full grid-cols-1 gap-2";
     block.appendChild(pillsRow);
 
     const ukDate = new Intl.DateTimeFormat("en-GB", {
@@ -1026,6 +1024,10 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
       secondPill.appendChild(secondZone);
       pillsRow.appendChild(secondPill);
     }
+
+    // Event name and channels sit beneath the start time.
+    header.appendChild(nameCell);
+    block.appendChild(header);
 
     // Keep transformed content to two text lines plus the time pills.
   }
