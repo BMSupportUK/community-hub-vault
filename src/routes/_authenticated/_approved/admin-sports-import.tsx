@@ -20,6 +20,7 @@ import {
   deleteQueueItems,
   splitQueueItem,
   splitQueueItemByProvider,
+  combineQueueItems,
   approveAllSuggested,
   listCategoriesWithSubs,
   listGuidesInCategory,
@@ -211,6 +212,34 @@ function AdminSportsImportPage() {
       toast.error(e.message ?? "Delete failed");
     } finally {
       setDeletingAll(false);
+    }
+  };
+
+  const combineFn = useServerFn(combineQueueItems);
+  const [combiningEspn, setCombiningEspn] = useState(false);
+  const espnItems = useMemo(
+    () =>
+      queue
+        .filter((q) => q.status === "pending" && /espn/i.test(String(q.parsed_event?.raw ?? q.raw_text ?? "")))
+        .sort((a, b) => a.created_at.localeCompare(b.created_at)),
+    [queue],
+  );
+  const onCombineEspn = async () => {
+    if (espnItems.length < 2) return;
+    const list = espnItems
+      .map((q, i) => `${i + 1}. ${String(q.parsed_event?.raw ?? q.raw_text ?? "").trim().split("\n").filter((l) => l.trim()).slice(0, 2).join(" / ").slice(0, 90)}`)
+      .join("\n");
+    if (!window.confirm(`Are all the ESPN listings in the queue?\n\n${list}\n\nThese ${espnItems.length} posts will be joined (oldest first) into 1 import.`)) return;
+    setCombiningEspn(true);
+    try {
+      const r = await combineFn({ data: { ids: espnItems.map((q) => q.id) } });
+      toast.success(`Combined ${r.combined} ESPN listings into 1 import`);
+      clearSelection();
+      refreshQueue(true);
+    } catch (e: any) {
+      toast.error(e.message ?? "Combine failed");
+    } finally {
+      setCombiningEspn(false);
     }
   };
 
