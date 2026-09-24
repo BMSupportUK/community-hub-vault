@@ -20,10 +20,11 @@ const SG_FOCUS_KEY = "sports-guides-focus-id";
 
 export const Route = createFileRoute("/_authenticated/_approved/sports-guides")({
   component: SportsGuidesRoute,
-  validateSearch: (search: Record<string, unknown>): { cat?: string; sub?: string; welcome?: boolean } => ({
+  validateSearch: (search: Record<string, unknown>): { cat?: string; sub?: string; welcome?: boolean; reset?: string } => ({
     cat: typeof search.cat === "string" ? search.cat : undefined,
     sub: typeof search.sub === "string" ? search.sub : undefined,
     welcome: search.welcome === true || search.welcome === "true" ? true : undefined,
+    reset: typeof search.reset === "string" ? search.reset : undefined,
   }),
 });
 
@@ -100,7 +101,7 @@ function SportsGuidesPage() {
   const { isMod, user, hasAny } = useAuth();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const { cat: catFromUrl, sub: subFromUrl, welcome: welcomeFromUrl } = Route.useSearch();
+  const { cat: catFromUrl, sub: subFromUrl, welcome: welcomeFromUrl, reset: resetFromUrl } = Route.useSearch();
   const canManageCategories = hasAny(["admin", "management", "staff"]);
   // Always open on Welcome with no category picked. Guides only appear once the
   // visitor clicks a category (returning from a guide uses the ?cat= param).
@@ -171,24 +172,7 @@ function SportsGuidesPage() {
       } catch { /* ignore */ }
       navigate({ to: "/sports-guides", search: {}, replace: true });
     }
-  }, [welcomeFromUrl, navigate]);
-
-  // The rail remains mounted while this page is open, so a repeated click on
-  // its already-active icon needs a direct reset as well as URL navigation.
-  useEffect(() => {
-    const showWelcome = () => {
-      setTab("welcome");
-      setActiveCat(null);
-      setSubFilter(null);
-      setSearch("");
-      setOpenGroups([]);
-      setSubDialogFor(null);
-      setOpenSubcategoryPopupFor(null);
-      scrollerRef.current?.scrollTo({ top: 0, behavior: "auto" });
-    };
-    window.addEventListener("sports-guides:show-welcome", showWelcome);
-    return () => window.removeEventListener("sports-guides:show-welcome", showWelcome);
-  }, []);
+  }, [welcomeFromUrl, resetFromUrl, navigate]);
 
   // The Guides tab only exists once a category has been picked — never auto-select one.
   const handleTabChange = (value: string) => {
