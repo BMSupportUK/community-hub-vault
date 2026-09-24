@@ -600,7 +600,9 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
     titleCameFromAbove = false;
   };
 
-  for (const line of lines) {
+  let lastChannelWasPlain: string | null = null;
+  for (let li = 0; li < lines.length; li++) {
+    const line = lines[li];
     const listingDate = listingDateFromLine(line);
     if (listingDate) {
       flush();
@@ -613,6 +615,21 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
 
     const detected = detectEvent(line, currentDate);
     if (detected) {
+      // "Azerbaijan : Practice 1" / "9:30am UK | 4:30am ET" / channels —
+      // the title sits ABOVE a bare time line and channels follow below.
+      const above = lastChannelWasPlain ?? previousPlainLine;
+      const next = lines[li + 1];
+      if (!detected.title && above && next && isLikelyChannelLabel(next) && !isLikelyChannelLabel(above)) {
+        if (lastChannelWasPlain && current && current.channels[current.channels.length - 1] === lastChannelWasPlain) {
+          current.channels.pop();
+        }
+        flush();
+        current = detected;
+        current.title = above;
+        previousPlainLine = null;
+        lastChannelWasPlain = null;
+        continue;
+      }
       flush();
       current = detected;
       // A title-above-time layout is specific to provider slot rows such as
@@ -643,7 +660,9 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
       previousPlainLine = line;
       continue;
     }
-    current.channels.push(...splitChannelLine(line));
+    const parts = splitChannelLine(line);
+    current.channels.push(...parts);
+    lastChannelWasPlain = parts.length === 1 ? parts[0] : null;
   }
   flush();
 
