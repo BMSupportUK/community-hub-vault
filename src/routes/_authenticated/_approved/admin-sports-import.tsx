@@ -15,6 +15,7 @@ import { parseSportsListingBlock, splitListingSections } from "@/lib/sports-list
 import {
   queuePastedPost,
   setupDiscordBot,
+  getDiscordStatus,
   listImportQueue,
   resolveQueueItem,
   deleteQueueItems,
@@ -61,6 +62,10 @@ function AdminSportsImportPage() {
   const isStaff = hasAny(["admin", "management", "moderator"]);
   const queuePasteFn = useServerFn(queuePastedPost);
   const setupDiscordFn = useServerFn(setupDiscordBot);
+  const discordStatusFn = useServerFn(getDiscordStatus);
+  const [discord, setDiscord] = useState<{ connected: boolean; application: string | null } | null>(null);
+  const refreshDiscord = () => { discordStatusFn().then(setDiscord).catch(() => setDiscord({ connected: false, application: null })); };
+  useEffect(() => { refreshDiscord(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, []);
   const listFn = useServerFn(listImportQueue);
   const resolveFn = useServerFn(resolveQueueItem);
   const splitFn = useServerFn(splitQueueItem);
@@ -384,6 +389,12 @@ function AdminSportsImportPage() {
               <h1 className="font-display text-2xl sm:text-3xl font-bold text-white">Sports Guide Importer</h1>
               <p className="text-sm text-white/85">Paste a listings post — it lands in the review queue as one block, ready to file into a guide.</p>
             </div>
+            {isStaff && discord && (
+              <span className={`shrink-0 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ring-1 ${discord.connected ? "bg-success/20 text-white ring-success/60" : "bg-white/10 text-white/80 ring-white/30"}`}>
+                <span className={`size-2 rounded-full ${discord.connected ? "bg-success" : "bg-muted-foreground"}`} />
+                {discord.connected ? `Discord connected${discord.application ? ` · ${discord.application}` : ""}` : "Discord not connected"}
+              </span>
+            )}
             {isStaff && (
               <Button
                 variant="secondary"
@@ -394,6 +405,7 @@ function AdminSportsImportPage() {
                   setSettingUpDiscord(true);
                   try {
                     const r = await setupDiscordFn({});
+                    refreshDiscord();
                     toast.success(`Discord connected — right-click any post in your server → Apps → Send to Sports Guide. (${r.application})`);
                   } catch (e: any) {
                     toast.error(e.message ?? "Discord setup failed");
@@ -403,13 +415,13 @@ function AdminSportsImportPage() {
                 }}
               >
                 {settingUpDiscord ? <Loader2 className="size-4 animate-spin" /> : <Inbox className="size-4" />}
-                {settingUpDiscord ? "Connecting…" : "Connect Discord bot"}
+                {settingUpDiscord ? "Connecting…" : discord?.connected ? "Reconnect" : "Connect Discord bot"}
               </Button>
             )}
           </div>
         </header>
 
-        <Tabs defaultValue="paste">
+        <Tabs defaultValue="queue">
           <TabsList>
             <TabsTrigger value="paste">Paste &amp; Import</TabsTrigger>
             <TabsTrigger value="queue">
