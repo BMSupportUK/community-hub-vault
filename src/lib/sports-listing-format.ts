@@ -620,8 +620,20 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
       // "Azerbaijan : Practice 1" / "9:30am UK | 4:30am ET" / channels —
       // the title sits ABOVE a bare time line and channels follow below.
       const above = lastChannelWasPlain ?? previousPlainLine;
-      const next = lines[li + 1];
-      if (!detected.title && above && next && isLikelyChannelLabel(next) && !isLikelyChannelLabel(above)) {
+      // Once an event is already open, a plain line immediately before the
+      // next bare clock is the next event's title (it was provisionally added
+      // to the previous event's channels). For the first event, accept a
+      // mixed-case title above the clock without requiring the following
+      // channel to be one of our known broadcasters. This covers short or
+      // unfamiliar channel names such as "Ten 2" while still keeping an
+      // all-caps post heading above a time-first listing out of the title.
+      const titleAboveTime = Boolean(
+        !detected.title &&
+        above &&
+        !isLikelyChannelLabel(above) &&
+        (lastChannelWasPlain || above !== above.toUpperCase()),
+      );
+      if (titleAboveTime && above) {
         if (lastChannelWasPlain && current && current.channels[current.channels.length - 1] === lastChannelWasPlain) {
           current.channels.pop();
         }
