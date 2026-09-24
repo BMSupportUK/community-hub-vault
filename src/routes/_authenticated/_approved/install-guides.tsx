@@ -1096,20 +1096,22 @@ function SecureGuideVideo({
   );
 }
 
-/** Same framed hero as the Welcome tab, with the tab's own content beneath. */
+/** Framed hero whose own content lives inside it; fills the screen on large displays, scrolls on smaller ones. */
 function IllustratedHero({ image, title, text, children }: { image: string; title: string; text: string; children: import("react").ReactNode }) {
   return (
-    <div className="space-y-6">
-      <div className="relative overflow-hidden rounded-2xl border border-border shadow-glow min-h-[34vh] lg:min-h-[40vh]">
-        <img src={image} alt="" aria-hidden width={1920} height={1024} className="absolute inset-0 h-full w-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/70 to-transparent" />
-        <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
-        <div className="relative p-6 sm:p-10 md:p-14 max-w-2xl">
+    <div className="relative overflow-hidden rounded-2xl border border-border shadow-glow min-h-[70vh] lg:h-[calc(100vh-13rem)] lg:min-h-[32rem] flex flex-col">
+      <img src={image} alt="" aria-hidden width={1920} height={1024} className="absolute inset-0 h-full w-full object-cover" />
+      <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/70 to-transparent" />
+      <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
+      <div className="relative flex min-h-0 flex-1 flex-col p-6 sm:p-10 md:p-14">
+        <div className="max-w-2xl">
           <h2 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-foreground leading-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]">{title}</h2>
           <p className="mt-4 text-base sm:text-lg text-foreground/90 drop-shadow">{text}</p>
         </div>
+        <div className="mt-6 min-h-0 flex-1 overflow-y-auto rounded-2xl border border-border bg-surface/80 p-4 shadow-lg backdrop-blur-md sm:p-6">
+          {children}
+        </div>
       </div>
-      <div className="max-w-5xl">{children}</div>
     </div>
   );
 }
