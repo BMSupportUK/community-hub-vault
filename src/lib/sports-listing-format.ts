@@ -755,32 +755,12 @@ function formatListingDate(date: Date): string {
   return `${weekday}, ${ordinal(date.getUTCDate())} ${month}`;
 }
 
-/**
- * Daily channel lists may omit the second date and simply continue after
- * midnight (for example 23:00, 23:00, 4AM). Preserve that source order and
- * move entries after the clock rolls backwards onto the following date.
- */
+/** Give every event without its own day/date the listing/import date. */
 function applyImplicitDateRollover(events: SportsListingEvent[], fallbackDate?: string | null): SportsListingEvent[] {
   const base = parseListingDate(fallbackDate);
   if (!base) return events;
-  // Some events carry their own day ("6:00am UK Fri"): any event with no day
-  // or date of its own is presumed to be on the listing/import day.
-  if (events.some((event) => event.date)) {
-    const fallback = formatListingDate(new Date(Date.UTC(base.y, base.m, base.d)));
-    return events.map((event) => (event.date ? event : { ...event, date: fallback }));
-  }
-
-  let dayOffset = 0;
-  let previousMinutes: number | null = null;
-  return events.map((event) => {
-    const clock = parseClockTime(event.time);
-    const minutes = clock ? clock.hour * 60 + clock.minute : null;
-    if (minutes !== null && previousMinutes !== null && minutes < previousMinutes) dayOffset += 1;
-    if (minutes !== null) previousMinutes = minutes;
-
-    const date = new Date(Date.UTC(base.y, base.m, base.d + dayOffset));
-    return { ...event, date: formatListingDate(date) };
-  });
+  const fallback = formatListingDate(new Date(Date.UTC(base.y, base.m, base.d)));
+  return events.map((event) => (event.date ? event : { ...event, date: fallback }));
 }
 
 /** Times that already name a UK zone are never reinterpreted as ET. */
@@ -799,8 +779,8 @@ function eventTimeForOutput(event: SportsListingEvent, input: ListingInput): str
 
 /**
  * Date a listing post should fall under when it never writes one: the day it
- * is imported, in UK office time. Times that run backwards after this are
- * rolled onto the following day by applyImplicitDateRollover.
+ * is imported, in UK office time. A clock changing from late to early does not
+ * imply tomorrow; only a day/date written on that event can move it.
  */
 export function importDayListingDate(nowMs: number = Date.now()): string {
   const today = ukTodayParts(nowMs);
