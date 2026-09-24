@@ -422,6 +422,17 @@ function detectAtSlotEvent(line: string, date: string | null): SportsListingEven
 }
 
 function detectEvent(line: string, date: string | null): SportsListingEvent | null {
+  // "UEFA 01 | 17:00 Andorra vs Malta" — channel, pipe, clock, event.
+  const piped = line.match(/^([A-Za-z][A-Za-z0-9+&.' -]{0,30}?\s*\d{1,3})\s*\|\s*(\d{1,2}[:.]\d{2}(?:\s*[ap]m)?)\s+(.+)$/i);
+  if (piped && piped[1] && piped[2] && piped[3]) {
+    return {
+      date,
+      time: normalizeTime(piped[2].replace(".", ":")),
+      title: normalizeSportsEventTitle(piped[3].trim()),
+      channels: [piped[1].trim().replace(/\s+/g, " ")],
+    };
+  }
+
   const atSlot = detectAtSlotEvent(line, date);
   if (atSlot) return atSlot;
 
