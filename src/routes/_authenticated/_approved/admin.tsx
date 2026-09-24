@@ -6,6 +6,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { backfillVpnDetection } from "@/lib/vpn-backfill.functions";
+import { unlockWithStaffPin, requestStaffPinReset } from "@/lib/staff-pin.functions";
+import { StaffPinAdminCard } from "@/components/app/StaffPinAdminCard";
 import { setAppTheme, useDefaultAppTheme } from "@/hooks/use-app-theme";
 import { ThemePicker, APP_THEME_OPTIONS } from "@/components/app/ThemePicker";
 import {
@@ -149,6 +151,8 @@ function AdminDashboard() {
 
 function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () => void }) {
   const { user } = useAuth();
+  const unlockFn = useServerFn(unlockWithStaffPin);
+  const requestResetFn = useServerFn(requestStaffPinReset);
   const [password, setPassword] = useState("");
   const [pin, setPin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
@@ -267,35 +271,15 @@ function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () 
     } finally { setBusy(false); }
   };
 
-  const setupPin = async () => {
-    if (!user) return;
-    if (pin.length < 4) return toast.error("PIN must be at least 4 characters");
-    if (pin !== confirmPin) return toast.error("PINs do not match");
-    setBusy(true);
-    try {
-      const hash = await sha256Hex(`${user.id}:${pin}`);
-      const { error } = await supabase.from("vault_pins").upsert({ user_id: user.id, pin_hash: hash });
-      if (error) throw error;
-      toast.success("PIN set. Please unlock.");
-      window.location.reload();
-    } catch (e: any) {
-      toast.error(e.message ?? "Failed");
-    } finally { setBusy(false); }
-  };
-
   const unlock = async () => {
     if (guardLocked()) return;
-    if (!user?.email) return;
     if (!password || !pin) return toast.error("Enter password and PIN");
     setBusy(true);
     try {
-      const { error: signErr } = await supabase.auth.signInWithPassword({ email: user.email, password });
-      if (signErr) throw new Error("Incorrect password");
-      const hash = await sha256Hex(`${user.id}:${pin}`);
-      const { data: row } = await supabase.from("vault_pins").select("pin_hash").eq("user_id", user.id).maybeSingle();
-      if (!row || row.pin_hash !== hash) throw new Error("Incorrect PIN");
+      const res = await unlockFn({ data: { password, pin } });
+      if (!res.ok) throw new Error(res.error ?? "Unlock failed");
       await clearFailures();
-      toast.success("Owner unlocked");
+      toast.success("Dashboard unlocked");
       onUnlocked();
     } catch (e: any) {
       await recordFailure();
@@ -304,22 +288,14 @@ function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () 
   };
 
   const resetPin = async () => {
-    if (!user?.email) return;
-    if (!password) return toast.error("Enter your account password");
-    if (pin.length < 4) return toast.error("PIN must be at least 4 characters");
-    if (pin !== confirmPin) return toast.error("PINs do not match");
     setBusy(true);
     try {
-      const { error: signErr } = await supabase.auth.signInWithPassword({ email: user.email, password });
-      if (signErr) throw new Error("Incorrect password");
-      const hash = await sha256Hex(`${user.id}:${pin}`);
-      const { error } = await supabase.from("vault_pins").upsert({ user_id: user.id, pin_hash: hash });
-      if (error) throw error;
-      toast.success("PIN reset. Please unlock with your new PIN.");
-      setPassword(""); setPin(""); setConfirmPin("");
+      const res = await requestResetFn({ data: { reason: password.trim() || undefined } });
+      toast.success(res.already ? "You already have a pending request — an admin will issue your PIN soon." : "Request sent. An admin will issue your new PIN.");
+      setPassword("");
       setMode("unlock");
     } catch (e: any) {
-      toast.error(e.message ?? "Reset failed");
+      toast.error(e.message ?? "Request failed");
     } finally { setBusy(false); }
   };
 
@@ -338,14 +314,20 @@ function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () 
           {5 - failedCount} attempt{5 - failedCount === 1 ? "" : "s"} remaining before lockout.
         </div>
       )}
-      {!hasPin ? (
+      {!hasPin && mode !== "reset" && mode !== "totp" && mode !== "backup" ? (
         <>
-          <h2 className="font-display text-lg font-bold">Set your owner PIN</h2>
-          <p className="text-sm text-muted-foreground mb-4">A personal PIN plus your account password is required to enter the owner dashboard.</p>
-          <input value={pin} onChange={(e) => setPin(e.target.value)} type="password" placeholder="New PIN (min 4)" className="w-full mb-2 px-3 py-2.5 rounded-lg bg-surface-2 border border-border text-sm" />
-          <input value={confirmPin} onChange={(e) => setConfirmPin(e.target.value)} type="password" placeholder="Confirm PIN" className="w-full mb-4 px-3 py-2.5 rounded-lg bg-surface-2 border border-border text-sm" />
-          <button onClick={setupPin} disabled={busy} className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-medium disabled:opacity-60">
-            {busy ? "Saving…" : "Save PIN"}
+          <h2 className="font-display text-lg font-bold">No staff PIN yet</h2>
+          <p className="text-sm text-muted-foreground mb-4">Staff PINs are issued by an admin. Request one and you'll get a mention when it's ready.</p>
+          <button onClick={() => setMode("reset")} className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-medium">
+            Request a staff PIN
+          </button>
+          {hasTotp && (
+            <button type="button" onClick={() => setMode("totp")} className="w-full mt-3 text-xs text-primary hover:underline underline-offset-2">
+              Use a 2FA code instead
+            </button>
+          )}
+          <button type="button" onClick={() => setMode("backup")} className="w-full mt-3 text-xs text-primary hover:underline underline-offset-2">
+            Use a backup recovery code
           </button>
         </>
       ) : mode === "unlock" ? (
@@ -431,17 +413,15 @@ function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () 
         </>
       ) : (
         <>
-          <h2 className="font-display text-lg font-bold">Reset owner PIN</h2>
-          <p className="text-sm text-muted-foreground mb-4">Confirm your account password, then choose a new PIN.</p>
-          <input value={password} onChange={(e) => setPassword(e.target.value)} type="password" placeholder="Account password" className="w-full mb-2 px-3 py-2.5 rounded-lg bg-surface-2 border border-border text-sm" autoFocus />
-          <input value={pin} onChange={(e) => setPin(e.target.value)} type="password" placeholder="New PIN (min 4)" className="w-full mb-2 px-3 py-2.5 rounded-lg bg-surface-2 border border-border text-sm" />
-          <input value={confirmPin} onChange={(e) => setConfirmPin(e.target.value)} type="password" placeholder="Confirm new PIN" className="w-full mb-4 px-3 py-2.5 rounded-lg bg-surface-2 border border-border text-sm" onKeyDown={(e) => e.key === "Enter" && resetPin()} />
+          <h2 className="font-display text-lg font-bold">Request a new staff PIN</h2>
+          <p className="text-sm text-muted-foreground mb-4">An admin will be alerted and will issue you a new PIN. You'll get a mention once it's ready — view it on your profile's Staff PIN tab.</p>
+          <textarea value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Reason (optional)" rows={2} className="w-full mb-4 px-3 py-2.5 rounded-lg bg-surface-2 border border-border text-sm" />
           <button onClick={resetPin} disabled={busy} className="w-full py-2.5 rounded-lg bg-primary text-primary-foreground font-medium disabled:opacity-60 flex items-center justify-center gap-2">
-            {busy ? <Loader2 className="size-4 animate-spin" /> : <KeyRound className="size-4" />} Save new PIN
+            {busy ? <Loader2 className="size-4 animate-spin" /> : <KeyRound className="size-4" />} Send reset request
           </button>
           <button
             type="button"
-            onClick={() => { setMode("unlock"); setPin(""); setConfirmPin(""); }}
+            onClick={() => { setMode("unlock"); setPassword(""); }}
             className="w-full mt-3 text-xs text-muted-foreground hover:text-foreground underline underline-offset-2"
           >
             Back to unlock
