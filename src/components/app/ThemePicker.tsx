@@ -68,22 +68,22 @@ export function ThemePicker({ current, onChoose, title, description }: ThemePick
               )}
             >
               <span className="flex w-full flex-col">
-                <span className="mb-3 flex items-center justify-between gap-2">
-                  <span className="font-display font-bold text-foreground">{option.name}</span>
-                  {busy === option.value ? (
-                    <Loader2 className="size-4 animate-spin text-primary" />
-                  ) : active ? (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-primary px-2 py-0.5 text-[10px] uppercase text-primary-foreground">
-                      <Check className="size-3" /> Active
-                    </span>
-                  ) : null}
-                </span>
-                <span className="mb-3 text-xs font-normal text-muted-foreground">{option.description}</span>
-                <span className="mt-auto flex gap-1.5" aria-hidden>
+                <span className="font-display font-bold text-foreground">{option.name}</span>
+                <span className="mt-2 text-xs font-normal text-muted-foreground">{option.description}</span>
+                <span className="mt-3 flex gap-1.5" aria-hidden>
                   {option.swatches.map((colour) => (
                     <span key={colour} className="h-7 flex-1 rounded-sm ring-1 ring-foreground/15" style={{ backgroundColor: colour }} />
                   ))}
                 </span>
+                {busy === option.value ? (
+                  <span className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-primary">
+                    <Loader2 className="size-3.5 animate-spin" /> Saving…
+                  </span>
+                ) : active ? (
+                  <span className="mt-3 inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-primary">
+                    <Check className="size-3.5" /> Active
+                  </span>
+                ) : null}
               </span>
             </Button>
           );

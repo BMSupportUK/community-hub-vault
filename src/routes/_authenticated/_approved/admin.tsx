@@ -436,7 +436,7 @@ function DashboardBody() {
   const { hasRole } = useAuth();
   const isAdminOnly = hasRole("admin");
   const canSeePins = isAdminOnly || hasRole("management");
-  const [tab, setTab] = useState<"tools" | "staff-pins">("tools");
+  const [tab, setTab] = useState<"tools" | "staff-pins" | "backup-codes">("tools");
 
 
 
@@ -510,6 +510,10 @@ function DashboardBody() {
 
       {tab === "staff-pins" && canSeePins ? (
         <StaffPinAdminCard />
+      ) : tab === "backup-codes" && canSeePins ? (
+        <div className="max-w-2xl">
+          <RecoveryCodes />
+        </div>
       ) : (
         <>
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px] items-start">
@@ -538,7 +542,6 @@ function DashboardBody() {
 
       <aside className="min-w-0 space-y-4 xl:sticky xl:top-4 xl:self-start">
         <ThemePickerCard />
-        <RecoveryCodes />
         <VpnBackfillCard />
       </aside>
     </div>
