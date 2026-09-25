@@ -90,6 +90,7 @@ function AuthLayout() {
     path === "/account-security" ||
     path === "/fan-zone-security" ||
     path === "/knowledge-base" ||
+    path === "/install-guides" ||
     path === "/sports-guides";
   // Everything else locks to the viewport on large screens and scrolls
   // normally on smaller ones.
