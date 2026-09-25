@@ -382,6 +382,19 @@ function detectStampedEvent(line: string, date: string | null): SportsListingEve
     };
   }
 
+  // "Stan event: EventS1 name: Harlequins v Bath - PREM Rugby" → channel
+  // "Stan Event S1", event after "name:".
+  const stanEvent = head.match(/^([a-z][a-z0-9 +&'./-]*?)\s+event\s*:\s*event\s*([a-z]?\d{1,3})\s+name\s*:\s*(.+)$/i);
+  if (stanEvent?.[1] && stanEvent[2] && stanEvent[3]) {
+    const brand = stanEvent[1].trim().replace(/^\w+$/, (w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+    return {
+      date: eventDate || date,
+      time: `${String(ukPart("hour") % 24).padStart(2, "0")}:${String(ukPart("minute")).padStart(2, "0")} ${ukZone}`,
+      title: normalizeSportsEventTitle(stanEvent[3].trim()),
+      channels: [`${brand} Event ${stanEvent[2].toUpperCase()}`],
+    };
+  }
+
   // "Setanta: 1: Panathinaikos - Paris" → channel "Setanta 1".
   const colonNumbered = head.match(/^([a-z][a-z0-9 +&'./-]*?)\s*:\s*(\d{1,3})\s*:\s*(.+)$/i);
   if (colonNumbered?.[1] && colonNumbered[2] && colonNumbered[3]) {
