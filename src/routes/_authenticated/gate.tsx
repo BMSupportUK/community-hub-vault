@@ -13,8 +13,19 @@ import ticketAudio from "@/assets/ticket-notify.mp3";
 import { playSound } from "@/lib/sound";
 import { MentionText } from "@/components/app/mentions";
 import { GateStaffPresence } from "@/components/app/GateStaffPresence";
+import { BmSplash } from "@/components/app/BmSplash";
 
 export const Route = createFileRoute("/_authenticated/gate")({
+  head: () => ({
+    meta: [
+      { title: "Account Access | BM Support" },
+      { name: "description", content: "Check the status of your BM Support account access." },
+      { property: "og:title", content: "Account Access | BM Support" },
+      { property: "og:description", content: "Check the status of your BM Support account access." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   validateSearch: (search: Record<string, unknown>): { intent?: "fan-zone" | "bm-support"; invite?: string } => ({
     intent:
       search.intent === "fan-zone" || search.intent === "bm-support"
@@ -30,6 +41,8 @@ interface Msg { id: string; sender_id: string; content: string; created_at: stri
 
 function GatePage() {
   const { user, refreshRoles, signOut } = useAuth();
+  const refreshRolesRef = useRef(refreshRoles);
+  refreshRolesRef.current = refreshRoles;
   const navigate = useNavigate();
   const { intent, invite: inviteFromUrl } = Route.useSearch();
   const isFanZone = intent === "fan-zone";
@@ -59,6 +72,7 @@ function GatePage() {
   const verifyCaptcha = useServerFn(verifyTurnstile);
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [referralNote, setReferralNote] = useState<string | null>(null);
+  const [referralChecking, setReferralChecking] = useState(true);
 
   const ACTIVATION_TEXT = "I would like to complete activation of my account.";
   const defaultDraft = (code?: string | null) =>
@@ -116,6 +130,7 @@ function GatePage() {
   // already-redeemed invite row in the database.
   useEffect(() => {
     if (!user) return;
+    setReferralChecking(true);
     let cancelled = false;
     (async () => {
       const urlCode = inviteFromUrl?.trim();
@@ -125,13 +140,13 @@ function GatePage() {
         if (!cancelled) {
           if (!error) {
             toast.success("Invite accepted — welcome.");
-            await refreshRoles?.();
+            await refreshRolesRef.current();
             navigate({ to: "/home" });
             return;
           }
-          setReferralCode(urlCode);
+          // A used code may already belong to this account (signup redeemed
+          // it before navigation). Check ownership below before showing gate.
           setReferralNote(error.message);
-          return;
         }
       }
       // No URL code — check whether an invite is already linked to this user.
@@ -144,17 +159,19 @@ function GatePage() {
         // Referral code already used → straight access, never the gate.
         const { data: ok } = await supabase.rpc("claim_invite_access");
         if (!cancelled && ok && intent !== "fan-zone") {
-          await refreshRoles?.();
+          await refreshRolesRef.current();
           navigate({ to: "/home" });
           return;
         }
         setReferralCode(linked.code);
       }
+      if (!cancelled && !linked && urlCode) setReferralCode(urlCode);
+      if (!cancelled) setReferralChecking(false);
     })();
     return () => {
       cancelled = true;
     };
-  }, [user, inviteFromUrl, intent, navigate, refreshRoles]);
+  }, [user?.id, inviteFromUrl, intent, navigate]);
 
   // Once the referral code resolves, fold it into the default activation draft.
   useEffect(() => {
@@ -395,6 +412,8 @@ function GatePage() {
   const openChatOrForm = () => {
     requestAccess("chat");
   };
+
+  if (referralChecking) return <BmSplash label="Checking your access…" />;
 
   return (
     <div className="fixed inset-0 overflow-hidden bg-black">

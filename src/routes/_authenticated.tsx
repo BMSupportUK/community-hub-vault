@@ -15,7 +15,6 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { isAllowedForFanZoneOnly, isFanZonePath } from "@/lib/fan-zone-nav";
 import { useFanZoneMembershipState } from "@/hooks/use-fan-zone";
 import { BmSplash } from "@/components/app/BmSplash";
-import { screenLockMayBeLocked } from "@/lib/screen-lock-hash";
 import { ScreenLockProvider } from "@/components/app/ScreenLockProvider";
 import { useViewportLockable } from "@/hooks/use-viewport-lock";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -200,9 +199,8 @@ function AuthLayout() {
 
 
   if (loading) {
-    // Only cover the app while it loads when a lock might be due — otherwise
-    // there is nothing to hide and a splash just gets in the way.
-    return screenLockMayBeLocked() ? <BmSplash /> : null;
+    // Keep the gate hidden until referral access and roles have resolved.
+    return <BmSplash />;
   }
 
 

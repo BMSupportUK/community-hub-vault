@@ -14,8 +14,19 @@ import { VpnBlockedDialog } from "@/components/VpnBlockedDialog";
 import { ShieldAlert, Loader2, RefreshCw } from "lucide-react";
 import { useViewportLockable } from "@/hooks/use-viewport-lock";
 import { useAuth } from "@/hooks/use-auth";
+import { BmSplash } from "@/components/app/BmSplash";
 
 export const Route = createFileRoute("/signup")({
+  head: () => ({
+    meta: [
+      { title: "Join BM Support" },
+      { name: "description", content: "Create a BM Support account using a member referral code." },
+      { property: "og:title", content: "Join BM Support" },
+      { property: "og:description", content: "Create a BM Support account using a member referral code." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   validateSearch: (search: Record<string, unknown>): { invite?: string } => ({
     invite: typeof search.invite === "string" ? search.invite : undefined,
   }),
@@ -195,7 +206,8 @@ function SignupPage() {
     } catch {
       // If the check fails, fall through to signUp.
     }
-    const { error } = await supabase.auth.signUp({
+    if (inviteCode.trim()) window.sessionStorage.setItem("bm-referral-setup", "pending");
+    const { data: signupData, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -208,9 +220,11 @@ function SignupPage() {
       },
     });
     if (error) {
+      window.sessionStorage.removeItem("bm-referral-setup");
       setBusy(false);
       return toast.error(error.message);
     }
+    if (inviteCode.trim() && signupData.user?.id) window.sessionStorage.setItem("bm-referral-setup", signupData.user.id);
     // Capture as much client/browser info as we can for owner review
     try {
       const nav = navigator as Navigator & {
@@ -244,20 +258,18 @@ function SignupPage() {
     }
     if (inviteCode.trim()) {
       const { error: redeemError } = await supabase.rpc("redeem_invite", { p_code: inviteCode.trim() });
+      window.sessionStorage.removeItem("bm-referral-setup");
       if (redeemError) {
         setBusy(false);
         toast.error(`Invite code: ${redeemError.message}`);
-        if (intent === "fan-zone") navigate({ to: "/fan-zone-pending" });
-        else navigate({ to: "/gate", search: { intent, invite: inviteCode.trim() } });
+        // Keep the referral form visible for correction, not the security gate.
         return;
       }
       // Valid invite → user is auto-approved as nonsubscriber; skip the gate for BM Support.
       if (intent !== "fan-zone") {
         // Load the newly granted access first, otherwise the app still sees
         // the account as waiting and sends it to the security gate.
-        try {
-          await refreshRoles();
-        } catch {}
+        await refreshRoles();
         setBusy(false);
         toast.success("Welcome — invite accepted.");
         navigate({ to: "/home" });
@@ -277,6 +289,8 @@ function SignupPage() {
   };
 
   return (
+    <>
+    {busy && <BmSplash label="Setting up your access…" />}
     <div
       className={
         (lockable
@@ -317,7 +331,7 @@ function SignupPage() {
           </Link>
           <div className="bg-surface/80 backdrop-blur-sm border border-border rounded-2xl p-5 sm:p-8 shadow-soft">
             <h1 className="font-display text-2xl font-bold">Join BM Support</h1>
-            <p className="text-sm text-muted-foreground mb-6">A moderator will review your request before you get in.</p>
+             <p className="text-sm text-muted-foreground mb-6">BM Support referrals get access straight away. Fan Zone requests are reviewed.</p>
             <form onSubmit={submit} className="space-y-3">
               {/* On small screens the registration choice is part of the form; on lg+ it moves to the sidebar */}
               <div className="lg:hidden">
@@ -438,5 +452,6 @@ function SignupPage() {
 
       <VpnBlockedDialog open={vpnDialogOpen} onOpenChange={setVpnDialogOpen} />
     </div>
+    </>
   );
 }
