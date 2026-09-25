@@ -196,7 +196,7 @@ function SignupPage() {
     } catch {
       // If the check fails, fall through to signUp.
     }
-    const { error } = await supabase.auth.signUp({
+    const { data: signupData, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -211,6 +211,9 @@ function SignupPage() {
     if (error) {
       setBusy(false);
       return toast.error(error.message);
+    }
+    if (inviteCode.trim() && signupData.user?.id) {
+      window.sessionStorage.setItem("bm-referral-setup", signupData.user.id);
     }
     // Capture as much client/browser info as we can for owner review
     try {
@@ -245,6 +248,7 @@ function SignupPage() {
     }
     if (inviteCode.trim()) {
       const { error: redeemError } = await supabase.rpc("redeem_invite", { p_code: inviteCode.trim() });
+      window.sessionStorage.removeItem("bm-referral-setup");
       if (redeemError) {
         setBusy(false);
         toast.error(`Invite code: ${redeemError.message}`);

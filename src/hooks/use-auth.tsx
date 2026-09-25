@@ -51,6 +51,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const activeUidRef = useRef<string | null>(null);
 
   const loadRoles = async (uid: string) => {
+    // Sign-up may create a session before its referral is redeemed. Wait for
+    // that in-flight redemption rather than publishing the interim pending role.
+    if (typeof window !== "undefined" && window.sessionStorage.getItem("bm-referral-setup") === uid) {
+      setTimeout(() => { if (activeUidRef.current === uid) void loadRoles(uid); }, 500);
+      return;
+    }
     const { data, error } = await supabase.from("user_roles").select("role").eq("user_id", uid);
     // If the query fails (transient network / RLS hiccup), keep the previously
     // loaded roles intact. Otherwise a refresh would clear roles, flip
@@ -67,6 +73,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // A role request may finish after sign-out. Never let that stale response
     // restore an authenticated role state for a user whose session is gone.
     if (activeUidRef.current !== uid) return;
+    if (typeof window !== "undefined" && window.sessionStorage.getItem("bm-referral-setup") === uid) {
+      setTimeout(() => { if (activeUidRef.current === uid) void loadRoles(uid); }, 500);
+      return;
+    }
     let resolvedRoles = (data ?? []).map((r) => r.role as AppRole);
     // Resolve an already-used referral before exposing a pending state to the
     // route guard. An invited account must never briefly render the gate.
