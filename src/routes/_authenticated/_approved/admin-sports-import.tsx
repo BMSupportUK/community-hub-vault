@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { ArrowLeft, Loader2, Sparkles, Send, Trash2, Inbox, Clock, Check, Scissors, Settings2, X } from "lucide-react";
 import { firstClockIn, firstDateIn, parseClockTime, toSingleZoneTime, type TimeZoneChoice } from "@/lib/import-time";
 import { formatSportsListingBlock, parseSportsListingBlock, splitListingSections } from "@/lib/sports-listing-format";
+import { checkSportsImport, type ImportCheckResult } from "@/lib/sports-import-check";
 import {
   queuePastedPost,
   setupDiscordBot,
@@ -853,8 +854,16 @@ function QueueSetup({
     return () => { alive = false; };
   }, [draft.destinationCategory, selectedSubcategory, readyForGuides]);
 
+  const itemRaw = String(item?.parsed_event?.raw ?? item?.raw_text ?? "");
+  const check = useMemo(() => checkSportsImport(itemRaw, draft.sourceZone), [itemRaw, draft.sourceZone]);
+  const [override, setOverride] = useState(false);
+  useEffect(() => setOverride(false), [item?.id, draft.sourceZone]);
+
   const run = async (action: "import" | "discard") => {
     if (!item) return;
+    if (action === "import" && check.errors > 0 && !override) {
+      return toast.error("The double-check found problems — fix the post or tick \"Import anyway\" first");
+    }
     if (action === "import" && !draft.destinationCategory) return toast.error("Pick a category and sub category");
     if (action === "import" && !draft.guideId && !draft.title.trim()) return toast.error("Pick the guide this post goes into");
     setBusy(action);
@@ -909,7 +918,8 @@ function QueueSetup({
         <p className="truncate text-sm font-medium">{draft.title || "Untitled post"}</p>
       </div>
 
-      <ListingPreview raw={String(item.parsed_event?.raw ?? item.raw_text ?? "")} sourceZone={draft.sourceZone} />
+      <ImportCheckPanel check={check} override={override} onOverride={setOverride} />
+      <ListingPreview check={check} />
 
       {(step > 1 || step > 2 || step > 3) && (
         <div className="flex flex-wrap items-center gap-1.5">
@@ -1159,13 +1169,46 @@ function QueueSetup({
   );
 }
 
-function ListingPreview({ raw, sourceZone }: { raw: string; sourceZone: TimeZoneChoice | null }) {
-  // Preview the same formatted body the save action writes, including date
-  // filling, timezone conversion and channel fallback rules.
-  const events = useMemo(() => {
-    const formatted = formatSportsListingBlock({ raw, sourceZone });
-    return parseSportsListingBlock(formatted ?? raw);
-  }, [raw, sourceZone]);
+function ImportCheckPanel({ check, override, onOverride }: { check: ImportCheckResult; override: boolean; onOverride: (v: boolean) => void }) {
+  if (!check.issues.length) {
+    return (
+      <div className="flex items-center gap-2 rounded-lg border border-primary/40 bg-primary/10 p-2.5 text-xs font-medium text-primary">
+        <Check className="size-4" strokeWidth={3} />
+        Double-check passed — {check.events.length} events, every one has a time, name and channel, and the saved guide reads back exactly.
+      </div>
+    );
+  }
+  return (
+    <div className={`space-y-1.5 rounded-lg border p-2.5 text-xs ${check.errors ? "border-destructive/50 bg-destructive/10" : "border-border bg-muted/30"}`}>
+      <p className={`font-semibold ${check.errors ? "text-destructive" : "text-foreground"}`}>
+        Double-check: {check.errors ? `${check.errors} problem${check.errors === 1 ? "" : "s"}` : "no problems"}
+        {check.warnings ? `, ${check.warnings} warning${check.warnings === 1 ? "" : "s"}` : ""}
+      </p>
+      <ul className="space-y-1">
+        {check.issues.map((issue, i) => (
+          <li key={i} className={issue.level === "error" ? "text-destructive" : "text-muted-foreground"}>
+            {issue.level === "error" ? "✕" : "!"} {issue.message}
+            {issue.events?.length ? ` — card${issue.events.length === 1 ? "" : "s"} ${issue.events.slice(0, 12).map((n) => String(n).padStart(2, "0")).join(", ")}${issue.events.length > 12 ? "…" : ""}` : ""}
+          </li>
+        ))}
+      </ul>
+      {check.errors > 0 && (
+        <label className="flex items-center gap-2 pt-1 text-foreground">
+          <input type="checkbox" checked={override} onChange={(e) => onOverride(e.target.checked)} />
+          I've checked the cards below — import anyway
+        </label>
+      )}
+    </div>
+  );
+}
+
+function ListingPreview({ check }: { check: ImportCheckResult }) {
+  // Shows exactly what the save action writes (same formatter, re-read).
+  const events = check.events;
+  const flagged = new Map<number, "error" | "warning">();
+  for (const issue of check.issues) for (const n of issue.events ?? []) {
+    if (flagged.get(n) !== "error") flagged.set(n, issue.level);
+  }
   if (!events.length) {
     return (
       <div className="rounded-lg border border-border bg-muted/30 p-3 text-xs text-muted-foreground">
@@ -1185,7 +1228,7 @@ function ListingPreview({ raw, sourceZone }: { raw: string; sourceZone: TimeZone
       <div className="max-h-60 space-y-2 overflow-y-auto pr-1">
         {events.map((event, index) => {
           return (
-            <div key={`${event.time}-${event.title}-${index}`} className="rounded-md border border-border bg-card/70 p-2">
+            <div key={`${event.time}-${event.title}-${index}`} className={`rounded-md border bg-card/70 p-2 ${flagged.get(index + 1) === "error" ? "border-destructive" : flagged.get(index + 1) === "warning" ? "border-primary/50" : "border-border"}`}>
               <div className="flex items-start gap-2">
                 <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold text-primary">
                   {String(index + 1).padStart(2, "0")}
