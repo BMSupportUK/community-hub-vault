@@ -67,10 +67,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // A role request may finish after sign-out. Never let that stale response
     // restore an authenticated role state for a user whose session is gone.
     if (activeUidRef.current !== uid) return;
+    let resolvedRoles = (data ?? []).map((r) => r.role as AppRole);
+    // Resolve an already-used referral before exposing a pending state to the
+    // route guard. An invited account must never briefly render the gate.
+    if (resolvedRoles.length === 0 || (resolvedRoles.length === 1 && resolvedRoles[0] === "pending")) {
+      const { data: claimed, error: claimError } = await supabase.rpc("claim_invite_access");
+      if (activeUidRef.current !== uid) return;
+      if (claimError) {
+        console.warn("[auth] referral check failed; retrying before routing", claimError);
+        setTimeout(() => { if (activeUidRef.current === uid) void loadRoles(uid); }, 2000);
+        return;
+      }
+      if (claimed) {
+        const { data: updated, error: updateError } = await supabase.from("user_roles").select("role").eq("user_id", uid);
+        if (activeUidRef.current !== uid) return;
+        if (updateError) {
+          console.warn("[auth] referral access refresh failed; retrying", updateError);
+          setTimeout(() => { if (activeUidRef.current === uid) void loadRoles(uid); }, 2000);
+          return;
+        }
+        resolvedRoles = (updated ?? []).map((r) => r.role as AppRole);
+      }
+    }
     // The database does not guarantee row order. Keep BM Support roles first
     // so dual-role accounts are consistently represented by their highest
     // support role throughout the UI.
-    setRoles(sortRolesByPriority((data ?? []).map((r) => r.role as AppRole)));
+    setRoles(sortRolesByPriority(resolvedRoles));
     setRolesLoaded(true);
   };
 
@@ -298,7 +320,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
 
         refreshRoles: async () => {
-          if (user) await loadRoles(user.id);
+          const uid = activeUidRef.current;
+          if (uid) await loadRoles(uid);
         },
       }}
     >

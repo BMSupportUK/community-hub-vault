@@ -14,6 +14,7 @@ import { VpnBlockedDialog } from "@/components/VpnBlockedDialog";
 import { ShieldAlert, Loader2, RefreshCw } from "lucide-react";
 import { useViewportLockable } from "@/hooks/use-viewport-lock";
 import { useAuth } from "@/hooks/use-auth";
+import { BmSplash } from "@/components/app/BmSplash";
 
 export const Route = createFileRoute("/signup")({
   validateSearch: (search: Record<string, unknown>): { invite?: string } => ({
@@ -247,17 +248,14 @@ function SignupPage() {
       if (redeemError) {
         setBusy(false);
         toast.error(`Invite code: ${redeemError.message}`);
-        if (intent === "fan-zone") navigate({ to: "/fan-zone-pending" });
-        else navigate({ to: "/gate", search: { intent, invite: inviteCode.trim() } });
+        // Keep the referral form visible for correction, not the security gate.
         return;
       }
       // Valid invite → user is auto-approved as nonsubscriber; skip the gate for BM Support.
       if (intent !== "fan-zone") {
         // Load the newly granted access first, otherwise the app still sees
         // the account as waiting and sends it to the security gate.
-        try {
-          await refreshRoles();
-        } catch {}
+        await refreshRoles();
         setBusy(false);
         toast.success("Welcome — invite accepted.");
         navigate({ to: "/home" });
@@ -277,6 +275,8 @@ function SignupPage() {
   };
 
   return (
+    <>
+    {busy && <BmSplash label="Setting up your access…" />}
     <div
       className={
         (lockable
@@ -438,5 +438,6 @@ function SignupPage() {
 
       <VpnBlockedDialog open={vpnDialogOpen} onOpenChange={setVpnDialogOpen} />
     </div>
+    </>
   );
 }

@@ -200,9 +200,8 @@ function AuthLayout() {
 
 
   if (loading) {
-    // Only cover the app while it loads when a lock might be due — otherwise
-    // there is nothing to hide and a splash just gets in the way.
-    return screenLockMayBeLocked() ? <BmSplash /> : null;
+    // Keep the gate hidden until referral access and roles have resolved.
+    return <BmSplash />;
   }
 
 
