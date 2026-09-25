@@ -22,3 +22,4 @@ Every new format: add it here, Bun-test raw AND round-trip, then repair the draf
 
 ## Peacock "title above slot" dump
 "Title" line, then "- DD-MM-YYYY 11:00 AM until DD-MM-YYYY 9:30 PM - PEACOCK 0 HD". Each pair is reordered to slot → title → channel before parsing. "ISO 2 V 9.25.26" — a V before a date is a feed tag, never "vs"/"&".
+- UFC Fightpass uses the same "title above slot" dump as Peacock, under a heading like `**## UFC FIGHTPASS**` and with slot lines that may start with " - ". The heading must never become the first fight's title. Times are UK wall-clock time (GMT/UK import choice). `VS` changes to `&`. Example: `00:55 · UFC BJJ 11: MUSUMECI & MITCHELL · UFC 1 HD`.
