@@ -30,3 +30,9 @@ Every new format: add it here, Bun-test raw AND round-trip, then repair the draf
 - URC / Premier Sports region-tag style: channel rows `UK | Premier Sports 1` / `IRE | Premier Sports 1` → KEEP the region, normalise to `UK Premier Sports 1` / `IRE Premier Sports 2`. UK and IRE are different feeds — never strip the tag.
 - Coupang pipe + double-slash style: `Coupang 1 | Azerbaijan Grand Prix Race // UK Sat 26 Sep 11:15am // ET Sat 26 Sep 6:15am` → channel `Coupang 1`, event, UK time and the row's own date. Rows containing `//` must never be split by the Rugby Pass channel-pipe rule (that broke it before).
 - Stan Sport event style: `Stan event: EventS1 name: Harlequins v Bath - PREM Rugby Round 1 start:2026-09-25 19:40:09 stop:...` → channel `Stan Event S1`, event is the complete `name:` value (`v` → `&`), time from `start:` as UK wall-clock time (no BST shift). Heading `**STAN Sport**` and `---` are not events. On saved read-back, punctuation inside the name stays in the name: `Seoul: Day 5 - WTA 250` must not turn `WTA 250` into a channel, and `Day 1 • Night Session - Laver Cup 2026` must remain one title.
+
+## NHL Center Ice (US | NHL Center Ice)
+Raw: `NHL | 01 - 7pm ET | 12am UK` then fixture on next line (`Bruins at Capitals`).
+Rule: time = the stated UK time as-is (never convert ET, no +1h), title = next line, channel = `NHL 01`.
+Header `US | NHL Center Ice` is dropped. Tested: 3 rows -> 3 events (12am/12:30am/1am, NHL 01/02/03).
+Evening-ET rows that are after midnight UK are tagged with the next UK weekday so they post on the right day.
