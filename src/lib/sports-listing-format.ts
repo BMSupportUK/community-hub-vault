@@ -667,10 +667,11 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
     // "VIP | Rugby Pass" headers are post headings, not events.
     .filter((line) => !/^vip\s*\|/i.test(line))
     // "UK | Premier Sports 1" / "IRE | Premier Sports 1" — region tag before a
-    // numbered channel. Keep the channel only; duplicates collapse later.
+    // numbered channel. Keep the region (UK and IRE feeds differ); normalise
+    // to "IRE Premier Sports 1" so it reads as one channel name.
     .map((line) => {
-      const m = line.match(/^(?:UK|IRE|IE|ROI|US|USA|CA|CAN|AUS|NZ)\s*\|\s*(.+?\s\d{1,3}(?:\s*HD)?)$/i);
-      return m ? m[1].trim() : line;
+      const m = line.match(/^(UK|IRE|IE|ROI|US|USA|CA|CAN|AUS|NZ)\s*\|\s*(.+?\s\d{1,3}(?:\s*HD)?)$/i);
+      return m ? `${m[1].toUpperCase()} ${m[2].trim()}` : line;
     })
     .filter((line, i, arr) => !(i > 0 && line === arr[i - 1] && /\s\d{1,3}(?:\s*HD)?$/i.test(line)));
   // Provider exports occasionally inject a lone marker between a programme
