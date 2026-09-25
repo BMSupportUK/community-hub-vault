@@ -73,9 +73,9 @@ function TransferStatusSteps({ transfer }: { transfer: Transfer }) {
 
   return (
     <div className="rounded-lg border border-border/60 bg-background/60 p-3">
-      <ol className="flex items-center gap-1">
+      <ol className="flex min-w-0 items-center gap-1">
         {steps.map((s, i) => (
-          <li key={s.label} className="flex flex-1 items-center gap-1 last:flex-none">
+          <li key={s.label} className="flex min-w-0 flex-1 items-center gap-1 last:flex-none">
             <span
               className={`grid size-5 shrink-0 place-items-center rounded-full border text-[10px] font-bold ${
                 s.state === "done"
@@ -87,8 +87,8 @@ function TransferStatusSteps({ transfer }: { transfer: Transfer }) {
             >
               {s.state === "done" ? "✓" : i + 1}
             </span>
-            <span
-              className={`text-[10px] leading-tight ${
+             <span
+               className={`min-w-0 break-words text-[10px] leading-tight ${
                 s.state === "done"
                   ? "text-emerald-300"
                   : s.state === "active"
@@ -221,7 +221,7 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
 
   return (
     <>
-      <article className="rounded-2xl border border-border/70 bg-surface overflow-hidden flex flex-col group shadow-soft hover:shadow-[0_0_30px_-10px_rgba(217,70,239,0.6)] hover:border-violet-500/40 transition-all">
+       <article className="min-w-0 rounded-lg border border-border/70 bg-surface overflow-hidden flex flex-col group shadow-soft hover:shadow-[0_0_30px_-10px_rgba(217,70,239,0.6)] hover:border-violet-500/40 transition-all">
         <div className="aspect-[16/10] bg-black/70 relative overflow-hidden">
           {build.videoPath && videoUrl ? (
             <video
@@ -256,7 +256,7 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
             <p className="text-sm text-violet-200/70 line-clamp-2">{build.releaseNotes}</p>
           )}
 
-          <div className="text-[11px] text-muted-foreground">
+           <div className="break-all text-[11px] text-muted-foreground">
             {build.fileName}
             {size ? ` · ${size}` : ""}
           </div>
@@ -483,28 +483,28 @@ export function AppTransferPanel({ onUploadClick }: { onUploadClick?: () => void
   }
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-border/80 bg-background/90 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.7)] backdrop-blur-xl">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-5 py-4 md:px-4 md:py-2 lg:px-5 lg:py-3">
-        <div className="flex items-center gap-3">
+     <section className="min-w-0 overflow-hidden rounded-lg border border-border/80 bg-background/90 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.7)] backdrop-blur-xl">
+       <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-2 border-b border-border/60 px-3 py-3 sm:px-5 sm:py-4 md:px-4 md:py-2 lg:px-5 lg:py-3">
+         <div className="flex min-w-0 items-center gap-2 sm:gap-3">
           <span className="grid size-10 place-items-center rounded-xl bg-gradient-primary text-primary-foreground shadow-glow">
             <Smartphone className="size-5" />
           </span>
-          <div>
+           <div className="min-w-0">
             <h3 className="font-display text-lg font-semibold text-foreground">Get the App</h3>
-            <p className="text-xs text-muted-foreground">
+             <p className="text-xs text-muted-foreground break-words">
               Secure 24-hour install links for your Fire Stick or Android device — each app has its own link.
             </p>
           </div>
         </div>
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/40 bg-emerald-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-300">
+         <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-emerald-400/40 bg-emerald-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-300">
           <ShieldCheck className="size-3" /> Secure links
         </span>
       </div>
-      <div className="p-5 md:p-3 lg:p-4">
-      <Tabs defaultValue={firstTab} className="w-full">
-        <TabsList className="flex h-auto flex-wrap justify-start gap-1 bg-surface-2/80 p-1">
+       <div className="min-w-0 p-3 sm:p-5 md:p-3 lg:p-4">
+       <Tabs defaultValue={firstTab} className="min-w-0 w-full">
+         <TabsList className="flex h-auto w-full min-w-0 justify-start gap-1 overflow-x-auto scrollbar-hide bg-surface-2/80 p-1 sm:flex-wrap">
           {APP_BUILD_CATEGORIES.map((c) => (
-            <TabsTrigger key={c.key} value={c.key} className="whitespace-normal text-xs sm:text-sm">
+             <TabsTrigger key={c.key} value={c.key} className="shrink-0 text-xs sm:text-sm">
               {c.label}
               <span className="ml-1.5 text-[10px] opacity-70">{(grouped[c.key] ?? []).length}</span>
             </TabsTrigger>
@@ -518,7 +518,7 @@ export function AppTransferPanel({ onUploadClick }: { onUploadClick?: () => void
                 <p className="mt-2 text-sm text-muted-foreground">No apps in this section yet.</p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+               <div className="grid min-w-0 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-5">
                 {(grouped[c.key] ?? []).map((b) => (
                   <AppCard key={b.id} build={b} transfer={byBuild.get(b.id)} now={now} />
                 ))}

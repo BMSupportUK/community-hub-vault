@@ -30,6 +30,16 @@ import installHero from "@/assets/install-guides-bg.jpg";
 
 
 export const Route = createFileRoute("/_authenticated/_approved/install-guides")({
+  head: () => ({
+    meta: [
+      { title: "Install Guides & BM App Store | BM Support" },
+      { name: "description", content: "Browse BM Support install guides and download the BM Support apps." },
+      { property: "og:title", content: "Install Guides & BM App Store | BM Support" },
+      { property: "og:description", content: "Browse BM Support install guides and download the BM Support apps." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   validateSearch: (search: Record<string, unknown>) => ({
     tab: typeof search.tab === "string" ? search.tab : undefined,
   }),
@@ -455,17 +465,17 @@ function InstallGuidesPage() {
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-1 overflow-hidden bg-background text-foreground">
-      <div className="flex h-full min-h-0 flex-1 items-start">
-        <div className="h-full min-h-0 min-w-0 flex-1">
-        <Tabs value={tab} onValueChange={setTab} className="flex h-full min-h-0 w-full flex-col">
-          <header className="shrink-0 border-b border-border bg-surface/60 px-4 pt-8 pb-6 backdrop-blur sm:px-8 md:px-6 md:py-3">
-            <div className="flex flex-wrap items-center justify-between gap-4">
+    <div className="flex h-full min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto bg-background text-foreground md:overflow-hidden">
+      <div className="flex min-h-0 min-w-0 flex-1 items-start md:h-full">
+        <div className="min-h-0 min-w-0 flex-1 md:h-full">
+        <Tabs value={tab} onValueChange={setTab} className="flex min-h-0 min-w-0 w-full flex-col md:h-full">
+          <header className="min-w-0 shrink-0 border-b border-border bg-surface/60 px-4 pt-5 pb-4 backdrop-blur sm:px-8 md:px-6 md:py-3">
+            <div className="grid min-w-0 grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
               <div className="min-w-0">
                 <h1 className="font-display text-3xl font-bold text-foreground">Install Guides</h1>
-                <p className="mt-1 text-muted-foreground md:hidden xl:block">Step-by-step installation walkthroughs and PDF docs</p>
+                <p className="mt-1 text-sm text-muted-foreground md:hidden xl:block">Step-by-step installation walkthroughs and PDF docs</p>
               </div>
-              <TabsList className="scrollbar-hide flex h-auto max-w-full flex-nowrap gap-1 overflow-x-auto rounded-full border border-border bg-surface/70 p-1 sm:flex-wrap sm:overflow-visible md:flex-nowrap md:overflow-x-auto">
+              <TabsList className="scrollbar-hide flex h-auto w-full min-w-0 max-w-full flex-nowrap justify-start gap-1 overflow-x-auto rounded-full border border-border bg-surface/70 p-1 lg:w-auto lg:max-w-full">
                 <TabsTrigger value="welcome" className="shrink-0 truncate rounded-full px-3 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">Welcome</TabsTrigger>
                 <TabsTrigger value="guides" className="shrink-0 truncate rounded-full px-3 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">Guides</TabsTrigger>
                 {canSeeAppTab && (
@@ -487,7 +497,7 @@ function InstallGuidesPage() {
             </div>
           </header>
 
-        <div className={`relative isolate min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-8 ${tab === "get-app" || tab === "transfers" ? "md:flex md:flex-col md:overflow-hidden md:px-6 md:py-3" : ""}`}>
+        <div className={`relative isolate min-w-0 min-h-0 flex-1 px-4 py-4 sm:px-8 md:overflow-y-auto md:py-6 ${tab === "get-app" || tab === "transfers" ? "md:flex md:flex-col md:overflow-hidden md:px-6 md:py-3" : ""}`}>
           {canManageGuides && (
             <TabsContent value="approvals" className="mt-6">
               <div className="max-w-5xl space-y-4">
@@ -503,7 +513,7 @@ function InstallGuidesPage() {
           )}
 
           {canSeeAppTab && (
-            <TabsContent value="get-app" className="mt-6 md:mt-0 md:flex md:min-h-0 md:flex-1 md:flex-col">
+            <TabsContent value="get-app" className="mt-0 min-w-0 md:flex md:min-h-0 md:flex-1 md:flex-col">
               <IllustratedHero
                 image={downloadIllustration}
                 title="Download the BM Support Apps"
@@ -515,7 +525,7 @@ function InstallGuidesPage() {
           )}
 
           {canSeeTransfers && (
-            <TabsContent value="transfers" className="mt-6 md:mt-0 md:flex md:min-h-0 md:flex-1 md:flex-col">
+            <TabsContent value="transfers" className="mt-0 min-w-0 md:flex md:min-h-0 md:flex-1 md:flex-col">
               <IllustratedHero
                 image={downloadIllustration}
                 title="App Transfers"
@@ -536,8 +546,8 @@ function InstallGuidesPage() {
 
 
 
-          <TabsContent value="welcome" className="mt-6">
-            <div className="relative overflow-hidden rounded-2xl border border-border shadow-glow min-h-[60vh] lg:min-h-[70vh]">
+          <TabsContent value="welcome" className="mt-0 min-w-0">
+            <div className="relative overflow-hidden rounded-lg border border-border shadow-glow min-h-[60vh] lg:min-h-[70vh]">
               <img
                 src={installHero}
                 alt="Couple watching an install guide on TV from their sofa"
@@ -547,7 +557,7 @@ function InstallGuidesPage() {
               />
               <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/70 to-transparent" />
               <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
-              <div className="relative p-6 sm:p-10 md:p-14 max-w-2xl">
+              <div className="relative p-5 sm:p-10 md:p-14 max-w-2xl">
                 <h2 className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-4xl font-bold text-foreground leading-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]">
                   Welcome to Install Guides
                 </h2>
@@ -562,7 +572,7 @@ function InstallGuidesPage() {
             </div>
           </TabsContent>
 
-          <TabsContent value="guides" className="mt-6">
+          <TabsContent value="guides" className="mt-0 min-w-0">
             {!canViewGuides ? (
               <AccessRequestPanel
                 section="guides"
@@ -575,7 +585,7 @@ function InstallGuidesPage() {
               style={{ backgroundImage: `url(${installHero})` }}
             >
               <div className="absolute inset-0 bg-gradient-to-br from-background/70 via-background/50 to-surface/70 pointer-events-none" />
-              <div className="relative grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
+              <div className="relative grid min-w-0 grid-cols-1 lg:grid-cols-[280px_minmax(0,1fr)] gap-4 lg:gap-6">
               <aside className="rounded-2xl bg-surface/70 border border-border p-4 h-fit">
                 <h3 className="font-display font-semibold mb-3 px-2 text-foreground">Categories</h3>
                 <div className="space-y-1">
@@ -614,9 +624,9 @@ function InstallGuidesPage() {
                 </div>
               </aside>
 
-              <section>
+               <section className="min-w-0">
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
-                  <div className="relative flex-1">
+                  <div className="relative min-w-0 flex-1">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                     <Input
                       value={search}
@@ -641,7 +651,7 @@ function InstallGuidesPage() {
                     No guides in this category yet.
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                   <div className="grid min-w-0 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-5">
                     {filtered.map((b) => (
                       <article
                         key={b.id}
@@ -655,7 +665,7 @@ function InstallGuidesPage() {
                           if (dragBlogId.current) reorderBlogs(dragBlogId.current, b.id);
                           dragBlogId.current = null;
                         }}
-                        className="rounded-2xl bg-surface/70 border border-border overflow-hidden flex flex-col group hover:shadow-[0_0_40px_-10px_rgba(139,92,246,0.6)] transition-shadow"
+                         className="min-w-0 rounded-lg bg-surface/70 border border-border overflow-hidden flex flex-col group hover:shadow-[0_0_40px_-10px_rgba(139,92,246,0.6)] transition-shadow"
                       >
                         <div className="aspect-[16/10] bg-surface-2/70 relative overflow-hidden">
                           {b.image_url ? (
@@ -1099,16 +1109,16 @@ function SecureGuideVideo({
 /** Framed hero whose own content lives inside it; fills the screen on large displays, scrolls on smaller ones. */
 function IllustratedHero({ image, title, text, children }: { image: string; title: string; text: string; children: import("react").ReactNode }) {
   return (
-    <div className="relative flex min-h-[70vh] flex-col overflow-hidden rounded-2xl border border-border shadow-glow md:min-h-0 md:flex-1">
+     <div className="relative flex min-w-0 flex-col overflow-hidden rounded-lg border border-border shadow-glow md:min-h-0 md:flex-1">
       <img src={image} alt="" aria-hidden width={1920} height={1024} className="absolute inset-0 h-full w-full object-cover" />
       <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/70 to-transparent" />
       <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
-      <div className="relative flex min-h-0 flex-1 flex-col p-6 sm:p-10 md:p-5 lg:p-8">
+       <div className="relative flex min-w-0 min-h-0 flex-1 flex-col p-4 sm:p-8 md:p-5 lg:p-8">
         <div className="max-w-2xl shrink-0">
           <h2 className="font-display text-3xl font-bold leading-tight text-foreground drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)] sm:text-4xl md:text-3xl lg:text-4xl">{title}</h2>
           <p className="mt-4 text-base text-foreground/90 drop-shadow sm:text-lg md:mt-1 md:text-sm lg:mt-2 lg:text-base">{text}</p>
         </div>
-        <div className="mt-6 min-h-0 flex-1 overflow-y-auto rounded-2xl border border-border bg-surface/80 p-4 shadow-lg backdrop-blur-md sm:p-6 md:mt-3 md:overflow-hidden md:p-2 lg:mt-4 lg:p-3">
+         <div className="mt-5 min-w-0 min-h-0 flex-1 rounded-lg border border-border bg-surface/80 p-3 shadow-lg backdrop-blur-md sm:p-6 md:mt-3 md:overflow-hidden md:p-2 lg:mt-4 lg:p-3">
           {children}
         </div>
       </div>
