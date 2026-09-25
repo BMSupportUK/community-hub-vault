@@ -321,7 +321,7 @@ function SignupPage() {
           </Link>
           <div className="bg-surface/80 backdrop-blur-sm border border-border rounded-2xl p-5 sm:p-8 shadow-soft">
             <h1 className="font-display text-2xl font-bold">Join BM Support</h1>
-            <p className="text-sm text-muted-foreground mb-6">A moderator will review your request before you get in.</p>
+             <p className="text-sm text-muted-foreground mb-6">BM Support referrals get access straight away. Fan Zone requests are reviewed.</p>
             <form onSubmit={submit} className="space-y-3">
               {/* On small screens the registration choice is part of the form; on lg+ it moves to the sidebar */}
               <div className="lg:hidden">
