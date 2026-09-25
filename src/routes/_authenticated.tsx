@@ -19,6 +19,9 @@ import { screenLockMayBeLocked } from "@/lib/screen-lock-hash";
 import { ScreenLockProvider } from "@/components/app/ScreenLockProvider";
 import { useViewportLockable } from "@/hooks/use-viewport-lock";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Capacitor } from "@capacitor/core";
+import { reportNativeInstall } from "@/lib/app-transfer.functions";
+import { ANDROID_RELEASE } from "@/lib/android-release";
 
 
 // Defer non-critical header widgets & alerts so the shell paints immediately.
@@ -51,6 +54,35 @@ function OnlinePresence() {
   useEffect(() => {
     setPresencePage(pageLabelForPath(path));
   }, [path]);
+  return null;
+}
+
+/**
+ * Inside the installed Android/Fire TV app, reports the install once per
+ * device so the Download tab can show "Installed & opened". Reinstalls wipe
+ * the WebView storage flag, so a fresh install reports again — as it should.
+ */
+function NativeInstallReporter() {
+  const report = useServerFn(reportNativeInstall);
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return;
+    if (window.localStorage.getItem("bm-install-reported")) return;
+    void (async () => {
+      try {
+        await report({
+          data: {
+            userAgent: navigator.userAgent,
+            platform: Capacitor.getPlatform(),
+            appVersion: ANDROID_RELEASE.versionName,
+          },
+        });
+        window.localStorage.setItem("bm-install-reported", "1");
+      } catch {
+        // Try again on the next app open.
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   return null;
 }
 
@@ -288,6 +320,9 @@ function AuthLayout() {
         </DeferUntilIdle>
         <DeferUntilIdle>
           <OnlinePresence />
+        </DeferUntilIdle>
+        <DeferUntilIdle>
+          <NativeInstallReporter />
         </DeferUntilIdle>
         </div>
       </div>
