@@ -640,6 +640,7 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
   // Provider dumps: "Title" then "- DD-MM-YYYY 11:00 AM until ... - CHANNEL".
   // Reorder each pair into slot → title → channel so every programme keeps
   // its own channel.
+  const reorderedSlots = new Set<string>();
   for (let i = 0; i < lines.length - 1; i++) {
     const span = lines[i + 1].replace(/^[-–—•]\s*/, "").match(DATE_TIME_SPAN_RE);
     if (!span || DATE_TIME_SPAN_RE.test(lines[i].replace(/^[-–—•]\s*/, ""))) continue;
@@ -647,6 +648,7 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
     const channel = span[span.length - 1]?.trim();
     const slot = lines[i + 1].replace(/^[-–—•]\s*/, "").replace(/\s*[-–—|·•]\s*[^-–—|·•]+$/, channel ? "" : "$&");
     const rows = [slot, lines[i]];
+    reorderedSlots.add(slot);
     if (channel) rows.push(channel);
     lines.splice(i, 2, ...rows);
     i += rows.length - 1;
@@ -684,6 +686,15 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
     if (detected) {
       // "Azerbaijan : Practice 1" / "9:30am UK | 4:30am ET" / channels —
       // the title sits ABOVE a bare time line and channels follow below.
+      // Reordered provider slots carry their own title on the next line; a
+      // heading above them ("## UFC FIGHTPASS") must never become the title.
+      if (reorderedSlots.has(line)) {
+        flush();
+        current = detected;
+        previousPlainLine = null;
+        lastChannelWasPlain = null;
+        continue;
+      }
       const above = lastChannelWasPlain ?? previousPlainLine;
       // Once an event is already open, a plain line immediately before the
       // next bare clock is the next event's title (it was provisionally added
