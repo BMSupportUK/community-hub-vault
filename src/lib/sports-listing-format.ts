@@ -698,7 +698,17 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
       new RegExp(String.raw`^([A-Za-z][A-Za-z+ ]*?)\s*\|\s*(\d{1,3})\s*[-–—]\s*(?:${TIME_SOURCE})\s*ET\s*\|\s*(${TIME_SOURCE})\s*UK\s*$`, "i"),
     );
     if (m && i + 1 < lines.length) {
-      lines.splice(i, 2, m[3], lines[i + 1], `${m[1].trim()} ${m[2]}`);
+      // Evening ET slots land after midnight UK — tag the UK weekday so the
+      // event belongs to the next day instead of being swept as stale.
+      const etPm = /pm/i.test(lines[i].split("|")[1] ?? "");
+      const ukAm = /^(12|[1-9])(?::\d{2})?\s*am$/i.test(m[3].trim());
+      let slot = m[3];
+      if (etPm && ukAm) {
+        const days = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+        const london = new Date(new Date().toLocaleString("en-US", { timeZone: "Europe/London" }));
+        slot = `${m[3]} UK ${days[(london.getDay() + 1) % 7]}`;
+      }
+      lines.splice(i, 2, slot, lines[i + 1], `${m[1].trim()} ${m[2]}`);
       i += 2;
     }
   }

@@ -35,3 +35,4 @@ Every new format: add it here, Bun-test raw AND round-trip, then repair the draf
 Raw: `NHL | 01 - 7pm ET | 12am UK` then fixture on next line (`Bruins at Capitals`).
 Rule: time = the stated UK time as-is (never convert ET, no +1h), title = next line, channel = `NHL 01`.
 Header `US | NHL Center Ice` is dropped. Tested: 3 rows -> 3 events (12am/12:30am/1am, NHL 01/02/03).
+Evening-ET rows that are after midnight UK are tagged with the next UK weekday so they post on the right day.
