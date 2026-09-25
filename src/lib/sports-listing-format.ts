@@ -825,9 +825,20 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
       continue;
     }
     if (!current.title) {
-      const split = splitTitleAndInlineChannels(line);
-      current.title = split.title;
-      current.channels.push(...split.channels);
+      // Formatter-generated listings always put the complete event name on
+      // the line after the clock and the channel on the following line. Do
+      // not split title punctuation such as "Day 1 • Night Session" or a
+      // competition suffix such as "Seoul: Day 5 - WTA 250" when that next
+      // line is clearly the channel. This keeps preview and saved read-back
+      // identical for Stan and other provider-stamp imports.
+      const following = lines[li + 1] ?? "";
+      if (following && isLikelyChannelLabel(following) && !detectEvent(following, currentDate)) {
+        current.title = line;
+      } else {
+        const split = splitTitleAndInlineChannels(line);
+        current.title = split.title;
+        current.channels.push(...split.channels);
+      }
       continue;
     }
     if (titleCameFromAbove) {
