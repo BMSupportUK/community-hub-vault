@@ -777,7 +777,7 @@ function ProductCard({
             onClick={onPlace}
             className="mt-2 w-full px-3 py-2 rounded-lg bg-gradient-to-r from-violet-600 to-blue-600 text-white text-xs font-semibold hover:opacity-90 shadow shadow-blue-500/20"
           >
-            Added
+             Checkout
           </button>
         )}
       </div>
