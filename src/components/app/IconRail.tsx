@@ -413,7 +413,7 @@ function RailIcon({
               } catch { /* ignore */ }
               void navigate({
                 to: "/sports-guides",
-                search: { welcome: true, reset: String(Date.now()) },
+                search: { reset: String(Date.now()) },
               });
             }}
             onDragStart={draggable ? undefined : (e) => e.preventDefault()}
