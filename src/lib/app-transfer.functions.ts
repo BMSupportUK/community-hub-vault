@@ -2,6 +2,59 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { randomInt } from "node:crypto";
 
+/**
+ * The installed Android/Fire TV app calls this once after the member signs in
+ * on a native device. It records the install and stamps the member's latest
+ * transfer so the Download tab can show "Installed & opened".
+ */
+export const reportNativeInstall = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (data: { userAgent?: string | null; platform?: string | null; appVersion?: string | null }) =>
+      data ?? {},
+  )
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { deviceFromUserAgent } = await import("@/lib/device-from-user-agent");
+    const device = deviceFromUserAgent(data.userAgent ?? null) || "Unknown device";
+    const platform = (data.platform ?? "android").slice(0, 40) || "android";
+    const appVersion = (data.appVersion ?? "").slice(0, 40) || null;
+    const nowIso = new Date().toISOString();
+
+    const { error } = await supabaseAdmin.from("app_installs").upsert(
+      {
+        user_id: context.userId,
+        device,
+        platform,
+        app_version: appVersion,
+        last_seen_at: nowIso,
+      } as never,
+      { onConflict: "user_id,device" },
+    );
+    if (error) throw new Error(error.message);
+
+    // Stamp the member's most recent transfer that hasn't been marked yet.
+    const { data: transfer } = await supabaseAdmin
+      .from("app_transfers")
+      .select("id")
+      .eq("user_id", context.userId)
+      .is("installed_at", null)
+      .order("issued_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (transfer) {
+      await supabaseAdmin
+        .from("app_transfers")
+        .update({
+          installed_at: nowIso,
+          install_device: device,
+          install_app_version: appVersion,
+        } as never)
+        .eq("id", transfer.id);
+    }
+    return { ok: true as const };
+  });
+
 const TRANSFER_TTL_MS = 24 * 60 * 60 * 1000;
 // Unambiguous on a TV remote keypad: no O/0, I/1, L.
 const ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
@@ -422,6 +475,9 @@ export const listAppTransfers = createServerFn({ method: "GET" })
       device: (r.last_download_device as string | null) ?? null,
       userAgent: (r.last_download_user_agent as string | null) ?? null,
       ip: (r.last_download_ip as string | null) ?? null,
+      installedAt: (r.installed_at as string | null) ?? null,
+      installDevice: (r.install_device as string | null) ?? null,
+      installAppVersion: (r.install_app_version as string | null) ?? null,
     }));
   });
 
