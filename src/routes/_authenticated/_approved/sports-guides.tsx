@@ -20,10 +20,9 @@ const SG_FOCUS_KEY = "sports-guides-focus-id";
 
 export const Route = createFileRoute("/_authenticated/_approved/sports-guides")({
   component: SportsGuidesRoute,
-  validateSearch: (search: Record<string, unknown>): { cat?: string; sub?: string; welcome?: boolean; reset?: string } => ({
+  validateSearch: (search: Record<string, unknown>): { cat?: string; sub?: string; reset?: string } => ({
     cat: typeof search.cat === "string" ? search.cat : undefined,
     sub: typeof search.sub === "string" ? search.sub : undefined,
-    welcome: search.welcome === true || search.welcome === "true" ? true : undefined,
     reset: typeof search.reset === "string" ? search.reset : undefined,
   }),
 });
@@ -31,7 +30,8 @@ export const Route = createFileRoute("/_authenticated/_approved/sports-guides")(
 function SportsGuidesRoute() {
   const childMatches = useChildMatches();
   if (childMatches.length > 0) return <Outlet />;
-  return <SportsGuidesPage />;
+  const { reset } = Route.useSearch();
+  return <SportsGuidesPage key={reset ?? "default"} />;
 }
 
 function escapeRegExp(s: string) {
@@ -101,7 +101,7 @@ function SportsGuidesPage() {
   const { isMod, user, hasAny } = useAuth();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const { cat: catFromUrl, sub: subFromUrl, welcome: welcomeFromUrl, reset: resetFromUrl } = Route.useSearch();
+  const { cat: catFromUrl, sub: subFromUrl, reset: resetFromUrl } = Route.useSearch();
   const canManageCategories = hasAny(["admin", "management", "staff"]);
   // Always open on Welcome with no category picked. Guides only appear once the
   // visitor clicks a category (returning from a guide uses the ?cat= param).
@@ -155,9 +155,10 @@ function SportsGuidesPage() {
     } catch { /* ignore */ }
   }, [activeCat]);
 
-  // Clicking Sports guides from the side rail must always land on the Welcome tab first.
+  // A rail reset remains in the URL for this visit and is authoritative over
+  // any category state left by the previous mounted guide screen.
   useEffect(() => {
-    if (welcomeFromUrl) {
+    if (resetFromUrl) {
       setTab("welcome");
       setActiveCat(null);
       setSubFilter(null);
@@ -170,9 +171,8 @@ function SportsGuidesPage() {
         sessionStorage.removeItem("sports-guides-active-tab");
         sessionStorage.removeItem("sports-guides-active-cat");
       } catch { /* ignore */ }
-      navigate({ to: "/sports-guides", search: {}, replace: true });
     }
-  }, [welcomeFromUrl, resetFromUrl, navigate]);
+  }, [resetFromUrl]);
 
   // The Guides tab only exists once a category has been picked — never auto-select one.
   const handleTabChange = (value: string) => {
@@ -334,14 +334,14 @@ function SportsGuidesPage() {
   // Only honour an explicit category from the URL. Do NOT auto-select a default
   // category: the Guides tab must stay hidden until the visitor picks one on Welcome.
   useEffect(() => {
-    if (resolvedCatFromUrl) setActiveCat((cur) => cur ?? resolvedCatFromUrl);
+    if (!resetFromUrl && resolvedCatFromUrl) setActiveCat((cur) => cur ?? resolvedCatFromUrl);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [categories, resolvedCatFromUrl]);
+  }, [categories, resolvedCatFromUrl, resetFromUrl]);
 
 
   // If we arrived back here from new/edit/read, jump straight to the category.
   useEffect(() => {
-    if (catFromUrl && resolvedCatFromUrl) {
+    if (!resetFromUrl && catFromUrl && resolvedCatFromUrl) {
       setActiveCat(resolvedCatFromUrl);
       setTab("guides");
       if (subFromUrl !== undefined) {
@@ -353,7 +353,7 @@ function SportsGuidesPage() {
       // top and wipes out the return-to-card scroll.
       navigate({ to: "/sports-guides", search: {}, replace: true, resetScroll: false });
     }
-  }, [catFromUrl, resolvedCatFromUrl, subFromUrl, navigate]);
+  }, [catFromUrl, resolvedCatFromUrl, subFromUrl, resetFromUrl, navigate]);
 
   const isUnread = (b: Blog) => {
     const upd = new Date(b.updated_at ?? b.created_at).getTime();
