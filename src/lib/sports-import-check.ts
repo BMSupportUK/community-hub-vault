@@ -22,9 +22,9 @@ export type ImportCheckResult = {
 };
 
 // Clock-looking token (12:30, 7.45pm, 9pm) — used to count post rows that carry a time.
-const CLOCK_RE = /\b\d{1,2}[:.]\d{2}\s*(?:am|pm)?\b|\b\d{1,2}\s*(?:am|pm)\b/i;
+const CLOCK_RE = /(?<![\d.:])\d{1,2}[:.]\d{2}(?![.\d])|\b\d{1,2}\s*(?:am|pm)\b/i;
 const SLOT_JUNK_RE = /\buntil\b|\bstart:|\bstop:|\d{2}-\d{2}-\d{4}/i;
-const HEADING_JUNK_RE = /^[#*_>\s]|^(vip|us|uk)\s*\|/i;
+const HEADING_JUNK_RE = /^(#+\s|[*_>])|^(vip|us|uk)\s*\|/i;
 
 /**
  * Double-checks an import before it is saved: runs the exact save formatter,
