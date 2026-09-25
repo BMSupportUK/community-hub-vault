@@ -716,8 +716,8 @@ function ProductCard({
 }) {
   const fmt = _currentFmt;
   return (
-    <div className="group bg-surface rounded-xl overflow-hidden border border-border hover:border-sky-400/50 hover:shadow-lg hover:shadow-blue-500/10 transition-all flex flex-col">
-      <div className="aspect-square bg-surface-2 grid place-items-center overflow-hidden relative">
+    <div className="group min-w-0 bg-surface rounded-xl overflow-hidden border border-border hover:border-sky-400/50 hover:shadow-lg hover:shadow-blue-500/10 transition-all flex flex-col">
+      <div className="aspect-[4/3] sm:aspect-square bg-surface-2 grid place-items-center overflow-hidden relative">
         {p.image_url ? (
           <img
             src={p.image_url}
@@ -1560,10 +1560,10 @@ function Storefront() {
   };
 
   return (
-    <main className="flex min-h-0 flex-1 flex-col overflow-visible md:h-full md:max-h-full md:overflow-hidden">
+    <main className="flex w-full min-w-0 min-h-0 flex-1 flex-col overflow-visible md:h-full md:max-h-full md:overflow-hidden">
       <div
         className={cn(
-          "flex-1 min-h-0 overflow-visible md:overflow-hidden",
+          "w-full min-w-0 flex-1 min-h-0 overflow-visible md:overflow-hidden",
           tab === "orders" && "relative bg-cover bg-center bg-fixed",
           tab === "app_demos" && "relative bg-cover bg-center bg-no-repeat bg-fixed",
         )}
@@ -1588,9 +1588,9 @@ function Storefront() {
             aria-hidden
           />
         )}
-        <div className="relative z-10 flex min-h-0 flex-col px-3 pt-3 sm:px-5 sm:pt-5 md:h-full">
-          <Tabs value={tab} onValueChange={setShopTab} className="flex min-h-0 w-full flex-col overflow-visible md:h-full md:overflow-hidden">
-            <TabsList className="shrink-0 max-w-full justify-start overflow-x-auto scrollbar-hide bg-surface-2 border border-border flex flex-nowrap h-auto">
+        <div className="relative z-10 flex w-full min-w-0 min-h-0 flex-col px-3 pt-3 sm:px-5 sm:pt-5 md:h-full">
+          <Tabs value={tab} onValueChange={setShopTab} className="flex min-h-0 min-w-0 w-full flex-col overflow-visible md:h-full md:overflow-hidden">
+            <TabsList className="w-full min-w-0 shrink-0 justify-start overflow-x-auto scrollbar-hide bg-surface-2 border border-border flex flex-nowrap h-auto [&>button]:shrink-0">
               <TabsTrigger
                 value="welcome"
                 className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-sky-400 data-[state=active]:text-white"
@@ -1660,17 +1660,17 @@ function Storefront() {
             </TabsList>
 
             <TabsContent value="welcome" className="mt-3 min-h-0 flex-1 overflow-y-auto scrollbar-hide">
-              <section className="relative overflow-hidden -mx-6 -mt-6">
+              <section className="relative overflow-hidden -mx-3 sm:-mx-5 md:-mt-6 md:-mx-6">
                 <div className="absolute inset-0">
                   <img src={shopHero} alt="" aria-hidden className="w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-gradient-to-r from-background/85 via-background/40 to-transparent" />
                   <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-b from-transparent to-background" />
                 </div>
-                <div className="relative px-6 md:px-10 pt-10 md:pt-16 pb-20 md:pb-28 max-w-3xl">
+                 <div className="relative px-4 md:px-10 pt-10 md:pt-16 pb-16 md:pb-28 max-w-3xl">
                   <div className="text-xs uppercase tracking-[0.2em] text-sky-200/90 mb-3">
                     BM Support · Shop
                   </div>
-                  <h1 className="font-display text-4xl md:text-6xl font-bold leading-tight text-white drop-shadow">
+                   <h1 className="font-display text-3xl md:text-6xl font-bold leading-tight text-white drop-shadow">
                     Welcome to the Store
                   </h1>
                   <p className="mt-4 text-sky-100/90 max-w-xl text-base md:text-lg">
@@ -1689,19 +1689,19 @@ function Storefront() {
             </TabsContent>
 
             <TabsContent value="how_to_order" className="mt-3 min-h-0 flex-1 overflow-y-auto scrollbar-hide">
-              <section className="relative overflow-hidden -mx-6 -mt-6">
+               <section className="relative overflow-hidden -mx-3 sm:-mx-5 md:-mt-6 md:-mx-6">
                 <div className="absolute inset-0">
                   <img src={shopHero} alt="" aria-hidden className="w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-gradient-to-r from-background/85 via-background/40 to-transparent" />
                   <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-b from-transparent to-background" />
                 </div>
-                <div className="relative px-6 md:px-10 pt-10 md:pt-16 pb-16 md:pb-24">
+                 <div className="relative px-4 md:px-10 pt-10 md:pt-16 pb-16 md:pb-24">
                   <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
                     <div className="flex-1 min-w-0">
                       <div className="text-xs uppercase tracking-[0.2em] text-sky-200/90 mb-3">
                         BM Support · Shop
                       </div>
-                      <h1 className="font-display text-4xl md:text-6xl font-bold leading-tight text-white drop-shadow">
+                       <h1 className="font-display text-3xl md:text-6xl font-bold leading-tight text-white drop-shadow">
                         How To Purchase or Renew Your Subscription
                       </h1>
                       <p className="mt-4 text-sky-100/90 max-w-xl text-base md:text-lg">
@@ -1719,10 +1719,10 @@ function Storefront() {
             </TabsContent>
 
 
-            <TabsContent value="shop" className="mt-3 min-h-0 flex-1 overflow-y-auto scrollbar-hide pb-5">
+             <TabsContent value="shop" className="mt-3 min-w-0 min-h-0 flex-1 overflow-y-auto scrollbar-hide pb-24 md:pb-5">
               <div
                 id="products"
-                className="bg-background/80 backdrop-blur border border-border rounded-xl px-4 py-3 flex items-center gap-2 flex-wrap mb-4 sticky top-0 z-10"
+                 className="bg-background/80 backdrop-blur border border-border rounded-lg px-3 py-3 flex items-center gap-2 overflow-x-auto scrollbar-hide whitespace-nowrap mb-4 sticky top-0 z-10 sm:flex-wrap sm:whitespace-normal"
               >
                 {categories.map((c) => {
                   const count = products.filter((p) => p.category === c).length;
@@ -1731,7 +1731,7 @@ function Storefront() {
                       key={c}
                       onClick={() => setCat(c)}
                       className={cn(
-                        "text-xs px-3 py-1.5 rounded-full transition font-medium inline-flex items-center gap-1.5",
+                         "shrink-0 text-xs px-3 py-1.5 rounded-full transition font-medium inline-flex items-center gap-1.5",
                         cat === c
                           ? "bg-gradient-to-r from-violet-600 to-blue-600 text-white shadow shadow-blue-500/30"
                           : "bg-surface-2 text-muted-foreground hover:text-foreground",
@@ -1750,7 +1750,7 @@ function Storefront() {
                   );
                 })}
                 {isAdmin && (
-                  <div className="ml-auto flex items-center gap-2">
+                   <div className="ml-auto flex shrink-0 items-center gap-2">
                     {addingCat ? (
                       <>
                         <input
@@ -1818,7 +1818,7 @@ function Storefront() {
                       ← All categories
                     </button>
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+                   <div className="grid min-w-0 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-5">
                     {filtered.map((p) => (
                       <ProductCard
                         key={p.id}
@@ -1927,10 +1927,11 @@ function CartWidget({
   onRemove: (id: string) => void;
   onCheckout: () => void;
 }) {
-  const [open, setOpen] = useState(true);
+   const [open, setOpen] = useState(false);
+   useEffect(() => { setOpen(window.matchMedia("(min-width: 768px)").matches); }, []);
   const count = items.reduce((s, i) => s + i.qty, 0);
   return (
-    <div className="fixed bottom-4 right-4 z-40 w-[320px] max-w-[calc(100vw-2rem)]">
+     <div className="fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-3 right-3 z-40 md:bottom-4 md:left-auto md:right-4 md:w-[320px]">
       <div className="bg-surface border border-border rounded-2xl shadow-2xl shadow-black/30 overflow-hidden">
         <button
           type="button"
@@ -1946,7 +1947,7 @@ function CartWidget({
         </button>
         {open && (
           <>
-            <div className="max-h-64 overflow-y-auto divide-y divide-border">
+             <div className="max-h-[35dvh] overflow-y-auto divide-y divide-border">
               {items.map((i) => (
                 <div key={i.id} className="p-3 flex items-center gap-2 text-sm">
                   <div className="min-w-0 flex-1">
@@ -2571,15 +2572,15 @@ function Checkout({
     (!requiresTriple || agreedTriple);
 
   return (
-    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm grid place-items-center z-50 p-4">
-      <div className="bg-surface rounded-2xl border border-border w-full max-w-lg shadow-soft">
+     <div className="fixed inset-0 bg-background/80 backdrop-blur-sm grid place-items-center z-50 p-2 sm:p-4">
+       <div className="bg-surface rounded-lg border border-border w-full min-w-0 max-w-lg max-h-[calc(100dvh-1rem)] flex flex-col overflow-hidden shadow-soft">
         <div className="p-5 border-b border-border flex items-center justify-between">
           <h2 className="font-display font-bold text-lg">Checkout</h2>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
             <X className="size-5" />
           </button>
         </div>
-        <div className="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
+         <div className="min-h-0 flex-1 p-4 sm:p-5 space-y-4 overflow-y-auto">
           <div className="space-y-2">
             {items.map((i) => (
               <div key={i.id} className="flex items-center justify-between gap-2 text-sm group">
@@ -2876,7 +2877,7 @@ function Checkout({
             )}
           </div>
         )}
-        <div className="p-5 border-t border-border flex flex-wrap gap-2 justify-end">
+         <div className="shrink-0 p-3 sm:p-5 border-t border-border flex gap-2 justify-end">
           <button onClick={onClose} className="px-4 py-2 rounded-lg bg-surface-2 text-sm">
             Cancel
           </button>
