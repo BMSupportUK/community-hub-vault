@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { type StripeEnv, createStripeClient, getStripeErrorMessage } from "@/lib/stripe.server";
+import { buildOrderItemLines } from "@/lib/order-item-lines";
 
 const FINAL_PAYMENT_STATUSES = new Set(["COMPLETED", "completed", "finished"]);
 

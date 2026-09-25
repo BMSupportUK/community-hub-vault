@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { getAutomatedMessageServer } from "@/lib/automated-messages.server";
+import { buildOrderItemLines } from "@/lib/order-item-lines";
 
 type NoticeInput = {
   orderId: string;
