@@ -43,6 +43,11 @@ const CHANNEL_COLON_TITLE_TIME_RE = new RegExp(
   `^\\s*([A-Za-z][A-Za-z0-9 +&'./-]*?\\d{1,3})\\s*:\\s*(.+?)\\s+(${TIME_WITH_ZONE_SOURCE})\\s*$`,
   "i",
 );
+// Channel, colon, then time first: "Super League Plus 01:  20:00 Leeds Rhinos vs Warrington Wolves".
+const CHANNEL_COLON_TIME_TITLE_RE = new RegExp(
+  `^\\s*([A-Za-z][A-Za-z0-9 +&'./-]*?\\d{1,3})\\s*:\\s*(${TIME_WITH_ZONE_SOURCE})\\s+(.+?)\\s*$`,
+  "i",
+);
 // Provider dumps put the title on its own line and the slot underneath:
 // "- 23-09-2026 8:30 PM until 24-09-2026 12:00 AM - PEACOCK 8 HD"
 const DATE_SOURCE = String.raw`\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4}`;
@@ -469,6 +474,21 @@ function detectEvent(line: string, date: string | null): SportsListingEvent | nu
       time: normalizeTime(channelColonTrailingTime[3]),
       title: normalizeSportsEventTitle(channelColonTrailingTime[2]),
       channels: [channelColonTrailingTime[1].replace(/^(NFL)(\d+)$/i, "$1 $2")],
+    };
+  }
+
+  const channelColonLeadingTime = line.match(CHANNEL_COLON_TIME_TITLE_RE);
+  if (
+    channelColonLeadingTime?.[1] &&
+    channelColonLeadingTime[2] &&
+    channelColonLeadingTime[3] &&
+    isLikelyChannelLabel(channelColonLeadingTime[1])
+  ) {
+    return {
+      date,
+      time: normalizeTime(channelColonLeadingTime[2]),
+      title: normalizeSportsEventTitle(channelColonLeadingTime[3]),
+      channels: [channelColonLeadingTime[1].trim().replace(/\s+/g, " ")],
     };
   }
 
