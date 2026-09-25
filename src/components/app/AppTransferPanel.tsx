@@ -221,8 +221,8 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
 
   return (
     <>
-       <article className="min-w-0 rounded-lg border border-border/70 bg-surface overflow-hidden flex flex-col group shadow-soft hover:shadow-[0_0_30px_-10px_rgba(217,70,239,0.6)] hover:border-violet-500/40 transition-all">
-        <div className="aspect-[16/10] bg-black/70 relative overflow-hidden">
+       <article className="group flex min-w-0 flex-col overflow-hidden rounded-lg border border-border/70 bg-surface shadow-soft transition-all hover:border-violet-500/40 hover:shadow-[0_0_30px_-10px_rgba(217,70,239,0.6)] md:grid md:grid-cols-[minmax(220px,42%)_minmax(0,1fr)] xl:flex">
+        <div className="relative aspect-[16/10] overflow-hidden bg-black/70 md:h-full md:min-h-0 md:aspect-auto xl:h-auto xl:aspect-[16/10]">
           {build.videoPath && videoUrl ? (
             <video
               src={videoUrl}
@@ -239,7 +239,7 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
           )}
         </div>
 
-        <div className="p-4 flex-1 flex flex-col gap-2">
+        <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-4 xl:overflow-visible">
           <div className="flex flex-wrap items-center gap-2">
             <h4 className="font-display font-semibold text-lg leading-snug text-foreground flex items-center gap-1.5">
               <Smartphone className="size-4 text-violet-300 shrink-0" />
@@ -483,7 +483,7 @@ export function AppTransferPanel({ onUploadClick }: { onUploadClick?: () => void
   }
 
   return (
-     <section className="min-w-0 overflow-hidden rounded-lg border border-border/80 bg-background/90 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.7)] backdrop-blur-xl">
+     <section className="min-w-0 overflow-hidden rounded-lg border border-border/80 bg-background/90 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.7)] backdrop-blur-xl md:flex md:min-h-0 md:flex-1 md:flex-col">
        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-2 border-b border-border/60 px-3 py-3 sm:px-5 sm:py-4 md:px-4 md:py-2 lg:px-5 lg:py-3">
          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
           <span className="grid size-10 place-items-center rounded-xl bg-gradient-primary text-primary-foreground shadow-glow">
@@ -500,9 +500,9 @@ export function AppTransferPanel({ onUploadClick }: { onUploadClick?: () => void
           <ShieldCheck className="size-3" /> Secure links
         </span>
       </div>
-       <div className="min-w-0 p-3 sm:p-5 md:p-3 lg:p-4">
-       <Tabs defaultValue={firstTab} className="min-w-0 w-full">
-         <TabsList className="flex h-auto w-full min-w-0 justify-start gap-1 overflow-x-auto scrollbar-hide bg-surface-2/80 p-1 sm:flex-wrap">
+        <div className="min-w-0 p-3 sm:p-5 md:flex md:min-h-0 md:flex-1 md:flex-col md:p-3 lg:p-4">
+        <Tabs defaultValue={firstTab} className="min-w-0 w-full md:flex md:min-h-0 md:flex-1 md:flex-col">
+          <TabsList className="flex h-auto w-full min-w-0 shrink-0 justify-start gap-1 overflow-x-auto scrollbar-hide bg-surface-2/80 p-1 sm:flex-wrap">
           {APP_BUILD_CATEGORIES.map((c) => (
              <TabsTrigger key={c.key} value={c.key} className="shrink-0 text-xs sm:text-sm">
               {c.label}
@@ -511,14 +511,14 @@ export function AppTransferPanel({ onUploadClick }: { onUploadClick?: () => void
           ))}
         </TabsList>
         {APP_BUILD_CATEGORIES.map((c) => (
-          <TabsContent key={c.key} value={c.key} className="mt-4 md:mt-2 lg:mt-3">
+          <TabsContent key={c.key} value={c.key} className="mt-4 md:min-h-0 md:flex-1 md:overflow-hidden md:mt-2 lg:mt-3">
             {(grouped[c.key] ?? []).length === 0 ? (
               <div className="grid place-items-center rounded-xl border border-dashed border-border/70 bg-surface/60 px-6 py-12 text-center">
                 <Smartphone className="size-8 text-muted-foreground/50" />
                 <p className="mt-2 text-sm text-muted-foreground">No apps in this section yet.</p>
               </div>
             ) : (
-               <div className="grid min-w-0 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 lg:gap-5">
+               <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 md:h-full md:auto-rows-fr md:grid-cols-1 lg:gap-5 xl:h-auto xl:grid-cols-3">
                 {(grouped[c.key] ?? []).map((b) => (
                   <AppCard key={b.id} build={b} transfer={byBuild.get(b.id)} now={now} />
                 ))}
