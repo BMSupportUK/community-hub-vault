@@ -17,6 +17,16 @@ import { useAuth } from "@/hooks/use-auth";
 import { BmSplash } from "@/components/app/BmSplash";
 
 export const Route = createFileRoute("/signup")({
+  head: () => ({
+    meta: [
+      { title: "Join BM Support" },
+      { name: "description", content: "Create a BM Support account using a member referral code." },
+      { property: "og:title", content: "Join BM Support" },
+      { property: "og:description", content: "Create a BM Support account using a member referral code." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   validateSearch: (search: Record<string, unknown>): { invite?: string } => ({
     invite: typeof search.invite === "string" ? search.invite : undefined,
   }),

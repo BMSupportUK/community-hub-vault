@@ -16,6 +16,16 @@ import { GateStaffPresence } from "@/components/app/GateStaffPresence";
 import { BmSplash } from "@/components/app/BmSplash";
 
 export const Route = createFileRoute("/_authenticated/gate")({
+  head: () => ({
+    meta: [
+      { title: "Account Access | BM Support" },
+      { name: "description", content: "Check the status of your BM Support account access." },
+      { property: "og:title", content: "Account Access | BM Support" },
+      { property: "og:description", content: "Check the status of your BM Support account access." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
   validateSearch: (search: Record<string, unknown>): { intent?: "fan-zone" | "bm-support"; invite?: string } => ({
     intent:
       search.intent === "fan-zone" || search.intent === "bm-support"
