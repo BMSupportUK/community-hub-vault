@@ -146,6 +146,7 @@ function ChannelPage() {
   const [unmuteTarget, setUnmuteTarget] = useState<{ id: string; name: string } | null>(null);
   const [unmuting, setUnmuting] = useState(false);
   const [pinnedOpen, setPinnedOpen] = useState(false);
+  const [headerExpanded, setHeaderExpanded] = useState(false);
   const [ignoredOpen, setIgnoredOpen] = useState(false);
   const [lastSentAt, setLastSentAt] = useState<number | null>(null);
   const [now, setNow] = useState(() => Date.now());
