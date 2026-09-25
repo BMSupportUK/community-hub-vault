@@ -723,6 +723,11 @@ function QueueRow({
     () => splitListingSections(String(ev.raw ?? item.raw_text ?? "")),
     [ev.raw, item.raw_text],
   );
+  const [pickingSplit, setPickingSplit] = useState(false);
+  const rawLines = useMemo(
+    () => String(ev.raw ?? item.raw_text ?? "").split("\n"),
+    [ev.raw, item.raw_text],
+  );
 
   return (
     <Card
