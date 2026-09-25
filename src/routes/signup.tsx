@@ -13,6 +13,7 @@ import { isVpnBypassEmail } from "@/lib/vpn-bypass";
 import { VpnBlockedDialog } from "@/components/VpnBlockedDialog";
 import { ShieldAlert, Loader2, RefreshCw } from "lucide-react";
 import { useViewportLockable } from "@/hooks/use-viewport-lock";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/signup")({
   validateSearch: (search: Record<string, unknown>): { invite?: string } => ({
@@ -89,6 +90,7 @@ function IntentChoice({
 function SignupPage() {
   const lockable = useViewportLockable();
   const navigate = useNavigate();
+  const { refreshRoles } = useAuth();
   const { invite: inviteFromUrl } = Route.useSearch();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -251,6 +253,11 @@ function SignupPage() {
       }
       // Valid invite → user is auto-approved as nonsubscriber; skip the gate for BM Support.
       if (intent !== "fan-zone") {
+        // Load the newly granted access first, otherwise the app still sees
+        // the account as waiting and sends it to the security gate.
+        try {
+          await refreshRoles();
+        } catch {}
         setBusy(false);
         toast.success("Welcome — invite accepted.");
         navigate({ to: "/home" });
