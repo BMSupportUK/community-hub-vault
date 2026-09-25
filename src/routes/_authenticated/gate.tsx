@@ -725,5 +725,6 @@ function GatePage() {
         </div>
       )}
     </div>
+    </>
   );
 }
