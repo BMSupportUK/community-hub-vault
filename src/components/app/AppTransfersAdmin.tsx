@@ -26,14 +26,16 @@ const STATUS_LABEL: Record<string, string> = {
   incomplete: "Stopped before finishing",
 };
 
-function statusAccent(status: string | null) {
+function statusAccent(status: string | null, installed?: boolean) {
+  if (installed) return "bg-emerald-300";
   if (status === "completed") return "bg-emerald-400";
   if (status === "downloading") return "bg-sky-400";
   if (status === "incomplete") return "bg-amber-400";
   return "bg-muted-foreground/40";
 }
 
-function statusClasses(status: string | null) {
+function statusClasses(status: string | null, installed?: boolean) {
+  if (installed) return "border-emerald-400/60 bg-emerald-500/25 text-emerald-200";
   if (status === "completed") return "border-emerald-500/40 bg-emerald-500/15 text-emerald-300";
   if (status === "downloading") return "border-sky-500/40 bg-sky-500/15 text-sky-300";
   if (status === "incomplete") return "border-amber-500/40 bg-amber-500/15 text-amber-300";
@@ -56,8 +58,10 @@ function TransferCard({
   onDelete: (id: string) => void;
   busy: boolean;
 }) {
-  const pct =
-    t.totalBytes && t.totalBytes > 0
+  const installed = !!t.installedAt;
+  const pct = installed
+    ? 100
+    : t.totalBytes && t.totalBytes > 0
       ? Math.min(100, Math.round((t.bytes / t.totalBytes) * 100))
       : t.status === "completed"
         ? 100
@@ -67,7 +71,7 @@ function TransferCard({
     <div className="relative overflow-hidden rounded-xl border border-border bg-surface/80 shadow-sm transition-colors hover:border-primary/40">
       <span
         aria-hidden
-        className={`absolute inset-y-0 left-0 w-1 ${statusAccent(t.status)}`}
+        className={`absolute inset-y-0 left-0 w-1 ${statusAccent(t.status, installed)}`}
       />
       <div className="flex flex-col gap-2 p-4 pl-5">
         <div className="flex items-start justify-between gap-2">
@@ -78,9 +82,15 @@ function TransferCard({
             </p>
           </div>
           <span
-            className={`shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-semibold ${statusClasses(t.status)}`}
+            className={`shrink-0 rounded-full border px-2 py-0.5 text-[11px] font-semibold ${statusClasses(t.status, installed)}`}
           >
-            {t.status ? (STATUS_LABEL[t.status] ?? t.status) : t.expired ? "Expired unused" : "Not started"}
+            {installed
+              ? "Installed & opened"
+              : t.status
+                ? (STATUS_LABEL[t.status] ?? t.status)
+                : t.expired
+                  ? "Expired unused"
+                  : "Not started"}
           </span>
         </div>
 
@@ -104,6 +114,13 @@ function TransferCard({
           </p>
           {t.startedAt && <p>Download started {new Date(t.startedAt).toLocaleString()}</p>}
           {t.lastDownloadAt && <p>Last activity {new Date(t.lastDownloadAt).toLocaleString()}</p>}
+          {t.installedAt && (
+            <p className="text-emerald-300">
+              Installed &amp; opened {new Date(t.installedAt).toLocaleString()}
+              {t.installDevice ? ` on ${t.installDevice}` : ""}
+              {t.installAppVersion ? ` · app v${t.installAppVersion}` : ""}
+            </p>
+          )}
           <p>Downloads started: {t.downloads}</p>
           {(t.device || t.ip) && (
             <p className="truncate">
