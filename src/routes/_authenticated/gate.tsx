@@ -403,9 +403,9 @@ function GatePage() {
     requestAccess("chat");
   };
 
+  if (referralChecking) return <BmSplash label="Checking your access…" />;
+
   return (
-    <>
-    {referralChecking && <BmSplash label="Checking your access…" />}
     <div className="fixed inset-0 overflow-hidden bg-black">
       {/* Cinematic background */}
       <img src={bg} alt="" className="absolute inset-0 w-full h-full object-cover" />
@@ -727,6 +727,5 @@ function GatePage() {
         </div>
       )}
     </div>
-    </>
   );
 }
