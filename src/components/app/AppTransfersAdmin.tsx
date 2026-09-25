@@ -138,7 +138,7 @@ function TransferCard({
           )}
         </div>
 
-        {t.status && (
+        {(t.status || t.installedAt) && (
           <div className="space-y-1">
             <Progress value={pct} className="h-2" />
             <p className="text-[11px] font-medium text-foreground/80">
