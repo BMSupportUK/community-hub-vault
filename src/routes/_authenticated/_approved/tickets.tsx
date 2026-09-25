@@ -42,7 +42,6 @@ import { StaffOnDutyStrip } from "@/components/app/StaffOnDutyStrip";
 import { Nameplate } from "@/components/app/Nameplate";
 import { QuickRepliesPill } from "@/components/app/QuickRepliesDialog";
 import { useChannelJump } from "@/components/app/ChannelJump";
-import AdSenseSlot from "@/components/app/AdSenseSlot";
 import {
   applyOrderToCredential,
   createCredentialForOrder,
