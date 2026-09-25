@@ -141,6 +141,13 @@ function GatePage() {
         .eq("used_by", user.id)
         .maybeSingle();
       if (!cancelled && linked?.code) {
+        // Referral code already used → straight access, never the gate.
+        const { data: ok } = await supabase.rpc("claim_invite_access");
+        if (!cancelled && ok && intent !== "fan-zone") {
+          await refreshRoles?.();
+          navigate({ to: "/home" });
+          return;
+        }
         setReferralCode(linked.code);
       }
     })();
