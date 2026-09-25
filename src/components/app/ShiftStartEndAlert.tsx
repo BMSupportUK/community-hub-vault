@@ -57,6 +57,7 @@ export function ShiftStartEndAlert() {
   const [slots, setSlots] = useState<Slot[]>([]);
   const [openShift, setOpenShift] = useState<OpenShift | null>(null);
   const [now, setNow] = useState(() => Date.now());
+  const [pageVisible, setPageVisible] = useState(false);
   const [active, setActive] = useState<{ slot: Slot; stage: Stage } | null>(null);
   const autoClockedRef = useRef<Set<string>>(new Set());
   const autoEndedRef = useRef<Set<string>>(new Set());
@@ -70,11 +71,16 @@ export function ShiftStartEndAlert() {
     return () => clearInterval(t);
   }, [isStaff]);
 
-  // Re-sync the clock the moment the tab becomes visible / focused so the alert fires immediately.
+  // Only start the response window while the app is actually visible. A hidden
+  // or closed app cannot show the question, so it must not start the countdown.
   useEffect(() => {
     if (!isStaff) return;
-    const resync = () => setNow(Date.now());
-    const onVis = () => { if (document.visibilityState === "visible") resync(); };
+    const resync = () => {
+      setPageVisible(document.visibilityState === "visible");
+      if (document.visibilityState === "visible") setNow(Date.now());
+    };
+    const onVis = () => resync();
+    resync();
     document.addEventListener("visibilitychange", onVis);
     window.addEventListener("focus", resync);
     window.addEventListener("pageshow", resync);
@@ -264,8 +270,8 @@ export function ShiftStartEndAlert() {
     );
   }, [active, now, shiftWindowToUtcMs]);
 
-  // End of shift: ask if they're still working, and clock them out
-  // automatically 15 minutes after the shift end if there's no answer.
+  // End of shift: ask if they're still working, then allow 15 minutes from
+  // when the visible question is first shown before clocking them out.
   const endsAtMs = useMemo(() => {
     if (!active || active.stage !== "end") return null;
     const { endsAt } = shiftWindowToUtcMs(active.slot.shift_date, active.slot.start_time, active.slot.end_time);
@@ -281,7 +287,7 @@ export function ShiftStartEndAlert() {
   // device all see the same state and nobody gets clocked out without a chance
   // to answer.
   useEffect(() => {
-    if (!openShift || endsAtMs === null || now < endsAtMs) {
+    if (!pageVisible || !openShift || endsAtMs === null || now < endsAtMs) {
       setAskOpen(false);
       setAutoEndAt(null);
       return;
@@ -315,8 +321,8 @@ export function ShiftStartEndAlert() {
       }
     }
     setAskOpen(true);
-    setAutoEndAt(Math.max(endsAtMs, askedAt) + AUTO_CLOCK_OUT_AFTER);
-  }, [openShift, endsAtMs, now]);
+    setAutoEndAt(askedAt + AUTO_CLOCK_OUT_AFTER);
+  }, [pageVisible, openShift, endsAtMs, now]);
 
 
   const clockOut = async (at: number) => {
@@ -346,7 +352,7 @@ export function ShiftStartEndAlert() {
     if (!openShift || autoEndAt === null || endsAtMs === null) return;
     if (now < autoEndAt) return;
     void clockOut(autoEndAt);
-    toast.info("Your shift was automatically clocked out 15 minutes after it ended.");
+    toast.info("Your shift was automatically clocked out 15 minutes after the notice was shown.");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [now, autoEndAt, openShift?.id, endsAtMs]);
 
