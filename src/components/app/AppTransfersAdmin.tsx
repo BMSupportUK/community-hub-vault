@@ -68,13 +68,13 @@ function TransferCard({
         : 0;
 
   return (
-    <div className="relative overflow-hidden rounded-xl border border-border bg-surface/80 shadow-sm transition-colors hover:border-primary/40">
+    <div className="relative min-w-0 overflow-hidden rounded-lg border border-border bg-surface/80 shadow-sm transition-colors hover:border-primary/40">
       <span
         aria-hidden
         className={`absolute inset-y-0 left-0 w-1 ${statusAccent(t.status, installed)}`}
       />
       <div className="flex flex-col gap-2 p-4 pl-5">
-        <div className="flex items-start justify-between gap-2">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2">
           <div className="min-w-0">
             <h4 className="truncate text-sm font-semibold text-foreground">{t.member}</h4>
             <p className="truncate text-xs text-muted-foreground">
@@ -278,9 +278,9 @@ export function AppTransfersAdmin() {
     );
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-border/80 bg-background/90 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.7)] backdrop-blur-xl">
+     <div className="min-w-0 overflow-hidden rounded-lg border border-border/80 bg-background/90 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.7)] backdrop-blur-xl">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border bg-gradient-to-r from-primary/15 via-primary/5 to-transparent px-5 py-4">
+       <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-2 border-b border-border bg-gradient-to-r from-primary/15 via-primary/5 to-transparent px-3 py-3 sm:px-5 sm:py-4">
         <div className="flex min-w-0 items-center gap-3">
           <div className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/30">
             <Smartphone className="size-5" />
@@ -314,9 +314,9 @@ export function AppTransfersAdmin() {
         </Button>
       </div>
 
-      <div className="space-y-4 p-5">
+       <div className="min-w-0 space-y-4 p-3 sm:p-5">
         {/* Week calendar */}
-        <div className="space-y-3 rounded-xl border border-border bg-surface/80 p-3 shadow-inner">
+         <div className="min-w-0 space-y-3 rounded-lg border border-border bg-surface/80 p-2 sm:p-3 shadow-inner">
           <div className="flex items-center justify-between gap-2">
             <Button
               size="icon"
@@ -344,7 +344,7 @@ export function AppTransfersAdmin() {
               <ChevronRight className="size-4" />
             </Button>
           </div>
-          <div className="grid grid-cols-7 gap-1.5">
+           <div className="grid min-w-0 grid-cols-7 gap-0.5 sm:gap-1.5">
             {days.map((d, i) => {
               const active = i === dayIdx;
               const isToday = weekOffset === 0 && i === todayIdx;
@@ -353,18 +353,18 @@ export function AppTransfersAdmin() {
                   key={i}
                   type="button"
                   onClick={() => setDayIdx(i)}
-                  className={`rounded-lg border px-1 py-1.5 text-center transition-all ${active ? "border-primary bg-primary text-primary-foreground shadow-md shadow-primary/30" : isToday ? "border-primary/50 bg-surface text-foreground hover:bg-primary/10" : "border-border bg-surface/60 text-foreground hover:bg-surface"}`}
+                   className={`min-w-0 rounded-lg border px-0.5 py-1.5 text-center transition-all sm:px-1 ${active ? "border-primary bg-primary text-primary-foreground shadow-md shadow-primary/30" : isToday ? "border-primary/50 bg-surface text-foreground hover:bg-primary/10" : "border-border bg-surface/60 text-foreground hover:bg-surface"}`}
                 >
                   <span className="block text-xs font-semibold">
                     {d.toLocaleDateString(undefined, { weekday: "short" })}
                   </span>
-                  <span className="block text-[11px] opacity-80">
-                    {d.toLocaleDateString(undefined, { day: "numeric", month: "short" })}
+                   <span className="block text-[10px] opacity-80 sm:text-[11px]">
+                     {d.getDate()}<span className="hidden sm:inline"> {d.toLocaleDateString(undefined, { month: "short" })}</span>
                   </span>
                   <span
                     className={`mx-auto mt-0.5 block w-fit rounded-full px-1.5 text-[10px] font-semibold ${active ? "bg-primary-foreground/20" : "bg-primary/15"}`}
                   >
-                    {isToday ? "Today · " : ""}
+                     {isToday ? <span className="sr-only">Today · </span> : null}
                     {dayCounts[i]}
                   </span>
                 </button>
@@ -374,10 +374,10 @@ export function AppTransfersAdmin() {
         </div>
 
         <Tabs defaultValue="active" className="w-full">
-          <TabsList className="flex-wrap h-auto">
-            <TabsTrigger value="active">Active transfers ({groups.active.length})</TabsTrigger>
-            <TabsTrigger value="completed">Completed ({groups.completed.length})</TabsTrigger>
-            <TabsTrigger value="pending">
+           <TabsList className="flex h-auto w-full min-w-0 justify-start gap-1 overflow-x-auto scrollbar-hide sm:flex-wrap">
+             <TabsTrigger value="active" className="shrink-0 text-xs sm:text-sm">Active transfers ({groups.active.length})</TabsTrigger>
+             <TabsTrigger value="completed" className="shrink-0 text-xs sm:text-sm">Completed ({groups.completed.length})</TabsTrigger>
+             <TabsTrigger value="pending" className="shrink-0 text-xs sm:text-sm">
               Pending or failed ({groups.pending.length})
             </TabsTrigger>
           </TabsList>
