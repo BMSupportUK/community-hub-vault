@@ -47,7 +47,7 @@ export function checkSportsImport(
 
   // 1. Round trip: the saved body must read back identically, otherwise the
   //    guide changes the next time it is opened, merged or auto-cleared.
-  const again = formatSportsListingBlock({ raw: formatted, sourceZone: "GMT" as TimeZoneChoice });
+  const again = formatSportsListingBlock({ raw: formatted, sourceZone: "gmt" });
   if (again !== null && again.trim() !== formatted.trim()) {
     issues.push({ level: "error", message: "The saved guide wouldn't read back the same way — times or channels could shift after posting." });
   }
