@@ -1,5 +1,5 @@
 import type { TimeZoneChoice } from "./import-time";
-import { ukListingInstant } from "./import-time";
+import { parseClockTime, ukListingInstant } from "./import-time";
 import {
   formatSportsListingBlock,
   isLikelyChannelLabel,
@@ -48,7 +48,15 @@ export function checkSportsImport(
   // 1. Round trip: the saved body must read back identically, otherwise the
   //    guide changes the next time it is opened, merged or auto-cleared.
   const again = formatSportsListingBlock({ raw: formatted, sourceZone: "gmt" });
-  if (again !== null && again.trim() !== formatted.trim()) {
+  const sig = (list: SportsListingEvent[]) =>
+    list
+      .map((e) => {
+        const c = parseClockTime(e.time);
+        const clock = c ? `${c.hour}:${c.minute}` : e.time;
+        return `${e.date}|${clock}|${e.title.trim().toLowerCase()}|${e.channels.join(",").toLowerCase()}`;
+      })
+      .join("\n");
+  if (again === null || sig(parseSportsListingBlock(again)) !== sig(events)) {
     issues.push({ level: "error", message: "The saved guide wouldn't read back the same way — times or channels could shift after posting." });
   }
 
@@ -64,12 +72,15 @@ export function checkSportsImport(
   const seen = new Map<string, number>();
   const dupes: number[] = [];
 
+  const channelBrands = new Set(
+    events.flatMap((e) => e.channels ?? []).map((c) => c.trim().split(/\s+/)[0]?.toLowerCase()).filter(Boolean),
+  );
   events.forEach((e, i) => {
     const n = i + 1;
     const title = (e.title ?? "").trim();
     if (!e.time?.trim()) noTime.push(n);
     if (!e.channels?.length) noChannel.push(n);
-    if (title && isLikelyChannelLabel(title)) channelAsTitle.push(n);
+    if (title && isLikelyChannelLabel(title) && channelBrands.has(title.split(/\s+/)[0].toLowerCase())) channelAsTitle.push(n);
     if (
       title.replace(/[^A-Za-z0-9]/g, "").length < 3 ||
       SLOT_JUNK_RE.test(title) ||
