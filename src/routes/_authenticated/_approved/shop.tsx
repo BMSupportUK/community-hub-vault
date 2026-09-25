@@ -1659,21 +1659,21 @@ function Storefront() {
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="welcome" className="mt-3 min-h-0 flex-1 overflow-y-auto scrollbar-hide">
-              <section className="relative overflow-hidden -mx-3 sm:-mx-5 md:-mt-6 md:-mx-6">
+            <TabsContent value="welcome" className="mt-3 min-w-0 min-h-0 flex-1 overflow-x-hidden overflow-y-auto scrollbar-hide">
+              <section className="relative min-w-0 overflow-hidden md:-mt-6 md:-mx-6">
                 <div className="absolute inset-0">
                   <img src={shopHero} alt="" aria-hidden className="w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-gradient-to-r from-background/85 via-background/40 to-transparent" />
                   <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-b from-transparent to-background" />
                 </div>
-                 <div className="relative px-4 md:px-10 pt-10 md:pt-16 pb-16 md:pb-28 max-w-3xl">
-                  <div className="text-xs uppercase tracking-[0.2em] text-sky-200/90 mb-3">
+                 <div className="relative min-w-0 px-4 md:px-10 pt-7 sm:pt-10 md:pt-16 pb-12 md:pb-28 max-w-3xl">
+                  <div className="text-xs uppercase tracking-[0.2em] text-sky-200/90 mb-3 break-words">
                     BM Support · Shop
                   </div>
-                   <h1 className="font-display text-3xl md:text-6xl font-bold leading-tight text-white drop-shadow">
+                   <h1 className="font-display text-3xl md:text-6xl font-bold leading-tight text-white drop-shadow break-words">
                     Welcome to the Store
                   </h1>
-                  <p className="mt-4 text-sky-100/90 max-w-xl text-base md:text-lg">
+                  <p className="mt-3 md:mt-4 text-sky-100/90 max-w-xl text-sm sm:text-base md:text-lg break-words">
                     Browse plans hand-picked for BM Support members. Place an order in seconds —
                     we'll keep you posted every step of the way.
                   </p>
@@ -1688,8 +1688,8 @@ function Storefront() {
               />
             </TabsContent>
 
-            <TabsContent value="how_to_order" className="mt-3 min-h-0 flex-1 overflow-y-auto scrollbar-hide">
-               <section className="relative overflow-hidden -mx-3 sm:-mx-5 md:-mt-6 md:-mx-6">
+            <TabsContent value="how_to_order" className="mt-3 min-w-0 min-h-0 flex-1 overflow-x-hidden overflow-y-auto scrollbar-hide">
+               <section className="relative min-w-0 overflow-hidden md:-mt-6 md:-mx-6">
                 <div className="absolute inset-0">
                   <img src={shopHero} alt="" aria-hidden className="w-full h-full object-cover" />
                   <div className="absolute inset-0 bg-gradient-to-r from-background/85 via-background/40 to-transparent" />
