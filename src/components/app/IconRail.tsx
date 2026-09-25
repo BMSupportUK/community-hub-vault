@@ -391,8 +391,6 @@ function RailIcon({
   params?: Record<string, string>;
   resetSportsGuides?: boolean;
 }) {
-  const navigate = useNavigate();
-
   return (
     <TooltipProvider delayDuration={150}>
       <Tooltip>
@@ -410,11 +408,11 @@ function RailIcon({
               try {
                 sessionStorage.removeItem("sports-guides-active-tab");
                 sessionStorage.removeItem("sports-guides-active-cat");
+                 sessionStorage.removeItem("sports-guides-focus-id");
               } catch { /* ignore */ }
-              void navigate({
-                to: "/sports-guides",
-                search: { reset: String(Date.now()) },
-              });
+               // Force a fresh route document so a mounted category/guide can
+               // never restore itself after the rail is clicked.
+               window.location.assign(`/sports-guides?reset=${Date.now()}`);
             }}
             onDragStart={draggable ? undefined : (e) => e.preventDefault()}
             className={cn(
