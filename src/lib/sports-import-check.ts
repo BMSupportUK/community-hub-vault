@@ -11,6 +11,8 @@ export type ImportCheckIssue = {
   level: "error" | "warning";
   message: string;
   events?: number[]; // 1-based card numbers
+  /** Set when a web lookup could supply the missing piece. */
+  fixable?: "time" | "title" | "channel";
 };
 
 export type ImportCheckResult = {
@@ -60,8 +62,8 @@ export function checkSportsImport(
     issues.push({ level: "error", message: "The saved guide wouldn't read back the same way — times or channels could shift after posting." });
   }
 
-  const add = (level: ImportCheckIssue["level"], message: string, list: number[]) => {
-    if (list.length) issues.push({ level, message, events: list });
+  const add = (level: ImportCheckIssue["level"], message: string, list: number[], fixable?: ImportCheckIssue["fixable"]) => {
+    if (list.length) issues.push({ level, message, events: list, fixable });
   };
 
   const noTime: number[] = [];
@@ -96,10 +98,10 @@ export function checkSportsImport(
     if (at !== null && nowMs >= at + 10 * 60 * 60 * 1000) stale.push(n);
   });
 
-  add("error", "Missing a start time", noTime);
-  add("error", "Event name looks like a channel (title and channel may be swapped)", channelAsTitle);
-  add("error", "Event name or channel looks like leftover post text", [...new Set(junkTitle)]);
-  add("warning", "No channel listed", noChannel);
+  add("error", "Missing a start time", noTime, "time");
+  add("error", "Event name looks like a channel (title and channel may be swapped)", channelAsTitle, "title");
+  add("error", "Event name or channel looks like leftover post text", [...new Set(junkTitle)], "title");
+  add("warning", "No channel listed", noChannel, "channel");
   add("warning", "Listed twice", dupes);
   add("warning", "Started more than 10 hours ago — will be cleared automatically", stale);
 

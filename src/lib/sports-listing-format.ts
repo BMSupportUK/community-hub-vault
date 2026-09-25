@@ -913,7 +913,7 @@ export function formatSportsListingBlock(input: ListingInput): string | null {
   return formatSportsListingEvents(events, { ...input, date: base ?? input.date });
 }
 
-function formatSportsListingEvents(events: SportsListingEvent[], input: ListingInput): string {
+export function formatSportsListingEvents(events: SportsListingEvent[], input: ListingInput): string {
   const out: string[] = [];
   let lastDate: string | null = null;
   for (const event of events) {
