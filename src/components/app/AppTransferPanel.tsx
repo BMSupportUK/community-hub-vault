@@ -46,6 +46,80 @@ function countdown(expiresAt: string | undefined, now: number) {
   return `${h}h ${String(m).padStart(2, "0")}m ${String(s).padStart(2, "0")}s`;
 }
 
+/** Step-by-step install status shown under a live link. */
+function TransferStatusSteps({ transfer }: { transfer: Transfer }) {
+  const installed = !!transfer.installedAt;
+  const downloaded = installed || transfer.status === "completed";
+  const downloading = !downloaded && transfer.status === "downloading";
+  const started = downloaded || downloading || transfer.status === "incomplete";
+  const pct =
+    transfer.totalBytes && transfer.totalBytes > 0
+      ? Math.min(100, Math.round((transfer.bytes / transfer.totalBytes) * 100))
+      : downloaded
+        ? 100
+        : 0;
+
+  const steps = [
+    { label: "Link issued", state: "done" as const },
+    {
+      label: downloading ? `Downloading… ${pct}%` : "Downloaded",
+      state: downloaded ? ("done" as const) : downloading ? ("active" as const) : ("todo" as const),
+    },
+    {
+      label: installed ? "Installed & opened" : "Installed",
+      state: installed ? ("done" as const) : ("todo" as const),
+    },
+  ];
+
+  return (
+    <div className="rounded-lg border border-border/60 bg-background/60 p-3">
+      <ol className="flex items-center gap-1">
+        {steps.map((s, i) => (
+          <li key={s.label} className="flex flex-1 items-center gap-1 last:flex-none">
+            <span
+              className={`grid size-5 shrink-0 place-items-center rounded-full border text-[10px] font-bold ${
+                s.state === "done"
+                  ? "border-emerald-400/50 bg-emerald-500/20 text-emerald-300"
+                  : s.state === "active"
+                    ? "border-sky-400/50 bg-sky-500/20 text-sky-300"
+                    : "border-border bg-surface text-muted-foreground"
+              }`}
+            >
+              {s.state === "done" ? "✓" : i + 1}
+            </span>
+            <span
+              className={`text-[10px] leading-tight ${
+                s.state === "done"
+                  ? "text-emerald-300"
+                  : s.state === "active"
+                    ? "text-sky-300"
+                    : "text-muted-foreground"
+              }`}
+            >
+              {s.label}
+            </span>
+            {i < steps.length - 1 && <span className="mx-1 h-px flex-1 bg-border" />}
+          </li>
+        ))}
+      </ol>
+      {downloading && (
+        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-surface-2">
+          <div className="h-full bg-sky-400 transition-all" style={{ width: `${pct}%` }} />
+        </div>
+      )}
+      {(installed || started) && (
+        <p className="mt-2 text-[10px] text-muted-foreground">
+          {installed
+            ? `Opened on ${transfer.installDevice || "the device"}${transfer.installAppVersion ? ` · app v${transfer.installAppVersion}` : ""} · ${new Date(transfer.installedAt!).toLocaleString()}`
+            : transfer.device
+              ? `Device: ${transfer.device}`
+              : null}
+        </p>
+      )}
+    </div>
+  );
+}
+
 /** Signs a private app-demos video path for playback. */
 function useDemoVideoUrl(path: string | null) {
   const [url, setUrl] = useState<string | null>(null);
@@ -280,6 +354,8 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
             <Clock className="size-3.5" /> Expires in {remaining} · downloads: {transfer?.downloads ?? 0}
           </p>
 
+          {transfer && <TransferStatusSteps transfer={transfer} />}
+
           <div className="flex flex-col sm:flex-row flex-wrap gap-2 justify-center">
             <Button size="sm" asChild className="bg-gradient-primary text-primary-foreground hover:opacity-90 h-auto min-h-9 w-full sm:w-auto whitespace-normal">
               <a href={`/api/public/a/${transfer?.token}`}>
@@ -359,8 +435,8 @@ export function AppTransferPanel({ onUploadClick }: { onUploadClick?: () => void
     queryKey: ["app-transfers"],
     queryFn: () => fetchTransfers(),
     enabled: canDownload,
-    refetchInterval: 60_000,
-    staleTime: 30_000,
+    refetchInterval: 15_000,
+    staleTime: 10_000,
   });
 
   const byBuild = useMemo(() => {
