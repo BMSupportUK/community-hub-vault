@@ -580,7 +580,7 @@ function TicketsPage() {
           <TabsContent value="open" className={cn("mt-6 lg:flex lg:min-h-0 lg:flex-1 lg:overflow-hidden", isChatting && "mt-0 h-full")}>
             <div className={cn(
               "grid grid-cols-1 gap-4 lg:h-full lg:min-h-0 lg:flex-1 lg:grid-cols-[300px_minmax(0,1fr)]",
-              isChatting && "h-full min-h-0 gap-0 lg:grid-cols-[280px_1fr] grid-rows-[auto_1fr] lg:grid-rows-1"
+              isChatting && "h-full min-h-0 gap-0 lg:grid-cols-[280px_1fr] grid-rows-[minmax(0,1fr)]"
             )}>
               <aside className={cn(
                 "hidden rounded-2xl border border-rose-500/30 bg-rose-950/50 p-4 backdrop-blur lg:flex lg:h-full lg:min-h-0 lg:flex-col",
@@ -620,7 +620,7 @@ function TicketsPage() {
           )}>
             <div className={cn(
               "grid grid-cols-1 lg:h-full lg:min-h-0 lg:flex-1 lg:grid-cols-[300px_minmax(0,1fr)] gap-4",
-              isChatting && "h-full min-h-0 flex-1 gap-0 overflow-hidden lg:grid-cols-[280px_1fr] grid-rows-[auto_1fr] lg:grid-rows-1"
+              isChatting && "h-full min-h-0 flex-1 gap-0 overflow-hidden lg:grid-cols-[280px_1fr] grid-rows-[minmax(0,1fr)]"
             )}>
               {/* Left list */}
               <aside className={cn(
