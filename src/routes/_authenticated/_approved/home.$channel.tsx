@@ -1470,6 +1470,20 @@ function ChannelPage() {
             )}
           </div>
         </div>
+        <button
+          onClick={() => setHeaderExpanded((v) => !v)}
+          className={cn(
+            "flex items-center justify-center size-8 rounded-full bg-surface-2/60 hover:bg-surface-2 border border-white/10 hover:border-white/20 transition-all cursor-pointer shadow-lg shadow-black/20",
+            !headerExpanded && "ml-auto",
+          )}
+          title={headerExpanded ? "Hide channel options" : "Show channel options"}
+        >
+          {headerExpanded ? (
+            <ChevronUp className="size-4 text-foreground/80" />
+          ) : (
+            <ChevronDown className="size-4 text-foreground/80" />
+          )}
+        </button>
       </header>
       <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
