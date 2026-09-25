@@ -6078,7 +6078,7 @@ function AdminDiscounts() {
                   </div>
                   {c.description && <p className="text-xs text-muted-foreground">{c.description}</p>}
                   <div className="text-[11px] text-muted-foreground">
-                    Created {new Date(c.created_at).toLocaleDateString("en-GB")}
+                    {c.created_at ? `Created ${new Date(c.created_at).toLocaleDateString("en-GB")}` : null}
                   </div>
                   <div className="mt-auto flex items-center gap-2 pt-1">
                     <button
