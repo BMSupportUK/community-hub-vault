@@ -472,6 +472,67 @@ export const splitQueueItem = createServerFn({ method: "POST" })
     return { created: rows.length };
   });
 
+/**
+ * Manual split: the admin picks the exact line where the second half starts
+ * and the post becomes two pending queue items, kept in original order.
+ */
+export const splitQueueItemAtLine = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z.object({ id: z.string().uuid(), line: z.number().int().min(1) }).parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+    await assertStaff(supabase, userId);
+
+    const { data: item, error: getErr } = await supabaseAdmin
+      .from("discord_import_queue")
+      .select("id, raw_text, parsed_event, status, source, source_ref, forwarded_from")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (getErr) throw new Error(getErr.message);
+    if (!item) throw new Error("Queue item not found");
+    if (item.status !== "pending") throw new Error("Already resolved");
+
+    const raw = String((item.parsed_event as any)?.raw ?? item.raw_text ?? "");
+    const lines = raw.split("\n");
+    if (data.line >= lines.length) throw new Error("Split point is past the end of the post");
+    const first = lines.slice(0, data.line).join("\n").trim();
+    const second = lines.slice(data.line).join("\n").trim();
+    if (!first || !second) throw new Error("Both halves need some text");
+
+    const mkRow = (text: string, part: number) => ({
+      raw_text: text,
+      parsed_event: {
+        title: null,
+        time: null,
+        date: null,
+        channels: [],
+        raw: text,
+        suggested_category: null,
+        suggested_subcategory: null,
+      } as any,
+      status: "pending",
+      source: item.source ?? "paste",
+      source_ref: `${item.source_ref ?? `split:${item.id}`}#part${part}`,
+      forwarded_from: item.forwarded_from ?? null,
+      created_by: userId,
+    });
+
+    const { error: insErr } = await supabaseAdmin
+      .from("discord_import_queue")
+      .insert([mkRow(first, 1), mkRow(second, 2)] as any);
+    if (insErr) throw new Error(insErr.message);
+
+    const { error: delErr } = await supabaseAdmin
+      .from("discord_import_queue")
+      .update({ status: "discarded" } as any)
+      .eq("id", item.id);
+    if (delErr) throw new Error(delErr.message);
+
+    return { created: 2 };
+  });
+
 // One pasted post can hold several providers ("MONOMAX" then "STAN Sport"),
 // each of which has its own guide. Split it into one queue item per provider
 // so each block can be filed against the right guide.
