@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, redirect, useRouterState, Navigate, useNavigate } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
-import { LayoutDashboard, Shield, ShieldCheck, Menu, Receipt } from "lucide-react";
+import { LayoutDashboard, Shield, ShieldCheck, Menu, Receipt, ChevronDown, ChevronUp } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState, lazy, Suspense, type ReactNode } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -116,6 +116,31 @@ function AuthLayout() {
   // Chat surfaces pin their composer to the bottom, but only on large
   // screens — on smaller screens the whole page scrolls like any other.
   const chatSurface = lockable && (path === "/tickets" || /^\/home\/[^/]+$/.test(path));
+  // Talk channels start with the main site header collapsed to a slim bar;
+  // it can be expanded again with the chevron at any time.
+  const inTalkChannel = /^\/home\/[^/]+$/.test(path);
+  const [talkHeaderExpanded, setTalkHeaderExpanded] = useState(false);
+  const [talkChannelName, setTalkChannelName] = useState<string | null>(null);
+  useEffect(() => {
+    if (inTalkChannel) setTalkHeaderExpanded(false);
+  }, [inTalkChannel, path]);
+  const talkHeaderCollapsed = inTalkChannel && !talkHeaderExpanded;
+  useEffect(() => {
+    if (!talkHeaderCollapsed) return;
+    const slug = path.split("/")[2] ?? "";
+    let alive = true;
+    supabase
+      .from("chat_channels")
+      .select("name")
+      .eq("slug", slug)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (alive) setTalkChannelName(data?.name ?? null);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [talkHeaderCollapsed, path]);
   // Pages that run their own internal scrolling panels when locked.
   const selfScrolling =
     chatSurface ||
