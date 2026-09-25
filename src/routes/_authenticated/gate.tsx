@@ -31,6 +31,8 @@ interface Msg { id: string; sender_id: string; content: string; created_at: stri
 
 function GatePage() {
   const { user, refreshRoles, signOut } = useAuth();
+  const refreshRolesRef = useRef(refreshRoles);
+  refreshRolesRef.current = refreshRoles;
   const navigate = useNavigate();
   const { intent, invite: inviteFromUrl } = Route.useSearch();
   const isFanZone = intent === "fan-zone";
@@ -128,7 +130,7 @@ function GatePage() {
         if (!cancelled) {
           if (!error) {
             toast.success("Invite accepted — welcome.");
-            await refreshRoles?.();
+            await refreshRolesRef.current();
             navigate({ to: "/home" });
             return;
           }
@@ -148,7 +150,7 @@ function GatePage() {
         // Referral code already used → straight access, never the gate.
         const { data: ok } = await supabase.rpc("claim_invite_access");
         if (!cancelled && ok && intent !== "fan-zone") {
-          await refreshRoles?.();
+          await refreshRolesRef.current();
           navigate({ to: "/home" });
           return;
         }
@@ -159,7 +161,7 @@ function GatePage() {
     return () => {
       cancelled = true;
     };
-  }, [user, inviteFromUrl, intent, navigate, refreshRoles]);
+  }, [user?.id, inviteFromUrl, intent, navigate]);
 
   // Once the referral code resolves, fold it into the default activation draft.
   useEffect(() => {

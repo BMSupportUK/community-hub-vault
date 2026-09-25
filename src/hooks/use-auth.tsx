@@ -53,7 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const loadRoles = async (uid: string) => {
     // Sign-up may create a session before its referral is redeemed. Wait for
     // that in-flight redemption rather than publishing the interim pending role.
-    if (typeof window !== "undefined" && window.sessionStorage.getItem("bm-referral-setup") === uid) {
+    if (typeof window !== "undefined" && ["pending", uid].includes(window.sessionStorage.getItem("bm-referral-setup") ?? "")) {
       setTimeout(() => { if (activeUidRef.current === uid) void loadRoles(uid); }, 500);
       return;
     }
@@ -73,7 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // A role request may finish after sign-out. Never let that stale response
     // restore an authenticated role state for a user whose session is gone.
     if (activeUidRef.current !== uid) return;
-    if (typeof window !== "undefined" && window.sessionStorage.getItem("bm-referral-setup") === uid) {
+    if (typeof window !== "undefined" && ["pending", uid].includes(window.sessionStorage.getItem("bm-referral-setup") ?? "")) {
       setTimeout(() => { if (activeUidRef.current === uid) void loadRoles(uid); }, 500);
       return;
     }

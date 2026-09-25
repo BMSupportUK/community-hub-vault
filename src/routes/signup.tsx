@@ -196,6 +196,7 @@ function SignupPage() {
     } catch {
       // If the check fails, fall through to signUp.
     }
+    if (inviteCode.trim()) window.sessionStorage.setItem("bm-referral-setup", "pending");
     const { data: signupData, error } = await supabase.auth.signUp({
       email,
       password,
@@ -209,12 +210,11 @@ function SignupPage() {
       },
     });
     if (error) {
+      window.sessionStorage.removeItem("bm-referral-setup");
       setBusy(false);
       return toast.error(error.message);
     }
-    if (inviteCode.trim() && signupData.user?.id) {
-      window.sessionStorage.setItem("bm-referral-setup", signupData.user.id);
-    }
+    if (inviteCode.trim() && signupData.user?.id) window.sessionStorage.setItem("bm-referral-setup", signupData.user.id);
     // Capture as much client/browser info as we can for owner review
     try {
       const nav = navigator as Navigator & {
