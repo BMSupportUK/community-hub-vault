@@ -117,7 +117,9 @@ export const listMyAppTransfers = createServerFn({ method: "GET" })
     const nowIso = new Date().toISOString();
     const { data } = await context.supabase
       .from("app_transfers")
-      .select("id, build_id, token, issued_at, expires_at, download_count")
+      .select(
+        "id, build_id, token, issued_at, expires_at, download_count, last_download_status, last_download_bytes, last_download_total_bytes, last_download_device, installed_at, install_device, install_app_version",
+      )
       .eq("user_id", context.userId)
       .gt("expires_at", nowIso)
       .order("issued_at", { ascending: false });
@@ -128,6 +130,13 @@ export const listMyAppTransfers = createServerFn({ method: "GET" })
       issuedAt: row.issued_at as string,
       expiresAt: row.expires_at as string,
       downloads: (row.download_count as number) ?? 0,
+      status: (row.last_download_status as string | null) ?? null,
+      bytes: Number(row.last_download_bytes ?? 0),
+      totalBytes: row.last_download_total_bytes == null ? null : Number(row.last_download_total_bytes),
+      device: (row.last_download_device as string | null) ?? null,
+      installedAt: (row.installed_at as string | null) ?? null,
+      installDevice: (row.install_device as string | null) ?? null,
+      installAppVersion: (row.install_app_version as string | null) ?? null,
     }));
   });
 
@@ -366,7 +375,7 @@ export const listAppTransfers = createServerFn({ method: "GET" })
     const { data } = await supabaseAdmin
       .from("app_transfers")
       .select(
-        "id, user_id, build_id, token, issued_at, expires_at, download_count, last_download_at, last_download_status, last_download_started_at, last_download_bytes, last_download_total_bytes, last_download_device, last_download_user_agent, last_download_ip",
+        "id, user_id, build_id, token, issued_at, expires_at, download_count, last_download_at, last_download_status, last_download_started_at, last_download_bytes, last_download_total_bytes, last_download_device, last_download_user_agent, last_download_ip, installed_at, install_device, install_app_version",
       )
       .order("issued_at", { ascending: false })
       .limit(2000);
