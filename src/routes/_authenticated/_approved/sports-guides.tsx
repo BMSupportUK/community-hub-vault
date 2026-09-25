@@ -29,8 +29,8 @@ export const Route = createFileRoute("/_authenticated/_approved/sports-guides")(
 
 function SportsGuidesRoute() {
   const childMatches = useChildMatches();
-  if (childMatches.length > 0) return <Outlet />;
   const { reset } = Route.useSearch();
+  if (childMatches.length > 0) return <Outlet />;
   return <SportsGuidesPage key={reset ?? "default"} />;
 }
 
