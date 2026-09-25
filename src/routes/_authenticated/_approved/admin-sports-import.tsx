@@ -855,10 +855,30 @@ function QueueSetup({
     return () => { alive = false; };
   }, [draft.destinationCategory, selectedSubcategory, readyForGuides]);
 
-  const itemRaw = String(item?.parsed_event?.raw ?? item?.raw_text ?? "");
+  // Inline card edits replace the post text (saved to the queue item), so the
+  // double-check and the final import both use the corrected version.
+  const [editedRaw, setEditedRaw] = useState<string | null>(null);
+  useEffect(() => setEditedRaw(null), [item?.id]);
+  const itemRaw = editedRaw ?? String(item?.parsed_event?.raw ?? item?.raw_text ?? "");
   const check = useMemo(() => checkSportsImport(itemRaw, draft.sourceZone), [itemRaw, draft.sourceZone]);
   const [override, setOverride] = useState(false);
   useEffect(() => setOverride(false), [item?.id, draft.sourceZone]);
+
+  const saveListingFn = useServerFn(saveQueueListing);
+  const applyCardEdit = async (index: number, updated: { time: string; title: string; channels: string[] }) => {
+    if (!item) return;
+    const events = check.events.map((event, i) =>
+      i === index ? { ...event, time: updated.time, title: updated.title, channels: updated.channels } : event,
+    );
+    const raw = formatSportsListingEvents(events, { raw: itemRaw, sourceZone: draft.sourceZone ?? "gmt" });
+    try {
+      await saveListingFn({ data: { id: item.id, raw } });
+      setEditedRaw(raw);
+      toast.success("Card updated — the double-check has run again");
+    } catch (e: any) {
+      toast.error(e.message ?? "Couldn't save that edit");
+    }
+  };
 
   const run = async (action: "import" | "discard") => {
     if (!item) return;
