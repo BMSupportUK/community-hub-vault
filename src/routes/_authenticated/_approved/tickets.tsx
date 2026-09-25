@@ -2327,16 +2327,11 @@ function TicketDetail({
         )}
       </div>
       </div>
-      <aside className="hidden lg:flex w-[260px] xl:w-[300px] shrink-0 min-h-0 max-h-full flex-col gap-4 border-l border-white/20 bg-white/5 p-3 backdrop-blur">
+      <aside className="hidden lg:flex w-[260px] xl:w-[300px] shrink-0 min-h-0 max-h-full flex-col gap-4 overflow-y-auto overscroll-contain border-l border-white/20 bg-white/5 p-3 backdrop-blur">
         {linkedOrder && (
-          <div className="min-h-0 max-h-[48%] shrink-0 overflow-y-auto overscroll-contain pb-2">
-            <div className="mb-2 text-[10px] uppercase tracking-wider text-white/70">Order</div>
-            {orderPanelInner}
-          </div>
+          <div className="mb-2 text-[10px] uppercase tracking-wider text-white/70">Order</div>
         )}
-        <div className="min-h-[250px] flex-1 overflow-hidden [&>div]:h-full">
-          <AdSenseSlot slot="sidebar" fitViewport />
-        </div>
+        {orderPanelInner}
       </aside>
     </div>
   );
