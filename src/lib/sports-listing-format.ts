@@ -285,7 +285,9 @@ function splitTitleAndInlineChannels(rest: string): { title: string; channels: s
   if (dash && dash[1] && dash[2] && isLikelyChannelLabel(dash[1])) {
     return { title: dash[2].trim(), channels: splitChannelLine(dash[1]) };
   }
-  if (dash && dash[1] && dash[2] && isLikelyChannelLabel(dash[2])) {
+  // "Fri, 9/25 - ESPN FC" is a show name (date + programme), never a channel.
+  const dateOnlyLeft = dash?.[1] && /^(?:mon|tue|wed|thu|fri|sat|sun)[a-z]*,?\s+\d{1,2}\/\d{1,2}(?:\/\d{2,4})?$/i.test(dash[1].trim());
+  if (dash && dash[1] && dash[2] && !dateOnlyLeft && isLikelyChannelLabel(dash[2])) {
     return { title: dash[1].trim(), channels: splitChannelLine(dash[2]) };
   }
 
