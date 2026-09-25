@@ -268,7 +268,7 @@ function AuthLayout() {
               <Link
                 to="/admin"
                 title="Admin | Admin Panel"
-                className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-3 py-1.5 bg-surface-2 hover:bg-primary hover:text-primary-foreground text-xs font-medium transition-colors"
+                className="hidden md:flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-3 py-1.5 bg-surface-2 hover:bg-primary hover:text-primary-foreground text-xs font-medium transition-colors"
               >
                 <LayoutDashboard className="size-4" />
                 <span className="hidden xl:inline">Admin | Admin Panel</span>
@@ -278,7 +278,7 @@ function AuthLayout() {
               <Link
                 to="/moderation"
                 title="Admin | Access Requests"
-                className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-3 py-1.5 bg-surface-2 hover:bg-primary hover:text-primary-foreground text-xs font-medium transition-colors"
+                className="hidden md:flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-3 py-1.5 bg-surface-2 hover:bg-primary hover:text-primary-foreground text-xs font-medium transition-colors"
               >
                 <Shield className="size-4" />
                 <span className="hidden xl:inline">Admin | Access Requests</span>
@@ -289,7 +289,7 @@ function AuthLayout() {
               <button
                 type="button"
                 title="Admin | Shop Orders"
-                className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-3 py-1.5 bg-surface-2 hover:bg-primary hover:text-primary-foreground text-xs font-medium transition-colors"
+                className="hidden md:flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-3 py-1.5 bg-surface-2 hover:bg-primary hover:text-primary-foreground text-xs font-medium transition-colors"
                 onClick={openSalesChats}
               >
                 <Receipt className="size-4" />
@@ -301,7 +301,7 @@ function AuthLayout() {
               <Link
                 to="/admin-roles"
                 title="Members & Role Management"
-                className="flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-3 py-1.5 bg-surface-2 hover:bg-primary hover:text-primary-foreground text-xs font-medium transition-colors"
+                className="hidden md:flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-3 py-1.5 bg-surface-2 hover:bg-primary hover:text-primary-foreground text-xs font-medium transition-colors"
               >
                 <ShieldCheck className="size-4" />
                 <span className="hidden xl:inline">Members &amp; Role Management</span>
@@ -319,9 +319,11 @@ function AuthLayout() {
             )}
           </div>
           <div className="hidden xl:flex flex-1 min-w-0 px-3" />
-            <DeferUntilIdle>
-              <Clocks />
-            </DeferUntilIdle>
+             <div className="hidden lg:contents">
+               <DeferUntilIdle>
+                 <Clocks />
+               </DeferUntilIdle>
+             </div>
             <DeferUntilIdle>
               <LockNowPill />
             </DeferUntilIdle>
