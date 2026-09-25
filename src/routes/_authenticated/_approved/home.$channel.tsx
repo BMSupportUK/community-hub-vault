@@ -1193,7 +1193,7 @@ function ChannelPage() {
 
   return (
     <main className="flex h-full max-h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-      <header className="h-14 border-b border-border px-5 flex items-center gap-3 shrink-0 relative z-[60]">
+      <header className={cn("border-b border-border px-5 flex items-center gap-3 shrink-0 relative z-[60] transition-[height] duration-200 ease-out", headerExpanded ? "h-14" : "h-10")}>
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-card/50 border border-primary/30 shadow-[0_0_20px_-4px_color-mix(in_oklab,var(--primary)_35%,transparent),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-xl">
           <Icon className="size-4 text-primary" />
           <h1 className="font-display font-semibold text-foreground">{channel.name}</h1>
