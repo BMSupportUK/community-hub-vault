@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, redirect, useRouterState, Navigate, useNavigate } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
-import { LayoutDashboard, Shield, ShieldCheck, Menu, Receipt } from "lucide-react";
+import { LayoutDashboard, Shield, ShieldCheck, Menu, Receipt, ChevronDown, ChevronUp } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState, lazy, Suspense, type ReactNode } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -116,6 +116,31 @@ function AuthLayout() {
   // Chat surfaces pin their composer to the bottom, but only on large
   // screens — on smaller screens the whole page scrolls like any other.
   const chatSurface = lockable && (path === "/tickets" || /^\/home\/[^/]+$/.test(path));
+  // Talk channels start with the main site header collapsed to a slim bar;
+  // it can be expanded again with the chevron at any time.
+  const inTalkChannel = /^\/home\/[^/]+$/.test(path);
+  const [talkHeaderExpanded, setTalkHeaderExpanded] = useState(false);
+  const [talkChannelName, setTalkChannelName] = useState<string | null>(null);
+  useEffect(() => {
+    if (inTalkChannel) setTalkHeaderExpanded(false);
+  }, [inTalkChannel, path]);
+  const talkHeaderCollapsed = inTalkChannel && !talkHeaderExpanded;
+  useEffect(() => {
+    if (!talkHeaderCollapsed) return;
+    const slug = path.split("/")[2] ?? "";
+    let alive = true;
+    supabase
+      .from("chat_channels")
+      .select("name")
+      .eq("slug", slug)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (alive) setTalkChannelName(data?.name ?? null);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [talkHeaderCollapsed, path]);
   // Pages that run their own internal scrolling panels when locked.
   const selfScrolling =
     chatSurface ||
@@ -216,7 +241,19 @@ function AuthLayout() {
       <div className={locksToViewport ? "fixed inset-0 flex h-dvh w-dvw overflow-hidden bg-background" : "relative flex min-h-dvh w-full bg-background"}>
         <IconRail />
         <div className={locksToViewport ? "flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden" : "flex min-h-dvh min-w-0 flex-1 flex-col"}>
-{!inFanZone && <header className="h-14 shrink-0 border-b border-border bg-rail/40 backdrop-blur flex items-center justify-between px-2 lg:px-4 gap-1.5 lg:gap-3 overflow-hidden mb-1">
+{!inFanZone && talkHeaderCollapsed && (
+          <button
+            type="button"
+            onClick={() => setTalkHeaderExpanded(true)}
+            title="Show header"
+            className="h-8 shrink-0 border-b border-border bg-rail/40 backdrop-blur flex items-center gap-2 px-3 text-xs text-muted-foreground hover:text-foreground transition-colors text-left"
+          >
+            <ChevronDown className="size-3.5" />
+            <span className="font-medium truncate">{talkChannelName ?? "Talk channel"}</span>
+            <span className="hidden sm:inline opacity-70">— show header</span>
+          </button>
+        )}
+        {!inFanZone && !talkHeaderCollapsed && (<header className="h-14 shrink-0 border-b border-border bg-rail/40 backdrop-blur flex items-center justify-between px-2 lg:px-4 gap-1.5 lg:gap-3 overflow-hidden mb-1">
           <div className="flex items-center gap-1.5 lg:gap-2 min-w-0 flex-1">
             <Sheet open={navOpen} onOpenChange={setNavOpen}>
               <SheetTrigger
@@ -297,7 +334,18 @@ function AuthLayout() {
             <DeferUntilIdle>
               <VpnPill />
             </DeferUntilIdle>
-        </header>}
+            {inTalkChannel && (
+              <button
+                type="button"
+                onClick={() => setTalkHeaderExpanded(false)}
+                title="Hide header"
+                aria-label="Hide header"
+                className="shrink-0 inline-flex items-center justify-center size-8 rounded-md hover:bg-surface-2 text-muted-foreground ml-1"
+              >
+                <ChevronUp className="size-4" />
+              </button>
+            )}
+        </header>)}
         <div
           className={
             locksToViewport
