@@ -13,6 +13,7 @@ import ticketAudio from "@/assets/ticket-notify.mp3";
 import { playSound } from "@/lib/sound";
 import { MentionText } from "@/components/app/mentions";
 import { GateStaffPresence } from "@/components/app/GateStaffPresence";
+import { BmSplash } from "@/components/app/BmSplash";
 
 export const Route = createFileRoute("/_authenticated/gate")({
   validateSearch: (search: Record<string, unknown>): { intent?: "fan-zone" | "bm-support"; invite?: string } => ({
@@ -59,6 +60,7 @@ function GatePage() {
   const verifyCaptcha = useServerFn(verifyTurnstile);
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [referralNote, setReferralNote] = useState<string | null>(null);
+  const [referralChecking, setReferralChecking] = useState(true);
 
   const ACTIVATION_TEXT = "I would like to complete activation of my account.";
   const defaultDraft = (code?: string | null) =>
@@ -116,6 +118,7 @@ function GatePage() {
   // already-redeemed invite row in the database.
   useEffect(() => {
     if (!user) return;
+    setReferralChecking(true);
     let cancelled = false;
     (async () => {
       const urlCode = inviteFromUrl?.trim();
@@ -131,6 +134,7 @@ function GatePage() {
           }
           setReferralCode(urlCode);
           setReferralNote(error.message);
+          setReferralChecking(false);
           return;
         }
       }
@@ -150,6 +154,7 @@ function GatePage() {
         }
         setReferralCode(linked.code);
       }
+      if (!cancelled) setReferralChecking(false);
     })();
     return () => {
       cancelled = true;
@@ -397,6 +402,8 @@ function GatePage() {
   };
 
   return (
+    <>
+    {referralChecking && <BmSplash label="Checking your access…" />}
     <div className="fixed inset-0 overflow-hidden bg-black">
       {/* Cinematic background */}
       <img src={bg} alt="" className="absolute inset-0 w-full h-full object-cover" />

@@ -15,7 +15,6 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { isAllowedForFanZoneOnly, isFanZonePath } from "@/lib/fan-zone-nav";
 import { useFanZoneMembershipState } from "@/hooks/use-fan-zone";
 import { BmSplash } from "@/components/app/BmSplash";
-import { screenLockMayBeLocked } from "@/lib/screen-lock-hash";
 import { ScreenLockProvider } from "@/components/app/ScreenLockProvider";
 import { useViewportLockable } from "@/hooks/use-viewport-lock";
 import { useIsMobile } from "@/hooks/use-mobile";
