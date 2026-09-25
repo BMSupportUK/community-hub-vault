@@ -41,11 +41,12 @@ export async function postOrderPaymentReceivedNotice(input: NoticeInput): Promis
 
   const { data: order } = await supabaseAdmin
     .from("orders")
-    .select("id,user_id,total_cents")
+    .select("id,user_id,total_cents,discount_cents")
     .eq("id", orderId)
     .maybeSingle();
   const orderUserId = (order as { user_id?: string } | null)?.user_id ?? input.actorId ?? null;
   const totalCents = input.amountCents ?? (order as { total_cents?: number } | null)?.total_cents ?? 0;
+  const discountCents = (order as { discount_cents?: number | null } | null)?.discount_cents ?? null;
   const senderId = input.actorId ?? orderUserId;
 
   const { data: items } = await supabaseAdmin
@@ -53,9 +54,9 @@ export async function postOrderPaymentReceivedNotice(input: NoticeInput): Promis
     .select("product_name,quantity,unit_price_cents")
     .eq("order_id", orderId);
 
-  const itemLines = (items ?? []).map(
-    (it: { product_name: string | null; quantity: number | null; unit_price_cents: number | null }) =>
-      `• ${it.quantity ?? 1} × ${it.product_name ?? "Item"} — £${(((it.unit_price_cents ?? 0) * (it.quantity ?? 1)) / 100).toFixed(2)}`,
+  const itemLines = buildOrderItemLines(
+    items as { product_name: string | null; quantity: number | null; unit_price_cents: number | null }[] | null,
+    discountCents,
   );
 
   const paidAtDate = input.paidAt ? new Date(input.paidAt) : new Date();

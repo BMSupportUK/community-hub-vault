@@ -252,7 +252,7 @@ export const confirmStripePayment = createServerFn({ method: "POST" })
 
       const { data: order, error: orderErr } = await supabase
         .from("orders")
-        .select("id,total_cents,paid_at,user_id")
+        .select("id,total_cents,paid_at,user_id,discount_cents")
         .eq("id", data.orderId)
         .single();
 
@@ -395,9 +395,9 @@ export const confirmStripePayment = createServerFn({ method: "POST" })
             .maybeSingle(),
         ]);
 
-        const itemLines = (items ?? []).map(
-          (it: { product_name: string | null; quantity: number | null; unit_price_cents: number | null }) =>
-            `• ${it.quantity ?? 1} × ${it.product_name ?? "Item"} — £${(((it.unit_price_cents ?? 0) * (it.quantity ?? 1)) / 100).toFixed(2)}`,
+        const itemLines = buildOrderItemLines(
+          items as { product_name: string | null; quantity: number | null; unit_price_cents: number | null }[] | null,
+          (order as { discount_cents?: number | null }).discount_cents ?? null,
         );
         const customerLines = [
           profile?.display_name ? `Name: ${profile.display_name}` : null,
