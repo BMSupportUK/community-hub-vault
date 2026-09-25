@@ -210,7 +210,10 @@ function splitChannelLine(line: string): string[] {
   let numberedPrefix: string | null = null;
 
   const expanded = parts.map((part) => {
-    const clean = part.trim();
+    // Discord/forwarded provider dumps can clip the final character of the
+    // last channel label. A trailing DAZN "H" is the clipped "HD" suffix,
+    // not a separate channel format.
+    const clean = part.trim().replace(/^(dazn\s*\d{1,3})\s+h$/i, "$1 HD");
     const prefixedNumber = clean.match(/^(.*?\D\s*)(\d{1,3})$/);
     if (prefixedNumber?.[1]) {
       numberedPrefix = prefixedNumber[1].trimEnd();
@@ -638,6 +641,19 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
     })
     // "VIP | Rugby Pass" headers are post headings, not events.
     .filter((line) => !/^vip\s*\|/i.test(line));
+  // Provider exports occasionally inject a lone marker between a programme
+  // title and its dated slot (for example "Vienna - GCL Round 1", "D", then
+  // the DAZN slot). Drop only that marker shape so the title remains paired
+  // with the slot beneath it.
+  for (let i = lines.length - 2; i >= 1; i--) {
+    if (
+      /^[A-Za-z]$/.test(lines[i]) &&
+      !DATE_TIME_SPAN_RE.test(lines[i - 1].replace(/^[-–—•]\s*/, "")) &&
+      DATE_TIME_SPAN_RE.test(lines[i + 1].replace(/^[-–—•]\s*/, ""))
+    ) {
+      lines.splice(i, 1);
+    }
+  }
   // Provider dumps: "Title" then "- DD-MM-YYYY 11:00 AM until ... - CHANNEL".
   // Reorder each pair into slot → title → channel so every programme keeps
   // its own channel.
@@ -898,7 +914,12 @@ function formatSportsListingEvents(events: SportsListingEvent[], input: ListingI
 
     out.push(eventTimeForOutput(event, input));
     out.push(event.title);
-    const channels = normalizeChannels([...(event.channels ?? []), ...((input.channels ?? []).filter(Boolean))]);
+    // Parsed rows own their channels. The block-level list is only a fallback
+    // for legacy single-event queue items; applying it globally corrupts a
+    // merged multi-channel post even though its preview is correct.
+    const channels = normalizeChannels(
+      event.channels?.length ? event.channels : (input.channels ?? []).filter(Boolean),
+    );
     if (channels.length) out.push(channels.join(" | "));
   }
 

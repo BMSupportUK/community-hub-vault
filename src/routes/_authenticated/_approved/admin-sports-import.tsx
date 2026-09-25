@@ -11,7 +11,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { ArrowLeft, Loader2, Sparkles, Send, Trash2, Inbox, Clock, Check, Scissors, Settings2, X } from "lucide-react";
 import { firstClockIn, firstDateIn, parseClockTime, toSingleZoneTime, type TimeZoneChoice } from "@/lib/import-time";
-import { parseSportsListingBlock, splitListingSections } from "@/lib/sports-listing-format";
+import { formatSportsListingBlock, parseSportsListingBlock, splitListingSections } from "@/lib/sports-listing-format";
 import {
   queuePastedPost,
   setupDiscordBot,
@@ -1160,7 +1160,12 @@ function QueueSetup({
 }
 
 function ListingPreview({ raw, sourceZone }: { raw: string; sourceZone: TimeZoneChoice | null }) {
-  const events = useMemo(() => parseSportsListingBlock(raw), [raw]);
+  // Preview the same formatted body the save action writes, including date
+  // filling, timezone conversion and channel fallback rules.
+  const events = useMemo(() => {
+    const formatted = formatSportsListingBlock({ raw, sourceZone });
+    return parseSportsListingBlock(formatted ?? raw);
+  }, [raw, sourceZone]);
   if (!events.length) {
     return (
       <div className="rounded-lg border border-border bg-muted/30 p-3 text-xs text-muted-foreground">
@@ -1179,9 +1184,6 @@ function ListingPreview({ raw, sourceZone }: { raw: string; sourceZone: TimeZone
       </div>
       <div className="max-h-60 space-y-2 overflow-y-auto pr-1">
         {events.map((event, index) => {
-          const converted = sourceZone
-            ? toSingleZoneTime(event.time, event.date, sourceZone)
-            : null;
           return (
             <div key={`${event.time}-${event.title}-${index}`} className="rounded-md border border-border bg-card/70 p-2">
               <div className="flex items-start gap-2">
@@ -1189,7 +1191,7 @@ function ListingPreview({ raw, sourceZone }: { raw: string; sourceZone: TimeZone
                   {String(index + 1).padStart(2, "0")}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold text-foreground">{converted ?? event.time}</p>
+                  <p className="text-xs font-semibold text-foreground">{event.time}</p>
                   <p className="break-words text-sm font-medium leading-snug">{event.title}</p>
                   {event.channels.length > 0 && (
                     <div className="mt-1 flex flex-wrap gap-1">
