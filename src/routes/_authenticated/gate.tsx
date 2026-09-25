@@ -154,7 +154,7 @@ function GatePage() {
     return () => {
       cancelled = true;
     };
-  }, [user, inviteFromUrl, navigate, refreshRoles]);
+  }, [user, inviteFromUrl, intent, navigate, refreshRoles]);
 
   // Once the referral code resolves, fold it into the default activation draft.
   useEffect(() => {
