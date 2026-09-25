@@ -23,6 +23,8 @@ import {
   Mic,
   Reply,
   CornerUpRight,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -144,6 +146,7 @@ function ChannelPage() {
   const [unmuteTarget, setUnmuteTarget] = useState<{ id: string; name: string } | null>(null);
   const [unmuting, setUnmuting] = useState(false);
   const [pinnedOpen, setPinnedOpen] = useState(false);
+  const [headerExpanded, setHeaderExpanded] = useState(false);
   const [ignoredOpen, setIgnoredOpen] = useState(false);
   const [lastSentAt, setLastSentAt] = useState<number | null>(null);
   const [now, setNow] = useState(() => Date.now());
@@ -1190,7 +1193,7 @@ function ChannelPage() {
 
   return (
     <main className="flex h-full max-h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-      <header className="h-14 border-b border-border px-5 flex items-center gap-3 shrink-0 relative z-[60]">
+      <header className={cn("border-b border-border px-5 flex items-center gap-3 shrink-0 relative z-[60] transition-[height] duration-200 ease-out", headerExpanded ? "h-14" : "h-10")}>
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-card/50 border border-primary/30 shadow-[0_0_20px_-4px_color-mix(in_oklab,var(--primary)_35%,transparent),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-xl">
           <Icon className="size-4 text-primary" />
           <h1 className="font-display font-semibold text-foreground">{channel.name}</h1>
@@ -1200,7 +1203,7 @@ function ChannelPage() {
             </span>
           )}
         </div>
-        <div className="ml-auto flex items-center gap-2 px-3 py-2 rounded-2xl bg-card/50 border border-primary/30 shadow-[0_0_24px_-4px_color-mix(in_oklab,var(--primary)_40%,transparent),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-xl">
+        <div className={cn("ml-auto items-center gap-2 px-3 py-2 rounded-2xl bg-card/50 border border-primary/30 shadow-[0_0_24px_-4px_color-mix(in_oklab,var(--primary)_40%,transparent),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-xl", headerExpanded ? "flex" : "hidden")}>
           {!hideMembersPanel && <OnlineMembersDialog />}
           <WorkingStatusBox variant="header" />
           {canManageSlow && (
@@ -1467,6 +1470,20 @@ function ChannelPage() {
             )}
           </div>
         </div>
+        <button
+          onClick={() => setHeaderExpanded((v) => !v)}
+          className={cn(
+            "flex items-center justify-center size-8 rounded-full bg-surface-2/60 hover:bg-surface-2 border border-white/10 hover:border-white/20 transition-all cursor-pointer shadow-lg shadow-black/20",
+            !headerExpanded && "ml-auto",
+          )}
+          title={headerExpanded ? "Hide channel options" : "Show channel options"}
+        >
+          {headerExpanded ? (
+            <ChevronUp className="size-4 text-foreground/80" />
+          ) : (
+            <ChevronDown className="size-4 text-foreground/80" />
+          )}
+        </button>
       </header>
       <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
