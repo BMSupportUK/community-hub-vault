@@ -221,8 +221,8 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
 
   return (
     <>
-       <article className="min-w-0 rounded-lg border border-border/70 bg-surface overflow-hidden flex flex-col group shadow-soft hover:shadow-[0_0_30px_-10px_rgba(217,70,239,0.6)] hover:border-violet-500/40 transition-all [@media(min-width:768px)_and_(max-height:800px)]:grid [@media(min-width:768px)_and_(max-height:800px)]:grid-cols-[minmax(220px,42%)_minmax(0,1fr)]">
-        <div className="aspect-[16/10] bg-black/70 relative overflow-hidden [@media(min-width:768px)_and_(max-height:800px)]:h-full [@media(min-width:768px)_and_(max-height:800px)]:min-h-0 [@media(min-width:768px)_and_(max-height:800px)]:aspect-auto">
+       <article className="group flex min-w-0 flex-col overflow-hidden rounded-lg border border-border/70 bg-surface shadow-soft transition-all hover:border-violet-500/40 hover:shadow-[0_0_30px_-10px_rgba(217,70,239,0.6)] md:grid md:grid-cols-[minmax(220px,42%)_minmax(0,1fr)] xl:flex">
+        <div className="relative aspect-[16/10] overflow-hidden bg-black/70 md:h-full md:min-h-0 md:aspect-auto xl:h-auto xl:aspect-[16/10]">
           {build.videoPath && videoUrl ? (
             <video
               src={videoUrl}
@@ -239,7 +239,7 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
           )}
         </div>
 
-        <div className="p-4 flex-1 flex flex-col gap-2 [@media(min-width:768px)_and_(max-height:800px)]:min-h-0 [@media(min-width:768px)_and_(max-height:800px)]:overflow-y-auto">
+        <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-4 xl:overflow-visible">
           <div className="flex flex-wrap items-center gap-2">
             <h4 className="font-display font-semibold text-lg leading-snug text-foreground flex items-center gap-1.5">
               <Smartphone className="size-4 text-violet-300 shrink-0" />
@@ -518,7 +518,7 @@ export function AppTransferPanel({ onUploadClick }: { onUploadClick?: () => void
                 <p className="mt-2 text-sm text-muted-foreground">No apps in this section yet.</p>
               </div>
             ) : (
-               <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 lg:gap-5 xl:grid-cols-3 [@media(min-width:768px)_and_(max-height:800px)]:h-full [@media(min-width:768px)_and_(max-height:800px)]:grid-cols-1 [@media(min-width:768px)_and_(max-height:800px)]:auto-rows-fr">
+               <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 md:h-full md:auto-rows-fr md:grid-cols-1 lg:gap-5 xl:h-auto xl:grid-cols-3">
                 {(grouped[c.key] ?? []).map((b) => (
                   <AppCard key={b.id} build={b} transfer={byBuild.get(b.id)} now={now} />
                 ))}
