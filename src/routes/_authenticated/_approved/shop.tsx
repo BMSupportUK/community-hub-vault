@@ -5420,96 +5420,95 @@ function AdminProductsInner() {
       </header>
       <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide p-6">
         <CurrencySettingsCard />
-        <div className="bg-surface rounded-xl border border-border overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-surface-2 text-muted-foreground text-xs">
-              <tr>
-                <th className="w-8 p-3"></th>
-                <th className="text-left p-3">Name</th>
-                <th className="text-left p-3">Category</th>
-                <th className="text-right p-3">Price</th>
-                <th className="text-right p-3">Stock</th>
-                <th className="text-center p-3">Active</th>
-                <th className="text-center p-3">Recommended</th>
-                <th className="p-3"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {products.length === 0 && (
-                <tr>
-                  <td colSpan={8} className="p-8 text-center text-muted-foreground">
-                    No products. Click "New Product" to add one.
-                  </td>
-                </tr>
-              )}
-              {products.map((p) => (
-                <tr
-                  key={p.id}
-                  draggable
-                  onDragStart={() => setDragId(p.id)}
-                  onDragOver={(e) => {
-                    e.preventDefault();
-                    setOverId(p.id);
-                  }}
-                  onDragLeave={() => setOverId((o) => (o === p.id ? null : o))}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    handleDrop(p.id);
-                  }}
-                  onDragEnd={() => {
-                    setDragId(null);
-                    setOverId(null);
-                  }}
+        {codes.length === 0 ? (
+          <div className="p-8 text-center text-muted-foreground bg-surface rounded-xl border border-border">
+            No discount codes yet.
+          </div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+            {codes.map((c) => {
+              const u = c.user_id ? users.find((x) => x.id === c.user_id) : null;
+              const pids = codeLinks.get(c.id) ?? [];
+              const pnames = pids.map((id) => products.find((p) => p.id === id)?.name ?? "Unknown");
+              return (
+                <div
+                  key={c.id}
                   className={cn(
-                    "border-t border-border transition",
-                    dragId === p.id && "opacity-50",
-                    overId === p.id && dragId && dragId !== p.id && "bg-primary/10",
+                    "bg-surface rounded-xl border border-border p-4 flex flex-col gap-3",
+                    !c.is_active && "opacity-60",
                   )}
                 >
-                  <td className="p-3 text-muted-foreground cursor-grab active:cursor-grabbing">
-                    <GripVertical className="size-4" />
-                  </td>
-                  <td className="p-3 font-medium">{p.name}</td>
-                  <td className="p-3 text-muted-foreground">{p.category ?? "—"}</td>
-                  <td className="p-3 text-right">{fmt(p.price_cents)}</td>
-                  <td className="p-3 text-right">{p.stock ?? "—"}</td>
-                  <td className="p-3 text-center">{p.is_active ? "✓" : "—"}</td>
-                  <td className="p-3 text-center">
-                    <button
-                      onClick={() => toggleRecommended(p)}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="font-mono font-semibold text-base break-all">{c.code}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {u ? `For @${u.username ?? u.display_name ?? "user"}` : "Everyone"}
+                      </div>
+                    </div>
+                    <span
                       className={cn(
-                        "inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition",
-                        p.is_recommended
-                          ? "bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow shadow-orange-500/30"
-                          : "bg-surface-2 text-muted-foreground hover:text-foreground",
+                        "shrink-0 text-[11px] px-2 py-0.5 rounded-full border",
+                        c.is_active
+                          ? "border-primary/40 text-primary"
+                          : "border-destructive/40 text-destructive",
                       )}
-                      title={
-                        p.is_recommended ? "Recommended — click to remove" : "Mark as recommended"
-                      }
                     >
-                      <Sparkles className="size-3" />
-                      {p.is_recommended ? "Recommended" : "Mark"}
-                    </button>
-                  </td>
-                  <td className="p-3 text-right">
+                      {c.is_active ? "Active" : "Revoked"}
+                    </span>
+                  </div>
+                  <div className="text-2xl font-display font-bold">
+                    {c.percent ? `${c.percent}% off` : c.amount_cents ? `${fmt(c.amount_cents)} off` : "—"}
+                  </div>
+                  <div className="text-xs space-y-1">
+                    <div className="text-muted-foreground">Packages</div>
+                    {pnames.length === 0 ? (
+                      <div>All packages</div>
+                    ) : (
+                      <div className="flex flex-wrap gap-1">
+                        {pnames.map((n, i) => (
+                          <span key={i} className="px-2 py-0.5 rounded-md bg-surface-2 border border-border">
+                            {n}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  {c.description && <p className="text-xs text-muted-foreground">{c.description}</p>}
+                  <div className="text-[11px] text-muted-foreground">
+                    Created {new Date(c.created_at).toLocaleDateString("en-GB")}
+                  </div>
+                  <div className="mt-auto flex items-center gap-2 pt-1">
                     <button
-                      onClick={() => setEditing(p)}
-                      className="p-1.5 rounded hover:bg-surface-2"
+                      onClick={() => revoke(c)}
+                      className={cn(
+                        "flex-1 px-3 py-1.5 rounded-lg text-sm font-medium border",
+                        c.is_active
+                          ? "border-destructive/40 text-destructive hover:bg-destructive/10"
+                          : "border-border hover:bg-surface-2",
+                      )}
+                    >
+                      {c.is_active ? "Revoke" : "Reactivate"}
+                    </button>
+                    <button
+                      onClick={() => setEditing(c)}
+                      className="p-2 rounded-lg hover:bg-surface-2 border border-border"
+                      aria-label="Edit"
                     >
                       <Pencil className="size-3.5" />
                     </button>
                     <button
-                      onClick={() => remove(p.id)}
-                      className="p-1.5 rounded hover:bg-surface-2 text-destructive"
+                      onClick={() => remove(c.id)}
+                      className="p-2 rounded-lg hover:bg-surface-2 border border-border text-destructive"
+                      aria-label="Delete"
                     >
                       <Trash2 className="size-3.5" />
                     </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
       {editing && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm grid place-items-center z-50 p-4">
@@ -5840,6 +5839,21 @@ function AdminDiscounts() {
   const [productQuery, setProductQuery] = useState("");
   const [percentInput, setPercentInput] = useState("");
   const [amountInput, setAmountInput] = useState("");
+  const [codeLinks, setCodeLinks] = useState<Map<string, string[]>>(new Map());
+
+  const genCode = (userId: string | null | undefined) => {
+    const u = userId ? users.find((x) => x.id === userId) : null;
+    const base = (u?.username ?? u?.display_name ?? "BM")
+      .replace(/[^a-z0-9]/gi, "")
+      .toUpperCase()
+      .slice(0, 8) || "BM";
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    let r = "";
+    const buf = new Uint32Array(6);
+    crypto.getRandomValues(buf);
+    buf.forEach((n) => (r += chars[n % chars.length]));
+    return `${base}-${r}`;
+  };
 
   useEffect(() => {
     if (editing) {
@@ -5870,6 +5884,24 @@ function AdminDiscounts() {
       .select("*")
       .order("created_at", { ascending: false });
     setCodes((data ?? []) as DiscountCode[]);
+    const { data: links } = await supabase
+      .from("discount_code_products")
+      .select("discount_code_id, product_id");
+    const m = new Map<string, string[]>();
+    (links ?? []).forEach((l: { discount_code_id: string; product_id: string }) => {
+      m.set(l.discount_code_id, [...(m.get(l.discount_code_id) ?? []), l.product_id]);
+    });
+    setCodeLinks(m);
+  };
+  const revoke = async (c: DiscountCode) => {
+    const next = !c.is_active;
+    if (!next && !confirm(`Revoke ${c.code}? It will stop applying to this customer's orders.`)) return;
+    const { error } = await supabase.from("discount_codes").update({ is_active: next }).eq("id", c.id);
+    if (error) toast.error(error.message);
+    else {
+      toast.success(next ? "Code reactivated" : "Code revoked");
+      load();
+    }
   };
   useEffect(() => {
     load();
@@ -5905,6 +5937,9 @@ function AdminDiscounts() {
   }, []);
 
   const save = async () => {
+    if (editing && !editing.code?.trim() && editing.user_id) {
+      editing.code = genCode(editing.user_id);
+    }
     if (!editing?.code) {
       toast.error("Code required");
       return;
@@ -6052,13 +6087,22 @@ function AdminDiscounts() {
               </button>
             </div>
             <div className="p-5 space-y-3 max-h-[70vh] overflow-y-auto">
-              <Field label="Code">
-                <input
-                  value={editing.code ?? ""}
-                  onChange={(e) => setEditing({ ...editing, code: e.target.value.toUpperCase() })}
-                  placeholder="SUMMER10"
-                  className="w-full px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border outline-none uppercase"
-                />
+              <Field label="Code (auto-generated for a customer)">
+                <div className="flex gap-2">
+                  <input
+                    value={editing.code ?? ""}
+                    onChange={(e) => setEditing({ ...editing, code: e.target.value.toUpperCase() })}
+                    placeholder="Pick a customer to auto-generate"
+                    className="flex-1 px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border outline-none uppercase font-mono"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setEditing({ ...editing, code: genCode(editing.user_id) })}
+                    className="px-3 py-2 rounded-lg bg-surface-2 border border-border text-xs font-medium"
+                  >
+                    Generate
+                  </button>
+                </div>
               </Field>
               <Field label="Description">
                 <input
@@ -6104,7 +6148,14 @@ function AdminDiscounts() {
               <Field label="Customer (leave blank for everyone)">
                 <select
                   value={editing.user_id ?? ""}
-                  onChange={(e) => setEditing({ ...editing, user_id: e.target.value || null })}
+                  onChange={(e) => {
+                    const uid = e.target.value || null;
+                    setEditing({
+                      ...editing,
+                      user_id: uid,
+                      code: !editing.id && uid ? genCode(uid) : editing.code,
+                    });
+                  }}
                   className="w-full px-3 py-2 rounded-lg bg-surface-2 text-sm border border-border outline-none"
                 >
                   <option value="">Everyone (global)</option>
