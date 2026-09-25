@@ -120,6 +120,13 @@
       "when": 1790239946299,
       "tag": "0016_staff_pins",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1790294886745,
+      "tag": "0017_app_install_status",
+      "breakpoints": true
     }
   ]
 }

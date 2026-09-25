@@ -269,6 +269,36 @@ export type Database = {
         }
         Relationships: []
       }
+      app_installs: {
+        Row: {
+          app_version: string | null
+          device: string
+          first_seen_at: string
+          id: string
+          last_seen_at: string
+          platform: string
+          user_id: string
+        }
+        Insert: {
+          app_version?: string | null
+          device?: string
+          first_seen_at?: string
+          id?: string
+          last_seen_at?: string
+          platform?: string
+          user_id: string
+        }
+        Update: {
+          app_version?: string | null
+          device?: string
+          first_seen_at?: string
+          id?: string
+          last_seen_at?: string
+          platform?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       app_settings: {
         Row: {
           key: string
@@ -296,6 +326,9 @@ export type Database = {
           download_count: number
           expires_at: string
           id: string
+          install_app_version: string | null
+          install_device: string | null
+          installed_at: string | null
           issued_at: string
           last_download_at: string | null
           last_download_bytes: number
@@ -313,6 +346,9 @@ export type Database = {
           download_count?: number
           expires_at: string
           id?: string
+          install_app_version?: string | null
+          install_device?: string | null
+          installed_at?: string | null
           issued_at?: string
           last_download_at?: string | null
           last_download_bytes?: number
@@ -330,6 +366,9 @@ export type Database = {
           download_count?: number
           expires_at?: string
           id?: string
+          install_app_version?: string | null
+          install_device?: string | null
+          installed_at?: string | null
           issued_at?: string
           last_download_at?: string | null
           last_download_bytes?: number
