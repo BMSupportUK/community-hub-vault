@@ -778,7 +778,41 @@ function QueueRow({
             ? "No events read from this post yet"
             : "Pick a guide for each event separately"}
         </span>
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-7 px-2 text-xs"
+          disabled={splitting}
+          onClick={() => setPickingSplit((v) => !v)}
+        >
+          <Scissors className="size-3" />
+          Split in two…
+        </Button>
       </div>
+      {pickingSplit && (
+        <div className="rounded-md border border-border bg-muted/30 p-2" onClick={(e) => e.stopPropagation()}>
+          <p className="mb-1 text-[11px] text-muted-foreground">
+            Click the line where the <strong>second</strong> post should start:
+          </p>
+          <div className="max-h-48 overflow-auto space-y-0.5">
+            {rawLines.map((line, i) =>
+              i === 0 ? null : (
+                <button
+                  key={i}
+                  type="button"
+                  disabled={splitting}
+                  onClick={() => { setPickingSplit(false); onSplitAtLine(i); }}
+                  className="block w-full truncate rounded px-1.5 py-0.5 text-left text-[11px] hover:bg-primary/15 hover:text-primary"
+                  title={line || "(blank line)"}
+                >
+                  <span className="mr-1 opacity-50">{i + 1}.</span>
+                  {line.trim() || "(blank line)"}
+                </button>
+              ),
+            )}
+          </div>
+        </div>
+      )}
       {providerSections.length > 1 && (
         <div className="flex flex-wrap items-center gap-2" onClick={(e) => e.stopPropagation()}>
           <Button
