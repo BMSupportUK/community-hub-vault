@@ -690,6 +690,21 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
       return m ? `${m[1].toUpperCase()} ${m[2].trim()}` : line;
     })
     .filter((line, i, arr) => !(i > 0 && line === arr[i - 1] && /\s\d{1,3}(?:\s*HD)?$/i.test(line)));
+  // NHL Center Ice: "NHL | 01 - 7pm ET | 12am UK" then the fixture on the
+  // next line. Use the stated UK time as-is (never convert ET), channel
+  // becomes "NHL 01". The "US | NHL Center Ice" header is not an event.
+  for (let i = 0; i < lines.length; i++) {
+    const m = lines[i].match(
+      new RegExp(String.raw`^([A-Za-z][A-Za-z+ ]*?)\s*\|\s*(\d{1,3})\s*[-–—]\s*(?:${TIME_SOURCE})\s*ET\s*\|\s*(${TIME_SOURCE})\s*UK\s*$`, "i"),
+    );
+    if (m && i + 1 < lines.length) {
+      lines.splice(i, 2, m[3], lines[i + 1], `${m[1].trim()} ${m[2]}`);
+      i += 2;
+    }
+  }
+  for (let i = lines.length - 1; i >= 0; i--) {
+    if (/^(US|USA)\s*\|\s*NHL Center Ice$/i.test(lines[i])) lines.splice(i, 1);
+  }
   // Provider exports occasionally inject a lone marker between a programme
   // title and its dated slot (for example "Vienna - GCL Round 1", "D", then
   // the DAZN slot). Drop only that marker shape so the title remains paired
