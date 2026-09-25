@@ -1203,7 +1203,7 @@ function ChannelPage() {
             </span>
           )}
         </div>
-        <div className="ml-auto flex items-center gap-2 px-3 py-2 rounded-2xl bg-card/50 border border-primary/30 shadow-[0_0_24px_-4px_color-mix(in_oklab,var(--primary)_40%,transparent),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-xl">
+        <div className={cn("ml-auto items-center gap-2 px-3 py-2 rounded-2xl bg-card/50 border border-primary/30 shadow-[0_0_24px_-4px_color-mix(in_oklab,var(--primary)_40%,transparent),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-xl", headerExpanded ? "flex" : "hidden")}>
           {!hideMembersPanel && <OnlineMembersDialog />}
           <WorkingStatusBox variant="header" />
           {canManageSlow && (
