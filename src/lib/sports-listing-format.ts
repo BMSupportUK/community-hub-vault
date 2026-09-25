@@ -853,7 +853,15 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
   }
   flush();
 
-  return events;
+  // Drop exact duplicate listings (same date, time, name and channels) — a
+  // post that lists an event twice should import it once.
+  const seenEvents = new Set<string>();
+  return events.filter((e) => {
+    const key = `${e.date ?? ""}|${(e.time ?? "").toLowerCase()}|${(e.title ?? "").trim().toLowerCase()}|${(e.channels ?? []).join(",").toLowerCase()}`;
+    if (seenEvents.has(key)) return false;
+    seenEvents.add(key);
+    return true;
+  });
 }
 
 function eventSortValue(event: SportsListingEvent, index: number): number {
