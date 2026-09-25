@@ -237,7 +237,9 @@ function normalizeChannels(channels: string[]): string[] {
 export function normalizeSportsEventTitle(value: string): string {
   return value
     .replace(/\s+/g, " ")
-    .replace(/\s+(?:x|vs\.?|v\.?|@)\s+/gi, " & ")
+    // "Morning News Now ISO 2 V 9.25.26" — a V before a date is a feed tag,
+    // not "versus".
+    .replace(/\s+(?:x|vs\.?|v\.?|@)\s+(?!\d{1,2}[./-]\d{1,2}[./-]\d{2,4}\b)/gi, " & ")
     .replace(/\s*&\s*/g, " & ")
     .trim();
 }
@@ -635,6 +637,20 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
     })
     // "VIP | Rugby Pass" headers are post headings, not events.
     .filter((line) => !/^vip\s*\|/i.test(line));
+  // Provider dumps: "Title" then "- DD-MM-YYYY 11:00 AM until ... - CHANNEL".
+  // Reorder each pair into slot → title → channel so every programme keeps
+  // its own channel.
+  for (let i = 0; i < lines.length - 1; i++) {
+    const span = lines[i + 1].replace(/^[-–—•]\s*/, "").match(DATE_TIME_SPAN_RE);
+    if (!span || DATE_TIME_SPAN_RE.test(lines[i].replace(/^[-–—•]\s*/, ""))) continue;
+    if (listingDateFromLine(lines[i])) continue;
+    const channel = span[span.length - 1]?.trim();
+    const slot = lines[i + 1].replace(/^[-–—•]\s*/, "").replace(/\s*[-–—|·•]\s*[^-–—|·•]+$/, channel ? "" : "$&");
+    const rows = [slot, lines[i]];
+    if (channel) rows.push(channel);
+    lines.splice(i, 2, ...rows);
+    i += rows.length - 1;
+  }
 
   const events: SportsListingEvent[] = [];
   let currentDate: string | null = null;

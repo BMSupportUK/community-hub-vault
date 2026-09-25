@@ -19,3 +19,6 @@ Every new format: add it here, Bun-test raw AND round-trip, then repair the draf
 - Provider `start:` stamps are already UK wall-clock time — never add the BST hour.
 - Setanta colon style: `Setanta: 1: Panathinaikos - Paris start:...` → channel `Setanta 1`, event `Panathinaikos & Paris`.
 - Flosports (Flo College / Flo Racing) `Event @ Sep 24 12:00 PM :Flo College 01` times are US Eastern; convert to UK automatically.
+
+## Peacock "title above slot" dump
+"Title" line, then "- DD-MM-YYYY 11:00 AM until DD-MM-YYYY 9:30 PM - PEACOCK 0 HD". Each pair is reordered to slot → title → channel before parsing. "ISO 2 V 9.25.26" — a V before a date is a feed tag, never "vs"/"&".
