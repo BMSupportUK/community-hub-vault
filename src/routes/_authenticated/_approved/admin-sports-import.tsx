@@ -689,6 +689,7 @@ function QueueRow({
   splitting,
   splittingProvider,
   onSplit,
+  onSplitAtLine,
   onSplitProvider,
   onSelect,
   onZoneApply,
@@ -700,6 +701,7 @@ function QueueRow({
   splitting: boolean;
   splittingProvider: boolean;
   onSplit: () => void;
+  onSplitAtLine: (line: number) => void;
   onSplitProvider: () => void;
   onSelect: () => void;
   onZoneApply: (shown: string, zone: "gmt" | "et") => void;
