@@ -659,6 +659,9 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
     // "Rugby Pass 01 | Ultimate Sevens Rugby - London Grand Final 17:30"
     // (channel | event trailing-time) → time / event / channel rows.
     .flatMap((line) => {
+      // "Coupang 1 | Race // UK Sat 26 Sep 11:15am // ET ..." rows carry
+      // their own zoned slots — never split them as Rugby Pass rows.
+      if (line.includes("//")) return [line];
       const m = line.match(
         new RegExp(String.raw`^([A-Za-z][A-Za-z+&' ]*?\s\d{1,3}(?:\s*HD)?)\s*\|\s*(.+?)\s+(${TIME_SOURCE})\s*$`, "i"),
       );
