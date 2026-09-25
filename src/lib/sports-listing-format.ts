@@ -58,7 +58,10 @@ const DATE_ONLY_RE = new RegExp(
 function cleanLine(line: string): string {
   return line
     .replace(/\r/g, "")
+    // Keep "#11 TCU" rankings; strip only markdown markers.
+    .replace(/#(?=\d)/g, "\u0000")
     .replace(/[*_`#>]+/g, "")
+    .replace(/\u0000/g, "#")
     .replace(/^[\s•·●○▪▫■□★☆✅☑️-]+/u, "")
     .replace(/\s+/g, " ")
     // Some posts end the date line with a full stop ("Sunday 20-09-26.").
@@ -282,7 +285,9 @@ function splitTitleAndInlineChannels(rest: string): { title: string; channels: s
   if (dash && dash[1] && dash[2] && isLikelyChannelLabel(dash[1])) {
     return { title: dash[2].trim(), channels: splitChannelLine(dash[1]) };
   }
-  if (dash && dash[1] && dash[2] && isLikelyChannelLabel(dash[2])) {
+  // "Fri, 9/25 - ESPN FC" is a show name (date + programme), never a channel.
+  const dateOnlyLeft = dash?.[1] && /^(?:mon|tue|wed|thu|fri|sat|sun)[a-z]*,?\s+\d{1,2}\/\d{1,2}(?:\/\d{2,4})?$/i.test(dash[1].trim());
+  if (dash && dash[1] && dash[2] && !dateOnlyLeft && isLikelyChannelLabel(dash[2])) {
     return { title: dash[1].trim(), channels: splitChannelLine(dash[2]) };
   }
 
@@ -677,6 +682,9 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
   // Provider dumps name the programme on the line above its time slot.
   let previousPlainLine: string | null = null;
   let titleCameFromAbove = false;
+  // Reordered provider slots already carry their channel; the programme name
+  // line is kept whole ("Fri, 9/25 - ESPN FC" is a show name, not a channel).
+  let slotTitlePending = false;
 
   const flush = () => {
     if (!current) return;
@@ -684,6 +692,7 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
     if (done) events.push(done);
     current = null;
     titleCameFromAbove = false;
+    slotTitlePending = false;
   };
 
   let lastChannelWasPlain: string | null = null;
@@ -708,6 +717,7 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
       if (reorderedSlots.has(line)) {
         flush();
         current = detected;
+        slotTitlePending = true;
         previousPlainLine = null;
         lastChannelWasPlain = null;
         continue;
@@ -763,6 +773,11 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
 
     if (!current) {
       previousPlainLine = line;
+      continue;
+    }
+    if (!current.title && slotTitlePending) {
+      slotTitlePending = false;
+      current.title = line;
       continue;
     }
     if (!current.title) {
@@ -927,9 +942,16 @@ function formatSportsListingEvents(events: SportsListingEvent[], input: ListingI
 }
 
 /** Rebuild an existing guide plus a new import into one sorted event list. */
-export function mergeSportsListingBlocks(existing: string, incoming: string, input: Omit<ListingInput, "raw">): string | null {
+export function mergeSportsListingBlocks(existing: string, incoming: string, input: Omit<ListingInput, "raw">, nowMs: number = Date.now()): string | null {
+  const cutoff = GUIDE_STALE_HOURS * 60 * 60 * 1000;
+  // Entries already past the 10-hour window are dropped on re-import so
+  // yesterday's listings never sit above the new day's events.
+  const fresh = (event: SportsListingEvent) => {
+    const instant = ukListingInstant(event.date, event.time);
+    return instant === null || nowMs - instant <= cutoff;
+  };
   const events = sortSportsListingEvents([
-    ...parseSportsListingBlock(existing),
+    ...parseSportsListingBlock(existing).filter(fresh),
     ...parseSportsListingBlock(incoming),
   ]);
   // Each parsed event already owns its channels. Re-applying the incoming
