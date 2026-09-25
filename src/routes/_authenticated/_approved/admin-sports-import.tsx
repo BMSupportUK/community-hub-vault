@@ -855,10 +855,30 @@ function QueueSetup({
     return () => { alive = false; };
   }, [draft.destinationCategory, selectedSubcategory, readyForGuides]);
 
-  const itemRaw = String(item?.parsed_event?.raw ?? item?.raw_text ?? "");
+  // Inline card edits replace the post text (saved to the queue item), so the
+  // double-check and the final import both use the corrected version.
+  const [editedRaw, setEditedRaw] = useState<string | null>(null);
+  useEffect(() => setEditedRaw(null), [item?.id]);
+  const itemRaw = editedRaw ?? String(item?.parsed_event?.raw ?? item?.raw_text ?? "");
   const check = useMemo(() => checkSportsImport(itemRaw, draft.sourceZone), [itemRaw, draft.sourceZone]);
   const [override, setOverride] = useState(false);
   useEffect(() => setOverride(false), [item?.id, draft.sourceZone]);
+
+  const saveListingFn = useServerFn(saveQueueListing);
+  const applyCardEdit = async (index: number, updated: { time: string; title: string; channels: string[] }) => {
+    if (!item) return;
+    const events = check.events.map((event, i) =>
+      i === index ? { ...event, time: updated.time, title: updated.title, channels: updated.channels } : event,
+    );
+    const raw = formatSportsListingEvents(events, { raw: itemRaw, sourceZone: draft.sourceZone ?? "gmt" });
+    try {
+      await saveListingFn({ data: { id: item.id, raw } });
+      setEditedRaw(raw);
+      toast.success("Card updated — the double-check has run again");
+    } catch (e: any) {
+      toast.error(e.message ?? "Couldn't save that edit");
+    }
+  };
 
   const run = async (action: "import" | "discard") => {
     if (!item) return;
@@ -927,7 +947,7 @@ function QueueSetup({
         check={check}
         onSaved={() => { setDraft({ ...draft, sourceZone: "gmt" }); onResolved(); }}
       />
-      <ListingPreview check={check} />
+      <ListingPreview check={check} onEditEvent={applyCardEdit} />
 
       {(step > 1 || step > 2 || step > 3) && (
         <div className="flex flex-wrap items-center gap-1.5">
@@ -1317,13 +1337,29 @@ function WebFixPanel({ itemId, guide, check, onSaved }: { itemId: string; guide:
   );
 }
 
-function ListingPreview({ check }: { check: ImportCheckResult }) {
+function ListingPreview({
+  check,
+  onEditEvent,
+}: {
+  check: ImportCheckResult;
+  onEditEvent?: (index: number, updated: { time: string; title: string; channels: string[] }) => void | Promise<void>;
+}) {
   // Shows exactly what the save action writes (same formatter, re-read).
   const events = check.events;
   const flagged = new Map<number, "error" | "warning">();
+  const flagReasons = new Map<number, string[]>();
   for (const issue of check.issues) for (const n of issue.events ?? []) {
     if (flagged.get(n) !== "error") flagged.set(n, issue.level);
+    flagReasons.set(n, [...(flagReasons.get(n) ?? []), issue.message]);
   }
+  const [editing, setEditing] = useState<number | null>(null);
+  const [editTime, setEditTime] = useState("");
+  const [editTitle, setEditTitle] = useState("");
+  const [editChannels, setEditChannels] = useState("");
+  const [saving, setSaving] = useState(false);
+  // Reopen nothing after a save — the check re-runs and the card re-renders.
+  useEffect(() => setEditing(null), [check.formatted]);
+
   if (!events.length) {
     return (
       <div className="rounded-lg border border-border bg-muted/30 p-3 text-xs text-muted-foreground">
@@ -1332,35 +1368,102 @@ function ListingPreview({ check }: { check: ImportCheckResult }) {
     );
   }
 
+  const startEdit = (index: number) => {
+    const event = events[index];
+    setEditing(index);
+    setEditTime(event.time ?? "");
+    setEditTitle(event.title ?? "");
+    setEditChannels((event.channels ?? []).join(" | "));
+  };
+
+  const saveEdit = async (index: number) => {
+    if (!onEditEvent) return;
+    setSaving(true);
+    try {
+      await onEditEvent(index, {
+        time: editTime.trim(),
+        title: editTitle.trim(),
+        channels: editChannels.split("|").map((c) => c.trim()).filter(Boolean),
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
     <div className="space-y-2 rounded-lg border border-border bg-muted/20 p-3">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-[11px] font-medium text-muted-foreground">Recognised event cards</span>
+        <span className="text-[11px] font-medium text-muted-foreground">Recognised event cards — flagged ones can be edited in place</span>
         <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
           {events.length}
         </span>
       </div>
       <div className="max-h-60 space-y-2 overflow-y-auto pr-1">
         {events.map((event, index) => {
+          const flag = flagged.get(index + 1);
+          const isEditing = editing === index;
           return (
-            <div key={`${event.time}-${event.title}-${index}`} className={`rounded-md border bg-card/70 p-2 ${flagged.get(index + 1) === "error" ? "border-destructive" : flagged.get(index + 1) === "warning" ? "border-primary/50" : "border-border"}`}>
+            <div key={`${event.time}-${event.title}-${index}`} className={`rounded-md border bg-card/70 p-2 ${flag === "error" ? "border-destructive" : flag === "warning" ? "border-primary/50" : "border-border"}`}>
               <div className="flex items-start gap-2">
                 <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-bold text-primary">
                   {String(index + 1).padStart(2, "0")}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs font-semibold text-foreground">{event.time}</p>
-                  <p className="break-words text-sm font-medium leading-snug">{event.title}</p>
-                  {event.channels.length > 0 && (
-                    <div className="mt-1 flex flex-wrap gap-1">
-                      {event.channels.map((channel) => (
-                        <span key={channel} className="rounded-full border border-border bg-background px-1.5 py-0.5 text-[10px] text-muted-foreground">
-                          {channel}
-                        </span>
-                      ))}
+                  {isEditing ? (
+                    <div className="space-y-1.5">
+                      <Input
+                        value={editTime}
+                        onChange={(e) => setEditTime(e.target.value)}
+                        placeholder="Start time, e.g. 19:45"
+                        className="h-7 text-xs"
+                      />
+                      <Input
+                        value={editTitle}
+                        onChange={(e) => setEditTitle(e.target.value)}
+                        placeholder="Event name"
+                        className="h-7 text-xs"
+                      />
+                      <Input
+                        value={editChannels}
+                        onChange={(e) => setEditChannels(e.target.value)}
+                        placeholder="Channels, split with | e.g. Sky Sports Main Event | Sky Sports+"
+                        className="h-7 text-xs"
+                      />
+                      <div className="flex gap-1.5">
+                        <Button size="sm" className="h-6 px-2 text-[11px]" disabled={saving} onClick={() => saveEdit(index)}>
+                          {saving ? <Loader2 className="size-3 animate-spin" /> : <Check className="size-3" />} Save card
+                        </Button>
+                        <Button size="sm" variant="ghost" className="h-6 px-2 text-[11px]" onClick={() => setEditing(null)}>
+                          Cancel
+                        </Button>
+                      </div>
                     </div>
+                  ) : (
+                    <>
+                      <p className="text-xs font-semibold text-foreground">{event.time}</p>
+                      <p className="break-words text-sm font-medium leading-snug">{event.title}</p>
+                      {event.channels.length > 0 && (
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {event.channels.map((channel) => (
+                            <span key={channel} className="rounded-full border border-border bg-background px-1.5 py-0.5 text-[10px] text-muted-foreground">
+                              {channel}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                      {flag && (
+                        <p className={`mt-1 text-[10px] ${flag === "error" ? "text-destructive" : "text-primary"}`}>
+                          {flagReasons.get(index + 1)?.join(" · ")}
+                        </p>
+                      )}
+                    </>
                   )}
                 </div>
+                {onEditEvent && !isEditing && (
+                  <Button size="sm" variant="ghost" className="h-6 px-2 text-[11px]" onClick={() => startEdit(index)}>
+                    Edit
+                  </Button>
+                )}
               </div>
             </div>
           );
