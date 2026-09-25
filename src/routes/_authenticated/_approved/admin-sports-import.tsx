@@ -11,7 +11,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { ArrowLeft, Loader2, Sparkles, Send, Trash2, Inbox, Clock, Check, Scissors, Settings2, X } from "lucide-react";
 import { firstClockIn, firstDateIn, parseClockTime, toSingleZoneTime, type TimeZoneChoice } from "@/lib/import-time";
-import { formatSportsListingBlock, parseSportsListingBlock, splitListingSections } from "@/lib/sports-listing-format";
+import { formatSportsListingBlock, formatSportsListingEvents, parseSportsListingBlock, splitListingSections } from "@/lib/sports-listing-format";
+import { suggestListingFixes, saveQueueListing, type ListingFixSuggestion } from "@/lib/listing-web-fix.functions";
 import { checkSportsImport, type ImportCheckResult } from "@/lib/sports-import-check";
 import {
   queuePastedPost,
@@ -919,6 +920,13 @@ function QueueSetup({
       </div>
 
       <ImportCheckPanel check={check} override={override} onOverride={setOverride} />
+      <WebFixPanel
+        key={`${item.id}-${draft.sourceZone}`}
+        itemId={item.id}
+        guide={draft.title}
+        check={check}
+        onSaved={() => { setDraft({ ...draft, sourceZone: "gmt" }); onResolved(); }}
+      />
       <ListingPreview check={check} />
 
       {(step > 1 || step > 2 || step > 3) && (
@@ -1197,6 +1205,113 @@ function ImportCheckPanel({ check, override, onOverride }: { check: ImportCheckR
           <input type="checkbox" checked={override} onChange={(e) => onOverride(e.target.checked)} />
           I've checked the cards below — import anyway
         </label>
+      )}
+    </div>
+  );
+}
+
+function WebFixPanel({ itemId, guide, check, onSaved }: { itemId: string; guide: string; check: ImportCheckResult; onSaved: () => void }) {
+  const suggestFn = useServerFn(suggestListingFixes);
+  const saveFn = useServerFn(saveQueueListing);
+  const [busy, setBusy] = useState<"look" | "save" | null>(null);
+  const [fixes, setFixes] = useState<ListingFixSuggestion[] | null>(null);
+  const [accepted, setAccepted] = useState<Set<number>>(new Set());
+
+  const flagged = useMemo(() => {
+    const map = new Map<number, Set<"time" | "title" | "channel">>();
+    for (const issue of check.issues) {
+      if (!issue.fixable) continue;
+      for (const n of issue.events ?? []) {
+        if (!map.has(n)) map.set(n, new Set());
+        map.get(n)!.add(issue.fixable);
+      }
+    }
+    return [...map.entries()].slice(0, 15).map(([n, problems]) => {
+      const e = check.events[n - 1];
+      return { n, date: e?.date ?? null, time: e?.time ?? "", title: e?.title ?? "", channels: e?.channels ?? [], problems: [...problems] };
+    });
+  }, [check]);
+
+  // Look up flagged rows automatically once per post.
+  useEffect(() => {
+    if (!flagged.length) return;
+    let alive = true;
+    setBusy("look");
+    suggestFn({ data: { guide: guide || undefined, events: flagged } })
+      .then((r: any) => { if (alive) { setFixes(r.fixes ?? []); setAccepted(new Set()); } })
+      .catch((e: any) => { if (alive) { setFixes([]); toast.error(e.message ?? "Web lookup failed"); } })
+      .finally(() => { if (alive) setBusy(null); });
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [itemId, flagged.length]);
+
+  if (!flagged.length) return null;
+
+  const apply = async () => {
+    if (!fixes || !accepted.size) return;
+    const events = check.events.map((e, i) => {
+      const f = fixes.find((x) => x.n === i + 1);
+      if (!f || !accepted.has(f.n)) return e;
+      return { ...e, time: f.time ?? e.time, title: f.title ?? e.title, channels: f.channels?.length ? f.channels : e.channels };
+    });
+    setBusy("save");
+    try {
+      await saveFn({ data: { id: itemId, raw: formatSportsListingEvents(events, { channels: [] }) } });
+      toast.success(`${accepted.size} fix${accepted.size === 1 ? "" : "es"} applied — double-check re-run`);
+      onSaved();
+    } catch (e: any) {
+      toast.error(e.message ?? "Couldn't save the fixes");
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  return (
+    <div className="space-y-2 rounded-lg border border-border bg-muted/30 p-2.5 text-xs">
+      <p className="flex items-center gap-1.5 font-semibold text-foreground">
+        <Sparkles className="size-3.5 text-primary" /> Web check on {flagged.length} flagged card{flagged.length === 1 ? "" : "s"}
+      </p>
+      {busy === "look" && (
+        <p className="flex items-center gap-1.5 text-muted-foreground"><Loader2 className="size-3.5 animate-spin" /> Searching the internet for the right details…</p>
+      )}
+      {fixes && fixes.length === 0 && busy !== "look" && (
+        <p className="text-muted-foreground">Nothing online confirmed a fix — check these cards by hand.</p>
+      )}
+      {fixes && fixes.length > 0 && (
+        <>
+          <ul className="space-y-1.5">
+            {fixes.map((f) => {
+              const e = check.events[f.n - 1];
+              return (
+                <li key={f.n}>
+                  <label className="flex items-start gap-2 rounded-md border border-border bg-card/70 p-2">
+                    <input
+                      type="checkbox"
+                      className="mt-0.5"
+                      checked={accepted.has(f.n)}
+                      onChange={(ev) => {
+                        const next = new Set(accepted);
+                        if (ev.target.checked) next.add(f.n); else next.delete(f.n);
+                        setAccepted(next);
+                      }}
+                    />
+                    <span className="min-w-0 flex-1 space-y-0.5">
+                      <span className="block font-semibold">Card {String(f.n).padStart(2, "0")}</span>
+                      {f.time && <span className="block">Time: <s className="text-muted-foreground">{e?.time || "none"}</s> → <b>{f.time}</b></span>}
+                      {f.title && <span className="block break-words">Name: <s className="text-muted-foreground">{e?.title || "none"}</s> → <b>{f.title}</b></span>}
+                      {f.channels?.length ? <span className="block">Channel: <s className="text-muted-foreground">{e?.channels.join(", ") || "none"}</s> → <b>{f.channels.join(", ")}</b></span> : null}
+                      <span className="block text-muted-foreground">{f.reason}{f.source ? ` · ${f.source}` : ""}</span>
+                    </span>
+                  </label>
+                </li>
+              );
+            })}
+          </ul>
+          <Button size="sm" disabled={!accepted.size || busy !== null} onClick={apply}>
+            {busy === "save" ? <Loader2 className="size-3.5 animate-spin" /> : <Check className="size-3.5" />}
+            Apply {accepted.size || ""} ticked fix{accepted.size === 1 ? "" : "es"}
+          </Button>
+        </>
       )}
     </div>
   );
