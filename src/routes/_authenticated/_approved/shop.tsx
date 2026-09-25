@@ -244,6 +244,7 @@ interface DiscountCode {
   amount_cents: number | null;
   user_id: string | null;
   is_active: boolean;
+  created_at?: string;
 }
 interface DiscountCodeWithProducts extends DiscountCode {
   product_ids?: string[];
@@ -5420,95 +5421,96 @@ function AdminProductsInner() {
       </header>
       <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide p-6">
         <CurrencySettingsCard />
-        {codes.length === 0 ? (
-          <div className="p-8 text-center text-muted-foreground bg-surface rounded-xl border border-border">
-            No discount codes yet.
-          </div>
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-            {codes.map((c) => {
-              const u = c.user_id ? users.find((x) => x.id === c.user_id) : null;
-              const pids = codeLinks.get(c.id) ?? [];
-              const pnames = pids.map((id) => products.find((p) => p.id === id)?.name ?? "Unknown");
-              return (
-                <div
-                  key={c.id}
+        <div className="bg-surface rounded-xl border border-border overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-surface-2 text-muted-foreground text-xs">
+              <tr>
+                <th className="w-8 p-3"></th>
+                <th className="text-left p-3">Name</th>
+                <th className="text-left p-3">Category</th>
+                <th className="text-right p-3">Price</th>
+                <th className="text-right p-3">Stock</th>
+                <th className="text-center p-3">Active</th>
+                <th className="text-center p-3">Recommended</th>
+                <th className="p-3"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {products.length === 0 && (
+                <tr>
+                  <td colSpan={8} className="p-8 text-center text-muted-foreground">
+                    No products. Click "New Product" to add one.
+                  </td>
+                </tr>
+              )}
+              {products.map((p) => (
+                <tr
+                  key={p.id}
+                  draggable
+                  onDragStart={() => setDragId(p.id)}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setOverId(p.id);
+                  }}
+                  onDragLeave={() => setOverId((o) => (o === p.id ? null : o))}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    handleDrop(p.id);
+                  }}
+                  onDragEnd={() => {
+                    setDragId(null);
+                    setOverId(null);
+                  }}
                   className={cn(
-                    "bg-surface rounded-xl border border-border p-4 flex flex-col gap-3",
-                    !c.is_active && "opacity-60",
+                    "border-t border-border transition",
+                    dragId === p.id && "opacity-50",
+                    overId === p.id && dragId && dragId !== p.id && "bg-primary/10",
                   )}
                 >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <div className="font-mono font-semibold text-base break-all">{c.code}</div>
-                      <div className="text-xs text-muted-foreground">
-                        {u ? `For @${u.username ?? u.display_name ?? "user"}` : "Everyone"}
-                      </div>
-                    </div>
-                    <span
-                      className={cn(
-                        "shrink-0 text-[11px] px-2 py-0.5 rounded-full border",
-                        c.is_active
-                          ? "border-primary/40 text-primary"
-                          : "border-destructive/40 text-destructive",
-                      )}
-                    >
-                      {c.is_active ? "Active" : "Revoked"}
-                    </span>
-                  </div>
-                  <div className="text-2xl font-display font-bold">
-                    {c.percent ? `${c.percent}% off` : c.amount_cents ? `${fmt(c.amount_cents)} off` : "—"}
-                  </div>
-                  <div className="text-xs space-y-1">
-                    <div className="text-muted-foreground">Packages</div>
-                    {pnames.length === 0 ? (
-                      <div>All packages</div>
-                    ) : (
-                      <div className="flex flex-wrap gap-1">
-                        {pnames.map((n, i) => (
-                          <span key={i} className="px-2 py-0.5 rounded-md bg-surface-2 border border-border">
-                            {n}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  {c.description && <p className="text-xs text-muted-foreground">{c.description}</p>}
-                  <div className="text-[11px] text-muted-foreground">
-                    Created {new Date(c.created_at).toLocaleDateString("en-GB")}
-                  </div>
-                  <div className="mt-auto flex items-center gap-2 pt-1">
+                  <td className="p-3 text-muted-foreground cursor-grab active:cursor-grabbing">
+                    <GripVertical className="size-4" />
+                  </td>
+                  <td className="p-3 font-medium">{p.name}</td>
+                  <td className="p-3 text-muted-foreground">{p.category ?? "—"}</td>
+                  <td className="p-3 text-right">{fmt(p.price_cents)}</td>
+                  <td className="p-3 text-right">{p.stock ?? "—"}</td>
+                  <td className="p-3 text-center">{p.is_active ? "✓" : "—"}</td>
+                  <td className="p-3 text-center">
                     <button
-                      onClick={() => revoke(c)}
+                      onClick={() => toggleRecommended(p)}
                       className={cn(
-                        "flex-1 px-3 py-1.5 rounded-lg text-sm font-medium border",
-                        c.is_active
-                          ? "border-destructive/40 text-destructive hover:bg-destructive/10"
-                          : "border-border hover:bg-surface-2",
+                        "inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition",
+                        p.is_recommended
+                          ? "bg-gradient-to-r from-amber-400 to-orange-500 text-white shadow shadow-orange-500/30"
+                          : "bg-surface-2 text-muted-foreground hover:text-foreground",
                       )}
+                      title={
+                        p.is_recommended ? "Recommended — click to remove" : "Mark as recommended"
+                      }
                     >
-                      {c.is_active ? "Revoke" : "Reactivate"}
+                      <Sparkles className="size-3" />
+                      {p.is_recommended ? "Recommended" : "Mark"}
                     </button>
+                  </td>
+                  <td className="p-3 text-right">
                     <button
-                      onClick={() => setEditing(c)}
-                      className="p-2 rounded-lg hover:bg-surface-2 border border-border"
-                      aria-label="Edit"
+                      onClick={() => setEditing(p)}
+                      className="p-1.5 rounded hover:bg-surface-2"
                     >
                       <Pencil className="size-3.5" />
                     </button>
                     <button
-                      onClick={() => remove(c.id)}
-                      className="p-2 rounded-lg hover:bg-surface-2 border border-border text-destructive"
-                      aria-label="Delete"
+                      onClick={() => remove(p.id)}
+                      className="p-1.5 rounded hover:bg-surface-2 text-destructive"
                     >
                       <Trash2 className="size-3.5" />
                     </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
       {editing && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm grid place-items-center z-50 p-4">
@@ -6021,59 +6023,95 @@ function AdminDiscounts() {
         </button>
       </header>
       <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide p-6">
-        <div className="bg-surface rounded-xl border border-border overflow-hidden">
-          <table className="w-full text-sm">
-            <thead className="bg-surface-2 text-muted-foreground text-xs">
-              <tr>
-                <th className="text-left p-3">Code</th>
-                <th className="text-left p-3">Discount</th>
-                <th className="text-left p-3">Scope</th>
-                <th className="text-left p-3">Description</th>
-                <th className="text-center p-3">Active</th>
-                <th className="p-3"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {codes.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="p-8 text-center text-muted-foreground">
-                    No discount codes yet.
-                  </td>
-                </tr>
-              )}
-              {codes.map((c) => {
-                const u = c.user_id ? users.find((x) => x.id === c.user_id) : null;
-                return (
-                  <tr key={c.id} className="border-t border-border">
-                    <td className="p-3 font-mono font-semibold">{c.code}</td>
-                    <td className="p-3">
-                      {c.percent ? `${c.percent}%` : c.amount_cents ? fmt(c.amount_cents) : "—"}
-                    </td>
-                    <td className="p-3 text-muted-foreground">
-                      {u ? `@${u.username ?? u.display_name ?? "user"}` : "Everyone"}
-                    </td>
-                    <td className="p-3 text-muted-foreground">{c.description ?? "—"}</td>
-                    <td className="p-3 text-center">{c.is_active ? "✓" : "—"}</td>
-                    <td className="p-3 text-right">
-                      <button
-                        onClick={() => setEditing(c)}
-                        className="p-1.5 rounded hover:bg-surface-2"
-                      >
-                        <Pencil className="size-3.5" />
-                      </button>
-                      <button
-                        onClick={() => remove(c.id)}
-                        className="p-1.5 rounded hover:bg-surface-2 text-destructive"
-                      >
-                        <Trash2 className="size-3.5" />
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        {codes.length === 0 ? (
+          <div className="p-8 text-center text-muted-foreground bg-surface rounded-xl border border-border">
+            No discount codes yet.
+          </div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+            {codes.map((c) => {
+              const u = c.user_id ? users.find((x) => x.id === c.user_id) : null;
+              const pids = codeLinks.get(c.id) ?? [];
+              const pnames = pids.map((id) => products.find((p) => p.id === id)?.name ?? "Unknown");
+              return (
+                <div
+                  key={c.id}
+                  className={cn(
+                    "bg-surface rounded-xl border border-border p-4 flex flex-col gap-3",
+                    !c.is_active && "opacity-60",
+                  )}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="font-mono font-semibold text-base break-all">{c.code}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {u ? `For @${u.username ?? u.display_name ?? "user"}` : "Everyone"}
+                      </div>
+                    </div>
+                    <span
+                      className={cn(
+                        "shrink-0 text-[11px] px-2 py-0.5 rounded-full border",
+                        c.is_active
+                          ? "border-primary/40 text-primary"
+                          : "border-destructive/40 text-destructive",
+                      )}
+                    >
+                      {c.is_active ? "Active" : "Revoked"}
+                    </span>
+                  </div>
+                  <div className="text-2xl font-display font-bold">
+                    {c.percent ? `${c.percent}% off` : c.amount_cents ? `${fmt(c.amount_cents)} off` : "—"}
+                  </div>
+                  <div className="text-xs space-y-1">
+                    <div className="text-muted-foreground">Packages</div>
+                    {pnames.length === 0 ? (
+                      <div>All packages</div>
+                    ) : (
+                      <div className="flex flex-wrap gap-1">
+                        {pnames.map((n, i) => (
+                          <span key={i} className="px-2 py-0.5 rounded-md bg-surface-2 border border-border">
+                            {n}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  {c.description && <p className="text-xs text-muted-foreground">{c.description}</p>}
+                  <div className="text-[11px] text-muted-foreground">
+                    Created {new Date(c.created_at).toLocaleDateString("en-GB")}
+                  </div>
+                  <div className="mt-auto flex items-center gap-2 pt-1">
+                    <button
+                      onClick={() => revoke(c)}
+                      className={cn(
+                        "flex-1 px-3 py-1.5 rounded-lg text-sm font-medium border",
+                        c.is_active
+                          ? "border-destructive/40 text-destructive hover:bg-destructive/10"
+                          : "border-border hover:bg-surface-2",
+                      )}
+                    >
+                      {c.is_active ? "Revoke" : "Reactivate"}
+                    </button>
+                    <button
+                      onClick={() => setEditing(c)}
+                      className="p-2 rounded-lg hover:bg-surface-2 border border-border"
+                      aria-label="Edit"
+                    >
+                      <Pencil className="size-3.5" />
+                    </button>
+                    <button
+                      onClick={() => remove(c.id)}
+                      className="p-2 rounded-lg hover:bg-surface-2 border border-border text-destructive"
+                      aria-label="Delete"
+                    >
+                      <Trash2 className="size-3.5" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
       {editing && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm grid place-items-center z-50 p-4">
