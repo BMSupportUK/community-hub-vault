@@ -22,6 +22,7 @@ import {
   resolveQueueItem,
   deleteQueueItems,
   splitQueueItem,
+  splitQueueItemAtLine,
   splitQueueItemByProvider,
   combineQueueItems,
   getMergeChannels,
@@ -164,6 +165,19 @@ function AdminSportsImportPage() {
       })
       .catch((e: any) => toast.error(e.message))
       .finally(() => setSplittingProviderId(null));
+  };
+
+  // Manual split: the admin picks the exact line the second half starts on.
+  const splitItemAtLine = (itemId: string, line: number) => {
+    setSplittingId(itemId);
+    splitAtLineFn({ data: { id: itemId, line } })
+      .then(() => {
+        toast.success("Split into two posts");
+        if (itemId === selectedId) clearSelection();
+        refreshQueue(true);
+      })
+      .catch((e: any) => toast.error(e.message))
+      .finally(() => setSplittingId(null));
   };
 
   // Forwarded posts arrive in the background, so the queue keeps itself
