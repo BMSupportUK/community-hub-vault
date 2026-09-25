@@ -1,6 +1,7 @@
 # Roadmap
 
 ## Current
+- [x] Merged DAZN imports: keep preview and saved guide identical; prevent inherited channels and isolated marker corruption
 - [x] MLB Extra Innings: repair draft from dated source; stop old rows carrying into new schedule
 - [x] Guides: stop adding an extra hour to times
 - [x] Setanta Sports + Flosports College imports

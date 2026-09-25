@@ -873,7 +873,17 @@ export const combineQueueItems = createServerFn({ method: "POST" })
       .from("discord_import_queue")
       .update({
         raw_text: merged,
-        parsed_event: { ...(first.parsed_event ?? {}), raw: merged, title: data.title ?? heading ?? "Merged listings" },
+        // The merged raw post is now the source of truth. Keeping the first
+        // item's date/time/channel fields would apply that one post's values
+        // to every event when the merged listing is saved.
+        parsed_event: {
+          ...(first.parsed_event ?? {}),
+          raw: merged,
+          title: data.title ?? heading ?? "Merged listings",
+          date: null,
+          time: null,
+          channels: [],
+        },
       } as any)
       .eq("id", first.id);
     if (upErr) throw new Error(upErr.message);
