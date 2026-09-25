@@ -247,7 +247,7 @@ function AdminSportsImportPage() {
           // channel label: at the start of a line, after a channel separator,
           // or followed by a number (e.g. "DAZN1" / "ESPN+ 01").
           re: new RegExp(
-            `(?:^[\\s*_>#-]*|(?:\\||·|•)\\s*)${c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?=\\s|\\d|$)|\\b${c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*\\d{1,3}\\b`,
+            `(?:^[\\s*_>#-]*|(?:\\||·|•)\\s*)${c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?=\\s|\\d|[*_#]*$)|\\b${c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*\\d{1,3}\\b`,
             "im",
           ),
         })),
