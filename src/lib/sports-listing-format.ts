@@ -680,6 +680,9 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
   // Provider dumps name the programme on the line above its time slot.
   let previousPlainLine: string | null = null;
   let titleCameFromAbove = false;
+  // Reordered provider slots already carry their channel; the programme name
+  // line is kept whole ("Fri, 9/25 - ESPN FC" is a show name, not a channel).
+  let slotTitlePending = false;
 
   const flush = () => {
     if (!current) return;
@@ -687,12 +690,10 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
     if (done) events.push(done);
     current = null;
     titleCameFromAbove = false;
+    slotTitlePending = false;
   };
 
   let lastChannelWasPlain: string | null = null;
-  // Reordered provider slots already carry their channel; the programme name
-  // line is kept whole ("Fri, 9/25 - ESPN FC" is a show name, not a channel).
-  let slotTitlePending = false;
   for (let li = 0; li < lines.length; li++) {
     const line = lines[li];
     const listingDate = listingDateFromLine(line);
