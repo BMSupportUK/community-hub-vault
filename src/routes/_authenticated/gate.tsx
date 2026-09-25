@@ -144,10 +144,9 @@ function GatePage() {
             navigate({ to: "/home" });
             return;
           }
-          setReferralCode(urlCode);
+          // A used code may already belong to this account (signup redeemed
+          // it before navigation). Check ownership below before showing gate.
           setReferralNote(error.message);
-          setReferralChecking(false);
-          return;
         }
       }
       // No URL code — check whether an invite is already linked to this user.
@@ -166,6 +165,7 @@ function GatePage() {
         }
         setReferralCode(linked.code);
       }
+      if (!cancelled && !linked && urlCode) setReferralCode(urlCode);
       if (!cancelled) setReferralChecking(false);
     })();
     return () => {
