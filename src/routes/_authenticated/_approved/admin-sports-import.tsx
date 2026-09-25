@@ -296,6 +296,30 @@ function AdminSportsImportPage() {
       setCombiningEspn(false);
     }
   };
+  const [pickMode, setPickMode] = useState(false);
+  const [picked, setPicked] = useState<string[]>([]);
+  const togglePick = (id: string) =>
+    setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
+  const onMergePicked = async () => {
+    const items = queue
+      .filter((q) => picked.includes(q.id))
+      .sort((a, b) => a.created_at.localeCompare(b.created_at));
+    if (items.length < 2) return;
+    if (!window.confirm(`Join these ${items.length} posts (oldest first) into 1 import?`)) return;
+    setCombiningEspn(true);
+    try {
+      const r = await combineFn({ data: { ids: items.map((q) => q.id) } });
+      toast.success(`Merged ${r.combined} posts into 1 import`);
+      setPicked([]);
+      setPickMode(false);
+      clearSelection();
+      refreshQueue(true);
+    } catch (e: any) {
+      toast.error(e.message ?? "Merge failed");
+    } finally {
+      setCombiningEspn(false);
+    }
+  };
   const onAddChannel = async () => {
     const name = newChannel.trim();
     if (!name) return;
@@ -485,6 +509,21 @@ function AdminSportsImportPage() {
                   </Button>
                 ))
               )}
+              {!pickMode ? (
+                <Button size="sm" variant="outline" onClick={() => { setPickMode(true); setPicked([]); }}>
+                  Pick posts to merge
+                </Button>
+              ) : (
+                <>
+                  <Button size="sm" onClick={onMergePicked} disabled={combiningEspn || picked.length < 2}>
+                    {combiningEspn ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
+                    Merge selected ({picked.length})
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => { setPickMode(false); setPicked([]); }}>
+                    Cancel
+                  </Button>
+                </>
+              )}
               <Button size="sm" variant="ghost" onClick={() => setShowChannels((v) => !v)} title="Manage merge channels">
                 <Settings2 className="size-4" />
               </Button>
@@ -571,8 +610,18 @@ function AdminSportsImportPage() {
                             ? draft.sourceZone
                             : sourceZoneStore.current.get(q.id) ?? null;
                         return (
+                          <div key={q.id} className="flex items-start gap-2">
+                            {pickMode && q.status === "pending" && (
+                              <input
+                                type="checkbox"
+                                aria-label="Pick post to merge"
+                                className="mt-4 size-5 shrink-0 accent-primary"
+                                checked={picked.includes(q.id)}
+                                onChange={() => togglePick(q.id)}
+                              />
+                            )}
+                            <div className="min-w-0 flex-1">
                           <QueueRow
-                            key={q.id}
                             item={q}
                             time={t}
                             zone={zone}
@@ -584,6 +633,8 @@ function AdminSportsImportPage() {
                             onSelect={() => selectItem(q)}
                             onZoneApply={(shown, z) => applyZoneToItem(q.id, shown, z)}
                           />
+                            </div>
+                          </div>
                         );
                       })}
                     </section>
