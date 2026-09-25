@@ -23,6 +23,8 @@ import {
   Mic,
   Reply,
   CornerUpRight,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
