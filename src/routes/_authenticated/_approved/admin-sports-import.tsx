@@ -90,6 +90,7 @@ function AdminSportsImportPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [splittingId, setSplittingId] = useState<string | null>(null);
   const [splittingProviderId, setSplittingProviderId] = useState<string | null>(null);
+  const splitAtLineFn = useServerFn(splitQueueItemAtLine);
   const [draft, setDraft] = useState<QueueDraft>({ category: "", destinationCategory: "", subcategories: [], title: "", time: null, sourceZone: null, guideId: null });
   const timeStore = useRef<Map<string, string | null>>(new Map());
   const sourceZoneStore = useRef<Map<string, TimeZoneChoice | null>>(new Map());
@@ -645,6 +646,7 @@ function AdminSportsImportPage() {
                             splitting={splittingId === q.id}
                             splittingProvider={splittingProviderId === q.id}
                             onSplit={() => splitItem(q.id)}
+                            onSplitAtLine={(line) => splitItemAtLine(q.id, line)}
                             onSplitProvider={() => splitItemByProvider(q.id)}
                             onSelect={() => selectItem(q)}
                             onZoneApply={(shown, z) => applyZoneToItem(q.id, shown, z)}
