@@ -6296,6 +6296,7 @@ export type Database = {
       }
       can_pay_by_bank_transfer: { Args: { _user_id: string }; Returns: boolean }
       check_admin_unlock_lockout: { Args: never; Returns: Json }
+      claim_invite_access: { Args: never; Returns: boolean }
       cleanup_old_chat_messages: { Args: never; Returns: number }
       clear_admin_unlock_failures: { Args: never; Returns: undefined }
       clear_fan_dm_threads: { Args: { _threads: string[] }; Returns: number }

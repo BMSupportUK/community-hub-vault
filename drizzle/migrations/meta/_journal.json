@@ -127,6 +127,13 @@
       "when": 1790294886745,
       "tag": "0017_app_install_status",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1790364830968,
+      "tag": "0018_claim_invite_access",
+      "breakpoints": true
     }
   ]
 }
