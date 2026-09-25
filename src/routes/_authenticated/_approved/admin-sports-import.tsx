@@ -244,11 +244,10 @@ function AdminSportsImportPage() {
         .map((c) => ({
           name: c,
           // Only treat the name as this post's channel when it appears as a
-          // channel label: at the start of a line, or followed by a channel
-          // number (e.g. "ESPN+ 01"). A passing mention anywhere in the body
-          // must not pull an unrelated provider's post into the merge.
+          // channel label: at the start of a line, after a channel separator,
+          // or followed by a number (e.g. "DAZN1" / "ESPN+ 01").
           re: new RegExp(
-            `(?:^[\\s*_>#-]*|\\|\\s*)${c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b|\\b${c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*\\d{1,3}\\b`,
+            `(?:^[\\s*_>#-]*|(?:\\||·|•)\\s*)${c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(?=\\s|\\d|[*_#]*$)|\\b${c.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*\\d{1,3}\\b`,
             "im",
           ),
         })),

@@ -873,7 +873,7 @@ export const combineQueueItems = createServerFn({ method: "POST" })
       .from("discord_import_queue")
       .update({
         raw_text: merged,
-        parsed_event: { ...(first.parsed_event ?? {}), raw: merged, title: data.title ?? "ESPN+" },
+        parsed_event: { ...(first.parsed_event ?? {}), raw: merged, title: data.title ?? heading ?? "Merged listings" },
       } as any)
       .eq("id", first.id);
     if (upErr) throw new Error(upErr.message);
