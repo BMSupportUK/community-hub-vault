@@ -665,7 +665,14 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
       return m ? [m[3], m[2].trim(), m[1].trim()] : [line];
     })
     // "VIP | Rugby Pass" headers are post headings, not events.
-    .filter((line) => !/^vip\s*\|/i.test(line));
+    .filter((line) => !/^vip\s*\|/i.test(line))
+    // "UK | Premier Sports 1" / "IRE | Premier Sports 1" — region tag before a
+    // numbered channel. Keep the channel only; duplicates collapse later.
+    .map((line) => {
+      const m = line.match(/^(?:UK|IRE|IE|ROI|US|USA|CA|CAN|AUS|NZ)\s*\|\s*(.+?\s\d{1,3}(?:\s*HD)?)$/i);
+      return m ? m[1].trim() : line;
+    })
+    .filter((line, i, arr) => !(i > 0 && line === arr[i - 1] && /\s\d{1,3}(?:\s*HD)?$/i.test(line)));
   // Provider exports occasionally inject a lone marker between a programme
   // title and its dated slot (for example "Vienna - GCL Round 1", "D", then
   // the DAZN slot). Drop only that marker shape so the title remains paired
