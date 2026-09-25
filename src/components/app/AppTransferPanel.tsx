@@ -408,7 +408,7 @@ export function AppTransferPanel({ onUploadClick }: { onUploadClick?: () => void
 
   return (
     <section className="overflow-hidden rounded-2xl border border-border/80 bg-background/90 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.7)] backdrop-blur-xl">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-5 py-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-5 py-4 md:px-4 md:py-2 lg:px-5 lg:py-3">
         <div className="flex items-center gap-3">
           <span className="grid size-10 place-items-center rounded-xl bg-gradient-primary text-primary-foreground shadow-glow">
             <Smartphone className="size-5" />
@@ -424,7 +424,7 @@ export function AppTransferPanel({ onUploadClick }: { onUploadClick?: () => void
           <ShieldCheck className="size-3" /> Secure links
         </span>
       </div>
-      <div className="p-5">
+      <div className="p-5 md:p-3 lg:p-4">
       <Tabs defaultValue={firstTab} className="w-full">
         <TabsList className="flex h-auto flex-wrap justify-start gap-1 bg-surface-2/80 p-1">
           {APP_BUILD_CATEGORIES.map((c) => (
@@ -435,7 +435,7 @@ export function AppTransferPanel({ onUploadClick }: { onUploadClick?: () => void
           ))}
         </TabsList>
         {APP_BUILD_CATEGORIES.map((c) => (
-          <TabsContent key={c.key} value={c.key} className="mt-4">
+          <TabsContent key={c.key} value={c.key} className="mt-4 md:mt-2 lg:mt-3">
             {(grouped[c.key] ?? []).length === 0 ? (
               <div className="grid place-items-center rounded-xl border border-dashed border-border/70 bg-surface/60 px-6 py-12 text-center">
                 <Smartphone className="size-8 text-muted-foreground/50" />

@@ -18,6 +18,7 @@ import { BmSplash } from "@/components/app/BmSplash";
 import { screenLockMayBeLocked } from "@/lib/screen-lock-hash";
 import { ScreenLockProvider } from "@/components/app/ScreenLockProvider";
 import { useViewportLockable } from "@/hooks/use-viewport-lock";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 
 // Defer non-critical header widgets & alerts so the shell paints immediately.
@@ -79,6 +80,7 @@ function AuthLayout() {
   const shopTab = typeof search.tab === "string" ? search.tab : undefined;
   const shopView = typeof search.view === "string" ? search.view : undefined;
   const lockable = useViewportLockable();
+  const isMobile = useIsMobile();
   // Chat surfaces pin their composer to the bottom, but only on large
   // screens — on smaller screens the whole page scrolls like any other.
   const chatSurface = lockable && (path === "/tickets" || /^\/home\/[^/]+$/.test(path));
@@ -90,10 +92,11 @@ function AuthLayout() {
     path === "/account-security" ||
     path === "/fan-zone-security" ||
     path === "/knowledge-base" ||
+    path === "/install-guides" ||
     path === "/sports-guides";
   // Everything else locks to the viewport on large screens and scrolls
   // normally on smaller ones.
-  const locksToViewport = chatSurface || lockable;
+  const locksToViewport = chatSurface || lockable || (path === "/install-guides" && !isMobile);
   void shopTab;
   void shopView;
   const logIp = useServerFn(logMyIp);

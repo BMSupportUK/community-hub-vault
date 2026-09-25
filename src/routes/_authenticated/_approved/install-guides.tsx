@@ -459,13 +459,13 @@ function InstallGuidesPage() {
       <div className="flex h-full min-h-0 flex-1 items-start">
         <div className="h-full min-h-0 min-w-0 flex-1">
         <Tabs value={tab} onValueChange={setTab} className="flex h-full min-h-0 w-full flex-col">
-          <header className="px-4 sm:px-8 pt-8 pb-6 border-b border-border bg-surface/60 backdrop-blur">
+          <header className="shrink-0 border-b border-border bg-surface/60 px-4 pt-8 pb-6 backdrop-blur sm:px-8 md:px-6 md:py-3">
             <div className="flex flex-wrap items-center justify-between gap-4">
               <div className="min-w-0">
                 <h1 className="font-display text-3xl font-bold text-foreground">Install Guides</h1>
-                <p className="text-muted-foreground mt-1">Step-by-step installation walkthroughs and PDF docs</p>
+                <p className="mt-1 text-muted-foreground md:hidden xl:block">Step-by-step installation walkthroughs and PDF docs</p>
               </div>
-              <TabsList className="flex max-w-full flex-nowrap overflow-x-auto scrollbar-hide h-auto gap-1 rounded-full border border-border bg-surface/70 p-1 sm:flex-wrap sm:overflow-visible">
+              <TabsList className="scrollbar-hide flex h-auto max-w-full flex-nowrap gap-1 overflow-x-auto rounded-full border border-border bg-surface/70 p-1 sm:flex-wrap sm:overflow-visible md:flex-nowrap md:overflow-x-auto">
                 <TabsTrigger value="welcome" className="shrink-0 truncate rounded-full px-3 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">Welcome</TabsTrigger>
                 <TabsTrigger value="guides" className="shrink-0 truncate rounded-full px-3 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">Guides</TabsTrigger>
                 {canSeeAppTab && (
@@ -487,7 +487,7 @@ function InstallGuidesPage() {
             </div>
           </header>
 
-        <div className={`relative isolate min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-8 ${tab === "get-app" || tab === "transfers" ? "lg:flex lg:flex-col lg:overflow-hidden" : ""}`}>
+        <div className={`relative isolate min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-8 ${tab === "get-app" || tab === "transfers" ? "md:flex md:flex-col md:overflow-hidden md:px-6 md:py-3" : ""}`}>
           {canManageGuides && (
             <TabsContent value="approvals" className="mt-6">
               <div className="max-w-5xl space-y-4">
@@ -503,7 +503,7 @@ function InstallGuidesPage() {
           )}
 
           {canSeeAppTab && (
-            <TabsContent value="get-app" className="mt-6 lg:mt-0 lg:flex lg:min-h-0 lg:flex-1 lg:flex-col">
+            <TabsContent value="get-app" className="mt-6 md:mt-0 md:flex md:min-h-0 md:flex-1 md:flex-col">
               <IllustratedHero
                 image={downloadIllustration}
                 title="Download the BM Support Apps"
@@ -515,7 +515,7 @@ function InstallGuidesPage() {
           )}
 
           {canSeeTransfers && (
-            <TabsContent value="transfers" className="mt-6 lg:mt-0 lg:flex lg:min-h-0 lg:flex-1 lg:flex-col">
+            <TabsContent value="transfers" className="mt-6 md:mt-0 md:flex md:min-h-0 md:flex-1 md:flex-col">
               <IllustratedHero
                 image={downloadIllustration}
                 title="App Transfers"
@@ -1099,16 +1099,16 @@ function SecureGuideVideo({
 /** Framed hero whose own content lives inside it; fills the screen on large displays, scrolls on smaller ones. */
 function IllustratedHero({ image, title, text, children }: { image: string; title: string; text: string; children: import("react").ReactNode }) {
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-border shadow-glow min-h-[70vh] lg:min-h-0 lg:flex-1 flex flex-col">
+    <div className="relative flex min-h-[70vh] flex-col overflow-hidden rounded-2xl border border-border shadow-glow md:min-h-0 md:flex-1">
       <img src={image} alt="" aria-hidden width={1920} height={1024} className="absolute inset-0 h-full w-full object-cover" />
       <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/70 to-transparent" />
       <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
-      <div className="relative flex min-h-0 flex-1 flex-col p-6 sm:p-10 md:p-14 lg:p-8">
+      <div className="relative flex min-h-0 flex-1 flex-col p-6 sm:p-10 md:p-5 lg:p-8">
         <div className="max-w-2xl shrink-0">
-          <h2 className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-4xl font-bold text-foreground leading-tight drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)]">{title}</h2>
-          <p className="mt-4 lg:mt-2 text-base sm:text-lg lg:text-base text-foreground/90 drop-shadow">{text}</p>
+          <h2 className="font-display text-3xl font-bold leading-tight text-foreground drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)] sm:text-4xl md:text-3xl lg:text-4xl">{title}</h2>
+          <p className="mt-4 text-base text-foreground/90 drop-shadow sm:text-lg md:mt-1 md:text-sm lg:mt-2 lg:text-base">{text}</p>
         </div>
-        <div className="mt-6 lg:mt-4 min-h-0 flex-1 overflow-y-auto rounded-2xl border border-border bg-surface/80 p-4 shadow-lg backdrop-blur-md sm:p-6 lg:p-4">
+        <div className="mt-6 min-h-0 flex-1 overflow-y-auto rounded-2xl border border-border bg-surface/80 p-4 shadow-lg backdrop-blur-md sm:p-6 md:mt-3 md:overflow-hidden md:p-2 lg:mt-4 lg:p-3">
           {children}
         </div>
       </div>
