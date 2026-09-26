@@ -55,6 +55,18 @@ function guideSearchText(value: string | null | undefined) {
     .trim();
 }
 
+/**
+ * A guide only counts as having listings when its body holds real text.
+ * Markup-only bodies ("<br>", "<p></p>") are the 10h sweep's empty shells —
+ * they have no events, so both the card and its category stay hidden.
+ */
+function guideHasListings(body: string | null | undefined) {
+  if (!body) return false;
+  const textarea = document.createElement("textarea");
+  textarea.innerHTML = body.replace(/<[^>]+>/g, " ");
+  return textarea.value.replace(/\u00a0/g, " ").trim().length > 0;
+}
+
 function matchesGuideSearch(text: string, query: string) {
   const haystack = text.toLocaleLowerCase();
   const terms = query.toLocaleLowerCase().split(/\s+/).filter(Boolean);
@@ -266,6 +278,25 @@ function SportsGuidesPage() {
   const baselineAt = dataQuery.data?.baselineAt ?? null;
   const load = () => queryClient.invalidateQueries({ queryKey });
 
+  // Guides without listings (empty or markup-only bodies) are invisible in the
+  // member view: their cards, category rows and sub-category buttons all hide.
+  const listingBlogs = useMemo(() => blogs.filter((b) => guideHasListings(b.body)), [blogs]);
+  const visibleCatIds = useMemo(() => new Set(listingBlogs.map((b) => b.category_id)), [listingBlogs]);
+  const listingCounts = useMemo(() => {
+    const m: Record<string, number> = {};
+    for (const b of listingBlogs) m[b.category_id] = (m[b.category_id] ?? 0) + 1;
+    return m;
+  }, [listingBlogs]);
+  const listingSubCounts = useMemo(() => {
+    const m: Record<string, Record<string, number>> = {};
+    for (const b of listingBlogs) {
+      const sub = b.subcategory ?? "";
+      if (!m[b.category_id]) m[b.category_id] = {};
+      m[b.category_id][sub] = (m[b.category_id][sub] ?? 0) + 1;
+    }
+    return m;
+  }, [listingBlogs]);
+
   // Two-level menu: main headings (no parent) and the categories grouped under them.
   const childrenByParent = useMemo(() => {
     const m: Record<string, Category[]> = {};
@@ -372,14 +403,14 @@ function SportsGuidesPage() {
 
   const unreadCounts = useMemo(() => {
     const m: Record<string, number> = {};
-    for (const b of blogs) if (isUnread(b)) m[b.category_id] = (m[b.category_id] ?? 0) + 1;
+    for (const b of listingBlogs) if (isUnread(b)) m[b.category_id] = (m[b.category_id] ?? 0) + 1;
     return m;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [blogs, reads, baselineAt]);
+  }, [listingBlogs, reads, baselineAt]);
 
   const unreadSubCounts = useMemo(() => {
     const m: Record<string, Record<string, number>> = {};
-    for (const b of blogs) {
+    for (const b of listingBlogs) {
       if (!isUnread(b)) continue;
       const sub = b.subcategory ?? "";
       if (!m[b.category_id]) m[b.category_id] = {};
@@ -387,7 +418,7 @@ function SportsGuidesPage() {
     }
     return m;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [blogs, reads, baselineAt]);
+  }, [listingBlogs, reads, baselineAt]);
 
   // Unread count including every nested sub-category below a category, so a
   // parent row still flags an unread guide that lives further down the tree.
@@ -445,20 +476,22 @@ function SportsGuidesPage() {
     if (!activeCat) { setSubFilter(null); return; }
     if (skipDefaultSubOnce.current) { skipDefaultSubOnce.current = false; return; }
     const list = subsByCat[activeCat] ?? [];
-    const def = list.find((s) => s.is_default);
-    setSubFilter(def?.name ?? list[0]?.name ?? null);
-  }, [activeCat, subsByCat]);
+    // Only default to a sub-category that actually holds listings.
+    const withListings = list.filter((s) => (listingSubCounts[activeCat]?.[s.name] ?? 0) > 0);
+    const def = withListings.find((s) => s.is_default);
+    setSubFilter(def?.name ?? withListings[0]?.name ?? null);
+  }, [activeCat, subsByCat, listingSubCounts]);
 
   const filtered = useMemo(() => {
     const q = activeSearch;
-    return blogs.filter((b) => {
+    return listingBlogs.filter((b) => {
       if (!q && activeCat && b.category_id !== activeCat) return false;
       if (!q && activeCat && subsByCat[activeCat]?.length && subFilter && b.subcategory !== subFilter) return false;
       if (!q) return true;
       // Events only — guide titles/descriptions are not searched.
       return matchesGuideSearch(guideSearchText(b.body), q);
     });
-  }, [blogs, activeCat, activeSearch, subFilter, subsByCat]);
+  }, [listingBlogs, activeCat, activeSearch, subFilter, subsByCat]);
 
   // A–Z jump map: first visible guide whose title starts with each letter.
   const azMap = useMemo(() => {
@@ -546,7 +579,7 @@ function SportsGuidesPage() {
     const q = activeSearch;
     if (!q) return [] as { blog: Blog; snippet: string }[];
     const out: { blog: Blog; snippet: string }[] = [];
-    for (const b of blogs) {
+    for (const b of listingBlogs) {
       const h = guideSearchText(b.body);
       if (!matchesGuideSearch(h, q)) continue;
       const firstTerm = q.toLocaleLowerCase().split(/\s+/).find(Boolean) ?? "";
@@ -557,7 +590,7 @@ function SportsGuidesPage() {
       if (snippet.trim()) out.push({ blog: b, snippet });
     }
     return out;
-  }, [blogs, activeSearch]);
+  }, [listingBlogs, activeSearch]);
 
   const activeCategory = categories.find((c) => c.id === activeCat);
 
@@ -1004,10 +1037,10 @@ function SportsGuidesPage() {
                       </button>
                     )}
                   </h3>
-                  {user && blogs.some(isUnread) && (
+                  {user && listingBlogs.some(isUnread) && (
                     <button
                       onClick={async () => {
-                        const unread = blogs.filter(isUnread);
+                        const unread = listingBlogs.filter(isUnread);
                         if (!unread.length) return;
                         const nowIso = new Date().toISOString();
                         queryClient.setQueryData<typeof dataQuery.data>(queryKey, (prev) => {
@@ -1039,6 +1072,10 @@ function SportsGuidesPage() {
                 <div className={subDialogFor ? "hidden" : "space-y-1"}>
                   {topCategories.map((top) => {
                     const kids = childrenByParent[top.id] ?? [];
+                    // Only show a row when it (or, for a heading, one of its
+                    // categories) holds a guide with listings.
+                    const visibleKids = kids.filter((k) => visibleCatIds.has(k.id));
+                    if (visibleKids.length === 0 && !visibleCatIds.has(top.id)) return null;
                     const heading = kids.length > 0;
                     const open = openGroups.includes(top.id);
                     const headingUnread = heading
@@ -1230,7 +1267,7 @@ function SportsGuidesPage() {
                       </div>
                       <div className="grid max-h-[70vh] gap-1 overflow-y-auto">
 
-                        {children.map((child) => {
+                        {children.filter((child) => visibleCatIds.has(child.id)).map((child) => {
                           const active = child.id === activeCat;
                           const unread = unreadDeep[child.id] ?? 0;
                           return (
@@ -1302,7 +1339,8 @@ function SportsGuidesPage() {
                           );
                         })}
                         {guideSubcategories.map((sub) => {
-                          const count = blogs.filter((b) => b.category_id === parent?.id && b.subcategory === sub.name).length;
+                          const count = listingSubCounts[parent?.id ?? ""]?.[sub.name] ?? 0;
+                          if (count === 0) return null;
                           const unread = parent ? unreadSubCounts[parent.id]?.[sub.name] ?? 0 : 0;
                           return (
                             <button
@@ -1492,7 +1530,8 @@ function SportsGuidesPage() {
                     </DialogHeader>
                     <div className="grid max-h-[60vh] grid-cols-1 gap-2 overflow-y-auto sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
                       {(subsByCat[activeCategory.id] ?? []).map((sub) => {
-                        const count = blogs.filter((b) => b.category_id === activeCategory.id && b.subcategory === sub.name).length;
+                        const count = listingSubCounts[activeCategory.id]?.[sub.name] ?? 0;
+                        if (count === 0) return null;
                         const active = subFilter === sub.name;
                         const unread = unreadSubCounts[activeCategory.id]?.[sub.name] ?? 0;
                         return (
@@ -1537,7 +1576,8 @@ function SportsGuidesPage() {
                 {activeCategory?.slug === "sports-passes" && activeCat && (subsByCat[activeCat]?.length ?? 0) > 0 && !activeSearch && (
                   <div className="mb-4 grid gap-2 rounded-xl border border-fuchsia-500/30 bg-purple-950/65 p-3 sm:grid-cols-2 xl:grid-cols-3">
                     {(subsByCat[activeCat] ?? []).map((sub) => {
-                      const count = blogs.filter((b) => b.category_id === activeCat && b.subcategory === sub.name).length;
+                      const count = listingSubCounts[activeCat]?.[sub.name] ?? 0;
+                      if (count === 0) return null;
                       const active = subFilter === sub.name;
                       const unread = unreadSubCounts[activeCat]?.[sub.name] ?? 0;
                       return (
