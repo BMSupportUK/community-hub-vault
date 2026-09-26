@@ -1325,7 +1325,9 @@ function TicketDetail({
           }
         }
       }
-      await postTicketSystem(await getAutomatedMessage("order_sale_completed"));
+      await postTicketSystem(await getAutomatedMessage(
+        linkedOrder.customer_type === "existing" ? "order_renewal_completed" : "order_sale_completed",
+      ));
       toast.success("Sale completed");
       await loadLinkedOrder();
       await applyRenewal();

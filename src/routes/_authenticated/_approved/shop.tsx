@@ -4100,7 +4100,9 @@ function OrderDetailImpl({
         toast.error(error.message);
         return;
       }
-      await sendSystem(await getAutomatedMessage("order_sale_completed"));
+      await sendSystem(await getAutomatedMessage(
+        order.customer_type === "existing" ? "order_renewal_completed" : "order_sale_completed",
+      ));
       toast.success("Sale completed");
     } finally {
       setBusy(false);
