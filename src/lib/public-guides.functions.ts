@@ -41,13 +41,38 @@ function bodyToLines(html: string): string[] {
     .filter(Boolean);
 }
 
+export interface PublicGuideCategory {
+  id: string;
+  name: string;
+  slug: string;
+  sort_order: number;
+  parent_id: string | null;
+}
+
+export interface PublicGuideSubcategory {
+  id: string;
+  category_id: string;
+  name: string;
+  sort_order: number;
+  is_default: boolean;
+}
+
 export interface PublicGuideSummary {
   id: string;
   title: string;
   excerpt: string | null;
   created_at: string;
+  updated_at: string | null;
   category_id: string;
-  category: string;
+  subcategory: string | null;
+  image_url: string | null;
+  badge: string | null;
+}
+
+export interface PublicGuidesData {
+  categories: PublicGuideCategory[];
+  subcategories: PublicGuideSubcategory[];
+  guides: PublicGuideSummary[];
 }
 
 export interface PublicGuideEvent {
@@ -69,33 +94,51 @@ export interface PublicGuideDetail {
 }
 
 export const listPublicGuides = createServerFn({ method: "GET" }).handler(
-  async (): Promise<PublicGuideSummary[]> => {
+  async (): Promise<PublicGuidesData> => {
     const supabase = await publicClient();
-    const [{ data: blogs, error: blogsError }, { data: categories }] =
-      await Promise.all([
-        supabase
-          .from("sports_blogs")
-          .select("id, title, excerpt, created_at, category_id, body, archived_body")
-          .eq("published", true)
-          .order("created_at", { ascending: false })
-          .limit(100),
-        supabase.from("sports_categories").select("id, name"),
-      ]);
+    const [
+      { data: blogs, error: blogsError },
+      { data: categories },
+      { data: subcategories },
+    ] = await Promise.all([
+      supabase
+        .from("sports_blogs")
+        .select(
+          "id, title, excerpt, created_at, updated_at, category_id, subcategory, image_url, badge, body, archived_body",
+        )
+        .eq("published", true)
+        .order("sort_order")
+        .order("created_at", { ascending: false })
+        .limit(200),
+      supabase
+        .from("sports_categories")
+        .select("id, name, slug, sort_order, parent_id")
+        .order("sort_order"),
+      supabase
+        .from("sports_subcategories")
+        .select("id, category_id, name, sort_order, is_default")
+        .order("sort_order"),
+    ]);
     if (blogsError) throw new Error(blogsError.message);
-    const categoryNames = new Map(
-      (categories ?? []).map((c) => [c.id, c.name] as const),
-    );
     // Skip guides with no content at all (never had a body).
-    return (blogs ?? [])
+    const guides = (blogs ?? [])
       .filter((b) => (b.body ?? b.archived_body ?? "").trim().length > 0)
       .map((b) => ({
         id: b.id,
         title: b.title,
         excerpt: b.excerpt,
         created_at: b.created_at,
+        updated_at: b.updated_at ?? null,
         category_id: b.category_id,
-        category: categoryNames.get(b.category_id) ?? "Sports",
+        subcategory: b.subcategory ?? null,
+        image_url: b.image_url ?? null,
+        badge: b.badge ?? null,
       }));
+    return {
+      categories: (categories ?? []) as PublicGuideCategory[],
+      subcategories: (subcategories ?? []) as PublicGuideSubcategory[],
+      guides,
+    };
   },
 );
 
