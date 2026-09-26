@@ -1,7 +1,7 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { LandingHeader } from "@/components/LandingHeader";
 import { getPublicGuide, type PublicGuideDetail } from "@/lib/public-guides.functions";
-import { Clock, CalendarDays, Lock, ArrowLeft } from "lucide-react";
+import { Clock, CalendarDays, ArrowLeft } from "lucide-react";
 import sportsBgAsset from "@/assets/sports-bg.jpg.asset.json";
 const sportsBg = sportsBgAsset.url;
 
@@ -120,31 +120,6 @@ function PublicGuidePage() {
             ))}
           </ul>
 
-          <div className="mt-10 rounded-2xl border border-fuchsia-400/30 bg-purple-950/50 p-6 text-center backdrop-blur">
-            <Lock className="mx-auto h-6 w-6 text-fuchsia-300" />
-            <h2 className="mt-3 text-lg font-semibold text-purple-50">
-              Want to know which channels are showing these?
-            </h2>
-            <p className="mx-auto mt-2 max-w-md text-sm text-purple-200/70">
-              BM Support members get the full guide inside the app — every event
-              with its exact channel listings, plus live chat, support tickets
-              and more.
-            </p>
-            <div className="mt-5 flex flex-wrap justify-center gap-3">
-              <Link
-                to="/signup"
-                className="rounded-lg bg-gradient-to-r from-fuchsia-600 to-purple-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:from-fuchsia-500 hover:to-purple-500"
-              >
-                Join BM Support
-              </Link>
-              <Link
-                to="/login"
-                className="rounded-lg border border-purple-500/40 px-5 py-2.5 text-sm font-semibold text-purple-100 transition hover:bg-purple-900/50"
-              >
-                Sign in
-              </Link>
-            </div>
-          </div>
         </main>
       </div>
     </div>
