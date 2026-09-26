@@ -9,6 +9,8 @@ import { backfillVpnDetection } from "@/lib/vpn-backfill.functions";
 import { unlockWithStaffPin, requestStaffPinReset } from "@/lib/staff-pin.functions";
 import { StaffPinAdminCard } from "@/components/app/StaffPinAdminCard";
 import { setAppTheme, useDefaultAppTheme } from "@/hooks/use-app-theme";
+import { applyNavOrder, setLandingNavOrder, useLandingNavOrder } from "@/hooks/use-landing-nav-order";
+import { ArrowDown, ArrowUp } from "lucide-react";
 import { ThemePicker, APP_THEME_OPTIONS } from "@/components/app/ThemePicker";
 import {
   Dialog,
@@ -489,6 +491,7 @@ function DashboardBody() {
     ["staff-pins", "Staff PINs", true],
     ["backup-codes", "Backup codes", true],
     ["theme", "Theme", false],
+    ["header-links", "Header links", false],
   ] as const).filter(([, , pinOnly]) => !pinOnly || canSeePins);
 
   const letters = Array.from(new Set(tools.map((t) => t.label[0].toUpperCase())));
@@ -525,6 +528,10 @@ function DashboardBody() {
       ) : tab === "theme" ? (
         <div className="max-w-2xl">
           <ThemePickerCard />
+        </div>
+      ) : tab === "header-links" ? (
+        <div className="max-w-2xl">
+          <HeaderLinksCard />
         </div>
       ) : (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px] items-start">
