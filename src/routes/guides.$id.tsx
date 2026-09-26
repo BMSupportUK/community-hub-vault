@@ -72,10 +72,14 @@ function PublicGuidePage() {
   }, [guide.id]);
 
   return (
-    <div
-      className="flex min-h-screen flex-col bg-background/90 bg-cover bg-center bg-blend-multiply text-foreground"
-      style={{ backgroundImage: `url(${sportsBg})` }}
-    >
+    <div className="relative flex min-h-screen flex-col bg-background text-foreground">
+      <img
+        src={sportsBg}
+        alt=""
+        aria-hidden
+        className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+      />
+      <div className="pointer-events-none absolute inset-0 bg-background/90" />
       <LandingHeader />
       <div className="relative flex-1">
         <main className="mx-auto w-full max-w-screen-2xl px-4 py-10 sm:px-8">
