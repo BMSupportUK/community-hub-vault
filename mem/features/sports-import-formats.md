@@ -57,3 +57,6 @@ When a daily post's times run past midnight (e.g. 23:00 then 01:00 under one dat
 
 ## Fubo Sports post (permanent)
 Format: `Fubo Sports 1 | Show name // UK Sat 26 Sep 11:00am // ET Sat 26 Sep 6:00am`. Channel before the pipe, show after, use the UK date/time (ignore ET). Show names containing the brand (e.g. "Fubo Sports News") are valid titles — never flag as channel/title swapped when the row's channel is a real channel label.
+
+## Duplicate listings (permanent)
+Same date + time + event name + same channel(s) = duplicate; keep one. Cleared automatically on import/merge and when a guide is saved as published. Same event on a different channel is NOT a duplicate.
