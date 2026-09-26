@@ -5,3 +5,4 @@
 - Keep the full-screen BM loading cover mounted through browser load and initial hydration, and use it as the router-wide pending screen, so hard refreshes never expose a partial page.
 - UFC multi-time imports must attach the complete listed UFC channel set to every time slot, never pair channels to times by position, because each feed carries every slot.
 - Public sports guides return only validated date, time and event names; never expose free-text notes, descriptions or channel lines, because channel heuristics can miss unfamiliar feed names.
+- The shared advert slots support two providers with Adsterra taking priority once its zone srcs are filled in `src/lib/adsterra.ts`; with those empty, AdSense stays primary and unfilled slots keep their placeholder, so a network switch is a one-file ID paste.

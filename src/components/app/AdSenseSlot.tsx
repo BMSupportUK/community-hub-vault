@@ -11,6 +11,11 @@ import {
   ensureAdSenseScript,
   pushAd,
 } from "@/lib/adsense";
+import {
+  ADSTERRA_ENABLED,
+  adsterraZoneFor,
+  ensureAdsterraScript,
+} from "@/lib/adsterra";
 
 export type AdSenseSlotKind = "topic" | "sidebar" | "home" | "talk" | "welcome";
 
@@ -29,9 +34,11 @@ function Placeholder({ label }: { label: string }) {
 }
 
 /**
- * Renders a Google AdSense display unit inside a forum thread.
- * - Before the AdSense account/slot is configured, everyone sees a subtle placeholder.
- * - Everyone (staff included) gets the live ad unit once AdSense is enabled.
+ * Renders an advert unit inside the site's shared advert slots.
+ * - Provider priority: Adsterra once its zones are filled in (the fallback
+ *   network), otherwise Google AdSense while that application is pending.
+ * - Before either provider is configured, everyone sees a subtle placeholder.
+ * - Everyone (staff included) gets the live ad unit once a provider is enabled.
  */
 function AdSenseSlotComponent({ slot = "topic", fitViewport = false }: { slot?: AdSenseSlotKind; fitViewport?: boolean }) {
   const adSlotId =
@@ -44,17 +51,30 @@ function AdSenseSlotComponent({ slot = "topic", fitViewport = false }: { slot?: 
           : slot === "welcome"
             ? ADSENSE_WELCOME_SLOT
             : ADSENSE_TOPIC_SLOT;
-  const enabled = ADSENSE_ENABLED && adSlotId.length > 0;
+  const adsterraZone = ADSTERRA_ENABLED ? adsterraZoneFor(slot) : "";
+  const provider: "adsterra" | "adsense" | "none" = adsterraZone
+    ? "adsterra"
+    : ADSENSE_ENABLED
+      ? "adsense"
+      : "none";
+  const enabled = provider !== "none";
+  const metricSlotId = provider === "adsterra" ? adsterraZone : adSlotId;
   // fitViewport: cap a sidebar unit to the visible screen height so pages
   // locked to the viewport (sign-in / join) never clip the advert.
   const sidebarFit = slot === "sidebar" && fitViewport;
 
   const boxRef = useRef<HTMLDivElement | null>(null);
   const insRef = useRef<HTMLModElement | null>(null);
+  const adsterraMountRef = useRef<HTMLDivElement | null>(null);
   const pressRef = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     if (!enabled) return;
+    if (provider === "adsterra") {
+      const mount = adsterraMountRef.current;
+      if (mount) ensureAdsterraScript(adsterraZone, mount);
+      return;
+    }
     ensureAdSenseScript();
     // Defer the push so the <ins> element is in the DOM first. For viewport-fit
     // sidebars, pick the format from the real screen height right before the
@@ -71,7 +91,7 @@ function AdSenseSlotComponent({ slot = "topic", fitViewport = false }: { slot?: 
       pushAd();
     }, 50);
     return () => window.clearTimeout(id);
-  }, [enabled, sidebarFit]);
+  }, [enabled, sidebarFit, provider, adsterraZone]);
 
   // Count a view once the unit actually scrolls into sight.
   useEffect(() => {
@@ -82,7 +102,7 @@ function AdSenseSlotComponent({ slot = "topic", fitViewport = false }: { slot?: 
       (entries) => {
         for (const entry of entries) {
           if (entry.isIntersecting) {
-            void recordAdEvent({ kind: "impression", slotKey: slot, adSlotId });
+            void recordAdEvent({ kind: "impression", slotKey: slot, adSlotId: metricSlotId });
             obs.disconnect();
           }
         }
@@ -91,7 +111,7 @@ function AdSenseSlotComponent({ slot = "topic", fitViewport = false }: { slot?: 
     );
     obs.observe(el);
     return () => obs.disconnect();
-  }, [enabled, slot, adSlotId]);
+  }, [enabled, slot, metricSlotId]);
 
   if (!enabled) {
     return <Placeholder label="Sponsored content appears here" />;
@@ -107,7 +127,7 @@ function AdSenseSlotComponent({ slot = "topic", fitViewport = false }: { slot?: 
     pressRef.current = null;
     if (!start) return;
     if (Math.abs(e.clientX - start.x) > 8 || Math.abs(e.clientY - start.y) > 8) return;
-    void recordAdEvent({ kind: "click", slotKey: slot, adSlotId });
+    void recordAdEvent({ kind: "click", slotKey: slot, adSlotId: metricSlotId });
   };
 
   return (
@@ -118,17 +138,27 @@ function AdSenseSlotComponent({ slot = "topic", fitViewport = false }: { slot?: 
       <div className="px-2 pb-1 text-[10px] uppercase tracking-[0.25em] text-muted-foreground/70">
         Advertisement
       </div>
-      <div className={sidebarFit ? "min-h-0" : undefined} onPointerDown={onAdPointerDown} onPointerUp={onAdPointerUp} onPointerCancel={() => (pressRef.current = null)}>
-        <ins
-          ref={insRef}
-          className={`adsbygoogle ${slot === "home" || slot === "welcome" ? "h-[64px]" : slot === "topic" ? "h-[90px]" : ""} ${sidebarFit ? "w-full" : ""}`}
-          style={{ display: "block", textAlign: "center" }}
-          data-ad-client={ADSENSE_CLIENT_ID}
-          data-ad-slot={adSlotId}
-          data-ad-format={slot === "home" || slot === "welcome" || slot === "topic" ? "horizontal" : slot === "talk" ? "rectangle" : "auto"}
-          data-full-width-responsive="true"
+      {provider === "adsterra" ? (
+        <div
+          ref={adsterraMountRef}
+          className={sidebarFit ? "min-h-0 w-full" : undefined}
+          onPointerDown={onAdPointerDown}
+          onPointerUp={onAdPointerUp}
+          onPointerCancel={() => (pressRef.current = null)}
         />
-      </div>
+      ) : (
+        <div className={sidebarFit ? "min-h-0" : undefined} onPointerDown={onAdPointerDown} onPointerUp={onAdPointerUp} onPointerCancel={() => (pressRef.current = null)}>
+          <ins
+            ref={insRef}
+            className={`adsbygoogle ${slot === "home" || slot === "welcome" ? "h-[64px]" : slot === "topic" ? "h-[90px]" : ""} ${sidebarFit ? "w-full" : ""}`}
+            style={{ display: "block", textAlign: "center" }}
+            data-ad-client={ADSENSE_CLIENT_ID}
+            data-ad-slot={adSlotId}
+            data-ad-format={slot === "home" || slot === "welcome" || slot === "topic" ? "horizontal" : slot === "talk" ? "rectangle" : "auto"}
+            data-full-width-responsive="true"
+          />
+        </div>
+      )}
     </div>
   );
 }

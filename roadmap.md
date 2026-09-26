@@ -1,6 +1,7 @@
 # Roadmap
 
 ## Current
+- [ ] Adsterra fallback advert provider: wire zone srcs once the Adsterra publisher account is approved and the five banner zones are created
 - [x] Audit published sports guides for leaked lead/channel text and prevent public guide text leaks on future imports
 - [x] Stan Sports imports: preserve complete event names through preview, save and read-back
 - [x] Merged DAZN imports: keep preview and saved guide identical; prevent inherited channels and isolated marker corruption
