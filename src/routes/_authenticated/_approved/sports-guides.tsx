@@ -403,14 +403,14 @@ function SportsGuidesPage() {
 
   const unreadCounts = useMemo(() => {
     const m: Record<string, number> = {};
-    for (const b of blogs) if (isUnread(b)) m[b.category_id] = (m[b.category_id] ?? 0) + 1;
+    for (const b of listingBlogs) if (isUnread(b)) m[b.category_id] = (m[b.category_id] ?? 0) + 1;
     return m;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [blogs, reads, baselineAt]);
+  }, [listingBlogs, reads, baselineAt]);
 
   const unreadSubCounts = useMemo(() => {
     const m: Record<string, Record<string, number>> = {};
-    for (const b of blogs) {
+    for (const b of listingBlogs) {
       if (!isUnread(b)) continue;
       const sub = b.subcategory ?? "";
       if (!m[b.category_id]) m[b.category_id] = {};
@@ -418,7 +418,7 @@ function SportsGuidesPage() {
     }
     return m;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [blogs, reads, baselineAt]);
+  }, [listingBlogs, reads, baselineAt]);
 
   // Unread count including every nested sub-category below a category, so a
   // parent row still flags an unread guide that lives further down the tree.
@@ -476,20 +476,22 @@ function SportsGuidesPage() {
     if (!activeCat) { setSubFilter(null); return; }
     if (skipDefaultSubOnce.current) { skipDefaultSubOnce.current = false; return; }
     const list = subsByCat[activeCat] ?? [];
-    const def = list.find((s) => s.is_default);
-    setSubFilter(def?.name ?? list[0]?.name ?? null);
-  }, [activeCat, subsByCat]);
+    // Only default to a sub-category that actually holds listings.
+    const withListings = list.filter((s) => (listingSubCounts[activeCat]?.[s.name] ?? 0) > 0);
+    const def = withListings.find((s) => s.is_default);
+    setSubFilter(def?.name ?? withListings[0]?.name ?? null);
+  }, [activeCat, subsByCat, listingSubCounts]);
 
   const filtered = useMemo(() => {
     const q = activeSearch;
-    return blogs.filter((b) => {
+    return listingBlogs.filter((b) => {
       if (!q && activeCat && b.category_id !== activeCat) return false;
       if (!q && activeCat && subsByCat[activeCat]?.length && subFilter && b.subcategory !== subFilter) return false;
       if (!q) return true;
       // Events only — guide titles/descriptions are not searched.
       return matchesGuideSearch(guideSearchText(b.body), q);
     });
-  }, [blogs, activeCat, activeSearch, subFilter, subsByCat]);
+  }, [listingBlogs, activeCat, activeSearch, subFilter, subsByCat]);
 
   // A–Z jump map: first visible guide whose title starts with each letter.
   const azMap = useMemo(() => {
@@ -577,7 +579,7 @@ function SportsGuidesPage() {
     const q = activeSearch;
     if (!q) return [] as { blog: Blog; snippet: string }[];
     const out: { blog: Blog; snippet: string }[] = [];
-    for (const b of blogs) {
+    for (const b of listingBlogs) {
       const h = guideSearchText(b.body);
       if (!matchesGuideSearch(h, q)) continue;
       const firstTerm = q.toLocaleLowerCase().split(/\s+/).find(Boolean) ?? "";
@@ -588,7 +590,7 @@ function SportsGuidesPage() {
       if (snippet.trim()) out.push({ blog: b, snippet });
     }
     return out;
-  }, [blogs, activeSearch]);
+  }, [listingBlogs, activeSearch]);
 
   const activeCategory = categories.find((c) => c.id === activeCat);
 
