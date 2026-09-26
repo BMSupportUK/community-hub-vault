@@ -17,6 +17,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useFanZoneMute } from "@/hooks/use-fan-zone-mute";
 import { FanZoneMutedScreen } from "@/components/app/FanZoneMutedScreen";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AdSenseSlot } from "@/components/app/AdSenseSlot";
 
 export const Route = createFileRoute("/fan-zone/")({
   loader: () => listPublicBoards(),
@@ -152,6 +153,7 @@ function FanZoneBoardsPage() {
               </div>
             </div>
           )}
+          <AdSenseSlot slot="topic" />
         </div>
         <div className="md:sticky md:top-4 md:self-start">
           <BoroMatchCentreBox />

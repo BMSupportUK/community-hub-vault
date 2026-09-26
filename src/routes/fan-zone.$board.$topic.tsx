@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { isTeamSheetPost, sortTeamSheetPosts } from "@/lib/forum-team-sheet";
 import { FanZoneShell } from "./fan-zone";
+import { AdSenseSlot } from "@/components/app/AdSenseSlot";
 
 
 export const Route = createFileRoute("/fan-zone/$board/$topic")({
@@ -66,6 +67,8 @@ function TopicReadPage() {
 
   return (
     <FanZoneShell>
+      <div className="grid items-start gap-4 md:grid-cols-[minmax(0,1fr)_280px]">
+      <div className="min-w-0">
       <div className="flex items-center gap-1 -ml-2 mb-2 flex-wrap">
         <Button asChild variant="ghost" size="sm" className="text-white/80 hover:text-white px-2">
           <Link to="/fan-zone">
@@ -143,6 +146,11 @@ function TopicReadPage() {
         Polls, reactions and replies are visible to Boro Fan Zone members.{" "}
         <Link to="/login" className="underline font-semibold">Sign in</Link> or{" "}
         <Link to="/signup" className="underline font-semibold">request access</Link> to join in.
+      </div>
+      </div>
+      <aside className="md:sticky md:top-4">
+        <AdSenseSlot slot="sidebar" />
+      </aside>
       </div>
     </FanZoneShell>
   );
