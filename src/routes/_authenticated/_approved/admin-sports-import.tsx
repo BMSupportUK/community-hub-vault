@@ -951,6 +951,7 @@ function QueueSetup({
           id: item.id,
           action,
           category: draft.destinationCategory || undefined,
+          subcategory: selectedSubcategory || null,
           subcategories: draft.guideId ? [] : draft.subcategories,
           title: draft.title,
           guideId: draft.guideId ?? undefined,
