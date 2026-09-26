@@ -86,7 +86,7 @@ function AdSenseSlotComponent({ slot = "topic", fitViewport = false }: { slot?: 
   }, [adsterraZone]);
 
   useEffect(() => {
-    if (provider === "adsterra") {
+    if (provider === "adsterra" && adsterraZone) {
       const mount = adsterraMountRef.current;
       if (!mount) return;
       if (isAdsterraZoneInjected(adsterraZone.key)) {
