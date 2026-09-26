@@ -185,8 +185,15 @@ function PublicGuidesPage() {
   const activeCategory = categories.find((c) => c.id === activeCat);
 
   const chooseCategory = (categoryId: string) => {
-    const categoryChildren = childrenByParent[categoryId] ?? [];
-    const guideSubcategories = subsByCat[categoryId] ?? [];
+    const categoryChildren = (childrenByParent[categoryId] ?? []).filter(
+      (child) => (counts[child.id] ?? 0) > 0,
+    );
+    const guideSubcategories = (subsByCat[categoryId] ?? []).filter((sub) =>
+      listingBlogs.some(
+        (guide) =>
+          guide.category_id === categoryId && guide.subcategory === sub.name,
+      ),
+    );
     if (categoryChildren.length > 0 || guideSubcategories.length > 0) {
       setSubDialogFor(categoryId);
       setOpenGroups([categoryId]);
@@ -390,7 +397,15 @@ function PublicGuidesPage() {
             const children = (childrenByParent[subDialogFor ?? ""] ?? []).filter(
               (c) => (counts[c.id] ?? 0) > 0,
             );
-            const guideSubcategories = subsByCat[subDialogFor ?? ""] ?? [];
+            const guideSubcategories = (
+              subsByCat[subDialogFor ?? ""] ?? []
+            ).filter((sub) =>
+              listingBlogs.some(
+                (guide) =>
+                  guide.category_id === parent?.id &&
+                  guide.subcategory === sub.name,
+              ),
+            );
             const grandParent = parent?.parent_id
               ? categories.find((c) => c.id === parent.parent_id)
               : null;
