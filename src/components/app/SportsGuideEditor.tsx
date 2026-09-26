@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
 import { X, Upload, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -185,6 +186,7 @@ function normalizeSportsGuidePaste(text: string): string {
 
 export function SportsGuideEditor({ blogId }: { blogId?: string }) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user } = useAuth();
   const [categories, setCategories] = useState<Category[]>([]);
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
@@ -504,6 +506,10 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
     try {
       localStorage.removeItem(editing.id ? editDraftKey(editing.id) : DRAFT_KEY);
     } catch { /* ignore */ }
+    // The guide list can remain mounted in React Query while this editor is
+    // open. Remove every user's cached copy so returning to the cards reads
+    // the saved `published` value instead of rendering the old draft state.
+    queryClient.removeQueries({ queryKey: ["sports-guides-data"] });
     toast.success(
       payload.published
         ? "Published — now visible on the public Sports Guide"
