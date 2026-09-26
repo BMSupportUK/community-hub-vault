@@ -223,7 +223,7 @@ const ImportInput = z.object({
     .max(500),
 });
 
-function buildBody(ev: { time?: string | null; date?: string | null; channels?: string[]; raw?: string }, sourceZone?: "gmt" | "et" | null) {
+function buildBody(ev: { time?: string | null; date?: string | null; channels?: string[]; raw?: string }, sourceZone?: "gmt" | "et" | null, guideTitle?: string | null) {
   // Flosports (Flo College, Flo Racing…) always publishes in US Eastern time.
   const zone = sourceZone ?? (/\bflo\s?(?:college|racing|sports|football|hockey|wrestling)\b/i.test(ev.raw ?? "") ? "et" : null);
   const formatted = formatSportsListingBlock({
@@ -232,6 +232,7 @@ function buildBody(ev: { time?: string | null; date?: string | null; channels?: 
     time: ev.time,
     channels: ev.channels,
     sourceZone: zone,
+    guideTitle,
   });
   if (formatted) return formatted;
 
@@ -354,7 +355,7 @@ export const importParsedEvents = createServerFn({ method: "POST" })
           subcategory: e.subcategory ?? null,
           title: e.title,
           excerpt: e.time ? `${e.date ? e.date + " · " : ""}${e.time}` : (e.date ?? null),
-          body: plainListingToHtml(buildBody(e)),
+          body: plainListingToHtml(buildBody(e, null, e.title)),
           image_url: coverMap.get(coverKey) ?? null,
           published: true,
           created_by: userId,
@@ -704,22 +705,23 @@ export const resolveQueueItem = createServerFn({ method: "POST" })
       const ev: any = { ...((item.parsed_event ?? {}) as Record<string, unknown>) };
       if (data.time !== undefined) ev.time = data.time;
       const title = data.title ?? ev.title ?? "Untitled";
-      const importedBody = buildBody(ev, data.sourceZone ?? null);
       if (data.guideId) {
         const { data: guide, error: guideErr } = await supabaseAdmin
           .from("sports_blogs")
-          .select("id, category_id, body")
+          .select("id, category_id, body, title")
           .eq("id", data.guideId)
           .eq("category_id", (cat as any).id)
           .maybeSingle();
         if (guideErr) throw new Error(guideErr.message);
         if (!guide) throw new Error("That guide is not in the selected category");
         const existingBody = String((guide as any).body ?? "").trim();
+        const importedBody = buildBody(ev, data.sourceZone ?? null, guide.title);
         const sortedBody = mergeSportsListingBlocks(existingBody, importedBody, {
           date: ev.date,
           time: ev.time,
           channels: ev.channels,
           sourceZone: data.sourceZone ?? null,
+          guideTitle: guide.title,
         });
         const safeBody = plainListingToHtml(sortedBody ?? [existingBody, importedBody].filter(Boolean).join("\n\n"));
         const { error: updateErr } = await supabaseAdmin
@@ -744,7 +746,7 @@ export const resolveQueueItem = createServerFn({ method: "POST" })
           subcategory: sub,
           title,
           excerpt: ev.time ? `${ev.date ? ev.date + " · " : ""}${ev.time}` : (ev.date ?? null),
-          body: plainListingToHtml(buildBody(ev, data.sourceZone ?? null)),
+          body: plainListingToHtml(buildBody(ev, data.sourceZone ?? null, title)),
           image_url: await ensureSportCover((cat as any).id, data.category!, sub),
           published: true,
           created_by: userId,
@@ -814,7 +816,7 @@ export const approveAllSuggested = createServerFn({ method: "POST" })
           subcategory: sub,
           title: ev.title ?? "Untitled",
           excerpt: ev.time ? `${ev.date ? ev.date + " · " : ""}${ev.time}` : (ev.date ?? null),
-          body: plainListingToHtml(buildBody(ev)),
+          body: plainListingToHtml(buildBody(ev, null, ev.title)),
           image_url: coverUrl,
           published: true,
           created_by: userId,
