@@ -10,6 +10,6 @@ export function publicGuideEvents(body: string): { date: string | null; time: st
 /** Fail closed if a channel was accidentally parsed as the event name. */
 export function safePublicEventTitle(event: SportsListingEvent): boolean {
   const title = event.title.trim();
-  if (!title || /^(?:under team channels|[a-z]{1,6}\s?\d{1,3})$/i.test(title)) return false;
+  if (!title || /^under team channels$/i.test(title)) return false;
   return !event.channels.some((channel) => channel.trim().toLowerCase() === title.toLowerCase());
 }
