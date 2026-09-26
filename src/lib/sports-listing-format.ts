@@ -255,8 +255,9 @@ export function normalizeSportsEventTitle(value: string): string {
     .replace(/\s+/g, " ")
     // "Morning News Now ISO 2 V 9.25.26" — a V before a date is a feed tag,
     // not "versus".
-    .replace(/\s+(?:x|vs\.?|v\.?|@)\s+(?!\d{1,2}[./-]\d{1,2}[./-]\d{2,4}\b)/gi, " & ")
-    .replace(/\s*&\s*/g, " & ")
+    .replace(/\s+(?:x|vs\.?|v\.?|@)\s+(?!\d{1,2}[./-]\d{1,2}[./-]\d{2,4}\b)/gi, " v ")
+    // A spaced ampersand in a fixture is a matchup, never the displayed separator.
+    .replace(/\s+&\s+/g, " v ")
     .trim();
 }
 
@@ -406,7 +407,7 @@ function detectStampedEvent(line: string, date: string | null): SportsListingEve
     return {
       date: eventDate || date,
       time: `${String(ukPart("hour") % 24).padStart(2, "0")}:${String(ukPart("minute")).padStart(2, "0")} ${ukZone}`,
-      title: normalizeSportsEventTitle(colonNumbered[3].trim().replace(/\s+-\s+/, " & ")),
+      title: normalizeSportsEventTitle(colonNumbered[3].trim().replace(/\s+-\s+/, " v ")),
       channels: [`${colonNumbered[1].trim()} ${colonNumbered[2]}`],
     };
   }
