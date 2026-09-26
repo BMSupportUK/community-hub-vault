@@ -1037,7 +1037,7 @@ function SportsGuidesPage() {
                       </button>
                     )}
                   </h3>
-                  {user && blogs.some(isUnread) && (
+                  {user && listingBlogs.some(isUnread) && (
                     <button
                       onClick={async () => {
                         const unread = blogs.filter(isUnread);
