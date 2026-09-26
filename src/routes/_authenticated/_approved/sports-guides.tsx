@@ -497,7 +497,13 @@ function SportsGuidesPage() {
     const q = activeSearch;
     return listingBlogs.filter((b) => {
       if (!q && activeCat && b.category_id !== activeCat) return false;
-      if (!q && activeCat && subsByCat[activeCat]?.length && subFilter && b.subcategory !== subFilter) return false;
+      // Guides with no (or an unknown) sub-section show under every sub-section
+      // so a new guide saved without one never vanishes from its category.
+      if (
+        !q && activeCat && subsByCat[activeCat]?.length && subFilter &&
+        b.subcategory !== subFilter &&
+        subsByCat[activeCat].some((s) => s.name === b.subcategory)
+      ) return false;
       if (!q) return true;
       // Events only — guide titles/descriptions are not searched.
       return matchesGuideSearch(guideSearchText(b.body), q);
