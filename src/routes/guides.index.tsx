@@ -119,9 +119,27 @@ function PublicGuidesPage() {
     }
     return m;
   }, [categories]);
+  // The server only returns guides holding at least one real timed event,
+  // so every guide here counts as having listings.
+  const listingBlogs = guides;
+
+  const counts = useMemo(() => {
+    const m: Record<string, number> = {};
+    const parentOf = new Map(
+      categories.map((c) => [c.id, c.parent_id ?? null] as const),
+    );
+    for (const g of listingBlogs) {
+      m[g.category_id] = (m[g.category_id] ?? 0) + 1;
+      // Roll child-category guides up to the top-level badge.
+      const parent = parentOf.get(g.category_id);
+      if (parent) m[parent] = (m[parent] ?? 0) + 1;
+    }
+    return m;
+  }, [listingBlogs, categories]);
+
   const topCategories = useMemo(
-    () => categories.filter((c) => !c.parent_id),
-    [categories],
+    () => categories.filter((c) => !c.parent_id && (counts[c.id] ?? 0) > 0),
+    [categories, counts],
   );
   const subsByCat = useMemo(() => {
     const m: Record<string, typeof subcategories> = {};
@@ -132,23 +150,9 @@ function PublicGuidesPage() {
     return m;
   }, [subcategories]);
 
-  const counts = useMemo(() => {
-    const m: Record<string, number> = {};
-    const parentOf = new Map(
-      categories.map((c) => [c.id, c.parent_id ?? null] as const),
-    );
-    for (const g of guides) {
-      m[g.category_id] = (m[g.category_id] ?? 0) + 1;
-      // Roll child-category guides up to the top-level badge.
-      const parent = parentOf.get(g.category_id);
-      if (parent) m[parent] = (m[parent] ?? 0) + 1;
-    }
-    return m;
-  }, [guides, categories]);
-
   const unreadCounts = useMemo(() => {
     const direct: Record<string, number> = {};
-    for (const guide of guides) {
+    for (const guide of listingBlogs) {
       if (isUnread(guide)) direct[guide.category_id] = (direct[guide.category_id] ?? 0) + 1;
     }
     const kids: Record<string, string[]> = {};
@@ -169,7 +173,14 @@ function PublicGuidesPage() {
     };
     for (const category of categories) walk(category.id, new Set());
     return totals;
-  }, [guides, categories, publicReads]);
+  }, [listingBlogs, categories, publicReads]);
+
+  // Categories and sub-categories only appear when they hold a guide with
+  // listings, mirroring the signed-in sports guide.
+  const visibleCategories = useMemo(
+    () => categories.filter((c) => (counts[c.id] ?? 0) > 0),
+    [categories, counts],
+  );
 
   const activeCategory = categories.find((c) => c.id === activeCat);
 
@@ -194,7 +205,7 @@ function PublicGuidesPage() {
     const list = subsByCat[activeCat] ?? [];
     if (!list.length) { setSubFilter(null); return; }
     const hasGuides = (name: string) =>
-      guides.some((g) => g.category_id === activeCat && g.subcategory === name);
+      listingBlogs.some((g) => g.category_id === activeCat && g.subcategory === name);
     const def = list.find((s) => s.is_default);
     // Prefer the default sub, but fall back to the first sub that actually
     // has public guides so visitors never land on an empty list.
@@ -214,13 +225,13 @@ function PublicGuidesPage() {
 
   const filtered = useMemo(
     () =>
-      guides.filter((g) => {
+      listingBlogs.filter((g) => {
         if (!activeCat || g.category_id !== activeCat) return false;
         if (subsByCat[activeCat]?.length && subFilter && g.subcategory !== subFilter)
           return false;
         return true;
       }),
-    [guides, activeCat, subFilter, subsByCat],
+    [listingBlogs, activeCat, subFilter, subsByCat],
   );
 
   const renderGuideCard = (g: PublicGuideSummary) => (
@@ -308,7 +319,9 @@ function PublicGuidesPage() {
       </div>
       <div className={subDialogFor ? "hidden" : "space-y-1"}>
         {topCategories.map((top) => {
-          const kids = childrenByParent[top.id] ?? [];
+          const kids = (childrenByParent[top.id] ?? []).filter(
+            (k) => (counts[k.id] ?? 0) > 0,
+          );
           const heading = kids.length > 0;
           const open = openGroups.includes(top.id);
           const renderRow = (c: PublicGuideCategory) => {
@@ -374,7 +387,9 @@ function PublicGuidesPage() {
         <div>
           {(() => {
             const parent = categories.find((c) => c.id === subDialogFor);
-            const children = childrenByParent[subDialogFor ?? ""] ?? [];
+            const children = (childrenByParent[subDialogFor ?? ""] ?? []).filter(
+              (c) => (counts[c.id] ?? 0) > 0,
+            );
             const guideSubcategories = subsByCat[subDialogFor ?? ""] ?? [];
             const grandParent = parent?.parent_id
               ? categories.find((c) => c.id === parent.parent_id)
@@ -588,11 +603,12 @@ function PublicGuidesPage() {
                 {(subsByCat[activeCategory.id]?.length ?? 0) > 0 && (
                   <div className="mb-4 flex flex-wrap gap-2">
                     {(subsByCat[activeCategory.id] ?? []).map((sub) => {
-                      const count = guides.filter(
+                      const count = listingBlogs.filter(
                         (g) => g.category_id === activeCategory.id && g.subcategory === sub.name,
                       ).length;
+                      if (count === 0) return null;
                       const active = subFilter === sub.name;
-                      const unread = guides.filter(
+                      const unread = listingBlogs.filter(
                         (g) => g.category_id === activeCategory.id && g.subcategory === sub.name && isUnread(g),
                       ).length;
                       return (

@@ -3,6 +3,7 @@ import {
   parseSportsListingBlock,
   isLikelyChannelLabel,
 } from "@/lib/sports-listing-format";
+import { findEarliestEventUtcMs } from "@/lib/parse-event-times";
 
 /**
  * Public, unauthenticated reads of PUBLISHED sports guides for the
@@ -178,6 +179,10 @@ export const listPublicGuides = createServerFn({ method: "POST" }).handler(
     const guides = (blogs ?? [])
       .filter((b) => hasRealContent(b.body))
       .filter((b) => !guideIsExpired(b.body ?? ""))
+      // Only guides holding at least one real timed event count as having
+      // listings — notice-only bodies stay off the public pages, matching
+      // the signed-in sports guide.
+      .filter((b) => findEarliestEventUtcMs(b.body ?? "") !== null)
       .map((b) => ({
         id: b.id,
         title: b.title,
