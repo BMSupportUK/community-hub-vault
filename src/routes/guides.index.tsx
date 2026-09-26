@@ -506,7 +506,7 @@ function PublicGuidesPage() {
 
   return (
     <div
-      className="flex min-h-screen flex-col bg-background/90 bg-cover bg-center bg-fixed bg-blend-multiply text-foreground"
+      className="flex min-h-screen flex-col bg-background/90 bg-cover bg-center bg-blend-multiply text-foreground"
       style={{ backgroundImage: `url(${sportsBg})` }}
     >
       <LandingHeader />
