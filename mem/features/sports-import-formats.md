@@ -16,6 +16,7 @@ Before claiming an import fix, verify the parser with Bun against the real post 
 - Channel-first pipe style: `Rugby Pass 01 | Ultimate Sevens Rugby - London Grand Final 17:30` → channel before `|`, event after, trailing clock is the time. `VIP | Provider` lines are headings, not events.
 - Game Pass colon style: `US | NFL Sunday Ticket` is a heading only. `NFL01: Falcons @ Packers 01:15` means event `Falcons & Packers`, channel `NFL 01`, and time `01:15`; never use the heading as the event name.
 Every new format: add it here, Bun-test raw AND round-trip, then repair the draft — never make the user report it twice.
+- Permanent competition safeguard: an explicit post heading must match the selected guide before saving. A combined post containing a different competition heading is blocked, and section headings are never appended to the preceding event's channel list.
 - Provider `start:` stamps are already UK wall-clock time — never add the BST hour.
 - Setanta colon style: `Setanta: 1: Panathinaikos - Paris start:...` → channel `Setanta 1`, event `Panathinaikos & Paris`.
 - Flosports (Flo College / Flo Racing) `Event @ Sep 24 12:00 PM :Flo College 01` times are US Eastern; convert to UK automatically.

@@ -261,6 +261,63 @@ export function normalizeSportsEventTitle(value: string): string {
     .trim();
 }
 
+/**
+ * Read an explicit Discord post heading without guessing from an ordinary
+ * all-caps fixture or channel line. This is used to stop one competition from
+ * being saved into another competition's existing guide.
+ */
+function sportsListingHeadings(raw: string | null | undefined): string[] {
+  if (!raw) return [];
+  const headings: string[] = [];
+  for (const rawLine of decodeListingEntities(raw).split("\n")) {
+    const trimmed = rawLine.trim();
+    const markdownHeading = trimmed.match(/^#{1,6}\s*(.+?)\s*$/)?.[1];
+    const boldHeading = trimmed.match(/^\*\*#{1,6}\s*(.+?)\*\*$/)?.[1];
+    const heading = cleanLine(markdownHeading ?? boldHeading ?? "");
+    if (
+      heading &&
+      !isDateLine(heading) &&
+      !parseClockTime(heading) &&
+      !/\s(?:&|v|vs|v\.|x)\s/i.test(heading) &&
+      !isLikelyChannelLabel(heading)
+    ) headings.push(heading);
+  }
+  return unique(headings);
+}
+
+export function sportsListingHeading(raw: string | null | undefined): string | null {
+  return sportsListingHeadings(raw)[0] ?? null;
+}
+
+function normalizedGuideIdentity(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/\b(?:channels?|streams?|listings?|fixtures?|schedule)\b/g, " ")
+    .replace(/[^a-z0-9+]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * Only explicit, specific headings are enforced. Broad headings such as
+ * "Football" can legitimately be filed into a narrower guide.
+ */
+export function listingHeadingMatchesGuide(raw: string | null | undefined, guideTitle: string | null | undefined): boolean {
+  return mismatchedSportsListingHeading(raw, guideTitle) === null;
+}
+
+export function mismatchedSportsListingHeading(raw: string | null | undefined, guideTitle: string | null | undefined): string | null {
+  const target = normalizedGuideIdentity(guideTitle ?? "");
+  if (!target) return null;
+  for (const heading of sportsListingHeadings(raw)) {
+    const source = normalizedGuideIdentity(heading);
+    if (!source || source.split(" ").length < 2) continue;
+    if (/^(?:todays? live events?|live sports?|football|sport|sports)$/.test(source)) continue;
+    if (source !== target && !source.includes(target) && !target.includes(source)) return heading;
+  }
+  return null;
+}
+
 export function isLikelyChannelLabel(value: string): boolean {
   const text = value.replace(/\s+/g, " ").trim();
   if (!text || text.length > 70) return false;
@@ -631,6 +688,7 @@ function isSectionHeading(rawLine: string): boolean {
   const text = cleanLine(trimmed);
   if (!text || text.length > 48) return false;
   if (text.includes("//")) return false;
+  if (/\s(?:&|v|vs|v\.|x)\s/i.test(text)) return false;
   if (/\d{1,2}\s*[:.]\s*\d{2}/.test(text)) return false;
   if (isDateLine(text) || listingDateFromLine(text)) return false;
   if (detectEvent(text, null)) return false;
@@ -668,6 +726,7 @@ export function splitListingSections(raw: string | null | undefined): ListingSec
 
 export function parseSportsListingBlock(raw: string | null | undefined): SportsListingEvent[] {
   if (!raw) return [];
+  const explicitHeadings = new Set(sportsListingHeadings(raw).map((heading) => heading.toLowerCase()));
   const lines = decodeListingEntities(raw)
     .replace(/<br\s*\/?\s*>/gi, "\n")
     .replace(/<\/div>/gi, "\n")
@@ -782,6 +841,15 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
     }
     if (isAlwaysNoiseLine(line)) continue;
     if (isNoiseLine(line) && !current) continue;
+    // A new competition/provider heading ends the preceding event. Never let
+    // headings such as "UEFA NATIONS LEAGUE" become channels on the event
+    // above them when Discord posts are pasted or combined.
+    if (explicitHeadings.has(line.toLowerCase())) {
+      flush();
+      previousPlainLine = null;
+      lastChannelWasPlain = null;
+      continue;
+    }
 
     const detected = detectEvent(line, currentDate);
     if (detected) {

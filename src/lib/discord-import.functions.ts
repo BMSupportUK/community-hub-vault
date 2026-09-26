@@ -12,6 +12,8 @@ import {
   splitListingSections,
   headlineListingDate,
   listingBlockHasDate,
+  listingHeadingMatchesGuide,
+  mismatchedSportsListingHeading,
 } from "./sports-listing-format";
 
 const STAFF_ROLES = ["admin", "management", "moderator"] as const;
@@ -175,7 +177,9 @@ async function splitWithAI(text: string): Promise<ParsedEvent[]> {
 
 function routeEvents(events: ParsedEvent[]): RoutedEvent[] {
   return events.map((ev) => {
-    const haystack = `${ev.title} ${ev.channels.join(" ")}`;
+    // Competition routing comes from the event/source text, never channel
+    // labels: a broadcaster line can be adjacent to a different competition.
+    const haystack = `${ev.title} ${ev.raw}`;
     const m = routeEvent(haystack);
     return {
       ...ev,
@@ -705,15 +709,23 @@ export const resolveQueueItem = createServerFn({ method: "POST" })
       const ev: any = { ...((item.parsed_event ?? {}) as Record<string, unknown>) };
       if (data.time !== undefined) ev.time = data.time;
       const title = data.title ?? ev.title ?? "Untitled";
+      const raw = String(ev.raw ?? "");
+      if (!listingHeadingMatchesGuide(raw, title)) {
+        const heading = mismatchedSportsListingHeading(raw, title);
+        throw new Error(`This post is headed “${heading ?? "another competition"}” and cannot be imported into “${title}”. Pick the matching guide.`);
+      }
       if (data.guideId) {
         const { data: guide, error: guideErr } = await supabaseAdmin
           .from("sports_blogs")
-          .select("id, category_id, body, title")
+          .select("id, category_id, subcategory, body, title")
           .eq("id", data.guideId)
           .eq("category_id", (cat as any).id)
           .maybeSingle();
         if (guideErr) throw new Error(guideErr.message);
         if (!guide) throw new Error("That guide is not in the selected category");
+        if (data.subcategory !== undefined && (guide.subcategory ?? null) !== (data.subcategory ?? null)) {
+          throw new Error("That guide is not in the selected sub category. Pick the matching guide.");
+        }
         const existingBody = String((guide as any).body ?? "").trim();
         const importedBody = buildBody(ev, data.sourceZone ?? null, guide.title);
         const sortedBody = mergeSportsListingBlocks(existingBody, importedBody, {
