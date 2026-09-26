@@ -548,6 +548,20 @@ function detectEvent(line: string, date: string | null): SportsListingEvent | nu
     };
   }
 
+  // "National League 1 - Aldershot vs. Tamworth (3:00 PM)" — channel, dash,
+  // fixture, bracketed UK kick-off.
+  const dashBracket = line.match(
+    /^([A-Za-z][A-Za-z0-9+&.' ]{0,40}?\s\d{1,3})\s+[-–—]\s+(.+?)\s*\(\s*(\d{1,2}(?:[:.]\d{2})?\s*[ap]\.?m\.?|\d{1,2}[:.]\d{2})\s*\)\s*$/i,
+  );
+  if (dashBracket && /\bvs?\.?\s|\s[x@]\s/i.test(dashBracket[2] + " ")) {
+    return {
+      date,
+      time: normalizeTime(dashBracket[3].replace(".", ":").replace(/\s+/g, "")),
+      title: normalizeSportsEventTitle(dashBracket[2].trim()),
+      channels: [dashBracket[1].trim().replace(/\s+/g, " ")],
+    };
+  }
+
   // "UEFA 01 | 17:00 Andorra vs Malta" — channel, pipe, clock, event.
   const piped = line.match(/^([A-Za-z][A-Za-z0-9+&.' -]{0,30}?\s*\d{1,3})\s*\|\s*(\d{1,2}[:.]\d{2}(?:\s*[ap]m)?)\s+(.+)$/i);
   if (piped && piped[1] && piped[2] && piped[3]) {
