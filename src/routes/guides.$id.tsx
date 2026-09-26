@@ -19,9 +19,7 @@ export const Route = createFileRoute("/guides/$id")({
     const title = loaderData
       ? `${loaderData.title} | Sports Guide | BM Support`
       : "Sports Guide | BM Support";
-    const description =
-      loaderData?.excerpt ??
-      "Fixture dates and start times from BM Support. Members see full channel listings inside the app.";
+    const description = "Fixture dates and start times from BM Support. Members see full channel listings inside the app.";
     const imageUrl = loaderData?.image_url;
     const socialImageMeta = imageUrl && /^https:\/\//i.test(imageUrl)
       ? [
@@ -107,9 +105,6 @@ function PublicGuidePage() {
           <h1 className="mt-2 font-display text-3xl font-bold sm:text-4xl bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 bg-clip-text text-transparent">
             {guide.title}
           </h1>
-          {guide.excerpt && (
-            <p className="mt-3 text-purple-200/80">{guide.excerpt}</p>
-          )}
           <p className="mt-2 flex items-center gap-1.5 text-xs text-purple-300/70">
             <CalendarDays className="h-3.5 w-3.5" />
             Last updated{" "}
@@ -144,16 +139,6 @@ function PublicGuidePage() {
               <div className="hidden w-[468px] shrink-0 items-center xl:flex">
                 <AdSenseSlot slot="home" />
               </div>
-            </div>
-          )}
-
-          {guide.notes.length > 0 && (
-            <div className="mt-8 space-y-2">
-              {guide.notes.map((note, i) => (
-                <p key={i} className="text-sm text-purple-200/70">
-                  {note}
-                </p>
-              ))}
             </div>
           )}
 

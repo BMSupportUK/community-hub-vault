@@ -8,6 +8,7 @@ import {
   parseSportsListingBlock,
   type SportsListingEvent,
 } from "./sports-listing-format";
+import { safePublicEventTitle } from "./public-guide-safety";
 
 export type ImportCheckIssue = {
   level: "error" | "warning";
@@ -81,6 +82,7 @@ export function checkSportsImport(
   const noChannel: number[] = [];
   const channelAsTitle: number[] = [];
   const junkTitle: number[] = [];
+  const leakedChannelTitle: number[] = [];
   const stale: number[] = [];
   const seen = new Map<string, number>();
   const dupes: number[] = [];
@@ -93,6 +95,7 @@ export function checkSportsImport(
     const title = (e.title ?? "").trim();
     if (!e.time?.trim()) noTime.push(n);
     if (!e.channels?.length) noChannel.push(n);
+    if (!safePublicEventTitle(e)) leakedChannelTitle.push(n);
     // Only a real swap when the listed channel doesn't itself look like a
     // channel — e.g. "Fubo Sports 1 | Fubo Sports News" is a show name.
     if (
@@ -119,6 +122,7 @@ export function checkSportsImport(
   add("error", "Missing a start time", noTime, "time");
   add("error", "Event name looks like a channel (title and channel may be swapped)", channelAsTitle, "title");
   add("error", "Event name or channel looks like leftover post text", [...new Set(junkTitle)], "title");
+  add("error", "A channel label was read as an event name — correct it before importing", leakedChannelTitle, "title");
   add("warning", "No channel listed", noChannel, "channel");
   add("warning", "Listed twice", dupes);
   add("warning", "Started more than 10 hours ago — will be cleared automatically", stale);

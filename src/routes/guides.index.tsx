@@ -303,9 +303,6 @@ function PublicGuidesPage() {
             })}
           </time>
         </div>
-        {g.excerpt && (
-          <p className="text-sm text-purple-200/70 line-clamp-2">{g.excerpt}</p>
-        )}
         <div className="mt-auto pt-3">
           <Link
             to="/guides/$id"
