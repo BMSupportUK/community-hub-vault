@@ -1220,10 +1220,9 @@ function TicketDetail({
   }, [ticket.order_id]);
 
   const orderIsUnpaid = !!linkedOrder && !linkedOrder.paid_at && linkedOrder.status !== "cancelled" && linkedOrder.status !== "refunded" && linkedOrder.status !== "completed";
-  const accountSetupMessageExists = messages.some((m) => (m.content ?? "").startsWith("🛠️"));
   const extendSubMessageExists = messages.some((m) => (m.content ?? "").startsWith("🔄"));
   const accountSetupDoneExists = messages.some((m) => (m.content ?? "").startsWith("🟢"));
-  const accountSetupStarted = accountSetupMessageExists || extendSubMessageExists;
+  const accountSetupStarted = accountSetupDoneExists || extendSubMessageExists;
 
 
   const postTicketSystem = async (content: string) => {
@@ -1253,20 +1252,6 @@ function TicketDetail({
       toast.success("Bank transfer confirmed");
     } catch (e: any) {
       toast.error(e?.message ?? "Could not confirm payment");
-    } finally { setOrderBusy(false); }
-  };
-
-  const orderSettingUpAccount = async () => {
-    if (!linkedOrder || orderBusy) return;
-    if (linkedOrder.status === "completed" || linkedOrder.completed_at) {
-      toast.error("This order is completed and cannot be changed.");
-      return;
-    }
-    setOrderBusy(true);
-    try {
-      await postTicketSystem(await getAutomatedMessage("order_setting_up_account"));
-
-      toast.success("Customer notified");
     } finally { setOrderBusy(false); }
   };
 
@@ -1879,20 +1864,6 @@ function TicketDetail({
               ) : (
                 <>
                   <button
-                    onClick={orderSettingUpAccount}
-                    disabled={orderBusy || !linkedOrder.paid_at || accountSetupMessageExists}
-                    title={
-                      !linkedOrder.paid_at
-                        ? "Waiting for payment confirmation"
-                        : accountSetupMessageExists
-                          ? "Account setup already sent"
-                          : undefined
-                    }
-                    className="px-2.5 py-1 rounded-md bg-blue-500/20 text-blue-50 text-xs font-medium hover:bg-blue-500/30 disabled:opacity-40 disabled:cursor-not-allowed"
-                  >
-                    🛠️ Setting Up Account
-                  </button>
-                  <button
                     onClick={orderAccountSetupDone}
                     disabled={orderBusy || !linkedOrder.paid_at || accountSetupDoneExists}
                     title={
@@ -2150,7 +2121,7 @@ function TicketDetail({
       />
 
       <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-3 sm:px-5 py-3 sm:py-4">
-        {messages.map((m) => {
+        {messages.filter((m) => !(m.content ?? "").startsWith("🛠️ We are currently setting up your account.")).map((m) => {
           const name = senderName(m.sender_id);
           const meta = senderMeta[m.sender_id];
           const role = chatRoleFlashMap.get(m.sender_id);
