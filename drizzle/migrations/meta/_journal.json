@@ -134,6 +134,13 @@
       "when": 1790364830968,
       "tag": "0018_claim_invite_access",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1790395081918,
+      "tag": "0019_public_sports_guides_anon_read",
+      "breakpoints": true
     }
   ]
 }
