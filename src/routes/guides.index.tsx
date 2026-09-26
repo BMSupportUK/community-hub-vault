@@ -340,20 +340,18 @@ function PublicGuidesPage() {
               >
                 <button
                   onClick={() => chooseCategory(c.id)}
-                  className="flex-1 flex items-center justify-between px-2 py-2 text-sm text-left"
+                  className="flex-1 flex flex-col items-start px-2 py-2 text-sm text-left"
                 >
                   <span>{c.name}</span>
-                   {(unreadCounts[c.id] ?? 0) > 0 && (
-                     <span className="inline-flex items-center gap-1 rounded-full bg-fuchsia-500 px-2 py-0.5 text-xs font-semibold text-white">
-                       <span className="size-1.5 rounded-full bg-fuchsia-100" />
-                       {unreadCounts[c.id]}
-                     </span>
-                   )}
-                  {(counts[c.id] ?? 0) > 0 && (
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-purple-800/70 text-purple-100 font-semibold">
-                      {counts[c.id]}
-                    </span>
-                  )}
+                  <span className={`mt-0.5 text-[11px] ${active ? "text-white/80" : "text-purple-200/60"}`}>
+                    {counts[c.id] ?? 0} {(counts[c.id] ?? 0) === 1 ? "guide" : "guides"}
+                    {(unreadCounts[c.id] ?? 0) > 0 && (
+                      <span className={`ml-1.5 inline-flex items-center gap-1 font-semibold ${active ? "text-white" : "text-fuchsia-300"}`}>
+                        · <span className="size-1.5 rounded-full bg-fuchsia-400" />
+                        {unreadCounts[c.id]} unread
+                      </span>
+                    )}
+                  </span>
                 </button>
               </div>
             );
@@ -369,20 +367,18 @@ function PublicGuidesPage() {
                 <button
                   onClick={() => openHeading(top.id)}
                   aria-expanded={open}
-                  className="flex-1 flex items-center justify-between px-2 py-2 text-sm text-left font-semibold"
+                  className="flex-1 flex flex-col items-start px-2 py-2 text-sm text-left font-semibold"
                 >
                   <span>{top.name}</span>
-                   {(unreadCounts[top.id] ?? 0) > 0 && (
-                     <span className="inline-flex items-center gap-1 rounded-full bg-fuchsia-500 px-2 py-0.5 text-xs font-semibold text-white">
-                       <span className="size-1.5 rounded-full bg-fuchsia-100" />
-                       {unreadCounts[top.id]}
-                     </span>
-                   )}
-                  {(counts[top.id] ?? 0) > 0 && (
-                    <span className="text-xs px-2 py-0.5 rounded-full bg-purple-800/70 text-purple-100 font-semibold">
-                      {counts[top.id]}
-                    </span>
-                  )}
+                  <span className={`mt-0.5 text-[11px] font-normal ${open ? "text-white/80" : "text-purple-200/60"}`}>
+                    {counts[top.id] ?? 0} {(counts[top.id] ?? 0) === 1 ? "guide" : "guides"}
+                    {(unreadCounts[top.id] ?? 0) > 0 && (
+                      <span className={`ml-1.5 inline-flex items-center gap-1 font-semibold ${open ? "text-white" : "text-fuchsia-300"}`}>
+                        · <span className="size-1.5 rounded-full bg-fuchsia-400" />
+                        {unreadCounts[top.id]} unread
+                      </span>
+                    )}
+                  </span>
                 </button>
               </div>
             </div>
