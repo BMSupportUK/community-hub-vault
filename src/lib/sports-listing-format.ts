@@ -1292,12 +1292,15 @@ export function dedupeSportsListingHtml(html: string | null | undefined): string
   const events = parseSportsListingBlock(html);
   if (!events.length) return null;
   const kept = dedupeSportsListingEvents(events);
-  if (kept.length === events.length) return null;
-  const roundTrip = plainListingToHtml(
-    formatSportsListingEvents(sortSportsListingEvents(events), { channels: [] }),
-  );
-  if (normalizeListingBody(roundTrip) !== normalizeListingBody(html)) return null;
-  return plainListingToHtml(formatSportsListingEvents(sortSportsListingEvents(kept), { channels: [] }));
+  const rebuilt = plainListingToHtml(formatSportsListingEvents(sortSportsListingEvents(kept), { channels: [] }));
+  const before = normalizeListingBody(html);
+  const after = normalizeListingBody(rebuilt);
+  if (before === after) return null;
+  // Only rewrite when every original line survives, i.e. the sole change is
+  // dropped repeats — never lose staff-written notes or headings.
+  const keptLines = new Set(after.split("\n"));
+  if (!before.split("\n").every((line) => keptLines.has(line))) return null;
+  return rebuilt;
 }
 
 export function escapeListingHtml(value: string): string {
