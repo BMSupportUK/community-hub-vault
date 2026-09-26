@@ -323,7 +323,9 @@ function PublicGuidesPage() {
       </div>
       <div className={subDialogFor ? "hidden" : "space-y-1"}>
         {topCategories.map((top) => {
-          const kids = childrenByParent[top.id] ?? [];
+          const kids = (childrenByParent[top.id] ?? []).filter(
+            (k) => (counts[k.id] ?? 0) > 0,
+          );
           const heading = kids.length > 0;
           const open = openGroups.includes(top.id);
           const renderRow = (c: PublicGuideCategory) => {
