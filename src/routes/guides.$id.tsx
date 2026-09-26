@@ -95,10 +95,13 @@ function PublicGuidePage() {
           <p className="mt-2 flex items-center gap-1.5 text-xs text-purple-300/70">
             <CalendarDays className="h-3.5 w-3.5" />
             Last updated{" "}
-            {new Date(guide.updated_at ?? guide.created_at).toLocaleDateString("en-GB", {
+            {new Date(guide.updated_at ?? guide.created_at).toLocaleString("en-GB", {
               day: "numeric",
               month: "long",
               year: "numeric",
+              hour: "numeric",
+              minute: "2-digit",
+              hour12: true,
             })}
           </p>
 
