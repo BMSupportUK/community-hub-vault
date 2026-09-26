@@ -48,3 +48,6 @@ Source: "ˢ ᴾ ᶠ ᴸ Cup 01 | 20:00 Queen of the South vs Rangers II" (channe
 
 ## UFC Streams multi-slot post (permanent)
 Source: "**UFC Fight Night: A vs. B**" / "`10pm | 11pm | 1am UK`" / "UFC 01" / "UFC 02" / "UFC 03". Each time pairs with the channel in the same position → three separate rows (22:00 UFC 01, 23:00 UFC 02, 01:00 next day UFC 03). After-midnight am slots roll to the next day.
+
+## Rugby Pass multi-channel post (permanent)
+Source: "Rugby Pass 01 | Lions v Leinster 12:00" rows, with bare continuation rows like "Stade Francais v Lyon 15:30" under a channel row. Each "Channel NN | Event HH:MM" row splits into time / event / channel; every bare "Event HH:MM" continuation row inherits the channel of the row above it, so each fixture keeps its own channel (e.g. Rugby Pass 02 gets Perpignan v Bordeaux Begles, Stade Francais v Lyon and Zebre v Bulls). Only applies when the post contains channel-pipe rows.

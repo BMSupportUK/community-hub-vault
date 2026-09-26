@@ -789,6 +789,15 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
   if (!raw) return [];
   raw = expandMultiSlotChannelPost(raw);
   const explicitHeadings = new Set(sportsListingHeadings(raw).map((heading) => heading.toLowerCase()));
+  // Rugby Pass style: "Channel NN | Event HH:MM" rows, optionally with bare
+  // "Event HH:MM" continuation rows that belong to the channel above them.
+  const hasChannelPipeRows = raw
+    .split("\n")
+    .some((l) =>
+      new RegExp(String.raw`^[A-Za-z][A-Za-z+&' ]*?\s\d{1,3}(?:\s*HD)?\s*\|\s*.+?\s+(?:${TIME_SOURCE})\s*$`, "i").test(
+        l.replace(/[*`#]/g, "").trim(),
+      ),
+    );
   const lines = decodeListingEntities(raw)
     .replace(/<br\s*\/?\s*>/gi, "\n")
     .replace(/<\/div>/gi, "\n")
@@ -825,6 +834,25 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
       return m ? `${m[1].toUpperCase()} ${m[2].trim()}` : line;
     })
     .filter((line, i, arr) => !(i > 0 && line === arr[i - 1] && /\s\d{1,3}(?:\s*HD)?$/i.test(line)));
+  // Rugby Pass continuation rows: a bare "Event HH:MM" line under a
+  // "Channel NN | ..." row belongs to that same channel — attach it so each
+  // fixture keeps its channel instead of swallowing the next one.
+  if (hasChannelPipeRows) {
+    let lastChannel: string | null = null;
+    for (let i = 0; i < lines.length; i++) {
+      const ch = lines[i].match(/^([A-Za-z][A-Za-z+&' ]*?\s\d{1,3}(?:\s*HD)?)$/);
+      if (ch) {
+        lastChannel = ch[1].trim();
+        continue;
+      }
+      if (!lastChannel) continue;
+      const m = lines[i].match(new RegExp(String.raw`^(.+?\b(?:v|vs)\b.+?)\s+(${TIME_SOURCE})$`, "i"));
+      if (m) {
+        lines.splice(i, 1, m[2], m[1].trim(), lastChannel);
+        i += 2;
+      }
+    }
+  }
   // NHL Center Ice: "NHL | 01 - 7pm ET | 12am UK" then the fixture on the
   // next line. Use the stated UK time as-is (never convert ET), channel
   // becomes "NHL 01". The "US | NHL Center Ice" header is not an event.
