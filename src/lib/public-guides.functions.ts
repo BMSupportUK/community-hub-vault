@@ -86,6 +86,7 @@ export interface PublicGuideDetail {
   title: string;
   excerpt: string | null;
   created_at: string;
+  updated_at: string | null;
   category: string;
   /** Structured listings — date, time and event name ONLY. */
   events: PublicGuideEvent[];

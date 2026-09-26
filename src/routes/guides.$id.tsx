@@ -94,8 +94,8 @@ function PublicGuidePage() {
           )}
           <p className="mt-2 flex items-center gap-1.5 text-xs text-purple-300/70">
             <CalendarDays className="h-3.5 w-3.5" />
-            Published{" "}
-            {new Date(guide.created_at).toLocaleDateString("en-GB", {
+            Last updated{" "}
+            {new Date(guide.updated_at ?? guide.created_at).toLocaleDateString("en-GB", {
               day: "numeric",
               month: "long",
               year: "numeric",
