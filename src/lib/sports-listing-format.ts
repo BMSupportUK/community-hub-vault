@@ -258,14 +258,15 @@ function normalizeChannels(channels: string[]): string[] {
 }
 
 export function normalizeSportsEventTitle(value: string): string {
-  return value
+  const text = value
     .replace(/\s+/g, " ")
     // "Morning News Now ISO 2 V 9.25.26" — a V before a date is a feed tag,
     // not "versus".
     .replace(/\s+(?:x|vs\.?|v\.?|@)\s+(?!\d{1,2}[./-]\d{1,2}[./-]\d{2,4}\b)/gi, " v ")
-    // A spaced ampersand in a fixture is a matchup, never the displayed separator.
-    .replace(/\s+&\s+/g, " v ")
     .trim();
+  // A spaced ampersand is the matchup only when no other separator exists —
+  // "London City v Brighton & Hove Albion" keeps the club's own "&".
+  return / v /.test(text) ? text : text.replace(/\s+&\s+/g, " v ");
 }
 
 /**
