@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { LandingHeader } from "@/components/LandingHeader";
 import {
   listPublicGuides,
@@ -440,6 +440,27 @@ function PublicGuidesPage() {
                     Guides
                   </h2>
                 </div>
+                {(subsByCat[activeCategory.id]?.length ?? 0) > 0 && (
+                  <div className="mb-4 flex flex-wrap gap-2">
+                    {(subsByCat[activeCategory.id] ?? []).map((sub) => {
+                      const count = guides.filter(
+                        (g) => g.category_id === activeCategory.id && g.subcategory === sub.name,
+                      ).length;
+                      const active = subFilter === sub.name;
+                      return (
+                        <button
+                          key={sub.id}
+                          type="button"
+                          onClick={() => setSubFilter(sub.name)}
+                          className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide transition-colors ${active ? "border-fuchsia-300 bg-fuchsia-600 text-white" : "border-purple-400/40 bg-purple-900/60 text-purple-100 hover:bg-purple-800/80"}`}
+                        >
+                          <span>{sub.name}</span>
+                          <span className="rounded-full bg-purple-950/70 px-1.5 py-0.5 text-[10px]">{count}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
                 {filtered.length === 0 ? (
                   <div className="rounded-2xl border border-dashed border-purple-500/40 p-12 text-center text-purple-200/70 bg-purple-950/30">
                     No guides in this category yet.
