@@ -268,7 +268,7 @@ export function normalizeSportsEventTitle(value: string): string {
     .replace(/\s+/g, " ")
     // "Morning News Now ISO 2 V 9.25.26" — a V before a date is a feed tag,
     // not "versus".
-    .replace(/\s+(?:x|vs\.?|v\.?|@)\s+(?!\d{1,2}[./-]\d{1,2}[./-]\d{2,4}\b)/gi, " v ")
+    .replace(/\s+(?:x|vs\.?|v\.?|@)\s+(?!\d{4}\b|\d{1,2}[./-]\d{1,2}[./-]\d{2,4}\b)/gi, " v ")
     .trim();
   // A spaced ampersand is the matchup only when no other separator exists —
   // "London City v Brighton & Hove Albion" keeps the club's own "&".
