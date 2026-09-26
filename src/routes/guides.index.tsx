@@ -121,8 +121,8 @@ function PublicGuidesPage() {
     return m;
   }, [categories]);
   const topCategories = useMemo(
-    () => categories.filter((c) => !c.parent_id),
-    [categories],
+    () => categories.filter((c) => !c.parent_id && (counts[c.id] ?? 0) > 0),
+    [categories, counts],
   );
   const subsByCat = useMemo(() => {
     const m: Record<string, typeof subcategories> = {};
