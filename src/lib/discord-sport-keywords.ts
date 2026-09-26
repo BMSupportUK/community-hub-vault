@@ -19,10 +19,10 @@ export const ROUTE_RULES: RouteRule[] = [
   { keywords: ["espn+", "espn plus", "sky sports pass", "tnt sports pass", "peacock pass", "dazn pass", "season pass", "sports pass"], category: "Sports Passes" },
 
   // ── UFC / MMA ─────────────────────────────────────────────────
-  { keywords: ["ufc", "mma", "bellator", " pfl"], category: "UFC" },
+  { keywords: ["ufc", "mma", "bellator", " pfl"], category: "Boxing, MMA & UFC" },
 
   // ── Boxing ────────────────────────────────────────────────────
-  { keywords: ["boxing", "matchroom", "queensberry", "fight night"], category: "Boxing" },
+  { keywords: ["boxing", "matchroom", "queensberry", "fight night"], category: "Boxing, MMA & UFC" },
 
   // ── Darts ─────────────────────────────────────────────────────
   { keywords: ["darts", "pdc"], category: "Darts" },
