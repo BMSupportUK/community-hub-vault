@@ -43,8 +43,10 @@ export const ADSTERRA_ZONES: Record<AdsterraZoneSize, AdsterraZone> = {
   "300x250": { id: "31421167", size: "300x250", width: 300, height: 250, key: "e754b4361a8e511e2ec376c4f8e5458e", host: "www.highrevenueformat.com" },
 };
 
-/** Share of page loads each slot gives to Adsterra when its zone is filled. */
-export const ADSTERRA_SHARE = 0.5;
+/** Share of page loads each slot gives to Adsterra when its zone is filled.
+ *  1 while AdSense is unapproved (Adsterra takes every slot); drop back to
+ *  0.5 when ADSENSE_APPROVED flips on and the two networks share again. */
+export const ADSTERRA_SHARE = 1;
 
 const ZONE_BY_SLOT: Record<AdsterraSlotKind, AdsterraZoneSize> = {
   topic: "468x60",

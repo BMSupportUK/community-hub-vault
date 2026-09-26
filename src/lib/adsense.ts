@@ -13,7 +13,13 @@ export const ADSENSE_HOME_SLOT = "1626759005";
 export const ADSENSE_TALK_SLOT = "8133272270";
 export const ADSENSE_WELCOME_SLOT = "6755403540";
 
+// AdSense stays OFF until the account is fully approved — flip this to true
+// once Google approves the site and the slots can go back to sharing space
+// with Adsterra.
+export const ADSENSE_APPROVED = false;
+
 export const ADSENSE_ENABLED =
+  ADSENSE_APPROVED &&
   ADSENSE_CLIENT_ID.length > 0 &&
   (ADSENSE_TOPIC_SLOT.length > 0 ||
     ADSENSE_SIDEBAR_SLOT.length > 0 ||
