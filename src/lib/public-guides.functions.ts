@@ -137,7 +137,9 @@ function guideIsExpired(html: string): boolean {
   return sawDate;
 }
 
-export const listPublicGuides = createServerFn({ method: "GET" }).handler(
+// POST prevents an intermediary from serving an old guide list while the
+// public page polls and listens for newly published guides.
+export const listPublicGuides = createServerFn({ method: "POST" }).handler(
   async (): Promise<PublicGuidesData> => {
     const supabase = await publicClient();
     const [
