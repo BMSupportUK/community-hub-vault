@@ -1,6 +1,7 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { LandingHeader } from "@/components/LandingHeader";
+import { BmSplash } from "@/components/app/BmSplash";
 import { getPublicGuide, type PublicGuideDetail } from "@/lib/public-guides.functions";
 import { Clock, CalendarDays, ArrowLeft } from "lucide-react";
 import sportsBgAsset from "@/assets/sports-bg.jpg.asset.json";
@@ -32,6 +33,8 @@ export const Route = createFileRoute("/guides/$id")({
     };
   },
   notFoundComponent: GuideNotFound,
+  pendingComponent: () => <BmSplash label="Loading guide…" />,
+  pendingMs: 0,
   component: PublicGuidePage,
 });
 
@@ -69,12 +72,16 @@ function PublicGuidePage() {
   }, [guide.id]);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="relative flex min-h-screen flex-col bg-background text-foreground" style={{ minHeight: "100dvh" }}>
+      <img
+        src={sportsBg}
+        alt=""
+        aria-hidden
+        className="pointer-events-none fixed inset-0 h-full w-full object-cover"
+      />
+      <div className="pointer-events-none fixed inset-0 bg-background/90" />
       <LandingHeader />
-      <div
-        className="relative bg-background/90 bg-cover bg-center bg-fixed bg-blend-multiply"
-        style={{ backgroundImage: `url(${sportsBg})` }}
-      >
+      <div className="relative flex-1">
         <main className="mx-auto w-full max-w-screen-2xl px-4 py-10 sm:px-8">
           <Link
             to="/guides"

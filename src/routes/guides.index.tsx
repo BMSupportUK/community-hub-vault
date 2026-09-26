@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { LandingHeader } from "@/components/LandingHeader";
+import { BmSplash } from "@/components/app/BmSplash";
 import {
   listPublicGuides,
   type PublicGuidesData,
@@ -46,6 +47,8 @@ export const Route = createFileRoute("/guides/")({
       { rel: "canonical", href: "https://bmsupport.uk/guides" },
     ],
   }),
+  pendingComponent: () => <BmSplash label="Loading sports guides…" />,
+  pendingMs: 0,
   component: PublicGuidesPage,
 });
 
@@ -502,12 +505,16 @@ function PublicGuidesPage() {
   );
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="relative flex min-h-screen flex-col bg-background text-foreground" style={{ minHeight: "100dvh" }}>
+      <img
+        src={sportsBg}
+        alt=""
+        aria-hidden
+        className="pointer-events-none fixed inset-0 h-full w-full object-cover"
+      />
+      <div className="pointer-events-none fixed inset-0 bg-background/90" />
       <LandingHeader />
-      <div
-        className="relative bg-background/90 bg-cover bg-center bg-fixed bg-blend-multiply"
-        style={{ backgroundImage: `url(${sportsBg})` }}
-      >
+      <div className="relative flex-1">
         <header className="relative px-4 sm:px-8 pt-8 pb-6 border-b border-purple-500/30 bg-purple-950/40 backdrop-blur">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="min-w-0">
