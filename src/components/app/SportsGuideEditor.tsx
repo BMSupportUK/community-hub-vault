@@ -504,7 +504,11 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
     try {
       localStorage.removeItem(editing.id ? editDraftKey(editing.id) : DRAFT_KEY);
     } catch { /* ignore */ }
-    toast.success(editing.id ? "Blog updated" : "Blog added");
+    toast.success(
+      payload.published
+        ? "Published — now visible on the public Sports Guide"
+        : "Saved as draft — not visible on the public Sports Guide",
+    );
     // Return to the saved guide's card (works for brand-new guides too).
     focusGuideCard(savedId);
     navigate({
@@ -538,7 +542,7 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
             <X className="size-4 mr-1" /> Cancel
           </Button>
           <Button onClick={save} disabled={saving || loading} className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0">
-            {saving ? "Saving…" : "Save"}
+            {saving ? "Saving…" : editing?.published ? "Publish guide" : "Save draft"}
           </Button>
         </div>
       </header>
@@ -700,7 +704,12 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
                 checked={editing.published}
                 onChange={(e) => setEditing({ ...editing, published: e.target.checked })}
               />
-              Published
+              <span>
+                Published
+                <span className="ml-2 text-xs text-purple-300/70">
+                  {editing.published ? "Public visitors can see this guide" : "Only staff can see this draft"}
+                </span>
+              </span>
             </label>
             <label className="flex items-center gap-2 text-sm text-purple-100">
               <input
