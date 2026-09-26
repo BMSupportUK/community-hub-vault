@@ -13,6 +13,7 @@ import AdSenseSlot from "@/components/app/AdSenseSlot";
 import { BackToTopButton } from "@/components/app/BackToTopButton";
 import { ArrowLeft, Home, ImageIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { findEarliestEventUtcMs } from "@/lib/parse-event-times";
 import sportsBgAsset from "@/assets/sports-bg.jpg.asset.json";
 const sportsBg = sportsBgAsset.url;
 const PUBLIC_GUIDE_READS_KEY = "bm-public-sports-guide-reads";
@@ -132,12 +133,19 @@ function PublicGuidesPage() {
     return m;
   }, [subcategories]);
 
+  // Only guides that hold at least one real timed event count as having
+  // listings — notice-only or empty bodies hide the card and its category.
+  const listingBlogs = useMemo(
+    () => guides.filter((g) => findEarliestEventUtcMs(g.body ?? "") !== null),
+    [guides],
+  );
+
   const counts = useMemo(() => {
     const m: Record<string, number> = {};
     const parentOf = new Map(
       categories.map((c) => [c.id, c.parent_id ?? null] as const),
     );
-    for (const g of guides) {
+    for (const g of listingBlogs) {
       m[g.category_id] = (m[g.category_id] ?? 0) + 1;
       // Roll child-category guides up to the top-level badge.
       const parent = parentOf.get(g.category_id);
