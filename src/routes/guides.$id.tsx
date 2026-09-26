@@ -75,7 +75,7 @@ function PublicGuidePage() {
         className="relative bg-background/90 bg-cover bg-center bg-fixed bg-blend-multiply"
         style={{ backgroundImage: `url(${sportsBg})` }}
       >
-        <main className="mx-auto w-full max-w-3xl px-4 py-10 sm:px-8">
+        <main className="mx-auto w-full max-w-screen-2xl px-4 py-10 sm:px-8">
           <Link
             to="/guides"
             className="inline-flex items-center gap-1.5 text-sm text-purple-200/80 hover:text-white"
@@ -112,7 +112,7 @@ function PublicGuidePage() {
             </div>
           )}
 
-          <ul className="mt-8 space-y-3">
+          <ul className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
             {guide.events.map((e, i) => (
               <li
                 key={i}
