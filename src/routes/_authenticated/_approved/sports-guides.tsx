@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef, useState, type DragEvent as ReactDragEvent 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { pruneStaleSportsGuides } from "@/lib/sports-guide-prune.functions";
+import { findEarliestEventUtcMs } from "@/lib/parse-event-times";
 import { Plus, Search, Pencil, Trash2, ImageIcon, GripVertical, X, ChevronDown, ChevronRight, ArrowUp, ArrowDown, ArrowLeft, Home } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -55,16 +56,10 @@ function guideSearchText(value: string | null | undefined) {
     .trim();
 }
 
-/**
- * A guide only counts as having listings when its body holds real text.
- * Markup-only bodies ("<br>", "<p></p>") are the 10h sweep's empty shells —
- * they have no events, so both the card and its category stay hidden.
- */
+/** A guide card and its category only appear when the body has a timed event. */
 function guideHasListings(body: string | null | undefined) {
   if (!body) return false;
-  const textarea = document.createElement("textarea");
-  textarea.innerHTML = body.replace(/<[^>]+>/g, " ");
-  return textarea.value.replace(/\u00a0/g, " ").trim().length > 0;
+  return findEarliestEventUtcMs(body) !== null;
 }
 
 function matchesGuideSearch(text: string, query: string) {
