@@ -42,3 +42,6 @@ Evening-ET rows that are after midnight UK are tagged with the next UK weekday s
 
 ## Scottish Cup channel break (permanent)
 Source lists "Premier Sports 1 UK" and "Premier Sports 1 IRE" on separate lines. Keep each channel on its own line with the exact source names — never join with " | " and never reorder to "UK Premier Sports 1". Formatter: regional-suffix (UK/IRE) channel lists are output one per line.
+
+## Scottish Cup Streams row (permanent)
+Source: "ˢ ᴾ ᶠ ᴸ Cup 01 | 20:00 Queen of the South vs Rangers II" (channel | leading time + event, one line). Break into time / "Queen of the South v Rangers II" / channel "SPFL Cup 01". Small-letter tags convert to plain capitals.
