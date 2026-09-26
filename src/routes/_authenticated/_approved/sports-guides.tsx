@@ -893,7 +893,7 @@ function SportsGuidesPage() {
     skipDefaultSubOnce.current = true;
     lastDefaultCat.current = categoryId;
     setActiveCat(categoryId);
-    setSubFilter(nextSub);
+    setSubFilter(nextSub ?? null);
     setTab("guides");
     toast.success(`Moved to ${name}`);
   };
