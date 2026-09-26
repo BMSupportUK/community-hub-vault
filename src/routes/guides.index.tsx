@@ -93,6 +93,17 @@ function PublicGuidesPage() {
     setTab("guides");
   };
 
+  // Mirror the signed-in page: when a category opens, default to its default
+  // sub-category (or the first one) so its guides show straight away.
+  useEffect(() => {
+    if (!activeCat) { setSubFilter(null); return; }
+    const list = subsByCat[activeCat] ?? [];
+    if (!list.length) { setSubFilter(null); return; }
+    const def = list.find((s) => s.is_default);
+    setSubFilter(def?.name ?? list[0]?.name ?? null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeCat, subsByCat]);
+
   const openHeading = (id: string) => {
     setOpenGroups([id]);
     setSubDialogFor(id);
