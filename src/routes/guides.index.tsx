@@ -625,6 +625,7 @@ function PublicGuidesPage() {
           )}
         </div>
       </div>
+      <BackToTopButton />
     </div>
   );
 }
