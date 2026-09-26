@@ -178,17 +178,17 @@ function AdSenseSlotComponent({ slot = "topic", fitViewport = false }: { slot?: 
       {adsterraActive ? (
         <div
           ref={adsterraMountRef}
-          className={sidebarFit ? "min-h-0 w-full" : undefined}
+          className={`flex w-full flex-1 items-center justify-center ${sidebarFit ? "min-h-0" : ""}`}
           onPointerDown={onAdPointerDown}
           onPointerUp={onAdPointerUp}
           onPointerCancel={() => (pressRef.current = null)}
         />
       ) : (
-        <div className={sidebarFit ? "min-h-0" : undefined} onPointerDown={onAdPointerDown} onPointerUp={onAdPointerUp} onPointerCancel={() => (pressRef.current = null)}>
+        <div className={`flex w-full flex-1 items-center justify-center ${sidebarFit ? "min-h-0" : ""}`} onPointerDown={onAdPointerDown} onPointerUp={onAdPointerUp} onPointerCancel={() => (pressRef.current = null)}>
           <ins
             ref={insRef}
             className={`adsbygoogle ${slot === "home" || slot === "welcome" ? "h-[64px]" : slot === "topic" ? "h-[90px]" : ""} ${sidebarFit ? "w-full" : ""}`}
-            style={{ display: "block", textAlign: "center" }}
+            style={{ display: "block", textAlign: "center", margin: "0 auto" }}
             data-ad-client={ADSENSE_CLIENT_ID}
             data-ad-slot={adSlotId}
             data-ad-format={slot === "home" || slot === "welcome" || slot === "topic" ? "horizontal" : slot === "talk" ? "rectangle" : "auto"}
