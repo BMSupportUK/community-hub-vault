@@ -726,7 +726,6 @@ export const resolveQueueItem = createServerFn({ method: "POST" })
           .from("sports_blogs")
           .update({
             body: safeBody,
-            published: false,
             updated_at: new Date().toISOString(),
           })
           .eq("id", data.guideId);
