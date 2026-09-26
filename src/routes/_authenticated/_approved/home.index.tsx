@@ -208,7 +208,6 @@ function WelcomePage() {
             <WorkingStatusBox />
             {/* Staff accounts see their subscription box on their profile instead. */}
             {!isStaffAccount && <SubscriptionDetailsCard />}
-            <AdSenseSlot slot="homeStatus" />
           </div>
         </div>
       </section>
