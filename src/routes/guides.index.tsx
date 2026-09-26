@@ -8,7 +8,7 @@ import {
   type PublicGuideCategory,
 } from "@/lib/public-guides.functions";
 import AdSenseSlot from "@/components/app/AdSenseSlot";
-import { ArrowLeft, Home, ImageIcon, Lock } from "lucide-react";
+import { ArrowLeft, Home, ImageIcon } from "lucide-react";
 import sportsBgAsset from "@/assets/sports-bg.jpg.asset.json";
 const sportsBg = sportsBgAsset.url;
 
