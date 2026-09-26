@@ -66,6 +66,7 @@ function AdSenseSlotComponent({ slot = "topic", fitViewport = false }: { slot?: 
   // call during SSR render would disagree with the client render and trip
   // React's hydration check. Everyone starts on the placeholder for a frame.
   const [provider, setProvider] = useState<Provider>("none");
+  const [refreshKey, setRefreshKey] = useState(0);
   const enabled = provider !== "none";
   const metricSlotId = provider === "adsterra" && adsterraZone ? adsterraZone.id : adSlotId;
 
@@ -88,6 +89,7 @@ function AdSenseSlotComponent({ slot = "topic", fitViewport = false }: { slot?: 
     if (provider === "adsterra" && adsterraZone) {
       const mount = adsterraMountRef.current;
       if (!mount) return;
+      mount.replaceChildren();
       ensureAdsterraBanner(adsterraZone, mount);
       return;
     }
@@ -108,7 +110,20 @@ function AdSenseSlotComponent({ slot = "topic", fitViewport = false }: { slot?: 
       pushAd();
     }, 50);
     return () => window.clearTimeout(id);
-  }, [provider, adsterraZone, sidebarFit]);
+  }, [provider, adsterraZone, sidebarFit, refreshKey]);
+
+  // Adsterra does not replace an existing creative itself. Quietly request a
+  // fresh creative once a minute while this slot remains mounted and visible.
+  // AdSense is deliberately excluded because its policy controls refreshes.
+  useEffect(() => {
+    if (provider !== "adsterra") return;
+    const intervalId = window.setInterval(() => {
+      if (document.visibilityState === "visible") {
+        setRefreshKey((current) => current + 1);
+      }
+    }, 60_000);
+    return () => window.clearInterval(intervalId);
+  }, [provider]);
 
   // Count a view once the unit actually scrolls into sight.
   useEffect(() => {

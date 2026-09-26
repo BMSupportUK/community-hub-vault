@@ -113,10 +113,13 @@ export function ensureAdsterraBanner(zone: AdsterraZone, mount: HTMLElement) {
         (document as { write: unknown }).write = capture;
         (document as { writeln: unknown }).writeln = capture;
 
+        let finished = false;
         const finish = () => {
+          if (finished) return;
+          finished = true;
           (document as { write: unknown }).write = originalWrite;
           (document as { writeln: unknown }).writeln = originalWriteln;
-          if (captured) mount.innerHTML = captured;
+          if (captured && mount.isConnected) mount.innerHTML = captured;
           resolve();
         };
 
