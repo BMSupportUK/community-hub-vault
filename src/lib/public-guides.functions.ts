@@ -1,6 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { createClient } from "@supabase/supabase-js";
-import type { Database } from "@/integrations/supabase/types";
 import {
   parseSportsListingBlock,
   isLikelyChannelLabel,
@@ -8,26 +6,16 @@ import {
 
 /**
  * Public, unauthenticated reads of PUBLISHED sports guides for the
- * AdSense-facing /guides pages. Uses the publishable key with the narrow
- * `TO anon` policies (published rows only). Never returns channel info:
- * events are reduced to date, time and title before leaving the server.
+ * AdSense-facing /guides pages. Runs server-side with the admin client but
+ * ONLY ever selects rows where published = true — drafts stay private.
+ * Never returns channel info: events are reduced to date, time and title
+ * before leaving the server.
  */
-
-function publicClient() {
-  const key = process.env["SUPABASE_PUBLISHABLE_KEY"]!;
-  return createClient<Database>(process.env["SUPABASE_URL"]!, key, {
-    auth: { persistSession: false },
-    global: {
-      fetch: (input, init) => {
-        const h = new Headers(init?.headers);
-        if (key.startsWith("sb_") && h.get("Authorization") === `Bearer ${key}`) {
-          h.delete("Authorization");
-        }
-        h.set("apikey", key);
-        return fetch(input, { ...init, headers: h });
-      },
-    },
-  });
+async function publicClient() {
+  const { supabaseAdmin } = await import(
+    "@/integrations/supabase/client.server"
+  );
+  return supabaseAdmin;
 }
 
 function decodeEntities(value: string): string {
