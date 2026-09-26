@@ -181,6 +181,7 @@ function PublicGuidePage() {
 
         </main>
       </div>
+      <BackToTopButton />
     </div>
   );
 }
