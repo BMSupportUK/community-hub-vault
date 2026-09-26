@@ -1130,7 +1130,7 @@ function TopicPage() {
               {opPost ? (
                 <>
                   {renderPost(opPost, 0)}
-                  <AdSenseSlot />
+                  {!isMatchDayThread && <AdSenseSlot />}
                 </>
               ) : (
                 <div className="text-sm text-muted-foreground text-center py-6">No original post.</div>
@@ -1150,12 +1150,12 @@ function TopicPage() {
               {pinnedReplies.length === 0 && pageReplies.length === 0 ? (
                 <>
                   <div className="text-sm text-muted-foreground text-center py-6">No replies yet.</div>
-                  <AdSenseSlot />
+                  {!isMatchDayThread && <AdSenseSlot />}
                 </>
               ) : (
                 <>
                   {pinnedReplies.slice(0, 1).map((p) => renderPost(p, 0))}
-                  <AdSenseSlot />
+                  {!isMatchDayThread && <AdSenseSlot />}
                   {pinnedReplies.slice(1).map((p) => renderPost(p, 0))}
                   {pageReplies.map((p, idx) => renderPost(p, start + idx + 1))}
                 </>
