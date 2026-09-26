@@ -110,6 +110,9 @@ function SportsGuidesPage() {
   const navigate = useNavigate();
   const { cat: catFromUrl, sub: subFromUrl, reset: resetFromUrl } = Route.useSearch();
   const canManageCategories = hasAny(["admin", "management", "staff"]);
+  // Admin & management see every category, sub-category and guide — even ones
+  // with no listings — so they can update guides that are currently empty.
+  const showAllGuides = hasAny(["admin", "management"]);
   // Always open on Welcome with no category picked. Guides only appear once the
   // visitor clicks a category (returning from a guide uses the ?cat= param).
   const [tab, setTab] = useState<string>("welcome");
