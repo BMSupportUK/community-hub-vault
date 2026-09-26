@@ -69,7 +69,7 @@ export function BackToTopButton() {
   useEffect(() => {
     lastScroller.current = null;
     setVisible(window.scrollY > 600);
-  }, [router.location.pathname]);
+  }, [pathname]);
 
   if (!visible) return null;
 
