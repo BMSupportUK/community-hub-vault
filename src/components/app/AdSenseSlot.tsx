@@ -16,7 +16,6 @@ import {
   ADSTERRA_SHARE,
   adsterraZoneFor,
   ensureAdsterraBanner,
-  isAdsterraZoneInjected,
   type AdsterraSlotKind,
   type AdsterraZone,
 } from "@/lib/adsterra";
