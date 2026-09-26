@@ -10,6 +10,7 @@ import {
   type PublicGuideCategory,
 } from "@/lib/public-guides.functions";
 import AdSenseSlot from "@/components/app/AdSenseSlot";
+import { BackToTopButton } from "@/components/app/BackToTopButton";
 import { ArrowLeft, Home, ImageIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import sportsBgAsset from "@/assets/sports-bg.jpg.asset.json";
