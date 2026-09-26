@@ -1267,7 +1267,7 @@ function SportsGuidesPage() {
                       </div>
                       <div className="grid max-h-[70vh] gap-1 overflow-y-auto">
 
-                        {children.map((child) => {
+                        {children.filter((child) => visibleCatIds.has(child.id)).map((child) => {
                           const active = child.id === activeCat;
                           const unread = unreadDeep[child.id] ?? 0;
                           return (
@@ -1339,7 +1339,8 @@ function SportsGuidesPage() {
                           );
                         })}
                         {guideSubcategories.map((sub) => {
-                          const count = blogs.filter((b) => b.category_id === parent?.id && b.subcategory === sub.name).length;
+                          const count = listingSubCounts[parent?.id ?? ""]?.[sub.name] ?? 0;
+                          if (count === 0) return null;
                           const unread = parent ? unreadSubCounts[parent.id]?.[sub.name] ?? 0 : 0;
                           return (
                             <button
@@ -1529,7 +1530,8 @@ function SportsGuidesPage() {
                     </DialogHeader>
                     <div className="grid max-h-[60vh] grid-cols-1 gap-2 overflow-y-auto sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
                       {(subsByCat[activeCategory.id] ?? []).map((sub) => {
-                        const count = blogs.filter((b) => b.category_id === activeCategory.id && b.subcategory === sub.name).length;
+                        const count = listingSubCounts[activeCategory.id]?.[sub.name] ?? 0;
+                        if (count === 0) return null;
                         const active = subFilter === sub.name;
                         const unread = unreadSubCounts[activeCategory.id]?.[sub.name] ?? 0;
                         return (
@@ -1574,7 +1576,8 @@ function SportsGuidesPage() {
                 {activeCategory?.slug === "sports-passes" && activeCat && (subsByCat[activeCat]?.length ?? 0) > 0 && !activeSearch && (
                   <div className="mb-4 grid gap-2 rounded-xl border border-fuchsia-500/30 bg-purple-950/65 p-3 sm:grid-cols-2 xl:grid-cols-3">
                     {(subsByCat[activeCat] ?? []).map((sub) => {
-                      const count = blogs.filter((b) => b.category_id === activeCat && b.subcategory === sub.name).length;
+                      const count = listingSubCounts[activeCat]?.[sub.name] ?? 0;
+                      if (count === 0) return null;
                       const active = subFilter === sub.name;
                       const unread = unreadSubCounts[activeCat]?.[sub.name] ?? 0;
                       return (
