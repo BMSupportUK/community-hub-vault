@@ -172,23 +172,23 @@ function AdSenseSlotComponent({ slot = "topic", fitViewport = false }: { slot?: 
       ref={boxRef}
       className={`hidden md:block rounded-2xl border border-border/60 bg-surface-2/20 px-2 py-2 overflow-hidden ${containerClass} ${sidebarFit ? "flex w-full flex-col" : ""}`}
     >
-      <div className="px-2 pb-1 text-[10px] uppercase tracking-[0.25em] text-muted-foreground/70">
+      <div className="px-2 pb-1 text-center text-[10px] uppercase tracking-[0.25em] text-muted-foreground/70">
         Advertisement
       </div>
       {adsterraActive ? (
         <div
           ref={adsterraMountRef}
-          className={sidebarFit ? "min-h-0 w-full" : undefined}
+          className={`flex w-full flex-1 items-center justify-center ${sidebarFit ? "min-h-0" : ""}`}
           onPointerDown={onAdPointerDown}
           onPointerUp={onAdPointerUp}
           onPointerCancel={() => (pressRef.current = null)}
         />
       ) : (
-        <div className={sidebarFit ? "min-h-0" : undefined} onPointerDown={onAdPointerDown} onPointerUp={onAdPointerUp} onPointerCancel={() => (pressRef.current = null)}>
+        <div className={`flex w-full flex-1 items-center justify-center ${sidebarFit ? "min-h-0" : ""}`} onPointerDown={onAdPointerDown} onPointerUp={onAdPointerUp} onPointerCancel={() => (pressRef.current = null)}>
           <ins
             ref={insRef}
             className={`adsbygoogle ${slot === "home" || slot === "welcome" ? "h-[64px]" : slot === "topic" ? "h-[90px]" : ""} ${sidebarFit ? "w-full" : ""}`}
-            style={{ display: "block", textAlign: "center" }}
+            style={{ display: "block", textAlign: "center", margin: "0 auto" }}
             data-ad-client={ADSENSE_CLIENT_ID}
             data-ad-slot={adSlotId}
             data-ad-format={slot === "home" || slot === "welcome" || slot === "topic" ? "horizontal" : slot === "talk" ? "rectangle" : "auto"}
