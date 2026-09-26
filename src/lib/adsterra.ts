@@ -43,7 +43,7 @@ export type AdsterraZoneSize = keyof typeof ADSTERRA_ZONES;
 export type AdsterraSlotKind = "topic" | "sidebar" | "home" | "talk" | "welcome";
 
 /** Share of page loads each slot gives to Adsterra when its zone is filled. */
-export const ADSTERRA_SHARE = 0.5;
+export const ADSTERRA_SHARE = 1; // TEMP-TEST: forced Adsterra; revert to 0.5
 
 const ZONE_BY_SLOT: Record<AdsterraSlotKind, AdsterraZoneSize> = {
   topic: "468x60",
