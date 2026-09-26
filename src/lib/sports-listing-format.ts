@@ -116,7 +116,7 @@ const CHANNEL_NUMBER_TITLE_TIME_RE = new RegExp(
 
 /** "Triller TV | Event 1: Highland Boxing: Resurgence 2026 10:00". */
 const TRILLER_TV_EVENT_RE = new RegExp(
-  String.raw`^\s*(Triller\s+TV)\s*\|\s*Event\s+\d{1,3}\s*:\s*(.+?)\s+(${TIME_WITH_ZONE_SOURCE})\s*$`,
+  String.raw`^\s*(Triller\s+TV)\s*\|\s*Event\s+(\d{1,3})\s*:\s*(.+?)\s+(${TIME_WITH_ZONE_SOURCE})\s*$`,
   "i",
 );
 
@@ -693,12 +693,12 @@ function detectEvent(line: string, date: string | null): SportsListingEvent | nu
   }
 
   const trillerEvent = line.match(TRILLER_TV_EVENT_RE);
-  if (trillerEvent?.[1] && trillerEvent[2] && trillerEvent[3]) {
+  if (trillerEvent?.[1] && trillerEvent[2] && trillerEvent[3] && trillerEvent[4]) {
     return {
       date,
-      time: normalizeTime(trillerEvent[3]),
-      title: normalizeSportsEventTitle(trillerEvent[2]),
-      channels: [trillerEvent[1].replace(/\s+/g, " ")],
+      time: normalizeTime(trillerEvent[4]),
+      title: normalizeSportsEventTitle(trillerEvent[3]),
+      channels: [`${trillerEvent[1].replace(/\s+/g, " ")} ${trillerEvent[2]}`],
     };
   }
 
