@@ -204,7 +204,7 @@ export const getPublicGuide = createServerFn({ method: "GET" })
     const supabase = await publicClient();
     const { data: blog, error } = await supabase
       .from("sports_blogs")
-      .select("id, title, excerpt, body, archived_body, created_at, category_id")
+      .select("id, title, excerpt, body, archived_body, created_at, updated_at, category_id")
       .eq("id", id)
       .eq("published", true)
       .maybeSingle();
@@ -251,6 +251,8 @@ export const getPublicGuide = createServerFn({ method: "GET" })
       if (events.length && /\s(?:vs?\.?|&|@)\s/i.test(line)) return false;
       // Bare date headings ("Friday 31-07-26", "Sat 12 Aug") are listings too.
       if (events.length && /^(mon|tue|wed|thu|fri|sat|sun)/i.test(line)) return false;
+      // Standalone numeric dates ("25-09-2026", "26/09/26") are day headings, not notes.
+      if (events.length && /^\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4}$/.test(line.trim())) return false;
       return true;
     });
 
@@ -259,6 +261,7 @@ export const getPublicGuide = createServerFn({ method: "GET" })
       title: blog.title,
       excerpt: blog.excerpt,
       created_at: blog.created_at,
+      updated_at: (blog as { updated_at?: string | null }).updated_at ?? null,
       category,
       events,
       notes: notes.slice(0, 20),
