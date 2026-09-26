@@ -176,10 +176,14 @@ function InitialPageLoadCover() {
 
   useEffect(() => {
     let cancelled = false;
+    let done = false;
     let timeoutId: number | undefined;
+    let maxId: number | undefined;
     const startedAt = performance.now();
 
     const reveal = () => {
+      if (done) return;
+      done = true;
       const minimumRemaining = Math.max(0, 300 - (performance.now() - startedAt));
       timeoutId = window.setTimeout(() => {
         window.requestAnimationFrame(() => {
@@ -200,10 +204,15 @@ function InitialPageLoadCover() {
       reveal();
     };
 
+    // Hard cap: a slow, hanging or blocked third-party resource (adverts,
+    // trackers, images) must never hold the cover up forever.
+    maxId = window.setTimeout(reveal, 3000);
+
     void waitForReady();
     return () => {
       cancelled = true;
       if (timeoutId !== undefined) window.clearTimeout(timeoutId);
+      if (maxId !== undefined) window.clearTimeout(maxId);
     };
   }, []);
 
