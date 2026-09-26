@@ -61,6 +61,15 @@ const DATE_ONLY_RE = new RegExp(
   "i",
 );
 
+// Cymru TV writes each fixture on one channel-first row:
+// "Cymru Football 1 - Barry Town United - Connah’s Quay Nomads [26th Sep - 2:25pm BST]".
+// The first dash separates the channel, the second separates the two teams,
+// and the bracket owns both the event date and kick-off.
+const CYMRU_CHANNEL_FIXTURE_RE = new RegExp(
+  String.raw`^\s*(Cymru\s+Football\s+\d{1,3})\s+[-–—]\s+(.+?)\s+[-–—]\s+(.+?)\s+\[\s*(\d{1,2}(?:st|nd|rd|th)?\s+[A-Za-z]+(?:\s+\d{2,4})?)\s+[-–—]\s+(${TIME_WITH_ZONE_SOURCE})\s*\]\s*$`,
+  "i",
+);
+
 function cleanLine(line: string): string {
   return line
     .replace(/\r/g, "")
@@ -527,6 +536,19 @@ function detectAtSlotEvent(line: string, date: string | null): SportsListingEven
 }
 
 function detectEvent(line: string, date: string | null): SportsListingEvent | null {
+  const cymru = line.match(CYMRU_CHANNEL_FIXTURE_RE);
+  if (cymru?.[1] && cymru[2] && cymru[3] && cymru[4] && cymru[5]) {
+    const parsedDate = parseListingDate(cymru[4]);
+    return {
+      date: parsedDate
+        ? formatListingDate(new Date(Date.UTC(parsedDate.y, parsedDate.m, parsedDate.d)))
+        : date,
+      time: normalizeTime(cymru[5]),
+      title: normalizeSportsEventTitle(`${cymru[2]} v ${cymru[3]}`),
+      channels: [cymru[1].replace(/\s+/g, " ").trim()],
+    };
+  }
+
   // "UEFA 01 | 17:00 Andorra vs Malta" — channel, pipe, clock, event.
   const piped = line.match(/^([A-Za-z][A-Za-z0-9+&.' -]{0,30}?\s*\d{1,3})\s*\|\s*(\d{1,2}[:.]\d{2}(?:\s*[ap]m)?)\s+(.+)$/i);
   if (piped && piped[1] && piped[2] && piped[3]) {

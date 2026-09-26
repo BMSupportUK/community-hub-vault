@@ -15,6 +15,7 @@
 - [x] Greyhound import: retain a shared date embedded in a multi-sport heading and repair the affected draft
 
 ## Done (recent)
+- [x] Cymru TV imports: parse channel-first fixtures with bracketed date and BST time
 - [x] Sports imports: block competition-to-guide mismatches and prevent headings becoming event channels
 - [x] Sports guide imports: use `v` as the event matchup separator; repair Scottish Cup and UEFA Nations League fixture names and verify future imports
 - [x] Header clocks + office-hours dialog, live dates, England public holiday closures
