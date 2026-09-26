@@ -1,4 +1,5 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { LandingHeader } from "@/components/LandingHeader";
 import { getPublicGuide, type PublicGuideDetail } from "@/lib/public-guides.functions";
 import { Clock, CalendarDays, ArrowLeft } from "lucide-react";
@@ -53,6 +54,19 @@ function GuideNotFound() {
 
 function PublicGuidePage() {
   const guide = Route.useLoaderData() as PublicGuideDetail;
+
+  useEffect(() => {
+    try {
+      const key = "bm-public-sports-guide-reads";
+      const stored = JSON.parse(localStorage.getItem(key) ?? "{}");
+      const reads = stored && typeof stored === "object" ? stored as Record<string, string> : {};
+      reads[guide.id] = new Date().toISOString();
+      localStorage.setItem(key, JSON.stringify(reads));
+      window.dispatchEvent(new Event("bm-public-guide-read"));
+    } catch {
+      /* Reading a public guide must still work when storage is unavailable. */
+    }
+  }, [guide.id]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">

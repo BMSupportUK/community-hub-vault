@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { LandingHeader } from "@/components/LandingHeader";
 import {
   listPublicGuides,
@@ -9,8 +10,20 @@ import {
 } from "@/lib/public-guides.functions";
 import AdSenseSlot from "@/components/app/AdSenseSlot";
 import { ArrowLeft, Home, ImageIcon } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 import sportsBgAsset from "@/assets/sports-bg.jpg.asset.json";
 const sportsBg = sportsBgAsset.url;
+const PUBLIC_GUIDE_READS_KEY = "bm-public-sports-guide-reads";
+
+function loadPublicGuideReads(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  try {
+    const value = JSON.parse(localStorage.getItem(PUBLIC_GUIDE_READS_KEY) ?? "{}");
+    return value && typeof value === "object" ? value as Record<string, string> : {};
+  } catch {
+    return {};
+  }
+}
 
 export const Route = createFileRoute("/guides/")({
   loader: () => listPublicGuides(),
@@ -37,8 +50,52 @@ export const Route = createFileRoute("/guides/")({
 });
 
 function PublicGuidesPage() {
-  const data = Route.useLoaderData() as PublicGuidesData;
+  const loaderData = Route.useLoaderData() as PublicGuidesData;
+  const queryClient = useQueryClient();
+  const queryKey = ["public-sports-guides"] as const;
+  const dataQuery = useQuery({
+    queryKey,
+    queryFn: () => listPublicGuides(),
+    initialData: loaderData,
+    staleTime: 0,
+    refetchInterval: 15_000,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+  });
+  const data = dataQuery.data;
   const { categories, subcategories, guides } = data;
+  const [publicReads, setPublicReads] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const refreshReads = () => setPublicReads(loadPublicGuideReads());
+    refreshReads();
+    window.addEventListener("focus", refreshReads);
+    window.addEventListener("storage", refreshReads);
+    window.addEventListener("bm-public-guide-read", refreshReads);
+    return () => {
+      window.removeEventListener("focus", refreshReads);
+      window.removeEventListener("storage", refreshReads);
+      window.removeEventListener("bm-public-guide-read", refreshReads);
+    };
+  }, []);
+
+  useEffect(() => {
+    const refresh = () => queryClient.invalidateQueries({ queryKey });
+    const channel = supabase
+      .channel("public-sports-guides-live")
+      .on("postgres_changes", { event: "*", schema: "public", table: "sports_blogs" }, refresh)
+      .on("postgres_changes", { event: "*", schema: "public", table: "sports_categories" }, refresh)
+      .on("postgres_changes", { event: "*", schema: "public", table: "sports_subcategories" }, refresh)
+      .subscribe();
+    return () => { void supabase.removeChannel(channel); };
+  }, [queryClient]);
+
+  const isUnread = (guide: PublicGuideSummary) => {
+    const readAt = publicReads[guide.id];
+    if (!readAt) return true;
+    return new Date(readAt).getTime() < new Date(guide.updated_at ?? guide.created_at).getTime();
+  };
 
   // Same staged navigation as the signed-in sports guide: the page always
   // opens on Welcome with no category picked; guides appear once a category
@@ -84,6 +141,31 @@ function PublicGuidesPage() {
     }
     return m;
   }, [guides, categories]);
+
+  const unreadCounts = useMemo(() => {
+    const direct: Record<string, number> = {};
+    for (const guide of guides) {
+      if (isUnread(guide)) direct[guide.category_id] = (direct[guide.category_id] ?? 0) + 1;
+    }
+    const kids: Record<string, string[]> = {};
+    for (const category of categories) {
+      if (!category.parent_id) continue;
+      if (!kids[category.parent_id]) kids[category.parent_id] = [];
+      kids[category.parent_id].push(category.id);
+    }
+    const totals: Record<string, number> = {};
+    const walk = (id: string, seen: Set<string>): number => {
+      if (totals[id] !== undefined) return totals[id];
+      if (seen.has(id)) return 0;
+      seen.add(id);
+      let total = direct[id] ?? 0;
+      for (const child of kids[id] ?? []) total += walk(child, seen);
+      totals[id] = total;
+      return total;
+    };
+    for (const category of categories) walk(category.id, new Set());
+    return totals;
+  }, [guides, categories, publicReads]);
 
   const activeCategory = categories.find((c) => c.id === activeCat);
 
@@ -174,6 +256,11 @@ function PublicGuidesPage() {
               {g.badge}
             </span>
           )}
+          {isUnread(g) && (
+            <span className="inline-flex items-center gap-1 rounded-md border border-fuchsia-300/60 bg-fuchsia-500/30 px-2 py-1 text-xs font-semibold text-fuchsia-50">
+              <span className="size-1.5 rounded-full bg-fuchsia-200" /> New
+            </span>
+          )}
         </div>
         <h3 className="font-display font-semibold text-lg leading-snug text-purple-50">
           {g.title}
@@ -228,6 +315,12 @@ function PublicGuidesPage() {
                   className="flex-1 flex items-center justify-between px-2 py-2 text-sm text-left"
                 >
                   <span>{c.name}</span>
+                   {(unreadCounts[c.id] ?? 0) > 0 && (
+                     <span className="inline-flex items-center gap-1 rounded-full bg-fuchsia-500 px-2 py-0.5 text-xs font-semibold text-white">
+                       <span className="size-1.5 rounded-full bg-fuchsia-100" />
+                       {unreadCounts[c.id]}
+                     </span>
+                   )}
                   {(counts[c.id] ?? 0) > 0 && (
                     <span className="text-xs px-2 py-0.5 rounded-full bg-purple-800/70 text-purple-100 font-semibold">
                       {counts[c.id]}
@@ -251,6 +344,12 @@ function PublicGuidesPage() {
                   className="flex-1 flex items-center justify-between px-2 py-2 text-sm text-left font-semibold"
                 >
                   <span>{top.name}</span>
+                   {(unreadCounts[top.id] ?? 0) > 0 && (
+                     <span className="inline-flex items-center gap-1 rounded-full bg-fuchsia-500 px-2 py-0.5 text-xs font-semibold text-white">
+                       <span className="size-1.5 rounded-full bg-fuchsia-100" />
+                       {unreadCounts[top.id]}
+                     </span>
+                   )}
                   {(counts[top.id] ?? 0) > 0 && (
                     <span className="text-xs px-2 py-0.5 rounded-full bg-purple-800/70 text-purple-100 font-semibold">
                       {counts[top.id]}
@@ -320,11 +419,19 @@ function PublicGuidesPage() {
                           className="flex flex-1 flex-col items-stretch gap-1.5 px-2 py-2.5 text-left text-sm"
                         >
                           <span className="flex min-w-0 items-start gap-2">
+                            {(unreadCounts[child.id] ?? 0) > 0 && (
+                              <span className="mt-1.5 size-2 shrink-0 rounded-full bg-fuchsia-300" />
+                            )}
                             <span className="min-w-0 break-words leading-snug">
                               {child.name}
                             </span>
                           </span>
                           <span className="flex flex-wrap items-center gap-1.5">
+                            {(unreadCounts[child.id] ?? 0) > 0 && (
+                              <span className="rounded-full bg-fuchsia-500 px-2 py-0.5 text-xs font-semibold text-white">
+                                {unreadCounts[child.id]} unread
+                              </span>
+                            )}
                             {(childrenByParent[child.id]?.length ?? 0) +
                               (subsByCat[child.id]?.length ?? 0) >
                             1 ? (
@@ -345,6 +452,9 @@ function PublicGuidesPage() {
                     const count = guides.filter(
                       (g) => g.category_id === parent?.id && g.subcategory === sub.name,
                     ).length;
+                    const unread = guides.filter(
+                      (g) => g.category_id === parent?.id && g.subcategory === sub.name && isUnread(g),
+                    ).length;
                     return (
                       <button
                         key={sub.id}
@@ -359,6 +469,7 @@ function PublicGuidesPage() {
                         className="flex flex-col items-stretch gap-1.5 rounded-lg border border-purple-400/40 bg-purple-900/60 px-3 py-2.5 text-left text-sm font-semibold text-purple-100 transition-colors hover:border-fuchsia-400/60 hover:bg-purple-800/80"
                       >
                         <span className="min-w-0 break-words leading-snug">
+                          {unread > 0 && <span className="mr-2 inline-block size-2 rounded-full bg-fuchsia-300" />}
                           {sub.name}
                         </span>
                         <span className="flex flex-wrap items-center gap-1.5">
@@ -368,6 +479,11 @@ function PublicGuidesPage() {
                           <span className="rounded-full bg-purple-950/70 px-2 py-0.5 text-xs">
                             {count}
                           </span>
+                          {unread > 0 && (
+                            <span className="rounded-full bg-fuchsia-500 px-2 py-0.5 text-xs font-semibold text-white">
+                              {unread} unread
+                            </span>
+                          )}
                         </span>
                       </button>
                     );
@@ -464,6 +580,9 @@ function PublicGuidesPage() {
                         (g) => g.category_id === activeCategory.id && g.subcategory === sub.name,
                       ).length;
                       const active = subFilter === sub.name;
+                      const unread = guides.filter(
+                        (g) => g.category_id === activeCategory.id && g.subcategory === sub.name && isUnread(g),
+                      ).length;
                       return (
                         <button
                           key={sub.id}
@@ -472,6 +591,7 @@ function PublicGuidesPage() {
                           className={`flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-bold uppercase tracking-wide transition-colors ${active ? "border-fuchsia-300 bg-fuchsia-600 text-white" : "border-purple-400/40 bg-purple-900/60 text-purple-100 hover:bg-purple-800/80"}`}
                         >
                           <span>{sub.name}</span>
+                          {unread > 0 && <span className="size-2 rounded-full bg-fuchsia-200" />}
                           <span className="rounded-full bg-purple-950/70 px-1.5 py-0.5 text-[10px]">{count}</span>
                         </button>
                       );
