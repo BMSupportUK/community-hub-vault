@@ -120,19 +120,6 @@ function PublicGuidesPage() {
     }
     return m;
   }, [categories]);
-  const topCategories = useMemo(
-    () => categories.filter((c) => !c.parent_id && (counts[c.id] ?? 0) > 0),
-    [categories, counts],
-  );
-  const subsByCat = useMemo(() => {
-    const m: Record<string, typeof subcategories> = {};
-    for (const s of subcategories) {
-      if (!m[s.category_id]) m[s.category_id] = [];
-      m[s.category_id].push(s);
-    }
-    return m;
-  }, [subcategories]);
-
   // Only guides that hold at least one real timed event count as having
   // listings — notice-only or empty bodies hide the card and its category.
   const listingBlogs = useMemo(
@@ -153,6 +140,19 @@ function PublicGuidesPage() {
     }
     return m;
   }, [listingBlogs, categories]);
+
+  const topCategories = useMemo(
+    () => categories.filter((c) => !c.parent_id && (counts[c.id] ?? 0) > 0),
+    [categories, counts],
+  );
+  const subsByCat = useMemo(() => {
+    const m: Record<string, typeof subcategories> = {};
+    for (const s of subcategories) {
+      if (!m[s.category_id]) m[s.category_id] = [];
+      m[s.category_id].push(s);
+    }
+    return m;
+  }, [subcategories]);
 
   const unreadCounts = useMemo(() => {
     const direct: Record<string, number> = {};
