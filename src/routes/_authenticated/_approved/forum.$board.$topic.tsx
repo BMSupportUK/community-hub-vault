@@ -1148,7 +1148,10 @@ function TopicPage() {
 
             <TabsContent id="forum-replies-top" value="reply" className="space-y-3 mt-3 scroll-mt-4">
               {pinnedReplies.length === 0 && pageReplies.length === 0 ? (
-                <div className="text-sm text-muted-foreground text-center py-6">No replies yet.</div>
+                <>
+                  <div className="text-sm text-muted-foreground text-center py-6">No replies yet.</div>
+                  <AdSenseSlot />
+                </>
               ) : (
                 <>
                   {pinnedReplies.slice(0, 1).map((p) => renderPost(p, 0))}
