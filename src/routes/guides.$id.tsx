@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { LandingHeader } from "@/components/LandingHeader";
 import { BmSplash } from "@/components/app/BmSplash";
 import AdSenseSlot from "@/components/app/AdSenseSlot";
+import { BackToTopButton } from "@/components/app/BackToTopButton";
 import { getPublicGuide, type PublicGuideDetail } from "@/lib/public-guides.functions";
 import { Clock, CalendarDays, ArrowLeft } from "lucide-react";
 import sportsBgAsset from "@/assets/sports-bg.jpg.asset.json";
