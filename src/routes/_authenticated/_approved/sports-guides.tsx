@@ -944,6 +944,11 @@ function SportsGuidesPage() {
             New
           </div>
         )}
+        {isMod && !b.published && (
+          <div className="absolute bottom-2 right-2 rounded-md border border-amber-400/60 bg-amber-950/90 px-2 py-1 text-[10px] font-bold uppercase text-amber-100 shadow-lg">
+            Draft · not public
+          </div>
+        )}
       </div>
       <div className="p-4 flex-1 flex flex-col gap-2">
         <div className="flex flex-wrap gap-2">
