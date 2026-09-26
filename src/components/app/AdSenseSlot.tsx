@@ -1,4 +1,4 @@
-import { memo, useEffect, useRef } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import { recordAdEvent } from "@/lib/ad-metrics";
 import {
   ADSENSE_CLIENT_ID,
@@ -13,11 +13,15 @@ import {
 } from "@/lib/adsense";
 import {
   ADSTERRA_ENABLED,
+  ADSTERRA_SHARE,
+  adsterraSizeFor,
   adsterraZoneFor,
   ensureAdsterraScript,
+  isAdsterraZoneInjected,
+  type AdsterraSlotKind,
 } from "@/lib/adsterra";
 
-export type AdSenseSlotKind = "topic" | "sidebar" | "home" | "talk" | "welcome";
+export type AdSenseSlotKind = AdsterraSlotKind;
 
 function Placeholder({ label }: { label: string }) {
   return (
@@ -33,10 +37,13 @@ function Placeholder({ label }: { label: string }) {
   );
 }
 
+type Provider = "adsterra" | "adsense" | "none";
+
 /**
  * Renders an advert unit inside the site's shared advert slots.
- * - Provider priority: Adsterra once its zones are filled in (the fallback
- *   network), otherwise Google AdSense while that application is pending.
+ * - Adsterra and Google AdSense run side by side: on each page load every slot
+ *   flips a coin (ADSTERRA_SHARE) and is filled by either network. Slots
+ *   without a matching Adsterra zone always use AdSense.
  * - Before either provider is configured, everyone sees a subtle placeholder.
  * - Everyone (staff included) gets the live ad unit once a provider is enabled.
  */
@@ -52,29 +59,46 @@ function AdSenseSlotComponent({ slot = "topic", fitViewport = false }: { slot?: 
             ? ADSENSE_WELCOME_SLOT
             : ADSENSE_TOPIC_SLOT;
   const adsterraZone = ADSTERRA_ENABLED ? adsterraZoneFor(slot) : "";
-  const provider: "adsterra" | "adsense" | "none" = adsterraZone
-    ? "adsterra"
-    : ADSENSE_ENABLED
-      ? "adsense"
-      : "none";
-  const enabled = provider !== "none";
-  const metricSlotId = provider === "adsterra" ? adsterraZone : adSlotId;
   // fitViewport: cap a sidebar unit to the visible screen height so pages
   // locked to the viewport (sign-in / join) never clip the advert.
   const sidebarFit = slot === "sidebar" && fitViewport;
+
+  // The provider is chosen in an effect, not during render: a Math.random()
+  // call during SSR render would disagree with the client render and trip
+  // React's hydration check. Everyone starts on the placeholder for a frame.
+  const [provider, setProvider] = useState<Provider>("none");
+  const enabled = provider !== "none";
+  const metricSlotId = provider === "adsterra" ? adsterraZone : adSlotId;
 
   const boxRef = useRef<HTMLDivElement | null>(null);
   const insRef = useRef<HTMLModElement | null>(null);
   const adsterraMountRef = useRef<HTMLDivElement | null>(null);
   const pressRef = useRef<{ x: number; y: number } | null>(null);
 
+  // Coin flip once per slot per page load: Adsterra and AdSense alternate.
   useEffect(() => {
-    if (!enabled) return;
+    const useAdsterra = adsterraZone !== "" && Math.random() < ADSTERRA_SHARE;
+    if (useAdsterra) {
+      setProvider("adsterra");
+    } else {
+      setProvider(ADSENSE_ENABLED ? "adsense" : "none");
+    }
+  }, [adsterraZone]);
+
+  useEffect(() => {
     if (provider === "adsterra") {
       const mount = adsterraMountRef.current;
-      if (mount) ensureAdsterraScript(adsterraZone, mount);
+      if (!mount) return;
+      if (isAdsterraZoneInjected(adsterraZone)) {
+        // A sibling slot on this page already loaded the same zone — don't
+        // double-inject it; hand this slot to AdSense instead.
+        setProvider(ADSENSE_ENABLED ? "adsense" : "none");
+        return;
+      }
+      ensureAdsterraScript(adsterraZone, mount);
       return;
     }
+    if (provider !== "adsense") return;
     ensureAdSenseScript();
     // Defer the push so the <ins> element is in the DOM first. For viewport-fit
     // sidebars, pick the format from the real screen height right before the
@@ -91,7 +115,7 @@ function AdSenseSlotComponent({ slot = "topic", fitViewport = false }: { slot?: 
       pushAd();
     }, 50);
     return () => window.clearTimeout(id);
-  }, [enabled, sidebarFit, provider, adsterraZone]);
+  }, [provider, adsterraZone, sidebarFit]);
 
   // Count a view once the unit actually scrolls into sight.
   useEffect(() => {
@@ -130,15 +154,27 @@ function AdSenseSlotComponent({ slot = "topic", fitViewport = false }: { slot?: 
     void recordAdEvent({ kind: "click", slotKey: slot, adSlotId: metricSlotId });
   };
 
+  // Adsterra banners arrive at a fixed pixel size, so the container opens up
+  // to the zone's real height; AdSense units size themselves.
+  const adsterraActive = provider === "adsterra";
+  const adsterraSize = adsterraActive ? adsterraSizeFor(slot) : null;
+  const containerClass = adsterraActive
+    ? adsterraSize === "160x600"
+      ? "min-h-[620px]"
+      : adsterraSize === "300x250"
+        ? "min-h-[310px]"
+        : "h-[132px]"
+    : `${slot === "home" || slot === "welcome" ? "h-[92px]" : slot === "topic" ? "h-[125px]" : slot === "sidebar" ? "min-h-[280px]" : ""} ${slot === "talk" ? "min-h-[250px]" : ""}`;
+
   return (
     <div
       ref={boxRef}
-      className={`hidden md:block rounded-2xl border border-border/60 bg-surface-2/20 px-2 py-2 overflow-hidden ${slot === "home" || slot === "welcome" ? "h-[92px]" : slot === "topic" ? "h-[125px]" : slot === "sidebar" ? "min-h-[280px]" : ""} ${slot === "talk" ? "min-h-[250px]" : ""} ${sidebarFit ? "flex w-full flex-col" : ""}`}
+      className={`hidden md:block rounded-2xl border border-border/60 bg-surface-2/20 px-2 py-2 overflow-hidden ${containerClass} ${sidebarFit ? "flex w-full flex-col" : ""}`}
     >
       <div className="px-2 pb-1 text-[10px] uppercase tracking-[0.25em] text-muted-foreground/70">
         Advertisement
       </div>
-      {provider === "adsterra" ? (
+      {adsterraActive ? (
         <div
           ref={adsterraMountRef}
           className={sidebarFit ? "min-h-0 w-full" : undefined}

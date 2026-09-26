@@ -1,49 +1,72 @@
 /**
- * Adsterra fallback advert configuration.
+ * Adsterra advert configuration.
  *
- * Adsterra is the no-site-review fallback network: if the AdSense application
- * is declined, paste the banner zone script src from each Adsterra zone into
- * the constants below and the whole site switches over — no component changes.
- * While every value is empty, behaviour is exactly as before (AdSense only,
- * or the placeholder panel when AdSense is unfilled).
+ * Adsterra now runs ALONGSIDE Google AdSense: on every page load each advert
+ * slot flips a coin and is filled by either network (see AdSenseSlot.tsx,
+ * ADSTERRA_SHARE). Slots whose kind has no matching Adsterra zone always use
+ * AdSense, and unfilled slots keep the placeholder panel.
  *
- * The Adsterra dashboard banner snippet looks like:
+ * Banner zones (one per size, from the Adsterra dashboard):
+ *   31421164 — 468x60   wide banner  → "topic" + "home" slots
+ *   31421166 — 728x90   wide banner  → "welcome" slot (guides hero area)
+ *   31421165 — 160x600  skyscraper   → "sidebar" slots
+ *   31421167 — 300x250  rectangle    → "talk" slots
+ *
+ * The dashboard banner snippet looks like:
  *   <script async data-cfasync="false"
- *     src="//pl123456.profitablecpmrate.com/<key>/invoke.js"></script>
- * Copy the src value (with or without the leading //) into the matching slot.
- * If the snippet ships an extra container div or inline options, we finalise
- * the embed here with the real snippet — the slots already reserve the space.
+ *     src="//pl31421164.profitablecpmrate.com/<key>/invoke.js"></script>
+ * Paste the full src value (with or without the leading //) for each zone into
+ * SRC_BY_SIZE below. While a value is empty that zone stays inert and its
+ * slots keep using AdSense — no component changes needed.
  */
 
-export const ADSTERRA_TOPIC_SRC = "";
-export const ADSTERRA_SIDEBAR_SRC = "";
-export const ADSTERRA_HOME_SRC = "";
-export const ADSTERRA_TALK_SRC = "";
-export const ADSTERRA_WELCOME_SRC = "";
-
-const SLOT_SRCS = {
-  topic: ADSTERRA_TOPIC_SRC,
-  sidebar: ADSTERRA_SIDEBAR_SRC,
-  home: ADSTERRA_HOME_SRC,
-  talk: ADSTERRA_TALK_SRC,
-  welcome: ADSTERRA_WELCOME_SRC,
+export const ADSTERRA_ZONES = {
+  "468x60": { id: "31421164", src: "" },
+  "728x90": { id: "31421166", src: "" },
+  "160x600": { id: "31421165", src: "" },
+  "300x250": { id: "31421167", src: "" },
 } as const;
 
-export type AdsterraSlotKind = keyof typeof SLOT_SRCS;
+export type AdsterraZoneSize = keyof typeof ADSTERRA_ZONES;
+export type AdsterraSlotKind = "topic" | "sidebar" | "home" | "talk" | "welcome";
 
-/** True once at least one Adsterra zone is filled. */
-export const ADSTERRA_ENABLED = Object.values(SLOT_SRCS).some((src) => src.length > 0);
+/** Share of page loads each slot gives to Adsterra when its zone is filled. */
+export const ADSTERRA_SHARE = 0.5;
 
-/** The zone src for a slot kind, or "" when that slot has no Adsterra zone. */
+const ZONE_BY_SLOT: Record<AdsterraSlotKind, AdsterraZoneSize> = {
+  topic: "468x60",
+  home: "468x60",
+  welcome: "728x90",
+  sidebar: "160x600",
+  talk: "300x250",
+};
+
+/** True once at least one Adsterra zone src is filled in. */
+export const ADSTERRA_ENABLED = Object.values(ADSTERRA_ZONES).some(
+  (zone) => zone.src.length > 0,
+);
+
+/** The invoke.js src for a slot kind, or "" when that slot has no Adsterra zone. */
 export function adsterraZoneFor(kind: AdsterraSlotKind): string {
-  return SLOT_SRCS[kind] ?? "";
+  return ADSTERRA_ZONES[ZONE_BY_SLOT[kind]]?.src ?? "";
+}
+
+/** The banner size reserved for a slot kind, so the container can fit it. */
+export function adsterraSizeFor(kind: AdsterraSlotKind): AdsterraZoneSize {
+  return ZONE_BY_SLOT[kind];
 }
 
 const injected = new Set<string>();
 
+/** True when this zone's loader already ran on the current page. */
+export function isAdsterraZoneInjected(src: string): boolean {
+  return injected.has(src);
+}
+
 /**
  * Injects the Adsterra zone loader script into the slot's mount element.
- * Runs once per zone per page; the mount element owns the rendering.
+ * Runs once per zone per page; a second slot on the same page reuses the
+ * already-injected zone rather than loading it twice.
  */
 export function ensureAdsterraScript(src: string, mount: HTMLElement) {
   if (!src || typeof document === "undefined") return;
