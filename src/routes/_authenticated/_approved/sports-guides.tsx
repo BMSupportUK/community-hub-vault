@@ -278,7 +278,10 @@ function SportsGuidesPage() {
 
   // Guides without listings (empty or markup-only bodies) are invisible in the
   // member view: their cards, category rows and sub-category buttons all hide.
-  const listingBlogs = useMemo(() => blogs.filter((b) => guideHasListings(b.body)), [blogs]);
+  const listingBlogs = useMemo(
+    () => (showAllGuides ? blogs : blogs.filter((b) => guideHasListings(b.body))),
+    [blogs, showAllGuides],
+  );
   const visibleCatIds = useMemo(() => new Set(listingBlogs.map((b) => b.category_id)), [listingBlogs]);
   const listingCounts = useMemo(() => {
     const m: Record<string, number> = {};
