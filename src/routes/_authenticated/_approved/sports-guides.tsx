@@ -389,6 +389,29 @@ function SportsGuidesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [blogs, reads, baselineAt]);
 
+  // Unread count including every nested sub-category below a category, so a
+  // parent row still flags an unread guide that lives further down the tree.
+  const unreadDeep = useMemo(() => {
+    const kidsOf: Record<string, string[]> = {};
+    for (const c of categories) {
+      if (!c.parent_id) continue;
+      if (!kidsOf[c.parent_id]) kidsOf[c.parent_id] = [];
+      kidsOf[c.parent_id].push(c.id);
+    }
+    const memo: Record<string, number> = {};
+    const walk = (id: string, seen: Set<string>): number => {
+      if (memo[id] !== undefined) return memo[id];
+      if (seen.has(id)) return 0;
+      seen.add(id);
+      let total = unreadCounts[id] ?? 0;
+      for (const kid of kidsOf[id] ?? []) total += walk(kid, seen);
+      memo[id] = total;
+      return total;
+    };
+    for (const c of categories) walk(c.id, new Set());
+    return memo;
+  }, [categories, unreadCounts]);
+
   const subsByCat = useMemo(() => {
     const m: Record<string, Subcategory[]> = {};
     for (const s of subcategories) {
