@@ -177,7 +177,14 @@ function PublicGuidesPage() {
     };
     for (const category of categories) walk(category.id, new Set());
     return totals;
-  }, [guides, categories, publicReads]);
+  }, [listingBlogs, categories, publicReads]);
+
+  // Categories and sub-categories only appear when they hold a guide with
+  // listings, mirroring the signed-in sports guide.
+  const visibleCategories = useMemo(
+    () => categories.filter((c) => (counts[c.id] ?? 0) > 0),
+    [categories, counts],
+  );
 
   const activeCategory = categories.find((c) => c.id === activeCat);
 
@@ -222,13 +229,13 @@ function PublicGuidesPage() {
 
   const filtered = useMemo(
     () =>
-      guides.filter((g) => {
+      listingBlogs.filter((g) => {
         if (!activeCat || g.category_id !== activeCat) return false;
         if (subsByCat[activeCat]?.length && subFilter && g.subcategory !== subFilter)
           return false;
         return true;
       }),
-    [guides, activeCat, subFilter, subsByCat],
+    [listingBlogs, activeCat, subFilter, subsByCat],
   );
 
   const renderGuideCard = (g: PublicGuideSummary) => (
