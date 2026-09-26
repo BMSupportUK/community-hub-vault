@@ -222,8 +222,17 @@ function PublicGuidesPage() {
   const renderGuideCard = (g: PublicGuideSummary) => (
     <article
       key={g.id}
-      className="rounded-2xl bg-purple-950/50 border border-purple-500/30 overflow-hidden flex flex-col group hover:border-fuchsia-500/60 hover:shadow-[0_0_30px_-10px_rgba(217,70,239,0.6)] transition-all"
+      className={`relative rounded-2xl bg-purple-950/50 overflow-hidden flex flex-col group transition-all ${
+        isUnread(g)
+          ? "border-2 border-fuchsia-400 shadow-[0_0_30px_-8px_rgba(217,70,239,0.85)]"
+          : "border border-purple-500/30 hover:border-fuchsia-500/60 hover:shadow-[0_0_30px_-10px_rgba(217,70,239,0.6)]"
+      }`}
     >
+      {isUnread(g) && (
+        <span className="absolute top-3 right-3 z-20 inline-flex items-center gap-1.5 rounded-full bg-fuchsia-500 px-3 py-1 text-[11px] font-bold uppercase tracking-wide text-white shadow-lg">
+          <span className="size-2 rounded-full bg-white animate-pulse" /> Unread
+        </span>
+      )}
       <div className="aspect-[16/10] bg-purple-900/50 relative overflow-hidden">
         {g.image_url ? (
           <>
@@ -254,11 +263,6 @@ function PublicGuidesPage() {
           {g.badge && (
             <span className="text-xs px-2 py-1 rounded-md bg-violet-500/20 text-violet-200 font-medium border border-violet-500/30">
               {g.badge}
-            </span>
-          )}
-          {isUnread(g) && (
-            <span className="inline-flex items-center gap-1 rounded-md border border-fuchsia-300/60 bg-fuchsia-500/30 px-2 py-1 text-xs font-semibold text-fuchsia-50">
-              <span className="size-1.5 rounded-full bg-fuchsia-200" /> New
             </span>
           )}
         </div>
