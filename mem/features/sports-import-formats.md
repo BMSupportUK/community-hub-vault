@@ -18,6 +18,7 @@ Before claiming an import fix, verify the parser with Bun against the real post 
 Every new format: add it here, Bun-test raw AND round-trip, then repair the draft — never make the user report it twice.
 - Permanent competition safeguard: an explicit post heading must match the selected guide before saving. A combined post containing a different competition heading is blocked, and section headings are never appended to the preceding event's channel list.
 - Provider `start:` stamps are already UK wall-clock time — never add the BST hour.
+- Triller TV rows are `Triller TV | Event N: title time`: remove `Event N` from the event title, but preserve its number in the channel as `Triller TV N` (for example, `Event 4` uses channel `Triller TV 4`). Keep the trailing time.
 - Setanta colon style: `Setanta: 1: Panathinaikos - Paris start:...` → channel `Setanta 1`, event `Panathinaikos & Paris`.
 - Flosports (Flo College / Flo Racing) `Event @ Sep 24 12:00 PM :Flo College 01` times are US Eastern; convert to UK automatically.
 
