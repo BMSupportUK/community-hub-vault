@@ -10,7 +10,7 @@
  *   31421164 — 468x60   wide banner  → "topic" + "home" slots
  *   31421166 — 728x90   wide banner  → "welcome" slot (guides hero area)
  *   31421165 — 160x600  skyscraper   → "sidebar" slots
- *   31421167 — 300x250  rectangle    → "talk" slots
+ *   31421167 — 300x250  rectangle    → "talk" + "homeStatus" slots
  *
  * Each dashboard snippet looks like:
  *   <script> atOptions = { 'key' : '<KEY>', 'format' : 'iframe',
@@ -34,7 +34,7 @@ export interface AdsterraZone {
 
 const ZONE_SIZES = ["468x60", "728x90", "160x600", "300x250"] as const;
 export type AdsterraZoneSize = (typeof ZONE_SIZES)[number];
-export type AdsterraSlotKind = "topic" | "sidebar" | "home" | "talk" | "welcome";
+export type AdsterraSlotKind = "topic" | "sidebar" | "home" | "talk" | "welcome" | "homeStatus";
 
 export const ADSTERRA_ZONES: Record<AdsterraZoneSize, AdsterraZone> = {
   "468x60": { id: "31421164", size: "468x60", width: 468, height: 60, key: "29d36d2e0295dbfee9149c7277c3e70d", host: "www.highrevenueformat.com" },
@@ -54,6 +54,7 @@ const ZONE_BY_SLOT: Record<AdsterraSlotKind, AdsterraZoneSize> = {
   welcome: "728x90",
   sidebar: "160x600",
   talk: "300x250",
+  homeStatus: "300x250",
 };
 
 /** True once at least one Adsterra zone key is filled in. */
