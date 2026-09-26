@@ -116,7 +116,7 @@ const CHANNEL_NUMBER_TITLE_TIME_RE = new RegExp(
 
 /** "Triller TV | Event 1: Highland Boxing: Resurgence 2026 10:00". */
 const TRILLER_TV_EVENT_RE = new RegExp(
-  `^\s*(Triller\s+TV)\s*\|\s*Event\s+\d{1,3}\s*:\s*(.+?)\s+(${TIME_WITH_ZONE_SOURCE})\s*$`,
+  String.raw`^\s*(Triller\s+TV)\s*\|\s*Event\s+\d{1,3}\s*:\s*(.+?)\s+(${TIME_WITH_ZONE_SOURCE})\s*$`,
   "i",
 );
 
