@@ -279,7 +279,7 @@ export function ChannelColumn({
   return (
     <>
     <nav className={cn(
-      "w-60 bg-surface flex-col",
+      "w-[332px] bg-surface flex-col",
       inSheet
         ? "flex h-full w-full"
         : "shrink-0 hidden md:flex border-r border-border h-full min-h-0 self-stretch overflow-hidden",
