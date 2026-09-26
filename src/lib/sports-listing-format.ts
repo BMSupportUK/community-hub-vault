@@ -1195,7 +1195,7 @@ export function formatSportsListingBlock(input: ListingInput): string | null {
   // No date written anywhere in the post: date it from the import day rather
   // than leaving the guide dateless for someone to fill in afterwards.
   const base = input.date ?? importDayListingDate();
-  const dated = applyImplicitDateRollover(parsed, base);
+  const dated = rollOvernightEvents(applyImplicitDateRollover(parsed, base));
   const events = sortSportsListingEvents(
     convertEventsToUk(dated, { ...input, date: base ?? input.date }),
   );
