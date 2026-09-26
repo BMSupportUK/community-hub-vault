@@ -36,7 +36,7 @@ function isPageScroller(target: EventTarget | null): boolean {
 export function BackToTopButton() {
   const [visible, setVisible] = useState(false);
   const lastScroller = useRef<HTMLElement | Window | null>(null);
-  const router = useRouter();
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   useEffect(() => {
     const evaluate = () => {
