@@ -222,7 +222,11 @@ function splitChannelLine(line: string): string[] {
     // Discord/forwarded provider dumps can clip the final character of the
     // last channel label. A trailing DAZN "H" is the clipped "HD" suffix,
     // not a separate channel format.
-    const clean = part.trim().replace(/^(dazn\s*\d{1,3})\s+h$/i, "$1 HD");
+    const clean = part.trim()
+      .replace(/^(dazn\s*\d{1,3})\s+h$/i, "$1 HD")
+      // Scottish Cup posts put the region after the Premier Sports feed;
+      // show it first, as we already do for "UK | Premier Sports 1" rows.
+      .replace(/^(Premier Sports\s+\d{1,3}(?:\s+HD)?)\s+(UK|IRE)$/i, (_match, feed: string, region: string) => `${region.toUpperCase()} ${feed}`);
     const prefixedNumber = clean.match(/^(.*?\D\s*)(\d{1,3})$/);
     if (prefixedNumber?.[1]) {
       numberedPrefix = prefixedNumber[1].trimEnd();
