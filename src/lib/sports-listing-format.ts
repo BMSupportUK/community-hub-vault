@@ -822,7 +822,13 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
       const s = plain.match(
         new RegExp(String.raw`^([A-Za-z][A-Za-z+&' ]*?\s\d{1,3}(?:\s*HD)?)\s*\|\s*(${TIME_SOURCE})\s+(.+?)\s*$`, "i"),
       );
-      return s ? [s[2], s[3].trim(), s[1].trim()] : [line];
+      if (s) return [s[2], s[3].trim(), s[1].trim()];
+      // UK Women's Football (FA Player): "WF00: 13:30 Charlton vs Man City"
+      // (channel code + colon, leading time, event).
+      const wf = line.match(
+        new RegExp(String.raw`^([A-Za-z]{1,6}\s?\d{1,3})\s*:\s*(${TIME_SOURCE})\s+(.+?)\s*$`, "i"),
+      );
+      return wf ? [wf[2], wf[3].trim(), wf[1].trim().toUpperCase()] : [line];
     })
     // "VIP | Rugby Pass" headers are post headings, not events.
     .filter((line) => !/^vip\s*\|/i.test(line))
