@@ -565,7 +565,12 @@ function detectEvent(line: string, date: string | null): SportsListingEvent | nu
         date: parsedDate
           ? formatListingDate(new Date(Date.UTC(parsedDate.y, parsedDate.m, parsedDate.d)))
           : date,
-        time: normalizeTime(timeMatch[1].replace(".", ":").replace(/\s+/g, "")),
+        // Keep a written UK zone label ("BST"/"GMT"/"UK") so the guide shows
+        // the same labelled clock as the rest of the listings.
+        time:
+          normalizeTime(timeMatch[1].replace(".", ":").replace(/\s+/g, "")) +
+          (UK_LABELLED_TIME_RE.test(timePart ?? "") ? " BST" : ""),
+
         title: normalizeSportsEventTitle(dashDateBracket[2].trim()),
         channels: [dashDateBracket[1].trim().replace(/\s+/g, " ")],
       };
