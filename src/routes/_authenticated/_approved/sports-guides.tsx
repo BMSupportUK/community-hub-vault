@@ -110,6 +110,9 @@ function SportsGuidesPage() {
   const navigate = useNavigate();
   const { cat: catFromUrl, sub: subFromUrl, reset: resetFromUrl } = Route.useSearch();
   const canManageCategories = hasAny(["admin", "management", "staff"]);
+  // Admin & management see every category, sub-category and guide — even ones
+  // with no listings — so they can update guides that are currently empty.
+  const showAllGuides = hasAny(["admin", "management"]);
   // Always open on Welcome with no category picked. Guides only appear once the
   // visitor clicks a category (returning from a guide uses the ?cat= param).
   const [tab, setTab] = useState<string>("welcome");
@@ -275,7 +278,10 @@ function SportsGuidesPage() {
 
   // Guides without listings (empty or markup-only bodies) are invisible in the
   // member view: their cards, category rows and sub-category buttons all hide.
-  const listingBlogs = useMemo(() => blogs.filter((b) => guideHasListings(b.body)), [blogs]);
+  const listingBlogs = useMemo(
+    () => (showAllGuides ? blogs : blogs.filter((b) => guideHasListings(b.body))),
+    [blogs, showAllGuides],
+  );
   const visibleCatIds = useMemo(() => new Set(listingBlogs.map((b) => b.category_id)), [listingBlogs]);
   const listingCounts = useMemo(() => {
     const m: Record<string, number> = {};
