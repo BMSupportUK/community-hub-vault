@@ -99,10 +99,19 @@ function PublicGuidesPage() {
     if (!activeCat) { setSubFilter(null); return; }
     const list = subsByCat[activeCat] ?? [];
     if (!list.length) { setSubFilter(null); return; }
+    const hasGuides = (name: string) =>
+      guides.some((g) => g.category_id === activeCat && g.subcategory === name);
     const def = list.find((s) => s.is_default);
-    setSubFilter(def?.name ?? list[0]?.name ?? null);
+    // Prefer the default sub, but fall back to the first sub that actually
+    // has public guides so visitors never land on an empty list.
+    const pick =
+      (def && hasGuides(def.name) ? def : undefined) ??
+      list.find((s) => hasGuides(s.name)) ??
+      def ??
+      list[0];
+    setSubFilter(pick?.name ?? null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeCat, subsByCat]);
+  }, [activeCat, subsByCat, guides]);
 
   const openHeading = (id: string) => {
     setOpenGroups([id]);
