@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { LogIn, Lock, Menu, Shield, UserPlus } from "lucide-react";
+import { Home, LogIn, Lock, Menu, Shield, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { IconRail } from "@/components/app/IconRail";
 import { Button } from "@/components/ui/button";
@@ -72,8 +72,19 @@ export function FanZonePublicHeader({ hideAuthButtons = false }: { hideAuthButto
           </>
         )}
 
-        {!hideAuthButtons && (
+        {!hideAuthButtons && !user && (
           <>
+            <Button
+              asChild
+              size="sm"
+              variant="outline"
+              className="border-white/25 bg-white/10 text-white hover:bg-white/20 hover:text-white"
+            >
+              <Link to="/" aria-label="Back to the BM Support home page">
+                <Home className="size-4 sm:mr-1.5" />
+                <span className="hidden sm:inline">Home</span>
+              </Link>
+            </Button>
             <Button asChild size="sm" variant="outline" className="border-white/25 bg-white/10 text-white hover:bg-white/20 hover:text-white">
               <Link to="/login">
                 <LogIn className="size-4 sm:mr-1.5" />
