@@ -5,9 +5,7 @@ import { Clock, CalendarDays, Lock, ArrowLeft } from "lucide-react";
 
 export const Route = createFileRoute("/guides/$id")({
   loader: async ({ params }) => {
-    console.error("[guides.$id loader] id=", params.id);
     const guide = await getPublicGuide({ data: params.id });
-    console.error("[guides.$id loader] guide=", guide ? guide.title : null);
     if (!guide) throw notFound();
     return guide;
   },
