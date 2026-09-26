@@ -75,7 +75,7 @@ export const listPublicGuides = createServerFn({ method: "GET" }).handler(
       await Promise.all([
         supabase
           .from("sports_blogs")
-          .select("id, title, excerpt, created_at, category_id")
+          .select("id, title, excerpt, created_at, category_id, body, archived_body")
           .eq("published", true)
           .order("created_at", { ascending: false })
           .limit(100),
@@ -85,14 +85,17 @@ export const listPublicGuides = createServerFn({ method: "GET" }).handler(
     const categoryNames = new Map(
       (categories ?? []).map((c) => [c.id, c.name] as const),
     );
-    return (blogs ?? []).map((b) => ({
-      id: b.id,
-      title: b.title,
-      excerpt: b.excerpt,
-      created_at: b.created_at,
-      category_id: b.category_id,
-      category: categoryNames.get(b.category_id) ?? "Sports",
-    }));
+    // Skip guides with no content at all (never had a body).
+    return (blogs ?? [])
+      .filter((b) => (b.body ?? b.archived_body ?? "").trim().length > 0)
+      .map((b) => ({
+        id: b.id,
+        title: b.title,
+        excerpt: b.excerpt,
+        created_at: b.created_at,
+        category_id: b.category_id,
+        category: categoryNames.get(b.category_id) ?? "Sports",
+      }));
   },
 );
 
@@ -105,7 +108,7 @@ export const getPublicGuide = createServerFn({ method: "GET" })
     const supabase = await publicClient();
     const { data: blog, error } = await supabase
       .from("sports_blogs")
-      .select("id, title, excerpt, body, created_at, category_id")
+      .select("id, title, excerpt, body, archived_body, created_at, category_id")
       .eq("id", id)
       .eq("published", true)
       .maybeSingle();
