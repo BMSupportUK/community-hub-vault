@@ -266,16 +266,27 @@ export function normalizeSportsEventTitle(value: string): string {
  * all-caps fixture or channel line. This is used to stop one competition from
  * being saved into another competition's existing guide.
  */
-export function sportsListingHeading(raw: string | null | undefined): string | null {
+function sportsListingHeadings(raw: string | null | undefined): string[] {
   if (!raw) return null;
+  const headings: string[] = [];
   for (const rawLine of decodeListingEntities(raw).split("\n").slice(0, 12)) {
     const trimmed = rawLine.trim();
     const markdownHeading = trimmed.match(/^#{1,6}\s*(.+?)\s*$/)?.[1];
     const boldHeading = trimmed.match(/^\*\*(?:#{1,6}\s*)?(.+?)\*\*$/)?.[1];
     const heading = cleanLine(markdownHeading ?? boldHeading ?? "");
-    if (heading && !isDateLine(heading) && !parseClockTime(heading)) return heading;
+    if (
+      heading &&
+      !isDateLine(heading) &&
+      !parseClockTime(heading) &&
+      !/\s(?:&|v|vs|v\.|x)\s/i.test(heading) &&
+      !isLikelyChannelLabel(heading)
+    ) headings.push(heading);
   }
-  return null;
+  return unique(headings);
+}
+
+export function sportsListingHeading(raw: string | null | undefined): string | null {
+  return sportsListingHeadings(raw)[0] ?? null;
 }
 
 function normalizedGuideIdentity(value: string): string {
@@ -292,12 +303,14 @@ function normalizedGuideIdentity(value: string): string {
  * "Football" can legitimately be filed into a narrower guide.
  */
 export function listingHeadingMatchesGuide(raw: string | null | undefined, guideTitle: string | null | undefined): boolean {
-  const heading = sportsListingHeading(raw);
-  const source = normalizedGuideIdentity(heading ?? "");
   const target = normalizedGuideIdentity(guideTitle ?? "");
-  if (!source || !target || source.split(" ").length < 2) return true;
-  if (/^(?:todays? live events?|live sports?|football|sport|sports)$/.test(source)) return true;
-  return source === target || source.includes(target) || target.includes(source);
+  if (!target) return true;
+  return sportsListingHeadings(raw).every((heading) => {
+    const source = normalizedGuideIdentity(heading);
+    if (!source || source.split(" ").length < 2) return true;
+    if (/^(?:todays? live events?|live sports?|football|sport|sports)$/.test(source)) return true;
+    return source === target || source.includes(target) || target.includes(source);
+  });
 }
 
 export function isLikelyChannelLabel(value: string): boolean {
@@ -670,6 +683,8 @@ function isSectionHeading(rawLine: string): boolean {
   const text = cleanLine(trimmed);
   if (!text || text.length > 48) return false;
   if (text.includes("//")) return false;
+  if (/\s(?:&|v|vs|v\.|x)\s/i.test(text)) return false;
+  if (isLikelyChannelLabel(text)) return false;
   if (/\d{1,2}\s*[:.]\s*\d{2}/.test(text)) return false;
   if (isDateLine(text) || listingDateFromLine(text)) return false;
   if (detectEvent(text, null)) return false;
