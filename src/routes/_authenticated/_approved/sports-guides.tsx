@@ -473,12 +473,22 @@ function SportsGuidesPage() {
 
   // When switching category, default to that category's default sub-category
   // (falling back to the first sub-category only when no default is set).
+  const lastDefaultCat = useRef<string | null>(null);
   useEffect(() => {
     if (!activeCat) { setSubFilter(null); return; }
     if (skipDefaultSubOnce.current) { skipDefaultSubOnce.current = false; return; }
     const list = subsByCat[activeCat] ?? [];
     // Only default to a sub-category that actually holds listings.
     const withListings = list.filter((s) => (listingSubCounts[activeCat]?.[s.name] ?? 0) > 0);
+    // Keep the current sub-category when it's still valid for this category
+    // (e.g. after moving/reordering a guide the data refreshes — never jump
+    // back to the default sub-category).
+    const catChanged = lastDefaultCat.current !== activeCat;
+    lastDefaultCat.current = activeCat;
+    if (!catChanged) {
+      setSubFilter((cur) => (cur && withListings.some((s) => s.name === cur) ? cur : (withListings.find((s) => s.is_default)?.name ?? withListings[0]?.name ?? null)));
+      return;
+    }
     const def = withListings.find((s) => s.is_default);
     setSubFilter(def?.name ?? withListings[0]?.name ?? null);
   }, [activeCat, subsByCat, listingSubCounts]);
@@ -879,6 +889,12 @@ function SportsGuidesPage() {
       .eq("id", blogId);
     if (error) { toast.error(error.message); load(); return; }
     const name = categories.find((c) => c.id === categoryId)?.name ?? "category";
+    // Follow the guide into the category/sub-category it was moved to.
+    skipDefaultSubOnce.current = true;
+    lastDefaultCat.current = categoryId;
+    setActiveCat(categoryId);
+    setSubFilter(nextSub ?? null);
+    setTab("guides");
     toast.success(`Moved to ${name}`);
   };
 
