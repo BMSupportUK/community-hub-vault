@@ -13,7 +13,6 @@ import AdSenseSlot from "@/components/app/AdSenseSlot";
 import { BackToTopButton } from "@/components/app/BackToTopButton";
 import { ArrowLeft, Home, ImageIcon } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { findEarliestEventUtcMs } from "@/lib/parse-event-times";
 import sportsBgAsset from "@/assets/sports-bg.jpg.asset.json";
 const sportsBg = sportsBgAsset.url;
 const PUBLIC_GUIDE_READS_KEY = "bm-public-sports-guide-reads";
@@ -120,12 +119,9 @@ function PublicGuidesPage() {
     }
     return m;
   }, [categories]);
-  // Only guides that hold at least one real timed event count as having
-  // listings — notice-only or empty bodies hide the card and its category.
-  const listingBlogs = useMemo(
-    () => guides.filter((g) => findEarliestEventUtcMs(g.body ?? "") !== null),
-    [guides],
-  );
+  // The server only returns guides holding at least one real timed event,
+  // so every guide here counts as having listings.
+  const listingBlogs = guides;
 
   const counts = useMemo(() => {
     const m: Record<string, number> = {};
