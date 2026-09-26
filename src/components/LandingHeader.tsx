@@ -7,6 +7,7 @@ import { ShieldAlert, Menu, X } from "lucide-react";
 import { useFinishedCompetitions } from "@/hooks/use-finished-competitions";
 import { COMPETITIONS } from "@/lib/competitions";
 import { isFanZonePath } from "@/lib/fan-zone-nav";
+import { applyNavOrder, useLandingNavOrder } from "@/hooks/use-landing-nav-order";
 
 
 const baseNavItems = [
@@ -29,17 +30,21 @@ export function LandingHeader() {
   const [vpnDialogOpen, setVpnDialogOpen] = useState(false);
   const [open, setOpen] = useState(false);
   const finished = useFinishedCompetitions();
+  const navOrder = useLandingNavOrder();
 
 
-  const navItems = [
-    ...baseNavItems.slice(0, 4),
-    ...COMPETITIONS.filter((c) => c.key !== "boro2026" && !finished.includes(c.key)).map((c) => ({
-      to: c.to,
-      label: COMPETITION_NAV_LABELS[c.key] ?? c.title,
-    })),
-    { to: "/competition-winners", label: "Competition Winners" },
-    ...baseNavItems.slice(4),
-  ];
+  const navItems = applyNavOrder(
+    [
+      ...baseNavItems.slice(0, 4),
+      ...COMPETITIONS.filter((c) => c.key !== "boro2026" && !finished.includes(c.key)).map((c) => ({
+        to: c.to,
+        label: COMPETITION_NAV_LABELS[c.key] ?? c.title,
+      })),
+      { to: "/competition-winners", label: "Competition Winners" },
+      ...baseNavItems.slice(4),
+    ],
+    navOrder,
+  );
 
   return (
     <header className="relative px-4 sm:px-8 py-4 sm:py-5 flex items-center justify-between border-b border-border">

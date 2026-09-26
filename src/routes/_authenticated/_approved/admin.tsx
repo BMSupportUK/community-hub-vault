@@ -9,6 +9,8 @@ import { backfillVpnDetection } from "@/lib/vpn-backfill.functions";
 import { unlockWithStaffPin, requestStaffPinReset } from "@/lib/staff-pin.functions";
 import { StaffPinAdminCard } from "@/components/app/StaffPinAdminCard";
 import { setAppTheme, useDefaultAppTheme } from "@/hooks/use-app-theme";
+import { applyNavOrder, setLandingNavOrder, useLandingNavOrder } from "@/hooks/use-landing-nav-order";
+import { ArrowDown, ArrowUp } from "lucide-react";
 import { ThemePicker, APP_THEME_OPTIONS } from "@/components/app/ThemePicker";
 import {
   Dialog,
@@ -436,7 +438,7 @@ function DashboardBody() {
   const { hasRole } = useAuth();
   const isAdminOnly = hasRole("admin");
   const canSeePins = isAdminOnly || hasRole("management");
-  const [tab, setTab] = useState<"tools" | "staff-pins" | "backup-codes" | "theme">("tools");
+  const [tab, setTab] = useState<"tools" | "staff-pins" | "backup-codes" | "theme" | "header-links">("tools");
 
 
 
@@ -489,6 +491,7 @@ function DashboardBody() {
     ["staff-pins", "Staff PINs", true],
     ["backup-codes", "Backup codes", true],
     ["theme", "Theme", false],
+    ["header-links", "Header links", false],
   ] as const).filter(([, , pinOnly]) => !pinOnly || canSeePins);
 
   const letters = Array.from(new Set(tools.map((t) => t.label[0].toUpperCase())));
@@ -525,6 +528,10 @@ function DashboardBody() {
       ) : tab === "theme" ? (
         <div className="max-w-2xl">
           <ThemePickerCard />
+        </div>
+      ) : tab === "header-links" ? (
+        <div className="max-w-2xl">
+          <HeaderLinksCard />
         </div>
       ) : (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px] items-start">
@@ -928,5 +935,96 @@ function ThemePickerCard() {
       title="App settings — default theme"
       description="Choose the starting theme for users who have not selected their own theme."
     />
+  );
+}
+
+const HEADER_LINK_DEFAULTS = [
+  { to: "/packages", label: "Packages" },
+  { to: "/guides", label: "Sports Guides" },
+  { to: "/faq", label: "FAQ" },
+  { to: "/about", label: "About" },
+  { to: "/competition-winners", label: "Competition Winners" },
+  { to: "/fan-zone", label: "Boro Fan Zone Forum" },
+  { to: "/contact", label: "Contact us" },
+];
+
+function HeaderLinksCard() {
+  const savedOrder = useLandingNavOrder();
+  const [items, setItems] = useState(HEADER_LINK_DEFAULTS);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setItems(applyNavOrder(HEADER_LINK_DEFAULTS, savedOrder));
+  }, [savedOrder]);
+
+  const move = (index: number, dir: -1 | 1) => {
+    setItems((prev) => {
+      const next = [...prev];
+      const target = index + dir;
+      if (target < 0 || target >= next.length) return prev;
+      [next[index], next[target]] = [next[target], next[index]];
+      return next;
+    });
+  };
+
+  const save = async () => {
+    setSaving(true);
+    try {
+      await setLandingNavOrder(items.map((i) => i.to));
+      toast.success("Header link order saved");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not save the link order");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="rounded-2xl border border-border bg-surface-1 p-5 space-y-4">
+      <div>
+        <h3 className="font-display font-bold">Landing page header links</h3>
+        <p className="text-sm text-muted-foreground">
+          Change the order of the navigation links in the top header of the public landing page. Sign in and Join BM Support always stay at the end.
+        </p>
+      </div>
+      <ul className="space-y-2">
+        {items.map((item, i) => (
+          <li
+            key={item.to}
+            className="flex items-center gap-3 rounded-xl border border-border bg-surface-2 px-3 py-2"
+          >
+            <span className="text-xs text-muted-foreground w-5 text-center">{i + 1}</span>
+            <span className="flex-1 text-sm font-medium">{item.label}</span>
+            <button
+              type="button"
+              aria-label={`Move ${item.label} up`}
+              disabled={i === 0}
+              onClick={() => move(i, -1)}
+              className="inline-flex items-center justify-center size-8 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-muted/50 disabled:opacity-30"
+            >
+              <ArrowUp className="size-4" />
+            </button>
+            <button
+              type="button"
+              aria-label={`Move ${item.label} down`}
+              disabled={i === items.length - 1}
+              onClick={() => move(i, 1)}
+              className="inline-flex items-center justify-center size-8 rounded-lg border border-border text-muted-foreground hover:text-foreground hover:bg-muted/50 disabled:opacity-30"
+            >
+              <ArrowDown className="size-4" />
+            </button>
+          </li>
+        ))}
+      </ul>
+      <button
+        type="button"
+        onClick={save}
+        disabled={saving}
+        className="inline-flex items-center gap-2 h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium hover:opacity-90 disabled:opacity-50"
+      >
+        {saving && <Loader2 className="size-4 animate-spin" />}
+        Save order
+      </button>
+    </div>
   );
 }
