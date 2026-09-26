@@ -70,7 +70,7 @@ export interface PublicGuideDetail {
 
 export const listPublicGuides = createServerFn({ method: "GET" }).handler(
   async (): Promise<PublicGuideSummary[]> => {
-    const supabase = publicClient();
+    const supabase = await publicClient();
     const [{ data: blogs, error: blogsError }, { data: categories }] =
       await Promise.all([
         supabase
@@ -102,7 +102,7 @@ export const getPublicGuide = createServerFn({ method: "GET" })
     return id;
   })
   .handler(async ({ data: id }): Promise<PublicGuideDetail | null> => {
-    const supabase = publicClient();
+    const supabase = await publicClient();
     const { data: blog, error } = await supabase
       .from("sports_blogs")
       .select("id, title, excerpt, body, created_at, category_id")
