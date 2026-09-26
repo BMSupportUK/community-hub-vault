@@ -230,11 +230,11 @@ function ReadPage() {
         >
           <ArrowLeft className="size-4 mr-1" /> Back to guides
         </Button>
-        {pageCount > 1 && (
-          <span className="text-xs text-purple-200/70 font-medium">
-            Page {page + 1} of {pageCount}
-          </span>
-        )}
+        <span className="text-xs text-purple-200/70 font-medium">
+          {pageCount > 1
+            ? `Page ${page + 1} of ${pageCount} · ${bodyItems.length} events`
+            : `${bodyItems.length} ${bodyItems.length === 1 ? "listing" : "listings"}`}
+        </span>
       </header>
       <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
         {loading || !blog ? (
