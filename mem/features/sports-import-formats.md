@@ -39,3 +39,6 @@ Rule: time = the stated UK time as-is (never convert ET, no +1h), title = next l
 Header `US | NHL Center Ice` is dropped. Tested: 3 rows -> 3 events (12am/12:30am/1am, NHL 01/02/03).
 Evening-ET rows that are after midnight UK are tagged with the next UK weekday so they post on the right day.
 - Cymru TV channel-first bracket style: `Cymru Football 1 - Barry Town United - Connah’s Quay Nomads [26th Sep - 2:25pm BST]` → channel `Cymru Football 1`, event `Barry Town United v Connah’s Quay Nomads`, date `26th Sep`, and time `2:25pm BST`. Every row owns its bracketed date/time; the `UK | Cymru TV` heading is never an event.
+
+## Scottish Cup channel break (permanent)
+Source lists "Premier Sports 1 UK" and "Premier Sports 1 IRE" on separate lines. Keep each channel on its own line with the exact source names — never join with " | " and never reorder to "UK Premier Sports 1". Formatter: regional-suffix (UK/IRE) channel lists are output one per line.

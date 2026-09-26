@@ -233,9 +233,7 @@ function splitChannelLine(line: string): string[] {
     // not a separate channel format.
     const clean = part.trim()
       .replace(/^(dazn\s*\d{1,3})\s+h$/i, "$1 HD")
-      // Scottish Cup posts put the region after the Premier Sports feed;
-      // show it first, as we already do for "UK | Premier Sports 1" rows.
-      .replace(/^(Premier Sports\s+\d{1,3}(?:\s+HD)?)\s+(UK|IRE)$/i, (_match, feed: string, region: string) => `${region.toUpperCase()} ${feed}`);
+      ;
     const prefixedNumber = clean.match(/^(.*?\D\s*)(\d{1,3})$/);
     if (prefixedNumber?.[1]) {
       numberedPrefix = prefixedNumber[1].trimEnd();
@@ -1124,7 +1122,14 @@ export function formatSportsListingEvents(events: SportsListingEvent[], input: L
     if (/^iFollow\b/i.test(input.guideTitle?.trim() ?? "")) {
       if (!channels.some((channel) => channel.toLowerCase() === "under team channels")) channels.push("Under Team Channels");
     }
-    if (channels.length) out.push(channels.join(" | "));
+    // Scottish Cup posts list each regional feed on its own line
+    // ("Premier Sports 1 UK" / "Premier Sports 1 IRE"). Keep that channel
+    // break and the source names exactly — never join them with " | ".
+    const regionalFeeds = channels.length > 1 && channels.every((c) => /\s(UK|IRE)$/i.test(c));
+    if (channels.length) {
+      if (regionalFeeds) out.push(...channels);
+      else out.push(channels.join(" | "));
+    }
   }
 
   return out.join("\n").trim();
