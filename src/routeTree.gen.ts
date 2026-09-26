@@ -35,6 +35,8 @@ import { Route as AuthenticatedGateRouteImport } from './routes/_authenticated/g
 import { Route as ATokenRouteImport } from './routes/a.$token'
 import { Route as FanZoneIndexRouteImport } from './routes/fan-zone.index'
 import { Route as FanZoneBoardRouteImport } from './routes/fan-zone.$board'
+import { Route as GuidesIndexRouteImport } from './routes/guides.index'
+import { Route as GuidesIdRouteImport } from './routes/guides.$id'
 import { Route as AuthenticatedApprovedAccountSecurityRouteImport } from './routes/_authenticated/_approved/account-security'
 import { Route as AuthenticatedApprovedAdminRouteImport } from './routes/_authenticated/_approved/admin'
 import { Route as AuthenticatedApprovedAdminAdStatsRouteImport } from './routes/_authenticated/_approved/admin-ad-stats'
@@ -283,6 +285,16 @@ const FanZoneBoardRoute = FanZoneBoardRouteImport.update({
   id: '/$board',
   path: '/$board',
   getParentRoute: () => FanZoneRoute,
+} as any)
+const GuidesIndexRoute = GuidesIndexRouteImport.update({
+  id: '/guides/',
+  path: '/guides/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GuidesIdRoute = GuidesIdRouteImport.update({
+  id: '/guides/$id',
+  path: '/guides/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedApprovedAccountSecurityRoute =
   AuthenticatedApprovedAccountSecurityRouteImport.update({
@@ -1018,7 +1030,9 @@ export interface FileRoutesByFullPath {
   '/gate': typeof AuthenticatedGateRoute
   '/a/$token': typeof ATokenRoute
   '/fan-zone/$board': typeof FanZoneBoardRouteWithChildren
+  '/guides/$id': typeof GuidesIdRoute
   '/fan-zone/': typeof FanZoneIndexRoute
+  '/guides/': typeof GuidesIndexRoute
   '/account-security': typeof AuthenticatedApprovedAccountSecurityRoute
   '/admin': typeof AuthenticatedApprovedAdminRoute
   '/admin-ad-stats': typeof AuthenticatedApprovedAdminAdStatsRoute
@@ -1161,7 +1175,9 @@ export interface FileRoutesByTo {
   '/fan-zone-pending': typeof AuthenticatedFanZonePendingRoute
   '/gate': typeof AuthenticatedGateRoute
   '/a/$token': typeof ATokenRoute
+  '/guides/$id': typeof GuidesIdRoute
   '/fan-zone': typeof FanZoneIndexRoute
+  '/guides': typeof GuidesIndexRoute
   '/account-security': typeof AuthenticatedApprovedAccountSecurityRoute
   '/admin': typeof AuthenticatedApprovedAdminRoute
   '/admin-ad-stats': typeof AuthenticatedApprovedAdminAdStatsRoute
@@ -1308,7 +1324,9 @@ export interface FileRoutesById {
   '/_authenticated/gate': typeof AuthenticatedGateRoute
   '/a/$token': typeof ATokenRoute
   '/fan-zone/$board': typeof FanZoneBoardRouteWithChildren
+  '/guides/$id': typeof GuidesIdRoute
   '/fan-zone/': typeof FanZoneIndexRoute
+  '/guides/': typeof GuidesIndexRoute
   '/_authenticated/_approved/account-security': typeof AuthenticatedApprovedAccountSecurityRoute
   '/_authenticated/_approved/admin': typeof AuthenticatedApprovedAdminRoute
   '/_authenticated/_approved/admin-ad-stats': typeof AuthenticatedApprovedAdminAdStatsRoute
@@ -1455,7 +1473,9 @@ export interface FileRouteTypes {
     | '/gate'
     | '/a/$token'
     | '/fan-zone/$board'
+    | '/guides/$id'
     | '/fan-zone/'
+    | '/guides/'
     | '/account-security'
     | '/admin'
     | '/admin-ad-stats'
@@ -1598,7 +1618,9 @@ export interface FileRouteTypes {
     | '/fan-zone-pending'
     | '/gate'
     | '/a/$token'
+    | '/guides/$id'
     | '/fan-zone'
+    | '/guides'
     | '/account-security'
     | '/admin'
     | '/admin-ad-stats'
@@ -1744,7 +1766,9 @@ export interface FileRouteTypes {
     | '/_authenticated/gate'
     | '/a/$token'
     | '/fan-zone/$board'
+    | '/guides/$id'
     | '/fan-zone/'
+    | '/guides/'
     | '/_authenticated/_approved/account-security'
     | '/_authenticated/_approved/admin'
     | '/_authenticated/_approved/admin-ad-stats'
@@ -1887,6 +1911,8 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
   ATokenRoute: typeof ATokenRoute
+  GuidesIdRoute: typeof GuidesIdRoute
+  GuidesIndexRoute: typeof GuidesIndexRoute
   ApiPublicAndroidApkRoute: typeof ApiPublicAndroidApkRoute
   ApiPublicBoroMatchDetailRoute: typeof ApiPublicBoroMatchDetailRoute
   ApiPublicLinkPreviewRoute: typeof ApiPublicLinkPreviewRoute
@@ -2114,6 +2140,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/fan-zone/$board'
       preLoaderRoute: typeof FanZoneBoardRouteImport
       parentRoute: typeof FanZoneRoute
+    }
+    '/guides/': {
+      id: '/guides/'
+      path: '/guides'
+      fullPath: '/guides/'
+      preLoaderRoute: typeof GuidesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/guides/$id': {
+      id: '/guides/$id'
+      path: '/guides/$id'
+      fullPath: '/guides/$id'
+      preLoaderRoute: typeof GuidesIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/_approved/account-security': {
       id: '/_authenticated/_approved/account-security'
@@ -3288,6 +3328,8 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
   ATokenRoute: ATokenRoute,
+  GuidesIdRoute: GuidesIdRoute,
+  GuidesIndexRoute: GuidesIndexRoute,
   ApiPublicAndroidApkRoute: ApiPublicAndroidApkRoute,
   ApiPublicBoroMatchDetailRoute: ApiPublicBoroMatchDetailRoute,
   ApiPublicLinkPreviewRoute: ApiPublicLinkPreviewRoute,
