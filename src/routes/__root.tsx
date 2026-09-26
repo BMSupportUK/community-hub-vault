@@ -21,6 +21,7 @@ import { MentionSoundAlert } from "@/components/app/MentionSoundAlert";
 import { ToastNotificationBridge } from "@/components/app/ToastNotificationBridge";
 import { LocalSendReceiverBridge } from "@/components/app/LocalSendReceiverBridge";
 import { BmSplash } from "@/components/app/BmSplash";
+import { BackToTopButton } from "@/components/app/BackToTopButton";
 
 
 function NotFoundComponent() {
@@ -158,6 +159,7 @@ function RootComponent() {
         <LocalSendReceiverBridge />
         <FanZonePresenceTracker />
         <Outlet />
+        <BackToTopButton />
         {/* z-index keeps toasts visible above the inactivity lock overlay (z-200) */}
         <Toaster theme="dark" position="bottom-right" style={{ zIndex: 2147483000 }} />
 
