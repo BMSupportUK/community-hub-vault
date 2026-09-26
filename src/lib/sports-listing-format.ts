@@ -261,6 +261,45 @@ export function normalizeSportsEventTitle(value: string): string {
     .trim();
 }
 
+/**
+ * Read an explicit Discord post heading without guessing from an ordinary
+ * all-caps fixture or channel line. This is used to stop one competition from
+ * being saved into another competition's existing guide.
+ */
+export function sportsListingHeading(raw: string | null | undefined): string | null {
+  if (!raw) return null;
+  for (const rawLine of decodeListingEntities(raw).split("\n").slice(0, 12)) {
+    const trimmed = rawLine.trim();
+    const markdownHeading = trimmed.match(/^#{1,6}\s*(.+?)\s*$/)?.[1];
+    const boldHeading = trimmed.match(/^\*\*(?:#{1,6}\s*)?(.+?)\*\*$/)?.[1];
+    const heading = cleanLine(markdownHeading ?? boldHeading ?? "");
+    if (heading && !isDateLine(heading) && !parseClockTime(heading)) return heading;
+  }
+  return null;
+}
+
+function normalizedGuideIdentity(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/\b(?:channels?|streams?|listings?|fixtures?|schedule)\b/g, " ")
+    .replace(/[^a-z0-9+]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/**
+ * Only explicit, specific headings are enforced. Broad headings such as
+ * "Football" can legitimately be filed into a narrower guide.
+ */
+export function listingHeadingMatchesGuide(raw: string | null | undefined, guideTitle: string | null | undefined): boolean {
+  const heading = sportsListingHeading(raw);
+  const source = normalizedGuideIdentity(heading ?? "");
+  const target = normalizedGuideIdentity(guideTitle ?? "");
+  if (!source || !target || source.split(" ").length < 2) return true;
+  if (/^(?:todays? live events?|live sports?|football|sport|sports)$/.test(source)) return true;
+  return source === target || source.includes(target) || target.includes(source);
+}
+
 export function isLikelyChannelLabel(value: string): boolean {
   const text = value.replace(/\s+/g, " ").trim();
   if (!text || text.length > 70) return false;
@@ -782,6 +821,15 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
     }
     if (isAlwaysNoiseLine(line)) continue;
     if (isNoiseLine(line) && !current) continue;
+    // A new competition/provider heading ends the preceding event. Never let
+    // headings such as "UEFA NATIONS LEAGUE" become channels on the event
+    // above them when Discord posts are pasted or combined.
+    if (isSectionHeading(line)) {
+      flush();
+      previousPlainLine = null;
+      lastChannelWasPlain = null;
+      continue;
+    }
 
     const detected = detectEvent(line, currentDate);
     if (detected) {
