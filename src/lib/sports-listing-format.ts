@@ -303,14 +303,19 @@ function normalizedGuideIdentity(value: string): string {
  * "Football" can legitimately be filed into a narrower guide.
  */
 export function listingHeadingMatchesGuide(raw: string | null | undefined, guideTitle: string | null | undefined): boolean {
+  return mismatchedSportsListingHeading(raw, guideTitle) === null;
+}
+
+export function mismatchedSportsListingHeading(raw: string | null | undefined, guideTitle: string | null | undefined): string | null {
   const target = normalizedGuideIdentity(guideTitle ?? "");
-  if (!target) return true;
-  return sportsListingHeadings(raw).every((heading) => {
+  if (!target) return null;
+  for (const heading of sportsListingHeadings(raw)) {
     const source = normalizedGuideIdentity(heading);
-    if (!source || source.split(" ").length < 2) return true;
-    if (/^(?:todays? live events?|live sports?|football|sport|sports)$/.test(source)) return true;
-    return source === target || source.includes(target) || target.includes(source);
-  });
+    if (!source || source.split(" ").length < 2) continue;
+    if (/^(?:todays? live events?|live sports?|football|sport|sports)$/.test(source)) continue;
+    if (source !== target && !source.includes(target) && !target.includes(source)) return heading;
+  }
+  return null;
 }
 
 export function isLikelyChannelLabel(value: string): boolean {
@@ -684,7 +689,6 @@ function isSectionHeading(rawLine: string): boolean {
   if (!text || text.length > 48) return false;
   if (text.includes("//")) return false;
   if (/\s(?:&|v|vs|v\.|x)\s/i.test(text)) return false;
-  if (isLikelyChannelLabel(text)) return false;
   if (/\d{1,2}\s*[:.]\s*\d{2}/.test(text)) return false;
   if (isDateLine(text) || listingDateFromLine(text)) return false;
   if (detectEvent(text, null)) return false;

@@ -13,7 +13,7 @@ import {
   headlineListingDate,
   listingBlockHasDate,
   listingHeadingMatchesGuide,
-  sportsListingHeading,
+  mismatchedSportsListingHeading,
 } from "./sports-listing-format";
 
 const STAFF_ROLES = ["admin", "management", "moderator"] as const;
@@ -707,6 +707,11 @@ export const resolveQueueItem = createServerFn({ method: "POST" })
       const ev: any = { ...((item.parsed_event ?? {}) as Record<string, unknown>) };
       if (data.time !== undefined) ev.time = data.time;
       const title = data.title ?? ev.title ?? "Untitled";
+      const raw = String(ev.raw ?? "");
+      if (!listingHeadingMatchesGuide(raw, title)) {
+        const heading = mismatchedSportsListingHeading(raw, title);
+        throw new Error(`This post is headed “${heading ?? "another competition"}” and cannot be imported into “${title}”. Pick the matching guide.`);
+      }
       if (data.guideId) {
         const { data: guide, error: guideErr } = await supabaseAdmin
           .from("sports_blogs")
@@ -716,11 +721,6 @@ export const resolveQueueItem = createServerFn({ method: "POST" })
           .maybeSingle();
         if (guideErr) throw new Error(guideErr.message);
         if (!guide) throw new Error("That guide is not in the selected category");
-        const raw = String(ev.raw ?? "");
-        if (!listingHeadingMatchesGuide(raw, guide.title)) {
-          const heading = sportsListingHeading(raw);
-          throw new Error(`This post is headed “${heading ?? "another competition"}” and cannot be imported into “${guide.title}”. Pick the matching guide.`);
-        }
         const existingBody = String((guide as any).body ?? "").trim();
         const importedBody = buildBody(ev, data.sourceZone ?? null, guide.title);
         const sortedBody = mergeSportsListingBlocks(existingBody, importedBody, {

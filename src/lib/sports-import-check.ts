@@ -4,7 +4,7 @@ import {
   formatSportsListingBlock,
   isLikelyChannelLabel,
   listingHeadingMatchesGuide,
-  sportsListingHeading,
+  mismatchedSportsListingHeading,
   parseSportsListingBlock,
   type SportsListingEvent,
 } from "./sports-listing-format";
@@ -46,7 +46,7 @@ export function checkSportsImport(
   const events = formatted ? parseSportsListingBlock(formatted) : [];
 
   if (guideTitle && !listingHeadingMatchesGuide(raw, guideTitle)) {
-    const heading = sportsListingHeading(raw);
+    const heading = mismatchedSportsListingHeading(raw, guideTitle);
     issues.push({
       level: "error",
       message: `This post is headed “${heading ?? "another competition"}” but the selected guide is “${guideTitle}”. Pick the matching guide.`,
