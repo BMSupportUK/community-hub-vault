@@ -20,7 +20,6 @@ import { useFanBlocks } from "@/hooks/use-fan-blocks";
 import { useFanZoneMute } from "@/hooks/use-fan-zone-mute";
 import { FanZoneMutedScreen } from "@/components/app/FanZoneMutedScreen";
 import { toast } from "sonner";
-import { RotatingAffiliateBanner } from "@/components/app/RotatingAffiliateBanner";
 import { AdSenseSlot } from "@/components/app/AdSenseSlot";
 import { ForumPoll, AddPollToTopic } from "@/components/app/ForumPoll";
 import { BlockUserButton } from "@/components/app/BlockUserButton";
@@ -955,17 +954,8 @@ function TopicPage() {
     return <div className="text-center text-sm text-muted-foreground">Topic not found. <Link to="/forum/$board" params={{ board: slug }} className="underline">Back to board</Link></div>;
   }
   if (!topic || !posts) return <div className="grid place-items-center py-20 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>;
-  const renderSponsorAdvert = () => (
-    <RotatingAffiliateBanner
-      boardId={board?.id ?? null}
-      paused={submitting || editingId !== null}
-      fallback={{
-        image_url: board?.affiliate_banner_url ?? null,
-        link_url: board?.affiliate_banner_link ?? null,
-        alt_text: board?.affiliate_banner_alt || `${board?.name ?? "Forum"} sponsor`,
-      }}
-    />
-  );
+  // Own sponsor adverts temporarily removed — Google AdSense sidebar unit shown instead.
+  const renderSponsorAdvert = () => <AdSenseSlot slot="sidebar" />;
   const renderTopicPoll = () => (
     <ForumPoll
       topicId={topic.id}

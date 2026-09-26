@@ -12,6 +12,7 @@ import { isFanZoneOnlyRoles } from "@/lib/fan-zone-nav";
 import { FanZoneStaffBox } from "@/components/app/FanZoneStaffBox";
 import { BoroMatchCentreBox } from "@/components/app/BoroMatchCentreBox";
 import { BoroLiveMatchStrip } from "@/components/app/BoroLiveMatchStrip";
+import { AdSenseSlot } from "@/components/app/AdSenseSlot";
 import { FanZoneNameGate } from "@/components/app/FanZoneNamePrompt";
 import { FanZoneBannedScreen } from "@/components/app/FanZoneBannedScreen";
 import { useFanZoneBan } from "@/hooks/use-fan-zone-ban";
@@ -594,6 +595,8 @@ function BoardsIndex() {
             <FanZoneStaffBox />
           </div>
         </div>
+        {/* Google advert under the boards (own adverts temporarily removed) */}
+        <AdSenseSlot slot="topic" />
       </div>
       <div className="lg:sticky lg:top-4 lg:self-start">
         <div className="space-y-4">

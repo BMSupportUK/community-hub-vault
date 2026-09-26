@@ -18,7 +18,7 @@ import { useFanZoneMute } from "@/hooks/use-fan-zone-mute";
 import { FanZoneMutedScreen } from "@/components/app/FanZoneMutedScreen";
 import { toast } from "sonner";
 import { censorText, useProfanityWords } from "@/lib/profanity";
-import { RotatingAffiliateBanner } from "@/components/app/RotatingAffiliateBanner";
+import { AdSenseSlot } from "@/components/app/AdSenseSlot";
 import { PollDraftEditor, persistDraftPoll, type DraftPoll } from "@/components/app/ForumPoll";
 import { BarChart3 } from "lucide-react";
 
@@ -370,16 +370,8 @@ function BoardPage() {
 
   const canPost = !board.is_locked && (isStaff || info?.status === "approved") && !myMute;
   const isBoardMod = isStaff || (user ? moderatorIds.has(user.id) : false);
-  const renderSponsorAdvert = () => (
-    <RotatingAffiliateBanner
-      boardId={board.id}
-      fallback={{
-        image_url: board.affiliate_banner_url,
-        link_url: board.affiliate_banner_link,
-        alt_text: board.affiliate_banner_alt || `${board.name} sponsor`,
-      }}
-    />
-  );
+  // Own sponsor adverts temporarily removed — Google AdSense sidebar unit shown instead.
+  const renderSponsorAdvert = () => <AdSenseSlot slot="sidebar" />;
 
   return (
     <div className="space-y-4">
