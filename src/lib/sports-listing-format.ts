@@ -744,6 +744,17 @@ export function splitListingSections(raw: string | null | undefined): ListingSec
   return filled.length >= 2 ? filled : [];
 }
 
+const SMALL_LETTERS: Record<string, string> = {
+  "ᴬ": "A", "ᴮ": "B", "ᶜ": "C", "ᴰ": "D", "ᴱ": "E", "ᶠ": "F", "ᴳ": "G", "ᴴ": "H", "ᴵ": "I", "ᴶ": "J", "ᴷ": "K", "ᴸ": "L", "ᴹ": "M",
+  "ᴺ": "N", "ᴼ": "O", "ᴾ": "P", "ᴿ": "R", "ˢ": "S", "ᵀ": "T", "ᵁ": "U", "ⱽ": "V", "ᵂ": "W", "ˣ": "X", "ʸ": "Y", "ᶻ": "Z",
+};
+/** "ˢ ᴾ ᶠ ᴸ Cup 01" → "SPFL Cup 01". */
+function normalizeSmallLetters(line: string): string {
+  if (!/[ᴬᴮᶜᴰᴱᶠᴳᴴᴵᴶᴷᴸᴹᴺᴼᴾᴿˢᵀᵁⱽᵂˣʸᶻ]/.test(line)) return line;
+  return line
+    .replace(/[ᴬᴮᶜᴰᴱᶠᴳᴴᴵᴶᴷᴸᴹᴺᴼᴾᴿˢᵀᵁⱽᵂˣʸᶻ](?:\s*[ᴬᴮᶜᴰᴱᶠᴳᴴᴵᴶᴷᴸᴹᴺᴼᴾᴿˢᵀᵁⱽᵂˣʸᶻ])*/g, (m) => m.replace(/\s+/g, "").split("").map((c) => SMALL_LETTERS[c] ?? c).join(""));
+}
+
 export function parseSportsListingBlock(raw: string | null | undefined): SportsListingEvent[] {
   if (!raw) return [];
   const explicitHeadings = new Set(sportsListingHeadings(raw).map((heading) => heading.toLowerCase()));
@@ -763,7 +774,15 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
       const m = line.match(
         new RegExp(String.raw`^([A-Za-z][A-Za-z+&' ]*?\s\d{1,3}(?:\s*HD)?)\s*\|\s*(.+?)\s+(${TIME_SOURCE})\s*$`, "i"),
       );
-      return m ? [m[3], m[2].trim(), m[1].trim()] : [line];
+      if (m) return [m[3], m[2].trim(), m[1].trim()];
+      // Scottish Cup Streams: "ˢ ᴾ ᶠ ᴸ Cup 01 | 20:00 Queen of the South vs Rangers II"
+      // (channel | leading time + event). Break the channel onto its own
+      // line; small-letter channel tags become plain "SPFL Cup 01".
+      const plain = normalizeSmallLetters(line);
+      const s = plain.match(
+        new RegExp(String.raw`^([A-Za-z][A-Za-z+&' ]*?\s\d{1,3}(?:\s*HD)?)\s*\|\s*(${TIME_SOURCE})\s+(.+?)\s*$`, "i"),
+      );
+      return s ? [s[2], s[3].trim(), s[1].trim()] : [line];
     })
     // "VIP | Rugby Pass" headers are post headings, not events.
     .filter((line) => !/^vip\s*\|/i.test(line))
