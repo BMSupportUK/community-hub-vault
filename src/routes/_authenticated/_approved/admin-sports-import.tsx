@@ -960,7 +960,7 @@ function QueueSetup({
       });
       toast.success(
         action === "import"
-          ? "Saved as a draft with its dates filled in — check it over, then publish"
+          ? "Imported and published with its dates filled in"
           : "Import deleted",
       );
       onDone();
