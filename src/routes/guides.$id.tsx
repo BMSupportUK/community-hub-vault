@@ -2,6 +2,7 @@ import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { LandingHeader } from "@/components/LandingHeader";
 import { BmSplash } from "@/components/app/BmSplash";
+import AdSenseSlot from "@/components/app/AdSenseSlot";
 import { getPublicGuide, type PublicGuideDetail } from "@/lib/public-guides.functions";
 import { Clock, CalendarDays, ArrowLeft } from "lucide-react";
 import sportsBgAsset from "@/assets/sports-bg.jpg.asset.json";
@@ -20,6 +21,13 @@ export const Route = createFileRoute("/guides/$id")({
     const description =
       loaderData?.excerpt ??
       "Fixture dates and start times from BM Support. Members see full channel listings inside the app.";
+    const imageUrl = loaderData?.image_url;
+    const socialImageMeta = imageUrl && /^https:\/\//i.test(imageUrl)
+      ? [
+          { property: "og:image", content: imageUrl },
+          { name: "twitter:image", content: imageUrl },
+        ]
+      : [];
     return {
       meta: [
         { title },
@@ -27,6 +35,8 @@ export const Route = createFileRoute("/guides/$id")({
         { property: "og:title", content: title },
         { property: "og:description", content: description },
         { property: "og:type", content: "article" },
+        { name: "twitter:card", content: "summary_large_image" },
+        ...socialImageMeta,
         { property: "og:url", content: `https://bmsupport.uk/guides/${params.id}` },
         { rel: "canonical", href: `https://bmsupport.uk/guides/${params.id}` },
       ],
@@ -111,6 +121,32 @@ function PublicGuidePage() {
               hour12: true,
             })}
           </p>
+
+          {guide.image_url && (
+            <div className="relative mt-6 h-32 w-full overflow-hidden rounded-2xl border border-purple-500/30 bg-purple-950/60 sm:h-40 lg:h-48">
+              <img
+                src={guide.image_url}
+                alt=""
+                aria-hidden
+                className="absolute inset-0 h-full w-full scale-110 object-cover opacity-30 blur-md"
+              />
+              <img
+                src={guide.image_url}
+                alt={guide.title}
+                className="absolute inset-0 h-full w-full object-contain"
+              />
+              <div className="absolute inset-y-0 left-3 z-10 hidden w-[468px] items-center xl:flex">
+                <div className="w-[468px]">
+                  <AdSenseSlot slot="home" />
+                </div>
+              </div>
+              <div className="absolute inset-y-0 right-3 z-10 hidden w-[468px] items-center xl:flex">
+                <div className="w-[468px]">
+                  <AdSenseSlot slot="home" />
+                </div>
+              </div>
+            </div>
+          )}
 
           {guide.notes.length > 0 && (
             <div className="mt-8 space-y-2">

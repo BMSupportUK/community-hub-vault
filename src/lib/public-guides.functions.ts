@@ -85,6 +85,7 @@ export interface PublicGuideDetail {
   id: string;
   title: string;
   excerpt: string | null;
+  image_url: string | null;
   created_at: string;
   updated_at: string | null;
   category: string;
@@ -205,7 +206,7 @@ export const getPublicGuide = createServerFn({ method: "GET" })
     const supabase = await publicClient();
     const { data: blog, error } = await supabase
       .from("sports_blogs")
-      .select("id, title, excerpt, body, archived_body, created_at, updated_at, category_id")
+      .select("id, title, excerpt, image_url, body, archived_body, created_at, updated_at, category_id")
       .eq("id", id)
       .eq("published", true)
       .maybeSingle();
@@ -261,6 +262,7 @@ export const getPublicGuide = createServerFn({ method: "GET" })
       id: blog.id,
       title: blog.title,
       excerpt: blog.excerpt,
+      image_url: blog.image_url ?? null,
       created_at: blog.created_at,
       updated_at: (blog as { updated_at?: string | null }).updated_at ?? null,
       category,
