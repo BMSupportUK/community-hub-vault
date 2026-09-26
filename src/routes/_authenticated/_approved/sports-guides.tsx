@@ -1042,11 +1042,11 @@ function SportsGuidesPage() {
                     const heading = kids.length > 0;
                     const open = openGroups.includes(top.id);
                     const headingUnread = heading
-                      ? kids.reduce((sum, k) => sum + (unreadCounts[k.id] ?? 0), 0)
-                      : unreadCounts[top.id] ?? 0;
+                      ? kids.reduce((sum, k) => sum + (unreadDeep[k.id] ?? 0), 0)
+                      : unreadDeep[top.id] ?? 0;
                     const renderRow = (c: Category) => {
                       const active = c.id === activeCat;
-                      const unread = unreadCounts[c.id] ?? 0;
+                      const unread = unreadDeep[c.id] ?? 0;
                       return (
                         <div
                           key={c.id}
@@ -1232,7 +1232,7 @@ function SportsGuidesPage() {
 
                         {children.map((child) => {
                           const active = child.id === activeCat;
-                          const unread = unreadCounts[child.id] ?? 0;
+                          const unread = unreadDeep[child.id] ?? 0;
                           return (
                             <div
                               key={child.id}
