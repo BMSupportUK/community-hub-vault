@@ -77,9 +77,9 @@ function PublicGuidePage() {
         src={sportsBg}
         alt=""
         aria-hidden
-        className="pointer-events-none absolute inset-0 h-full w-full object-cover"
+        className="pointer-events-none fixed inset-0 h-full w-full object-cover"
       />
-      <div className="pointer-events-none absolute inset-0 bg-background/90" />
+      <div className="pointer-events-none fixed inset-0 bg-background/90" />
       <LandingHeader />
       <div className="relative flex-1">
         <main className="mx-auto w-full max-w-screen-2xl px-4 py-10 sm:px-8">
