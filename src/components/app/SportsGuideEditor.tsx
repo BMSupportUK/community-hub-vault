@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { HtmlEditor } from "@/components/ui/html-editor";
 import { toast } from "sonner";
 import { pruneExpiredGuideEvents } from "@/lib/prune-expired-guide-events";
-import { formatSportsListingBlock, plainListingToHtml } from "@/lib/sports-listing-format";
+import { dedupeSportsListingHtml, formatSportsListingBlock, plainListingToHtml } from "@/lib/sports-listing-format";
 
 type Category = { id: string; name: string; parent_id?: string | null };
 type Subcategory = { id: string; category_id: string; name: string; sort_order: number; is_default: boolean };
@@ -471,6 +471,14 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
           ? editing.subcategory
           : defaultSubName,
     };
+    // Publishing clears repeat entries (same time, event and channel).
+    if (payload.published && payload.body) {
+      const deduped = dedupeSportsListingHtml(payload.body);
+      if (deduped !== null) {
+        payload.body = deduped;
+        toast.info("Removed duplicate listings before publishing");
+      }
+    }
     if (!editing.id) {
       // Append to the end of the chosen category so the admin-defined order is preserved.
       const { data: maxRow } = await supabase

@@ -1196,9 +1196,9 @@ export function formatSportsListingBlock(input: ListingInput): string | null {
   // than leaving the guide dateless for someone to fill in afterwards.
   const base = input.date ?? importDayListingDate();
   const dated = rollOvernightEvents(applyImplicitDateRollover(parsed, base));
-  const events = sortSportsListingEvents(
+  const events = dedupeSportsListingEvents(sortSportsListingEvents(
     convertEventsToUk(dated, { ...input, date: base ?? input.date }),
-  );
+  ));
   if (!events.length) return null;
 
   return formatSportsListingEvents(events, { ...input, date: base ?? input.date });
@@ -1253,13 +1253,54 @@ export function mergeSportsListingBlocks(existing: string, incoming: string, inp
     const instant = ukListingInstant(event.date, event.time);
     return instant === null || nowMs - instant <= cutoff;
   };
-  const events = sortSportsListingEvents([
+  const events = dedupeSportsListingEvents(sortSportsListingEvents([
     ...parseSportsListingBlock(existing).filter(fresh),
     ...parseSportsListingBlock(incoming),
-  ]);
+  ]));
   // Each parsed event already owns its channels. Re-applying the incoming
   // event's channels here incorrectly adds them to every older guide entry.
   return events.length ? formatSportsListingEvents(events, { ...input, channels: [] }) : null;
+}
+
+/**
+ * Drops repeat entries: same date, same start time, same event name and the
+ * same channel(s). Keeps the first; different channels stay separate.
+ */
+export function dedupeSportsListingEvents(events: SportsListingEvent[]): SportsListingEvent[] {
+  const seen = new Set<string>();
+  const norm = (v: string | null | undefined) => (v ?? "").replace(/\s+/g, " ").trim().toLowerCase();
+  return events.filter((e) => {
+    const key = [
+      norm(e.date),
+      norm(e.time).replace(/\s+/g, ""),
+      norm(e.title),
+      (e.channels ?? []).map(norm).sort().join("|"),
+    ].join("#");
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
+
+/**
+ * Removes duplicate entries from a saved guide body. Returns the new HTML, or
+ * null when nothing changes or the body isn't a plain formatter-built listing.
+ */
+export function dedupeSportsListingHtml(html: string | null | undefined): string | null {
+  if (!html || !html.trim()) return null;
+  if (/data-link-preview|<img|<iframe|<video|<table/i.test(html)) return null;
+  const events = parseSportsListingBlock(html);
+  if (!events.length) return null;
+  const kept = dedupeSportsListingEvents(events);
+  const rebuilt = plainListingToHtml(formatSportsListingEvents(sortSportsListingEvents(kept), { channels: [] }));
+  const before = normalizeListingBody(html);
+  const after = normalizeListingBody(rebuilt);
+  if (before === after) return null;
+  // Only rewrite when every original line survives, i.e. the sole change is
+  // dropped repeats — never lose staff-written notes or headings.
+  const keptLines = new Set(after.split("\n"));
+  if (!before.split("\n").every((line) => keptLines.has(line))) return null;
+  return rebuilt;
 }
 
 export function escapeListingHtml(value: string): string {
