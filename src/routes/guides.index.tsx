@@ -424,11 +424,6 @@ function PublicGuidesPage() {
                   <p className="mt-6 text-sm font-semibold text-fuchsia-200">
                     Pick a category on the right to open the guides.
                   </p>
-                  <p className="mt-4 flex items-center gap-2 text-xs text-purple-200/60">
-                    <Lock className="size-3.5" />
-                    Channel listings are members-only — join BM Support to see
-                    exactly which channels are showing every event.
-                  </p>
                 </div>
                 <div className="mt-6">
                   <AdSenseSlot slot="welcome" />
