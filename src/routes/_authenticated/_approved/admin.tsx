@@ -438,7 +438,7 @@ function DashboardBody() {
   const { hasRole } = useAuth();
   const isAdminOnly = hasRole("admin");
   const canSeePins = isAdminOnly || hasRole("management");
-  const [tab, setTab] = useState<"tools" | "staff-pins" | "backup-codes" | "theme">("tools");
+  const [tab, setTab] = useState<"tools" | "staff-pins" | "backup-codes" | "theme" | "header-links">("tools");
 
 
 
