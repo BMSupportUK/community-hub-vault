@@ -292,9 +292,9 @@ const GuidesIndexRoute = GuidesIndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const GuidesIdRoute = GuidesIdRouteImport.update({
-  id: '/guides/$id',
-  path: '/guides/$id',
-  getParentRoute: () => rootRouteImport,
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => GuidesRoute,
 } as any)
 const AuthenticatedApprovedAccountSecurityRoute =
   AuthenticatedApprovedAccountSecurityRouteImport.update({
@@ -1911,7 +1911,6 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
   ATokenRoute: typeof ATokenRoute
-  GuidesIdRoute: typeof GuidesIdRoute
   GuidesIndexRoute: typeof GuidesIndexRoute
   ApiPublicAndroidApkRoute: typeof ApiPublicAndroidApkRoute
   ApiPublicBoroMatchDetailRoute: typeof ApiPublicBoroMatchDetailRoute
@@ -2150,10 +2149,10 @@ declare module '@tanstack/react-router' {
     }
     '/guides/$id': {
       id: '/guides/$id'
-      path: '/guides/$id'
+      path: '/$id'
       fullPath: '/guides/$id'
       preLoaderRoute: typeof GuidesIdRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof GuidesRoute
     }
     '/_authenticated/_approved/account-security': {
       id: '/_authenticated/_approved/account-security'
@@ -3328,7 +3327,6 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
   ATokenRoute: ATokenRoute,
-  GuidesIdRoute: GuidesIdRoute,
   GuidesIndexRoute: GuidesIndexRoute,
   ApiPublicAndroidApkRoute: ApiPublicAndroidApkRoute,
   ApiPublicBoroMatchDetailRoute: ApiPublicBoroMatchDetailRoute,
