@@ -17,8 +17,17 @@ Google's reviewer can only see the front page and login screen today, which risk
    - A new read-only rule lets visitors see **published** guides only. Drafts, and every other table, stay locked to members exactly as they are now.
 
 4. **Discovery**
-   - "Sports Guides" link added to the front page footer next to Privacy Policy.
+   - "Sports Guides" link added to the **public header** alongside Packages, FAQ, About, Boro Fan Zone Forum and Contact us — visible on every public page.
    - `/guides` added to the sitemap so Google finds it immediately.
+
+## AdSense-friendly confirmation
+
+Yes — these pages are built to pass AdSense review:
+- Real, substantial content (full fixture listings with dates, times and events), not placeholder text.
+- Publicly readable with no sign-in wall, so Google's reviewer can see everything.
+- Each page has its own title, description and canonical URL.
+- No channel/broadcaster names shown publicly (members-only info), which also keeps you clear of any rights-holder concerns.
+- Nothing copied from other sites — it's your own listings data.
 
 ## What does NOT change
 
