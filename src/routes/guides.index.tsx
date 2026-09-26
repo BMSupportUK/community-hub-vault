@@ -209,7 +209,7 @@ function PublicGuidesPage() {
     const list = subsByCat[activeCat] ?? [];
     if (!list.length) { setSubFilter(null); return; }
     const hasGuides = (name: string) =>
-      guides.some((g) => g.category_id === activeCat && g.subcategory === name);
+      listingBlogs.some((g) => g.category_id === activeCat && g.subcategory === name);
     const def = list.find((s) => s.is_default);
     // Prefer the default sub, but fall back to the first sub that actually
     // has public guides so visitors never land on an empty list.
@@ -607,11 +607,12 @@ function PublicGuidesPage() {
                 {(subsByCat[activeCategory.id]?.length ?? 0) > 0 && (
                   <div className="mb-4 flex flex-wrap gap-2">
                     {(subsByCat[activeCategory.id] ?? []).map((sub) => {
-                      const count = guides.filter(
+                      const count = listingBlogs.filter(
                         (g) => g.category_id === activeCategory.id && g.subcategory === sub.name,
                       ).length;
+                      if (count === 0) return null;
                       const active = subFilter === sub.name;
-                      const unread = guides.filter(
+                      const unread = listingBlogs.filter(
                         (g) => g.category_id === activeCategory.id && g.subcategory === sub.name && isUnread(g),
                       ).length;
                       return (
