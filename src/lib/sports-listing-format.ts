@@ -114,6 +114,12 @@ const CHANNEL_NUMBER_TITLE_TIME_RE = new RegExp(
   "i",
 );
 
+/** "Triller TV | Event 1: Highland Boxing: Resurgence 2026 10:00". */
+const TRILLER_TV_EVENT_RE = new RegExp(
+  `^\s*(Triller\s+TV)\s*\|\s*Event\s+\d{1,3}\s*:\s*(.+?)\s+(${TIME_WITH_ZONE_SOURCE})\s*$`,
+  "i",
+);
+
 /**
  * Named feeds number their channels after the feed name and then dash into the
  * kick-off: "NHL | 01 - 7pm Maple Leafs at Senators". Keep "NHL 01" as the
@@ -683,6 +689,16 @@ function detectEvent(line: string, date: string | null): SportsListingEvent | nu
       time: normalizeTime(numberedTrailingTime[3]),
       title: split.title,
       channels: unique([`Channel ${numberedTrailingTime[1]}`, ...split.channels]),
+    };
+  }
+
+  const trillerEvent = line.match(TRILLER_TV_EVENT_RE);
+  if (trillerEvent?.[1] && trillerEvent[2] && trillerEvent[3]) {
+    return {
+      date,
+      time: normalizeTime(trillerEvent[3]),
+      title: normalizeSportsEventTitle(trillerEvent[2]),
+      channels: [trillerEvent[1].replace(/\s+/g, " ")],
     };
   }
 

@@ -1,6 +1,7 @@
 # Roadmap
 
 ## Current
+- [x] Fix and retain Triller TV imports from numbered, trailing-time queue rows
 - [x] Separate completion messages for new account sales and renewals; remove incorrect “upgraded” wording
 - [x] Remove the duplicate “setting up your account” notice and its button from order support tickets
 - [x] Add the 300x250 advert slot on the members home page below the working status / subscription box
