@@ -72,28 +72,20 @@ export function adsterraSizeFor(kind: AdsterraSlotKind): AdsterraZoneSize {
   return ZONE_BY_SLOT[kind];
 }
 
-const injected = new Set<string>();
-
-/** True when this zone's loader already ran on the current page. */
-export function isAdsterraZoneInjected(key: string): boolean {
-  return injected.has(key);
-}
-
 // The classic Adsterra banner code sets one global `atOptions` and loads the
-// zone's invoke.js, which renders the banner. Two zones on one page would
-// race over that global, so injections are serialized: each zone's config is
-// written immediately before its loader runs, and the next zone waits.
+// zone's invoke.js, which renders the banner. Two banners on one page would
+// race over that global, so injections are serialized: each slot's config is
+// written immediately before its loader runs, and the next slot waits.
 let chain: Promise<void> = Promise.resolve();
 
 /**
  * Injects the Adsterra banner for a zone into the slot's mount element.
- * Runs once per zone per page; a second slot reusing the zone is left to
- * AdSense by the caller (isAdsterraZoneInjected).
+ * Every slot gets its own config + loader pair (serialized through the
+ * chain), so several slots sharing a zone on one page — or on later pages
+ * in the same session — each render their own banner.
  */
 export function ensureAdsterraBanner(zone: AdsterraZone, mount: HTMLElement) {
   if (!zone.key || typeof document === "undefined") return;
-  if (injected.has(zone.key)) return;
-  injected.add(zone.key);
   chain = chain.then(
     () =>
       new Promise<void>((resolve) => {
