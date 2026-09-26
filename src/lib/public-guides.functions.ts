@@ -109,6 +109,7 @@ export const getPublicGuide = createServerFn({ method: "GET" })
       .eq("id", id)
       .eq("published", true)
       .maybeSingle();
+    console.error("[getPublicGuide]", id, "error:", error?.message, "found:", !!blog);
     if (error) throw new Error(error.message);
     if (!blog) return null;
 
