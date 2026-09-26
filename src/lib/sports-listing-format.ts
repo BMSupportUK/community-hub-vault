@@ -1120,33 +1120,30 @@ function applyImplicitDateRollover(events: SportsListingEvent[], fallbackDate?: 
 }
 
 /**
- * Daily posts run past midnight: when a time drops from evening to early
- * morning within the same date group (23:30 then 01:00), the later event
- * belongs to the next day — roll its date forward automatically, and keep
- * every following event on the rolled date until the post names a new day.
+ * Daily posts run past midnight: an early-morning time (before 06:00) that
+ * follows a later time in the same date group belongs to the next day.
+ * Rolls are never chained — an event moves at most one day past the date the
+ * post gave it, and later daytime events stay on the post's own date (posts
+ * like "Todays Live Events" list channel blocks out of time order).
  */
 function rollOvernightEvents(events: SportsListingEvent[]): SportsListingEvent[] {
   let groupDate: string | null = null;
-  let prevMinutes: number | null = null;
-  let rolledDate: string | null = null;
+  let maxMinutes: number | null = null;
   return events.map((event) => {
     const clock = parseClockTime(event.time ?? "");
     const minutes = clock ? clock.hour * 60 + clock.minute : null;
     if (event.date !== groupDate) {
       groupDate = event.date ?? null;
-      prevMinutes = minutes;
-      rolledDate = null;
+      maxMinutes = minutes;
       return event;
     }
-    if (minutes !== null && prevMinutes !== null && prevMinutes - minutes > 6 * 60 && event.date) {
-      const parsed = parseListingDate(rolledDate ?? event.date);
-      if (parsed) {
-        rolledDate = formatListingDate(new Date(Date.UTC(parsed.y, parsed.m, parsed.d + 1)));
-      }
-    }
-    const next = rolledDate && event.date ? { ...event, date: rolledDate } : event;
-    prevMinutes = minutes ?? prevMinutes;
-    return next;
+    if (minutes === null) return event;
+    const roll = event.date && maxMinutes !== null && minutes < 6 * 60 && maxMinutes - minutes > 6 * 60;
+    if (minutes >= 6 * 60) maxMinutes = Math.max(maxMinutes ?? 0, minutes);
+    if (!roll || !event.date) return event;
+    const parsed = parseListingDate(event.date);
+    if (!parsed) return event;
+    return { ...event, date: formatListingDate(new Date(Date.UTC(parsed.y, parsed.m, parsed.d + 1))) };
   });
 }
 
