@@ -33,7 +33,9 @@ export const AUTOMATED_MESSAGE_FALLBACKS: Record<string, string> = {
   order_subscription_updating:
     "🔄 Your subscription{account_handle} is being updated. You'll receive confirmation once the extension is complete.",
   order_sale_completed:
-    "🎉 Your account has been upgraded — thank you for your business! We really appreciate it.",
+    "🎉 Your new account sale is complete — thank you for choosing BM Support!",
+  order_renewal_completed:
+    "🎉 Your subscription renewal is complete — thank you for staying with BM Support!",
   order_account_created:
     "🆕 Account set up — {account_label} ({account_type}), {months} month{month_suffix}, expires {expiry}. Your login details are in My Account.",
   order_subscription_extended:
