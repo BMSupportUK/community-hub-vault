@@ -39,7 +39,7 @@ export type AdsterraSlotKind = "topic" | "sidebar" | "home" | "talk" | "welcome"
 export const ADSTERRA_ZONES: Record<AdsterraZoneSize, AdsterraZone> = {
   "468x60": { id: "31421164", size: "468x60", width: 468, height: 60, key: "29d36d2e0295dbfee9149c7277c3e70d", host: "www.highrevenueformat.com" },
   "728x90": { id: "31421166", size: "728x90", width: 728, height: 90, key: "", host: "" },
-  "160x600": { id: "31421165", size: "160x600", width: 160, height: 600, key: "", host: "" },
+  "160x600": { id: "31421165", size: "160x600", width: 160, height: 600, key: "12ba0d3de4e44823dca06483b91973a6", host: "www.highrevenueformat.com" },
   "300x250": { id: "31421167", size: "300x250", width: 300, height: 250, key: "", host: "" },
 };
 
