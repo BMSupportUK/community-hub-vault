@@ -72,7 +72,7 @@ function PublicGuidePage() {
   }, [guide.id]);
 
   return (
-    <div className="relative flex min-h-screen flex-col bg-background text-foreground">
+    <div className="relative flex min-h-screen flex-col bg-background text-foreground" style={{ minHeight: "100dvh" }}>
       <img
         src={sportsBg}
         alt=""
