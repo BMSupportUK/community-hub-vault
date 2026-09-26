@@ -355,7 +355,7 @@ export const importParsedEvents = createServerFn({ method: "POST" })
           subcategory: e.subcategory ?? null,
           title: e.title,
           excerpt: e.time ? `${e.date ? e.date + " · " : ""}${e.time}` : (e.date ?? null),
-          body: plainListingToHtml(buildBody(e)),
+          body: plainListingToHtml(buildBody(e, null, e.title)),
           image_url: coverMap.get(coverKey) ?? null,
           published: true,
           created_by: userId,
@@ -705,7 +705,6 @@ export const resolveQueueItem = createServerFn({ method: "POST" })
       const ev: any = { ...((item.parsed_event ?? {}) as Record<string, unknown>) };
       if (data.time !== undefined) ev.time = data.time;
       const title = data.title ?? ev.title ?? "Untitled";
-      const importedBody = buildBody(ev, data.sourceZone ?? null, title);
       if (data.guideId) {
         const { data: guide, error: guideErr } = await supabaseAdmin
           .from("sports_blogs")
@@ -716,6 +715,7 @@ export const resolveQueueItem = createServerFn({ method: "POST" })
         if (guideErr) throw new Error(guideErr.message);
         if (!guide) throw new Error("That guide is not in the selected category");
         const existingBody = String((guide as any).body ?? "").trim();
+        const importedBody = buildBody(ev, data.sourceZone ?? null, guide.title);
         const sortedBody = mergeSportsListingBlocks(existingBody, importedBody, {
           date: ev.date,
           time: ev.time,
@@ -816,7 +816,7 @@ export const approveAllSuggested = createServerFn({ method: "POST" })
           subcategory: sub,
           title: ev.title ?? "Untitled",
           excerpt: ev.time ? `${ev.date ? ev.date + " · " : ""}${ev.time}` : (ev.date ?? null),
-           body: plainListingToHtml(buildBody(ev, null, ev.title)),
+          body: plainListingToHtml(buildBody(ev, null, ev.title)),
           image_url: coverUrl,
           published: true,
           created_by: userId,
