@@ -14,11 +14,11 @@ import {
 import {
   ADSTERRA_ENABLED,
   ADSTERRA_SHARE,
-  adsterraSizeFor,
   adsterraZoneFor,
-  ensureAdsterraScript,
+  ensureAdsterraBanner,
   isAdsterraZoneInjected,
   type AdsterraSlotKind,
+  type AdsterraZone,
 } from "@/lib/adsterra";
 
 export type AdSenseSlotKind = AdsterraSlotKind;
@@ -58,7 +58,7 @@ function AdSenseSlotComponent({ slot = "topic", fitViewport = false }: { slot?: 
           : slot === "welcome"
             ? ADSENSE_WELCOME_SLOT
             : ADSENSE_TOPIC_SLOT;
-  const adsterraZone = ADSTERRA_ENABLED ? adsterraZoneFor(slot) : "";
+  const adsterraZone: AdsterraZone | null = ADSTERRA_ENABLED ? adsterraZoneFor(slot) : null;
   // fitViewport: cap a sidebar unit to the visible screen height so pages
   // locked to the viewport (sign-in / join) never clip the advert.
   const sidebarFit = slot === "sidebar" && fitViewport;
@@ -68,7 +68,7 @@ function AdSenseSlotComponent({ slot = "topic", fitViewport = false }: { slot?: 
   // React's hydration check. Everyone starts on the placeholder for a frame.
   const [provider, setProvider] = useState<Provider>("none");
   const enabled = provider !== "none";
-  const metricSlotId = provider === "adsterra" ? adsterraZone : adSlotId;
+  const metricSlotId = provider === "adsterra" && adsterraZone ? adsterraZone.id : adSlotId;
 
   const boxRef = useRef<HTMLDivElement | null>(null);
   const insRef = useRef<HTMLModElement | null>(null);
@@ -77,7 +77,7 @@ function AdSenseSlotComponent({ slot = "topic", fitViewport = false }: { slot?: 
 
   // Coin flip once per slot per page load: Adsterra and AdSense alternate.
   useEffect(() => {
-    const useAdsterra = adsterraZone !== "" && Math.random() < ADSTERRA_SHARE;
+    const useAdsterra = !!adsterraZone && Math.random() < ADSTERRA_SHARE;
     if (useAdsterra) {
       setProvider("adsterra");
     } else {
@@ -86,16 +86,16 @@ function AdSenseSlotComponent({ slot = "topic", fitViewport = false }: { slot?: 
   }, [adsterraZone]);
 
   useEffect(() => {
-    if (provider === "adsterra") {
+    if (provider === "adsterra" && adsterraZone) {
       const mount = adsterraMountRef.current;
       if (!mount) return;
-      if (isAdsterraZoneInjected(adsterraZone)) {
+      if (isAdsterraZoneInjected(adsterraZone.key)) {
         // A sibling slot on this page already loaded the same zone — don't
         // double-inject it; hand this slot to AdSense instead.
         setProvider(ADSENSE_ENABLED ? "adsense" : "none");
         return;
       }
-      ensureAdsterraScript(adsterraZone, mount);
+      ensureAdsterraBanner(adsterraZone, mount);
       return;
     }
     if (provider !== "adsense") return;
@@ -157,13 +157,14 @@ function AdSenseSlotComponent({ slot = "topic", fitViewport = false }: { slot?: 
   // Adsterra banners arrive at a fixed pixel size, so the container opens up
   // to the zone's real height; AdSense units size themselves.
   const adsterraActive = provider === "adsterra";
-  const adsterraSize = adsterraActive ? adsterraSizeFor(slot) : null;
-  const containerClass = adsterraActive
-    ? adsterraSize === "160x600"
-      ? "min-h-[620px]"
-      : adsterraSize === "300x250"
-        ? "min-h-[310px]"
-        : "h-[132px]"
+  const containerClass = adsterraActive && adsterraZone
+    ? adsterraZone.height >= 600
+      ? "min-h-[640px]"
+      : adsterraZone.height >= 250
+        ? "min-h-[290px]"
+        : adsterraZone.height >= 90
+          ? "h-[132px]"
+          : "h-[100px]"
     : `${slot === "home" || slot === "welcome" ? "h-[92px]" : slot === "topic" ? "h-[125px]" : slot === "sidebar" ? "min-h-[280px]" : ""} ${slot === "talk" ? "min-h-[250px]" : ""}`;
 
   return (
