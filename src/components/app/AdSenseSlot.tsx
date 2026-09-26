@@ -89,12 +89,6 @@ function AdSenseSlotComponent({ slot = "topic", fitViewport = false }: { slot?: 
     if (provider === "adsterra" && adsterraZone) {
       const mount = adsterraMountRef.current;
       if (!mount) return;
-      if (isAdsterraZoneInjected(adsterraZone.key)) {
-        // A sibling slot on this page already loaded the same zone — don't
-        // double-inject it; hand this slot to AdSense instead.
-        setProvider(ADSENSE_ENABLED ? "adsense" : "none");
-        return;
-      }
       ensureAdsterraBanner(adsterraZone, mount);
       return;
     }
