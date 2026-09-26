@@ -172,7 +172,7 @@ function AdSenseSlotComponent({ slot = "topic", fitViewport = false }: { slot?: 
       ref={boxRef}
       className={`hidden md:block rounded-2xl border border-border/60 bg-surface-2/20 px-2 py-2 overflow-hidden ${containerClass} ${sidebarFit ? "flex w-full flex-col" : ""}`}
     >
-      <div className="px-2 pb-1 text-[10px] uppercase tracking-[0.25em] text-muted-foreground/70">
+      <div className="px-2 pb-1 text-center text-[10px] uppercase tracking-[0.25em] text-muted-foreground/70">
         Advertisement
       </div>
       {adsterraActive ? (
