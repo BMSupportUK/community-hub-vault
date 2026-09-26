@@ -213,16 +213,24 @@ export const getPublicGuide = createServerFn({ method: "GET" })
       .maybeSingle();
     if (cat?.name) category = cat.name;
 
-    // Live body first; fall back to the archived body for swept guides so
-    // the public pages still show the fixture dates/times (never channels).
-    const lines = bodyToLines(blog.body?.trim() ? blog.body : (blog.archived_body ?? ""));
+    // Live body only: an empty body means the 10h sweep archived it because
+    // every event has already happened — treat the guide as expired.
+    if (!blog.body?.trim()) return null;
+    const lines = bodyToLines(blog.body);
     const parsed = parseSportsListingBlock(lines.join("\n"));
     // Channel info is members-only: keep date, time and event name only.
-    const events: PublicGuideEvent[] = parsed.map((e) => ({
-      date: e.date ?? null,
-      time: e.time ?? null,
-      title: e.title,
-    }));
+    // Drop events whose date is already past (London).
+    const today = todayLondon();
+    const events: PublicGuideEvent[] = parsed
+      .filter((e) => {
+        const d = parseEventDate(e.date ?? null);
+        return !d || d >= today;
+      })
+      .map((e) => ({
+        date: e.date ?? null,
+        time: e.time ?? null,
+        title: e.title,
+      }));
 
     // Non-listing lines (intro text, notes) are shown as long as they are
     // not channel labels.
