@@ -73,9 +73,17 @@ function PublicGuidesPage() {
 
   const counts = useMemo(() => {
     const m: Record<string, number> = {};
-    for (const g of guides) m[g.category_id] = (m[g.category_id] ?? 0) + 1;
+    const parentOf = new Map(
+      categories.map((c) => [c.id, c.parent_id ?? null] as const),
+    );
+    for (const g of guides) {
+      m[g.category_id] = (m[g.category_id] ?? 0) + 1;
+      // Roll child-category guides up to the top-level badge.
+      const parent = parentOf.get(g.category_id);
+      if (parent) m[parent] = (m[parent] ?? 0) + 1;
+    }
     return m;
-  }, [guides]);
+  }, [guides, categories]);
 
   const activeCategory = categories.find((c) => c.id === activeCat);
 
@@ -243,6 +251,11 @@ function PublicGuidesPage() {
                   className="flex-1 flex items-center justify-between px-2 py-2 text-sm text-left font-semibold"
                 >
                   <span>{top.name}</span>
+                  {(counts[top.id] ?? 0) > 0 && (
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-purple-800/70 text-purple-100 font-semibold">
+                      {counts[top.id]}
+                    </span>
+                  )}
                 </button>
               </div>
             </div>

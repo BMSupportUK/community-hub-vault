@@ -165,10 +165,14 @@ export const listPublicGuides = createServerFn({ method: "GET" }).handler(
     ]);
     if (blogsError) throw new Error(blogsError.message);
     // Only guides with a live body: an empty body means the 10h sweep has
-    // archived it, i.e. every event has already happened. Belt-and-braces:
+    // archived it, i.e. every event has already happened. A body that is
+    // only markup ("<br>", "<p></p>") counts as empty too — it has no
+    // events and would otherwise show as a phantom badge. Belt-and-braces:
     // also drop any guide whose parseable event dates are all in the past.
+    const hasRealContent = (html: string | null) =>
+      decodeEntities((html ?? "").replace(/<[^>]*>/g, "")).trim().length > 0;
     const guides = (blogs ?? [])
-      .filter((b) => (b.body ?? "").trim().length > 0)
+      .filter((b) => hasRealContent(b.body))
       .filter((b) => !guideIsExpired(b.body ?? ""))
       .map((b) => ({
         id: b.id,
