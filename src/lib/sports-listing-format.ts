@@ -1112,6 +1112,37 @@ function applyImplicitDateRollover(events: SportsListingEvent[], fallbackDate?: 
   return events.map((event) => (event.date ? event : { ...event, date: fallback }));
 }
 
+/**
+ * Daily posts run past midnight: when a time drops from evening to early
+ * morning within the same date group (23:30 then 01:00), the later event
+ * belongs to the next day — roll its date forward automatically, and keep
+ * every following event on the rolled date until the post names a new day.
+ */
+function rollOvernightEvents(events: SportsListingEvent[]): SportsListingEvent[] {
+  let groupDate: string | null = null;
+  let prevMinutes: number | null = null;
+  let rolledDate: string | null = null;
+  return events.map((event) => {
+    const clock = parseClockTime(event.time ?? "");
+    const minutes = clock ? clock.hour * 60 + clock.minute : null;
+    if (event.date !== groupDate) {
+      groupDate = event.date ?? null;
+      prevMinutes = minutes;
+      rolledDate = null;
+      return event;
+    }
+    if (minutes !== null && prevMinutes !== null && prevMinutes - minutes > 6 * 60 && event.date) {
+      const parsed = parseListingDate(rolledDate ?? event.date);
+      if (parsed) {
+        rolledDate = formatListingDate(new Date(Date.UTC(parsed.y, parsed.m, parsed.d + 1)));
+      }
+    }
+    const next = rolledDate && event.date ? { ...event, date: rolledDate } : event;
+    prevMinutes = minutes ?? prevMinutes;
+    return next;
+  });
+}
+
 /** Times that already name a UK zone are never reinterpreted as ET. */
 const UK_LABELLED_TIME_RE = /\b(uk|gmt|bst)\b/i;
 
