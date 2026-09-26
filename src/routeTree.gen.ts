@@ -21,7 +21,6 @@ import { Route as FanzoneBanDemoRouteImport } from './routes/fanzone-ban-demo'
 import { Route as FanzoneMuteDemoRouteImport } from './routes/fanzone-mute-demo'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
-import { Route as GuidesRouteImport } from './routes/guides'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MfaChallengeRouteImport } from './routes/mfa-challenge'
 import { Route as PackagesRouteImport } from './routes/packages'
@@ -36,6 +35,7 @@ import { Route as AuthenticatedGateRouteImport } from './routes/_authenticated/g
 import { Route as ATokenRouteImport } from './routes/a.$token'
 import { Route as FanZoneIndexRouteImport } from './routes/fan-zone.index'
 import { Route as FanZoneBoardRouteImport } from './routes/fan-zone.$board'
+import { Route as GuidesIndexRouteImport } from './routes/guides.index'
 import { Route as GuidesIdRouteImport } from './routes/guides.$id'
 import { Route as AuthenticatedApprovedAccountSecurityRouteImport } from './routes/_authenticated/_approved/account-security'
 import { Route as AuthenticatedApprovedAdminRouteImport } from './routes/_authenticated/_approved/admin'
@@ -216,11 +216,6 @@ const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
   path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const GuidesRoute = GuidesRouteImport.update({
-  id: '/guides',
-  path: '/guides',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -291,10 +286,15 @@ const FanZoneBoardRoute = FanZoneBoardRouteImport.update({
   path: '/$board',
   getParentRoute: () => FanZoneRoute,
 } as any)
+const GuidesIndexRoute = GuidesIndexRouteImport.update({
+  id: '/guides/',
+  path: '/guides/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GuidesIdRoute = GuidesIdRouteImport.update({
-  id: '/$id',
-  path: '/$id',
-  getParentRoute: () => GuidesRoute,
+  id: '/guides/$id',
+  path: '/guides/$id',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedApprovedAccountSecurityRoute =
   AuthenticatedApprovedAccountSecurityRouteImport.update({
@@ -1018,7 +1018,6 @@ export interface FileRoutesByFullPath {
   '/fanzone-mute-demo': typeof FanzoneMuteDemoRoute
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
-  '/guides': typeof GuidesRouteWithChildren
   '/login': typeof LoginRoute
   '/mfa-challenge': typeof MfaChallengeRoute
   '/packages': typeof PackagesRoute
@@ -1033,6 +1032,7 @@ export interface FileRoutesByFullPath {
   '/fan-zone/$board': typeof FanZoneBoardRouteWithChildren
   '/guides/$id': typeof GuidesIdRoute
   '/fan-zone/': typeof FanZoneIndexRoute
+  '/guides/': typeof GuidesIndexRoute
   '/account-security': typeof AuthenticatedApprovedAccountSecurityRoute
   '/admin': typeof AuthenticatedApprovedAdminRoute
   '/admin-ad-stats': typeof AuthenticatedApprovedAdminAdStatsRoute
@@ -1164,7 +1164,6 @@ export interface FileRoutesByTo {
   '/fanzone-mute-demo': typeof FanzoneMuteDemoRoute
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
-  '/guides': typeof GuidesRouteWithChildren
   '/login': typeof LoginRoute
   '/mfa-challenge': typeof MfaChallengeRoute
   '/packages': typeof PackagesRoute
@@ -1178,6 +1177,7 @@ export interface FileRoutesByTo {
   '/a/$token': typeof ATokenRoute
   '/guides/$id': typeof GuidesIdRoute
   '/fan-zone': typeof FanZoneIndexRoute
+  '/guides': typeof GuidesIndexRoute
   '/account-security': typeof AuthenticatedApprovedAccountSecurityRoute
   '/admin': typeof AuthenticatedApprovedAdminRoute
   '/admin-ad-stats': typeof AuthenticatedApprovedAdminAdStatsRoute
@@ -1311,7 +1311,6 @@ export interface FileRoutesById {
   '/fanzone-mute-demo': typeof FanzoneMuteDemoRoute
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
-  '/guides': typeof GuidesRouteWithChildren
   '/login': typeof LoginRoute
   '/mfa-challenge': typeof MfaChallengeRoute
   '/packages': typeof PackagesRoute
@@ -1327,6 +1326,7 @@ export interface FileRoutesById {
   '/fan-zone/$board': typeof FanZoneBoardRouteWithChildren
   '/guides/$id': typeof GuidesIdRoute
   '/fan-zone/': typeof FanZoneIndexRoute
+  '/guides/': typeof GuidesIndexRoute
   '/_authenticated/_approved/account-security': typeof AuthenticatedApprovedAccountSecurityRoute
   '/_authenticated/_approved/admin': typeof AuthenticatedApprovedAdminRoute
   '/_authenticated/_approved/admin-ad-stats': typeof AuthenticatedApprovedAdminAdStatsRoute
@@ -1461,7 +1461,6 @@ export interface FileRouteTypes {
     | '/fanzone-mute-demo'
     | '/faq'
     | '/forgot-password'
-    | '/guides'
     | '/login'
     | '/mfa-challenge'
     | '/packages'
@@ -1476,6 +1475,7 @@ export interface FileRouteTypes {
     | '/fan-zone/$board'
     | '/guides/$id'
     | '/fan-zone/'
+    | '/guides/'
     | '/account-security'
     | '/admin'
     | '/admin-ad-stats'
@@ -1607,7 +1607,6 @@ export interface FileRouteTypes {
     | '/fanzone-mute-demo'
     | '/faq'
     | '/forgot-password'
-    | '/guides'
     | '/login'
     | '/mfa-challenge'
     | '/packages'
@@ -1621,6 +1620,7 @@ export interface FileRouteTypes {
     | '/a/$token'
     | '/guides/$id'
     | '/fan-zone'
+    | '/guides'
     | '/account-security'
     | '/admin'
     | '/admin-ad-stats'
@@ -1753,7 +1753,6 @@ export interface FileRouteTypes {
     | '/fanzone-mute-demo'
     | '/faq'
     | '/forgot-password'
-    | '/guides'
     | '/login'
     | '/mfa-challenge'
     | '/packages'
@@ -1769,6 +1768,7 @@ export interface FileRouteTypes {
     | '/fan-zone/$board'
     | '/guides/$id'
     | '/fan-zone/'
+    | '/guides/'
     | '/_authenticated/_approved/account-security'
     | '/_authenticated/_approved/admin'
     | '/_authenticated/_approved/admin-ad-stats'
@@ -1903,7 +1903,6 @@ export interface RootRouteChildren {
   FanzoneMuteDemoRoute: typeof FanzoneMuteDemoRoute
   FaqRoute: typeof FaqRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
-  GuidesRoute: typeof GuidesRouteWithChildren
   LoginRoute: typeof LoginRoute
   MfaChallengeRoute: typeof MfaChallengeRoute
   PackagesRoute: typeof PackagesRoute
@@ -1912,6 +1911,8 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
   ATokenRoute: typeof ATokenRoute
+  GuidesIdRoute: typeof GuidesIdRoute
+  GuidesIndexRoute: typeof GuidesIndexRoute
   ApiPublicAndroidApkRoute: typeof ApiPublicAndroidApkRoute
   ApiPublicBoroMatchDetailRoute: typeof ApiPublicBoroMatchDetailRoute
   ApiPublicLinkPreviewRoute: typeof ApiPublicLinkPreviewRoute
@@ -2042,13 +2043,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/guides': {
-      id: '/guides'
-      path: '/guides'
-      fullPath: '/guides'
-      preLoaderRoute: typeof GuidesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -2147,12 +2141,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FanZoneBoardRouteImport
       parentRoute: typeof FanZoneRoute
     }
+    '/guides/': {
+      id: '/guides/'
+      path: '/guides'
+      fullPath: '/guides/'
+      preLoaderRoute: typeof GuidesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/guides/$id': {
       id: '/guides/$id'
-      path: '/$id'
+      path: '/guides/$id'
       fullPath: '/guides/$id'
       preLoaderRoute: typeof GuidesIdRouteImport
-      parentRoute: typeof GuidesRoute
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/_approved/account-security': {
       id: '/_authenticated/_approved/account-security'
@@ -3306,17 +3307,6 @@ const FanZoneRouteChildren: FanZoneRouteChildren = {
 const FanZoneRouteWithChildren =
   FanZoneRoute._addFileChildren(FanZoneRouteChildren)
 
-interface GuidesRouteChildren {
-  GuidesIdRoute: typeof GuidesIdRoute
-}
-
-const GuidesRouteChildren: GuidesRouteChildren = {
-  GuidesIdRoute: GuidesIdRoute,
-}
-
-const GuidesRouteWithChildren =
-  GuidesRoute._addFileChildren(GuidesRouteChildren)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
@@ -3330,7 +3320,6 @@ const rootRouteChildren: RootRouteChildren = {
   FanzoneMuteDemoRoute: FanzoneMuteDemoRoute,
   FaqRoute: FaqRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
-  GuidesRoute: GuidesRouteWithChildren,
   LoginRoute: LoginRoute,
   MfaChallengeRoute: MfaChallengeRoute,
   PackagesRoute: PackagesRoute,
@@ -3339,6 +3328,8 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
   ATokenRoute: ATokenRoute,
+  GuidesIdRoute: GuidesIdRoute,
+  GuidesIndexRoute: GuidesIndexRoute,
   ApiPublicAndroidApkRoute: ApiPublicAndroidApkRoute,
   ApiPublicBoroMatchDetailRoute: ApiPublicBoroMatchDetailRoute,
   ApiPublicLinkPreviewRoute: ApiPublicLinkPreviewRoute,
