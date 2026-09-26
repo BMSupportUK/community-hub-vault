@@ -55,6 +55,18 @@ function guideSearchText(value: string | null | undefined) {
     .trim();
 }
 
+/**
+ * A guide only counts as having listings when its body holds real text.
+ * Markup-only bodies ("<br>", "<p></p>") are the 10h sweep's empty shells —
+ * they have no events, so both the card and its category stay hidden.
+ */
+function guideHasListings(body: string | null | undefined) {
+  if (!body) return false;
+  const textarea = document.createElement("textarea");
+  textarea.innerHTML = body.replace(/<[^>]+>/g, " ");
+  return textarea.value.replace(/\u00a0/g, " ").trim().length > 0;
+}
+
 function matchesGuideSearch(text: string, query: string) {
   const haystack = text.toLocaleLowerCase();
   const terms = query.toLocaleLowerCase().split(/\s+/).filter(Boolean);
@@ -265,6 +277,25 @@ function SportsGuidesPage() {
   const reads = dataQuery.data?.reads ?? {};
   const baselineAt = dataQuery.data?.baselineAt ?? null;
   const load = () => queryClient.invalidateQueries({ queryKey });
+
+  // Guides without listings (empty or markup-only bodies) are invisible in the
+  // member view: their cards, category rows and sub-category buttons all hide.
+  const listingBlogs = useMemo(() => blogs.filter((b) => guideHasListings(b.body)), [blogs]);
+  const visibleCatIds = useMemo(() => new Set(listingBlogs.map((b) => b.category_id)), [listingBlogs]);
+  const listingCounts = useMemo(() => {
+    const m: Record<string, number> = {};
+    for (const b of listingBlogs) m[b.category_id] = (m[b.category_id] ?? 0) + 1;
+    return m;
+  }, [listingBlogs]);
+  const listingSubCounts = useMemo(() => {
+    const m: Record<string, Record<string, number>> = {};
+    for (const b of listingBlogs) {
+      const sub = b.subcategory ?? "";
+      if (!m[b.category_id]) m[b.category_id] = {};
+      m[b.category_id][sub] = (m[b.category_id][sub] ?? 0) + 1;
+    }
+    return m;
+  }, [listingBlogs]);
 
   // Two-level menu: main headings (no parent) and the categories grouped under them.
   const childrenByParent = useMemo(() => {
