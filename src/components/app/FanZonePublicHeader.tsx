@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { LogIn, Lock, Menu, Shield, UserPlus } from "lucide-react";
+import { Home, LogIn, Lock, Menu, Shield, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { IconRail } from "@/components/app/IconRail";
 import { Button } from "@/components/ui/button";
