@@ -123,7 +123,9 @@ export const getPublicGuide = createServerFn({ method: "GET" })
       .maybeSingle();
     if (cat?.name) category = cat.name;
 
-    const lines = bodyToLines(blog.body ?? "");
+    // Live body first; fall back to the archived body for swept guides so
+    // the public pages still show the fixture dates/times (never channels).
+    const lines = bodyToLines(blog.body?.trim() ? blog.body : (blog.archived_body ?? ""));
     const parsed = parseSportsListingBlock(lines.join("\n"));
     // Channel info is members-only: keep date, time and event name only.
     const events: PublicGuideEvent[] = parsed.map((e) => ({
