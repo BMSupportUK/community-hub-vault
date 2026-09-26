@@ -2,6 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { LandingHeader } from "@/components/LandingHeader";
+import { BmSplash } from "@/components/app/BmSplash";
 import {
   listPublicGuides,
   type PublicGuidesData,
@@ -46,6 +47,8 @@ export const Route = createFileRoute("/guides/")({
       { rel: "canonical", href: "https://bmsupport.uk/guides" },
     ],
   }),
+  pendingComponent: () => <BmSplash label="Loading sports guides…" />,
+  pendingMs: 0,
   component: PublicGuidesPage,
 });
 
@@ -505,7 +508,7 @@ function PublicGuidesPage() {
     <div className="min-h-screen bg-background text-foreground">
       <LandingHeader />
       <div
-        className="relative bg-background/90 bg-cover bg-center bg-fixed bg-blend-multiply"
+        className="relative min-h-[calc(100vh-4rem)] bg-background/90 bg-cover bg-center bg-fixed bg-blend-multiply"
         style={{ backgroundImage: `url(${sportsBg})` }}
       >
         <header className="relative px-4 sm:px-8 pt-8 pb-6 border-b border-purple-500/30 bg-purple-950/40 backdrop-blur">
