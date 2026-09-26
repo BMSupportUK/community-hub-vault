@@ -1,7 +1,7 @@
 # Roadmap
 
 ## Current
-- [ ] Adsterra fallback advert provider: wire zone srcs once the Adsterra publisher account is approved and the five banner zones are created
+- [ ] Adsterra live alongside AdSense: zones 31421164/65/66/67 mapped to slot kinds in src/lib/adsterra.ts — awaiting the four invoke.js srcs from the Adsterra dashboard to switch on (paste into ADSTERRA_ZONES)
 - [x] Audit published sports guides for leaked lead/channel text and prevent public guide text leaks on future imports
 - [x] Stan Sports imports: preserve complete event names through preview, save and read-back
 - [x] Merged DAZN imports: keep preview and saved guide identical; prevent inherited channels and isolated marker corruption
