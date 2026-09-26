@@ -391,7 +391,9 @@ function PublicGuidesPage() {
         <div>
           {(() => {
             const parent = categories.find((c) => c.id === subDialogFor);
-            const children = childrenByParent[subDialogFor ?? ""] ?? [];
+            const children = (childrenByParent[subDialogFor ?? ""] ?? []).filter(
+              (c) => (counts[c.id] ?? 0) > 0,
+            );
             const guideSubcategories = subsByCat[subDialogFor ?? ""] ?? [];
             const grandParent = parent?.parent_id
               ? categories.find((c) => c.id === parent.parent_id)
