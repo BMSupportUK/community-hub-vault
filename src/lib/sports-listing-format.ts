@@ -757,8 +757,8 @@ function normalizeSmallLetters(line: string): string {
 
 /**
  * UFC Streams: "**UFC Fight Night: A vs. B**" / "`10pm | 11pm | 1am UK`" then
- * one channel per line ("UFC 01", "UFC 02", "UFC 03"). Each time belongs to
- * the channel in the same position — list them as separate channel rows.
+ * one or more channel lines ("UFC 01", "UFC 02", "UFC 03"). Every listed
+ * time carries the complete channel list; channels are not paired by position.
  */
 function expandMultiSlotChannelPost(raw: string): string {
   const lines = raw.split("\n").map((l) => l.replace(/[*`#]/g, "").trim()).filter(Boolean);
@@ -768,7 +768,7 @@ function expandMultiSlotChannelPost(raw: string): string {
   if (slotIdx !== 1) return raw;
   const times = lines[1].replace(/\s*UK$/i, "").split("|").map((t) => t.trim());
   const channels = lines.slice(2);
-  if (channels.length !== times.length || !channels.every((c) => /^[A-Za-z][A-Za-z+ ]*\s\d{1,3}(?:\s*HD)?$/.test(c))) return raw;
+  if (!channels.length || !channels.every((c) => /^[A-Za-z][A-Za-z+ ]*\s\d{1,3}(?:\s*HD)?$/.test(c))) return raw;
   const title = lines[0];
   const days = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
   const london = new Date(new Date().toLocaleString("en-US", { timeZone: "Europe/London" }));
@@ -780,7 +780,7 @@ function expandMultiSlotChannelPost(raw: string): string {
     if (/pm$/i.test(t)) prevPm = true;
     const tt = t.replace(/^(\d{1,2})\s*(am|pm)$/i, "$1:00$2");
     const slot = pastMidnight ? `${tt} UK ${days[(london.getDay() + 1) % 7]}` : `${tt} UK`;
-    return `${slot}\n${title}\n${channels[i]}`;
+    return `${slot}\n${title}\n${channels.join(" | ")}`;
   });
   return rows.join("\n\n");
 }
