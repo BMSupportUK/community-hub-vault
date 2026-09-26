@@ -1,8 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
-import {
-  parseSportsListingBlock,
-  isLikelyChannelLabel,
-} from "@/lib/sports-listing-format";
+import { parseSportsListingBlock } from "@/lib/sports-listing-format";
+import { publicGuideEvents } from "@/lib/public-guide-safety";
 import { findEarliestEventUtcMs } from "@/lib/parse-event-times";
 
 /**
@@ -61,7 +59,6 @@ export interface PublicGuideSubcategory {
 export interface PublicGuideSummary {
   id: string;
   title: string;
-  excerpt: string | null;
   created_at: string;
   updated_at: string | null;
   category_id: string;
@@ -85,15 +82,12 @@ export interface PublicGuideEvent {
 export interface PublicGuideDetail {
   id: string;
   title: string;
-  excerpt: string | null;
   image_url: string | null;
   created_at: string;
   updated_at: string | null;
   category: string;
   /** Structured listings — date, time and event name ONLY. */
   events: PublicGuideEvent[];
-  /** Free-text intro/note lines that are not listings and not channels. */
-  notes: string[];
 }
 
 /** Today at 00:00 in Europe/London, for dropping past events. */
@@ -153,7 +147,7 @@ export const listPublicGuides = createServerFn({ method: "POST" }).handler(
       supabase
         .from("sports_blogs")
         .select(
-          "id, title, excerpt, created_at, updated_at, category_id, subcategory, image_url, badge, body, archived_body",
+          "id, title, created_at, updated_at, category_id, subcategory, image_url, badge, body, archived_body",
         )
         .eq("published", true)
         .order("sort_order")
@@ -186,7 +180,6 @@ export const listPublicGuides = createServerFn({ method: "POST" }).handler(
       .map((b) => ({
         id: b.id,
         title: b.title,
-        excerpt: b.excerpt,
         created_at: b.created_at,
         updated_at: b.updated_at ?? null,
         category_id: b.category_id,
@@ -211,7 +204,7 @@ export const getPublicGuide = createServerFn({ method: "GET" })
     const supabase = await publicClient();
     const { data: blog, error } = await supabase
       .from("sports_blogs")
-      .select("id, title, excerpt, image_url, body, archived_body, created_at, updated_at, category_id")
+      .select("id, title, image_url, body, archived_body, created_at, updated_at, category_id")
       .eq("id", id)
       .eq("published", true)
       .maybeSingle();
@@ -229,8 +222,7 @@ export const getPublicGuide = createServerFn({ method: "GET" })
     // Live body only: an empty body means the 10h sweep archived it because
     // every event has already happened — treat the guide as expired.
     if (!blog.body?.trim()) return null;
-    const lines = bodyToLines(blog.body);
-    const parsed = parseSportsListingBlock(lines.join("\n"));
+    const parsed = publicGuideEvents(bodyToLines(blog.body).join("\n"));
     // Channel info is members-only: keep date, time and event name only.
     // Drop events whose date is already past (London).
     const today = todayLondon();
@@ -245,33 +237,13 @@ export const getPublicGuide = createServerFn({ method: "GET" })
         title: e.title,
       }));
 
-    // Non-listing lines (intro text, notes) are shown as long as they are
-    // not channel labels.
-    const eventLines = new Set(
-      events.map((e) => e.title.trim().toLowerCase()),
-    );
-    const notes = lines.filter((line) => {
-      if (isLikelyChannelLabel(line)) return false;
-      if (eventLines.has(line.toLowerCase())) return false;
-      if (events.length && /^\d{1,2}:\d{2}/.test(line)) return false;
-      // Fixture-style lines ("A vs B", "A v B", "A & B") are listings, not notes.
-      if (events.length && /\s(?:vs?\.?|&|@)\s/i.test(line)) return false;
-      // Bare date headings ("Friday 31-07-26", "Sat 12 Aug") are listings too.
-      if (events.length && /^(mon|tue|wed|thu|fri|sat|sun)/i.test(line)) return false;
-      // Standalone numeric dates ("25-09-2026", "26/09/26") are day headings, not notes.
-      if (events.length && /^\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4}$/.test(line.trim())) return false;
-      return true;
-    });
-
     return {
       id: blog.id,
       title: blog.title,
-      excerpt: blog.excerpt,
       image_url: blog.image_url ?? null,
       created_at: blog.created_at,
       updated_at: (blog as { updated_at?: string | null }).updated_at ?? null,
       category,
       events,
-      notes: notes.slice(0, 20),
     };
   });
