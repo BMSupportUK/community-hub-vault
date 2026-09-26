@@ -60,3 +60,6 @@ Format: `Fubo Sports 1 | Show name // UK Sat 26 Sep 11:00am // ET Sat 26 Sep 6:0
 
 ## Duplicate listings (permanent)
 Same date + time + event name + same channel(s) = duplicate; keep one. Cleared automatically on import/merge and when a guide is saved as published. Same event on a different channel is NOT a duplicate.
+
+## UK Women's Football / FA Player (permanent)
+Format: heading `**UK | FA Player | Women's Football**` then rows `WF00: 13:30 Charlton Athletic vs Manchester City`. Code before the colon (WF00, WF01…) is the channel; leading time; event. Club names with "&" (Brighton & Hove Albion) keep the "&" when the row already has vs/v.
