@@ -32,15 +32,16 @@ export interface AdsterraZone {
   host: string;
 }
 
+const ZONE_SIZES = ["468x60", "728x90", "160x600", "300x250"] as const;
+export type AdsterraZoneSize = (typeof ZONE_SIZES)[number];
+export type AdsterraSlotKind = "topic" | "sidebar" | "home" | "talk" | "welcome";
+
 export const ADSTERRA_ZONES: Record<AdsterraZoneSize, AdsterraZone> = {
   "468x60": { id: "31421164", size: "468x60", width: 468, height: 60, key: "29d36d2e0295dbfee9149c7277c3e70d", host: "www.highrevenueformat.com" },
   "728x90": { id: "31421166", size: "728x90", width: 728, height: 90, key: "", host: "" },
   "160x600": { id: "31421165", size: "160x600", width: 160, height: 600, key: "", host: "" },
   "300x250": { id: "31421167", size: "300x250", width: 300, height: 250, key: "", host: "" },
 };
-
-export type AdsterraZoneSize = keyof typeof ADSTERRA_ZONES;
-export type AdsterraSlotKind = "topic" | "sidebar" | "home" | "talk" | "welcome";
 
 /** Share of page loads each slot gives to Adsterra when its zone is filled. */
 export const ADSTERRA_SHARE = 0.5;
