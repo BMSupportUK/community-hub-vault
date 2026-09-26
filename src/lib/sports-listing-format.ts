@@ -548,7 +548,37 @@ function detectEvent(line: string, date: string | null): SportsListingEvent | nu
     };
   }
 
+  // "MLB 1 - Mets vs. Nationals [26th Sep - 5:35pm BST]" — channel, dash,
+  // fixture, then a bracket carrying the date and the UK kick-off time.
+  const dashDateBracket = line.match(
+    /^([A-Za-z][A-Za-z0-9+&.' ]{0,40}?\s\d{1,3})\s+[-–—]\s+(.+?)\s*[[(]\s*([^\])]+?)\s*[\])]\s*$/i,
+  );
+  if (dashDateBracket?.[1] && dashDateBracket[2] && dashDateBracket[3] && /\bvs?\.?\s|\s[x@]\s/i.test(dashDateBracket[2] + " ")) {
+    const inner = dashDateBracket[3];
+    const innerParts = inner.split(/\s*[-–—]\s*/);
+    const timePart = innerParts.length > 1 ? innerParts[innerParts.length - 1] : inner;
+    const datePart = innerParts.length > 1 ? innerParts.slice(0, -1).join(" ") : "";
+    const timeMatch = timePart?.match(/(\d{1,2}(?:[:.]\d{2})?\s*[ap]\.?m\.?|\d{1,2}[:.]\d{2})/i);
+    const parsedDate = datePart ? parseListingDate(datePart) : null;
+    if (timeMatch?.[1] && (parsedDate || !datePart)) {
+      return {
+        date: parsedDate
+          ? formatListingDate(new Date(Date.UTC(parsedDate.y, parsedDate.m, parsedDate.d)))
+          : date,
+        // Keep a written UK zone label ("BST"/"GMT"/"UK") so the guide shows
+        // the same labelled clock as the rest of the listings.
+        time:
+          normalizeTime(timeMatch[1].replace(".", ":").replace(/\s+/g, "")) +
+          (UK_LABELLED_TIME_RE.test(timePart ?? "") ? " BST" : ""),
+
+        title: normalizeSportsEventTitle(dashDateBracket[2].trim()),
+        channels: [dashDateBracket[1].trim().replace(/\s+/g, " ")],
+      };
+    }
+  }
+
   // "National League 1 - Aldershot vs. Tamworth (3:00 PM)" — channel, dash,
+
   // fixture, bracketed UK kick-off.
   const dashBracket = line.match(
     /^([A-Za-z][A-Za-z0-9+&.' ]{0,40}?\s\d{1,3})\s+[-–—]\s+(.+?)\s*\(\s*(\d{1,2}(?:[:.]\d{2})?\s*[ap]\.?m\.?|\d{1,2}[:.]\d{2})\s*\)\s*$/i,

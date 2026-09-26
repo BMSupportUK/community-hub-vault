@@ -66,3 +66,6 @@ Format: heading `**UK | FA Player | Women's Football**` then rows `WF00: 13:30 C
 
 ## National League TV (permanent)
 Format: heading `**National League**` then rows `National League 1 - Aldershot vs. Tamworth (3:00 PM)`. Channel before the first dash, fixture after (`vs.` → `v`, club `&` kept), bracketed time is UK time. Tested: 17 rows → 17 events, zero check issues.
+
+## MLB Extra Innings dash + bracketed date (permanent)
+Format: heading `**US | MLB Extra Innings**` then rows `MLB 1 - Mets vs. Nationals [26th Sep - 5:35pm BST]`. Channel before the dash, fixture after (`vs.` → `v`), and the bracket carries BOTH the date and the UK time (`26th Sep - 5:35pm BST`) — the bracketed date wins over any post-level date, so after-midnight games dated the next day stay on that day. A written BST/GMT/UK label is kept so the guide shows the labelled 24h clock. Tested: 13 rows → 13 events, zero check issues. Older `MLB 01 : Cubs x Red Sox start:...` rows still import as before.
