@@ -3,6 +3,7 @@
 ## Current
 - [x] Separate completion messages for new account sales and renewals; remove incorrect “upgraded” wording
 - [x] Remove the duplicate “setting up your account” notice and its button from order support tickets
+- [x] Add the 300x250 advert slot on the members home page below the working status / subscription box
 - [x] Widen the member channel sidebar for its 300x250 banner and silently refresh visible Adsterra creatives every minute
 - [x] Adsterra live in all four advert sizes; AdSense remains disabled until account approval
 - [x] Audit published sports guides for leaked lead/channel text and prevent public guide text leaks on future imports
