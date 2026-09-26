@@ -267,9 +267,9 @@ export function normalizeSportsEventTitle(value: string): string {
  * being saved into another competition's existing guide.
  */
 function sportsListingHeadings(raw: string | null | undefined): string[] {
-  if (!raw) return null;
+  if (!raw) return [];
   const headings: string[] = [];
-  for (const rawLine of decodeListingEntities(raw).split("\n").slice(0, 12)) {
+  for (const rawLine of decodeListingEntities(raw).split("\n")) {
     const trimmed = rawLine.trim();
     const markdownHeading = trimmed.match(/^#{1,6}\s*(.+?)\s*$/)?.[1];
     const boldHeading = trimmed.match(/^\*\*(?:#{1,6}\s*)?(.+?)\*\*$/)?.[1];
