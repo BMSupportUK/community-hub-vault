@@ -15,6 +15,7 @@ import {
   listingHeadingMatchesGuide,
   mismatchedSportsListingHeading,
 } from "./sports-listing-format";
+import { safePublicEventTitle } from "./public-guide-safety";
 
 const STAFF_ROLES = ["admin", "management", "moderator"] as const;
 
@@ -238,14 +239,11 @@ function buildBody(ev: { time?: string | null; date?: string | null; channels?: 
     sourceZone: zone,
     guideTitle,
   });
-  if (formatted) return formatted;
-
-  const parts: string[] = [];
-  if (ev.date) parts.push(ev.date);
-  if (ev.time) parts.push(ev.time);
-  if (ev.raw) parts.push(ev.raw);
-  if (ev.channels && ev.channels.length) parts.push(ev.channels.join(" • "));
-  return parts.join("\n");
+  const events = parseSportsListingBlock(formatted);
+  if (!events.length || events.some((event) => !safePublicEventTitle(event))) {
+    throw new Error("Import stopped: a listing could not be safely separated from channel or lead text. Correct the post in the review queue first.");
+  }
+  return formatted ?? "";
 }
 
 // ── Auto cover illustration ───────────────────────────────────────
