@@ -93,6 +93,50 @@ export interface PublicGuideDetail {
   notes: string[];
 }
 
+/** Today at 00:00 in Europe/London, for dropping past events. */
+function todayLondon(): Date {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Europe/London",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(new Date());
+  const get = (t: string) => parts.find((p) => p.type === t)?.value ?? "0";
+  return new Date(`${get("year")}-${get("month")}-${get("day")}T00:00:00Z`);
+}
+
+/** Best-effort parse of an event date label ("Friday 31-07-26", "Fri, 9/25"). */
+function parseEventDate(label: string | null): Date | null {
+  if (!label) return null;
+  const m = label.match(/(\d{1,2})[-/](\d{1,2})(?:[-/](\d{2,4}))?/);
+  if (!m) return null;
+  const a = Number(m[1]);
+  const b = Number(m[2]);
+  // dd/mm when either part exceeds 12 or a 4-digit year is present; else
+  // assume dd/mm (UK guides) — mm/dd only when the first part can't be a day.
+  const [day, month] = a > 12 ? [a, b] : b > 12 ? [b, a] : [a, b];
+  let year = m[3] ? Number(m[3]) : todayLondon().getUTCFullYear();
+  if (year < 100) year += 2000;
+  const d = new Date(Date.UTC(year, month - 1, day));
+  return Number.isNaN(d.getTime()) ? null : d;
+}
+
+/** True when every parseable event date is before today (London). */
+function guideIsExpired(html: string): boolean {
+  const parsed = parseSportsListingBlock(bodyToLines(html).join("\n"));
+  if (!parsed.length) return false;
+  const today = todayLondon();
+  let sawDate = false;
+  for (const e of parsed) {
+    const d = parseEventDate(e.date ?? null);
+    if (!d) continue;
+    sawDate = true;
+    if (d >= today) return false;
+  }
+  // No parseable dates → can't prove it's old, keep it.
+  return sawDate;
+}
+
 export const listPublicGuides = createServerFn({ method: "GET" }).handler(
   async (): Promise<PublicGuidesData> => {
     const supabase = await publicClient();
@@ -120,9 +164,12 @@ export const listPublicGuides = createServerFn({ method: "GET" }).handler(
         .order("sort_order"),
     ]);
     if (blogsError) throw new Error(blogsError.message);
-    // Skip guides with no content at all (never had a body).
+    // Only guides with a live body: an empty body means the 10h sweep has
+    // archived it, i.e. every event has already happened. Belt-and-braces:
+    // also drop any guide whose parseable event dates are all in the past.
     const guides = (blogs ?? [])
-      .filter((b) => (b.body ?? b.archived_body ?? "").trim().length > 0)
+      .filter((b) => (b.body ?? "").trim().length > 0)
+      .filter((b) => !guideIsExpired(b.body ?? ""))
       .map((b) => ({
         id: b.id,
         title: b.title,
