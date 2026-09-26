@@ -265,11 +265,6 @@ function PublicGuidesPage() {
               {g.badge}
             </span>
           )}
-          {isUnread(g) && (
-            <span className="inline-flex items-center gap-1 rounded-md border border-fuchsia-300/60 bg-fuchsia-500/30 px-2 py-1 text-xs font-semibold text-fuchsia-50">
-              <span className="size-1.5 rounded-full bg-fuchsia-200" /> New
-            </span>
-          )}
         </div>
         <h3 className="font-display font-semibold text-lg leading-snug text-purple-50">
           {g.title}
