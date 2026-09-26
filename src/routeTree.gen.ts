@@ -25,6 +25,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as MfaChallengeRouteImport } from './routes/mfa-challenge'
 import { Route as PackagesRouteImport } from './routes/packages'
 import { Route as PredictionsRouteImport } from './routes/predictions'
+import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as AuthenticatedApprovedRouteImport } from './routes/_authenticated/_approved'
@@ -231,6 +232,11 @@ const PackagesRoute = PackagesRouteImport.update({
 const PredictionsRoute = PredictionsRouteImport.update({
   id: '/predictions',
   path: '/predictions',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyPolicyRoute = PrivacyPolicyRouteImport.update({
+  id: '/privacy-policy',
+  path: '/privacy-policy',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
@@ -1004,6 +1010,7 @@ export interface FileRoutesByFullPath {
   '/mfa-challenge': typeof MfaChallengeRoute
   '/packages': typeof PackagesRoute
   '/predictions': typeof PredictionsRoute
+  '/privacy-policy': typeof PrivacyPolicyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/banned': typeof AuthenticatedBannedRoute
@@ -1147,6 +1154,7 @@ export interface FileRoutesByTo {
   '/mfa-challenge': typeof MfaChallengeRoute
   '/packages': typeof PackagesRoute
   '/predictions': typeof PredictionsRoute
+  '/privacy-policy': typeof PrivacyPolicyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/banned': typeof AuthenticatedBannedRoute
@@ -1291,6 +1299,7 @@ export interface FileRoutesById {
   '/mfa-challenge': typeof MfaChallengeRoute
   '/packages': typeof PackagesRoute
   '/predictions': typeof PredictionsRoute
+  '/privacy-policy': typeof PrivacyPolicyRoute
   '/reset-password': typeof ResetPasswordRoute
   '/signup': typeof SignupRoute
   '/_authenticated/_approved': typeof AuthenticatedApprovedRouteWithChildren
@@ -1438,6 +1447,7 @@ export interface FileRouteTypes {
     | '/mfa-challenge'
     | '/packages'
     | '/predictions'
+    | '/privacy-policy'
     | '/reset-password'
     | '/signup'
     | '/banned'
@@ -1581,6 +1591,7 @@ export interface FileRouteTypes {
     | '/mfa-challenge'
     | '/packages'
     | '/predictions'
+    | '/privacy-policy'
     | '/reset-password'
     | '/signup'
     | '/banned'
@@ -1724,6 +1735,7 @@ export interface FileRouteTypes {
     | '/mfa-challenge'
     | '/packages'
     | '/predictions'
+    | '/privacy-policy'
     | '/reset-password'
     | '/signup'
     | '/_authenticated/_approved'
@@ -1871,6 +1883,7 @@ export interface RootRouteChildren {
   MfaChallengeRoute: typeof MfaChallengeRoute
   PackagesRoute: typeof PackagesRoute
   PredictionsRoute: typeof PredictionsRoute
+  PrivacyPolicyRoute: typeof PrivacyPolicyRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
   ATokenRoute: typeof ATokenRoute
@@ -2030,6 +2043,13 @@ declare module '@tanstack/react-router' {
       path: '/predictions'
       fullPath: '/predictions'
       preLoaderRoute: typeof PredictionsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy-policy': {
+      id: '/privacy-policy'
+      path: '/privacy-policy'
+      fullPath: '/privacy-policy'
+      preLoaderRoute: typeof PrivacyPolicyRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/reset-password': {
@@ -3264,6 +3284,7 @@ const rootRouteChildren: RootRouteChildren = {
   MfaChallengeRoute: MfaChallengeRoute,
   PackagesRoute: PackagesRoute,
   PredictionsRoute: PredictionsRoute,
+  PrivacyPolicyRoute: PrivacyPolicyRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
   ATokenRoute: ATokenRoute,
