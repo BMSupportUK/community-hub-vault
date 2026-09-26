@@ -356,7 +356,7 @@ export const importParsedEvents = createServerFn({ method: "POST" })
           excerpt: e.time ? `${e.date ? e.date + " · " : ""}${e.time}` : (e.date ?? null),
           body: plainListingToHtml(buildBody(e)),
           image_url: coverMap.get(coverKey) ?? null,
-          published: false,
+          published: true,
           created_by: userId,
         };
       })
@@ -732,8 +732,8 @@ export const resolveQueueItem = createServerFn({ method: "POST" })
         if (updateErr) throw new Error(updateErr.message);
         guideIds.push(data.guideId);
       } else {
-      // One draft per chosen subcategory (none chosen → a single draft
-      // straight under the category).
+      // One public guide per chosen subcategory (none chosen → a single guide
+      // straight under the category). Existing guides retain their status above.
       const chosenSubs: (string | null)[] =
         data.subcategories && data.subcategories.length > 0
           ? Array.from(new Set(data.subcategories))
@@ -746,7 +746,7 @@ export const resolveQueueItem = createServerFn({ method: "POST" })
           excerpt: ev.time ? `${ev.date ? ev.date + " · " : ""}${ev.time}` : (ev.date ?? null),
           body: plainListingToHtml(buildBody(ev, data.sourceZone ?? null)),
           image_url: await ensureSportCover((cat as any).id, data.category!, sub),
-          published: false,
+          published: true,
           created_by: userId,
         })),
       );
@@ -816,7 +816,7 @@ export const approveAllSuggested = createServerFn({ method: "POST" })
           excerpt: ev.time ? `${ev.date ? ev.date + " · " : ""}${ev.time}` : (ev.date ?? null),
           body: plainListingToHtml(buildBody(ev)),
           image_url: coverUrl,
-          published: false,
+          published: true,
           created_by: userId,
         });
         if (insErr) continue;
