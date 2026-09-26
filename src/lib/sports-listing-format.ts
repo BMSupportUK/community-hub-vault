@@ -272,7 +272,7 @@ function sportsListingHeadings(raw: string | null | undefined): string[] {
   for (const rawLine of decodeListingEntities(raw).split("\n")) {
     const trimmed = rawLine.trim();
     const markdownHeading = trimmed.match(/^#{1,6}\s*(.+?)\s*$/)?.[1];
-    const boldHeading = trimmed.match(/^\*\*(?:#{1,6}\s*)?(.+?)\*\*$/)?.[1];
+    const boldHeading = trimmed.match(/^\*\*#{1,6}\s*(.+?)\*\*$/)?.[1];
     const heading = cleanLine(markdownHeading ?? boldHeading ?? "");
     if (
       heading &&
@@ -726,6 +726,7 @@ export function splitListingSections(raw: string | null | undefined): ListingSec
 
 export function parseSportsListingBlock(raw: string | null | undefined): SportsListingEvent[] {
   if (!raw) return [];
+  const explicitHeadings = new Set(sportsListingHeadings(raw).map((heading) => heading.toLowerCase()));
   const lines = decodeListingEntities(raw)
     .replace(/<br\s*\/?\s*>/gi, "\n")
     .replace(/<\/div>/gi, "\n")
@@ -843,7 +844,7 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
     // A new competition/provider heading ends the preceding event. Never let
     // headings such as "UEFA NATIONS LEAGUE" become channels on the event
     // above them when Discord posts are pasted or combined.
-    if (isSectionHeading(line)) {
+    if (explicitHeadings.has(line.toLowerCase())) {
       flush();
       previousPlainLine = null;
       lastChannelWasPlain = null;
