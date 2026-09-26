@@ -93,7 +93,14 @@ export function checkSportsImport(
     const title = (e.title ?? "").trim();
     if (!e.time?.trim()) noTime.push(n);
     if (!e.channels?.length) noChannel.push(n);
-    if (title && isLikelyChannelLabel(title) && channelBrands.has(title.split(/\s+/)[0].toLowerCase())) channelAsTitle.push(n);
+    // Only a real swap when the listed channel doesn't itself look like a
+    // channel — e.g. "Fubo Sports 1 | Fubo Sports News" is a show name.
+    if (
+      title &&
+      isLikelyChannelLabel(title) &&
+      channelBrands.has(title.split(/\s+/)[0].toLowerCase()) &&
+      !(e.channels ?? []).some((ch) => isLikelyChannelLabel(ch))
+    ) channelAsTitle.push(n);
     if (
       title.replace(/[^A-Za-z0-9]/g, "").length < 3 ||
       SLOT_JUNK_RE.test(title) ||

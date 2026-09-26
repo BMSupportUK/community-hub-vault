@@ -54,3 +54,6 @@ Source: "Rugby Pass 01 | Lions v Leinster 12:00" rows, with bare continuation ro
 
 ## Overnight rollover on daily posts (permanent)
 When a daily post's times run past midnight (e.g. 23:00 then 01:00 under one date), the early-morning events automatically move to the next day's date, and every following event stays on the rolled date until the post names a new day. A drop of more than 6 hours between consecutive times triggers the roll.
+
+## Fubo Sports post (permanent)
+Format: `Fubo Sports 1 | Show name // UK Sat 26 Sep 11:00am // ET Sat 26 Sep 6:00am`. Channel before the pipe, show after, use the UK date/time (ignore ET). Show names containing the brand (e.g. "Fubo Sports News") are valid titles — never flag as channel/title swapped when the row's channel is a real channel label.
