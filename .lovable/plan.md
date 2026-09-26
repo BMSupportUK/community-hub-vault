@@ -9,8 +9,7 @@ Google's reviewer can only see the front page and login screen today, which risk
    - Same dark red/black look as the front page, with links back to Home, About, FAQ, Contact, Privacy Policy.
 
 2. **Public guide pages — `/guides/$id`**
-   - Shows start times and event names only — **channel names are NOT shown publicly**; that stays members-only information.
-   - Where channels would appear, a locked line reads "Sign in to see which channels are showing this" with a sign-in button.
+   - Shows **only the date, start time, and event name** for each listing — nothing else. No channel names, no channel info of any kind; that stays members-only.
    - Each page gets its own title, description, and social-share tags so Google indexes them individually.
    - A "Sign in to BM Support" call-to-action at the bottom turns visitors into members.
 
