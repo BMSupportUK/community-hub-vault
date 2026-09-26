@@ -3,7 +3,7 @@ import { LandingHeader } from "@/components/LandingHeader";
 import { listPublicGuides, type PublicGuideSummary } from "@/lib/public-guides.functions";
 import { CalendarDays } from "lucide-react";
 
-export const Route = createFileRoute("/guides")({
+export const Route = createFileRoute("/guides/")({
   loader: () => listPublicGuides(),
   head: () => ({
     meta: [
