@@ -10,6 +10,11 @@ export function publicGuideEvents(body: string): { date: string | null; time: st
 /** Fail closed if a channel was accidentally parsed as the event name. */
 export function safePublicEventTitle(event: SportsListingEvent): boolean {
   const title = event.title.trim();
-  if (!title || /^under team channels$/i.test(title)) return false;
+  if (
+    !title ||
+    /^under team channels$/i.test(title) ||
+    /\b(?:https?:\/\/|www\.|t\.me\/|discord\.gg\/|@everyone|@here)\b/i.test(title) ||
+    /^(?:join|subscribe|follow|visit|click|download|contact|message|dm|use our|check out|watch live|all times|source:|posted by)\b/i.test(title)
+  ) return false;
   return !event.channels.some((channel) => channel.trim().toLowerCase() === title.toLowerCase());
 }
