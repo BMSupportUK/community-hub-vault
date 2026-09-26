@@ -152,11 +152,11 @@ function PublicGuidesPage() {
       if (parent) m[parent] = (m[parent] ?? 0) + 1;
     }
     return m;
-  }, [guides, categories]);
+  }, [listingBlogs, categories]);
 
   const unreadCounts = useMemo(() => {
     const direct: Record<string, number> = {};
-    for (const guide of guides) {
+    for (const guide of listingBlogs) {
       if (isUnread(guide)) direct[guide.category_id] = (direct[guide.category_id] ?? 0) + 1;
     }
     const kids: Record<string, string[]> = {};
