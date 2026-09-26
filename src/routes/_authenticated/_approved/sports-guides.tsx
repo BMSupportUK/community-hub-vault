@@ -1040,7 +1040,7 @@ function SportsGuidesPage() {
                   {user && listingBlogs.some(isUnread) && (
                     <button
                       onClick={async () => {
-                        const unread = blogs.filter(isUnread);
+                        const unread = listingBlogs.filter(isUnread);
                         if (!unread.length) return;
                         const nowIso = new Date().toISOString();
                         queryClient.setQueryData<typeof dataQuery.data>(queryKey, (prev) => {
@@ -1072,6 +1072,10 @@ function SportsGuidesPage() {
                 <div className={subDialogFor ? "hidden" : "space-y-1"}>
                   {topCategories.map((top) => {
                     const kids = childrenByParent[top.id] ?? [];
+                    // Only show a row when it (or, for a heading, one of its
+                    // categories) holds a guide with listings.
+                    const visibleKids = kids.filter((k) => visibleCatIds.has(k.id));
+                    if (visibleKids.length === 0 && !visibleCatIds.has(top.id)) return null;
                     const heading = kids.length > 0;
                     const open = openGroups.includes(top.id);
                     const headingUnread = heading
