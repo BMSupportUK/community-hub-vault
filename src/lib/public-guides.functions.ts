@@ -143,6 +143,10 @@ export const getPublicGuide = createServerFn({ method: "GET" })
       if (isLikelyChannelLabel(line)) return false;
       if (eventLines.has(line.toLowerCase())) return false;
       if (events.length && /^\d{1,2}:\d{2}/.test(line)) return false;
+      // Fixture-style lines ("A vs B", "A v B", "A & B") are listings, not notes.
+      if (events.length && /\s(?:vs?\.?|&|@)\s/i.test(line)) return false;
+      // Bare date headings ("Friday 31-07-26", "Sat 12 Aug") are listings too.
+      if (events.length && /^(mon|tue|wed|thu|fri|sat|sun)/i.test(line)) return false;
       return true;
     });
 
