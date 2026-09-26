@@ -789,6 +789,15 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
   if (!raw) return [];
   raw = expandMultiSlotChannelPost(raw);
   const explicitHeadings = new Set(sportsListingHeadings(raw).map((heading) => heading.toLowerCase()));
+  // Rugby Pass style: "Channel NN | Event HH:MM" rows, optionally with bare
+  // "Event HH:MM" continuation rows that belong to the channel above them.
+  const hasChannelPipeRows = raw
+    .split("\n")
+    .some((l) =>
+      new RegExp(String.raw`^[A-Za-z][A-Za-z+&' ]*?\s\d{1,3}(?:\s*HD)?\s*\|\s*.+?\s+(?:${TIME_SOURCE})\s*$`, "i").test(
+        l.replace(/[*`#]/g, "").trim(),
+      ),
+    );
   const lines = decodeListingEntities(raw)
     .replace(/<br\s*\/?\s*>/gi, "\n")
     .replace(/<\/div>/gi, "\n")
