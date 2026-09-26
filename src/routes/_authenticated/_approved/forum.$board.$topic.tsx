@@ -20,7 +20,6 @@ import { useFanBlocks } from "@/hooks/use-fan-blocks";
 import { useFanZoneMute } from "@/hooks/use-fan-zone-mute";
 import { FanZoneMutedScreen } from "@/components/app/FanZoneMutedScreen";
 import { toast } from "sonner";
-import { RotatingAffiliateBanner } from "@/components/app/RotatingAffiliateBanner";
 import { AdSenseSlot } from "@/components/app/AdSenseSlot";
 import { ForumPoll, AddPollToTopic } from "@/components/app/ForumPoll";
 import { BlockUserButton } from "@/components/app/BlockUserButton";
