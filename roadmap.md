@@ -1,6 +1,7 @@
 # Roadmap
 
 ## Current
+- [x] Remove the duplicate “setting up your account” notice and its button from order support tickets
 - [x] Widen the member channel sidebar for its 300x250 banner and silently refresh visible Adsterra creatives every minute
 - [x] Adsterra live in all four advert sizes; AdSense remains disabled until account approval
 - [x] Audit published sports guides for leaked lead/channel text and prevent public guide text leaks on future imports
