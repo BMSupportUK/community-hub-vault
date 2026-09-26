@@ -461,6 +461,9 @@ function PublicGuidesPage() {
                             </span>
                           </span>
                           <span className="flex flex-wrap items-center gap-1.5">
+                            <span className="rounded-full bg-purple-950/70 px-2 py-0.5 text-xs">
+                              {counts[child.id] ?? 0} {(counts[child.id] ?? 0) === 1 ? "guide" : "guides"}
+                            </span>
                             {(unreadCounts[child.id] ?? 0) > 0 && (
                               <span className="rounded-full bg-fuchsia-500 px-2 py-0.5 text-xs font-semibold text-white">
                                 {unreadCounts[child.id]} unread
@@ -511,7 +514,7 @@ function PublicGuidesPage() {
                             Click to read guides
                           </span>
                           <span className="rounded-full bg-purple-950/70 px-2 py-0.5 text-xs">
-                            {count}
+                            {count} {count === 1 ? "guide" : "guides"}
                           </span>
                           {unread > 0 && (
                             <span className="rounded-full bg-fuchsia-500 px-2 py-0.5 text-xs font-semibold text-white">
