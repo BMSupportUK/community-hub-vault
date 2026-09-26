@@ -148,6 +148,7 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+        <InitialPageLoadCover />
         <RightClickGuard />
         <SoundUnlocker />
         <MentionSoundAlert />
@@ -163,6 +164,50 @@ function RootComponent() {
       </AuthProvider>
     </QueryClientProvider>
   );
+}
+
+/**
+ * Covers the server-rendered page until the browser has finished its first
+ * load and React has hydrated it. This prevents a hard refresh from exposing
+ * a partial page between the initial HTML, auth restoration and route data.
+ */
+function InitialPageLoadCover() {
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    let timeoutId: number | undefined;
+    const startedAt = performance.now();
+
+    const reveal = () => {
+      const minimumRemaining = Math.max(0, 300 - (performance.now() - startedAt));
+      timeoutId = window.setTimeout(() => {
+        window.requestAnimationFrame(() => {
+          window.requestAnimationFrame(() => {
+            if (!cancelled) setVisible(false);
+          });
+        });
+      }, minimumRemaining);
+    };
+
+    const waitForReady = async () => {
+      if (document.readyState !== "complete") {
+        await new Promise<void>((resolve) => {
+          window.addEventListener("load", () => resolve(), { once: true });
+        });
+      }
+      if (document.fonts?.ready) await document.fonts.ready.catch(() => undefined);
+      reveal();
+    };
+
+    void waitForReady();
+    return () => {
+      cancelled = true;
+      if (timeoutId !== undefined) window.clearTimeout(timeoutId);
+    };
+  }, []);
+
+  return visible ? <BmSplash label="Loading page…" /> : null;
 }
 
 function RightClickGuard() {
