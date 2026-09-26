@@ -778,7 +778,8 @@ function expandMultiSlotChannelPost(raw: string): string {
     const am = /am$/i.test(t);
     if (am && (prevPm || pastMidnight)) pastMidnight = true;
     if (/pm$/i.test(t)) prevPm = true;
-    const slot = pastMidnight ? `${t} UK ${days[(london.getDay() + 1) % 7]}` : t;
+    const tt = t.replace(/^(\d{1,2})\s*(am|pm)$/i, "$1:00$2");
+    const slot = pastMidnight ? `${tt} UK ${days[(london.getDay() + 1) % 7]}` : `${tt} UK`;
     return `${slot}\n${title}\n${channels[i]}`;
   });
   return rows.join("\n\n");
