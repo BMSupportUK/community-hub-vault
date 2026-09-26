@@ -37,9 +37,10 @@ export function checkSportsImport(
   raw: string,
   sourceZone: TimeZoneChoice | null,
   nowMs: number = Date.now(),
+  guideTitle?: string | null,
 ): ImportCheckResult {
   const issues: ImportCheckIssue[] = [];
-  const formatted = formatSportsListingBlock({ raw, sourceZone });
+  const formatted = formatSportsListingBlock({ raw, sourceZone, guideTitle });
   const events = formatted ? parseSportsListingBlock(formatted) : [];
 
   if (!formatted || events.length === 0) {

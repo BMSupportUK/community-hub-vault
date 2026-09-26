@@ -917,7 +917,7 @@ function QueueSetup({
   const [editedRaw, setEditedRaw] = useState<string | null>(null);
   useEffect(() => setEditedRaw(null), [item?.id]);
   const itemRaw = editedRaw ?? String(item?.parsed_event?.raw ?? item?.raw_text ?? "");
-  const check = useMemo(() => checkSportsImport(itemRaw, draft.sourceZone), [itemRaw, draft.sourceZone]);
+  const check = useMemo(() => checkSportsImport(itemRaw, draft.sourceZone, Date.now(), draft.title), [itemRaw, draft.sourceZone, draft.title]);
   const [override, setOverride] = useState(false);
   useEffect(() => setOverride(false), [item?.id, draft.sourceZone]);
 

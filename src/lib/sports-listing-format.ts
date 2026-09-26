@@ -13,6 +13,7 @@ type ListingInput = {
   time?: string | null;
   channels?: string[] | null;
   sourceZone?: TimeZoneChoice | null;
+  guideTitle?: string | null;
 };
 
 const ZONE = "GMT|UTC|UK|BST|ET|EST|EDT|CT|CST|CDT|MT|MST|MDT|PT|PST|PDT|CET|CEST|AEST|AEDT|JST|IST";
@@ -1023,6 +1024,11 @@ export function formatSportsListingEvents(events: SportsListingEvent[], input: L
     const channels = normalizeChannels(
       event.channels?.length ? event.channels : (input.channels ?? []).filter(Boolean),
     );
+    // iFollow fixtures are found under the team's own channel rather than a
+    // numbered feed. Give every fixture in that guide the same channel label.
+    if (/^iFollow\b/i.test(input.guideTitle?.trim() ?? "")) {
+      if (!channels.some((channel) => channel.toLowerCase() === "under team channels")) channels.push("Under Team Channels");
+    }
     if (channels.length) out.push(channels.join(" | "));
   }
 
