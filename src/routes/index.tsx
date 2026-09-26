@@ -218,7 +218,10 @@ function Landing() {
       <footer className="shrink-0 border-t border-red-500/20 bg-black/60 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-6 py-3 [@media(max-height:650px)]:py-1.5 flex flex-col md:flex-row items-center justify-between gap-3 [@media(max-height:650px)]:gap-1">
           <p className="text-sm text-red-50/70 order-2 md:order-1">
-            © BM Support 2026. All rights reserved.
+            © BM Support 2026. All rights reserved.{" "}
+            <Link to="/privacy-policy" className="underline underline-offset-4 hover:text-red-200">
+              Privacy Policy
+            </Link>
           </p>
           <div className="flex min-w-0 flex-col items-center gap-2 order-1 md:order-2">
             <span className="text-[11px] uppercase tracking-wider text-red-100/60">Accepted payment methods</span>
