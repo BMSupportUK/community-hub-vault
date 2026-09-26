@@ -600,7 +600,7 @@ function PublicGuidesPage() {
                 )}
                 {filtered.length === 0 ? (
                   <div className="rounded-2xl border border-dashed border-purple-500/40 p-12 text-center text-purple-200/70 bg-purple-950/30">
-                    No guides in this category yet.
+                    No listings submitted yet.
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
