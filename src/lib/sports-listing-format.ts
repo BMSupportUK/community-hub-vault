@@ -755,8 +755,39 @@ function normalizeSmallLetters(line: string): string {
     .replace(/[ᴬᴮᶜᴰᴱᶠᴳᴴᴵᴶᴷᴸᴹᴺᴼᴾᴿˢᵀᵁⱽᵂˣʸᶻ](?:\s*[ᴬᴮᶜᴰᴱᶠᴳᴴᴵᴶᴷᴸᴹᴺᴼᴾᴿˢᵀᵁⱽᵂˣʸᶻ])*/g, (m) => m.replace(/\s+/g, "").split("").map((c) => SMALL_LETTERS[c] ?? c).join(""));
 }
 
+/**
+ * UFC Streams: "**UFC Fight Night: A vs. B**" / "`10pm | 11pm | 1am UK`" then
+ * one channel per line ("UFC 01", "UFC 02", "UFC 03"). Each time belongs to
+ * the channel in the same position — list them as separate channel rows.
+ */
+function expandMultiSlotChannelPost(raw: string): string {
+  const lines = raw.split("\n").map((l) => l.replace(/[*`#]/g, "").trim()).filter(Boolean);
+  if (lines.length < 3) return raw;
+  const slotRe = new RegExp(String.raw`^((?:${TIME_SOURCE})(?:\s*\|\s*(?:${TIME_SOURCE}))+)\s*UK$`, "i");
+  const slotIdx = lines.findIndex((l) => slotRe.test(l));
+  if (slotIdx !== 1) return raw;
+  const times = lines[1].replace(/\s*UK$/i, "").split("|").map((t) => t.trim());
+  const channels = lines.slice(2);
+  if (channels.length !== times.length || !channels.every((c) => /^[A-Za-z][A-Za-z+ ]*\s\d{1,3}(?:\s*HD)?$/.test(c))) return raw;
+  const title = lines[0];
+  const days = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+  const london = new Date(new Date().toLocaleString("en-US", { timeZone: "Europe/London" }));
+  let pastMidnight = false;
+  let prevPm = false;
+  const rows = times.map((t, i) => {
+    const am = /am$/i.test(t);
+    if (am && (prevPm || pastMidnight)) pastMidnight = true;
+    if (/pm$/i.test(t)) prevPm = true;
+    const tt = t.replace(/^(\d{1,2})\s*(am|pm)$/i, "$1:00$2");
+    const slot = pastMidnight ? `${tt} UK ${days[(london.getDay() + 1) % 7]}` : `${tt} UK`;
+    return `${slot}\n${title}\n${channels[i]}`;
+  });
+  return rows.join("\n\n");
+}
+
 export function parseSportsListingBlock(raw: string | null | undefined): SportsListingEvent[] {
   if (!raw) return [];
+  raw = expandMultiSlotChannelPost(raw);
   const explicitHeadings = new Set(sportsListingHeadings(raw).map((heading) => heading.toLowerCase()));
   const lines = decodeListingEntities(raw)
     .replace(/<br\s*\/?\s*>/gi, "\n")
