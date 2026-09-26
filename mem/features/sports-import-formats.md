@@ -53,7 +53,7 @@ Source: "**UFC Fight Night: A vs. B**" / "`10pm | 11pm | 1am UK`" / "UFC 01" / "
 Source: "Rugby Pass 01 | Lions v Leinster 12:00" rows, with bare continuation rows like "Stade Francais v Lyon 15:30" under a channel row. Each "Channel NN | Event HH:MM" row splits into time / event / channel; every bare "Event HH:MM" continuation row inherits the channel of the row above it, so each fixture keeps its own channel (e.g. Rugby Pass 02 gets Perpignan v Bordeaux Begles, Stade Francais v Lyon and Zebre v Bulls). Only applies when the post contains channel-pipe rows.
 
 ## Overnight rollover on daily posts (permanent)
-When a daily post's times run past midnight (e.g. 23:00 then 01:00 under one date), the early-morning events automatically move to the next day's date, and every following event stays on the rolled date until the post names a new day. A drop of more than 6 hours between consecutive times triggers the roll.
+Only early-morning times (before 06:00) that follow a later time in the same date group move to the next day. NEVER chain rolls and never carry the rolled date forward — daytime events stay on the post's date. "Todays Live Events" posts list channel blocks out of time order (e.g. 20:00, 12AM, 17:00, 12AM, 18:00), so chaining spread one day's events across four days.
 
 ## Fubo Sports post (permanent)
 Format: `Fubo Sports 1 | Show name // UK Sat 26 Sep 11:00am // ET Sat 26 Sep 6:00am`. Channel before the pipe, show after, use the UK date/time (ignore ET). Show names containing the brand (e.g. "Fubo Sports News") are valid titles — never flag as channel/title swapped when the row's channel is a real channel label.
