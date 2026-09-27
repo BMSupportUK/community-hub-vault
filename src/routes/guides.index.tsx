@@ -566,6 +566,23 @@ function PublicGuidesPage() {
                   Guides
                 </button>
               )}
+              {guides.some(isUnread) && (
+                <button
+                  onClick={() => {
+                    const reads = loadPublicGuideReads();
+                    const now = new Date().toISOString();
+                    for (const g of guides) reads[g.id] = now;
+                    try {
+                      localStorage.setItem(PUBLIC_GUIDE_READS_KEY, JSON.stringify(reads));
+                    } catch { /* storage full/blocked — badge just reappears */ }
+                    setPublicReads(reads);
+                    window.dispatchEvent(new Event("bm-public-guide-read"));
+                  }}
+                  className="rounded-full px-4 py-1.5 text-sm font-medium text-fuchsia-200 transition hover:bg-fuchsia-600/40 hover:text-white"
+                >
+                  Mark All Read
+                </button>
+              )}
             </div>
           </div>
         </header>
