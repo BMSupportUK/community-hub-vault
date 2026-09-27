@@ -134,10 +134,17 @@ export function WiseIncomingCard({
             <Landmark className="size-5" />
           </div>
           <div>
-            <h2 className="font-display font-bold">Incoming transfers (Wise)</h2>
+            <h2 className="font-display font-bold">
+              {mode === "settings" ? "Wise settings" : "Incoming transfers (Wise)"}
+            </h2>
             <p className="text-xs text-muted-foreground">Not connected yet.</p>
           </div>
         </div>
+        {mode === "settings" ? (
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            The Wise key and email forwarding address live here once a token is saved.
+          </p>
+        ) : null}
         <p className="text-xs text-muted-foreground leading-relaxed">
           To see bank transfers land here automatically, create a read token in your Wise account (Settings → API
           tokens, full access) and ask Lovable to save it as <span className="font-mono">WISE_API_TOKEN</span>. Nothing
