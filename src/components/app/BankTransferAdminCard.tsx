@@ -34,7 +34,9 @@ const blank = {
 };
 
 /** Owner-only: bank account details + which customers may pay by bank transfer. */
-export function BankTransferAdminCard() {
+type BankTransferView = "details" | "customers" | "incoming" | "wise";
+
+export function BankTransferAdminCard({ initialView = "details" }: { initialView?: BankTransferView }) {
   const { hasRole } = useAuth();
   const isOwner = hasRole("admin");
 
@@ -44,7 +46,7 @@ export function BankTransferAdminCard() {
   const grant = useServerFn(grantBankTransfer);
   const revoke = useServerFn(revokeBankTransfer);
 
-  const [view, setView] = useState<"details" | "customers" | "incoming" | "wise">("details");
+  const [view, setView] = useState<BankTransferView>(initialView);
   const [form, setForm] = useState(blank);
   const [grants, setGrants] = useState<Grant[]>([]);
   const [names, setNames] = useState<Record<string, string>>({});
