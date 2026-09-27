@@ -151,34 +151,12 @@ export function OrderStatusAdminCard() {
           <h2 className="font-display text-lg font-semibold">Order status</h2>
           <p className="text-sm text-muted-foreground">Every order with its current status, by year and month.</p>
         </div>
-        {isAdmin && !adding && (
-          <button type="button" onClick={openAdd} className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-primary text-primary-foreground text-sm font-medium">
+        {isAdmin && (
+          <Link to="/admin-add-order" className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-primary text-primary-foreground text-sm font-medium">
             <Plus className="size-4" /> Add order
-          </button>
+          </Link>
         )}
       </div>
-
-      {adding && (
-        <div className="rounded-xl border border-border bg-surface-2 p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="font-semibold">Add an order manually</h3>
-            <button type="button" onClick={() => setAdding(false)} aria-label="Close" className="text-muted-foreground hover:text-foreground"><X className="size-4" /></button>
-          </div>
-          <input value={custName} onChange={(e) => setCustName(e.target.value)} placeholder="Customer name" className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm" />
-          <div className="space-y-2">
-            {products.length === 0 ? <p className="text-sm text-muted-foreground">Loading products…</p> : products.map((p) => (
-              <div key={p.id} className="flex items-center justify-between gap-3 text-sm">
-                <span>{p.name} <span className="text-muted-foreground">· {money(p.price_cents)}</span></span>
-                <input type="number" min={0} value={qty[p.id] ?? 0} onChange={(e) => setQty((q) => ({ ...q, [p.id]: Math.max(0, Number(e.target.value) || 0) }))} className="w-20 h-9 rounded-lg border border-border bg-background px-2 text-sm" aria-label={`Quantity of ${p.name}`} />
-              </div>
-            ))}
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Total {money(products.reduce((a, p) => a + p.price_cents * (qty[p.id] ?? 0), 0))}</span>
-            <button type="button" disabled={busy} onClick={saveOrder} className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50">{busy ? "Saving…" : "Save order"}</button>
-          </div>
-        </div>
-      )}
 
       {error ? <p className="text-sm text-destructive">Could not load orders: {error}</p>
         : rows === null ? <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" /> Loading…</div>
@@ -213,7 +191,7 @@ export function OrderStatusAdminCard() {
                       <td className="px-3 py-2 whitespace-nowrap">{new Date(r.created_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}</td>
                       <td className="px-3 py-2">
                         <div>{r.shipping_name || r.existing_username || "—"}</div>
-                        <div className="text-xs text-muted-foreground">#{r.id.slice(0, 8)}{r.customer_type ? ` · ${r.customer_type}` : ""}</div>
+                        <div className="text-xs text-muted-foreground">{r.order_ref ?? `#${r.id.slice(0, 8)}`}{r.customer_type ? ` · ${r.customer_type}` : ""}</div>
                       </td>
                       <td className="px-3 py-2 whitespace-nowrap">{money(r.total_cents)}</td>
                       <td className="px-3 py-2"><span className={`inline-flex px-2 py-0.5 rounded-full border text-xs capitalize ${statusTone(r.status)}`}>{r.status.toLowerCase()}</span></td>
