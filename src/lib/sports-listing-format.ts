@@ -280,23 +280,52 @@ export function normalizeSportsEventTitle(value: string): string {
  * all-caps fixture or channel line. This is used to stop one competition from
  * being saved into another competition's existing guide.
  */
+function sportsListingLineHeading(trimmed: string): string | null {
+  const markdownHeading = trimmed.match(/^#{1,6}\s*(.+?)\s*$/)?.[1];
+  const boldHeading = trimmed.match(/^\*\*#{1,6}\s*(.+?)\*\*$/)?.[1];
+  const heading = cleanLine(markdownHeading ?? boldHeading ?? "");
+  if (
+    heading &&
+    !isDateLine(heading) &&
+    !parseClockTime(heading) &&
+    !/\s(?:&|v|vs|v\.|x)\s/i.test(heading) &&
+    !isLikelyChannelLabel(heading)
+  ) return heading;
+  return null;
+}
+
 function sportsListingHeadings(raw: string | null | undefined): string[] {
   if (!raw) return [];
   const headings: string[] = [];
   for (const rawLine of decodeListingEntities(raw).split("\n")) {
-    const trimmed = rawLine.trim();
-    const markdownHeading = trimmed.match(/^#{1,6}\s*(.+?)\s*$/)?.[1];
-    const boldHeading = trimmed.match(/^\*\*#{1,6}\s*(.+?)\*\*$/)?.[1];
-    const heading = cleanLine(markdownHeading ?? boldHeading ?? "");
-    if (
-      heading &&
-      !isDateLine(heading) &&
-      !parseClockTime(heading) &&
-      !/\s(?:&|v|vs|v\.|x)\s/i.test(heading) &&
-      !isLikelyChannelLabel(heading)
-    ) headings.push(heading);
+    const heading = sportsListingLineHeading(rawLine.trim());
+    if (heading) headings.push(heading);
   }
   return unique(headings);
+}
+
+/**
+ * Split a post into its heading sections, keeping the lines that precede the
+ * first heading as a heading-less section. Each section's events are labelled
+ * with their own heading, so a "SERIE A" block never inherits a "PREMIER
+ * LEAGUE" label from earlier in the post.
+ */
+function splitSportsListingSections(raw: string): { heading: string | null; text: string }[] {
+  const sections: { heading: string | null; lines: string[] }[] = [];
+  for (const rawLine of decodeListingEntities(raw).split("\n")) {
+    const heading = sportsListingLineHeading(rawLine.trim());
+    if (heading) {
+      const last = sections[sections.length - 1];
+      if (last && last.heading === heading) continue;
+      sections.push({ heading, lines: [] });
+      continue;
+    }
+    if (!sections.length) sections.push({ heading: null, lines: [] });
+    sections[sections.length - 1]!.lines.push(rawLine);
+  }
+  return sections
+    .map((s) => ({ heading: s.heading, text: s.lines.join("\n") }))
+    .filter((s) => s.text.trim() || s.heading);
 }
 
 export function sportsListingHeading(raw: string | null | undefined): string | null {
