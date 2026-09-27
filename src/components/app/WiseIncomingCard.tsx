@@ -379,9 +379,13 @@ export function WiseIncomingCard({
               className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-surface-2 px-3 py-3"
             >
               <div className="min-w-0">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <span className="text-sm font-semibold">{fmt(t.amountCents)}</span>
-                  {t.match?.exact ? (
+                  {t.autoMatched ? (
+                    <span className="rounded-full bg-emerald-500/15 text-emerald-400 text-[10px] font-bold px-2 py-0.5 uppercase tracking-wide">
+                      Auto-matched · marked as received
+                    </span>
+                  ) : t.match?.exact ? (
                     <span className="rounded-full bg-emerald-500/15 text-emerald-400 text-[10px] font-bold px-2 py-0.5 uppercase tracking-wide">
                       Match
                     </span>
@@ -412,22 +416,29 @@ export function WiseIncomingCard({
                     <LinkIcon className="size-3" />
                     View order · {t.match.customerName ?? "Customer"} · {fmt(t.match.amountCents)}
                   </Link>
-                  <Button
-                    type="button"
-                    size="sm"
-                    disabled={busyOrder !== null || settled}
-                    onClick={() => t.match && void doConfirm(t.match.orderId)}
-                    className="h-auto px-3 py-1.5 text-xs rounded-lg"
-                  >
-                    {busyOrder === t.match.orderId ? (
-                      <Loader2 className="size-3.5 animate-spin" />
-                    ) : settled ? (
+                  {t.autoMatched ? (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-400">
                       <Check className="size-3.5" />
-                    ) : (
-                      <ArrowUpRight className="size-3.5" />
-                    )}
-                    {settled ? "Confirmed" : "Confirm received"}
-                  </Button>
+                      Marked as received automatically
+                    </span>
+                  ) : (
+                    <Button
+                      type="button"
+                      size="sm"
+                      disabled={busyOrder !== null || settled}
+                      onClick={() => t.match && void doConfirm(t.match.orderId)}
+                      className="h-auto px-3 py-1.5 text-xs rounded-lg"
+                    >
+                      {busyOrder === t.match.orderId ? (
+                        <Loader2 className="size-3.5 animate-spin" />
+                      ) : settled ? (
+                        <Check className="size-3.5" />
+                      ) : (
+                        <ArrowUpRight className="size-3.5" />
+                      )}
+                      {settled ? "Confirmed" : "Confirm received"}
+                    </Button>
+                  )}
                 </div>
               ) : (
                 <select
