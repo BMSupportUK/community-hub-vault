@@ -142,7 +142,7 @@ export const Route = createFileRoute("/api/public/wise-email")({
           kind: "wise_payment",
           title: `Wise payment received: ${parsed.currency} ${amount}`,
           body: `${who} paid ${parsed.currency} ${amount} — reference "${parsed.reference}". Allocate it to its order on the Bank Transfer page.`,
-          link_path: "/admin-bank-transfer",
+          link_path: "/admin?tab=bank-transfer-orders",
         });
         return new Response("ok");
       },
