@@ -141,41 +141,9 @@ export const createStripeInvoiceForOrder = createServerFn({ method: "POST" })
 
       const shortRef = orderId.slice(0, 8);
 
-      // Load items so the invoice shows what was purchased.
-      const { data: items } = await supabaseAdmin
-        .from("order_items")
-        .select("product_name,quantity,unit_price_cents")
-        .eq("order_id", orderId);
-      const itemsTotal = (items ?? []).reduce(
-        (sum, it: any) => sum + (it.unit_price_cents ?? 0) * (it.quantity ?? 0),
-        0,
-      );
-
-      // The dahlia API takes decimal-string amounts on invoice items
-      // (unit_amount_decimal) instead of the integer unit_amount.
-      const perItem =
-        items && items.length > 0 && itemsTotal === totalCents
-          ? items.map((it: any) => ({
-              customer: customerId,
-              currency: "gbp",
-              unit_amount_decimal: String(it.unit_price_cents),
-              quantity: it.quantity ?? 1,
-              description: `Order #${shortRef} — ${it.product_name ?? "Item"}`.slice(0, 500),
-            }))
-          : [
-              {
-                customer: customerId,
-                currency: "gbp",
-                unit_amount_decimal: String(totalCents),
-                quantity: 1,
-                description: `Order #${shortRef}`.slice(0, 500),
-              },
-            ];
-
-      for (const item of perItem) {
-        await stripe.invoiceItems.create(item as never);
-      }
-
+      // On the current Stripe API, invoice items must be attached to a draft
+      // invoice explicitly (they no longer auto-attach). Create the draft
+      // first, then add each item, then finalise.
       const invoice = await stripe.invoices.create({
         customer: customerId,
         collection_method: "send_invoice",
@@ -188,10 +156,55 @@ export const createStripeInvoiceForOrder = createServerFn({ method: "POST" })
         },
         description: `Order #${shortRef}`,
       } as never);
-
       if (!invoice.id) throw new Error("Failed to create Stripe invoice");
+
+      // Load items so the invoice shows what was purchased.
+      const { data: items } = await supabaseAdmin
+        .from("order_items")
+        .select("product_name,quantity,unit_price_cents")
+        .eq("order_id", orderId);
+      const itemsTotal = (items ?? []).reduce(
+        (sum, it: any) => sum + (it.unit_price_cents ?? 0) * (it.quantity ?? 0),
+        0,
+      );
+
+      // The dahlia API takes decimal-string amounts on invoice items
+      // (unit_amount_decimal, in cents) instead of the integer unit_amount.
+      const perItem =
+        items && items.length > 0 && itemsTotal === totalCents
+          ? items.map((it: any) => ({
+              customer: customerId,
+              invoice: invoice.id,
+              currency: "gbp",
+              unit_amount_decimal: String(it.unit_price_cents),
+              quantity: it.quantity ?? 1,
+              description: `Order #${shortRef} — ${it.product_name ?? "Item"}`.slice(0, 500),
+            }))
+          : [
+              {
+                customer: customerId,
+                invoice: invoice.id,
+                currency: "gbp",
+                unit_amount_decimal: String(totalCents),
+                quantity: 1,
+                description: `Order #${shortRef}`.slice(0, 500),
+              },
+            ];
+
+      for (const item of perItem) {
+        await stripe.invoiceItems.create(item as never);
+      }
+
       const finalized = await stripe.invoices.finalizeInvoice(invoice.id);
       if (!finalized.hosted_invoice_url) throw new Error("Stripe invoice has no payment link");
+      // A zero-total invoice finalises as "paid" with no money changing hands —
+      // treat an amount mismatch as a failure rather than free access.
+      if (Number(finalized.total ?? 0) !== totalCents) {
+        try {
+          await stripe.invoices.voidInvoice(finalized.id);
+        } catch {}
+        throw new Error("Stripe invoice amount mismatch — invoice voided, please try again");
+      }
 
       const row = {
         order_id: orderId,
