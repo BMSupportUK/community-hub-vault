@@ -22,13 +22,40 @@ function pick(obj: Record<string, any>, keys: string[]) {
   return "";
 }
 
+function decodeQuotedPrintable(value: string) {
+  return value
+    .replace(/=\r?\n/g, "")
+    .replace(/=([A-Fa-f0-9]{2})/g, (_match, hex: string) =>
+      String.fromCharCode(Number.parseInt(hex, 16)),
+    );
+}
+
+function collectStrings(value: unknown, output: string[] = []): string[] {
+  if (typeof value === "string") {
+    output.push(value);
+    try {
+      const parsed = JSON.parse(value);
+      if (parsed && typeof parsed === "object") collectStrings(parsed, output);
+    } catch {
+      // Normal email text is not JSON.
+    }
+  } else if (Array.isArray(value)) {
+    for (const item of value) collectStrings(item, output);
+  } else if (value && typeof value === "object") {
+    for (const item of Object.values(value)) collectStrings(item, output);
+  }
+  return output;
+}
+
 function extractGmailForwardingConfirmation(subject: string, body: string) {
-  if (!/gmail forwarding confirmation|receive mail from/i.test(subject)) return null;
-  const readableBody = stripHtml(body).replace(/&amp;/gi, "&");
+  const readableBody = stripHtml(decodeQuotedPrintable(body))
+    .replace(/&amp;/gi, "&")
+    .replace(/&#x3D;|&#61;/gi, "=");
+  if (!/gmail forwarding confirmation|receive mail from/i.test(`${subject}\n${readableBody}`)) return null;
   const code = readableBody.match(/(?:confirmation code|code)\D{0,120}(\d{6,12})/i)?.[1]
     ?? readableBody.match(/\b(\d{9})\b/)?.[1]
     ?? null;
-  const url = readableBody.match(/https?:\/\/mail-settings\.google\.com\/mail\/vf-[^\s<>"']+/i)?.[0]
+  const url = readableBody.match(/https?:\/\/mail-settings\.google\.com\/mail\/vf-[^\s<>"')\]]+/i)?.[0]
     ?? readableBody.match(/https?:\/\/(?:mail\.)?google\.com\/[^\s<>"']+/i)?.[0]
     ?? null;
   return { code, url };
@@ -66,15 +93,21 @@ export const Route = createFileRoute("/api/public/wise-email")({
         if (!body) body = stripHtml(pick(data, ["HtmlBody", "html", "body-html"]));
         const from = pick(data, ["From", "from", "sender"]) || pick(headers, ["from", "From"]);
 
-        const gmailConfirmation = extractGmailForwardingConfirmation(subject, body);
-        if (gmailConfirmation) {
+        // CloudMailin's normalized multipart shape varies by message. Search every
+        // textual field so Gmail's confirmation cannot be lost when it is nested
+        // inside headers, plain/html parts, or quoted-printable content.
+        const allText = collectStrings(data).join("\n").slice(0, 100_000);
+        const gmailConfirmation = extractGmailForwardingConfirmation(subject, `${body}\n${allText}`);
+        const isGmailForwardingMessage = /forwarding-noreply@google\.com/i.test(`${from}\n${allText}`)
+          || /gmail forwarding confirmation|receive mail from/i.test(`${subject}\n${allText}`);
+        if (gmailConfirmation || isGmailForwardingMessage) {
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
           const { error } = await supabaseAdmin.from("email_forwarding_confirmations").insert({
             sender: from.slice(0, 300),
             subject: subject.slice(0, 300),
-            confirmation_code: gmailConfirmation.code,
-            confirmation_url: gmailConfirmation.url,
-            excerpt: body.replace(/\s+/g, " ").trim().slice(0, 1000),
+            confirmation_code: gmailConfirmation?.code ?? null,
+            confirmation_url: gmailConfirmation?.url ?? null,
+            excerpt: stripHtml(decodeQuotedPrintable(`${body}\n${allText}`)).replace(/\s+/g, " ").trim().slice(0, 1000),
           });
           if (error) return new Response("Save failed", { status: 500 });
           return new Response("confirmation saved");
