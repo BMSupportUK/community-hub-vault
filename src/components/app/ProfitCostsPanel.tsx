@@ -75,7 +75,13 @@ export function ProfitCostsPanel() {
     void load();
   };
 
-  const list = orders ?? [];
+  const all = orders ?? [];
+  const methodTabs = useMemo(() => {
+    const seen = new Set<string>();
+    for (const o of all) { const m = methodOf[o.id]; if (m) seen.add(m); }
+    return [...seen].sort((a, b) => (METHOD_LABELS[a] ?? a).localeCompare(METHOD_LABELS[b] ?? b));
+  }, [all, methodOf]);
+  const list = tab === "profit" || tab === "costs" ? all : all.filter((o) => methodOf[o.id] === tab);
   const years = useMemo(() => [...new Set(list.map((o) => new Date(o.created_at).getFullYear()))].sort((a, b) => b - a), [list]);
   const ay = year && years.includes(year) ? year : years[0] ?? null;
   const yearOrders = list.filter((o) => new Date(o.created_at).getFullYear() === ay);
@@ -108,9 +114,10 @@ export function ProfitCostsPanel() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2">
-        <button type="button" className={pill(tab === "profit")} onClick={() => setTab("profit")}>Profit</button>
+        <button type="button" className={pill(tab === "profit")} onClick={() => setTab("profit")}>Total profit</button>
+        {methodTabs.map((m) => <button key={m} type="button" className={pill(tab === m)} onClick={() => setTab(m)}>{METHOD_LABELS[m] ?? m}</button>)}
         <button type="button" className={pill(tab === "costs")} onClick={() => setTab("costs")}>Product costs</button>
-        {tab === "profit" && am != null && (
+        {tab !== "costs" && am != null && (
           <span className="px-3 h-8 rounded-lg text-sm font-medium inline-flex items-center bg-surface-2 border border-border text-muted-foreground">
             {yearOrders.filter((o) => new Date(o.created_at).getMonth() === am).length} orders
           </span>
@@ -129,7 +136,7 @@ export function ProfitCostsPanel() {
               </div>
             ))}
           </div>
-        ) : list.length === 0 ? <p className="text-sm text-muted-foreground">No paid orders yet.</p> : (
+        ) : list.length === 0 ? <p className="text-sm text-muted-foreground">{tab === "profit" ? "No paid orders yet." : `No ${METHOD_LABELS[tab] ?? tab} orders yet.`}</p> : (
           <div className="space-y-4">
             <div className="flex flex-wrap gap-2">{years.map((y) => <button key={y} type="button" className={pill(y === ay)} onClick={() => { setYear(y); setMonth(null); }}>{y}</button>)}</div>
             <div><h3 className="text-sm font-semibold mb-2">{ay} total</h3><Totals t={yT} /></div>
