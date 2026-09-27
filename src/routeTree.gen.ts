@@ -40,6 +40,7 @@ import { Route as GuidesIdRouteImport } from './routes/guides.$id'
 import { Route as AuthenticatedApprovedAccountSecurityRouteImport } from './routes/_authenticated/_approved/account-security'
 import { Route as AuthenticatedApprovedAdminRouteImport } from './routes/_authenticated/_approved/admin'
 import { Route as AuthenticatedApprovedAdminAdStatsRouteImport } from './routes/_authenticated/_approved/admin-ad-stats'
+import { Route as AuthenticatedApprovedAdminAddOrderRouteImport } from './routes/_authenticated/_approved/admin-add-order'
 import { Route as AuthenticatedApprovedAdminAffiliateBannersRouteImport } from './routes/_authenticated/_approved/admin-affiliate-banners'
 import { Route as AuthenticatedApprovedAdminArchivedTicketsRouteImport } from './routes/_authenticated/_approved/admin-archived-tickets'
 import { Route as AuthenticatedApprovedAdminAutomatedMessagesRouteImport } from './routes/_authenticated/_approved/admin-automated-messages'
@@ -315,6 +316,12 @@ const AuthenticatedApprovedAdminAdStatsRoute =
   AuthenticatedApprovedAdminAdStatsRouteImport.update({
     id: '/admin-ad-stats',
     path: '/admin-ad-stats',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedAdminAddOrderRoute =
+  AuthenticatedApprovedAdminAddOrderRouteImport.update({
+    id: '/admin-add-order',
+    path: '/admin-add-order',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
 const AuthenticatedApprovedAdminAffiliateBannersRoute =
@@ -1056,6 +1063,7 @@ export interface FileRoutesByFullPath {
   '/account-security': typeof AuthenticatedApprovedAccountSecurityRoute
   '/admin': typeof AuthenticatedApprovedAdminRoute
   '/admin-ad-stats': typeof AuthenticatedApprovedAdminAdStatsRoute
+  '/admin-add-order': typeof AuthenticatedApprovedAdminAddOrderRoute
   '/admin-affiliate-banners': typeof AuthenticatedApprovedAdminAffiliateBannersRoute
   '/admin-archived-tickets': typeof AuthenticatedApprovedAdminArchivedTicketsRoute
   '/admin-automated-messages': typeof AuthenticatedApprovedAdminAutomatedMessagesRoute
@@ -1204,6 +1212,7 @@ export interface FileRoutesByTo {
   '/account-security': typeof AuthenticatedApprovedAccountSecurityRoute
   '/admin': typeof AuthenticatedApprovedAdminRoute
   '/admin-ad-stats': typeof AuthenticatedApprovedAdminAdStatsRoute
+  '/admin-add-order': typeof AuthenticatedApprovedAdminAddOrderRoute
   '/admin-affiliate-banners': typeof AuthenticatedApprovedAdminAffiliateBannersRoute
   '/admin-archived-tickets': typeof AuthenticatedApprovedAdminArchivedTicketsRoute
   '/admin-automated-messages': typeof AuthenticatedApprovedAdminAutomatedMessagesRoute
@@ -1356,6 +1365,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/account-security': typeof AuthenticatedApprovedAccountSecurityRoute
   '/_authenticated/_approved/admin': typeof AuthenticatedApprovedAdminRoute
   '/_authenticated/_approved/admin-ad-stats': typeof AuthenticatedApprovedAdminAdStatsRoute
+  '/_authenticated/_approved/admin-add-order': typeof AuthenticatedApprovedAdminAddOrderRoute
   '/_authenticated/_approved/admin-affiliate-banners': typeof AuthenticatedApprovedAdminAffiliateBannersRoute
   '/_authenticated/_approved/admin-archived-tickets': typeof AuthenticatedApprovedAdminArchivedTicketsRoute
   '/_authenticated/_approved/admin-automated-messages': typeof AuthenticatedApprovedAdminAutomatedMessagesRoute
@@ -1508,6 +1518,7 @@ export interface FileRouteTypes {
     | '/account-security'
     | '/admin'
     | '/admin-ad-stats'
+    | '/admin-add-order'
     | '/admin-affiliate-banners'
     | '/admin-archived-tickets'
     | '/admin-automated-messages'
@@ -1656,6 +1667,7 @@ export interface FileRouteTypes {
     | '/account-security'
     | '/admin'
     | '/admin-ad-stats'
+    | '/admin-add-order'
     | '/admin-affiliate-banners'
     | '/admin-archived-tickets'
     | '/admin-automated-messages'
@@ -1807,6 +1819,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/account-security'
     | '/_authenticated/_approved/admin'
     | '/_authenticated/_approved/admin-ad-stats'
+    | '/_authenticated/_approved/admin-add-order'
     | '/_authenticated/_approved/admin-affiliate-banners'
     | '/_authenticated/_approved/admin-archived-tickets'
     | '/_authenticated/_approved/admin-automated-messages'
@@ -2213,6 +2226,13 @@ declare module '@tanstack/react-router' {
       path: '/admin-ad-stats'
       fullPath: '/admin-ad-stats'
       preLoaderRoute: typeof AuthenticatedApprovedAdminAdStatsRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/admin-add-order': {
+      id: '/_authenticated/_approved/admin-add-order'
+      path: '/admin-add-order'
+      fullPath: '/admin-add-order'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminAddOrderRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
     '/_authenticated/_approved/admin-affiliate-banners': {
@@ -3141,6 +3161,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedAccountSecurityRoute: typeof AuthenticatedApprovedAccountSecurityRoute
   AuthenticatedApprovedAdminRoute: typeof AuthenticatedApprovedAdminRoute
   AuthenticatedApprovedAdminAdStatsRoute: typeof AuthenticatedApprovedAdminAdStatsRoute
+  AuthenticatedApprovedAdminAddOrderRoute: typeof AuthenticatedApprovedAdminAddOrderRoute
   AuthenticatedApprovedAdminAffiliateBannersRoute: typeof AuthenticatedApprovedAdminAffiliateBannersRoute
   AuthenticatedApprovedAdminArchivedTicketsRoute: typeof AuthenticatedApprovedAdminArchivedTicketsRoute
   AuthenticatedApprovedAdminAutomatedMessagesRoute: typeof AuthenticatedApprovedAdminAutomatedMessagesRoute
@@ -3213,6 +3234,8 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
   AuthenticatedApprovedAdminRoute: AuthenticatedApprovedAdminRoute,
   AuthenticatedApprovedAdminAdStatsRoute:
     AuthenticatedApprovedAdminAdStatsRoute,
+  AuthenticatedApprovedAdminAddOrderRoute:
+    AuthenticatedApprovedAdminAddOrderRoute,
   AuthenticatedApprovedAdminAffiliateBannersRoute:
     AuthenticatedApprovedAdminAffiliateBannersRoute,
   AuthenticatedApprovedAdminArchivedTicketsRoute:

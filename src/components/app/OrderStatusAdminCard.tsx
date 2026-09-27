@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Loader2, Plus, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Link } from "@tanstack/react-router";
 
 type Row = {
   id: string;
@@ -13,6 +14,7 @@ type Row = {
   shipping_name: string | null;
   existing_username: string | null;
   customer_type: string | null;
+  order_ref: string | null;
 };
 
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -48,41 +50,6 @@ export function OrderStatusAdminCard() {
 
   const [reload, setReload] = useState(0);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [adding, setAdding] = useState(false);
-  const [custName, setCustName] = useState("");
-  const [products, setProducts] = useState<{ id: string; name: string; price_cents: number }[]>([]);
-  const [qty, setQty] = useState<Record<string, number>>({});
-  const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    (async () => {
-      const { data: u } = await supabase.auth.getUser();
-      if (!u.user) return;
-      const { data } = await supabase.rpc("has_role", { _user_id: u.user.id, _role: "admin" });
-      setIsAdmin(!!data);
-    })();
-  }, []);
-
-  const openAdd = async () => {
-    setAdding(true);
-    if (!products.length) {
-      const { data } = await supabase.from("products").select("id, name, price_cents").order("sort_order");
-      setProducts((data ?? []) as typeof products);
-    }
-  };
-
-  const saveOrder = async () => {
-    const items = Object.entries(qty).filter(([, q]) => q > 0).map(([product_id, quantity]) => ({ product_id, quantity }));
-    if (!custName.trim()) return toast.error("Enter the customer name");
-    if (!items.length) return toast.error("Pick at least one product");
-    setBusy(true);
-    const { error } = await supabase.rpc("admin_create_manual_order", { _customer_name: custName.trim(), _items: items });
-    setBusy(false);
-    if (error) return toast.error(error.message);
-    toast.success("Order added");
-    setAdding(false); setCustName(""); setQty({}); setYear(null); setMonth(null); setReload((n) => n + 1);
-  };
-
   const [completing, setCompleting] = useState<string | null>(null);
   const [payMethod, setPayMethod] = useState("");
   const [payRef, setPayRef] = useState("");
@@ -103,7 +70,7 @@ export function OrderStatusAdminCard() {
     (async () => {
       const { data, error } = await supabase
         .from("orders")
-        .select("id, status, total_cents, created_at, paid_at, completed_at, shipping_name, existing_username, customer_type")
+        .select("id, status, total_cents, created_at, paid_at, completed_at, shipping_name, existing_username, customer_type, order_ref")
         .order("created_at", { ascending: false })
         .limit(5000);
       if (cancelled) return;
