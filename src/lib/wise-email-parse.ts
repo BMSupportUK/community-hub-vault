@@ -31,11 +31,16 @@ export function parseWiseEmail(subject: string, body: string): ParsedWiseEmail |
   const text = `${subject}\n${body}`.replace(/\u00a0/g, " ");
   // Only money-in emails.
   if (!/(sent you|received|you've got|you have received|paid you|money in)/i.test(text)) return null;
+  // Skip Wise comms that mention money but are NOT money in: outgoing-transfer
+  // confirmations ("We've received your £50 — converting it", "You've sent £50")
+  // and "your transfer is on its way" notices.
+  if (/(we'?ve received your|you'?ve sent|you'?re sending|converting your|your transfer (is |has ))/i.test(text)) return null;
 
   const amt =
     text.match(/([£€$])\s?([\d,]+(?:\.\d{1,2})?)/) ??
     null;
   const amtCode = text.match(/([\d,]+(?:\.\d{1,2})?)\s?(GBP|EUR|USD)\b/);
+  const codeAmt = text.match(/\b(GBP|EUR|USD)\s?([\d,]+(?:\.\d{1,2})?)/i);
   let amountCents = NaN;
   let currency = "GBP";
   if (amt) {
@@ -44,6 +49,9 @@ export function parseWiseEmail(subject: string, body: string): ParsedWiseEmail |
   } else if (amtCode) {
     amountCents = toCents(amtCode[1]);
     currency = amtCode[2];
+  } else if (codeAmt) {
+    amountCents = toCents(codeAmt[2]);
+    currency = codeAmt[1].toUpperCase();
   }
   if (!Number.isFinite(amountCents) || amountCents <= 0) return null;
 
