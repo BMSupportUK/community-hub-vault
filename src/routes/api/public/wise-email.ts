@@ -36,7 +36,12 @@ export const Route = createFileRoute("/api/public/wise-email")({
         } catch {
           return new Response("Bad body", { status: 400 });
         }
-        const headers = (data.headers && typeof data.headers === "object" ? data.headers : {}) as Record<string, any>;
+        // CloudMailin "Multipart" posts `headers` as a JSON string; JSON format posts it as an object.
+        let headers: Record<string, any> = {};
+        if (data.headers && typeof data.headers === "object") headers = data.headers;
+        else if (typeof data.headers === "string") {
+          try { headers = JSON.parse(data.headers); } catch { /* ignore */ }
+        }
         const subject = pick(data, ["Subject", "subject"]) || pick(headers, ["subject", "Subject"]);
         let body = pick(data, ["TextBody", "text", "body-plain", "plain", "stripped-text", "body"]);
         if (!body) body = stripHtml(pick(data, ["HtmlBody", "html", "body-html"]));
