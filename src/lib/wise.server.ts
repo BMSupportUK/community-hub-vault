@@ -36,14 +36,15 @@ async function signScaChallenge(oneTimeToken: string): Promise<string | null> {
     .replace(/-----END (?:RSA )?PRIVATE KEY-----/g, "")
     .replace(/\s+/g, "");
   const der = Buffer.from(base64, "base64");
-  const isPkcs1 = normalized.includes("BEGIN RSA PRIVATE KEY");
-  const key = await crypto.subtle.importKey(
-    isPkcs1 ? "pkcs8" in {} ? "pkcs8" : "pkcs8" : "pkcs8",
-    der,
-    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
-    false,
-    ["sign"],
-  ).catch(() => null);
+  const key = await crypto.subtle
+    .importKey(
+      "pkcs8",
+      der,
+      { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+      false,
+      ["sign"],
+    )
+    .catch(() => null);
   if (!key) return null;
   const sig = await crypto.subtle.sign(
     "RSASSA-PKCS1-v1_5",
