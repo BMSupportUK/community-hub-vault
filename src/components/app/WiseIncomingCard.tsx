@@ -15,7 +15,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { confirmBankTransferReceived } from "@/lib/bank-transfer.functions";
-import { getWiseIncomingTransfers, revealWiseForwardUrl, type WiseFeed } from "@/lib/wise.functions";
+import { dismissGmailConfirmation, getWiseIncomingTransfers, revealWiseForwardUrl, type WiseFeed } from "@/lib/wise.functions";
 import { supabase } from "@/integrations/supabase/client";
 
 const fmt = (cents: number) =>
@@ -198,9 +198,22 @@ export function WiseIncomingCard({ hidePending = false }: { hidePending?: boolea
         </details>
       ) : null}
 
-      {feed?.gmailConfirmation ? (
+      {feed?.gmailConfirmation && transactions.length === 0 ? (
         <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
-          <div className="font-bold text-amber-300">Gmail forwarding confirmation</div>
+          <div className="flex items-start justify-between gap-2">
+            <div className="font-bold text-amber-300">Gmail forwarding confirmation</div>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              className="h-auto px-2 py-1 text-xs text-amber-300"
+              disabled={dismissing}
+              onClick={() => void doDismissConfirmation()}
+            >
+              {dismissing ? <Loader2 className="size-3.5 animate-spin" /> : null}
+              Forwarding confirmed — hide this
+            </Button>
+          </div>
           {feed.gmailConfirmation.code ? (
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <span>Enter this code in Gmail:</span>
