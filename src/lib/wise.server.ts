@@ -67,7 +67,7 @@ async function getProfiles(): Promise<Profile[]> {
     } catch (e) {
       if (e instanceof WiseAuthError) {
         throw new WiseAuthError(
-          `Wise rejected the token when reading your account profiles (${(e as Error).message.replace(/^Wise rejected the token \((\d+)\).*/, "$1")}). The token needs the Profiles permission: in Wise go to Settings → API tokens, delete this token, create a new one and enable every listed API (Profiles, Balances, Transfers, Statements).`,
+          `Wise rejected the token when reading your account profiles. Wise's own message: "${(e as Error).message}". Wise tokens have no permission tick boxes — a token is full-access by default. A rejection here almost always means the token was created on the wrong Wise account or environment: log in at wise.com, switch to your BUSINESS profile (top-left profile switcher), then go to Settings → API tokens and create the token there. Tokens from wise.com/sandbox or a personal profile will not work.`,
         );
       }
     }
@@ -88,7 +88,7 @@ async function getBalances(profileId: number): Promise<Array<{ id: number; curre
     } catch (e) {
       if (e instanceof WiseAuthError) {
         throw new WiseAuthError(
-          `Wise rejected the token when reading your balances. The token needs the Balances permission: in Wise go to Settings → API tokens, delete this token, create a new one and enable every listed API (Profiles, Balances, Transfers, Statements).`,
+          `Wise rejected the token when reading your balances. Wise's own message: "${(e as Error).message}".`,
         );
       }
     }
@@ -119,7 +119,7 @@ async function getStatement(
     } catch (e) {
       if (e instanceof WiseAuthError) {
         throw new WiseAuthError(
-          `Wise rejected the token when reading the statement. The token needs the Statements permission: in Wise go to Settings → API tokens, delete this token, create a new one and enable every listed API (Profiles, Balances, Transfers, Statements).`,
+          `Wise rejected the token when reading the statement. Wise's own message: "${(e as Error).message}".`,
         );
       }
     }
