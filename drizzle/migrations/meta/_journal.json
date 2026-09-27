@@ -190,6 +190,13 @@
       "when": 1790534565490,
       "tag": "0026_admin_manual_orders",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "7",
+      "when": 1790534737213,
+      "tag": "0027_manual_order_payment_method",
+      "breakpoints": true
     }
   ]
 }
