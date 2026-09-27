@@ -117,7 +117,11 @@ async function getStatement(
       const data = await wiseApi(path);
       if (Array.isArray(data?.transactions)) return data.transactions;
     } catch (e) {
-      if (e instanceof WiseAuthError) throw e;
+      if (e instanceof WiseAuthError) {
+        throw new WiseAuthError(
+          `Wise rejected the token when reading the statement. The token needs the Statements permission: in Wise go to Settings → API tokens, delete this token, create a new one and enable every listed API (Profiles, Balances, Transfers, Statements).`,
+        );
+      }
     }
   }
   return [];
