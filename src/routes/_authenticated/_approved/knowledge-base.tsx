@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  Plus, Search, X, Pencil, Trash2, GripVertical, BookOpen, ChevronRight,
+  Plus, Search, X, Pencil, Trash2, GripVertical, BookOpen, ChevronRight, ArrowRight,
   ArrowLeft, Save, Loader2, FolderPlus, Eye, EyeOff, Star,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -378,6 +378,16 @@ function KnowledgeBasePage() {
     ));
   };
 
+  // Arrow buttons: move a guide one place earlier/later; saved for everyone.
+  const moveArticle = (id: string, dir: -1 | 1) => {
+    if (!activeCat) return;
+    const inCat = articles.filter((a) => a.category_id === activeCat);
+    const i = inCat.findIndex((a) => a.id === id);
+    const target = inCat[i + dir];
+    if (i < 0 || !target) return;
+    void reorderArticles(id, target.id);
+  };
+
   // ---------- Welcome ----------
   const saveWelcome = async () => {
     if (!welcomeDraft) return;
@@ -662,6 +672,12 @@ function KnowledgeBasePage() {
                               </button>
                               {isMod && (
                                 <div className="flex gap-0.5 items-center">
+                                  {!search && (
+                                    <>
+                                      <button aria-label="Move earlier" title="Move earlier" onClick={() => moveArticle(a.id, -1)} className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground"><ArrowLeft className="size-3.5" /></button>
+                                      <button aria-label="Move later" title="Move later" onClick={() => moveArticle(a.id, 1)} className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground"><ArrowRight className="size-3.5" /></button>
+                                    </>
+                                  )}
                                   <GripVertical className="size-3.5 text-muted-foreground cursor-grab self-center" />
                                   <button onClick={() => { focusArticleId.current = a.id; setEditing(a); }} className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground"><Pencil className="size-3.5" /></button>
                                   <button onClick={() => deleteArticle(a.id)} className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-destructive"><Trash2 className="size-3.5" /></button>
