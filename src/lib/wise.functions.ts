@@ -1,12 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import {
-  fetchWiseIncomingTransfers,
-  isWiseConfigured,
-  WiseApiError,
-  WiseAuthError,
-  type WiseIncoming,
-} from "@/lib/wise.server";
+import type { WiseIncoming } from "@/lib/wise.server";
 
 /**
  * Owner-only view of incoming Wise transfers, matched against pending
@@ -30,6 +24,7 @@ export type WiseFeed = {
   error: string | null;
   authError: boolean;
   transactions: WiseRow[];
+  forwardUrl: string | null;
   pending: Array<{
     orderId: string;
     reference: string;
@@ -59,10 +54,14 @@ function buildReference(prefix: string, orderId: string) {
 export const getWiseIncomingTransfers = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<WiseFeed> => {
-    const feed: WiseFeed = { configured: false, error: null, authError: false, transactions: [], pending: [] };
-
-    if (!isWiseConfigured()) return feed;
+    const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
+    if (!isAdmin) throw new Error("Forbidden: owner only");
+    const feed: WiseFeed = { configured: false, error: null, authError: false, transactions: [], pending: [], forwardUrl: null };
+    const token = process.env.WISE_EMAIL_WEBHOOK_TOKEN;
+    if (!token) return feed;
     feed.configured = true;
+    const origin = process.env.PUBLIC_SITE_URL || "https://bmsupport.uk";
+    feed.forwardUrl = `${origin}/api/public/wise-email?token=${token}`;
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -160,7 +159,24 @@ export const getWiseIncomingTransfers = createServerFn({ method: "POST" })
 
     // Fetch Wise credits and match.
     try {
-      const incoming = await fetchWiseIncomingTransfers(7);
+      const since = new Date(Date.now() - 14 * 86400_000).toISOString();
+      const { data: emails, error: emailErr } = await supabaseAdmin
+        .from("wise_email_payments")
+        .select("*")
+        .gte("received_at", since)
+        .order("received_at", { ascending: false })
+        .limit(100);
+      if (emailErr) throw emailErr;
+      const incoming: WiseIncoming[] = (emails ?? []).map((e: any) => ({
+        id: String(e.id),
+        date: e.received_at,
+        senderName: e.sender_name,
+        senderAccount: null,
+        description: [e.subject, e.excerpt].join(" "),
+        reference: e.reference ?? "",
+        amountCents: Number(e.amount_cents),
+        currency: e.currency ?? "GBP",
+      }));
       const pendingByCode = new Map<string, { p: PendingBankOrder; reference: string }>();
       for (const p of pendingRows) {
         const code = normalizeCode(p.reference);
@@ -199,14 +215,7 @@ export const getWiseIncomingTransfers = createServerFn({ method: "POST" })
         return { ...t, match };
       });
     } catch (e) {
-      if (e instanceof WiseAuthError) {
-        feed.authError = true;
-        feed.error = e.message;
-      } else if (e instanceof WiseApiError) {
-        feed.error = e.message;
-      } else {
-        feed.error = e instanceof Error ? e.message : "Could not reach Wise";
-      }
+      feed.error = e instanceof Error ? e.message : "Could not load payments";
     }
 
     return feed;
