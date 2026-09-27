@@ -118,11 +118,6 @@ export function ProfitCostsPanel() {
         <button type="button" className={pill(tab === "profit")} onClick={() => setTab("profit")}>Total profit</button>
         {methodTabs.map((m) => <button key={m} type="button" className={pill(tab === m)} onClick={() => setTab(m)}>{METHOD_LABELS[m] ?? m}</button>)}
         <button type="button" className={pill(tab === "costs")} onClick={() => setTab("costs")}>Product costs</button>
-        {tab !== "costs" && am != null && (
-          <span className="px-3 h-8 rounded-lg text-sm font-medium inline-flex items-center bg-surface-2 border border-border text-muted-foreground">
-            {yearOrders.filter((o) => new Date(o.created_at).getMonth() === am).length} orders
-          </span>
-        )}
       </div>
       {products === null ? <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" /> Loading…</div>
         : tab === "costs" ? (
