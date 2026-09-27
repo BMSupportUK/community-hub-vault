@@ -165,7 +165,7 @@ export const Route = createFileRoute("/api/public/wise-email")({
           const matched = (payments ?? []).filter((p: any) => {
             const order = (orders ?? []).find((o: any) => String(o.id) === String(p.order_id));
             if (!order) return false;
-            const orderRef = String(p.provider_payment_id ?? `${prefix}-${String(p.order_id).slice(0, 8)}`).toLowerCase();
+            const orderRef = String(p.provider_payment_id ?? `${prefix}-${String(p.order_id).replace(/-/g, "").slice(0, 6).toUpperCase()}`).toLowerCase();
             const refMatch = ref.length >= 4 && (orderRef.includes(ref) || ref.includes(orderRef));
             const amountMatch = Number(p.amount_cents ?? order.total_cents ?? 0) === parsed.amountCents;
             return refMatch || (amountMatch && ref.length === 0);
