@@ -12,6 +12,7 @@ import { CardPaymentsAdminCard } from "@/components/app/CardPaymentsAdminCard";
 import { OrderStatusAdminCard } from "@/components/app/OrderStatusAdminCard";
 import { AwaitingPaymentsSidebar } from "@/components/app/AwaitingPaymentsSidebar";
 import { WiseIncomingCard } from "@/components/app/WiseIncomingCard";
+import { BankTransferAdminCard } from "@/components/app/BankTransferAdminCard";
 import { setAppTheme, useDefaultAppTheme } from "@/hooks/use-app-theme";
 import { applyNavOrder, setLandingNavOrder, useLandingNavOrder } from "@/hooks/use-landing-nav-order";
 import { ArrowDown, ArrowUp } from "lucide-react";
