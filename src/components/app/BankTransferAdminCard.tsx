@@ -44,7 +44,7 @@ export function BankTransferAdminCard() {
   const grant = useServerFn(grantBankTransfer);
   const revoke = useServerFn(revokeBankTransfer);
 
-  const [view, setView] = useState<"details" | "customers" | "wise">("details");
+  const [view, setView] = useState<"details" | "customers" | "incoming" | "wise">("details");
   const [form, setForm] = useState(blank);
   const [grants, setGrants] = useState<Grant[]>([]);
   const [names, setNames] = useState<Record<string, string>>({});
