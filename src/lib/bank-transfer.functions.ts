@@ -22,6 +22,20 @@ async function assertOwner(supabase: any, userId: string) {
   if (!data?.length) throw new Error("Forbidden: owner only");
 }
 
+/** Admin role + a fresh 2FA (TOTP) verification within the last 5 minutes. */
+async function assertAdminWithFreshTotp(supabase: any, userId: string, claims: any, action: string) {
+  const { data: adminRows } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("role", "admin");
+  if (!adminRows?.length) throw new Error(`Only admins can ${action}`);
+  const amr: Array<{ method?: string; timestamp?: number }> = Array.isArray(claims?.amr) ? claims.amr : [];
+  const totp = amr.find((m) => m?.method === "totp");
+  const fresh = totp?.timestamp && Date.now() / 1000 - totp.timestamp < 300;
+  if (claims?.aal !== "aal2" || !fresh) throw new Error(`Enter your 2FA code to ${action}`);
+}
+
 async function isStaff(supabase: any, userId: string) {
   const { data } = await supabase
     .from("user_roles")
