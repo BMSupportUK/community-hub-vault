@@ -35,6 +35,7 @@ function paymentLabel(provider: string | null | undefined) {
   if (v === "bank_transfer" || v === "bank") return "Bank transfer";
   if (v === "crypto") return "Crypto";
   if (v === "cash") return "Cash";
+  if (v === "wise") return "Wise";
   return provider ? provider : "—";
 }
 
@@ -84,13 +85,16 @@ export function OrderStatusAdminCard() {
 
   const [completing, setCompleting] = useState<string | null>(null);
   const [payMethod, setPayMethod] = useState("");
+  const [payRef, setPayRef] = useState("");
+  const needsRef = ["square", "stripe", "wise"].includes(payMethod);
   const completeOrder = async (id: string) => {
     if (!payMethod) return toast.error("Pick how the customer paid");
+    if (needsRef && !payRef.trim()) return toast.error(`Enter the ${paymentLabel(payMethod)} transaction ID`);
     if (!confirm(`Mark this order as complete, paid by ${paymentLabel(payMethod)}?`)) return;
-    const { error } = await supabase.rpc("admin_complete_manual_order", { _order_id: id, _method: payMethod });
+    const { error } = await supabase.rpc("admin_complete_manual_order", { _order_id: id, _method: payMethod, _reference: payRef.trim() || undefined });
     if (error) return toast.error(error.message);
     toast.success("Order marked complete");
-    setCompleting(null); setPayMethod("");
+    setCompleting(null); setPayMethod(""); setPayRef("");
     setReload((n) => n + 1);
   };
 
@@ -221,9 +225,11 @@ export function OrderStatusAdminCard() {
                             <option value="">Paid by…</option>
                             <option value="square">Square</option>
                             <option value="stripe">Stripe</option>
+                            <option value="wise">Wise</option>
                             <option value="crypto">Crypto</option>
                             <option value="cash">Cash</option>
                           </select>
+                          {needsRef && <input value={payRef} onChange={(e) => setPayRef(e.target.value)} placeholder="Transaction ID" aria-label="Transaction ID" className="h-7 w-36 rounded-md border border-border bg-background px-1.5 text-xs text-foreground" />}
                           <button type="button" onClick={() => completeOrder(r.id)} aria-label="Confirm complete" className="h-7 px-2 rounded-md bg-success/15 border border-success/40 text-success"><Check className="size-3.5" /></button>
                           <button type="button" onClick={() => { setCompleting(null); setPayMethod(""); }} aria-label="Cancel" className="h-7 px-2 rounded-md border border-border text-muted-foreground"><X className="size-3.5" /></button>
                         </div>
