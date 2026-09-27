@@ -20,6 +20,11 @@ import {
 } from "@/lib/nowpayments.functions";
 import { StripeOrderPanel, verifyStripePaymentForOrder } from "@/components/app/StripeOrderPanel";
 import { confirmStripePayment } from "@/lib/stripe-payments.functions";
+import {
+  createStripeInvoiceForOrder,
+  refreshStripeInvoiceStatus,
+} from "@/lib/stripe-invoices.functions";
+import { getStripeEnvironment } from "@/lib/stripe";
 import { BankTransferPanel } from "@/components/app/BankTransferPanel";
 import { getMyBankTransferAccess, getBankDetailsForOrder } from "@/lib/bank-transfer.functions";
 
@@ -259,6 +264,7 @@ export function PayOrderDialog({
                 <SquareInvoicePanel orderId={orderId} amountCents={amountCents} onChange={handleChange} />
               </TabsContent>
               <TabsContent value="stripe" className="mt-3">
+                <StripeInvoicePanel orderId={orderId} amountCents={amountCents} onChange={handleChange} />
                 <StripeOrderPanel
                   orderId={orderId}
                   amountCents={amountCents}
@@ -388,6 +394,128 @@ function SquareInvoicePanel({
         <Button type="button" onClick={generate} disabled={busy} className="w-full h-auto px-4 py-2.5 rounded-lg font-medium">
           <CreditCard className="size-4" />
           {busy ? "Creating invoice…" : `Pay ${format(amountCents)} via Square`}
+        </Button>
+      )}
+      {err && <div className="text-xs text-destructive">{err}</div>}
+    </div>
+  );
+}
+
+function StripeInvoicePanel({
+  orderId,
+  amountCents,
+  onChange,
+}: {
+  orderId: string;
+  amountCents: number;
+  onChange?: () => void | Promise<void>;
+}) {
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const [url, setUrl] = useState<string | null>(null);
+  const [status, setStatus] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const { format = fallbackFormat } = useCurrency();
+  const createInvoice = useServerFn(createStripeInvoiceForOrder);
+  const refreshInvoice = useServerFn(refreshStripeInvoiceStatus);
+  const confirmStripeFn = useServerFn(confirmStripePayment);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("order_invoices")
+        .select("stripe_invoice_id,public_url,status")
+        .eq("order_id", orderId)
+        .maybeSingle();
+      if (cancelled) return;
+      if (data?.stripe_invoice_id && data?.public_url) setUrl(data.public_url);
+      if (data?.stripe_invoice_id && data?.status) setStatus(data.status);
+      setLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [orderId]);
+
+  const generate = async () => {
+    setBusy(true);
+    setErr(null);
+    try {
+      const res: any = await createInvoice({ data: { orderId, environment: getStripeEnvironment() } });
+      if (res?.error) throw new Error(res.error);
+      if (res?.public_url) {
+        setUrl(res.public_url);
+        setStatus(res.status ?? "open");
+        try {
+          window.open(res.public_url, "_blank", "noopener,noreferrer");
+        } catch {}
+        await onChange?.();
+      } else {
+        setErr("Invoice created but no link was returned. Please refresh.");
+      }
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Failed to create invoice");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const refresh = async () => {
+    setBusy(true);
+    setErr(null);
+    try {
+      const stripeRes: any = await verifyStripePaymentForOrder(confirmStripeFn, orderId);
+      if (stripeRes && !("error" in stripeRes)) {
+        setStatus("PAID");
+        await onChange?.();
+        return;
+      }
+      const res: any = await refreshInvoice({ data: { orderId, environment: getStripeEnvironment() } });
+      if (res?.error) {
+        setErr(res.error);
+      } else {
+        if (res?.status) setStatus(res.status);
+        if (res?.public_url) setUrl(res.public_url);
+      }
+      await onChange?.();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Failed to refresh status");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (loading) {
+    return <div className="text-xs text-muted-foreground">Loading…</div>;
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="text-xs text-muted-foreground leading-relaxed">
+        Pay securely via a hosted Stripe invoice. Card, Apple Pay, and Google Pay are supported on
+        the invoice page. Total {format(amountCents)}.
+      </div>
+      {url ? (
+        <div className="space-y-2">
+          <Button asChild className="w-full h-auto px-4 py-2.5 rounded-lg font-medium">
+            <a href={url} target="_blank" rel="noopener noreferrer">
+              <CreditCard className="size-4" />
+              Open Stripe invoice
+            </a>
+          </Button>
+          {status && <div className="text-[11px] text-muted-foreground text-center">Status: {status}</div>}
+          <Button type="button" variant="link" onClick={refresh} disabled={busy} className="w-full h-auto text-xs">
+            {busy ? "Checking…" : "I've paid — refresh status"}
+          </Button>
+          <Button type="button" variant="link" onClick={generate} disabled={busy} className="w-full h-auto text-[11px] text-muted-foreground">
+            {busy ? "Generating…" : "Generate a fresh link"}
+          </Button>
+        </div>
+      ) : (
+        <Button type="button" onClick={generate} disabled={busy} className="w-full h-auto px-4 py-2.5 rounded-lg font-medium">
+          <CreditCard className="size-4" />
+          {busy ? "Creating invoice…" : `Pay ${format(amountCents)} via Stripe`}
         </Button>
       )}
       {err && <div className="text-xs text-destructive">{err}</div>}

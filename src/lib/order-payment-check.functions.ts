@@ -152,6 +152,35 @@ export const checkOrderPaymentAcrossProviders = createServerFn({ method: "POST" 
       const stripe = createStripeClient((process.env.STRIPE_ENVIRONMENT as StripeEnv) ?? "sandbox");
       checked.push("Stripe");
 
+      // Stripe invoice (raised like a Square invoice) — check its status before
+      // the checkout-session lookups, since an invoice payment never produces a
+      // session.
+      const { data: stripeInv } = await supabaseAdmin
+        .from("order_invoices")
+        .select("stripe_invoice_id,status,public_url,invoice_number")
+        .eq("order_id", orderId)
+        .maybeSingle();
+      if (stripeInv?.stripe_invoice_id) {
+        const invoice = await stripe.invoices.retrieve(String(stripeInv.stripe_invoice_id));
+        if (invoice) {
+          await supabaseAdmin
+            .from("order_invoices")
+            .update({
+              status: invoice.status ?? stripeInv.status,
+              public_url: invoice.hosted_invoice_url ?? stripeInv.public_url,
+              invoice_number: invoice.number ?? stripeInv.invoice_number,
+              last_synced_at: new Date().toISOString(),
+            })
+            .eq("order_id", orderId);
+          if (invoice.status === "paid") {
+            const ref = invoice.number ?? String(stripeInv.stripe_invoice_id);
+            await markPaid(orderId, ref, userId);
+            await postNotice({ orderId, provider: "Stripe", reference: ref, amountCents: totalCents, actorId: userId, receiptUrl: invoice.hosted_invoice_url ?? null });
+            return { paid: true, status: "paid", provider: "Stripe", reference: ref, detail: "Payment confirmed via Stripe invoice.", checked };
+          }
+        }
+      }
+
       let stripeRef: string | null = null;
       let cardBrand: string | null = null;
       let last4: string | null = null;

@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { isSettledPaymentStatus } from "@/lib/payment-status";
+import { voidStripeInvoiceForOrder } from "@/lib/stripe-invoices.functions";
 
 const baseUrl = () =>
   (process.env.SQUARE_ENVIRONMENT ?? "production").toLowerCase() === "sandbox"
@@ -368,6 +369,14 @@ export const cancelOrderAndSquareInvoice = createServerFn({ method: "POST" })
       if (error) throw new Error(error.message);
     }
 
+    let stripeInvoiceStatus: string | null = null;
+    try {
+      const stripeInv = await voidStripeInvoiceForOrder(data.orderId);
+      stripeInvoiceStatus = String((stripeInv as any)?.status ?? null);
+    } catch {
+      stripeInvoiceStatus = null;
+    }
+
     try {
       const invoice = await cancelSquareInvoiceForOrder(data.orderId);
       return {
@@ -375,13 +384,14 @@ export const cancelOrderAndSquareInvoice = createServerFn({ method: "POST" })
         invoiceCancelled: String(invoice?.status ?? "").toUpperCase() === "CANCELED",
         invoiceStatus: invoice?.status ?? null,
         invoiceError: null,
+        stripeInvoiceStatus,
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       if (/No Square invoice|PAID/i.test(message)) {
-        return { orderCancelled: true, invoiceCancelled: false, invoiceStatus: null, invoiceError: message };
+        return { orderCancelled: true, invoiceCancelled: false, invoiceStatus: null, invoiceError: message, stripeInvoiceStatus };
       }
       console.error("[square-invoices] failed to cancel invoice", { orderId: data.orderId, message });
-      return { orderCancelled: true, invoiceCancelled: false, invoiceStatus: null, invoiceError: message };
+      return { orderCancelled: true, invoiceCancelled: false, invoiceStatus: null, invoiceError: message, stripeInvoiceStatus };
     }
   });

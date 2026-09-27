@@ -3880,9 +3880,10 @@ export type Database = {
           order_id: string
           paid_at: string | null
           public_url: string | null
-          square_invoice_id: string
+          square_invoice_id: string | null
           square_order_id: string | null
           status: string
+          stripe_invoice_id: string | null
           updated_at: string
         }
         Insert: {
@@ -3896,9 +3897,10 @@ export type Database = {
           order_id: string
           paid_at?: string | null
           public_url?: string | null
-          square_invoice_id: string
+          square_invoice_id?: string | null
           square_order_id?: string | null
           status?: string
+          stripe_invoice_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -3912,9 +3914,10 @@ export type Database = {
           order_id?: string
           paid_at?: string | null
           public_url?: string | null
-          square_invoice_id?: string
+          square_invoice_id?: string | null
           square_order_id?: string | null
           status?: string
+          stripe_invoice_id?: string | null
           updated_at?: string
         }
         Relationships: []
