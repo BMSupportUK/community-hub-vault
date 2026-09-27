@@ -10,7 +10,6 @@ import { unlockWithStaffPin, requestStaffPinReset } from "@/lib/staff-pin.functi
 import { StaffPinAdminCard } from "@/components/app/StaffPinAdminCard";
 import { CardPaymentsAdminCard } from "@/components/app/CardPaymentsAdminCard";
 import { OrderStatusAdminCard } from "@/components/app/OrderStatusAdminCard";
-import { ProfitCostsPanel } from "@/components/app/ProfitCostsPanel";
 import { setAppTheme, useDefaultAppTheme } from "@/hooks/use-app-theme";
 import { applyNavOrder, setLandingNavOrder, useLandingNavOrder } from "@/hooks/use-landing-nav-order";
 import { ArrowDown, ArrowUp } from "lucide-react";
@@ -25,8 +24,9 @@ import {
 } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin")({
-  validateSearch: (search: Record<string, unknown>): { next?: string } => ({
+  validateSearch: (search: Record<string, unknown>): { next?: string; tab?: string } => ({
     next: typeof search.next === "string" ? (search.next as string) : undefined,
+    tab: typeof search.tab === "string" ? (search.tab as string) : undefined,
   }),
   component: AdminDashboard,
 });
@@ -441,7 +441,10 @@ function DashboardBody() {
   const { hasRole } = useAuth();
   const isAdminOnly = hasRole("admin");
   const canSeePins = isAdminOnly || hasRole("management");
-  const [tab, setTab] = useState<"tools" | "order-status" | "profit-costs" | "square" | "stripe" | "bank-transfer" | "staff-pins" | "backup-codes" | "theme" | "header-links">("tools");
+  const { tab: searchTab } = Route.useSearch();
+  const [tab, setTab] = useState<"tools" | "order-status" | "square" | "stripe" | "bank-transfer" | "staff-pins" | "backup-codes" | "theme" | "header-links">(
+    searchTab === "order-status" ? "order-status" : "tools",
+  );
 
 
 
@@ -491,7 +494,7 @@ function DashboardBody() {
   const tabs = ([
     ["tools", "Owner tools", false],
     ["order-status", "Order status", true],
-    ["profit-costs", "Profit & costs", true],
+    ["profit-costs", "Profit & costs", "profit"],
     ["square", "Square", true],
     ["stripe", "Stripe", true],
     ["bank-transfer", "Bank transfer", "bank"],
@@ -521,6 +524,14 @@ function DashboardBody() {
             >
               {label}
             </Link>
+          ) : key === "profit-costs" ? (
+            <Link
+              key={key}
+              to="/admin-profit-costs"
+              className="px-4 h-9 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:text-foreground inline-flex items-center"
+            >
+              {label}
+            </Link>
           ) : (
             <button
               key={key}
@@ -540,8 +551,6 @@ function DashboardBody() {
 
       {tab === "order-status" && canSeePins ? (
         <OrderStatusAdminCard />
-      ) : tab === "profit-costs" && canSeePins ? (
-        <ProfitCostsPanel />
       ) : tab === "square" && canSeePins ? (
         <CardPaymentsAdminCard provider="square" />
       ) : tab === "stripe" && canSeePins ? (
