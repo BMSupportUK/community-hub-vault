@@ -55,10 +55,9 @@ export function OrderStatusAdminCard() {
   const [payRef, setPayRef] = useState("");
   const needsRef = ["square", "stripe", "wise"].includes(payMethod);
   const completeOrder = async (id: string) => {
-    if (!payMethod) return toast.error("Pick how the customer paid");
     if (needsRef && !payRef.trim()) return toast.error(`Enter the ${paymentLabel(payMethod)} transaction ID`);
-    if (!confirm(`Mark this order as complete, paid by ${paymentLabel(payMethod)}?`)) return;
-    const { error } = await supabase.rpc("admin_complete_manual_order", { _order_id: id, _method: payMethod, _reference: payRef.trim() || undefined });
+    if (!confirm(payMethod ? `Mark this order as complete, paid by ${paymentLabel(payMethod)}?` : "Mark this order as complete using the payment method saved with it?")) return;
+    const { error } = await supabase.rpc("admin_complete_manual_order", { _order_id: id, _method: payMethod || undefined, _reference: payRef.trim() || undefined });
     if (error) return toast.error(error.message);
     toast.success("Order marked complete");
     setCompleting(null); setPayMethod(""); setPayRef("");
@@ -167,7 +166,7 @@ export function OrderStatusAdminCard() {
                         completing === r.id ? (
                         <div className="flex items-center gap-1.5">
                           <select value={payMethod} onChange={(e) => setPayMethod(e.target.value)} aria-label="Payment method" className="h-7 rounded-md border border-border bg-background px-1.5 text-xs text-foreground">
-                            <option value="">Paid by…</option>
+                            <option value="">Use saved method</option>
                             <option value="square">Square</option>
                             <option value="stripe">Stripe</option>
                             <option value="wise">Wise</option>

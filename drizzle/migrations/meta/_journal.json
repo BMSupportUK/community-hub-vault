@@ -218,6 +218,13 @@
       "when": 1790537612875,
       "tag": "0030_manual_order_ref_number_only",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1790537693092,
+      "tag": "0031_manual_order_pending_payment",
+      "breakpoints": true
     }
   ]
 }

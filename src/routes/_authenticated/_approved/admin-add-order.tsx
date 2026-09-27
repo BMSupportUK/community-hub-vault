@@ -51,10 +51,8 @@ function AddOrderPage() {
     if (!payMethod) return toast.error("Pick the payment method");
     if (needsRef && !payRef.trim()) return toast.error("Enter the transaction ID");
     setBusy(true);
-    const { data: id, error } = await supabase.rpc("admin_create_manual_order", { _customer_name: custName.trim(), _items: items });
+    const { data: id, error } = await supabase.rpc("admin_create_manual_order", { _customer_name: custName.trim(), _items: items, _method: payMethod, _reference: payRef.trim() || undefined });
     if (error) { setBusy(false); return toast.error(error.message); }
-    const { error: payErr } = await supabase.rpc("admin_complete_manual_order", { _order_id: id as string, _method: payMethod, _reference: payRef.trim() || undefined });
-    if (payErr) toast.error(`Order saved but payment not recorded: ${payErr.message}`);
     const { data: o } = await supabase.from("orders").select("order_ref").eq("id", id as string).maybeSingle();
     setBusy(false);
     toast.success(`Order ${o?.order_ref ?? ""} added`);
