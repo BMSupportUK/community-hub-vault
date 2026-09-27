@@ -22,15 +22,59 @@ export type WiseIncoming = {
 export class WiseAuthError extends Error {}
 export class WiseApiError extends Error {}
 
+function normalizePem(pem: string): string {
+  // Secrets are often pasted with literal \n sequences — convert to real newlines.
+  return pem.replace(/\\n/g, "\n").trim();
+}
+
+async function signScaChallenge(oneTimeToken: string): Promise<string | null> {
+  const pem = (process.env.WISE_SCA_PRIVATE_KEY ?? "").trim();
+  if (!pem) return null;
+  const normalized = normalizePem(pem);
+  const base64 = normalized
+    .replace(/-----BEGIN (?:RSA )?PRIVATE KEY-----/g, "")
+    .replace(/-----END (?:RSA )?PRIVATE KEY-----/g, "")
+    .replace(/\s+/g, "");
+  const der = Buffer.from(base64, "base64");
+  const isPkcs1 = normalized.includes("BEGIN RSA PRIVATE KEY");
+  const key = await crypto.subtle.importKey(
+    isPkcs1 ? "pkcs8" in {} ? "pkcs8" : "pkcs8" : "pkcs8",
+    der,
+    { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+    false,
+    ["sign"],
+  ).catch(() => null);
+  if (!key) return null;
+  const sig = await crypto.subtle.sign(
+    "RSASSA-PKCS1-v1_5",
+    key,
+    new TextEncoder().encode(oneTimeToken),
+  );
+  return Buffer.from(sig).toString("base64");
+}
+
 async function wiseApi(path: string): Promise<any> {
   const token = (process.env.WISE_API_TOKEN ?? "").trim();
   if (!token) throw new Error("WISE_API_TOKEN not configured");
-  const res = await fetch(`${WISE_BASE}${path}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: "application/json",
-    },
-  });
+  const doFetch = (extraHeaders: Record<string, string> = {}) =>
+    fetch(`${WISE_BASE}${path}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+        ...extraHeaders,
+      },
+    });
+  let res = await doFetch();
+  // Wise protects the statement endpoint with SCA: a 403 carrying an
+  // x-2fa-approval one-time token. Sign it with the private key whose public
+  // half is uploaded in Wise (Settings → API tokens → public keys) and retry.
+  if (res.status === 403 && res.headers.get("x-2fa-approval")) {
+    const oneTimeToken = res.headers.get("x-2fa-approval")!;
+    const signature = await signScaChallenge(oneTimeToken);
+    if (signature) {
+      res = await doFetch({ "x-2fa-approval": oneTimeToken, "X-Signature": signature });
+    }
+  }
   const text = await res.text();
   let body: any = {};
   try {
