@@ -65,7 +65,11 @@ async function getProfiles(): Promise<Profile[]> {
       const data = await wiseApi(path);
       if (Array.isArray(data) && data.length) return data as Profile[];
     } catch (e) {
-      if (e instanceof WiseAuthError) throw e;
+      if (e instanceof WiseAuthError) {
+        throw new WiseAuthError(
+          `Wise rejected the token when reading your account profiles (${(e as Error).message.replace(/^Wise rejected the token \((\d+)\).*/, "$1")}). The token needs the Profiles permission: in Wise go to Settings → API tokens, delete this token, create a new one and enable every listed API (Profiles, Balances, Transfers, Statements).`,
+        );
+      }
     }
   }
   return [];
