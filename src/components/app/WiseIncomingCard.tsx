@@ -24,7 +24,10 @@ const MONTHS = ["January","February","March","April","May","June","July","August
 
 const REFRESH_MS = 60_000;
 
-export function WiseIncomingCard({ hidePending = false }: { hidePending?: boolean } = {}) {
+export function WiseIncomingCard({
+  mode = "feed",
+  hidePending = false,
+}: { mode?: "feed" | "settings"; hidePending?: boolean } = {}) {
   const loadFeed = useServerFn(getWiseIncomingTransfers);
   const confirm = useServerFn(confirmBankTransferReceived);
 
