@@ -364,7 +364,7 @@ function KnowledgeBasePage() {
 
   const reorderArticles = async (fromId: string, toId: string) => {
     if (fromId === toId || !activeCat) return;
-    const inCat = articles.filter((a) => a.category_id === activeCat);
+    const inCat = articles.filter((a) => a.category_id === activeCat).sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || a.title.localeCompare(b.title));
     const others = articles.filter((a) => a.category_id !== activeCat);
     const fi = inCat.findIndex((a) => a.id === fromId);
     const ti = inCat.findIndex((a) => a.id === toId);
@@ -381,7 +381,7 @@ function KnowledgeBasePage() {
   // Arrow buttons: move a guide one place earlier/later; saved for everyone.
   const moveArticle = (id: string, dir: -1 | 1) => {
     if (!activeCat) return;
-    const inCat = articles.filter((a) => a.category_id === activeCat);
+    const inCat = articles.filter((a) => a.category_id === activeCat).sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || a.title.localeCompare(b.title));
     const i = inCat.findIndex((a) => a.id === id);
     const target = inCat[i + dir];
     if (i < 0 || !target) return;
