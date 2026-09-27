@@ -147,7 +147,7 @@ export const createStripeInvoiceForOrder = createServerFn({ method: "POST" })
       const invoice = await stripe.invoices.create({
         customer: customerId,
         collection_method: "send_invoice",
-        days_until_due: 14,
+        days_until_due: 1,
         currency: "gbp",
         payment_settings: { payment_method_types: ["card"] },
         metadata: {
