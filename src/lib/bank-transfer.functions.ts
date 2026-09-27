@@ -102,7 +102,18 @@ export const saveBankTransferDetails = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    await assertOwner(context.supabase, context.userId);
+    const { data: adminRows } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .eq("role", "admin");
+    if (!adminRows?.length) throw new Error("Only admins can change bank details");
+    // Require a fresh 2FA verification (within the last 5 minutes).
+    const claims = (context as any).claims ?? {};
+    const amr: Array<{ method?: string; timestamp?: number }> = Array.isArray(claims.amr) ? claims.amr : [];
+    const totp = amr.find((m) => m?.method === "totp");
+    const fresh = totp?.timestamp && Date.now() / 1000 - totp.timestamp < 300;
+    if (claims.aal !== "aal2" || !fresh) throw new Error("Enter your 2FA code to save bank details");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin
       .from("bank_transfer_details")
