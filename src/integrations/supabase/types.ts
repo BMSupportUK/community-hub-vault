@@ -6093,6 +6093,7 @@ export type Database = {
       wise_email_payments: {
         Row: {
           amount_cents: number
+          auto_matched: boolean
           created_at: string
           currency: string
           excerpt: string
@@ -6105,6 +6106,7 @@ export type Database = {
         }
         Insert: {
           amount_cents: number
+          auto_matched?: boolean
           created_at?: string
           currency?: string
           excerpt?: string
@@ -6117,6 +6119,7 @@ export type Database = {
         }
         Update: {
           amount_cents?: number
+          auto_matched?: boolean
           created_at?: string
           currency?: string
           excerpt?: string

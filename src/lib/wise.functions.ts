@@ -17,7 +17,7 @@ export type WiseMatch = {
   kind: "reference" | "amount";
 };
 
-export type WiseRow = WiseIncoming & { match: WiseMatch | null };
+export type WiseRow = WiseIncoming & { match: WiseMatch | null; autoMatched?: boolean };
 
 export type WiseFeed = {
   configured: boolean;
@@ -179,6 +179,15 @@ export const getWiseIncomingTransfers = createServerFn({ method: "POST" })
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
+    // Auto-match anything obvious before building the feed, so the list and
+    // the awaiting sidebar reflect payments the system has already settled.
+    try {
+      const { runWiseAutoMatch } = await import("@/lib/wise-auto-match.server");
+      await runWiseAutoMatch(supabaseAdmin);
+    } catch (e) {
+      console.error("Wise auto-match on feed load failed:", e);
+    }
+
     const { data: confirmation } = await supabaseAdmin
       .from("email_forwarding_confirmations")
       .select("received_at,confirmation_code,confirmation_url")
@@ -304,6 +313,7 @@ export const getWiseIncomingTransfers = createServerFn({ method: "POST" })
         reference: e.reference ?? "",
         amountCents: Number(e.amount_cents),
         currency: e.currency ?? "GBP",
+        autoMatched: Boolean(e.auto_matched),
         storedOrderId: e.matched_order_id ? String(e.matched_order_id) : null,
       }));
 
