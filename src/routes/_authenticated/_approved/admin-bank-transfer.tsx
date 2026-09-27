@@ -3,6 +3,7 @@ import { ArrowLeft, Landmark } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { isAdminUnlocked } from "@/lib/admin-unlock";
 import { BankTransferAdminCard } from "@/components/app/BankTransferAdminCard";
+import { WiseIncomingCard } from "@/components/app/WiseIncomingCard";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-bank-transfer")({
   component: AdminBankTransferPage,
@@ -42,6 +43,7 @@ function AdminBankTransferPage() {
           </div>
         </div>
 
+        <WiseIncomingCard />
         <BankTransferAdminCard />
       </div>
     </main>
