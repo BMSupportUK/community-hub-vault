@@ -70,3 +70,6 @@ Format: heading `**National League**` then rows `National League 1 - Aldershot v
 
 ## MLB Extra Innings dash + bracketed date (permanent)
 Format: heading `**US | MLB Extra Innings**` then rows `MLB 1 - Mets vs. Nationals [26th Sep - 5:35pm BST]`. Channel before the dash, fixture after (`vs.` → `v`), and the bracket carries BOTH the date and the UK time (`26th Sep - 5:35pm BST`) — the bracketed date wins over any post-level date, so after-midnight games dated the next day stay on that day. A written BST/GMT/UK label is kept so the guide shows the labelled 24h clock. Tested: 13 rows → 13 events, zero check issues. Older `MLB 01 : Cubs x Red Sox start:...` rows still import as before.
+
+## MLB Extra Innings "event N name:" style (permanent)
+Row: `MLB event 1 name: Mets x Nationals start:2026-09-27 18:05:00 stop:...` → channel `MLB 1`, event `Mets v Nationals`, UK time from `start:` (no BST shift). Tested on the real queued post: 15 events, 0 issues.
