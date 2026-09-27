@@ -499,15 +499,15 @@ function DashboardBody() {
     ["profit-costs", "Profit & costs", "profit"],
     ["square", "Square", true],
     ["stripe", "Stripe", true],
-    ["bank-transfer", "Bank transfer", "bank"],
     ["bank-transfer-orders", "Bank transfer orders", true],
     ["cash", "Cash", true],
+    ["bank-transfer", "Bank Settings", "bank"],
     ["staff-pins", "Staff PINs", true],
     ["backup-codes", "Backup codes", true],
     ["theme", "Theme", false],
     ["header-links", "Header links", false],
   ] as const).filter(([, , gate]) =>
-    gate === "bank" ? isAdminOnly || hasRole("management") : !gate || canSeePins,
+    gate === "bank" ? isAdminOnly : !gate || canSeePins,
   );
 
   const letters = Array.from(new Set(tools.map((t) => t.label[0].toUpperCase())));
@@ -561,7 +561,7 @@ function DashboardBody() {
           </div>
           <AwaitingPaymentsSidebar />
         </div>
-      ) : tab === "bank-transfer" && (isAdminOnly || hasRole("management")) ? (
+      ) : tab === "bank-transfer" && isAdminOnly ? (
         <div className="max-w-2xl grid sm:grid-cols-2 gap-3">
           {([
             ["details", "Bank details", "Set the bank details customers see when paying by bank transfer."],

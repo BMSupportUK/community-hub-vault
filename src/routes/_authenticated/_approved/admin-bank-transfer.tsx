@@ -19,7 +19,7 @@ export const Route = createFileRoute("/_authenticated/_approved/admin-bank-trans
 function AdminBankTransferPage() {
   const { hasRole, user } = useAuth();
   const { tab } = Route.useSearch();
-  const isOwner = hasRole("admin") || hasRole("management");
+  const isOwner = hasRole("admin");
 
   if (!isOwner) return <Navigate to="/home" />;
   if (!isAdminUnlocked(user?.id)) {
