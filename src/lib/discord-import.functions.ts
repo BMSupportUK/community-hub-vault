@@ -477,6 +477,19 @@ export const splitQueueItem = createServerFn({ method: "POST" })
  * Manual split: the admin picks the exact line where the second half starts
  * and the post becomes two pending queue items, kept in original order.
  */
+// A split point next to a provider heading ("**US | MLB Extra Inning**")
+// always lands on that heading, so the heading stays with its own rows and a
+// half is never left holding only a heading.
+export function snapSplitToHeading(lines: string[], line: number): number {
+  const isHead = (l: string) => /^\s*(?:\*{2,}|__|#+\s)/.test(l) && !/\d{1,2}[:.]\d{2}/.test(l);
+  const heads: number[] = [];
+  lines.forEach((l, i) => { if (i > 0 && isHead(l) && lines.slice(0, i).some((x) => x.trim() && !isHead(x))) heads.push(i); });
+  if (!heads.length) return line;
+  // Prefer the next heading at or after the chosen line, else the nearest one.
+  const next = heads.find((h) => h >= line);
+  return next ?? heads[heads.length - 1];
+}
+
 export const splitQueueItemAtLine = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
@@ -498,8 +511,9 @@ export const splitQueueItemAtLine = createServerFn({ method: "POST" })
     const raw = String((item.parsed_event as any)?.raw ?? item.raw_text ?? "");
     const lines = raw.split("\n");
     if (data.line >= lines.length) throw new Error("Split point is past the end of the post");
-    const first = lines.slice(0, data.line).join("\n").trim();
-    const second = lines.slice(data.line).join("\n").trim();
+    const splitAt = snapSplitToHeading(lines, data.line);
+    const first = lines.slice(0, splitAt).join("\n").trim();
+    const second = lines.slice(splitAt).join("\n").trim();
     if (!first || !second) throw new Error("Both halves need some text");
 
     const mkRow = (text: string, part: number) => ({
