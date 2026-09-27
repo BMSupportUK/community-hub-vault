@@ -1,7 +1,7 @@
 # Roadmap
 
 ## Current
-- [x] Show Gmail forwarding confirmation codes and links on the Bank Transfer page
+- [ ] Capture Gmail forwarding confirmations from every CloudMailin multipart format and show them on the Bank Transfer page
 - [x] System Status completed incidents: organise cards into year and month tabs
 - [x] Make System Status use the full available page width and move notification controls into a right sidebar
 - [x] Rugby Pass numbered rows: retain explanatory text after the time without swallowing the row into the previous event
