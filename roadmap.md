@@ -1,6 +1,7 @@
 # Roadmap
 
 ## Current
+- [x] Split Shop orders into counted workflow tabs: New order, Awaiting payment, Account setup, Completed, Cancelled
 - [ ] Capture Gmail forwarding confirmations from every CloudMailin multipart format and show them on the Bank Transfer page
 - [x] System Status completed incidents: organise cards into year and month tabs
 - [x] Make System Status use the full available page width and move notification controls into a right sidebar
