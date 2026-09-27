@@ -3,8 +3,6 @@ import { parseClockTime, ukListingInstant } from "./import-time";
 import {
   formatSportsListingBlock,
   isLikelyChannelLabel,
-  listingHeadingMatchesGuide,
-  mismatchedSportsListingHeading,
   parseSportsListingBlock,
   type SportsListingEvent,
 } from "./sports-listing-format";
