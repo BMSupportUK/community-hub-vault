@@ -53,6 +53,6 @@ export function parseWiseEmail(subject: string, body: string): ParsedWiseEmail |
   if (s1) senderName = s1[1].trim();
   else if (s2) senderName = s2[1].trim();
 
-  const ref = text.match(/reference[:\s]+["“]?([^\n"”]{1,80})/i);
+  const ref = text.match(/reference[:\s]+["“]?([^\n"”.]{1,80})/i);
   return { amountCents, currency, senderName, reference: ref ? ref[1].trim() : "" };
 }
