@@ -1334,7 +1334,7 @@ export function formatSportsListingBlock(input: ListingInput): string | null {
   // into its sections so each event carries its own section's heading —
   // never the first heading of the whole post. Do not duplicate a heading
   // when the event name already begins with it.
-  const sections = splitSportsListingSections(input.raw);
+  const sections = splitSportsListingSections(input.raw ?? "");
   const labelled = sections.flatMap((section) => {
     const events = processSection(section.text);
     if (!section.heading) return events;
