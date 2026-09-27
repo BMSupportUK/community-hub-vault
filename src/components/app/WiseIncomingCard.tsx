@@ -158,7 +158,7 @@ export function WiseIncomingCard() {
       ) : null}
 
       {transactions.length === 0 && !feed?.error ? (
-        <p className="text-xs text-muted-foreground">No incoming payments in the last 7 days.</p>
+        <p className="text-xs text-muted-foreground">No incoming payments in the last 14 days.</p>
       ) : null}
 
       <ul className="space-y-2">
