@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  Plus, Search, X, Pencil, Trash2, GripVertical, BookOpen, ChevronRight, ArrowLeft, ArrowRight,
+  Plus, Search, X, Pencil, Trash2, GripVertical, BookOpen, ChevronRight, ArrowRight,
   ArrowLeft, Save, Loader2, FolderPlus, Eye, EyeOff, Star,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
