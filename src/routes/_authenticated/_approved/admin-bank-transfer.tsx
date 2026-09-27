@@ -53,7 +53,7 @@ function AdminBankTransferPage() {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-          <BankTransferAdminCard />
+          <BankTransferAdminCard key={tab} initialView={tab} />
           <AwaitingPaymentsSidebar />
         </div>
       </div>
