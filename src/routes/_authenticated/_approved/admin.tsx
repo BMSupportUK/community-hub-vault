@@ -442,7 +442,10 @@ function DashboardBody() {
   const { hasRole } = useAuth();
   const isAdminOnly = hasRole("admin");
   const canSeePins = isAdminOnly || hasRole("management");
-  const [tab, setTab] = useState<"tools" | "order-status" | "profit-costs" | "square" | "stripe" | "bank-transfer" | "staff-pins" | "backup-codes" | "theme" | "header-links">("tools");
+  const { tab: searchTab } = Route.useSearch();
+  const [tab, setTab] = useState<"tools" | "order-status" | "square" | "stripe" | "bank-transfer" | "staff-pins" | "backup-codes" | "theme" | "header-links">(
+    searchTab === "order-status" ? "order-status" : "tools",
+  );
 
 
 
