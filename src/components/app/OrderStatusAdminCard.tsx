@@ -28,8 +28,17 @@ function statusTone(s: string) {
   return "bg-destructive/15 text-destructive border-destructive/30";
 }
 
+function paymentLabel(provider: string | null | undefined) {
+  const v = (provider ?? "").toLowerCase();
+  if (v === "stripe") return "Stripe";
+  if (v === "square") return "Square";
+  if (v === "bank_transfer" || v === "bank") return "Bank transfer";
+  return provider ? provider : "—";
+}
+
 export function OrderStatusAdminCard() {
   const [rows, setRows] = useState<Row[] | null>(null);
+  const [methods, setMethods] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [year, setYear] = useState<number | null>(null);
   const [month, setMonth] = useState<number | null>(null);
@@ -44,7 +53,20 @@ export function OrderStatusAdminCard() {
         .limit(5000);
       if (cancelled) return;
       if (error) return setError(error.message);
-      setRows((data ?? []) as Row[]);
+      const orders = (data ?? []) as Row[];
+      setRows(orders);
+      if (orders.length) {
+        const { data: pays } = await supabase
+          .from("order_payments")
+          .select("order_id, provider")
+          .in("order_id", orders.map((o) => o.id));
+        if (cancelled) return;
+        const map: Record<string, string> = {};
+        for (const p of (pays ?? []) as { order_id: string; provider: string | null }[]) {
+          if (p.provider && !map[p.order_id]) map[p.order_id] = p.provider;
+        }
+        setMethods(map);
+      }
     })();
     return () => { cancelled = true; };
   }, []);
@@ -101,6 +123,7 @@ export function OrderStatusAdminCard() {
                     <th className="px-3 py-2 font-medium">Status</th>
                     <th className="px-3 py-2 font-medium">Paid</th>
                     <th className="px-3 py-2 font-medium">Completed</th>
+                    <th className="px-3 py-2 font-medium">Payment method</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -115,6 +138,7 @@ export function OrderStatusAdminCard() {
                       <td className="px-3 py-2"><span className={`inline-flex px-2 py-0.5 rounded-full border text-xs capitalize ${statusTone(r.status)}`}>{r.status.toLowerCase()}</span></td>
                       <td className="px-3 py-2 whitespace-nowrap text-xs text-muted-foreground">{r.paid_at ? new Date(r.paid_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" }) : "—"}</td>
                       <td className="px-3 py-2 whitespace-nowrap text-xs text-muted-foreground">{r.completed_at ? new Date(r.completed_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" }) : "—"}</td>
+                      <td className="px-3 py-2 whitespace-nowrap text-xs">{paymentLabel(methods[r.id])}</td>
                     </tr>
                   ))}
                 </tbody>
