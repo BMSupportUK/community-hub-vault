@@ -335,17 +335,15 @@ function AuthLayout() {
             <DeferUntilIdle>
               <VpnPill />
             </DeferUntilIdle>
-            {(
-              <button
-                type="button"
-                onClick={() => setTalkHeaderExpanded(false)}
-                title="Hide header"
-                aria-label="Hide header"
-                className="shrink-0 inline-flex items-center justify-center size-8 rounded-md hover:bg-surface-2 text-muted-foreground ml-1"
-              >
-                <ChevronUp className="size-4" />
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => setTalkHeaderExpanded(false)}
+              title="Hide header"
+              aria-label="Hide header"
+              className="shrink-0 inline-flex items-center justify-center size-8 rounded-md hover:bg-surface-2 text-muted-foreground ml-1"
+            >
+              <ChevronUp className="size-4" />
+            </button>
         </header>)}
         <div
           className={
