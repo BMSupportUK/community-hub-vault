@@ -136,7 +136,13 @@ export function ProfitCostsPanel() {
           <div className="space-y-4">
             <div className="flex flex-wrap gap-2">{years.map((y) => <button key={y} type="button" className={pill(y === ay)} onClick={() => { setYear(y); setMonth(null); }}>{y}</button>)}</div>
             <div><h3 className="text-sm font-semibold mb-2">{ay} total</h3><Totals t={yT} /></div>
-            <div className="flex flex-wrap gap-2">{byMonth.map(([k, v]) => <button key={k} type="button" className={pill(k === am)} onClick={() => setMonth(k)}>{MONTHS[k]} · {money(v.revenue - v.cost)}{v.missing ? " ⚠" : ""}</button>)}</div>
+            <div className="flex flex-wrap gap-2">{byMonth.map(([k, v]) => <button key={k} type="button" className={pill(k === am)} onClick={() => setMonth(k)}>{MONTHS[k]} · {money(v.revenue - v.cost)}{v.missing ? " ⚠" : ""}</button>)}
+              {am != null && (
+                <span className="px-3 h-8 rounded-lg text-sm font-medium inline-flex items-center bg-surface-2 border border-border text-muted-foreground self-center">
+                  {yearOrders.filter((o) => new Date(o.created_at).getMonth() === am).length} orders
+                </span>
+              )}
+            </div>
             {am != null && <div><h3 className="text-sm font-semibold mb-2">{MONTHS[am]} {ay}</h3><Totals t={mT} /></div>}
           </div>
         )}
