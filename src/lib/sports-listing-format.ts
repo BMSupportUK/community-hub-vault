@@ -44,6 +44,13 @@ const CHANNEL_COLON_TITLE_TIME_RE = new RegExp(
   `^\\s*([A-Za-z][A-Za-z0-9 +&'./-]*?\\d{1,3})\\s*:\\s*(.+?)\\s+(${TIME_WITH_ZONE_SOURCE})\\s*$`,
   "i",
 );
+// Numbered feeds may append an explanatory note after the kick-off:
+// "Rugby Pass 03: The 745 Game 17:45 (Raise Awareness and Funds ...)".
+// Keep that note in the event name instead of treating the row as a channel.
+const CHANNEL_COLON_TITLE_TIME_NOTE_RE = new RegExp(
+  String.raw`^\s*([A-Za-z][A-Za-z0-9 +&'./-]*?\d{1,3})\s*:\s*(.+?)\s+(${TIME_WITH_ZONE_SOURCE})\s+(\(.+\))\s*$`,
+  "i",
+);
 // Channel, colon, then time first: "Super League Plus 01:  20:00 Leeds Rhinos vs Warrington Wolves".
 const CHANNEL_COLON_TIME_TITLE_RE = new RegExp(
   `^\\s*([A-Za-z][A-Za-z0-9 +&'./-]*?\\d{1,3})\\s*:\\s*(${TIME_WITH_ZONE_SOURCE})\\s+(.+?)\\s*$`,
@@ -646,6 +653,22 @@ function detectEvent(line: string, date: string | null): SportsListingEvent | nu
       time: normalizeTime(piped[2].replace(".", ":")),
       title: normalizeSportsEventTitle(piped[3].trim()),
       channels: [piped[1].trim().replace(/\s+/g, " ")],
+    };
+  }
+
+  const channelColonTrailingTimeWithNote = line.match(CHANNEL_COLON_TITLE_TIME_NOTE_RE);
+  if (
+    channelColonTrailingTimeWithNote?.[1] &&
+    channelColonTrailingTimeWithNote[2] &&
+    channelColonTrailingTimeWithNote[3] &&
+    channelColonTrailingTimeWithNote[4] &&
+    isLikelyChannelLabel(channelColonTrailingTimeWithNote[1])
+  ) {
+    return {
+      date,
+      time: normalizeTime(channelColonTrailingTimeWithNote[3]),
+      title: normalizeSportsEventTitle(`${channelColonTrailingTimeWithNote[2]} ${channelColonTrailingTimeWithNote[4]}`),
+      channels: [channelColonTrailingTimeWithNote[1].trim().replace(/\s+/g, " ")],
     };
   }
 
