@@ -17,6 +17,7 @@ type Row = {
   status: string;
   amount_cents: number;
   currency: string;
+  provider_payment_id: string | null;
   card_brand: string | null;
   last_4: string | null;
   receipt_url: string | null;
@@ -52,7 +53,7 @@ export function CardPaymentsAdminCard({ provider }: { provider: Provider }) {
     (async () => {
       const { data, error } = await supabase
         .from("order_payments")
-        .select("id, order_id, provider, status, amount_cents, currency, card_brand, last_4, receipt_url, created_at")
+        .select("id, order_id, provider, provider_payment_id, status, amount_cents, currency, card_brand, last_4, receipt_url, created_at")
         .in("provider", ["square", "stripe", "cash", "bank_transfer"])
         .order("created_at", { ascending: false })
         .limit(2000);
@@ -120,7 +121,7 @@ export function CardPaymentsAdminCard({ provider }: { provider: Provider }) {
                     <th className="px-3 py-2 font-medium">Amount</th>
                     <th className="px-3 py-2 font-medium">Payment</th>
                     <th className="px-3 py-2 font-medium">Order</th>
-                    <th className="px-3 py-2 font-medium">Card</th>
+                    <th className="px-3 py-2 font-medium">{provider === "bank_transfer" ? "Reference" : "Card"}</th>
                     <th className="px-3 py-2 font-medium" />
                   </tr>
                 </thead>
@@ -136,7 +137,7 @@ export function CardPaymentsAdminCard({ provider }: { provider: Provider }) {
                       <td className="px-3 py-2 whitespace-nowrap">{money(r.amount_cents, r.currency)}</td>
                       <td className="px-3 py-2"><span className={`inline-flex px-2 py-0.5 rounded-full border text-xs capitalize ${statusTone(r.status)}`}>{r.status.toLowerCase()}</span></td>
                       <td className="px-3 py-2 capitalize">{r.order?.status ?? "—"}</td>
-                      <td className="px-3 py-2 whitespace-nowrap">{r.card_brand ? `${r.card_brand}${r.last_4 ? ` •••• ${r.last_4}` : ""}` : "—"}</td>
+                      <td className="px-3 py-2 whitespace-nowrap">{provider === "bank_transfer" ? (r.provider_payment_id || "—") : r.card_brand ? `${r.card_brand}${r.last_4 ? ` •••• ${r.last_4}` : ""}` : "—"}</td>
                       <td className="px-3 py-2">{r.receipt_url && <a href={r.receipt_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline">Receipt <ExternalLink className="size-3" /></a>}</td>
                     </tr>
                   ))}
