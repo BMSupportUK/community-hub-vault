@@ -23,11 +23,14 @@ function calc(o: Order): Calc {
   return { revenue: o.total_cents, cost, missing };
 }
 
+const METHOD_LABELS: Record<string, string> = { square: "Square", stripe: "Stripe", wise: "Wise", bank_transfer: "Bank transfer", cash: "Cash", crypto: "Crypto", manual: "Manual" };
+
 export function ProfitCostsPanel() {
-  const [tab, setTab] = useState<"profit" | "costs">("profit");
+  const [tab, setTab] = useState<string>("profit");
   const [products, setProducts] = useState<Product[] | null>(null);
   const [costs, setCosts] = useState<Record<string, string>>({});
   const [orders, setOrders] = useState<Order[] | null>(null);
+  const [methodOf, setMethodOf] = useState<Record<string, string>>({});
   const [year, setYear] = useState<number | null>(null);
   const [month, setMonth] = useState<number | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
@@ -46,11 +49,16 @@ export function ProfitCostsPanel() {
     setCosts(m);
     const ids = (o.data ?? []).map((x) => x.id as string);
     const items: (Item & { order_id: string })[] = [];
+    const methods: Record<string, string> = {};
     for (let i = 0; i < ids.length; i += 200) {
-      const r = await supabase.from("order_items").select("order_id, product_id, product_name, unit_price_cents, quantity, unit_cost_cents").in("order_id", ids.slice(i, i + 200));
+      const chunk = ids.slice(i, i + 200);
+      const r = await supabase.from("order_items").select("order_id, product_id, product_name, unit_price_cents, quantity, unit_cost_cents").in("order_id", chunk);
       if (r.error) { toast.error(r.error.message); return; }
       items.push(...((r.data ?? []) as (Item & { order_id: string })[]));
+      const pay = await supabase.from("order_payments").select("order_id, provider").in("order_id", chunk);
+      if (!pay.error) for (const row of pay.data ?? []) if (row.order_id && row.provider && !methods[row.order_id]) methods[row.order_id] = row.provider;
     }
+    setMethodOf(methods);
     setOrders(((o.data ?? []) as unknown as Order[]).map((x) => ({ ...x, order_items: items.filter((i) => i.order_id === x.id) })).filter((x) => PROFIT_STATUSES.includes(x.status?.toLowerCase())));
     setLoaded(true);
   };
@@ -67,7 +75,13 @@ export function ProfitCostsPanel() {
     void load();
   };
 
-  const list = orders ?? [];
+  const all = orders ?? [];
+  const methodTabs = useMemo(() => {
+    const seen = new Set<string>();
+    for (const o of all) { const m = methodOf[o.id]; if (m) seen.add(m); }
+    return [...seen].sort((a, b) => (METHOD_LABELS[a] ?? a).localeCompare(METHOD_LABELS[b] ?? b));
+  }, [all, methodOf]);
+  const list = tab === "profit" || tab === "costs" ? all : all.filter((o) => methodOf[o.id] === tab);
   const years = useMemo(() => [...new Set(list.map((o) => new Date(o.created_at).getFullYear()))].sort((a, b) => b - a), [list]);
   const ay = year && years.includes(year) ? year : years[0] ?? null;
   const yearOrders = list.filter((o) => new Date(o.created_at).getFullYear() === ay);
@@ -100,9 +114,10 @@ export function ProfitCostsPanel() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap gap-2">
-        <button type="button" className={pill(tab === "profit")} onClick={() => setTab("profit")}>Profit</button>
+        <button type="button" className={pill(tab === "profit")} onClick={() => setTab("profit")}>Total profit</button>
+        {methodTabs.map((m) => <button key={m} type="button" className={pill(tab === m)} onClick={() => setTab(m)}>{METHOD_LABELS[m] ?? m}</button>)}
         <button type="button" className={pill(tab === "costs")} onClick={() => setTab("costs")}>Product costs</button>
-        {tab === "profit" && am != null && (
+        {tab !== "costs" && am != null && (
           <span className="px-3 h-8 rounded-lg text-sm font-medium inline-flex items-center bg-surface-2 border border-border text-muted-foreground">
             {yearOrders.filter((o) => new Date(o.created_at).getMonth() === am).length} orders
           </span>
@@ -121,7 +136,7 @@ export function ProfitCostsPanel() {
               </div>
             ))}
           </div>
-        ) : list.length === 0 ? <p className="text-sm text-muted-foreground">No paid orders yet.</p> : (
+        ) : list.length === 0 ? <p className="text-sm text-muted-foreground">{tab === "profit" ? "No paid orders yet." : `No ${METHOD_LABELS[tab] ?? tab} orders yet.`}</p> : (
           <div className="space-y-4">
             <div className="flex flex-wrap gap-2">{years.map((y) => <button key={y} type="button" className={pill(y === ay)} onClick={() => { setYear(y); setMonth(null); }}>{y}</button>)}</div>
             <div><h3 className="text-sm font-semibold mb-2">{ay} total</h3><Totals t={yT} /></div>
