@@ -12,8 +12,6 @@ import {
   splitListingSections,
   headlineListingDate,
   listingBlockHasDate,
-  listingHeadingMatchesGuide,
-  mismatchedSportsListingHeading,
 } from "./sports-listing-format";
 import { safePublicEventTitle } from "./public-guide-safety";
 
@@ -707,11 +705,6 @@ export const resolveQueueItem = createServerFn({ method: "POST" })
       const ev: any = { ...((item.parsed_event ?? {}) as Record<string, unknown>) };
       if (data.time !== undefined) ev.time = data.time;
       const title = data.title ?? ev.title ?? "Untitled";
-      const raw = String(ev.raw ?? "");
-      if (!listingHeadingMatchesGuide(raw, title)) {
-        const heading = mismatchedSportsListingHeading(raw, title);
-        throw new Error(`This post is headed “${heading ?? "another competition"}” and cannot be imported into “${title}”. Pick the matching guide.`);
-      }
       if (data.guideId) {
         const { data: guide, error: guideErr } = await supabaseAdmin
           .from("sports_blogs")

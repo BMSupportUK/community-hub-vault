@@ -1,6 +1,7 @@
 # Roadmap
 
 ## Current
+- [x] Allow differently headed sports posts to import by carrying the heading onto every event name
 - [x] Fix Triller TV numbered, trailing-time imports and retain each Event N as channel `Triller TV N`
 - [x] Separate completion messages for new account sales and renewals; remove incorrect “upgraded” wording
 - [x] Remove the duplicate “setting up your account” notice and its button from order support tickets
@@ -24,7 +25,7 @@
 ## Done (recent)
 - [x] UFC Streams multi-time imports: attach every listed channel to every time and retain next-day rollover
 - [x] Cymru TV imports: parse channel-first fixtures with bracketed date and BST time
-- [x] Sports imports: block competition-to-guide mismatches and prevent headings becoming event channels
+- [x] Sports imports: carry competition headings onto event names and prevent headings becoming event channels
 - [x] Sports guide imports: use `v` as the event matchup separator; repair Scottish Cup and UEFA Nations League fixture names and verify future imports
 - [x] Header clocks + office-hours dialog, live dates, England public holiday closures
 - [x] Automated messages & emails admin section (Account setup / Sales / Support tickets / Emails), HTML-only email editor with secure image upload
