@@ -54,7 +54,7 @@ export function OrderStatusAdminCard() {
   const [completing, setCompleting] = useState<string | null>(null);
   const [payMethod, setPayMethod] = useState("");
   const [payRef, setPayRef] = useState("");
-  const needsRef = ["square", "stripe", "wise"].includes(payMethod);
+  const needsRef = ["square", "stripe"].includes(payMethod);
   const completeOrder = async (id: string) => {
     if (needsRef && !payRef.trim()) return toast.error(`Enter the ${paymentLabel(payMethod)} transaction ID`);
     if (!confirm(payMethod ? `Mark this order as complete, paid by ${paymentLabel(payMethod)}?` : "Mark this order as complete using the payment method saved with it?")) return;
