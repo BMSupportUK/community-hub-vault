@@ -34,8 +34,7 @@ function statusTone(s: string) {
   return "bg-destructive/15 text-destructive border-destructive/30";
 }
 
-export function CardPaymentsAdminCard() {
-  const [provider, setProvider] = useState<Provider>("square");
+export function CardPaymentsAdminCard({ provider }: { provider: Provider }) {
   const [rows, setRows] = useState<Row[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [year, setYear] = useState<number | null>(null);
