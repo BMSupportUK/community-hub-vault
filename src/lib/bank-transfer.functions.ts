@@ -22,6 +22,20 @@ async function assertOwner(supabase: any, userId: string) {
   if (!data?.length) throw new Error("Forbidden: owner only");
 }
 
+/** Admin role + a fresh 2FA (TOTP) verification within the last 5 minutes. */
+async function assertAdminWithFreshTotp(supabase: any, userId: string, claims: any, action: string) {
+  const { data: adminRows } = await supabase
+    .from("user_roles")
+    .select("role")
+    .eq("user_id", userId)
+    .eq("role", "admin");
+  if (!adminRows?.length) throw new Error(`Only admins can ${action}`);
+  const amr: Array<{ method?: string; timestamp?: number }> = Array.isArray(claims?.amr) ? claims.amr : [];
+  const totp = amr.find((m) => m?.method === "totp");
+  const fresh = totp?.timestamp && Date.now() / 1000 - totp.timestamp < 300;
+  if (claims?.aal !== "aal2" || !fresh) throw new Error(`Enter your 2FA code to ${action}`);
+}
+
 async function isStaff(supabase: any, userId: string) {
   const { data } = await supabase
     .from("user_roles")
@@ -102,18 +116,7 @@ export const saveBankTransferDetails = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    const { data: adminRows } = await context.supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", context.userId)
-      .eq("role", "admin");
-    if (!adminRows?.length) throw new Error("Only admins can change bank details");
-    // Require a fresh 2FA verification (within the last 5 minutes).
-    const claims = (context as any).claims ?? {};
-    const amr: Array<{ method?: string; timestamp?: number }> = Array.isArray(claims.amr) ? claims.amr : [];
-    const totp = amr.find((m) => m?.method === "totp");
-    const fresh = totp?.timestamp && Date.now() / 1000 - totp.timestamp < 300;
-    if (claims.aal !== "aal2" || !fresh) throw new Error("Enter your 2FA code to save bank details");
+    await assertAdminWithFreshTotp(context.supabase, context.userId, (context as any).claims, "change bank details");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin
       .from("bank_transfer_details")
@@ -136,7 +139,13 @@ export const searchUsersForBankTransfer = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input) => z.object({ query: z.string().min(2).max(80) }).parse(input))
   .handler(async ({ data, context }) => {
-    await assertOwner(context.supabase, context.userId);
+    // Search is part of the add-customer flow: admin only.
+    const { data: adminRows } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .eq("role", "admin");
+    if (!adminRows?.length) throw new Error("Only admins can add bank transfer customers");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: rows } = await supabaseAdmin
       .from("profiles")
@@ -158,7 +167,7 @@ export const grantBankTransfer = createServerFn({ method: "POST" })
       .parse(input),
   )
   .handler(async ({ data, context }) => {
-    await assertOwner(context.supabase, context.userId);
+    await assertAdminWithFreshTotp(context.supabase, context.userId, (context as any).claims, "add bank transfer customers");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.from("bank_transfer_permissions").upsert(
       {

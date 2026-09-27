@@ -135,9 +135,24 @@ export function BankTransferAdminCard() {
     }
   };
 
-  const doGrant = async (userId: string) => {
+  const [grantMfaFor, setGrantMfaFor] = useState<string | null>(null);
+  const [grantMfaCode, setGrantMfaCode] = useState("");
+
+  const doGrant = async () => {
+    const userId = grantMfaFor;
+    if (!userId) return;
+    const code = grantMfaCode.replace(/\s/g, "");
+    if (!/^\d{6}$/.test(code)) {
+      toast.error("Enter the 6-digit code from your authenticator app");
+      return;
+    }
     setBusy(true);
     try {
+      const { data: f } = await supabase.auth.mfa.listFactors();
+      const factor = f?.totp?.find((x: any) => x.status === "verified");
+      if (!factor) throw new Error("Set up 2FA on your account first");
+      const { error: vErr } = await supabase.auth.mfa.challengeAndVerify({ factorId: factor.id, code });
+      if (vErr) throw new Error("Wrong 2FA code");
       await grant({
         data: { userId, expiresAt: expiry ? new Date(expiry).toISOString() : null, note: null },
       });
@@ -145,6 +160,8 @@ export function BankTransferAdminCard() {
       setQuery("");
       setResults([]);
       setExpiry("");
+      setGrantMfaFor(null);
+      setGrantMfaCode("");
       await load();
     } catch (e: any) {
       toast.error(e?.message ?? "Could not grant access");
@@ -303,7 +320,7 @@ export function BankTransferAdminCard() {
                 {results.map((u) => (
                   <button
                     key={u.id}
-                    onClick={() => void doGrant(u.id)}
+                    onClick={() => { setGrantMfaFor(u.id); setGrantMfaCode(""); }}
                     disabled={busy}
                     className="w-full flex items-center justify-between gap-2 px-3 py-2 text-sm hover:bg-surface-2 disabled:opacity-60"
                   >
@@ -311,6 +328,41 @@ export function BankTransferAdminCard() {
                     <Plus className="size-4 text-emerald-400" />
                   </button>
                 ))}
+              </div>
+            )}
+            {grantMfaFor && (
+              <div className="space-y-2 rounded-lg border border-border p-3">
+                <div className="text-sm font-medium">
+                  Enter your 2FA code to add {names[grantMfaFor] ?? results.find((u) => u.id === grantMfaFor)?.display_name ?? "this customer"}
+                </div>
+                <input
+                  className={input}
+                  inputMode="numeric"
+                  autoFocus
+                  maxLength={6}
+                  placeholder="6-digit code"
+                  value={grantMfaCode}
+                  onChange={(e) => setGrantMfaCode(e.target.value.replace(/\D/g, ""))}
+                  onKeyDown={(e) => e.key === "Enter" && void doGrant()}
+                />
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => void doGrant()}
+                    disabled={busy}
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-60"
+                  >
+                    {busy ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
+                    Confirm and add
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setGrantMfaFor(null); setGrantMfaCode(""); }}
+                    className="text-xs text-muted-foreground underline"
+                  >
+                    Cancel
+                  </button>
+                </div>
               </div>
             )}
 
