@@ -1,7 +1,7 @@
 # Roadmap
 
 ## Current
-- [x] Sports imports: carry every explicit competition heading onto every event beneath it, regardless of the selected guide
+- [x] Sports imports: insert every explicit competition heading at the start of each imported event name
 - [x] Fix Triller TV numbered, trailing-time imports and retain each Event N as channel `Triller TV N`
 - [x] Separate completion messages for new account sales and renewals; remove incorrect “upgraded” wording
 - [x] Remove the duplicate “setting up your account” notice and its button from order support tickets

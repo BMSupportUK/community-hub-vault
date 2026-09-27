@@ -1,7 +1,7 @@
 # Project Architecture Rules
 
 - Sports-guide updates must preserve published status so live guides stay public.
-- Every explicit sports heading prefixes every event beneath it, regardless of the selected guide; headings never block imports or become channels.
+- Explicit sports headings start each imported event name (`HEADING: event`), regardless of guide; never block or become channels.
 - Keep the BM loading cover through browser load/hydration and as the router pending screen.
 - UFC multi-time imports must attach the complete listed UFC channel set to every time slot, never pair channels to times by position, because each feed carries every slot.
 - Triller TV rows are `Triller TV | Event N: title time`; remove `Event N` from the title, keep the trailing time, and use `Triller TV N` as the channel so the source channel number is retained and saved guides read back unchanged.
