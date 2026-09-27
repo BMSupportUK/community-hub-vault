@@ -169,6 +169,13 @@
       "when": 1790530074628,
       "tag": "0023_wise_email_payments_matched_order",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1790530991273,
+      "tag": "0024_stripe_invoice_id_on_order_invoices",
+      "breakpoints": true
     }
   ]
 }
