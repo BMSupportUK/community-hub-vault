@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Loader2, Plus, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Link } from "@tanstack/react-router";
 
 type Row = {
   id: string;
@@ -13,6 +14,7 @@ type Row = {
   shipping_name: string | null;
   existing_username: string | null;
   customer_type: string | null;
+  order_ref: string | null;
 };
 
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -48,41 +50,6 @@ export function OrderStatusAdminCard() {
 
   const [reload, setReload] = useState(0);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [adding, setAdding] = useState(false);
-  const [custName, setCustName] = useState("");
-  const [products, setProducts] = useState<{ id: string; name: string; price_cents: number }[]>([]);
-  const [qty, setQty] = useState<Record<string, number>>({});
-  const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    (async () => {
-      const { data: u } = await supabase.auth.getUser();
-      if (!u.user) return;
-      const { data } = await supabase.rpc("has_role", { _user_id: u.user.id, _role: "admin" });
-      setIsAdmin(!!data);
-    })();
-  }, []);
-
-  const openAdd = async () => {
-    setAdding(true);
-    if (!products.length) {
-      const { data } = await supabase.from("products").select("id, name, price_cents").order("sort_order");
-      setProducts((data ?? []) as typeof products);
-    }
-  };
-
-  const saveOrder = async () => {
-    const items = Object.entries(qty).filter(([, q]) => q > 0).map(([product_id, quantity]) => ({ product_id, quantity }));
-    if (!custName.trim()) return toast.error("Enter the customer name");
-    if (!items.length) return toast.error("Pick at least one product");
-    setBusy(true);
-    const { error } = await supabase.rpc("admin_create_manual_order", { _customer_name: custName.trim(), _items: items });
-    setBusy(false);
-    if (error) return toast.error(error.message);
-    toast.success("Order added");
-    setAdding(false); setCustName(""); setQty({}); setYear(null); setMonth(null); setReload((n) => n + 1);
-  };
-
   const [completing, setCompleting] = useState<string | null>(null);
   const [payMethod, setPayMethod] = useState("");
   const [payRef, setPayRef] = useState("");
@@ -103,7 +70,7 @@ export function OrderStatusAdminCard() {
     (async () => {
       const { data, error } = await supabase
         .from("orders")
-        .select("id, status, total_cents, created_at, paid_at, completed_at, shipping_name, existing_username, customer_type")
+        .select("id, status, total_cents, created_at, paid_at, completed_at, shipping_name, existing_username, customer_type, order_ref")
         .order("created_at", { ascending: false })
         .limit(5000);
       if (cancelled) return;
@@ -151,34 +118,12 @@ export function OrderStatusAdminCard() {
           <h2 className="font-display text-lg font-semibold">Order status</h2>
           <p className="text-sm text-muted-foreground">Every order with its current status, by year and month.</p>
         </div>
-        {isAdmin && !adding && (
-          <button type="button" onClick={openAdd} className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-primary text-primary-foreground text-sm font-medium">
+        {isAdmin && (
+          <Link to="/admin-add-order" className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-primary text-primary-foreground text-sm font-medium">
             <Plus className="size-4" /> Add order
-          </button>
+          </Link>
         )}
       </div>
-
-      {adding && (
-        <div className="rounded-xl border border-border bg-surface-2 p-4 space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="font-semibold">Add an order manually</h3>
-            <button type="button" onClick={() => setAdding(false)} aria-label="Close" className="text-muted-foreground hover:text-foreground"><X className="size-4" /></button>
-          </div>
-          <input value={custName} onChange={(e) => setCustName(e.target.value)} placeholder="Customer name" className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm" />
-          <div className="space-y-2">
-            {products.length === 0 ? <p className="text-sm text-muted-foreground">Loading products…</p> : products.map((p) => (
-              <div key={p.id} className="flex items-center justify-between gap-3 text-sm">
-                <span>{p.name} <span className="text-muted-foreground">· {money(p.price_cents)}</span></span>
-                <input type="number" min={0} value={qty[p.id] ?? 0} onChange={(e) => setQty((q) => ({ ...q, [p.id]: Math.max(0, Number(e.target.value) || 0) }))} className="w-20 h-9 rounded-lg border border-border bg-background px-2 text-sm" aria-label={`Quantity of ${p.name}`} />
-              </div>
-            ))}
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Total {money(products.reduce((a, p) => a + p.price_cents * (qty[p.id] ?? 0), 0))}</span>
-            <button type="button" disabled={busy} onClick={saveOrder} className="h-9 px-4 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-50">{busy ? "Saving…" : "Save order"}</button>
-          </div>
-        </div>
-      )}
 
       {error ? <p className="text-sm text-destructive">Could not load orders: {error}</p>
         : rows === null ? <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" /> Loading…</div>
@@ -213,7 +158,7 @@ export function OrderStatusAdminCard() {
                       <td className="px-3 py-2 whitespace-nowrap">{new Date(r.created_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}</td>
                       <td className="px-3 py-2">
                         <div>{r.shipping_name || r.existing_username || "—"}</div>
-                        <div className="text-xs text-muted-foreground">#{r.id.slice(0, 8)}{r.customer_type ? ` · ${r.customer_type}` : ""}</div>
+                        <div className="text-xs text-muted-foreground">{r.order_ref ?? `#${r.id.slice(0, 8)}`}{r.customer_type ? ` · ${r.customer_type}` : ""}</div>
                       </td>
                       <td className="px-3 py-2 whitespace-nowrap">{money(r.total_cents)}</td>
                       <td className="px-3 py-2"><span className={`inline-flex px-2 py-0.5 rounded-full border text-xs capitalize ${statusTone(r.status)}`}>{r.status.toLowerCase()}</span></td>
