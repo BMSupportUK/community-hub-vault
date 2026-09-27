@@ -9,7 +9,8 @@ import {
 } from "@tanstack/react-router";
 import { Toaster } from "sonner";
 import { FanZonePresenceTracker } from "@/components/app/FanZonePresenceTracker";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { initAnalytics, trackPageView } from "@/lib/analytics";
 
 import appCss from "../styles.css?url";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
@@ -146,6 +147,21 @@ function RootComponent() {
   useEffect(() => {
     sessionStorage.removeItem("bm-stale-chunk-reloaded");
   }, []);
+
+  // Google Analytics: load gtag.js once, then send a page view on every
+  // client-side route change (the initial load is recorded by `config`).
+  const initialAnalyticsLoad = useRef(true);
+  useEffect(() => {
+    initAnalytics();
+  }, []);
+  const analyticsPath = useRouterState({ select: (s) => s.location.pathname });
+  useEffect(() => {
+    if (initialAnalyticsLoad.current) {
+      initialAnalyticsLoad.current = false;
+      return;
+    }
+    trackPageView(analyticsPath);
+  }, [analyticsPath]);
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
