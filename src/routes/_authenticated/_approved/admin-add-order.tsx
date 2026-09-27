@@ -31,6 +31,9 @@ function AddOrderPage() {
   const [products, setProducts] = useState<{ id: string; name: string; price_cents: number }[] | null>(null);
   const [qty, setQty] = useState<Record<string, number>>({});
   const [busy, setBusy] = useState(false);
+  const [payMethod, setPayMethod] = useState("");
+  const [payRef, setPayRef] = useState("");
+  const needsRef = ["square", "stripe", "wise"].includes(payMethod);
 
   useEffect(() => {
     supabase.from("products").select("id, name, price_cents").order("sort_order").then(({ data }) => setProducts((data ?? []) as never));
@@ -45,9 +48,13 @@ function AddOrderPage() {
     const items = Object.entries(qty).filter(([, q]) => q > 0).map(([product_id, quantity]) => ({ product_id, quantity }));
     if (!custName.trim()) return toast.error("Enter the customer name");
     if (!items.length) return toast.error("Pick at least one product");
+    if (!payMethod) return toast.error("Pick the payment method");
+    if (needsRef && !payRef.trim()) return toast.error("Enter the transaction ID");
     setBusy(true);
     const { data: id, error } = await supabase.rpc("admin_create_manual_order", { _customer_name: custName.trim(), _items: items });
     if (error) { setBusy(false); return toast.error(error.message); }
+    const { error: payErr } = await supabase.rpc("admin_complete_manual_order", { _order_id: id as string, _method: payMethod, _reference: payRef.trim() || undefined });
+    if (payErr) toast.error(`Order saved but payment not recorded: ${payErr.message}`);
     const { data: o } = await supabase.from("orders").select("order_ref").eq("id", id as string).maybeSingle();
     setBusy(false);
     toast.success(`Order ${o?.order_ref ?? ""} added`);
@@ -78,6 +85,18 @@ function AddOrderPage() {
                 <input type="number" min={0} value={qty[p.id] ?? 0} onChange={(e) => setQty((q) => ({ ...q, [p.id]: Math.max(0, Number(e.target.value) || 0) }))} className="w-20 h-9 rounded-lg border border-border bg-background px-2 text-sm" aria-label={`Quantity of ${p.name}`} />
               </div>
             ))}
+          </div>
+          <div className="space-y-2 pt-2 border-t border-border">
+            <label className="text-sm font-medium" htmlFor="pay-method">Payment method</label>
+            <select id="pay-method" value={payMethod} onChange={(e) => setPayMethod(e.target.value)} className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm">
+              <option value="">Choose how the customer paid…</option>
+              <option value="square">Square</option>
+              <option value="stripe">Stripe</option>
+              <option value="wise">Wise</option>
+              <option value="crypto">Crypto</option>
+              <option value="cash">Cash</option>
+            </select>
+            {needsRef && <input value={payRef} onChange={(e) => setPayRef(e.target.value)} placeholder="Transaction ID" className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm" />}
           </div>
           <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-border">
             <span className="text-sm text-muted-foreground">Total {money(total)}</span>
