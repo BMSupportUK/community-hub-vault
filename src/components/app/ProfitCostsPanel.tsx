@@ -121,20 +121,7 @@ export function ProfitCostsPanel() {
             <div className="flex flex-wrap gap-2">{years.map((y) => <button key={y} type="button" className={pill(y === ay)} onClick={() => { setYear(y); setMonth(null); }}>{y}</button>)}</div>
             <div><h3 className="text-sm font-semibold mb-2">{ay} total</h3><Totals t={yT} /></div>
             <div className="flex flex-wrap gap-2">{byMonth.map(([k, v]) => <button key={k} type="button" className={pill(k === am)} onClick={() => setMonth(k)}>{MONTHS[k]} · {money(v.revenue - v.cost)}{v.missing ? " ⚠" : ""}</button>)}</div>
-            {am != null && <>
-              <div><h3 className="text-sm font-semibold mb-2">{MONTHS[am]} {ay}</h3><Totals t={mT} /></div>
-              <div className="overflow-x-auto"><table className="w-full text-sm">
-                <thead className="text-muted-foreground text-left"><tr><th className="py-1">Date</th><th>Customer</th><th>Products</th><th className="text-right">Revenue</th><th className="text-right">Cost</th><th className="text-right">Profit</th></tr></thead>
-                <tbody>{monthOrders.map((o) => { const c = calc(o); const p = c.revenue - c.cost; return (
-                  <tr key={o.id} className="border-t border-border">
-                    <td className="py-1.5">{new Date(o.created_at).toLocaleDateString("en-GB")}</td>
-                    <td>{o.shipping_name || o.existing_username || "—"}</td>
-                    <td>{(o.order_items ?? []).map((i) => `${i.product_name} ×${i.quantity}`).join(", ") || "—"}{c.missing && <span className="ml-1 text-xs text-warning">(cost missing)</span>}</td>
-                    <td className="text-right">{money(c.revenue)}</td><td className="text-right">{money(c.cost)}</td>
-                    <td className={`text-right font-medium ${p >= 0 ? "text-success" : "text-destructive"}`}>{money(p)}</td>
-                  </tr>); })}</tbody>
-              </table></div>
-            </>}
+            {am != null && <div><h3 className="text-sm font-semibold mb-2">{MONTHS[am]} {ay}</h3><Totals t={mT} /></div>}
           </div>
         )}
     </div>
