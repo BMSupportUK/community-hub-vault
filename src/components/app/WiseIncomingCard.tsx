@@ -143,6 +143,38 @@ export function WiseIncomingCard() {
         </details>
       ) : null}
 
+      {feed?.gmailConfirmation ? (
+        <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
+          <div className="font-bold text-amber-300">Gmail forwarding confirmation</div>
+          {feed.gmailConfirmation.code ? (
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <span>Enter this code in Gmail:</span>
+              <code className="rounded bg-background px-3 py-1.5 font-mono text-base font-bold">
+                {feed.gmailConfirmation.code}
+              </code>
+              <Button type="button" size="sm" variant="outline" onClick={() => { void navigator.clipboard.writeText(feed.gmailConfirmation?.code ?? ""); toast.success("Code copied"); }}>
+                Copy code
+              </Button>
+            </div>
+          ) : null}
+          {feed.gmailConfirmation.url ? (
+            <a
+              href={feed.gmailConfirmation.url}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-2 inline-flex items-center gap-1 font-semibold text-amber-300 underline"
+            >
+              Confirm forwarding with Google <ArrowUpRight className="size-4" />
+            </a>
+          ) : null}
+          {!feed.gmailConfirmation.code && !feed.gmailConfirmation.url ? (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Gmail’s confirmation arrived, but its code was not included. Resend it from Gmail and refresh this page.
+            </p>
+          ) : null}
+        </div>
+      ) : null}
+
       {feed?.authError ? (
         <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
           <CircleAlert className="size-4 shrink-0 mt-0.5" />
