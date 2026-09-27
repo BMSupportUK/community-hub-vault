@@ -1,6 +1,7 @@
 # Roadmap
 
 ## Current
+- [x] Rugby Pass numbered rows: retain explanatory text after the time without swallowing the row into the previous event
 - [x] Sports imports: insert every explicit competition heading at the start of each imported event name
 - [x] Fix Triller TV numbered, trailing-time imports and retain each Event N as channel `Triller TV N`
 - [x] Separate completion messages for new account sales and renewals; remove incorrect “upgraded” wording
