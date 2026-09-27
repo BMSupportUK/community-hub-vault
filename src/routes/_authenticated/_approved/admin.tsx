@@ -439,7 +439,7 @@ function DashboardBody() {
   const { hasRole } = useAuth();
   const isAdminOnly = hasRole("admin");
   const canSeePins = isAdminOnly || hasRole("management");
-  const [tab, setTab] = useState<"tools" | "payments" | "staff-pins" | "backup-codes" | "theme" | "header-links">("tools");
+  const [tab, setTab] = useState<"tools" | "square" | "stripe" | "bank-transfer" | "staff-pins" | "backup-codes" | "theme" | "header-links">("tools");
 
 
 
@@ -477,7 +477,6 @@ function DashboardBody() {
     { to: "/admin-streaming-devices", label: "Streaming devices", desc: "Manage the streaming device catalogue and refresh UK retailer prices.", icon: MonitorPlay },
     { to: "/shop", search: { view: "admin" }, label: "Shop products", desc: "Add, edit and reorder shop products and categories.", icon: Package, adminOnly: true },
     { to: "/shop", search: { view: "discounts" }, label: "Discount codes", desc: "Create and manage promotional discount codes.", icon: Tag, adminOnly: true },
-    { to: "/admin-bank-transfer", label: "Bank transfer", desc: "Set the bank details customers see and grant bank-transfer payment access.", icon: Landmark, adminOnly: true, managementToo: true },
     { to: "/install-guides", search: { tab: "app-apk" }, label: "App APK & transfers", desc: "Upload the Android APK and monitor the live 24-hour install links members have requested.", icon: Package },
     { to: "/admin-sounds", label: "Notification sounds", desc: "Play and verify every notification MP3 used across the app, and set volume for this device.", icon: Bell },
     { to: "/admin-ad-stats", label: "Advert performance", desc: "See how many views and clicks each advert unit gets on bmsupport.uk, by page and by day.", icon: BarChart3 },
@@ -489,12 +488,16 @@ function DashboardBody() {
 
   const tabs = ([
     ["tools", "Owner tools", false],
-    ["payments", "Payments", true],
+    ["square", "Square", true],
+    ["stripe", "Stripe", true],
+    ["bank-transfer", "Bank transfer", "bank"],
     ["staff-pins", "Staff PINs", true],
     ["backup-codes", "Backup codes", true],
     ["theme", "Theme", false],
     ["header-links", "Header links", false],
-  ] as const).filter(([, , pinOnly]) => !pinOnly || canSeePins);
+  ] as const).filter(([, , gate]) =>
+    gate === "bank" ? isAdminOnly || hasRole("management") : !gate || canSeePins,
+  );
 
   const letters = Array.from(new Set(tools.map((t) => t.label[0].toUpperCase())));
 
@@ -521,8 +524,26 @@ function DashboardBody() {
         ))}
       </div>
 
-      {tab === "payments" && canSeePins ? (
-        <CardPaymentsAdminCard />
+      {tab === "square" && canSeePins ? (
+        <CardPaymentsAdminCard provider="square" />
+      ) : tab === "stripe" && canSeePins ? (
+        <CardPaymentsAdminCard provider="stripe" />
+      ) : tab === "bank-transfer" && (isAdminOnly || hasRole("management")) ? (
+        <div className="max-w-2xl">
+          <Link
+            to="/admin-bank-transfer"
+            className="group relative block rounded-2xl border border-border bg-surface-1 p-4 hover:border-primary hover:shadow-glow transition-all overflow-hidden"
+          >
+            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-accent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="flex items-center gap-3 mb-2">
+              <div className="size-10 rounded-xl bg-gradient-primary grid place-items-center text-primary-foreground shadow-glow">
+                <Landmark className="size-5" />
+              </div>
+              <div className="font-display font-bold">Bank transfer</div>
+            </div>
+            <p className="text-xs text-muted-foreground">Set the bank details customers see, grant bank-transfer payment access, and review incoming Wise payments.</p>
+          </Link>
+        </div>
       ) : tab === "staff-pins" && canSeePins ? (
         <StaffPinAdminCard />
       ) : tab === "backup-codes" && canSeePins ? (

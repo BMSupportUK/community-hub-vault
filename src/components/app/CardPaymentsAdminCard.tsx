@@ -34,8 +34,7 @@ function statusTone(s: string) {
   return "bg-destructive/15 text-destructive border-destructive/30";
 }
 
-export function CardPaymentsAdminCard() {
-  const [provider, setProvider] = useState<Provider>("square");
+export function CardPaymentsAdminCard({ provider }: { provider: Provider }) {
   const [rows, setRows] = useState<Row[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [year, setYear] = useState<number | null>(null);
@@ -87,16 +86,8 @@ export function CardPaymentsAdminCard() {
   return (
     <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
       <div>
-        <h2 className="font-display text-lg font-semibold">Card payments</h2>
-        <p className="text-sm text-muted-foreground">Square and Stripe orders with their payment status, by year and month.</p>
-      </div>
-
-      <div className="flex gap-2">
-        {(["square", "stripe"] as const).map((p) => (
-          <button key={p} type="button" className={pill(provider === p)} onClick={() => { setProvider(p); setYear(null); setMonth(null); }}>
-            {p === "square" ? "Square" : "Stripe"} ({(rows ?? []).filter((r) => r.provider === p).length})
-          </button>
-        ))}
+        <h2 className="font-display text-lg font-semibold">{provider === "square" ? "Square" : "Stripe"} payments</h2>
+        <p className="text-sm text-muted-foreground">Orders with their payment status, by year and month.</p>
       </div>
 
       {error ? <p className="text-sm text-destructive">Could not load payments: {error}</p>
