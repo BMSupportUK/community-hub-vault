@@ -38,14 +38,21 @@ export function ProfitCostsDialog() {
     const [p, c, o] = await Promise.all([
       supabase.from("products").select("id, name, price_cents").order("name"),
       supabase.from("product_costs").select("product_id, cost_cents"),
-      supabase.from("orders").select("id, status, total_cents, created_at, shipping_name, existing_username, order_items(product_id, product_name, unit_price_cents, quantity, unit_cost_cents)").order("created_at", { ascending: false }).limit(5000),
+      supabase.from("orders").select("id, status, total_cents, created_at, shipping_name, existing_username").order("created_at", { ascending: false }).limit(5000),
     ]);
     if (p.error || c.error || o.error) { toast.error((p.error ?? c.error ?? o.error)!.message); return; }
     setProducts((p.data ?? []) as Product[]);
     const m: Record<string, string> = {};
     for (const r of c.data ?? []) m[r.product_id] = (r.cost_cents / 100).toFixed(2);
     setCosts(m);
-    setOrders(((o.data ?? []) as unknown as Order[]).filter((x) => PROFIT_STATUSES.includes(x.status?.toLowerCase())));
+    const ids = (o.data ?? []).map((x) => x.id as string);
+    const items: (Item & { order_id: string })[] = [];
+    for (let i = 0; i < ids.length; i += 200) {
+      const r = await supabase.from("order_items").select("order_id, product_id, product_name, unit_price_cents, quantity, unit_cost_cents").in("order_id", ids.slice(i, i + 200));
+      if (r.error) { toast.error(r.error.message); return; }
+      items.push(...((r.data ?? []) as (Item & { order_id: string })[]));
+    }
+    setOrders(((o.data ?? []) as unknown as Order[]).map((x) => ({ ...x, order_items: items.filter((i) => i.order_id === x.id) })).filter((x) => PROFIT_STATUSES.includes(x.status?.toLowerCase())));
   };
   useEffect(() => { if (open) void load(); }, [open]);
 
