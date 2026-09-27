@@ -167,6 +167,117 @@ export function WiseIncomingCard({
   const selMonth = month !== null && months.includes(month) ? month : months[0];
   const shown = yearTx.filter((t) => tMonth(t) === selMonth);
 
+  if (mode === "settings") {
+    return (
+      <section className="rounded-2xl border border-border bg-surface-1 p-5 space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="size-10 rounded-xl bg-sky-500/15 text-sky-400 grid place-items-center">
+            <Landmark className="size-5" />
+          </div>
+          <div>
+            <h2 className="font-display font-bold">Wise settings</h2>
+            <p className="text-xs text-muted-foreground">
+              Admin only. The Wise key and email forwarding address are locked behind 2FA.
+            </p>
+          </div>
+        </div>
+
+        {feed?.authError ? (
+          <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
+            <CircleAlert className="size-4 shrink-0 mt-0.5" />
+            <span>
+              Wise rejected the saved token. Create a new token in Wise (Settings → API tokens) and ask Lovable to
+              replace it. {feed.error ? `(${feed.error})` : null}
+            </span>
+          </div>
+        ) : null}
+
+        {feed?.forwardUrl ? (
+          <details className="rounded-lg border border-border bg-surface-2/50 px-3 py-2 text-xs">
+            <summary className="cursor-pointer font-medium">Wise key / forwarding address (admin, 2FA locked)</summary>
+            {revealedUrl ? (
+              <div className="mt-2 flex items-center gap-2">
+                <code className="flex-1 break-all rounded bg-background px-2 py-1 font-mono">{revealedUrl}</code>
+                <Button type="button" size="sm" variant="outline" onClick={() => { void navigator.clipboard.writeText(revealedUrl); toast.success("Copied"); }}>Copy</Button>
+                <Button type="button" size="sm" variant="ghost" onClick={() => setRevealedUrl(null)}>Hide</Button>
+              </div>
+            ) : (
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <span className="text-muted-foreground">Enter your 6-digit 2FA code to view:</span>
+                <input
+                  value={keyCode}
+                  onChange={(e) => setKeyCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  onKeyDown={(e) => { if (e.key === "Enter") void doReveal(); }}
+                  inputMode="numeric"
+                  maxLength={6}
+                  placeholder="123456"
+                  className="w-28 rounded border border-border bg-background px-2 py-1 font-mono"
+                  aria-label="2FA code for Wise key"
+                />
+                <Button type="button" size="sm" disabled={revealing} onClick={() => void doReveal()}>
+                  {revealing ? <Loader2 className="size-3.5 animate-spin" /> : null} Unlock
+                </Button>
+              </div>
+            )}
+          </details>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            No Wise key is saved yet. Save one as <span className="font-mono">WISE_API_TOKEN</span> to enable the feed.
+          </p>
+        )}
+
+        {feed?.gmailConfirmation ? (
+          <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
+            <div className="flex items-start justify-between gap-2">
+              <div className="font-bold text-amber-300">Gmail forwarding confirmation</div>
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                className="h-auto px-2 py-1 text-xs text-amber-300"
+                disabled={dismissing}
+                onClick={() => void doDismissConfirmation()}
+              >
+                {dismissing ? <Loader2 className="size-3.5 animate-spin" /> : null}
+                Forwarding confirmed — hide this
+              </Button>
+            </div>
+            {feed.gmailConfirmation.code ? (
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <span>Enter this code in Gmail:</span>
+                <code className="rounded bg-background px-3 py-1.5 font-mono text-base font-bold">
+                  {feed.gmailConfirmation.code}
+                </code>
+                <Button type="button" size="sm" variant="outline" onClick={() => { void navigator.clipboard.writeText(feed.gmailConfirmation?.code ?? ""); toast.success("Code copied"); }}>
+                  Copy code
+                </Button>
+              </div>
+            ) : null}
+            {feed.gmailConfirmation.url ? (
+              <a
+                href={feed.gmailConfirmation.url}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-2 inline-flex items-center gap-1 font-semibold text-amber-300 underline"
+              >
+                Confirm forwarding with Google <ArrowUpRight className="size-4" />
+              </a>
+            ) : null}
+            {!feed.gmailConfirmation.code && !feed.gmailConfirmation.url ? (
+              <p className="mt-2 text-xs text-muted-foreground">
+                Gmail’s confirmation arrived, but its code was not included. Resend it from Gmail and refresh this page.
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          Incoming payments come from forwarded Wise payment emails — see the “Incoming transfers” tab for the list.
+        </p>
+      </section>
+    );
+  }
+
   return (
     <section className="rounded-2xl border border-border bg-surface-1 p-5 space-y-4">
       <div className="flex items-start justify-between gap-3">
