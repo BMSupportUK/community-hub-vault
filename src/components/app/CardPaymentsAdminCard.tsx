@@ -2,7 +2,14 @@ import { useEffect, useMemo, useState } from "react";
 import { Loader2, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
-type Provider = "square" | "stripe" | "cash";
+type Provider = "square" | "stripe" | "cash" | "bank_transfer";
+
+const PROVIDER_LABELS: Record<Provider, string> = {
+  square: "Square",
+  stripe: "Stripe",
+  cash: "Cash",
+  bank_transfer: "Bank transfer",
+};
 type Row = {
   id: string;
   order_id: string;
@@ -46,7 +53,7 @@ export function CardPaymentsAdminCard({ provider }: { provider: Provider }) {
       const { data, error } = await supabase
         .from("order_payments")
         .select("id, order_id, provider, status, amount_cents, currency, card_brand, last_4, receipt_url, created_at")
-        .in("provider", ["square", "stripe", "cash"])
+        .in("provider", ["square", "stripe", "cash", "bank_transfer"])
         .order("created_at", { ascending: false })
         .limit(2000);
       if (cancelled) return;
@@ -86,13 +93,13 @@ export function CardPaymentsAdminCard({ provider }: { provider: Provider }) {
   return (
     <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
       <div>
-        <h2 className="font-display text-lg font-semibold">{provider === "square" ? "Square" : provider === "cash" ? "Cash" : "Stripe"} payments</h2>
+        <h2 className="font-display text-lg font-semibold">{PROVIDER_LABELS[provider]} payments</h2>
         <p className="text-sm text-muted-foreground">Orders with their payment status, by year and month.</p>
       </div>
 
       {error ? <p className="text-sm text-destructive">Could not load payments: {error}</p>
         : rows === null ? <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" /> Loading…</div>
-        : list.length === 0 ? <p className="text-sm text-muted-foreground">No {provider === "square" ? "Square" : provider === "cash" ? "Cash" : "Stripe"} payments yet.</p>
+        : list.length === 0 ? <p className="text-sm text-muted-foreground">No {PROVIDER_LABELS[provider]} payments yet.</p>
         : (
           <>
             <div className="flex flex-wrap gap-2">
