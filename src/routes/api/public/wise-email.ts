@@ -120,29 +120,13 @@ export const Route = createFileRoute("/api/public/wise-email")({
         if (!parsed) return new Response("ignored", { status: 200 });
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        const { error } = await supabaseAdmin.from("wise_email_payments").insert({
-          amount_cents: parsed.amountCents,
-          currency: parsed.currency,
-          sender_name: parsed.senderName?.slice(0, 120) ?? null,
-          reference: parsed.reference.slice(0, 120),
-          subject: subject.slice(0, 300),
-          excerpt: body.replace(/\s+/g, " ").trim().slice(0, 500),
-        });
-        if (error) return new Response("Save failed", { status: 500 });
 
-        // Alert admin/management in the staff notification bell.
+        // Match the payment against awaiting bank-transfer orders first, so the
+        // winning order is stored on the payment row itself.
         const amount = (parsed.amountCents / 100).toFixed(2);
         const who = parsed.senderName ?? "Unknown sender";
-        await supabaseAdmin.from("staff_notifications").insert({
-          kind: "wise_payment",
-          title: `Wise payment received: ${parsed.currency} ${amount}`,
-          body: `${who} paid ${parsed.currency} ${amount} — reference "${parsed.reference}". Check it against awaiting orders on the Bank Transfer page.`,
-          link_path: "/admin-bank-transfer",
-        });
-
-        // Post a silent staff-only note into the support ticket of every
-        // awaiting bank-transfer order this payment could belong to. The note
-        // is is_internal, so the customer never sees it.
+        let matched: any[] = [];
+        let matchedOrders: any[] = [];
         try {
           const ref = parsed.reference.trim().toLowerCase();
           const { data: detailsRow } = await supabaseAdmin
@@ -162,7 +146,7 @@ export const Route = createFileRoute("/api/public/wise-email")({
             ? await supabaseAdmin.from("orders").select("id,user_id,total_cents").in("id", orderIds).is("paid_at", null).neq("status", "cancelled")
             : { data: [] as any[] };
 
-          const matched = (payments ?? []).filter((p: any) => {
+          matched = (payments ?? []).filter((p: any) => {
             const order = (orders ?? []).find((o: any) => String(o.id) === String(p.order_id));
             if (!order) return false;
             const orderRef = String(p.provider_payment_id ?? `${prefix}-${String(p.order_id).replace(/-/g, "").slice(0, 6).toUpperCase()}`).toLowerCase();
@@ -170,9 +154,36 @@ export const Route = createFileRoute("/api/public/wise-email")({
             const amountMatch = Number(p.amount_cents ?? order.total_cents ?? 0) === parsed.amountCents;
             return refMatch || (amountMatch && ref.length === 0);
           });
+          matchedOrders = orders ?? [];
+        } catch {
+          // Matching is best-effort; the payment is still saved without it.
+        }
 
+        const { error } = await supabaseAdmin.from("wise_email_payments").insert({
+          amount_cents: parsed.amountCents,
+          currency: parsed.currency,
+          sender_name: parsed.senderName?.slice(0, 120) ?? null,
+          reference: parsed.reference.slice(0, 120),
+          subject: subject.slice(0, 300),
+          excerpt: body.replace(/\s+/g, " ").trim().slice(0, 500),
+          matched_order_id: matched.length ? String(matched[0].order_id) : null,
+        });
+        if (error) return new Response("Save failed", { status: 500 });
+
+        // Alert admin/management in the staff notification bell.
+        await supabaseAdmin.from("staff_notifications").insert({
+          kind: "wise_payment",
+          title: `Wise payment received: ${parsed.currency} ${amount}`,
+          body: `${who} paid ${parsed.currency} ${amount} — reference "${parsed.reference}". Check it against awaiting orders on the Bank Transfer page.`,
+          link_path: "/admin-bank-transfer",
+        });
+
+        // Post a silent staff-only note into the support ticket of every
+        // awaiting bank-transfer order this payment could belong to. The note
+        // is is_internal, so the customer never sees it.
+        try {
           for (const p of matched) {
-            const order = (orders ?? []).find((o: any) => String(o.id) === String(p.order_id));
+            const order = matchedOrders.find((o: any) => String(o.id) === String(p.order_id));
             const { data: ticket } = await supabaseAdmin
               .from("tickets")
               .select("id,user_id")
