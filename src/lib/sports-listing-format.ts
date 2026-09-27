@@ -280,23 +280,52 @@ export function normalizeSportsEventTitle(value: string): string {
  * all-caps fixture or channel line. This is used to stop one competition from
  * being saved into another competition's existing guide.
  */
+function sportsListingLineHeading(trimmed: string): string | null {
+  const markdownHeading = trimmed.match(/^#{1,6}\s*(.+?)\s*$/)?.[1];
+  const boldHeading = trimmed.match(/^\*\*#{1,6}\s*(.+?)\*\*$/)?.[1];
+  const heading = cleanLine(markdownHeading ?? boldHeading ?? "");
+  if (
+    heading &&
+    !isDateLine(heading) &&
+    !parseClockTime(heading) &&
+    !/\s(?:&|v|vs|v\.|x)\s/i.test(heading) &&
+    !isLikelyChannelLabel(heading)
+  ) return heading;
+  return null;
+}
+
 function sportsListingHeadings(raw: string | null | undefined): string[] {
   if (!raw) return [];
   const headings: string[] = [];
   for (const rawLine of decodeListingEntities(raw).split("\n")) {
-    const trimmed = rawLine.trim();
-    const markdownHeading = trimmed.match(/^#{1,6}\s*(.+?)\s*$/)?.[1];
-    const boldHeading = trimmed.match(/^\*\*#{1,6}\s*(.+?)\*\*$/)?.[1];
-    const heading = cleanLine(markdownHeading ?? boldHeading ?? "");
-    if (
-      heading &&
-      !isDateLine(heading) &&
-      !parseClockTime(heading) &&
-      !/\s(?:&|v|vs|v\.|x)\s/i.test(heading) &&
-      !isLikelyChannelLabel(heading)
-    ) headings.push(heading);
+    const heading = sportsListingLineHeading(rawLine.trim());
+    if (heading) headings.push(heading);
   }
   return unique(headings);
+}
+
+/**
+ * Split a post into its heading sections, keeping the lines that precede the
+ * first heading as a heading-less section. Each section's events are labelled
+ * with their own heading, so a "SERIE A" block never inherits a "PREMIER
+ * LEAGUE" label from earlier in the post.
+ */
+function splitSportsListingSections(raw: string): { heading: string | null; text: string }[] {
+  const sections: { heading: string | null; lines: string[] }[] = [];
+  for (const rawLine of decodeListingEntities(raw).split("\n")) {
+    const heading = sportsListingLineHeading(rawLine.trim());
+    if (heading) {
+      const last = sections[sections.length - 1];
+      if (last && last.heading === heading) continue;
+      sections.push({ heading, lines: [] });
+      continue;
+    }
+    if (!sections.length) sections.push({ heading: null, lines: [] });
+    sections[sections.length - 1]!.lines.push(rawLine);
+  }
+  return sections
+    .map((s) => ({ heading: s.heading, text: s.lines.join("\n") }))
+    .filter((s) => s.text.trim() || s.heading);
 }
 
 export function sportsListingHeading(raw: string | null | undefined): string | null {
@@ -1291,29 +1320,35 @@ function convertEventsToUk(events: SportsListingEvent[], input: ListingInput): S
 }
 
 export function formatSportsListingBlock(input: ListingInput): string | null {
-  const parsed = parseSportsListingBlock(input.raw);
   // No date written anywhere in the post: date it from the import day rather
   // than leaving the guide dateless for someone to fill in afterwards.
   const base = input.date ?? importDayListingDate();
-  const dated = rollOvernightEvents(applyImplicitDateRollover(parsed, base));
-  const events = dedupeSportsListingEvents(sortSportsListingEvents(
-    convertEventsToUk(dated, { ...input, date: base ?? input.date }),
-  ));
+  const processSection = (text: string): SportsListingEvent[] => {
+    const parsed = parseSportsListingBlock(text);
+    const dated = rollOvernightEvents(applyImplicitDateRollover(parsed, base));
+    return convertEventsToUk(dated, { ...input, date: base ?? input.date });
+  };
+
+  // Every explicit competition heading belongs on the events beneath it
+  // ("ICC ODI: India v West Indies"). A post with several headings is split
+  // into its sections so each event carries its own section's heading —
+  // never the first heading of the whole post. Do not duplicate a heading
+  // when the event name already begins with it.
+  const sections = splitSportsListingSections(input.raw ?? "");
+  const labelled = sections.flatMap((section) => {
+    const events = processSection(section.text);
+    if (!section.heading) return events;
+    const heading = section.heading;
+    return events.map((event) =>
+      event.title.toLowerCase().startsWith(heading.toLowerCase())
+        ? event
+        : { ...event, title: `${heading}: ${event.title}` },
+    );
+  });
+  const events = dedupeSportsListingEvents(sortSportsListingEvents(labelled));
   if (!events.length) return null;
 
-  // Every explicit competition heading belongs on every event name, whether
-  // or not it matches the selected guide ("ICC ODI: India v West Indies").
-  // Do not duplicate a heading when the event name already begins with it.
-  const listingHeading = sportsListingHeading(input.raw);
-  const labelled = listingHeading
-    ? events.map((event) =>
-        event.title.toLowerCase().startsWith(listingHeading.toLowerCase())
-          ? event
-          : { ...event, title: `${listingHeading}: ${event.title}` },
-      )
-    : events;
-
-  return formatSportsListingEvents(labelled, { ...input, date: base ?? input.date });
+  return formatSportsListingEvents(events, { ...input, date: base ?? input.date });
 }
 
 export function formatSportsListingEvents(events: SportsListingEvent[], input: ListingInput): string {
