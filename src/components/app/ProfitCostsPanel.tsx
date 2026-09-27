@@ -99,9 +99,14 @@ export function ProfitCostsPanel() {
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <button type="button" className={pill(tab === "profit")} onClick={() => setTab("profit")}>Profit</button>
         <button type="button" className={pill(tab === "costs")} onClick={() => setTab("costs")}>Product costs</button>
+        {tab === "profit" && am != null && (
+          <span className="px-3 h-8 rounded-lg text-sm font-medium inline-flex items-center bg-surface-2 border border-border text-muted-foreground">
+            {yearOrders.filter((o) => new Date(o.created_at).getMonth() === am).length} orders
+          </span>
+        )}
       </div>
       {products === null ? <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" /> Loading…</div>
         : tab === "costs" ? (
