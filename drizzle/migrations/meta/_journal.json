@@ -162,6 +162,13 @@
       "when": 1790525709457,
       "tag": "0022_store_email_forwarding_confirmations",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1790530074628,
+      "tag": "0023_wise_email_payments_matched_order",
+      "breakpoints": true
     }
   ]
 }
