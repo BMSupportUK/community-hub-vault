@@ -207,7 +207,7 @@ export function BankTransferAdminCard() {
       ) : (
         <>
           <div className="flex flex-wrap gap-2">
-            {([["details", "Bank details"], ["customers", `Bank transfer customers (${grants.length})`], ["wise", "Wise settings"]] as const).map(([k, label]) => (
+            {([["details", "Bank details"], ["customers", `Bank transfer customers (${grants.length})`], ["incoming", "Incoming transfers"], ["wise", "Wise settings"]] as const).map(([k, label]) => (
               <button
                 key={k}
                 type="button"
@@ -401,7 +401,8 @@ export function BankTransferAdminCard() {
           </div>
           )}
 
-          {view === "wise" && <WiseIncomingCard hidePending />}
+          {view === "incoming" && <WiseIncomingCard hidePending />}
+          {view === "wise" && <WiseIncomingCard mode="settings" hidePending />}
         </>
       )}
     </section>
