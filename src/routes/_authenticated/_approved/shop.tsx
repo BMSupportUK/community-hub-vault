@@ -4580,8 +4580,44 @@ function PayOrderDialog({
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+  // An unexpired, unpaid invoice replaces the Pay button until it expires (24h).
+  const [liveInvoice, setLiveInvoice] = useState<{ url: string; expiresAt: number } | null>(null);
+  const [nowTick, setNowTick] = useState(() => Date.now());
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("order_invoices")
+        .select("public_url,status,created_at,updated_at")
+        .eq("order_id", orderId)
+        .maybeSingle();
+      if (cancelled) return;
+      const st = String(data?.status ?? "").toLowerCase();
+      if (data?.public_url && !["paid", "canceled", "cancelled", "void", "voided"].includes(st)) {
+        const base = new Date((data as any).updated_at || data.created_at).getTime();
+        setLiveInvoice({ url: data.public_url, expiresAt: base + 24 * 60 * 60 * 1000 });
+      } else setLiveInvoice(null);
+    })();
+    return () => { cancelled = true; };
+  }, [orderId, open]);
+  useEffect(() => {
+    const t = window.setInterval(() => setNowTick(Date.now()), 60_000);
+    return () => window.clearInterval(t);
+  }, []);
+  const invoiceActive = liveInvoice && liveInvoice.expiresAt > nowTick;
   return (
     <>
+      {invoiceActive ? (
+        <a
+          href={liveInvoice!.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-warning/15 text-warning border border-warning/40 font-medium hover:bg-warning/25 transition"
+        >
+          <CreditCard className="size-4" />
+          Invoice created — awaiting payment
+        </a>
+      ) : (
       <button
         type="button"
         onClick={() => setOpen(true)}
@@ -4590,6 +4626,7 @@ function PayOrderDialog({
         <CreditCard className="size-4" />
         Pay {fmt(amountCents)}
       </button>
+      )}
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
