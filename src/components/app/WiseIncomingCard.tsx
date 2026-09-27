@@ -288,7 +288,7 @@ export function WiseIncomingCard({
           <div>
             <h2 className="font-display font-bold">Incoming transfers (Wise)</h2>
             <p className="text-xs text-muted-foreground">
-              From Wise payment emails · last 14 days · refreshes every minute
+              From Wise payment emails · by year and month · refreshes every minute
             </p>
           </div>
         </div>
