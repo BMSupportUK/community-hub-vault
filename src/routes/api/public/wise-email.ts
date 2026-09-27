@@ -129,6 +129,16 @@ export const Route = createFileRoute("/api/public/wise-email")({
           excerpt: body.replace(/\s+/g, " ").trim().slice(0, 500),
         });
         if (error) return new Response("Save failed", { status: 500 });
+
+        // Alert admin/management in the staff notification bell.
+        const amount = (parsed.amountCents / 100).toFixed(2);
+        const who = parsed.senderName ?? "Unknown sender";
+        await supabaseAdmin.from("staff_notifications").insert({
+          kind: "wise_payment",
+          title: `Wise payment received: ${parsed.currency} ${amount}`,
+          body: `${who} paid ${parsed.currency} ${amount} — reference "${parsed.reference}". Check it against awaiting orders on the Bank Transfer page.`,
+          link_path: "/admin-bank-transfer",
+        });
         return new Response("ok");
       },
     },
