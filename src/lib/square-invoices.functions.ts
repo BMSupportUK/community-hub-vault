@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { isSettledPaymentStatus } from "@/lib/payment-status";
+import { voidStripeInvoiceForOrder } from "@/lib/stripe-invoices.functions";
 
 const baseUrl = () =>
   (process.env.SQUARE_ENVIRONMENT ?? "production").toLowerCase() === "sandbox"
