@@ -1009,7 +1009,7 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
     // A new competition/provider heading ends the preceding event. Never let
     // headings such as "UEFA NATIONS LEAGUE" become channels on the event
     // above them when Discord posts are pasted or combined.
-    if (explicitHeadings.has(line.toLowerCase())) {
+    if (explicitHeadings.has(line.toLowerCase()) && (!current || Boolean(current.title))) {
       flush();
       previousPlainLine = null;
       lastChannelWasPlain = null;
