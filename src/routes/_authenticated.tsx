@@ -120,10 +120,10 @@ function AuthLayout() {
   // again with the chevron at any time. Talk channels also show the channel
   // name on the slim bar.
   const inTalkChannel = /^\/home\/[^/]+$/.test(path);
-  const [talkHeaderExpanded, setTalkHeaderExpanded] = useState(path === "/");
+  const [talkHeaderExpanded, setTalkHeaderExpanded] = useState(path === "/home");
   const [talkChannelName, setTalkChannelName] = useState<string | null>(null);
   useEffect(() => {
-    setTalkHeaderExpanded(path === "/");
+    setTalkHeaderExpanded(path === "/home");
   }, [path]);
   const talkHeaderCollapsed = !talkHeaderExpanded;
   useEffect(() => {
