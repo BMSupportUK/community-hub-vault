@@ -18,7 +18,7 @@ import {
   getCryptoConfig,
   getCryptoInvoiceStatus,
 } from "@/lib/nowpayments.functions";
-import { StripeOrderPanel, verifyStripePaymentForOrder } from "@/components/app/StripeOrderPanel";
+import { verifyStripePaymentForOrder } from "@/components/app/StripeOrderPanel";
 import { confirmStripePayment } from "@/lib/stripe-payments.functions";
 import {
   createStripeInvoiceForOrder,
@@ -265,12 +265,6 @@ export function PayOrderDialog({
               </TabsContent>
               <TabsContent value="stripe" className="mt-3">
                 <StripeInvoicePanel orderId={orderId} amountCents={amountCents} onChange={handleChange} />
-                <StripeOrderPanel
-                  orderId={orderId}
-                  amountCents={amountCents}
-                  canPay
-                  onChange={handleChange}
-                />
               </TabsContent>
               <TabsContent value="usdt" className="mt-3">
                 <CryptoPanel orderId={orderId} amountCents={amountCents} canPay onChange={handleChange} />
@@ -418,7 +412,6 @@ function StripeInvoicePanel({
   const { format = fallbackFormat } = useCurrency();
   const createInvoice = useServerFn(createStripeInvoiceForOrder);
   const refreshInvoice = useServerFn(refreshStripeInvoiceStatus);
-  const confirmStripeFn = useServerFn(confirmStripePayment);
 
   useEffect(() => {
     let cancelled = false;
@@ -465,12 +458,6 @@ function StripeInvoicePanel({
     setBusy(true);
     setErr(null);
     try {
-      const stripeRes: any = await verifyStripePaymentForOrder(confirmStripeFn, orderId);
-      if (stripeRes && !("error" in stripeRes)) {
-        setStatus("PAID");
-        await onChange?.();
-        return;
-      }
       const res: any = await refreshInvoice({ data: { orderId, environment: getStripeEnvironment() } });
       if (res?.error) {
         setErr(res.error);
