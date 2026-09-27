@@ -6331,7 +6331,7 @@ export type Database = {
         }[]
       }
       admin_complete_manual_order: {
-        Args: { _method: string; _order_id: string }
+        Args: { _method: string; _order_id: string; _reference?: string }
         Returns: undefined
       }
       admin_create_manual_order: {

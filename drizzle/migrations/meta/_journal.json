@@ -197,6 +197,13 @@
       "when": 1790534737213,
       "tag": "0027_manual_order_payment_method",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1790535237670,
+      "tag": "0028_manual_order_payment_reference",
+      "breakpoints": true
     }
   ]
 }
