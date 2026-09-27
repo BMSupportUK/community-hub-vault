@@ -9,6 +9,7 @@ import { backfillVpnDetection } from "@/lib/vpn-backfill.functions";
 import { unlockWithStaffPin, requestStaffPinReset } from "@/lib/staff-pin.functions";
 import { StaffPinAdminCard } from "@/components/app/StaffPinAdminCard";
 import { CardPaymentsAdminCard } from "@/components/app/CardPaymentsAdminCard";
+import { OrderStatusAdminCard } from "@/components/app/OrderStatusAdminCard";
 import { setAppTheme, useDefaultAppTheme } from "@/hooks/use-app-theme";
 import { applyNavOrder, setLandingNavOrder, useLandingNavOrder } from "@/hooks/use-landing-nav-order";
 import { ArrowDown, ArrowUp } from "lucide-react";
@@ -439,7 +440,7 @@ function DashboardBody() {
   const { hasRole } = useAuth();
   const isAdminOnly = hasRole("admin");
   const canSeePins = isAdminOnly || hasRole("management");
-  const [tab, setTab] = useState<"tools" | "square" | "stripe" | "bank-transfer" | "staff-pins" | "backup-codes" | "theme" | "header-links">("tools");
+  const [tab, setTab] = useState<"tools" | "order-status" | "square" | "stripe" | "bank-transfer" | "staff-pins" | "backup-codes" | "theme" | "header-links">("tools");
 
 
 
@@ -488,6 +489,7 @@ function DashboardBody() {
 
   const tabs = ([
     ["tools", "Owner tools", false],
+    ["order-status", "Order status", true],
     ["square", "Square", true],
     ["stripe", "Stripe", true],
     ["bank-transfer", "Bank transfer", "bank"],
@@ -524,7 +526,9 @@ function DashboardBody() {
         ))}
       </div>
 
-      {tab === "square" && canSeePins ? (
+      {tab === "order-status" && canSeePins ? (
+        <OrderStatusAdminCard />
+      ) : tab === "square" && canSeePins ? (
         <CardPaymentsAdminCard provider="square" />
       ) : tab === "stripe" && canSeePins ? (
         <CardPaymentsAdminCard provider="stripe" />
