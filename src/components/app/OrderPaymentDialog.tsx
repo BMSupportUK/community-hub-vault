@@ -18,8 +18,6 @@ import {
   getCryptoConfig,
   getCryptoInvoiceStatus,
 } from "@/lib/nowpayments.functions";
-import { verifyStripePaymentForOrder } from "@/components/app/StripeOrderPanel";
-import { confirmStripePayment } from "@/lib/stripe-payments.functions";
 import {
   createStripeInvoiceForOrder,
   refreshStripeInvoiceStatus,
@@ -295,8 +293,6 @@ function SquareInvoicePanel({
   const { format = fallbackFormat } = useCurrency();
   const createInvoice = useServerFn(createSquareInvoiceForOrder);
   const refreshInvoice = useServerFn(refreshSquareInvoiceStatus);
-  const confirmStripeFn = useServerFn(confirmStripePayment);
-
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -341,12 +337,6 @@ function SquareInvoicePanel({
     setBusy(true);
     setErr(null);
     try {
-      const stripeRes: any = await verifyStripePaymentForOrder(confirmStripeFn, orderId);
-      if (stripeRes && !("error" in stripeRes)) {
-        setStatus("PAID");
-        await onChange?.();
-        return;
-      }
       const res: any = await refreshInvoice({ data: { orderId } });
       if (res?.status) setStatus(res.status);
       if (res?.public_url) setUrl(res.public_url);
