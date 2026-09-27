@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Landmark, Loader2, Plus, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
 import {
   getBankTransferAdminData,
   grantBankTransfer,
@@ -83,9 +84,22 @@ export function BankTransferAdminCard() {
   if (!isOwner) return null;
 
 
+  const [mfaOpen, setMfaOpen] = useState(false);
+  const [mfaCode, setMfaCode] = useState("");
+
   const doSave = async () => {
+    const code = mfaCode.replace(/\s/g, "");
+    if (!/^\d{6}$/.test(code)) {
+      toast.error("Enter the 6-digit code from your authenticator app");
+      return;
+    }
     setBusy(true);
     try {
+      const { data: f } = await supabase.auth.mfa.listFactors();
+      const factor = f?.totp?.find((x: any) => x.status === "verified");
+      if (!factor) throw new Error("Set up 2FA on your account first");
+      const { error: vErr } = await supabase.auth.mfa.challengeAndVerify({ factorId: factor.id, code });
+      if (vErr) throw new Error("Wrong 2FA code");
       await save({
         data: {
           account_name: form.account_name,
@@ -98,6 +112,8 @@ export function BankTransferAdminCard() {
         },
       });
       toast.success("Bank details saved");
+      setMfaOpen(false);
+      setMfaCode("");
     } catch (e: any) {
       toast.error(e?.message ?? "Save failed");
     } finally {
@@ -233,13 +249,31 @@ export function BankTransferAdminCard() {
               value={form.instructions}
               onChange={(e) => setForm({ ...form, instructions: e.target.value })}
             />
+            {mfaOpen && (
+              <div className="space-y-2 rounded-lg border border-border p-3">
+                <div className="text-sm font-medium">Enter your 2FA code to save</div>
+                <input
+                  className={input}
+                  inputMode="numeric"
+                  autoFocus
+                  maxLength={6}
+                  placeholder="6-digit code"
+                  value={mfaCode}
+                  onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, ""))}
+                  onKeyDown={(e) => e.key === "Enter" && doSave()}
+                />
+                <button type="button" onClick={() => { setMfaOpen(false); setMfaCode(""); }} className="text-xs text-muted-foreground underline">
+                  Cancel
+                </button>
+              </div>
+            )}
             <button
-              onClick={doSave}
+              onClick={() => (mfaOpen ? doSave() : setMfaOpen(true))}
               disabled={busy}
               className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-primary text-primary-foreground text-sm font-medium disabled:opacity-60"
             >
               {busy ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
-              Save bank details
+              {mfaOpen ? "Confirm and save" : "Save bank details"}
             </button>
           </div>
           )}
