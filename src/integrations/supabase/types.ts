@@ -6025,6 +6025,42 @@ export type Database = {
         }
         Relationships: []
       }
+      wise_email_payments: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          currency: string
+          excerpt: string
+          id: string
+          received_at: string
+          reference: string
+          sender_name: string | null
+          subject: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          currency?: string
+          excerpt?: string
+          id?: string
+          received_at?: string
+          reference?: string
+          sender_name?: string | null
+          subject?: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          currency?: string
+          excerpt?: string
+          id?: string
+          received_at?: string
+          reference?: string
+          sender_name?: string | null
+          subject?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       app_credentials: {
