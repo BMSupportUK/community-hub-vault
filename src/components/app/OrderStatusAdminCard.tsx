@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { ProfitCostsDialog } from "./ProfitCostsDialog";
 
 type Row = {
   id: string;
@@ -68,9 +69,12 @@ export function OrderStatusAdminCard() {
 
   return (
     <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
-      <div>
-        <h2 className="font-display text-lg font-semibold">Order status</h2>
-        <p className="text-sm text-muted-foreground">Every order with its current status, by year and month.</p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="font-display text-lg font-semibold">Order status</h2>
+          <p className="text-sm text-muted-foreground">Every order with its current status, by year and month.</p>
+        </div>
+        <ProfitCostsDialog />
       </div>
 
       {error ? <p className="text-sm text-destructive">Could not load orders: {error}</p>
