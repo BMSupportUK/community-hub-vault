@@ -23,11 +23,14 @@ function calc(o: Order): Calc {
   return { revenue: o.total_cents, cost, missing };
 }
 
+const METHOD_LABELS: Record<string, string> = { square: "Square", stripe: "Stripe", wise: "Wise", bank_transfer: "Bank transfer", cash: "Cash", crypto: "Crypto", manual: "Manual" };
+
 export function ProfitCostsPanel() {
-  const [tab, setTab] = useState<"profit" | "costs">("profit");
+  const [tab, setTab] = useState<string>("profit");
   const [products, setProducts] = useState<Product[] | null>(null);
   const [costs, setCosts] = useState<Record<string, string>>({});
   const [orders, setOrders] = useState<Order[] | null>(null);
+  const [methodOf, setMethodOf] = useState<Record<string, string>>({});
   const [year, setYear] = useState<number | null>(null);
   const [month, setMonth] = useState<number | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
@@ -46,11 +49,16 @@ export function ProfitCostsPanel() {
     setCosts(m);
     const ids = (o.data ?? []).map((x) => x.id as string);
     const items: (Item & { order_id: string })[] = [];
+    const methods: Record<string, string> = {};
     for (let i = 0; i < ids.length; i += 200) {
-      const r = await supabase.from("order_items").select("order_id, product_id, product_name, unit_price_cents, quantity, unit_cost_cents").in("order_id", ids.slice(i, i + 200));
+      const chunk = ids.slice(i, i + 200);
+      const r = await supabase.from("order_items").select("order_id, product_id, product_name, unit_price_cents, quantity, unit_cost_cents").in("order_id", chunk);
       if (r.error) { toast.error(r.error.message); return; }
       items.push(...((r.data ?? []) as (Item & { order_id: string })[]));
+      const pay = await supabase.from("order_payments").select("order_id, provider").in("order_id", chunk);
+      if (!pay.error) for (const row of pay.data ?? []) if (row.order_id && row.provider && !methods[row.order_id]) methods[row.order_id] = row.provider;
     }
+    setMethodOf(methods);
     setOrders(((o.data ?? []) as unknown as Order[]).map((x) => ({ ...x, order_items: items.filter((i) => i.order_id === x.id) })).filter((x) => PROFIT_STATUSES.includes(x.status?.toLowerCase())));
     setLoaded(true);
   };
