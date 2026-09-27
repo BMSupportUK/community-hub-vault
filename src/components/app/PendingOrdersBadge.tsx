@@ -30,7 +30,7 @@ export function PendingOrdersBadge() {
         const paid = !!r.paid_at;
         if (r.status === "pending" && !paid) n += 1;
         else if (r.status === "processing" && !paid) a += 1;
-        else if (!paid || r.status === "paid") s += 1;
+        else s += 1;
       }
       setNewCount(n);
       setAwaitingCount(a);
