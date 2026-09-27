@@ -495,7 +495,7 @@ function DashboardBody() {
   const tabs = ([
     ["tools", "Owner tools", false],
     ["order-status", "Order status", true],
-    ["profit-costs", "Profit & costs", true],
+    ["profit-costs", "Profit & costs", "profit"],
     ["square", "Square", true],
     ["stripe", "Stripe", true],
     ["bank-transfer", "Bank transfer", "bank"],
