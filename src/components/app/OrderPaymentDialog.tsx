@@ -357,6 +357,10 @@ function SquareInvoicePanel({
       <div className="text-xs text-muted-foreground leading-relaxed">
         Pay securely via a hosted Square invoice. Card, Apple Pay, and Google Pay are supported on
         the invoice page. Total {format(amountCents)}.
+        <span className="block mt-1 font-medium text-foreground">
+          Your payment link is valid for 24 hours from when it's created — after that it expires and
+          you'll need a fresh one.
+        </span>
       </div>
       {url ? (
         <div className="space-y-2">
@@ -472,6 +476,10 @@ function StripeInvoicePanel({
       <div className="text-xs text-muted-foreground leading-relaxed">
         Pay securely via a hosted Stripe invoice. Card, Apple Pay, and Google Pay are supported on
         the invoice page. Total {format(amountCents)}.
+        <span className="block mt-1 font-medium text-foreground">
+          Your payment link is valid for 24 hours from when it's created — after that it expires and
+          you'll need a fresh one.
+        </span>
       </div>
       {url ? (
         <div className="space-y-2">

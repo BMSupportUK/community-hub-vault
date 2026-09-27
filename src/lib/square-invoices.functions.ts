@@ -166,7 +166,7 @@ export const createSquareInvoiceForOrder = createServerFn({ method: "POST" })
           primary_recipient: { customer_id: customerId },
           payment_requests: [{
             request_type: "BALANCE",
-            due_date: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+            due_date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
           }],
           delivery_method: "SHARE_MANUALLY",
           accepted_payment_methods: { card: true, square_gift_card: false, bank_account: false, buy_now_pay_later: false },
