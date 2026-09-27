@@ -56,6 +56,7 @@ import { Route as AuthenticatedApprovedAdminFantasyScoringRouteImport } from './
 import { Route as AuthenticatedApprovedAdminFantasySquadNumbersRouteImport } from './routes/_authenticated/_approved/admin-fantasy-squad-numbers'
 import { Route as AuthenticatedApprovedAdminForumRouteImport } from './routes/_authenticated/_approved/admin-forum'
 import { Route as AuthenticatedApprovedAdminHeroBoxesRouteImport } from './routes/_authenticated/_approved/admin-hero-boxes'
+import { Route as AuthenticatedApprovedAdminIncomingTransfersRouteImport } from './routes/_authenticated/_approved/admin-incoming-transfers'
 import { Route as AuthenticatedApprovedAdminNameplatesRouteImport } from './routes/_authenticated/_approved/admin-nameplates'
 import { Route as AuthenticatedApprovedAdminNotificationsRouteImport } from './routes/_authenticated/_approved/admin-notifications'
 import { Route as AuthenticatedApprovedAdminPackagesRouteImport } from './routes/_authenticated/_approved/admin-packages'
@@ -410,6 +411,12 @@ const AuthenticatedApprovedAdminHeroBoxesRoute =
   AuthenticatedApprovedAdminHeroBoxesRouteImport.update({
     id: '/admin-hero-boxes',
     path: '/admin-hero-boxes',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedAdminIncomingTransfersRoute =
+  AuthenticatedApprovedAdminIncomingTransfersRouteImport.update({
+    id: '/admin-incoming-transfers',
+    path: '/admin-incoming-transfers',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
 const AuthenticatedApprovedAdminNameplatesRoute =
@@ -1065,6 +1072,7 @@ export interface FileRoutesByFullPath {
   '/admin-fantasy-squad-numbers': typeof AuthenticatedApprovedAdminFantasySquadNumbersRoute
   '/admin-forum': typeof AuthenticatedApprovedAdminForumRoute
   '/admin-hero-boxes': typeof AuthenticatedApprovedAdminHeroBoxesRoute
+  '/admin-incoming-transfers': typeof AuthenticatedApprovedAdminIncomingTransfersRoute
   '/admin-nameplates': typeof AuthenticatedApprovedAdminNameplatesRoute
   '/admin-notifications': typeof AuthenticatedApprovedAdminNotificationsRoute
   '/admin-packages': typeof AuthenticatedApprovedAdminPackagesRoute
@@ -1212,6 +1220,7 @@ export interface FileRoutesByTo {
   '/admin-fantasy-squad-numbers': typeof AuthenticatedApprovedAdminFantasySquadNumbersRoute
   '/admin-forum': typeof AuthenticatedApprovedAdminForumRoute
   '/admin-hero-boxes': typeof AuthenticatedApprovedAdminHeroBoxesRoute
+  '/admin-incoming-transfers': typeof AuthenticatedApprovedAdminIncomingTransfersRoute
   '/admin-nameplates': typeof AuthenticatedApprovedAdminNameplatesRoute
   '/admin-notifications': typeof AuthenticatedApprovedAdminNotificationsRoute
   '/admin-packages': typeof AuthenticatedApprovedAdminPackagesRoute
@@ -1363,6 +1372,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/admin-fantasy-squad-numbers': typeof AuthenticatedApprovedAdminFantasySquadNumbersRoute
   '/_authenticated/_approved/admin-forum': typeof AuthenticatedApprovedAdminForumRoute
   '/_authenticated/_approved/admin-hero-boxes': typeof AuthenticatedApprovedAdminHeroBoxesRoute
+  '/_authenticated/_approved/admin-incoming-transfers': typeof AuthenticatedApprovedAdminIncomingTransfersRoute
   '/_authenticated/_approved/admin-nameplates': typeof AuthenticatedApprovedAdminNameplatesRoute
   '/_authenticated/_approved/admin-notifications': typeof AuthenticatedApprovedAdminNotificationsRoute
   '/_authenticated/_approved/admin-packages': typeof AuthenticatedApprovedAdminPackagesRoute
@@ -1514,6 +1524,7 @@ export interface FileRouteTypes {
     | '/admin-fantasy-squad-numbers'
     | '/admin-forum'
     | '/admin-hero-boxes'
+    | '/admin-incoming-transfers'
     | '/admin-nameplates'
     | '/admin-notifications'
     | '/admin-packages'
@@ -1661,6 +1672,7 @@ export interface FileRouteTypes {
     | '/admin-fantasy-squad-numbers'
     | '/admin-forum'
     | '/admin-hero-boxes'
+    | '/admin-incoming-transfers'
     | '/admin-nameplates'
     | '/admin-notifications'
     | '/admin-packages'
@@ -1811,6 +1823,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/admin-fantasy-squad-numbers'
     | '/_authenticated/_approved/admin-forum'
     | '/_authenticated/_approved/admin-hero-boxes'
+    | '/_authenticated/_approved/admin-incoming-transfers'
     | '/_authenticated/_approved/admin-nameplates'
     | '/_authenticated/_approved/admin-notifications'
     | '/_authenticated/_approved/admin-packages'
@@ -2312,6 +2325,13 @@ declare module '@tanstack/react-router' {
       path: '/admin-hero-boxes'
       fullPath: '/admin-hero-boxes'
       preLoaderRoute: typeof AuthenticatedApprovedAdminHeroBoxesRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/admin-incoming-transfers': {
+      id: '/_authenticated/_approved/admin-incoming-transfers'
+      path: '/admin-incoming-transfers'
+      fullPath: '/admin-incoming-transfers'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminIncomingTransfersRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
     '/_authenticated/_approved/admin-nameplates': {
@@ -3137,6 +3157,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedAdminFantasySquadNumbersRoute: typeof AuthenticatedApprovedAdminFantasySquadNumbersRoute
   AuthenticatedApprovedAdminForumRoute: typeof AuthenticatedApprovedAdminForumRoute
   AuthenticatedApprovedAdminHeroBoxesRoute: typeof AuthenticatedApprovedAdminHeroBoxesRoute
+  AuthenticatedApprovedAdminIncomingTransfersRoute: typeof AuthenticatedApprovedAdminIncomingTransfersRoute
   AuthenticatedApprovedAdminNameplatesRoute: typeof AuthenticatedApprovedAdminNameplatesRoute
   AuthenticatedApprovedAdminNotificationsRoute: typeof AuthenticatedApprovedAdminNotificationsRoute
   AuthenticatedApprovedAdminPackagesRoute: typeof AuthenticatedApprovedAdminPackagesRoute
@@ -3222,6 +3243,8 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
   AuthenticatedApprovedAdminForumRoute: AuthenticatedApprovedAdminForumRoute,
   AuthenticatedApprovedAdminHeroBoxesRoute:
     AuthenticatedApprovedAdminHeroBoxesRoute,
+  AuthenticatedApprovedAdminIncomingTransfersRoute:
+    AuthenticatedApprovedAdminIncomingTransfersRoute,
   AuthenticatedApprovedAdminNameplatesRoute:
     AuthenticatedApprovedAdminNameplatesRoute,
   AuthenticatedApprovedAdminNotificationsRoute:
