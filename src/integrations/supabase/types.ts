@@ -6221,6 +6221,7 @@ export type Database = {
           email: string | null
           existing_username: string | null
           id: string | null
+          manual_pay_method: string | null
           notes: string | null
           order_ref: string | null
           paid_at: string | null
@@ -6243,6 +6244,7 @@ export type Database = {
           email?: never
           existing_username?: string | null
           id?: string | null
+          manual_pay_method?: string | null
           notes?: string | null
           order_ref?: string | null
           paid_at?: string | null
@@ -6265,6 +6267,7 @@ export type Database = {
           email?: never
           existing_username?: string | null
           id?: string | null
+          manual_pay_method?: string | null
           notes?: string | null
           order_ref?: string | null
           paid_at?: string | null
