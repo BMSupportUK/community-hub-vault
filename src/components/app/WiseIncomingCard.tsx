@@ -15,7 +15,17 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { confirmBankTransferReceived } from "@/lib/bank-transfer.functions";
-import { dismissGmailConfirmation, getWiseIncomingTransfers, revealWiseForwardUrl, type WiseFeed } from "@/lib/wise.functions";
+import { allocateWisePayment, dismissGmailConfirmation, getWiseIncomingTransfers, revealWiseForwardUrl, type WiseFeed } from "@/lib/wise.functions";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { supabase } from "@/integrations/supabase/client";
 
 const fmt = (cents: number) =>
@@ -44,6 +54,14 @@ export function WiseIncomingCard({
   const [revealing, setRevealing] = useState(false);
   const [revealedUrl, setRevealedUrl] = useState<string | null>(null);
   const dismissConfirmation = useServerFn(dismissGmailConfirmation);
+  const allocate = useServerFn(allocateWisePayment);
+  const [allocating, setAllocating] = useState<{
+    paymentId: string;
+    amountCents: number;
+    sender: string | null;
+    order: { orderId: string; reference: string; customerName: string | null; amountCents: number };
+  } | null>(null);
+  const [allocBusy, setAllocBusy] = useState(false);
   const [dismissing, setDismissing] = useState(false);
 
   const doDismissConfirmation = async () => {
@@ -101,6 +119,21 @@ export function WiseIncomingCard({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const doAllocate = async () => {
+    if (!allocating) return;
+    setAllocBusy(true);
+    try {
+      await allocate({ data: { paymentId: allocating.paymentId, orderId: allocating.order.orderId } });
+      toast.success("Payment allocated to the order.");
+      setAllocating(null);
+      await load();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not allocate payment");
+    } finally {
+      setAllocBusy(false);
+    }
+  };
 
   const doConfirm = async (orderId: string) => {
     setBusyOrder(orderId);
@@ -382,7 +415,7 @@ export function WiseIncomingCard({
                   <Button
                     type="button"
                     size="sm"
-                    disabled={busyOrder !== null || settled || !t.match.exact}
+                    disabled={busyOrder !== null || settled}
                     onClick={() => t.match && void doConfirm(t.match.orderId)}
                     className="h-auto px-3 py-1.5 text-xs rounded-lg"
                   >
@@ -396,11 +429,52 @@ export function WiseIncomingCard({
                     {settled ? "Confirmed" : "Confirm received"}
                   </Button>
                 </div>
-              ) : null}
+              ) : (
+                <select
+                  aria-label="Allocate to order"
+                  value=""
+                  disabled={pending.length === 0}
+                  onChange={(e) => {
+                    const p = pending.find((x) => x.orderId === e.target.value);
+                    if (p) setAllocating({ paymentId: t.id, amountCents: t.amountCents, sender: t.senderName, order: p });
+                  }}
+                  className="rounded-lg border border-border bg-background px-2 py-1.5 text-xs max-w-[260px]"
+                >
+                  <option value="">{pending.length ? "Select the order this pays…" : "No orders awaiting payment"}</option>
+                  {pending.map((p) => (
+                    <option key={p.orderId} value={p.orderId}>
+                      {p.customerName ?? "Customer"} · {p.reference} · {fmt(p.amountCents)}
+                    </option>
+                  ))}
+                </select>
+              )}
             </li>
           );
         })}
       </ul>
+
+      <AlertDialog open={!!allocating} onOpenChange={(o) => { if (!o && !allocBusy) setAllocating(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Is this the right order?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {allocating ? (
+                <>
+                  Allocate the {fmt(allocating.amountCents)} payment from {allocating.sender ?? "Unknown sender"} to{" "}
+                  {allocating.order.customerName ?? "Customer"}'s order {allocating.order.reference} ({fmt(allocating.order.amountCents)})?
+                  {Math.abs(allocating.amountCents - allocating.order.amountCents) > 1 ? " The amounts do not match." : ""}
+                </>
+              ) : null}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={allocBusy}>No, cancel</AlertDialogCancel>
+            <AlertDialogAction disabled={allocBusy} onClick={(e) => { e.preventDefault(); void doAllocate(); }}>
+              {allocBusy ? <Loader2 className="size-3.5 animate-spin" /> : null} Yes, this is the right order
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {!hidePending && pending.length > 0 ? (
         <div className="rounded-xl border border-border bg-surface-2/60 p-3 space-y-1.5">

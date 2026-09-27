@@ -90,6 +90,76 @@ export const revealWiseForwardUrl = createServerFn({ method: "POST" })
     return { forwardUrl: `${origin}/api/public/wise-email?token=${token}` };
   });
 
+/** Admin/management manually allocate a Wise payment to one order. */
+export const allocateWisePayment = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { paymentId: string; orderId: string }) => {
+    const uuid = /^[0-9a-f-]{36}$/i;
+    if (!uuid.test(d?.paymentId ?? "") || !uuid.test(d?.orderId ?? "")) throw new Error("Invalid selection");
+    return d;
+  })
+  .handler(async ({ data, context }): Promise<{ ok: true }> => {
+    const { data: roleRows } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .in("role", ["admin", "management"]);
+    if (!roleRows?.length) throw new Error("Only admin or management can allocate payments");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: pay } = await supabaseAdmin
+      .from("wise_email_payments")
+      .select("id,matched_order_id,amount_cents,currency,sender_name,reference")
+      .eq("id", data.paymentId)
+      .maybeSingle();
+    if (!pay) throw new Error("Payment not found");
+    if (pay.matched_order_id) throw new Error("This payment is already allocated to an order");
+
+    const { data: order } = await supabaseAdmin
+      .from("orders")
+      .select("id,user_id,paid_at,status")
+      .eq("id", data.orderId)
+      .maybeSingle();
+    if (!order || order.paid_at || order.status === "cancelled") throw new Error("That order is no longer awaiting payment");
+
+    const { data: already } = await supabaseAdmin
+      .from("wise_email_payments")
+      .select("id")
+      .eq("matched_order_id", data.orderId)
+      .limit(1);
+    if (already?.length) throw new Error("That order already has a payment allocated");
+
+    const { error } = await supabaseAdmin
+      .from("wise_email_payments")
+      .update({ matched_order_id: data.orderId })
+      .eq("id", data.paymentId)
+      .is("matched_order_id", null);
+    if (error) throw new Error("Could not save the allocation");
+
+    // Silent staff-only note in the order's ticket.
+    try {
+      const { data: ticket } = await supabaseAdmin
+        .from("tickets")
+        .select("id")
+        .eq("order_id", data.orderId)
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (ticket) {
+        const amount = (Number(pay.amount_cents) / 100).toFixed(2);
+        await supabaseAdmin.from("ticket_messages").insert({
+          ticket_id: ticket.id,
+          sender_id: order.user_id,
+          content: `🤖 Automated staff note — @admin @management: a Wise payment of ${pay.currency ?? "GBP"} ${amount} from ${pay.sender_name ?? "Unknown sender"} (reference "${pay.reference ?? ""}") has been allocated to this order. Approve it on the Bank Transfer page.`,
+          is_internal: true,
+        } as never);
+      }
+    } catch {
+      // The allocation is saved even if the note fails.
+    }
+    return { ok: true };
+  });
+
 export const getWiseIncomingTransfers = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<WiseFeed> => {
@@ -255,16 +325,9 @@ export const getWiseIncomingTransfers = createServerFn({ method: "POST" })
           storedOrders[String(o.id)] = { userId: String(o.user_id), amountCents: Number(o.total_cents ?? 0) };
         }
       }
-      const pendingByCode = new Map<string, { p: PendingBankOrder; reference: string }>();
-      for (const p of pendingRows) {
-        const code = normalizeCode(p.reference);
-        if (code.length >= 5) pendingByCode.set(code, { p, reference: p.reference });
-      }
-
+      // Only manual allocations count — no automatic matching.
       feed.transactions = incoming.map((t) => {
-        const haystack = normalizeCode([t.reference, t.description, t.senderName ?? ""].join(" "));
         let match: WiseMatch | null = null;
-        // A stored match wins — it was made while the order was still pending.
         if (t.storedOrderId && storedOrders[t.storedOrderId]) {
           const o = storedOrders[t.storedOrderId];
           match = {
@@ -275,32 +338,6 @@ export const getWiseIncomingTransfers = createServerFn({ method: "POST" })
             exact: true,
             kind: "reference",
           };
-        }
-        for (const [code, { p, reference }] of pendingByCode) {
-          if (match || !haystack.includes(code)) continue;
-          const exact = Math.abs(t.amountCents - p.amountCents) <= 1;
-          match = {
-            orderId: p.orderId,
-            reference,
-            customerName: names[p.userId] ?? null,
-            amountCents: p.amountCents,
-            exact,
-            kind: "reference",
-          };
-          break;
-        }
-        if (!match) {
-          const amountMatch = pendingRows.find((p) => Math.abs(t.amountCents - p.amountCents) <= 1);
-          if (amountMatch) {
-            match = {
-              orderId: amountMatch.orderId,
-              reference: amountMatch.reference,
-              customerName: names[amountMatch.userId] ?? null,
-              amountCents: amountMatch.amountCents,
-              exact: true,
-              kind: "amount",
-            };
-          }
         }
         return { ...t, match };
       });
