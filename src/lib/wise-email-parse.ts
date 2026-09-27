@@ -40,6 +40,7 @@ export function parseWiseEmail(subject: string, body: string): ParsedWiseEmail |
     text.match(/([£€$])\s?([\d,]+(?:\.\d{1,2})?)/) ??
     null;
   const amtCode = text.match(/([\d,]+(?:\.\d{1,2})?)\s?(GBP|EUR|USD)\b/);
+  const codeAmt = text.match(/\b(GBP|EUR|USD)\s?([\d,]+(?:\.\d{1,2})?)/i);
   let amountCents = NaN;
   let currency = "GBP";
   if (amt) {
@@ -48,6 +49,9 @@ export function parseWiseEmail(subject: string, body: string): ParsedWiseEmail |
   } else if (amtCode) {
     amountCents = toCents(amtCode[1]);
     currency = amtCode[2];
+  } else if (codeAmt) {
+    amountCents = toCents(codeAmt[2]);
+    currency = codeAmt[1].toUpperCase();
   }
   if (!Number.isFinite(amountCents) || amountCents <= 0) return null;
 
