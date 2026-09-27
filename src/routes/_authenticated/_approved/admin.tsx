@@ -555,26 +555,7 @@ function DashboardBody() {
       ) : tab === "cash" && canSeePins ? (
         <CardPaymentsAdminCard provider="cash" />
       ) : tab === "bank-transfer-orders" && canSeePins ? (
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-          <div className="space-y-6">
-            <CardPaymentsAdminCard provider="bank_transfer" />
-          </div>
-          <div className="space-y-6">
-            <AwaitingPaymentsSidebar />
-            <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
-              <div>
-                <h3 className="font-display font-semibold">Incoming transfers (Wise)</h3>
-                <p className="text-xs text-muted-foreground">From Wise payment emails, by year and month.</p>
-              </div>
-              <Link
-                to="/admin-incoming-transfers"
-                className="inline-flex w-full items-center justify-center rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
-              >
-                Click to view transfers
-              </Link>
-            </div>
-          </div>
-        </div>
+        <BankTransferOrdersTabs />
       ) : tab === "bank-transfer" && isAdminOnly ? (
         <div className="max-w-2xl grid sm:grid-cols-2 gap-3">
           {([
