@@ -8,6 +8,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { backfillVpnDetection } from "@/lib/vpn-backfill.functions";
 import { unlockWithStaffPin, requestStaffPinReset } from "@/lib/staff-pin.functions";
 import { StaffPinAdminCard } from "@/components/app/StaffPinAdminCard";
+import { CardPaymentsAdminCard } from "@/components/app/CardPaymentsAdminCard";
 import { setAppTheme, useDefaultAppTheme } from "@/hooks/use-app-theme";
 import { applyNavOrder, setLandingNavOrder, useLandingNavOrder } from "@/hooks/use-landing-nav-order";
 import { ArrowDown, ArrowUp } from "lucide-react";
@@ -438,7 +439,7 @@ function DashboardBody() {
   const { hasRole } = useAuth();
   const isAdminOnly = hasRole("admin");
   const canSeePins = isAdminOnly || hasRole("management");
-  const [tab, setTab] = useState<"tools" | "staff-pins" | "backup-codes" | "theme" | "header-links">("tools");
+  const [tab, setTab] = useState<"tools" | "payments" | "staff-pins" | "backup-codes" | "theme" | "header-links">("tools");
 
 
 
@@ -488,6 +489,7 @@ function DashboardBody() {
 
   const tabs = ([
     ["tools", "Owner tools", false],
+    ["payments", "Payments", true],
     ["staff-pins", "Staff PINs", true],
     ["backup-codes", "Backup codes", true],
     ["theme", "Theme", false],
@@ -519,7 +521,9 @@ function DashboardBody() {
         ))}
       </div>
 
-      {tab === "staff-pins" && canSeePins ? (
+      {tab === "payments" && canSeePins ? (
+        <CardPaymentsAdminCard />
+      ) : tab === "staff-pins" && canSeePins ? (
         <StaffPinAdminCard />
       ) : tab === "backup-codes" && canSeePins ? (
         <div className="max-w-2xl">
