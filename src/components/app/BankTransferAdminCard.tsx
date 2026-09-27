@@ -135,9 +135,24 @@ export function BankTransferAdminCard() {
     }
   };
 
-  const doGrant = async (userId: string) => {
+  const [grantMfaFor, setGrantMfaFor] = useState<string | null>(null);
+  const [grantMfaCode, setGrantMfaCode] = useState("");
+
+  const doGrant = async () => {
+    const userId = grantMfaFor;
+    if (!userId) return;
+    const code = grantMfaCode.replace(/\s/g, "");
+    if (!/^\d{6}$/.test(code)) {
+      toast.error("Enter the 6-digit code from your authenticator app");
+      return;
+    }
     setBusy(true);
     try {
+      const { data: f } = await supabase.auth.mfa.listFactors();
+      const factor = f?.totp?.find((x: any) => x.status === "verified");
+      if (!factor) throw new Error("Set up 2FA on your account first");
+      const { error: vErr } = await supabase.auth.mfa.challengeAndVerify({ factorId: factor.id, code });
+      if (vErr) throw new Error("Wrong 2FA code");
       await grant({
         data: { userId, expiresAt: expiry ? new Date(expiry).toISOString() : null, note: null },
       });
@@ -145,6 +160,8 @@ export function BankTransferAdminCard() {
       setQuery("");
       setResults([]);
       setExpiry("");
+      setGrantMfaFor(null);
+      setGrantMfaCode("");
       await load();
     } catch (e: any) {
       toast.error(e?.message ?? "Could not grant access");
