@@ -544,8 +544,6 @@ function DashboardBody() {
 
       {tab === "order-status" && canSeePins ? (
         <OrderStatusAdminCard />
-      ) : tab === "profit-costs" && canSeePins ? (
-        <ProfitCostsPanel />
       ) : tab === "square" && canSeePins ? (
         <CardPaymentsAdminCard provider="square" />
       ) : tab === "stripe" && canSeePins ? (
