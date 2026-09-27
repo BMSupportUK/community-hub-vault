@@ -6222,6 +6222,7 @@ export type Database = {
           existing_username: string | null
           id: string | null
           notes: string | null
+          order_ref: string | null
           paid_at: string | null
           paid_by: string | null
           shipping_address: string | null
@@ -6243,6 +6244,7 @@ export type Database = {
           existing_username?: string | null
           id?: string | null
           notes?: string | null
+          order_ref?: string | null
           paid_at?: string | null
           paid_by?: string | null
           shipping_address?: never
@@ -6264,6 +6266,7 @@ export type Database = {
           existing_username?: string | null
           id?: string | null
           notes?: string | null
+          order_ref?: string | null
           paid_at?: string | null
           paid_by?: string | null
           shipping_address?: never
