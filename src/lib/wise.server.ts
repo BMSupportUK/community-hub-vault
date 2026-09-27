@@ -112,19 +112,20 @@ async function getStatement(
     `/v2/profiles/${profileId}/balance-statements/${balanceId}/statement.json?${qs}`,
     `/profiles/${profileId}/balance-statements/${balanceId}/statement.json?${qs}`,
   ];
+  const failures: string[] = [];
   for (const path of attempts) {
     try {
       const data = await wiseApi(path);
       if (Array.isArray(data?.transactions)) return data.transactions;
+      failures.push(`${path.split("?")[0]}: ok but no transactions array`);
     } catch (e) {
-      if (e instanceof WiseAuthError) {
-        throw new WiseAuthError(
-          `Wise rejected the token when reading the statement. Wise's own message: "${(e as Error).message}".`,
-        );
-      }
+      failures.push(`${path.split("?")[0]}: ${(e as Error).message}`);
+      if (e instanceof WiseAuthError) continue;
     }
   }
-  return [];
+  throw new WiseAuthError(
+    `Wise would not return the account statement (profile ${profileId}, balance ${balanceId}, ${currency}). Attempts: ${failures.join(" | ")}`,
+  );
 }
 
 function cents(value: unknown): number {
