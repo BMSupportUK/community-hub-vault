@@ -264,8 +264,20 @@ export const getWiseIncomingTransfers = createServerFn({ method: "POST" })
       feed.transactions = incoming.map((t) => {
         const haystack = normalizeCode([t.reference, t.description, t.senderName ?? ""].join(" "));
         let match: WiseMatch | null = null;
+        // A stored match wins — it was made while the order was still pending.
+        if (t.storedOrderId && storedOrders[t.storedOrderId]) {
+          const o = storedOrders[t.storedOrderId];
+          match = {
+            orderId: t.storedOrderId,
+            reference: t.reference,
+            customerName: names[o.userId] ?? null,
+            amountCents: o.amountCents,
+            exact: true,
+            kind: "reference",
+          };
+        }
         for (const [code, { p, reference }] of pendingByCode) {
-          if (!haystack.includes(code)) continue;
+          if (match || !haystack.includes(code)) continue;
           const exact = Math.abs(t.amountCents - p.amountCents) <= 1;
           match = {
             orderId: p.orderId,
