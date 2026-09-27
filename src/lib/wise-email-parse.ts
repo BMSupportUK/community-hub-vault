@@ -31,6 +31,10 @@ export function parseWiseEmail(subject: string, body: string): ParsedWiseEmail |
   const text = `${subject}\n${body}`.replace(/\u00a0/g, " ");
   // Only money-in emails.
   if (!/(sent you|received|you've got|you have received|paid you|money in)/i.test(text)) return null;
+  // Skip Wise comms that mention money but are NOT money in: outgoing-transfer
+  // confirmations ("We've received your £50 — converting it", "You've sent £50")
+  // and "your transfer is on its way" notices.
+  if (/(we'?ve received your|you'?ve sent|you'?re sending|converting your|your transfer (is |has ))/i.test(text)) return null;
 
   const amt =
     text.match(/([£€$])\s?([\d,]+(?:\.\d{1,2})?)/) ??
