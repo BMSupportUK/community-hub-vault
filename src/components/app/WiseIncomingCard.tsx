@@ -40,6 +40,21 @@ export function WiseIncomingCard({ hidePending = false }: { hidePending?: boolea
   const [keyCode, setKeyCode] = useState("");
   const [revealing, setRevealing] = useState(false);
   const [revealedUrl, setRevealedUrl] = useState<string | null>(null);
+  const dismissConfirmation = useServerFn(dismissGmailConfirmation);
+  const [dismissing, setDismissing] = useState(false);
+
+  const doDismissConfirmation = async () => {
+    setDismissing(true);
+    try {
+      await dismissConfirmation({});
+      setFeed((prev) => (prev ? { ...prev, gmailConfirmation: null } : prev));
+      toast.success("Confirmation hidden — forwarding is live.");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not hide it");
+    } finally {
+      setDismissing(false);
+    }
+  };
 
   const doReveal = async () => {
     if (!/^\d{6}$/.test(keyCode)) { toast.error("Enter the 6-digit code"); return; }
