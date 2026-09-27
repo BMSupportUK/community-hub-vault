@@ -44,7 +44,7 @@ export function BankTransferAdminCard() {
   const grant = useServerFn(grantBankTransfer);
   const revoke = useServerFn(revokeBankTransfer);
 
-  const [view, setView] = useState<"details" | "customers" | "wise">("details");
+  const [view, setView] = useState<"details" | "customers" | "incoming" | "wise">("details");
   const [form, setForm] = useState(blank);
   const [grants, setGrants] = useState<Grant[]>([]);
   const [names, setNames] = useState<Record<string, string>>({});
@@ -207,7 +207,7 @@ export function BankTransferAdminCard() {
       ) : (
         <>
           <div className="flex flex-wrap gap-2">
-            {([["details", "Bank details"], ["customers", `Bank transfer customers (${grants.length})`], ["wise", "Wise settings"]] as const).map(([k, label]) => (
+            {([["details", "Bank details"], ["customers", `Bank transfer customers (${grants.length})`], ["incoming", "Incoming transfers"], ["wise", "Wise settings"]] as const).map(([k, label]) => (
               <button
                 key={k}
                 type="button"
@@ -401,7 +401,8 @@ export function BankTransferAdminCard() {
           </div>
           )}
 
-          {view === "wise" && <WiseIncomingCard hidePending />}
+          {view === "incoming" && <WiseIncomingCard hidePending />}
+          {view === "wise" && <WiseIncomingCard mode="settings" hidePending />}
         </>
       )}
     </section>
