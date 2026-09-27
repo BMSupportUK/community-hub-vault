@@ -81,9 +81,8 @@ export function ProfitCostsPanel() {
     return [...m.entries()].sort((a, b) => b[0] - a[0]);
   }, [yearOrders]);
   const am = month != null && byMonth.some(([k]) => k === month) ? month : byMonth[0]?.[0] ?? null;
-  const monthOrders = yearOrders.filter((o) => new Date(o.created_at).getMonth() === am);
   const sum = (os: Order[]) => os.reduce((a, o) => { const c = calc(o); return { revenue: a.revenue + c.revenue, cost: a.cost + c.cost }; }, { revenue: 0, cost: 0 });
-  const yT = sum(yearOrders), mT = sum(monthOrders);
+  const yT = sum(yearOrders), mT = sum(am != null ? yearOrders.filter((o) => new Date(o.created_at).getMonth() === am) : []);
 
   const pill = (a: boolean) => `px-3 h-8 rounded-lg text-sm font-medium border transition-colors ${a ? "bg-primary text-primary-foreground border-primary" : "bg-surface-2 border-border text-muted-foreground hover:text-foreground"}`;
   const Stat = ({ label, value, tone }: { label: string; value: string; tone?: string }) => (
