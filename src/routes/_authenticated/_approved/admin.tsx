@@ -444,7 +444,7 @@ function DashboardBody() {
 
 
 
-  const allTools: { to: string; search?: Record<string, string>; label: string; desc: string; icon: any; adminOnly?: boolean }[] = [
+  const allTools: { to: string; search?: Record<string, string>; label: string; desc: string; icon: any; adminOnly?: boolean; managementToo?: boolean }[] = [
     { to: "/admin-roles", label: "Members & Role Management", desc: "Assign roles to members and create or delete custom roles.", icon: ShieldCheck },
     { to: "/admin-permissions", label: "Role permissions", desc: "Choose which roles can access pages and what they can do in channels.", icon: Shield },
     { to: "/admin-credentials", label: "User credentials", desc: "Set up app logins assigned to each user.", icon: KeySquare },
