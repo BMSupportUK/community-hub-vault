@@ -1265,7 +1265,20 @@ export function formatSportsListingBlock(input: ListingInput): string | null {
   ));
   if (!events.length) return null;
 
-  return formatSportsListingEvents(events, { ...input, date: base ?? input.date });
+  // A post headed with a different competition than the selected guide is no
+  // longer blocked: the heading is carried onto every event name instead
+  // ("ICC ODI: India v West Indies"), so the listing keeps its context and
+  // the import goes through.
+  const strayHeading = mismatchedSportsListingHeading(input.raw, input.guideTitle);
+  const labelled = strayHeading
+    ? events.map((event) =>
+        event.title.toLowerCase().startsWith(strayHeading.toLowerCase())
+          ? event
+          : { ...event, title: `${strayHeading}: ${event.title}` },
+      )
+    : events;
+
+  return formatSportsListingEvents(labelled, { ...input, date: base ?? input.date });
 }
 
 export function formatSportsListingEvents(events: SportsListingEvent[], input: ListingInput): string {

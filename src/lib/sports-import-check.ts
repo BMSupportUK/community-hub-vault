@@ -3,8 +3,6 @@ import { parseClockTime, ukListingInstant } from "./import-time";
 import {
   formatSportsListingBlock,
   isLikelyChannelLabel,
-  listingHeadingMatchesGuide,
-  mismatchedSportsListingHeading,
   parseSportsListingBlock,
   type SportsListingEvent,
 } from "./sports-listing-format";
@@ -46,13 +44,10 @@ export function checkSportsImport(
   const formatted = formatSportsListingBlock({ raw, sourceZone, guideTitle });
   const events = formatted ? parseSportsListingBlock(formatted) : [];
 
-  if (guideTitle && !listingHeadingMatchesGuide(raw, guideTitle)) {
-    const heading = mismatchedSportsListingHeading(raw, guideTitle);
-    issues.push({
-      level: "error",
-      message: `This post is headed “${heading ?? "another competition"}” but the selected guide is “${guideTitle}”. Pick the matching guide.`,
-    });
-  }
+  // A post headed with a different competition than the selected guide is not
+  // blocked: the formatter carries the heading onto every event name instead.
+
+
 
   if (!formatted || events.length === 0) {
     issues.push({ level: "error", message: "No events were recognised in this post." });
