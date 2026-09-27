@@ -6065,6 +6065,7 @@ export type Database = {
           currency: string
           excerpt: string
           id: string
+          matched_order_id: string | null
           received_at: string
           reference: string
           sender_name: string | null
@@ -6076,6 +6077,7 @@ export type Database = {
           currency?: string
           excerpt?: string
           id?: string
+          matched_order_id?: string | null
           received_at?: string
           reference?: string
           sender_name?: string | null
@@ -6087,12 +6089,21 @@ export type Database = {
           currency?: string
           excerpt?: string
           id?: string
+          matched_order_id?: string | null
           received_at?: string
           reference?: string
           sender_name?: string | null
           subject?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "wise_email_payments_matched_order_id_fkey"
+            columns: ["matched_order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

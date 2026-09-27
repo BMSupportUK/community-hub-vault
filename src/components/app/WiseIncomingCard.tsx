@@ -373,11 +373,11 @@ export function WiseIncomingCard({
                 <div className="flex items-center gap-2">
                   <Link
                     to="/shop"
-                    search={{ view: "orders", id: t.match.orderId } as never}
-                    className="text-[11px] text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+                    search={{ view: "orders", scope: "all", id: t.match.orderId } as never}
+                    className="text-[11px] text-primary hover:underline inline-flex items-center gap-1"
                   >
                     <LinkIcon className="size-3" />
-                    {t.match.customerName ?? "Order"} · {fmt(t.match.amountCents)}
+                    View order · {t.match.customerName ?? "Customer"} · {fmt(t.match.amountCents)}
                   </Link>
                   <Button
                     type="button"
