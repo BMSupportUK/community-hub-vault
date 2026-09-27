@@ -166,7 +166,7 @@ export function OrderStatusAdminCard() {
                         completing === r.id ? (
                         <div className="flex items-center gap-1.5">
                           <select value={payMethod} onChange={(e) => setPayMethod(e.target.value)} aria-label="Payment method" className="h-7 rounded-md border border-border bg-background px-1.5 text-xs text-foreground">
-                            <option value="">Paid by…</option>
+                            <option value="">Use saved method</option>
                             <option value="square">Square</option>
                             <option value="stripe">Stripe</option>
                             <option value="wise">Wise</option>
