@@ -3026,14 +3026,13 @@ function OrdersView({
   const completedOrders = monthOrders.filter((o) => o.status === "completed");
   const cancelledOrders = monthOrders.filter((o) => o.status === "cancelled");
 
-  const countBadge = (count: number, tone: "new" | "waiting" | "done" | "cancelled") => (
+  const countBadge = (count: number, isNew = false) => (
     <span
       className={cn(
         "inline-grid min-w-5 h-5 place-items-center rounded-full px-1 text-[10px] font-bold",
-        tone === "new" && "bg-destructive text-destructive-foreground",
-        tone === "waiting" && "bg-warning text-warning-foreground",
-        tone === "done" && "bg-success text-success-foreground",
-        tone === "cancelled" && "bg-muted text-muted-foreground",
+        isNew
+          ? "bg-destructive text-destructive-foreground"
+          : "bg-warning text-warning-foreground",
       )}
     >
       {count}
@@ -3209,31 +3208,31 @@ function OrdersView({
                 value="new"
                 className="shrink-0 gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white"
               >
-                New order {countBadge(newOrders.length, "new")}
+                New order {countBadge(newOrders.length, true)}
               </TabsTrigger>
               <TabsTrigger
                 value="awaiting-payment"
                 className="shrink-0 gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white"
               >
-                Awaiting payment {countBadge(awaitingPaymentOrders.length, "waiting")}
+                Awaiting payment {countBadge(awaitingPaymentOrders.length)}
               </TabsTrigger>
               <TabsTrigger
                 value="account-setup"
                 className="shrink-0 gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white"
               >
-                Account setup {countBadge(accountSetupOrders.length, "waiting")}
+                Account setup {countBadge(accountSetupOrders.length)}
               </TabsTrigger>
               <TabsTrigger
                 value="completed"
                 className="shrink-0 gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white"
               >
-                Completed {countBadge(completedOrders.length, "done")}
+                Completed {countBadge(completedOrders.length)}
               </TabsTrigger>
               <TabsTrigger
                 value="cancelled"
                 className="shrink-0 gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white"
               >
-                Cancelled {countBadge(cancelledOrders.length, "cancelled")}
+                Cancelled {countBadge(cancelledOrders.length)}
               </TabsTrigger>
             </TabsList>
             {isAdmin && adminUnlocked && (
