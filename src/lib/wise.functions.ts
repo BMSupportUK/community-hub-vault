@@ -225,7 +225,7 @@ export const getWiseIncomingTransfers = createServerFn({ method: "POST" })
         .order("received_at", { ascending: false })
         .limit(1000);
       if (emailErr) throw emailErr;
-      const incoming: WiseIncoming[] = (emails ?? []).map((e: any) => ({
+      const incoming: (WiseIncoming & { storedOrderId: string | null })[] = (emails ?? []).map((e: any) => ({
         id: String(e.id),
         date: e.received_at,
         senderName: e.sender_name,
@@ -234,7 +234,27 @@ export const getWiseIncomingTransfers = createServerFn({ method: "POST" })
         reference: e.reference ?? "",
         amountCents: Number(e.amount_cents),
         currency: e.currency ?? "GBP",
+        storedOrderId: e.matched_order_id ? String(e.matched_order_id) : null,
       }));
+
+      // Orders stored on the payment rows — these keep their match even after
+      // the order is paid and drops out of the pending list.
+      const storedIds = Array.from(new Set(incoming.map((t) => t.storedOrderId).filter(Boolean))) as string[];
+      const storedOrders: Record<string, { userId: string; amountCents: number }> = {};
+      if (storedIds.length) {
+        const { data: sOrders } = await supabaseAdmin
+          .from("orders")
+          .select("id,user_id,total_cents")
+          .in("id", storedIds);
+        const sUserIds = Array.from(new Set((sOrders ?? []).map((o: any) => String(o.user_id))));
+        const { data: sProfiles } = sUserIds.length
+          ? await supabaseAdmin.from("profiles").select("id,display_name").in("id", sUserIds)
+          : { data: [] as any[] };
+        for (const p of sProfiles ?? []) names[String(p.id)] = String(p.display_name ?? "Unknown");
+        for (const o of sOrders ?? []) {
+          storedOrders[String(o.id)] = { userId: String(o.user_id), amountCents: Number(o.total_cents ?? 0) };
+        }
+      }
       const pendingByCode = new Map<string, { p: PendingBankOrder; reference: string }>();
       for (const p of pendingRows) {
         const code = normalizeCode(p.reference);
