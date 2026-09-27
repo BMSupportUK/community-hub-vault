@@ -1,7 +1,7 @@
 # Roadmap
 
 ## Current
-- [ ] System Status completed incidents: organise cards into year and month tabs
+- [x] System Status completed incidents: organise cards into year and month tabs
 - [x] Make System Status use the full available page width and move notification controls into a right sidebar
 - [x] Rugby Pass numbered rows: retain explanatory text after the time without swallowing the row into the previous event
 - [x] Sports imports: insert every explicit competition heading at the start of each imported event name

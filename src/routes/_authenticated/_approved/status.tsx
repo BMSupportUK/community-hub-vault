@@ -79,6 +79,14 @@ const STATUS_META: Record<IncidentStatus, { label: string; classes: string; icon
   completed: { label: "Completed", classes: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30", icon: CheckCircle2 },
 };
 
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+function incidentArchiveDate(incident: Incident): Date {
+  const resolved = incident.resolved_at ? new Date(incident.resolved_at) : null;
+  if (resolved && !Number.isNaN(resolved.getTime())) return resolved;
+  return new Date(incident.updated_at);
+}
+
 async function uploadFiles(files: File[]): Promise<Attachment[]> {
   const out: Attachment[] = [];
   for (const f of files) {
@@ -188,6 +196,8 @@ function StatusPage() {
   const canManage = hasAny(["admin", "management", "staff"]);
   const [incidents, setIncidents] = useState<Incident[] | null>(null);
   const [tab, setTab] = useState<"active" | "completed">("active");
+  const [archiveYear, setArchiveYear] = useState<number | null>(null);
+  const [archiveMonth, setArchiveMonth] = useState<number | null>(null);
   const [editor, setEditor] = useState<{ open: boolean; incident?: Incident }>({ open: false });
 
   const load = async () => {
@@ -212,7 +222,33 @@ function StatusPage() {
 
   const active = (incidents ?? []).filter((i) => i.status !== "completed");
   const completed = (incidents ?? []).filter((i) => i.status === "completed");
-  const list = tab === "active" ? active : completed;
+  const archiveYears = Array.from(new Set(completed.map((incident) => incidentArchiveDate(incident).getFullYear())))
+    .sort((a, b) => b - a);
+  const selectedYear = archiveYear !== null && archiveYears.includes(archiveYear) ? archiveYear : (archiveYears[0] ?? null);
+  const monthsWithIncidents = selectedYear === null
+    ? []
+    : Array.from(new Set(
+        completed
+          .filter((incident) => incidentArchiveDate(incident).getFullYear() === selectedYear)
+          .map((incident) => incidentArchiveDate(incident).getMonth()),
+      )).sort((a, b) => b - a);
+  const selectedMonth = archiveMonth !== null && monthsWithIncidents.includes(archiveMonth)
+    ? archiveMonth
+    : (monthsWithIncidents[0] ?? null);
+  const monthCounts = MONTHS.map((_, monthIndex) =>
+    selectedYear === null
+      ? 0
+      : completed.filter((incident) => {
+          const date = incidentArchiveDate(incident);
+          return date.getFullYear() === selectedYear && date.getMonth() === monthIndex;
+        }).length,
+  );
+  const list = tab === "active"
+    ? active
+    : completed.filter((incident) => {
+        const date = incidentArchiveDate(incident);
+        return date.getFullYear() === selectedYear && date.getMonth() === selectedMonth;
+      });
 
   return (
     <main
@@ -259,6 +295,59 @@ function StatusPage() {
           ))}
         </div>
 
+        {tab === "completed" && completed.length > 0 && (
+          <div className="space-y-3" aria-label="Completed incident archive period">
+            <div className="flex flex-wrap gap-2" role="tablist" aria-label="Years">
+              {archiveYears.map((year) => (
+                <button
+                  key={year}
+                  type="button"
+                  role="tab"
+                  aria-selected={selectedYear === year}
+                  onClick={() => {
+                    const latestMonth = completed
+                      .filter((incident) => incidentArchiveDate(incident).getFullYear() === year)
+                      .reduce((latest, incident) => Math.max(latest, incidentArchiveDate(incident).getMonth()), 0);
+                    setArchiveYear(year);
+                    setArchiveMonth(latestMonth);
+                  }}
+                  className={`min-w-20 rounded-md border px-3 py-1.5 text-sm font-semibold transition-colors ${
+                    selectedYear === year
+                      ? "border-primary bg-primary/20 text-primary"
+                      : "border-border bg-surface-1/50 text-muted-foreground hover:border-primary/60 hover:text-foreground"
+                  }`}
+                >
+                  {year}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex gap-1.5 overflow-x-auto pb-1" role="tablist" aria-label={`Months in ${selectedYear ?? "archive"}`}>
+              {MONTHS.map((month, monthIndex) => (
+                <button
+                  key={month}
+                  type="button"
+                  role="tab"
+                  aria-selected={selectedMonth === monthIndex}
+                  onClick={() => setArchiveMonth(monthIndex)}
+                  className={`flex min-w-14 shrink-0 items-center justify-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors ${
+                    selectedMonth === monthIndex
+                      ? "border-fuchsia-400/70 bg-fuchsia-500/25 text-foreground"
+                      : "border-border bg-surface-1/50 text-muted-foreground hover:border-fuchsia-400/50 hover:text-foreground"
+                  }`}
+                >
+                  <span>{month}</span>
+                  {monthCounts[monthIndex] > 0 && (
+                    <span className="grid min-w-5 place-items-center rounded-full bg-fuchsia-500/30 px-1 text-[10px] text-fuchsia-100">
+                      {monthCounts[monthIndex]}
+                    </span>
+                  )}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* List */}
         {incidents === null ? (
           <div className="grid place-items-center py-16 text-muted-foreground">
@@ -266,7 +355,11 @@ function StatusPage() {
           </div>
         ) : list.length === 0 ? (
           <div className="text-center text-sm text-muted-foreground py-12">
-            {tab === "active" ? "No active incidents." : "No completed incidents yet."}
+            {tab === "active"
+              ? "No active incidents."
+              : completed.length === 0
+                ? "No completed incidents yet."
+                : `No completed incidents in ${selectedMonth === null ? "this month" : MONTHS[selectedMonth]} ${selectedYear ?? ""}.`}
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-4 items-start">
