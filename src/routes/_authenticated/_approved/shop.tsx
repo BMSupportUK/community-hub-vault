@@ -3963,6 +3963,13 @@ function OrderDetailImpl({
     if (busy) return;
     setBusy(true);
     try {
+      if (payProvider === "stripe") {
+        const r = await checkPaymentBothProviders({ data: { orderId } });
+        await load();
+        if (r.paid) toast.success(r.detail || "Matched a Stripe payment — order marked paid");
+        else toast.message(r.detail || "No completed Stripe payment found for this order");
+        return;
+      }
       const res = (await reconcileSquare({ data: { orderId } })) as {
         paid: boolean;
         status: string;
@@ -4191,14 +4198,14 @@ function OrderDetailImpl({
                   <span className="ml-1 font-mono text-[11px] opacity-80">· {paidMethodLabel}</span>
                 )}
               </button>
-              {!isOrderPaid && order.status !== "cancelled" && !order.completed_at && (
+              {!isOrderPaid && order.status !== "cancelled" && !order.completed_at && (payProvider === "stripe" || payProvider === "square" || !payProvider) && (
                 <button
                   onClick={reconcileWithSquare}
                   disabled={busy}
-                  title="Scan recent Square payments and mark paid if a matching transaction is found"
+                  title={`Check ${payProvider === "stripe" ? "Stripe" : "Square"} for this order's payment and mark paid if found`}
                   className="px-2.5 py-1 rounded-md bg-surface-2 text-xs font-medium flex items-center gap-1 hover:bg-surface-2/80 disabled:opacity-50"
                 >
-                  <BadgeCheck className="size-3.5" /> Reconcile with Square
+                  <BadgeCheck className="size-3.5" /> Reconcile with {payProvider === "stripe" ? "Stripe" : "Square"}
                 </button>
               )}
             </>
