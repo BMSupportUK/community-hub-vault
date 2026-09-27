@@ -32,6 +32,16 @@ import {
 
 export const Route = createFileRoute("/_authenticated/_approved/status")({
   component: StatusPage,
+  head: () => ({
+    meta: [
+      { title: "System Status · BM Support" },
+      { name: "description", content: "Check current and resolved BM Support service incidents and manage outage alerts." },
+      { property: "og:title", content: "System Status · BM Support" },
+      { property: "og:description", content: "Check current and resolved BM Support service incidents and manage outage alerts." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
 });
 
 type IncidentStatus = "investigating" | "identified" | "monitoring" | "completed";
@@ -207,12 +217,12 @@ function StatusPage() {
 
   return (
     <main
-      className="flex-1 overflow-y-auto bg-[#1a0b2e] bg-cover bg-center bg-no-repeat bg-fixed relative"
+      className="relative min-w-0 flex-1 overflow-y-auto bg-[#1a0b2e] bg-cover bg-center bg-no-repeat bg-fixed"
       style={{ backgroundImage: `url(${statusBg})` }}
     >
       <div className="absolute inset-0 bg-gradient-to-b from-[#1a0b2e]/85 via-[#1a0b2e]/75 to-[#1a0b2e]/85 pointer-events-none" aria-hidden />
-      <div className="relative z-10 max-w-7xl mx-auto px-6 py-8 grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
-        <div className="space-y-6 min-w-0">
+      <div className="relative z-10 grid w-full min-w-0 grid-cols-1 items-start gap-8 px-4 py-6 sm:px-6 lg:grid-cols-[minmax(0,1fr)_280px] lg:gap-0 lg:px-0 lg:py-0 2xl:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="min-w-0 space-y-6 lg:px-8 lg:py-8 2xl:px-10">
         {/* Hero illustration */}
         <div className="relative rounded-3xl overflow-hidden border border-primary/30 shadow-glow bg-gradient-primary">
           <img
@@ -301,7 +311,7 @@ function StatusPage() {
             {tab === "active" ? "No active incidents." : "No completed incidents yet."}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 items-start">
+          <div className="grid grid-cols-1 sm:grid-cols-2 2xl:grid-cols-3 gap-4 items-start">
             {list.map((i) => (
               <IncidentCard
                 key={i.id}
@@ -314,13 +324,10 @@ function StatusPage() {
         )}
         </div>
 
-        {/* Sidebar */}
-        <aside className="lg:sticky lg:top-6 space-y-4">
-          <div className="rounded-2xl border border-border bg-surface-1/60 p-4 space-y-3">
-            <div>
-              <div className="font-display text-sm font-semibold">Get notified about outages</div>
-              <div className="text-xs text-muted-foreground mt-1">Push alerts when an outage is created or updated. Works on Android Chrome (add to home screen for app-like alerts).</div>
-            </div>
+        <aside aria-label="Outage notifications" className="min-w-0 border-t border-border/60 pt-6 lg:sticky lg:top-0 lg:min-h-screen lg:self-stretch lg:border-l lg:border-t-0 lg:bg-surface-1/30 lg:px-6 lg:py-8">
+          <div className="space-y-4">
+            <h2 className="font-display text-base font-semibold">Get notified about outages</h2>
+            <p className="text-sm text-muted-foreground">Push alerts when an outage is created or updated. Works on Android Chrome (add to home screen for app-like alerts).</p>
             <PushNotificationsToggle />
           </div>
         </aside>
