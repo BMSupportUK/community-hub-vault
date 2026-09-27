@@ -183,6 +183,13 @@
       "when": 1790533052684,
       "tag": "0025_product_costs",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1790534565490,
+      "tag": "0026_admin_manual_orders",
+      "breakpoints": true
     }
   ]
 }

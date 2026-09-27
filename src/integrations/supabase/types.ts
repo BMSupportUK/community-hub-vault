@@ -6330,6 +6330,14 @@ export type Database = {
           slot_key: string
         }[]
       }
+      admin_complete_manual_order: {
+        Args: { _order_id: string }
+        Returns: undefined
+      }
+      admin_create_manual_order: {
+        Args: { _customer_name: string; _items: Json }
+        Returns: string
+      }
       admin_get_user_location_history: {
         Args: { _limit?: number; _user_id: string }
         Returns: {
