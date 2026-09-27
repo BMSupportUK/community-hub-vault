@@ -54,9 +54,9 @@ export function OrderStatusAdminCard() {
   const [completing, setCompleting] = useState<string | null>(null);
   const [payMethod, setPayMethod] = useState("");
   const [payRef, setPayRef] = useState("");
-  const needsRef = ["square", "stripe"].includes(payMethod);
+  const needsRef = ["square", "stripe", "wise"].includes(payMethod);
   const completeOrder = async (id: string) => {
-    if (needsRef && !payRef.trim()) return toast.error(`Enter the ${paymentLabel(payMethod)} transaction ID`);
+    if (needsRef && !payRef.trim()) return toast.error(payMethod === "wise" ? "Enter the Wise transfer number" : `Enter the ${paymentLabel(payMethod)} transaction ID`);
     if (!confirm(payMethod ? `Mark this order as complete, paid by ${paymentLabel(payMethod)}?` : "Mark this order as complete using the payment method saved with it?")) return;
     const { error } = await supabase.rpc("admin_complete_manual_order", { _order_id: id, _method: payMethod || undefined, _reference: payRef.trim() || undefined });
     if (error) return toast.error(error.message);
@@ -174,7 +174,7 @@ export function OrderStatusAdminCard() {
                             <option value="crypto">Crypto</option>
                             <option value="cash">Cash</option>
                           </select>
-                          {needsRef && <input value={payRef} onChange={(e) => setPayRef(e.target.value)} placeholder="Transaction ID" aria-label="Transaction ID" className="h-7 w-36 rounded-md border border-border bg-background px-1.5 text-xs text-foreground" />}
+                          {needsRef && <input value={payRef} onChange={(e) => setPayRef(e.target.value)} placeholder={payMethod === "wise" ? "Wise transfer no." : "Transaction ID"} aria-label="Transaction ID" className="h-7 w-36 rounded-md border border-border bg-background px-1.5 text-xs text-foreground" />}
                           <button type="button" onClick={() => completeOrder(r.id)} aria-label="Confirm complete" className="h-7 px-2 rounded-md bg-success/15 border border-success/40 text-success"><Check className="size-3.5" /></button>
                           <button type="button" onClick={() => { setCompleting(null); setPayMethod(""); }} aria-label="Cancel" className="h-7 px-2 rounded-md border border-border text-muted-foreground"><X className="size-3.5" /></button>
                         </div>

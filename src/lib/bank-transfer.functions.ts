@@ -359,7 +359,7 @@ export const reportBankTransferSent = createServerFn({ method: "POST" })
 /** Staff/owner confirm the money landed — settles the order as paid. */
 export const confirmBankTransferReceived = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input) => z.object({ orderId: z.string().uuid() }).parse(input))
+  .inputValidator((input) => z.object({ orderId: z.string().uuid(), transferNumber: z.string().trim().min(3).max(80).optional() }).parse(input))
   .handler(async ({ data, context }) => {
     const { data: roles } = await context.supabase
       .from("user_roles")
@@ -375,12 +375,14 @@ export const confirmBankTransferReceived = createServerFn({ method: "POST" })
       .eq("order_id", data.orderId)
       .maybeSingle();
 
-    const reference = payment?.provider_payment_id ? String(payment.provider_payment_id) : String(data.orderId);
+    const reference = data.transferNumber
+      ? data.transferNumber
+      : payment?.provider_payment_id ? String(payment.provider_payment_id) : String(data.orderId);
 
     if (payment?.id) {
       await supabaseAdmin
         .from("order_payments")
-        .update({ provider: "bank_transfer", status: "paid" } as never)
+        .update({ provider: "bank_transfer", status: "paid", ...(data.transferNumber ? { provider_payment_id: data.transferNumber } : {}) } as never)
         .eq("id", payment.id);
     }
 
@@ -406,6 +408,25 @@ export const confirmBankTransferReceived = createServerFn({ method: "POST" })
       });
     } catch (e) {
       console.error("Failed to post bank transfer payment notice:", e);
+    }
+
+    // Silent staff-only note recording the Wise transfer number.
+    if (data.transferNumber) {
+      try {
+        const { data: ticket } = await supabaseAdmin
+          .from("tickets").select("id").eq("order_id", data.orderId)
+          .order("created_at", { ascending: false }).limit(1).maybeSingle();
+        if (ticket) {
+          await supabaseAdmin.from("ticket_messages").insert({
+            ticket_id: ticket.id,
+            sender_id: context.userId,
+            content: `🔒 Staff note — @admin @management: bank transfer received. Wise transfer number: ${data.transferNumber}`,
+            is_internal: true,
+          } as never);
+        }
+      } catch (e) {
+        console.error("Failed to post transfer number note:", e);
+      }
     }
 
     return { success: true };

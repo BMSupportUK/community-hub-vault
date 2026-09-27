@@ -1239,15 +1239,20 @@ function TicketDetail({
   };
 
   const confirmBankTransferFn = useServerFn(confirmBankTransferReceived);
+  const [transferNumber, setTransferNumber] = useState("");
   const orderConfirmBankTransfer = async () => {
     if (!linkedOrder || orderBusy) return;
+    const num = transferNumber.trim();
+    if (num.length < 3) { toast.error("Enter the Wise transfer number from the payment email"); return; }
+    if (!confirm(`Mark this order as paid with Wise transfer number ${num}?`)) return;
     setOrderBusy(true);
     try {
       const message = await getAutomatedMessage("order_bank_transfer_received", {
         total: (linkedOrder.total_cents / 100).toLocaleString("en-GB", { style: "currency", currency: "GBP" }),
       });
-      await confirmBankTransferFn({ data: { orderId: linkedOrder.id } });
+      await confirmBankTransferFn({ data: { orderId: linkedOrder.id, transferNumber: num } });
       await postTicketSystem(message);
+      setTransferNumber("");
       await loadLinkedOrder();
       toast.success("Bank transfer confirmed");
     } catch (e: any) {
@@ -1837,6 +1842,14 @@ function TicketDetail({
           {isAdmin && (
             <>
               {!linkedOrder.paid_at && (bankOnlyOrder || payProvider === "bank_transfer") && (
+                <span className="inline-flex items-center gap-1">
+                <input
+                  value={transferNumber}
+                  onChange={(e) => setTransferNumber(e.target.value)}
+                  placeholder="Wise transfer no. (staff only)"
+                  aria-label="Wise transfer number"
+                  className="h-7 w-44 rounded-md border border-white/30 bg-white/10 px-2 text-xs text-white placeholder:text-white/50"
+                />
                 <button
                   onClick={orderConfirmBankTransfer}
                   disabled={orderBusy}
@@ -1846,6 +1859,7 @@ function TicketDetail({
                   <CheckCircle2 className="size-3.5 text-emerald-300" />
                   {orderBusy ? "Confirming…" : "Confirm Bank Transfer Received"}
                 </button>
+                </span>
               )}
               {linkedOrder.customer_type === "existing" &&
               Boolean((linkedOrder as { existing_username?: string | null }).existing_username) ? (
