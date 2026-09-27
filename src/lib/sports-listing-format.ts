@@ -48,7 +48,7 @@ const CHANNEL_COLON_TITLE_TIME_RE = new RegExp(
 // "Rugby Pass 03: The 745 Game 17:45 (Raise Awareness and Funds ...)".
 // Keep that note in the event name instead of treating the row as a channel.
 const CHANNEL_COLON_TITLE_TIME_NOTE_RE = new RegExp(
-  `^\s*([A-Za-z][A-Za-z0-9 +&'./-]*?\d{1,3})\s*:\s*(.+?)\s+(${TIME_WITH_ZONE_SOURCE})\s+(\(.+\))\s*$`,
+  String.raw`^\s*([A-Za-z][A-Za-z0-9 +&'./-]*?\d{1,3})\s*:\s*(.+?)\s+(${TIME_WITH_ZONE_SOURCE})\s+(\(.+\))\s*$`,
   "i",
 );
 // Channel, colon, then time first: "Super League Plus 01:  20:00 Leeds Rhinos vs Warrington Wolves".
