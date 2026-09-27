@@ -15,6 +15,7 @@ type Row = {
   existing_username: string | null;
   customer_type: string | null;
   order_ref: string | null;
+  manual_pay_method: string | null;
 };
 
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -69,7 +70,7 @@ export function OrderStatusAdminCard() {
     (async () => {
       const { data, error } = await supabase
         .from("orders")
-        .select("id, status, total_cents, created_at, paid_at, completed_at, shipping_name, existing_username, customer_type, order_ref")
+        .select("id, status, total_cents, created_at, paid_at, completed_at, shipping_name, existing_username, customer_type, order_ref, manual_pay_method")
         .order("created_at", { ascending: false })
         .limit(5000);
       if (cancelled) return;
@@ -177,7 +178,7 @@ export function OrderStatusAdminCard() {
                           <button type="button" onClick={() => completeOrder(r.id)} aria-label="Confirm complete" className="h-7 px-2 rounded-md bg-success/15 border border-success/40 text-success"><Check className="size-3.5" /></button>
                           <button type="button" onClick={() => { setCompleting(null); setPayMethod(""); }} aria-label="Cancel" className="h-7 px-2 rounded-md border border-border text-muted-foreground"><X className="size-3.5" /></button>
                         </div>
-                      ) : <button type="button" onClick={() => { setCompleting(r.id); setPayMethod(""); }} className="inline-flex items-center gap-1 h-7 px-2 rounded-md border border-success/40 text-success text-xs font-medium hover:bg-success/10"><Check className="size-3.5" /> Mark complete</button>
+                      ) : <button type="button" onClick={() => { setCompleting(r.id); setPayMethod(r.manual_pay_method ?? ""); setPayRef(""); }} className="inline-flex items-center gap-1 h-7 px-2 rounded-md border border-success/40 text-success text-xs font-medium hover:bg-success/10"><Check className="size-3.5" /> Mark complete</button>
                       ) : r.completed_at ? new Date(r.completed_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" }) : "—"}</td>
                       <td className="px-3 py-2 whitespace-nowrap text-xs">{paymentLabel(methods[r.id])}</td>
                     </tr>

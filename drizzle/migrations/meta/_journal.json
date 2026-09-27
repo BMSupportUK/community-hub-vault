@@ -225,6 +225,13 @@
       "when": 1790537693092,
       "tag": "0031_manual_order_pending_payment",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1790537833520,
+      "tag": "0032_manual_order_method_at_create_ref_at_complete",
+      "breakpoints": true
     }
   ]
 }

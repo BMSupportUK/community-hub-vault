@@ -32,8 +32,6 @@ function AddOrderPage() {
   const [qty, setQty] = useState<Record<string, number>>({});
   const [busy, setBusy] = useState(false);
   const [payMethod, setPayMethod] = useState("");
-  const [payRef, setPayRef] = useState("");
-  const needsRef = ["square", "stripe", "wise"].includes(payMethod);
 
   useEffect(() => {
     supabase.from("products").select("id, name, price_cents").order("sort_order").then(({ data }) => setProducts((data ?? []) as never));
@@ -49,9 +47,8 @@ function AddOrderPage() {
     if (!custName.trim()) return toast.error("Enter the customer name");
     if (!items.length) return toast.error("Pick at least one product");
     if (!payMethod) return toast.error("Pick the payment method");
-    if (needsRef && !payRef.trim()) return toast.error("Enter the transaction ID");
     setBusy(true);
-    const { data: id, error } = await supabase.rpc("admin_create_manual_order", { _customer_name: custName.trim(), _items: items, _method: payMethod, _reference: payRef.trim() || undefined });
+    const { data: id, error } = await supabase.rpc("admin_create_manual_order", { _customer_name: custName.trim(), _items: items, _method: payMethod });
     if (error) { setBusy(false); return toast.error(error.message); }
     const { data: o } = await supabase.from("orders").select("order_ref").eq("id", id as string).maybeSingle();
     setBusy(false);
@@ -87,14 +84,14 @@ function AddOrderPage() {
           <div className="space-y-2 pt-2 border-t border-border">
             <label className="text-sm font-medium" htmlFor="pay-method">Payment method</label>
             <select id="pay-method" value={payMethod} onChange={(e) => setPayMethod(e.target.value)} className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm">
-              <option value="">Choose how the customer paid…</option>
+              <option value="">Choose how the customer wants to pay…</option>
               <option value="square">Square</option>
               <option value="stripe">Stripe</option>
               <option value="wise">Wise</option>
               <option value="crypto">Crypto</option>
               <option value="cash">Cash</option>
             </select>
-            {needsRef && <input value={payRef} onChange={(e) => setPayRef(e.target.value)} placeholder="Transaction ID" className="w-full h-10 rounded-lg border border-border bg-background px-3 text-sm" />}
+            <p className="text-xs text-muted-foreground">You'll add the transaction ID when you mark the order complete.</p>
           </div>
           <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-border">
             <span className="text-sm text-muted-foreground">Total {money(total)}</span>
