@@ -232,6 +232,13 @@
       "when": 1790537833520,
       "tag": "0032_manual_order_method_at_create_ref_at_complete",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1790538147313,
+      "tag": "0033_wise_no_reference_required",
+      "breakpoints": true
     }
   ]
 }
