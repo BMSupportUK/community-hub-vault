@@ -483,7 +483,7 @@ function DashboardBody() {
     { to: "/admin-shifts", label: "Staff shifts", desc: "Review every staff shift, clock-in, clock-out, breaks and auto clock-out, grouped by day.", icon: Users },
   ];
   const tools = allTools
-    .filter((t) => !t.adminOnly || isAdminOnly)
+    .filter((t) => !t.adminOnly || isAdminOnly || (t.managementToo && hasRole("management")))
     .sort((a, b) => a.label.localeCompare(b.label, "en-GB", { sensitivity: "base" }));
 
   const tabs = ([
