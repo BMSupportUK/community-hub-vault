@@ -139,6 +139,58 @@ export const Route = createFileRoute("/api/public/wise-email")({
           body: `${who} paid ${parsed.currency} ${amount} — reference "${parsed.reference}". Check it against awaiting orders on the Bank Transfer page.`,
           link_path: "/admin-bank-transfer",
         });
+
+        // Post a silent staff-only note into the support ticket of every
+        // awaiting bank-transfer order this payment could belong to. The note
+        // is is_internal, so the customer never sees it.
+        try {
+          const ref = parsed.reference.trim().toLowerCase();
+          const { data: detailsRow } = await supabaseAdmin
+            .from("bank_transfer_details")
+            .select("reference_prefix")
+            .eq("singleton", true)
+            .maybeSingle();
+          const prefix = String(detailsRow?.reference_prefix ?? "BM");
+
+          const { data: payments } = await supabaseAdmin
+            .from("order_payments")
+            .select("order_id,provider_payment_id,amount_cents")
+            .eq("provider", "bank_transfer")
+            .eq("status", "awaiting_verification");
+          const orderIds = (payments ?? []).map((p: any) => String(p.order_id));
+          const { data: orders } = orderIds.length
+            ? await supabaseAdmin.from("orders").select("id,user_id,total_cents").in("id", orderIds).is("paid_at", null).neq("status", "cancelled")
+            : { data: [] as any[] };
+
+          const matched = (payments ?? []).filter((p: any) => {
+            const order = (orders ?? []).find((o: any) => String(o.id) === String(p.order_id));
+            if (!order) return false;
+            const orderRef = String(p.provider_payment_id ?? `${prefix}-${String(p.order_id).slice(0, 8)}`).toLowerCase();
+            const refMatch = ref.length >= 4 && (orderRef.includes(ref) || ref.includes(orderRef));
+            const amountMatch = Number(p.amount_cents ?? order.total_cents ?? 0) === parsed.amountCents;
+            return refMatch || (amountMatch && ref.length === 0);
+          });
+
+          for (const p of matched) {
+            const order = (orders ?? []).find((o: any) => String(o.id) === String(p.order_id));
+            const { data: ticket } = await supabaseAdmin
+              .from("tickets")
+              .select("id,user_id")
+              .eq("order_id", String(p.order_id))
+              .order("created_at", { ascending: false })
+              .limit(1)
+              .maybeSingle();
+            if (!ticket) continue;
+            await supabaseAdmin.from("ticket_messages").insert({
+              ticket_id: ticket.id,
+              sender_id: order.user_id,
+              content: `🤖 Automated staff note — @admin @management: a Wise payment of ${parsed.currency} ${amount} was received from ${who} (reference "${parsed.reference}") and may belong to this order. Check it on the Bank Transfer page and approve or cancel it there.`,
+              is_internal: true,
+            } as never);
+          }
+        } catch {
+          // Never fail the webhook because the ticket note could not be posted.
+        }
         return new Response("ok");
       },
     },
