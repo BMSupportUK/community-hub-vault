@@ -77,7 +77,8 @@ export function ProfitCostsPanel() {
 
   const all = orders ?? [];
   const methodTabs = useMemo(() => {
-    const seen = new Set<string>();
+    const fixed = ["square", "stripe", "wise", "bank_transfer", "cash", "crypto"];
+    const seen = new Set<string>(fixed);
     for (const o of all) { const m = methodOf[o.id]; if (m) seen.add(m); }
     return [...seen].sort((a, b) => (METHOD_LABELS[a] ?? a).localeCompare(METHOD_LABELS[b] ?? b));
   }, [all, methodOf]);
