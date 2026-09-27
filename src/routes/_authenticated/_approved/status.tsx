@@ -18,7 +18,6 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
-import statusHero from "@/assets/status-hero.webp";
 import statusBg from "@/assets/status-bg.jpg";
 import { PushNotificationsToggle } from "@/components/app/PushNotificationsToggle";
 import { useServerFn } from "@tanstack/react-start";
@@ -223,20 +222,6 @@ function StatusPage() {
       <div className="absolute inset-0 bg-gradient-to-b from-[#1a0b2e]/85 via-[#1a0b2e]/75 to-[#1a0b2e]/85 pointer-events-none" aria-hidden />
       <div className="relative z-10 grid w-full min-w-0 grid-cols-1 items-start gap-8 px-4 py-6 sm:px-6 lg:grid-cols-[minmax(0,1fr)_280px] lg:gap-0 lg:px-0 lg:py-0 2xl:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0 space-y-6 lg:px-8 lg:py-8 2xl:px-10">
-        {/* Hero illustration */}
-        <div className="relative rounded-3xl overflow-hidden border border-primary/30 shadow-glow bg-gradient-primary">
-          <img
-            src={statusHero}
-            alt="BM Support engineer monitoring systems"
-            className="w-full h-44 sm:h-56 object-cover object-center"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-background/85 via-background/20 to-transparent pointer-events-none" />
-          <div className="absolute bottom-0 left-0 right-0 p-5 sm:p-6">
-            <div className="font-display text-2xl sm:text-3xl font-bold text-white drop-shadow">BM Support · System Status</div>
-            <div className="text-sm text-white/85">Real-time infrastructure monitoring</div>
-          </div>
-        </div>
-
         <header className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="size-11 rounded-2xl bg-gradient-primary grid place-items-center shadow-glow">
@@ -256,33 +241,6 @@ function StatusPage() {
             </button>
           )}
         </header>
-
-        {/* Banner */}
-        <div
-          className={`rounded-2xl border p-6 flex items-center gap-4 ${
-            active.length === 0
-              ? "border-success/40 bg-gradient-to-r from-success/10 via-primary/5 to-accent/10"
-              : "border-primary/40 bg-gradient-to-r from-primary/15 via-fuchsia-500/10 to-accent/15"
-          }`}
-        >
-          {active.length === 0 ? (
-            <CheckCircle2 className="size-10 text-success shrink-0" />
-          ) : (
-            <ShieldAlert className="size-10 text-primary shrink-0" />
-          )}
-          <div>
-            <div className="font-display text-lg font-bold">
-              {active.length === 0
-                ? "All Services are Operational"
-                : `${active.length} active issue${active.length === 1 ? "" : "s"}`}
-            </div>
-            <div className="text-sm text-muted-foreground">
-              {active.length === 0
-                ? "No active incidents reported."
-                : "Our team is working to resolve the issues below."}
-            </div>
-          </div>
-        </div>
 
         {/* Tabs */}
         <div className="flex gap-2 border-b border-border">
@@ -326,6 +284,33 @@ function StatusPage() {
 
         <aside aria-label="Outage notifications" className="min-w-0 border-t border-border/60 pt-6 lg:sticky lg:top-0 lg:min-h-screen lg:self-stretch lg:border-l lg:border-t-0 lg:bg-surface-1/30 lg:px-6 lg:py-8">
           <div className="space-y-4">
+            {/* Status banner */}
+            <div
+              className={`rounded-2xl border p-4 flex items-start gap-3 ${
+                active.length === 0
+                  ? "border-success/40 bg-gradient-to-br from-success/10 via-primary/5 to-accent/10"
+                  : "border-primary/40 bg-gradient-to-br from-primary/15 via-fuchsia-500/10 to-accent/15"
+              }`}
+            >
+              {active.length === 0 ? (
+                <CheckCircle2 className="size-7 text-success shrink-0" />
+              ) : (
+                <ShieldAlert className="size-7 text-primary shrink-0" />
+              )}
+              <div>
+                <div className="font-display font-bold">
+                  {active.length === 0
+                    ? "All Services are Operational"
+                    : `${active.length} active issue${active.length === 1 ? "" : "s"}`}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  {active.length === 0
+                    ? "No active incidents reported."
+                    : "Our team is working to resolve the issues below."}
+                </div>
+              </div>
+            </div>
+
             <h2 className="font-display text-base font-semibold">Get notified about outages</h2>
             <p className="text-sm text-muted-foreground">Push alerts when an outage is created or updated. Works on Android Chrome (add to home screen for app-like alerts).</p>
             <PushNotificationsToggle />
