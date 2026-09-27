@@ -55,10 +55,9 @@ export function OrderStatusAdminCard() {
   const [payRef, setPayRef] = useState("");
   const needsRef = ["square", "stripe", "wise"].includes(payMethod);
   const completeOrder = async (id: string) => {
-    if (!payMethod) return toast.error("Pick how the customer paid");
     if (needsRef && !payRef.trim()) return toast.error(`Enter the ${paymentLabel(payMethod)} transaction ID`);
-    if (!confirm(`Mark this order as complete, paid by ${paymentLabel(payMethod)}?`)) return;
-    const { error } = await supabase.rpc("admin_complete_manual_order", { _order_id: id, _method: payMethod, _reference: payRef.trim() || undefined });
+    if (!confirm(payMethod ? `Mark this order as complete, paid by ${paymentLabel(payMethod)}?` : "Mark this order as complete using the payment method saved with it?")) return;
+    const { error } = await supabase.rpc("admin_complete_manual_order", { _order_id: id, _method: payMethod || undefined, _reference: payRef.trim() || undefined });
     if (error) return toast.error(error.message);
     toast.success("Order marked complete");
     setCompleting(null); setPayMethod(""); setPayRef("");
