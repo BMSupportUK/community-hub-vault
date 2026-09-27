@@ -3930,6 +3930,7 @@ export type Database = {
           product_id: string | null
           product_name: string
           quantity: number
+          unit_cost_cents: number | null
           unit_price_cents: number
         }
         Insert: {
@@ -3939,6 +3940,7 @@ export type Database = {
           product_id?: string | null
           product_name: string
           quantity: number
+          unit_cost_cents?: number | null
           unit_price_cents: number
         }
         Update: {
@@ -3948,6 +3950,7 @@ export type Database = {
           product_id?: string | null
           product_name?: string
           quantity?: number
+          unit_cost_cents?: number | null
           unit_price_cents?: number
         }
         Relationships: [
@@ -4207,6 +4210,32 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      product_costs: {
+        Row: {
+          cost_cents: number
+          product_id: string
+          updated_at: string
+        }
+        Insert: {
+          cost_cents?: number
+          product_id: string
+          updated_at?: string
+        }
+        Update: {
+          cost_cents?: number
+          product_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "product_costs_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: true
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       product_ratings: {
         Row: {
