@@ -1,0 +1,269 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+import { getAutomatedMessageServer } from "@/lib/automated-messages.server";
+import { postOrderPaymentReceivedNotice } from "@/lib/order-payment-notice.server";
+
+/**
+ * Automatic Wise payment matching.
+ *
+ * A payment email is auto-matched — and its order marked as received — only
+ * when it is unambiguous: the order's unique payment reference (BM-xxxxxx)
+ * appears in the email, exactly ONE order is awaiting a bank transfer with
+ * that reference, and the amount matches to the penny in GBP. Anything else
+ * (no match, several candidates, amount mismatch) stays for manual
+ * allocation on the Bank Transfer page.
+ */
+
+type Admin = SupabaseClient;
+
+function normalizeCode(s: string) {
+  return s.toUpperCase().replace(/[^A-Z0-9]/g, "");
+}
+
+function buildReference(prefix: string, orderId: string) {
+  const clean = (prefix || "BM").replace(/[^A-Za-z0-9]/g, "").toUpperCase().slice(0, 6) || "BM";
+  const tail = orderId.replace(/-/g, "").slice(0, 6).toUpperCase();
+  return `${clean}-${tail}`;
+}
+
+/** The Wise transfer number (e.g. #2392929350) if the email text carries one. */
+function extractTransferNumber(...texts: (string | null | undefined)[]) {
+  for (const t of texts) {
+    if (!t) continue;
+    const m = t.match(/#?\d{6,}/);
+    if (m) return m[0];
+  }
+  return null;
+}
+
+export type WiseAutoMatchResult = {
+  matched: number;
+  marked: number;
+  matchedIds: string[];
+};
+
+export async function runWiseAutoMatch(admin: Admin): Promise<WiseAutoMatchResult> {
+  const result: WiseAutoMatchResult = { matched: 0, marked: 0, matchedIds: [] };
+
+  // 1. Unallocated payment emails, oldest first.
+  const { data: payments, error: payErr } = await admin
+    .from("wise_email_payments")
+    .select("id,amount_cents,currency,sender_name,reference,subject,excerpt,matched_order_id")
+    .is("matched_order_id", null)
+    .order("received_at", { ascending: true })
+    .limit(200);
+  if (payErr || !payments?.length) return result;
+
+  // 2. Orders awaiting a bank transfer payment.
+  type Awaiting = { orderId: string; reference: string; userId: string; amountCents: number };
+  let awaiting: Awaiting[] = [];
+  const seen = new Set<string>();
+
+  const { data: awaitingPayments } = await admin
+    .from("order_payments")
+    .select("order_id,provider_payment_id,amount_cents")
+    .eq("provider", "bank_transfer")
+    .eq("status", "awaiting_verification");
+  const orderIds = Array.from(new Set((awaitingPayments ?? []).map((p: any) => String(p.order_id))));
+  const orderRows: Array<{ id: string; user_id: string; total_cents: number }> = [];
+  if (orderIds.length) {
+    const { data } = await admin
+      .from("orders")
+      .select("id,user_id,total_cents")
+      .in("id", orderIds)
+      .is("paid_at", null)
+      .neq("status", "cancelled");
+    for (const o of data ?? []) orderRows.push(o as any);
+  }
+  for (const p of awaitingPayments ?? []) {
+    const orderId = String(p.order_id);
+    const order = orderRows.find((o) => o.id === orderId);
+    if (!order || seen.has(orderId)) continue;
+    seen.add(orderId);
+    awaiting.push({
+      orderId,
+      reference: String(p.provider_payment_id ?? buildReference("BM", orderId)),
+      userId: String(order.user_id),
+      amountCents: Number(p.amount_cents ?? order.total_cents ?? 0),
+    });
+  }
+
+  const { data: grants } = await admin
+    .from("bank_transfer_permissions")
+    .select("user_id,expires_at")
+    .is("revoked_at", null);
+  const now = Date.now();
+  const grantedUserIds = (grants ?? [])
+    .filter((g: any) => !g.expires_at || new Date(g.expires_at).getTime() > now)
+    .map((g: any) => String(g.user_id));
+  if (grantedUserIds.length) {
+    const { data: unpaid } = await admin
+      .from("orders")
+      .select("id,user_id,total_cents")
+      .in("user_id", grantedUserIds)
+      .is("paid_at", null)
+      .neq("status", "cancelled")
+      .order("created_at", { ascending: false })
+      .limit(100);
+    const { data: detailsRow } = await admin
+      .from("bank_transfer_details")
+      .select("reference_prefix")
+      .eq("singleton", true)
+      .maybeSingle();
+    const prefix = String(detailsRow?.reference_prefix ?? "BM");
+    for (const o of unpaid ?? []) {
+      const orderId = String(o.id);
+      if (seen.has(orderId)) continue;
+      seen.add(orderId);
+      awaiting.push({
+        orderId,
+        reference: buildReference(prefix, orderId),
+        userId: String(o.user_id),
+        amountCents: Number(o.total_cents ?? 0),
+      });
+    }
+  }
+
+  // Orders already tied to another payment stay out of the candidate list.
+  if (awaiting.length) {
+    const { data: takenRows } = await admin
+      .from("wise_email_payments")
+      .select("matched_order_id")
+      .in("matched_order_id", awaiting.map((a) => a.orderId));
+    const taken = new Set((takenRows ?? []).map((r: any) => String(r.matched_order_id)));
+    awaiting = awaiting.filter((a) => !taken.has(a.orderId));
+  }
+  if (!awaiting.length) return result;
+
+  // 3. Match each payment against exactly one order.
+  for (const pay of payments as any[]) {
+    if (String(pay.currency ?? "GBP") !== "GBP") continue;
+    const hay = `${pay.reference ?? ""} ${pay.subject ?? ""} ${pay.excerpt ?? ""}`
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, "");
+    if (!hay) continue;
+    const candidates = awaiting.filter(
+      (a) => a.amountCents === Number(pay.amount_cents) && hay.includes(normalizeCode(a.reference)),
+    );
+    if (candidates.length !== 1) continue;
+    const order = candidates[0]!;
+
+    // Atomic claim: only one payment ever lands on an order.
+    const { data: claimed } = await admin
+      .from("wise_email_payments")
+      .update({ matched_order_id: order.orderId, auto_matched: true })
+      .eq("id", pay.id)
+      .is("matched_order_id", null)
+      .select("id");
+    if (!claimed?.length) continue;
+    result.matched += 1;
+    result.matchedIds.push(String(pay.id));
+    awaiting = awaiting.filter((a) => a.orderId !== order.orderId);
+
+    try {
+      const transferNumber = extractTransferNumber(pay.reference, pay.subject, pay.excerpt);
+      const { data: payRow } = await admin
+        .from("order_payments")
+        .select("id,provider_payment_id")
+        .eq("order_id", order.orderId)
+        .maybeSingle();
+      const reference = transferNumber
+        ?? (payRow?.provider_payment_id ? String(payRow.provider_payment_id) : buildReference("BM", order.orderId));
+
+      if (payRow?.id) {
+        await admin
+          .from("order_payments")
+          .update({
+            provider: "bank_transfer",
+            status: "paid",
+            ...(transferNumber ? { provider_payment_id: transferNumber } : {}),
+          } as never)
+          .eq("id", payRow.id);
+      }
+
+      const { error: rpcErr } = await admin.rpc("mark_order_paid" as never, {
+        p_order_id: order.orderId,
+        p_transaction_id: reference,
+      } as never);
+      if (rpcErr) {
+        const { error: fallbackErr } = await admin
+          .from("orders")
+          .update({ paid_at: new Date().toISOString(), status: "paid" } as never)
+          .eq("id", order.orderId);
+        if (fallbackErr) throw fallbackErr;
+      }
+      result.marked += 1;
+
+      // Same notices a manual confirmation produces.
+      try {
+        await postOrderPaymentReceivedNotice({
+          orderId: order.orderId,
+          provider: "Bank Transfer",
+          reference,
+          actorId: null,
+        });
+      } catch (e) {
+        console.error("Auto-match payment notice failed:", e);
+      }
+      try {
+        const message = await getAutomatedMessageServer(
+          "order_bank_transfer_received",
+          { total: `£${(order.amountCents / 100).toFixed(2)}` },
+          `✅ Bank transfer received — your payment of £${(order.amountCents / 100).toFixed(2)} has landed in our account and your order is now marked as paid.`,
+        );
+        const { data: linkedTickets } = await admin
+          .from("tickets")
+          .select("id")
+          .eq("order_id", order.orderId);
+        if (linkedTickets?.length) {
+          await admin.from("ticket_messages").insert(
+            linkedTickets.map((t: { id: string }) => ({
+              ticket_id: t.id,
+              sender_id: order.userId,
+              content: message,
+            })) as never,
+          );
+        }
+      } catch (e) {
+        console.error("Auto-match bank transfer notice failed:", e);
+      }
+
+      // Silent staff-only note recording the automatic match.
+      try {
+        const { data: staffTickets } = await admin
+          .from("tickets")
+          .select("id")
+          .eq("order_id", order.orderId)
+          .order("created_at", { ascending: false })
+          .limit(1);
+        if (staffTickets?.length) {
+          const amount = (Number(pay.amount_cents) / 100).toFixed(2);
+          await admin.from("ticket_messages").insert({
+            ticket_id: staffTickets[0]!.id,
+            sender_id: order.userId,
+            content: `🤖 Automated staff note — @admin @management: a Wise payment of ${pay.currency ?? "GBP"} ${amount} from ${pay.sender_name ?? "Unknown sender"} (reference "${pay.reference ?? ""}") was auto-matched to this order by its payment reference and marked as received automatically.${transferNumber ? ` Wise transfer number: ${transferNumber}` : ""}`,
+            is_internal: true,
+          } as never);
+        }
+      } catch (e) {
+        console.error("Auto-match staff note failed:", e);
+      }
+
+      // Staff bell notification.
+      try {
+        const amount = (Number(pay.amount_cents) / 100).toFixed(2);
+        await admin.from("staff_notifications").insert({
+          kind: "wise_payment",
+          title: `Wise payment auto-marked as received: ${pay.currency ?? "GBP"} ${amount}`,
+          body: `${pay.sender_name ?? "Unknown sender"} paid ${pay.currency ?? "GBP"} ${amount} — reference "${pay.reference ?? ""}" matched order ${buildReference("BM", order.orderId)} exactly, so it was marked as received automatically.`,
+          link_path: "/admin?tab=bank-transfer-orders",
+        });
+      } catch (e) {
+        console.error("Auto-match staff notification failed:", e);
+      }
+    } catch (e) {
+      console.error("Auto-match settlement failed:", e);
+    }
+  }
+
+  return result;
+}
