@@ -43,6 +43,7 @@ function AdminBankTransferPage() {
           </div>
         </div>
 
+        <WiseIncomingCard />
         <BankTransferAdminCard />
       </div>
     </main>
