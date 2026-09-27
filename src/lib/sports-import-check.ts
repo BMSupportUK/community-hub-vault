@@ -44,8 +44,7 @@ export function checkSportsImport(
   const formatted = formatSportsListingBlock({ raw, sourceZone, guideTitle });
   const events = formatted ? parseSportsListingBlock(formatted) : [];
 
-  // A post headed with a different competition than the selected guide is not
-  // blocked: the formatter carries the heading onto every event name instead.
+  // Every explicit competition heading is carried onto every event name.
 
 
 
