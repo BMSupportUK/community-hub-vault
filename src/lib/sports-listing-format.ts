@@ -896,7 +896,9 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
       );
       if (s) return [s[2], s[3].trim(), s[1].trim()];
       // UK Women's Football (FA Player): "WF00: 13:30 Charlton vs Man City"
-      // (channel code + colon, leading time, event).
+      // (channel code + colon, leading time, event). Pipe rows such as
+      // "NFL 02: 1pm ET | 6pm UK" are handled later — never split them here.
+      if (line.includes("|")) return [line];
       const wf = line.match(
         new RegExp(String.raw`^([A-Za-z]{1,6}\s?\d{1,3})\s*:\s*(${TIME_SOURCE})\s+(.+?)\s*$`, "i"),
       );
@@ -955,6 +957,29 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
   }
   for (let i = lines.length - 1; i >= 0; i--) {
     if (/^(US|USA)\s*\|\s*NHL Center Ice$/i.test(lines[i])) lines.splice(i, 1);
+  }
+  // NFL Sunday Ticket: "NFL 02: 1pm ET | 6pm UK" then the fixture on the
+  // next line. Same handling as NHL Center Ice — stated UK time as-is,
+  // channel "NFL 02", and the "US | NFL Sunday Ticket" header is dropped.
+  for (let i = 0; i < lines.length; i++) {
+    const m = lines[i].match(
+      new RegExp(String.raw`^([A-Za-z][A-Za-z+ ]*?)\s+(\d{1,3})\s*:\s*(?:${TIME_SOURCE})\s*ET\s*\|\s*(${TIME_SOURCE})\s*UK\s*$`, "i"),
+    );
+    if (m && i + 1 < lines.length) {
+      const etPm = /pm/i.test(lines[i].split("|")[0] ?? "");
+      const ukAm = /^(12|[1-9])(?::\d{2})?\s*am$/i.test(m[3].trim());
+      let slot = m[3];
+      if (etPm && ukAm) {
+        const days = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+        const london = new Date(new Date().toLocaleString("en-US", { timeZone: "Europe/London" }));
+        slot = `${m[3]} UK ${days[(london.getDay() + 1) % 7]}`;
+      }
+      lines.splice(i, 2, slot, lines[i + 1], `${m[1].trim()} ${m[2]}`);
+      i += 2;
+    }
+  }
+  for (let i = lines.length - 1; i >= 0; i--) {
+    if (/^(US|USA)\s*\|\s*NFL Sunday Ticket$/i.test(lines[i])) lines.splice(i, 1);
   }
   // Provider exports occasionally inject a lone marker between a programme
   // title and its dated slot (for example "Vienna - GCL Round 1", "D", then
