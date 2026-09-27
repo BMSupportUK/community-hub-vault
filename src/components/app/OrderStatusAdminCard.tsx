@@ -33,6 +33,8 @@ function paymentLabel(provider: string | null | undefined) {
   if (v === "stripe") return "Stripe";
   if (v === "square") return "Square";
   if (v === "bank_transfer" || v === "bank") return "Bank transfer";
+  if (v === "crypto") return "Crypto";
+  if (v === "cash") return "Cash";
   return provider ? provider : "—";
 }
 
@@ -80,11 +82,15 @@ export function OrderStatusAdminCard() {
     setAdding(false); setCustName(""); setQty({}); setYear(null); setMonth(null); setReload((n) => n + 1);
   };
 
+  const [completing, setCompleting] = useState<string | null>(null);
+  const [payMethod, setPayMethod] = useState("");
   const completeOrder = async (id: string) => {
-    if (!confirm("Mark this order as complete?")) return;
-    const { error } = await supabase.rpc("admin_complete_manual_order", { _order_id: id });
+    if (!payMethod) return toast.error("Pick how the customer paid");
+    if (!confirm(`Mark this order as complete, paid by ${paymentLabel(payMethod)}?`)) return;
+    const { error } = await supabase.rpc("admin_complete_manual_order", { _order_id: id, _method: payMethod });
     if (error) return toast.error(error.message);
     toast.success("Order marked complete");
+    setCompleting(null); setPayMethod("");
     setReload((n) => n + 1);
   };
 
@@ -209,7 +215,19 @@ export function OrderStatusAdminCard() {
                       <td className="px-3 py-2"><span className={`inline-flex px-2 py-0.5 rounded-full border text-xs capitalize ${statusTone(r.status)}`}>{r.status.toLowerCase()}</span></td>
                       <td className="px-3 py-2 whitespace-nowrap text-xs text-muted-foreground">{r.paid_at ? new Date(r.paid_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" }) : "—"}</td>
                       <td className="px-3 py-2 whitespace-nowrap text-xs text-muted-foreground">{isAdmin && r.customer_type === "manual" && !r.completed_at ? (
-                        <button type="button" onClick={() => completeOrder(r.id)} className="inline-flex items-center gap-1 h-7 px-2 rounded-md border border-success/40 text-success text-xs font-medium hover:bg-success/10"><Check className="size-3.5" /> Mark complete</button>
+                        completing === r.id ? (
+                        <div className="flex items-center gap-1.5">
+                          <select value={payMethod} onChange={(e) => setPayMethod(e.target.value)} aria-label="Payment method" className="h-7 rounded-md border border-border bg-background px-1.5 text-xs text-foreground">
+                            <option value="">Paid by…</option>
+                            <option value="square">Square</option>
+                            <option value="stripe">Stripe</option>
+                            <option value="crypto">Crypto</option>
+                            <option value="cash">Cash</option>
+                          </select>
+                          <button type="button" onClick={() => completeOrder(r.id)} aria-label="Confirm complete" className="h-7 px-2 rounded-md bg-success/15 border border-success/40 text-success"><Check className="size-3.5" /></button>
+                          <button type="button" onClick={() => { setCompleting(null); setPayMethod(""); }} aria-label="Cancel" className="h-7 px-2 rounded-md border border-border text-muted-foreground"><X className="size-3.5" /></button>
+                        </div>
+                      ) : <button type="button" onClick={() => { setCompleting(r.id); setPayMethod(""); }} className="inline-flex items-center gap-1 h-7 px-2 rounded-md border border-success/40 text-success text-xs font-medium hover:bg-success/10"><Check className="size-3.5" /> Mark complete</button>
                       ) : r.completed_at ? new Date(r.completed_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" }) : "—"}</td>
                       <td className="px-3 py-2 whitespace-nowrap text-xs">{paymentLabel(methods[r.id])}</td>
                     </tr>
