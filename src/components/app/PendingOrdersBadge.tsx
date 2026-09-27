@@ -19,17 +19,35 @@ export function PendingOrdersBadge() {
     const load = async () => {
       const { data } = await supabase
         .from("orders")
-        .select("status,paid_at")
+        .select("id,status,paid_at")
         .in("status", ["pending", "processing", "paid"]);
       if (!active) return;
-      const rows = (data ?? []) as OrderRow[];
+      const rows = (data ?? []) as Array<OrderRow & { id: string }>;
+      // Orders with a live invoice are awaiting payment, not new.
+      const invoiced = new Set<string>();
+      if (rows.length > 0) {
+        const { data: invs } = await supabase
+          .from("order_invoices")
+          .select("order_id,status,paid_at")
+          .in(
+            "order_id",
+            rows.map((r) => r.id),
+          );
+        (invs ?? []).forEach((inv: any) => {
+          const st = String(inv.status ?? "").toUpperCase();
+          if (!inv.paid_at && st !== "PAID" && st !== "CANCELED" && st !== "CANCELLED" && st !== "VOIDED") {
+            invoiced.add(inv.order_id);
+          }
+        });
+      }
+      if (!active) return;
       let n = 0;
       let a = 0;
       let s = 0;
       for (const r of rows) {
         const paid = !!r.paid_at;
-        if (r.status === "pending" && !paid) n += 1;
-        else if (r.status === "processing" && !paid) a += 1;
+        if (r.status === "pending" && !paid && !invoiced.has(r.id)) n += 1;
+        else if (!paid && (r.status === "processing" || invoiced.has(r.id))) a += 1;
         else s += 1;
       }
       setNewCount(n);

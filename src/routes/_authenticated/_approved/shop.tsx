@@ -2902,11 +2902,13 @@ function OrdersView({
   const { user } = useAuth();
 
   type OrdersTab = "new" | "awaiting-payment" | "account-setup" | "completed" | "cancelled";
+  const [invoicedOrderIds, setInvoicedOrderIds] = useState<Set<string>>(new Set());
   const tabForOrder = (order: Order): OrdersTab => {
     if (order.status === "completed") return "completed";
     if (order.status === "cancelled") return "cancelled";
     if (order.status === "paid" || !!order.paid_at) return "account-setup";
-    if (order.status === "processing") return "awaiting-payment";
+    // An order with a live invoice (or already processing) is awaiting payment, not new.
+    if (order.status === "processing" || invoicedOrderIds.has(order.id)) return "awaiting-payment";
     return "new";
   };
 
@@ -2971,9 +2973,22 @@ function OrdersView({
       });
       setCryptoOrderIds(all);
       setCryptoPendingIds(pending);
+      const { data: invs } = await supabase
+        .from("order_invoices")
+        .select("order_id,status,paid_at")
+        .in("order_id", ids);
+      const invoiced = new Set<string>();
+      (invs ?? []).forEach((inv: any) => {
+        const st = String(inv.status ?? "").toUpperCase();
+        if (!inv.paid_at && st !== "PAID" && st !== "CANCELED" && st !== "CANCELLED" && st !== "VOIDED") {
+          invoiced.add(inv.order_id);
+        }
+      });
+      setInvoicedOrderIds(invoiced);
     } else {
       setCryptoOrderIds(new Set());
       setCryptoPendingIds(new Set());
+      setInvoicedOrderIds(new Set());
     }
   };
   useEffect(() => {
