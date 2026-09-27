@@ -442,7 +442,7 @@ function DashboardBody() {
   const isAdminOnly = hasRole("admin");
   const canSeePins = isAdminOnly || hasRole("management");
   const { tab: searchTab } = Route.useSearch();
-  const [tab, setTab] = useState<"tools" | "order-status" | "square" | "stripe" | "bank-transfer" | "cash" | "staff-pins" | "backup-codes" | "theme" | "header-links">(
+  const [tab, setTab] = useState<"tools" | "order-status" | "square" | "stripe" | "bank-transfer" | "bank-transfer-orders" | "cash" | "staff-pins" | "backup-codes" | "theme" | "header-links">(
     searchTab === "order-status" ? "order-status" : "tools",
   );
 
@@ -498,6 +498,7 @@ function DashboardBody() {
     ["square", "Square", true],
     ["stripe", "Stripe", true],
     ["bank-transfer", "Bank transfer", "bank"],
+    ["bank-transfer-orders", "Bank transfer orders", true],
     ["cash", "Cash", true],
     ["staff-pins", "Staff PINs", true],
     ["backup-codes", "Backup codes", true],
@@ -550,6 +551,8 @@ function DashboardBody() {
         <CardPaymentsAdminCard provider="stripe" />
       ) : tab === "cash" && canSeePins ? (
         <CardPaymentsAdminCard provider="cash" />
+      ) : tab === "bank-transfer-orders" && canSeePins ? (
+        <CardPaymentsAdminCard provider="bank_transfer" />
       ) : tab === "bank-transfer" && (isAdminOnly || hasRole("management")) ? (
         <div className="max-w-2xl grid sm:grid-cols-2 gap-3">
           {([
