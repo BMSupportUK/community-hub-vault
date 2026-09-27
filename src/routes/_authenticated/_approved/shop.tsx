@@ -2901,15 +2901,16 @@ function OrdersView({
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const tabForStatus = (status: OrderStatus) => {
-    if (status === "completed") return "completed";
-    if (status === "cancelled") return "cancelled";
-    return "processing";
+  type OrdersTab = "new" | "awaiting-payment" | "account-setup" | "completed" | "cancelled";
+  const tabForOrder = (order: Order): OrdersTab => {
+    if (order.status === "completed") return "completed";
+    if (order.status === "cancelled") return "cancelled";
+    if (order.status === "paid" || !!order.paid_at) return "account-setup";
+    if (order.status === "processing") return "awaiting-payment";
+    return "new";
   };
 
-  const [ordersTab, setOrdersTab] = useState<"processing" | "completed" | "cancelled">(
-    "processing",
-  );
+  const [ordersTab, setOrdersTab] = useState<OrdersTab>("new");
   const [month, setMonth] = useState(() => new Date().getMonth());
   const [year, setYear] = useState(() => new Date().getFullYear());
   const monthLabels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
@@ -2924,7 +2925,7 @@ function OrdersView({
     if (selectedId) {
       const o = orders.find((x) => x.id === selectedId);
       if (o) {
-        setOrdersTab(tabForStatus(o.status));
+        setOrdersTab(tabForOrder(o));
         const createdAt = new Date(o.created_at);
         if (!Number.isNaN(createdAt.getTime())) {
           setYear(createdAt.getFullYear());
@@ -3017,11 +3018,27 @@ function OrdersView({
   const monthOrders = currentYearOrders.filter(
     (order) => new Date(order.created_at).getMonth() === month,
   );
-  const processingOrders = monthOrders.filter((o) =>
-    ["pending", "processing", "paid"].includes(o.status),
+  const newOrders = monthOrders.filter((o) => o.status === "pending" && !o.paid_at);
+  const awaitingPaymentOrders = monthOrders.filter((o) => o.status === "processing" && !o.paid_at);
+  const accountSetupOrders = monthOrders.filter(
+    (o) => o.status !== "completed" && o.status !== "cancelled" && (o.status === "paid" || !!o.paid_at),
   );
   const completedOrders = monthOrders.filter((o) => o.status === "completed");
   const cancelledOrders = monthOrders.filter((o) => o.status === "cancelled");
+
+  const countBadge = (count: number, tone: "new" | "waiting" | "done" | "cancelled") => (
+    <span
+      className={cn(
+        "inline-grid min-w-5 h-5 place-items-center rounded-full px-1 text-[10px] font-bold",
+        tone === "new" && "bg-destructive text-destructive-foreground",
+        tone === "waiting" && "bg-warning text-warning-foreground",
+        tone === "done" && "bg-success text-success-foreground",
+        tone === "cancelled" && "bg-muted text-muted-foreground",
+      )}
+    >
+      {count}
+    </span>
+  );
 
   const renderOrderList = (list: Order[]) => {
   const activeId = selectedId && list.some((o) => o.id === selectedId) ? selectedId : null;
@@ -3181,30 +3198,42 @@ function OrdersView({
         <Tabs
           value={ordersTab}
           onValueChange={(v) => {
-            setOrdersTab(v as "processing" | "completed" | "cancelled");
+            setOrdersTab(v as OrdersTab);
             clearSelectedOrder();
           }}
           className="w-full"
         >
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <TabsList className="grid grid-cols-3 w-full max-w-lg bg-purple-950/60 border border-purple-500/30">
+            <TabsList className="flex h-auto w-full max-w-full justify-start gap-1 overflow-x-auto bg-purple-950/60 border border-purple-500/30 p-1 scrollbar-hide">
               <TabsTrigger
-                value="processing"
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white"
+                value="new"
+                className="shrink-0 gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white"
               >
-                Processing ({processingOrders.length})
+                New order {countBadge(newOrders.length, "new")}
+              </TabsTrigger>
+              <TabsTrigger
+                value="awaiting-payment"
+                className="shrink-0 gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white"
+              >
+                Awaiting payment {countBadge(awaitingPaymentOrders.length, "waiting")}
+              </TabsTrigger>
+              <TabsTrigger
+                value="account-setup"
+                className="shrink-0 gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white"
+              >
+                Account setup {countBadge(accountSetupOrders.length, "waiting")}
               </TabsTrigger>
               <TabsTrigger
                 value="completed"
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white"
+                className="shrink-0 gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white"
               >
-                Completed ({completedOrders.length})
+                Completed {countBadge(completedOrders.length, "done")}
               </TabsTrigger>
               <TabsTrigger
                 value="cancelled"
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white"
+                className="shrink-0 gap-2 data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white"
               >
-                Cancelled ({cancelledOrders.length})
+                Cancelled {countBadge(cancelledOrders.length, "cancelled")}
               </TabsTrigger>
             </TabsList>
             {isAdmin && adminUnlocked && (
@@ -3238,8 +3267,16 @@ function OrdersView({
             )}
           </div>
 
-          <TabsContent value="processing" className="mt-6">
-            {renderOrderList(processingOrders)}
+          <TabsContent value="new" className="mt-6">
+            {renderOrderList(newOrders)}
+          </TabsContent>
+
+          <TabsContent value="awaiting-payment" className="mt-6">
+            {renderOrderList(awaitingPaymentOrders)}
+          </TabsContent>
+
+          <TabsContent value="account-setup" className="mt-6">
+            {renderOrderList(accountSetupOrders)}
           </TabsContent>
 
           <TabsContent value="completed" className="mt-6">
