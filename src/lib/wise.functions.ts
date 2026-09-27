@@ -56,6 +56,20 @@ function buildReference(prefix: string, orderId: string) {
   return `${clean}-${tail}`;
 }
 
+export const dismissGmailConfirmation = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<{ ok: true }> => {
+    const { data: roleRows } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .eq("role", "admin");
+    if (!roleRows?.length) throw new Error("Only admin can dismiss this");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("email_forwarding_confirmations").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+    return { ok: true };
+  });
+
 export const revealWiseForwardUrl = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<{ forwardUrl: string | null }> => {
