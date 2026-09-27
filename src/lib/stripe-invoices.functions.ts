@@ -151,12 +151,14 @@ export const createStripeInvoiceForOrder = createServerFn({ method: "POST" })
         0,
       );
 
+      // The dahlia API takes decimal-string amounts on invoice items
+      // (unit_amount_decimal) instead of the integer unit_amount.
       const perItem =
         items && items.length > 0 && itemsTotal === totalCents
           ? items.map((it: any) => ({
               customer: customerId,
               currency: "gbp",
-              unit_amount: it.unit_price_cents,
+              unit_amount_decimal: String(it.unit_price_cents),
               quantity: it.quantity ?? 1,
               description: `Order #${shortRef} — ${it.product_name ?? "Item"}`.slice(0, 500),
             }))
@@ -164,7 +166,7 @@ export const createStripeInvoiceForOrder = createServerFn({ method: "POST" })
               {
                 customer: customerId,
                 currency: "gbp",
-                unit_amount: totalCents,
+                unit_amount_decimal: String(totalCents),
                 quantity: 1,
                 description: `Order #${shortRef}`.slice(0, 500),
               },
