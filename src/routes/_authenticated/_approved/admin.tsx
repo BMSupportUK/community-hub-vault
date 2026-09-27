@@ -524,8 +524,26 @@ function DashboardBody() {
         ))}
       </div>
 
-      {tab === "payments" && canSeePins ? (
-        <CardPaymentsAdminCard />
+      {tab === "square" && canSeePins ? (
+        <CardPaymentsAdminCard provider="square" />
+      ) : tab === "stripe" && canSeePins ? (
+        <CardPaymentsAdminCard provider="stripe" />
+      ) : tab === "bank-transfer" && (isAdminOnly || hasRole("management")) ? (
+        <div className="max-w-2xl">
+          <Link
+            to="/admin-bank-transfer"
+            className="group relative block rounded-2xl border border-border bg-surface-1 p-4 hover:border-primary hover:shadow-glow transition-all overflow-hidden"
+          >
+            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-accent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="flex items-center gap-3 mb-2">
+              <div className="size-10 rounded-xl bg-gradient-primary grid place-items-center text-primary-foreground shadow-glow">
+                <Landmark className="size-5" />
+              </div>
+              <div className="font-display font-bold">Bank transfer</div>
+            </div>
+            <p className="text-xs text-muted-foreground">Set the bank details customers see, grant bank-transfer payment access, and review incoming Wise payments.</p>
+          </Link>
+        </div>
       ) : tab === "staff-pins" && canSeePins ? (
         <StaffPinAdminCard />
       ) : tab === "backup-codes" && canSeePins ? (
