@@ -115,14 +115,15 @@ function AuthLayout() {
   // Chat surfaces pin their composer to the bottom, but only on large
   // screens — on smaller screens the whole page scrolls like any other.
   const chatSurface = lockable && (path === "/tickets" || /^\/home\/[^/]+$/.test(path));
-  // Every page starts with the main site header collapsed to a slim bar;
-  // it can be expanded again with the chevron at any time. Talk channels
-  // also show the channel name on the slim bar.
+  // Every page starts with the main site header collapsed to a slim bar,
+  // except the home page where it stays open. It can be collapsed/expanded
+  // again with the chevron at any time. Talk channels also show the channel
+  // name on the slim bar.
   const inTalkChannel = /^\/home\/[^/]+$/.test(path);
-  const [talkHeaderExpanded, setTalkHeaderExpanded] = useState(false);
+  const [talkHeaderExpanded, setTalkHeaderExpanded] = useState(path === "/");
   const [talkChannelName, setTalkChannelName] = useState<string | null>(null);
   useEffect(() => {
-    setTalkHeaderExpanded(false);
+    setTalkHeaderExpanded(path === "/");
   }, [path]);
   const talkHeaderCollapsed = !talkHeaderExpanded;
   useEffect(() => {
