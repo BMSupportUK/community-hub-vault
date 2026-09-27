@@ -34,7 +34,7 @@ const blank = {
 };
 
 /** Owner-only: bank account details + which customers may pay by bank transfer. */
-type BankTransferView = "details" | "customers" | "incoming" | "wise";
+type BankTransferView = "details" | "customers" | "wise";
 
 export function BankTransferAdminCard({ initialView = "details" }: { initialView?: BankTransferView }) {
   const { hasRole } = useAuth();
@@ -209,7 +209,7 @@ export function BankTransferAdminCard({ initialView = "details" }: { initialView
       ) : (
         <>
           <div className="flex flex-wrap gap-2">
-            {([["details", "Bank details"], ["customers", `Bank transfer customers (${grants.length})`], ["incoming", "Incoming transfers"], ["wise", "Wise settings"]] as const).map(([k, label]) => (
+            {([["details", "Bank details"], ["customers", `Bank transfer customers (${grants.length})`], ["wise", "Wise settings"]] as const).map(([k, label]) => (
               <button
                 key={k}
                 type="button"
@@ -403,7 +403,6 @@ export function BankTransferAdminCard({ initialView = "details" }: { initialView
           </div>
           )}
 
-          {view === "incoming" && <WiseIncomingCard hidePending />}
           {view === "wise" && <WiseIncomingCard mode="settings" hidePending />}
         </>
       )}

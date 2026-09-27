@@ -3,9 +3,8 @@ import { ArrowLeft, Landmark } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { isAdminUnlocked } from "@/lib/admin-unlock";
 import { BankTransferAdminCard } from "@/components/app/BankTransferAdminCard";
-import { AwaitingPaymentsSidebar } from "@/components/app/AwaitingPaymentsSidebar";
 
-const BANK_TABS = ["details", "customers", "incoming", "wise"] as const;
+const BANK_TABS = ["details", "customers", "wise"] as const;
 type BankTab = (typeof BANK_TABS)[number];
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-bank-transfer")({
@@ -52,10 +51,7 @@ function AdminBankTransferPage() {
           </div>
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-          <BankTransferAdminCard key={tab} initialView={tab} />
-          <AwaitingPaymentsSidebar />
-        </div>
+        <BankTransferAdminCard key={tab} initialView={tab} />
       </div>
     </main>
   );

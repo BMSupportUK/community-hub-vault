@@ -10,6 +10,8 @@ import { unlockWithStaffPin, requestStaffPinReset } from "@/lib/staff-pin.functi
 import { StaffPinAdminCard } from "@/components/app/StaffPinAdminCard";
 import { CardPaymentsAdminCard } from "@/components/app/CardPaymentsAdminCard";
 import { OrderStatusAdminCard } from "@/components/app/OrderStatusAdminCard";
+import { WiseIncomingCard } from "@/components/app/WiseIncomingCard";
+import { AwaitingPaymentsSidebar } from "@/components/app/AwaitingPaymentsSidebar";
 import { setAppTheme, useDefaultAppTheme } from "@/hooks/use-app-theme";
 import { applyNavOrder, setLandingNavOrder, useLandingNavOrder } from "@/hooks/use-landing-nav-order";
 import { ArrowDown, ArrowUp } from "lucide-react";
@@ -552,13 +554,18 @@ function DashboardBody() {
       ) : tab === "cash" && canSeePins ? (
         <CardPaymentsAdminCard provider="cash" />
       ) : tab === "bank-transfer-orders" && canSeePins ? (
-        <CardPaymentsAdminCard provider="bank_transfer" />
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="space-y-6">
+            <WiseIncomingCard hidePending />
+            <CardPaymentsAdminCard provider="bank_transfer" />
+          </div>
+          <AwaitingPaymentsSidebar />
+        </div>
       ) : tab === "bank-transfer" && (isAdminOnly || hasRole("management")) ? (
         <div className="max-w-2xl grid sm:grid-cols-2 gap-3">
           {([
             ["details", "Bank details", "Set the bank details customers see when paying by bank transfer."],
             ["customers", "Bank transfer customers", "Grant or remove bank-transfer payment access for customers."],
-            ["incoming", "Incoming transfers", "Review incoming Wise payments and allocate them to orders."],
             ["wise", "Wise settings", "Manage the Wise feed and email forwarding setup."],
           ] as const).map(([subTab, label, desc]) => (
             <Link
