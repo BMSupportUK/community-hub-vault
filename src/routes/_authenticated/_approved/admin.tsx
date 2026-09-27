@@ -12,6 +12,7 @@ import { CardPaymentsAdminCard } from "@/components/app/CardPaymentsAdminCard";
 import { OrderStatusAdminCard } from "@/components/app/OrderStatusAdminCard";
 import { AwaitingPaymentsSidebar } from "@/components/app/AwaitingPaymentsSidebar";
 import { WiseIncomingCard } from "@/components/app/WiseIncomingCard";
+import { BankTransferAdminCard } from "@/components/app/BankTransferAdminCard";
 import { setAppTheme, useDefaultAppTheme } from "@/hooks/use-app-theme";
 import { applyNavOrder, setLandingNavOrder, useLandingNavOrder } from "@/hooks/use-landing-nav-order";
 import { ArrowDown, ArrowUp } from "lucide-react";
@@ -596,29 +597,7 @@ function DashboardBody() {
       ) : tab === "bank-transfer-orders" && canSeePins ? (
         <BankTransferOrdersTabs />
       ) : tab === "bank-transfer" && isAdminOnly ? (
-        <div className="max-w-2xl grid sm:grid-cols-2 gap-3">
-          {([
-            ["details", "Bank details", "Set the bank details customers see when paying by bank transfer."],
-            ["customers", "Bank transfer customers", "Grant or remove bank-transfer payment access for customers."],
-            ["wise", "Wise settings", "Manage the Wise feed and email forwarding setup."],
-          ] as const).map(([subTab, label, desc]) => (
-            <Link
-              key={subTab}
-              to="/admin-bank-transfer"
-              search={{ tab: subTab }}
-              className="group relative block rounded-2xl border border-border bg-surface-1 p-4 hover:border-primary hover:shadow-glow transition-all overflow-hidden"
-            >
-              <div className="absolute inset-x-0 top-0 h-1 bg-gradient-accent opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="flex items-center gap-3 mb-2">
-                <div className="size-10 rounded-xl bg-gradient-primary grid place-items-center text-primary-foreground shadow-glow">
-                  <Landmark className="size-5" />
-                </div>
-                <div className="font-display font-bold">{label}</div>
-              </div>
-              <p className="text-xs text-muted-foreground">{desc}</p>
-            </Link>
-          ))}
-        </div>
+        <BankTransferAdminCard />
       ) : tab === "staff-pins" && canSeePins ? (
         <StaffPinAdminCard />
       ) : tab === "backup-codes" && canSeePins ? (
