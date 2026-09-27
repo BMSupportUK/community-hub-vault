@@ -517,15 +517,7 @@ function DashboardBody() {
     <div className="space-y-6">
       <div className="inline-flex flex-wrap p-1 rounded-xl bg-surface-2 border border-border">
         {tabs.map(([key, label]) =>
-          key === "bank-transfer" ? (
-            <Link
-              key={key}
-              to="/admin-bank-transfer"
-              className="px-4 h-9 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:text-foreground inline-flex items-center"
-            >
-              {label}
-            </Link>
-          ) : key === "profit-costs" ? (
+          key === "profit-costs" ? (
             <Link
               key={key}
               to="/admin-profit-costs"
