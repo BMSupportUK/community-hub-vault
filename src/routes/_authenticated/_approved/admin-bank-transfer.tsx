@@ -5,12 +5,21 @@ import { isAdminUnlocked } from "@/lib/admin-unlock";
 import { BankTransferAdminCard } from "@/components/app/BankTransferAdminCard";
 import { AwaitingPaymentsSidebar } from "@/components/app/AwaitingPaymentsSidebar";
 
+const BANK_TABS = ["details", "customers", "incoming", "wise"] as const;
+type BankTab = (typeof BANK_TABS)[number];
+
 export const Route = createFileRoute("/_authenticated/_approved/admin-bank-transfer")({
+  validateSearch: (search: Record<string, unknown>) => ({
+    tab: (BANK_TABS as readonly string[]).includes(search.tab as string)
+      ? (search.tab as BankTab)
+      : ("details" as BankTab),
+  }),
   component: AdminBankTransferPage,
 });
 
 function AdminBankTransferPage() {
   const { hasRole, user } = useAuth();
+  const { tab } = Route.useSearch();
   const isOwner = hasRole("admin") || hasRole("management");
 
   if (!isOwner) return <Navigate to="/home" />;
