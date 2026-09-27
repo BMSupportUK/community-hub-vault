@@ -1503,6 +1503,39 @@ export type Database = {
         }
         Relationships: []
       }
+      email_forwarding_confirmations: {
+        Row: {
+          confirmation_code: string | null
+          confirmation_url: string | null
+          created_at: string
+          excerpt: string
+          id: string
+          received_at: string
+          sender: string
+          subject: string
+        }
+        Insert: {
+          confirmation_code?: string | null
+          confirmation_url?: string | null
+          created_at?: string
+          excerpt?: string
+          id?: string
+          received_at?: string
+          sender: string
+          subject: string
+        }
+        Update: {
+          confirmation_code?: string | null
+          confirmation_url?: string | null
+          created_at?: string
+          excerpt?: string
+          id?: string
+          received_at?: string
+          sender?: string
+          subject?: string
+        }
+        Relationships: []
+      }
       email_list_members: {
         Row: {
           created_at: string
