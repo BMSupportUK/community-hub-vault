@@ -11,6 +11,7 @@ import { StaffPinAdminCard } from "@/components/app/StaffPinAdminCard";
 import { CardPaymentsAdminCard } from "@/components/app/CardPaymentsAdminCard";
 import { OrderStatusAdminCard } from "@/components/app/OrderStatusAdminCard";
 import { AwaitingPaymentsSidebar } from "@/components/app/AwaitingPaymentsSidebar";
+import { WiseIncomingCard } from "@/components/app/WiseIncomingCard";
 import { setAppTheme, useDefaultAppTheme } from "@/hooks/use-app-theme";
 import { applyNavOrder, setLandingNavOrder, useLandingNavOrder } from "@/hooks/use-landing-nav-order";
 import { ArrowDown, ArrowUp } from "lucide-react";
@@ -438,6 +439,44 @@ function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () 
   );
 }
 
+function BankTransferOrdersTabs() {
+  const [sub, setSub] = useState<"orders" | "awaiting" | "incoming">("orders");
+  const subTabs = [
+    ["orders", "Orders"],
+    ["awaiting", "Awaiting payment"],
+    ["incoming", "Incoming transfers"],
+  ] as const;
+  return (
+    <div className="space-y-6">
+      <div className="inline-flex flex-wrap p-1 rounded-xl bg-surface-2 border border-border">
+        {subTabs.map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setSub(key)}
+            className={`px-4 h-9 rounded-lg text-sm font-medium transition-colors ${
+              sub === key
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      {sub === "orders" ? (
+        <CardPaymentsAdminCard provider="bank_transfer" />
+      ) : sub === "awaiting" ? (
+        <div className="max-w-md">
+          <AwaitingPaymentsSidebar />
+        </div>
+      ) : (
+        <WiseIncomingCard hidePending />
+      )}
+    </div>
+  );
+}
+
 function DashboardBody() {
   const { hasRole } = useAuth();
   const isAdminOnly = hasRole("admin");
@@ -555,26 +594,7 @@ function DashboardBody() {
       ) : tab === "cash" && canSeePins ? (
         <CardPaymentsAdminCard provider="cash" />
       ) : tab === "bank-transfer-orders" && canSeePins ? (
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-          <div className="space-y-6">
-            <CardPaymentsAdminCard provider="bank_transfer" />
-          </div>
-          <div className="space-y-6">
-            <AwaitingPaymentsSidebar />
-            <div className="rounded-2xl border border-border bg-card p-4 space-y-3">
-              <div>
-                <h3 className="font-display font-semibold">Incoming transfers (Wise)</h3>
-                <p className="text-xs text-muted-foreground">From Wise payment emails, by year and month.</p>
-              </div>
-              <Link
-                to="/admin-incoming-transfers"
-                className="inline-flex w-full items-center justify-center rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
-              >
-                Click to view transfers
-              </Link>
-            </div>
-          </div>
-        </div>
+        <BankTransferOrdersTabs />
       ) : tab === "bank-transfer" && isAdminOnly ? (
         <div className="max-w-2xl grid sm:grid-cols-2 gap-3">
           {([
