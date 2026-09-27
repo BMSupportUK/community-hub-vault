@@ -245,7 +245,7 @@ function KnowledgeBasePage() {
           (a.body ?? "").toLowerCase().includes(q)
         );
       })
-      .sort((a, b) => a.title.localeCompare(b.title));
+      .sort((a, b) => (a.sort_order ?? 0) - (b.sort_order ?? 0) || a.title.localeCompare(b.title));
   }, [articles, activeCat, search, isMod]);
 
   const activeCategory = categories.find((c) => c.id === activeCat) ?? null;
