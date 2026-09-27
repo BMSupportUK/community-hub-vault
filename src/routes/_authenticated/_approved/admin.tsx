@@ -525,6 +525,14 @@ function DashboardBody() {
             >
               {label}
             </Link>
+          ) : key === "profit-costs" ? (
+            <Link
+              key={key}
+              to="/admin-profit-costs"
+              className="px-4 h-9 rounded-lg text-sm font-medium transition-colors text-muted-foreground hover:text-foreground inline-flex items-center"
+            >
+              {label}
+            </Link>
           ) : (
             <button
               key={key}
