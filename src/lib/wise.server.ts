@@ -23,7 +23,7 @@ export class WiseAuthError extends Error {}
 export class WiseApiError extends Error {}
 
 async function wiseApi(path: string): Promise<any> {
-  const token = process.env.WISE_API_TOKEN;
+  const token = (process.env.WISE_API_TOKEN ?? "").trim();
   if (!token) throw new Error("WISE_API_TOKEN not configured");
   const res = await fetch(`${WISE_BASE}${path}`, {
     headers: {
