@@ -116,7 +116,7 @@ export function WiseIncomingCard() {
           <div>
             <h2 className="font-display font-bold">Incoming transfers (Wise)</h2>
             <p className="text-xs text-muted-foreground">
-              Last 7 days · refreshes every minute · read-only
+              From Wise payment emails · last 14 days · refreshes every minute
             </p>
           </div>
         </div>
@@ -131,6 +131,17 @@ export function WiseIncomingCard() {
           <RefreshCw className={`size-4 ${refreshing ? "animate-spin" : ""}`} />
         </Button>
       </div>
+
+      {feed?.forwardUrl ? (
+        <details className="rounded-lg border border-border bg-surface-2/50 px-3 py-2 text-xs">
+          <summary className="cursor-pointer font-medium">Email forwarding address (keep private)</summary>
+          <p className="mt-2 text-muted-foreground">Wise "you received money" emails sent here appear in this feed.</p>
+          <div className="mt-2 flex items-center gap-2">
+            <code className="flex-1 break-all rounded bg-background px-2 py-1 font-mono">{feed.forwardUrl}</code>
+            <Button type="button" size="sm" variant="outline" onClick={() => { void navigator.clipboard.writeText(feed.forwardUrl!); toast.success("Copied"); }}>Copy</Button>
+          </div>
+        </details>
+      ) : null}
 
       {feed?.authError ? (
         <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive">
