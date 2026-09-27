@@ -22,15 +22,60 @@ export type WiseIncoming = {
 export class WiseAuthError extends Error {}
 export class WiseApiError extends Error {}
 
+function normalizePem(pem: string): string {
+  // Secrets are often pasted with literal \n sequences — convert to real newlines.
+  return pem.replace(/\\n/g, "\n").trim();
+}
+
+async function signScaChallenge(oneTimeToken: string): Promise<string | null> {
+  const pem = (process.env.WISE_SCA_PRIVATE_KEY ?? "").trim();
+  if (!pem) return null;
+  const normalized = normalizePem(pem);
+  const base64 = normalized
+    .replace(/-----BEGIN (?:RSA )?PRIVATE KEY-----/g, "")
+    .replace(/-----END (?:RSA )?PRIVATE KEY-----/g, "")
+    .replace(/\s+/g, "");
+  const der = Buffer.from(base64, "base64");
+  const key = await crypto.subtle
+    .importKey(
+      "pkcs8",
+      der,
+      { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+      false,
+      ["sign"],
+    )
+    .catch(() => null);
+  if (!key) return null;
+  const sig = await crypto.subtle.sign(
+    "RSASSA-PKCS1-v1_5",
+    key,
+    new TextEncoder().encode(oneTimeToken),
+  );
+  return Buffer.from(sig).toString("base64");
+}
+
 async function wiseApi(path: string): Promise<any> {
   const token = (process.env.WISE_API_TOKEN ?? "").trim();
   if (!token) throw new Error("WISE_API_TOKEN not configured");
-  const res = await fetch(`${WISE_BASE}${path}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: "application/json",
-    },
-  });
+  const doFetch = (extraHeaders: Record<string, string> = {}) =>
+    fetch(`${WISE_BASE}${path}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/json",
+        ...extraHeaders,
+      },
+    });
+  let res = await doFetch();
+  // Wise protects the statement endpoint with SCA: a 403 carrying an
+  // x-2fa-approval one-time token. Sign it with the private key whose public
+  // half is uploaded in Wise (Settings → API tokens → public keys) and retry.
+  if (res.status === 403 && res.headers.get("x-2fa-approval")) {
+    const oneTimeToken = res.headers.get("x-2fa-approval")!;
+    const signature = await signScaChallenge(oneTimeToken);
+    if (signature) {
+      res = await doFetch({ "x-2fa-approval": oneTimeToken, "X-Signature": signature });
+    }
+  }
   const text = await res.text();
   let body: any = {};
   try {
@@ -67,7 +112,7 @@ async function getProfiles(): Promise<Profile[]> {
     } catch (e) {
       if (e instanceof WiseAuthError) {
         throw new WiseAuthError(
-          `Wise rejected the token when reading your account profiles (${(e as Error).message.replace(/^Wise rejected the token \((\d+)\).*/, "$1")}). The token needs the Profiles permission: in Wise go to Settings → API tokens, delete this token, create a new one and enable every listed API (Profiles, Balances, Transfers, Statements).`,
+          `Wise rejected the token when reading your account profiles. Wise's own message: "${(e as Error).message}". Wise tokens have no permission tick boxes — a token is full-access by default. A rejection here almost always means the token was created on the wrong Wise account or environment: log in at wise.com, switch to your BUSINESS profile (top-left profile switcher), then go to Settings → API tokens and create the token there. Tokens from wise.com/sandbox or a personal profile will not work.`,
         );
       }
     }
@@ -88,7 +133,7 @@ async function getBalances(profileId: number): Promise<Array<{ id: number; curre
     } catch (e) {
       if (e instanceof WiseAuthError) {
         throw new WiseAuthError(
-          `Wise rejected the token when reading your balances. The token needs the Balances permission: in Wise go to Settings → API tokens, delete this token, create a new one and enable every listed API (Profiles, Balances, Transfers, Statements).`,
+          `Wise rejected the token when reading your balances. Wise's own message: "${(e as Error).message}".`,
         );
       }
     }
@@ -112,19 +157,20 @@ async function getStatement(
     `/v2/profiles/${profileId}/balance-statements/${balanceId}/statement.json?${qs}`,
     `/profiles/${profileId}/balance-statements/${balanceId}/statement.json?${qs}`,
   ];
+  const failures: string[] = [];
   for (const path of attempts) {
     try {
       const data = await wiseApi(path);
       if (Array.isArray(data?.transactions)) return data.transactions;
+      failures.push(`${path.split("?")[0]}: ok but no transactions array`);
     } catch (e) {
-      if (e instanceof WiseAuthError) {
-        throw new WiseAuthError(
-          `Wise rejected the token when reading the statement. The token needs the Statements permission: in Wise go to Settings → API tokens, delete this token, create a new one and enable every listed API (Profiles, Balances, Transfers, Statements).`,
-        );
-      }
+      failures.push(`${path.split("?")[0]}: ${(e as Error).message}`);
+      if (e instanceof WiseAuthError) continue;
     }
   }
-  return [];
+  throw new WiseAuthError(
+    `Wise would not return the account statement (profile ${profileId}, balance ${balanceId}, ${currency}). Attempts: ${failures.join(" | ")}`,
+  );
 }
 
 function cents(value: unknown): number {
