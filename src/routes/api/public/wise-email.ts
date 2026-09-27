@@ -11,17 +11,25 @@ function tokenOk(given: string | null) {
 }
 
 function pick(obj: Record<string, any>, keys: string[]) {
-  for (const k of keys) if (typeof obj[k] === "string" && obj[k]) return obj[k] as string;
+  for (const k of keys) {
+    const value = obj[k];
+    if (typeof value === "string" && value) return value;
+    if (Array.isArray(value)) {
+      const text = value.find((item) => typeof item === "string" && item);
+      if (typeof text === "string") return text;
+    }
+  }
   return "";
 }
 
 function extractGmailForwardingConfirmation(subject: string, body: string) {
-  if (!/gmail forwarding confirmation/i.test(subject)) return null;
-  const code = body.match(/(?:confirmation code|code)\D{0,80}(\d{6,12})/i)?.[1]
-    ?? body.match(/\b(\d{9})\b/)?.[1]
+  if (!/gmail forwarding confirmation|receive mail from/i.test(subject)) return null;
+  const readableBody = stripHtml(body).replace(/&amp;/gi, "&");
+  const code = readableBody.match(/(?:confirmation code|code)\D{0,120}(\d{6,12})/i)?.[1]
+    ?? readableBody.match(/\b(\d{9})\b/)?.[1]
     ?? null;
-  const url = body.match(/https?:\/\/mail-settings\.google\.com\/mail\/vf-[^\s<>"']+/i)?.[0]
-    ?? body.match(/https?:\/\/mail\.google\.com\/[^\s<>"']+/i)?.[0]
+  const url = readableBody.match(/https?:\/\/mail-settings\.google\.com\/mail\/vf-[^\s<>"']+/i)?.[0]
+    ?? readableBody.match(/https?:\/\/(?:mail\.)?google\.com\/[^\s<>"']+/i)?.[0]
     ?? null;
   return { code, url };
 }
@@ -40,9 +48,9 @@ export const Route = createFileRoute("/api/public/wise-email")({
           if (type.includes("json")) data = await request.json();
           else {
             const form = await request.formData();
-            form.forEach((v, k) => {
-              if (typeof v === "string") data[k] = v;
-            });
+            for (const [key, value] of form.entries()) {
+              data[key] = typeof value === "string" ? value : await value.text();
+            }
           }
         } catch {
           return new Response("Bad body", { status: 400 });
@@ -58,9 +66,7 @@ export const Route = createFileRoute("/api/public/wise-email")({
         if (!body) body = stripHtml(pick(data, ["HtmlBody", "html", "body-html"]));
         const from = pick(data, ["From", "from", "sender"]) || pick(headers, ["from", "From"]);
 
-        const gmailConfirmation = /forwarding-noreply@google\.com/i.test(from)
-          ? extractGmailForwardingConfirmation(subject, body)
-          : null;
+        const gmailConfirmation = extractGmailForwardingConfirmation(subject, body);
         if (gmailConfirmation) {
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
           const { error } = await supabaseAdmin.from("email_forwarding_confirmations").insert({
