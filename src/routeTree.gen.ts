@@ -99,6 +99,7 @@ import { Route as ApiPublicBoroMatchDetailRouteImport } from './routes/api/publi
 import { Route as ApiPublicLinkPreviewRouteImport } from './routes/api/public/link-preview'
 import { Route as ApiPublicTweetRouteImport } from './routes/api/public/tweet'
 import { Route as ApiPublicTweetImageRouteImport } from './routes/api/public/tweet-image'
+import { Route as ApiPublicWiseEmailRouteImport } from './routes/api/public/wise-email'
 import { Route as FanZoneBoardIndexRouteImport } from './routes/fan-zone.$board.index'
 import { Route as FanZoneBoardTopicRouteImport } from './routes/fan-zone.$board.$topic'
 import { Route as FanZoneUUserIdRouteImport } from './routes/fan-zone.u.$userId'
@@ -672,6 +673,11 @@ const ApiPublicTweetImageRoute = ApiPublicTweetImageRouteImport.update({
   path: '/api/public/tweet-image',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicWiseEmailRoute = ApiPublicWiseEmailRouteImport.update({
+  id: '/api/public/wise-email',
+  path: '/api/public/wise-email',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FanZoneBoardIndexRoute = FanZoneBoardIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -1095,6 +1101,7 @@ export interface FileRoutesByFullPath {
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
   '/api/public/tweet-image': typeof ApiPublicTweetImageRoute
+  '/api/public/wise-email': typeof ApiPublicWiseEmailRoute
   '/fan-zone/$board/$topic': typeof FanZoneBoardTopicRoute
   '/fan-zone/u/$userId': typeof FanZoneUUserIdRoute
   '/lovable/email/events': typeof LovableEmailEventsRoute
@@ -1239,6 +1246,7 @@ export interface FileRoutesByTo {
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
   '/api/public/tweet-image': typeof ApiPublicTweetImageRoute
+  '/api/public/wise-email': typeof ApiPublicWiseEmailRoute
   '/fan-zone/$board/$topic': typeof FanZoneBoardTopicRoute
   '/fan-zone/u/$userId': typeof FanZoneUUserIdRoute
   '/lovable/email/events': typeof LovableEmailEventsRoute
@@ -1389,6 +1397,7 @@ export interface FileRoutesById {
   '/api/public/link-preview': typeof ApiPublicLinkPreviewRoute
   '/api/public/tweet': typeof ApiPublicTweetRoute
   '/api/public/tweet-image': typeof ApiPublicTweetImageRoute
+  '/api/public/wise-email': typeof ApiPublicWiseEmailRoute
   '/fan-zone/$board/$topic': typeof FanZoneBoardTopicRoute
   '/fan-zone/u/$userId': typeof FanZoneUUserIdRoute
   '/lovable/email/events': typeof LovableEmailEventsRoute
@@ -1538,6 +1547,7 @@ export interface FileRouteTypes {
     | '/api/public/link-preview'
     | '/api/public/tweet'
     | '/api/public/tweet-image'
+    | '/api/public/wise-email'
     | '/fan-zone/$board/$topic'
     | '/fan-zone/u/$userId'
     | '/lovable/email/events'
@@ -1682,6 +1692,7 @@ export interface FileRouteTypes {
     | '/api/public/link-preview'
     | '/api/public/tweet'
     | '/api/public/tweet-image'
+    | '/api/public/wise-email'
     | '/fan-zone/$board/$topic'
     | '/fan-zone/u/$userId'
     | '/lovable/email/events'
@@ -1831,6 +1842,7 @@ export interface FileRouteTypes {
     | '/api/public/link-preview'
     | '/api/public/tweet'
     | '/api/public/tweet-image'
+    | '/api/public/wise-email'
     | '/fan-zone/$board/$topic'
     | '/fan-zone/u/$userId'
     | '/lovable/email/events'
@@ -1918,6 +1930,7 @@ export interface RootRouteChildren {
   ApiPublicLinkPreviewRoute: typeof ApiPublicLinkPreviewRoute
   ApiPublicTweetRoute: typeof ApiPublicTweetRoute
   ApiPublicTweetImageRoute: typeof ApiPublicTweetImageRoute
+  ApiPublicWiseEmailRoute: typeof ApiPublicWiseEmailRoute
   LovableEmailEventsRoute: typeof LovableEmailEventsRoute
   ApiPublicATokenRoute: typeof ApiPublicATokenRoute
   ApiPublicAdsAdBannerTrackRoute: typeof ApiPublicAdsAdBannerTrackRoute
@@ -2587,6 +2600,13 @@ declare module '@tanstack/react-router' {
       path: '/api/public/tweet-image'
       fullPath: '/api/public/tweet-image'
       preLoaderRoute: typeof ApiPublicTweetImageRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/wise-email': {
+      id: '/api/public/wise-email'
+      path: '/api/public/wise-email'
+      fullPath: '/api/public/wise-email'
+      preLoaderRoute: typeof ApiPublicWiseEmailRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/fan-zone/$board/': {
@@ -3335,6 +3355,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicLinkPreviewRoute: ApiPublicLinkPreviewRoute,
   ApiPublicTweetRoute: ApiPublicTweetRoute,
   ApiPublicTweetImageRoute: ApiPublicTweetImageRoute,
+  ApiPublicWiseEmailRoute: ApiPublicWiseEmailRoute,
   LovableEmailEventsRoute: LovableEmailEventsRoute,
   ApiPublicATokenRoute: ApiPublicATokenRoute,
   ApiPublicAdsAdBannerTrackRoute: ApiPublicAdsAdBannerTrackRoute,

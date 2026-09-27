@@ -1,0 +1,65 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { timingSafeEqual } from "crypto";
+import { parseWiseEmail, stripHtml } from "@/lib/wise-email-parse";
+
+function tokenOk(given: string | null) {
+  const expected = process.env.WISE_EMAIL_WEBHOOK_TOKEN ?? "";
+  if (!expected || !given) return false;
+  const a = Buffer.from(given);
+  const b = Buffer.from(expected);
+  return a.length === b.length && timingSafeEqual(a, b);
+}
+
+function pick(obj: Record<string, any>, keys: string[]) {
+  for (const k of keys) if (typeof obj[k] === "string" && obj[k]) return obj[k] as string;
+  return "";
+}
+
+/** Receives forwarded Wise "money received" emails (Postmark, Mailgun, CloudMailin, or plain JSON). */
+export const Route = createFileRoute("/api/public/wise-email")({
+  server: {
+    handlers: {
+      POST: async ({ request }) => {
+        const url = new URL(request.url);
+        if (!tokenOk(url.searchParams.get("token"))) return new Response("Unauthorized", { status: 401 });
+
+        let data: Record<string, any> = {};
+        const type = request.headers.get("content-type") ?? "";
+        try {
+          if (type.includes("json")) data = await request.json();
+          else {
+            const form = await request.formData();
+            form.forEach((v, k) => {
+              if (typeof v === "string") data[k] = v;
+            });
+          }
+        } catch {
+          return new Response("Bad body", { status: 400 });
+        }
+        const headers = (data.headers && typeof data.headers === "object" ? data.headers : {}) as Record<string, any>;
+        const subject = pick(data, ["Subject", "subject"]) || pick(headers, ["subject", "Subject"]);
+        let body = pick(data, ["TextBody", "text", "body-plain", "plain", "stripped-text", "body"]);
+        if (!body) body = stripHtml(pick(data, ["HtmlBody", "html", "body-html"]));
+        const from = pick(data, ["From", "from", "sender"]) || pick(headers, ["from", "From"]);
+
+        if (from && !/wise\.com|transferwise/i.test(from) && !/wise/i.test(`${subject} ${body}`)) {
+          return new Response("ignored", { status: 200 });
+        }
+        const parsed = parseWiseEmail(subject.slice(0, 300), body.slice(0, 20000));
+        if (!parsed) return new Response("ignored", { status: 200 });
+
+        const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+        const { error } = await supabaseAdmin.from("wise_email_payments").insert({
+          amount_cents: parsed.amountCents,
+          currency: parsed.currency,
+          sender_name: parsed.senderName?.slice(0, 120) ?? null,
+          reference: parsed.reference.slice(0, 120),
+          subject: subject.slice(0, 300),
+          excerpt: body.replace(/\s+/g, " ").trim().slice(0, 500),
+        });
+        if (error) return new Response("Save failed", { status: 500 });
+        return new Response("ok");
+      },
+    },
+  },
+});

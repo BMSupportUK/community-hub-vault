@@ -148,6 +148,13 @@
       "when": 1790398865131,
       "tag": "0020_0020_landing_nav_order_public_read",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1790524055933,
+      "tag": "0021_wise_email_payments",
+      "breakpoints": true
     }
   ]
 }
