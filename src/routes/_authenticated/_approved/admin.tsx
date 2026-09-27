@@ -439,6 +439,44 @@ function SecurityGate({ hasPin, onUnlocked }: { hasPin: boolean; onUnlocked: () 
   );
 }
 
+function BankTransferOrdersTabs() {
+  const [sub, setSub] = useState<"orders" | "awaiting" | "incoming">("orders");
+  const subTabs = [
+    ["orders", "Orders"],
+    ["awaiting", "Awaiting payment"],
+    ["incoming", "Incoming transfers"],
+  ] as const;
+  return (
+    <div className="space-y-6">
+      <div className="inline-flex flex-wrap p-1 rounded-xl bg-surface-2 border border-border">
+        {subTabs.map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setSub(key)}
+            className={`px-4 h-9 rounded-lg text-sm font-medium transition-colors ${
+              sub === key
+                ? "bg-primary text-primary-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+      {sub === "orders" ? (
+        <CardPaymentsAdminCard provider="bank_transfer" />
+      ) : sub === "awaiting" ? (
+        <div className="max-w-md">
+          <AwaitingPaymentsSidebar />
+        </div>
+      ) : (
+        <WiseIncomingCard hidePending />
+      )}
+    </div>
+  );
+}
+
 function DashboardBody() {
   const { hasRole } = useAuth();
   const isAdminOnly = hasRole("admin");
