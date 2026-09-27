@@ -22,7 +22,7 @@ const fmt = (cents: number) =>
 
 const REFRESH_MS = 60_000;
 
-export function WiseIncomingCard() {
+export function WiseIncomingCard({ hidePending = false }: { hidePending?: boolean } = {}) {
   const loadFeed = useServerFn(getWiseIncomingTransfers);
   const confirm = useServerFn(confirmBankTransferReceived);
 
@@ -258,7 +258,7 @@ export function WiseIncomingCard() {
         })}
       </ul>
 
-      {pending.length > 0 ? (
+      {!hidePending && pending.length > 0 ? (
         <div className="rounded-xl border border-border bg-surface-2/60 p-3 space-y-1.5">
           <div className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">
             Waiting for payment

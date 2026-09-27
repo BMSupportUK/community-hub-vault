@@ -386,3 +386,30 @@ export const confirmBankTransferReceived = createServerFn({ method: "POST" })
 
     return { success: true };
   });
+
+/** Admin/management: cancel an order that is awaiting a bank transfer. */
+export const cancelBankTransferOrder = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ orderId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: roles } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .in("role", ["admin", "management"]);
+    if (!roles?.length) throw new Error("Forbidden: admin or management only");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin
+      .from("order_payments")
+      .update({ status: "cancelled" } as never)
+      .eq("order_id", data.orderId)
+      .eq("provider", "bank_transfer");
+    const { error } = await supabaseAdmin
+      .from("orders")
+      .update({ status: "cancelled" } as never)
+      .eq("id", data.orderId)
+      .is("paid_at", null);
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });

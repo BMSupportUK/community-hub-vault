@@ -102,7 +102,8 @@ export const getWiseIncomingTransfers = createServerFn({ method: "POST" })
         .from("orders")
         .select("id,user_id,total_cents")
         .in("id", orderIds)
-        .is("paid_at", null);
+        .is("paid_at", null)
+        .neq("status", "cancelled");
       for (const o of data ?? []) orderRows.push(o as any);
     }
     for (const p of payments ?? []) {
@@ -136,6 +137,7 @@ export const getWiseIncomingTransfers = createServerFn({ method: "POST" })
         .select("id,user_id,total_cents")
         .in("user_id", grantedUserIds)
         .is("paid_at", null)
+        .neq("status", "cancelled")
         .order("created_at", { ascending: false })
         .limit(100);
       const { data: detailsRow } = await supabaseAdmin
