@@ -15,10 +15,12 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { confirmBankTransferReceived } from "@/lib/bank-transfer.functions";
-import { getWiseIncomingTransfers, type WiseFeed } from "@/lib/wise.functions";
+import { getWiseIncomingTransfers, revealWiseForwardUrl, type WiseFeed } from "@/lib/wise.functions";
+import { supabase } from "@/integrations/supabase/client";
 
 const fmt = (cents: number) =>
   new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format((cents || 0) / 100);
+const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
 
 const REFRESH_MS = 60_000;
 
@@ -32,6 +34,31 @@ export function WiseIncomingCard({ hidePending = false }: { hidePending?: boolea
   const [busyOrder, setBusyOrder] = useState<string | null>(null);
   const [confirmed, setConfirmed] = useState<Set<string>>(new Set());
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const reveal = useServerFn(revealWiseForwardUrl);
+  const [year, setYear] = useState<number | null>(null);
+  const [month, setMonth] = useState<number | null>(null);
+  const [keyCode, setKeyCode] = useState("");
+  const [revealing, setRevealing] = useState(false);
+  const [revealedUrl, setRevealedUrl] = useState<string | null>(null);
+
+  const doReveal = async () => {
+    if (!/^\d{6}$/.test(keyCode)) { toast.error("Enter the 6-digit code"); return; }
+    setRevealing(true);
+    try {
+      const { data: f } = await supabase.auth.mfa.listFactors();
+      const factor = f?.totp?.find((x: any) => x.status === "verified");
+      if (!factor) throw new Error("Set up 2FA on your account first");
+      const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId: factor.id, code: keyCode });
+      if (error) throw new Error("Wrong 2FA code");
+      const res = await reveal({});
+      setRevealedUrl(res.forwardUrl);
+      setKeyCode("");
+    } catch (e: any) {
+      toast.error(e?.message ?? "Could not unlock");
+    } finally {
+      setRevealing(false);
+    }
+  };
 
   const load = useCallback(async () => {
     setRefreshing(true);
@@ -105,6 +132,15 @@ export function WiseIncomingCard({ hidePending = false }: { hidePending?: boolea
   const transactions = feed?.transactions ?? [];
   const pending = feed?.pending ?? [];
   const pendingConfirmed = (orderId: string) => confirmed.has(orderId);
+  const tDate = (t: { date: string | null }) => new Date(t.date ?? 0);
+  const tYear = (t: { date: string | null }) => tDate(t).getFullYear();
+  const tMonth = (t: { date: string | null }) => tDate(t).getMonth();
+  const years = Array.from(new Set(transactions.map(tYear))).sort((a, b) => b - a);
+  const selYear = year !== null && years.includes(year) ? year : years[0];
+  const yearTx = transactions.filter((t) => tYear(t) === selYear);
+  const months = Array.from(new Set(yearTx.map(tMonth))).sort((a, b) => b - a);
+  const selMonth = month !== null && months.includes(month) ? month : months[0];
+  const shown = yearTx.filter((t) => tMonth(t) === selMonth);
 
   return (
     <section className="rounded-2xl border border-border bg-surface-1 p-5 space-y-4">
@@ -134,12 +170,31 @@ export function WiseIncomingCard({ hidePending = false }: { hidePending?: boolea
 
       {feed?.forwardUrl ? (
         <details className="rounded-lg border border-border bg-surface-2/50 px-3 py-2 text-xs">
-          <summary className="cursor-pointer font-medium">Email forwarding address (keep private)</summary>
-          <p className="mt-2 text-muted-foreground">Wise "you received money" emails sent here appear in this feed.</p>
-          <div className="mt-2 flex items-center gap-2">
-            <code className="flex-1 break-all rounded bg-background px-2 py-1 font-mono">{feed.forwardUrl}</code>
-            <Button type="button" size="sm" variant="outline" onClick={() => { void navigator.clipboard.writeText(feed.forwardUrl!); toast.success("Copied"); }}>Copy</Button>
-          </div>
+          <summary className="cursor-pointer font-medium">Wise key / forwarding address (admin, 2FA locked)</summary>
+          {revealedUrl ? (
+            <div className="mt-2 flex items-center gap-2">
+              <code className="flex-1 break-all rounded bg-background px-2 py-1 font-mono">{revealedUrl}</code>
+              <Button type="button" size="sm" variant="outline" onClick={() => { void navigator.clipboard.writeText(revealedUrl); toast.success("Copied"); }}>Copy</Button>
+              <Button type="button" size="sm" variant="ghost" onClick={() => setRevealedUrl(null)}>Hide</Button>
+            </div>
+          ) : (
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <span className="text-muted-foreground">Enter your 6-digit 2FA code to view:</span>
+              <input
+                value={keyCode}
+                onChange={(e) => setKeyCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                onKeyDown={(e) => { if (e.key === "Enter") void doReveal(); }}
+                inputMode="numeric"
+                maxLength={6}
+                placeholder="123456"
+                className="w-28 rounded border border-border bg-background px-2 py-1 font-mono"
+                aria-label="2FA code for Wise key"
+              />
+              <Button type="button" size="sm" disabled={revealing} onClick={() => void doReveal()}>
+                {revealing ? <Loader2 className="size-3.5 animate-spin" /> : null} Unlock
+              </Button>
+            </div>
+          )}
         </details>
       ) : null}
 
@@ -190,11 +245,34 @@ export function WiseIncomingCard({ hidePending = false }: { hidePending?: boolea
       ) : null}
 
       {transactions.length === 0 && !feed?.error ? (
-        <p className="text-xs text-muted-foreground">No incoming payments in the last 14 days.</p>
+        <p className="text-xs text-muted-foreground">No incoming payments yet.</p>
+      ) : null}
+
+      {years.length > 0 ? (
+        <div className="space-y-2">
+          <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Year">
+            {years.map((y) => (
+              <button key={y} type="button" role="tab" aria-selected={y === selYear}
+                onClick={() => { setYear(y); setMonth(null); }}
+                className={`rounded-full px-3 py-1 text-xs font-semibold ${y === selYear ? "bg-primary text-primary-foreground" : "bg-surface-2 text-muted-foreground"}`}>
+                {y} <span className="opacity-70">({transactions.filter((t) => tYear(t) === y).length})</span>
+              </button>
+            ))}
+          </div>
+          <div className="flex flex-wrap gap-1.5" role="tablist" aria-label="Month">
+            {months.map((m) => (
+              <button key={m} type="button" role="tab" aria-selected={m === selMonth}
+                onClick={() => setMonth(m)}
+                className={`rounded-full px-3 py-1 text-xs font-semibold ${m === selMonth ? "bg-primary text-primary-foreground" : "bg-surface-2 text-muted-foreground"}`}>
+                {MONTHS[m]} <span className="opacity-70">({yearTx.filter((t) => tMonth(t) === m).length})</span>
+              </button>
+            ))}
+          </div>
+        </div>
       ) : null}
 
       <ul className="space-y-2">
-        {transactions.map((t) => {
+        {shown.map((t) => {
           const settled = t.match ? pendingConfirmed(t.match.orderId) : false;
           return (
             <li

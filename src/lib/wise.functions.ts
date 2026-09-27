@@ -56,6 +56,26 @@ function buildReference(prefix: string, orderId: string) {
   return `${clean}-${tail}`;
 }
 
+export const revealWiseForwardUrl = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<{ forwardUrl: string | null }> => {
+    const { data: roleRows } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .eq("role", "admin");
+    if (!roleRows?.length) throw new Error("Only admin can view the Wise key");
+    const claims = (context as any).claims ?? {};
+    const amr = Array.isArray(claims.amr) ? claims.amr : [];
+    const totp = amr.find((m: any) => m?.method === "totp");
+    const fresh = totp?.timestamp && Date.now() / 1000 - totp.timestamp < 300;
+    if (claims.aal !== "aal2" || !fresh) throw new Error("Enter your 2FA code to view the Wise key");
+    const token = process.env.WISE_EMAIL_WEBHOOK_TOKEN;
+    if (!token) return { forwardUrl: null };
+    const origin = process.env.PUBLIC_SITE_URL || "https://bmsupport.uk";
+    return { forwardUrl: `${origin}/api/public/wise-email?token=${token}` };
+  });
+
 export const getWiseIncomingTransfers = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<WiseFeed> => {
@@ -65,12 +85,13 @@ export const getWiseIncomingTransfers = createServerFn({ method: "POST" })
       .eq("user_id", context.userId)
       .in("role", ["admin", "management"]);
     if (!roleRows?.length) throw new Error("Forbidden: owner only");
+    const isAdmin = roleRows.some((r: any) => r.role === "admin");
     const feed: WiseFeed = { configured: false, error: null, authError: false, transactions: [], pending: [], forwardUrl: null, gmailConfirmation: null };
     const token = process.env.WISE_EMAIL_WEBHOOK_TOKEN;
     if (!token) return feed;
     feed.configured = true;
-    const origin = process.env.PUBLIC_SITE_URL || "https://bmsupport.uk";
-    feed.forwardUrl = `${origin}/api/public/wise-email?token=${token}`;
+    // The key itself is never sent here; admins reveal it separately with 2FA.
+    feed.forwardUrl = isAdmin ? "locked" : null;
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -184,13 +205,11 @@ export const getWiseIncomingTransfers = createServerFn({ method: "POST" })
 
     // Fetch Wise credits and match.
     try {
-      const since = new Date(Date.now() - 14 * 86400_000).toISOString();
       const { data: emails, error: emailErr } = await supabaseAdmin
         .from("wise_email_payments")
         .select("*")
-        .gte("received_at", since)
         .order("received_at", { ascending: false })
-        .limit(100);
+        .limit(1000);
       if (emailErr) throw emailErr;
       const incoming: WiseIncoming[] = (emails ?? []).map((e: any) => ({
         id: String(e.id),
