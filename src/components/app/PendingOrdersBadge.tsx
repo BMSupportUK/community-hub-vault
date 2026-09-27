@@ -62,6 +62,11 @@ export function PendingOrdersBadge() {
         { event: "*", schema: "public", table: "orders" },
         () => load(),
       )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "order_invoices" },
+        () => load(),
+      )
       .subscribe();
     // Realtime postgres_changes above handles fresh updates;
     // this interval is only a reconciliation safety net.
