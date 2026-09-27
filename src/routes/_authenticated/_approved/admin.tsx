@@ -25,8 +25,9 @@ import {
 } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin")({
-  validateSearch: (search: Record<string, unknown>): { next?: string } => ({
+  validateSearch: (search: Record<string, unknown>): { next?: string; tab?: string } => ({
     next: typeof search.next === "string" ? (search.next as string) : undefined,
+    tab: typeof search.tab === "string" ? (search.tab as string) : undefined,
   }),
   component: AdminDashboard,
 });
