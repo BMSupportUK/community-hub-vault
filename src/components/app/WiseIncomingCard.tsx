@@ -185,7 +185,8 @@ export function WiseIncomingCard() {
               {t.match ? (
                 <div className="flex items-center gap-2">
                   <Link
-                    to="/admin"
+                    to="/shop"
+                    search={{ view: "orders", id: t.match.orderId } as never}
                     className="text-[11px] text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
                   >
                     <LinkIcon className="size-3" />
