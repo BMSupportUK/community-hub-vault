@@ -15,6 +15,17 @@ function pick(obj: Record<string, any>, keys: string[]) {
   return "";
 }
 
+function extractGmailForwardingConfirmation(subject: string, body: string) {
+  if (!/gmail forwarding confirmation/i.test(subject)) return null;
+  const code = body.match(/(?:confirmation code|code)\D{0,80}(\d{6,12})/i)?.[1]
+    ?? body.match(/\b(\d{9})\b/)?.[1]
+    ?? null;
+  const url = body.match(/https?:\/\/mail-settings\.google\.com\/mail\/vf-[^\s<>"']+/i)?.[0]
+    ?? body.match(/https?:\/\/mail\.google\.com\/[^\s<>"']+/i)?.[0]
+    ?? null;
+  return { code, url };
+}
+
 /** Receives forwarded Wise "money received" emails (Postmark, Mailgun, CloudMailin, or plain JSON). */
 export const Route = createFileRoute("/api/public/wise-email")({
   server: {
@@ -46,6 +57,22 @@ export const Route = createFileRoute("/api/public/wise-email")({
         let body = pick(data, ["TextBody", "text", "body-plain", "plain", "stripped-text", "body"]);
         if (!body) body = stripHtml(pick(data, ["HtmlBody", "html", "body-html"]));
         const from = pick(data, ["From", "from", "sender"]) || pick(headers, ["from", "From"]);
+
+        const gmailConfirmation = /forwarding-noreply@google\.com/i.test(from)
+          ? extractGmailForwardingConfirmation(subject, body)
+          : null;
+        if (gmailConfirmation) {
+          const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+          const { error } = await supabaseAdmin.from("email_forwarding_confirmations").insert({
+            sender: from.slice(0, 300),
+            subject: subject.slice(0, 300),
+            confirmation_code: gmailConfirmation.code,
+            confirmation_url: gmailConfirmation.url,
+            excerpt: body.replace(/\s+/g, " ").trim().slice(0, 1000),
+          });
+          if (error) return new Response("Save failed", { status: 500 });
+          return new Response("confirmation saved");
+        }
 
         if (from && !/wise\.com|transferwise/i.test(from) && !/wise/i.test(`${subject} ${body}`)) {
           return new Response("ignored", { status: 200 });

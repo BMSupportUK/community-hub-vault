@@ -25,6 +25,11 @@ export type WiseFeed = {
   authError: boolean;
   transactions: WiseRow[];
   forwardUrl: string | null;
+  gmailConfirmation: {
+    receivedAt: string;
+    code: string | null;
+    url: string | null;
+  } | null;
   pending: Array<{
     orderId: string;
     reference: string;
@@ -56,7 +61,7 @@ export const getWiseIncomingTransfers = createServerFn({ method: "POST" })
   .handler(async ({ context }): Promise<WiseFeed> => {
     const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
     if (!isAdmin) throw new Error("Forbidden: owner only");
-    const feed: WiseFeed = { configured: false, error: null, authError: false, transactions: [], pending: [], forwardUrl: null };
+    const feed: WiseFeed = { configured: false, error: null, authError: false, transactions: [], pending: [], forwardUrl: null, gmailConfirmation: null };
     const token = process.env.WISE_EMAIL_WEBHOOK_TOKEN;
     if (!token) return feed;
     feed.configured = true;
@@ -64,6 +69,20 @@ export const getWiseIncomingTransfers = createServerFn({ method: "POST" })
     feed.forwardUrl = `${origin}/api/public/wise-email?token=${token}`;
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+
+    const { data: confirmation } = await supabaseAdmin
+      .from("email_forwarding_confirmations")
+      .select("received_at,confirmation_code,confirmation_url")
+      .order("received_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (confirmation) {
+      feed.gmailConfirmation = {
+        receivedAt: confirmation.received_at,
+        code: confirmation.confirmation_code,
+        url: confirmation.confirmation_url,
+      };
+    }
 
     // Pending bank-transfer orders: explicit awaiting_verification rows, plus
     // unpaid orders for customers who hold a live bank-transfer grant.
