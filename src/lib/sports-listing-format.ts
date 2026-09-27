@@ -1320,29 +1320,35 @@ function convertEventsToUk(events: SportsListingEvent[], input: ListingInput): S
 }
 
 export function formatSportsListingBlock(input: ListingInput): string | null {
-  const parsed = parseSportsListingBlock(input.raw);
   // No date written anywhere in the post: date it from the import day rather
   // than leaving the guide dateless for someone to fill in afterwards.
   const base = input.date ?? importDayListingDate();
-  const dated = rollOvernightEvents(applyImplicitDateRollover(parsed, base));
-  const events = dedupeSportsListingEvents(sortSportsListingEvents(
-    convertEventsToUk(dated, { ...input, date: base ?? input.date }),
-  ));
+  const processSection = (text: string): SportsListingEvent[] => {
+    const parsed = parseSportsListingBlock(text);
+    const dated = rollOvernightEvents(applyImplicitDateRollover(parsed, base));
+    return convertEventsToUk(dated, { ...input, date: base ?? input.date });
+  };
+
+  // Every explicit competition heading belongs on the events beneath it
+  // ("ICC ODI: India v West Indies"). A post with several headings is split
+  // into its sections so each event carries its own section's heading —
+  // never the first heading of the whole post. Do not duplicate a heading
+  // when the event name already begins with it.
+  const sections = splitSportsListingSections(input.raw);
+  const labelled = sections.flatMap((section) => {
+    const events = processSection(section.text);
+    if (!section.heading) return events;
+    const heading = section.heading;
+    return events.map((event) =>
+      event.title.toLowerCase().startsWith(heading.toLowerCase())
+        ? event
+        : { ...event, title: `${heading}: ${event.title}` },
+    );
+  });
+  const events = dedupeSportsListingEvents(sortSportsListingEvents(labelled));
   if (!events.length) return null;
 
-  // Every explicit competition heading belongs on every event name, whether
-  // or not it matches the selected guide ("ICC ODI: India v West Indies").
-  // Do not duplicate a heading when the event name already begins with it.
-  const listingHeading = sportsListingHeading(input.raw);
-  const labelled = listingHeading
-    ? events.map((event) =>
-        event.title.toLowerCase().startsWith(listingHeading.toLowerCase())
-          ? event
-          : { ...event, title: `${listingHeading}: ${event.title}` },
-      )
-    : events;
-
-  return formatSportsListingEvents(labelled, { ...input, date: base ?? input.date });
+  return formatSportsListingEvents(events, { ...input, date: base ?? input.date });
 }
 
 export function formatSportsListingEvents(events: SportsListingEvent[], input: ListingInput): string {
