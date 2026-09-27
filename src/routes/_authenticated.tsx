@@ -115,17 +115,18 @@ function AuthLayout() {
   // Chat surfaces pin their composer to the bottom, but only on large
   // screens — on smaller screens the whole page scrolls like any other.
   const chatSurface = lockable && (path === "/tickets" || /^\/home\/[^/]+$/.test(path));
-  // Talk channels start with the main site header collapsed to a slim bar;
-  // it can be expanded again with the chevron at any time.
+  // Every page starts with the main site header collapsed to a slim bar;
+  // it can be expanded again with the chevron at any time. Talk channels
+  // also show the channel name on the slim bar.
   const inTalkChannel = /^\/home\/[^/]+$/.test(path);
   const [talkHeaderExpanded, setTalkHeaderExpanded] = useState(false);
   const [talkChannelName, setTalkChannelName] = useState<string | null>(null);
   useEffect(() => {
-    if (inTalkChannel) setTalkHeaderExpanded(false);
-  }, [inTalkChannel, path]);
-  const talkHeaderCollapsed = inTalkChannel && !talkHeaderExpanded;
+    setTalkHeaderExpanded(false);
+  }, [path]);
+  const talkHeaderCollapsed = !talkHeaderExpanded;
   useEffect(() => {
-    if (!talkHeaderCollapsed) return;
+    if (!inTalkChannel || !talkHeaderCollapsed) return;
     const slug = path.split("/")[2] ?? "";
     let alive = true;
     supabase
@@ -139,7 +140,7 @@ function AuthLayout() {
     return () => {
       alive = false;
     };
-  }, [talkHeaderCollapsed, path]);
+  }, [talkHeaderCollapsed, inTalkChannel, path]);
   // Pages that run their own internal scrolling panels when locked.
   const selfScrolling =
     chatSurface ||
@@ -247,7 +248,7 @@ function AuthLayout() {
             className="h-8 shrink-0 border-b border-border bg-rail/40 backdrop-blur flex items-center gap-2 px-3 text-xs text-muted-foreground hover:text-foreground transition-colors text-left"
           >
             <ChevronDown className="size-3.5" />
-            <span className="font-medium truncate">{talkChannelName ?? "Talk channel"}</span>
+            {inTalkChannel && <span className="font-medium truncate">{talkChannelName ?? "Talk channel"}</span>}
             <span className="hidden sm:inline opacity-70">— show header</span>
           </button>
         )}
@@ -334,17 +335,15 @@ function AuthLayout() {
             <DeferUntilIdle>
               <VpnPill />
             </DeferUntilIdle>
-            {inTalkChannel && (
-              <button
-                type="button"
-                onClick={() => setTalkHeaderExpanded(false)}
-                title="Hide header"
-                aria-label="Hide header"
-                className="shrink-0 inline-flex items-center justify-center size-8 rounded-md hover:bg-surface-2 text-muted-foreground ml-1"
-              >
-                <ChevronUp className="size-4" />
-              </button>
-            )}
+            <button
+              type="button"
+              onClick={() => setTalkHeaderExpanded(false)}
+              title="Hide header"
+              aria-label="Hide header"
+              className="shrink-0 inline-flex items-center justify-center size-8 rounded-md hover:bg-surface-2 text-muted-foreground ml-1"
+            >
+              <ChevronUp className="size-4" />
+            </button>
         </header>)}
         <div
           className={
