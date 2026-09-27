@@ -252,11 +252,11 @@ function StatusPage() {
 
   return (
     <main
-      className="relative min-w-0 flex-1 overflow-y-auto bg-[#1a0b2e] bg-cover bg-center bg-no-repeat bg-fixed"
+      className="relative min-h-0 min-w-0 flex-1 overflow-y-auto bg-[#1a0b2e] bg-cover bg-center bg-no-repeat bg-fixed"
       style={{ backgroundImage: `url(${statusBg})` }}
     >
       <div className="absolute inset-0 bg-gradient-to-b from-[#1a0b2e]/85 via-[#1a0b2e]/75 to-[#1a0b2e]/85 pointer-events-none" aria-hidden />
-      <div className="relative z-10 grid w-full min-w-0 grid-cols-1 items-start gap-8 px-4 py-6 sm:px-6 lg:grid-cols-[minmax(0,1fr)_280px] lg:gap-0 lg:px-0 lg:py-0 2xl:grid-cols-[minmax(0,1fr)_320px]">
+      <div className="relative z-10 grid min-h-full w-full min-w-0 grid-cols-1 items-start gap-8 px-4 py-6 sm:px-6 lg:grid-cols-[minmax(0,1fr)_280px] lg:gap-0 lg:px-0 lg:py-0 2xl:grid-cols-[minmax(0,1fr)_320px]">
         <div className="min-w-0 space-y-6 lg:px-8 lg:py-8 2xl:px-10">
         <header className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -375,7 +375,7 @@ function StatusPage() {
         )}
         </div>
 
-        <aside aria-label="Outage notifications" className="min-w-0 border-t border-border/60 pt-6 lg:sticky lg:top-0 lg:min-h-screen lg:self-stretch lg:border-l lg:border-t-0 lg:bg-surface-1/30 lg:px-6 lg:py-8">
+        <aside aria-label="Outage notifications" className="min-w-0 border-t border-border/60 pt-6 lg:sticky lg:top-0 lg:min-h-0 lg:self-stretch lg:border-l lg:border-t-0 lg:bg-surface-1/30 lg:px-6 lg:py-8">
           <div className="space-y-4">
             {/* Status banner */}
             <div
