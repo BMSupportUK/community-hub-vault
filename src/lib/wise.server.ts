@@ -86,7 +86,11 @@ async function getBalances(profileId: number): Promise<Array<{ id: number; curre
       const data = await wiseApi(path);
       if (Array.isArray(data) && data.length) return data;
     } catch (e) {
-      if (e instanceof WiseAuthError) throw e;
+      if (e instanceof WiseAuthError) {
+        throw new WiseAuthError(
+          `Wise rejected the token when reading your balances. The token needs the Balances permission: in Wise go to Settings → API tokens, delete this token, create a new one and enable every listed API (Profiles, Balances, Transfers, Statements).`,
+        );
+      }
     }
   }
   return [];
