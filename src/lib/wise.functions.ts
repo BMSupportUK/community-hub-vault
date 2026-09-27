@@ -59,8 +59,12 @@ function buildReference(prefix: string, orderId: string) {
 export const getWiseIncomingTransfers = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<WiseFeed> => {
-    const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
-    if (!isAdmin) throw new Error("Forbidden: owner only");
+    const { data: roleRows } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId)
+      .in("role", ["admin", "management"]);
+    if (!roleRows?.length) throw new Error("Forbidden: owner only");
     const feed: WiseFeed = { configured: false, error: null, authError: false, transactions: [], pending: [], forwardUrl: null, gmailConfirmation: null };
     const token = process.env.WISE_EMAIL_WEBHOOK_TOKEN;
     if (!token) return feed;
