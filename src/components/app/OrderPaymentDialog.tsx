@@ -20,6 +20,11 @@ import {
 } from "@/lib/nowpayments.functions";
 import { StripeOrderPanel, verifyStripePaymentForOrder } from "@/components/app/StripeOrderPanel";
 import { confirmStripePayment } from "@/lib/stripe-payments.functions";
+import {
+  createStripeInvoiceForOrder,
+  refreshStripeInvoiceStatus,
+} from "@/lib/stripe-invoices.functions";
+import { getStripeEnvironment } from "@/lib/stripe";
 import { BankTransferPanel } from "@/components/app/BankTransferPanel";
 import { getMyBankTransferAccess, getBankDetailsForOrder } from "@/lib/bank-transfer.functions";
 
@@ -259,6 +264,7 @@ export function PayOrderDialog({
                 <SquareInvoicePanel orderId={orderId} amountCents={amountCents} onChange={handleChange} />
               </TabsContent>
               <TabsContent value="stripe" className="mt-3">
+                <StripeInvoicePanel orderId={orderId} amountCents={amountCents} onChange={handleChange} />
                 <StripeOrderPanel
                   orderId={orderId}
                   amountCents={amountCents}
