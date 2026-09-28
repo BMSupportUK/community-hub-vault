@@ -75,3 +75,8 @@ Format: heading `**US | MLB Extra Innings**` then rows `MLB 1 - Mets vs. Nationa
 Row: `MLB event 1 name: Mets x Nationals start:2026-09-27 18:05:00 stop:...` → channel `MLB 1`, event `Mets v Nationals`, UK time from `start:` (no BST shift). Tested on the real queued post: 15 events, 0 issues.
 
 NFL Sunday Ticket rows are `NFL NN: ET time | UK time` with the fixture on the next line: use the stated UK time as-is (never convert ET), channel `NFL NN`, and drop the `US | NFL Sunday Ticket` header. Pipe rows must never be split by the FA Player (WF) colon rule.
+
+## WST / snooker title-time-channel layout (permanent)
+Source repeats `**Event title**`, then ``UK time | ET time``, then one or more channel lines. The title belongs to the time below it, and the channels below that time belong to the same event. Example: `**Shenzhen Open**` / `7:00am UK | 2:00am ET` / `TNT Sports 1 & 2` becomes `07:00 BST`, `WST: Shenzhen Open`, channels `TNT Sports 1` and `TNT Sports 2`. Repeated sessions must never use the event title as a channel or the channel line as the event name.
+
+All permanent provider layouts must have parser regression coverage. Every importer change must run the complete sports-import format test file as well as the real post's safety and round-trip checks.

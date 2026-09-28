@@ -10,4 +10,5 @@
 - Header starts collapsed (slim bar) except the home page, which starts open; re-collapses per navigation (home re-opens). Talk channels add channel name; Fan Zone never shows it.
 - Back-to-top reacts only to page-level scrollers, never dialogs or inner chat/reply panes.
 - NFL Sunday Ticket rows are `NFL NN: ET time | UK time` with the fixture on the next line: use the stated UK time as-is, channel `NFL NN`, drop the `US | NFL Sunday Ticket` header; pipe rows are never split by the WF colon rule.
+- Every supported sports-import layout requires a permanent parser regression test, because provider-specific fixes must not regress when another layout is added.
 - Gmail forwarding confirmations are captured by the email receiver and shown only to admins on the Bank Transfer page.
