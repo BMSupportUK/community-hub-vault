@@ -13,4 +13,4 @@
 - Every corrected sports-import layout needs a permanent test covering split, safety, formatting and read-back; normalize escaped line breaks first.
 - Manual sports-queue splits preserve both halves; only an adjacent heading may move with the split, and a shared heading is copied to the second half.
 - Gmail forwarding confirmations are captured by the email receiver and shown only to admins on the Bank Transfer page.
-- Talk Channels always show all staff; online means present in any Talk Channel, named below working status.
+- Talk Channels show all staff/current channel; fit viewports with composer and people access.

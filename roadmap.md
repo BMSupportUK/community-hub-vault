@@ -1,6 +1,7 @@
 # Roadmap
 
 ## Current
+- [x] Make Talk Channels fit phone screens with reachable channel, people, message and composer controls
 - [x] Admin dashboard: move Theme and Header links into Owner tools and restore Add manual order
 - [x] Profit & costs: group crypto under NOWPayments and bank transfers under Wise
 - [x] Talk Channels: replace the staff card with an always-visible Online/Offline staff list, name cards, working/break countdowns, and current channel

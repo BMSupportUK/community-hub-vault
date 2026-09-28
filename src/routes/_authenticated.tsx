@@ -112,9 +112,10 @@ function AuthLayout() {
   const shopView = typeof search.view === "string" ? search.view : undefined;
   const lockable = useViewportLockable();
   const isMobile = useIsMobile();
-  // Chat surfaces pin their composer to the bottom, but only on large
-  // screens — on smaller screens the whole page scrolls like any other.
-  const chatSurface = lockable && (path === "/tickets" || /^\/home\/[^/]+$/.test(path));
+  // Talk Channels always pin their composer within the visible phone or desktop
+  // viewport. Tickets keep their existing large-screen-only panel behaviour.
+  const talkSurface = /^\/home\/[^/]+$/.test(path);
+  const chatSurface = talkSurface || (lockable && path === "/tickets");
   // Every page starts with the main site header collapsed to a slim bar,
   // except the home page where it stays open. It can be collapsed/expanded
   // again with the chevron at any time. Talk channels also show the channel
