@@ -32,7 +32,7 @@ Hiding is enforced by the database, not just the screen. Other members' apps nev
 - Pin UPDATE policy: disallow pinning when `private_to IS NOT NULL`.
 - Realtime already respects row security, so live messages are filtered with no extra work.
 - `home.$channel.tsx`:
-  - composer toggle, which sends with `private_to`
+  - detect a leading `/private ` or `/p ` in the composer, strip it, and send with `private_to`
   - the amber badge and styling on private messages
   - the staff "Reply privately" action, which sets reply_to and `private_to` to the original member
   - mention/notification previews skip private content for non-staff
