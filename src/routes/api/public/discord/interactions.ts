@@ -139,18 +139,25 @@ export const Route = createFileRoute("/api/public/discord/interactions")({
               source_ref: blocks.length > 1 ? `${sourceRef}#${index + 1}` : sourceRef,
               forwarded_from: channelName ? `#${channelName}` : "Discord",
             }));
-            const { error } = await supabaseAdmin.from("discord_import_queue").insert(rows as any);
+            const { data: insertedRows, error } = await supabaseAdmin
+              .from("discord_import_queue")
+              .insert(rows as any)
+              .select("id");
             if (error) throw new Error(error.message);
 
-            return Response.json({
-              type: 4,
-              data: {
-                content: blocks.length > 1
-                  ? `✅ Split into ${blocks.length} listings and added to the Sports Guide review queue.`
-                  : "✅ Added to the Sports Guide review queue.",
-                flags: 64,
-              },
-            });
+            // Discord posts auto-publish: format with the known layout fixes,
+            // safety-check and go live. Anything unsafe or unrouted is held.
+            const queueId = (insertedRows ?? [])[0]?.id as string | undefined;
+            let content = "✅ Added to the Sports Guide review queue.";
+            if (queueId) {
+              const { autoPublishDiscordQueueItem } = await import("@/lib/discord-import.functions");
+              const r = await autoPublishDiscordQueueItem(queueId);
+              content = r.published
+                ? `✅ Published "${r.title}" in ${r.category}.`
+                : `⏸️ Held in the review queue: ${r.reason}`;
+            }
+
+            return Response.json({ type: 4, data: { content, flags: 64 } });
           } catch (e) {
             console.error("discord ingest failed:", e);
             return Response.json({
