@@ -112,8 +112,9 @@ interface Message {
   private_to?: string | null;
 }
 
-// Messages starting with `/private ` or `/s ` are only visible to the sender and staff.
-const PRIVATE_CMD_RE = /^\s*\/(?:private|s)(?:\s|$)/i;
+// Messages starting with `!private ` or `!s ` are only visible to the sender and staff.
+// Authorised change (user request): `!` prefix so the command never clashes with `/` shortcuts.
+const PRIVATE_CMD_RE = /^\s*!(?:private|s)(?:\s|$)/i;
 function stripPrivateCommand(text: string) {
   return text.replace(/^((?:<[^>]+>)*)\s*\/(?:private|s)\b(?:\s|&nbsp;)*/i, "$1");
 }
@@ -893,13 +894,13 @@ function ChannelPage() {
         setUploadingPaste(false);
       }
     }
-    // Private: `/private` command, or any reply to a private message.
+    // Private: `!private` command, or any reply to a private message.
     const wantsPrivate = PRIVATE_CMD_RE.test(directText ?? originalPlain) || !!replyTo?.private_to;
     let privateTo: string | null = null;
     if (wantsPrivate) {
       content = stripPrivateCommand(content).trim();
       if (!content) {
-        toast.error("Type your private message after /private");
+        toast.error("Type your private message after !private");
         restoreDraft();
         setSending(false);
         return;
@@ -2278,7 +2279,7 @@ function ChannelPage() {
                         ? `Slow mode: wait ${slowRemaining}s before sending another message`
                         : pendingGif
                           ? "GIF attached — press Enter or Send"
-                          : `Message #${channel.name} — /private or /s for staff-only · @ to mention · # to jump to a channel · paste or Win + . for emotes & GIFs`
+                          : `Message #${channel.name} — !private or !s for staff-only · @ to mention · # to jump to a channel · paste or Win + . for emotes & GIFs`
                 }
                 onBeforeInput={(e) => {
                   const inputEvent = e.nativeEvent as InputEvent;
