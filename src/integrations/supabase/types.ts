@@ -1144,6 +1144,7 @@ export type Database = {
           id: string
           pinned_at: string | null
           pinned_by: string | null
+          private_to: string | null
           reply_to: string | null
           sender_id: string
         }
@@ -1155,6 +1156,7 @@ export type Database = {
           id?: string
           pinned_at?: string | null
           pinned_by?: string | null
+          private_to?: string | null
           reply_to?: string | null
           sender_id: string
         }
@@ -1166,6 +1168,7 @@ export type Database = {
           id?: string
           pinned_at?: string | null
           pinned_by?: string | null
+          private_to?: string | null
           reply_to?: string | null
           sender_id?: string
         }

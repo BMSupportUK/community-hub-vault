@@ -89,7 +89,8 @@ export function UnclaimedTicketsNotifier() {
     void load();
   };
 
-  if (!onShift || rows.length === 0 || onTicketsPage) return null;
+  // Talk channels show the count on the staff ticket icons instead.
+  if (!onShift || rows.length === 0 || onTicketsPage || isTalk) return null;
   const n = rows.length;
   const label = `${n} ticket${n === 1 ? "" : "s"} waiting to be claimed`;
 

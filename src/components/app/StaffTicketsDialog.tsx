@@ -26,19 +26,61 @@ function ago(iso: string) {
   return `${Math.floor(h / 24)}d ago`;
 }
 
+// One shared live count of unclaimed tickets for every staff ticket icon.
+let unclaimedCount = 0;
+const listeners = new Set<(n: number) => void>();
+let unclaimedChannel: ReturnType<typeof supabase.channel> | null = null;
+async function refreshUnclaimed() {
+  const { count } = await supabase
+    .from("tickets")
+    .select("id", { count: "exact", head: true })
+    .in("status", ["open", "in_progress", "waiting"])
+    .is("assigned_to", null)
+    .is("archived_at", null);
+  unclaimedCount = count ?? 0;
+  listeners.forEach((l) => l(unclaimedCount));
+}
+function useUnclaimedCount() {
+  const [n, setN] = useState(unclaimedCount);
+  useEffect(() => {
+    listeners.add(setN);
+    if (!unclaimedChannel) {
+      void refreshUnclaimed();
+      unclaimedChannel = supabase
+        .channel(`unclaimed-ticket-count-${Math.random().toString(36).slice(2)}`)
+        .on("postgres_changes", { event: "*", schema: "public", table: "tickets" }, () => { void refreshUnclaimed(); })
+        .subscribe();
+    }
+    return () => {
+      listeners.delete(setN);
+      if (!listeners.size && unclaimedChannel) { void supabase.removeChannel(unclaimedChannel); unclaimedChannel = null; }
+    };
+  }, []);
+  return n;
+}
+
 export function StaffTicketsButton({ staffId, staffName }: { staffId: string; staffName: string }) {
   const [open, setOpen] = useState(false);
+  const unclaimed = useUnclaimedCount();
   return (
     <>
       <button
         type="button"
         aria-label={`Tickets for ${staffName}`}
-        title="Ticket overview"
+        title={unclaimed > 0 ? `${unclaimed} unclaimed ticket${unclaimed === 1 ? "" : "s"} – click to claim` : "Ticket overview"}
         onPointerDown={(e) => e.stopPropagation()}
         onClick={(e) => { e.stopPropagation(); e.preventDefault(); setOpen(true); }}
-        className="grid size-6 shrink-0 place-items-center rounded-md bg-surface-2/80 text-muted-foreground hover:bg-primary hover:text-primary-foreground"
+        className={cn(
+          "relative grid size-6 shrink-0 place-items-center rounded-md hover:bg-primary hover:text-primary-foreground",
+          unclaimed > 0 ? "animate-pulse bg-destructive text-destructive-foreground" : "bg-surface-2/80 text-muted-foreground",
+        )}
       >
         <Ticket className="size-3.5" />
+        {unclaimed > 0 && (
+          <span className="absolute -right-1.5 -top-1.5 grid min-w-4 place-items-center rounded-full bg-background px-1 text-[9px] font-bold leading-4 text-destructive ring-1 ring-destructive">
+            {unclaimed > 99 ? "99+" : unclaimed}
+          </span>
+        )}
       </button>
       {open && <StaffTicketsDialog staffId={staffId} staffName={staffName} onClose={() => setOpen(false)} />}
     </>
