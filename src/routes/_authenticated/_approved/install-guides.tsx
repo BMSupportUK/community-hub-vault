@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { HeaderImageUpload } from "@/components/ui/header-image-upload";
 import { HeaderVideoUpload } from "@/components/ui/header-video-upload";
 import { GuideVaultCardActions } from "@/components/app/GuideVaultCardActions";
+import { MobilePdfViewer } from "@/components/app/MobilePdfViewer";
 import { useGuideVideoUrl } from "@/hooks/use-guide-video-url";
 import { AppTransferPanel } from "@/components/app/AppTransferPanel";
 import { AppBuildAdmin } from "@/components/app/AppBuildAdmin";
@@ -846,7 +847,7 @@ function InstallGuidesPage() {
 
       {/* Guide viewer — the link is short-lived and view-only */}
       <Dialog open={!!unlocked} onOpenChange={(o) => { if (!o) { setUnlocked(null); scrollBackToGuide(); } }}>
-        <DialogContent className="max-w-5xl h-[90vh] flex flex-col">
+        <DialogContent className="flex h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-5xl flex-col overflow-hidden p-3 sm:h-[90vh] sm:p-6">
           {unlocked && (
             <>
               <DialogHeader>
@@ -855,11 +856,16 @@ function InstallGuidesPage() {
                 </DialogTitle>
               </DialogHeader>
               {unlocked.viewUrl ? (
-                <iframe
-                  src={`${unlocked.viewUrl}#toolbar=0&navpanes=0`}
-                  title={unlocked.blog.title}
-                  className="flex-1 w-full rounded-lg border border-border bg-white"
-                />
+                <>
+                  <div className="min-h-0 flex-1 md:hidden">
+                    <MobilePdfViewer url={unlocked.viewUrl} title={unlocked.blog.title} />
+                  </div>
+                  <iframe
+                    src={`${unlocked.viewUrl}#toolbar=0&navpanes=0`}
+                    title={unlocked.blog.title}
+                    className="hidden min-h-0 flex-1 w-full rounded-lg border border-border bg-white md:block"
+                  />
+                </>
               ) : (
                 <div className="whitespace-pre-wrap text-sm leading-relaxed overflow-y-auto">
                   {unlocked.body || "This guide has no readable content yet."}
@@ -873,7 +879,7 @@ function InstallGuidesPage() {
       {/* Reader */}
 
       <Dialog open={!!reading} onOpenChange={(o) => { if (!o) { setReading(null); scrollBackToGuide(); } }}>
-        <DialogContent className={reading?.pdf_url ? "max-w-5xl h-[90vh] flex flex-col" : "max-w-2xl max-h-[85vh] overflow-y-auto"}>
+        <DialogContent className={reading?.pdf_url ? "flex h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-5xl flex-col overflow-hidden p-3 sm:h-[90vh] sm:p-6" : "max-w-2xl max-h-[85vh] overflow-y-auto"}>
           {reading && (
             <>
               <DialogHeader>
@@ -882,11 +888,16 @@ function InstallGuidesPage() {
                 </DialogTitle>
               </DialogHeader>
               {reading.pdf_url ? (
-                <iframe
-                  src={`${reading.pdf_url}#toolbar=0&navpanes=0`}
-                  title={reading.title}
-                  className="flex-1 w-full rounded-lg border border-border bg-white"
-                />
+                <>
+                  <div className="min-h-0 flex-1 md:hidden">
+                    <MobilePdfViewer url={reading.pdf_url} title={reading.title} />
+                  </div>
+                  <iframe
+                    src={`${reading.pdf_url}#toolbar=0&navpanes=0`}
+                    title={reading.title}
+                    className="hidden min-h-0 flex-1 w-full rounded-lg border border-border bg-white md:block"
+                  />
+                </>
               ) : (
                 <>
                   {reading.image_url && (

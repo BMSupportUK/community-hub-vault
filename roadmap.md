@@ -1,6 +1,7 @@
 # Roadmap
 
 ## Current
+- [x] Display install-guide PDFs inside the page on mobile instead of triggering downloads
 - [x] Make the BM Support Apps download page and download popup phone-friendly
 - [x] Keep Talk Channel mini profiles centred and readable on mobile
 - [x] Give Talk Channels separate mobile Staff and Members buttons with a phone-friendly member list
