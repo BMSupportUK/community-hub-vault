@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Search, X, Pencil, Trash2, ImageIcon, GripVertical, FileText, Play, Film, Copy, Check, Upload, Loader2 } from "lucide-react";
+import { Plus, Search, X, Pencil, Trash2, ImageIcon, GripVertical, FileText, Play, Film, Copy, Check, Upload, Loader2, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { AccessRequestPanel } from "@/components/app/AccessRequestPanel";
@@ -852,7 +852,15 @@ function InstallGuidesPage() {
             <>
               <DialogHeader>
                 <DialogTitle className="font-display text-2xl flex flex-wrap items-center gap-3 text-white">
-                  <span className="flex-1">{unlocked.blog.title}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="shrink-0 gap-1.5 text-muted-foreground hover:text-foreground md:hidden"
+                    onClick={() => { setUnlocked(null); scrollBackToGuide(); }}
+                  >
+                    <ArrowLeft className="size-4" /> Back
+                  </Button>
+                  <span className="min-w-0 flex-1">{unlocked.blog.title}</span>
                 </DialogTitle>
               </DialogHeader>
               {unlocked.viewUrl ? (
@@ -884,7 +892,15 @@ function InstallGuidesPage() {
             <>
               <DialogHeader>
                 <DialogTitle className="font-display text-2xl flex items-center gap-3 text-white">
-                  <span className="flex-1">{reading.title}</span>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="shrink-0 gap-1.5 text-muted-foreground hover:text-foreground md:hidden"
+                    onClick={() => { setReading(null); scrollBackToGuide(); }}
+                  >
+                    <ArrowLeft className="size-4" /> Back
+                  </Button>
+                  <span className="min-w-0 flex-1">{reading.title}</span>
                 </DialogTitle>
               </DialogHeader>
               {reading.pdf_url ? (
