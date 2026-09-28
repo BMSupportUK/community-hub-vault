@@ -1,6 +1,7 @@
 # Roadmap
 
 ## Current
+- [x] Talk Channels: move the online numbers into the STAFF and MEMBERS tabs (desktop sidebar and mobile People sheet)
 - [x] Display install-guide PDFs inside the page on mobile instead of triggering downloads
 - [x] Make the BM Support Apps download page and download popup phone-friendly
 - [x] Keep Talk Channel mini profiles centred and readable on mobile
