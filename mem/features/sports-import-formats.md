@@ -82,6 +82,9 @@ Source repeats `**Event title**`, then ``UK time | ET time``, then one or more c
 ## Asian Games title-time-channel layout (permanent)
 Source: `**## ASIAN GAMES**`, `**Aichi Nagoya 2026**`, ``11:00pm UK | 6:00pm ET``, `beIN Sports English 1 & 2`. Output: `23:00 BST`, `ASIAN GAMES: Aichi Nagoya 2026`, channels `beIN Sports English 1` and `beIN Sports English 2`. The competition heading prefixes the event; the numbered beIN feeds remain separate channels.
 
+## Other Sport shared-heading manual split (permanent)
+Source may arrive with literal escaped `\\n` line breaks. A shared `**## OTHER SPORT: MONDAY 28 SEPTEMBER**` heading covers Greyhound Racing at `11:05am UK / 6:05am ET`, then Ultimate Pool at `6:00pm UK / 1:00pm ET`. Splitting at the second time preserves both events, copies the shared heading, and keeps all UK/Australia channel lines.
+
 All permanent provider layouts must have parser regression coverage. Every importer change must run the complete sports-import format test file as well as the real post's safety and round-trip checks.
 
 ## Manual queue splitting (permanent)
