@@ -1,6 +1,8 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Ticket } from "lucide-react";
+import { ArrowRight, Ticket } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
@@ -46,28 +48,55 @@ export function StaffTicketsButton({ staffId, staffName }: { staffId: string; st
 function StaffTicketsDialog({ staffId, staffName, onClose }: { staffId: string; staffName: string; onClose: () => void }) {
   const [rows, setRows] = useState<Row[] | null>(null);
   const [names, setNames] = useState<Map<string, string>>(new Map());
+  const [me, setMe] = useState<string | null>(null);
+  const [claiming, setClaiming] = useState<string | null>(null);
+  const [justClaimed, setJustClaimed] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    const { data } = await supabase
+      .from("tickets")
+      .select("id, subject, status, priority, created_at, updated_at, user_id, assigned_to")
+      .in("status", ["open", "in_progress", "waiting"])
+      .is("archived_at", null)
+      .order("created_at", { ascending: false })
+      .limit(300);
+    const list = (data ?? []) as Row[];
+    const ids = Array.from(new Set(list.flatMap((r) => [r.user_id, r.assigned_to]).filter(Boolean))) as string[];
+    const map = new Map<string, string>();
+    if (ids.length) {
+      const { data: profs } = await supabase.from("profiles").select("id, display_name, username").in("id", ids);
+      for (const p of profs ?? []) map.set(p.id, p.display_name || p.username || "User");
+    }
+    setNames(map);
+    setRows(list);
+  }, []);
 
   useEffect(() => {
-    let alive = true;
-    (async () => {
-      const { data } = await supabase
-        .from("tickets")
-        .select("id, subject, status, priority, created_at, updated_at, user_id, assigned_to")
-        .in("status", ["open", "in_progress", "waiting"])
-        .is("archived_at", null)
-        .order("created_at", { ascending: false })
-        .limit(300);
-      const list = (data ?? []) as Row[];
-      const ids = Array.from(new Set(list.flatMap((r) => [r.user_id, r.assigned_to]).filter(Boolean))) as string[];
-      const map = new Map<string, string>();
-      if (ids.length) {
-        const { data: profs } = await supabase.from("profiles").select("id, display_name, username").in("id", ids);
-        for (const p of profs ?? []) map.set(p.id, p.display_name || p.username || "User");
-      }
-      if (alive) { setNames(map); setRows(list); }
-    })();
-    return () => { alive = false; };
-  }, []);
+    void supabase.auth.getUser().then(({ data }) => setMe(data.user?.id ?? null));
+    void load();
+    const channel = supabase
+      .channel(`staff-tickets-dialog-${staffId}-${Math.random().toString(36).slice(2)}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "tickets" }, () => { void load(); })
+      .subscribe();
+    return () => { void supabase.removeChannel(channel); };
+  }, [load, staffId]);
+
+  const claim = async (id: string) => {
+    if (!me) return;
+    setClaiming(id);
+    const { data, error } = await supabase
+      .from("tickets")
+      .update({ assigned_to: me })
+      .eq("id", id)
+      .is("assigned_to", null)
+      .select("id");
+    setClaiming(null);
+    if (error) return toast.error(error.message);
+    if (!data?.length) { toast.error("Someone else claimed this ticket first"); return void load(); }
+    toast.success("Ticket claimed");
+    setJustClaimed(id);
+    await load();
+  };
 
   const mine = rows?.filter((r) => r.assigned_to === staffId) ?? [];
   const unclaimed = rows?.filter((r) => !r.assigned_to) ?? [];
@@ -85,13 +114,7 @@ function StaffTicketsDialog({ staffId, staffName, onClose }: { staffId: string; 
         ) : items.length === 0 ? (
           <p className="p-2 text-xs text-muted-foreground">{empty}</p>
         ) : items.map((r) => (
-          <Link
-            key={r.id}
-            to="/tickets"
-            search={{ view: "all" } as never}
-            onClick={onClose}
-            className="block rounded-md border border-border bg-background/60 p-2 hover:bg-surface-2"
-          >
+          <div key={r.id} className={cn("rounded-md border border-border bg-background/60 p-2", justClaimed === r.id && "ring-2 ring-primary")}>
             <p className="truncate text-sm font-medium">{r.subject}</p>
             <p className="mt-0.5 text-[11px] text-muted-foreground">
               Customer: {names.get(r.user_id) ?? "Unknown"} · {r.status.replace("_", " ")} · {r.priority}
@@ -99,7 +122,26 @@ function StaffTicketsDialog({ staffId, staffName, onClose }: { staffId: string; 
             <p className="text-[11px] text-muted-foreground">
               {r.assigned_to ? `Claimed by ${names.get(r.assigned_to) ?? "staff"}` : "Not claimed"} · opened {ago(r.created_at)}
             </p>
-          </Link>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {!r.assigned_to && (
+                <Button size="sm" className="h-8" disabled={!me || claiming === r.id} onClick={() => claim(r.id)}>
+                  {claiming === r.id ? "Claiming…" : "Claim ticket"}
+                </Button>
+              )}
+              {(r.assigned_to === me || !r.assigned_to) && (
+                <Button asChild size="sm" variant={r.assigned_to === me ? "default" : "outline"} className="h-8">
+                  <Link to="/tickets" search={{ id: r.id, view: "all" } as never} onClick={onClose}>
+                    Go to ticket <ArrowRight className="size-3.5" />
+                  </Link>
+                </Button>
+              )}
+              {r.assigned_to && r.assigned_to !== me && (
+                <Button asChild size="sm" variant="ghost" className="h-8">
+                  <Link to="/tickets" search={{ id: r.id, view: "all" } as never} onClick={onClose}>View</Link>
+                </Button>
+              )}
+            </div>
+          </div>
         ))}
       </div>
     </section>
