@@ -164,20 +164,37 @@ function londonNow(at: number | Date = Date.now()) {
 const ROLE_ORDER = ["admin", "management", "staff", "moderator"] as const;
 const OFF_ORDER = ["admin", "management", "staff", "moderator"] as const;
 
-export function StaffOnDutySidebar({ channelId }: { channelId?: string | null } = {}) {
-  return <StaffOnDutyStrip variant="sidebar" channelId={channelId} />;
+export function StaffOnDutySidebar({
+  channelId,
+  onOnlineCountChange,
+}: {
+  channelId?: string | null;
+  /** Authorised change (user request): reports the online staff count so the
+   *  STAFF/MEMBERS tabs can show it — replaces the old sidebar header pill. */
+  onOnlineCountChange?: (count: number) => void;
+} = {}) {
+  return (
+    <StaffOnDutyStrip
+      variant="sidebar"
+      channelId={channelId}
+      onOnlineCountChange={onOnlineCountChange}
+    />
+  );
 }
 
 export function StaffOnDutyStrip({
   variant = "strip",
   hideRoles = [],
   channelId = null,
+  onOnlineCountChange,
 }: {
   variant?: "strip" | "sidebar" | "tickets";
   hideRoles?: string[];
   /** When set, the strip only shows staff who can view this talk channel,
    *  and presence reflects that channel specifically. */
   channelId?: string | null;
+  /** Authorised change (user request): sidebar variant only. */
+  onOnlineCountChange?: (count: number) => void;
 } = {}) {
   const isSidebar = variant === "sidebar";
   const [shifts, setShifts] = useState<StaffShift[]>([]);
@@ -640,6 +657,20 @@ export function StaffOnDutyStrip({
     );
   };
 
+  // Authorised change (user request): the sidebar online staff count is reported
+  // to the parent so the STAFF/MEMBERS tabs can show it in-line. The header pill
+  // that used to carry this number was moved into those tabs.
+  const staffOnlineCount = isSidebar
+    ? [
+        ...allOrderedShifts.map((shift) => shift.user_id),
+        ...allVisibleOffDuty.map((person) => person.id),
+      ].filter((id, i, all) => presentUserIds.has(id) && all.indexOf(id) === i).length
+    : 0;
+  useEffect(() => {
+    if (!isSidebar) return;
+    onOnlineCountChange?.(staffOnlineCount);
+  }, [isSidebar, staffOnlineCount, onOnlineCountChange]);
+
   if (isSidebar) {
     const shiftsByUser = new Map(allOrderedShifts.map((shift) => [shift.user_id, shift]));
     const allStaff = [
@@ -662,12 +693,6 @@ export function StaffOnDutyStrip({
         <div className="flex shrink-0 items-center gap-2 border-b border-border px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
           <Users className="size-3.5" />
           Staff
-          <span className={cn(
-            "ml-auto inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none",
-            sidebarTab === "online" ? "bg-emerald-500/15 text-emerald-300" : "bg-muted text-muted-foreground",
-          )}>
-            {visibleStaff.length}
-          </span>
         </div>
         <div className="grid shrink-0 grid-cols-2 border-b border-border">
           {(["online", "offline"] as const).map((tab) => (
