@@ -395,6 +395,20 @@ export async function leaveTalkChannelsOnSignOut(userId: string): Promise<void> 
   ]);
   trackedUserId = null;
   flushCount();
+  // Authorised fix (user request, 2026-09-28): signed-out users stayed listed
+  // online on other screens because the presence socket outlived the session.
+  // Tear the shared channel down so the server drops this connection's
+  // presence for everyone. A fresh channel is built on the next sign-in.
+  if (sharedChannel === channel) {
+    sharedChannel = null;
+    subscribed = false;
+    trackedSignature = "";
+    try {
+      void supabase.removeChannel(channel);
+    } catch {
+      /* ignore */
+    }
+  }
 }
 
 /**
@@ -676,6 +690,8 @@ function ensureSharedChannel() {
         return;
       }
       if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+        // A deliberately removed channel (sign-out teardown) must not respawn.
+        if (sharedChannel !== channel) return;
         subscribed = false;
         resubscribe();
       }

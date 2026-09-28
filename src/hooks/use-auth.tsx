@@ -255,7 +255,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (signingOutUser) {
             await Promise.race([
               leaveTalkChannelsOnSignOut(signingOutUser.id),
-              new Promise((resolve) => window.setTimeout(resolve, 750)),
+              new Promise((resolve) => window.setTimeout(resolve, 1500)),
             ]);
           }
           // Auto-clock-out any active shift (and end any active break) so the
