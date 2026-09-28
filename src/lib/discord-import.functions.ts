@@ -12,6 +12,7 @@ import {
   splitListingSections,
   headlineListingDate,
   listingBlockHasDate,
+  normalizeSportsListingText,
 } from "./sports-listing-format";
 import { safePublicEventTitle } from "./public-guide-safety";
 
@@ -434,7 +435,7 @@ export const splitQueueItem = createServerFn({ method: "POST" })
     if (!item) throw new Error("Queue item not found");
     if (item.status !== "pending") throw new Error("Already resolved");
 
-    const raw = String((item.parsed_event as any)?.raw ?? item.raw_text ?? "");
+    const raw = normalizeSportsListingText(String((item.parsed_event as any)?.raw ?? item.raw_text ?? ""));
     const headDate = headlineListingDate(raw);
     const events = sortSportsListingEvents(parseSportsListingBlock(raw)).map((e) => ({ ...e, date: e.date || headDate }));
     if (!events.length) throw new Error("Couldn't read any events in this post");
@@ -461,14 +462,11 @@ export const splitQueueItem = createServerFn({ method: "POST" })
       created_by: userId,
     }));
 
-    const { error: insErr } = await supabaseAdmin.from("discord_import_queue").insert(rows as any);
-    if (insErr) throw new Error(insErr.message);
-
-    const { error: delErr } = await supabaseAdmin
-      .from("discord_import_queue")
-      .update({ status: "discarded" } as any)
-      .eq("id", item.id);
-    if (delErr) throw new Error(delErr.message);
+    const { error: splitErr } = await supabaseAdmin.rpc("replace_discord_import_queue_item_with_split", {
+      p_original_id: item.id,
+      p_rows: rows as any,
+    });
+    if (splitErr) throw new Error(`Split replacement failed: ${splitErr.message}`);
 
     return { created: rows.length };
   });
@@ -496,6 +494,21 @@ export function snapSplitToHeading(lines: string[], line: number): number {
   return previous > 0 && isHead(lines[previous]) ? previous : target;
 }
 
+export function splitSportsListingAtLine(rawValue: string, line: number): [string, string] {
+  const lines = normalizeSportsListingText(rawValue).split("\n");
+  if (line >= lines.length) throw new Error("Split point is past the end of the post");
+  const splitAt = snapSplitToHeading(lines, line);
+  const first = lines.slice(0, splitAt).join("\n").trim();
+  let second = lines.slice(splitAt).join("\n").trim();
+  if (!first || !second) throw new Error("Both halves need some text");
+  const isHeading = (value: string) => /^\s*(?:\*{2,}|__|#+\s)/.test(value) && !/\d{1,2}[:.]\d{2}/.test(value);
+  if (!isHeading(second.split("\n")[0] ?? "")) {
+    const sharedHeading = lines.slice(0, splitAt).reverse().find((value) => isHeading(value));
+    if (sharedHeading) second = `${sharedHeading.trim()}\n\n${second}`;
+  }
+  return [first, second];
+}
+
 export const splitQueueItemAtLine = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) =>
@@ -514,22 +527,8 @@ export const splitQueueItemAtLine = createServerFn({ method: "POST" })
     if (!item) throw new Error("Queue item not found");
     if (item.status !== "pending") throw new Error("Already resolved");
 
-    const raw = String((item.parsed_event as any)?.raw ?? item.raw_text ?? "");
-    const lines = raw.split("\n");
-    if (data.line >= lines.length) throw new Error("Split point is past the end of the post");
-    const splitAt = snapSplitToHeading(lines, data.line);
-    const first = lines.slice(0, splitAt).join("\n").trim();
-    let second = lines.slice(splitAt).join("\n").trim();
-    if (!first || !second) throw new Error("Both halves need some text");
-
-    // When two events share one post heading, carry that heading into the
-    // second half. Each resulting queue item then retains its provider/date
-    // context instead of silently losing it during a manual event split.
-    const isHeading = (value: string) => /^\s*(?:\*{2,}|__|#+\s)/.test(value) && !/\d{1,2}[:.]\d{2}/.test(value);
-    if (!isHeading(second.split("\n")[0] ?? "")) {
-      const sharedHeading = lines.slice(0, splitAt).reverse().find((value: string) => isHeading(value));
-      if (sharedHeading) second = `${sharedHeading.trim()}\n\n${second}`;
-    }
+    const raw = normalizeSportsListingText(String((item.parsed_event as any)?.raw ?? item.raw_text ?? ""));
+    const [first, second] = splitSportsListingAtLine(raw, data.line);
 
     const mkRow = (text: string, part: number) => ({
       raw_text: text,
@@ -549,16 +548,12 @@ export const splitQueueItemAtLine = createServerFn({ method: "POST" })
       created_by: userId,
     });
 
-    const { error: insErr } = await supabaseAdmin
-      .from("discord_import_queue")
-      .insert([mkRow(first, 1), mkRow(second, 2)] as any);
-    if (insErr) throw new Error(insErr.message);
-
-    const { error: delErr } = await supabaseAdmin
-      .from("discord_import_queue")
-      .update({ status: "discarded" } as any)
-      .eq("id", item.id);
-    if (delErr) throw new Error(delErr.message);
+    const rows = [mkRow(first, 1), mkRow(second, 2)];
+    const { error: splitErr } = await supabaseAdmin.rpc("replace_discord_import_queue_item_with_split", {
+      p_original_id: item.id,
+      p_rows: rows as any,
+    });
+    if (splitErr) throw new Error(`Manual split replacement failed: ${splitErr.message}`);
 
     return { created: 2 };
   });
@@ -582,7 +577,7 @@ export const splitQueueItemByProvider = createServerFn({ method: "POST" })
     if (!item) throw new Error("Queue item not found");
     if (item.status !== "pending") throw new Error("Already resolved");
 
-    const raw = String((item.parsed_event as any)?.raw ?? item.raw_text ?? "");
+    const raw = normalizeSportsListingText(String((item.parsed_event as any)?.raw ?? item.raw_text ?? ""));
     const sections = splitListingSections(raw);
     if (sections.length < 2) throw new Error("Only one listing name found in this post");
 
@@ -613,14 +608,11 @@ export const splitQueueItemByProvider = createServerFn({ method: "POST" })
       };
     });
 
-    const { error: insErr } = await supabaseAdmin.from("discord_import_queue").insert(rows as any);
-    if (insErr) throw new Error(insErr.message);
-
-    const { error: delErr } = await supabaseAdmin
-      .from("discord_import_queue")
-      .update({ status: "discarded" } as any)
-      .eq("id", item.id);
-    if (delErr) throw new Error(delErr.message);
+    const { error: splitErr } = await supabaseAdmin.rpc("replace_discord_import_queue_item_with_split", {
+      p_original_id: item.id,
+      p_rows: rows as any,
+    });
+    if (splitErr) throw new Error(`Provider split replacement failed: ${splitErr.message}`);
 
     return { created: rows.length };
   });

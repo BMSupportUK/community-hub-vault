@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { checkSportsImport } from "../src/lib/sports-import-check";
 import { formatSportsListingBlock, parseSportsListingBlock } from "../src/lib/sports-listing-format";
-import { snapSplitToHeading } from "../src/lib/discord-import.functions";
+import { snapSplitToHeading, splitSportsListingAtLine } from "../src/lib/discord-import.functions";
 
 describe("remembered sports import layouts", () => {
   test("manual split never jumps backwards to an unrelated post heading", () => {
@@ -12,6 +12,26 @@ describe("remembered sports import layouts", () => {
     ];
     expect(snapSplitToHeading(lines, 8)).toBe(8);
     expect(snapSplitToHeading(lines, 3)).toBe(2);
+  });
+
+  test("recovered escaped Greyhound and Ultimate Pool posts survive split and final read-back", () => {
+    const original = "-\\n\\n**## OTHER SPORT: MONDAY 28 SEPTEMBER**\\n\\n`11:05am UK / 6:05am ET`\\nGREYHOUND RACING: Romford\\nUK: Sky Sports Racing\\n\\n`6:00pm UK / 1:00pm ET`\\nULTIMATE POOL: Mixed Team\\nUK: TNT Sports 1\\nAustralia: Fox Sports More 507";
+    const splitLine = original.replace(/\\n/g, "\n").split("\n").findIndex((line) => line.includes("6:00pm"));
+    const parts = splitSportsListingAtLine(original, splitLine);
+    const expected = [
+      { guide: "Greyhound Racing", time: "11:05 BST", title: "GREYHOUND RACING: Romford", channels: ["UK: Sky Sports Racing"] },
+      { guide: "Pool", time: "18:00 BST", title: "ULTIMATE POOL: Mixed Team", channels: ["UK: TNT Sports 1", "Australia: Fox Sports More 507"] },
+    ];
+
+    expect(parts).toHaveLength(2);
+    parts.forEach((raw, index) => {
+      const item = expected[index];
+      const result = checkSportsImport(raw, "gmt", Date.UTC(2026, 8, 28, 8), item.guide);
+      expect(result.errors).toBe(0);
+      expect(result.warnings).toBe(0);
+      expect(result.events).toEqual([{ date: "Monday, 28th September", time: item.time, title: item.title, channels: item.channels }]);
+      expect(parseSportsListingBlock(result.formatted)).toEqual(result.events);
+    });
   });
 
   test("WST title above dual UK/ET time keeps both snooker sessions correctly paired", () => {

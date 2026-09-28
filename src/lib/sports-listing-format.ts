@@ -91,8 +91,9 @@ function cleanLine(line: string): string {
     .trim();
 }
 
-function decodeListingEntities(value: string): string {
+export function normalizeSportsListingText(value: string): string {
   return value
+    .replace(/\\r\\n|\\n|\\r/g, "\n")
     .replace(/&nbsp;/gi, " ")
     .replace(/&amp;/gi, "&")
     .replace(/&lt;/gi, "<")
@@ -100,6 +101,8 @@ function decodeListingEntities(value: string): string {
     .replace(/&quot;/gi, '"')
     .replace(/&#39;|&apos;/gi, "'");
 }
+
+const decodeListingEntities = normalizeSportsListingText;
 
 /**
  * Daily listings lead each row with the channel number ("01 | 00:00 Trackside
