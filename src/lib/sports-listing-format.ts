@@ -968,6 +968,27 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
       return m ? `${m[1].toUpperCase()} ${m[2].trim()}` : line;
     })
     .filter((line, i, arr) => !(i > 0 && line === arr[i - 1] && /\s\d{1,3}(?:\s*HD)?$/i.test(line)));
+  // WST and other listings commonly repeat this three-line layout:
+  // title → "UK time | ET time" → channel(s). Resolve that structure before
+  // the stateful parser runs, otherwise a repeated title can be provisionally
+  // attached to the previous event as a channel and reverse the pairing.
+  for (let i = 0; i < lines.length - 2; i++) {
+    const title = lines[i];
+    const slot = lines[i + 1];
+    const channel = lines[i + 2];
+    if (
+      DUAL_TIME_ONLY_RE.test(slot) &&
+      !detectEvent(title, null) &&
+      !listingDateFromLine(title) &&
+      !isNoiseLine(title) &&
+      !explicitHeadings.has(title.toLowerCase()) &&
+      !isLikelyChannelLabel(title) &&
+      isLikelyChannelLabel(channel)
+    ) {
+      lines.splice(i, 3, slot, title, channel);
+      i += 2;
+    }
+  }
   // Rugby Pass continuation rows: a bare "Event HH:MM" line under a
   // "Channel NN | ..." row belongs to that same channel — attach it so each
   // fixture keeps its channel instead of swallowing the next one.
