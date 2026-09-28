@@ -462,14 +462,11 @@ export const splitQueueItem = createServerFn({ method: "POST" })
       created_by: userId,
     }));
 
-    const { error: insErr } = await supabaseAdmin.from("discord_import_queue").insert(rows as any);
-    if (insErr) throw new Error(insErr.message);
-
-    const { error: delErr } = await supabaseAdmin
-      .from("discord_import_queue")
-      .update({ status: "discarded" } as any)
-      .eq("id", item.id);
-    if (delErr) throw new Error(delErr.message);
+    const { error: splitErr } = await supabaseAdmin.rpc("replace_discord_import_queue_item_with_split", {
+      p_original_id: item.id,
+      p_rows: rows as any,
+    });
+    if (splitErr) throw new Error(`Split replacement failed: ${splitErr.message}`);
 
     return { created: rows.length };
   });
@@ -551,16 +548,12 @@ export const splitQueueItemAtLine = createServerFn({ method: "POST" })
       created_by: userId,
     });
 
-    const { error: insErr } = await supabaseAdmin
-      .from("discord_import_queue")
-      .insert([mkRow(first, 1), mkRow(second, 2)] as any);
-    if (insErr) throw new Error(insErr.message);
-
-    const { error: delErr } = await supabaseAdmin
-      .from("discord_import_queue")
-      .update({ status: "discarded" } as any)
-      .eq("id", item.id);
-    if (delErr) throw new Error(delErr.message);
+    const rows = [mkRow(first, 1), mkRow(second, 2)];
+    const { error: splitErr } = await supabaseAdmin.rpc("replace_discord_import_queue_item_with_split", {
+      p_original_id: item.id,
+      p_rows: rows as any,
+    });
+    if (splitErr) throw new Error(`Manual split replacement failed: ${splitErr.message}`);
 
     return { created: 2 };
   });
@@ -615,14 +608,11 @@ export const splitQueueItemByProvider = createServerFn({ method: "POST" })
       };
     });
 
-    const { error: insErr } = await supabaseAdmin.from("discord_import_queue").insert(rows as any);
-    if (insErr) throw new Error(insErr.message);
-
-    const { error: delErr } = await supabaseAdmin
-      .from("discord_import_queue")
-      .update({ status: "discarded" } as any)
-      .eq("id", item.id);
-    if (delErr) throw new Error(delErr.message);
+    const { error: splitErr } = await supabaseAdmin.rpc("replace_discord_import_queue_item_with_split", {
+      p_original_id: item.id,
+      p_rows: rows as any,
+    });
+    if (splitErr) throw new Error(`Provider split replacement failed: ${splitErr.message}`);
 
     return { created: rows.length };
   });
