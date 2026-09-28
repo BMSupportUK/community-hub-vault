@@ -1913,10 +1913,10 @@ function ChannelPage() {
                           <div
                             data-msg-menu
                             className={cn(
-                              "absolute -top-3 right-2 flex items-center rounded-lg border border-border bg-popover shadow-md transition-opacity",
+                               "absolute -top-2 right-1 z-10 flex min-h-9 items-center rounded-lg border border-border bg-popover shadow-md transition-opacity sm:-top-3 sm:right-2 sm:min-h-0",
                               menuOpen || pickerOpen
                                 ? "opacity-100"
-                                : "opacity-0 group-hover:opacity-100",
+                                 : "opacity-100 sm:opacity-0 sm:group-hover:opacity-100 sm:group-focus-within:opacity-100",
                             )}
                           >
                             <button
@@ -1924,7 +1924,7 @@ function ChannelPage() {
                                 setEmojiPickerId(pickerOpen ? null : m.id);
                                 setOpenMenuId(null);
                               }}
-                              className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-surface-2 rounded-l-lg"
+                               className="hidden p-1.5 text-muted-foreground hover:text-foreground hover:bg-surface-2 rounded-l-lg sm:block"
                               title="Add reaction"
                             >
                               <SmilePlus className="size-4" />
@@ -1936,11 +1936,25 @@ function ChannelPage() {
                                 setEmojiPickerId(null);
                                 taRef.current?.focus();
                               }}
-                              className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-surface-2 border-l border-border"
+                               className="hidden p-1.5 text-muted-foreground hover:text-foreground hover:bg-surface-2 border-l border-border sm:block"
                               title="Reply"
                             >
                               <Reply className="size-4" />
                             </button>
+                             {canEdit && (
+                               <button
+                                 onClick={() => {
+                                   startEdit(m);
+                                   setOpenMenuId(null);
+                                   setEmojiPickerId(null);
+                                 }}
+                                 className="grid size-9 place-items-center text-muted-foreground hover:bg-surface-2 hover:text-foreground sm:hidden"
+                                 title="Edit message"
+                                 aria-label="Edit message"
+                               >
+                                 <Pencil className="size-4" />
+                               </button>
+                             )}
                             {canDelete && (
                               <button
                                 onClick={() => {
@@ -1952,7 +1966,7 @@ function ChannelPage() {
                                     setEmojiPickerId(null);
                                   }
                                 }}
-                                className="p-1.5 text-destructive hover:bg-destructive/10 border-l border-border"
+                                 className="grid size-9 place-items-center border-l border-border text-destructive hover:bg-destructive/10 sm:size-auto sm:p-1.5"
                                 title="Delete message"
                                 aria-label="Delete message"
                               >
@@ -1964,8 +1978,9 @@ function ChannelPage() {
                                 setOpenMenuId(menuOpen ? null : m.id);
                                 setEmojiPickerId(null);
                               }}
-                              className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-surface-2 rounded-r-lg border-l border-border"
+                               className="grid size-9 place-items-center rounded-r-lg border-l border-border text-muted-foreground hover:bg-surface-2 hover:text-foreground sm:size-auto sm:p-1.5"
                               title="More"
+                               aria-label="More message actions"
                             >
                               <MoreHorizontal className="size-4" />
                             </button>
@@ -2098,8 +2113,10 @@ function ChannelPage() {
                                     <div className="my-1 border-t border-border" />
                                     <button
                                       onClick={() => {
-                                        remove(m.id);
-                                        setOpenMenuId(null);
+                                         if (window.confirm("Delete this message? This cannot be undone.")) {
+                                           remove(m.id);
+                                           setOpenMenuId(null);
+                                         }
                                       }}
                                       className="w-full flex items-center gap-2 px-3 py-1.5 hover:bg-destructive/10 text-destructive text-left"
                                     >
