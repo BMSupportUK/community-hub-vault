@@ -1260,20 +1260,6 @@ function TicketDetail({
     } finally { setOrderBusy(false); }
   };
 
-  const orderAccountSetupDone = async () => {
-    if (!linkedOrder || orderBusy) return;
-    setOrderBusy(true);
-    try {
-      const profileLink = linkedOrderUsername
-        ? `\n\n🔗 [Click here to view your Credentials](${window.location.origin}/u/${linkedOrderUsername}?tab=creds)`
-        : "";
-      await postTicketSystem(await getAutomatedMessage("order_account_setup_done", {
-        profile_link: profileLink,
-      }));
-      toast.success("Account setup confirmed");
-    } finally { setOrderBusy(false); }
-  };
-
   const orderExtendSubscription = async () => {
 
     if (!linkedOrder || orderBusy) return;

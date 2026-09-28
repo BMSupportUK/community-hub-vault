@@ -28,8 +28,6 @@ export const AUTOMATED_MESSAGE_FALLBACKS: Record<string, string> = {
     "✅ Bank transfer received — your payment of {total} has landed in our account and your order is now marked as paid.\n\n🙏 Thank you for the transfer — we really appreciate it. We'll get your account sorted and keep you updated here.",
   order_setting_up_account:
     "🛠️ We are currently setting up your account. Your login details will appear in the Credentials section of your profile soon.",
-  order_account_setup_done:
-    "🟢 Your account is now set up and ready to use! Your login details are available in the Credentials section of your profile.{profile_link}",
   order_subscription_updating:
     "🔄 Your subscription{account_handle} is being updated. You'll receive confirmation once the extension is complete.",
   order_sale_completed:
