@@ -1314,16 +1314,20 @@ function ChannelPage() {
                 </div>
               )}
               <div className={cn("min-h-0 flex-1 overflow-hidden", hideMembersPanel && "pt-10")}>
-                {hideMembersPanel || sideTab === "staff" ? (
+                {/* Both panels stay mounted so each tab count updates live. */}
+                <div className={cn("h-full", !(hideMembersPanel || sideTab === "staff") && "hidden")}>
                   <StaffOnDutySidebar
                     channelId={channel?.id ?? null}
                     onOnlineCountChange={handleStaffOnlineCount}
                   />
-                ) : (
-                  <TalkChannelMembersPanel
-                    channelId={channel?.id ?? null}
-                    onOnlineCountChange={handleMembersOnlineCount}
-                  />
+                </div>
+                {!hideMembersPanel && (
+                  <div className={cn("h-full", sideTab === "staff" && "hidden")}>
+                    <TalkChannelMembersPanel
+                      channelId={channel?.id ?? null}
+                      onOnlineCountChange={handleMembersOnlineCount}
+                    />
+                  </div>
                 )}
               </div>
             </SheetContent>
@@ -2477,17 +2481,19 @@ function ChannelPage() {
                 </div>
               )}
               <div className="flex h-full max-h-full min-h-0 flex-1 overflow-hidden">
-                {sideTab === "staff" ? (
+                {/* Both panels stay mounted so each tab count updates live. */}
+                <div className={cn("flex h-full min-h-0 w-full flex-1", sideTab !== "staff" && "hidden")}>
                   <StaffOnDutySidebar
                     channelId={channel?.id ?? null}
                     onOnlineCountChange={handleStaffOnlineCount}
                   />
-                ) : (
+                </div>
+                <div className={cn("flex h-full min-h-0 w-full flex-1", sideTab === "staff" && "hidden")}>
                   <TalkChannelMembersPanel
                     channelId={channel?.id ?? null}
                     onOnlineCountChange={handleMembersOnlineCount}
                   />
-                )}
+                </div>
               </div>
             </>
           )}
