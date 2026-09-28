@@ -527,7 +527,7 @@ export const splitQueueItemAtLine = createServerFn({ method: "POST" })
     // context instead of silently losing it during a manual event split.
     const isHeading = (value: string) => /^\s*(?:\*{2,}|__|#+\s)/.test(value) && !/\d{1,2}[:.]\d{2}/.test(value);
     if (!isHeading(second.split("\n")[0] ?? "")) {
-      const sharedHeading = lines.slice(0, splitAt).findLast((value) => isHeading(value));
+      const sharedHeading = lines.slice(0, splitAt).reverse().find((value: string) => isHeading(value));
       if (sharedHeading) second = `${sharedHeading.trim()}\n\n${second}`;
     }
 
