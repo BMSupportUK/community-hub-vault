@@ -8,6 +8,8 @@ import { formatLastSeen } from "@/lib/relative-time";
 
 interface ServiceStatusBoxProps {
   hideButtons?: boolean;
+  /** Talk Channels: hide incident cards, show only the counter and a link to the status page. */
+  compact?: boolean;
 }
 
 type IncidentStatus = "investigating" | "identified" | "monitoring" | "completed";
@@ -39,7 +41,7 @@ const STATUS_META: Record<
   monitoring: { label: "Monitoring", dot: "bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.8)]", text: "text-blue-300", border: "border-blue-500/40" },
 };
 
-export function ServiceStatusBox({ hideButtons }: ServiceStatusBoxProps = {}) {
+export function ServiceStatusBox({ hideButtons, compact }: ServiceStatusBoxProps = {}) {
   const [incidents, setIncidents] = useState<ActiveIncident[]>([]);
   const [loading, setLoading] = useState(true);
 
