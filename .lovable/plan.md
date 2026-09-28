@@ -7,10 +7,12 @@
 - The sound and browser alert for new tickets still play for staff on shift.
 - Technical: `UnclaimedTicketsNotifier` returns nothing on Talk routes. `StaffTicketsButton` gets one shared live unclaimed count (a single subscription used by all icons), with a pulsing destructive badge.
 
-## Part 2 – Private "staff only" messages
+## Part 2 – Private messages posted in the Talk room (command-based)
 
 ## What users will see
-- The message box in every Talk channel gets a **lock toggle**: "Private – only staff can see". While it's on, the box turns amber and the Send button reads "Send privately".
+- Any member can post a private message in the normal Talk room by starting it with the command **/private** (short form **/p**), for example: `/private my account email is ...`.
+- The command is removed before posting. The message appears in the room timeline, but only the sender and staff can read it.
+- While the message box starts with the command, it turns amber and shows a hint: "Private – only you and staff will see this". Typing `/` suggests the command.
 - A private message shows in the channel with an amber lock badge: "Private – only you and staff". Other members never see it at all, not even as a placeholder.
 - **Staff** see every private message, marked "Private from <name>". Each one has a **Reply privately** button, so the staff reply is seen only by that member and staff.
 - Replies stay in the same channel and timeline, so the conversation reads naturally for the member and for staff.
