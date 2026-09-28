@@ -255,15 +255,22 @@ function MemberRow({
             />
           </span>
           <span className="min-w-0 flex-1">
-            <span
-              className={cn(
-                "block truncate text-sm font-medium",
-                ROLE_TEXT[top] ?? "text-foreground",
-                roleFlashClass(flash),
-              )}
+            <Nameplate
+              id={row.equipped_nameplate_id}
+              className="flex min-h-7 w-full items-center rounded-md px-1.5 py-0.5 isolate"
             >
-              {name}
-            </span>
+              <span
+                className={cn(
+                  "block truncate text-sm font-semibold",
+                  np
+                    ? "text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]"
+                    : ROLE_TEXT[top] ?? "text-foreground",
+                  roleFlashClass(flash),
+                )}
+              >
+                {name}
+              </span>
+            </Nameplate>
             <span className="block truncate text-[10px] leading-tight text-muted-foreground">
               {roleLabels || "Member"}
             </span>
