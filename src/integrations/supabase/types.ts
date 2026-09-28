@@ -6895,6 +6895,10 @@ export type Database = {
       record_admin_unlock_failure: { Args: never; Returns: Json }
       redeem_invite: { Args: { p_code: string }; Returns: Json }
       reopen_own_ticket: { Args: { _ticket_id: string }; Returns: boolean }
+      replace_discord_import_queue_item_with_split: {
+        Args: { p_original_id: string; p_rows: Json }
+        Returns: number
+      }
       request_ticket_admin_help: {
         Args: { _ticket_id: string }
         Returns: number
