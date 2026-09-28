@@ -1,6 +1,7 @@
 # Roadmap
 
 ## Current
+- [x] Talk Channels: make member nameplates fill the same full sidebar width as staff nameplates
 - [x] Talk Channels: move the online numbers into the STAFF and MEMBERS tabs (desktop sidebar and mobile People sheet)
 - [x] Display install-guide PDFs inside the page on mobile instead of triggering downloads
 - [x] Make the BM Support Apps download page and download popup phone-friendly
