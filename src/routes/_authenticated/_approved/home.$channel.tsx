@@ -10,6 +10,7 @@ import {
   EyeOff,
   Eye,
   Pin,
+  Lock,
   PinOff,
   X,
   ShieldOff,
