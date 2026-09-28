@@ -476,7 +476,10 @@ function scheduleConfirmedLeave(channel: RealtimeChannel, departingUserId: strin
       flushCount();
       trackedUserId = null;
     });
-  }, 750);
+  // Authorised fix (user request, 2026-09-28): exiting Talk Channels must
+  // remove the person from the room list immediately. A zero-delay task still
+  // lets a channel-to-channel navigation mount its replacement tracker first.
+  }, 0);
 }
 
 /**
