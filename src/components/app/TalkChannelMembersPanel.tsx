@@ -61,7 +61,6 @@ export function TalkChannelMembersPanel({
   const onlineIds = useTalkChannelPresentUsersInChannel(channelId);
   const roleFlashMap = useRoleFlashMap();
   const [rows, setRows] = useState<DirectoryRow[] | null>(null);
-  const [activeTab, setActiveTab] = useState<"online" | "offline">("online");
 
   const load = useCallback(async () => {
     if (!channelId) {
@@ -103,7 +102,8 @@ export function TalkChannelMembersPanel({
     [rows],
   );
 
-  /** Members sorted alphabetically, separated only by online status. */
+  /** Authorised change (user request, 2026-09-28): this panel is online-only —
+   *  offline members are not listed here at all. */
   const groups = useMemo(() => {
     const sortByName = (a: DirectoryRow, b: DirectoryRow) => {
       const aName = (a.display_name || a.username || "Member").toLowerCase();
@@ -112,7 +112,6 @@ export function TalkChannelMembersPanel({
     };
     return {
       online: members.filter((m) => onlineIds.has(m.user_id)).sort(sortByName),
-      offline: members.filter((m) => !onlineIds.has(m.user_id)).sort(sortByName),
     };
   }, [members, onlineIds]);
 
@@ -140,71 +139,20 @@ export function TalkChannelMembersPanel({
         Members
       </div>
 
-      <div className="shrink-0 grid grid-cols-2 border-b border-border">
-        <button
-          type="button"
-          onClick={() => setActiveTab("online")}
-          className={cn(
-            "px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider transition-colors",
-            activeTab === "online"
-              ? "bg-surface text-emerald-300"
-              : "text-muted-foreground hover:text-foreground hover:bg-surface-2/50",
-          )}
-        >
-          Online
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab("offline")}
-          className={cn(
-            "px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider transition-colors",
-            activeTab === "offline"
-              ? "bg-surface text-foreground"
-              : "text-muted-foreground hover:text-foreground hover:bg-surface-2/50",
-          )}
-        >
-          Offline
-        </button>
-      </div>
-
       <div className="min-h-0 w-full min-w-0 flex-1 overflow-y-auto overscroll-contain px-2 py-2 space-y-3 scrollbar-hide">
-        {activeTab === "online" && (
-          <>
-            <div className="space-y-0.5">
-              {groups.online.map((m) => (
-                <MemberRow
-                  key={m.user_id}
-                  row={m}
-                  online
-                  selfId={user?.id ?? null}
-                  roleFlashMap={roleFlashMap}
-                />
-              ))}
-            </div>
-            {groups.online.length === 0 && (
-              <p className="px-2 py-6 text-center text-xs text-muted-foreground">No members online.</p>
-            )}
-          </>
-        )}
-
-        {activeTab === "offline" && (
-          <>
-            {groups.offline.length > 0 ? (
-              <div className="space-y-0.5">
-                {groups.offline.map((m) => (
-                  <MemberRow
-                    key={m.user_id}
-                    row={m}
-                    online={false}
-                    selfId={user?.id ?? null}
-                    roleFlashMap={roleFlashMap}
-                  />
-                ))}
-              </div>
-            ) : (
-              <p className="px-2 py-6 text-center text-xs text-muted-foreground">No members offline.</p>
-            )}
-          </>
+        <div className="space-y-0.5">
+          {groups.online.map((m) => (
+            <MemberRow
+              key={m.user_id}
+              row={m}
+              online
+              selfId={user?.id ?? null}
+              roleFlashMap={roleFlashMap}
+            />
+          ))}
+        </div>
+        {groups.online.length === 0 && (
+          <p className="px-2 py-6 text-center text-xs text-muted-foreground">No members online.</p>
         )}
       </div>
     </div>
