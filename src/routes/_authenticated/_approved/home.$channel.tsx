@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Hash,
   Megaphone,
@@ -160,6 +160,12 @@ function ChannelPage() {
   const [muteSubmenuId, setMuteSubmenuId] = useState<string | null>(null);
   const [sideTab, setSideTab] = useState<"staff" | "members">("staff");
   const [mobilePeopleOpen, setMobilePeopleOpen] = useState(false);
+  // Authorised change (user request, 2026-09-28): online counts moved out of the
+  // staff/members panel headers into these two tabs.
+  const [staffOnlineCount, setStaffOnlineCount] = useState(0);
+  const [membersOnlineCount, setMembersOnlineCount] = useState(0);
+  const handleStaffOnlineCount = useCallback((n: number) => setStaffOnlineCount(n), []);
+  const handleMembersOnlineCount = useCallback((n: number) => setMembersOnlineCount(n), []);
 
   const [myMuteExpires, setMyMuteExpires] = useState<Date | null>(null);
   const [muteTick, setMuteTick] = useState(0);
@@ -1278,28 +1284,45 @@ function ChannelPage() {
             <SheetContent side="right" className="flex h-dvh w-[min(92vw,24rem)] flex-col gap-0 border-l border-border bg-surface p-0">
               {!hideMembersPanel && (
                 <div className="grid shrink-0 grid-cols-2 gap-1 border-b border-border p-2 pr-12">
-                  {(["staff", "members"] as const).map((tab) => (
-                    <button
-                      key={tab}
-                      type="button"
-                      onClick={() => setSideTab(tab)}
-                      className={cn(
-                        "rounded-md px-3 py-2 text-xs font-semibold uppercase transition-colors",
-                        sideTab === tab
-                          ? "bg-primary/20 text-primary ring-1 ring-primary/40"
-                          : "text-muted-foreground hover:bg-surface-2",
-                      )}
-                    >
-                      {tab}
-                    </button>
-                  ))}
+                  {(["staff", "members"] as const).map((tab) => {
+                    const count = tab === "staff" ? staffOnlineCount : membersOnlineCount;
+                    return (
+                      <button
+                        key={tab}
+                        type="button"
+                        onClick={() => setSideTab(tab)}
+                        className={cn(
+                          "inline-flex items-center justify-center gap-1.5 rounded-md px-3 py-2 text-xs font-semibold uppercase transition-colors",
+                          sideTab === tab
+                            ? "bg-primary/20 text-primary ring-1 ring-primary/40"
+                            : "text-muted-foreground hover:bg-surface-2",
+                        )}
+                      >
+                        {tab}
+                        <span
+                          className={cn(
+                            "inline-flex min-w-4 items-center justify-center rounded-full px-1.5 py-0.5 text-[9px] font-bold leading-none",
+                            count > 0 ? "bg-emerald-500/15 text-emerald-300" : "bg-muted text-muted-foreground",
+                          )}
+                        >
+                          {count}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               )}
               <div className={cn("min-h-0 flex-1 overflow-hidden", hideMembersPanel && "pt-10")}>
                 {hideMembersPanel || sideTab === "staff" ? (
-                  <StaffOnDutySidebar channelId={channel?.id ?? null} />
+                  <StaffOnDutySidebar
+                    channelId={channel?.id ?? null}
+                    onOnlineCountChange={handleStaffOnlineCount}
+                  />
                 ) : (
-                  <TalkChannelMembersPanel channelId={channel?.id ?? null} />
+                  <TalkChannelMembersPanel
+                    channelId={channel?.id ?? null}
+                    onOnlineCountChange={handleMembersOnlineCount}
+                  />
                 )}
               </div>
             </SheetContent>
@@ -2416,20 +2439,32 @@ function ChannelPage() {
           ) : (
             <>
               <div className="shrink-0 grid grid-cols-2 gap-1 border-b border-border p-1.5">
-                {(["staff", "members"] as const).map((t) => (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() => setSideTab(t)}
-                    className={`rounded-md px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider transition-colors ${
-                      sideTab === t
-                        ? "bg-primary/20 text-primary ring-1 ring-primary/40"
-                        : "text-muted-foreground hover:bg-surface-2"
-                    }`}
-                  >
-                    {t === "staff" ? "Staff" : "Members"}
-                  </button>
-                ))}
+                {(["staff", "members"] as const).map((t) => {
+                  const count = t === "staff" ? staffOnlineCount : membersOnlineCount;
+                  return (
+                    <button
+                      key={t}
+                      type="button"
+                      onClick={() => setSideTab(t)}
+                      className={cn(
+                        "inline-flex items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider transition-colors",
+                        sideTab === t
+                          ? "bg-primary/20 text-primary ring-1 ring-primary/40"
+                          : "text-muted-foreground hover:bg-surface-2",
+                      )}
+                    >
+                      {t === "staff" ? "Staff" : "Members"}
+                      <span
+                        className={cn(
+                          "inline-flex min-w-4 items-center justify-center rounded-full px-1.5 py-0.5 text-[9px] font-bold leading-none",
+                          count > 0 ? "bg-emerald-500/15 text-emerald-300" : "bg-muted text-muted-foreground",
+                        )}
+                      >
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
               {isModOrAdmin && (
                 <div className="shrink-0 border-b border-border px-1.5 py-1.5">
@@ -2442,9 +2477,15 @@ function ChannelPage() {
               )}
               <div className="flex h-full max-h-full min-h-0 flex-1 overflow-hidden">
                 {sideTab === "staff" ? (
-                  <StaffOnDutySidebar channelId={channel?.id ?? null} />
+                  <StaffOnDutySidebar
+                    channelId={channel?.id ?? null}
+                    onOnlineCountChange={handleStaffOnlineCount}
+                  />
                 ) : (
-                  <TalkChannelMembersPanel channelId={channel?.id ?? null} />
+                  <TalkChannelMembersPanel
+                    channelId={channel?.id ?? null}
+                    onOnlineCountChange={handleMembersOnlineCount}
+                  />
                 )}
               </div>
             </>

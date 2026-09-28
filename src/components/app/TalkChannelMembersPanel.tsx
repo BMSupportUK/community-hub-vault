@@ -119,7 +119,6 @@ export function TalkChannelMembersPanel({
   // panel header into the parent's STAFF/MEMBERS tabs via onOnlineCountChange.
   // Counter logic itself is unchanged — online non-staff members in this channel.
   const membersInChat = groups.online.length;
-  const headerCount = activeTab === "offline" ? groups.offline.length : membersInChat;
   useEffect(() => {
     onOnlineCountChange?.(membersInChat);
   }, [membersInChat, onOnlineCountChange]);
