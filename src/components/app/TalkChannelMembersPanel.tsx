@@ -46,7 +46,15 @@ const ROLE_TEXT: Record<string, string> = {
  * access to the channel being viewed, and marks the ones currently inside
  * that channel with a live green status dot.
  */
-export function TalkChannelMembersPanel({ channelId }: { channelId: string | null }) {
+export function TalkChannelMembersPanel({
+  channelId,
+  onOnlineCountChange,
+}: {
+  channelId: string | null;
+  /** Authorised change (user request, 2026-09-28): reports the online member
+   *  count so the parent's STAFF/MEMBERS tabs can show it in-line. */
+  onOnlineCountChange?: (count: number) => void;
+}) {
   const { user } = useAuth();
   const onlineIds = useTalkChannelPresentUsersInChannel(channelId);
   const roleFlashMap = useRoleFlashMap();
@@ -107,12 +115,14 @@ export function TalkChannelMembersPanel({ channelId }: { channelId: string | nul
   }, [members, onlineIds]);
 
   // LOCKED: Members panel header counter — online non-staff members only.
-  // Authorised change (user request): counter follows the active tab, showing offline count on the Offline tab.
-  // Authorised change (user request, 2026-09-10): list and counter are scoped to the
-  // channel being viewed — only members with access to it, online = inside this channel.
-  // Do not change, restyle, or remove without explicit authorisation. See mem://constraints/chat-counters-locked
+  // Authorised change (user request, 2026-09-28): the count moved out of the
+  // panel header into the parent's STAFF/MEMBERS tabs via onOnlineCountChange.
+  // Counter logic itself is unchanged — online non-staff members in this channel.
   const membersInChat = groups.online.length;
   const headerCount = activeTab === "offline" ? groups.offline.length : membersInChat;
+  useEffect(() => {
+    onOnlineCountChange?.(membersInChat);
+  }, [membersInChat, onOnlineCountChange]);
 
   if (rows === null) {
     return (
@@ -127,9 +137,6 @@ export function TalkChannelMembersPanel({ channelId }: { channelId: string | nul
       <div className="shrink-0 border-b border-border px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
         <Users className="size-3.5" />
         Members
-        <span className={"ml-auto inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none " + (activeTab === "offline" ? "bg-muted text-muted-foreground" : "bg-emerald-500/15 text-emerald-300")}>
-          {headerCount}
-        </span>
       </div>
 
       <div className="shrink-0 grid grid-cols-2 border-b border-border">
