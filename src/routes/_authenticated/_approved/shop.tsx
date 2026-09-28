@@ -3054,6 +3054,52 @@ function OrdersView({
     </span>
   );
 
+  const [deleteTarget, setDeleteTarget] = useState<Order | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const deleteOrderFn = useServerFn(deleteOrderCompletely);
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await deleteOrderFn({ data: { orderId: deleteTarget.id } });
+      toast.success("Order deleted");
+      setDeleteTarget(null);
+      if (selectedId === deleteTarget.id) clearSelectedOrder();
+      await load();
+      window.dispatchEvent(new Event("orders:changed"));
+    } catch (e) {
+      toast.error((e as Error).message || "Could not delete the order");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const deleteConfirmDialog = (
+    <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete this order?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Order #{deleteTarget?.id.slice(0, 8)} and its messages, payments and support ticket will be
+            removed permanently. This cannot be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={deleting}>Keep order</AlertDialogCancel>
+          <AlertDialogAction
+            disabled={deleting}
+            onClick={(e) => {
+              e.preventDefault();
+              void confirmDelete();
+            }}
+          >
+            {deleting ? "Deleting…" : "Delete order"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+
   const renderOrderList = (list: Order[]) => {
   const activeId = selectedId && list.some((o) => o.id === selectedId) ? selectedId : null;
   return (
