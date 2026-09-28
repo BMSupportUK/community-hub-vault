@@ -108,6 +108,13 @@ interface Message {
   pinned_by: string | null;
   edited_at?: string | null;
   reply_to?: string | null;
+  private_to?: string | null;
+}
+
+// Messages starting with `/private ` or `/p ` are only visible to the sender and staff.
+const PRIVATE_CMD_RE = /^\s*\/(?:private|p)(?:\s|$)/i;
+function stripPrivateCommand(text: string) {
+  return text.replace(/^((?:<[^>]+>)*)\s*\/(?:private|p)\b(?:\s|&nbsp;)*/i, "$1");
 }
 
 interface Profile {
@@ -146,6 +153,7 @@ function ChannelPage() {
   const canPin = hasAny(["admin", "management", "moderator", "staff"]);
   const canManageSlow = hasAny(["admin", "management", "moderator", "staff"]);
   const isModOrAdmin = hasAny(["admin", "management", "moderator", "staff"]);
+  const isPrivateStaff = hasAny(["admin", "management", "staff"]);
   const canMute = hasAny(["admin", "management", "moderator", "staff"]);
   const hideMembersPanel = slug === "welcome" || slug === "rules";
   const [muteSubmenuId, setMuteSubmenuId] = useState<string | null>(null);
@@ -620,7 +628,7 @@ function ChannelPage() {
 
       const { data } = await supabase
         .from("chat_messages")
-        .select("id, channel_id, sender_id, content, created_at, pinned_at, pinned_by, reply_to")
+        .select("id, channel_id, sender_id, content, created_at, pinned_at, pinned_by, reply_to, private_to")
         .eq("channel_id", channel.id)
         .order("created_at", { ascending: true })
         .limit(200);
@@ -878,11 +886,33 @@ function ChannelPage() {
         setUploadingPaste(false);
       }
     }
+    // Private: `/private` command, or any reply to a private message.
+    const wantsPrivate = PRIVATE_CMD_RE.test(directText ?? originalPlain) || !!replyTo?.private_to;
+    let privateTo: string | null = null;
+    if (wantsPrivate) {
+      content = stripPrivateCommand(content).trim();
+      if (!content) {
+        toast.error("Type your private message after /private");
+        restoreDraft();
+        setSending(false);
+        return;
+      }
+      privateTo = !isPrivateStaff
+        ? user.id
+        : replyTo?.private_to ?? (replyTo && replyTo.sender_id !== user.id ? replyTo.sender_id : null);
+      if (isPrivateStaff && !privateTo) {
+        toast.error("Staff: reply to a member's message to send them a private message");
+        restoreDraft();
+        setSending(false);
+        return;
+      }
+    }
     const { error } = await supabase.from("chat_messages").insert({
       channel_id: channel.id,
       sender_id: user.id,
       content,
       reply_to: replyTo?.id ?? null,
+      private_to: privateTo,
     });
     if (error) {
       const msg = error.message || "";
@@ -1748,6 +1778,14 @@ function ChannelPage() {
                               </span>
 
 
+                              {m.private_to && (
+                                <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/60 bg-amber-500/15 px-2 py-0.5 text-[10px] font-bold text-amber-300">
+                                  <Lock className="size-3" />
+                                  {isPrivateStaff
+                                    ? `Private · ${profiles[m.private_to]?.display_name ?? profiles[m.private_to]?.username ?? "member"} & staff`
+                                    : "Private – only you and staff"}
+                                </span>
+                              )}
                               {isPinned && (
                                 <span className="inline-flex items-center gap-1 text-[10px] text-primary">
                                   <Pin className="size-3" /> Pinned
@@ -2138,7 +2176,7 @@ function ChannelPage() {
               <div className="mb-2 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 rounded-lg border border-primary/40 bg-primary/10 px-2 py-2 text-xs sm:flex sm:px-3">
                 <Reply className="size-3.5 shrink-0 text-primary" />
                 <span className="truncate font-semibold sm:shrink-0">
-                  Replying to{" "}
+                  {replyTo.private_to ? "🔒 Private reply to " : "Replying to "}
                   {profiles[replyTo.sender_id]?.display_name ??
                     profiles[replyTo.sender_id]?.username ??
                     "Unknown"}
@@ -2187,7 +2225,15 @@ function ChannelPage() {
                 </div>
               </div>
             )}
-            <div className="relative flex flex-wrap items-end gap-2 rounded-xl border border-border bg-surface-2 px-2 py-2 focus-within:border-primary sm:flex-nowrap sm:px-3">
+            {(PRIVATE_CMD_RE.test(draft) || !!replyTo?.private_to) && (
+              <div className="mb-2 flex items-center gap-2 rounded-lg border border-amber-500/60 bg-amber-500/15 px-3 py-1.5 text-xs font-semibold text-amber-300">
+                <Lock className="size-3.5 shrink-0" />
+                {isPrivateStaff && !replyTo
+                  ? "Staff: reply to a member's message to send them a private message"
+                  : "Private – only you and staff will see this"}
+              </div>
+            )}
+            <div className={cn("relative flex flex-wrap items-end gap-2 rounded-xl border bg-surface-2 px-2 py-2 focus-within:border-primary sm:flex-nowrap sm:px-3", PRIVATE_CMD_RE.test(draft) || replyTo?.private_to ? "border-amber-500/70" : "border-border")}>
               {mention.dropdown}
               {channelJump.dropdown}
               {quickSlash.dropdown}
@@ -2208,7 +2254,7 @@ function ChannelPage() {
                         ? `Slow mode: wait ${slowRemaining}s before sending another message`
                         : pendingGif
                           ? "GIF attached — press Enter or Send"
-                          : `Message #${channel.name} — @ to mention · # to jump to a channel · paste or Win + . for emotes & GIFs`
+                          : `Message #${channel.name} — /private for staff-only · @ to mention · # to jump to a channel · paste or Win + . for emotes & GIFs`
                 }
                 onBeforeInput={(e) => {
                   const inputEvent = e.nativeEvent as InputEvent;
