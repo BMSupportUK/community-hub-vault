@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { CircleDot, ChevronLeft, ChevronRight, Clock, MapPin } from "lucide-react";
+import { CircleDot, ChevronLeft, ChevronRight, Clock, Hash, MapPin, Users } from "lucide-react";
 import { useUserPage } from "@/hooks/use-online-users";
 
 import { supabase } from "@/integrations/supabase/client";
@@ -61,6 +61,18 @@ function ViewingLine({ userId }: { userId: string }) {
     <div className="mt-1 flex items-center gap-1 text-[10px] font-medium text-white/85 min-w-0">
       <MapPin className="size-3 shrink-0" />
       <span className="truncate">{page}</span>
+    </div>
+  );
+}
+
+/** The exact Talk Channel this staff member currently has open. */
+function TalkChannelLine({ userId }: { userId: string }) {
+  const page = useUserPage(userId);
+  if (!page?.startsWith("Talk Channel · ")) return null;
+  return (
+    <div className="mt-0.5 flex min-w-0 items-center gap-1 text-[10px] text-muted-foreground">
+      <Hash className="size-2.5 shrink-0" />
+      <span className="truncate">{page.slice("Talk Channel · ".length)}</span>
     </div>
   );
 }
@@ -166,6 +178,7 @@ export function StaffOnDutyStrip({
    *  and presence reflects that channel specifically. */
   channelId?: string | null;
 } = {}) {
+  const isSidebar = variant === "sidebar";
   const [shifts, setShifts] = useState<StaffShift[]>([]);
   const [breaks, setBreaks] = useState<StaffBreak[]>([]);
   const [profiles, setProfiles] = useState<Record<string, StaffProfile>>({});
@@ -173,10 +186,11 @@ export function StaffOnDutyStrip({
   const [now, setNow] = useState(() => Date.now());
   const [selfId, setSelfId] = useState<string | null>(null);
   const [dutyTab, setDutyTab] = useState<"on" | "off">("on");
+  const [sidebarTab, setSidebarTab] = useState<"online" | "offline">("online");
   const roleFlashMap = useRoleFlashMap();
   const presentGlobalIds = useTalkChannelPresentUsers();
   const presentChannelIds = useTalkChannelPresentUsersInChannel(channelId);
-  const presentUserIds = channelId ? presentChannelIds : presentGlobalIds;
+  const presentUserIds = isSidebar ? presentGlobalIds : channelId ? presentChannelIds : presentGlobalIds;
   // IDs allowed to view the scoped channel; null means "no channel filter".
   const [allowedIds, setAllowedIds] = useState<Set<string> | null>(null);
 
@@ -308,7 +322,6 @@ export function StaffOnDutyStrip({
     return `${h}h ${m}m`;
   };
 
-  const isSidebar = variant === "sidebar";
   const isTickets = variant === "tickets";
   /** On the tickets strip, Dane J's presence follows business hours like everyone else. */
   const daneOverride = !isTickets;
@@ -326,7 +339,7 @@ export function StaffOnDutyStrip({
       return an.localeCompare(bn);
     })
     .filter((s) => !hideRoles.includes(roleFlashMap.get(s.user_id) ?? ""))
-    .filter((s) => !allowedIds || allowedIds.has(s.user_id));
+    .filter((s) => isSidebar || !allowedIds || allowedIds.has(s.user_id));
 
   const daneShift = allOrderedShifts.find((s) => isDaneJProfile(profiles[s.user_id]));
   const orderedShifts = allOrderedShifts.filter((s) => !isDaneJProfile(profiles[s.user_id]));
@@ -335,8 +348,8 @@ export function StaffOnDutyStrip({
 
 
   const allVisibleOffDuty = useMemo(
-    () => offDuty.filter((p) => !hideRoles.includes(p.role) && (!allowedIds || allowedIds.has(p.id))),
-    [offDuty, hideRoles, allowedIds]
+    () => offDuty.filter((p) => !hideRoles.includes(p.role) && (isSidebar || !allowedIds || allowedIds.has(p.id))),
+    [offDuty, hideRoles, allowedIds, isSidebar]
   );
   const daneOff = daneShift ? undefined : allVisibleOffDuty.find((p) => isDaneJProfile(p));
   const visibleOffDuty = useMemo(
@@ -548,6 +561,136 @@ export function StaffOnDutyStrip({
       <div key={p.id}>{card}</div>
     );
   };
+
+  const renderSidebarRow = (p: StaffProfile & { role: string }, shift?: StaffShift) => {
+    const name = p.display_name || p.username || "Staff";
+    const online = presentUserIds.has(p.id);
+    const br = breakByUser.get(p.id);
+    const shiftElapsed = shift ? (now - new Date(shift.clock_in).getTime()) / 1000 : 0;
+    const breakElapsed = br ? (now - new Date(br.started_at).getTime()) / 1000 : 0;
+    const breakRemaining = br ? STAFF_BREAK_LIMITS[br.kind] - breakElapsed : 0;
+    const breakOver = breakRemaining < 0;
+    const row = (
+      <div className={cn(
+        "flex w-full items-start gap-2 rounded-md px-1.5 py-1.5 text-left transition-colors hover:bg-surface-2",
+        !online && "opacity-55",
+      )}>
+        <span className="relative mt-0.5 shrink-0">
+          <img
+            src={resolveAvatarUrl(p.id, p.avatar_url, roleFlashMap)}
+            alt=""
+            className="size-9 rounded-full object-cover"
+          />
+          <PresenceDot userId={p.id} baseClass={online ? "bg-emerald-500" : "bg-zinc-500"} />
+        </span>
+        <span className="min-w-0 flex-1">
+          <Nameplate
+            id={p.equipped_nameplate_id}
+            className="flex min-h-9 w-full flex-col justify-center rounded-md px-2 py-1 shadow-sm isolate"
+          >
+            <span className={cn(
+              "relative z-10 block truncate text-xs font-semibold text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]",
+              roleFlashClass(roleFlashMap.get(p.id)),
+            )}>
+              {name}
+            </span>
+            <span className="relative z-10 block truncate text-[9px] font-medium uppercase text-white/85">
+              {formatRoleLabel(p.role)}
+            </span>
+          </Nameplate>
+          <span className="mt-1 block text-[10px] leading-tight text-muted-foreground">
+            {shift ? (
+              <span className="flex items-center gap-1 text-emerald-300">
+                <Clock className="size-2.5 shrink-0" />
+                <span>Working {fmtHMS(shiftElapsed)}</span>
+              </span>
+            ) : (
+              <span>Off duty</span>
+            )}
+          </span>
+          {br && (
+            <span className={cn("mt-0.5 flex items-center gap-1 text-[10px] leading-tight", breakOver ? "text-destructive" : "text-amber-300")}>
+              {(() => { const Icon = breakIcon(br.kind); return <Icon className="size-2.5 shrink-0" />; })()}
+              <span className="truncate">
+                {breakLabel(br.kind)} {breakOver ? `+${fmtMinSec(-breakRemaining)}` : fmtMinSec(breakRemaining)}
+              </span>
+            </span>
+          )}
+          <TalkChannelLine userId={p.id} />
+          <DndCountdown userId={p.id} compact className="mt-1" />
+        </span>
+      </div>
+    );
+    return (
+      <TalkMemberMiniProfile
+        key={p.id}
+        userId={p.id}
+        online={online}
+        fallback={talkFallbackRow(p.id)}
+        className="block w-full"
+      >
+        {row}
+      </TalkMemberMiniProfile>
+    );
+  };
+
+  if (isSidebar) {
+    const shiftsByUser = new Map(allOrderedShifts.map((shift) => [shift.user_id, shift]));
+    const allStaff = [
+      ...allOrderedShifts.map((shift) => ({
+        ...(profiles[shift.user_id] ?? { id: shift.user_id, username: null, display_name: null, avatar_url: null, equipped_nameplate_id: null }),
+        role: roleFlashMap.get(shift.user_id) ?? "staff",
+      })),
+      ...allVisibleOffDuty,
+    ].sort((a, b) => {
+      const roleDiff = roleRank(a.id) - roleRank(b.id);
+      if (roleDiff !== 0) return roleDiff;
+      return (a.display_name || a.username || "Staff").localeCompare(b.display_name || b.username || "Staff");
+    });
+    const onlineStaff = allStaff.filter((person) => presentUserIds.has(person.id));
+    const offlineStaff = allStaff.filter((person) => !presentUserIds.has(person.id));
+    const visibleStaff = sidebarTab === "online" ? onlineStaff : offlineStaff;
+
+    return (
+      <div className="flex h-full max-h-full min-h-0 flex-col overflow-hidden">
+        <div className="flex shrink-0 items-center gap-2 border-b border-border px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <Users className="size-3.5" />
+          Staff
+          <span className={cn(
+            "ml-auto inline-flex min-w-5 items-center justify-center rounded-full px-1.5 py-0.5 text-[10px] font-bold leading-none",
+            sidebarTab === "online" ? "bg-emerald-500/15 text-emerald-300" : "bg-muted text-muted-foreground",
+          )}>
+            {visibleStaff.length}
+          </span>
+        </div>
+        <div className="grid shrink-0 grid-cols-2 border-b border-border">
+          {(["online", "offline"] as const).map((tab) => (
+            <button
+              key={tab}
+              type="button"
+              onClick={() => setSidebarTab(tab)}
+              className={cn(
+                "px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider transition-colors",
+                sidebarTab === tab
+                  ? tab === "online" ? "bg-surface text-emerald-300" : "bg-surface text-foreground"
+                  : "text-muted-foreground hover:bg-surface-2/50 hover:text-foreground",
+              )}
+            >
+              {tab}
+            </button>
+          ))}
+        </div>
+        <div className="min-h-0 flex-1 space-y-0.5 overflow-y-auto overscroll-contain px-2 py-2 scrollbar-hide">
+          {visibleStaff.map((person) => renderSidebarRow(person, shiftsByUser.get(person.id)))}
+          {visibleStaff.length === 0 && (
+            <p className="px-2 py-6 text-center text-xs text-muted-foreground">
+              No staff {sidebarTab}.
+            </p>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   const daneSection = (daneShift || daneOff) ? (
     <div className="relative mb-3 pb-3 border-b border-white/15">
