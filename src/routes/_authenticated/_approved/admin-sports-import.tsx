@@ -11,7 +11,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { ArrowLeft, Loader2, Sparkles, Send, Trash2, Inbox, Clock, Check, Scissors, Settings2, X } from "lucide-react";
 import { firstClockIn, firstDateIn, parseClockTime, toSingleZoneTime, type TimeZoneChoice } from "@/lib/import-time";
-import { formatSportsListingBlock, formatSportsListingEvents, parseSportsListingBlock, splitListingSections } from "@/lib/sports-listing-format";
+import { formatSportsListingBlock, formatSportsListingEvents, normalizeSportsListingText, parseSportsListingBlock, splitListingSections } from "@/lib/sports-listing-format";
 import { suggestListingFixes, saveQueueListing, type ListingFixSuggestion } from "@/lib/listing-web-fix.functions";
 import { checkSportsImport, type ImportCheckResult } from "@/lib/sports-import-check";
 import {
@@ -710,23 +710,24 @@ function QueueRow({
 
   // Queued posts arrive whole with no time pulled out — fall back to the
   // first clock time written inside the post itself.
-  const zoneSource = firstClockIn(String(ev.raw ?? item.raw_text ?? "")) ?? time;
-  const zoneDate = ev.date ?? firstDateIn(String(ev.raw ?? item.raw_text ?? ""));
+  const normalizedRaw = normalizeSportsListingText(String(ev.raw ?? item.raw_text ?? ""));
+  const zoneSource = firstClockIn(normalizedRaw) ?? time;
+  const zoneDate = ev.date ?? firstDateIn(normalizedRaw);
   // Always offer the choice so a wrong pick can be changed before importing.
   const needsZone = parseClockTime(zoneSource) !== null;
   const splitCount = useMemo(
-    () => parseSportsListingBlock(String(ev.raw ?? item.raw_text ?? "")).length,
-    [ev.raw, item.raw_text],
+    () => parseSportsListingBlock(normalizedRaw).length,
+    [normalizedRaw],
   );
   // Names listed inside the post that each have their own guide.
   const providerSections = useMemo(
-    () => splitListingSections(String(ev.raw ?? item.raw_text ?? "")),
-    [ev.raw, item.raw_text],
+    () => splitListingSections(normalizedRaw),
+    [normalizedRaw],
   );
   const [pickingSplit, setPickingSplit] = useState(false);
   const rawLines = useMemo(
-    () => String(ev.raw ?? item.raw_text ?? "").split("\n"),
-    [ev.raw, item.raw_text],
+    () => normalizedRaw.split("\n"),
+    [normalizedRaw],
   );
 
   return (
@@ -736,7 +737,7 @@ function QueueRow({
         selected ? "ring-2 ring-primary" : "hover:ring-1 hover:ring-primary/40"
       }`}
     >
-      {ev.raw && <pre className="max-h-24 overflow-auto whitespace-pre-wrap break-words rounded bg-muted/50 p-2 text-xs">{ev.raw}</pre>}
+      {ev.raw && <pre className="max-h-24 overflow-auto whitespace-pre-wrap break-words rounded bg-muted/50 p-2 text-xs">{normalizedRaw}</pre>}
       <div className="text-xs text-muted-foreground">
         {[ev.date, time].filter(Boolean).join(" · ")}
         {Array.isArray(ev.channels) && ev.channels.length > 0 && <> · {ev.channels.join(" • ")}</>}
