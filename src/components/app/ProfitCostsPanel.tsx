@@ -23,7 +23,13 @@ function calc(o: Order): Calc {
   return { revenue: o.total_cents, cost, missing };
 }
 
-const METHOD_LABELS: Record<string, string> = { square: "Square", stripe: "Stripe", wise: "Wise", bank_transfer: "Bank transfer", cash: "Cash", crypto: "Crypto", manual: "Manual" };
+const METHOD_LABELS: Record<string, string> = { square: "Square", stripe: "Stripe", wise: "Wise", cash: "Cash", nowpayments: "NOWPayments", manual: "Manual" };
+
+function paymentGroup(provider: string | undefined) {
+  if (provider === "crypto" || provider === "nowpayments") return "nowpayments";
+  if (provider === "bank_transfer" || provider === "wise") return "wise";
+  return provider;
+}
 
 export function ProfitCostsPanel() {
   const [tab, setTab] = useState<string>("profit");
@@ -77,12 +83,12 @@ export function ProfitCostsPanel() {
 
   const all = orders ?? [];
   const methodTabs = useMemo(() => {
-    const fixed = ["square", "stripe", "wise", "bank_transfer", "cash", "crypto"];
+    const fixed = ["square", "stripe", "wise", "cash", "nowpayments"];
     const seen = new Set<string>(fixed);
-    for (const o of all) { const m = methodOf[o.id]; if (m) seen.add(m); }
+    for (const o of all) { const m = paymentGroup(methodOf[o.id]); if (m) seen.add(m); }
     return [...seen].sort((a, b) => (METHOD_LABELS[a] ?? a).localeCompare(METHOD_LABELS[b] ?? b));
   }, [all, methodOf]);
-  const list = tab === "profit" || tab === "costs" ? all : all.filter((o) => methodOf[o.id] === tab);
+  const list = tab === "profit" || tab === "costs" ? all : all.filter((o) => paymentGroup(methodOf[o.id]) === tab);
   const years = useMemo(() => [...new Set(list.map((o) => new Date(o.created_at).getFullYear()))].sort((a, b) => b - a), [list]);
   const ay = year && years.includes(year) ? year : years[0] ?? null;
   const yearOrders = list.filter((o) => new Date(o.created_at).getFullYear() === ay);
