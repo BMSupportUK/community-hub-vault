@@ -894,7 +894,7 @@ function ChannelPage() {
         setUploadingPaste(false);
       }
     }
-    // Private: `/private` command, or any reply to a private message.
+    // Private: `!private` command, or any reply to a private message.
     const wantsPrivate = PRIVATE_CMD_RE.test(directText ?? originalPlain) || !!replyTo?.private_to;
     let privateTo: string | null = null;
     if (wantsPrivate) {
