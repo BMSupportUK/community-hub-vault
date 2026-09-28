@@ -1,6 +1,7 @@
 # Roadmap
 
 ## Current
+- [ ] Talk Channels: replace the staff card with an always-visible Online/Offline staff list, name cards, working/break countdowns, and current channel
 - [x] Asian Games import: verify exact post and preserve its heading, UK time, title, and both beIN channels
 - [x] Manual sports-import split: prevent heading snap from deleting one half and preserve shared heading context
 - [x] WST snooker imports: preserve repeated title → UK/ET time → channels blocks and add permanent format regression checks
