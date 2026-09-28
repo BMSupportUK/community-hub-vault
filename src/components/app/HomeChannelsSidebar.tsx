@@ -3,6 +3,7 @@ import { useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ChannelColumn, type ChannelGroup } from "@/components/app/ChannelColumn";
 import { ServiceStatusBox } from "@/components/app/ServiceStatusBox";
+import { TalkCommandsBox } from "@/components/app/TalkCommandsBox";
 import { WorkingStatusBox } from "@/components/app/WorkingStatusBox";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -132,6 +133,7 @@ export function HomeChannelsSidebar() {
         footer={
           <div className="space-y-4">
             <ServiceStatusBox />
+            <TalkCommandsBox />
             <WorkingStatusBox />
           </div>
         }
@@ -145,6 +147,7 @@ export function HomeChannelsSidebar() {
       footer={
         <div className="space-y-4">
           <ServiceStatusBox />
+          <TalkCommandsBox />
           <WorkingStatusBox />
         </div>
       }
