@@ -536,11 +536,11 @@ function DashboardBody() {
 
   const tabs = ([
     ["tools", "Owner tools", false],
-    ["order-status", "Order status", true],
+    ["order-status", "Orders", true],
     ["profit-costs", "Profit & costs", "profit"],
     ["square", "Square", true],
     ["stripe", "Stripe", true],
-    ["bank-transfer-orders", "Bank transfer orders", true],
+    ["bank-transfer-orders", "Bank Transfer", true],
     ["cash", "Cash", true],
     ["bank-transfer", "Bank Settings", "bank"],
     ["staff-pins", "Staff PINs", true],
