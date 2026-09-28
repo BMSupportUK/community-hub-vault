@@ -476,23 +476,23 @@ function InstallGuidesPage() {
                 <h1 className="font-display text-2xl font-bold text-foreground sm:text-3xl">Install Guides</h1>
                 <p className="mt-1 text-sm text-muted-foreground md:hidden xl:block">Step-by-step installation walkthroughs and PDF docs</p>
               </div>
-              <TabsList className="scrollbar-hide flex h-auto w-full min-w-0 max-w-full flex-nowrap justify-start gap-1 overflow-x-auto rounded-lg border border-border bg-surface/70 p-1 lg:w-auto lg:max-w-full lg:rounded-full">
-                <TabsTrigger value="welcome" className="shrink-0 truncate rounded-full px-3 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">Welcome</TabsTrigger>
-                <TabsTrigger value="guides" className="shrink-0 truncate rounded-full px-3 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">Guides</TabsTrigger>
+              <TabsList className="scrollbar-hide grid h-auto w-full min-w-0 max-w-full grid-cols-2 justify-start gap-1 rounded-lg border border-border bg-surface/70 p-1 sm:flex sm:flex-wrap lg:w-auto lg:max-w-full lg:flex-nowrap lg:rounded-full">
+                <TabsTrigger value="welcome" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">Welcome</TabsTrigger>
+                <TabsTrigger value="guides" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">Guides</TabsTrigger>
                 {canSeeAppTab && (
-                  <TabsTrigger value="get-app" className="shrink-0 truncate rounded-full px-3 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">{hasLiveTransfer ? "View Your Download URL" : "Download BM Support Apps"}</TabsTrigger>
+                  <TabsTrigger value="get-app" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">{hasLiveTransfer ? "View Your Download URL" : "Download BM Support Apps"}</TabsTrigger>
                 )}
                 {canManageCategories && (
-                  <TabsTrigger value="categories" className="shrink-0 truncate rounded-full px-3 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">Categories</TabsTrigger>
+                  <TabsTrigger value="categories" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">Categories</TabsTrigger>
                 )}
                 {canSeeTransfers && (
-                  <TabsTrigger value="transfers" className="shrink-0 truncate rounded-full px-3 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">Transfers</TabsTrigger>
+                  <TabsTrigger value="transfers" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">Transfers</TabsTrigger>
                 )}
                 {canManageApps && (
-                  <TabsTrigger value="app-apk" className="shrink-0 truncate rounded-full px-3 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">App APK</TabsTrigger>
+                  <TabsTrigger value="app-apk" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">App APK</TabsTrigger>
                 )}
                 {canManageGuides && (
-                  <TabsTrigger value="approvals" className="shrink-0 truncate rounded-full px-3 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">Approvals</TabsTrigger>
+                  <TabsTrigger value="approvals" className="min-w-0 whitespace-normal break-words rounded-full px-3 py-2 text-center text-xs leading-tight data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:shrink-0 lg:text-sm">Approvals</TabsTrigger>
                 )}
               </TabsList>
             </div>
