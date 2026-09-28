@@ -166,7 +166,7 @@ export function NotificationBell() {
             playSound(orderAudio, { label: "order", gain: 1.8 });
           }
           if (n.kind === "ticket_raised" && canHandleTickets) {
-            playSound(ticketAudio, { label: "ticket", gain: 2.0 });
+            // Sound + browser alert come from UnclaimedTicketsNotifier (on-shift only).
             toast(`🎫 ${n.title}`, {
               description: n.body ?? "A ticket is needing assistance.",
               duration: 8000,
