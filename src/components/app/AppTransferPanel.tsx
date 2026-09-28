@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import QRCode from "qrcode";
-import { Smartphone, Copy, Download, Trash2, Loader2, ShieldCheck, Clock, Eye, Lock } from "lucide-react";
+import { Smartphone, Copy, Download, Trash2, Loader2, ShieldCheck, Clock, Eye, Lock, ZoomIn, ZoomOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
@@ -146,6 +146,7 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
   const [busy, setBusy] = useState<"request" | "delete" | null>(null);
   const [open, setOpen] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [infoZoom, setInfoZoom] = useState(1);
   const videoUrl = useDemoVideoUrl(build.videoPath);
 
   const shortUrl = useMemo(() => {
@@ -304,8 +305,38 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
 
           {build.installInstructions && (
             <div className="rounded-lg border border-violet-500/30 bg-violet-500/10 p-3">
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-violet-200">Additional App Information</p>
-              <p className="mt-1.5 text-xs text-foreground/85 whitespace-pre-wrap">{build.installInstructions}</p>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-violet-200">Additional App Information</p>
+                <div className="flex shrink-0 items-center gap-1">
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="size-7 text-violet-200 hover:text-foreground hover:bg-surface-2/80 disabled:opacity-40"
+                    title="Smaller text"
+                    disabled={infoZoom <= 1}
+                    onClick={() => setInfoZoom((z) => Math.max(1, +(z - 0.25).toFixed(2)))}
+                  >
+                    <ZoomOut className="size-3.5" />
+                  </Button>
+                  <span className="min-w-8 text-center text-[10px] font-semibold text-violet-200">{Math.round(infoZoom * 100)}%</span>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="size-7 text-violet-200 hover:text-foreground hover:bg-surface-2/80 disabled:opacity-40"
+                    title="Bigger text"
+                    disabled={infoZoom >= 2}
+                    onClick={() => setInfoZoom((z) => Math.min(2, +(z + 0.25).toFixed(2)))}
+                  >
+                    <ZoomIn className="size-3.5" />
+                  </Button>
+                </div>
+              </div>
+              <p
+                className="mt-1.5 text-xs text-foreground/85 whitespace-pre-wrap"
+                style={{ fontSize: `${infoZoom * 0.75}rem`, lineHeight: 1.5 }}
+              >
+                {build.installInstructions}
+              </p>
             </div>
           )}
 
