@@ -242,12 +242,12 @@ function MemberRow({
     <button
       type="button"
       className={cn(
-        "flex w-full items-center gap-2 rounded-md px-1.5 py-1 text-left transition-colors hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        "flex w-full items-start gap-2 rounded-md px-1.5 py-1.5 text-left transition-colors hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         !online && "opacity-50",
       )}
     >
-          <span className="relative shrink-0">
-            <img src={avatar} alt="" className="size-8 rounded-full object-cover" />
+          <span className="relative mt-0.5 shrink-0">
+            <img src={avatar} alt="" className="size-9 rounded-full object-cover" />
             <span
               className={cn(
                 "absolute -bottom-0.5 -right-0.5 size-2.5 rounded-full ring-2 ring-surface",
@@ -258,11 +258,11 @@ function MemberRow({
           <span className="min-w-0 flex-1">
             <Nameplate
               id={row.equipped_nameplate_id}
-              className="flex min-h-7 w-full items-center rounded-md px-1.5 py-0.5 isolate"
+              className="flex min-h-9 w-full flex-col justify-center rounded-md px-2 py-1 shadow-sm isolate"
             >
               <span
                 className={cn(
-                  "block truncate text-sm font-semibold",
+                  "relative z-10 block truncate text-xs font-semibold",
                   np
                     ? "text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]"
                     : ROLE_TEXT[top] ?? "text-foreground",
@@ -271,11 +271,14 @@ function MemberRow({
               >
                 {name}
               </span>
+              <span className={cn(
+                "relative z-10 block truncate text-[9px] font-medium uppercase",
+                np ? "text-white/85" : "text-muted-foreground",
+              )}>
+                {roleLabels || "Member"}
+              </span>
             </Nameplate>
-            <span className="block truncate text-[10px] leading-tight text-muted-foreground">
-              {roleLabels || "Member"}
-            </span>
-            <span className="flex items-center gap-1 truncate text-[10px] leading-tight text-muted-foreground">
+            <span className="mt-1 flex items-center gap-1 truncate text-[10px] leading-tight text-muted-foreground">
               <Clock className="size-2.5 shrink-0" />
               Last active {online ? "now" : formatLastSeen(lastSeenAt)}
             </span>
