@@ -3058,10 +3058,10 @@ function OrdersView({
   const countBadge = (count: number, isNew = false) => (
     <span
       className={cn(
-        "inline-grid min-w-5 h-5 place-items-center rounded-full px-1 text-[10px] font-bold",
+        "inline-grid min-w-5 h-5 place-items-center rounded-full px-1 text-[11px] font-extrabold ring-2",
         isNew
-          ? "bg-destructive text-destructive-foreground"
-          : "bg-warning text-warning-foreground",
+          ? "bg-red-500 text-white ring-red-300/70 shadow-[0_0_10px_rgba(239,68,68,0.9)]"
+          : "bg-amber-400 text-amber-950 ring-amber-200/80 shadow-[0_0_10px_rgba(251,191,36,0.9)]",
       )}
     >
       {count}
