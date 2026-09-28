@@ -10,6 +10,8 @@ import { formatLastSeen } from "@/lib/relative-time";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { TalkMemberProfileCard } from "@/components/app/TalkMemberProfileCard";
+import { Nameplate } from "@/components/app/Nameplate";
+import { useNameplate } from "@/lib/nameplates";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useRoleFlashMap, roleFlashClass, resolveAvatarUrl } from "@/lib/role-flash";
 import { formatRoleLabel } from "@/lib/role-label";
@@ -231,6 +233,9 @@ function MemberRow({
   const roleLabels = roles.map((role) => formatRoleLabel(role)).join(" · ");
   const currentPage = useUserPage(row.user_id);
   const { lastSeenAt } = useLiveLastSeen(row.user_id, row.last_seen_at);
+  // Authorised change (user request): show the member's equipped nameplate
+  // behind their name like the staff name cards do.
+  const np = useNameplate(row.equipped_nameplate_id);
 
 
   const trigger = (
@@ -251,15 +256,22 @@ function MemberRow({
             />
           </span>
           <span className="min-w-0 flex-1">
-            <span
-              className={cn(
-                "block truncate text-sm font-medium",
-                ROLE_TEXT[top] ?? "text-foreground",
-                roleFlashClass(flash),
-              )}
+            <Nameplate
+              id={row.equipped_nameplate_id}
+              className="flex min-h-7 w-full items-center rounded-md px-1.5 py-0.5 isolate"
             >
-              {name}
-            </span>
+              <span
+                className={cn(
+                  "block truncate text-sm font-semibold",
+                  np
+                    ? "text-white drop-shadow-[0_1px_1px_rgba(0,0,0,0.6)]"
+                    : ROLE_TEXT[top] ?? "text-foreground",
+                  roleFlashClass(flash),
+                )}
+              >
+                {name}
+              </span>
+            </Nameplate>
             <span className="block truncate text-[10px] leading-tight text-muted-foreground">
               {roleLabels || "Member"}
             </span>
