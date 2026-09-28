@@ -2067,7 +2067,7 @@ function ChannelPage() {
                                     <Pencil className="size-4" /> Edit message
                                   </button>
                                 )}
-                                {canPin && (
+                                {canPin && !m.private_to && (
                                   <button
                                     onClick={() => {
                                       togglePin(m);
