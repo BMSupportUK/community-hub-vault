@@ -3,6 +3,7 @@ import { FanZoneFriendRequestsListener } from "@/components/app/FanZoneFriendReq
 
 import { TwoFactorBanner } from "@/components/app/TwoFactorBanner";
 import { OutstandingTicketsAlert } from "@/components/app/OutstandingTicketsAlert";
+import { UnclaimedTicketsNotifier } from "@/components/app/UnclaimedTicketsNotifier";
 import { TicketAssignedAlert } from "@/components/app/TicketAssignedAlert";
 import { PaymentConfirmedAlert } from "@/components/app/PaymentConfirmedAlert";
 import { TicketHelpRequestedAlert } from "@/components/app/TicketHelpRequestedAlert";
@@ -25,6 +26,7 @@ export function ApprovedDeferredExtras() {
       <FanZoneFriendRequestsListener />
 
       {!isSoundTestPage && <OutstandingTicketsAlert />}
+      <UnclaimedTicketsNotifier />
       <TicketAssignedAlert />
       <PaymentConfirmedAlert />
       <TicketHelpRequestedAlert />

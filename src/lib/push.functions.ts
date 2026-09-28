@@ -474,6 +474,9 @@ export const sendNewTicketPush = createServerFn({ method: "POST" })
     }).parse(input),
   )
   .handler(async ({ data, context }) => {
+    // New-ticket pushes are now sent once by the staff-notification hook,
+    // to on-shift staff only. Kept as a no-op so older clients don't error.
+    if (data.ticketId) return { web: { sent: 0 }, fcm: { sent: 0, failed: 0 } };
     const name = await getActorName(context.userId);
     // Owner-management tickets are restricted to admin + management; all
     // other categories notify the full staff group.

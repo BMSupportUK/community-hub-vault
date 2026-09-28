@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { pushToRoles } from "@/lib/fcm.server";
-import { broadcastToRoles } from "@/lib/push.functions";
+import { pushToRoles, pushToUser } from "@/lib/fcm.server";
+import { broadcastToRoles, broadcastToUser } from "@/lib/push.functions";
 
 // POST /api/public/hooks/staff-notification-push
 // Called by an AFTER INSERT trigger on public.staff_notifications via pg_net.
@@ -85,6 +85,30 @@ export const Route = createFileRoute("/api/public/hooks/staff-notification-push"
         const tag = `staff-${r.kind}-${r.id}`;
 
         try {
+          if (r.kind === "ticket_raised") {
+            // Tickets are claimed, not assigned: alert only staff on shift now.
+            const { data: shifts } = await supabaseAdmin
+              .from("shifts").select("user_id").is("clock_out", null).lte("clock_in", new Date().toISOString());
+            const onShift = Array.from(new Set((shifts ?? []).map((s) => s.user_id as string)));
+            const { data: roleRows } = onShift.length
+              ? await supabaseAdmin.from("user_roles").select("user_id").in("user_id", onShift).in("role", roles)
+              : { data: [] as { user_id: string }[] };
+            const targets = Array.from(new Set((roleRows ?? []).map((x) => x.user_id)));
+            let webSent = 0, fcmSent = 0;
+            await Promise.all(targets.map(async (uid) => {
+              const [w, f] = await Promise.all([
+                broadcastToUser(uid, title, text, url, tag).catch(() => ({ sent: 0 })),
+                pushToUser(uid, { title, body: text, data: { kind: r.kind, notificationId: r.id, url, ...(r.entity_id ? { entityId: r.entity_id } : {}) } }).catch(() => ({ sent: 0, failed: 0 })),
+              ]);
+              webSent += w.sent; fcmSent += f.sent;
+            }));
+            await supabaseAdmin.from("notification_log").insert({
+              kind: r.kind, channel: "push", target_id: r.id,
+              status: webSent > 0 || fcmSent > 0 ? "sent" : "skipped",
+              message: `staff_push on_shift=${targets.length} web=${webSent} fcm=${fcmSent}`,
+            } as never);
+            return Response.json({ ok: true, onShift: targets.length, web: webSent, fcm: fcmSent });
+          }
           const [web, fcm] = await Promise.all([
             broadcastToRoles(roles, title, text, url, tag).catch((e) => ({
               sent: 0,
