@@ -296,7 +296,9 @@ function sportsListingLineHeading(trimmed: string): string | null {
     !isDateLine(heading) &&
     !parseClockTime(heading) &&
     !/\s(?:&|v|vs|v\.|x)\s/i.test(heading) &&
-    !isLikelyChannelLabel(heading)
+    !isLikelyChannelLabel(heading) &&
+    // Generic post banners ("TODAYS LIVE EVENTS") are not competitions.
+    !/^(?:today'?s?|tonight'?s?|this\s+week'?s?|daily|all)?\s*(?:live\s+)?(?:events?|listings?|schedule|fixtures|sports?)(?:\s+(?:today|tonight|live))?$/i.test(heading.replace(/[’']/g, "'"))
   ) return heading;
   return null;
 }
