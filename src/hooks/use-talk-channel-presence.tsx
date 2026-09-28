@@ -451,7 +451,7 @@ function cancelPendingLeave() {
 
 function scheduleConfirmedLeave(channel: RealtimeChannel, departingUserId: string) {
   cancelPendingLeave();
-  pendingLeaveTimer = setTimeout(() => {
+  pendingLeaveTimer = setTimeout(async () => {
     pendingLeaveTimer = null;
     // Effect cleanup/re-run and fast channel navigation briefly empty the
     // tracker map. Only announce an exit if it is still empty after settling.
@@ -462,7 +462,9 @@ function scheduleConfirmedLeave(channel: RealtimeChannel, departingUserId: strin
     const departingKey = `${getConnectionId()}:${departingUserId}`;
     explicitlyDepartedKeys.add(departingKey);
     cleanlyDepartedUserIds.add(departingUserId);
-    void channel.send({
+    // Send the explicit room exit before untracking. Running these together
+    // let untrack win the race and other screens then missed the instant leave.
+    await channel.send({
       type: "broadcast",
       event: "talk-presence-change",
       payload: {
@@ -471,12 +473,14 @@ function scheduleConfirmedLeave(channel: RealtimeChannel, departingUserId: strin
         user_id: departingUserId,
       } satisfies TalkPresenceSignal,
     }).catch(() => undefined);
-    void channel.untrack().catch(() => undefined).finally(() => {
-      trackedUserId = departingUserId;
-      flushCount();
-      trackedUserId = null;
-    });
-  }, 750);
+    await channel.untrack().catch(() => undefined);
+    trackedUserId = departingUserId;
+    flushCount();
+    trackedUserId = null;
+  // Authorised fix (user request, 2026-09-28): exiting Talk Channels must
+  // remove the person from the room list immediately. A zero-delay task still
+  // lets a channel-to-channel navigation mount its replacement tracker first.
+  }, 0);
 }
 
 /**
