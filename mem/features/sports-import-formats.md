@@ -80,3 +80,6 @@ NFL Sunday Ticket rows are `NFL NN: ET time | UK time` with the fixture on the n
 Source repeats `**Event title**`, then ``UK time | ET time``, then one or more channel lines. The title belongs to the time below it, and the channels below that time belong to the same event. Example: `**Shenzhen Open**` / `7:00am UK | 2:00am ET` / `TNT Sports 1 & 2` becomes `07:00 BST`, `WST: Shenzhen Open`, channels `TNT Sports 1` and `TNT Sports 2`. Repeated sessions must never use the event title as a channel or the channel line as the event name.
 
 All permanent provider layouts must have parser regression coverage. Every importer change must run the complete sports-import format test file as well as the real post's safety and round-trip checks.
+
+## Manual queue splitting (permanent)
+Splitting a multi-event post at the second event must keep both events. A chosen split point may include a heading immediately above it, but must never jump backwards or forwards to an unrelated heading. Blank/decorative rows are not valid split choices. When both halves share one provider/date heading, copy that heading into the second half so both queued listings retain their context.

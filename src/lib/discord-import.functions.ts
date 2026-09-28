@@ -482,12 +482,18 @@ export const splitQueueItem = createServerFn({ method: "POST" })
 // half is never left holding only a heading.
 export function snapSplitToHeading(lines: string[], line: number): number {
   const isHead = (l: string) => /^\s*(?:\*{2,}|__|#+\s)/.test(l) && !/\d{1,2}[:.]\d{2}/.test(l);
-  const heads: number[] = [];
-  lines.forEach((l, i) => { if (i > 0 && isHead(l) && lines.slice(0, i).some((x) => x.trim() && !isHead(x))) heads.push(i); });
-  if (!heads.length) return line;
-  // Prefer the next heading at or after the chosen line, else the nearest one.
-  const next = heads.find((h) => h >= line);
-  return next ?? heads[heads.length - 1];
+  let target = line;
+  while (target < lines.length && !lines[target]?.trim()) target += 1;
+  if (target >= lines.length) return line;
+  if (isHead(lines[target])) return target;
+
+  // Include a heading only when it sits directly above the selected content.
+  // Never jump to the first/last unrelated heading elsewhere in the post: that
+  // previously reduced one half to a decorative "-" and left every event in
+  // the other half.
+  let previous = target - 1;
+  while (previous > 0 && !lines[previous]?.trim()) previous -= 1;
+  return previous > 0 && isHead(lines[previous]) ? previous : target;
 }
 
 export const splitQueueItemAtLine = createServerFn({ method: "POST" })
@@ -513,8 +519,17 @@ export const splitQueueItemAtLine = createServerFn({ method: "POST" })
     if (data.line >= lines.length) throw new Error("Split point is past the end of the post");
     const splitAt = snapSplitToHeading(lines, data.line);
     const first = lines.slice(0, splitAt).join("\n").trim();
-    const second = lines.slice(splitAt).join("\n").trim();
+    let second = lines.slice(splitAt).join("\n").trim();
     if (!first || !second) throw new Error("Both halves need some text");
+
+    // When two events share one post heading, carry that heading into the
+    // second half. Each resulting queue item then retains its provider/date
+    // context instead of silently losing it during a manual event split.
+    const isHeading = (value: string) => /^\s*(?:\*{2,}|__|#+\s)/.test(value) && !/\d{1,2}[:.]\d{2}/.test(value);
+    if (!isHeading(second.split("\n")[0] ?? "")) {
+      const sharedHeading = lines.slice(0, splitAt).reverse().find((value: string) => isHeading(value));
+      if (sharedHeading) second = `${sharedHeading.trim()}\n\n${second}`;
+    }
 
     const mkRow = (text: string, part: number) => ({
       raw_text: text,
