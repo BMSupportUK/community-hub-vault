@@ -12,6 +12,7 @@ import { sortRolesByPriority } from "@/lib/role-rank";
 import { formatLastSeen } from "@/lib/relative-time";
 import { useUserPage } from "@/hooks/use-online-users";
 import { useLiveLastSeen } from "@/hooks/use-live-last-seen";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 
 import { cn } from "@/lib/utils";
@@ -330,6 +331,7 @@ export function TalkMemberMiniProfile({
   side?: "top" | "right" | "bottom" | "left";
 }) {
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const [row, setRow] = useState<TalkMemberProfileRow>({ user_id: userId, ...fallback });
   const [open, setOpen] = useState(false);
 
@@ -352,7 +354,7 @@ export function TalkMemberMiniProfile({
   );
   const card = <TalkMemberProfileCard row={row} online={online} selfId={user?.id ?? null} />;
 
-  if (asDialog) {
+  if (asDialog || isMobile) {
     return (
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
@@ -360,7 +362,7 @@ export function TalkMemberMiniProfile({
             {children}
           </button>
         </DialogTrigger>
-        <DialogContent className="w-80 max-w-[calc(100vw-2rem)] gap-0 overflow-hidden p-0">
+        <DialogContent className="max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-80 gap-0 overflow-x-hidden overflow-y-auto p-0 sm:w-80">
           <DialogTitle className="sr-only">{name}</DialogTitle>
           {card}
         </DialogContent>

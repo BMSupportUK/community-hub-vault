@@ -8,7 +8,9 @@ import { useLiveLastSeen } from "@/hooks/use-live-last-seen";
 
 import { formatLastSeen } from "@/lib/relative-time";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { TalkMemberProfileCard } from "@/components/app/TalkMemberProfileCard";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useRoleFlashMap, roleFlashClass, resolveAvatarUrl } from "@/lib/role-flash";
 import { formatRoleLabel } from "@/lib/role-label";
 import { sortRolesByPriority, highestRole, isSupportRole } from "@/lib/role-rank";
@@ -212,6 +214,7 @@ function MemberRow({
   selfId: string | null;
   roleFlashMap: ReturnType<typeof useRoleFlashMap>;
 }) {
+  const isMobile = useIsMobile();
   const name = row.display_name || row.username || "Member";
   const flash = roleFlashMap.get(row.user_id);
   const roles = sortRolesByPriority(
@@ -224,16 +227,14 @@ function MemberRow({
   const { lastSeenAt } = useLiveLastSeen(row.user_id, row.last_seen_at);
 
 
-  return (
-    <Popover>
-      <PopoverTrigger asChild>
-        <button
-          type="button"
-          className={cn(
-            "flex w-full items-center gap-2 rounded-md px-1.5 py-1 text-left transition-colors hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-            !online && "opacity-50",
-          )}
-        >
+  const trigger = (
+    <button
+      type="button"
+      className={cn(
+        "flex w-full items-center gap-2 rounded-md px-1.5 py-1 text-left transition-colors hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        !online && "opacity-50",
+      )}
+    >
           <span className="relative shrink-0">
             <img src={avatar} alt="" className="size-8 rounded-full object-cover" />
             <span
@@ -267,8 +268,24 @@ function MemberRow({
               </span>
             )}
           </span>
-        </button>
-      </PopoverTrigger>
+    </button>
+  );
+
+  if (isMobile) {
+    return (
+      <Dialog>
+        <DialogTrigger asChild>{trigger}</DialogTrigger>
+        <DialogContent className="max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-80 gap-0 overflow-x-hidden overflow-y-auto p-0">
+          <DialogTitle className="sr-only">{name}</DialogTitle>
+          <TalkMemberProfileCard row={row} online={online} selfId={selfId} />
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>{trigger}</PopoverTrigger>
 
       <PopoverContent
         side="left"
