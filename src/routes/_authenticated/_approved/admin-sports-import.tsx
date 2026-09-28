@@ -745,6 +745,11 @@ function QueueRow({
           <>{ev.date || time || (Array.isArray(ev.channels) && ev.channels.length > 0) ? " · " : ""}via Telegram{item.forwarded_from ? ` · forwarded from ${item.forwarded_from}` : ""}</>
         )}
       </div>
+      {(ev as any).auto_hold_reason && (
+        <div className="rounded-md border border-warning/40 bg-warning/10 px-2 py-1 text-xs text-foreground">
+          Not auto-published: {(ev as any).auto_hold_reason}
+        </div>
+      )}
       {needsZone && (
         <div className="flex flex-wrap items-center gap-2" onClick={(e) => e.stopPropagation()}>
           <span className="text-[11px] text-muted-foreground">Start times in this post are:</span>

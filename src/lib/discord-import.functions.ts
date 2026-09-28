@@ -1024,3 +1024,79 @@ export const saveMergeChannels = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { channels };
   });
+
+/**
+ * Discord auto-publish: formats a queued Discord post with the permanent
+ * layout fixes, runs the public-safety check, routes it to a category and
+ * publishes it straight away. Anything that can't be formatted safely or
+ * routed stays pending in the review queue with a reason. Called only from
+ * the signature-verified Discord interactions route.
+ */
+export async function autoPublishDiscordQueueItem(queueId: string): Promise<
+  { published: true; title: string; category: string } | { published: false; reason: string }
+> {
+  const { data: item, error } = await supabaseAdmin
+    .from("discord_import_queue")
+    .select("id, parsed_event, raw_text, status")
+    .eq("id", queueId)
+    .maybeSingle();
+  if (error || !item || item.status !== "pending") return { published: false, reason: "Queue item not found" };
+  const ev: any = { ...((item.parsed_event ?? {}) as Record<string, unknown>) };
+  const raw = normalizeSportsListingText(String(ev.raw ?? item.raw_text ?? ""));
+  ev.raw = raw;
+
+  const hold = async (reason: string) => {
+    await supabaseAdmin
+      .from("discord_import_queue")
+      .update({ parsed_event: { ...ev, auto_hold_reason: reason } as any })
+      .eq("id", queueId);
+    return { published: false as const, reason };
+  };
+
+  const route = routeEvent(`${ev.title ?? ""} ${raw}`);
+  if (!route) return hold("Couldn't tell which category this belongs in — pick one in the review queue.");
+  const { data: cat } = await supabaseAdmin
+    .from("sports_categories")
+    .select("id, name")
+    .eq("name", route.category)
+    .maybeSingle();
+  if (!cat) return hold(`Category "${route.category}" doesn't exist — pick one in the review queue.`);
+
+  let body: string;
+  try {
+    body = buildBody(ev, null, ev.title);
+  } catch {
+    return hold("This layout couldn't be formatted safely — it needs fixing before it can go live.");
+  }
+
+  const sub = route.subcategory ?? null;
+  // Only use an already-cached cover: Discord needs a reply within 3 seconds.
+  const { data: cached } = await supabaseAdmin
+    .from("sport_cover_cache")
+    .select("image_url")
+    .eq("category_id", (cat as any).id)
+    .eq("subcategory", sub ?? "")
+    .maybeSingle();
+
+  const title = ev.title ?? "Untitled";
+  const { error: insErr } = await supabaseAdmin.from("sports_blogs").insert({
+    category_id: (cat as any).id,
+    subcategory: sub,
+    title,
+    excerpt: ev.time ? `${ev.date ? ev.date + " · " : ""}${ev.time}` : (ev.date ?? null),
+    body: plainListingToHtml(body),
+    image_url: cached?.image_url ?? null,
+    published: true,
+  } as any);
+  if (insErr) return hold("Saving the guide failed — try again from the review queue.");
+
+  await supabaseAdmin
+    .from("discord_import_queue")
+    .update({
+      status: "imported",
+      resolved_at: new Date().toISOString(),
+      parsed_event: { ...ev, suggested_category: route.category, suggested_subcategory: sub } as any,
+    })
+    .eq("id", queueId);
+  return { published: true, title, category: sub ? `${route.category} › ${sub}` : route.category };
+}
