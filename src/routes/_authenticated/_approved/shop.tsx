@@ -2987,12 +2987,16 @@ function OrdersView({
       });
       setCryptoOrderIds(all);
       setCryptoPendingIds(pending);
-      const { data: invs } = await supabase
-        .from("order_invoices")
-        .select("order_id,status,paid_at")
-        .in("order_id", ids);
+      let invs: any[] = [];
+      try {
+        invs = await fetchInChunks<any>(ids, (chunk) =>
+          supabase.from("order_invoices").select("order_id,status,paid_at").in("order_id", chunk),
+        );
+      } catch (e) {
+        toast.error("Could not load invoice status — tab counts may be incomplete.");
+      }
       const invoiced = new Set<string>();
-      (invs ?? []).forEach((inv: any) => {
+      invs.forEach((inv: any) => {
         const st = String(inv.status ?? "").toUpperCase();
         if (!inv.paid_at && st !== "PAID" && st !== "CANCELED" && st !== "CANCELLED" && st !== "VOIDED") {
           invoiced.add(inv.order_id);

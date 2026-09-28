@@ -80,13 +80,18 @@ export function OrderStatusAdminCard() {
       const orders = (data ?? []) as Row[];
       setRows(orders);
       if (orders.length) {
-        const { data: pays } = await supabase
-          .from("order_payments")
-          .select("order_id, provider")
-          .in("order_id", orders.map((o) => o.id));
+        let pays: { order_id: string; provider: string | null }[];
+        try {
+          pays = await fetchInChunks(orders.map((o) => o.id), (chunk) =>
+            supabase.from("order_payments").select("order_id, provider").in("order_id", chunk),
+          );
+        } catch (e) {
+          if (!cancelled) setError(e instanceof Error ? e.message : "Could not load payment methods");
+          return;
+        }
         if (cancelled) return;
         const map: Record<string, string> = {};
-        for (const p of (pays ?? []) as { order_id: string; provider: string | null }[]) {
+        for (const p of pays) {
           if (p.provider && !map[p.order_id]) map[p.order_id] = p.provider;
         }
         setMethods(map);
