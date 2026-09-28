@@ -1221,7 +1221,7 @@ function TicketDetail({
 
   const orderIsUnpaid = !!linkedOrder && !linkedOrder.paid_at && linkedOrder.status !== "cancelled" && linkedOrder.status !== "refunded" && linkedOrder.status !== "completed";
   const extendSubMessageExists = messages.some((m) => (m.content ?? "").startsWith("🔄"));
-  const accountSetupDoneExists = messages.some((m) => (m.content ?? "").startsWith("🟢"));
+  const accountSetupDoneExists = messages.some((m) => { const c = m.content ?? ""; return c.startsWith("🟢") || c.startsWith("🆕"); });
   const accountSetupStarted = accountSetupDoneExists || extendSubMessageExists;
 
 
@@ -1257,20 +1257,6 @@ function TicketDetail({
       toast.success("Bank transfer confirmed");
     } catch (e: any) {
       toast.error(e?.message ?? "Could not confirm payment");
-    } finally { setOrderBusy(false); }
-  };
-
-  const orderAccountSetupDone = async () => {
-    if (!linkedOrder || orderBusy) return;
-    setOrderBusy(true);
-    try {
-      const profileLink = linkedOrderUsername
-        ? `\n\n🔗 [Click here to view your Credentials](${window.location.origin}/u/${linkedOrderUsername}?tab=creds)`
-        : "";
-      await postTicketSystem(await getAutomatedMessage("order_account_setup_done", {
-        profile_link: profileLink,
-      }));
-      toast.success("Account setup confirmed");
     } finally { setOrderBusy(false); }
   };
 
@@ -1877,30 +1863,7 @@ function TicketDetail({
                 >
                   🔄 Extend Subscription
                 </button>
-              ) : (
-                <>
-                  <button
-                    onClick={orderAccountSetupDone}
-                    disabled={orderBusy || !linkedOrder.paid_at || accountSetupDoneExists}
-                    title={
-                      !linkedOrder.paid_at
-                        ? "Waiting for payment confirmation"
-                        : accountSetupDoneExists
-                          ? "Account setup already confirmed"
-                          : "Tick once the account is set up — notifies the customer"
-                    }
-                    className={cn(
-                      "px-2.5 py-1 rounded-md text-xs font-semibold inline-flex items-center gap-1 border transition disabled:cursor-not-allowed",
-                      accountSetupDoneExists
-                        ? "bg-emerald-500/40 border-emerald-300/60 text-emerald-50 opacity-100"
-                        : "bg-emerald-500/20 border-emerald-300/40 text-emerald-50 hover:bg-emerald-500/35 disabled:opacity-40",
-                    )}
-                  >
-                    <CheckCircle2 className="size-3.5 text-emerald-300" />
-                    {accountSetupDoneExists ? "Account Set Up ✓" : "Account Set Up"}
-                  </button>
-                </>
-              )}
+              ) : null}
 
               <button
                 onClick={orderCompleteSale}
