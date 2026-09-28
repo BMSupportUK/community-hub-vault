@@ -9,6 +9,7 @@ import { formatRoleLabel } from "@/lib/role-label";
 import { DndCountdown } from "@/components/app/DndCountdown";
 import { useDndStatus } from "@/hooks/use-dnd";
 import { Nameplate } from "@/components/app/Nameplate";
+import { StaffTicketsButton } from "@/components/app/StaffTicketsDialog";
 import { ChatMiniProfile, type ChatMiniProfileData } from "@/components/app/ChatMiniProfile";
 import {
   TalkMemberMiniProfile,
@@ -622,15 +623,17 @@ export function StaffOnDutyStrip({
       </div>
     );
     return (
-      <TalkMemberMiniProfile
-        key={p.id}
-        userId={p.id}
-        online={online}
-        fallback={talkFallbackRow(p.id)}
-        className="block w-full"
-      >
-        {row}
-      </TalkMemberMiniProfile>
+      <div key={p.id} className="flex items-start gap-1">
+        <TalkMemberMiniProfile
+          userId={p.id}
+          online={online}
+          fallback={talkFallbackRow(p.id)}
+          className="block min-w-0 flex-1"
+        >
+          {row}
+        </TalkMemberMiniProfile>
+        <span className="mt-3 shrink-0"><StaffTicketsButton staffId={p.id} staffName={name} /></span>
+      </div>
     );
   };
 
