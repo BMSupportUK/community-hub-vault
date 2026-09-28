@@ -58,6 +58,18 @@ export function TicketAssignedAlert() {
           );
         },
       )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "user_notifications", filter: `user_id=eq.${user.id}` },
+        (p) => {
+          const r = p.new as { id: string; read_at: string | null };
+          if (r.read_at) setQueue((q) => q.filter((x) => x.id !== r.id));
+        },
+      )
+      .on("postgres_changes", { event: "DELETE", schema: "public", table: "user_notifications" }, (p) => {
+        const id = (p.old as { id?: string })?.id;
+        if (id) setQueue((q) => q.filter((x) => x.id !== id));
+      })
       .subscribe();
     return () => {
       supabase.removeChannel(ch);

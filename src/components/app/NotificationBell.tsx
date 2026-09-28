@@ -18,6 +18,7 @@ import paymentReceivedAudio from "@/assets/payment-received.mp3";
 import newSignupAudio from "@/assets/new-signup-notify.mp3";
 import { playSound } from "@/lib/sound";
 import { cancelOrderAndSquareInvoice } from "@/lib/square-invoices.functions";
+import { closeLocalNotifications } from "@/lib/local-notify";
 
 type Notif = {
   id: string;
@@ -37,6 +38,8 @@ export function NotificationBell() {
   const navigate = useNavigate();
   const channelInstanceId = useRef(Math.random().toString(36).slice(2)).current;
   const [items, setItems] = useState<Notif[]>([]);
+  const itemsRef = useRef<Notif[]>([]);
+  itemsRef.current = items;
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
   const [open, setOpen] = useState(false);
   const canManageOrders = hasAny(["admin", "management"]);
@@ -239,11 +242,45 @@ export function NotificationBell() {
       )
       .subscribe();
 
+    // Cross-device sync: when a notification is read/cleared on another
+    // device, drop it here too and close any matching OS popup.
+    const clearEverywhere = (id: string) => {
+      const it = itemsRef.current.find((x) => x.id === id);
+      if (!it) return;
+      setReadIds((prev) => new Set(prev).add(id));
+      setItems((prev) => prev.filter((x) => x.id !== id));
+      void closeLocalNotifications({ id, title: it.title });
+    };
+    const syncCh = supabase
+      .channel(`notif-sync-${user.id}-${channelInstanceId}`)
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "user_notifications", filter: `user_id=eq.${user.id}` },
+        (p) => {
+          const r = p.new as { id: string; read_at: string | null };
+          if (r.read_at) clearEverywhere(r.id);
+        },
+      )
+      .on("postgres_changes", { event: "DELETE", schema: "public", table: "user_notifications" }, (p) => {
+        const id = (p.old as { id?: string })?.id;
+        if (id) clearEverywhere(id);
+      })
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "staff_notification_reads", filter: `user_id=eq.${user.id}` },
+        (p) => {
+          const id = (p.new as { notification_id?: string })?.notification_id;
+          if (id) clearEverywhere(id);
+        },
+      )
+      .subscribe();
+
     return () => {
       active = false;
       supabase.removeChannel(ch);
       if (staffCh) supabase.removeChannel(staffCh);
       supabase.removeChannel(incidentCh);
+      supabase.removeChannel(syncCh);
     };
   }, [user, isStaff, isPending, canManageOrders, canHandleTickets, canApproveSignups, channelInstanceId, navigate]);
 
