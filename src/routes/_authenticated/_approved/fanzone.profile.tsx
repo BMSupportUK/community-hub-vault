@@ -20,6 +20,16 @@ import { useFanAvatarLock } from "@/lib/fan-avatar-lock";
 
 export const Route = createFileRoute("/_authenticated/_approved/fanzone/profile")({
   component: FanZoneProfilePage,
+  head: () => ({
+    meta: [
+      { title: "Fan Profile | Boro Fan Zone" },
+      { name: "description", content: "Manage your Boro Fan Zone identity, profile details, friends and privacy." },
+      { property: "og:title", content: "Fan Profile | Boro Fan Zone" },
+      { property: "og:description", content: "Manage your Boro Fan Zone identity, profile details, friends and privacy." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
 });
 
 function FanZoneProfilePage() {
@@ -128,7 +138,7 @@ function FanZoneProfilePage() {
         aria-hidden
       />
 
-      <div className="relative z-10 w-full px-4 sm:px-6 lg:px-10 py-8">
+      <div className="relative z-10 w-full px-3 py-5 sm:px-6 sm:py-8 lg:px-10">
         <Button asChild variant="ghost" size="sm" className="text-white hover:text-white hover:bg-white/10 -ml-2 mb-4">
           <Link to="/forum"><ArrowLeft className="size-4 mr-1" />Back to forum</Link>
         </Button>
@@ -148,27 +158,27 @@ function FanZoneProfilePage() {
         ) : (
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
             <Tabs defaultValue="profile" className="w-full min-w-0">
-            <TabsList className="bg-black/55 border border-white/20 backdrop-blur-md mb-4">
-              <TabsTrigger value="profile" className="data-[state=active]:bg-[#E11B22] data-[state=active]:text-white text-white/70">Profile</TabsTrigger>
-              <TabsTrigger value="friends" className="data-[state=active]:bg-[#E11B22] data-[state=active]:text-white text-white/70">Friends</TabsTrigger>
-              <TabsTrigger value="ignored" className="data-[state=active]:bg-[#E11B22] data-[state=active]:text-white text-white/70">Ignored</TabsTrigger>
-              <TabsTrigger value="privacy" className="data-[state=active]:bg-[#E11B22] data-[state=active]:text-white text-white/70">Privacy</TabsTrigger>
+            <TabsList className="mb-4 grid h-auto w-full grid-cols-2 gap-1 border border-white/20 bg-black/55 p-1 backdrop-blur-md sm:flex sm:w-fit sm:gap-0">
+              <TabsTrigger value="profile" className="min-w-0 text-xs data-[state=active]:bg-[#E11B22] data-[state=active]:text-white text-white/70 sm:text-sm">Profile</TabsTrigger>
+              <TabsTrigger value="friends" className="min-w-0 text-xs data-[state=active]:bg-[#E11B22] data-[state=active]:text-white text-white/70 sm:text-sm">Friends</TabsTrigger>
+              <TabsTrigger value="ignored" className="min-w-0 text-xs data-[state=active]:bg-[#E11B22] data-[state=active]:text-white text-white/70 sm:text-sm">Ignored</TabsTrigger>
+              <TabsTrigger value="privacy" className="min-w-0 text-xs data-[state=active]:bg-[#E11B22] data-[state=active]:text-white text-white/70 sm:text-sm">Privacy</TabsTrigger>
             </TabsList>
 
             <TabsContent value="profile">
               <div className="rounded-2xl border border-[#E11B22]/45 bg-black/75 backdrop-blur-md shadow-2xl text-white overflow-hidden">
-            <div className="flex items-center gap-4 px-5 sm:px-6 py-5 bg-gradient-to-r from-[#E11B22]/30 to-transparent border-b border-white/10">
+            <div className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-3 border-b border-white/10 bg-gradient-to-r from-[#E11B22]/30 to-transparent px-4 py-5 sm:flex sm:items-center sm:gap-4 sm:px-6">
               <div className="size-20 rounded-full overflow-hidden bg-gradient-to-br from-[#E11B22] to-[#8B0F14] ring-4 ring-white/15 shrink-0">
                 <img src={editPreviewAvatar} alt="" className="size-20 object-cover" />
               </div>
-              <div className="flex flex-col gap-2">
+              <div className="flex min-w-0 flex-col gap-2">
                 <div className="inline-flex w-fit items-center gap-1.5 rounded-full bg-black/40 px-2 py-0.5 text-[11px] font-medium text-white/90 ring-1 ring-white/15">
                   <Clock className="size-3" />
                   Last active <RelativeTime iso={myLastSeen} />
                 </div>
                 <div className="flex flex-wrap gap-2">
                 {avatarLocked ? (
-                  <p className="inline-flex items-center gap-1.5 rounded-full bg-[#E11B22]/20 px-3 py-1 text-[11px] font-semibold text-white ring-1 ring-[#E11B22]/50">
+                  <p className="inline-flex max-w-full items-start gap-1.5 rounded-lg bg-[#E11B22]/20 px-3 py-1 text-[11px] font-semibold text-white ring-1 ring-[#E11B22]/50 sm:rounded-full">
                     <Lock className="size-3.5" />
                     {lockMessage}
                   </p>
@@ -206,7 +216,7 @@ function FanZoneProfilePage() {
 
             </div>
 
-            <div className="px-5 sm:px-6 py-5 space-y-5">
+            <div className="space-y-5 px-4 py-5 sm:px-6">
               <div>
                 <label className="text-[11px] uppercase tracking-wider font-semibold text-white/70">
                   Display name (Boro Fan Zone only)

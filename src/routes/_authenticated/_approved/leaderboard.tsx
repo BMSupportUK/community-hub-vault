@@ -9,6 +9,16 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/_approved/leaderboard")({
   component: LeaderboardPage,
+  head: () => ({
+    meta: [
+      { title: "Referrals | BM Support" },
+      { name: "description", content: "Create referral invites and view the BM Support referral leaderboard." },
+      { property: "og:title", content: "Referrals | BM Support" },
+      { property: "og:description", content: "Create referral invites and view the BM Support referral leaderboard." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
 });
 
 type LeaderRow = {
@@ -180,32 +190,32 @@ function LeaderboardPage() {
 
   return (
     <div className="flex-1 overflow-y-auto bg-gradient-to-br from-[#1a0b2e] via-[#2d1b4e] to-[#1a0b2e]">
-      <header className="px-8 pt-8 pb-6 border-b border-purple-500/30 bg-purple-950/40 backdrop-blur">
-        <h1 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 bg-clip-text text-transparent">Referrals</h1>
+      <header className="border-b border-purple-500/30 bg-purple-950/40 px-4 pb-5 pt-6 backdrop-blur sm:px-8 sm:pb-6 sm:pt-8">
+        <h1 className="font-display text-2xl font-bold bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 bg-clip-text text-transparent sm:text-3xl">Referrals</h1>
         <p className="text-purple-200/80 mt-1">Invite friends to the community and climb the ranks</p>
       </header>
 
-      <div className="px-8 py-6">
+      <div className="px-4 py-5 sm:px-8 sm:py-6">
         <Tabs value={tab} onValueChange={setTab} className="w-full">
-          <TabsList className={`grid ${isAdmin ? "grid-cols-5 max-w-4xl" : "grid-cols-3 max-w-2xl"} bg-purple-950/60 border border-purple-500/30`}>
-            <TabsTrigger value="welcome" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Welcome</TabsTrigger>
-            <TabsTrigger value="leaderboard" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Leaderboard</TabsTrigger>
-            <TabsTrigger value="invites" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">My Invites</TabsTrigger>
+          <TabsList className={`grid h-auto w-full grid-cols-2 gap-1 bg-purple-950/60 p-1 border border-purple-500/30 sm:gap-0 ${isAdmin ? "sm:grid-cols-5 sm:max-w-4xl" : "sm:grid-cols-3 sm:max-w-2xl"}`}>
+            <TabsTrigger value="welcome" className="min-w-0 px-2 text-xs data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white sm:text-sm">Welcome</TabsTrigger>
+            <TabsTrigger value="leaderboard" className="min-w-0 px-2 text-xs data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white sm:text-sm">Leaderboard</TabsTrigger>
+            <TabsTrigger value="invites" className="min-w-0 px-2 text-xs data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white sm:text-sm">My Invites</TabsTrigger>
             {isAdmin && (
               <>
-                <TabsTrigger value="referrals" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Referrals</TabsTrigger>
-                <TabsTrigger value="bonuses" className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Bonuses</TabsTrigger>
+                <TabsTrigger value="referrals" className="min-w-0 px-2 text-xs data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white sm:text-sm">Referrals</TabsTrigger>
+                <TabsTrigger value="bonuses" className="col-span-2 min-w-0 px-2 text-xs data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white sm:col-span-1 sm:text-sm">Bonuses</TabsTrigger>
               </>
             )}
           </TabsList>
 
           <TabsContent value="welcome" className="mt-6">
-            <div className="rounded-2xl bg-gradient-to-br from-fuchsia-600/30 via-purple-600/30 to-violet-700/30 border border-purple-500/40 p-10 shadow-[0_0_60px_-15px_rgba(168,85,247,0.5)]">
-              <div className="flex items-center gap-3 mb-2">
+            <div className="rounded-2xl bg-gradient-to-br from-fuchsia-600/30 via-purple-600/30 to-violet-700/30 border border-purple-500/40 p-5 shadow-[0_0_60px_-15px_rgba(168,85,247,0.5)] sm:p-10">
+              <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 mb-2">
                 <div className="size-12 rounded-xl bg-gradient-to-br from-violet-600 to-blue-600 grid place-items-center shadow-lg shadow-purple-900/50">
                   <Trophy className="size-6 text-white" />
                 </div>
-                <h2 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 to-blue-600 bg-clip-text text-transparent">Welcome to Referrals</h2>
+                <h2 className="min-w-0 font-display text-2xl font-bold bg-gradient-to-r from-violet-600 to-blue-600 bg-clip-text text-transparent sm:text-3xl">Welcome to Referrals</h2>
               </div>
               <p className="mt-3 text-lg text-purple-100/90 max-w-2xl">
                 Spread the word and grow our community. Generate single-use invite codes to share with friends — no expiry, no fuss.
@@ -230,9 +240,9 @@ function LeaderboardPage() {
           </TabsContent>
 
           <TabsContent value="leaderboard" className="mt-6">
-            <div className="mb-4 flex items-center justify-between">
+            <div className="mb-4 grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
               <h3 className="font-display text-xl font-semibold text-purple-50">Top inviters</h3>
-              <span className="text-xs text-purple-300/70">Ranked by successful joins</span>
+              <span className="max-w-28 text-right text-xs text-purple-300/70 sm:max-w-none">Ranked by successful joins</span>
             </div>
             {loading ? (
               <div className="rounded-2xl border border-purple-500/30 bg-purple-950/40 p-12 text-center text-purple-200/70">Loading…</div>
@@ -309,12 +319,12 @@ function LeaderboardPage() {
           </TabsContent>
 
           <TabsContent value="invites" className="mt-6">
-            <div className="flex items-center justify-between mb-4">
-              <div>
+            <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+              <div className="min-w-0">
                 <h3 className="font-display text-xl font-semibold text-purple-50">Your invite codes</h3>
                 <p className="text-sm text-purple-300/70">Single-use, no expiry. Share the link with anyone you trust.</p>
               </div>
-              <Button onClick={createInvite} disabled={creating} className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0">
+              <Button onClick={createInvite} disabled={creating} className="w-full bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0 sm:w-auto">
                 <Plus className="size-4 mr-1" /> {creating ? "Creating…" : "New invite"}
               </Button>
             </div>

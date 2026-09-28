@@ -9,6 +9,16 @@ export const Route = createFileRoute("/_authenticated/_approved/profile")({
     tab: typeof search.tab === "string" ? (search.tab as string) : undefined,
   }),
   component: MyProfileRedirect,
+  head: () => ({
+    meta: [
+      { title: "My Profile | BM Support" },
+      { name: "description", content: "Open and manage your BM Support profile." },
+      { property: "og:title", content: "My Profile | BM Support" },
+      { property: "og:description", content: "Open and manage your BM Support profile." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
 });
 
 function MyProfileRedirect() {

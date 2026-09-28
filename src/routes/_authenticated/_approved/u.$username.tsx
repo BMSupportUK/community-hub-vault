@@ -584,8 +584,8 @@ function ProfilePage() {
         </div>
       )}
       <div className={cn("relative z-10", locked && "flex min-h-0 flex-1 flex-col overflow-hidden")}>
-      <header className="px-8 pt-8 pb-6 border-b border-purple-500/30 bg-purple-950/40 backdrop-blur">
-        <h1 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 bg-clip-text text-transparent">
+      <header className="border-b border-purple-500/30 bg-purple-950/40 px-4 pb-5 pt-6 backdrop-blur sm:px-8 sm:pb-6 sm:pt-8">
+        <h1 className="font-display text-2xl font-bold bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 bg-clip-text text-transparent sm:text-3xl">
           {isOwner ? "Your Profile" : `${display}'s Profile`}
         </h1>
         <p className="text-purple-200/80 mt-1">
@@ -595,14 +595,14 @@ function ProfilePage() {
         </p>
       </header>
 
-      <div className={cn("px-8 py-6", locked && "flex min-h-0 flex-1 flex-col overflow-hidden")}>
+      <div className={cn("min-w-0 px-4 py-5 sm:px-8 sm:py-6", locked && "flex min-h-0 flex-1 flex-col overflow-hidden")}>
         <Tabs value={mainTab} onValueChange={(v) => setMainTab(v as typeof mainTab)} className={cn("w-full", locked && "flex min-h-0 flex-1 flex-col")}>
-          <TabsList className="flex flex-wrap h-auto bg-purple-950/60 border border-purple-500/30">
+          <TabsList className="flex h-auto w-full justify-start gap-1 overflow-x-auto bg-purple-950/60 p-1 border border-purple-500/30 sm:flex-wrap sm:overflow-visible">
             {tabDefs.map((t) => (
               <TabsTrigger
                 key={t.id}
                 value={t.id}
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white"
+                className="shrink-0 px-3 text-xs data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white sm:text-sm"
               >
                 {t.label}
               </TabsTrigger>
@@ -629,11 +629,11 @@ function ProfilePage() {
                     decoding="async"
                   />
                 </div>
-                <div className="px-6 pt-4 pb-6 flex flex-col sm:flex-row sm:items-end gap-4">
+                <div className="flex flex-col gap-4 px-4 pb-5 pt-4 sm:flex-row sm:items-end sm:px-6 sm:pb-6">
                   <Avatar url={profile.avatar_url} name={display} size={96} ring userId={profile.id} />
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <h2 className={cn("font-display text-2xl font-bold truncate", roleFlashClass(roleFlashMap.get(profile.id)))}>{display}</h2>
+                    <div className="flex min-w-0 flex-wrap items-center gap-2">
+                      <h2 className={cn("max-w-full truncate font-display text-xl font-bold sm:text-2xl", roleFlashClass(roleFlashMap.get(profile.id)))}>{display}</h2>
                       <VpnBadge userId={profile.id} size={18} />
                       {sortedRoles.map((r) => (
                         <span key={r} className={cn("text-xs px-2 py-0.5 rounded-full border font-medium", ROLE_STYLES[r])}>
@@ -644,26 +644,26 @@ function ProfilePage() {
                     <p className="text-sm text-purple-200/80">@{profile.username ?? "unknown"}</p>
                   </div>
                   {isOwner && (
-                    <>
+                    <div className="grid w-full grid-cols-2 gap-2 sm:flex sm:w-auto">
                     <button
                       onClick={() => setEditing(true)}
-                      className="self-start sm:self-end flex items-center gap-2 px-4 py-2 rounded-lg bg-gradient-to-r from-violet-600 to-blue-600 text-white font-medium text-sm shadow-lg shadow-purple-900/50"
+                      className="flex min-w-0 items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-violet-600 to-blue-600 px-3 py-2 text-sm font-medium text-white shadow-lg shadow-purple-900/50 sm:self-end sm:px-4"
                     >
                       <Pencil className="size-4" /> Edit profile
                     </button>
                     <button
                       onClick={() => setPickerOpen(true)}
-                      className="self-start sm:self-end flex items-center gap-2 px-4 py-2 rounded-lg bg-purple-900/60 border border-purple-500/40 text-white font-medium text-sm"
+                      className="flex min-w-0 items-center justify-center gap-2 rounded-lg border border-purple-500/40 bg-purple-900/60 px-3 py-2 text-sm font-medium text-white sm:self-end sm:px-4"
                     >
                       Nameplate
                     </button>
-                    </>
+                    </div>
                   )}
                   {!isOwner && viewer && (
                     <FriendActionButton rel={rel} busy={relBusy} onSend={sendFriendRequest} onAccept={acceptFriendRequest} onRemove={() => rel.kind === "friends" && removeFriend(rel.id)} />
                   )}
                 </div>
-                <div className="px-6 pb-6">
+                <div className="px-4 pb-5 sm:px-6 sm:pb-6">
                    <p className="text-xs uppercase tracking-wider text-amber-100/80 mb-2">Bio</p>
                    {profile.bio ? (
                      <div
@@ -1354,7 +1354,7 @@ function ReferralsPanel({
   };
   return (
     <section className="relative text-white">
-      <div className="relative p-6 sm:p-8">
+      <div className="relative px-0 py-2 sm:p-8">
         {canAssign && (
           <div className="mb-6 rounded-2xl border border-amber-300/40 bg-amber-500/10 backdrop-blur-xl p-5 text-white">
             <div className="flex items-center gap-2 mb-2">
@@ -1364,7 +1364,7 @@ function ReferralsPanel({
             <p className="text-sm text-white/80 mb-3">
               This user has no referrer on record. Enter the referral code the referrer gave them — we'll check it's still active and mark it used.
             </p>
-            <div className="flex items-center gap-2 max-w-md">
+            <div className="grid max-w-md grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
               <input
                 value={assignCode}
                 onChange={(e) => setAssignCode(e.target.value.toUpperCase())}
@@ -1383,8 +1383,8 @@ function ReferralsPanel({
             </div>
           </div>
         )}
-        <div className="flex items-end justify-between gap-4 flex-wrap mb-6">
-          <div>
+          <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+          <div className="min-w-0">
             <h2 className="flex items-center gap-2 font-display text-2xl sm:text-3xl font-bold drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]">
               <Trophy className="size-6 text-amber-200" /> Referrals
             </h2>
@@ -1396,7 +1396,7 @@ function ReferralsPanel({
             <button
               onClick={onCreate}
               disabled={creating}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-white text-rose-600 font-semibold text-sm hover:bg-amber-50 transition-colors disabled:opacity-60 shadow-lg shadow-rose-950/40"
+              className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-rose-600 shadow-lg shadow-rose-950/40 transition-colors hover:bg-amber-50 disabled:opacity-60 sm:w-auto"
             >
               <Plus className="size-4" /> {creating ? "Creating…" : "New invite"}
             </button>
@@ -1429,7 +1429,7 @@ function ReferralsPanel({
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <div className="text-[10px] uppercase tracking-[0.2em] text-white/60 mb-1">Code</div>
-                      <div className="font-mono text-xl font-bold tracking-widest text-amber-100 drop-shadow">
+                      <div className="break-all font-mono text-lg font-bold tracking-widest text-amber-100 drop-shadow sm:text-xl">
                         {r.code}
                       </div>
                     </div>

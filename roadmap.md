@@ -1,6 +1,7 @@
 # Roadmap
 
 ## Current
+- [x] Fix mobile Referrals text overlap and make main and Fan Zone profiles phone-friendly
 - [x] Make Talk Channels fit phone screens with reachable channel, people, message and composer controls
 - [x] Admin dashboard: move Theme and Header links into Owner tools and restore Add manual order
 - [x] Profit & costs: group crypto under NOWPayments and bank transfers under Wise
