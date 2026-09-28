@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Loader2, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchInChunks } from "@/lib/chunked-in";
+import { fetchInChunks } from "@/lib/chunked-in";
 
 type Provider = "square" | "stripe" | "cash" | "bank_transfer";
 
