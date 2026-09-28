@@ -1,10 +1,14 @@
 import { useEffect, useState } from "react";
 import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Plus } from "lucide-react";
+import { ArrowLeft, CalendarIcon, Plus } from "lucide-react";
+import { format } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { isAdminUnlocked } from "@/lib/admin-unlock";
+import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-add-order")({
   head: () => ({
@@ -32,6 +36,8 @@ function AddOrderPage() {
   const [qty, setQty] = useState<Record<string, number>>({});
   const [busy, setBusy] = useState(false);
   const [payMethod, setPayMethod] = useState("");
+  const [orderDate, setOrderDate] = useState<Date>(new Date());
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   useEffect(() => {
     supabase.from("products").select("id, name, price_cents").order("sort_order").then(({ data }) => setProducts((data ?? []) as never));
@@ -48,7 +54,17 @@ function AddOrderPage() {
     if (!items.length) return toast.error("Pick at least one product");
     if (!payMethod) return toast.error("Pick the payment method");
     setBusy(true);
-    const { data: id, error } = await supabase.rpc("admin_create_manual_order", { _customer_name: custName.trim(), _items: items, _method: payMethod });
+    const now = new Date();
+    const isToday = format(orderDate, "yyyy-MM-dd") === format(now, "yyyy-MM-dd");
+    const createdAt = isToday
+      ? undefined
+      : new Date(orderDate.getFullYear(), orderDate.getMonth(), orderDate.getDate(), now.getHours(), now.getMinutes(), now.getSeconds());
+    const { data: id, error } = await supabase.rpc("admin_create_manual_order", {
+      _customer_name: custName.trim(),
+      _items: items,
+      _method: payMethod,
+      _created_at: createdAt ? createdAt.toISOString() : null,
+    } as never);
     if (error) { setBusy(false); return toast.error(error.message); }
     const { data: o } = await supabase.from("orders").select("order_ref").eq("id", id as string).maybeSingle();
     setBusy(false);
@@ -92,6 +108,31 @@ function AddOrderPage() {
               <option value="cash">Cash</option>
             </select>
             <p className="text-xs text-muted-foreground">You'll add the transaction ID when you mark the order complete.</p>
+          </div>
+          <div className="space-y-2 pt-2 border-t border-border">
+            <label className="text-sm font-medium" htmlFor="order-date">Order date</label>
+            <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+              <PopoverTrigger asChild>
+                <Button id="order-date" variant="outline" className="w-full justify-start text-left font-normal h-10">
+                  <CalendarIcon className="mr-2 size-4" />
+                  {format(orderDate, "d MMMM yyyy")}
+                  {format(orderDate, "yyyy-MM-dd") !== format(new Date(), "yyyy-MM-dd") && (
+                    <span className="ml-2 text-xs text-muted-foreground">(backdated)</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={orderDate}
+                  onSelect={(d) => { if (d) { setOrderDate(d); setCalendarOpen(false); } }}
+                  disabled={{ after: new Date() }}
+                  initialFocus
+                  className="p-3 pointer-events-auto"
+                />
+              </PopoverContent>
+            </Popover>
+            <p className="text-xs text-muted-foreground">Defaults to today — pick an earlier date to backdate the order.</p>
           </div>
           <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-border">
             <span className="text-sm text-muted-foreground">Total {money(total)}</span>
