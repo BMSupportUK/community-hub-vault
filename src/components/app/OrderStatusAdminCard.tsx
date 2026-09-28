@@ -117,7 +117,7 @@ export function OrderStatusAdminCard() {
     <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h2 className="font-display text-lg font-semibold">Order status</h2>
+          <h2 className="font-display text-lg font-semibold">Orders</h2>
           <p className="text-sm text-muted-foreground">Every order with its current status, by year and month.</p>
         </div>
         {isAdmin && (
