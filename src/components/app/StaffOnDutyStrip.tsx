@@ -599,14 +599,7 @@ export function StaffOnDutyStrip({
             </span>
           </Nameplate>
           <span className="mt-1 block text-[10px] leading-tight text-muted-foreground">
-            {br ? (
-              <span className={cn("flex items-center gap-1", breakOver ? "text-destructive" : "text-amber-300")}>
-                {(() => { const Icon = breakIcon(br.kind); return <Icon className="size-2.5 shrink-0" />; })()}
-                <span className="truncate">
-                  {breakLabel(br.kind)} {breakOver ? `+${fmtMinSec(-breakRemaining)}` : fmtMinSec(breakRemaining)}
-                </span>
-              </span>
-            ) : shift ? (
+            {shift ? (
               <span className="flex items-center gap-1 text-emerald-300">
                 <Clock className="size-2.5 shrink-0" />
                 <span>Working {fmtHMS(shiftElapsed)}</span>
@@ -615,6 +608,14 @@ export function StaffOnDutyStrip({
               <span>Off duty</span>
             )}
           </span>
+          {br && (
+            <span className={cn("mt-0.5 flex items-center gap-1 text-[10px] leading-tight", breakOver ? "text-destructive" : "text-amber-300")}>
+              {(() => { const Icon = breakIcon(br.kind); return <Icon className="size-2.5 shrink-0" />; })()}
+              <span className="truncate">
+                {breakLabel(br.kind)} {breakOver ? `+${fmtMinSec(-breakRemaining)}` : fmtMinSec(breakRemaining)}
+              </span>
+            </span>
+          )}
           <TalkChannelLine userId={p.id} />
           <DndCountdown userId={p.id} compact className="mt-1" />
         </span>
