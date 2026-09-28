@@ -145,19 +145,11 @@ export const Route = createFileRoute("/api/public/discord/interactions")({
               .select("id");
             if (error) throw new Error(error.message);
 
-            // Discord posts auto-publish: format with the known layout fixes,
-            // safety-check and go live. Anything unsafe or unrouted is held.
-            const queueId = (insertedRows ?? [])[0]?.id as string | undefined;
-            let content = "✅ Added to the Sports Guide review queue.";
-            if (queueId) {
-              const { autoPublishDiscordQueueItem } = await import("@/lib/discord-import.functions");
-              const r = await autoPublishDiscordQueueItem(queueId);
-              content = r.published
-                ? `✅ Published "${r.title}" in ${r.category}.`
-                : `⏸️ Held in the review queue: ${r.reason}`;
-            }
-
-            return Response.json({ type: 4, data: { content, flags: 64 } });
+            // Discord posts stay pending for manual review — nothing auto-publishes.
+            return Response.json({
+              type: 4,
+              data: { content: "✅ Added to the Sports Guide review queue.", flags: 64 },
+            });
           } catch (e) {
             console.error("discord ingest failed:", e);
             return Response.json({
