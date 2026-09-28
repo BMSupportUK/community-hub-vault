@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Hash, Menu } from "lucide-react";
 import { ChannelColumn, type ChannelGroup } from "@/components/app/ChannelColumn";
 import { ServiceStatusBox } from "@/components/app/ServiceStatusBox";
+import { TalkCommandsBox } from "@/components/app/TalkCommandsBox";
 import { WorkingStatusBox } from "@/components/app/WorkingStatusBox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
@@ -65,6 +66,7 @@ function HomeLayout() {
   const channelFooter = (
     <div className="space-y-4">
       {!hideOutageBox && <ServiceStatusBox compact />}
+      {!isHomeIndex && <TalkCommandsBox />}
       {isHomeIndex && <WorkingStatusBox stackActions />}
     </div>
   );
