@@ -87,6 +87,17 @@ import { VpnGuideView } from "@/components/app/VpnGuideView";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { getOrderPaymentState } from "@/lib/order-payment-state.functions";
 import { isSettledPaymentStatus } from "@/lib/payment-status";
+import { deleteOrderCompletely } from "@/lib/order-delete.functions";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type View = "store" | "orders" | "admin" | "refund" | "multi_room" | "triple_room" | "streaming_devices" | "reviews" | "app_demos";
 
@@ -3104,6 +3115,7 @@ function OrdersView({
   const activeId = selectedId && list.some((o) => o.id === selectedId) ? selectedId : null;
   return (
     <div className={cn("grid grid-cols-1 gap-4 min-h-[60vh]", activeId && "lg:grid-cols-[1fr_380px]")}>
+      {deleteConfirmDialog}
       <div
         className={cn(
           "grid grid-cols-1 sm:grid-cols-2 gap-3 content-start",
