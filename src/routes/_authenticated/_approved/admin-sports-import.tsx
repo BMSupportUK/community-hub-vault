@@ -801,7 +801,7 @@ function QueueRow({
           </p>
           <div className="max-h-48 overflow-auto space-y-0.5">
             {rawLines.map((line, i) =>
-              i === 0 ? null : (
+              i === 0 || !line.trim() || /^[-–—_=•·]+$/.test(line.trim()) ? null : (
                 <button
                   key={i}
                   type="button"

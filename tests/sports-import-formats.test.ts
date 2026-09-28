@@ -1,8 +1,19 @@
 import { describe, expect, test } from "bun:test";
 import { checkSportsImport } from "../src/lib/sports-import-check";
 import { formatSportsListingBlock, parseSportsListingBlock } from "../src/lib/sports-listing-format";
+import { snapSplitToHeading } from "../src/lib/discord-import.functions";
 
 describe("remembered sports import layouts", () => {
+  test("manual split never jumps backwards to an unrelated post heading", () => {
+    const lines = [
+      "-", "", "**## OTHER SPORT: MONDAY 28 SEPTEMBER**", "",
+      "`11:05am UK / 6:05am ET`", "GREYHOUND RACING: Romford", "UK: Sky Sports Racing", "",
+      "`6:00pm UK / 1:00pm ET`", "ULTIMATE POOL: Mixed Team", "UK: TNT Sports 1",
+    ];
+    expect(snapSplitToHeading(lines, 8)).toBe(8);
+    expect(snapSplitToHeading(lines, 3)).toBe(2);
+  });
+
   test("WST title above dual UK/ET time keeps both snooker sessions correctly paired", () => {
     const raw = `-
 
