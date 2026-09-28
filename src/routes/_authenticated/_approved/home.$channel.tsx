@@ -2433,6 +2433,32 @@ function ChannelPage() {
                   <Send className="size-4" />
                 )}
               </button>
+              {/* Authorised change (user request: permanent command help box under the
+                  composer so the hints stay visible even while a message is being typed). */}
+              <div className="mt-1.5 flex w-full flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-border bg-surface-2/50 px-2.5 py-1.5 text-[11px] text-muted-foreground">
+                <span className="text-[10px] font-semibold uppercase tracking-wider">Commands</span>
+                <span className="whitespace-nowrap">
+                  <code className="rounded bg-surface-2 px-1 py-0.5 font-mono text-[10px] text-foreground">!private</code>
+                  {" / "}
+                  <code className="rounded bg-surface-2 px-1 py-0.5 font-mono text-[10px] text-foreground">!s</code>
+                  {" — private message (staff + you only)"}
+                </span>
+                <span className="whitespace-nowrap">
+                  <code className="rounded bg-surface-2 px-1 py-0.5 font-mono text-[10px] text-foreground">@</code>
+                  {" — mention someone"}
+                </span>
+                <span className="whitespace-nowrap">
+                  <code className="rounded bg-surface-2 px-1 py-0.5 font-mono text-[10px] text-foreground">#</code>
+                  {" — jump to a channel"}
+                </span>
+                {isModOrAdmin && (
+                  <span className="whitespace-nowrap">
+                    <code className="rounded bg-surface-2 px-1 py-0.5 font-mono text-[10px] text-foreground">/</code>
+                    {" — staff shortcuts"}
+                  </span>
+                )}
+                <span className="whitespace-nowrap">paste or Win + . for emotes & GIFs</span>
+              </div>
             </div>
           </div>
         </div>
