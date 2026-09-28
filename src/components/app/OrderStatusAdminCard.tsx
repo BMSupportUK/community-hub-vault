@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Loader2, Plus, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchInChunks } from "@/lib/chunked-in";
 import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
 
