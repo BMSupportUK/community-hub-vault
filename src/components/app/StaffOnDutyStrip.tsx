@@ -204,7 +204,6 @@ export function StaffOnDutyStrip({
   const [now, setNow] = useState(() => Date.now());
   const [selfId, setSelfId] = useState<string | null>(null);
   const [dutyTab, setDutyTab] = useState<"on" | "off">("on");
-  const [sidebarTab, setSidebarTab] = useState<"online" | "offline">("online");
   const roleFlashMap = useRoleFlashMap();
   const presentGlobalIds = useTalkChannelPresentUsers();
   const presentChannelIds = useTalkChannelPresentUsersInChannel(channelId);
@@ -687,9 +686,9 @@ export function StaffOnDutyStrip({
       if (roleDiff !== 0) return roleDiff;
       return (a.display_name || a.username || "Staff").localeCompare(b.display_name || b.username || "Staff");
     });
+    // Authorised change (user request, 2026-09-28): the Talk channel staff
+    // list is online-only — offline staff are not listed here at all.
     const onlineStaff = allStaff.filter((person) => inThisChannelIds.has(person.id));
-    const offlineStaff = allStaff.filter((person) => !inThisChannelIds.has(person.id));
-    const visibleStaff = sidebarTab === "online" ? onlineStaff : offlineStaff;
 
     return (
       <div className="flex h-full max-h-full min-h-0 w-full min-w-0 flex-col overflow-hidden">
@@ -697,28 +696,11 @@ export function StaffOnDutyStrip({
           <Users className="size-3.5" />
           Staff
         </div>
-        <div className="grid shrink-0 grid-cols-2 border-b border-border">
-          {(["online", "offline"] as const).map((tab) => (
-            <button
-              key={tab}
-              type="button"
-              onClick={() => setSidebarTab(tab)}
-              className={cn(
-                "px-2 py-1.5 text-[11px] font-semibold uppercase tracking-wider transition-colors",
-                sidebarTab === tab
-                  ? tab === "online" ? "bg-surface text-emerald-300" : "bg-surface text-foreground"
-                  : "text-muted-foreground hover:bg-surface-2/50 hover:text-foreground",
-              )}
-            >
-              {tab}
-            </button>
-          ))}
-        </div>
         <div className="min-h-0 flex-1 space-y-0.5 overflow-y-auto overscroll-contain px-2 py-2 scrollbar-hide">
-          {visibleStaff.map((person) => renderSidebarRow(person, shiftsByUser.get(person.id)))}
-          {visibleStaff.length === 0 && (
+          {onlineStaff.map((person) => renderSidebarRow(person, shiftsByUser.get(person.id)))}
+          {onlineStaff.length === 0 && (
             <p className="px-2 py-6 text-center text-xs text-muted-foreground">
-              No staff {sidebarTab}.
+              No staff online.
             </p>
           )}
         </div>
