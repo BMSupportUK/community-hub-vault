@@ -11,12 +11,11 @@ export const deleteOrderCompletely = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data) => z.object({ orderId: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
-    const { data: roles, error: roleError } = await context.supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", context.userId);
+    const { data: isAdmin, error: roleError } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "admin",
+    });
     if (roleError) throw new Error(roleError.message);
-    const isAdmin = (roles ?? []).some((r: { role: string }) => String(r.role) === "admin");
     if (!isAdmin) throw new Error("Forbidden: admin only");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -33,7 +32,7 @@ export const deleteOrderCompletely = createServerFn({ method: "POST" })
 
     await supabaseAdmin.from("order_invoices").delete().eq("order_id", data.orderId);
 
-    const { error } = await supabaseAdmin.from("orders").delete().eq("id", data.orderId);
+    const { error } = await supabaseAdmin.schema("private").from("orders").delete().eq("id", data.orderId);
     if (error) throw new Error(error.message);
 
     return { deleted: true, ticketsDeleted: ticketIds.length };

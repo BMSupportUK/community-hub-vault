@@ -410,6 +410,7 @@ function ShopPage() {
               <OrdersView
                 selectedId={id}
                 isAdmin={isAdmin}
+                isAdminOnly={isAdminOnly}
                 adminUnlocked={adminUnlocked}
                 initialScope={scope === "all" && isAdmin ? "all" : "mine"}
               />
@@ -2894,11 +2895,13 @@ const STATUS_COLOR: Record<string, string> = {
 function OrdersView({
   selectedId,
   isAdmin,
+  isAdminOnly,
   adminUnlocked,
   initialScope,
 }: {
   selectedId?: string;
   isAdmin: boolean;
+  isAdminOnly: boolean;
   adminUnlocked: boolean;
   initialScope: "mine" | "all";
 }) {
@@ -3200,7 +3203,7 @@ function OrdersView({
               <span className="inline-flex items-center gap-1 text-[11px] text-fuchsia-300 font-medium">
                 <Package className="size-3" /> View details
               </span>
-              {isAdmin && adminUnlocked && (
+              {isAdminOnly && adminUnlocked && (
                 <button
                   type="button"
                   title="Delete this order permanently"
