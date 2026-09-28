@@ -134,7 +134,7 @@ export function TalkChannelMembersPanel({
   }
 
   return (
-    <div className="flex h-full max-h-full min-h-0 flex-col overflow-hidden">
+    <div className="flex h-full max-h-full min-h-0 w-full min-w-0 flex-col overflow-hidden">
       <div className="shrink-0 border-b border-border px-3 py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
         <Users className="size-3.5" />
         Members
@@ -167,7 +167,7 @@ export function TalkChannelMembersPanel({
         </button>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 py-2 space-y-3 scrollbar-hide">
+      <div className="min-h-0 w-full min-w-0 flex-1 overflow-y-auto overscroll-contain px-2 py-2 space-y-3 scrollbar-hide">
         {activeTab === "online" && (
           <>
             <div className="space-y-0.5">
@@ -242,7 +242,7 @@ function MemberRow({
     <button
       type="button"
       className={cn(
-        "flex w-full items-start gap-2 rounded-md px-1.5 py-1.5 text-left transition-colors hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        "flex w-full min-w-0 items-start gap-2 rounded-md px-1.5 py-1.5 text-left transition-colors hover:bg-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
         !online && "opacity-50",
       )}
     >
