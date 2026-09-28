@@ -20,7 +20,6 @@ function PdfPage({ page, width }: { page: PDFPageProxy; width: number }) {
     canvas.style.width = `${Math.floor(viewport.width)}px`;
     canvas.style.height = `${Math.floor(viewport.height)}px`;
     const task = page.render({
-      canvas,
       canvasContext: context,
       viewport,
       transform: pixelRatio === 1 ? undefined : [pixelRatio, 0, 0, pixelRatio, 0, 0],
