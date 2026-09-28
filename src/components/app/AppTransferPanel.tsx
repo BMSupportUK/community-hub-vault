@@ -311,23 +311,23 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
                   <Button
                     size="icon"
                     variant="ghost"
-                    className="size-7 text-violet-200 hover:text-foreground hover:bg-surface-2/80 disabled:opacity-40"
+                    className="size-9 text-violet-200 hover:text-foreground hover:bg-surface-2/80 disabled:opacity-40 sm:size-7"
                     title="Smaller text"
                     disabled={infoZoom <= 1}
                     onClick={() => setInfoZoom((z) => Math.max(1, +(z - 0.25).toFixed(2)))}
                   >
-                    <ZoomOut className="size-3.5" />
+                    <ZoomOut className="size-5 sm:size-3.5" />
                   </Button>
-                  <span className="min-w-8 text-center text-[10px] font-semibold text-violet-200">{Math.round(infoZoom * 100)}%</span>
+                  <span className="min-w-9 text-center text-xs font-semibold text-violet-200 sm:min-w-8 sm:text-[10px]">{Math.round(infoZoom * 100)}%</span>
                   <Button
                     size="icon"
                     variant="ghost"
-                    className="size-7 text-violet-200 hover:text-foreground hover:bg-surface-2/80 disabled:opacity-40"
+                    className="size-9 text-violet-200 hover:text-foreground hover:bg-surface-2/80 disabled:opacity-40 sm:size-7"
                     title="Bigger text"
-                    disabled={infoZoom >= 2}
-                    onClick={() => setInfoZoom((z) => Math.min(2, +(z + 0.25).toFixed(2)))}
+                    disabled={infoZoom >= 3}
+                    onClick={() => setInfoZoom((z) => Math.min(3, +(z + 0.25).toFixed(2)))}
                   >
-                    <ZoomIn className="size-3.5" />
+                    <ZoomIn className="size-5 sm:size-3.5" />
                   </Button>
                 </div>
               </div>
