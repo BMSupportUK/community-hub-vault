@@ -59,17 +59,15 @@ function TransferStatusSteps({ transfer }: { transfer: Transfer }) {
         ? 100
         : 0;
 
-  const steps = [
-    { label: "Link issued", state: "done" as const },
+  // Third-party APKs never report installs, so only show that step when an app actually reported.
+  const steps: { label: string; state: "done" | "active" | "todo" }[] = [
+    { label: "Link issued", state: "done" },
     {
       label: downloading ? `Downloading… ${pct}%` : "Downloaded",
-      state: downloaded ? ("done" as const) : downloading ? ("active" as const) : ("todo" as const),
-    },
-    {
-      label: installed ? "Installed & opened" : "Installed",
-      state: installed ? ("done" as const) : ("todo" as const),
+      state: downloaded ? "done" : downloading ? "active" : "todo",
     },
   ];
+  if (installed) steps.push({ label: "Installed & opened", state: "done" });
 
   return (
     <div className="rounded-lg border border-border/60 bg-background/60 p-3">
