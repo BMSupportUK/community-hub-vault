@@ -65,7 +65,6 @@ function HomeLayout() {
   const channelFooter = (
     <div className="space-y-4">
       {!hideOutageBox && <ServiceStatusBox />}
-      {!isHomeIndex && <AdSenseSlot slot="talk" />}
       {isHomeIndex && <WorkingStatusBox stackActions />}
     </div>
   );
