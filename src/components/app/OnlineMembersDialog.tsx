@@ -90,7 +90,9 @@ function lastActiveStamp(iso: string | null): string {
  * currently online, with view profile / add friend / ignore actions.
  */
 export function OnlineMembersDialog({ className }: { className?: string }) {
-  const { user } = useAuth();
+  const { user, hasAny } = useAuth();
+  // Members directory is private: staff roles and current subscribers only.
+  const canViewDirectory = hasAny(["admin", "management", "staff", "moderator", "subscriber"]);
   // This control lives in Talk Channels, so its count and list must use the
   // talk-channel presence feed rather than the separate site-wide presence.
   const onlineIds = useTalkChannelPresentUsers();
@@ -299,6 +301,18 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
           aria-hidden
           className="pointer-events-none absolute inset-0 z-0 bg-background/35"
         />
+        {!canViewDirectory && (
+          <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 p-6 backdrop-blur-sm">
+            <DialogTitle className="sr-only">Members</DialogTitle>
+            <DialogClose className="absolute right-4 top-4 rounded-md p-2 text-muted-foreground hover:text-foreground" aria-label="Close">
+              <X className="size-5" />
+            </DialogClose>
+            <p className="max-w-md rounded-xl border border-border bg-card px-6 py-5 text-center text-lg font-semibold text-foreground shadow-lg">
+              Sorry your Roles don't allow have access to view
+            </p>
+          </div>
+        )}
+
         <DialogHeader className="relative z-10 border-b border-border bg-background/65 px-5 py-4 text-left backdrop-blur-sm">
           <div className="flex flex-wrap items-center gap-3">
             <DialogTitle className="flex items-center gap-2 text-foreground">
