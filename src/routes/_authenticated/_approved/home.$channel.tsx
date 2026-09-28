@@ -23,6 +23,7 @@ import {
   Mic,
   Reply,
   CornerUpRight,
+  Users,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -69,11 +70,22 @@ import { formatLastSeen } from "@/lib/relative-time";
 import { useRoleFlashMap, roleFlashClass, resolveAvatarUrl } from "@/lib/role-flash";
 import { useHomeChannelContentReady } from "@/components/app/HomeChannelReadyContext";
 import { WorkingStatusBox } from "@/components/app/WorkingStatusBox";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 export const Route = createFileRoute("/_authenticated/_approved/home/$channel")({
   validateSearch: (search: Record<string, unknown>): { msg?: string } =>
     typeof search.msg === "string" ? { msg: search.msg } : {},
   component: ChannelPage,
+  head: () => ({
+    meta: [
+      { title: "Talk Channels | BM Support" },
+      { name: "description", content: "Join live BM Support community conversations and keep in touch with staff and members." },
+      { property: "og:title", content: "Talk Channels | BM Support" },
+      { property: "og:description", content: "Join live BM Support community conversations and keep in touch with staff and members." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
 });
 
 interface Channel {
@@ -137,6 +149,7 @@ function ChannelPage() {
   const hideMembersPanel = slug === "welcome" || slug === "rules";
   const [muteSubmenuId, setMuteSubmenuId] = useState<string | null>(null);
   const [sideTab, setSideTab] = useState<"staff" | "members">("staff");
+  const [mobilePeopleOpen, setMobilePeopleOpen] = useState(false);
 
   const [myMuteExpires, setMyMuteExpires] = useState<Date | null>(null);
   const [muteTick, setMuteTick] = useState(0);
@@ -1190,18 +1203,57 @@ function ChannelPage() {
 
   return (
     <main className="flex h-full max-h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-      <header className={cn("border-b border-border px-5 flex items-center gap-3 shrink-0 relative z-[60]")}>
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-card/50 border border-primary/30 shadow-[0_0_20px_-4px_color-mix(in_oklab,var(--primary)_35%,transparent),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-xl">
+      <header className={cn("relative z-[60] flex shrink-0 flex-col items-stretch gap-2 border-b border-border px-2 py-2 md:flex-row md:items-center md:gap-3 md:px-5 md:py-0")}>
+        <div className="flex min-w-0 items-center gap-2 rounded-2xl border border-primary/30 bg-card/50 px-3 py-1.5 shadow-[0_0_20px_-4px_color-mix(in_oklab,var(--primary)_35%,transparent),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-xl">
           <Icon className="size-4 text-primary" />
-          <h1 className="font-display font-semibold text-foreground">{channel.name}</h1>
+          <h1 className="min-w-0 truncate font-display font-semibold text-foreground">{channel.name}</h1>
           {channel.staff_only && (
             <span className="ml-1 text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-400 border border-amber-500/20">
               staff
             </span>
           )}
         </div>
-        <div className="ml-auto flex items-center gap-2 px-3 py-2 rounded-2xl bg-card/50 border border-primary/30 shadow-[0_0_24px_-4px_color-mix(in_oklab,var(--primary)_40%,transparent),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-xl">
-          {!hideMembersPanel && <OnlineMembersDialog />}
+        <div className="flex min-w-0 items-center gap-2 overflow-x-auto rounded-2xl border border-primary/30 bg-card/50 px-2 py-1.5 shadow-[0_0_24px_-4px_color-mix(in_oklab,var(--primary)_40%,transparent),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-xl scrollbar-hide md:ml-auto md:px-3 md:py-2">
+          <Sheet open={mobilePeopleOpen} onOpenChange={setMobilePeopleOpen}>
+            <SheetTrigger asChild>
+              <button
+                type="button"
+                className="flex shrink-0 items-center gap-1.5 rounded-full border border-white/10 bg-surface-2/60 px-3 py-1.5 text-xs font-semibold text-foreground md:hidden"
+              >
+                <Users className="size-4 text-primary" />
+                {hideMembersPanel ? "Staff" : "People"}
+              </button>
+            </SheetTrigger>
+            <SheetContent side="right" className="flex h-dvh w-[min(92vw,24rem)] flex-col gap-0 border-l border-border bg-surface p-0">
+              {!hideMembersPanel && (
+                <div className="grid shrink-0 grid-cols-2 gap-1 border-b border-border p-2 pr-12">
+                  {(["staff", "members"] as const).map((tab) => (
+                    <button
+                      key={tab}
+                      type="button"
+                      onClick={() => setSideTab(tab)}
+                      className={cn(
+                        "rounded-md px-3 py-2 text-xs font-semibold uppercase transition-colors",
+                        sideTab === tab
+                          ? "bg-primary/20 text-primary ring-1 ring-primary/40"
+                          : "text-muted-foreground hover:bg-surface-2",
+                      )}
+                    >
+                      {tab}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <div className={cn("min-h-0 flex-1 overflow-hidden", hideMembersPanel && "pt-10")}>
+                {hideMembersPanel || sideTab === "staff" ? (
+                  <StaffOnDutySidebar channelId={channel?.id ?? null} />
+                ) : (
+                  <TalkChannelMembersPanel channelId={channel?.id ?? null} />
+                )}
+              </div>
+            </SheetContent>
+          </Sheet>
+          {!hideMembersPanel && <span className="hidden md:block"><OnlineMembersDialog /></span>}
           <WorkingStatusBox variant="header" />
           {canManageSlow && (
             <button
@@ -1210,7 +1262,7 @@ function ChannelPage() {
               title={channel.slow_mode_seconds > 0 ? "Disable slow mode" : "Enable 30s slow mode"}
             >
               <Timer className="size-4 text-success group-hover:rotate-12 transition-transform" />
-              <span className="text-xs font-semibold tracking-wide text-foreground/90 group-hover:text-foreground transition-colors">
+              <span className="hidden text-xs font-semibold tracking-wide text-foreground/90 transition-colors group-hover:text-foreground sm:inline">
                 Slow mode {channel.slow_mode_seconds > 0 ? "on" : "off"}
               </span>
             </button>
@@ -1251,7 +1303,7 @@ function ChannelPage() {
             {pinnedMessages.length === 0 && (
               <button
                 onClick={() => setPinnedOpen((v) => !v)}
-                className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-surface-2/60 hover:bg-surface-2 border border-white/10 hover:border-white/20 transition-all cursor-pointer group shadow-lg shadow-black/20"
+                className="flex shrink-0 items-center gap-2 rounded-full border border-white/10 bg-surface-2/60 px-2.5 py-1.5 shadow-lg shadow-black/20 transition-all hover:border-white/20 hover:bg-surface-2 md:px-3.5"
                 title="Pinned messages"
               >
                 <Pin className="size-4 text-primary/60 group-hover:-translate-y-0.5 transition-transform" />
@@ -1259,7 +1311,7 @@ function ChannelPage() {
               </button>
             )}
             {pinnedOpen && (
-              <div className="fixed right-4 top-28 md:right-[14.75rem] xl:right-[16.75rem] w-[440px] max-w-[calc(100vw-2rem)] max-h-[70vh] overflow-y-auto rounded-2xl border-2 border-primary/60 bg-surface shadow-[0_24px_70px_-12px_rgb(0_0_0/0.75),0_0_60px_-12px_color-mix(in_oklab,var(--primary)_55%,transparent)] z-[100] animate-scale-in">
+               <div className="fixed inset-x-2 top-28 z-[100] max-h-[70vh] overflow-y-auto rounded-2xl border-2 border-primary/60 bg-surface shadow-[0_24px_70px_-12px_rgb(0_0_0/0.75),0_0_60px_-12px_color-mix(in_oklab,var(--primary)_55%,transparent)] animate-scale-in sm:left-auto sm:right-4 sm:w-[440px] md:right-[14.75rem] xl:right-[16.75rem]">
                 <div className="sticky top-0 z-10 flex items-center justify-between px-4 py-3 border-b-2 border-primary/30 bg-surface">
                   <div className="flex items-center gap-2">
                     <Pin className="size-4 text-primary fill-primary/40" />
@@ -1359,7 +1411,7 @@ function ChannelPage() {
               <span className="text-xs font-bold text-foreground/90">{ignoredIds.size}</span>
             </button>
             {ignoredOpen && (
-              <div className="absolute right-0 top-full mt-2 w-80 max-h-96 overflow-y-auto rounded-lg border border-border bg-popover shadow-lg z-30">
+              <div className="fixed inset-x-2 top-32 z-30 max-h-[60vh] overflow-y-auto rounded-lg border border-border bg-popover shadow-lg sm:absolute sm:inset-x-auto sm:right-0 sm:top-full sm:mt-2 sm:w-80 sm:max-h-96">
                 <div className="flex items-center justify-between px-3 py-2 border-b border-border">
                   <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                     Ignored users
@@ -1470,7 +1522,7 @@ function ChannelPage() {
       </header>
       <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-          <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4 space-y-3 [overflow-anchor:auto]">
+           <div ref={scrollRef} className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-2 py-3 [overflow-anchor:auto] sm:px-5 sm:py-4">
             {channel.slug !== "welcome" && channel.slug !== "rules" && (
               <div className="flex items-center gap-2 rounded-lg border border-border bg-surface-2/60 px-3 py-2 text-xs text-muted-foreground">
                 <Trash2 className="size-3.5 text-primary shrink-0" />
@@ -1561,7 +1613,7 @@ function ChannelPage() {
                         <div
                           id={`msg-${m.id}`}
                           className={cn(
-                            "group relative flex items-start gap-3 rounded-xl transition-colors scroll-mt-24 mb-4",
+                            "group relative mb-4 flex items-start gap-1.5 rounded-xl transition-colors scroll-mt-24 sm:gap-3",
                             flashMsgId === m.id && "ring-2 ring-primary bg-primary/10",
                           )}
                         >
@@ -1602,9 +1654,9 @@ function ChannelPage() {
                               // Fixed-width column: the presence label text changes over
                               // time ("Online" -> "Active 5 minutes ago"), so a fluid
                               // width would shift the whole message row sideways.
-                              <div className="flex w-16 flex-col items-center gap-0.5 shrink-0 mt-0.5">
+                              <div className="mt-0.5 flex w-11 shrink-0 flex-col items-center gap-0.5 sm:w-16">
                                 {avatarEl}
-                                <div className="flex h-4 w-16 items-center justify-center gap-1 text-[10px] text-muted-foreground">
+                                 <div className="flex h-4 w-11 items-center justify-center gap-1 text-[9px] text-muted-foreground sm:w-16 sm:text-[10px]">
                                   {profileId && (
                                     <>
                                     <PresenceMiniDot userId={profileId} isOnline={isOnline} />
@@ -1633,7 +1685,7 @@ function ChannelPage() {
                                 >
                                   <Nameplate
                                     id={p?.equipped_nameplate_id}
-                                    className="inline-flex items-center rounded-md px-3 py-1 min-w-0 h-7 max-h-7 pr-12 shadow-sm isolate"
+                                     className="inline-flex h-7 max-h-7 min-w-0 max-w-full items-center rounded-md px-2 py-1 pr-7 shadow-sm isolate sm:px-3 sm:pr-12"
                                     fallbackStyle={{
                                       background:
                                         "linear-gradient(135deg, #1a4a2a 0%, #2d6a3f 50%, #1a4a2a 100%)",
@@ -1720,8 +1772,8 @@ function ChannelPage() {
                               )}
                             >
                               {isEditing ? (
-                                <div className="flex flex-col gap-2 w-full min-w-[280px]">
-                                  <div className="relative flex items-end gap-2 rounded-xl bg-surface-2 border border-primary px-3 py-2 focus-within:ring-1 focus-within:ring-primary/40">
+                                <div className="flex min-w-0 w-full flex-col gap-2">
+                                  <div className="relative flex min-w-0 flex-wrap items-end gap-2 rounded-xl border border-primary bg-surface-2 px-2 py-2 focus-within:ring-1 focus-within:ring-primary/40 sm:flex-nowrap sm:px-3">
                                     <div
                                       ref={editEditorRef}
                                       contentEditable
@@ -1745,7 +1797,7 @@ function ChannelPage() {
                                           setEditDraftHtml("");
                                         }
                                       }}
-                                      className="flex-1 min-h-[80px] overflow-y-auto bg-transparent outline-none text-sm py-1 max-h-40 whitespace-pre-wrap break-words empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground empty:before:pointer-events-none"
+                                      className="min-h-[80px] min-w-0 basis-full overflow-y-auto bg-transparent py-1 text-sm outline-none max-h-40 whitespace-pre-wrap break-words empty:before:content-[attr(data-placeholder)] empty:before:pointer-events-none empty:before:text-muted-foreground sm:basis-auto sm:flex-1"
                                     />
                                     <ChatFormatToolbar
                                       editorRef={editEditorRef}
@@ -1759,7 +1811,7 @@ function ChannelPage() {
                                       disabled={false}
                                     />
                                   </div>
-                                  <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                                  <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
                                     <button
                                       onClick={() => saveEdit(m.id)}
                                       className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-primary text-primary-foreground hover:bg-primary/90"
@@ -1776,7 +1828,7 @@ function ChannelPage() {
                                     >
                                       Cancel
                                     </button>
-                                    <span>Enter to save · Esc to cancel</span>
+                                    <span className="hidden sm:inline">Enter to save · Esc to cancel</span>
                                   </div>
                                 </div>
                               ) : (
@@ -2044,17 +2096,17 @@ function ChannelPage() {
                   })}
           </div>
 
-          <div className="shrink-0 border-t border-border bg-background p-4">
+          <div className="shrink-0 border-t border-border bg-background p-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] sm:p-4">
             {replyTo && (
-              <div className="mb-2 flex items-center gap-2 rounded-lg border border-primary/40 bg-primary/10 px-3 py-2 text-xs">
+              <div className="mb-2 grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 rounded-lg border border-primary/40 bg-primary/10 px-2 py-2 text-xs sm:flex sm:px-3">
                 <Reply className="size-3.5 shrink-0 text-primary" />
-                <span className="shrink-0 font-semibold">
+                <span className="truncate font-semibold sm:shrink-0">
                   Replying to{" "}
                   {profiles[replyTo.sender_id]?.display_name ??
                     profiles[replyTo.sender_id]?.username ??
                     "Unknown"}
                 </span>
-                <span className="min-w-0 flex-1 truncate text-muted-foreground">
+                <span className="col-start-2 min-w-0 truncate text-muted-foreground sm:flex-1">
                   {/^https?:\/\/\S+$/i.test(replyTo.content.trim())
                     ? "Attachment"
                     : replyTo.content}
@@ -2062,7 +2114,7 @@ function ChannelPage() {
                 <button
                   type="button"
                   onClick={() => jumpToMessage(replyTo.id)}
-                  className="inline-flex shrink-0 items-center gap-1 rounded-md border border-border bg-surface-1 px-2 py-0.5 text-[10px] font-semibold hover:bg-surface-2"
+                  className="hidden shrink-0 items-center gap-1 rounded-md border border-border bg-surface-1 px-2 py-0.5 text-[10px] font-semibold hover:bg-surface-2 sm:inline-flex"
                   title="Jump to original message"
                 >
                   <CornerUpRight className="size-3" /> Jump
@@ -2070,7 +2122,7 @@ function ChannelPage() {
                 <button
                   type="button"
                   onClick={() => setReplyTo(null)}
-                  className="grid size-6 shrink-0 place-items-center rounded-md hover:bg-surface-2"
+                  className="col-start-3 row-start-1 grid size-6 shrink-0 place-items-center rounded-md hover:bg-surface-2 sm:col-auto sm:row-auto"
                   title="Cancel reply"
                   aria-label="Cancel reply"
                 >
@@ -2098,7 +2150,7 @@ function ChannelPage() {
                 </div>
               </div>
             )}
-            <div className="relative flex items-end gap-2 rounded-xl bg-surface-2 border border-border focus-within:border-primary px-3 py-2">
+            <div className="relative flex flex-wrap items-end gap-2 rounded-xl border border-border bg-surface-2 px-2 py-2 focus-within:border-primary sm:flex-nowrap sm:px-3">
               {mention.dropdown}
               {channelJump.dropdown}
               {quickSlash.dropdown}
@@ -2194,7 +2246,7 @@ function ChannelPage() {
                   e.preventDefault();
                   attachGifTransfer(e.dataTransfer);
                 }}
-                className="flex-1 min-h-7 overflow-y-auto bg-transparent outline-none text-sm py-1 max-h-32 whitespace-pre-wrap break-words empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground empty:before:pointer-events-none"
+                className="min-h-10 min-w-0 basis-full overflow-y-auto bg-transparent py-1 text-sm outline-none max-h-32 whitespace-pre-wrap break-words empty:before:content-[attr(data-placeholder)] empty:before:pointer-events-none empty:before:text-muted-foreground sm:min-h-7 sm:basis-auto sm:flex-1"
               />
               {uploadingPaste && (
                 <div className="flex items-center gap-1 text-xs text-muted-foreground px-2 py-1">
@@ -2318,7 +2370,7 @@ function ChannelPage() {
       </div>
 
       {isMuted && (
-        <div className="pointer-events-none fixed bottom-4 right-4 z-50 max-w-sm rounded-xl border-2 border-red-500 bg-neutral-950/95 backdrop-blur-md px-4 py-3 shadow-2xl shadow-red-500/30 ring-1 ring-red-500/20">
+        <div className="pointer-events-none fixed inset-x-2 bottom-[calc(0.5rem+env(safe-area-inset-bottom))] z-50 rounded-xl border-2 border-red-500 bg-neutral-950/95 px-3 py-2 shadow-2xl shadow-red-500/30 ring-1 ring-red-500/20 backdrop-blur-md sm:left-auto sm:right-4 sm:max-w-sm sm:px-4 sm:py-3">
           <div className="flex items-start gap-3">
             <div className="grid place-items-center size-9 rounded-lg bg-red-500/15 border border-red-500/40 shrink-0">
               <MicOff className="size-5 text-red-400" />
