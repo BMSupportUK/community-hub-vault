@@ -25,6 +25,7 @@ export function OutstandingTicketsAlert() {
   const pathname = useLocation({ select: (location) => location.pathname });
   // Never interrupt the shop/orders flow with this dialog — a toast is enough there.
   const isSoundTestPage = pathname === "/admin-sounds" || pathname.startsWith("/shop");
+  const isTalkChannel = pathname === "/home" || pathname.startsWith("/home/");
   const isStaffRole = hasAny(["admin", "management", "staff"]);
   const [open, setOpen] = useState(false);
   const [counts, setCounts] = useState({ open: 0, in_progress: 0, unassigned: 0 });
@@ -54,7 +55,18 @@ export function OutstandingTicketsAlert() {
       const total = next.open + next.in_progress;
       if (autoOpen && total > 0 && sessionStorage.getItem(SESSION_KEY) !== "1") {
         sessionStorage.setItem(SESSION_KEY, "1");
-        setOpen(true);
+        if (isTalkChannel) {
+          toast.info("Outstanding support tickets", {
+            description: `${total} ticket${total === 1 ? " is" : "s are"} waiting for a response.`,
+            duration: Infinity,
+            action: {
+              label: "View tickets",
+              onClick: () => navigate({ to: "/tickets", search: { view: "all" } }),
+            },
+          });
+        } else {
+          setOpen(true);
+        }
       }
       bootstrapped = true;
     };
@@ -88,7 +100,7 @@ export function OutstandingTicketsAlert() {
       cancelled = true;
       supabase.removeChannel(ch);
     };
-  }, [user, isStaffRole, isSoundTestPage]);
+  }, [user, isStaffRole, isSoundTestPage, isTalkChannel, navigate]);
 
   if (!isStaffRole || isSoundTestPage) return null;
 
