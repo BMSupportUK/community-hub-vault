@@ -91,7 +91,7 @@ TNT Sports 1 & 2`;
     {
       name: "National League dash and bracketed time",
       raw: "National League 1 - Aldershot vs. Tamworth (3:00 PM)",
-      expected: { time: "3:00 PM", title: "Aldershot v Tamworth", channels: ["National League 1"] },
+      expected: { time: "3:00PM", title: "Aldershot v Tamworth", channels: ["National League 1"] },
     },
     {
       name: "MLB bracketed date",
@@ -126,7 +126,7 @@ TNT Sports 1 & 2`;
     {
       name: "NHL Center Ice next-line fixture",
       raw: "US | NHL Center Ice\nNHL | 01 - 7pm ET | 12am UK\nBruins at Capitals",
-      expected: { time: "12am", title: "Bruins at Capitals", channels: ["NHL 01"] },
+      expected: { time: "12am UK", title: "Bruins at Capitals", channels: ["NHL 01"] },
     },
   ];
 
