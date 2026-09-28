@@ -476,7 +476,7 @@ function InstallGuidesPage() {
                 <h1 className="font-display text-2xl font-bold text-foreground sm:text-3xl">Install Guides</h1>
                 <p className="mt-1 text-sm text-muted-foreground md:hidden xl:block">Step-by-step installation walkthroughs and PDF docs</p>
               </div>
-              <TabsList className="scrollbar-hide flex h-auto w-full min-w-0 max-w-full flex-nowrap justify-start gap-1 overflow-x-auto rounded-lg border border-border bg-surface/70 p-1 lg:w-auto lg:max-w-full lg:rounded-full">
+              <TabsList className="scrollbar-hide grid h-auto w-full min-w-0 max-w-full grid-cols-2 justify-start gap-1 rounded-lg border border-border bg-surface/70 p-1 sm:flex sm:flex-wrap lg:w-auto lg:max-w-full lg:flex-nowrap lg:rounded-full">
                 <TabsTrigger value="welcome" className="shrink-0 truncate rounded-full px-3 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">Welcome</TabsTrigger>
                 <TabsTrigger value="guides" className="shrink-0 truncate rounded-full px-3 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">Guides</TabsTrigger>
                 {canSeeAppTab && (
