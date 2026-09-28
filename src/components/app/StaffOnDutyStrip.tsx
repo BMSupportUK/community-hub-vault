@@ -209,6 +209,9 @@ export function StaffOnDutyStrip({
   const presentGlobalIds = useTalkChannelPresentUsers();
   const presentChannelIds = useTalkChannelPresentUsersInChannel(channelId);
   const presentUserIds = isSidebar ? presentGlobalIds : channelId ? presentChannelIds : presentGlobalIds;
+  // Authorised change (user request): sidebar Online list + count reflect THIS channel,
+  // so staff who move to another channel drop out straight away.
+  const inThisChannelIds = channelId ? presentChannelIds : presentGlobalIds;
   // IDs allowed to view the scoped channel; null means "no channel filter".
   const [allowedIds, setAllowedIds] = useState<Set<string> | null>(null);
 
@@ -664,7 +667,7 @@ export function StaffOnDutyStrip({
     ? [
         ...allOrderedShifts.map((shift) => shift.user_id),
         ...allVisibleOffDuty.map((person) => person.id),
-      ].filter((id, i, all) => presentUserIds.has(id) && all.indexOf(id) === i).length
+      ].filter((id, i, all) => inThisChannelIds.has(id) && all.indexOf(id) === i).length
     : 0;
   useEffect(() => {
     if (!isSidebar) return;
@@ -684,8 +687,8 @@ export function StaffOnDutyStrip({
       if (roleDiff !== 0) return roleDiff;
       return (a.display_name || a.username || "Staff").localeCompare(b.display_name || b.username || "Staff");
     });
-    const onlineStaff = allStaff.filter((person) => presentUserIds.has(person.id));
-    const offlineStaff = allStaff.filter((person) => !presentUserIds.has(person.id));
+    const onlineStaff = allStaff.filter((person) => inThisChannelIds.has(person.id));
+    const offlineStaff = allStaff.filter((person) => !inThisChannelIds.has(person.id));
     const visibleStaff = sidebarTab === "online" ? onlineStaff : offlineStaff;
 
     return (
