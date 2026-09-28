@@ -53,6 +53,30 @@ TNT Sports 1 & 2`;
     expect(parseSportsListingBlock(formatted)).toEqual(result.events);
   });
 
+  test("Asian Games title above dual UK/ET time keeps both beIN channels", () => {
+    const raw = `-
+
+**## ASIAN GAMES**
+
+**Aichi Nagoya 2026**
+\`11:00pm UK | 6:00pm ET\`
+
+beIN Sports English 1 & 2`;
+    const result = checkSportsImport(raw, "gmt", Date.UTC(2026, 8, 28, 8), "Asian Games");
+
+    expect(result.errors).toBe(0);
+    expect(result.warnings).toBe(0);
+    expect(result.events).toEqual([
+      {
+        date: "Monday, 28th September",
+        time: "23:00 BST",
+        title: "ASIAN GAMES: Aichi Nagoya 2026",
+        channels: ["beIN Sports English 1", "beIN Sports English 2"],
+      },
+    ]);
+    expect(parseSportsListingBlock(result.formatted)).toEqual(result.events);
+  });
+
   test("Triller numbered events retain their numbered channel", () => {
     const result = parseSportsListingBlock("Triller TV | Event 4: Highland Boxing: Resurgence 2026 10:00");
     expect(result).toEqual([{ date: null, time: "10:00", title: "Highland Boxing: Resurgence 2026", channels: ["Triller TV 4"] }]);
