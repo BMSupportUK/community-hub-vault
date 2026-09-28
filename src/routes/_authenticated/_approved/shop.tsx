@@ -3071,8 +3071,19 @@ function OrdersView({
           </div>
         )}
         {list.map((o) => (
-          <button
+          <div
             key={o.id}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                navigate({
+                  to: "/shop",
+                  search: { view: "orders", id: o.id, scope: scope === "all" ? "all" : undefined },
+                });
+              }
+            }}
             onClick={() =>
               navigate({
                 to: "/shop",
@@ -3127,12 +3138,26 @@ function OrdersView({
             <div className="text-[11px] text-purple-200/60">
               {new Date(o.created_at).toLocaleString("en-GB")}
             </div>
-            <div className="mt-auto pt-2 flex items-center gap-2">
+            <div className="mt-auto pt-2 flex items-center justify-between gap-2">
               <span className="inline-flex items-center gap-1 text-[11px] text-fuchsia-300 font-medium">
                 <Package className="size-3" /> View details
               </span>
+              {isAdmin && adminUnlocked && (
+                <button
+                  type="button"
+                  title="Delete this order permanently"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDeleteTarget(o);
+                  }}
+                  className="inline-flex items-center gap-1 rounded-md border border-red-500/40 bg-red-500/10 px-2 py-1 text-[11px] font-medium text-red-200 transition hover:bg-red-500/20"
+                >
+                  <Trash2 className="size-3" /> Delete
+                </button>
+              )}
             </div>
-          </button>
+          </div>
+
         ))}
       </div>
       {activeId && (
