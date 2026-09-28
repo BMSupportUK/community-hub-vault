@@ -87,6 +87,17 @@ import { VpnGuideView } from "@/components/app/VpnGuideView";
 import { PaymentTestModeBanner } from "@/components/PaymentTestModeBanner";
 import { getOrderPaymentState } from "@/lib/order-payment-state.functions";
 import { isSettledPaymentStatus } from "@/lib/payment-status";
+import { deleteOrderCompletely } from "@/lib/order-delete.functions";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 type View = "store" | "orders" | "admin" | "refund" | "multi_room" | "triple_room" | "streaming_devices" | "reviews" | "app_demos";
 
@@ -3054,10 +3065,57 @@ function OrdersView({
     </span>
   );
 
+  const [deleteTarget, setDeleteTarget] = useState<Order | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const deleteOrderFn = useServerFn(deleteOrderCompletely);
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await deleteOrderFn({ data: { orderId: deleteTarget.id } });
+      toast.success("Order deleted");
+      setDeleteTarget(null);
+      if (selectedId === deleteTarget.id) clearSelectedOrder();
+      await load();
+      window.dispatchEvent(new Event("orders:changed"));
+    } catch (e) {
+      toast.error((e as Error).message || "Could not delete the order");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const deleteConfirmDialog = (
+    <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete this order?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Order #{deleteTarget?.id.slice(0, 8)} and its messages, payments and support ticket will be
+            removed permanently. This cannot be undone.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={deleting}>Keep order</AlertDialogCancel>
+          <AlertDialogAction
+            disabled={deleting}
+            onClick={(e) => {
+              e.preventDefault();
+              void confirmDelete();
+            }}
+          >
+            {deleting ? "Deleting…" : "Delete order"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+
   const renderOrderList = (list: Order[]) => {
   const activeId = selectedId && list.some((o) => o.id === selectedId) ? selectedId : null;
   return (
     <div className={cn("grid grid-cols-1 gap-4 min-h-[60vh]", activeId && "lg:grid-cols-[1fr_380px]")}>
+      {deleteConfirmDialog}
       <div
         className={cn(
           "grid grid-cols-1 sm:grid-cols-2 gap-3 content-start",
@@ -3071,8 +3129,19 @@ function OrdersView({
           </div>
         )}
         {list.map((o) => (
-          <button
+          <div
             key={o.id}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                navigate({
+                  to: "/shop",
+                  search: { view: "orders", id: o.id, scope: scope === "all" ? "all" : undefined },
+                });
+              }
+            }}
             onClick={() =>
               navigate({
                 to: "/shop",
@@ -3127,12 +3196,26 @@ function OrdersView({
             <div className="text-[11px] text-purple-200/60">
               {new Date(o.created_at).toLocaleString("en-GB")}
             </div>
-            <div className="mt-auto pt-2 flex items-center gap-2">
+            <div className="mt-auto pt-2 flex items-center justify-between gap-2">
               <span className="inline-flex items-center gap-1 text-[11px] text-fuchsia-300 font-medium">
                 <Package className="size-3" /> View details
               </span>
+              {isAdmin && adminUnlocked && (
+                <button
+                  type="button"
+                  title="Delete this order permanently"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setDeleteTarget(o);
+                  }}
+                  className="inline-flex items-center gap-1 rounded-md border border-red-500/40 bg-red-500/10 px-2 py-1 text-[11px] font-medium text-red-200 transition hover:bg-red-500/20"
+                >
+                  <Trash2 className="size-3" /> Delete
+                </button>
+              )}
             </div>
-          </button>
+          </div>
+
         ))}
       </div>
       {activeId && (
