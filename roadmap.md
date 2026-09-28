@@ -1,6 +1,7 @@
 # Roadmap
 
 ## Current
+- [x] Give Talk Channels separate mobile Staff and Members buttons with a phone-friendly member list
 - [x] Fix mobile Referrals text overlap and make main and Fan Zone profiles phone-friendly
 - [x] Make Talk Channels fit phone screens with reachable channel, people, message and composer controls
 - [x] Admin dashboard: move Theme and Header links into Owner tools and restore Add manual order

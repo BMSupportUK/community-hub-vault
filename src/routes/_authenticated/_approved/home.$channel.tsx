@@ -24,6 +24,7 @@ import {
   Reply,
   CornerUpRight,
   Users,
+  UserRoundCog,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -70,7 +71,7 @@ import { formatLastSeen } from "@/lib/relative-time";
 import { useRoleFlashMap, roleFlashClass, resolveAvatarUrl } from "@/lib/role-flash";
 import { useHomeChannelContentReady } from "@/components/app/HomeChannelReadyContext";
 import { WorkingStatusBox } from "@/components/app/WorkingStatusBox";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 
 export const Route = createFileRoute("/_authenticated/_approved/home/$channel")({
   validateSearch: (search: Record<string, unknown>): { msg?: string } =>
@@ -1214,16 +1215,35 @@ function ChannelPage() {
           )}
         </div>
         <div className="flex min-w-0 items-center gap-2 overflow-x-auto rounded-2xl border border-primary/30 bg-card/50 px-2 py-1.5 shadow-[0_0_24px_-4px_color-mix(in_oklab,var(--primary)_40%,transparent),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-xl scrollbar-hide md:ml-auto md:px-3 md:py-2">
-          <Sheet open={mobilePeopleOpen} onOpenChange={setMobilePeopleOpen}>
-            <SheetTrigger asChild>
+          <div className="flex shrink-0 items-center gap-1.5 md:hidden">
+            <button
+              type="button"
+              onClick={() => {
+                setSideTab("staff");
+                setMobilePeopleOpen(true);
+              }}
+              className="flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-surface-2/60 px-3 py-1.5 text-xs font-semibold text-foreground"
+              aria-label="Open staff list"
+            >
+              <UserRoundCog className="size-4 shrink-0 text-primary" />
+              Staff
+            </button>
+            {!hideMembersPanel && (
               <button
                 type="button"
-                className="flex shrink-0 items-center gap-1.5 rounded-full border border-white/10 bg-surface-2/60 px-3 py-1.5 text-xs font-semibold text-foreground md:hidden"
+                onClick={() => {
+                  setSideTab("members");
+                  setMobilePeopleOpen(true);
+                }}
+                className="flex shrink-0 items-center gap-1.5 rounded-full border border-border bg-surface-2/60 px-3 py-1.5 text-xs font-semibold text-foreground"
+                aria-label="Open members list"
               >
-                <Users className="size-4 text-primary" />
-                {hideMembersPanel ? "Staff" : "People"}
+                <Users className="size-4 shrink-0 text-primary" />
+                Members
               </button>
-            </SheetTrigger>
+            )}
+          </div>
+          <Sheet open={mobilePeopleOpen} onOpenChange={setMobilePeopleOpen}>
             <SheetContent side="right" className="flex h-dvh w-[min(92vw,24rem)] flex-col gap-0 border-l border-border bg-surface p-0">
               {!hideMembersPanel && (
                 <div className="grid shrink-0 grid-cols-2 gap-1 border-b border-border p-2 pr-12">
