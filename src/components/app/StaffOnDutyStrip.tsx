@@ -605,6 +605,8 @@ export function StaffOnDutyStrip({
                 <Clock className="size-2.5 shrink-0" />
                 <span>Working {fmtHMS(shiftElapsed)}</span>
               </span>
+            ) : online ? (
+              <span className="text-emerald-400">Off duty but chatting</span>
             ) : (
               <span>Off duty</span>
             )}
