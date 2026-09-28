@@ -3047,13 +3047,27 @@ function OrdersView({
   const monthOrders = currentYearOrders.filter(
     (order) => new Date(order.created_at).getMonth() === month,
   );
-  const newOrders = monthOrders.filter((o) => o.status === "pending" && !o.paid_at);
-  const awaitingPaymentOrders = monthOrders.filter((o) => o.status === "processing" && !o.paid_at);
-  const accountSetupOrders = monthOrders.filter(
-    (o) => o.status !== "completed" && o.status !== "cancelled" && (o.status === "paid" || !!o.paid_at),
-  );
-  const completedOrders = monthOrders.filter((o) => o.status === "completed");
-  const cancelledOrders = monthOrders.filter((o) => o.status === "cancelled");
+  const newOrders = monthOrders.filter((o) => tabForOrder(o) === "new");
+  const awaitingPaymentOrders = monthOrders.filter((o) => tabForOrder(o) === "awaiting-payment");
+  const accountSetupOrders = monthOrders.filter((o) => tabForOrder(o) === "account-setup");
+  const completedOrders = monthOrders.filter((o) => tabForOrder(o) === "completed");
+  const cancelledOrders = monthOrders.filter((o) => tabForOrder(o) === "cancelled");
+  const tabCountsKey = [newOrders.length, awaitingPaymentOrders.length, accountSetupOrders.length, completedOrders.length, cancelledOrders.length].join(",");
+  // When the chosen month/year has no orders in the open tab, jump to the first tab that has some.
+  useEffect(() => {
+    if (selectedId) return;
+    const counts: Record<OrdersTab, number> = {
+      new: newOrders.length,
+      "awaiting-payment": awaitingPaymentOrders.length,
+      "account-setup": accountSetupOrders.length,
+      completed: completedOrders.length,
+      cancelled: cancelledOrders.length,
+    } as Record<OrdersTab, number>;
+    if ((counts[ordersTab] ?? 0) > 0) return;
+    const first = (Object.keys(counts) as OrdersTab[]).find((k) => counts[k] > 0);
+    if (first) setOrdersTab(first);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [month, year, tabCountsKey]);
 
   const countBadge = (count: number, isNew = false) => (
     <span
@@ -3259,7 +3273,7 @@ function OrdersView({
       </header>
 
       <div className="relative px-4 md:px-8 py-6">
-        {availableYears.length > 1 && (
+        {availableYears.length > 0 && (
           <div className="mb-2 flex max-w-full gap-1.5 overflow-x-auto pb-1 scrollbar-hide" aria-label="Order year">
             {availableYears.map((y) => (
               <Button
