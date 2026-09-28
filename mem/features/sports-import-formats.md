@@ -79,6 +79,9 @@ NFL Sunday Ticket rows are `NFL NN: ET time | UK time` with the fixture on the n
 ## WST / snooker title-time-channel layout (permanent)
 Source repeats `**Event title**`, then ``UK time | ET time``, then one or more channel lines. The title belongs to the time below it, and the channels below that time belong to the same event. Example: `**Shenzhen Open**` / `7:00am UK | 2:00am ET` / `TNT Sports 1 & 2` becomes `07:00 BST`, `WST: Shenzhen Open`, channels `TNT Sports 1` and `TNT Sports 2`. Repeated sessions must never use the event title as a channel or the channel line as the event name.
 
+## Asian Games title-time-channel layout (permanent)
+Source: `**## ASIAN GAMES**`, `**Aichi Nagoya 2026**`, ``11:00pm UK | 6:00pm ET``, `beIN Sports English 1 & 2`. Output: `23:00 BST`, `ASIAN GAMES: Aichi Nagoya 2026`, channels `beIN Sports English 1` and `beIN Sports English 2`. The competition heading prefixes the event; the numbered beIN feeds remain separate channels.
+
 All permanent provider layouts must have parser regression coverage. Every importer change must run the complete sports-import format test file as well as the real post's safety and round-trip checks.
 
 ## Manual queue splitting (permanent)
