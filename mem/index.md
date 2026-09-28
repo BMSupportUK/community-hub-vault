@@ -9,6 +9,7 @@ Boro score predictions = Championship (league) fixtures ONLY. Never let cup ties
 
 
 ## Memories
+- [Admin owner tools](mem://features/admin-owner-tools) — Theme and Header links live inside Owner tools; Orders keeps the admin Add manual order action
 - [Profit payment groups](mem://features/profit-payment-groups) — Crypto is grouped under NOWPayments; bank transfers are grouped under Wise in Profit & costs
 - [SECURITY DEFINER allowlist](mem://security/security-definer-allowlist) — Functions that must remain executable by `authenticated`; safe to ignore lint 0029 for them
 - [Sports guides frozen](mem://constraints/sports-guides-frozen) — Do not touch sports-guides routes or parser without explicit request

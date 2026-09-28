@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { BarChart3, ShieldCheck, Lock, KeyRound, ShieldAlert, KeySquare, Globe, Clock, FileText, Loader2, Shield, Star, Filter, Sparkles, LifeBuoy, RefreshCw, Copy, Download, Ban, Tag, Package, Bell, Trophy, MessageSquare, Image as ImageIcon, MonitorPlay, Eye, EyeOff, Landmark, Users } from "lucide-react";
+import { BarChart3, ShieldCheck, Lock, KeyRound, ShieldAlert, KeySquare, Globe, Clock, FileText, Loader2, Shield, Star, Filter, Sparkles, LifeBuoy, RefreshCw, Copy, Download, Ban, Tag, Package, Bell, Trophy, MessageSquare, Image as ImageIcon, MonitorPlay, Eye, EyeOff, Landmark, Users, Palette, PanelTop } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -545,8 +545,6 @@ function DashboardBody() {
     ["bank-transfer", "Bank Settings", "bank"],
     ["staff-pins", "Staff PINs", true],
     ["backup-codes", "Backup codes", true],
-    ["theme", "Theme", false],
-    ["header-links", "Header links", false],
   ] as const).filter(([, , gate]) =>
     gate === "bank" ? isAdminOnly : !gate || canSeePins,
   );
@@ -575,7 +573,7 @@ function DashboardBody() {
               type="button"
               onClick={() => setTab(key)}
               className={`px-4 h-9 rounded-lg text-sm font-medium transition-colors ${
-                tab === key
+                tab === key || (key === "tools" && (tab === "theme" || tab === "header-links"))
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:text-foreground"
               }`}
@@ -616,6 +614,32 @@ function DashboardBody() {
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px] items-start">
       <section className="min-w-0">
         <h2 className="font-display text-sm uppercase tracking-wide text-muted-foreground mb-3">Owner tools</h2>
+        <div className="grid sm:grid-cols-2 gap-3 mb-3">
+          <button
+            type="button"
+            onClick={() => setTab("theme")}
+            className="group relative text-left rounded-2xl border border-border bg-surface-1 p-4 hover:border-primary hover:shadow-glow transition-all overflow-hidden"
+          >
+            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-accent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="flex items-center gap-3 mb-2">
+              <div className="size-10 rounded-xl bg-gradient-primary grid place-items-center text-primary-foreground shadow-glow"><Palette className="size-5" /></div>
+              <div className="font-display font-bold">Theme</div>
+            </div>
+            <p className="text-xs text-muted-foreground">Choose the default app theme for members.</p>
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab("header-links")}
+            className="group relative text-left rounded-2xl border border-border bg-surface-1 p-4 hover:border-primary hover:shadow-glow transition-all overflow-hidden"
+          >
+            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-accent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="flex items-center gap-3 mb-2">
+              <div className="size-10 rounded-xl bg-gradient-primary grid place-items-center text-primary-foreground shadow-glow"><PanelTop className="size-5" /></div>
+              <div className="font-display font-bold">Header links</div>
+            </div>
+            <p className="text-xs text-muted-foreground">Change the public header link order.</p>
+          </button>
+        </div>
         <div className="grid sm:grid-cols-2 2xl:grid-cols-3 gap-3">
           {tools.map((t, i) => {
             const letter = t.label[0].toUpperCase();

@@ -3,6 +3,7 @@ import { Loader2, Plus, Check, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Link } from "@tanstack/react-router";
+import { useAuth } from "@/hooks/use-auth";
 
 type Row = {
   id: string;
@@ -43,6 +44,8 @@ function paymentLabel(provider: string | null | undefined) {
 }
 
 export function OrderStatusAdminCard() {
+  const { hasRole } = useAuth();
+  const isAdmin = hasRole("admin");
   const [rows, setRows] = useState<Row[] | null>(null);
   const [methods, setMethods] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
@@ -50,7 +53,6 @@ export function OrderStatusAdminCard() {
   const [month, setMonth] = useState<number | null>(null);
 
   const [reload, setReload] = useState(0);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [completing, setCompleting] = useState<string | null>(null);
   const [payMethod, setPayMethod] = useState("");
   const [payRef, setPayRef] = useState("");
@@ -120,7 +122,7 @@ export function OrderStatusAdminCard() {
         </div>
         {isAdmin && (
           <Link to="/admin-add-order" className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg bg-primary text-primary-foreground text-sm font-medium">
-            <Plus className="size-4" /> Add order
+            <Plus className="size-4" /> Add manual order
           </Link>
         )}
       </div>

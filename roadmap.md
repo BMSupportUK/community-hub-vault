@@ -1,6 +1,7 @@
 # Roadmap
 
 ## Current
+- [x] Admin dashboard: move Theme and Header links into Owner tools and restore Add manual order
 - [x] Profit & costs: group crypto under NOWPayments and bank transfers under Wise
 - [x] Talk Channels: replace the staff card with an always-visible Online/Offline staff list, name cards, working/break countdowns, and current channel
 - [x] Asian Games import: verify exact post and preserve its heading, UK time, title, and both beIN channels
