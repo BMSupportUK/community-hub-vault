@@ -54,6 +54,15 @@ export function pageLabelForPath(pathname: string | null | undefined): string | 
   const path = pathname.length > 1 ? pathname.replace(/\/+$/, "") : pathname;
   const exact = EXACT[path];
   if (exact) return exact;
+  if (path.startsWith("/home/")) {
+    const slug = decodeURIComponent(path.slice("/home/".length)).split("/")[0];
+    const channelName = slug
+      .split("-")
+      .filter(Boolean)
+      .map((word) => word[0]?.toUpperCase() + word.slice(1))
+      .join(" ");
+    return channelName ? `Talk Channel · ${channelName}` : "Customer Chatroom";
+  }
   for (const [prefix, label] of PREFIX) {
     if (path.startsWith(prefix)) return label;
   }
