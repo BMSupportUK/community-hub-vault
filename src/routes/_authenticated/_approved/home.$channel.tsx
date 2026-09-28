@@ -76,6 +76,16 @@ export const Route = createFileRoute("/_authenticated/_approved/home/$channel")(
   validateSearch: (search: Record<string, unknown>): { msg?: string } =>
     typeof search.msg === "string" ? { msg: search.msg } : {},
   component: ChannelPage,
+  head: () => ({
+    meta: [
+      { title: "Talk Channels | BM Support" },
+      { name: "description", content: "Join live BM Support community conversations and keep in touch with staff and members." },
+      { property: "og:title", content: "Talk Channels | BM Support" },
+      { property: "og:description", content: "Join live BM Support community conversations and keep in touch with staff and members." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
 });
 
 interface Channel {
