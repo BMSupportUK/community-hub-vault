@@ -1,4 +1,13 @@
-# Private "staff only" messages in Talk channels
+# Talk channels: unclaimed ticket badge + private staff messages
+
+## Part 1 – Unclaimed tickets on the staff ticket icon
+- Remove the small "tickets waiting to be claimed" card in the Talk channel corner. The red bar on other pages stays.
+- The ticket icon next to each staff name flashes red with a number showing how many tickets are unclaimed. It updates live and stops flashing when the count reaches 0.
+- Clicking it opens the existing ticket popup, where staff press **Claim ticket** and then **Go to ticket**.
+- The sound and browser alert for new tickets still play for staff on shift.
+- Technical: `UnclaimedTicketsNotifier` returns nothing on Talk routes. `StaffTicketsButton` gets one shared live unclaimed count (a single subscription used by all icons), with a pulsing destructive badge.
+
+## Part 2 – Private "staff only" messages
 
 ## What users will see
 - The message box in every Talk channel gets a **lock toggle**: "Private – only staff can see". While it's on, the box turns amber and the Send button reads "Send privately".
