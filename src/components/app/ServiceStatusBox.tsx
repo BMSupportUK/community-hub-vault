@@ -121,6 +121,13 @@ export function ServiceStatusBox({ hideButtons, compact }: ServiceStatusBoxProps
               <CheckCircle2 className="size-4 text-emerald-400 shrink-0" />
               <span className="text-sm font-medium text-emerald-300">All Systems Operational</span>
             </div>
+          ) : compact ? (
+            <div className="flex items-center gap-2">
+              <span className="size-2.5 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.9)] animate-pulse" />
+              <span className="text-sm font-medium text-red-300">
+                {incidents.length} active issue{incidents.length === 1 ? "" : "s"}
+              </span>
+            </div>
           ) : (
             <ul className="space-y-4">
               {incidents.map((i) => {
@@ -168,12 +175,12 @@ export function ServiceStatusBox({ hideButtons, compact }: ServiceStatusBoxProps
               })}
             </ul>
           )}
-          {!operational && (
+          {(!operational || compact) && (
             <Link
               to="/status"
               className="block text-center text-xs font-medium px-3 py-2 rounded-lg bg-surface border border-border hover:border-fuchsia-400 hover:text-fuchsia-300 transition"
             >
-              View full status page →
+              View status page →
             </Link>
           )}
         </div>

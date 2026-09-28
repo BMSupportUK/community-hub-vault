@@ -64,7 +64,7 @@ function HomeLayout() {
   const isHomeIndex = pathname === "/home" || pathname === "/home/";
   const channelFooter = (
     <div className="space-y-4">
-      {!hideOutageBox && <ServiceStatusBox />}
+      {!hideOutageBox && <ServiceStatusBox compact />}
       {isHomeIndex && <WorkingStatusBox stackActions />}
     </div>
   );
