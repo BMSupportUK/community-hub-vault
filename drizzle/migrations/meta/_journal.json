@@ -281,6 +281,13 @@
       "when": 1790619227106,
       "tag": "0039_talk_private_messages",
       "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1790626644769,
+      "tag": "0040_restrict_member_directory",
+      "breakpoints": true
     }
   ]
 }
