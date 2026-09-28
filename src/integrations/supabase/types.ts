@@ -6354,6 +6354,16 @@ export type Database = {
             }
             Returns: string
           }
+        | {
+            Args: {
+              _created_at?: string
+              _customer_name: string
+              _items: Json
+              _method?: string
+              _reference?: string
+            }
+            Returns: string
+          }
       admin_delete_order: { Args: { _order_id: string }; Returns: Json }
       admin_get_user_location_history: {
         Args: { _limit?: number; _user_id: string }
