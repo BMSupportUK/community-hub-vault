@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
-import type { PDFDocumentProxy, PDFPageProxy } from "pdfjs-dist";
+import type { PDFPageProxy } from "pdfjs-dist";
 
 const pdfWorkerUrl = new URL("pdfjs-dist/build/pdf.worker.min.mjs", import.meta.url).toString();
 
@@ -33,7 +33,6 @@ function PdfPage({ page, width }: { page: PDFPageProxy; width: number }) {
 
 export function MobilePdfViewer({ url, title }: { url: string; title: string }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const [document, setDocument] = useState<PDFDocumentProxy | null>(null);
   const [pages, setPages] = useState<PDFPageProxy[]>([]);
   const [width, setWidth] = useState(0);
   const [error, setError] = useState(false);
@@ -46,11 +45,7 @@ export function MobilePdfViewer({ url, title }: { url: string; title: string }) 
       loadingTask = pdfjs.getDocument({ url });
       try {
         const loaded = await loadingTask.promise;
-        if (cancelled) {
-          await loaded.destroy();
-          return;
-        }
-        setDocument(loaded);
+        if (cancelled) return;
         const loadedPages = await Promise.all(
           Array.from({ length: loaded.numPages }, (_, index) => loaded.getPage(index + 1)),
         );
@@ -74,8 +69,6 @@ export function MobilePdfViewer({ url, title }: { url: string; title: string }) 
     observer.observe(container);
     return () => observer.disconnect();
   }, []);
-
-  useEffect(() => () => { void document?.destroy(); }, [document]);
 
   return (
     <div ref={containerRef} aria-label={`${title} document`} className="h-full min-h-0 w-full overflow-y-auto rounded-lg bg-muted p-1">
