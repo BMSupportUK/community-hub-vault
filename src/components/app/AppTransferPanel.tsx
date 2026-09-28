@@ -73,9 +73,9 @@ function TransferStatusSteps({ transfer }: { transfer: Transfer }) {
 
   return (
     <div className="rounded-lg border border-border/60 bg-background/60 p-3">
-      <ol className="flex min-w-0 items-center gap-1">
+      <ol className="grid min-w-0 grid-cols-1 gap-2 sm:flex sm:items-center sm:gap-1">
         {steps.map((s, i) => (
-          <li key={s.label} className="flex min-w-0 flex-1 items-center gap-1 last:flex-none">
+          <li key={s.label} className="flex min-w-0 flex-1 items-center gap-2 sm:gap-1 sm:last:flex-none">
             <span
               className={`grid size-5 shrink-0 place-items-center rounded-full border text-[10px] font-bold ${
                 s.state === "done"
@@ -98,7 +98,7 @@ function TransferStatusSteps({ transfer }: { transfer: Transfer }) {
             >
               {s.label}
             </span>
-            {i < steps.length - 1 && <span className="mx-1 h-px flex-1 bg-border" />}
+             {i < steps.length - 1 && <span className="mx-1 hidden h-px flex-1 bg-border sm:block" />}
           </li>
         ))}
       </ol>
@@ -239,9 +239,9 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
           )}
         </div>
 
-        <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-4 xl:overflow-visible">
+        <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-3 sm:p-4 xl:overflow-visible">
           <div className="flex flex-wrap items-center gap-2">
-            <h4 className="font-display font-semibold text-lg leading-snug text-foreground flex items-center gap-1.5">
+             <h4 className="flex min-w-0 items-center gap-1.5 break-words font-display text-base font-semibold leading-snug text-foreground sm:text-lg">
               <Smartphone className="size-4 text-violet-300 shrink-0" />
               {build.appName || build.fileName}
             </h4>
@@ -294,7 +294,7 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
 
 
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-sm sm:max-w-md max-h-[85vh] overflow-y-auto border-violet-500/30 bg-violet-950/95 backdrop-blur-sm">
+         <DialogContent className="max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-sm overflow-x-hidden overflow-y-auto border-violet-500/30 bg-violet-950/95 p-4 backdrop-blur-sm sm:max-w-md sm:p-6">
           <DialogHeader>
             <DialogTitle className="font-display text-base flex items-center gap-2">
               <Smartphone className="size-4 text-violet-300" /> {build.appName || build.fileName}
@@ -316,7 +316,7 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
               <p className="text-[10px] uppercase tracking-wider text-emerald-300/90 font-semibold">
                 Type into Downloader on your device
               </p>
-              <div className="mt-1.5 flex items-center justify-between gap-2">
+               <div className="mt-1.5 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
                 <span className="font-mono text-sm tracking-wide text-foreground break-all">{shortUrl}</span>
                 <Button
                   size="icon"
@@ -338,11 +338,11 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
           )}
 
           <div className="flex flex-col items-center gap-3">
-            <div className="rounded-xl bg-white p-2">
+             <div className="max-w-full rounded-xl bg-white p-2">
               {qrDataUrl ? (
-                <img src={qrDataUrl} alt="Secure install link QR code" className="block size-[192px]" />
+                 <img src={qrDataUrl} alt="Secure install link QR code" className="block size-40 sm:size-[192px]" />
               ) : (
-                <div className="flex size-[192px] items-center justify-center">
+                 <div className="flex size-40 items-center justify-center sm:size-[192px]">
                   <Loader2 className="size-5 animate-spin text-violet-600" />
                 </div>
               )}
@@ -484,7 +484,7 @@ export function AppTransferPanel({ onUploadClick }: { onUploadClick?: () => void
 
   return (
      <section className="min-w-0 overflow-hidden rounded-lg border border-border/80 bg-background/90 shadow-[0_24px_60px_-24px_rgba(0,0,0,0.7)] backdrop-blur-xl md:flex md:min-h-0 md:flex-1 md:flex-col">
-       <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-2 border-b border-border/60 px-3 py-3 sm:px-5 sm:py-4 md:px-4 md:py-2 lg:px-5 lg:py-3">
+       <div className="grid min-w-0 grid-cols-1 gap-2 border-b border-border/60 px-3 py-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:px-5 sm:py-4 md:px-4 md:py-2 lg:px-5 lg:py-3">
          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
           <span className="grid size-10 place-items-center rounded-xl bg-gradient-primary text-primary-foreground shadow-glow">
             <Smartphone className="size-5" />
@@ -496,15 +496,15 @@ export function AppTransferPanel({ onUploadClick }: { onUploadClick?: () => void
             </p>
           </div>
         </div>
-         <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-emerald-400/40 bg-emerald-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-300">
+          <span className="inline-flex w-fit shrink-0 items-center gap-1.5 rounded-full border border-emerald-400/40 bg-emerald-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-300">
           <ShieldCheck className="size-3" /> Secure links
         </span>
       </div>
         <div className="min-w-0 p-3 sm:p-5 md:flex md:min-h-0 md:flex-1 md:flex-col md:p-3 lg:p-4">
         <Tabs defaultValue={firstTab} className="min-w-0 w-full md:flex md:min-h-0 md:flex-1 md:flex-col">
-          <TabsList className="flex h-auto w-full min-w-0 shrink-0 justify-start gap-1 overflow-x-auto scrollbar-hide bg-surface-2/80 p-1 sm:flex-wrap">
+          <TabsList className="grid h-auto w-full min-w-0 shrink-0 grid-cols-2 gap-1 bg-surface-2/80 p-1 sm:flex sm:flex-wrap sm:justify-start">
           {APP_BUILD_CATEGORIES.map((c) => (
-             <TabsTrigger key={c.key} value={c.key} className="shrink-0 text-xs sm:text-sm">
+             <TabsTrigger key={c.key} value={c.key} className="min-w-0 whitespace-normal px-2 text-xs leading-tight sm:shrink-0 sm:text-sm">
               {c.label}
               <span className="ml-1.5 text-[10px] opacity-70">{(grouped[c.key] ?? []).length}</span>
             </TabsTrigger>

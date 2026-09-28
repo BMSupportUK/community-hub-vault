@@ -469,13 +469,13 @@ function InstallGuidesPage() {
       <div className="flex min-h-0 min-w-0 flex-1 items-start md:h-full">
         <div className="min-h-0 min-w-0 flex-1 md:h-full">
         <Tabs value={tab} onValueChange={setTab} className="flex min-h-0 min-w-0 w-full flex-col md:h-full">
-          <header className="min-w-0 shrink-0 border-b border-border bg-surface/60 px-4 pt-5 pb-4 backdrop-blur sm:px-8 md:px-6 md:py-3">
+          <header className="min-w-0 shrink-0 border-b border-border bg-surface/60 px-3 pb-3 pt-4 backdrop-blur sm:px-8 md:px-6 md:py-3">
             <div className="grid min-w-0 grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
               <div className="min-w-0">
-                <h1 className="font-display text-3xl font-bold text-foreground">Install Guides</h1>
+                <h1 className="font-display text-2xl font-bold text-foreground sm:text-3xl">Install Guides</h1>
                 <p className="mt-1 text-sm text-muted-foreground md:hidden xl:block">Step-by-step installation walkthroughs and PDF docs</p>
               </div>
-              <TabsList className="scrollbar-hide flex h-auto w-full min-w-0 max-w-full flex-nowrap justify-start gap-1 overflow-x-auto rounded-full border border-border bg-surface/70 p-1 lg:w-auto lg:max-w-full">
+              <TabsList className="scrollbar-hide flex h-auto w-full min-w-0 max-w-full flex-nowrap justify-start gap-1 overflow-x-auto rounded-lg border border-border bg-surface/70 p-1 lg:w-auto lg:max-w-full lg:rounded-full">
                 <TabsTrigger value="welcome" className="shrink-0 truncate rounded-full px-3 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">Welcome</TabsTrigger>
                 <TabsTrigger value="guides" className="shrink-0 truncate rounded-full px-3 text-xs data-[state=active]:bg-primary data-[state=active]:text-primary-foreground lg:text-sm">Guides</TabsTrigger>
                 {canSeeAppTab && (
@@ -497,7 +497,7 @@ function InstallGuidesPage() {
             </div>
           </header>
 
-        <div className={`relative isolate min-w-0 min-h-0 flex-1 px-4 py-4 sm:px-8 md:overflow-y-auto md:py-6 ${tab === "get-app" || tab === "transfers" ? "md:flex md:flex-col md:overflow-hidden md:px-6 md:py-3" : ""}`}>
+        <div className={`relative isolate min-w-0 min-h-0 flex-1 px-2 py-3 sm:px-8 md:overflow-y-auto md:py-6 ${tab === "get-app" || tab === "transfers" ? "md:flex md:flex-col md:overflow-hidden md:px-6 md:py-3" : ""}`}>
           {canManageGuides && (
             <TabsContent value="approvals" className="mt-6">
               <div className="max-w-5xl space-y-4">
@@ -1113,12 +1113,12 @@ function IllustratedHero({ image, title, text, children }: { image: string; titl
       <img src={image} alt="" aria-hidden width={1920} height={1024} className="absolute inset-0 h-full w-full object-cover" />
       <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/70 to-transparent" />
       <div className="absolute inset-0 bg-gradient-to-t from-background/80 via-transparent to-transparent" />
-       <div className="relative flex min-w-0 min-h-0 flex-1 flex-col p-4 sm:p-8 md:p-5 lg:p-8">
+        <div className="relative flex min-w-0 min-h-0 flex-1 flex-col p-3 sm:p-8 md:p-5 lg:p-8">
         <div className="max-w-2xl shrink-0">
-          <h2 className="font-display text-3xl font-bold leading-tight text-foreground drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)] sm:text-4xl md:text-3xl lg:text-4xl">{title}</h2>
-          <p className="mt-4 text-base text-foreground/90 drop-shadow sm:text-lg md:mt-1 md:text-sm lg:mt-2 lg:text-base">{text}</p>
+           <h2 className="font-display text-2xl font-bold leading-tight text-foreground drop-shadow-[0_2px_12px_rgba(0,0,0,0.6)] sm:text-4xl md:text-3xl lg:text-4xl">{title}</h2>
+           <p className="mt-2 text-sm text-foreground/90 drop-shadow sm:mt-4 sm:text-lg md:mt-1 md:text-sm lg:mt-2 lg:text-base">{text}</p>
         </div>
-         <div className="mt-5 min-w-0 min-h-0 flex-1 rounded-lg border border-border bg-surface/80 p-3 shadow-lg backdrop-blur-md sm:p-6 md:mt-3 md:flex md:flex-col md:overflow-hidden md:p-2 lg:mt-4 lg:p-3">
+          <div className="mt-3 min-w-0 min-h-0 flex-1 rounded-lg border border-border bg-surface/80 p-2 shadow-lg backdrop-blur-md sm:mt-5 sm:p-6 md:mt-3 md:flex md:flex-col md:overflow-hidden md:p-2 lg:mt-4 lg:p-3">
           {children}
         </div>
       </div>
