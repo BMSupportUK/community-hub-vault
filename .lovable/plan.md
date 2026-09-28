@@ -1,19 +1,18 @@
-# Fix: APK install information not showing
+# Remove the "Installed" step for APK downloads
 
-## Why it happens
+## Why
 
-The "Installed & opened" step on a download link is only filled in when the installed app itself opens, signs in, and reports back to the site. When a member downloads the APK through the secure link (or types the code into Downloader on a Fire Stick) and installs it manually, nothing on that device tells the website — so the install step stays blank forever. A website cannot detect an APK being installed on another device; only the app can report it.
+Apps like the QD app are third-party APKs. They never talk back to the site, so the "Installed" step can never be filled in and always looks stuck. Only our own BM Support Android app could report an install.
 
 ## What I'll change
 
-1. **Manual "Mark as installed" button** — in the download popup, once the download has completed, show a "Mark as installed" button. Tapping it stamps the link as installed (recorded as "confirmed by member" rather than a device report), so the status steps complete instead of looking stuck.
-
-2. **Clearer status wording** — when the download finished but no install report has arrived, the steps will say the install info appears automatically once the app is opened and signed in, with the manual button as the fallback. No more silent blank step.
-
-3. **Keep automatic reporting** — the official app will still stamp installs automatically when it's opened and signed in on the device; the manual button only appears as a fallback.
+1. **Download-only progress** — in the download popup, the steps become just "Link issued" and "Downloaded" (with the live percentage and device while downloading). The "Installed" step is removed.
+2. **Keep useful download info** — download count, device name and download time stay visible.
+3. **Staff view** — the staff live-transfers list drops the install column/label the same way, so it shows download status only.
+4. **BM Support app only** — if a card is our own website Android app, the "Installed & opened" step stays, because that app does report back when a member signs in.
 
 ## Technical details
 
-- New server function `markTransferInstalled` in `src/lib/app-transfer.functions.ts`: authenticated, member can only stamp their own transfer, sets `installed_at` and records `install_device` as "Confirmed by member" so manual marks are distinguishable from real app reports.
-- `TransferStatusSteps` in `src/components/app/AppTransferPanel.tsx`: updated labels/hint text and the new button, shown only when downloaded but not yet installed.
-- No database changes needed — existing `app_transfers` columns are reused.
+- `TransferStatusSteps` in `src/components/app/AppTransferPanel.tsx`: render the install step only when the transfer already has `installedAt` (i.e. the own app reported), otherwise show two steps.
+- Same conditional in the staff transfers view that reads `installedAt`.
+- No database or server changes; `reportNativeInstall` stays for the own app.
