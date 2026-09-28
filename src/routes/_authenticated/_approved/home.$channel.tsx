@@ -2283,7 +2283,7 @@ function ChannelPage() {
                         ? `Slow mode: wait ${slowRemaining}s before sending another message`
                         : pendingGif
                           ? "GIF attached — press Enter or Send"
-                          : `Message #${channel.name} — !private or !s for staff-only · @ to mention · # to jump to a channel · paste or Win + . for emotes & GIFs`
+                          : `Message #${channel.name}`
                 }
                 onBeforeInput={(e) => {
                   const inputEvent = e.nativeEvent as InputEvent;
