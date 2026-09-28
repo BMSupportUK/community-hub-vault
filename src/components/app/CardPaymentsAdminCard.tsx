@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Loader2, ExternalLink } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchInChunks } from "@/lib/chunked-in";
 
 type Provider = "square" | "stripe" | "cash" | "bank_transfer";
 
@@ -62,11 +63,18 @@ export function CardPaymentsAdminCard({ provider }: { provider: Provider }) {
       const ids = Array.from(new Set((data ?? []).map((r) => r.order_id)));
       const orders: Record<string, Row["order"]> = {};
       if (ids.length) {
-        const { data: o } = await supabase
-          .from("orders")
-          .select("id, status, shipping_name, email, existing_username, customer_type")
-          .in("id", ids);
-        for (const x of o ?? []) if (x.id) orders[x.id] = x as never;
+        try {
+          const o = await fetchInChunks<{ id: string }>(ids, (chunk) =>
+            supabase
+              .from("orders")
+              .select("id, status, shipping_name, email, existing_username, customer_type")
+              .in("id", chunk),
+          );
+          for (const x of o) if (x.id) orders[x.id] = x as never;
+        } catch (e) {
+          if (!cancelled) setError(e instanceof Error ? e.message : "Could not load customer details");
+          return;
+        }
       }
       if (!cancelled) setRows((data ?? []).map((r) => ({ ...r, order: orders[r.order_id] ?? null })));
     })();
