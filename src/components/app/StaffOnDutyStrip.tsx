@@ -623,16 +623,17 @@ export function StaffOnDutyStrip({
       </div>
     );
     return (
-      <div key={p.id} className="flex items-start gap-1">
+      <div key={p.id} className="relative">
         <TalkMemberMiniProfile
           userId={p.id}
           online={online}
           fallback={talkFallbackRow(p.id)}
-          className="block min-w-0 flex-1"
+          className="block w-full"
         >
           {row}
         </TalkMemberMiniProfile>
-        <span className="mt-3 shrink-0"><StaffTicketsButton staffId={p.id} staffName={name} /></span>
+        {/* Overlaid bottom-right so the name card keeps its full original width. */}
+        <span className="absolute bottom-1 right-1 z-20"><StaffTicketsButton staffId={p.id} staffName={name} /></span>
       </div>
     );
   };
