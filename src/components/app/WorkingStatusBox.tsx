@@ -266,7 +266,8 @@ export function WorkingStatusBox({
   stackActions?: boolean;
   variant?: "card" | "header";
 } = {}) {
-  const { user, roles } = useAuth();
+  const { user, roles, hasAny } = useAuth();
+  const canAnswerTickets = hasAny(["admin", "management", "staff"]);
   const dnd = useDndStatus(user?.id);
   const notifyShift = useServerFn(sendShiftEventPush);
   const notifyBreak = useServerFn(sendBreakEventPush);
@@ -604,7 +605,9 @@ export function WorkingStatusBox({
           Staff Shift Controls
         </span>
         <ActionIcons compact />
-        <StaffTicketsButton staffId={user.id} staffName={displayName} placement="below" className="shrink-0" />
+        {canAnswerTickets && (
+          <StaffTicketsButton staffId={user.id} staffName={displayName} placement="below" className="shrink-0" />
+        )}
         <Link
           to="/clock"
           title="Clock page"
