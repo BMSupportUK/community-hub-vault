@@ -39,6 +39,8 @@ describe("remembered sports import layouts", () => {
 
 **## WST**
 
+Monday, 28th September
+
 **Shenzhen Open**
 \`7:00am UK | 2:00am ET\`
 
@@ -77,6 +79,8 @@ TNT Sports 1 & 2`;
     const raw = `-
 
 **## ASIAN GAMES**
+
+Monday, 28th September
 
 **Aichi Nagoya 2026**
 \`11:00pm UK | 6:00pm ET\`
