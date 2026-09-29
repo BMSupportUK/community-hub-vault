@@ -545,7 +545,6 @@ function SportsGuidesPage() {
     if (!ids?.length) return;
     const c = azCycleRef.current;
     const idsKey = ids.join("|");
-    console.log("AZ-debug", { letter, idx: c.index, id: ids[c.index], count: ids.length });
     if (c.letter !== letter || c.idsKey !== idsKey) {
       c.letter = letter;
       c.idsKey = idsKey;
