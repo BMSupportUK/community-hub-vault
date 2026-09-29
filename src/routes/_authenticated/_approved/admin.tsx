@@ -15,7 +15,7 @@ import { WiseIncomingCard } from "@/components/app/WiseIncomingCard";
 import { BankTransferAdminCard } from "@/components/app/BankTransferAdminCard";
 import { setAppTheme, useDefaultAppTheme } from "@/hooks/use-app-theme";
 import { applyNavOrder, setLandingNavOrder, useLandingNavOrder } from "@/hooks/use-landing-nav-order";
-import { ArrowDown, ArrowUp, LogOut } from "lucide-react";
+import { ArrowDown, ArrowUp, LogOut, Smartphone } from "lucide-react";
 import { RemoteSignOutCard } from "@/components/app/RemoteSignOutCard";
 import { AndroidApkUploadCard } from "@/components/app/AndroidApkUploadCard";
 import { ThemePicker, APP_THEME_OPTIONS } from "@/components/app/ThemePicker";
