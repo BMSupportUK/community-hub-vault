@@ -88,7 +88,10 @@ export function StaffTicketsButton({ staffId, staffName }: { staffId: string; st
         className="relative"
         onMouseEnter={(e) => {
           const r = e.currentTarget.getBoundingClientRect();
-          setHoverAnchor({ top: r.top, left: r.left + r.width / 2 });
+          const vw = window.innerWidth;
+          // Near the right edge, right-align the panel so it never overflows the screen.
+          if (vw - r.left < 170) setHoverAnchor({ top: r.top, right: vw - r.right });
+          else setHoverAnchor({ top: r.top, left: r.left + r.width / 2 });
           void loadHoverCounts();
         }}
         onMouseLeave={() => setHoverAnchor(null)}
