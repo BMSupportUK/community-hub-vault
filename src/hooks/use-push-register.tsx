@@ -124,7 +124,16 @@ export function usePushRegister() {
         const err = await PushNotifications.addListener("registrationError", (e) => {
           console.error("[push] registration error", e);
         });
-        listeners.push(reg, err, received);
+
+        // Tapping a notification (app closed or backgrounded) opens the app
+        // straight on the relevant page instead of just the home screen.
+        const tapped = await PushNotifications.addListener("pushNotificationActionPerformed", (action) => {
+          const url = action.notification?.data?.url;
+          if (typeof url === "string" && url.startsWith("/")) {
+            window.location.assign(url);
+          }
+        });
+        listeners.push(reg, err, received, tapped);
 
         await PushNotifications.register();
       } catch (e) {
