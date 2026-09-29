@@ -127,13 +127,18 @@ export function usePushRegister() {
 
         // Tapping a notification (app closed or backgrounded) opens the app
         // straight on the relevant page instead of just the home screen.
-        const tapped = await PushNotifications.addListener("pushNotificationActionPerformed", (action) => {
-          const url = action.notification?.data?.url;
+        const openUrl = (url: unknown) => {
           if (typeof url === "string" && url.startsWith("/")) {
             window.location.assign(url);
           }
+        };
+        const tapped = await PushNotifications.addListener("pushNotificationActionPerformed", (action) => {
+          openUrl(action.notification?.data?.url);
         });
-        listeners.push(reg, err, received, tapped);
+        const localTapped = await LocalNotifications.addListener("localNotificationActionPerformed", (action) => {
+          openUrl(action.notification?.extra?.url);
+        });
+        listeners.push(reg, err, received, tapped, localTapped);
 
         await PushNotifications.register();
       } catch (e) {
