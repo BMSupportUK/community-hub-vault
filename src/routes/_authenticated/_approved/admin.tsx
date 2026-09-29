@@ -17,6 +17,7 @@ import { setAppTheme, useDefaultAppTheme } from "@/hooks/use-app-theme";
 import { applyNavOrder, setLandingNavOrder, useLandingNavOrder } from "@/hooks/use-landing-nav-order";
 import { ArrowDown, ArrowUp, LogOut } from "lucide-react";
 import { RemoteSignOutCard } from "@/components/app/RemoteSignOutCard";
+import { AndroidApkUploadCard } from "@/components/app/AndroidApkUploadCard";
 import { ThemePicker, APP_THEME_OPTIONS } from "@/components/app/ThemePicker";
 import {
   Dialog,
@@ -484,7 +485,7 @@ function DashboardBody() {
   const isAdminOnly = hasRole("admin");
   const canSeePins = isAdminOnly || hasRole("management");
   const { tab: searchTab } = Route.useSearch();
-  const validTabs = ["tools", "order-status", "square", "stripe", "bank-transfer", "bank-transfer-orders", "cash", "staff-pins", "backup-codes", "theme", "header-links", "sign-out-devices"] as const;
+  const validTabs = ["tools", "order-status", "square", "stripe", "bank-transfer", "bank-transfer-orders", "cash", "staff-pins", "backup-codes", "theme", "header-links", "sign-out-devices", "android-apk"] as const;
   type DashTab = (typeof validTabs)[number];
   const [tab, setTab] = useState<DashTab>(
     (validTabs as readonly string[]).includes(searchTab as string) ? (searchTab as DashTab) : "tools",
@@ -574,7 +575,7 @@ function DashboardBody() {
               type="button"
               onClick={() => setTab(key)}
               className={`px-4 h-9 rounded-lg text-sm font-medium transition-colors ${
-                tab === key || (key === "tools" && (tab === "theme" || tab === "header-links" || tab === "sign-out-devices"))
+                tab === key || (key === "tools" && (tab === "theme" || tab === "header-links" || tab === "sign-out-devices" || tab === "android-apk"))
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:text-foreground"
               }`}
@@ -614,6 +615,10 @@ function DashboardBody() {
       ) : tab === "sign-out-devices" && canSeePins ? (
         <div className="max-w-2xl">
           <RemoteSignOutCard />
+        </div>
+      ) : tab === "android-apk" && isAdminOnly ? (
+        <div className="max-w-2xl">
+          <AndroidApkUploadCard />
         </div>
       ) : (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px] items-start">
@@ -656,6 +661,20 @@ function DashboardBody() {
                 <div className="font-display font-bold">Sign out devices</div>
               </div>
               <p className="text-xs text-muted-foreground">Sign an account out of every device remotely.</p>
+            </button>
+          )}
+          {isAdminOnly && (
+            <button
+              type="button"
+              onClick={() => setTab("android-apk")}
+              className="group relative text-left rounded-2xl border border-border bg-surface-1 p-4 hover:border-primary hover:shadow-glow transition-all overflow-hidden"
+            >
+              <div className="absolute inset-x-0 top-0 h-1 bg-gradient-accent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="flex items-center gap-3 mb-2">
+                <div className="size-10 rounded-xl bg-gradient-primary grid place-items-center text-primary-foreground shadow-glow"><Smartphone className="size-5" /></div>
+                <div className="font-display font-bold">Android app file</div>
+              </div>
+              <p className="text-xs text-muted-foreground">Upload the BM Support APK the download barcode points to.</p>
             </button>
           )}
         </div>
