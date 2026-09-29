@@ -15,6 +15,7 @@ import { initAnalytics, trackPageView } from "@/lib/analytics";
 
 import appCss from "../styles.css?url";
 import { AuthProvider, useAuth } from "@/hooks/use-auth";
+import { ForceSignOutListener } from "@/components/app/ForceSignOutListener";
 import { useAppTheme } from "@/hooks/use-app-theme";
 import { SoundUnlocker } from "@/components/app/SoundUnlocker";
 import { TicketReplyAlert } from "@/components/app/TicketReplyAlert";
@@ -175,6 +176,7 @@ function RootComponent() {
         <ToastNotificationBridge />
         <LocalSendReceiverBridge />
         <FanZonePresenceTracker />
+        <ForceSignOutListener />
         <Outlet />
         <BackToTopButton />
         {/* z-index keeps toasts visible above the inactivity lock overlay (z-200) */}
