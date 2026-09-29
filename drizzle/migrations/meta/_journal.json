@@ -295,6 +295,13 @@
       "when": 1790706879579,
       "tag": "0041_remote_sign_out",
       "breakpoints": true
+    },
+    {
+      "idx": 42,
+      "version": "7",
+      "when": 1790707436185,
+      "tag": "0042_shift_phone_alerts",
+      "breakpoints": true
     }
   ]
 }
