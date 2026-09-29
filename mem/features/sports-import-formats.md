@@ -89,3 +89,6 @@ All permanent provider layouts must have parser regression coverage. Every impor
 
 ## Manual queue splitting (permanent)
 Splitting a multi-event post at the second event must keep both events. A chosen split point may include a heading immediately above it, but must never jump backwards or forwards to an unrelated heading. Blank/decorative rows are not valid split choices. When both halves share one provider/date heading, copy that heading into the second half so both queued listings retain their context.
+
+## ESPN+ ranked team at line start (permanent)
+`#10 Notre Dame vs. UIC` — a `#` followed by a digit is a ranking, never a markdown heading. Headings need `#` then a non-digit. `vs.` also blocks heading detection. Tested on the real 38-row post: 38 events, 0 issues.

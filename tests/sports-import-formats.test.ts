@@ -232,3 +232,13 @@ beIN Sports English 1 & 2`;
     });
   }
 });
+describe("ESPN+ ranked team at line start", () => {
+  test("#10 Notre Dame vs. UIC is an event, not a heading", () => {
+    const raw = "# ESPN\n\nMaryland vs. Princeton \n- 29-09-2026 7:55 PM until 29-09-2026 10:05 PM - ESPN 3 HD\n\n#10 Notre Dame vs. UIC\n - 29-09-2026 11:55 PM until 30-09-2026 2:05 AM - ESPN 17 HD";
+    const r = checkSportsImport(raw, "gmt", Date.parse("2026-09-29T10:00:00Z"), "ESPN+");
+    expect(r.errors).toBe(0);
+    expect(r.warnings).toBe(0);
+    expect(r.events).toHaveLength(2);
+    expect(r.events[1]).toMatchObject({ title: "#10 Notre Dame v UIC", channels: ["ESPN 17 HD"] });
+  });
+});
