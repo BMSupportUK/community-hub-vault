@@ -60,11 +60,22 @@ function useUnclaimedCount() {
   return n;
 }
 
-export function StaffTicketsButton({ staffId, staffName }: { staffId: string; staffName: string }) {
+export function StaffTicketsButton({
+  staffId,
+  staffName,
+  placement = "above",
+  className,
+}: {
+  staffId: string;
+  staffName: string;
+  /** "above" (talk staff cards) or "below" (staff controls in the page header). */
+  placement?: "above" | "below";
+  className?: string;
+}) {
   const [open, setOpen] = useState(false);
   const unclaimed = useUnclaimedCount();
   const [hoverCounts, setHoverCounts] = useState<{ unclaimed: number; mine: number; others: number } | null>(null);
-  const [hoverAnchor, setHoverAnchor] = useState<{ top: number; left?: number; right?: number } | null>(null);
+  const [hoverAnchor, setHoverAnchor] = useState<{ top?: number; bottom?: number; left?: number; right?: number } | null>(null);
 
   // Three live counts on hover: unclaimed / claimed by this staff member / claimed by other staff.
   const loadHoverCounts = useCallback(async () => {
@@ -87,13 +98,19 @@ export function StaffTicketsButton({ staffId, staffName }: { staffId: string; st
   return (
     <>
       <div
-        className="relative"
+        className={cn("relative", className)}
         onMouseEnter={(e) => {
           const r = e.currentTarget.getBoundingClientRect();
           const vw = window.innerWidth;
           // Near the right edge, right-align the panel so it never overflows the screen.
-          if (vw - r.left < 170) setHoverAnchor({ top: r.top, right: vw - r.right });
-          else setHoverAnchor({ top: r.top, left: r.left + r.width / 2 });
+          if (placement === "below") {
+            if (vw - r.left < 170) setHoverAnchor({ bottom: r.bottom, right: vw - r.right });
+            else setHoverAnchor({ bottom: r.bottom, left: r.left + r.width / 2 });
+          } else if (vw - r.left < 170) {
+            setHoverAnchor({ top: r.top, right: vw - r.right });
+          } else {
+            setHoverAnchor({ top: r.top, left: r.left + r.width / 2 });
+          }
           void loadHoverCounts();
         }}
         onMouseLeave={() => setHoverAnchor(null)}
@@ -105,8 +122,18 @@ export function StaffTicketsButton({ staffId, staffName }: { staffId: string; st
           onPointerDown={(e) => e.stopPropagation()}
           onClick={(e) => { e.stopPropagation(); e.preventDefault(); setHoverAnchor(null); setOpen(true); }}
           className={cn(
-            "relative grid size-6 shrink-0 place-items-center rounded-md hover:bg-primary hover:text-primary-foreground",
-            unclaimed > 0 ? "animate-pulse bg-destructive text-destructive-foreground" : "bg-surface-2/80 text-muted-foreground",
+            "relative grid place-items-center",
+            placement === "below"
+              ? cn(
+                  "size-8 shrink-0 rounded-full transition-colors",
+                  unclaimed > 0
+                    ? "bg-destructive/15 text-destructive hover:bg-destructive/25"
+                    : "text-muted-foreground hover:bg-surface-2 hover:text-foreground",
+                )
+              : cn(
+                  "size-6 shrink-0 rounded-md hover:bg-primary hover:text-primary-foreground",
+                  unclaimed > 0 ? "animate-pulse bg-destructive text-destructive-foreground" : "bg-surface-2/80 text-muted-foreground",
+                ),
           )}
         >
           <Ticket className="size-3.5" />
@@ -122,11 +149,13 @@ export function StaffTicketsButton({ staffId, staffName }: { staffId: string; st
         <div
           className={cn(
             "pointer-events-none fixed z-[80] w-max rounded-md border border-border bg-background px-2.5 py-1.5 text-left shadow-xl",
-            hoverAnchor.left !== undefined && "-translate-x-1/2 -translate-y-full",
-            hoverAnchor.right !== undefined && "-translate-y-full",
+            hoverAnchor.left !== undefined && hoverAnchor.top !== undefined && "-translate-x-1/2 -translate-y-full",
+            hoverAnchor.right !== undefined && hoverAnchor.top !== undefined && "-translate-y-full",
+            hoverAnchor.left !== undefined && hoverAnchor.bottom !== undefined && "-translate-x-1/2",
           )}
           style={{
-            top: hoverAnchor.top - 6,
+            ...(hoverAnchor.top !== undefined ? { top: hoverAnchor.top - 6 } : {}),
+            ...(hoverAnchor.bottom !== undefined ? { top: hoverAnchor.bottom + 6 } : {}),
             ...(hoverAnchor.left !== undefined ? { left: hoverAnchor.left } : {}),
             ...(hoverAnchor.right !== undefined ? { right: hoverAnchor.right + 8 } : {}),
           }}

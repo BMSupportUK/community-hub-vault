@@ -9,7 +9,6 @@ import { formatRoleLabel } from "@/lib/role-label";
 import { DndCountdown } from "@/components/app/DndCountdown";
 import { useDndStatus } from "@/hooks/use-dnd";
 import { Nameplate } from "@/components/app/Nameplate";
-import { StaffTicketsButton } from "@/components/app/StaffTicketsDialog";
 import { ChatMiniProfile, type ChatMiniProfileData } from "@/components/app/ChatMiniProfile";
 import {
   TalkMemberMiniProfile,
@@ -678,7 +677,7 @@ export function StaffOnDutyStrip({
       </div>
     );
     return (
-      <div key={p.id} className="relative">
+      <div key={p.id}>
         <TalkMemberMiniProfile
           userId={p.id}
           online={online}
@@ -687,8 +686,6 @@ export function StaffOnDutyStrip({
         >
           {row}
         </TalkMemberMiniProfile>
-        {/* Overlaid bottom-right so the name card keeps its full original width. */}
-        <span className="absolute bottom-1 right-1 z-20"><StaffTicketsButton staffId={p.id} staffName={name} /></span>
       </div>
     );
   };
