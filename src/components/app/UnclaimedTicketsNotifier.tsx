@@ -154,6 +154,100 @@ export function UnclaimedTicketsNotifier() {
 }
 
 /**
+ * Authorised change (user request, 2026-09-29): in Talk channels the
+ * unclaimed-tickets bar renders directly above the STAFF/MEMBERS pills in the
+ * channel sidebar / people sheet, not as a page-top banner. Same on-shift and
+ * live-list rules as the page-top banner; the new-ticket sound stays on
+ * UnclaimedTicketsNotifier.
+ */
+export function TalkUnclaimedTicketsBar() {
+  const { user, hasAny } = useAuth();
+  const isStaff = hasAny(["admin", "management", "staff"]);
+  const [onShift, setOnShift] = useState(false);
+  const [rows, setRows] = useState<Row[]>([]);
+  const [claiming, setClaiming] = useState<string | null>(null);
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (!user || !isStaff) { setOnShift(false); return; }
+    let cancelled = false;
+    const check = async () => {
+      const { data } = await supabase.from("shifts").select("id").eq("user_id", user.id).is("clock_out", null).limit(1);
+      if (!cancelled) setOnShift(!!data?.length);
+    };
+    void check();
+    const ch = supabase
+      .channel(`talk-claim-bar-shift-${user.id}-${Math.random().toString(36).slice(2)}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "shifts", filter: `user_id=eq.${user.id}` }, () => { void check(); })
+      .subscribe();
+    return () => { cancelled = true; void supabase.removeChannel(ch); };
+  }, [user, isStaff]);
+
+  const load = useCallback(async () => {
+    if (!onShift) { setRows([]); return; }
+    setRows(await fetchUnclaimed());
+  }, [onShift]);
+
+  useEffect(() => {
+    void load();
+    const ch = supabase
+      .channel(`talk-claim-bar-tickets-${Math.random().toString(36).slice(2)}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "tickets" }, () => { void load(); })
+      .subscribe();
+    return () => { void supabase.removeChannel(ch); };
+  }, [load]);
+
+  const claim = async (id: string) => {
+    if (!user) return;
+    setClaiming(id);
+    const result = await claimTicket(id, user.id);
+    setClaiming(null);
+    if (result === "error") return toast.error("Couldn't claim the ticket");
+    if (result === "taken") toast.error("Someone else claimed this ticket first");
+    else toast.success("Ticket claimed", { action: { label: "Go to ticket", onClick: () => { window.location.href = `/tickets?id=${id}&view=all`; } } });
+    void load();
+  };
+
+  if (!user || !isStaff || !onShift || rows.length === 0) return null;
+  const n = rows.length;
+  const label = `${n} ticket${n === 1 ? "" : "s"} waiting to be claimed`;
+
+  return (
+    <div role="status" className="shrink-0 border-b border-destructive/40 bg-destructive/10">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center gap-1.5 px-2.5 py-1.5 text-left"
+        aria-expanded={open}
+      >
+        <BellRing className="size-3.5 shrink-0 animate-pulse text-destructive" />
+        <span className="min-w-0 flex-1 truncate text-[11px] font-semibold text-destructive">{label}</span>
+        {open ? <ChevronUp className="size-3.5 shrink-0 text-destructive" /> : <ChevronDown className="size-3.5 shrink-0 text-destructive" />}
+      </button>
+      {open && (
+        <div className="scrollbar-hide max-h-48 space-y-1 overflow-y-auto border-t border-destructive/30 p-1.5">
+          {rows.map((r) => (
+            <div key={r.id} className="rounded-md border border-border/60 bg-surface-2/60 p-1.5">
+              <p className="truncate text-[11px] font-medium text-foreground">{r.subject}</p>
+              <p className="text-[10px] capitalize text-muted-foreground">{r.priority} priority</p>
+              <div className="mt-1 flex gap-1">
+                <Button size="sm" className="h-6 px-2 text-[10px]" disabled={claiming === r.id} onClick={() => claim(r.id)}>
+                  {claiming === r.id ? "Claiming…" : "Claim"}
+                </Button>
+                <Button asChild size="sm" variant="outline" className="h-6 px-2 text-[10px]">
+                  <Link to="/tickets" search={{ id: r.id, view: "all" } as never}>Go to ticket <ArrowRight className="size-3" /></Link>
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+/**
  * Talk-only compact bar (user request, 2026-09-29): sits directly above the
  * STAFF/MEMBERS pills in the channel sidebar / people sheet instead of the
  * page-top banner. Same on-shift + live-list rules as the page-top banner;
