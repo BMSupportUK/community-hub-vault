@@ -15,7 +15,8 @@ import { WiseIncomingCard } from "@/components/app/WiseIncomingCard";
 import { BankTransferAdminCard } from "@/components/app/BankTransferAdminCard";
 import { setAppTheme, useDefaultAppTheme } from "@/hooks/use-app-theme";
 import { applyNavOrder, setLandingNavOrder, useLandingNavOrder } from "@/hooks/use-landing-nav-order";
-import { ArrowDown, ArrowUp } from "lucide-react";
+import { ArrowDown, ArrowUp, LogOut } from "lucide-react";
+import { RemoteSignOutCard } from "@/components/app/RemoteSignOutCard";
 import { ThemePicker, APP_THEME_OPTIONS } from "@/components/app/ThemePicker";
 import {
   Dialog,
@@ -483,7 +484,7 @@ function DashboardBody() {
   const isAdminOnly = hasRole("admin");
   const canSeePins = isAdminOnly || hasRole("management");
   const { tab: searchTab } = Route.useSearch();
-  const validTabs = ["tools", "order-status", "square", "stripe", "bank-transfer", "bank-transfer-orders", "cash", "staff-pins", "backup-codes", "theme", "header-links"] as const;
+  const validTabs = ["tools", "order-status", "square", "stripe", "bank-transfer", "bank-transfer-orders", "cash", "staff-pins", "backup-codes", "theme", "header-links", "sign-out-devices"] as const;
   type DashTab = (typeof validTabs)[number];
   const [tab, setTab] = useState<DashTab>(
     (validTabs as readonly string[]).includes(searchTab as string) ? (searchTab as DashTab) : "tools",
@@ -573,7 +574,7 @@ function DashboardBody() {
               type="button"
               onClick={() => setTab(key)}
               className={`px-4 h-9 rounded-lg text-sm font-medium transition-colors ${
-                tab === key || (key === "tools" && (tab === "theme" || tab === "header-links"))
+                tab === key || (key === "tools" && (tab === "theme" || tab === "header-links" || tab === "sign-out-devices"))
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:text-foreground"
               }`}
@@ -610,6 +611,10 @@ function DashboardBody() {
         <div className="max-w-2xl">
           <HeaderLinksCard />
         </div>
+      ) : tab === "sign-out-devices" && canSeePins ? (
+        <div className="max-w-2xl">
+          <RemoteSignOutCard />
+        </div>
       ) : (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px] items-start">
       <section className="min-w-0">
@@ -639,6 +644,20 @@ function DashboardBody() {
             </div>
             <p className="text-xs text-muted-foreground">Change the public header link order.</p>
           </button>
+          {canSeePins && (
+            <button
+              type="button"
+              onClick={() => setTab("sign-out-devices")}
+              className="group relative text-left rounded-2xl border border-border bg-surface-1 p-4 hover:border-primary hover:shadow-glow transition-all overflow-hidden"
+            >
+              <div className="absolute inset-x-0 top-0 h-1 bg-gradient-accent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="flex items-center gap-3 mb-2">
+                <div className="size-10 rounded-xl bg-gradient-primary grid place-items-center text-primary-foreground shadow-glow"><LogOut className="size-5" /></div>
+                <div className="font-display font-bold">Sign out devices</div>
+              </div>
+              <p className="text-xs text-muted-foreground">Sign an account out of every device remotely.</p>
+            </button>
+          )}
         </div>
         <div className="grid sm:grid-cols-2 2xl:grid-cols-3 gap-3">
           {tools.map((t, i) => {
