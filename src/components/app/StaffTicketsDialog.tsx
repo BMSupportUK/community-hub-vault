@@ -266,43 +266,58 @@ function StaffTicketsDialog({ staffId, staffName, readOnly = false, onClose }: {
             <p className="text-[11px] text-muted-foreground">
               {r.assigned_to ? `Claimed by ${names.get(r.assigned_to) ?? "staff"}` : "Not claimed"} · opened {ago(r.created_at)}
             </p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {!r.assigned_to && (
-                <Button size="sm" className="h-8" disabled={!me || claiming === r.id} onClick={() => claim(r.id)}>
-                  {claiming === r.id ? "Claiming…" : "Claim ticket"}
-                </Button>
-              )}
-              {(r.assigned_to === me || !r.assigned_to) && (
-                <Button asChild size="sm" variant={r.assigned_to === me ? "default" : "outline"} className="h-8">
-                  <Link to="/tickets" search={{ id: r.id, view: "all" } as never} onClick={onClose}>
-                    Go to ticket <ArrowRight className="size-3.5" />
-                  </Link>
-                </Button>
-              )}
-              {r.assigned_to && r.assigned_to !== me && (
-                <Button asChild size="sm" variant="ghost" className="h-8">
-                  <Link to="/tickets" search={{ id: r.id, view: "all" } as never} onClick={onClose}>View</Link>
-                </Button>
-              )}
-            </div>
+            {!readOnly && (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {!r.assigned_to && (
+                  <Button size="sm" className="h-8" disabled={!me || claiming === r.id} onClick={() => claim(r.id)}>
+                    {claiming === r.id ? "Claiming…" : "Claim ticket"}
+                  </Button>
+                )}
+                {(r.assigned_to === me || !r.assigned_to) && (
+                  <Button asChild size="sm" variant={r.assigned_to === me ? "default" : "outline"} className="h-8">
+                    <Link to="/tickets" search={{ id: r.id, view: "all" } as never} onClick={onClose}>
+                      Go to ticket <ArrowRight className="size-3.5" />
+                    </Link>
+                  </Button>
+                )}
+                {r.assigned_to && r.assigned_to !== me && (
+                  <Button asChild size="sm" variant="ghost" className="h-8">
+                    <Link to="/tickets" search={{ id: r.id, view: "all" } as never} onClick={onClose}>View</Link>
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
         ))}
       </div>
     </section>
   );
 
+  const claimed = rows?.filter((r) => r.assigned_to) ?? [];
+
   return (
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="flex h-[100dvh] w-screen max-w-none flex-col gap-3 overflow-y-auto rounded-none p-4 sm:max-w-none lg:overflow-hidden">
         <DialogHeader>
-          <DialogTitle>Ticket overview — {staffName}</DialogTitle>
-          <DialogDescription>Open tickets, who has claimed them and which are still unclaimed.</DialogDescription>
+          <DialogTitle>Ticket overview{readOnly ? "" : ` — ${staffName}`}</DialogTitle>
+          <DialogDescription>
+            {readOnly
+              ? "Open tickets, which are still unclaimed and which staff member has claimed each one."
+              : "Open tickets, who has claimed them and which are still unclaimed."}
+          </DialogDescription>
         </DialogHeader>
-        <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 lg:grid-cols-3">
-          <Col title={`Claimed by ${staffName}`} items={mine} tone="bg-emerald-500/20 text-emerald-300" empty="No tickets claimed." />
-          <Col title="Not claimed" items={unclaimed} tone="bg-destructive/20 text-destructive" empty="Every ticket is claimed." />
-          <Col title="Claimed by other staff" items={others} tone="bg-amber-500/20 text-amber-300" empty="None." />
-        </div>
+        {readOnly ? (
+          <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 lg:grid-cols-2">
+            <Col title="Not claimed" items={unclaimed} tone="bg-destructive/20 text-destructive" empty="Every ticket is claimed." />
+            <Col title="Claimed" items={claimed} tone="bg-emerald-500/20 text-emerald-300" empty="None claimed yet." />
+          </div>
+        ) : (
+          <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 lg:grid-cols-3">
+            <Col title={`Claimed by ${staffName}`} items={mine} tone="bg-emerald-500/20 text-emerald-300" empty="No tickets claimed." />
+            <Col title="Not claimed" items={unclaimed} tone="bg-destructive/20 text-destructive" empty="Every ticket is claimed." />
+            <Col title="Claimed by other staff" items={others} tone="bg-amber-500/20 text-amber-300" empty="None." />
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );
