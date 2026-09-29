@@ -777,6 +777,14 @@ function ChannelPage() {
     if (!scrollRef.current || messages.length === 0) return;
     const el = scrollRef.current;
     if (!initialScrollDoneRef.current) {
+      // Phones always enter at the first message. Jumping to the unread marker
+      // or bottom made a long opening message appear cut in half on entry.
+      if (window.matchMedia("(max-width: 767px)").matches) {
+        setFirstUnreadId(null);
+        el.scrollTo({ top: 0 });
+        initialScrollDoneRef.current = true;
+        return;
+      }
       // First render of this channel: jump to first unread, else bottom.
       const lr = lastReadAtRef.current;
       // With no saved marker this is the user's first visit, so the first
