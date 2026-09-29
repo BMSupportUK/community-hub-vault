@@ -128,7 +128,6 @@ export function StaffTicketsButton({ staffId, staffName }: { staffId: string; st
             ...(hoverAnchor.left !== undefined ? { left: hoverAnchor.left } : {}),
             ...(hoverAnchor.right !== undefined ? { right: hoverAnchor.right + 8 } : {}),
           }}
-          onMouseEnter={() => {}}
         >
           <div className="flex items-center justify-between gap-3 whitespace-nowrap text-[11px] font-medium">
             <span className="flex items-center gap-1.5 text-muted-foreground">
