@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { pushToUser } from "@/lib/fcm.server";
+import { broadcastToUser } from "@/lib/push.functions";
 
 // POST /api/public/hooks/user-notification-push
 // Called by an AFTER INSERT trigger on public.user_notifications via pg_net.
