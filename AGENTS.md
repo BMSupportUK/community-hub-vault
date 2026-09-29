@@ -14,3 +14,4 @@
 - Talk: show all staff/channel; fit composer and people. Mobile guide PDFs render in-page.
 - Talk presence: channel exit broadcasts leave/untracks next task; sign-out also removes the shared channel without respawn, preventing stale online users.
 - Talk staff sidebar status: active DND overrides Working/Off duty text with “Away - From the office.” while retaining the countdown.
+- Android spoken alerts use dedicated versioned notification channels; change the channel ID when correcting a sound because Android keeps a channel's original sound permanently.
