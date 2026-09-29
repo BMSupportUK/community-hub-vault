@@ -147,6 +147,13 @@ export function UnclaimedTicketsNotifier() {
       <BellRing className="size-4 shrink-0 animate-pulse" />
       <span className="flex-1 truncate font-medium">{label}</span>
       <Button asChild size="sm" variant="secondary" className="h-7">
+        <Link to="/tickets" search={{ view: "all" } as never}>Claim</Link>
+      </Button>
+    </div>
+  );
+}
+
+/**
  * Talk-only compact bar (user request, 2026-09-29): sits directly above the
  * STAFF/MEMBERS pills in the channel sidebar / people sheet instead of the
  * page-top banner. Same on-shift + live-list rules as the page-top banner;
