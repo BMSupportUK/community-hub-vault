@@ -54,6 +54,44 @@ function DaneStatusLine({ userId }: { userId: string }) {
   );
 }
 
+/** Talk sidebar status: an active DND state takes priority over shift presence. */
+function TalkStaffStatusLine({
+  userId,
+  shift,
+  online,
+  shiftElapsed,
+}: {
+  userId: string;
+  shift?: StaffShift;
+  online: boolean;
+  shiftElapsed: number;
+}) {
+  const dnd = useDndStatus(userId);
+  if (dnd?.active) {
+    return <span className="font-semibold text-violet-300">Away - From the office.</span>;
+  }
+  if (shift) {
+    return (
+      <span className="flex items-center gap-1 text-emerald-300">
+        <Clock className="size-2.5 shrink-0" />
+        <span>Working {fmtStaffHours(shiftElapsed)}</span>
+      </span>
+    );
+  }
+  return online ? (
+    <span className="text-emerald-400">Off duty but chatting</span>
+  ) : (
+    <span>Off duty</span>
+  );
+}
+
+function fmtStaffHours(sec: number) {
+  const safeSeconds = Math.max(0, Math.floor(sec));
+  const hours = Math.floor(safeSeconds / 3600).toString().padStart(2, "0");
+  const minutes = Math.floor((safeSeconds % 3600) / 60).toString().padStart(2, "0");
+  return `${hours}h ${minutes}m`;
+}
+
 /** Where in the site this person currently is, shown under their working status. */
 function ViewingLine({ userId }: { userId: string }) {
   const page = useUserPage(userId);
@@ -619,16 +657,12 @@ export function StaffOnDutyStrip({
             </span>
           </Nameplate>
           <span className="mt-1 block text-[10px] leading-tight text-muted-foreground">
-            {shift ? (
-              <span className="flex items-center gap-1 text-emerald-300">
-                <Clock className="size-2.5 shrink-0" />
-                <span>Working {fmtHMS(shiftElapsed)}</span>
-              </span>
-            ) : online ? (
-              <span className="text-emerald-400">Off duty but chatting</span>
-            ) : (
-              <span>Off duty</span>
-            )}
+            <TalkStaffStatusLine
+              userId={p.id}
+              shift={shift}
+              online={online}
+              shiftElapsed={shiftElapsed}
+            />
           </span>
           {br && (
             <span className={cn("mt-0.5 flex items-center gap-1 text-[10px] leading-tight", breakOver ? "text-destructive" : "text-amber-300")}>

@@ -15,4 +15,4 @@
 - Gmail forwarding confirmations are captured by the email receiver and shown only to admins on the Bank Transfer page.
 - Talk: show all staff/channel; fit composer and people. Mobile guide PDFs render in-page.
 - Talk presence: channel exit broadcasts leave/untracks next task; sign-out also removes the shared channel without respawn, preventing stale online users.
-- Discord "Send to Sports Guide" posts auto-publish only after the permanent layout formatter and public-safety check pass and a category routes; otherwise they stay pending with auto_hold_reason, so broken layouts never go live.
+- Talk staff sidebar status: active DND overrides Working/Off duty text with “Away - From the office.” while retaining the countdown.
