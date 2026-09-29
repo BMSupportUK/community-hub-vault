@@ -295,14 +295,15 @@ export function normalizeSportsEventTitle(value: string): string {
  * being saved into another competition's existing guide.
  */
 function sportsListingLineHeading(trimmed: string): string | null {
-  const markdownHeading = trimmed.match(/^#{1,6}\s*(.+?)\s*$/)?.[1];
-  const boldHeading = trimmed.match(/^\*\*#{1,6}\s*(.+?)\*\*$/)?.[1];
+  // "#10 Notre Dame vs. UIC" is a ranked team, never a markdown heading.
+  const markdownHeading = trimmed.match(/^#{1,6}(?!\d)\s*(.+?)\s*$/)?.[1];
+  const boldHeading = trimmed.match(/^\*\*#{1,6}(?!\d)\s*(.+?)\*\*$/)?.[1];
   const heading = cleanLine(markdownHeading ?? boldHeading ?? "");
   if (
     heading &&
     !isDateLine(heading) &&
     !parseClockTime(heading) &&
-    !/\s(?:&|v|vs|v\.|x)\s/i.test(heading) &&
+    !/\s(?:&|v|vs|v\.|vs\.|x)\s/i.test(heading) &&
     !isLikelyChannelLabel(heading) &&
     // Generic post banners ("TODAYS LIVE EVENTS") are not competitions.
     !/^(?:today'?s?|tonight'?s?|this\s+week'?s?|daily|all)?\s*(?:live\s+)?(?:events?|listings?|schedule|fixtures|sports?)(?:\s+(?:today|tonight|live))?$/i.test(heading.replace(/[’']/g, "'"))
