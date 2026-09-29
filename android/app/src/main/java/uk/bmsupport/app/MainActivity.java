@@ -24,6 +24,11 @@ public class MainActivity extends BridgeActivity {
         super.onCreate(savedInstanceState);
         createDefaultNotificationChannel();
         createTicketReplyNotificationChannel();
+        createSpokenChannel("bm_support_tickets_v3", "New support tickets", R.raw.ticket_notify);
+        createSpokenChannel("bm_support_shift_start_v2", "Shift starting", R.raw.shift_start_notify);
+        createSpokenChannel("bm_support_shift_end_v2", "Shift ending", R.raw.shift_end_notify);
+        createSpokenChannel("bm_support_outage_v2", "Service outage", R.raw.outage_notify);
+        createSpokenChannel("bm_support_outage_resolved_v2", "Outage resolved", R.raw.outage_resolved_notify);
         enableWebViewDownloads();
     }
 
@@ -124,5 +129,22 @@ public class MainActivity extends BridgeActivity {
         if (notificationManager != null) {
             notificationManager.createNotificationChannel(channel);
         }
+    }
+
+    /** Spoken channels are created natively so closed-app pushes always find them with their MP3. */
+    private void createSpokenChannel(String id, String name, int rawRes) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return;
+        AudioAttributes audioAttrs = new AudioAttributes.Builder()
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                .build();
+        Uri soundUri = Uri.parse("android.resource://" + getPackageName() + "/" + rawRes);
+        NotificationChannel channel = new NotificationChannel(id, name, NotificationManager.IMPORTANCE_HIGH);
+        channel.setDescription("Spoken BM Support alert");
+        channel.enableVibration(true);
+        channel.enableLights(true);
+        channel.setSound(soundUri, audioAttrs);
+        NotificationManager nm = getSystemService(NotificationManager.class);
+        if (nm != null) nm.createNotificationChannel(channel);
     }
 }
