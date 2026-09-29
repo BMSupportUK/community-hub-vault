@@ -130,6 +130,13 @@ async function loadMemberDirectory(force = false) {
  */
 const lastSeenLocal = new Map<string, number>();
 /**
+ * Last time each presence key's `online_at` stamp CHANGED, on this device's
+ * clock. A live connection refreshes its stamp every heartbeat; a dead or
+ * frozen one never changes again. Comparing stamp-change times (never the
+ * remote stamp itself) evicts zombies without any cross-device clock skew.
+ */
+const stampChangedAt = new Map<string, number>();
+/**
  * Some realtime clients emit a leave diff before their local presenceState()
  * snapshot has removed that connection. Remember the exact departed payload
  * so a stale snapshot cannot keep another browser's rail badge at 1.
@@ -188,11 +195,22 @@ function collectUniqueUsers(channel: RealtimeChannel): Set<string> {
       const stamp = presence.online_at ?? "";
       const departedStamp = departedPresenceStamps.get(seenKey);
       if (departedStamp !== undefined) {
-        // Ignore the old snapshot after a leave. A genuinely new track has a
-        // new heartbeat stamp and is safe to count immediately.
-        if (!stamp || stamp === departedStamp) continue;
+        // Ignore snapshots from before the leave. A key can hold several
+        // entries (every heartbeat re-track adds a fresh one), so compare the
+        // stamps: only a strictly newer stamp is a genuine rejoin. ISO stamps
+        // compare correctly as strings.
+        if (!stamp || stamp <= departedStamp) continue;
         departedPresenceStamps.delete(seenKey);
       }
+      // Zombie eviction: a live connection's heartbeat re-track changes its
+      // stamp every HEARTBEAT_MS. If the stamp has not changed for twice the
+      // stale window, the owner is gone (frozen tab, dead socket the server
+      // never reclaimed) and must not keep the online counters stuck.
+      if (presenceStamps.get(seenKey) !== stamp || !stampChangedAt.has(seenKey)) {
+        stampChangedAt.set(seenKey, now);
+      }
+      const stampAge = now - (stampChangedAt.get(seenKey) ?? now);
+      if (stampAge > STALE_MS * 2) continue;
       // A key still present in the server-owned presence snapshot is online.
       // Refreshing our local observation time here avoids re-tracking solely
       // to update a timestamp; re-track emits a false leave+join pair that made
@@ -223,6 +241,7 @@ function collectUniqueUsers(channel: RealtimeChannel): Set<string> {
     if (!liveKeys.has(key)) {
       lastSeenLocal.delete(key);
       presenceStamps.delete(key);
+      stampChangedAt.delete(key);
     }
   }
 
@@ -726,9 +745,20 @@ function ensureSharedChannel() {
         resubscribe();
         return;
       }
-      // Do not call track() as a heartbeat. The realtime connection already
-      // maintains presence, while re-tracking generates a synthetic leave/join
-      // cycle on every other client and makes member rows flicker offline.
+      // Heartbeat re-track: refresh our online_at stamp so every other screen
+      // can tell a live session from a frozen one (see stampChangedAt). The
+      // synthetic leave/join this emits is absorbed by departedPresenceStamps
+      // and the linger grace, so member rows do not flicker offline.
+      const beating = Array.from(trackers.values()).at(-1);
+      if (beating && !presenceSuspended) {
+        void live
+          .track({
+            user_id: beating.userId,
+            channel_id: beating.channelId,
+            online_at: new Date().toISOString(),
+          })
+          .catch(() => undefined);
+      }
       publishCount();
     }, HEARTBEAT_MS);
   }
