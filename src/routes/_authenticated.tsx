@@ -155,7 +155,7 @@ function AuthLayout() {
     path === "/sports-guides";
   // Everything else locks to the viewport on large screens and scrolls
   // normally on smaller ones.
-  const locksToViewport = chatSurface || lockable || (path === "/install-guides" && !isMobile);
+  const locksToViewport = chatSurface || lockable;
   void shopTab;
   void shopView;
   const logIp = useServerFn(logMyIp);
