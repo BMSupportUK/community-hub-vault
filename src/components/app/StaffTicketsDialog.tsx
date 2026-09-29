@@ -68,15 +68,17 @@ export function StaffTicketsButton({ staffId, staffName }: { staffId: string; st
 
   // Three live counts on hover: unclaimed / claimed by this staff member / claimed by other staff.
   const loadHoverCounts = useCallback(async () => {
-    const base = supabase
-      .from("tickets")
-      .select("id", { count: "exact", head: true })
-      .in("status", ["open", "in_progress", "waiting"])
-      .is("archived_at", null);
+    // Build each query fresh — reusing one builder would merge the filters together.
+    const mk = () =>
+      supabase
+        .from("tickets")
+        .select("id", { count: "exact", head: true })
+        .in("status", ["open", "in_progress", "waiting"])
+        .is("archived_at", null);
     const [u, m, o] = await Promise.all([
-      base.is("assigned_to", null),
-      base.eq("assigned_to", staffId),
-      base.not("assigned_to", "is", null).neq("assigned_to", staffId),
+      mk().is("assigned_to", null),
+      mk().eq("assigned_to", staffId),
+      mk().not("assigned_to", "is", null).neq("assigned_to", staffId),
     ]);
     setHoverCounts({ unclaimed: u.count ?? 0, mine: m.count ?? 0, others: o.count ?? 0 });
   }, [staffId]);
