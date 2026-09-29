@@ -121,7 +121,7 @@ export function StaffTicketsButton({
         <button
           type="button"
           aria-label={`Tickets for ${staffName}`}
-          title={unclaimed > 0 ? `${unclaimed} unclaimed ticket${unclaimed === 1 ? "" : "s"} – click to claim` : "Ticket overview"}
+          title={unclaimed > 0 ? `${unclaimed} unclaimed ticket${unclaimed === 1 ? "" : "s"}${readOnly ? "" : " – click to claim"}` : "Ticket overview"}
           onPointerDown={(e) => e.stopPropagation()}
           onClick={(e) => { e.stopPropagation(); e.preventDefault(); setHoverAnchor(null); setOpen(true); }}
           className={cn(
