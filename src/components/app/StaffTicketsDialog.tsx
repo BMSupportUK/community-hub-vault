@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, Ticket } from "lucide-react";
 import { toast } from "sonner";
@@ -62,26 +63,95 @@ function useUnclaimedCount() {
 export function StaffTicketsButton({ staffId, staffName }: { staffId: string; staffName: string }) {
   const [open, setOpen] = useState(false);
   const unclaimed = useUnclaimedCount();
+  const [hoverCounts, setHoverCounts] = useState<{ unclaimed: number; mine: number; others: number } | null>(null);
+  const [hoverAnchor, setHoverAnchor] = useState<{ top: number; left?: number; right?: number } | null>(null);
+
+  // Three live counts on hover: unclaimed / claimed by this staff member / claimed by other staff.
+  const loadHoverCounts = useCallback(async () => {
+    // Build each query fresh — reusing one builder would merge the filters together.
+    const mk = () =>
+      supabase
+        .from("tickets")
+        .select("id", { count: "exact", head: true })
+        .in("status", ["open", "in_progress", "waiting"])
+        .is("archived_at", null);
+    const [u, m, o] = await Promise.all([
+      mk().is("assigned_to", null),
+      mk().eq("assigned_to", staffId),
+      mk().not("assigned_to", "is", null).neq("assigned_to", staffId),
+    ]);
+    setHoverCounts({ unclaimed: u.count ?? 0, mine: m.count ?? 0, others: o.count ?? 0 });
+  }, [staffId]);
+
+  const hoverOpen = hoverAnchor !== null;
   return (
     <>
-      <button
-        type="button"
-        aria-label={`Tickets for ${staffName}`}
-        title={unclaimed > 0 ? `${unclaimed} unclaimed ticket${unclaimed === 1 ? "" : "s"} – click to claim` : "Ticket overview"}
-        onPointerDown={(e) => e.stopPropagation()}
-        onClick={(e) => { e.stopPropagation(); e.preventDefault(); setOpen(true); }}
-        className={cn(
-          "relative grid size-6 shrink-0 place-items-center rounded-md hover:bg-primary hover:text-primary-foreground",
-          unclaimed > 0 ? "animate-pulse bg-destructive text-destructive-foreground" : "bg-surface-2/80 text-muted-foreground",
-        )}
+      <div
+        className="relative"
+        onMouseEnter={(e) => {
+          const r = e.currentTarget.getBoundingClientRect();
+          const vw = window.innerWidth;
+          // Near the right edge, right-align the panel so it never overflows the screen.
+          if (vw - r.left < 170) setHoverAnchor({ top: r.top, right: vw - r.right });
+          else setHoverAnchor({ top: r.top, left: r.left + r.width / 2 });
+          void loadHoverCounts();
+        }}
+        onMouseLeave={() => setHoverAnchor(null)}
       >
-        <Ticket className="size-3.5" />
-        {unclaimed > 0 && (
-          <span className="absolute -right-1.5 -top-1.5 grid min-w-4 place-items-center rounded-full bg-background px-1 text-[9px] font-bold leading-4 text-destructive ring-1 ring-destructive">
-            {unclaimed > 99 ? "99+" : unclaimed}
-          </span>
-        )}
-      </button>
+        <button
+          type="button"
+          aria-label={`Tickets for ${staffName}`}
+          title={unclaimed > 0 ? `${unclaimed} unclaimed ticket${unclaimed === 1 ? "" : "s"} – click to claim` : "Ticket overview"}
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => { e.stopPropagation(); e.preventDefault(); setHoverAnchor(null); setOpen(true); }}
+          className={cn(
+            "relative grid size-6 shrink-0 place-items-center rounded-md hover:bg-primary hover:text-primary-foreground",
+            unclaimed > 0 ? "animate-pulse bg-destructive text-destructive-foreground" : "bg-surface-2/80 text-muted-foreground",
+          )}
+        >
+          <Ticket className="size-3.5" />
+          {unclaimed > 0 && (
+            <span className="absolute -right-1.5 -top-1.5 grid min-w-4 place-items-center rounded-full bg-background px-1 text-[9px] font-bold leading-4 text-destructive ring-1 ring-destructive">
+              {unclaimed > 99 ? "99+" : unclaimed}
+            </span>
+          )}
+        </button>
+      </div>
+      {/* Fixed-position hover panel so no card overflow can clip it */}
+      {hoverOpen && hoverCounts !== null && createPortal(
+        <div
+          className={cn(
+            "pointer-events-none fixed z-[80] w-max rounded-md border border-border bg-background px-2.5 py-1.5 text-left shadow-xl",
+            hoverAnchor.left !== undefined && "-translate-x-1/2 -translate-y-full",
+            hoverAnchor.right !== undefined && "-translate-y-full",
+          )}
+          style={{
+            top: hoverAnchor.top - 6,
+            ...(hoverAnchor.left !== undefined ? { left: hoverAnchor.left } : {}),
+            ...(hoverAnchor.right !== undefined ? { right: hoverAnchor.right + 8 } : {}),
+          }}
+        >
+          <div className="flex items-center justify-between gap-3 whitespace-nowrap text-[11px] font-medium">
+            <span className="flex items-center gap-1.5 text-muted-foreground">
+              <span className="size-1.5 rounded-full bg-destructive" />Unclaimed
+            </span>
+            <span className="font-bold text-destructive">{hoverCounts.unclaimed}</span>
+          </div>
+          <div className="mt-1 flex items-center justify-between gap-3 whitespace-nowrap text-[11px] font-medium">
+            <span className="flex items-center gap-1.5 text-muted-foreground">
+              <span className="size-1.5 rounded-full bg-emerald-500" />Claimed by you
+            </span>
+            <span className="font-bold text-emerald-400">{hoverCounts.mine}</span>
+          </div>
+          <div className="mt-1 flex items-center justify-between gap-3 whitespace-nowrap text-[11px] font-medium">
+            <span className="flex items-center gap-1.5 text-muted-foreground">
+              <span className="size-1.5 rounded-full bg-amber-500" />Other staff
+            </span>
+            <span className="font-bold text-amber-400">{hoverCounts.others}</span>
+          </div>
+        </div>,
+        document.body,
+      )}
       {open && <StaffTicketsDialog staffId={staffId} staffName={staffName} onClose={() => setOpen(false)} />}
     </>
   );
