@@ -1,6 +1,7 @@
 # Roadmap
 
 ## Current
+- [x] Merged DAZN imports: parse inline fixture slots and title qualifiers without losing or corrupting events
 - [x] Talk Channels: show “Away - From the office.” in the staff list when DND is active
 - [x] Talk Channels: remove members from the room's online list immediately when they exit the channel
 - [x] Talk Channels: make member nameplates fill the same full sidebar width as staff nameplates

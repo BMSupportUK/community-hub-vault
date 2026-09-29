@@ -63,6 +63,10 @@ const DATE_TIME_SPAN_RE = new RegExp(
   `^\\s*(${DATE_SOURCE})\\s+(${TIME_WITH_ZONE_SOURCE})\\s+(?:until|till|to|[-–—])\\s+(?:${DATE_SOURCE}\\s+)?(?:${TIME_WITH_ZONE_SOURCE})\\s*(?:[-–—|·•]\\s*(.+?))?\\s*$`,
   "i",
 );
+const INLINE_DATE_TIME_SPAN_RE = new RegExp(
+  `^\\s*(.+?)\\s+[-–—]\\s+((${DATE_SOURCE})\\s+(${TIME_WITH_ZONE_SOURCE})\\s+(?:until|till|to|[-–—])\\s+(?:${DATE_SOURCE}\\s+)?(?:${TIME_WITH_ZONE_SOURCE})\\s*(?:[-–—|·•]\\s*(.+?))?)\\s*$`,
+  "i",
+);
 const DATE_ONLY_RE = new RegExp(
   `^\\s*(?:(?:${ZONE})\\s+)?(?:(?:mon|tue|wed|thu|fri|sat|sun)[a-z]*\\b[\\s,]+)?(?:\\d{4}[-/.]\\d{1,2}[-/.]\\d{1,2}|\\d{1,2}[-/.]\\d{1,2}[-/.](?:\\d{2}|\\d{4})|\\d{1,2}(?:st|nd|rd|th)?\\s+[a-z]+(?:\\s+(?:\\d{2}|\\d{4}))?|[a-z]+\\s+\\d{1,2}(?:st|nd|rd|th)?(?:,?\\s+(?:\\d{2}|\\d{4}))?)(?:\\s+(?:${ZONE}))?\\s*$`,
   "i",
@@ -1058,6 +1062,23 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
   }
   for (let i = lines.length - 1; i >= 0; i--) {
     if (/^(US|USA)\s*\|\s*NFL Sunday Ticket$/i.test(lines[i])) lines.splice(i, 1);
+  }
+  // DAZN merges can put a fixture or venue qualifier before the dated slot.
+  // Split complete fixtures out; join qualifiers to the programme name above.
+  for (let i = 0; i < lines.length; i++) {
+    const inline = lines[i].match(INLINE_DATE_TIME_SPAN_RE);
+    if (!inline) continue;
+    const prefix = inline[1].trim();
+    const slot = inline[2].trim();
+    const prefixIsTitle = /\s(?:@|v|vs\.?|x)\s/i.test(prefix);
+    const previous = lines[i - 1];
+    if (!prefixIsTitle && previous && !DATE_TIME_SPAN_RE.test(previous.replace(/^[-–—•]\s*/, "")) && !listingDateFromLine(previous) && !isLikelyChannelLabel(previous)) {
+      lines.splice(i - 1, 2, `${previous} - ${prefix}`, slot);
+      i -= 1;
+    } else {
+      lines.splice(i, 1, prefix, slot);
+      i += 1;
+    }
   }
   // Provider exports occasionally inject a lone marker between a programme
   // title and its dated slot (for example "Vienna - GCL Round 1", "D", then
