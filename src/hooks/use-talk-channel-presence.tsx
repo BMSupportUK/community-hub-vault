@@ -195,9 +195,11 @@ function collectUniqueUsers(channel: RealtimeChannel): Set<string> {
       const stamp = presence.online_at ?? "";
       const departedStamp = departedPresenceStamps.get(seenKey);
       if (departedStamp !== undefined) {
-        // Ignore the old snapshot after a leave. A genuinely new track has a
-        // new heartbeat stamp and is safe to count immediately.
-        if (!stamp || stamp === departedStamp) continue;
+        // Ignore snapshots from before the leave. A key can hold several
+        // entries (every heartbeat re-track adds a fresh one), so compare the
+        // stamps: only a strictly newer stamp is a genuine rejoin. ISO stamps
+        // compare correctly as strings.
+        if (!stamp || stamp <= departedStamp) continue;
         departedPresenceStamps.delete(seenKey);
       }
       // Zombie eviction: a live connection's heartbeat re-track changes its
@@ -957,24 +959,4 @@ export function useTalkChannelMemberCount(): number {
     if (memberIds.has(id)) count++;
   }
   return count;
-}
-
-// TEMP DEBUG (presence stuck-counter investigation, 2026-09-29). Remove after fix.
-if (typeof window !== "undefined") {
-  (window as unknown as Record<string, unknown>).__talkPresenceDebug = () => ({
-    count: currentCount,
-    ids: Array.from(currentUserIds),
-    trackedUserId,
-    trackedSignature,
-    trackers: Array.from(trackers.values()),
-    subscribed,
-    channelState: sharedChannel?.state ?? null,
-    presenceKeys: sharedChannel ? Object.keys(sharedChannel.presenceState<TalkPresence>()) : [],
-    presenceState: sharedChannel ? sharedChannel.presenceState<TalkPresence>() : {},
-    explicitlyDeparted: Array.from(explicitlyDepartedKeys),
-    cleanlyDeparted: Array.from(cleanlyDepartedUserIds),
-    missingSince: Object.fromEntries(missingSince),
-    lastChannelByUser: Object.fromEntries(lastChannelByUser),
-    connectionId: getConnectionId(),
-  });
 }
