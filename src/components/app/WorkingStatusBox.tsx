@@ -605,8 +605,8 @@ export function WorkingStatusBox({
           Staff Shift Controls
         </span>
         <ActionIcons compact />
-        {canAnswerTickets && (
-          <StaffTicketsButton staffId={user.id} staffName={displayName} placement="below" className="shrink-0" />
+        {(canAnswerTickets || roles.includes("moderator")) && (
+          <StaffTicketsButton staffId={user.id} staffName={displayName} placement="below" className="shrink-0" readOnly={!canAnswerTickets} />
         )}
         <Link
           to="/clock"
