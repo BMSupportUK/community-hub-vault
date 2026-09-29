@@ -6937,6 +6937,7 @@ export type Database = {
         Args: { _body: string; _id: string }
         Returns: undefined
       }
+      queue_shift_phone_alerts: { Args: never; Returns: number }
       reassign_ticket: {
         Args: { _ticket_id: string; _to_user: string }
         Returns: undefined
