@@ -19,9 +19,25 @@ export const Route = createFileRoute("/api/public/android-apk")({
   },
 });
 
+/** Admin-uploaded APK (Owner tools) wins over the bundled release. */
+async function uploadedApk(): Promise<{ url: string; version: string } | null> {
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data } = await supabaseAdmin.from("app_settings").select("value").eq("key", "android_apk_upload").maybeSingle();
+    const v = data?.value as { path?: string; version?: string } | null;
+    if (!v?.path) return null;
+    const { data: signed } = await supabaseAdmin.storage.from("android-app").createSignedUrl(v.path, 600);
+    return signed?.signedUrl ? { url: signed.signedUrl, version: v.version || "latest" } : null;
+  } catch (e) {
+    console.error("[android-apk] uploaded lookup failed", e);
+    return null;
+  }
+}
+
 async function handle(request: Request, method: "GET" | "HEAD") {
   const origin = new URL(request.url).origin;
-  const target = new URL(ANDROID_RELEASE.assetUrl, origin).toString();
+  const uploaded = await uploadedApk();
+  const target = uploaded?.url ?? new URL(ANDROID_RELEASE.assetUrl, origin).toString();
 
   const range = request.headers.get("range");
   const upstream = await fetch(target, {
@@ -33,7 +49,7 @@ async function handle(request: Request, method: "GET" | "HEAD") {
     return new Response("App file unavailable", { status: 502 });
   }
 
-  const fileName = `BMSupport-${ANDROID_RELEASE.versionName}.apk`;
+  const fileName = `BMSupport-${uploaded?.version ?? ANDROID_RELEASE.versionName}.apk`;
   const headers = new Headers();
   headers.set("content-type", "application/vnd.android.package-archive");
   headers.set("content-disposition", `attachment; filename="${fileName}"`);
