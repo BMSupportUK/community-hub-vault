@@ -4442,6 +4442,30 @@ export type Database = {
         }
         Relationships: []
       }
+      remote_signout_log: {
+        Row: {
+          actor_id: string
+          created_at: string
+          id: string
+          sessions_revoked: number
+          target_id: string
+        }
+        Insert: {
+          actor_id: string
+          created_at?: string
+          id?: string
+          sessions_revoked?: number
+          target_id: string
+        }
+        Update: {
+          actor_id?: string
+          created_at?: string
+          id?: string
+          sessions_revoked?: number
+          target_id?: string
+        }
+        Relationships: []
+      }
       role_definitions: {
         Row: {
           created_at: string
@@ -6402,6 +6426,10 @@ export type Database = {
           user_id: string
         }[]
       }
+      admin_revoke_user_sessions: {
+        Args: { _keep_session: string; _target: string }
+        Returns: number
+      }
       admin_upsert_signup_vpn: {
         Args: {
           _city: string
@@ -6416,6 +6444,13 @@ export type Database = {
           _vpn_raw: Json
         }
         Returns: undefined
+      }
+      admin_user_session_info: {
+        Args: { _target: string }
+        Returns: {
+          last_sign_in: string
+          session_count: number
+        }[]
       }
       app_credentials_visible: {
         Args: never
