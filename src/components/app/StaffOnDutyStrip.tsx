@@ -728,14 +728,21 @@ export function StaffOnDutyStrip({
           Staff
         </div>
         <div className="min-h-0 flex-1 space-y-0.5 overflow-y-auto overscroll-contain px-2 py-2 scrollbar-hide">
-          {onlineStaff.map((person, i) => (
-            <div key={person.id}>
-              {i > 0 && roleRank(person.id) !== roleRank(onlineStaff[i - 1].id) && (
-                <div className="mx-1 my-1.5 border-t border-border/60" />
-              )}
-              {renderSidebarRow(person, shiftsByUser.get(person.id))}
-            </div>
-          ))}
+          {onlineStaff.map((person, i) => {
+            const newGroup = i === 0 || roleRank(person.id) !== roleRank(onlineStaff[i - 1].id);
+            const roleName = String(roleFlashMap.get(person.id) ?? (person as { role?: string }).role ?? "staff");
+            return (
+              <div key={person.id}>
+                {newGroup && (
+                  <div className={cn("flex items-center gap-2 px-1", i === 0 ? "mb-1.5" : "mt-3 mb-1.5")}>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-primary">{roleName}</span>
+                    <div className="h-0.5 flex-1 rounded-full bg-primary/70" />
+                  </div>
+                )}
+                {renderSidebarRow(person, shiftsByUser.get(person.id))}
+              </div>
+            );
+          })}
           {onlineStaff.length === 0 && (
             <p className="px-2 py-6 text-center text-xs text-muted-foreground">
               No staff online.
