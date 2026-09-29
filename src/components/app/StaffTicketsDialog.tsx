@@ -64,7 +64,7 @@ export function StaffTicketsButton({ staffId, staffName }: { staffId: string; st
   const [open, setOpen] = useState(false);
   const unclaimed = useUnclaimedCount();
   const [hoverCounts, setHoverCounts] = useState<{ unclaimed: number; mine: number; others: number } | null>(null);
-  const [hoverAnchor, setHoverAnchor] = useState<{ top: number; left: number } | null>(null);
+  const [hoverAnchor, setHoverAnchor] = useState<{ top: number; left?: number; right?: number } | null>(null);
 
   // Three live counts on hover: unclaimed / claimed by this staff member / claimed by other staff.
   const loadHoverCounts = useCallback(async () => {
