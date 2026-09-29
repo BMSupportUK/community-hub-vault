@@ -64,7 +64,7 @@ export const Route = createFileRoute("/api/public/hooks/user-notification-push")
                 url,
               },
             }),
-            broadcastToUser(r.user_id, r.title || "Notification", cleanBody || " ", url, tag)
+            broadcastToUser(r.user_id, r.title || "Notification", cleanBody || " ", url, tag, undefined, r.kind)
               .catch((e) => ({ sent: 0, error: e instanceof Error ? e.message : String(e) })),
           ]);
           const res = fcm;
