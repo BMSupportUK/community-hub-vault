@@ -172,6 +172,8 @@ async function sendFcmToTokens(
   const isMention = args.data?.kind === "mention";
   const isShiftStart = args.data?.kind === "shift_start";
   const isShiftEnd = args.data?.kind === "shift_end";
+  const isOutage = args.data?.kind === "incident" && args.data?.event === "created";
+  const isOutageResolved = args.data?.kind === "incident" && args.data?.event === "resolved";
   for (const token of tokens) {
     const res = await fetch(url, {
       method: "POST",
@@ -197,7 +199,11 @@ async function sendFcmToTokens(
                     ? "bm_support_shift_start_v1"
                     : isShiftEnd
                       ? "bm_support_shift_end_v1"
-                      : "bm_support_alerts_v4",
+                      : isOutage
+                        ? "bm_support_outage_v1"
+                        : isOutageResolved
+                          ? "bm_support_outage_resolved_v1"
+                          : "bm_support_alerts_v4",
               sound: isTicketReply
                 ? "ticket_reply_notify"
                 : isMention
@@ -206,8 +212,12 @@ async function sendFcmToTokens(
                     ? "shift_start_notify"
                     : isShiftEnd
                       ? "shift_end_notify"
-                      : undefined,
-              default_sound: !isTicketReply && !isMention && !isShiftStart && !isShiftEnd,
+                      : isOutage
+                        ? "outage_notify"
+                        : isOutageResolved
+                          ? "outage_resolved_notify"
+                          : undefined,
+              default_sound: !isTicketReply && !isMention && !isShiftStart && !isShiftEnd && !isOutage && !isOutageResolved,
               default_vibrate_timings: true,
               notification_priority: "PRIORITY_HIGH",
             },

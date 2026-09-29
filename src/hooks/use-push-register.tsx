@@ -98,10 +98,12 @@ export function usePushRegister() {
         for (const c of [
           { id: "bm_support_shift_start_v1", name: "Shift starting", sound: "shift_start_notify.mp3" },
           { id: "bm_support_shift_end_v1", name: "Shift ending", sound: "shift_end_notify.mp3" },
+          { id: "bm_support_outage_v1", name: "Service outage", sound: "outage_notify.mp3" },
+          { id: "bm_support_outage_resolved_v1", name: "Outage resolved", sound: "outage_resolved_notify.mp3" },
         ]) {
           await PushNotifications.createChannel({
             ...c,
-            description: "Spoken alert before your shift starts or ends",
+            description: "Spoken alert for shifts and service outages",
             importance: 4,
             visibility: 1,
             lights: true,
