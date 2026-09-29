@@ -510,12 +510,13 @@ function SportsGuidesPage() {
     });
   }, [listingBlogs, activeCat, activeSearch, subFilter, subsByCat]);
 
-  // A–Z jump map: first visible guide whose title starts with each letter.
+  // A–Z jump map: every visible guide whose title starts with each letter, in
+  // list order, so repeated presses of the same letter can cycle through them.
   const azMap = useMemo(() => {
-    const m: Record<string, string> = {};
+    const m: Record<string, string[]> = {};
     for (const b of filtered) {
       const letter = (b.title?.trim()[0] ?? "").toUpperCase();
-      if (letter >= "A" && letter <= "Z" && !m[letter]) m[letter] = b.id;
+      if (letter >= "A" && letter <= "Z") (m[letter] ??= []).push(b.id);
     }
     return m;
   }, [filtered]);
