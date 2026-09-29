@@ -39,6 +39,8 @@ describe("remembered sports import layouts", () => {
 
 **## WST**
 
+Monday, 28th September
+
 **Shenzhen Open**
 \`7:00am UK | 2:00am ET\`
 
@@ -78,6 +80,8 @@ TNT Sports 1 & 2`;
 
 **## ASIAN GAMES**
 
+Monday, 28th September
+
 **Aichi Nagoya 2026**
 \`11:00pm UK | 6:00pm ET\`
 
@@ -111,6 +115,41 @@ beIN Sports English 1 & 2`;
     const result = parseSportsListingBlock("**UFC Fight Night: A vs. B**\n`10pm | 11pm | 1am UK`\nUFC 01\nUFC 02\nUFC 03");
     expect(result).toHaveLength(3);
     expect(result.every((event) => event.channels.join("|") === "UFC 01|UFC 02|UFC 03")).toBe(true);
+  });
+
+  test("merged DAZN inline fixtures and venue qualifiers stay as separate events", () => {
+    const rows = [
+      ["Eagles @ Bears", "1:12 AM", "Dazn 2 HD"], ["Eagles @ Bears (In French)", "1:12 AM", "Dazn 3 HD"],
+      ["Philippines vs. Pakistan", "9:57 AM", "Dazn 1 HD"], ["Thailand vs. Vietnam", "1:27 PM", "Dazn 1 HD"],
+      ["Finland vs. Belarus", "4:57 PM", "Dazn 3 HD"], ["Moldova vs. Faroe Islands", "4:57 PM", "Dazn 4 HD"],
+      ["Boreham Wood vs. Kidderminster", "6:57 PM", "Dazn 2 HD"], ["Barrow vs. Scunthorpe", "7:42 PM", "Dazn 1 HD"],
+      ["San Marino vs. Albania", "7:42 PM", "Dazn 3 HD"], ["Forest Green vs. Wealdstone", "7:42 PM", "Dazn 4 HD"],
+      ["Gateshead vs. Altrincham", "7:42 PM", "Dazn 6 HD"], ["Luxembourg vs. Iceland", "7:42 PM", "Dazn 7 HD"],
+      ["FC Halifax Town vs. Boston", "7:42 PM", "Dazn 8 HD"], ["Hornchurch vs. Aldershot", "7:42 PM", "Dazn 9 HD"],
+      ["Slovakia vs. Kazakhstan", "7:42 PM", "Dazn 11 HD"], ["Spain vs. Croatia", "7:42 PM", "Dazn 12 HD"],
+      ["Slovenia vs. North Macedonia", "7:42 PM", "Dazn 13 HD"], ["Yeovil vs. Worthing", "7:42 PM", "Dazn 14 HD"],
+      ["Bulgaria vs. Estonia", "7:42 PM", "Dazn 15 HD"], ["Fylde vs. Carlisle", "7:42 PM", "Dazn 16 HD"],
+      ["Woking vs. Solihull Moors", "7:42 PM", "Dazn 17 HD"], ["Scotland vs. Switzerland", "7:42 PM", "Dazn 18 HD"],
+      ["Hartlepool vs. Harrogate", "7:42 PM", "Dazn 19 HD"],
+    ];
+    const ordinary = rows.map(([title, time, channel]) => `${title}\n- 29-09-2026 ${time} until 29-09-2026 10:02 PM - ${channel}`);
+    const raw = ["# DAZN", "`Tuesday, 29th September`", ...ordinary.slice(0, 4),
+      "U15 Baseball World Cup 2026 - Day 5\n- Beto Avila - 29-09-2026 4:27 PM until 29-09-2026 6:47 PM - Dazn 2 HD",
+      ...ordinary.slice(4, 6),
+      "U15 Baseball World Cup 2026 - Day 5\n- Kukulkan - 29-09-2026 5:27 PM until 29-09-2026 7:47 PM - Dazn 5 HD",
+      ...ordinary.slice(6, 14),
+      "Czechia vs. England - 29-09-2026 7:42 PM until 29-09-2026 10:02 PM - Dazn 10 HD",
+      ...ordinary.slice(14),
+    ].join("\n");
+    const result = checkSportsImport(raw, "gmt", Date.UTC(2026, 8, 29, 7, 25), "DAZN");
+
+    expect(result.errors).toBe(0);
+    expect(result.warnings).toBe(0);
+    expect(result.events).toHaveLength(26);
+    expect(result.events.find((event) => event.channels.includes("Dazn 2 HD") && event.time === "16:27 BST")?.title).toBe("U15 Baseball World Cup 2026 - Day 5 - Beto Avila");
+    expect(result.events.find((event) => event.channels.includes("Dazn 5 HD"))?.title).toBe("U15 Baseball World Cup 2026 - Day 5 - Kukulkan");
+    expect(result.events.find((event) => event.channels.includes("Dazn 10 HD"))?.title).toBe("Czechia v England");
+    expect(parseSportsListingBlock(result.formatted)).toEqual(result.events);
   });
 
   const rememberedRows: Array<{
