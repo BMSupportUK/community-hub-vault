@@ -20,6 +20,7 @@ import { useDndStatus } from "@/hooks/use-dnd";
 import { Moon } from "lucide-react";
 import { DndCountdown } from "@/components/app/DndCountdown";
 import { DndDialogButton } from "@/components/app/DndDialogButton";
+import { StaffTicketsButton } from "@/components/app/StaffTicketsDialog";
 import { type BreakKind, BREAK_LIMITS as LIMITS, breakLabel, breakIcon } from "@/lib/breaks";
 import { useServerFn } from "@tanstack/react-start";
 import { sendShiftEventPush, sendBreakEventPush } from "@/lib/push.functions";
@@ -603,6 +604,7 @@ export function WorkingStatusBox({
           Staff Shift Controls
         </span>
         <ActionIcons compact />
+        <StaffTicketsButton staffId={user.id} staffName={displayName} placement="below" className="shrink-0" />
         <Link
           to="/clock"
           title="Clock page"
