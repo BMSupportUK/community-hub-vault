@@ -170,6 +170,8 @@ async function sendFcmToTokens(
   const stale: string[] = [];
   const isTicketReply = args.data?.kind === "ticket_reply";
   const isMention = args.data?.kind === "mention";
+  const isShiftStart = args.data?.kind === "shift_start";
+  const isShiftEnd = args.data?.kind === "shift_end";
   for (const token of tokens) {
     const res = await fetch(url, {
       method: "POST",
@@ -191,13 +193,21 @@ async function sendFcmToTokens(
                 ? "bm_support_ticket_replies_v2"
                 : isMention
                   ? "bm_support_mentions_v1"
-                  : "bm_support_alerts_v4",
+                  : isShiftStart
+                    ? "bm_support_shift_start_v1"
+                    : isShiftEnd
+                      ? "bm_support_shift_end_v1"
+                      : "bm_support_alerts_v4",
               sound: isTicketReply
                 ? "ticket_reply_notify"
                 : isMention
                   ? "mention_notify"
-                  : undefined,
-              default_sound: !isTicketReply && !isMention,
+                  : isShiftStart
+                    ? "shift_start_notify"
+                    : isShiftEnd
+                      ? "shift_end_notify"
+                      : undefined,
+              default_sound: !isTicketReply && !isMention && !isShiftStart && !isShiftEnd,
               default_vibrate_timings: true,
               notification_priority: "PRIORITY_HIGH",
             },

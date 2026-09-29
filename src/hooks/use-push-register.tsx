@@ -94,6 +94,21 @@ export function usePushRegister() {
           sound: "mention_notify.mp3",
         });
 
+        // Shift start/end use the same spoken MP3s as the in-app shift pop-up.
+        for (const c of [
+          { id: "bm_support_shift_start_v1", name: "Shift starting", sound: "shift_start_notify.mp3" },
+          { id: "bm_support_shift_end_v1", name: "Shift ending", sound: "shift_end_notify.mp3" },
+        ]) {
+          await PushNotifications.createChannel({
+            ...c,
+            description: "Spoken alert before your shift starts or ends",
+            importance: 4,
+            visibility: 1,
+            lights: true,
+            vibration: true,
+          });
+        }
+
         const received = await PushNotifications.addListener("pushNotificationReceived", async (notification) => {
           const kind = notification.data?.kind;
           if (kind !== "ticket_reply" && kind !== "mention") return;
