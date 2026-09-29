@@ -15,6 +15,7 @@ export function PushSoundBridge() {
       try {
         const data = event.data as { type?: string; sound?: string } | null;
         if (!data || data.type !== "bm-play-sound") return;
+        shakeScreen();
         const def = getSound(data.sound);
         played = def ? await playSound(def.src, { label: `push-${def.key}`, gain: 2.0 }) : false;
       } catch (err) {
