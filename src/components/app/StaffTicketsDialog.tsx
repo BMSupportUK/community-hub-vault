@@ -65,12 +65,15 @@ export function StaffTicketsButton({
   staffName,
   placement = "above",
   className,
+  readOnly = false,
 }: {
   staffId: string;
   staffName: string;
   /** "above" (talk staff cards) or "below" (staff controls in the page header). */
   placement?: "above" | "below";
   className?: string;
+  /** Moderators: overview only — no claim button, no ticket links. */
+  readOnly?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const unclaimed = useUnclaimedCount();
@@ -181,12 +184,12 @@ export function StaffTicketsButton({
         </div>,
         document.body,
       )}
-      {open && <StaffTicketsDialog staffId={staffId} staffName={staffName} onClose={() => setOpen(false)} />}
+      {open && <StaffTicketsDialog staffId={staffId} staffName={staffName} readOnly={readOnly} onClose={() => setOpen(false)} />}
     </>
   );
 }
 
-function StaffTicketsDialog({ staffId, staffName, onClose }: { staffId: string; staffName: string; onClose: () => void }) {
+function StaffTicketsDialog({ staffId, staffName, readOnly = false, onClose }: { staffId: string; staffName: string; readOnly?: boolean; onClose: () => void }) {
   const [rows, setRows] = useState<Row[] | null>(null);
   const [names, setNames] = useState<Map<string, string>>(new Map());
   const [me, setMe] = useState<string | null>(null);
