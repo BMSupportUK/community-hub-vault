@@ -176,6 +176,12 @@ async function sendFcmToTokens(
   const isShiftEnd = args.data?.kind === "shift_end";
   const isOutage = args.data?.kind === "incident" && args.data?.event === "created";
   const isOutageResolved = args.data?.kind === "incident" && args.data?.event === "resolved";
+  const k = args.data?.kind;
+  const spokenExtra = k === "order" || k === "order_placed"
+    ? { channel: "bm_support_orders_v1", sound: "order_notify" }
+    : k === "order_paid" || k === "invoice_paid" || k === "wise_payment"
+      ? { channel: "bm_support_payments_v1", sound: "payment_received_notify" }
+      : null;
   for (const token of tokens) {
     const res = await fetch(url, {
       method: "POST",
