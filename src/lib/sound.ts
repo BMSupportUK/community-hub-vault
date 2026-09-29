@@ -1,4 +1,5 @@
 // Shared audio playback helper.
+import { shakeScreen } from "@/lib/screen-shake";
 //
 // Playback strategy (in order):
 //   1. Web Audio AudioBufferSourceNode — the file is fetched once and decoded
