@@ -788,8 +788,18 @@ function ChannelPage() {
       if (firstUnread) {
         setFirstUnreadId(firstUnread.id);
         // Defer to next frame so the divider DOM exists before scrolling.
+        // Scroll only the message container: scrollIntoView also scrolls every
+        // ancestor including the window, which left small screens starting
+        // half-way down the page.
         requestAnimationFrame(() => {
-          firstUnreadRef.current?.scrollIntoView({ block: "start" });
+          const target = firstUnreadRef.current;
+          const container = scrollRef.current;
+          if (!target || !container) return;
+          container.scrollTop =
+            target.getBoundingClientRect().top -
+            container.getBoundingClientRect().top +
+            container.scrollTop -
+            8;
         });
       } else {
         el.scrollTo({ top: el.scrollHeight });
