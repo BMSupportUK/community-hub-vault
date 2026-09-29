@@ -95,14 +95,17 @@ export function usePushRegister() {
         });
 
         // Shift start/end use the same spoken MP3s as the in-app shift pop-up.
-        // New support tickets use the same MP3 as the in-app ticket alert.
-        for (const c of [
-          { id: "bm_support_tickets_v1", name: "New support tickets", sound: "ticket_notify.mp3" },
+        // New support tickets use the same MP3 as the in-app ticket alert. The
+        // v2 ticket channel intentionally replaces v1: Android permanently
+        // retained the silent sound setting from the first v1 installation.
+        const spokenChannels = [
+          { id: "bm_support_tickets_v2", name: "New support tickets", sound: "ticket_notify.mp3" },
           { id: "bm_support_shift_start_v1", name: "Shift starting", sound: "shift_start_notify.mp3" },
           { id: "bm_support_shift_end_v1", name: "Shift ending", sound: "shift_end_notify.mp3" },
           { id: "bm_support_outage_v1", name: "Service outage", sound: "outage_notify.mp3" },
           { id: "bm_support_outage_resolved_v1", name: "Outage resolved", sound: "outage_resolved_notify.mp3" },
-        ]) {
+        ];
+        for (const c of spokenChannels) {
           await PushNotifications.createChannel({
             ...c,
             description: "Spoken alert for shifts and service outages",
@@ -111,25 +114,47 @@ export function usePushRegister() {
             lights: true,
             vibration: true,
           });
+          await LocalNotifications.createChannel({
+            ...c,
+            description: "Spoken alert for shifts and service outages",
+            importance: 5,
+            visibility: 1,
+            vibration: true,
+          });
         }
 
         const received = await PushNotifications.addListener("pushNotificationReceived", async (notification) => {
           const kind = notification.data?.kind;
-          if (kind !== "ticket_reply" && kind !== "mention") return;
-          const isMention = kind === "mention";
+          const incidentEvent = notification.data?.event;
+          const spoken = kind === "ticket_reply"
+            ? { channelId: "bm_support_ticket_replies_v2", sound: "ticket_reply_notify.mp3", fallback: "Support ticket reply" }
+            : kind === "mention"
+              ? { channelId: "bm_support_mentions_v1", sound: "mention_notify.mp3", fallback: "New mention" }
+              : kind === "ticket_raised"
+                ? { channelId: "bm_support_tickets_v2", sound: "ticket_notify.mp3", fallback: "New support ticket" }
+                : kind === "shift_start"
+                  ? { channelId: "bm_support_shift_start_v1", sound: "shift_start_notify.mp3", fallback: "Shift starts soon" }
+                  : kind === "shift_end"
+                    ? { channelId: "bm_support_shift_end_v1", sound: "shift_end_notify.mp3", fallback: "Shift ends soon" }
+                    : kind === "incident" && incidentEvent === "created"
+                      ? { channelId: "bm_support_outage_v1", sound: "outage_notify.mp3", fallback: "Service outage" }
+                      : kind === "incident" && incidentEvent === "resolved"
+                        ? { channelId: "bm_support_outage_resolved_v1", sound: "outage_resolved_notify.mp3", fallback: "Outage resolved" }
+                        : null;
+          if (!spoken) return;
           try {
             await LocalNotifications.schedule({
               notifications: [{
                 id: Math.floor(Date.now() % 2_000_000_000),
-                title: notification.title || (isMention ? "New mention" : "Support ticket reply"),
-                body: notification.body || (isMention ? "Somebody mentioned you." : "A customer replied to an assigned ticket."),
-                channelId: isMention ? "bm_support_mentions_v1" : "bm_support_ticket_replies_v2",
-                sound: isMention ? "mention_notify.mp3" : "ticket_reply_notify.mp3",
+                title: notification.title || spoken.fallback,
+                body: notification.body || "Open BM Support to view it.",
+                channelId: spoken.channelId,
+                sound: spoken.sound,
                 extra: notification.data,
               }],
             });
           } catch (e) {
-            console.error("[push] foreground ticket reply sound failed", e);
+            console.error("[push] foreground spoken alert failed", e);
           }
         });
 

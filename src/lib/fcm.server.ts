@@ -193,7 +193,7 @@ async function sendFcmToTokens(
               // Spoken alerts have dedicated native channels so Android uses
               // the bundled uploaded MP3 while the app is backgrounded/closed.
               channel_id: isTicketRaised
-                ? "bm_support_tickets_v1"
+                ? "bm_support_tickets_v2"
                 : isTicketReply
                 ? "bm_support_ticket_replies_v2"
                 : isMention
