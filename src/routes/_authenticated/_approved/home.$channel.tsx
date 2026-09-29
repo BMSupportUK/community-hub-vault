@@ -779,21 +779,12 @@ function ChannelPage() {
     if (!scrollRef.current || messages.length === 0) return;
     const el = scrollRef.current;
     if (!initialScrollDoneRef.current) {
-      // Narrow or short screens always enter at the first message. Jumping to
-      // the unread marker or bottom made a long opening message appear cut in
-      // half on entry, including short laptop/browser windows.
-      if (window.matchMedia("(max-width: 767px), (max-height: 699px)").matches) {
-        setFirstUnreadId(null);
-        keepScrollPinnedRef.current = false;
-        el.scrollTo({ top: 0 });
-        requestAnimationFrame(() => {
-          el.scrollTo({ top: 0 });
-          requestAnimationFrame(() => el.scrollTo({ top: 0 }));
-        });
-        initialScrollDoneRef.current = true;
-        return;
-      }
-      // First render of this channel: jump to first unread, else bottom.
+      const smallScreen = window.matchMedia(
+        "(max-width: 767px), (max-height: 699px)",
+      ).matches;
+      // First render of this channel: jump to first unread, else bottom (top
+      // on small screens, where jumping to the bottom left a long opening
+      // message looking cut in half on entry).
       const lr = lastReadAtRef.current;
       // With no saved marker this is the user's first visit, so the first
       // message from another user is genuinely unread rather than silently
@@ -816,6 +807,13 @@ function ChannelPage() {
             container.getBoundingClientRect().top +
             container.scrollTop -
             8;
+        });
+      } else if (smallScreen) {
+        keepScrollPinnedRef.current = false;
+        el.scrollTo({ top: 0 });
+        requestAnimationFrame(() => {
+          el.scrollTo({ top: 0 });
+          requestAnimationFrame(() => el.scrollTo({ top: 0 }));
         });
       } else {
         el.scrollTo({ top: el.scrollHeight });
