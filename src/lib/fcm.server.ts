@@ -168,6 +168,7 @@ async function sendFcmToTokens(
   let sent = 0;
   let failed = 0;
   const stale: string[] = [];
+  const isTicketRaised = args.data?.kind === "ticket_raised";
   const isTicketReply = args.data?.kind === "ticket_reply";
   const isMention = args.data?.kind === "mention";
   const isShiftStart = args.data?.kind === "shift_start";
@@ -191,7 +192,9 @@ async function sendFcmToTokens(
             notification: {
               // Spoken alerts have dedicated native channels so Android uses
               // the bundled uploaded MP3 while the app is backgrounded/closed.
-              channel_id: isTicketReply
+              channel_id: isTicketRaised
+                ? "bm_support_tickets_v1"
+                : isTicketReply
                 ? "bm_support_ticket_replies_v2"
                 : isMention
                   ? "bm_support_mentions_v1"
@@ -204,7 +207,9 @@ async function sendFcmToTokens(
                         : isOutageResolved
                           ? "bm_support_outage_resolved_v1"
                           : "bm_support_alerts_v4",
-              sound: isTicketReply
+              sound: isTicketRaised
+                ? "ticket_notify"
+                : isTicketReply
                 ? "ticket_reply_notify"
                 : isMention
                   ? "mention_notify"
@@ -217,7 +222,7 @@ async function sendFcmToTokens(
                         : isOutageResolved
                           ? "outage_resolved_notify"
                           : undefined,
-              default_sound: !isTicketReply && !isMention && !isShiftStart && !isShiftEnd && !isOutage && !isOutageResolved,
+              default_sound: !isTicketRaised && !isTicketReply && !isMention && !isShiftStart && !isShiftEnd && !isOutage && !isOutageResolved,
               default_vibrate_timings: true,
               notification_priority: "PRIORITY_HIGH",
             },
