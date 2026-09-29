@@ -41,7 +41,7 @@ self.addEventListener("push", (event) => {
     // missed while the user is busy in another window.
     const STICKY_KINDS = new Set([
       "ticket_reply", "mention", "ticket_assigned", "ticket_help",
-      "ticket_raised", "order_placed", "signup", "friend_request",
+      "ticket_raised", "order_placed", "signup", "friend_request", "shift_start", "shift_end",
     ]);
     const sticky = STICKY_KINDS.has(payload.kind);
 
