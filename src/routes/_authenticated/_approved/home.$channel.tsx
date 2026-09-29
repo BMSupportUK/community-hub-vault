@@ -117,7 +117,7 @@ interface Message {
 // Authorised change (user request): `!` prefix so the command never clashes with `/` shortcuts.
 const PRIVATE_CMD_RE = /^\s*!(?:private|s)(?:\s|$)/i;
 function stripPrivateCommand(text: string) {
-  return text.replace(/^((?:<[^>]+>)*)\s*\/(?:private|s)\b(?:\s|&nbsp;)*/i, "$1");
+  return text.replace(/^((?:<[^>]+>)*)\s*!+(?:private|s)\b(?:\s|&nbsp;)*/i, "$1");
 }
 
 interface Profile {
