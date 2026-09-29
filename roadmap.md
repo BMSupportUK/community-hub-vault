@@ -56,3 +56,4 @@
 - [x] Store orders: buyer name beside price, details-on-demand, month/status tabs, no auto-tickets
 - [x] Password+PIN gates: Discount Codes, Manage Products, Members & Role Management, Shop Orders
 - Sports imports: NFL Sunday Ticket `NFL NN: ET | UK` rows import with the stated UK time and channel `NFL NN`.
+- [x] Talk channels: unclaimed-tickets bar above the STAFF/MEMBERS pills (Talk only), collapsible, live Claim + Go to ticket; page-top banner stays elsewhere
