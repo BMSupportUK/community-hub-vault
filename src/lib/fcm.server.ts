@@ -193,19 +193,19 @@ async function sendFcmToTokens(
               // Spoken alerts have dedicated native channels so Android uses
               // the bundled uploaded MP3 while the app is backgrounded/closed.
               channel_id: isTicketRaised
-                ? "bm_support_tickets_v2"
+                ? "bm_support_tickets_v3"
                 : isTicketReply
                 ? "bm_support_ticket_replies_v2"
                 : isMention
                   ? "bm_support_mentions_v1"
                   : isShiftStart
-                    ? "bm_support_shift_start_v1"
+                    ? "bm_support_shift_start_v2"
                     : isShiftEnd
-                      ? "bm_support_shift_end_v1"
+                      ? "bm_support_shift_end_v2"
                       : isOutage
-                        ? "bm_support_outage_v1"
+                        ? "bm_support_outage_v2"
                         : isOutageResolved
-                          ? "bm_support_outage_resolved_v1"
+                          ? "bm_support_outage_resolved_v2"
                           : "bm_support_alerts_v4",
               sound: isTicketRaised
                 ? "ticket_notify"
