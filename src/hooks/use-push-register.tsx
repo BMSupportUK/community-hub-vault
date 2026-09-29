@@ -104,6 +104,8 @@ export function usePushRegister() {
           { id: "bm_support_shift_end_v2", name: "Shift ending", sound: "shift_end_notify.mp3" },
           { id: "bm_support_outage_v2", name: "Service outage", sound: "outage_notify.mp3" },
           { id: "bm_support_outage_resolved_v2", name: "Outage resolved", sound: "outage_resolved_notify.mp3" },
+          { id: "bm_support_orders_v1", name: "New orders", sound: "order_notify.mp3" },
+          { id: "bm_support_payments_v1", name: "Payments received", sound: "payment_received_notify.mp3" },
         ];
         for (const c of spokenChannels) {
           await PushNotifications.createChannel({
@@ -140,7 +142,11 @@ export function usePushRegister() {
                       ? { channelId: "bm_support_outage_v2", sound: "outage_notify.mp3", fallback: "Service outage" }
                       : kind === "incident" && incidentEvent === "resolved"
                         ? { channelId: "bm_support_outage_resolved_v2", sound: "outage_resolved_notify.mp3", fallback: "Outage resolved" }
-                        : null;
+                        : kind === "order" || kind === "order_placed"
+                          ? { channelId: "bm_support_orders_v1", sound: "order_notify.mp3", fallback: "New order" }
+                          : kind === "order_paid" || kind === "invoice_paid" || kind === "wise_payment"
+                            ? { channelId: "bm_support_payments_v1", sound: "payment_received_notify.mp3", fallback: "Payment received" }
+                            : null;
           if (!spoken) return;
           try {
             await LocalNotifications.schedule({

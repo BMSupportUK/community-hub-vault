@@ -176,6 +176,12 @@ async function sendFcmToTokens(
   const isShiftEnd = args.data?.kind === "shift_end";
   const isOutage = args.data?.kind === "incident" && args.data?.event === "created";
   const isOutageResolved = args.data?.kind === "incident" && args.data?.event === "resolved";
+  const k = args.data?.kind;
+  const spokenExtra = k === "order" || k === "order_placed"
+    ? { channel: "bm_support_orders_v1", sound: "order_notify" }
+    : k === "order_paid" || k === "invoice_paid" || k === "wise_payment"
+      ? { channel: "bm_support_payments_v1", sound: "payment_received_notify" }
+      : null;
   for (const token of tokens) {
     const res = await fetch(url, {
       method: "POST",
@@ -193,7 +199,7 @@ async function sendFcmToTokens(
             notification: {
               // Spoken alerts have dedicated native channels so Android uses
               // the bundled uploaded MP3 while the app is backgrounded/closed.
-              channel_id: isTicketRaised
+              channel_id: spokenExtra ? spokenExtra.channel : isTicketRaised
                 ? "bm_support_tickets_v3"
                 : isTicketReply
                 ? "bm_support_ticket_replies_v2"
@@ -208,7 +214,7 @@ async function sendFcmToTokens(
                         : isOutageResolved
                           ? "bm_support_outage_resolved_v2"
                           : "bm_support_alerts_v4",
-              sound: isTicketRaised
+              sound: spokenExtra ? spokenExtra.sound : isTicketRaised
                 ? "ticket_notify"
                 : isTicketReply
                 ? "ticket_reply_notify"
@@ -223,7 +229,7 @@ async function sendFcmToTokens(
                         : isOutageResolved
                           ? "outage_resolved_notify"
                           : undefined,
-              default_sound: !isTicketRaised && !isTicketReply && !isMention && !isShiftStart && !isShiftEnd && !isOutage && !isOutageResolved,
+              default_sound: !spokenExtra && !isTicketRaised && !isTicketReply && !isMention && !isShiftStart && !isShiftEnd && !isOutage && !isOutageResolved,
               default_vibrate_timings: true,
               notification_priority: "PRIORITY_HIGH",
             },
