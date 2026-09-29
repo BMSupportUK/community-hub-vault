@@ -613,6 +613,8 @@ function ChannelPage() {
     if (!channel) return;
     // Reset scroll/unread tracking when switching channels
     initialScrollDoneRef.current = false;
+    keepScrollPinnedRef.current = false;
+    scrollRef.current?.scrollTo({ top: 0 });
     setFirstUnreadId(null);
     lastReadAtRef.current = null;
     latestMessageRef.current = null;
@@ -777,13 +779,17 @@ function ChannelPage() {
     if (!scrollRef.current || messages.length === 0) return;
     const el = scrollRef.current;
     if (!initialScrollDoneRef.current) {
-      // Phones always enter at the first message. Jumping to the unread marker
-      // or bottom made a long opening message appear cut in half on entry.
-      if (window.matchMedia("(max-width: 767px)").matches) {
+      // Narrow or short screens always enter at the first message. Jumping to
+      // the unread marker or bottom made a long opening message appear cut in
+      // half on entry, including short laptop/browser windows.
+      if (window.matchMedia("(max-width: 767px), (max-height: 699px)").matches) {
         setFirstUnreadId(null);
         keepScrollPinnedRef.current = false;
         el.scrollTo({ top: 0 });
-        requestAnimationFrame(() => el.scrollTo({ top: 0 }));
+        requestAnimationFrame(() => {
+          el.scrollTo({ top: 0 });
+          requestAnimationFrame(() => el.scrollTo({ top: 0 }));
+        });
         initialScrollDoneRef.current = true;
         return;
       }
