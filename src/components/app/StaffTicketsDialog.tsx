@@ -118,8 +118,16 @@ export function StaffTicketsButton({ staffId, staffName }: { staffId: string; st
       {/* Fixed-position hover panel so no card overflow can clip it */}
       {hoverOpen && hoverCounts !== null && createPortal(
         <div
-          className="pointer-events-none fixed z-[80] w-max -translate-x-1/2 -translate-y-full rounded-md border border-border bg-background px-2.5 py-1.5 text-left shadow-xl"
-          style={{ top: hoverAnchor.top - 6, left: hoverAnchor.left }}
+          className={cn(
+            "pointer-events-none fixed z-[80] w-max rounded-md border border-border bg-background px-2.5 py-1.5 text-left shadow-xl",
+            hoverAnchor.left !== undefined && "-translate-x-1/2 -translate-y-full",
+            hoverAnchor.right !== undefined && "-translate-y-full",
+          )}
+          style={{
+            top: hoverAnchor.top - 6,
+            ...(hoverAnchor.left !== undefined ? { left: hoverAnchor.left } : {}),
+            ...(hoverAnchor.right !== undefined ? { right: hoverAnchor.right + 8 } : {}),
+          }}
           onMouseEnter={() => {}}
         >
           <div className="flex items-center justify-between gap-3 whitespace-nowrap text-[11px] font-medium">
