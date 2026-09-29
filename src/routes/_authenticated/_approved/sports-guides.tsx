@@ -510,12 +510,13 @@ function SportsGuidesPage() {
     });
   }, [listingBlogs, activeCat, activeSearch, subFilter, subsByCat]);
 
-  // A–Z jump map: first visible guide whose title starts with each letter.
+  // A–Z jump map: every visible guide whose title starts with each letter, in
+  // list order, so repeated presses of the same letter can cycle through them.
   const azMap = useMemo(() => {
-    const m: Record<string, string> = {};
+    const m: Record<string, string[]> = {};
     for (const b of filtered) {
       const letter = (b.title?.trim()[0] ?? "").toUpperCase();
-      if (letter >= "A" && letter <= "Z" && !m[letter]) m[letter] = b.id;
+      if (letter >= "A" && letter <= "Z") (m[letter] ??= []).push(b.id);
     }
     return m;
   }, [filtered]);
@@ -532,11 +533,27 @@ function SportsGuidesPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filtered, reads, baselineAt]);
 
+  // Repeated presses of the same letter walk through every guide starting with
+  // that letter, in list order, wrapping back to the first. A change of letter
+  // or of the filtered list (search/category/sub-section) restarts the cycle.
+  const azCycleRef = useRef<{ letter: string; index: number; idsKey: string }>({
+    letter: "", index: -1, idsKey: "",
+  });
+
   const jumpToLetter = (letter: string) => {
-    const id = azMap[letter];
-    if (!id) return;
-    const targetIndex = filtered.findIndex((b) => b.id === id);
-    if (targetIndex < 0) return;
+    const ids = azMap[letter];
+    if (!ids?.length) return;
+    const c = azCycleRef.current;
+    const idsKey = ids.join("|");
+    if (c.letter !== letter || c.idsKey !== idsKey) {
+      c.letter = letter;
+      c.idsKey = idsKey;
+      c.index = 0;
+    } else {
+      c.index = (c.index + 1) % ids.length;
+    }
+    const id = ids[c.index];
+    if (!filtered.some((b) => b.id === id)) return;
     window.setTimeout(() => {
       document
         .querySelector<HTMLElement>(`[data-guide-id="${id}"]`)
@@ -2047,3 +2064,4 @@ function SportsGuidesPage() {
     </div>
   );
 }
+
