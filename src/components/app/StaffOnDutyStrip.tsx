@@ -728,7 +728,14 @@ export function StaffOnDutyStrip({
           Staff
         </div>
         <div className="min-h-0 flex-1 space-y-0.5 overflow-y-auto overscroll-contain px-2 py-2 scrollbar-hide">
-          {onlineStaff.map((person) => renderSidebarRow(person, shiftsByUser.get(person.id)))}
+          {onlineStaff.map((person, i) => (
+            <div key={person.id}>
+              {i > 0 && roleRank(person.id) !== roleRank(onlineStaff[i - 1].id) && (
+                <div className="mx-1 my-1.5 border-t border-border/60" />
+              )}
+              {renderSidebarRow(person, shiftsByUser.get(person.id))}
+            </div>
+          ))}
           {onlineStaff.length === 0 && (
             <p className="px-2 py-6 text-center text-xs text-muted-foreground">
               No staff online.
@@ -891,10 +898,10 @@ export function StaffOnDutyStrip({
                 Off duty · {visibleOffDuty.length}
               </div>
               <div className={cn(isSidebar ? "flex flex-col gap-4" : "flex flex-col gap-4")}>
-                {OFF_ORDER.filter((r) => groups[r]?.length).map((role) => {
+                {OFF_ORDER.filter((r) => groups[r]?.length).map((role, groupIndex) => {
                   const members = groups[role];
                   return (
-                    <div key={role} className="min-w-0">
+                    <div key={role} className={cn("min-w-0", groupIndex > 0 && "border-t border-white/15 pt-3")}>
                       <div className={cn("text-[10px] font-bold uppercase tracking-wider mb-1.5 flex items-center gap-1.5", roleFlashClass(roleFlashMap.get(members[0].id)))}>
                         <span>{formatRoleLabel(role)}</span>
                         <span className="px-1.5 py-0.5 rounded-full bg-white/10 text-white/80">{members.length}</span>
