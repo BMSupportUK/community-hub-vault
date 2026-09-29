@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { playSound } from "@/lib/sound";
 import { getSound } from "@/lib/notification-sounds";
+import { shakeScreen } from "@/lib/screen-shake";
 
 /**
  * Plays the uploaded voice clips when a web push arrives, so staff hear the
