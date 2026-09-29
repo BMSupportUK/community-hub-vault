@@ -95,7 +95,9 @@ export function usePushRegister() {
         });
 
         // Shift start/end use the same spoken MP3s as the in-app shift pop-up.
+        // New support tickets use the same MP3 as the in-app ticket alert.
         for (const c of [
+          { id: "bm_support_tickets_v1", name: "New support tickets", sound: "ticket_notify.mp3" },
           { id: "bm_support_shift_start_v1", name: "Shift starting", sound: "shift_start_notify.mp3" },
           { id: "bm_support_shift_end_v1", name: "Shift ending", sound: "shift_end_notify.mp3" },
           { id: "bm_support_outage_v1", name: "Service outage", sound: "outage_notify.mp3" },
