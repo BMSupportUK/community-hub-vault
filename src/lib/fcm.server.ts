@@ -168,7 +168,8 @@ async function sendFcmToTokens(
   let sent = 0;
   let failed = 0;
   const stale: string[] = [];
-  const isTicketRaised = args.data?.kind === "ticket_raised";
+  // Admin new-ticket alerts (notify.ts) send kind "ticket"; staff ones send "ticket_raised".
+  const isTicketRaised = args.data?.kind === "ticket_raised" || args.data?.kind === "ticket";
   const isTicketReply = args.data?.kind === "ticket_reply";
   const isMention = args.data?.kind === "mention";
   const isShiftStart = args.data?.kind === "shift_start";
