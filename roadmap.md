@@ -2,7 +2,7 @@
 
 ## Current
 - [x] Install Guides: allow the app-download page to scroll on short desktop screens instead of clipping its content
-- [x] Talk Channels: always open at the first message on small screens instead of halfway down
+- [x] Talk Channels: always open at the first message on narrow phones and short desktop screens instead of halfway down
 - [x] Merged DAZN imports: parse inline fixture slots and title qualifiers without losing or corrupting events
 - [x] Talk Channels: show “Away - From the office.” in the staff list when DND is active
 - [x] Talk Channels: remove members from the room's online list immediately when they exit the channel
