@@ -117,6 +117,7 @@ export async function broadcastToUser(
   url: string,
   tag: string,
   sound?: string,
+  kind?: string,
 ) {
   const webpush = await getWebPush();
   const { data: subs } = await supabaseAdmin
@@ -125,7 +126,7 @@ export async function broadcastToUser(
     .eq("user_id", userId);
   if (!subs?.length) return { sent: 0 };
 
-  const payload = JSON.stringify({ title, body, url, tag, sound });
+  const payload = JSON.stringify({ title, body, url, tag, sound, kind });
   const stale: string[] = [];
   let sent = 0;
   await Promise.all(
@@ -154,6 +155,7 @@ export async function broadcastToRoles(
   body: string,
   url: string,
   tag: string,
+  kind?: string,
 ) {
   const webpush = await getWebPush();
   const { data: roleRows } = await supabaseAdmin
@@ -168,7 +170,7 @@ export async function broadcastToRoles(
     .in("user_id", userIds);
   if (!subs?.length) return { sent: 0 };
 
-  const payload = JSON.stringify({ title, body, url, tag });
+  const payload = JSON.stringify({ title, body, url, tag, kind });
   const stale: string[] = [];
   let sent = 0;
   await Promise.all(

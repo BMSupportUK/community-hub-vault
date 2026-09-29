@@ -97,7 +97,7 @@ export const Route = createFileRoute("/api/public/hooks/staff-notification-push"
             let webSent = 0, fcmSent = 0;
             await Promise.all(targets.map(async (uid) => {
               const [w, f] = await Promise.all([
-                broadcastToUser(uid, title, text, url, tag).catch(() => ({ sent: 0 })),
+                broadcastToUser(uid, title, text, url, tag, undefined, r.kind).catch(() => ({ sent: 0 })),
                 pushToUser(uid, { title, body: text, data: { kind: r.kind, notificationId: r.id, url, ...(r.entity_id ? { entityId: r.entity_id } : {}) } }).catch(() => ({ sent: 0, failed: 0 })),
               ]);
               webSent += w.sent; fcmSent += f.sent;
@@ -110,7 +110,7 @@ export const Route = createFileRoute("/api/public/hooks/staff-notification-push"
             return Response.json({ ok: true, onShift: targets.length, web: webSent, fcm: fcmSent });
           }
           const [web, fcm] = await Promise.all([
-            broadcastToRoles(roles, title, text, url, tag).catch((e) => ({
+            broadcastToRoles(roles, title, text, url, tag, r.kind).catch((e) => ({
               sent: 0,
               error: e instanceof Error ? e.message : String(e),
             })),

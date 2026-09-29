@@ -37,14 +37,23 @@ self.addEventListener("push", (event) => {
       }
     }
 
+    // Important alerts stay on screen until clicked/dismissed so they are not
+    // missed while the user is busy in another window.
+    const STICKY_KINDS = new Set([
+      "ticket_reply", "mention", "ticket_assigned", "ticket_help",
+      "ticket_raised", "order_placed", "signup", "friend_request",
+    ]);
+    const sticky = STICKY_KINDS.has(payload.kind);
+
     const options = {
       body: payload.body || "",
       icon: payload.icon || "/icon-192.png",
       badge: payload.badge || "/favicon.png",
       tag: payload.tag || "bm-support",
       data: { url: payload.url || "/status" },
-      vibrate: [120, 60, 120],
+      vibrate: sticky ? [200, 100, 200, 100, 200] : [120, 60, 120],
       renotify: true,
+      requireInteraction: sticky,
       // Suppress the default chime when the app itself is playing the clip.
       silent: playedInApp,
     };
