@@ -64,7 +64,7 @@ export function StaffTicketsButton({ staffId, staffName }: { staffId: string; st
   const [open, setOpen] = useState(false);
   const unclaimed = useUnclaimedCount();
   const [hoverCounts, setHoverCounts] = useState<{ unclaimed: number; mine: number; others: number } | null>(null);
-  const [hoverOpen, setHoverOpen] = useState(false);
+  const [hoverAnchor, setHoverAnchor] = useState<{ top: number; left: number } | null>(null);
 
   // Three live counts on hover: unclaimed / claimed by this staff member / claimed by other staff.
   const loadHoverCounts = useCallback(async () => {
@@ -81,19 +81,24 @@ export function StaffTicketsButton({ staffId, staffName }: { staffId: string; st
     setHoverCounts({ unclaimed: u.count ?? 0, mine: m.count ?? 0, others: o.count ?? 0 });
   }, [staffId]);
 
+  const hoverOpen = hoverAnchor !== null;
   return (
     <>
       <div
         className="relative"
-        onMouseEnter={() => { if (hoverOpen) return; setHoverOpen(true); void loadHoverCounts(); }}
-        onMouseLeave={() => setHoverOpen(false)}
+        onMouseEnter={(e) => {
+          const r = e.currentTarget.getBoundingClientRect();
+          setHoverAnchor({ top: r.top, left: r.left + r.width / 2 });
+          void loadHoverCounts();
+        }}
+        onMouseLeave={() => setHoverAnchor(null)}
       >
         <button
           type="button"
           aria-label={`Tickets for ${staffName}`}
           title={unclaimed > 0 ? `${unclaimed} unclaimed ticket${unclaimed === 1 ? "" : "s"} – click to claim` : "Ticket overview"}
           onPointerDown={(e) => e.stopPropagation()}
-          onClick={(e) => { e.stopPropagation(); e.preventDefault(); setHoverOpen(false); setOpen(true); }}
+          onClick={(e) => { e.stopPropagation(); e.preventDefault(); setHoverAnchor(null); setOpen(true); }}
           className={cn(
             "relative grid size-6 shrink-0 place-items-center rounded-md hover:bg-primary hover:text-primary-foreground",
             unclaimed > 0 ? "animate-pulse bg-destructive text-destructive-foreground" : "bg-surface-2/80 text-muted-foreground",
@@ -106,29 +111,35 @@ export function StaffTicketsButton({ staffId, staffName }: { staffId: string; st
             </span>
           )}
         </button>
-        {hoverOpen && (
-          <div className="pointer-events-none absolute bottom-full right-0 z-50 mb-2 w-max rounded-md border border-border bg-surface-1 px-2.5 py-1.5 text-left shadow-xl">
-            <div className="flex items-center justify-between gap-3 whitespace-nowrap text-[11px] font-medium">
-              <span className="flex items-center gap-1.5 text-muted-foreground">
-                <span className="size-1.5 rounded-full bg-destructive" />Unclaimed
-              </span>
-              <span className="font-bold text-destructive">{hoverCounts?.unclaimed ?? "…"}</span>
-            </div>
-            <div className="mt-1 flex items-center justify-between gap-3 whitespace-nowrap text-[11px] font-medium">
-              <span className="flex items-center gap-1.5 text-muted-foreground">
-                <span className="size-1.5 rounded-full bg-emerald-500" />Claimed by you
-              </span>
-              <span className="font-bold text-emerald-400">{hoverCounts?.mine ?? "…"}</span>
-            </div>
-            <div className="mt-1 flex items-center justify-between gap-3 whitespace-nowrap text-[11px] font-medium">
-              <span className="flex items-center gap-1.5 text-muted-foreground">
-                <span className="size-1.5 rounded-full bg-amber-500" />Other staff
-              </span>
-              <span className="font-bold text-amber-400">{hoverCounts?.others ?? "…"}</span>
-            </div>
-          </div>
-        )}
       </div>
+      {/* Fixed-position hover panel so no card overflow can clip it */}
+      {hoverOpen && hoverCounts !== null && createPortal(
+        <div
+          className="pointer-events-none fixed z-[80] w-max -translate-x-1/2 -translate-y-full rounded-md border border-border bg-background px-2.5 py-1.5 text-left shadow-xl"
+          style={{ top: hoverAnchor.top - 6, left: hoverAnchor.left }}
+          onMouseEnter={() => {}}
+        >
+          <div className="flex items-center justify-between gap-3 whitespace-nowrap text-[11px] font-medium">
+            <span className="flex items-center gap-1.5 text-muted-foreground">
+              <span className="size-1.5 rounded-full bg-destructive" />Unclaimed
+            </span>
+            <span className="font-bold text-destructive">{hoverCounts.unclaimed}</span>
+          </div>
+          <div className="mt-1 flex items-center justify-between gap-3 whitespace-nowrap text-[11px] font-medium">
+            <span className="flex items-center gap-1.5 text-muted-foreground">
+              <span className="size-1.5 rounded-full bg-emerald-500" />Claimed by you
+            </span>
+            <span className="font-bold text-emerald-400">{hoverCounts.mine}</span>
+          </div>
+          <div className="mt-1 flex items-center justify-between gap-3 whitespace-nowrap text-[11px] font-medium">
+            <span className="flex items-center gap-1.5 text-muted-foreground">
+              <span className="size-1.5 rounded-full bg-amber-500" />Other staff
+            </span>
+            <span className="font-bold text-amber-400">{hoverCounts.others}</span>
+          </div>
+        </div>,
+        document.body,
+      )}
       {open && <StaffTicketsDialog staffId={staffId} staffName={staffName} onClose={() => setOpen(false)} />}
     </>
   );
