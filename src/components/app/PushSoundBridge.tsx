@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { playSound } from "@/lib/sound";
 import { getSound } from "@/lib/notification-sounds";
+import { shakeScreen } from "@/lib/screen-shake";
 
 /**
  * Plays the uploaded voice clips when a web push arrives, so staff hear the
@@ -14,6 +15,7 @@ export function PushSoundBridge() {
       try {
         const data = event.data as { type?: string; sound?: string } | null;
         if (!data || data.type !== "bm-play-sound") return;
+        shakeScreen();
         const def = getSound(data.sound);
         played = def ? await playSound(def.src, { label: `push-${def.key}`, gain: 2.0 }) : false;
       } catch (err) {

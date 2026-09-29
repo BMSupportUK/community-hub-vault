@@ -1927,3 +1927,24 @@ html.boro-bg-active .min-h-dvh.bg-background {
   .np2::before, .np2::after, .np2 .nameplate-mascot,
   .nameplate-alpine .nameplate-alpine-cross { animation: none !important; }
 }
+
+/* ---- Screen shake (visual alert when sound can't be used) ---- */
+@keyframes bm-screen-shake-anim {
+  0%, 100% { transform: translate(0, 0); }
+  10% { transform: translate(-8px, 2px); }
+  20% { transform: translate(7px, -2px); }
+  30% { transform: translate(-6px, 1px); }
+  40% { transform: translate(5px, -1px); }
+  50% { transform: translate(-4px, 1px); }
+  60% { transform: translate(3px, 0); }
+  70% { transform: translate(-2px, 0); }
+  80% { transform: translate(1px, 0); }
+  90% { transform: translate(-1px, 0); }
+}
+.bm-screen-shake,
+.bm-screen-shake body {
+  animation: bm-screen-shake-anim 0.9s ease-in-out;
+}
+@media (prefers-reduced-motion: reduce) {
+  .bm-screen-shake, .bm-screen-shake body { animation: none !important; }
+}

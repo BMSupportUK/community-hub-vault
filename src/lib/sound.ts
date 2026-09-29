@@ -1,4 +1,5 @@
 // Shared audio playback helper.
+import { shakeScreen } from "@/lib/screen-shake";
 //
 // Playback strategy (in order):
 //   1. Web Audio AudioBufferSourceNode — the file is fetched once and decoded
@@ -223,6 +224,9 @@ export function playSound(
     console.warn("[sound] ignored playback with no source", opts.label ?? "");
     return Promise.resolve(false);
   }
+  // Visual alert: shake even when sound is muted or the user is signed out,
+  // so the alert is still noticed on screen.
+  shakeScreen();
   if (!signedIn) return Promise.resolve(false);
   if (getSoundPrefs().muted) return Promise.resolve(false);
 
