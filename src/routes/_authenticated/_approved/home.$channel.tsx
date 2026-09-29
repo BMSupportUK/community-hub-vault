@@ -781,7 +781,9 @@ function ChannelPage() {
       // or bottom made a long opening message appear cut in half on entry.
       if (window.matchMedia("(max-width: 767px)").matches) {
         setFirstUnreadId(null);
+        keepScrollPinnedRef.current = false;
         el.scrollTo({ top: 0 });
+        requestAnimationFrame(() => el.scrollTo({ top: 0 }));
         initialScrollDoneRef.current = true;
         return;
       }
@@ -1621,7 +1623,7 @@ function ChannelPage() {
       </header>
       <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-           <div ref={scrollRef} className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-2 py-3 scrollbar-hide [overflow-anchor:auto] sm:px-5 sm:py-4">
+           <div ref={scrollRef} className="min-h-0 flex-1 space-y-3 overflow-y-auto overscroll-contain px-2 py-3 scrollbar-hide [overflow-anchor:none] sm:px-5 sm:py-4 md:[overflow-anchor:auto]">
             {channel.slug !== "welcome" && channel.slug !== "rules" && (
               <div className="flex items-center gap-2 rounded-lg border border-border bg-surface-2/60 px-3 py-2 text-xs text-muted-foreground">
                 <Trash2 className="size-3.5 text-primary shrink-0" />
