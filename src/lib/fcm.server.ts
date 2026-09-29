@@ -172,8 +172,10 @@ async function sendFcmToTokens(
   const isTicketRaised = args.data?.kind === "ticket_raised" || args.data?.kind === "ticket";
   const isTicketReply = args.data?.kind === "ticket_reply";
   const isMention = args.data?.kind === "mention";
-  const isShiftStart = args.data?.kind === "shift_start";
-  const isShiftEnd = args.data?.kind === "shift_end";
+  // Scheduled reminders use phase-specific kinds (for example
+  // shift_end_warn). Route every phase through the same spoken channel.
+  const isShiftStart = args.data?.kind?.startsWith("shift_start") === true;
+  const isShiftEnd = args.data?.kind?.startsWith("shift_end") === true;
   const isOutage = args.data?.kind === "incident" && args.data?.event === "created";
   const isOutageResolved = args.data?.kind === "incident" && args.data?.event === "resolved";
   const k = args.data?.kind;

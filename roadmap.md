@@ -1,6 +1,7 @@
 # Roadmap
 
 ## Current
+- [x] Android shift alerts: route scheduled start/end warning kinds to their spoken audio channels
 - [x] Install Guides: allow the app-download page to scroll on short desktop screens instead of clipping its content
 - [x] Talk Channels: always open at the first message on narrow phones and short desktop screens instead of halfway down
 - [x] Merged DAZN imports: parse inline fixture slots and title qualifiers without losing or corrupting events
