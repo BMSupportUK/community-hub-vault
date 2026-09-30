@@ -42,7 +42,9 @@ export const Route = createFileRoute("/api/public/hooks/rota-autofill")({
       POST: async () => {
         const start = mondayOf(new Date());
         const dates: Date[] = [];
-        for (let i = 0; i < 14; i++) {
+        // Current week + 4 more weeks, so there are always at least 4 full
+        // weeks of claimable slots ahead for every staff role.
+        for (let i = 0; i < 35; i++) {
           const d = new Date(start);
           d.setUTCDate(start.getUTCDate() + i);
           dates.push(d);
