@@ -3532,14 +3532,12 @@ function MyOrdersTab({ onOpenOrder }: { onOpenOrder: (id: string) => void }) {
                 >
                   <Package className="size-3.5" /> View order
                 </button>
-                {!ticketId && (
-                  <button
-                    onClick={() => openSecureCheckout(o.id, onOpenOrder)}
-                    className="px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-xs font-medium hover:opacity-90 inline-flex items-center gap-1"
-                  >
-                    <Receipt className="size-3.5" /> Secure checkout
-                  </button>
-                )}
+                <button
+                  onClick={() => openSecureCheckout(o.id, onOpenOrder)}
+                  className="px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-xs font-medium hover:opacity-90 inline-flex items-center gap-1"
+                >
+                  <Receipt className="size-3.5" /> Secure checkout
+                </button>
                 {ticketId && (
                   <button
                     onClick={() => navigate({ to: "/tickets", search: { id: ticketId } })}
@@ -4479,37 +4477,39 @@ function OrderDetailImpl({
             method={payProvider ?? (bankOnlyCustomer ? "bank_transfer" : null)}
           />
 
-          {order.user_id === user?.id &&
-            !isOrderPaid &&
-            !order.completed_at &&
-            order.status !== "cancelled" && (
-              <div className="space-y-3">
-                {pendingCrypto && (
-                  <div className="rounded-md border border-warning/30 bg-warning/10 px-3 py-2.5 text-xs text-foreground">
-                    <div className="font-medium mb-0.5">USDT payment in progress</div>
-                    <div className="text-muted-foreground">
-                      Awaiting on-chain confirmation ({pendingCrypto.status}). Your secure checkout
-                      page shows the live payment status.
-                    </div>
+          {order.user_id === user?.id && (
+            <div className="space-y-3">
+              {pendingCrypto && !isOrderPaid && !order.completed_at && (
+                <div className="rounded-md border border-warning/30 bg-warning/10 px-3 py-2.5 text-xs text-foreground">
+                  <div className="font-medium mb-0.5">USDT payment in progress</div>
+                  <div className="text-muted-foreground">
+                    Awaiting on-chain confirmation ({pendingCrypto.status}). Your secure checkout
+                    page shows the live payment status.
                   </div>
-                )}
-                <button
-                  type="button"
-                  onClick={() =>
-                    openSecureCheckout(orderId, () =>
-                      toast.error("Could not open the secure checkout — please try again"),
-                    )
-                  }
-                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition"
-                >
-                  <Lock className="size-4" /> Open secure checkout — pay {fmt(order.total_cents ?? 0)}
-                </button>
+                </div>
+              )}
+              <button
+                type="button"
+                onClick={() =>
+                  openSecureCheckout(orderId, () =>
+                    toast.error("Could not open the secure checkout — please try again"),
+                  )
+                }
+                className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition"
+              >
+                <Lock className="size-4" />
+                {isOrderPaid || order.completed_at
+                  ? "Open secure checkout"
+                  : `Open secure checkout — pay ${fmt(order.total_cents ?? 0)}`}
+              </button>
+              {!isOrderPaid && !order.completed_at && (
                 <p className="text-[11px] text-muted-foreground text-center">
                   Card, crypto and bank transfer payments all happen on your secure checkout page,
                   which also updates itself once your payment is confirmed.
                 </p>
-              </div>
-            )}
+              )}
+            </div>
+          )}
         </div>
       </div>
       {credsOpen && order.user_id && (
