@@ -173,6 +173,9 @@ export const createCredentialForOrder = createServerFn({ method: "POST" })
         loginName: z.string().trim().min(1).max(120),
         password: z.string().min(1).max(200),
         accountType: z.enum(["single", "multi", "triple"]).optional(),
+        // Explicit expiry staff picked in the dialog; used as the fallback when
+        // the order's subscription length can't be derived from its items.
+        expiresAt: z.string().datetime().optional(),
       })
       .parse(input),
   )
