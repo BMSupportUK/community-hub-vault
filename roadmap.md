@@ -62,13 +62,13 @@
 - [x] Talk channels: unclaimed-tickets bar above the STAFF/MEMBERS pills (Talk only), collapsible, live Claim + Go to ticket; page-top banner stays elsewhere
 
 ## Manual order secure checkout pages
-- [ ] Draft checkout template designs for approval (Stripe/Square/Wise/Cash/Paid)
-- [ ] Manual order: email + discount fields, remove crypto
-- [ ] Unique secure page per order, copy-link button, status bar
-- [ ] Stripe/Square invoices + pay buttons; Wise bank details + strict reference
-- [ ] Cash thank-you page; "we got your payment" state once paid
+- [x] Draft checkout template designs for approval (Stripe/Square/Wise/Cash/Paid)
+- [x] Manual order: email + discount fields, remove crypto
+- [x] Unique secure page per order, copy-link button, status bar
+- [x] Stripe/Square invoices + pay buttons; Wise bank details + strict reference
+- [x] Cash thank-you page; "we got your payment" state once paid
 - [ ] Completed manual orders move into their sale type tab
-- [ ] Order form: New or Existing customer question
-- [ ] Completed state on secure page: "account set up" (new) / "subscription upgraded" (existing)
-- [ ] Unique password per secure page, shown next to link
-- [ ] Live chat bubble on secure page (customer <-> admin/management)
+- [x] Order form: New or Existing customer question
+- [x] Completed state on secure page: "account set up" (new) / "subscription upgraded" (existing)
+- [x] Unique password per secure page, shown next to link
+- [x] Live chat bubble on secure page (customer <-> admin/management)
