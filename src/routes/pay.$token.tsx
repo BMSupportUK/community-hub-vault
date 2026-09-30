@@ -27,6 +27,7 @@ function PayPage() {
   const { token } = Route.useParams();
   const fetchCheckout = useServerFn(getCheckout);
   const [password, setPassword] = useState<string | null>(null);
+  const [unlocked, setUnlocked] = useState(false);
   const [input, setInput] = useState("");
   const [view, setView] = useState<CheckoutView | null>(null);
   const [error, setError] = useState<string | null>(null);
