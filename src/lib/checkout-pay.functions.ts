@@ -78,7 +78,9 @@ async function withPaymentLock<T>(supabaseAdmin: any, orderId: string, fn: () =>
 }
 
 async function markPaid(supabaseAdmin: any, order: any, provider: "Square" | "Stripe" | "NOWPayments", reference: string, receiptUrl?: string | null) {
-  const { error: paidErr } = await supabaseAdmin.from("orders").update({ paid_at: new Date().toISOString() }).eq("id", order.id).is("paid_at", null);
+  const patch: Record<string, string> = { paid_at: new Date().toISOString() };
+  if (order.status !== "completed" && order.status !== "cancelled") patch.status = "paid";
+  const { error: paidErr } = await supabaseAdmin.from("orders").update(patch).eq("id", order.id).is("paid_at", null);
   if (paidErr) {
     // The card was charged — never hide this. Staff see it in logs; the payment row stays COMPLETED so the order can be repaired.
     console.error(`[checkout] payment taken but order ${order.id} could not be marked paid:`, paidErr.message);
