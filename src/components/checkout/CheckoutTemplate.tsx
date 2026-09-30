@@ -88,7 +88,7 @@ function QdCopy({ value }: { value: string }) {
   );
 }
 
-export function CheckoutTemplate({ view, preview = false, claimToken, cardPayment, onPaymentSent, onContinueToSetup }: { view: CheckoutView; preview?: boolean; claimToken?: string; cardPayment?: ReactNode; onPaymentSent?: () => Promise<void>; onContinueToSetup?: () => Promise<void> }) {
+export function CheckoutTemplate({ view, preview = false, claimToken, cardPayment, onPaymentSent, onContinueToSetup, moveToSetup, addLoginDetails }: { view: CheckoutView; preview?: boolean; claimToken?: string; cardPayment?: ReactNode; onPaymentSent?: () => Promise<void>; onContinueToSetup?: () => Promise<void>; moveToSetup?: ReactNode; addLoginDetails?: ReactNode }) {
   const [sending, setSending] = useState(false);
   const [continuing, setContinuing] = useState(false);
   const { order, items, invoice, bank, qdCode } = view;
@@ -204,6 +204,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
                   </button>
                 )}
               </section>
+              {moveToSetup}
             </aside>
           ) : accountSidebar ? (
             <aside className="min-w-0 space-y-3 lg:sticky lg:top-4">
@@ -218,6 +219,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
                       : (order.customerKind === "existing" ? "Payment confirmed. We're now extending your subscription." : "Payment confirmed. We're now setting up your account.")}</p>
                 </div>
               </section>
+              {addLoginDetails}
               {order.customerKind === "new" && (
                 <section className="rounded-2xl border border-border bg-card p-5 flex gap-3 items-start">
                   <Info className="size-5 text-primary shrink-0 mt-0.5" />
