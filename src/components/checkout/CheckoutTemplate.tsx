@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { AlertTriangle, Bitcoin, BookOpen, Check, Clock, Copy, CreditCard, Hourglass, Info, Loader2, Lock, PartyPopper, Send, UserCheck, UserPlus } from "lucide-react";
+import { AlertTriangle, Bitcoin, BookOpen, Check, Clock, Copy, CreditCard, Hourglass, Loader2, Lock, PartyPopper, Send, UserCheck, UserPlus } from "lucide-react";
 import hero from "@/assets/checkout-family-tv.jpg";
 import installGuideIllustration from "@/assets/manual-order-install-guide.jpg";
 
