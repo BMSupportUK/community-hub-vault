@@ -46,12 +46,19 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
     const pad = (n: number) => String(n).padStart(2, "0");
     return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   };
+  // Add months without overflowing (31 Jan + 1 month = 28/29 Feb, not 3 Mar) — matches the database.
+  const addMonths = (d: Date, m: number) => {
+    const day = d.getDate();
+    d.setDate(1);
+    d.setMonth(d.getMonth() + m);
+    d.setDate(Math.min(day, new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()));
+  };
   useEffect(() => {
     if (link?.customer_kind !== "existing" || !renewAccounts || renewMonths <= 0) return;
     const current = renewAccounts.find((a) => a.id === renewAccountId);
     const remaining = current?.expiry_at ? new Date(current.expiry_at).getTime() : 0;
     const base = new Date(stackEarly ? Math.max(remaining, Date.now()) : Date.now());
-    base.setMonth(base.getMonth() + renewMonths);
+    addMonths(base, renewMonths);
     setExpiryLocal(toLocal(base));
   }, [renewAccounts, renewAccountId, renewMonths, stackEarly, link?.customer_kind]);
   // New accounts: expiry = date the payment reached us + months bought.
@@ -59,7 +66,7 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
     if (!link || link.customer_kind === "existing" || renewMonths <= 0 || !paidLocal) return;
     const base = new Date(paidLocal);
     if (Number.isNaN(base.getTime())) return;
-    base.setMonth(base.getMonth() + renewMonths);
+    addMonths(base, renewMonths);
     setExpiryLocal(toLocal(base));
   }, [paidLocal, renewMonths, link?.customer_kind]);
   useEffect(() => {
