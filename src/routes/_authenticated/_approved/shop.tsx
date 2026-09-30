@@ -4307,7 +4307,9 @@ function OrderDetailImpl({
         <div className="flex items-center gap-2 flex-wrap justify-end">
           <button
             onClick={handleDownload}
-            className="px-2.5 py-1 rounded-md bg-surface-2 text-xs font-medium flex items-center gap-1 hover:bg-surface-2/80"
+            disabled={!isOrderPaid}
+            title={isOrderPaid ? undefined : "Available once the sale is complete"}
+            className="px-2.5 py-1 rounded-md bg-surface-2 text-xs font-medium flex items-center gap-1 hover:bg-surface-2/80 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Download className="size-3.5" /> {order.paid_at ? "Receipt" : "Invoice"} PDF
           </button>
