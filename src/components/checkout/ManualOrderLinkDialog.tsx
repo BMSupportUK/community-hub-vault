@@ -64,13 +64,13 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
     if (!loginName.trim() || !accountPassword.trim()) return toast.error("Username and password are required");
     setBusy(true);
     try {
-      const result = await createCredential({ data: { orderId, loginName: loginName.trim(), password: accountPassword } }) as ApplyOrderResult;
+      const chosen = expiryLocal ? new Date(expiryLocal) : null;
+      const result = await createCredential({ data: { orderId, loginName: loginName.trim(), password: accountPassword, expiresAt: chosen && !Number.isNaN(chosen.getTime()) ? chosen.toISOString() : undefined } }) as ApplyOrderResult;
       if (result.status !== "applied") {
-        toast.error(result.status === "no_term" ? "The subscription length could not be read from the order" : "The account details could not be saved");
+        toast.error(result.status === "no_term" ? "The subscription length couldn't be read from the order — pick the expiry date & time below and save again" : "The account details could not be saved");
         return;
       }
-      if (expiryLocal) {
-        const chosen = new Date(expiryLocal);
+      if (chosen && result.months > 0) {
         const { data: newExp, error: expError } = await supabase.rpc("staff_set_order_credential_expiry" as never, { p_order_id: orderId, p_credential_id: result.credentialId || null, p_expiry: chosen.toISOString() } as never);
         if (expError) throw expError;
         result.newExpiry = new Date((newExp as unknown as string) ?? chosen.toISOString()).toISOString();
@@ -84,7 +84,7 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
         "Your login details are as follows:",
         `Username: ${loginName.trim()}`,
         `Password: ${accountPassword}`,
-        `Subscription length: ${result.months} month${result.months === 1 ? "" : "s"}`,
+        ...(result.months > 0 ? [`Subscription length: ${result.months} month${result.months === 1 ? "" : "s"}`] : []),
         `Starts: ${starts}`,
         `Expires: ${expires}`,
         selectedCode ? `QD app login code (${selectedCode.label}): ${selectedCode.code}` : "If you use the QD app, ask us in this chat for your QD login code.",
