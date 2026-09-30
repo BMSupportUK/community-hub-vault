@@ -6442,7 +6442,7 @@ function HowToOrderVideo({ isAdmin, inHero, settingsKey = HOW_TO_ORDER_VIDEO_KEY
       const { data } = await supabase
         .from("app_settings")
         .select("value")
-        .eq("key", HOW_TO_ORDER_VIDEO_KEY)
+        .eq("key", settingsKey)
         .maybeSingle();
       if (cancelled) return;
       const path =
@@ -6455,7 +6455,7 @@ function HowToOrderVideo({ isAdmin, inHero, settingsKey = HOW_TO_ORDER_VIDEO_KEY
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [settingsKey]);
 
   const onPickFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -6553,7 +6553,7 @@ function HowToOrderVideo({ isAdmin, inHero, settingsKey = HOW_TO_ORDER_VIDEO_KEY
           ) : (
             <div className="grid place-items-center py-16 text-center text-sm text-muted-foreground rounded-xl border border-dashed border-border">
               {isAdmin
-                ? "No video yet — upload one so customers can see how to order."
+                ? emptyHint
                 : "A walkthrough video is coming soon."}
             </div>
           )}
