@@ -70,3 +70,5 @@
 - [ ] Completed manual orders move into their sale type tab
 - [ ] Order form: New or Existing customer question
 - [ ] Completed state on secure page: "account set up" (new) / "subscription upgraded" (existing)
+- [ ] Unique password per secure page, shown next to link
+- [ ] Live chat bubble on secure page (customer <-> admin/management)
