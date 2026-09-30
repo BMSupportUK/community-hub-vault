@@ -60,3 +60,11 @@
 - [x] Password+PIN gates: Discount Codes, Manage Products, Members & Role Management, Shop Orders
 - Sports imports: NFL Sunday Ticket `NFL NN: ET | UK` rows import with the stated UK time and channel `NFL NN`.
 - [x] Talk channels: unclaimed-tickets bar above the STAFF/MEMBERS pills (Talk only), collapsible, live Claim + Go to ticket; page-top banner stays elsewhere
+
+## Manual order secure checkout pages
+- [ ] Draft checkout template designs for approval (Stripe/Square/Wise/Cash/Paid)
+- [ ] Manual order: email + discount fields, remove crypto
+- [ ] Unique secure page per order, copy-link button, status bar
+- [ ] Stripe/Square invoices + pay buttons; Wise bank details + strict reference
+- [ ] Cash thank-you page; "we got your payment" state once paid
+- [ ] Completed manual orders move into their sale type tab
