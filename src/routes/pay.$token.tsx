@@ -1,0 +1,94 @@
+import { useCallback, useEffect, useState } from "react";
+import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { Loader2, Lock } from "lucide-react";
+import { getCheckout } from "@/lib/checkout.functions";
+import { CheckoutTemplate, type CheckoutView } from "@/components/checkout/CheckoutTemplate";
+import { CustomerCheckoutChat } from "@/components/checkout/CheckoutChat";
+
+export const Route = createFileRoute("/pay/$token")({
+  head: () => ({
+    meta: [
+      { title: "Secure checkout — BM Support" },
+      { name: "description", content: "Your private, password-protected BM Support order and payment page." },
+      { name: "robots", content: "noindex, nofollow" },
+      { property: "og:title", content: "Secure checkout — BM Support" },
+      { property: "og:description", content: "Your private, password-protected BM Support order and payment page." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
+  component: PayPage,
+});
+
+function PayPage() {
+  const { token } = Route.useParams();
+  const fetchCheckout = useServerFn(getCheckout);
+  const [password, setPassword] = useState<string | null>(null);
+  const [input, setInput] = useState("");
+  const [view, setView] = useState<CheckoutView | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const validToken = /^[a-f0-9]{64}$/.test(token);
+  const key = `bm-pay-${token}`;
+
+  const load = useCallback(async (pw: string) => {
+    const r = await fetchCheckout({ data: { token, password: pw } });
+    if (!r.ok) return false;
+    setView({ order: r.order, items: r.items, invoice: r.invoice, bank: r.bank });
+    return true;
+  }, [fetchCheckout, token]);
+
+  useEffect(() => {
+    const saved = sessionStorage.getItem(key);
+    if (saved && validToken) load(saved).then((ok) => { if (ok) setPassword(saved); else sessionStorage.removeItem(key); });
+  }, [key, load, validToken]);
+
+  // Keep the page live so payment / completion show without a refresh.
+  useEffect(() => {
+    if (!password) return;
+    const t = setInterval(() => { if (document.visibilityState === "visible") load(password); }, 20000);
+    const onFocus = () => load(password);
+    window.addEventListener("focus", onFocus);
+    return () => { clearInterval(t); window.removeEventListener("focus", onFocus); };
+  }, [password, load]);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!validToken) return setError("This link is not valid.");
+    setBusy(true); setError(null);
+    const pw = input.trim();
+    try {
+      const ok = await load(pw);
+      if (ok) { sessionStorage.setItem(key, pw); setPassword(pw); }
+      else setError("That password is not correct. Check the password you were given with this link.");
+    } catch { setError("Something went wrong. Please try again."); }
+    finally { setBusy(false); }
+  };
+
+  if (!password || !view) {
+    return (
+      <main className="min-h-screen grid place-items-center bg-background px-5">
+        <form onSubmit={submit} className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 space-y-4 text-center">
+          <div className="mx-auto size-12 rounded-full bg-primary/15 text-primary grid place-items-center"><Lock className="size-6" /></div>
+          <div>
+            <h1 className="font-display text-xl font-bold">Secure checkout</h1>
+            <p className="text-sm text-muted-foreground">Enter the password you were given with this link.</p>
+          </div>
+          <input value={input} onChange={(e) => setInput(e.target.value)} autoComplete="off" placeholder="XXXX-XXXX-XXXX" className="w-full h-11 rounded-lg border border-border bg-background px-3 text-center font-mono tracking-widest uppercase" aria-label="Password" />
+          {error && <p className="text-sm text-destructive">{error}</p>}
+          <button type="submit" disabled={busy || !input.trim()} className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-semibold disabled:opacity-50 inline-flex items-center justify-center gap-2">
+            {busy && <Loader2 className="size-4 animate-spin" />} Open my order
+          </button>
+        </form>
+      </main>
+    );
+  }
+
+  return (
+    <main className="min-h-screen overflow-y-auto">
+      <CheckoutTemplate view={view} />
+      <CustomerCheckoutChat token={token} password={password} />
+    </main>
+  );
+}

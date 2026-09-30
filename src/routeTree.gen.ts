@@ -37,6 +37,7 @@ import { Route as FanZoneIndexRouteImport } from './routes/fan-zone.index'
 import { Route as FanZoneBoardRouteImport } from './routes/fan-zone.$board'
 import { Route as GuidesIndexRouteImport } from './routes/guides.index'
 import { Route as GuidesIdRouteImport } from './routes/guides.$id'
+import { Route as PayTokenRouteImport } from './routes/pay.$token'
 import { Route as AuthenticatedApprovedAccountSecurityRouteImport } from './routes/_authenticated/_approved/account-security'
 import { Route as AuthenticatedApprovedAdminRouteImport } from './routes/_authenticated/_approved/admin'
 import { Route as AuthenticatedApprovedAdminAdStatsRouteImport } from './routes/_authenticated/_approved/admin-ad-stats'
@@ -48,6 +49,7 @@ import { Route as AuthenticatedApprovedAdminBankTransferRouteImport } from './ro
 import { Route as AuthenticatedApprovedAdminBlacklistRouteImport } from './routes/_authenticated/_approved/admin-blacklist'
 import { Route as AuthenticatedApprovedAdminBoroTeamSheetRouteImport } from './routes/_authenticated/_approved/admin-boro-team-sheet'
 import { Route as AuthenticatedApprovedAdminBusinessHoursRouteImport } from './routes/_authenticated/_approved/admin-business-hours'
+import { Route as AuthenticatedApprovedAdminCheckoutTemplatesRouteImport } from './routes/_authenticated/_approved/admin-checkout-templates'
 import { Route as AuthenticatedApprovedAdminCredentialsRouteImport } from './routes/_authenticated/_approved/admin-credentials'
 import { Route as AuthenticatedApprovedAdminDnsRouteImport } from './routes/_authenticated/_approved/admin-dns'
 import { Route as AuthenticatedApprovedAdminFanZoneRouteImport } from './routes/_authenticated/_approved/admin-fan-zone'
@@ -300,6 +302,11 @@ const GuidesIdRoute = GuidesIdRouteImport.update({
   path: '/guides/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PayTokenRoute = PayTokenRouteImport.update({
+  id: '/pay/$token',
+  path: '/pay/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedApprovedAccountSecurityRoute =
   AuthenticatedApprovedAccountSecurityRouteImport.update({
     id: '/account-security',
@@ -364,6 +371,12 @@ const AuthenticatedApprovedAdminBusinessHoursRoute =
   AuthenticatedApprovedAdminBusinessHoursRouteImport.update({
     id: '/admin-business-hours',
     path: '/admin-business-hours',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedAdminCheckoutTemplatesRoute =
+  AuthenticatedApprovedAdminCheckoutTemplatesRouteImport.update({
+    id: '/admin-checkout-templates',
+    path: '/admin-checkout-templates',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
 const AuthenticatedApprovedAdminCredentialsRoute =
@@ -1058,6 +1071,7 @@ export interface FileRoutesByFullPath {
   '/a/$token': typeof ATokenRoute
   '/fan-zone/$board': typeof FanZoneBoardRouteWithChildren
   '/guides/$id': typeof GuidesIdRoute
+  '/pay/$token': typeof PayTokenRoute
   '/fan-zone/': typeof FanZoneIndexRoute
   '/guides/': typeof GuidesIndexRoute
   '/account-security': typeof AuthenticatedApprovedAccountSecurityRoute
@@ -1071,6 +1085,7 @@ export interface FileRoutesByFullPath {
   '/admin-blacklist': typeof AuthenticatedApprovedAdminBlacklistRoute
   '/admin-boro-team-sheet': typeof AuthenticatedApprovedAdminBoroTeamSheetRoute
   '/admin-business-hours': typeof AuthenticatedApprovedAdminBusinessHoursRoute
+  '/admin-checkout-templates': typeof AuthenticatedApprovedAdminCheckoutTemplatesRoute
   '/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
   '/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
   '/admin-fan-zone': typeof AuthenticatedApprovedAdminFanZoneRoute
@@ -1207,6 +1222,7 @@ export interface FileRoutesByTo {
   '/gate': typeof AuthenticatedGateRoute
   '/a/$token': typeof ATokenRoute
   '/guides/$id': typeof GuidesIdRoute
+  '/pay/$token': typeof PayTokenRoute
   '/fan-zone': typeof FanZoneIndexRoute
   '/guides': typeof GuidesIndexRoute
   '/account-security': typeof AuthenticatedApprovedAccountSecurityRoute
@@ -1220,6 +1236,7 @@ export interface FileRoutesByTo {
   '/admin-blacklist': typeof AuthenticatedApprovedAdminBlacklistRoute
   '/admin-boro-team-sheet': typeof AuthenticatedApprovedAdminBoroTeamSheetRoute
   '/admin-business-hours': typeof AuthenticatedApprovedAdminBusinessHoursRoute
+  '/admin-checkout-templates': typeof AuthenticatedApprovedAdminCheckoutTemplatesRoute
   '/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
   '/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
   '/admin-fan-zone': typeof AuthenticatedApprovedAdminFanZoneRoute
@@ -1360,6 +1377,7 @@ export interface FileRoutesById {
   '/a/$token': typeof ATokenRoute
   '/fan-zone/$board': typeof FanZoneBoardRouteWithChildren
   '/guides/$id': typeof GuidesIdRoute
+  '/pay/$token': typeof PayTokenRoute
   '/fan-zone/': typeof FanZoneIndexRoute
   '/guides/': typeof GuidesIndexRoute
   '/_authenticated/_approved/account-security': typeof AuthenticatedApprovedAccountSecurityRoute
@@ -1373,6 +1391,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/admin-blacklist': typeof AuthenticatedApprovedAdminBlacklistRoute
   '/_authenticated/_approved/admin-boro-team-sheet': typeof AuthenticatedApprovedAdminBoroTeamSheetRoute
   '/_authenticated/_approved/admin-business-hours': typeof AuthenticatedApprovedAdminBusinessHoursRoute
+  '/_authenticated/_approved/admin-checkout-templates': typeof AuthenticatedApprovedAdminCheckoutTemplatesRoute
   '/_authenticated/_approved/admin-credentials': typeof AuthenticatedApprovedAdminCredentialsRoute
   '/_authenticated/_approved/admin-dns': typeof AuthenticatedApprovedAdminDnsRoute
   '/_authenticated/_approved/admin-fan-zone': typeof AuthenticatedApprovedAdminFanZoneRoute
@@ -1513,6 +1532,7 @@ export interface FileRouteTypes {
     | '/a/$token'
     | '/fan-zone/$board'
     | '/guides/$id'
+    | '/pay/$token'
     | '/fan-zone/'
     | '/guides/'
     | '/account-security'
@@ -1526,6 +1546,7 @@ export interface FileRouteTypes {
     | '/admin-blacklist'
     | '/admin-boro-team-sheet'
     | '/admin-business-hours'
+    | '/admin-checkout-templates'
     | '/admin-credentials'
     | '/admin-dns'
     | '/admin-fan-zone'
@@ -1662,6 +1683,7 @@ export interface FileRouteTypes {
     | '/gate'
     | '/a/$token'
     | '/guides/$id'
+    | '/pay/$token'
     | '/fan-zone'
     | '/guides'
     | '/account-security'
@@ -1675,6 +1697,7 @@ export interface FileRouteTypes {
     | '/admin-blacklist'
     | '/admin-boro-team-sheet'
     | '/admin-business-hours'
+    | '/admin-checkout-templates'
     | '/admin-credentials'
     | '/admin-dns'
     | '/admin-fan-zone'
@@ -1814,6 +1837,7 @@ export interface FileRouteTypes {
     | '/a/$token'
     | '/fan-zone/$board'
     | '/guides/$id'
+    | '/pay/$token'
     | '/fan-zone/'
     | '/guides/'
     | '/_authenticated/_approved/account-security'
@@ -1827,6 +1851,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/admin-blacklist'
     | '/_authenticated/_approved/admin-boro-team-sheet'
     | '/_authenticated/_approved/admin-business-hours'
+    | '/_authenticated/_approved/admin-checkout-templates'
     | '/_authenticated/_approved/admin-credentials'
     | '/_authenticated/_approved/admin-dns'
     | '/_authenticated/_approved/admin-fan-zone'
@@ -1963,6 +1988,7 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   ATokenRoute: typeof ATokenRoute
   GuidesIdRoute: typeof GuidesIdRoute
+  PayTokenRoute: typeof PayTokenRoute
   GuidesIndexRoute: typeof GuidesIndexRoute
   ApiPublicAndroidApkRoute: typeof ApiPublicAndroidApkRoute
   ApiPublicBoroMatchDetailRoute: typeof ApiPublicBoroMatchDetailRoute
@@ -2207,6 +2233,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GuidesIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pay/$token': {
+      id: '/pay/$token'
+      path: '/pay/$token'
+      fullPath: '/pay/$token'
+      preLoaderRoute: typeof PayTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/_approved/account-security': {
       id: '/_authenticated/_approved/account-security'
       path: '/account-security'
@@ -2282,6 +2315,13 @@ declare module '@tanstack/react-router' {
       path: '/admin-business-hours'
       fullPath: '/admin-business-hours'
       preLoaderRoute: typeof AuthenticatedApprovedAdminBusinessHoursRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/admin-checkout-templates': {
+      id: '/_authenticated/_approved/admin-checkout-templates'
+      path: '/admin-checkout-templates'
+      fullPath: '/admin-checkout-templates'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminCheckoutTemplatesRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
     '/_authenticated/_approved/admin-credentials': {
@@ -3169,6 +3209,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedAdminBlacklistRoute: typeof AuthenticatedApprovedAdminBlacklistRoute
   AuthenticatedApprovedAdminBoroTeamSheetRoute: typeof AuthenticatedApprovedAdminBoroTeamSheetRoute
   AuthenticatedApprovedAdminBusinessHoursRoute: typeof AuthenticatedApprovedAdminBusinessHoursRoute
+  AuthenticatedApprovedAdminCheckoutTemplatesRoute: typeof AuthenticatedApprovedAdminCheckoutTemplatesRoute
   AuthenticatedApprovedAdminCredentialsRoute: typeof AuthenticatedApprovedAdminCredentialsRoute
   AuthenticatedApprovedAdminDnsRoute: typeof AuthenticatedApprovedAdminDnsRoute
   AuthenticatedApprovedAdminFanZoneRoute: typeof AuthenticatedApprovedAdminFanZoneRoute
@@ -3250,6 +3291,8 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
     AuthenticatedApprovedAdminBoroTeamSheetRoute,
   AuthenticatedApprovedAdminBusinessHoursRoute:
     AuthenticatedApprovedAdminBusinessHoursRoute,
+  AuthenticatedApprovedAdminCheckoutTemplatesRoute:
+    AuthenticatedApprovedAdminCheckoutTemplatesRoute,
   AuthenticatedApprovedAdminCredentialsRoute:
     AuthenticatedApprovedAdminCredentialsRoute,
   AuthenticatedApprovedAdminDnsRoute: AuthenticatedApprovedAdminDnsRoute,
@@ -3418,6 +3461,7 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   ATokenRoute: ATokenRoute,
   GuidesIdRoute: GuidesIdRoute,
+  PayTokenRoute: PayTokenRoute,
   GuidesIndexRoute: GuidesIndexRoute,
   ApiPublicAndroidApkRoute: ApiPublicAndroidApkRoute,
   ApiPublicBoroMatchDetailRoute: ApiPublicBoroMatchDetailRoute,
