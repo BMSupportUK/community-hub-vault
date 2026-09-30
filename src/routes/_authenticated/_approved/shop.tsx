@@ -4477,62 +4477,37 @@ function OrderDetailImpl({
             method={payProvider ?? (bankOnlyCustomer ? "bank_transfer" : null)}
           />
 
-          {order.user_id === user?.id && (
-            <div className="space-y-3">
-              {pendingCrypto ? (
-                <>
+          {order.user_id === user?.id &&
+            !isOrderPaid &&
+            !order.completed_at &&
+            order.status !== "cancelled" && (
+              <div className="space-y-3">
+                {pendingCrypto && (
                   <div className="rounded-md border border-warning/30 bg-warning/10 px-3 py-2.5 text-xs text-foreground">
                     <div className="font-medium mb-0.5">USDT payment in progress</div>
                     <div className="text-muted-foreground">
-                      Awaiting on-chain confirmation ({pendingCrypto.status}). Other payment methods
-                      are locked until this clears. If you didn't send anything, wait for the
-                      invoice to expire or contact support.
+                      Awaiting on-chain confirmation ({pendingCrypto.status}). Your secure checkout
+                      page shows the live payment status.
                     </div>
                   </div>
-                  <CryptoPanel
-                    orderId={orderId}
-                    amountCents={order.total_cents ?? 0}
-                    canPay={false}
-                    onChange={load}
-                  />
-                </>
-              ) : isOrderPaid || order.completed_at || order.status === "cancelled" ? (
-                <>
-                  <SquareCardPanel
-                    orderId={orderId}
-                    amountCents={order.total_cents ?? 0}
-                    canPay={false}
-                    onChange={load}
-                  />
-                  <CryptoPanel
-                    orderId={orderId}
-                    amountCents={order.total_cents ?? 0}
-                    canPay={false}
-                    onChange={load}
-                  />
-                </>
-              ) : (
-                <>
-                  <PayOrderDialog
-                    orderId={orderId}
-                    amountCents={order.total_cents ?? 0}
-                    onChange={load}
-                  />
-                  {!bankOnlyCustomer && (
-                    <button
-                      type="button"
-                      onClick={refreshCustomerSquareInvoice}
-                      disabled={busy}
-                      className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-border bg-surface-2 text-sm font-medium hover:bg-surface-2/80 transition disabled:opacity-50"
-                    >
-                      <BadgeCheck className="size-4" />
-                      {busy ? "Checking payment…" : "I've paid — refresh status"}
-                    </button>
-                  )}
-                </>
-              )}
-            </div>
-          )}
+                )}
+                <button
+                  type="button"
+                  onClick={() =>
+                    openSecureCheckout(orderId, () =>
+                      toast.error("Could not open the secure checkout — please try again"),
+                    )
+                  }
+                  className="w-full inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 transition"
+                >
+                  <Lock className="size-4" /> Open secure checkout — pay {fmt(order.total_cents ?? 0)}
+                </button>
+                <p className="text-[11px] text-muted-foreground text-center">
+                  Card, crypto and bank transfer payments all happen on your secure checkout page,
+                  which also updates itself once your payment is confirmed.
+                </p>
+              </div>
+            )}
         </div>
       </div>
       {credsOpen && order.user_id && (
