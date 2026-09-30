@@ -59,16 +59,35 @@ export function CustomerCheckoutChat({ token, password, orderRef }: { token: str
   const openRef = useRef(open);
   openRef.current = open;
   const chRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
+  const readKey = `bm-checkout-chat-read-${token}`;
+
+  const markStaffMessagesRead = useCallback((items: Msg[]) => {
+    const latest = items.filter((m) => m.sender === "staff").at(-1);
+    if (latest && typeof window !== "undefined") window.localStorage.setItem(readKey, latest.created_at);
+    setUnread(0);
+  }, [readKey]);
 
   const load = useCallback(async () => {
     const r = await list({ data: { token, password } });
     if (!r.ok) return;
-    setMessages((prev) => {
-      const newStaff = r.messages.filter((m) => m.sender === "staff" && !prev.some((p) => p.id === m.id)).length;
-      if (prev.length && newStaff && !openRef.current) setUnread((u) => u + newStaff);
-      return r.messages;
+    setMessages(r.messages);
+    if (openRef.current) {
+      markStaffMessagesRead(r.messages);
+      return;
+    }
+    const lastRead = typeof window !== "undefined" ? window.localStorage.getItem(readKey) : null;
+    const unreadStaff = r.messages.filter((m) => m.sender === "staff" && (!lastRead || m.created_at > lastRead)).length;
+    setUnread(unreadStaff);
+  }, [list, token, password, readKey, markStaffMessagesRead]);
+
+  const toggleChat = () => {
+    setOpen((wasOpen) => {
+      const willOpen = !wasOpen;
+      openRef.current = willOpen;
+      if (willOpen) markStaffMessagesRead(messages);
+      return willOpen;
     });
-  }, [list, token, password]);
+  };
 
   useEffect(() => {
     load();
@@ -103,7 +122,7 @@ export function CustomerCheckoutChat({ token, password, orderRef }: { token: str
           }} />
         </div>
       )}
-      <button type="button" onClick={() => { setOpen((o) => !o); setUnread(0); }} aria-label="Chat with us" className={`fixed bottom-5 right-4 z-50 size-14 rounded-full bg-primary text-primary-foreground grid place-items-center shadow-xl hover:scale-105 transition-transform ${unread > 0 && !open ? "animate-bounce" : ""}`}>
+      <button type="button" onClick={toggleChat} aria-label={unread > 0 ? `Chat with us, ${unread} unread ${unread === 1 ? "message" : "messages"}` : "Chat with us"} className={`fixed bottom-5 right-4 z-50 size-14 rounded-full bg-primary text-primary-foreground grid place-items-center shadow-xl hover:scale-105 transition-transform ${unread > 0 && !open ? "animate-bounce" : ""}`}>
         {unread > 0 && !open && <span className="absolute inset-0 rounded-full bg-primary/60 animate-ping" aria-hidden />}
         {open ? <X className="size-6" /> : <MessageCircle className="size-6" />}
         {unread > 0 && !open && <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-destructive text-destructive-foreground text-[11px] font-bold grid place-items-center z-10">{unread}</span>}
