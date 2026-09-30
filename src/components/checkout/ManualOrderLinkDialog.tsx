@@ -31,18 +31,22 @@ export function SecureLinkPanel({ orderId, withChat = true }: { orderId: string;
   if (link === undefined) return <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" /> Loading…</div>;
   if (!link) return <p className="text-sm text-muted-foreground">This order has no secure checkout page (it was added before secure pages existed).</p>;
   const url = secureCheckoutUrl(link.token);
-  return (
-    <div className="space-y-3">
+  const fields = (
+    <div className="space-y-3 min-w-0">
       <CopyField label="Secure page link" value={url} />
       <CopyField label="Password" value={link.password} />
       <CopyField label="Link + password (to send to the customer)" value={`Your secure order page: ${url}\nPassword: ${link.password}`} />
       <a href={url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline"><ExternalLink className="size-3.5" /> Open page</a>
-      {withChat && (
-        <div className="space-y-1 pt-2">
-          <div className="text-xs font-medium">Chat with the customer</div>
-          <StaffCheckoutChat orderId={orderId} token={link.token} />
-        </div>
-      )}
+    </div>
+  );
+  if (!withChat) return fields;
+  return (
+    <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)]">
+      {fields}
+      <aside className="min-w-0 space-y-2 lg:border-l lg:border-border lg:pl-6">
+        <div className="text-xs font-medium">Chat with the customer</div>
+        <StaffCheckoutChat orderId={orderId} token={link.token} />
+      </aside>
     </div>
   );
 }
