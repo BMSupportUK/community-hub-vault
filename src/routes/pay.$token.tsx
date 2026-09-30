@@ -104,16 +104,17 @@ function PayPage() {
     );
   }
 
+  const pw = password ?? "";
   return (
     <main className="min-h-screen overflow-y-auto">
       <CheckoutTemplate
         view={view}
         claimToken={token}
         cardPayment={(view.order.method === "square" || view.order.method === "stripe" || view.order.method === "crypto") && !view.order.paidAt && !view.order.cancelled ? (
-          <CheckoutCardPayment token={token} password={password} method={view.order.method} amountCents={view.order.totalCents} onPaid={() => { load(password); }} />
+          <CheckoutCardPayment token={token} password={pw} method={view.order.method} amountCents={view.order.totalCents} onPaid={() => { load(pw); }} />
         ) : undefined}
       />
-      <CustomerCheckoutChat token={token} password={password} />
+      <CustomerCheckoutChat token={token} password={pw} />
     </main>
   );
 }
