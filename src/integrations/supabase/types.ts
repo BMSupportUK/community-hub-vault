@@ -3908,6 +3908,7 @@ export type Database = {
           order_id: string
           password: string
           payment_sent_at: string | null
+          qd_code_id: string | null
           token: string
         }
         Insert: {
@@ -3919,6 +3920,7 @@ export type Database = {
           order_id: string
           password: string
           payment_sent_at?: string | null
+          qd_code_id?: string | null
           token: string
         }
         Update: {
@@ -3930,9 +3932,18 @@ export type Database = {
           order_id?: string
           password?: string
           payment_sent_at?: string | null
+          qd_code_id?: string | null
           token?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "order_checkout_links_qd_code_id_fkey"
+            columns: ["qd_code_id"]
+            isOneToOne: false
+            referencedRelation: "qd_dns_codes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       order_invoices: {
         Row: {

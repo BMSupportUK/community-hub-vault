@@ -69,6 +69,8 @@ export function SecureLinkPanel({ orderId, withChat = true }: { orderId: string;
         return;
       }
       const selectedCode = qdCodes.find((code) => code.id === qdCodeId);
+      // Remember the chosen QD code on the link so the customer's secure page shows it.
+      await supabase.from("order_checkout_links").update({ qd_code_id: selectedCode?.id ?? null } as never).eq("order_id", orderId);
       const starts = new Date().toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" });
       const expires = new Date(result.newExpiry).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" });
       const message = [

@@ -102,6 +102,15 @@ export const getCheckout = createServerFn({ method: "POST" })
     }
     const { data: pay } = await supabaseAdmin.from("order_payments").select("provider,status").eq("order_id", link.order_id).maybeSingle();
     const cryptoConfirming = pay?.provider === "nowpayments" && ["confirming", "confirmed", "sending", "partially_paid"].includes(String(pay.status));
+    // QD login code: the one staff picked for this order, else the first DNS code from the admin dashboard.
+    let qdCode: { label: string; code: string } | null = null;
+    {
+      const qdId = (link as any).qd_code_id as string | null;
+      const { data: qd } = qdId
+        ? await supabaseAdmin.from("qd_dns_codes").select("label,code").eq("id", qdId).maybeSingle()
+        : await supabaseAdmin.from("qd_dns_codes").select("label,code").order("label").limit(1).maybeSingle();
+      if (qd) qdCode = { label: String(qd.label ?? "QD"), code: String(qd.code ?? "") };
+    }
     return {
       ok: true as const,
       order: {
@@ -127,6 +136,7 @@ export const getCheckout = createServerFn({ method: "POST" })
       items: (items ?? []).map((i: any) => ({ name: String(i.product_name ?? "Item"), qty: Number(i.quantity ?? 1), unitCents: Number(i.unit_price_cents ?? 0) })),
       invoice,
       bank,
+      qdCode,
     };
   });
 

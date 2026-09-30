@@ -41,7 +41,7 @@ function PayPage() {
   const load = useCallback(async (pw: string) => {
     const r = await fetchCheckout({ data: { token, password: pw } });
     if (!r.ok) return false;
-    setView({ order: r.order, items: r.items, invoice: r.invoice, bank: r.bank });
+    setView({ order: r.order, items: r.items, invoice: r.invoice, bank: r.bank, qdCode: (r as { qdCode?: { label: string; code: string } | null }).qdCode ?? null });
     return true;
   }, [fetchCheckout, token]);
 
