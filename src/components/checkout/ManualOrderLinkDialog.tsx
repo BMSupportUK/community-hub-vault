@@ -41,23 +41,35 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
   const [renewMonths, setRenewMonths] = useState(0);
   // Early renewals stack the new months on top of the time the customer still has left.
   const [stackEarly, setStackEarly] = useState(true);
+  const [paidLocal, setPaidLocal] = useState("");
+  const toLocal = (d: Date) => {
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
   useEffect(() => {
-    if (!renewAccounts || renewMonths <= 0) return;
+    if (link?.customer_kind !== "existing" || !renewAccounts || renewMonths <= 0) return;
     const current = renewAccounts.find((a) => a.id === renewAccountId);
     const remaining = current?.expiry_at ? new Date(current.expiry_at).getTime() : 0;
     const base = new Date(stackEarly ? Math.max(remaining, Date.now()) : Date.now());
     base.setMonth(base.getMonth() + renewMonths);
-    const pad = (n: number) => String(n).padStart(2, "0");
-    setExpiryLocal(`${base.getFullYear()}-${pad(base.getMonth() + 1)}-${pad(base.getDate())}T${pad(base.getHours())}:${pad(base.getMinutes())}`);
-  }, [renewAccounts, renewAccountId, renewMonths, stackEarly]);
+    setExpiryLocal(toLocal(base));
+  }, [renewAccounts, renewAccountId, renewMonths, stackEarly, link?.customer_kind]);
+  // New accounts: expiry = date the payment reached us + months bought.
   useEffect(() => {
-    if (!loginOnly || link?.customer_kind !== "existing") return;
+    if (!link || link.customer_kind === "existing" || renewMonths <= 0 || !paidLocal) return;
+    const base = new Date(paidLocal);
+    if (Number.isNaN(base.getTime())) return;
+    base.setMonth(base.getMonth() + renewMonths);
+    setExpiryLocal(toLocal(base));
+  }, [paidLocal, renewMonths, link?.customer_kind]);
+  useEffect(() => {
+    if (!loginOnly || !link) return;
     loadRenewalAccounts({ data: { orderId } }).then((r) => {
       setRenewAccounts(r.accounts);
       setRenewAccountId(r.suggestedId ?? "");
       setRenewMonths(r.months);
     }).catch((e) => { setRenewAccounts([]); toast.error(e instanceof Error ? e.message : "Couldn't load the customer's accounts"); });
-  }, [loginOnly, link?.customer_kind, orderId]);
+  }, [loginOnly, !!link, orderId]);
   useEffect(() => {
     Promise.all([
       supabase.from("order_checkout_links").select("token,password,payment_sent_at,account_setup_at,customer_kind").eq("order_id", orderId).maybeSingle(),
@@ -65,7 +77,9 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
       supabase.from("qd_dns_codes").select("id,label,code").order("label"),
     ]).then(([{ data: linkData }, { data: orderData }, { data: codeData }]) => {
       setLink((linkData as never) ?? null);
-      setOrderPaid(!!(orderData as { paid_at?: string | null } | null)?.paid_at);
+      const paidAt = (orderData as { paid_at?: string | null } | null)?.paid_at;
+      setOrderPaid(!!paidAt);
+      if (paidAt) setPaidLocal(toLocal(new Date(paidAt)));
       const codes = (codeData ?? []) as { id: string; label: string; code: string }[];
       setQdCodes(codes);
       if (codes.length > 0) setQdCodeId(codes[0].id);
@@ -101,7 +115,7 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
       const selectedCode = qdCodes.find((code) => code.id === qdCodeId);
       // Remember the chosen QD code on the link so the customer's secure page shows it.
       await supabase.from("order_checkout_links").update({ qd_code_id: selectedCode?.id ?? null } as never).eq("order_id", orderId);
-      const starts = new Date().toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" });
+      const starts = (paidLocal && !Number.isNaN(new Date(paidLocal).getTime()) ? new Date(paidLocal) : new Date()).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" });
       const expires = new Date(result.newExpiry).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" });
       const message = [
         "Your login details are as follows:",
@@ -128,7 +142,8 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
   const selectedQd = qdCodes.find((code) => code.id === qdCodeId);
   const extraFields = (
     <>
-      <label className="block space-y-1"><span className="text-xs font-medium">Subscription expiry date &amp; time</span><input type="datetime-local" value={expiryLocal} onChange={(event) => setExpiryLocal(event.target.value)} className="w-full h-9 rounded-lg border border-border bg-background px-3 text-sm" /><span className="block text-[11px] text-muted-foreground">Leave blank to use the order's subscription length from today.</span></label>
+      <label className="block space-y-1"><span className="text-xs font-medium">Date the payment reached us</span><input type="datetime-local" value={paidLocal} onChange={(event) => setPaidLocal(event.target.value)} className="w-full h-9 rounded-lg border border-border bg-background px-3 text-sm" /><span className="block text-[11px] text-muted-foreground">{renewMonths > 0 ? `The ${renewMonths} month${renewMonths === 1 ? " bought is" : "s bought are"} added from this date.` : "The order's length couldn't be read — set the expiry below."}</span></label>
+      <label className="block space-y-1"><span className="text-xs font-medium">Subscription expiry date &amp; time</span><input type="datetime-local" value={expiryLocal} onChange={(event) => setExpiryLocal(event.target.value)} className="w-full h-9 rounded-lg border border-border bg-background px-3 text-sm" /><span className="block text-[11px] text-muted-foreground">Filled in automatically from the payment date — change it if needed.</span></label>
       <label className="block space-y-1"><span className="text-xs font-medium">QD app login code (DNS code from admin dashboard)</span><select value={qdCodeId} onChange={(event) => setQdCodeId(event.target.value)} className="w-full h-9 rounded-lg border border-border bg-background px-3 text-sm"><option value="">Customer is not using QD</option>{qdCodes.map((code) => <option key={code.id} value={code.id}>{code.label} — {code.code}</option>)}</select></label>
       {selectedQd ? (
         <div className="rounded-lg border border-primary/30 bg-primary/5 px-3 py-2"><div className="text-[11px] text-muted-foreground">QD login code that will be sent</div><div className="font-mono text-base font-semibold break-all">{selectedQd.code}</div></div>
