@@ -330,6 +330,13 @@
       "when": 1790738383397,
       "tag": "0046_manual_order_account_claim",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1790741517082,
+      "tag": "0047_shop_order_secure_checkout",
+      "breakpoints": true
     }
   ]
 }
