@@ -43,8 +43,9 @@ function CheckoutInstallGuidesPage() {
   const [video, setVideo] = useState<{ title: string; url: string } | null>(null);
 
   useEffect(() => {
-    const saved = sessionStorage.getItem(`bm-pay-${token}`);
-    if (!saved) { setDenied(true); setLoading(false); return; }
+    // Member (shop) orders unlock with the link alone, so no password is saved;
+    // manual orders need the saved password. Trying "" fails safely for manual.
+    const saved = sessionStorage.getItem(`bm-pay-${token}`) ?? "";
     setPassword(saved);
     fetchGuides({ data: { token, password: saved } }).then((result) => {
       if (!result.ok) { setDenied(true); return; }
