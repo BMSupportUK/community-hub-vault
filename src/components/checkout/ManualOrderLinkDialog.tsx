@@ -70,8 +70,7 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
         toast.error(result.status === "no_term" ? "The subscription length couldn't be read from the order — pick the expiry date & time below and save again" : "The account details could not be saved");
         return;
       }
-      if (expiryLocal) {
-        const chosen = new Date(expiryLocal);
+      if (chosen && result.months > 0) {
         const { data: newExp, error: expError } = await supabase.rpc("staff_set_order_credential_expiry" as never, { p_order_id: orderId, p_credential_id: result.credentialId || null, p_expiry: chosen.toISOString() } as never);
         if (expError) throw expError;
         result.newExpiry = new Date((newExp as unknown as string) ?? chosen.toISOString()).toISOString();
@@ -85,7 +84,7 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
         "Your login details are as follows:",
         `Username: ${loginName.trim()}`,
         `Password: ${accountPassword}`,
-        `Subscription length: ${result.months} month${result.months === 1 ? "" : "s"}`,
+        ...(result.months > 0 ? [`Subscription length: ${result.months} month${result.months === 1 ? "" : "s"}`] : []),
         `Starts: ${starts}`,
         `Expires: ${expires}`,
         selectedCode ? `QD app login code (${selectedCode.label}): ${selectedCode.code}` : "If you use the QD app, ask us in this chat for your QD login code.",
