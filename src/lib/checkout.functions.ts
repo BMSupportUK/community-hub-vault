@@ -291,6 +291,13 @@ export const markPaymentSent = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const u = await unlock(data.token, data.password);
     if (!u) return { ok: false as const };
+    // Double-payment protection: never accept a bank transfer report once a card/crypto payment exists.
+    const { data: ord } = await u.supabaseAdmin.from("orders").select("paid_at").eq("id", u.link.order_id).maybeSingle();
+    if (ord?.paid_at) return { ok: false as const, reason: "This order is already paid — please don't send a bank transfer." };
+    const { data: pay } = await u.supabaseAdmin.from("order_payments").select("provider,status").eq("order_id", u.link.order_id).maybeSingle();
+    if (pay && ["COMPLETED", "APPROVED", "FINISHED", "WAITING", "CONFIRMING", "CONFIRMED", "SENDING"].includes(String(pay.status).toUpperCase())) {
+      return { ok: false as const, reason: "A card or crypto payment is already going through for this order — please don't send a bank transfer." };
+    }
     const { data: row } = await u.supabaseAdmin.from("order_checkout_links")
       .update({ payment_sent_at: new Date().toISOString() } as never)
       .eq("order_id", u.link.order_id).is("payment_sent_at", null).select("order_id").maybeSingle();
