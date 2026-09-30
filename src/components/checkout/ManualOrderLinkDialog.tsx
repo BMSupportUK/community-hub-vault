@@ -47,6 +47,10 @@ export function SecureLinkPanel({ orderId, withChat = true }: { orderId: string;
 
 export function ManualOrderLinkButton({ orderId, orderRef }: { orderId: string; orderRef: string | null }) {
   const [open, setOpen] = useState(false);
+  // Chat alerts link to /admin?tab=order-status&chat=<orderId> — auto-open that order's chat.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("chat") === orderId) setOpen(true);
+  }, [orderId]);
   return (
     <>
       <button type="button" onClick={() => setOpen(true)} className="inline-flex items-center gap-1 h-7 px-2 rounded-md border border-border text-xs font-medium hover:bg-surface-2">
