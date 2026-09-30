@@ -241,4 +241,13 @@ describe("ESPN+ ranked team at line start", () => {
     expect(r.events).toHaveLength(2);
     expect(r.events[1]).toMatchObject({ title: "#10 Notre Dame v UIC", channels: ["ESPN 17 HD"] });
   });
+
+  test("HBO Max channel-first rows keep qualifiers in the event name", () => {
+    const raw = "**UK | TNT Sports**\n\nHBO Max UK 1 | Jackson Page - Mark Selby Shenzhen Open | Round 3 // UK Wed 30 Sep 7:00am // ET Wed 30 Sep 2:00am \nHBO Max UK 2 | Boston Red Sox @ New York Yankees MLB | AL Wild Card | Game 2 // UK Thu 1 Oct 1:00am // ET Wed 30 Sep 8:00pm\nHBO Max UK 5 | India - West Indies 2nd ODI // UK Wed 30 Sep 9:15am // ET Wed 30 Sep 4:15am";
+    const r = checkSportsImport(raw, "gmt", Date.parse("2026-09-30T05:00:00Z"));
+    expect(r.errors).toBe(0);
+    expect(r.events).toHaveLength(3);
+    expect(r.events.every((e) => e.channels.length === 1 && e.channels[0]!.startsWith("HBO Max UK"))).toBe(true);
+    expect(r.events.some((e) => e.title.includes("Round 3") && e.title.includes("Selby"))).toBe(true);
+  });
 });

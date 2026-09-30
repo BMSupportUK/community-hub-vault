@@ -458,6 +458,17 @@ function detectSlashZonedEvent(line: string, date: string | null): SportsListing
   // Some providers separate the channel from the fixture with a spaced colon
   // ("Stan 01 : Singapore: Day 3 - WTA 500") instead of a pipe.
   const parts = head.split(/\s*(?:\||·|•)\s*|\s+:\s+/).map((part) => part.trim()).filter(Boolean);
+  // Channel-first rows with qualifiers after the fixture:
+  // "HBO Max UK 1 | Page - Selby Shenzhen Open | Round 3" → channel first,
+  // every later segment belongs to the event name.
+  if (parts.length >= 3 && isLikelyChannelLabel(parts[0]!) && !parts.slice(1).some((p) => isLikelyChannelLabel(p))) {
+    return {
+      date: eventDate,
+      time: normalizeTime(`${time} ${zone}`),
+      title: parts.slice(1).join(": "),
+      channels: [parts[0]!],
+    };
+  }
   const titlePart = parts.find((part) => /\bv(?:s|ersus)?\b/i.test(part)) ?? parts[parts.length - 1] ?? head;
   const channels = unique(parts.filter((part) => part !== titlePart));
 
