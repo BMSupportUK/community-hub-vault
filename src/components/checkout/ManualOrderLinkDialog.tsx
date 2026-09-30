@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
-import { Check, Copy, ExternalLink, Hourglass, Link2, Loader2, UserCheck } from "lucide-react";
+import { Check, Copy, ExternalLink, Hourglass, KeyRound, Link2, Loader2, Send, UserCheck } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { StaffCheckoutChat, secureCheckoutUrl } from "@/components/checkout/CheckoutChat";
+import { createCredentialForOrder, type ApplyOrderResult } from "@/lib/order-fulfilment.functions";
 
 
 
@@ -25,10 +27,25 @@ function CopyField({ label, value }: { label: string; value: string }) {
 /** Secure link + password panel, reused after saving an order and on the orders list. */
 export function SecureLinkPanel({ orderId, withChat = true }: { orderId: string; withChat?: boolean }) {
   const [link, setLink] = useState<{ token: string; password: string; payment_sent_at: string | null; account_setup_at: string | null; customer_kind: string | null } | null | undefined>(undefined);
+  const [orderPaid, setOrderPaid] = useState(false);
+  const [loginName, setLoginName] = useState("");
+  const [accountPassword, setAccountPassword] = useState("");
+  const [qdCodes, setQdCodes] = useState<{ id: string; label: string; code: string }[]>([]);
+  const [qdCodeId, setQdCodeId] = useState("");
   const [busy, setBusy] = useState(false);
+  const createCredential = useServerFn(createCredentialForOrder);
   useEffect(() => {
-    supabase.from("order_checkout_links").select("token,password,payment_sent_at,account_setup_at,customer_kind").eq("order_id", orderId).maybeSingle()
-      .then(({ data }) => setLink((data as never) ?? null));
+    Promise.all([
+      supabase.from("order_checkout_links").select("token,password,payment_sent_at,account_setup_at,customer_kind").eq("order_id", orderId).maybeSingle(),
+      supabase.from("orders").select("paid_at").eq("id", orderId).maybeSingle(),
+      supabase.from("qd_dns_codes").select("id,label,code").order("label"),
+    ]).then(([{ data: linkData }, { data: orderData }, { data: codeData }]) => {
+      setLink((linkData as never) ?? null);
+      setOrderPaid(!!(orderData as { paid_at?: string | null } | null)?.paid_at);
+      const codes = (codeData ?? []) as { id: string; label: string; code: string }[];
+      setQdCodes(codes);
+      if (codes.length === 1) setQdCodeId(codes[0].id);
+    });
   }, [orderId]);
   const toggleSetup = async (done: boolean) => {
     setBusy(true);
@@ -42,6 +59,40 @@ export function SecureLinkPanel({ orderId, withChat = true }: { orderId: string;
   if (!link) return <p className="text-sm text-muted-foreground">This order has no secure checkout page (it was added before secure pages existed).</p>;
   const url = secureCheckoutUrl(link.token);
   const renewal = link.customer_kind === "existing";
+  const sendCredentials = async () => {
+    if (!loginName.trim() || !accountPassword.trim()) return toast.error("Username and password are required");
+    setBusy(true);
+    try {
+      const result = await createCredential({ data: { orderId, loginName: loginName.trim(), password: accountPassword } }) as ApplyOrderResult;
+      if (result.status !== "applied") {
+        toast.error(result.status === "no_term" ? "The subscription length could not be read from the order" : "The account details could not be saved");
+        return;
+      }
+      const selectedCode = qdCodes.find((code) => code.id === qdCodeId);
+      const starts = new Date().toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" });
+      const expires = new Date(result.newExpiry).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" });
+      const message = [
+        "Your login details are as follows:",
+        `Username: ${loginName.trim()}`,
+        `Password: ${accountPassword}`,
+        `Subscription length: ${result.months} month${result.months === 1 ? "" : "s"}`,
+        `Starts: ${starts}`,
+        `Expires: ${expires}`,
+        selectedCode ? `QD app login code (${selectedCode.label}): ${selectedCode.code}` : "If you use the QD app, ask us in this chat for your QD login code.",
+      ].join("\n");
+      const { error } = await supabase.from("checkout_chat_messages").insert({ order_id: orderId, sender: "staff", content: message });
+      if (error) throw error;
+      const { data, error: setupError } = await supabase.rpc("admin_set_account_setup" as never, { p_order_id: orderId, p_done: true } as never);
+      if (setupError) throw setupError;
+      setLink((current) => current ? { ...current, account_setup_at: (data as string | null) ?? new Date().toISOString() } : current);
+      setAccountPassword("");
+      toast.success("Account saved and login details sent in the chat");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Account details could not be sent");
+    } finally {
+      setBusy(false);
+    }
+  };
   const fields = (
     <div className="space-y-3 min-w-0">
       {link.payment_sent_at && (
@@ -50,10 +101,20 @@ export function SecureLinkPanel({ orderId, withChat = true }: { orderId: string;
       <div className={`rounded-lg border px-3 py-2.5 space-y-2 ${link.account_setup_at ? "border-success/40 bg-success/10" : "border-border"}`}>
         <div className="flex items-center gap-2 text-sm font-medium"><UserCheck className={`size-4 ${link.account_setup_at ? "text-success" : "text-muted-foreground"}`} /> {renewal ? "Subscription extended (renewal)" : "Account set up"}</div>
         <p className="text-xs text-muted-foreground">{link.account_setup_at ? `Confirmed ${new Date(link.account_setup_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}. The sale can now be completed.` : renewal ? "Confirm the customer's subscription has been extended. The sale can't be completed until you do." : "Confirm the customer's new account is set up. The sale can't be completed until you do."}</p>
-        <button type="button" disabled={busy} onClick={() => toggleSetup(!link.account_setup_at)} className={`inline-flex items-center gap-1 h-8 px-3 rounded-lg text-xs font-medium disabled:opacity-60 ${link.account_setup_at ? "border border-border text-muted-foreground" : "bg-success text-background"}`}>
+        <button type="button" disabled={busy || (!renewal && !link.account_setup_at)} onClick={() => toggleSetup(!link.account_setup_at)} className={`inline-flex items-center gap-1 h-8 px-3 rounded-lg text-xs font-medium disabled:opacity-60 ${link.account_setup_at ? "border border-border text-muted-foreground" : "bg-success text-background"}`}>
           {busy ? <Loader2 className="size-3.5 animate-spin" /> : <Check className="size-3.5" />} {link.account_setup_at ? "Undo confirmation" : (renewal ? "Confirm extension is done" : "Confirm account is set up")}
         </button>
       </div>
+      {!renewal && orderPaid && !link.account_setup_at && (
+        <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-3">
+          <div className="flex items-center gap-2 text-sm font-semibold"><KeyRound className="size-4 text-primary" /> Complete the new account</div>
+          <p className="text-xs text-muted-foreground">Enter the service login details. Saving them creates the customer's credential and sends the username, password, subscription length, dates and QD code in the checkout chat.</p>
+          <label className="block space-y-1"><span className="text-xs font-medium">Username</span><input value={loginName} onChange={(event) => setLoginName(event.target.value)} autoComplete="off" className="w-full h-9 rounded-lg border border-border bg-background px-3 text-sm" /></label>
+          <label className="block space-y-1"><span className="text-xs font-medium">Password</span><input value={accountPassword} onChange={(event) => setAccountPassword(event.target.value)} autoComplete="off" className="w-full h-9 rounded-lg border border-border bg-background px-3 text-sm" /></label>
+          <label className="block space-y-1"><span className="text-xs font-medium">QD app login code</span><select value={qdCodeId} onChange={(event) => setQdCodeId(event.target.value)} className="w-full h-9 rounded-lg border border-border bg-background px-3 text-sm"><option value="">Customer is not using QD / send later</option>{qdCodes.map((code) => <option key={code.id} value={code.id}>{code.label}</option>)}</select></label>
+          <button type="button" disabled={busy || !loginName.trim() || !accountPassword.trim()} onClick={sendCredentials} className="inline-flex items-center gap-2 h-9 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold disabled:opacity-50">{busy ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />} Save and send login details</button>
+        </div>
+      )}
       <CopyField label="Secure page link" value={url} />
       <CopyField label="Password" value={link.password} />
       <CopyField label="Link + password (to send to the customer)" value={`Your secure order page: ${url}\nPassword: ${link.password}`} />

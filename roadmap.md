@@ -1,6 +1,9 @@
 # Roadmap
 
 ## Current
+- [x] Secure checkout: move paid account status and account sign-up into the right sidebar
+- [x] New-sale completion: save username/password, subscription term and dates, then post them automatically in checkout chat
+- [x] Secure checkout: show and optionally include an admin-managed QD app login code
 - [x] Android shift alerts: route scheduled start/end warning kinds to their spoken audio channels
 - [x] Install Guides: allow the app-download page to scroll on short desktop screens instead of clipping its content
 - [x] Talk Channels: always open at the first message on narrow phones and short desktop screens instead of halfway down
