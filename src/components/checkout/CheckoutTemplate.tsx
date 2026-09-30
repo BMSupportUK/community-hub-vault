@@ -24,6 +24,7 @@ export type CheckoutView = {
     status?: string;
     paymentSentAt?: string | null;
     id?: string;
+    accountSetupStartedAt?: string | null;
     accountSetupAt?: string | null;
   };
   items: { name: string; qty: number; unitCents: number }[];
@@ -95,11 +96,12 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
   const paid = step >= 2;
   const method = order.method;
   const awaitingConfirmation = !paid && !order.cancelled && !!order.paymentSentAt;
+  const accountSetupStarted = !!order.accountSetupStartedAt || !!order.accountSetupAt || step === 3;
   const accountSetup = !!order.accountSetupAt;
   // Payment details (bank info, card form, crypto) sit in a right sidebar on
   // wide screens while the order is awaiting payment.
   const paymentSidebar = ["wise", "stripe", "square", "crypto"].includes(method) && !paid && !order.cancelled;
-  const accountSidebar = paid && !order.cancelled;
+  const accountSidebar = paid && !order.cancelled && accountSetupStarted;
   const splitLayout = paymentSidebar || accountSidebar;
 
   let heading = `Order #${order.ref}`;

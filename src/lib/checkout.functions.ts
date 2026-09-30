@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { unlock } from "@/lib/checkout.server";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 /**
  * Public secure checkout page for manual orders. Every call is gated by the
@@ -116,6 +117,7 @@ export const getCheckout = createServerFn({ method: "POST" })
       order: {
         id: String(order.id),
         paymentSentAt: ((link as any).payment_sent_at as string | null) ?? (cryptoConfirming ? new Date().toISOString() : null),
+        accountSetupStartedAt: ((link as any).account_setup_started_at as string | null) ?? null,
         accountSetupAt: ((link as any).account_setup_at as string | null) ?? null,
         ref: order.order_ref ?? String(order.id).slice(0, 8),
         name: order.shipping_name ?? "",
@@ -140,6 +142,48 @@ export const getCheckout = createServerFn({ method: "POST" })
       bank,
       qdCode,
     };
+  });
+
+/** Staff advances a paid sale into fulfilment without marking setup complete. */
+export const startCheckoutAccountSetup = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ orderId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: roles, error: roleError } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId);
+    if (roleError) throw new Error(roleError.message);
+    if (!(roles ?? []).some(({ role }) => ["admin", "management", "staff"].includes(String(role)))) {
+      throw new Error("Forbidden");
+    }
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: order, error: orderError } = await supabaseAdmin
+      .from("orders")
+      .select("paid_at,status")
+      .eq("id", data.orderId)
+      .maybeSingle();
+    if (orderError) throw new Error(orderError.message);
+    if (!order?.paid_at || order.status === "cancelled") throw new Error("Only paid orders can move to account setup");
+
+    const { data: link, error } = await supabaseAdmin
+      .from("order_checkout_links")
+      .update({ account_setup_started_at: new Date().toISOString(), account_setup_started_by: context.userId })
+      .eq("order_id", data.orderId)
+      .is("account_setup_started_at", null)
+      .select("account_setup_started_at")
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (link?.account_setup_started_at) return { startedAt: String(link.account_setup_started_at) };
+
+    const { data: existing } = await supabaseAdmin
+      .from("order_checkout_links")
+      .select("account_setup_started_at")
+      .eq("order_id", data.orderId)
+      .maybeSingle();
+    if (!existing?.account_setup_started_at) throw new Error("This checkout could not be moved to account setup");
+    return { startedAt: String(existing.account_setup_started_at) };
   });
 
 export const listCheckoutChat = createServerFn({ method: "POST" })
