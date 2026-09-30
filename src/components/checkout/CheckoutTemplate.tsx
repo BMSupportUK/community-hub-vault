@@ -86,7 +86,9 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
   const accountSetup = !!order.accountSetupAt;
   // Payment details (bank info, card form, crypto) sit in a right sidebar on
   // wide screens while the order is awaiting payment.
-  const bankSidebar = ["wise", "stripe", "square", "crypto"].includes(method) && !paid && !order.cancelled;
+  const paymentSidebar = ["wise", "stripe", "square", "crypto"].includes(method) && !paid && !order.cancelled;
+  const accountSidebar = paid && !order.cancelled;
+  const splitLayout = paymentSidebar || accountSidebar;
 
   let heading = `Order #${order.ref}`;
   let sub = "Please complete your payment below.";
@@ -127,17 +129,8 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
             </div>
           )}
 
-          {paid && step < 3 && !order.cancelled && (
-            <div className={`rounded-2xl border p-4 flex gap-3 items-start ${accountSetup ? "border-success/40 bg-success/10" : "border-border bg-card"}`}>
-              {accountSetup ? <UserCheck className="size-5 text-success shrink-0 mt-0.5" /> : <Clock className="size-5 text-primary shrink-0 mt-0.5" />}
-              <p className="text-sm">{accountSetup
-                ? (order.customerKind === "existing" ? "Your subscription has been extended — we're just finishing off your order." : "Your account has been set up — we're just finishing off your order.")
-                : (order.customerKind === "existing" ? "Payment confirmed. We're now extending your subscription." : "Payment confirmed. We're now setting up your account.")}</p>
-            </div>
-          )}
-
-          <div className={bankSidebar ? "grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(340px,440px)] lg:items-start" : "space-y-6"}>
-            <section className={`rounded-2xl border border-border bg-card p-5 ${bankSidebar ? "min-w-0" : ""}`}>
+          <div className={splitLayout ? "grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(340px,440px)] lg:items-start" : "space-y-6"}>
+            <section className={`rounded-2xl border border-border bg-card p-5 ${splitLayout ? "min-w-0" : ""}`}>
             <h2 className="font-semibold mb-3">Order breakdown</h2>
             <div className="space-y-2 text-sm">
               {items.map((i, idx) => (
@@ -170,14 +163,29 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
             </dl>
           </section>
 
-          {(paid || order.cancelled) ? (
-            !order.cancelled && (
-              <section className="space-y-3">
-                <div className="rounded-2xl border border-border bg-card p-5 flex gap-3">
-                  {step === 3 ? <Info className="size-5 text-primary shrink-0" /> : <Mail className="size-5 text-primary shrink-0" />}
-                  <p className="text-sm">{step === 3 ? sub : "We'll set everything up and let you know when it's complete. Use the chat button if you have any questions."}</p>
+          {accountSidebar ? (
+            <aside className="min-w-0 space-y-3 lg:sticky lg:top-4">
+              <section className={`rounded-2xl border p-5 flex gap-3 items-start ${accountSetup ? "border-success/40 bg-success/10" : "border-border bg-card"}`}>
+                {accountSetup ? <UserCheck className="size-5 text-success shrink-0 mt-0.5" /> : <Clock className="size-5 text-primary shrink-0 mt-0.5" />}
+                <div className="space-y-1">
+                  <p className="font-semibold">{order.customerKind === "existing" ? "Subscription extension" : "Account setup"}</p>
+                  <p className="text-sm">{step === 3
+                    ? sub
+                    : accountSetup
+                      ? (order.customerKind === "existing" ? "Your subscription has been extended — we're just finishing off your order." : "Your account has been set up. Your login details have been sent in the chat.")
+                      : (order.customerKind === "existing" ? "Payment confirmed. We're now extending your subscription." : "Payment confirmed. We're now setting up your account.")}</p>
                 </div>
-                <div className="rounded-2xl border border-primary/30 bg-primary/5 p-5 flex gap-3 items-start">
+              </section>
+              {order.customerKind === "new" && (
+                <section className="rounded-2xl border border-border bg-card p-5 flex gap-3 items-start">
+                  <Info className="size-5 text-primary shrink-0 mt-0.5" />
+                  <div className="space-y-1 min-w-0">
+                    <p className="font-semibold">Using the QD app?</p>
+                    <p className="text-sm text-muted-foreground">You will also need a QD login code. The team will include it with your username, password and subscription dates in the chat.</p>
+                  </div>
+                </section>
+              )}
+              <section className="rounded-2xl border border-primary/30 bg-primary/5 p-5 flex gap-3 items-start">
                   <UserPlus className="size-5 text-primary shrink-0 mt-0.5" />
                   <div className="space-y-2 min-w-0">
                     <p className="font-semibold">Keep updated with the service</p>
@@ -194,9 +202,8 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
                       {order.customerKind === "existing" ? "Sign in to my account" : "Create an account"}
                     </Link>
                   </div>
-                </div>
               </section>
-            )
+            </aside>
           ) : (method === "stripe" || method === "square") ? (
             <aside className="min-w-0 rounded-2xl border border-border bg-card p-5 space-y-4 lg:sticky lg:top-4">
               <div className="flex items-center gap-3">
