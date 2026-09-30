@@ -46,22 +46,22 @@ function PayPage() {
     if (!validToken) return;
     const saved = sessionStorage.getItem(key);
     if (saved) {
-      load(saved).then((ok) => { if (ok) setPassword(saved); else sessionStorage.removeItem(key); });
+      load(saved).then((ok) => { if (ok) { setPassword(saved); setUnlocked(true); } else sessionStorage.removeItem(key); });
       return;
     }
     // Shop orders unlock with the link alone — try it before showing the
     // password form (only manual orders need one).
-    load("").then((ok) => { if (ok) setPassword(""); });
+    load("").then((ok) => { if (ok) { setPassword(""); setUnlocked(true); } });
   }, [key, load, validToken]);
 
   // Keep the page live so payment / completion show without a refresh.
   useEffect(() => {
-    if (!password) return;
+    if (!unlocked || password === null) return;
     const t = setInterval(() => { if (document.visibilityState === "visible") load(password); }, 20000);
     const onFocus = () => load(password);
     window.addEventListener("focus", onFocus);
     return () => { clearInterval(t); window.removeEventListener("focus", onFocus); };
-  }, [password, load]);
+  }, [unlocked, password, load]);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,13 +70,13 @@ function PayPage() {
     const pw = input.trim();
     try {
       const ok = await load(pw);
-      if (ok) { sessionStorage.setItem(key, pw); setPassword(pw); }
+      if (ok) { sessionStorage.setItem(key, pw); setPassword(pw); setUnlocked(true); }
       else setError("That password is not correct. Check the password you were given with this link.");
     } catch { setError("Something went wrong. Please try again."); }
     finally { setBusy(false); }
   };
 
-  if (!password || !view) {
+  if (!unlocked || !view) {
     return (
       <main className="min-h-screen grid place-items-center bg-background px-5 py-10">
         <form onSubmit={submit} className="w-full max-w-md rounded-2xl border border-border bg-card overflow-hidden text-center">
