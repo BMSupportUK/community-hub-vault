@@ -131,7 +131,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
             </p>
           </div>
 
-          {!order.cancelled && <OrderStatusBar step={step} awaitingConfirmation={awaitingConfirmation} accountSetup={accountSetup} renewal={order.customerKind === "existing"} />}
+          {!order.cancelled && <OrderStatusBar step={step} awaitingConfirmation={awaitingConfirmation} accountSetup={accountSetupStarted} renewal={order.customerKind === "existing"} />}
 
           {awaitingConfirmation && (
             <div className="rounded-2xl border-2 border-warning bg-warning/10 p-4 flex gap-3 items-start">
