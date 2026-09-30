@@ -64,9 +64,10 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
     if (!loginName.trim() || !accountPassword.trim()) return toast.error("Username and password are required");
     setBusy(true);
     try {
-      const result = await createCredential({ data: { orderId, loginName: loginName.trim(), password: accountPassword } }) as ApplyOrderResult;
+      const chosen = expiryLocal ? new Date(expiryLocal) : null;
+      const result = await createCredential({ data: { orderId, loginName: loginName.trim(), password: accountPassword, expiresAt: chosen && !Number.isNaN(chosen.getTime()) ? chosen.toISOString() : undefined } }) as ApplyOrderResult;
       if (result.status !== "applied") {
-        toast.error(result.status === "no_term" ? "The subscription length could not be read from the order" : "The account details could not be saved");
+        toast.error(result.status === "no_term" ? "The subscription length couldn't be read from the order — pick the expiry date & time below and save again" : "The account details could not be saved");
         return;
       }
       if (expiryLocal) {
