@@ -1,37 +1,42 @@
-# Manual orders with secure customer checkout pages
+# Every shop order uses the secure checkout page
 
-## What you get
+## What changes for customers
+1. Customer adds items in the shop and checks out.
+2. The checkout form asks how they want to pay:
+   - **Square (card)** is selected by default and marked "Preferred".
+   - Stripe (card) is the other option.
+   - **Customers set up for bank transfer** don't get a choice. They only see "Bank transfer".
+3. When they place the order, they go straight to that order's own secure checkout page. No support ticket is opened and no password is needed, because they're already signed in as the order's owner.
+4. On the secure page:
+   - **Square / Stripe:** a card form sits inline on the page, with no invoice link. Once the payment goes through, the page moves to "Payment received".
+   - **Bank transfer:** bank details and the reference warning appear in the right sidebar, like manual orders do today.
+   - The order chat bubble replaces the ticket for questions. Staff get the same new-chat alert and can reply from the admin Secure page.
+5. On "My orders", the "Open ticket" button becomes "Open secure checkout".
 
-1. **Add an order form** gains:
-   - Customer email box (optional, admin/management only see it afterwards).
-   - Discount box (£ amount taken off the total, shown live under the total).
-2. **Every manual order gets its own secure checkout page** at a long random link (e.g. `/pay/<secret-token>`). Anyone with the link can view it; nobody can guess it. The link is saved on the order and shown in the order's page in Admin.
-3. **Checkout page layout** (one template per payment method, all sharing the same look):
-   - Digital illustration header: a family watching TV together on the sofa.
-   - Order number, customer name, date.
-   - Item breakdown: each item, quantity, price; discount line struck through / shown as minus; final total.
-   - Status bar across the top: Created → Awaiting payment → Paid → Completed.
-   - Payment section, depending on the method picked:
-     - **Stripe** — creates a Stripe invoice and shows a "Pay invoice" button.
-     - **Square** — creates a Square invoice and shows a "Pay invoice" button.
-     - **Wise / Bank transfer** — shows your bank details with a bold warning box: "You MUST use your Order Number (MANUAL-xxxx) as the payment reference, or your payment cannot be matched."
-     - Cash / Crypto — shows simple instructions only.
-4. **After saving the order** a confirmation screen shows the link with a "Copy secure link" button (also available on the order in Admin at any time).
-5. **Admin dashboard** gets a "Checkout templates" preview so you can see each of the Stripe, Square and Wise templates.
-6. **Status bar on every order** in the Admin order list, showing the same stages.
-7. **Completed manual orders move into their payment type tab** (Square, Stripe, Wise, Cash, Crypto) in the sales/profit view, as soon as they are marked complete, and are counted there.
+## What changes for staff
+- New shop orders no longer create tickets in the "Orders" category, and they no longer post automated ticket messages.
+- Every order, not just manual ones, gets a "Secure page" button in the admin orders list.
+- Manual orders also switch to inline card payment for Stripe and Square, instead of invoices.
+- Old orders keep their existing tickets and invoices. They're left untouched and still show where they are today.
 
 ## Technical details
+- **Database migration:**
+  - Allow `order_checkout_links` rows for non-private (shop) orders.
+  - Add an owner-access path: a `get_my_checkout_token(order_id)` security-definer function that returns or creates the link for `auth.uid()`'s own order.
+  - The password stays only for guests who use a shared link.
+- **`checkout.functions.ts`:**
+  - `getCheckout` accepts either the password or an authenticated owner session.
+  - Chat send and list do the same.
+- **`shop.tsx` place-order flow:**
+  - Remove the ticket and ticket_messages block around lines 1453–1531.
+  - After the order is created, get the token and `navigate('/pay/$token')`.
+  - The method picker defaults to `square`. If `getMyBankTransferAccess().allowed`, only `bank_transfer` is shown.
+- **`pay.$token.tsx`:** skip the password screen when a signed-in owner loads the page successfully.
+- **`CheckoutTemplate.tsx`:**
+  - Stripe and Square branches render the inline card forms, reusing the existing `chargeOrderWithSquare` (Square Web Payments card) and `createStripePaymentIntent`/`confirmStripePayment` payment functions.
+  - The "Pay invoice" buttons are removed.
+- **`admin-add-order.tsx`:** stop calling `createSquareInvoiceForOrder`/`createStripeInvoiceForOrder`.
+- The invoice functions and existing order tickets stay in place for historic orders. Nothing is deleted.
 
-- Migration: add `checkout_token` (unique, random 32-byte hex) to `orders`; extend `admin_create_manual_order` with `_email` and `_discount_cents` params (email stored encrypted like existing `email_enc`, discount clamped to subtotal).
-- Public read: server function `getCheckoutByToken` using admin client inside handler, returns only safe fields (ref, name, items, discount, total, status, method, invoice URL, bank details for Wise). No email returned.
-- Invoice creation: reuse `createSquareInvoiceForOrder` and the Stripe invoice functions in `stripe-invoices.functions.ts`, triggered by a token-verified server function when the page is first opened (idempotent — stored in `order_invoices`).
-- Wise bank details read from existing `bank_transfer_details`.
-- New route `src/routes/pay.$token.tsx` with head metadata; illustration generated into `src/assets/checkout-family-tv.jpg`.
-- New `OrderStatusBar` component reused on checkout page and Admin order rows.
-- Admin page `admin-checkout-templates.tsx` rendering the template with sample data for each method.
-
-## Assumptions (tell me if wrong)
-
-- Discount is a fixed £ amount, not a percentage.
-- "Sale type" means the per-payment-method tabs in the orders/profit area.
+## Open point
+Guests who aren't signed in can't place shop orders today, and that stays the same.
