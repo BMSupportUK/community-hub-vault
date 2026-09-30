@@ -14,6 +14,7 @@ export type CheckoutView = {
     cancelled?: boolean;
     method: string;
     customerKind: "new" | "existing";
+    manual?: boolean;
     createdAt?: string;
     email?: string | null;
     customerType?: string | null;
@@ -206,24 +207,22 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
                   </div>
                 </section>
               )}
-              <section className="rounded-2xl border border-primary/30 bg-primary/5 p-5 flex gap-3 items-start">
+              {step === 3 && order.manual && (
+                <section className="rounded-2xl border border-primary/30 bg-primary/5 p-5 flex gap-3 items-start">
                   <UserPlus className="size-5 text-primary shrink-0 mt-0.5" />
                   <div className="space-y-2 min-w-0">
                     <p className="font-semibold">Keep updated with the service</p>
-                    <p className="text-sm text-muted-foreground">
-                      {order.customerKind === "existing"
-                        ? "Sign in to your account to follow your order, get the latest updates and have your subscription re-applied straight away."
-                        : "Create a free account to follow your order, get the latest updates and manage your subscription any time. Your subscription is added automatically — no waiting for approval."}
-                    </p>
+                    <p className="text-sm text-muted-foreground">Create a free account to follow your orders, get the latest updates and manage your subscription any time. Your subscription is added automatically — no waiting for approval.</p>
                     <Link
-                      to={order.customerKind === "existing" ? "/login" : "/signup"}
+                      to="/signup"
                       onClick={() => { if (claimToken) try { localStorage.setItem("bm-checkout-claim", claimToken); } catch { /* ignore */ } }}
                       className="inline-flex items-center gap-2 h-10 px-4 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90"
                     >
-                      {order.customerKind === "existing" ? "Sign in to my account" : "Create an account"}
+                      Create an account
                     </Link>
                   </div>
-              </section>
+                </section>
+              )}
             </aside>
           ) : (method === "stripe" || method === "square") ? (
             <aside className="min-w-0 rounded-2xl border border-border bg-card p-5 space-y-4 lg:sticky lg:top-4">
