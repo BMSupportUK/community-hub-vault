@@ -29,6 +29,52 @@ async function loadOrder(supabaseAdmin: any, orderId: string) {
   return order;
 }
 
+/**
+ * Double-payment protection. Before starting any payment we re-check the other
+ * methods (a late Stripe/crypto payment may have landed), and refuse to start a
+ * new one while another payment is already underway for the same order.
+ */
+async function guardAgainstDoublePayment(supabaseAdmin: any, orderId: string, method: "square" | "stripe" | "nowpayments") {
+  try { await syncStripeSession(supabaseAdmin, orderId); } catch { /* ignore */ }
+  try { await syncCryptoPayment(supabaseAdmin, orderId); } catch { /* ignore */ }
+  const order = await loadOrder(supabaseAdmin, orderId);
+  const { data: link } = await supabaseAdmin.from("order_checkout_links").select("payment_sent_at").eq("order_id", orderId).maybeSingle();
+  if (link?.payment_sent_at) {
+    throw new Error("You've already told us a bank transfer was sent for this order. Please wait for us to confirm it, or message us in the chat before paying another way.");
+  }
+  const { data: p } = await supabaseAdmin.from("order_payments").select("provider,status").eq("order_id", orderId).maybeSingle();
+  const st = String(p?.status ?? "").toUpperCase();
+  if (p && ["COMPLETED", "APPROVED", "FINISHED"].includes(st)) throw new Error("A payment has already been taken for this order.");
+  if (p?.provider === "nowpayments" && method !== "nowpayments" && ["WAITING", "CONFIRMING", "CONFIRMED", "SENDING", "PARTIALLY_PAID"].includes(st)) {
+    throw new Error("A crypto payment for this order is already being processed. Please wait for it to confirm.");
+  }
+  return order;
+}
+
+async function expireOpenStripeSession(supabaseAdmin: any, orderId: string) {
+  const { data: p } = await supabaseAdmin.from("order_payments").select("provider,provider_payment_id").eq("order_id", orderId).maybeSingle();
+  if (p?.provider !== "stripe" || !String(p.provider_payment_id ?? "").startsWith("cs_")) return;
+  const { createStripeClient } = await import("@/lib/stripe.server");
+  for (const env of ["live", "sandbox"] as const) {
+    try {
+      const s = await createStripeClient(env).checkout.sessions.retrieve(String(p.provider_payment_id));
+      if (s.payment_status === "paid") throw new Error("A Stripe payment has already been taken for this order.");
+      if (s.status === "open") await createStripeClient(env).checkout.sessions.expire(s.id);
+      return;
+    } catch (e) {
+      if (/already been taken/.test((e as Error).message)) throw e;
+    }
+  }
+}
+
+async function withPaymentLock<T>(supabaseAdmin: any, orderId: string, fn: () => Promise<T>): Promise<T> {
+  const { data: got } = await supabaseAdmin.rpc("claim_checkout_payment_lock", { p_order: orderId, p_seconds: 90 });
+  if (!got) throw new Error("A payment for this order is already in progress. Please wait a moment and refresh before trying again.");
+  try { return await fn(); } finally {
+    await supabaseAdmin.rpc("release_checkout_payment_lock", { p_order: orderId });
+  }
+}
+
 async function markPaid(supabaseAdmin: any, order: any, provider: "Square" | "Stripe" | "NOWPayments", reference: string, receiptUrl?: string | null) {
   await supabaseAdmin.from("orders").update({ paid_at: new Date().toISOString() }).eq("id", order.id).is("paid_at", null);
   try {
