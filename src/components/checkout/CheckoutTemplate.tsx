@@ -144,7 +144,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
             </div>
           )}
 
-          {paid && !order.cancelled && !accountSetupStarted && step !== 3 && onContinueToSetup && (
+          {paid && !order.cancelled && !accountSetupStarted && onContinueToSetup && (
             <section className="rounded-2xl border border-success/40 bg-success/10 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="flex gap-3 items-start">
                 <Check className="size-5 text-success shrink-0 mt-0.5" />
