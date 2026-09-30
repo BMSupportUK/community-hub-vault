@@ -68,3 +68,5 @@
 - [ ] Stripe/Square invoices + pay buttons; Wise bank details + strict reference
 - [ ] Cash thank-you page; "we got your payment" state once paid
 - [ ] Completed manual orders move into their sale type tab
+- [ ] Order form: New or Existing customer question
+- [ ] Completed state on secure page: "account set up" (new) / "subscription upgraded" (existing)
