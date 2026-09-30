@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, Lock } from "lucide-react";
+import { Loader2, Lock, ShieldCheck } from "lucide-react";
 import { getCheckout } from "@/lib/checkout.functions";
 import { CheckoutTemplate, type CheckoutView } from "@/components/checkout/CheckoutTemplate";
 import { CustomerCheckoutChat } from "@/components/checkout/CheckoutChat";
+import hero from "@/assets/checkout-family-tv.jpg";
 
 export const Route = createFileRoute("/pay/$token")({
   head: () => ({
@@ -68,18 +69,27 @@ function PayPage() {
 
   if (!password || !view) {
     return (
-      <main className="min-h-screen grid place-items-center bg-background px-5">
-        <form onSubmit={submit} className="w-full max-w-sm rounded-2xl border border-border bg-card p-6 space-y-4 text-center">
-          <div className="mx-auto size-12 rounded-full bg-primary/15 text-primary grid place-items-center"><Lock className="size-6" /></div>
-          <div>
-            <h1 className="font-display text-xl font-bold">Secure checkout</h1>
-            <p className="text-sm text-muted-foreground">Enter the password you were given with this link.</p>
+      <main className="min-h-screen grid place-items-center bg-background px-5 py-10">
+        <form onSubmit={submit} className="w-full max-w-md rounded-2xl border border-border bg-card overflow-hidden text-center">
+          <img src={hero} alt="Family watching TV together" className="w-full aspect-[16/9] object-cover" />
+          <div className="p-6 space-y-4">
+            <div className="mx-auto size-12 rounded-full bg-primary/15 text-primary grid place-items-center"><Lock className="size-6" /></div>
+            <div className="space-y-1.5">
+              <h1 className="font-display text-xl font-bold">Secure checkout</h1>
+              <p className="text-sm text-muted-foreground">
+                This is your private, secure checkout page for your BM Support order. To view your order and pay,
+                enter the password that was supplied to you with this link.
+              </p>
+            </div>
+            <input value={input} onChange={(e) => setInput(e.target.value)} autoComplete="off" placeholder="XXXX-XXXX-XXXX" className="w-full h-11 rounded-lg border border-border bg-background px-3 text-center font-mono tracking-widest uppercase" aria-label="Password" />
+            {error && <p className="text-sm text-destructive">{error}</p>}
+            <button type="submit" disabled={busy || !input.trim()} className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-semibold disabled:opacity-50 inline-flex items-center justify-center gap-2">
+              {busy && <Loader2 className="size-4 animate-spin" />} Open my order
+            </button>
+            <p className="text-xs text-muted-foreground inline-flex items-center justify-center gap-1.5">
+              <ShieldCheck className="size-3.5" /> Only you can see this page — it is protected by your unique link and password.
+            </p>
           </div>
-          <input value={input} onChange={(e) => setInput(e.target.value)} autoComplete="off" placeholder="XXXX-XXXX-XXXX" className="w-full h-11 rounded-lg border border-border bg-background px-3 text-center font-mono tracking-widest uppercase" aria-label="Password" />
-          {error && <p className="text-sm text-destructive">{error}</p>}
-          <button type="submit" disabled={busy || !input.trim()} className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-semibold disabled:opacity-50 inline-flex items-center justify-center gap-2">
-            {busy && <Loader2 className="size-4 animate-spin" />} Open my order
-          </button>
         </form>
       </main>
     );
