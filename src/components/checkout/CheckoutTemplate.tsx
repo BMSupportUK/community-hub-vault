@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { AlertTriangle, Bitcoin, Check, Copy, CreditCard, Info, Lock, Mail, PartyPopper, UserPlus } from "lucide-react";
+import { AlertTriangle, Bitcoin, Check, Clock, Copy, CreditCard, Hourglass, Info, Loader2, Lock, Mail, PartyPopper, Send, UserCheck, UserPlus } from "lucide-react";
 import hero from "@/assets/checkout-family-tv.jpg";
 
 export type CheckoutView = {
@@ -21,6 +21,8 @@ export type CheckoutView = {
     discountCode?: string | null;
     adultContent?: boolean | null;
     status?: string;
+    paymentSentAt?: string | null;
+    accountSetupAt?: string | null;
   };
   items: { name: string; qty: number; unitCents: number }[];
   invoice: { status: string; url: string | null; number: string | null } | null;
@@ -30,12 +32,14 @@ export type CheckoutView = {
 const GBP = (c: number) => new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(c / 100);
 const METHOD: Record<string, string> = { stripe: "Stripe", square: "Square", wise: "bank transfer", cash: "cash", crypto: "crypto (USDT)" };
 
-export function OrderStatusBar({ step, compact = false }: { step: number; compact?: boolean }) {
-  const labels = ["Created", "Awaiting payment", "Paid", "Completed"];
+export function OrderStatusBar({ step, compact = false, awaitingConfirmation = false, accountSetup = false }: { step: number; compact?: boolean; awaitingConfirmation?: boolean; accountSetup?: boolean }) {
+  const labels = ["Created", awaitingConfirmation ? "Awaiting confirmation" : "Awaiting payment", "Paid", "Account set up", "Completed"];
+  // Map the 4-state step (0-3) onto 5 labels: after paid, "Account set up" is done once confirmed.
+  step = step === 3 ? 4 : step === 2 && accountSetup ? 3 : step;
   return (
     <div className="flex items-start w-full" aria-label={`Order status: ${labels[step]}`}>
       {labels.map((l, i) => {
-        const done = i < step || step === 3;
+        const done = i < step || step === 4;
         const current = i === step;
         return (
           <div key={l} className="flex-1 flex flex-col items-center relative">
@@ -71,12 +75,15 @@ function CopyRow({ label, value }: { label: string; value: string | null }) {
   );
 }
 
-export function CheckoutTemplate({ view, preview = false, claimToken, cardPayment }: { view: CheckoutView; preview?: boolean; claimToken?: string; cardPayment?: ReactNode }) {
+export function CheckoutTemplate({ view, preview = false, claimToken, cardPayment, onPaymentSent }: { view: CheckoutView; preview?: boolean; claimToken?: string; cardPayment?: ReactNode; onPaymentSent?: () => Promise<void> }) {
+  const [sending, setSending] = useState(false);
   const { order, items, invoice, bank } = view;
   const step = checkoutStep(order);
   const subtotal = items.reduce((s, i) => s + i.unitCents * i.qty, 0);
   const paid = step >= 2;
   const method = order.method;
+  const awaitingConfirmation = !paid && !order.cancelled && !!order.paymentSentAt;
+  const accountSetup = !!order.accountSetupAt;
   // Payment details (bank info, card form, crypto) sit in a right sidebar on
   // wide screens while the order is awaiting payment.
   const bankSidebar = ["wise", "stripe", "square", "crypto"].includes(method) && !paid && !order.cancelled;
@@ -88,6 +95,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
     heading = order.customerKind === "existing" ? "Your subscription has been upgraded!" : "Your account has been set up!";
     sub = order.customerKind === "existing" ? "Your upgrade is live now — just restart your app to enjoy it." : "Your new account is ready. Your login details will be sent to you by the team.";
   } else if (method === "cash") { heading = "Thank you for your cash payment!"; sub = "We'll set everything up and let you know when it's complete."; }
+  else if (awaitingConfirmation) { heading = "Payment sent — awaiting confirmation"; sub = "Thanks! We're waiting for your payment to arrive. This page updates automatically once it's confirmed."; }
   else if (paid) { heading = "Thank you — we've got your payment!"; sub = "We'll set everything up and let you know when it's complete."; }
 
   return (
@@ -107,7 +115,26 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
             </p>
           </div>
 
-          {!order.cancelled && <OrderStatusBar step={step} />}
+          {!order.cancelled && <OrderStatusBar step={step} awaitingConfirmation={awaitingConfirmation} accountSetup={accountSetup} />}
+
+          {awaitingConfirmation && (
+            <div className="rounded-2xl border-2 border-warning bg-warning/10 p-4 flex gap-3 items-start">
+              <Hourglass className="size-5 text-warning shrink-0 mt-0.5 animate-pulse" />
+              <div className="text-sm space-y-1">
+                <p className="font-semibold">We're waiting to confirm your payment</p>
+                <p className="text-muted-foreground">{method === "wise" ? "Bank transfers can take anywhere from a few minutes up to 1–2 working days to arrive, depending on your bank. You don't need to do anything else — we'll confirm it as soon as it lands." : "Your payment is being confirmed. This usually only takes a few minutes."}</p>
+              </div>
+            </div>
+          )}
+
+          {paid && step < 3 && !order.cancelled && (
+            <div className={`rounded-2xl border p-4 flex gap-3 items-start ${accountSetup ? "border-success/40 bg-success/10" : "border-border bg-card"}`}>
+              {accountSetup ? <UserCheck className="size-5 text-success shrink-0 mt-0.5" /> : <Clock className="size-5 text-primary shrink-0 mt-0.5" />}
+              <p className="text-sm">{accountSetup
+                ? (order.customerKind === "existing" ? "Your subscription has been upgraded — we're just finishing off your order." : "Your account has been set up — we're just finishing off your order.")
+                : (order.customerKind === "existing" ? "Payment confirmed. We're now upgrading your subscription." : "Payment confirmed. We're now setting up your account.")}</p>
+            </div>
+          )}
 
           <div className={bankSidebar ? "grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(340px,440px)] lg:items-start" : "space-y-6"}>
             <section className={`rounded-2xl border border-border bg-card p-5 ${bankSidebar ? "min-w-0" : ""}`}>
@@ -230,6 +257,19 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
                   <p className="font-bold text-warning break-words">IMPORTANT: You MUST use <span className="font-mono">{order.ref}</span> as your payment reference.</p>
                   <p className="text-sm">Do not add anything else to the reference. Payments without this exact reference cannot be matched to your order and will be delayed.</p>
                 </div>
+              </section>
+              <section className="rounded-2xl border border-border bg-card p-5 space-y-3">
+                <div className="flex gap-3 items-start">
+                  <Clock className="size-5 text-primary shrink-0 mt-0.5" />
+                  <p className="text-sm"><span className="font-semibold">Please allow time for your transfer to arrive.</span> Most bank transfers land within minutes, but some banks can take up to 1–2 working days (longer over weekends and bank holidays). Your order will move on as soon as we receive it.</p>
+                </div>
+                {awaitingConfirmation ? (
+                  <div className="flex items-center justify-center gap-2 h-11 rounded-xl bg-warning/15 text-warning text-sm font-semibold"><Hourglass className="size-4" /> Payment sent — awaiting confirmation</div>
+                ) : (
+                  <button type="button" disabled={preview || sending || !onPaymentSent} onClick={async () => { if (!onPaymentSent) return; setSending(true); try { await onPaymentSent(); } finally { setSending(false); } }} className="w-full inline-flex items-center justify-center gap-2 h-11 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90 disabled:opacity-60">
+                    {sending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />} I've sent the payment
+                  </button>
+                )}
               </section>
             </aside>
           ) : null}

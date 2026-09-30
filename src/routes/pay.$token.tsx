@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft, Loader2, Lock, ShieldCheck } from "lucide-react";
-import { getCheckout } from "@/lib/checkout.functions";
+import { getCheckout, markPaymentSent } from "@/lib/checkout.functions";
 import { CheckoutTemplate, type CheckoutView } from "@/components/checkout/CheckoutTemplate";
 import { CustomerCheckoutChat } from "@/components/checkout/CheckoutChat";
 import { CheckoutCardPayment } from "@/components/checkout/CheckoutCardPayment";
@@ -28,6 +28,7 @@ function PayPage() {
   const { token } = Route.useParams();
   const { user } = useAuth();
   const fetchCheckout = useServerFn(getCheckout);
+  const sendPaymentSent = useServerFn(markPaymentSent);
   const [password, setPassword] = useState<string | null>(null);
   const [unlocked, setUnlocked] = useState(false);
   const [input, setInput] = useState("");
@@ -124,6 +125,7 @@ function PayPage() {
       <CheckoutTemplate
         view={view}
         claimToken={token}
+        onPaymentSent={async () => { await sendPaymentSent({ data: { token, password: pw } }); await load(pw); }}
         cardPayment={(view.order.method === "square" || view.order.method === "stripe" || view.order.method === "crypto") && !view.order.paidAt && !view.order.cancelled ? (
           <CheckoutCardPayment token={token} password={pw} method={view.order.method} amountCents={view.order.totalCents} onPaid={() => { load(pw); }} />
         ) : undefined}
