@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { unlock } from "@/lib/checkout.functions";
+import { unlock } from "@/lib/checkout.server";
 
 /**
  * Inline card payments for the secure checkout page. Gated by the order's
