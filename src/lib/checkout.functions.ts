@@ -19,7 +19,7 @@ function same(a: string, b: string) {
   return timingSafeEqual(x, y);
 }
 
-async function unlock(token: string, password: string) {
+export async function unlock(token: string, password: string) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data: link } = await supabaseAdmin
     .from("order_checkout_links")
@@ -101,6 +101,10 @@ export const getCheckout = createServerFn({ method: "POST" })
     const { data: items } = await supabaseAdmin
       .from("order_items").select("product_name,quantity,unit_price_cents").eq("order_id", link.order_id);
     const method = String(order.manual_pay_method ?? "");
+    if (!order.paid_at && method === "stripe") {
+      const { syncStripeSession } = await import("@/lib/checkout-pay.functions");
+      await syncStripeSession(supabaseAdmin, link.order_id).catch(() => undefined);
+    }
     const invoice = !order.paid_at && (method === "stripe" || method === "square")
       ? await syncInvoice(supabaseAdmin, link.order_id, method)
       : null;
