@@ -15,5 +15,5 @@
 - Talk staff sidebar status: active DND overrides Working/Off duty text with “Away - From the office.” while retaining the countdown.
 - Android spoken alerts use dedicated versioned notification channels; change the channel ID when correcting a sound because Android keeps a channel's original sound permanently.
 - Manual orders use password-gated checkout links and order-only chat; paid, non-cancelled orders can open published guides through the same credentials.
-- Shop sales use secure checkout; after payment, staff or the customer starts account setup before QD/fulfilment controls appear.
+- Secure checkout browses only reached stages, never reverses payment; staff completion requires confirmed account setup.
 - Manual-order login details saved before the customer has an account are held privately per order and moved into their credentials when they claim the checkout — keeps one source of truth in the admin credentials list.

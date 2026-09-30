@@ -209,6 +209,40 @@ export const continueCheckoutToAccountSetup = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
+/** Staff completes a secure-checkout sale after account setup is confirmed. */
+export const completeCheckoutSale = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ orderId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    const { data: roles, error: roleError } = await context.supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", context.userId);
+    if (roleError) throw new Error(roleError.message);
+    if (!(roles ?? []).some(({ role }) => ["admin", "management", "staff"].includes(String(role)))) throw new Error("Forbidden");
+
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const [{ data: order, error: orderError }, { data: link, error: linkError }] = await Promise.all([
+      supabaseAdmin.from("orders").select("paid_at,completed_at,status").eq("id", data.orderId).maybeSingle(),
+      supabaseAdmin.from("order_checkout_links").select("account_setup_at").eq("order_id", data.orderId).maybeSingle(),
+    ]);
+    if (orderError) throw new Error(orderError.message);
+    if (linkError) throw new Error(linkError.message);
+    if (!order?.paid_at) throw new Error("Payment must be confirmed before completing the sale");
+    if (order.status === "cancelled") throw new Error("A cancelled sale cannot be completed");
+    if (order.completed_at || order.status === "completed") return { completedAt: String(order.completed_at ?? "") };
+    if (!link?.account_setup_at) throw new Error("Confirm the account setup before completing the sale");
+
+    const completedAt = new Date().toISOString();
+    const { error } = await supabaseAdmin
+      .from("orders")
+      .update({ completed_at: completedAt, completed_by: context.userId, status: "completed" } as never)
+      .eq("id", data.orderId)
+      .is("completed_at", null);
+    if (error) throw new Error(error.message);
+    return { completedAt };
+  });
+
 export const listCheckoutChat = createServerFn({ method: "POST" })
   .inputValidator((d) => creds.parse(d))
   .handler(async ({ data }) => {

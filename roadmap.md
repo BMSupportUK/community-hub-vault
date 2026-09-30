@@ -1,6 +1,8 @@
 # Roadmap
 
 ## Current
+- [x] Secure checkout: browse completed/current stages backward and forward without undoing payment
+- [x] Secure checkout: let staff complete a sale from confirmed account setup
 - [x] Paid manual-order checkout: private install-guide card and order-password access
 - [x] Secure checkout: keep paid Square details and continue control in the right sidebar
 - [x] Secure checkout: prevent the manual-password screen flashing on hard refresh of member orders
