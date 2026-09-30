@@ -5,7 +5,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { StaffCheckoutChat, secureCheckoutUrl } from "@/components/checkout/CheckoutChat";
-import { createCredentialForOrder, type ApplyOrderResult } from "@/lib/order-fulfilment.functions";
+import { createCredentialForOrder, getOrderRenewalAccounts, type ApplyOrderResult, type CredentialCandidate } from "@/lib/order-fulfilment.functions";
 
 
 
@@ -35,6 +35,23 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
   const [expiryLocal, setExpiryLocal] = useState("");
   const [busy, setBusy] = useState(false);
   const createCredential = useServerFn(createCredentialForOrder);
+  const loadRenewalAccounts = useServerFn(getOrderRenewalAccounts);
+  const [renewAccounts, setRenewAccounts] = useState<CredentialCandidate[] | null>(null);
+  const [renewAccountId, setRenewAccountId] = useState("");
+  useEffect(() => {
+    if (!loginOnly || link?.customer_kind !== "existing") return;
+    loadRenewalAccounts({ data: { orderId } }).then((r) => {
+      setRenewAccounts(r.accounts);
+      setRenewAccountId(r.suggestedId ?? "");
+      const current = r.accounts.find((a) => a.id === r.suggestedId);
+      if (current?.expiry_at && r.months > 0) {
+        const base = new Date(Math.max(new Date(current.expiry_at).getTime(), Date.now()));
+        base.setMonth(base.getMonth() + r.months);
+        const pad = (n: number) => String(n).padStart(2, "0");
+        setExpiryLocal(`${base.getFullYear()}-${pad(base.getMonth() + 1)}-${pad(base.getDate())}T${pad(base.getHours())}:${pad(base.getMinutes())}`);
+      }
+    }).catch((e) => { setRenewAccounts([]); toast.error(e instanceof Error ? e.message : "Couldn't load the customer's accounts"); });
+  }, [loginOnly, link?.customer_kind, orderId]);
   useEffect(() => {
     Promise.all([
       supabase.from("order_checkout_links").select("token,password,payment_sent_at,account_setup_at,customer_kind").eq("order_id", orderId).maybeSingle(),
@@ -141,7 +158,42 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
     </div>
   );
   if (loginOnly) {
-    if (renewal) return <p className="text-sm text-muted-foreground">This is a renewal — no new login details are needed. Confirm the extension on the admin Secure page.</p>;
+    if (renewal) {
+      if (!orderPaid) return <p className="text-sm text-muted-foreground">The renewal expiry can be set once the order is paid.</p>;
+      if (link.account_setup_at) return <p className="text-sm text-success">Renewal confirmed on {new Date(link.account_setup_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}.</p>;
+      if (renewAccounts === null) return <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" /> Loading accounts…</div>;
+      if (renewAccounts.length === 0) return <p className="text-sm text-warning">This customer has no saved service account in admin Credentials to renew. Add their account in Credentials first.</p>;
+      const saveRenewal = async () => {
+        const chosen = new Date(expiryLocal);
+        if (!expiryLocal || Number.isNaN(chosen.getTime())) return toast.error("Pick the new expiry date & time");
+        if (chosen.getTime() <= Date.now()) return toast.error("The new expiry must be in the future");
+        setBusy(true);
+        try {
+          const { error } = await supabase.rpc("staff_set_order_credential_expiry" as never, { p_order_id: orderId, p_credential_id: renewAccountId, p_expiry: chosen.toISOString() } as never);
+          if (error) throw error;
+          const account = renewAccounts.find((a) => a.id === renewAccountId);
+          const expires = chosen.toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" });
+          const { error: chatError } = await supabase.from("checkout_chat_messages").insert({ order_id: orderId, sender: "staff", content: `Your subscription has been renewed.\n${account?.app_login_name ? `Account: ${account.app_login_name}\n` : ""}New expiry: ${expires}\nJust restart your app to carry on watching.` });
+          if (chatError) throw chatError;
+          const { data, error: setupError } = await supabase.rpc("admin_set_account_setup" as never, { p_order_id: orderId, p_done: true } as never);
+          if (setupError) throw setupError;
+          setLink((current) => current ? { ...current, account_setup_at: (data as string | null) ?? new Date().toISOString() } : current);
+          toast.success("Renewal expiry saved and sent in the chat");
+          onDone?.();
+        } catch (error) {
+          toast.error(error instanceof Error ? error.message : "Renewal could not be saved");
+        } finally {
+          setBusy(false);
+        }
+      };
+      return (
+        <div className="space-y-3">
+          <label className="block space-y-1"><span className="text-xs font-medium">Account to renew</span><select value={renewAccountId} onChange={(event) => setRenewAccountId(event.target.value)} className="w-full h-9 rounded-lg border border-border bg-background px-3 text-sm">{renewAccounts.map((a) => <option key={a.id} value={a.id}>{a.app_login_name?.trim() || `Account ${a.account_number ?? "?"}`}{a.expiry_at ? ` — currently expires ${new Date(a.expiry_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}` : ""}</option>)}</select></label>
+          <label className="block space-y-1"><span className="text-xs font-medium">New subscription expiry date &amp; time</span><input type="datetime-local" value={expiryLocal} onChange={(event) => setExpiryLocal(event.target.value)} className="w-full h-9 rounded-lg border border-border bg-background px-3 text-sm" /><span className="block text-[11px] text-muted-foreground">Pre-filled from the months bought where possible — change it if needed.</span></label>
+          <button type="button" disabled={busy || !renewAccountId || !expiryLocal} onClick={saveRenewal} className="inline-flex w-full items-center justify-center gap-2 h-10 px-3 rounded-lg bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-50">{busy ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />} Save renewal expiry</button>
+        </div>
+      );
+    }
     if (!orderPaid) return <p className="text-sm text-muted-foreground">Login details can be added once the order is paid.</p>;
     if (link.account_setup_at) return <p className="text-sm text-success">Login details already sent on {new Date(link.account_setup_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}.</p>;
     return (

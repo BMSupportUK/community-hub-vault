@@ -284,3 +284,18 @@ export const createCredentialForOrder = createServerFn({ method: "POST" })
       unparsed: terms.unparsed,
     };
   });
+
+/**
+ * Lists the customer's existing service accounts for a renewal order so staff
+ * can pick which one to extend. Admin / management / staff only.
+ */
+export const getOrderRenewalAccounts = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) => z.object({ orderId: z.string().uuid() }).parse(input))
+  .handler(async ({ data, context }) => {
+    await assertStaff(context.supabase, context.userId);
+    const { order, creds, terms } = await loadOrderContext(data.orderId);
+    const existingLogin = (order.existing_username ?? "").trim().toLowerCase();
+    const suggested = creds.find((c) => (c.app_login_name ?? "").trim().toLowerCase() === existingLogin) ?? creds[0] ?? null;
+    return { accounts: creds, suggestedId: suggested?.id ?? null, months: terms.months };
+  });
