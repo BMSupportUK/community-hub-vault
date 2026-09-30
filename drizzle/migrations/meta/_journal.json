@@ -309,6 +309,13 @@
       "when": 1790708306649,
       "tag": "0043_android_apk_admin_upload",
       "breakpoints": true
+    },
+    {
+      "idx": 44,
+      "version": "7",
+      "when": 1790734796673,
+      "tag": "0044_manual_order_secure_checkout",
+      "breakpoints": true
     }
   ]
 }

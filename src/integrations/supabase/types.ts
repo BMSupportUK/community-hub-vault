@@ -1216,6 +1216,33 @@ export type Database = {
         }
         Relationships: []
       }
+      checkout_chat_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          order_id: string
+          sender: string
+          staff_id: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          order_id: string
+          sender: string
+          staff_id?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          order_id?: string
+          sender?: string
+          staff_id?: string | null
+        }
+        Relationships: []
+      }
       contact_submissions: {
         Row: {
           created_at: string
@@ -3871,6 +3898,30 @@ export type Database = {
         }
         Relationships: []
       }
+      order_checkout_links: {
+        Row: {
+          created_at: string
+          customer_kind: string
+          order_id: string
+          password: string
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          customer_kind?: string
+          order_id: string
+          password: string
+          token: string
+        }
+        Update: {
+          created_at?: string
+          customer_kind?: string
+          order_id?: string
+          password?: string
+          token?: string
+        }
+        Relationships: []
+      }
       order_invoices: {
         Row: {
           amount_cents: number
@@ -6391,6 +6442,18 @@ export type Database = {
             }
             Returns: string
           }
+      admin_create_manual_order_v2: {
+        Args: {
+          _created_at?: string
+          _customer_kind?: string
+          _customer_name: string
+          _discount_cents?: number
+          _email?: string
+          _items: Json
+          _method: string
+        }
+        Returns: string
+      }
       admin_delete_order: { Args: { _order_id: string }; Returns: Json }
       admin_get_user_location_history: {
         Args: { _limit?: number; _user_id: string }
