@@ -218,7 +218,8 @@ export const checkoutCryptoInvoice = createServerFn({ method: "POST" })
       const u = await unlock(data.token, data.password);
       if (!u) throw new Error("Not authorized");
       const { supabaseAdmin, link } = u;
-      const order = await loadOrder(supabaseAdmin, link.order_id);
+      const order = await guardAgainstDoublePayment(supabaseAdmin, link.order_id, "nowpayments");
+      await expireOpenStripeSession(supabaseAdmin, order.id);
       const { data: existing } = await supabaseAdmin.from("order_payments").select("provider,status,receipt_url").eq("order_id", order.id).maybeSingle();
       if (existing?.provider === "nowpayments" && existing.receipt_url && ["invoice_created", "waiting", "confirming", "partially_paid"].includes(String(existing.status))) {
         return { invoiceUrl: String(existing.receipt_url) };
