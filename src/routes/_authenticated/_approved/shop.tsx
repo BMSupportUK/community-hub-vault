@@ -975,6 +975,15 @@ function OrderProgressStrip({
 }
 
 
+/** Open (creating if needed) the customer's own secure checkout page for an order. */
+async function openSecureCheckout(orderId: string, fallback: (id: string) => void) {
+  const { data, error } = await supabase.rpc("create_my_checkout_link" as never, { p_order_id: orderId, p_method: null } as never);
+  const row = (Array.isArray(data) ? data[0] : data) as { token: string; password: string } | null;
+  if (error || !row?.token) { if (error) toast.error(error.message); return fallback(orderId); }
+  try { sessionStorage.setItem(`bm-pay-${row.token}`, row.password); } catch { /* ignore */ }
+  window.location.assign(`/pay/${row.token}`);
+}
+
 function BuySteps({
   latestOrder,
   onBrowse,
@@ -1018,15 +1027,15 @@ function BuySteps({
         : paid
           ? `Payment confirmed on ${new Date(latestOrder!.paid_at!).toLocaleDateString("en-GB")}.`
           : placed
-            ? "Awaiting your payment — open the support ticket for this order."
-            : "We'll create a support ticket for your order — pay securely by card or bank transfer.",
-      cta: cancelled ? "Browse products" : placed ? (ticketId ? "Open ticket" : "Open order") : undefined,
+            ? ticketId ? "Awaiting your payment — open the support ticket for this order." : "Awaiting your payment — open your secure checkout page to pay."
+            : "You'll get your own secure checkout page — pay by card or bank transfer.",
+      cta: cancelled ? "Browse products" : placed ? (ticketId ? "Open ticket" : "Open secure checkout") : undefined,
       action: cancelled
         ? onBrowse
         : placed
           ? ticketId
             ? () => onViewTicket(ticketId)
-            : () => onViewOrder(latestOrder!.id)
+            : () => openSecureCheckout(latestOrder!.id, onViewOrder)
           : undefined,
     },
     {
@@ -3523,6 +3532,14 @@ function MyOrdersTab({ onOpenOrder }: { onOpenOrder: (id: string) => void }) {
                 >
                   <Package className="size-3.5" /> View order
                 </button>
+                {!ticketId && (
+                  <button
+                    onClick={() => openSecureCheckout(o.id, onOpenOrder)}
+                    className="px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-xs font-medium hover:opacity-90 inline-flex items-center gap-1"
+                  >
+                    <Receipt className="size-3.5" /> Secure checkout
+                  </button>
+                )}
                 {ticketId && (
                   <button
                     onClick={() => navigate({ to: "/tickets", search: { id: ticketId } })}
