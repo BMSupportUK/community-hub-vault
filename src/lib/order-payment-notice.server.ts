@@ -104,34 +104,8 @@ export async function postOrderPaymentReceivedNotice(input: NoticeInput): Promis
           content,
         })) as never,
       );
-    } else {
-      const { data: ordersCat } = await supabaseAdmin
-        .from("ticket_categories")
-        .select("id")
-        .eq("slug", "orders")
-        .maybeSingle();
-      if (ordersCat?.id && orderUserId) {
-        const { data: ticket } = await supabaseAdmin
-          .from("tickets")
-          .insert({
-            user_id: orderUserId,
-            category_id: ordersCat.id,
-            subject: `Order #${orderId.slice(0, 8)} — ${provider} payment received`,
-            priority: "normal",
-            order_id: orderId,
-          } as never)
-          .select("id")
-          .single();
-        if (ticket?.id) {
-          ticketId = String(ticket.id);
-          await supabaseAdmin.from("ticket_messages").insert({
-            ticket_id: ticket.id,
-            sender_id: senderId,
-            content: `🧾 Order ID: ${orderId}\n\n${content}`,
-          } as never);
-        }
-      }
     }
+    // Sales never open support tickets — the secure checkout chat handles them.
   } catch (e) {
     console.error("Failed to post payment notice to ticket:", e);
   }

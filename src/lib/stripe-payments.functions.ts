@@ -441,38 +441,8 @@ export const confirmStripePayment = createServerFn({ method: "POST" })
               })),
             );
           }
-        } else if (!alreadyNotified) {
-
-          // No ticket linked yet (e.g. order created outside the shop flow) —
-          // open one in the admin/management-only "Orders" category so the
-          // purchase reference is always tracked in support.
-          const { data: ordersCat } = await supabaseAdmin
-            .from("ticket_categories")
-            .select("id")
-            .eq("slug", "orders")
-            .maybeSingle();
-          if (ordersCat?.id) {
-            const { data: ticket } = await supabaseAdmin
-              .from("tickets")
-              .insert({
-                user_id: (order as { user_id?: string }).user_id ?? userId,
-                category_id: ordersCat.id,
-                subject: `Order #${String(order.id).slice(0, 8)} — Stripe payment received`,
-                priority: "normal",
-                order_id: String(order.id),
-              } as never)
-              .select("id")
-              .single();
-            if (ticket?.id) {
-              ticketId = String(ticket.id);
-              await supabaseAdmin.from("ticket_messages").insert({
-                ticket_id: ticket.id,
-                sender_id: userId,
-                content: `🧾 Order ID: ${order.id}\n\n${staffContent}`,
-              } as never);
-            }
-          }
         }
+        // Sales never open support tickets — the secure checkout chat handles them.
       } catch (e) {
         console.error("Failed to post Stripe payment message to ticket:", e);
       }
