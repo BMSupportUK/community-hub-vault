@@ -69,6 +69,9 @@ export function CheckoutTemplate({ view, preview = false }: { view: CheckoutView
   const subtotal = items.reduce((s, i) => s + i.unitCents * i.qty, 0);
   const paid = step >= 2;
   const method = order.method;
+  // Bank transfer (Wise) puts the details + reference warning in a right sidebar
+  // on wide screens; everything else stays in the single centered column.
+  const bankSidebar = method === "wise" && !paid && !order.cancelled;
 
   let heading = `Order ${order.ref}`;
   let sub = "Please complete your payment below.";
@@ -81,7 +84,7 @@ export function CheckoutTemplate({ view, preview = false }: { view: CheckoutView
 
   return (
     <div className="min-h-full bg-background text-foreground">
-      <div className="max-w-2xl mx-auto pb-24">
+      <div className={`${bankSidebar ? "max-w-4xl" : "max-w-2xl"} mx-auto pb-24`}>
         <img src={hero} alt="A family relaxing on the sofa watching TV together" width={1600} height={640} className="w-full h-44 sm:h-60 object-cover sm:rounded-b-2xl" />
         <div className="px-5 -mt-2 space-y-6">
           <div className="text-center pt-6 space-y-2">
