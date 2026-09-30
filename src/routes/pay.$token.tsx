@@ -151,39 +151,13 @@ function PayPage() {
       {/* Members get a way back to their order screen; link-only customers
           (manual orders) arrived by link, so there is nothing to go back to. */}
       {user && (
-        <div className="w-full px-3 pt-3 flex flex-wrap items-center justify-between gap-2">
+        <div className="w-full px-3 pt-3">
           <Link
             to="/shop"
             className="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="size-4" /> Back to my orders
           </Link>
-          {canMoveToSetup && view.order.id && view.order.paidAt && !view.order.cancelled && !view.order.accountSetupStartedAt && !view.order.accountSetupAt && !view.order.completedAt && (
-            <button
-              type="button"
-              disabled={movingToSetup}
-              onClick={async () => {
-                setMovingToSetup(true);
-                try {
-                  await startAccountSetup({ data: { orderId: view.order.id as string } });
-                  await load(pw);
-                  toast.success("Order moved to account setup");
-                } catch (cause) {
-                  toast.error(cause instanceof Error ? cause.message : "The order could not be moved");
-                } finally {
-                  setMovingToSetup(false);
-                }
-              }}
-              className="inline-flex items-center gap-2 h-9 px-3 rounded-lg bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-60"
-            >
-              {movingToSetup ? <Loader2 className="size-4 animate-spin" /> : <UserCheck className="size-4" />} Move to account setup
-            </button>
-          )}
-          {canManage && view.order.id && view.order.paidAt && view.order.accountSetupStartedAt && !view.order.accountSetupAt && !view.order.cancelled && view.order.customerKind === "new" && (
-            <button type="button" onClick={() => setLoginOpen(true)} className="inline-flex items-center gap-2 h-9 px-3 rounded-lg bg-primary text-primary-foreground text-sm font-semibold">
-              <KeyRound className="size-4" /> Add customer login details
-            </button>
-          )}
         </div>
       )}
       <CheckoutTemplate
