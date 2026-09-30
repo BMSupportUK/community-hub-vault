@@ -216,7 +216,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
                   </button>
                 )}
               </section>
-              {manualInstallCard}
+              {installCard}
               {moveToSetup}
             </aside>
           ) : accountSidebar ? (
@@ -232,7 +232,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
                       : (order.customerKind === "existing" ? "Payment confirmed. We're now extending your subscription." : "Payment confirmed. We're now setting up your account.")}</p>
                 </div>
               </section>
-              {manualInstallCard}
+              {installCard}
               {addLoginDetails}
               {order.customerKind === "new" && (
                 <section className="rounded-2xl border border-border bg-card p-5 flex gap-3 items-start">
