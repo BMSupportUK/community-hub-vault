@@ -1,7 +1,9 @@
-import { Check, Copy, ExternalLink, Link2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Check, Copy, ExternalLink, Link2, Loader2 } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { StaffCheckoutChat, secureCheckoutUrl } from "@/components/checkout/CheckoutChat";
+
 
 
 function CopyField({ label, value }: { label: string; value: string }) {
