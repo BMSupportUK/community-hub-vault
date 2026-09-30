@@ -72,7 +72,7 @@ import {
   getCryptoConfig,
   getCryptoInvoiceStatus,
 } from "@/lib/nowpayments.functions";
-import { CreditCard, Ban } from "lucide-react";
+import { CreditCard, Ban, Lock } from "lucide-react";
 import { getOutOfHoursMessage } from "@/lib/business-hours";
 import { getAutomatedMessage } from "@/lib/automated-messages";
 import { isAdminUnlocked } from "@/lib/admin-unlock";
