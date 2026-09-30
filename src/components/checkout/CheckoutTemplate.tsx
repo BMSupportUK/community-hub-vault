@@ -32,8 +32,8 @@ export type CheckoutView = {
 const GBP = (c: number) => new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(c / 100);
 const METHOD: Record<string, string> = { stripe: "Stripe", square: "Square", wise: "bank transfer", cash: "cash", crypto: "crypto (USDT)" };
 
-export function OrderStatusBar({ step, compact = false, awaitingConfirmation = false, accountSetup = false }: { step: number; compact?: boolean; awaitingConfirmation?: boolean; accountSetup?: boolean }) {
-  const labels = ["Created", awaitingConfirmation ? "Awaiting confirmation" : "Awaiting payment", "Paid", "Account set up", "Completed"];
+export function OrderStatusBar({ step, compact = false, awaitingConfirmation = false, accountSetup = false, renewal = false }: { step: number; compact?: boolean; awaitingConfirmation?: boolean; accountSetup?: boolean; renewal?: boolean }) {
+  const labels = ["Created", awaitingConfirmation ? "Awaiting confirmation" : "Awaiting payment", "Paid", renewal ? "Subscription extended" : "Account set up", "Completed"];
   // Map the 4-state step (0-3) onto 5 labels: after paid, "Account set up" is done once confirmed.
   step = step === 3 ? 4 : step === 2 && accountSetup ? 3 : step;
   return (
@@ -92,8 +92,8 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
   let sub = "Please complete your payment below.";
   if (order.cancelled) { heading = "This order has been cancelled"; sub = "Contact us using the chat if you think this is a mistake."; }
   else if (step === 3) {
-    heading = order.customerKind === "existing" ? "Your subscription has been upgraded!" : "Your account has been set up!";
-    sub = order.customerKind === "existing" ? "Your upgrade is live now — just restart your app to enjoy it." : "Your new account is ready. Your login details will be sent to you by the team.";
+    heading = order.customerKind === "existing" ? "Your subscription has been extended!" : "Your account has been set up!";
+    sub = order.customerKind === "existing" ? "Your extension is live now — just restart your app to carry on watching." : "Your new account is ready. Your login details will be sent to you by the team.";
   } else if (method === "cash") { heading = "Thank you for your cash payment!"; sub = "We'll set everything up and let you know when it's complete."; }
   else if (awaitingConfirmation) { heading = "Payment sent — awaiting confirmation"; sub = "Thanks! We're waiting for your payment to arrive. This page updates automatically once it's confirmed."; }
   else if (paid) { heading = "Thank you — we've got your payment!"; sub = "We'll set everything up and let you know when it's complete."; }
@@ -115,7 +115,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
             </p>
           </div>
 
-          {!order.cancelled && <OrderStatusBar step={step} awaitingConfirmation={awaitingConfirmation} accountSetup={accountSetup} />}
+          {!order.cancelled && <OrderStatusBar step={step} awaitingConfirmation={awaitingConfirmation} accountSetup={accountSetup} renewal={order.customerKind === "existing"} />}
 
           {awaitingConfirmation && (
             <div className="rounded-2xl border-2 border-warning bg-warning/10 p-4 flex gap-3 items-start">
@@ -131,8 +131,8 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
             <div className={`rounded-2xl border p-4 flex gap-3 items-start ${accountSetup ? "border-success/40 bg-success/10" : "border-border bg-card"}`}>
               {accountSetup ? <UserCheck className="size-5 text-success shrink-0 mt-0.5" /> : <Clock className="size-5 text-primary shrink-0 mt-0.5" />}
               <p className="text-sm">{accountSetup
-                ? (order.customerKind === "existing" ? "Your subscription has been upgraded — we're just finishing off your order." : "Your account has been set up — we're just finishing off your order.")
-                : (order.customerKind === "existing" ? "Payment confirmed. We're now upgrading your subscription." : "Payment confirmed. We're now setting up your account.")}</p>
+                ? (order.customerKind === "existing" ? "Your subscription has been extended — we're just finishing off your order." : "Your account has been set up — we're just finishing off your order.")
+                : (order.customerKind === "existing" ? "Payment confirmed. We're now extending your subscription." : "Payment confirmed. We're now setting up your account.")}</p>
             </div>
           )}
 

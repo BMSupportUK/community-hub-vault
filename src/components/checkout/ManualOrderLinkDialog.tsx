@@ -24,10 +24,10 @@ function CopyField({ label, value }: { label: string; value: string }) {
 
 /** Secure link + password panel, reused after saving an order and on the orders list. */
 export function SecureLinkPanel({ orderId, withChat = true }: { orderId: string; withChat?: boolean }) {
-  const [link, setLink] = useState<{ token: string; password: string; payment_sent_at: string | null; account_setup_at: string | null } | null | undefined>(undefined);
+  const [link, setLink] = useState<{ token: string; password: string; payment_sent_at: string | null; account_setup_at: string | null; customer_kind: string | null } | null | undefined>(undefined);
   const [busy, setBusy] = useState(false);
   useEffect(() => {
-    supabase.from("order_checkout_links").select("token,password,payment_sent_at,account_setup_at").eq("order_id", orderId).maybeSingle()
+    supabase.from("order_checkout_links").select("token,password,payment_sent_at,account_setup_at,customer_kind").eq("order_id", orderId).maybeSingle()
       .then(({ data }) => setLink((data as never) ?? null));
   }, [orderId]);
   const toggleSetup = async (done: boolean) => {
@@ -36,21 +36,22 @@ export function SecureLinkPanel({ orderId, withChat = true }: { orderId: string;
     setBusy(false);
     if (error) return toast.error(error.message);
     setLink((l) => (l ? { ...l, account_setup_at: (data as string | null) ?? null } : l));
-    toast.success(done ? "Account confirmed as set up — you can now complete the sale" : "Account set-up confirmation removed");
+    toast.success(done ? (link?.customer_kind === "existing" ? "Extension confirmed — you can now complete the sale" : "Account confirmed as set up — you can now complete the sale") : "Account set-up confirmation removed");
   };
   if (link === undefined) return <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" /> Loading…</div>;
   if (!link) return <p className="text-sm text-muted-foreground">This order has no secure checkout page (it was added before secure pages existed).</p>;
   const url = secureCheckoutUrl(link.token);
+  const renewal = link.customer_kind === "existing";
   const fields = (
     <div className="space-y-3 min-w-0">
       {link.payment_sent_at && (
         <div className="flex items-center gap-2 rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-xs"><Hourglass className="size-3.5 text-warning" /> Customer says payment was sent {new Date(link.payment_sent_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })} — awaiting confirmation</div>
       )}
       <div className={`rounded-lg border px-3 py-2.5 space-y-2 ${link.account_setup_at ? "border-success/40 bg-success/10" : "border-border"}`}>
-        <div className="flex items-center gap-2 text-sm font-medium"><UserCheck className={`size-4 ${link.account_setup_at ? "text-success" : "text-muted-foreground"}`} /> Account set up</div>
-        <p className="text-xs text-muted-foreground">{link.account_setup_at ? `Confirmed ${new Date(link.account_setup_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}. The sale can now be completed.` : "Confirm the customer's account is set up (or subscription upgraded). The sale can't be completed until you do."}</p>
+        <div className="flex items-center gap-2 text-sm font-medium"><UserCheck className={`size-4 ${link.account_setup_at ? "text-success" : "text-muted-foreground"}`} /> {renewal ? "Subscription extended (renewal)" : "Account set up"}</div>
+        <p className="text-xs text-muted-foreground">{link.account_setup_at ? `Confirmed ${new Date(link.account_setup_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}. The sale can now be completed.` : renewal ? "Confirm the customer's subscription has been extended. The sale can't be completed until you do." : "Confirm the customer's new account is set up. The sale can't be completed until you do."}</p>
         <button type="button" disabled={busy} onClick={() => toggleSetup(!link.account_setup_at)} className={`inline-flex items-center gap-1 h-8 px-3 rounded-lg text-xs font-medium disabled:opacity-60 ${link.account_setup_at ? "border border-border text-muted-foreground" : "bg-success text-background"}`}>
-          {busy ? <Loader2 className="size-3.5 animate-spin" /> : <Check className="size-3.5" />} {link.account_setup_at ? "Undo confirmation" : "Confirm account is set up"}
+          {busy ? <Loader2 className="size-3.5 animate-spin" /> : <Check className="size-3.5" />} {link.account_setup_at ? "Undo confirmation" : (renewal ? "Confirm extension is done" : "Confirm account is set up")}
         </button>
       </div>
       <CopyField label="Secure page link" value={url} />
