@@ -358,6 +358,13 @@
       "when": 1790750913084,
       "tag": "0050_checkout_awaiting_confirmation_and_account_setup",
       "breakpoints": true
+    },
+    {
+      "idx": 51,
+      "version": "7",
+      "when": 1790753622440,
+      "tag": "0051_pending_manual_order_credentials",
+      "breakpoints": true
     }
   ]
 }
