@@ -184,8 +184,58 @@ export const createCredentialForOrder = createServerFn({ method: "POST" })
     await assertStaff(supabase, userId);
 
     const { terms, ownerId } = await loadOrderContext(data.orderId);
-    if (terms.months <= 0) return { status: "no_term", unparsed: terms.unparsed };
     const accountType = data.accountType ?? terms.accountType ?? "single";
+    if (terms.months <= 0) {
+      // Subscription length isn't mandatory: when it can't be read from the
+      // order, staff set the expiry date themselves and we save with that.
+      if (!data.expiresAt) return { status: "no_term", unparsed: terms.unparsed };
+      const expiry = new Date(data.expiresAt);
+      if (Number.isNaN(expiry.getTime())) return { status: "no_term", unparsed: terms.unparsed };
+      if (!ownerId) {
+        const { error: stashError } = await supabase.rpc("staff_stash_order_credential_with_expiry" as never, {
+          p_order_id: data.orderId,
+          p_login_name: data.loginName,
+          p_password: data.password,
+          p_expiry: expiry.toISOString(),
+          p_account_type: accountType,
+        } as never);
+        if (stashError) throw new Error(stashError.message);
+        return {
+          status: "applied",
+          credentialId: "",
+          accountLabel: data.loginName.trim(),
+          months: 0,
+          newExpiry: expiry.toISOString(),
+          accountType: accountType as AccountType,
+          accountTypeLabel: accountTypeLabelFor(accountType as AccountType),
+          created: true,
+          unparsed: terms.unparsed,
+        };
+      }
+      const { data: rows, error } = await supabase.rpc("staff_create_credential_with_expiry" as never, {
+        p_owner_id: ownerId,
+        p_login_name: data.loginName,
+        p_password: data.password,
+        p_expiry: expiry.toISOString(),
+        p_account_type: accountType,
+      } as never);
+      if (error) throw new Error(error.message);
+      const row = (Array.isArray(rows) ? rows[0] : rows) as
+        | { credential_id: string; account_number: number; expiry_at: string }
+        | undefined;
+      if (!row) throw new Error("Account could not be created");
+      return {
+        status: "applied",
+        credentialId: row.credential_id,
+        accountLabel: data.loginName.trim(),
+        months: 0,
+        newExpiry: new Date(row.expiry_at).toISOString(),
+        accountType: accountType as AccountType,
+        accountTypeLabel: accountTypeLabelFor(accountType as AccountType),
+        created: true,
+        unparsed: terms.unparsed,
+      };
+    }
     if (!ownerId) {
       // Manual order with no account yet: hold the details until the customer
       // creates their account from the checkout page, then they move onto it.
