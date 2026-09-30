@@ -1365,6 +1365,7 @@ function Storefront() {
     wants_adult_content: boolean;
     purchase_kind?: "renewal" | "additional" | "new";
     owned_logins?: string[];
+    pay_method?: "square" | "stripe" | "wise";
   }) => {
 
     if (!user || cartItems.length === 0) return;
@@ -1451,86 +1452,21 @@ function Storefront() {
       toast.error(ie.message);
       return;
     }
-    // Open a support ticket in the admin/management-only "Orders" category.
-    // The ticket replaces the old order chat as the primary communication
-    // channel; the order record itself still drives the payment lifecycle.
-    let newTicketId: string | null = null;
-    try {
-      const { data: ordersCat } = await supabase
-        .from("ticket_categories")
-        .select("id")
-        .eq("slug", "orders")
-        .maybeSingle();
-      if (ordersCat?.id) {
-        const itemLines = cartItems.map((p) => `• ${p.name} × ${cart[p.id]}`).join("\n");
-        const { data: ticket } = await supabase
-          .from("tickets")
-          .insert({
-            user_id: user.id,
-            category_id: ordersCat.id,
-            subject: `New order #${String(order.id).slice(0, 8)}`,
-            priority: "normal",
-            order_id: order.id,
-          } as never)
-          .select()
-          .single();
-        if (ticket?.id) {
-          newTicketId = ticket.id;
-          const ownedLogins = info.owned_logins ?? [];
-          const kind = info.purchase_kind ?? (info.customer_type === "existing" ? "renewal" : "new");
-          const orderType =
-            kind === "renewal"
-              ? `🔁 Renewal — login: ${info.existing_username.trim() || "(not specified)"}`
-              : kind === "additional"
-                ? `➕ Additional account — create a BRAND NEW login (do not renew an existing account)`
-                : `🆕 New customer`;
-          const ticketBody = await getAutomatedMessage("order_placed_ticket", {
-            order_id: String(order.id),
-            order_short: String(order.id).slice(0, 8),
-            order_type: orderType,
-            existing_accounts:
-              ownedLogins.length > 0 && kind === "renewal"
-                ? `\nExisting accounts on file: ${ownedLogins.join(", ")}`
-                : "",
-            adult_access: info.wants_adult_content ? "Yes" : "No",
-            items: itemLines,
-          });
-
-          await supabase.from("ticket_messages").insert({
-            ticket_id: ticket.id,
-            sender_id: user.id,
-            content: ticketBody,
-          } as never);
-          const bankAccess: any = await getMyBankTransferAccess({}).catch(() => null);
-          const payMsg = await getAutomatedMessage(
-            bankAccess?.allowed ? "order_pay_bank" : "order_pay_card",
-            { total: fmt(finalTotal) },
-          );
-          await supabase.from("ticket_messages").insert({
-            ticket_id: ticket.id,
-            sender_id: user.id,
-            content: payMsg,
-          } as never);
-          const oohMsg = await getOutOfHoursMessage();
-          if (oohMsg) {
-            await supabase.from("ticket_messages").insert({
-              ticket_id: ticket.id,
-              sender_id: user.id,
-              content: oohMsg,
-            } as never);
-          }
-        }
-      }
-    } catch (e) {
-      console.warn("[shop] failed to open order ticket", e);
-    }
+    // Every order uses its own secure checkout page (no support ticket).
+    const { data: link, error: le } = await supabase.rpc("create_my_checkout_link" as never, {
+      p_order_id: order.id,
+      p_method: info.pay_method ?? "square",
+    } as never);
     setCart({});
     setShowCheckout(false);
     toast.success("Order placed!");
     reloadLatestOrder();
-    if (newTicketId) {
-      navigate({ to: "/tickets", search: { id: newTicketId } });
+    const row = (Array.isArray(link) ? link[0] : link) as { token: string; password: string } | null;
+    if (!le && row?.token) {
+      try { sessionStorage.setItem(`bm-pay-${row.token}`, row.password); } catch { /* ignore */ }
+      navigate({ to: "/pay/$token", params: { token: row.token } });
     } else {
+      if (le) toast.error(le.message);
       navigate({ to: "/shop", search: { view: "orders", id: order.id ?? undefined } });
     }
   };
@@ -2363,6 +2299,7 @@ function Checkout({
     wants_adult_content: boolean;
     purchase_kind: "renewal" | "additional" | "new";
     owned_logins: string[];
+    pay_method: "square" | "stripe" | "wise";
   }) => void;
   onRemoveItem: (id: string) => void;
 }) {
@@ -2370,6 +2307,15 @@ function Checkout({
   const [name, setName] = useState("");
   const [email, setEmail] = useState(user?.email ?? "");
   const [customerType, setCustomerType] = useState<"new" | "existing">("new");
+  const [payMethod, setPayMethod] = useState<"square" | "stripe" | "wise">("square");
+  const [bankOnly, setBankOnly] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    (getMyBankTransferAccess({}) as Promise<any>)
+      .then((r) => { if (alive && r?.allowed) { setBankOnly(true); setPayMethod("wise"); } })
+      .catch(() => undefined);
+    return () => { alive = false; };
+  }, []);
   const [existingUsername, setExistingUsername] = useState("");
   const [adultContent, setAdultContent] = useState<"yes" | "no" | "">("");
   const [appliedCode, setAppliedCode] = useState<DiscountCode | null>(null);
@@ -2853,6 +2799,25 @@ function Checkout({
             )}
           </div>
         )}
+          <div className="shrink-0 px-3 sm:px-5 pt-3 space-y-2">
+            <div className="text-sm font-medium">Payment method</div>
+            {bankOnly ? (
+              <div className="rounded-lg border border-primary bg-primary/10 p-3 text-sm">
+                <span className="font-semibold">Bank transfer</span>
+                <span className="block text-xs text-muted-foreground">Your bank details and reference will be shown on your secure checkout page.</span>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                {(["square", "stripe"] as const).map((m) => (
+                  <button key={m} type="button" onClick={() => setPayMethod(m)} aria-pressed={payMethod === m}
+                    className={`rounded-lg border p-3 text-left text-sm ${payMethod === m ? "border-primary bg-primary/10" : "border-border"}`}>
+                    <span className="font-semibold">{m === "square" ? "Square (card)" : "Stripe (card)"}</span>
+                    {m === "square" && <span className="ml-2 text-[10px] uppercase tracking-wide rounded bg-primary text-primary-foreground px-1.5 py-0.5">Preferred</span>}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
          <div className="shrink-0 p-3 sm:p-5 border-t border-border flex gap-2 justify-end">
           <button onClick={onClose} className="px-4 py-2 rounded-lg bg-surface-2 text-sm">
             Cancel
@@ -2871,7 +2836,7 @@ function Checkout({
                 owned_logins: myCreds
                   .map((c) => c.app_login_name?.trim())
                   .filter(Boolean) as string[],
-
+                pay_method: payMethod,
               })
             }
             disabled={!canSubmit}
