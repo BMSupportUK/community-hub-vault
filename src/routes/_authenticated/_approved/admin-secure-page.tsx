@@ -6,9 +6,11 @@ import { useAuth } from "@/hooks/use-auth";
 import { SecureLinkPanel } from "@/components/checkout/ManualOrderLinkDialog";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-secure-page")({
-  validateSearch: (search: Record<string, unknown>): { order?: string } => ({
+  validateSearch: (search: Record<string, unknown>): { order?: string; ref?: string } => ({
     order: typeof search.order === "string" ? (search.order as string) : undefined,
+    ref: typeof search.ref === "string" ? (search.ref as string) : undefined,
   }),
+
   head: () => ({
     meta: [
       { title: "Secure checkout page — BM Support" },
@@ -24,16 +26,16 @@ export const Route = createFileRoute("/_authenticated/_approved/admin-secure-pag
 
 function SecurePageAdmin() {
   const { hasRole } = useAuth();
-  const { order } = Route.useSearch();
-  const [orderRef, setOrderRef] = useState<string | null>(null);
-  const [loaded, setLoaded] = useState(false);
+  const { order, ref: refParam } = Route.useSearch();
+  const [orderRef, setOrderRef] = useState<string | null>(refParam ?? null);
+  const [loaded, setLoaded] = useState(!!refParam);
 
   useEffect(() => {
     if (!order) return;
-    setLoaded(false);
     supabase.from("orders").select("order_ref").eq("id", order).maybeSingle()
       .then(({ data }) => { setOrderRef((data as never as { order_ref: string } | null)?.order_ref ?? null); setLoaded(true); });
   }, [order]);
+
 
   if (!hasRole("admin") && !hasRole("management")) return <Navigate to="/admin" />;
   if (!order) return <Navigate to="/admin" search={{ tab: "order-status" } as never} />;
