@@ -3902,6 +3902,8 @@ export type Database = {
         Row: {
           account_setup_at: string | null
           account_setup_by: string | null
+          account_setup_started_at: string | null
+          account_setup_started_by: string | null
           claimed_by: string | null
           created_at: string
           customer_kind: string
@@ -3914,6 +3916,8 @@ export type Database = {
         Insert: {
           account_setup_at?: string | null
           account_setup_by?: string | null
+          account_setup_started_at?: string | null
+          account_setup_started_by?: string | null
           claimed_by?: string | null
           created_at?: string
           customer_kind?: string
@@ -3926,6 +3930,8 @@ export type Database = {
         Update: {
           account_setup_at?: string | null
           account_setup_by?: string | null
+          account_setup_started_at?: string | null
+          account_setup_started_by?: string | null
           claimed_by?: string | null
           created_at?: string
           customer_kind?: string

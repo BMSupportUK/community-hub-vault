@@ -1,6 +1,7 @@
 # Roadmap
 
 ## Current
+- [x] Secure checkout: require staff to move a paid order into account setup before showing setup and QD details
 - [x] Secure checkout: move paid account status and account sign-up into the right sidebar
 - [x] New-sale completion: save username/password, subscription term and dates, then post them automatically in checkout chat
 - [x] Secure checkout: show and optionally include an admin-managed QD app login code

@@ -1,16 +1,16 @@
 import { useCallback, useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, Loader2, Lock, ShieldCheck } from "lucide-react";
-import { getCheckout, markPaymentSent } from "@/lib/checkout.functions";
+import { ArrowLeft, KeyRound, Loader2, Lock, ShieldCheck, UserCheck } from "lucide-react";
+import { getCheckout, markPaymentSent, startCheckoutAccountSetup } from "@/lib/checkout.functions";
 import { CheckoutTemplate, type CheckoutView } from "@/components/checkout/CheckoutTemplate";
 import { CustomerCheckoutChat } from "@/components/checkout/CheckoutChat";
 import { CheckoutCardPayment } from "@/components/checkout/CheckoutCardPayment";
 import { useAuth } from "@/hooks/use-auth";
-import { KeyRound } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { SecureLinkPanel } from "@/components/checkout/ManualOrderLinkDialog";
 import hero from "@/assets/checkout-family-tv.jpg";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/pay/$token")({
   head: () => ({
@@ -31,9 +31,12 @@ function PayPage() {
   const { token } = Route.useParams();
   const { user, hasRole } = useAuth();
   const [loginOpen, setLoginOpen] = useState(false);
+  const [movingToSetup, setMovingToSetup] = useState(false);
   const canManage = !!user && (hasRole("admin") || hasRole("management"));
+  const canMoveToSetup = !!user && (canManage || hasRole("staff"));
   const fetchCheckout = useServerFn(getCheckout);
   const sendPaymentSent = useServerFn(markPaymentSent);
+  const startAccountSetup = useServerFn(startCheckoutAccountSetup);
   const [password, setPassword] = useState<string | null>(null);
   const [unlocked, setUnlocked] = useState(false);
   const [input, setInput] = useState("");
@@ -125,7 +128,28 @@ function PayPage() {
           >
             <ArrowLeft className="size-4" /> Back to my orders
           </Link>
-          {canManage && view.order.id && view.order.paidAt && !view.order.cancelled && (
+          {canMoveToSetup && view.order.id && view.order.paidAt && !view.order.cancelled && !view.order.accountSetupStartedAt && !view.order.accountSetupAt && !view.order.completedAt && (
+            <button
+              type="button"
+              disabled={movingToSetup}
+              onClick={async () => {
+                setMovingToSetup(true);
+                try {
+                  await startAccountSetup({ data: { orderId: view.order.id as string } });
+                  await load(pw);
+                  toast.success("Order moved to account setup");
+                } catch (cause) {
+                  toast.error(cause instanceof Error ? cause.message : "The order could not be moved");
+                } finally {
+                  setMovingToSetup(false);
+                }
+              }}
+              className="inline-flex items-center gap-2 h-9 px-3 rounded-lg bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-60"
+            >
+              {movingToSetup ? <Loader2 className="size-4 animate-spin" /> : <UserCheck className="size-4" />} Move to account setup
+            </button>
+          )}
+          {canManage && view.order.id && view.order.paidAt && view.order.accountSetupStartedAt && !view.order.accountSetupAt && !view.order.cancelled && view.order.customerKind === "new" && (
             <button type="button" onClick={() => setLoginOpen(true)} className="inline-flex items-center gap-2 h-9 px-3 rounded-lg bg-primary text-primary-foreground text-sm font-semibold">
               <KeyRound className="size-4" /> Add customer login details
             </button>

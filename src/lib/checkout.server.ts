@@ -10,7 +10,7 @@ export async function unlock(token: string, password: string) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data: link } = await supabaseAdmin
     .from("order_checkout_links")
-    .select("order_id,password,customer_kind,claimed_by,payment_sent_at,account_setup_at,qd_code_id")
+    .select("order_id,password,customer_kind,claimed_by,payment_sent_at,account_setup_started_at,account_setup_at,qd_code_id")
     .eq("token", token)
     .maybeSingle();
   if (!link) return null;
