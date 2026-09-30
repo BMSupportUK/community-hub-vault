@@ -76,6 +76,15 @@ function CopyRow({ label, value }: { label: string; value: string | null }) {
   );
 }
 
+function QdCopy({ value }: { value: string }) {
+  const [done, setDone] = useState(false);
+  return (
+    <button type="button" onClick={() => { navigator.clipboard.writeText(value); setDone(true); setTimeout(() => setDone(false), 1500); }} className="inline-flex items-center gap-1 text-xs text-primary hover:underline shrink-0">
+      {done ? <Check className="size-3.5" /> : <Copy className="size-3.5" />} {done ? "Copied" : "Copy"}
+    </button>
+  );
+}
+
 export function CheckoutTemplate({ view, preview = false, claimToken, cardPayment, onPaymentSent }: { view: CheckoutView; preview?: boolean; claimToken?: string; cardPayment?: ReactNode; onPaymentSent?: () => Promise<void> }) {
   const [sending, setSending] = useState(false);
   const { order, items, invoice, bank, qdCode } = view;
