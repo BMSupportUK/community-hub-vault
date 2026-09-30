@@ -72,7 +72,7 @@ export function SecureLinkPanel({ orderId, withChat = true }: { orderId: string;
       const starts = new Date().toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" });
       const expires = new Date(result.newExpiry).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" });
       const message = [
-        "Your account is ready. Here are your login details:",
+        "Your login details are as follows:",
         `Username: ${loginName.trim()}`,
         `Password: ${accountPassword}`,
         `Subscription length: ${result.months} month${result.months === 1 ? "" : "s"}`,
