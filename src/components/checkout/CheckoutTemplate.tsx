@@ -14,6 +14,13 @@ export type CheckoutView = {
     cancelled?: boolean;
     method: string;
     customerKind: "new" | "existing";
+    createdAt?: string;
+    email?: string | null;
+    customerType?: string | null;
+    existingUsername?: string | null;
+    discountCode?: string | null;
+    adultContent?: boolean | null;
+    status?: string;
   };
   items: { name: string; qty: number; unitCents: number }[];
   invoice: { status: string; url: string | null; number: string | null } | null;
@@ -86,7 +93,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
   return (
     <div className="min-h-full bg-background text-foreground">
       <div className="w-full px-3 pb-24">
-        <img src={hero} alt="A family relaxing on the sofa watching TV together" width={1600} height={640} className="w-full h-44 sm:h-72 object-cover rounded-b-2xl" />
+        <img src={hero} alt="A family relaxing on the sofa watching TV together" width={1600} height={640} className="w-full h-auto max-h-[420px] object-contain bg-card rounded-b-2xl" />
         <div className="px-2 sm:px-4 -mt-2 pb-6 space-y-6">
           <div className="text-center pt-6 space-y-2">
             {(paid || order.cancelled) && (
@@ -117,6 +124,23 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
               )}
               <div className="flex justify-between font-bold text-base border-t border-border pt-3"><span>{paid ? "Total paid" : "Total to pay"}</span><span>{GBP(order.totalCents)}</span></div>
             </div>
+            <h2 className="font-semibold mt-6 mb-3">Order details</h2>
+            <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-2 text-sm">
+              {([
+                ["Order", order.ref],
+                ["Placed", order.createdAt ? new Date(order.createdAt).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" }) : null],
+                ["Name", order.name || null],
+                ["Email", order.email],
+                ["Customer", order.customerType === "existing" ? "Existing customer" : order.customerType === "new" ? "New customer" : null],
+                ["Username", order.existingUsername],
+                ["Payment", METHOD[method] ?? (method || null)],
+                ["Discount code", order.discountCode],
+                ["Adult content", order.adultContent == null ? null : order.adultContent ? "Yes" : "No"],
+                ["Status", order.status ? order.status.charAt(0).toUpperCase() + order.status.slice(1) : null],
+              ] as [string, string | null | undefined][]).filter(([, v]) => v).map(([k, v]) => (
+                <div key={k} className="contents"><dt className="text-muted-foreground">{k}</dt><dd className="break-all text-right font-medium">{v}</dd></div>
+              ))}
+            </dl>
           </section>
 
           {(paid || order.cancelled) ? (

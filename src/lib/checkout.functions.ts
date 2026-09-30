@@ -76,7 +76,7 @@ export const getCheckout = createServerFn({ method: "POST" })
     const { supabaseAdmin, link } = u;
     const { data: order } = await supabaseAdmin
       .from("orders")
-      .select("id,order_ref,shipping_name,total_cents,discount_cents,paid_at,completed_at,created_at,manual_pay_method,status")
+      .select("id,order_ref,shipping_name,email,customer_type,existing_username,discount_code,wants_adult_content,total_cents,discount_cents,paid_at,completed_at,created_at,manual_pay_method,status")
       .eq("id", link.order_id)
       .maybeSingle();
     if (!order) return { ok: false as const };
@@ -113,6 +113,12 @@ export const getCheckout = createServerFn({ method: "POST" })
         cancelled: String(order.status) === "cancelled",
         method,
         customerKind: link.customer_kind as "new" | "existing",
+        email: ((order as any).email as string | null) ?? null,
+        customerType: ((order as any).customer_type as string | null) ?? null,
+        existingUsername: ((order as any).existing_username as string | null) ?? null,
+        discountCode: ((order as any).discount_code as string | null) ?? null,
+        adultContent: ((order as any).wants_adult_content as boolean | null) ?? null,
+        status: String(order.status ?? ""),
       },
       items: (items ?? []).map((i: any) => ({ name: String(i.product_name ?? "Item"), qty: Number(i.quantity ?? 1), unitCents: Number(i.unit_price_cents ?? 0) })),
       invoice,
