@@ -10,7 +10,8 @@ import { unlock } from "@/lib/checkout.server";
 
 const creds = z.object({
   token: z.string().regex(/^[a-f0-9]{64}$/),
-  password: z.string().min(1).max(64),
+  // Empty is allowed: only manual-order links are password-gated.
+  password: z.string().max(64).default(""),
 });
 
 async function syncInvoice(supabaseAdmin: any, orderId: string, method: string) {
