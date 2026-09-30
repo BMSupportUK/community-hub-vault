@@ -1,1 +1,1 @@
-$(cat AGENTS.md)
+$(cat AGENTS.md)- All shop orders use their own secure /pay/<token> checkout page (create_my_checkout_link) with inline Square/Stripe card payment; no order tickets or invoices — one payment surface for every sale.
