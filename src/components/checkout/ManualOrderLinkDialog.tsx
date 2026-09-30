@@ -126,7 +126,10 @@ export function SecureLinkPanel({ orderId, withChat = true }: { orderId: string;
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)]">
       {fields}
       <aside className="min-w-0 space-y-2 lg:border-l lg:border-border lg:pl-6">
-        <div className="text-xs font-medium">Chat with the customer</div>
+        <div>
+          <div className="text-xs font-medium">Chat for this sale only</div>
+          <p className="text-[11px] text-muted-foreground">Only messages attached to this order appear here.</p>
+        </div>
         <StaffCheckoutChat orderId={orderId} token={link.token} />
       </aside>
     </div>

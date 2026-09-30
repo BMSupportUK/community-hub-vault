@@ -18,7 +18,7 @@ function Thread({ messages, mine }: { messages: Msg[]; mine: "customer" | "staff
   useEffect(() => { end.current?.scrollIntoView({ block: "end" }); }, [messages.length]);
   return (
     <div className="flex-1 overflow-y-auto p-3 space-y-2">
-      {messages.length === 0 && <p className="text-xs text-center text-muted-foreground py-6">No messages yet. Say hello!</p>}
+      {messages.length === 0 && <p className="text-xs text-center text-muted-foreground py-6">No messages for this sale yet.</p>}
       {messages.map((m) => (
         <div key={m.id} className={`flex ${m.sender === mine ? "justify-end" : "justify-start"}`}>
           <div className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm whitespace-pre-wrap break-words ${m.sender === mine ? "bg-primary text-primary-foreground rounded-br-sm" : "bg-surface-2 text-foreground rounded-bl-sm"}`}>
@@ -50,7 +50,7 @@ function Composer({ onSend }: { onSend: (t: string) => Promise<void> }) {
 }
 
 /** Customer-side floating chat bubble on the secure checkout page. */
-export function CustomerCheckoutChat({ token, password }: { token: string; password: string }) {
+export function CustomerCheckoutChat({ token, password, orderRef }: { token: string; password: string; orderRef: string }) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>([]);
   const [unread, setUnread] = useState(0);
@@ -93,7 +93,7 @@ export function CustomerCheckoutChat({ token, password }: { token: string; passw
       {open && (
         <div className="fixed bottom-24 right-4 z-50 w-[min(360px,calc(100vw-2rem))] h-[min(480px,70vh)] flex flex-col rounded-2xl border border-border bg-card shadow-2xl overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 bg-primary text-primary-foreground">
-            <div><div className="font-semibold text-sm">BM Support</div><div className="text-[11px] opacity-80">We usually reply within a few minutes</div></div>
+            <div><div className="font-semibold text-sm">Order #{orderRef}</div><div className="text-[11px] opacity-80">Private chat for this sale only</div></div>
             <button type="button" onClick={() => setOpen(false)} aria-label="Close chat"><X className="size-5" /></button>
           </div>
           <Thread messages={messages} mine="customer" />

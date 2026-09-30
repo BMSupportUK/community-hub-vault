@@ -130,7 +130,7 @@ function PayPage() {
           <CheckoutCardPayment token={token} password={pw} method={view.order.method} amountCents={view.order.totalCents} onPaid={() => { load(pw); }} />
         ) : undefined}
       />
-      <CustomerCheckoutChat token={token} password={pw} />
+      <CustomerCheckoutChat token={token} password={pw} orderRef={view.order.ref} />
     </main>
   );
 }
