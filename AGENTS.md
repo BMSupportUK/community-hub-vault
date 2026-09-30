@@ -1,7 +1,6 @@
 # Project Architecture Rules
 
-- Sports-guide updates preserve published status. Headings prefix event names, never channels.
-- Keep the BM loading cover through browser load/hydration and as the router pending screen.
+- Sports guides preserve published status; headings prefix event names, never channels. Keep the BM loading cover through hydration and router pending.
 - UFC multi-time imports attach all listed channels to every slot. Triller `Event N` becomes channel `Triller TV N`.
 - Public sports guides return only validated date, time and event names; never expose free-text notes, descriptions or channel lines, because channel heuristics can miss unfamiliar feed names.
 - Ads alternate Adsterra/AdSense; refresh visible Adsterra every 60s, never AdSense.
@@ -16,5 +15,5 @@
 - Talk staff sidebar status: active DND overrides Working/Off duty text with “Away - From the office.” while retaining the countdown.
 - Android spoken alerts use dedicated versioned notification channels; change the channel ID when correcting a sound because Android keeps a channel's original sound permanently.
 - Manual orders: secure /pay/<token> page (password-gated via order_checkout_links), chat in checkout_chat_messages; created by admin_create_manual_order_v2 — keeps customer page auth-free while gated.
-- Shop sales use secure checkout; paid stays distinct until staff starts account setup, which reveals QD/fulfilment controls.
+- Shop sales use secure checkout; after payment, staff or the customer starts account setup before QD/fulfilment controls appear.
 - Manual-order login details saved before the customer has an account are held privately per order and moved into their credentials when they claim the checkout — keeps one source of truth in the admin credentials list.

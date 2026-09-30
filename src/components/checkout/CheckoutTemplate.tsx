@@ -88,8 +88,9 @@ function QdCopy({ value }: { value: string }) {
   );
 }
 
-export function CheckoutTemplate({ view, preview = false, claimToken, cardPayment, onPaymentSent }: { view: CheckoutView; preview?: boolean; claimToken?: string; cardPayment?: ReactNode; onPaymentSent?: () => Promise<void> }) {
+export function CheckoutTemplate({ view, preview = false, claimToken, cardPayment, onPaymentSent, onContinueToSetup }: { view: CheckoutView; preview?: boolean; claimToken?: string; cardPayment?: ReactNode; onPaymentSent?: () => Promise<void>; onContinueToSetup?: () => Promise<void> }) {
   const [sending, setSending] = useState(false);
+  const [continuing, setContinuing] = useState(false);
   const { order, items, invoice, bank, qdCode } = view;
   const step = checkoutStep(order);
   const subtotal = items.reduce((s, i) => s + i.unitCents * i.qty, 0);
@@ -141,6 +142,30 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
                 <p className="text-muted-foreground">{method === "wise" ? "Bank transfers can take anywhere from a few minutes up to 1–2 working days to arrive, depending on your bank. You don't need to do anything else — we'll confirm it as soon as it lands." : "Your payment is being confirmed. This usually only takes a few minutes."}</p>
               </div>
             </div>
+          )}
+
+          {paid && !order.cancelled && !accountSetupStarted && onContinueToSetup && (
+            <section className="rounded-2xl border border-success/40 bg-success/10 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex gap-3 items-start">
+                <Check className="size-5 text-success shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold">We’ve received your payment</p>
+                  <p className="text-sm text-muted-foreground">Continue when you’re ready so we can begin setting up your service.</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                disabled={continuing}
+                onClick={async () => {
+                  setContinuing(true);
+                  try { await onContinueToSetup(); } finally { setContinuing(false); }
+                }}
+                className="h-11 px-5 rounded-xl bg-primary text-primary-foreground font-semibold inline-flex items-center justify-center gap-2 shrink-0 disabled:opacity-60"
+              >
+                {continuing ? <Loader2 className="size-4 animate-spin" /> : <UserCheck className="size-4" />}
+                Continue to account setup
+              </button>
+            </section>
           )}
 
           <div className={splitLayout ? "grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(340px,440px)] lg:items-start" : "space-y-6"}>
