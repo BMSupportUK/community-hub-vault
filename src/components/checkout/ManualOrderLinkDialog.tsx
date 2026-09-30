@@ -115,7 +115,10 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
       const selectedCode = qdCodes.find((code) => code.id === qdCodeId);
       // Remember the chosen QD code on the link so the customer's secure page shows it.
       await supabase.from("order_checkout_links").update({ qd_code_id: selectedCode?.id ?? null } as never).eq("order_id", orderId);
-      const starts = (paidLocal && !Number.isNaN(new Date(paidLocal).getTime()) ? new Date(paidLocal) : new Date()).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" });
+      // The subscription starts when staff save the details, not when the
+      // payment arrived — an order paid overnight but processed the next day
+      // would otherwise show the customer the wrong start date.
+      const starts = new Date().toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" });
       const expires = new Date(result.newExpiry).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" });
       const message = [
         "Your login details are as follows:",
