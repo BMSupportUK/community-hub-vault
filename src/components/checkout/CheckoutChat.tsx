@@ -78,6 +78,16 @@ export function CustomerCheckoutChat({ token, password }: { token: string; passw
     return () => { clearInterval(poll); supabase.removeChannel(ch); };
   }, [load, token]);
 
+  // Browser-tab indicator: show unread replies in the tab title so the customer
+  // notices even when the page is in a background tab.
+  const baseTitle = useRef(typeof document !== "undefined" ? document.title : "");
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    document.title = unread > 0 ? `💬 (${unread}) New reply — BM Support` : baseTitle.current;
+    return () => { document.title = baseTitle.current; };
+  }, [unread]);
+
+
   return (
     <>
       {open && (
@@ -93,10 +103,12 @@ export function CustomerCheckoutChat({ token, password }: { token: string; passw
           }} />
         </div>
       )}
-      <button type="button" onClick={() => { setOpen((o) => !o); setUnread(0); }} aria-label="Chat with us" className="fixed bottom-5 right-4 z-50 size-14 rounded-full bg-primary text-primary-foreground grid place-items-center shadow-xl hover:scale-105 transition-transform">
+      <button type="button" onClick={() => { setOpen((o) => !o); setUnread(0); }} aria-label="Chat with us" className={`fixed bottom-5 right-4 z-50 size-14 rounded-full bg-primary text-primary-foreground grid place-items-center shadow-xl hover:scale-105 transition-transform ${unread > 0 && !open ? "animate-bounce" : ""}`}>
+        {unread > 0 && !open && <span className="absolute inset-0 rounded-full bg-primary/60 animate-ping" aria-hidden />}
         {open ? <X className="size-6" /> : <MessageCircle className="size-6" />}
-        {unread > 0 && !open && <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-destructive text-destructive-foreground text-[11px] font-bold grid place-items-center">{unread}</span>}
+        {unread > 0 && !open && <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-destructive text-destructive-foreground text-[11px] font-bold grid place-items-center z-10">{unread}</span>}
       </button>
+
     </>
   );
 }
