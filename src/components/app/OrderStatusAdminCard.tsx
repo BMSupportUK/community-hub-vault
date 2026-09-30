@@ -184,7 +184,6 @@ export function OrderStatusAdminCard() {
                             <option value="square">Square</option>
                             <option value="stripe">Stripe</option>
                             <option value="wise">Wise</option>
-                            <option value="crypto">Crypto</option>
                             <option value="cash">Cash</option>
                           </select>
                           {needsRef && <input value={payRef} onChange={(e) => setPayRef(e.target.value)} placeholder={payMethod === "wise" ? "Wise transfer no." : "Transaction ID"} aria-label="Transaction ID" className="h-7 w-36 rounded-md border border-border bg-background px-1.5 text-xs text-foreground" />}
