@@ -70,11 +70,16 @@ export function SquareCardPanel({
   amountCents,
   canPay,
   onChange,
+  getConfigOverride,
+  chargeOverride,
 }: {
   orderId: string;
   amountCents: number;
   canPay: boolean;
   onChange?: () => void | Promise<void>;
+  /** Used by the password-gated secure checkout page (no sign-in). */
+  getConfigOverride?: () => Promise<any>;
+  chargeOverride?: (args: { data: { orderId: string; sourceId: string } }) => Promise<any>;
 }) {
   const [paid, setPaid] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
@@ -88,8 +93,10 @@ export function SquareCardPanel({
   const googlePayInstanceRef = useRef<any>(null);
   const [googlePayReady, setGooglePayReady] = useState(false);
   const { format } = useCurrency();
-  const getConfig = useServerFn(getSquareWebConfig);
-  const chargeFn = useServerFn(chargeOrderWithSquare);
+  const getConfigDefault = useServerFn(getSquareWebConfig);
+  const chargeDefault = useServerFn(chargeOrderWithSquare);
+  const getConfig = getConfigOverride ?? getConfigDefault;
+  const chargeFn = chargeOverride ?? chargeDefault;
 
   const loadPayment = async () => {
     const { data } = await supabase
