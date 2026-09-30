@@ -59,7 +59,7 @@ function CheckoutInstallGuidesPage() {
   }), [activeCategory, guides, search]);
 
   const readGuide = async (guide: Guide) => {
-    if (!password) return;
+    if (password === null) return;
     setOpening(guide.id);
     try {
       if (guide.video_url) {
