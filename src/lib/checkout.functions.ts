@@ -105,6 +105,10 @@ export const getCheckout = createServerFn({ method: "POST" })
       const { syncStripeSession } = await import("@/lib/checkout-pay.functions");
       await syncStripeSession(supabaseAdmin, link.order_id).catch(() => undefined);
     }
+    if (!order.paid_at && method === "crypto") {
+      const { syncCryptoPayment } = await import("@/lib/checkout-pay.functions");
+      await syncCryptoPayment(supabaseAdmin, link.order_id).catch(() => undefined);
+    }
     const invoice = !order.paid_at && (method === "stripe" || method === "square")
       ? await syncInvoice(supabaseAdmin, link.order_id, method)
       : null;

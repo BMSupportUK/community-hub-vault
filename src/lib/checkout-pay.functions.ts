@@ -29,7 +29,7 @@ async function loadOrder(supabaseAdmin: any, orderId: string) {
   return order;
 }
 
-async function markPaid(supabaseAdmin: any, order: any, provider: "Square" | "Stripe", reference: string, receiptUrl?: string | null) {
+async function markPaid(supabaseAdmin: any, order: any, provider: "Square" | "Stripe" | "NOWPayments", reference: string, receiptUrl?: string | null) {
   await supabaseAdmin.from("orders").update({ paid_at: new Date().toISOString() }).eq("id", order.id).is("paid_at", null);
   try {
     const { postOrderPaymentReceivedNotice } = await import("@/lib/order-payment-notice.server");
@@ -138,5 +138,75 @@ export async function syncStripeSession(supabaseAdmin: any, orderId: string) {
       }
       return;
     } catch { /* try other environment */ }
+  }
+}
+
+async function npFetch(path: string, init: RequestInit = {}) {
+  const key = process.env.NOWPAYMENTS_API_KEY;
+  if (!key) throw new Error("Crypto payments are not configured");
+  const res = await fetch(`https://api.nowpayments.io/v1${path}`, {
+    ...init,
+    headers: { "x-api-key": key, "Content-Type": "application/json", ...(init.headers ?? {}) },
+  });
+  const body: any = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(body?.message || "NOWPayments request failed");
+  return body;
+}
+
+/** Create (or reuse) a NOWPayments USDT invoice for the secure checkout page. */
+export const checkoutCryptoInvoice = createServerFn({ method: "POST" })
+  .inputValidator((d) => creds.parse(d))
+  .handler(async ({ data }): Promise<{ invoiceUrl: string } | { error: string }> => {
+    try {
+      const u = await unlock(data.token, data.password);
+      if (!u) throw new Error("Not authorized");
+      const { supabaseAdmin, link } = u;
+      const order = await loadOrder(supabaseAdmin, link.order_id);
+      const { data: existing } = await supabaseAdmin.from("order_payments").select("provider,status,receipt_url").eq("order_id", order.id).maybeSingle();
+      if (existing?.provider === "nowpayments" && existing.receipt_url && ["invoice_created", "waiting", "confirming", "partially_paid"].includes(String(existing.status))) {
+        return { invoiceUrl: String(existing.receipt_url) };
+      }
+      const minutes = Math.max(20, Math.min(1440, Number(process.env.NOWPAYMENTS_EXPIRY_MINUTES) || 1440));
+      const invoice = await npFetch("/invoice", {
+        method: "POST",
+        body: JSON.stringify({
+          price_amount: +(order.total_cents / 100).toFixed(2),
+          price_currency: "gbp",
+          pay_currency: "usdterc20",
+          order_id: order.id,
+          order_description: `Order ${order.order_ref ?? String(order.id).slice(0, 8)}`,
+          ipn_callback_url: process.env.NOWPAYMENTS_IPN_URL || "https://bmsupport.uk/api/public/hooks/nowpayments",
+          is_fee_paid_by_user: false,
+          expiration_estimate_date: new Date(Date.now() + minutes * 60_000).toISOString(),
+        }),
+      });
+      if (!invoice?.id || !invoice?.invoice_url) throw new Error("NOWPayments did not return an invoice");
+      await supabaseAdmin.from("order_payments").upsert({
+        order_id: order.id, provider: "nowpayments", provider_payment_id: String(invoice.id), square_payment_id: String(invoice.id),
+        status: "invoice_created", amount_cents: order.total_cents, currency: "GBP", card_brand: "USDT-ERC20",
+        receipt_url: String(invoice.invoice_url), created_by: order.user_id,
+      }, { onConflict: "order_id" });
+      return { invoiceUrl: String(invoice.invoice_url) };
+    } catch (e) {
+      return { error: (e as Error).message };
+    }
+  });
+
+/** Called by getCheckout: detect a finished NOWPayments payment. */
+export async function syncCryptoPayment(supabaseAdmin: any, orderId: string) {
+  if (!process.env.NOWPAYMENTS_API_KEY) return;
+  const { data: p } = await supabaseAdmin.from("order_payments").select("provider").eq("order_id", orderId).maybeSingle();
+  if (!p || p.provider !== "nowpayments") return;
+  const list = await npFetch(`/payment/?limit=20&order_id=${encodeURIComponent(orderId)}`);
+  const pays: any[] = Array.isArray(list?.data) ? list.data : [];
+  const done = pays.find((x) => x.payment_status === "finished");
+  const best = done ?? pays[0];
+  if (!best) return;
+  await supabaseAdmin.from("order_payments").update({ status: String(best.payment_status ?? "waiting") }).eq("order_id", orderId);
+  if (done) {
+    const paidAmt = Number(done.actually_paid ?? 0), price = Number(done.price_amount ?? 0);
+    if (price > 0 && paidAmt > 0 && paidAmt < price * 0.99) return;
+    const { data: order } = await supabaseAdmin.from("orders").select("id,paid_at").eq("id", orderId).maybeSingle();
+    if (order && !order.paid_at) await markPaid(supabaseAdmin, order, "NOWPayments", String(done.payment_id ?? ""));
   }
 }
