@@ -63,12 +63,14 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
     setExpiryLocal(toLocal(base));
   }, [paidLocal, renewMonths, link?.customer_kind]);
   useEffect(() => {
-    if (!loginOnly || !link) return;
+    // Load the months bought in both the checkout-page window and the admin
+    // Orders "secure page" panel, so the expiry date fills in everywhere.
+    if (!link) return;
     loadRenewalAccounts({ data: { orderId } }).then((r) => {
       setRenewAccounts(r.accounts);
       setRenewAccountId(r.suggestedId ?? "");
       setRenewMonths(r.months);
-    }).catch((e) => { setRenewAccounts([]); toast.error(e instanceof Error ? e.message : "Couldn't load the customer's accounts"); });
+    }).catch((e) => { setRenewAccounts([]); if (loginOnly) toast.error(e instanceof Error ? e.message : "Couldn't load the customer's accounts"); });
   }, [loginOnly, !!link, orderId]);
   useEffect(() => {
     Promise.all([
