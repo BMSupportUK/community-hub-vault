@@ -13,9 +13,13 @@ export async function unlock(token: string, password: string) {
     .select("order_id,password,customer_kind")
     .eq("token", token)
     .maybeSingle();
-  // Always run a comparison so a wrong token and a wrong password look the same.
-  const ok = same(password, link?.password ?? "____-____-____") && !!link;
-  if (!ok || !link) return null;
+  if (!link) return null;
+  // Only manual orders (which set customer_kind) are password-gated. Shop
+  // orders unlock with the unguessable token alone.
+  if (link.customer_kind) {
+    // Always run a comparison so a wrong token and a wrong password look the same.
+    if (!same(password, link.password)) return null;
+  }
   return { supabaseAdmin, link };
 }
 
