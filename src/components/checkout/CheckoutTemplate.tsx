@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { AlertTriangle, Check, Copy, CreditCard, Info, Lock, Mail, PartyPopper } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { AlertTriangle, Check, Copy, CreditCard, Info, Lock, Mail, PartyPopper, UserPlus } from "lucide-react";
 import hero from "@/assets/checkout-family-tv.jpg";
 
 export type CheckoutView = {
@@ -120,9 +121,21 @@ export function CheckoutTemplate({ view, preview = false }: { view: CheckoutView
 
           {(paid || order.cancelled) ? (
             !order.cancelled && (
-              <section className="rounded-2xl border border-border bg-card p-5 flex gap-3">
-                {step === 3 ? <Info className="size-5 text-primary shrink-0" /> : <Mail className="size-5 text-primary shrink-0" />}
-                <p className="text-sm">{step === 3 ? sub : "We'll set everything up and let you know when it's complete. Use the chat button if you have any questions."}</p>
+              <section className="space-y-3">
+                <div className="rounded-2xl border border-border bg-card p-5 flex gap-3">
+                  {step === 3 ? <Info className="size-5 text-primary shrink-0" /> : <Mail className="size-5 text-primary shrink-0" />}
+                  <p className="text-sm">{step === 3 ? sub : "We'll set everything up and let you know when it's complete. Use the chat button if you have any questions."}</p>
+                </div>
+                <div className="rounded-2xl border border-primary/30 bg-primary/5 p-5 flex gap-3 items-start">
+                  <UserPlus className="size-5 text-primary shrink-0 mt-0.5" />
+                  <div className="space-y-2 min-w-0">
+                    <p className="font-semibold">Keep updated with the service</p>
+                    <p className="text-sm text-muted-foreground">Create a free account to follow your order, get the latest updates and manage your subscription any time.</p>
+                    <Link to="/signup" className="inline-flex items-center gap-2 h-10 px-4 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90">
+                      Create an account
+                    </Link>
+                  </div>
+                </div>
               </section>
             )
           ) : (method === "stripe" || method === "square") ? (
