@@ -7,6 +7,9 @@ import { CheckoutTemplate, type CheckoutView } from "@/components/checkout/Check
 import { CustomerCheckoutChat } from "@/components/checkout/CheckoutChat";
 import { CheckoutCardPayment } from "@/components/checkout/CheckoutCardPayment";
 import { useAuth } from "@/hooks/use-auth";
+import { KeyRound } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { SecureLinkPanel } from "@/components/checkout/ManualOrderLinkDialog";
 import hero from "@/assets/checkout-family-tv.jpg";
 
 export const Route = createFileRoute("/pay/$token")({
@@ -26,7 +29,9 @@ export const Route = createFileRoute("/pay/$token")({
 
 function PayPage() {
   const { token } = Route.useParams();
-  const { user } = useAuth();
+  const { user, hasRole } = useAuth();
+  const [loginOpen, setLoginOpen] = useState(false);
+  const canManage = !!user && (hasRole("admin") || hasRole("management"));
   const fetchCheckout = useServerFn(getCheckout);
   const sendPaymentSent = useServerFn(markPaymentSent);
   const [password, setPassword] = useState<string | null>(null);
@@ -113,13 +118,18 @@ function PayPage() {
       {/* Members get a way back to their order screen; link-only customers
           (manual orders) arrived by link, so there is nothing to go back to. */}
       {user && (
-        <div className="w-full px-3 pt-3">
+        <div className="w-full px-3 pt-3 flex flex-wrap items-center justify-between gap-2">
           <Link
             to="/shop"
             className="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground"
           >
             <ArrowLeft className="size-4" /> Back to my orders
           </Link>
+          {canManage && view.order.id && view.order.paidAt && !view.order.cancelled && (
+            <button type="button" onClick={() => setLoginOpen(true)} className="inline-flex items-center gap-2 h-9 px-3 rounded-lg bg-primary text-primary-foreground text-sm font-semibold">
+              <KeyRound className="size-4" /> Add customer login details
+            </button>
+          )}
         </div>
       )}
       <CheckoutTemplate
@@ -130,6 +140,17 @@ function PayPage() {
           <CheckoutCardPayment token={token} password={pw} method={view.order.method} amountCents={view.order.totalCents} onPaid={() => { load(pw); }} />
         ) : undefined}
       />
+      {canManage && view.order.id && (
+        <Dialog open={loginOpen} onOpenChange={setLoginOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Customer service login details</DialogTitle>
+              <DialogDescription>Saved to the customer's account and sent to them in this sale's chat with the subscription length, dates and QD code.</DialogDescription>
+            </DialogHeader>
+            <SecureLinkPanel orderId={view.order.id} loginOnly onDone={() => { load(pw); }} />
+          </DialogContent>
+        </Dialog>
+      )}
       <CustomerCheckoutChat token={token} password={pw} orderRef={view.order.ref} />
     </main>
   );
