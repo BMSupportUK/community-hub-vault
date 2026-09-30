@@ -476,6 +476,11 @@ function InstallGuidesPage() {
           <header className="min-w-0 shrink-0 border-b border-border bg-surface/60 px-3 pb-3 pt-4 backdrop-blur sm:px-8 md:px-6 md:py-3">
             <div className="grid min-w-0 grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
               <div className="min-w-0">
+                {checkoutToken && (
+                  <Button asChild variant="outline" size="sm" className="mb-2">
+                    <Link to="/pay/$token" params={{ token: checkoutToken }}><ArrowLeft className="size-4" /> Back to my order</Link>
+                  </Button>
+                )}
                 <h1 className="font-display text-2xl font-bold text-foreground sm:text-3xl">Install Guides</h1>
                 <p className="mt-1 text-sm text-muted-foreground md:hidden xl:block">Step-by-step installation walkthroughs and PDF docs</p>
               </div>
