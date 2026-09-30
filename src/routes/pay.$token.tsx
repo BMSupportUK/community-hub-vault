@@ -101,7 +101,7 @@ function PayPage() {
       <CheckoutTemplate
         view={view}
         claimToken={token}
-        cardPayment={(view.order.method === "square" || view.order.method === "stripe") && !view.order.paidAt && !view.order.cancelled ? (
+        cardPayment={(view.order.method === "square" || view.order.method === "stripe" || view.order.method === "crypto") && !view.order.paidAt && !view.order.cancelled ? (
           <CheckoutCardPayment token={token} password={password} method={view.order.method} amountCents={view.order.totalCents} onPaid={() => { load(password); }} />
         ) : undefined}
       />

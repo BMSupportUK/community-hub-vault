@@ -1374,7 +1374,7 @@ function Storefront() {
     wants_adult_content: boolean;
     purchase_kind?: "renewal" | "additional" | "new";
     owned_logins?: string[];
-    pay_method?: "square" | "stripe" | "wise";
+    pay_method?: "square" | "stripe" | "wise" | "crypto";
   }) => {
 
     if (!user || cartItems.length === 0) return;
@@ -2308,7 +2308,7 @@ function Checkout({
     wants_adult_content: boolean;
     purchase_kind: "renewal" | "additional" | "new";
     owned_logins: string[];
-    pay_method: "square" | "stripe" | "wise";
+    pay_method: "square" | "stripe" | "wise" | "crypto";
   }) => void;
   onRemoveItem: (id: string) => void;
 }) {
@@ -2316,7 +2316,7 @@ function Checkout({
   const [name, setName] = useState("");
   const [email, setEmail] = useState(user?.email ?? "");
   const [customerType, setCustomerType] = useState<"new" | "existing">("new");
-  const [payMethod, setPayMethod] = useState<"square" | "stripe" | "wise">("square");
+  const [payMethod, setPayMethod] = useState<"square" | "stripe" | "wise" | "crypto">("square");
   const [bankOnly, setBankOnly] = useState(false);
   useEffect(() => {
     let alive = true;
@@ -2816,11 +2816,11 @@ function Checkout({
                 <span className="block text-xs text-muted-foreground">Your bank details and reference will be shown on your secure checkout page.</span>
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-2">
-                {(["square", "stripe"] as const).map((m) => (
+              <div className="grid grid-cols-3 gap-2">
+                {(["square", "stripe", "crypto"] as const).map((m) => (
                   <button key={m} type="button" onClick={() => setPayMethod(m)} aria-pressed={payMethod === m}
                     className={`rounded-lg border p-3 text-left text-sm ${payMethod === m ? "border-primary bg-primary/10" : "border-border"}`}>
-                    <span className="font-semibold">{m === "square" ? "Square (card)" : "Stripe (card)"}</span>
+                    <span className="font-semibold">{m === "square" ? "Square (card)" : m === "stripe" ? "Stripe (card)" : "Crypto (USDT)"}</span>
                     {m === "square" && <span className="ml-2 text-[10px] uppercase tracking-wide rounded bg-primary text-primary-foreground px-1.5 py-0.5">Preferred</span>}
                   </button>
                 ))}
