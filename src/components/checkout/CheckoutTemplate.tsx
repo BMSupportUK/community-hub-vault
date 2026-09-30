@@ -23,6 +23,7 @@ export type CheckoutView = {
     adultContent?: boolean | null;
     status?: string;
     paymentSentAt?: string | null;
+    id?: string;
     accountSetupAt?: string | null;
   };
   items: { name: string; qty: number; unitCents: number }[];
