@@ -33,6 +33,7 @@ import { Route as AuthenticatedBannedRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedFanZonePendingRouteImport } from './routes/_authenticated/fan-zone-pending'
 import { Route as AuthenticatedGateRouteImport } from './routes/_authenticated/gate'
 import { Route as ATokenRouteImport } from './routes/a.$token'
+import { Route as CheckoutInstallTokenRouteImport } from './routes/checkout-install.$token'
 import { Route as FanZoneIndexRouteImport } from './routes/fan-zone.index'
 import { Route as FanZoneBoardRouteImport } from './routes/fan-zone.$board'
 import { Route as GuidesIndexRouteImport } from './routes/guides.index'
@@ -281,6 +282,11 @@ const AuthenticatedGateRoute = AuthenticatedGateRouteImport.update({
 const ATokenRoute = ATokenRouteImport.update({
   id: '/a/$token',
   path: '/a/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CheckoutInstallTokenRoute = CheckoutInstallTokenRouteImport.update({
+  id: '/checkout-install/$token',
+  path: '/checkout-install/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FanZoneIndexRoute = FanZoneIndexRouteImport.update({
@@ -1076,6 +1082,7 @@ export interface FileRoutesByFullPath {
   '/fan-zone-pending': typeof AuthenticatedFanZonePendingRoute
   '/gate': typeof AuthenticatedGateRoute
   '/a/$token': typeof ATokenRoute
+  '/checkout-install/$token': typeof CheckoutInstallTokenRoute
   '/fan-zone/$board': typeof FanZoneBoardRouteWithChildren
   '/guides/$id': typeof GuidesIdRoute
   '/pay/$token': typeof PayTokenRoute
@@ -1229,6 +1236,7 @@ export interface FileRoutesByTo {
   '/fan-zone-pending': typeof AuthenticatedFanZonePendingRoute
   '/gate': typeof AuthenticatedGateRoute
   '/a/$token': typeof ATokenRoute
+  '/checkout-install/$token': typeof CheckoutInstallTokenRoute
   '/guides/$id': typeof GuidesIdRoute
   '/pay/$token': typeof PayTokenRoute
   '/fan-zone': typeof FanZoneIndexRoute
@@ -1384,6 +1392,7 @@ export interface FileRoutesById {
   '/_authenticated/fan-zone-pending': typeof AuthenticatedFanZonePendingRoute
   '/_authenticated/gate': typeof AuthenticatedGateRoute
   '/a/$token': typeof ATokenRoute
+  '/checkout-install/$token': typeof CheckoutInstallTokenRoute
   '/fan-zone/$board': typeof FanZoneBoardRouteWithChildren
   '/guides/$id': typeof GuidesIdRoute
   '/pay/$token': typeof PayTokenRoute
@@ -1540,6 +1549,7 @@ export interface FileRouteTypes {
     | '/fan-zone-pending'
     | '/gate'
     | '/a/$token'
+    | '/checkout-install/$token'
     | '/fan-zone/$board'
     | '/guides/$id'
     | '/pay/$token'
@@ -1693,6 +1703,7 @@ export interface FileRouteTypes {
     | '/fan-zone-pending'
     | '/gate'
     | '/a/$token'
+    | '/checkout-install/$token'
     | '/guides/$id'
     | '/pay/$token'
     | '/fan-zone'
@@ -1847,6 +1858,7 @@ export interface FileRouteTypes {
     | '/_authenticated/fan-zone-pending'
     | '/_authenticated/gate'
     | '/a/$token'
+    | '/checkout-install/$token'
     | '/fan-zone/$board'
     | '/guides/$id'
     | '/pay/$token'
@@ -2000,6 +2012,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
   ATokenRoute: typeof ATokenRoute
+  CheckoutInstallTokenRoute: typeof CheckoutInstallTokenRoute
   GuidesIdRoute: typeof GuidesIdRoute
   PayTokenRoute: typeof PayTokenRoute
   GuidesIndexRoute: typeof GuidesIndexRoute
@@ -2216,6 +2229,13 @@ declare module '@tanstack/react-router' {
       path: '/a/$token'
       fullPath: '/a/$token'
       preLoaderRoute: typeof ATokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/checkout-install/$token': {
+      id: '/checkout-install/$token'
+      path: '/checkout-install/$token'
+      fullPath: '/checkout-install/$token'
+      preLoaderRoute: typeof CheckoutInstallTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/fan-zone/': {
@@ -3483,6 +3503,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
   ATokenRoute: ATokenRoute,
+  CheckoutInstallTokenRoute: CheckoutInstallTokenRoute,
   GuidesIdRoute: GuidesIdRoute,
   PayTokenRoute: PayTokenRoute,
   GuidesIndexRoute: GuidesIndexRoute,

@@ -1,6 +1,7 @@
 # Roadmap
 
 ## Current
+- [x] Paid manual-order checkout: private install-guide card and order-password access
 - [x] Secure checkout: keep paid Square details and continue control in the right sidebar
 - [x] Secure checkout: prevent the manual-password screen flashing on hard refresh of member orders
 - [x] Secure checkout: require staff to move a paid order into account setup before showing setup and QD details
