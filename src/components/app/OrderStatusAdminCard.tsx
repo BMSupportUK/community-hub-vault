@@ -5,6 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { fetchInChunks } from "@/lib/chunked-in";
 import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
+import { OrderStatusBar, checkoutStep } from "@/components/checkout/CheckoutTemplate";
+import { ManualOrderLinkButton } from "@/components/checkout/ManualOrderLinkDialog";
 
 type Row = {
   id: string;
@@ -169,7 +171,10 @@ export function OrderStatusAdminCard() {
                         <div className="text-xs text-muted-foreground">{r.order_ref ?? `#${r.id.slice(0, 8)}`}{r.customer_type ? ` · ${r.customer_type}` : ""}</div>
                       </td>
                       <td className="px-3 py-2 whitespace-nowrap">{money(r.total_cents)}</td>
-                      <td className="px-3 py-2"><span className={`inline-flex px-2 py-0.5 rounded-full border text-xs capitalize ${statusTone(r.status)}`}>{r.status.toLowerCase()}</span></td>
+                      <td className="px-3 py-2 min-w-[150px]"><span className={`inline-flex px-2 py-0.5 rounded-full border text-xs capitalize ${statusTone(r.status)}`}>{r.status.toLowerCase()}</span>
+                        {r.status.toLowerCase() !== "cancelled" && <div className="mt-1.5 w-32"><OrderStatusBar compact step={r.completed_at ? 3 : r.paid_at ? 2 : 1} /></div>}
+                        {r.customer_type === "manual" && (isAdmin || hasRole("management")) && <div className="mt-1.5"><ManualOrderLinkButton orderId={r.id} orderRef={r.order_ref} /></div>}
+                      </td>
                       <td className="px-3 py-2 whitespace-nowrap text-xs text-muted-foreground">{r.paid_at ? new Date(r.paid_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" }) : "—"}</td>
                       <td className="px-3 py-2 whitespace-nowrap text-xs text-muted-foreground">{isAdmin && r.customer_type === "manual" && !r.completed_at ? (
                         completing === r.id ? (
