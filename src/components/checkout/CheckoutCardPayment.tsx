@@ -1,13 +1,13 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from "@stripe/react-stripe-js";
 import { getStripe, getStripeEnvironment } from "@/lib/stripe";
 import { SquareCardPanel } from "@/components/app/SquareCardPanel";
-import { checkoutSquareCharge, checkoutSquareConfig, checkoutStripeSession } from "@/lib/checkout-pay.functions";
+import { checkoutCryptoInvoice, checkoutSquareCharge, checkoutSquareConfig, checkoutStripeSession } from "@/lib/checkout-pay.functions";
 
 /** Inline card payment for the secure checkout page (Square or Stripe). */
 export function CheckoutCardPayment({ token, password, method, amountCents, onPaid }: {
-  token: string; password: string; method: "square" | "stripe"; amountCents: number; onPaid: () => void | Promise<void>;
+  token: string; password: string; method: "square" | "stripe" | "crypto"; amountCents: number; onPaid: () => void | Promise<void>;
 }) {
   const cfg = useServerFn(checkoutSquareConfig);
   const charge = useServerFn(checkoutSquareCharge);
@@ -29,6 +29,7 @@ export function CheckoutCardPayment({ token, password, method, amountCents, onPa
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [token, password]);
 
+  if (method === "crypto") return <CryptoPay token={token} password={password} amountCents={amountCents} />;
   if (method === "square") {
     return (
       <SquareCardPanel
@@ -46,6 +47,36 @@ export function CheckoutCardPayment({ token, password, method, amountCents, onPa
       <EmbeddedCheckoutProvider stripe={getStripe()} options={stripeOptions}>
         <EmbeddedCheckout />
       </EmbeddedCheckoutProvider>
+    </div>
+  );
+}
+
+function CryptoPay({ token, password, amountCents }: { token: string; password: string; amountCents: number }) {
+  const create = useServerFn(checkoutCryptoInvoice);
+  const [url, setUrl] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const start = async () => {
+    setBusy(true); setErr(null);
+    try {
+      const r = await create({ data: { token, password } });
+      if ("error" in r) setErr(r.error); else setUrl(r.invoiceUrl);
+    } catch (e) { setErr((e as Error).message); } finally { setBusy(false); }
+  };
+  if (url) {
+    return (
+      <div className="space-y-2">
+        <iframe src={url} title="Crypto payment" className="w-full h-[640px] rounded-xl border border-border bg-background" allow="clipboard-write" />
+        <a href={url} target="_blank" rel="noreferrer" className="block text-center text-xs text-primary hover:underline">Open the payment in a new tab</a>
+      </div>
+    );
+  }
+  return (
+    <div className="space-y-2">
+      <button type="button" onClick={start} disabled={busy} className="w-full h-12 rounded-xl bg-primary text-primary-foreground font-semibold disabled:opacity-50">
+        {busy ? "Preparing payment…" : `Pay £${(amountCents / 100).toFixed(2)} in USDT`}
+      </button>
+      {err && <p className="text-sm text-destructive">{err}</p>}
     </div>
   );
 }

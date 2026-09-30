@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { createHash, timingSafeEqual } from "crypto";
+import { unlock } from "@/lib/checkout.server";
 
 /**
  * Public secure checkout page for manual orders. Every call is gated by the
@@ -12,25 +12,6 @@ const creds = z.object({
   token: z.string().regex(/^[a-f0-9]{64}$/),
   password: z.string().min(1).max(64),
 });
-
-function same(a: string, b: string) {
-  const x = createHash("sha256").update(a.trim().toUpperCase()).digest();
-  const y = createHash("sha256").update(b.trim().toUpperCase()).digest();
-  return timingSafeEqual(x, y);
-}
-
-export async function unlock(token: string, password: string) {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data: link } = await supabaseAdmin
-    .from("order_checkout_links")
-    .select("order_id,password,customer_kind")
-    .eq("token", token)
-    .maybeSingle();
-  // Always run a comparison so a wrong token and a wrong password look the same.
-  const ok = same(password, link?.password ?? "____-____-____") && !!link;
-  if (!ok || !link) return null;
-  return { supabaseAdmin, link };
-}
 
 async function syncInvoice(supabaseAdmin: any, orderId: string, method: string) {
   const { data: inv } = await supabaseAdmin.from("order_invoices").select("*").eq("order_id", orderId).maybeSingle();
@@ -104,6 +85,10 @@ export const getCheckout = createServerFn({ method: "POST" })
     if (!order.paid_at && method === "stripe") {
       const { syncStripeSession } = await import("@/lib/checkout-pay.functions");
       await syncStripeSession(supabaseAdmin, link.order_id).catch(() => undefined);
+    }
+    if (!order.paid_at && method === "crypto") {
+      const { syncCryptoPayment } = await import("@/lib/checkout-pay.functions");
+      await syncCryptoPayment(supabaseAdmin, link.order_id).catch(() => undefined);
     }
     const invoice = !order.paid_at && (method === "stripe" || method === "square")
       ? await syncInvoice(supabaseAdmin, link.order_id, method)

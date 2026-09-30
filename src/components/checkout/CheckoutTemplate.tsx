@@ -1,6 +1,6 @@
 import { useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { AlertTriangle, Check, Copy, CreditCard, Info, Lock, Mail, PartyPopper, UserPlus } from "lucide-react";
+import { AlertTriangle, Bitcoin, Check, Copy, CreditCard, Info, Lock, Mail, PartyPopper, UserPlus } from "lucide-react";
 import hero from "@/assets/checkout-family-tv.jpg";
 
 export type CheckoutView = {
@@ -21,7 +21,7 @@ export type CheckoutView = {
 };
 
 const GBP = (c: number) => new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(c / 100);
-const METHOD: Record<string, string> = { stripe: "Stripe", square: "Square", wise: "bank transfer", cash: "cash" };
+const METHOD: Record<string, string> = { stripe: "Stripe", square: "Square", wise: "bank transfer", cash: "cash", crypto: "crypto (USDT)" };
 
 export function OrderStatusBar({ step, compact = false }: { step: number; compact?: boolean }) {
   const labels = ["Created", "Awaiting payment", "Paid", "Completed"];
@@ -70,9 +70,9 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
   const subtotal = items.reduce((s, i) => s + i.unitCents * i.qty, 0);
   const paid = step >= 2;
   const method = order.method;
-  // Bank transfer (Wise) puts the details + reference warning in a right sidebar
-  // on wide screens; everything else stays in the single centered column.
-  const bankSidebar = method === "wise" && !paid && !order.cancelled;
+  // Payment details (bank info, card form, crypto) sit in a right sidebar on
+  // wide screens while the order is awaiting payment.
+  const bankSidebar = ["wise", "stripe", "square", "crypto"].includes(method) && !paid && !order.cancelled;
 
   let heading = `Order ${order.ref}`;
   let sub = "Please complete your payment below.";
@@ -85,9 +85,9 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
 
   return (
     <div className="min-h-full bg-background text-foreground">
-      <div className={`${bankSidebar ? "max-w-4xl" : "max-w-2xl"} mx-auto pb-24`}>
-        <img src={hero} alt="A family relaxing on the sofa watching TV together" width={1600} height={640} className="w-full h-44 sm:h-60 object-cover sm:rounded-b-2xl" />
-        <div className="px-5 -mt-2 pb-6 space-y-6">
+      <div className="w-full px-3 pb-24">
+        <img src={hero} alt="A family relaxing on the sofa watching TV together" width={1600} height={640} className="w-full h-44 sm:h-72 object-cover rounded-b-2xl" />
+        <div className="px-2 sm:px-4 -mt-2 pb-6 space-y-6">
           <div className="text-center pt-6 space-y-2">
             {(paid || order.cancelled) && (
               <div className={`mx-auto size-14 rounded-full grid place-items-center ${order.cancelled ? "bg-destructive/15 text-destructive" : "bg-success text-background"}`}>
@@ -102,7 +102,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
 
           {!order.cancelled && <OrderStatusBar step={step} />}
 
-          <div className={bankSidebar ? "grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(300px,380px)] lg:items-start" : "space-y-6"}>
+          <div className={bankSidebar ? "grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(340px,440px)] lg:items-start" : "space-y-6"}>
             <section className={`rounded-2xl border border-border bg-card p-5 ${bankSidebar ? "min-w-0" : ""}`}>
             <h2 className="font-semibold mb-3">Order breakdown</h2>
             <div className="space-y-2 text-sm">
@@ -147,7 +147,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
               </section>
             )
           ) : (method === "stripe" || method === "square") ? (
-            <section className="rounded-2xl border border-border bg-card p-5 space-y-4">
+            <aside className="min-w-0 rounded-2xl border border-border bg-card p-5 space-y-4 lg:sticky lg:top-4">
               <div className="flex items-center gap-3">
                 <CreditCard className="size-5 text-primary" />
                 <div>
@@ -167,9 +167,25 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
                 <p className="text-sm text-muted-foreground">Loading secure card form…</p>
               )}
               <p className="text-xs text-center text-muted-foreground">This page updates automatically once your payment goes through.</p>
-            </section>
+            </aside>
+          ) : method === "crypto" ? (
+            <aside className="min-w-0 rounded-2xl border border-border bg-card p-5 space-y-4 lg:sticky lg:top-4">
+              <div className="flex items-center gap-3">
+                <Bitcoin className="size-5 text-primary" />
+                <div>
+                  <h2 className="font-semibold">Pay with crypto (USDT)</h2>
+                  <p className="text-xs text-muted-foreground">Payments are handled securely by NOWPayments.</p>
+                </div>
+              </div>
+              {cardPayment ? cardPayment : (
+                <div className="flex items-center justify-center gap-2 h-12 rounded-xl bg-primary text-primary-foreground font-semibold">
+                  <Lock className="size-4" /> Pay {GBP(order.totalCents)} in USDT
+                </div>
+              )}
+              <p className="text-xs text-center text-muted-foreground">Crypto payments can take a few minutes to confirm. This page updates automatically.</p>
+            </aside>
           ) : method === "wise" ? (
-            <aside className="min-w-0 space-y-6">
+            <aside className="min-w-0 space-y-6 lg:sticky lg:top-4">
               <section className="rounded-2xl border border-border bg-card p-5">
                 <h2 className="font-semibold">Bank transfer details</h2>
                 <p className="text-xs text-muted-foreground mb-3">Send exactly {GBP(order.totalCents)} to this account.</p>
