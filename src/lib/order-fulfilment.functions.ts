@@ -50,7 +50,9 @@ interface OrderRow {
   customer_type: string | null;
 }
 
-async function loadOrderContext(orderId: string) {
+// `credsDb` must be a signed-in staff client: the credentials view hides every
+// row from the admin client.
+async function loadOrderContext(orderId: string, credsDb?: { from: (t: "app_credentials") => any }) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
   const { data: order, error: orderError } = await supabaseAdmin
@@ -77,7 +79,7 @@ async function loadOrderContext(orderId: string) {
   const ownerId = (order as unknown as OrderRow).user_id;
   let creds: CredentialCandidate[] = [];
   if (ownerId) {
-    const { data: credsData, error: credsError } = await supabaseAdmin
+    const { data: credsData, error: credsError } = await (credsDb ?? supabaseAdmin)
       .from("app_credentials")
       .select("id, account_number, app_login_name, account_type, expiry_at")
       .eq("owner_id", ownerId)
@@ -104,7 +106,7 @@ export const applyOrderToCredential = createServerFn({ method: "POST" })
     const { supabase, userId } = context;
     await assertStaff(supabase, userId);
 
-    const { order, terms, creds } = await loadOrderContext(data.orderId);
+    const { order, terms, creds } = await loadOrderContext(data.orderId, supabase as never);
     if (terms.months <= 0) return { status: "no_term", unparsed: terms.unparsed };
 
     const existingLogin = (order.existing_username ?? "").trim().toLowerCase();
@@ -294,7 +296,19 @@ export const getOrderRenewalAccounts = createServerFn({ method: "POST" })
   .inputValidator((input) => z.object({ orderId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     await assertStaff(context.supabase, context.userId);
-    const { order, creds, terms } = await loadOrderContext(data.orderId);
+    const { order, terms, ownerId } = await loadOrderContext(data.orderId);
+    // The credentials view only shows rows to a signed-in staff member, so read
+    // it as the staff user (the admin client sees nothing through it).
+    let creds: CredentialCandidate[] = [];
+    if (ownerId) {
+      const { data: rows, error } = await context.supabase
+        .from("app_credentials")
+        .select("id, account_number, app_login_name, account_type, expiry_at")
+        .eq("owner_id", ownerId)
+        .order("account_number", { ascending: true });
+      if (error) throw new Error(error.message);
+      creds = (rows ?? []) as CredentialCandidate[];
+    }
     const existingLogin = (order.existing_username ?? "").trim().toLowerCase();
     const suggested = creds.find((c) => (c.app_login_name ?? "").trim().toLowerCase() === existingLogin) ?? creds[0] ?? null;
     return { accounts: creds, suggestedId: suggested?.id ?? null, months: terms.months };
