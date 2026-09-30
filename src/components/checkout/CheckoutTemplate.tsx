@@ -55,7 +55,7 @@ function CopyRow({ label, value }: { label: string; value: string | null }) {
   return (
     <div className="flex items-center justify-between gap-3 py-2.5 border-t border-border first:border-t-0">
       <span className="text-sm text-muted-foreground">{label}</span>
-      <span className="font-mono text-sm ml-auto">{value}</span>
+      <span className={`font-mono text-sm ml-auto break-all ${label === "Reference" ? "text-right" : "text-right"}`}>{value}</span>
       <button type="button" onClick={() => { navigator.clipboard.writeText(value); setDone(true); setTimeout(() => setDone(false), 1500); }} className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
         {done ? <Check className="size-3.5" /> : <Copy className="size-3.5" />} {done ? "Copied" : "Copy"}
       </button>
@@ -86,7 +86,7 @@ export function CheckoutTemplate({ view, preview = false }: { view: CheckoutView
     <div className="min-h-full bg-background text-foreground">
       <div className={`${bankSidebar ? "max-w-4xl" : "max-w-2xl"} mx-auto pb-24`}>
         <img src={hero} alt="A family relaxing on the sofa watching TV together" width={1600} height={640} className="w-full h-44 sm:h-60 object-cover sm:rounded-b-2xl" />
-        <div className="px-5 -mt-2 space-y-6">
+        <div className={`px-5 -mt-2 pb-6 ${bankSidebar ? "grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(300px,380px)] lg:items-start" : "space-y-6"}`}>
           <div className="text-center pt-6 space-y-2">
             {(paid || order.cancelled) && (
               <div className={`mx-auto size-14 rounded-full grid place-items-center ${order.cancelled ? "bg-destructive/15 text-destructive" : "bg-success text-background"}`}>
@@ -101,7 +101,7 @@ export function CheckoutTemplate({ view, preview = false }: { view: CheckoutView
 
           {!order.cancelled && <OrderStatusBar step={step} />}
 
-          <section className="rounded-2xl border border-border bg-card p-5">
+          <section className={`rounded-2xl border border-border bg-card p-5 ${bankSidebar ? "min-w-0" : ""}`}>
             <h2 className="font-semibold mb-3">Order breakdown</h2>
             <div className="space-y-2 text-sm">
               {items.map((i, idx) => (
