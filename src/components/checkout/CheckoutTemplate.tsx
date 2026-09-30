@@ -27,6 +27,7 @@ export type CheckoutView = {
   items: { name: string; qty: number; unitCents: number }[];
   invoice: { status: string; url: string | null; number: string | null } | null;
   bank: { account_name: string | null; sort_code: string | null; account_number: string | null; iban: string | null; bic: string | null } | null;
+  qdCode?: { label: string; code: string } | null;
 };
 
 const GBP = (c: number) => new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(c / 100);
@@ -77,7 +78,7 @@ function CopyRow({ label, value }: { label: string; value: string | null }) {
 
 export function CheckoutTemplate({ view, preview = false, claimToken, cardPayment, onPaymentSent }: { view: CheckoutView; preview?: boolean; claimToken?: string; cardPayment?: ReactNode; onPaymentSent?: () => Promise<void> }) {
   const [sending, setSending] = useState(false);
-  const { order, items, invoice, bank } = view;
+  const { order, items, invoice, bank, qdCode } = view;
   const step = checkoutStep(order);
   const subtotal = items.reduce((s, i) => s + i.unitCents * i.qty, 0);
   const paid = step >= 2;
@@ -181,7 +182,18 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
                   <Info className="size-5 text-primary shrink-0 mt-0.5" />
                   <div className="space-y-1 min-w-0">
                     <p className="font-semibold">Using the QD app?</p>
-                    <p className="text-sm text-muted-foreground">You will also need a QD login code. The team will include it with your username, password and subscription dates in the chat.</p>
+                    {qdCode ? (
+                      <div className="space-y-2">
+                        <p className="text-sm text-muted-foreground">Enter this login code in the QD app:</p>
+                        <div className="flex items-center justify-between gap-2 rounded-lg border border-border bg-background px-3 py-2">
+                          <span className="font-mono text-sm font-semibold break-all">{qdCode.code}</span>
+                          <QdCopy value={qdCode.code} />
+                        </div>
+                        <p className="text-xs text-muted-foreground">{qdCode.label} — also sent with your login details in the chat.</p>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">You will also need a QD login code. The team will include it with your username, password and subscription dates in the chat.</p>
+                    )}
                   </div>
                 </section>
               )}
