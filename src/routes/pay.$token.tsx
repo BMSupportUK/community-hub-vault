@@ -42,8 +42,15 @@ function PayPage() {
   }, [fetchCheckout, token]);
 
   useEffect(() => {
+    if (!validToken) return;
     const saved = sessionStorage.getItem(key);
-    if (saved && validToken) load(saved).then((ok) => { if (ok) setPassword(saved); else sessionStorage.removeItem(key); });
+    if (saved) {
+      load(saved).then((ok) => { if (ok) setPassword(saved); else sessionStorage.removeItem(key); });
+      return;
+    }
+    // Shop orders unlock with the link alone — try it before showing the
+    // password form (only manual orders need one).
+    load("").then((ok) => { if (ok) setPassword(""); });
   }, [key, load, validToken]);
 
   // Keep the page live so payment / completion show without a refresh.
