@@ -101,16 +101,21 @@ export const checkoutSquareCharge = createServerFn({ method: "POST" })
     const u = await unlock(data.token, data.password);
     if (!u) throw new Error("Not authorized");
     const { supabaseAdmin, link } = u;
-    const order = await loadOrder(supabaseAdmin, link.order_id);
     const token = process.env.SQUARE_ACCESS_TOKEN;
     const locationId = process.env.SQUARE_LOCATION_ID;
     if (!token || !locationId) throw new Error("Card payments are not configured");
+    return withPaymentLock(supabaseAdmin, link.order_id, async () => {
+    const order = await guardAgainstDoublePayment(supabaseAdmin, link.order_id, "square");
+    await expireOpenStripeSession(supabaseAdmin, order.id);
+    // Same card token → same key, so a resubmitted request can never charge twice.
+    const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(`${order.id}:${data.sourceId}`));
+    const idem = "c" + Array.from(new Uint8Array(digest)).map((b) => b.toString(16).padStart(2, "0")).join("").slice(0, 40);
     const res = await fetch(`${sqBase()}/v2/payments`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json", "Square-Version": "2024-10-17" },
       body: JSON.stringify({
         source_id: data.sourceId,
-        idempotency_key: `c${String(order.id).replace(/-/g, "").slice(0, 24)}${Date.now().toString(36)}`,
+        idempotency_key: idem,
         amount_money: { amount: order.total_cents, currency: "GBP" },
         location_id: locationId,
         reference_id: order.id,
@@ -134,6 +139,7 @@ export const checkoutSquareCharge = createServerFn({ method: "POST" })
     }, { onConflict: "order_id" });
     await markPaid(supabaseAdmin, order, "Square", payment.id, receiptUrl);
     return { status: String(payment.status), cardBrand, last4, receiptUrl };
+    });
   });
 
 export const checkoutStripeSession = createServerFn({ method: "POST" })
@@ -144,7 +150,9 @@ export const checkoutStripeSession = createServerFn({ method: "POST" })
       const u = await unlock(data.token, data.password);
       if (!u) throw new Error("Not authorized");
       const { supabaseAdmin, link } = u;
-      const order = await loadOrder(supabaseAdmin, link.order_id);
+      return await withPaymentLock(supabaseAdmin, link.order_id, async () => {
+      const order = await guardAgainstDoublePayment(supabaseAdmin, link.order_id, "stripe");
+      await expireOpenStripeSession(supabaseAdmin, order.id);
       const stripe = createStripeClient(data.environment);
       const ref = order.order_ref ?? String(order.id).slice(0, 8);
       const session = await stripe.checkout.sessions.create({
@@ -154,7 +162,7 @@ export const checkoutStripeSession = createServerFn({ method: "POST" })
         line_items: [{ price_data: { currency: "gbp", product_data: { name: `Order ${ref}` }, unit_amount: order.total_cents }, quantity: 1 }],
         payment_intent_data: { description: `Order ${ref}`, metadata: { order_id: String(order.id) } },
         metadata: { order_id: String(order.id), ...(order.user_id ? { user_id: String(order.user_id) } : {}) },
-      } as any);
+      } as any, { idempotencyKey: `checkout-${order.id}-${Math.floor(Date.now() / 60000)}` });
       if (!session.client_secret) throw new Error("Stripe did not return a client secret");
       await supabaseAdmin.from("order_payments").upsert({
         order_id: order.id, provider: "stripe", provider_payment_id: session.id, square_payment_id: session.id,
