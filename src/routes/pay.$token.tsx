@@ -194,9 +194,9 @@ function PayPage() {
             {movingToSetup ? <Loader2 className="size-4 animate-spin" /> : <UserCheck className="size-4" />} Move to account setup
           </button>
         ) : undefined}
-        addLoginDetails={canManage && view.order.id && view.order.paidAt && view.order.accountSetupStartedAt && !view.order.accountSetupAt && !view.order.cancelled && view.order.customerKind === "new" ? (
+        addLoginDetails={canManage && view.order.id && view.order.paidAt && view.order.accountSetupStartedAt && !view.order.accountSetupAt && !view.order.cancelled ? (
           <button type="button" onClick={() => setLoginOpen(true)} className="w-full h-11 px-5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold inline-flex items-center justify-center gap-2">
-            <KeyRound className="size-4" /> Add customer login details
+            <KeyRound className="size-4" /> {view.order.customerKind === "existing" ? "Enter renewal expiry date" : "Add customer login details"}
           </button>
         ) : undefined}
         cardPayment={(view.order.method === "square" || view.order.method === "stripe" || view.order.method === "crypto") && !view.order.paidAt && !view.order.cancelled ? (
@@ -207,8 +207,8 @@ function PayPage() {
         <Dialog open={loginOpen} onOpenChange={setLoginOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Customer service login details</DialogTitle>
-              <DialogDescription>Saved to the customer's account and sent to them in this sale's chat with the subscription length, dates and QD code.</DialogDescription>
+              <DialogTitle>{view.order.customerKind === "existing" ? "Renewal subscription expiry" : "Customer service login details"}</DialogTitle>
+              <DialogDescription>{view.order.customerKind === "existing" ? "Updates the customer's account in admin Credentials and their profile, and tells them the new expiry in this sale's chat." : "Saved to the customer's account and sent to them in this sale's chat with the subscription length, dates and QD code."}</DialogDescription>
             </DialogHeader>
             <SecureLinkPanel orderId={view.order.id} loginOnly onDone={() => { load(pw); }} />
           </DialogContent>
