@@ -7,9 +7,9 @@ const guideInput = accessInput.extend({ blogId: z.string().uuid() });
 const SIGNED_URL_SECONDS = 600;
 const VIDEO_BUCKET = "guide-videos";
 
-async function paidManualAccess(token: string, password: string) {
+async function paidOrderAccess(token: string, password: string) {
   const unlocked = await unlock(token, password);
-  if (!unlocked || unlocked.link.claimed_by) return null;
+  if (!unlocked) return null;
   const { data: order } = await unlocked.supabaseAdmin.from("orders").select("order_ref,paid_at,status").eq("id", unlocked.link.order_id).maybeSingle();
   if (!order?.paid_at || order.status === "cancelled") return null;
   return { ...unlocked, order };
@@ -23,7 +23,7 @@ function parseStorageUrl(url: string): { bucket: string; path: string } | null {
 export const getCheckoutInstallGuides = createServerFn({ method: "POST" })
   .inputValidator((input) => accessInput.parse(input))
   .handler(async ({ data }) => {
-    const access = await paidManualAccess(data.token, data.password);
+    const access = await paidOrderAccess(data.token, data.password);
     if (!access) return { ok: false as const };
     const [{ data: categories }, { data: guides }] = await Promise.all([
       access.supabaseAdmin.from("install_categories").select("id,name,sort_order").order("sort_order"),
@@ -35,7 +35,7 @@ export const getCheckoutInstallGuides = createServerFn({ method: "POST" })
 export const openCheckoutInstallGuide = createServerFn({ method: "POST" })
   .inputValidator((input) => guideInput.parse(input))
   .handler(async ({ data }) => {
-    const access = await paidManualAccess(data.token, data.password);
+    const access = await paidOrderAccess(data.token, data.password);
     if (!access) return { ok: false as const };
     const { data: guide } = await access.supabaseAdmin.from("install_blogs").select("id,title,body,pdf_url,file_path,file_name,file_mime").eq("id", data.blogId).eq("published", true).maybeSingle();
     if (!guide) return { ok: false as const };
@@ -51,7 +51,7 @@ export const openCheckoutInstallGuide = createServerFn({ method: "POST" })
 export const openCheckoutGuideVideo = createServerFn({ method: "POST" })
   .inputValidator((input) => guideInput.parse(input))
   .handler(async ({ data }) => {
-    const access = await paidManualAccess(data.token, data.password);
+    const access = await paidOrderAccess(data.token, data.password);
     if (!access) return { ok: false as const };
     const { data: guide } = await access.supabaseAdmin.from("install_blogs").select("video_url").eq("id", data.blogId).eq("published", true).maybeSingle();
     const ref = String(guide?.video_url ?? "").trim();

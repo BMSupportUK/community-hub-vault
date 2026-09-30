@@ -106,7 +106,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
   const accountSidebar = paid && !order.cancelled && accountSetupStarted;
   const paidSidebar = paid && !order.cancelled && !accountSetupStarted;
   const splitLayout = paymentSidebar || accountSidebar || paidSidebar;
-  const manualInstallCard = paid && order.manual && claimToken ? (
+  const installCard = paid && claimToken ? (
     <section className="overflow-hidden rounded-2xl border border-border bg-card">
       <div className="grid grid-cols-[112px_minmax(0,1fr)] items-stretch">
         <img src={installGuideIllustration} alt="Person on a sofa watching television" loading="lazy" width={992} height={672} className="size-full min-h-36 object-cover" />
@@ -216,7 +216,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
                   </button>
                 )}
               </section>
-              {manualInstallCard}
+              {installCard}
               {moveToSetup}
             </aside>
           ) : accountSidebar ? (
@@ -232,7 +232,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
                       : (order.customerKind === "existing" ? "Payment confirmed. We're now extending your subscription." : "Payment confirmed. We're now setting up your account.")}</p>
                 </div>
               </section>
-              {manualInstallCard}
+              {installCard}
               {addLoginDetails}
               {order.customerKind === "new" && (
                 <section className="rounded-2xl border border-border bg-card p-5 flex gap-3 items-start">
