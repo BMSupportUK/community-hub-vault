@@ -182,9 +182,30 @@ export const createCredentialForOrder = createServerFn({ method: "POST" })
 
     const { terms, ownerId } = await loadOrderContext(data.orderId);
     if (terms.months <= 0) return { status: "no_term", unparsed: terms.unparsed };
-    if (!ownerId) throw new Error("This order has no customer attached");
-
     const accountType = data.accountType ?? terms.accountType ?? "single";
+    if (!ownerId) {
+      // Manual order with no account yet: hold the details until the customer
+      // creates their account from the checkout page, then they move onto it.
+      const { data: expiry, error: stashError } = await supabase.rpc("staff_stash_order_credential" as never, {
+        p_order_id: data.orderId,
+        p_login_name: data.loginName,
+        p_password: data.password,
+        p_months: terms.months,
+        p_account_type: accountType,
+      } as never);
+      if (stashError) throw new Error(stashError.message);
+      return {
+        status: "applied",
+        credentialId: "",
+        accountLabel: data.loginName.trim(),
+        months: terms.months,
+        newExpiry: new Date(expiry as unknown as string).toISOString(),
+        accountType: accountType as AccountType,
+        accountTypeLabel: accountTypeLabelFor(accountType as AccountType),
+        created: true,
+        unparsed: terms.unparsed,
+      };
+    }
     const { data: rows, error } = await supabase.rpc("staff_create_credential", {
       p_owner_id: ownerId,
       p_login_name: data.loginName,
