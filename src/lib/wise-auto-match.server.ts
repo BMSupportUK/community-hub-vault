@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getAutomatedMessageServer } from "@/lib/automated-messages.server";
 import { postOrderPaymentReceivedNotice } from "@/lib/order-payment-notice.server";
+import { listAwaitingBankOrders } from "@/lib/bank-awaiting.server";
 
 /**
  * Automatic Wise payment matching.
@@ -19,11 +20,6 @@ function normalizeCode(s: string) {
   return s.toUpperCase().replace(/[^A-Z0-9]/g, "");
 }
 
-function buildReference(prefix: string, orderId: string) {
-  const clean = (prefix || "BM").replace(/[^A-Za-z0-9]/g, "").toUpperCase().slice(0, 6) || "BM";
-  const tail = orderId.replace(/-/g, "").slice(0, 6).toUpperCase();
-  return `${clean}-${tail}`;
-}
 
 /** The Wise transfer number (e.g. #2392929350) if the email text carries one. */
 function extractTransferNumber(...texts: (string | null | undefined)[]) {
@@ -53,75 +49,9 @@ export async function runWiseAutoMatch(admin: Admin): Promise<WiseAutoMatchResul
     .limit(200);
   if (payErr || !payments?.length) return result;
 
-  // 2. Orders awaiting a bank transfer payment.
-  type Awaiting = { orderId: string; reference: string; userId: string; amountCents: number };
-  let awaiting: Awaiting[] = [];
-  const seen = new Set<string>();
-
-  const { data: awaitingPayments } = await admin
-    .from("order_payments")
-    .select("order_id,provider_payment_id,amount_cents")
-    .eq("provider", "bank_transfer")
-    .eq("status", "awaiting_verification");
-  const orderIds = Array.from(new Set((awaitingPayments ?? []).map((p: any) => String(p.order_id))));
-  const orderRows: Array<{ id: string; user_id: string; total_cents: number }> = [];
-  if (orderIds.length) {
-    const { data } = await admin
-      .from("orders")
-      .select("id,user_id,total_cents")
-      .in("id", orderIds)
-      .is("paid_at", null)
-      .neq("status", "cancelled");
-    for (const o of data ?? []) orderRows.push(o as any);
-  }
-  for (const p of awaitingPayments ?? []) {
-    const orderId = String(p.order_id);
-    const order = orderRows.find((o) => o.id === orderId);
-    if (!order || seen.has(orderId)) continue;
-    seen.add(orderId);
-    awaiting.push({
-      orderId,
-      reference: String(p.provider_payment_id ?? buildReference("BM", orderId)),
-      userId: String(order.user_id),
-      amountCents: Number(p.amount_cents ?? order.total_cents ?? 0),
-    });
-  }
-
-  const { data: grants } = await admin
-    .from("bank_transfer_permissions")
-    .select("user_id,expires_at")
-    .is("revoked_at", null);
-  const now = Date.now();
-  const grantedUserIds = (grants ?? [])
-    .filter((g: any) => !g.expires_at || new Date(g.expires_at).getTime() > now)
-    .map((g: any) => String(g.user_id));
-  if (grantedUserIds.length) {
-    const { data: unpaid } = await admin
-      .from("orders")
-      .select("id,user_id,total_cents")
-      .in("user_id", grantedUserIds)
-      .is("paid_at", null)
-      .neq("status", "cancelled")
-      .order("created_at", { ascending: false })
-      .limit(100);
-    const { data: detailsRow } = await admin
-      .from("bank_transfer_details")
-      .select("reference_prefix")
-      .eq("singleton", true)
-      .maybeSingle();
-    const prefix = String(detailsRow?.reference_prefix ?? "BM");
-    for (const o of unpaid ?? []) {
-      const orderId = String(o.id);
-      if (seen.has(orderId)) continue;
-      seen.add(orderId);
-      awaiting.push({
-        orderId,
-        reference: buildReference(prefix, orderId),
-        userId: String(o.user_id),
-        amountCents: Number(o.total_cents ?? 0),
-      });
-    }
-  }
+  // 2. Orders awaiting a bank transfer payment (member and manual orders).
+  type Awaiting = { orderId: string; reference: string; references: string[]; userId: string | null; amountCents: number };
+  let awaiting: Awaiting[] = await listAwaitingBankOrders(admin);
 
   // Orders already tied to another payment stay out of the candidate list.
   if (awaiting.length) {
@@ -142,7 +72,7 @@ export async function runWiseAutoMatch(admin: Admin): Promise<WiseAutoMatchResul
       .replace(/[^A-Z0-9]/g, "");
     if (!hay) continue;
     const candidates = awaiting.filter(
-      (a) => a.amountCents === Number(pay.amount_cents) && hay.includes(normalizeCode(a.reference)),
+      (a) => a.amountCents === Number(pay.amount_cents) && a.references.some((r) => { const n = normalizeCode(r); return n.length >= 6 && hay.includes(n); }),
     );
     if (candidates.length !== 1) continue;
     const order = candidates[0]!;
@@ -167,7 +97,7 @@ export async function runWiseAutoMatch(admin: Admin): Promise<WiseAutoMatchResul
         .eq("order_id", order.orderId)
         .maybeSingle();
       const reference = transferNumber
-        ?? (payRow?.provider_payment_id ? String(payRow.provider_payment_id) : buildReference("BM", order.orderId));
+        ?? (payRow?.provider_payment_id ? String(payRow.provider_payment_id) : order.reference);
 
       if (payRow?.id) {
         await admin
@@ -254,7 +184,7 @@ export async function runWiseAutoMatch(admin: Admin): Promise<WiseAutoMatchResul
         await admin.from("staff_notifications").insert({
           kind: "wise_payment",
           title: `Wise payment auto-marked as received: ${pay.currency ?? "GBP"} ${amount}`,
-          body: `${pay.sender_name ?? "Unknown sender"} paid ${pay.currency ?? "GBP"} ${amount} — reference "${pay.reference ?? ""}" matched order ${buildReference("BM", order.orderId)} exactly, so it was marked as received automatically.`,
+          body: `${pay.sender_name ?? "Unknown sender"} paid ${pay.currency ?? "GBP"} ${amount} — reference "${pay.reference ?? ""}" matched order ${order.reference} exactly, so it was marked as received automatically.`,
           link_path: "/admin?tab=bank-transfer-orders",
         });
       } catch (e) {

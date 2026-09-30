@@ -202,99 +202,18 @@ export const getWiseIncomingTransfers = createServerFn({ method: "POST" })
       };
     }
 
-    // Pending bank-transfer orders: explicit awaiting_verification rows, plus
-    // unpaid orders for customers who hold a live bank-transfer grant.
-    const pendingRows: PendingBankOrder[] = [];
-    const seen = new Set<string>();
-
-    const { data: payments } = await supabaseAdmin
-      .from("order_payments")
-      .select("order_id,provider_payment_id,amount_cents")
-      .eq("provider", "bank_transfer")
-      .eq("status", "awaiting_verification");
-
-    const orderIds = (payments ?? []).map((p: any) => String(p.order_id));
-    const orderRows: Array<{ id: string; user_id: string; total_cents: number }> = [];
-    if (orderIds.length) {
-      const { data } = await supabaseAdmin
-        .from("orders")
-        .select("id,user_id,total_cents")
-        .in("id", orderIds)
-        .is("paid_at", null)
-        .neq("status", "cancelled");
-      for (const o of data ?? []) orderRows.push(o as any);
+    // Pending bank-transfer orders — shared with the automatic matcher so
+    // manual orders (no account) and secure-checkout references are included.
+    {
+      const { listAwaitingBankOrders } = await import("@/lib/bank-awaiting.server");
+      const rows = await listAwaitingBankOrders(supabaseAdmin);
+      feed.pending = rows.map((p) => ({
+        orderId: p.orderId,
+        reference: p.reference,
+        customerName: p.customerName,
+        amountCents: p.amountCents,
+      }));
     }
-    for (const p of payments ?? []) {
-      const orderId = String(p.order_id);
-      if (seen.has(orderId)) continue;
-      const order = orderRows.find((o) => o.id === orderId);
-      if (!order) continue;
-      seen.add(orderId);
-      pendingRows.push({
-        orderId,
-        reference: String(p.provider_payment_id ?? buildReference("BM", orderId)),
-        userId: String(order.user_id),
-        amountCents: Number(p.amount_cents ?? order.total_cents ?? 0),
-        hasPaymentRow: true,
-      });
-    }
-
-    // Grants — customers currently allowed to pay by bank transfer.
-    const { data: grants } = await supabaseAdmin
-      .from("bank_transfer_permissions")
-      .select("user_id,expires_at")
-      .is("revoked_at", null);
-    const now = Date.now();
-    const grantedUserIds = (grants ?? [])
-      .filter((g: any) => !g.expires_at || new Date(g.expires_at).getTime() > now)
-      .map((g: any) => String(g.user_id));
-
-    if (grantedUserIds.length) {
-      const { data: unpaid } = await supabaseAdmin
-        .from("orders")
-        .select("id,user_id,total_cents")
-        .in("user_id", grantedUserIds)
-        .is("paid_at", null)
-        .neq("status", "cancelled")
-        .order("created_at", { ascending: false })
-        .limit(100);
-      const { data: detailsRow } = await supabaseAdmin
-        .from("bank_transfer_details")
-        .select("reference_prefix")
-        .eq("singleton", true)
-        .maybeSingle();
-      const prefix = String(detailsRow?.reference_prefix ?? "BM");
-      for (const o of unpaid ?? []) {
-        const orderId = String(o.id);
-        if (seen.has(orderId)) continue;
-        seen.add(orderId);
-        pendingRows.push({
-          orderId,
-          reference: buildReference(prefix, orderId),
-          userId: String(o.user_id),
-          amountCents: Number(o.total_cents ?? 0),
-          hasPaymentRow: false,
-        });
-      }
-    }
-
-    // Customer names.
-    const userIds = Array.from(new Set(pendingRows.map((p) => p.userId)));
-    const names: Record<string, string> = {};
-    if (userIds.length) {
-      const { data: profiles } = await supabaseAdmin
-        .from("profiles")
-        .select("id,display_name")
-        .in("id", userIds);
-      for (const p of profiles ?? []) names[String(p.id)] = String(p.display_name ?? "Unknown");
-    }
-
-    feed.pending = pendingRows.map((p) => ({
-      orderId: p.orderId,
-      reference: p.reference,
-      customerName: names[p.userId] ?? null,
-      amountCents: p.amountCents,
-    }));
 
     // Fetch Wise credits and match.
     try {
@@ -321,6 +240,7 @@ export const getWiseIncomingTransfers = createServerFn({ method: "POST" })
       // the order is paid and drops out of the pending list.
       const storedIds = Array.from(new Set(incoming.map((t) => t.storedOrderId).filter(Boolean))) as string[];
       const storedOrders: Record<string, { userId: string; amountCents: number }> = {};
+      const names: Record<string, string> = {};
       if (storedIds.length) {
         const { data: sOrders } = await supabaseAdmin
           .from("orders")
