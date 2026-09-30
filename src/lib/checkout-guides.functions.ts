@@ -7,9 +7,9 @@ const guideInput = accessInput.extend({ blogId: z.string().uuid() });
 const SIGNED_URL_SECONDS = 600;
 const VIDEO_BUCKET = "guide-videos";
 
-async function paidManualAccess(token: string, password: string) {
+async function paidOrderAccess(token: string, password: string) {
   const unlocked = await unlock(token, password);
-  if (!unlocked || unlocked.link.claimed_by) return null;
+  if (!unlocked) return null;
   const { data: order } = await unlocked.supabaseAdmin.from("orders").select("order_ref,paid_at,status").eq("id", unlocked.link.order_id).maybeSingle();
   if (!order?.paid_at || order.status === "cancelled") return null;
   return { ...unlocked, order };

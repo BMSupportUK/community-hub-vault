@@ -106,7 +106,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
   const accountSidebar = paid && !order.cancelled && accountSetupStarted;
   const paidSidebar = paid && !order.cancelled && !accountSetupStarted;
   const splitLayout = paymentSidebar || accountSidebar || paidSidebar;
-  const manualInstallCard = paid && order.manual && claimToken ? (
+  const installCard = paid && claimToken ? (
     <section className="overflow-hidden rounded-2xl border border-border bg-card">
       <div className="grid grid-cols-[112px_minmax(0,1fr)] items-stretch">
         <img src={installGuideIllustration} alt="Person on a sofa watching television" loading="lazy" width={992} height={672} className="size-full min-h-36 object-cover" />
