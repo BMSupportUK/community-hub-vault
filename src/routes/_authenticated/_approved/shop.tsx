@@ -1531,6 +1531,12 @@ function Storefront() {
                 How to Order?
               </TabsTrigger>
               <TabsTrigger
+                value="how_to_renew"
+                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-sky-400 data-[state=active]:text-white"
+              >
+                How to Renew?
+              </TabsTrigger>
+              <TabsTrigger
                 value="vpn"
                 className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-blue-500 data-[state=active]:to-sky-400 data-[state=active]:text-white"
               >
@@ -1637,6 +1643,36 @@ function Storefront() {
                   </div>
                 </div>
               </section>
+            </TabsContent>
+
+            <TabsContent value="how_to_renew" className="mt-3 min-w-0 min-h-0 flex-1 overflow-x-hidden overflow-y-auto scrollbar-hide">
+                <section className="relative min-w-0 overflow-hidden md:-mt-6 md:-mx-6">
+                 <div className="absolute inset-0">
+                   <img src={shopHero} alt="" aria-hidden className="w-full h-full object-cover" />
+                   <div className="absolute inset-0 bg-gradient-to-r from-background/85 via-background/40 to-transparent" />
+                   <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-b from-transparent to-background" />
+                 </div>
+                  <div className="relative px-4 md:px-10 pt-10 md:pt-16 pb-16 md:pb-24">
+                   <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-8 lg:gap-12 items-start">
+                     <div className="flex-1 min-w-0">
+                       <div className="text-xs uppercase tracking-[0.2em] text-sky-200/90 mb-3">
+                         BM Support · Shop
+                       </div>
+                        <h1 className="font-display text-3xl md:text-6xl font-bold leading-tight text-white drop-shadow">
+                         How To Renew Your Subscription
+                       </h1>
+                       <p className="mt-4 text-sky-100/90 max-w-xl text-base md:text-lg">
+                         Watch the short walkthrough to see exactly how to renew your existing
+                         subscription — including renewing early, which adds the new months on
+                         top of the time you have left.
+                       </p>
+                     </div>
+                     <div className="w-full lg:w-[420px] xl:w-[480px] shrink-0">
+                       <HowToOrderVideo isAdmin={isAdmin} inHero settingsKey="how_to_renew_video" pathPrefix="how-to-renew" emptyHint="No video yet — upload one so customers can see how to renew." />
+                     </div>
+                   </div>
+                 </div>
+               </section>
             </TabsContent>
 
 
@@ -6382,7 +6418,7 @@ function CryptoPanel({
 
 const HOW_TO_ORDER_VIDEO_KEY = "how_to_order_video";
 
-function HowToOrderVideo({ isAdmin, inHero }: { isAdmin: boolean; inHero?: boolean }) {
+function HowToOrderVideo({ isAdmin, inHero, settingsKey = HOW_TO_ORDER_VIDEO_KEY, pathPrefix = "how-to-order", emptyHint = "No video yet — upload one so customers can see how to order." }: { isAdmin: boolean; inHero?: boolean; settingsKey?: string; pathPrefix?: string; emptyHint?: string }) {
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -6406,7 +6442,7 @@ function HowToOrderVideo({ isAdmin, inHero }: { isAdmin: boolean; inHero?: boole
       const { data } = await supabase
         .from("app_settings")
         .select("value")
-        .eq("key", HOW_TO_ORDER_VIDEO_KEY)
+        .eq("key", settingsKey)
         .maybeSingle();
       if (cancelled) return;
       const path =
@@ -6419,7 +6455,7 @@ function HowToOrderVideo({ isAdmin, inHero }: { isAdmin: boolean; inHero?: boole
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [settingsKey]);
 
   const onPickFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -6431,7 +6467,7 @@ function HowToOrderVideo({ isAdmin, inHero }: { isAdmin: boolean; inHero?: boole
     setUploading(true);
     try {
       const ext = (file.name.split(".").pop() || "mp4").toLowerCase();
-      const path = `how-to-order-${Date.now()}.${ext}`;
+      const path = `${pathPrefix}-${Date.now()}.${ext}`;
       const { error: upErr } = await supabase.storage
         .from("shop-media")
         .upload(path, file, { contentType: file.type, upsert: false });
@@ -6439,7 +6475,7 @@ function HowToOrderVideo({ isAdmin, inHero }: { isAdmin: boolean; inHero?: boole
       const { error: setErr } = await supabase
         .from("app_settings")
         .upsert(
-          { key: HOW_TO_ORDER_VIDEO_KEY, value: { path } as never },
+          { key: settingsKey, value: { path } as never },
           { onConflict: "key" },
         );
       if (setErr) throw setErr;
@@ -6517,7 +6553,7 @@ function HowToOrderVideo({ isAdmin, inHero }: { isAdmin: boolean; inHero?: boole
           ) : (
             <div className="grid place-items-center py-16 text-center text-sm text-muted-foreground rounded-xl border border-dashed border-border">
               {isAdmin
-                ? "No video yet — upload one so customers can see how to order."
+                ? emptyHint
                 : "A walkthrough video is coming soon."}
             </div>
           )}
