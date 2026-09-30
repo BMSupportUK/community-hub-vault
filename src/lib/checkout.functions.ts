@@ -126,6 +126,7 @@ export const getCheckout = createServerFn({ method: "POST" })
         cancelled: String(order.status) === "cancelled",
         method,
         customerKind: link.customer_kind as "new" | "existing",
+        manual: !link.claimed_by,
         email: ((order as any).email as string | null) ?? null,
         customerType: ((order as any).customer_type as string | null) ?? null,
         existingUsername: ((order as any).existing_username as string | null) ?? null,

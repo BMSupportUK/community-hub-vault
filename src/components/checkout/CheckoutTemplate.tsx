@@ -14,6 +14,7 @@ export type CheckoutView = {
     cancelled?: boolean;
     method: string;
     customerKind: "new" | "existing";
+    manual?: boolean;
     createdAt?: string;
     email?: string | null;
     customerType?: string | null;
