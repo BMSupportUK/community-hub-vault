@@ -3900,6 +3900,7 @@ export type Database = {
       }
       order_checkout_links: {
         Row: {
+          claimed_by: string | null
           created_at: string
           customer_kind: string
           order_id: string
@@ -3907,6 +3908,7 @@ export type Database = {
           token: string
         }
         Insert: {
+          claimed_by?: string | null
           created_at?: string
           customer_kind?: string
           order_id: string
@@ -3914,6 +3916,7 @@ export type Database = {
           token: string
         }
         Update: {
+          claimed_by?: string | null
           created_at?: string
           customer_kind?: string
           order_id?: string
@@ -6544,6 +6547,7 @@ export type Database = {
       }
       can_pay_by_bank_transfer: { Args: { _user_id: string }; Returns: boolean }
       check_admin_unlock_lockout: { Args: never; Returns: Json }
+      claim_checkout_access: { Args: { p_token: string }; Returns: boolean }
       claim_invite_access: { Args: never; Returns: boolean }
       cleanup_old_chat_messages: { Args: never; Returns: number }
       clear_admin_unlock_failures: { Args: never; Returns: undefined }
