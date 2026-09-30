@@ -7100,6 +7100,20 @@ export type Database = {
           expiry_at: string
         }[]
       }
+      staff_create_credential_with_expiry: {
+        Args: {
+          p_account_type?: string
+          p_expiry: string
+          p_login_name: string
+          p_owner_id: string
+          p_password: string
+        }
+        Returns: {
+          account_number: number
+          credential_id: string
+          expiry_at: string
+        }[]
+      }
       staff_extend_credential: {
         Args: {
           p_account_type?: string
@@ -7126,6 +7140,16 @@ export type Database = {
           p_account_type?: string
           p_login_name: string
           p_months: number
+          p_order_id: string
+          p_password: string
+        }
+        Returns: string
+      }
+      staff_stash_order_credential_with_expiry: {
+        Args: {
+          p_account_type?: string
+          p_expiry: string
+          p_login_name: string
           p_order_id: string
           p_password: string
         }
