@@ -88,7 +88,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
   // wide screens while the order is awaiting payment.
   const bankSidebar = ["wise", "stripe", "square", "crypto"].includes(method) && !paid && !order.cancelled;
 
-  let heading = `Order ${order.ref}`;
+  let heading = `Order #${order.ref}`;
   let sub = "Please complete your payment below.";
   if (order.cancelled) { heading = "This order has been cancelled"; sub = "Contact us using the chat if you think this is a mistake."; }
   else if (step === 3) {
@@ -111,7 +111,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
             )}
             <h1 className="font-display text-2xl sm:text-3xl font-bold">{heading}</h1>
             <p className="text-sm text-muted-foreground">
-              {paid || order.cancelled ? `Order ${order.ref} · ` : ""}{order.name ? `For ${order.name} · ` : ""}{paid ? `Paid by ${METHOD[method] ?? method}` : sub}
+              {paid || order.cancelled ? `Order #${order.ref} · ` : ""}{order.name ? `For ${order.name} · ` : ""}{paid ? `Paid by ${METHOD[method] ?? method}` : sub}
             </p>
           </div>
 
@@ -154,7 +154,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
             <h2 className="font-semibold mt-6 mb-3">Order details</h2>
             <dl className="grid grid-cols-[auto_minmax(0,1fr)] gap-x-4 gap-y-2 text-sm">
               {([
-                ["Order", order.ref],
+                ["Order", `#${order.ref}`],
                 ["Placed", order.createdAt ? new Date(order.createdAt).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" }) : null],
                 ["Name", order.name || null],
                 ["Email", order.email],
