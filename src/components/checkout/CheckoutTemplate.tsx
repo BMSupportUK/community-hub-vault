@@ -112,7 +112,9 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
         <img src={installGuideIllustration} alt="Person on a sofa watching television" loading="lazy" width={992} height={672} className="size-full min-h-36 object-cover" />
         <div className="min-w-0 p-4 space-y-3">
           <div><p className="font-semibold">Install the app while we set up your account</p><p className="mt-1 text-sm text-muted-foreground">Use your paid order to open the private install guides now.</p></div>
-          <Link to="/checkout-install/$token" params={{ token: claimToken }} className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground hover:opacity-90"><BookOpen className="size-4" /> Open install guides</Link>
+          {order.manual
+            ? <Link to="/checkout-install/$token" params={{ token: claimToken }} className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground hover:opacity-90"><BookOpen className="size-4" /> Open install guides</Link>
+            : <Link to="/install-guides" search={{ tab: "guides", checkout: claimToken }} className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground hover:opacity-90"><BookOpen className="size-4" /> Open install guides</Link>}
         </div>
       </div>
     </section>
