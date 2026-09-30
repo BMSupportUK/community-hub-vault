@@ -64,7 +64,7 @@ function CopyRow({ label, value }: { label: string; value: string | null }) {
   );
 }
 
-export function CheckoutTemplate({ view, preview = false }: { view: CheckoutView; preview?: boolean }) {
+export function CheckoutTemplate({ view, preview = false, claimToken }: { view: CheckoutView; preview?: boolean; claimToken?: string }) {
   const { order, items, invoice, bank } = view;
   const step = checkoutStep(order);
   const subtotal = items.reduce((s, i) => s + i.unitCents * i.qty, 0);

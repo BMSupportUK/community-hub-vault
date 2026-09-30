@@ -57,6 +57,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setTimeout(() => { if (activeUidRef.current === uid) void loadRoles(uid); }, 500);
       return;
     }
+    // Paid manual-order customers who came from their checkout page get the
+    // subscriber role straight away (skipping the security gate).
+    const claimToken = typeof window !== "undefined" ? window.localStorage.getItem("bm-checkout-claim") : null;
+    if (claimToken) {
+      const { error: claimErr } = await supabase.rpc("claim_checkout_access", { p_token: claimToken });
+      if (!claimErr) window.localStorage.removeItem("bm-checkout-claim");
+    }
     const { data, error } = await supabase.from("user_roles").select("role").eq("user_id", uid);
     // If the query fails (transient network / RLS hiccup), keep the previously
     // loaded roles intact. Otherwise a refresh would clear roles, flip
