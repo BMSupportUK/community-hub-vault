@@ -32,7 +32,7 @@ export function OrderStatusBar({ step, compact = false }: { step: number; compac
         return (
           <div key={l} className="flex-1 flex flex-col items-center relative">
             {i > 0 && <div className={`absolute top-[11px] right-1/2 w-full h-0.5 ${i <= step ? "bg-success" : "bg-border"}`} />}
-            <div className={`relative z-10 grid place-items-center rounded-full border-2 ${compact ? "size-5" : "size-6"} ${done ? "bg-success border-success text-success-foreground" : current ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-muted-foreground"}`}>
+            <div className={`relative z-10 grid place-items-center rounded-full border-2 ${compact ? "size-5" : "size-6"} ${done ? "bg-success border-success text-background" : current ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-muted-foreground"}`}>
               {done ? <Check className="size-3" /> : <span className="text-[10px] font-bold">{i + 1}</span>}
             </div>
             {!compact && <span className={`mt-1.5 text-[11px] text-center ${current ? "font-semibold text-foreground" : "text-muted-foreground"}`}>{l}</span>}
@@ -86,7 +86,7 @@ export function CheckoutTemplate({ view, preview = false }: { view: CheckoutView
         <div className="px-5 -mt-2 space-y-6">
           <div className="text-center pt-6 space-y-2">
             {(paid || order.cancelled) && (
-              <div className={`mx-auto size-14 rounded-full grid place-items-center ${order.cancelled ? "bg-destructive/15 text-destructive" : "bg-success text-success-foreground"}`}>
+              <div className={`mx-auto size-14 rounded-full grid place-items-center ${order.cancelled ? "bg-destructive/15 text-destructive" : "bg-success text-background"}`}>
                 {step === 3 ? <PartyPopper className="size-7" /> : order.cancelled ? <AlertTriangle className="size-7" /> : <Check className="size-8" />}
               </div>
             )}

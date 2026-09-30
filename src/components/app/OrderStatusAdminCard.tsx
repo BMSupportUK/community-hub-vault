@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { fetchInChunks } from "@/lib/chunked-in";
 import { Link } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
-import { OrderStatusBar, checkoutStep } from "@/components/checkout/CheckoutTemplate";
+import { OrderStatusBar } from "@/components/checkout/CheckoutTemplate";
 import { ManualOrderLinkButton } from "@/components/checkout/ManualOrderLinkDialog";
 
 type Row = {
