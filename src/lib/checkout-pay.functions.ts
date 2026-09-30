@@ -8,7 +8,9 @@ import { unlock } from "@/lib/checkout.server";
  */
 const creds = z.object({
   token: z.string().regex(/^[a-f0-9]{64}$/),
-  password: z.string().min(1).max(64),
+  // Member (shop) orders unlock with the link alone, so the password is empty;
+  // unlock() still enforces it for manual orders.
+  password: z.string().max(64).default(""),
 });
 
 const sqBase = () =>

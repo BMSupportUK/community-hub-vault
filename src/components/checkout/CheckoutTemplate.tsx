@@ -211,7 +211,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
                 <div className="flex gap-3 items-start">
                   <Check className="size-5 text-success shrink-0 mt-0.5" />
                   <div>
-                    <p className="font-semibold">Square payment received</p>
+                    <p className="font-semibold">{({ square: "Square", stripe: "Card", crypto: "Crypto", wise: "Bank transfer", bank_transfer: "Bank transfer", cash: "Cash" } as Record<string, string>)[String(view.order.method)] ?? "Payment"} payment received</p>
                     <p className="text-sm text-muted-foreground">Your payment is confirmed. Continue when you’re ready so we can begin setting up your service.</p>
                   </div>
                 </div>

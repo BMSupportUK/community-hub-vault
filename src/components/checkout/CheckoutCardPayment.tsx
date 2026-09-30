@@ -5,6 +5,8 @@ import { getStripe, getStripeEnvironment } from "@/lib/stripe";
 import { SquareCardPanel } from "@/components/app/SquareCardPanel";
 import { checkoutCryptoInvoice, checkoutSquareCharge, checkoutSquareConfig, checkoutStripeSession } from "@/lib/checkout-pay.functions";
 
+const stripeSecrets = new Map<string, Promise<string>>();
+
 /** Inline card payment for the secure checkout page (Square or Stripe). */
 export function CheckoutCardPayment({ token, password, method, amountCents, onPaid }: {
   token: string; password: string; method: "square" | "stripe" | "crypto"; amountCents: number; onPaid: () => void | Promise<void>;
@@ -20,10 +22,20 @@ export function CheckoutCardPayment({ token, password, method, amountCents, onPa
   );
 
   const stripeOptions = useMemo(() => ({
-    fetchClientSecret: async () => {
-      const r = await stripeSession({ data: { token, password, environment: getStripeEnvironment(), returnUrl: window.location.href } });
-      if ("error" in r) throw new Error(r.error);
-      return r.clientSecret;
+    // One session per page load: a remount (dev double-render, re-render of the
+    // sidebar) must reuse it, otherwise the second request expires the session
+    // the card form is showing and Stripe says "Something went wrong".
+    fetchClientSecret: () => {
+      const cached = stripeSecrets.get(token);
+      if (cached) return cached;
+      const p = (async () => {
+        const r = await stripeSession({ data: { token, password, environment: getStripeEnvironment(), returnUrl: window.location.href } });
+        if ("error" in r) throw new Error(r.error);
+        return r.clientSecret;
+      })();
+      stripeSecrets.set(token, p);
+      p.catch(() => stripeSecrets.delete(token));
+      return p;
     },
     onComplete: () => { void onPaid(); },
     // eslint-disable-next-line react-hooks/exhaustive-deps
