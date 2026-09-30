@@ -1,6 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { getAutomatedMessageServer } from "@/lib/automated-messages.server";
 import { postOrderPaymentReceivedNotice } from "@/lib/order-payment-notice.server";
+import { listAwaitingBankOrders } from "@/lib/bank-awaiting.server";
 
 /**
  * Automatic Wise payment matching.
@@ -19,11 +20,6 @@ function normalizeCode(s: string) {
   return s.toUpperCase().replace(/[^A-Z0-9]/g, "");
 }
 
-function buildReference(prefix: string, orderId: string) {
-  const clean = (prefix || "BM").replace(/[^A-Za-z0-9]/g, "").toUpperCase().slice(0, 6) || "BM";
-  const tail = orderId.replace(/-/g, "").slice(0, 6).toUpperCase();
-  return `${clean}-${tail}`;
-}
 
 /** The Wise transfer number (e.g. #2392929350) if the email text carries one. */
 function extractTransferNumber(...texts: (string | null | undefined)[]) {

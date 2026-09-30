@@ -369,6 +369,10 @@ export const confirmBankTransferReceived = createServerFn({ method: "POST" })
     if (!roles?.length) throw new Error("Forbidden: admin or management only");
 
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: target } = await supabaseAdmin.from("orders").select("paid_at,status,order_ref").eq("id", data.orderId).maybeSingle();
+    if (!target) throw new Error("Order not found");
+    if (target.paid_at) return { success: true };
+    if (target.status === "cancelled") throw new Error("This order is cancelled");
     const { data: payment } = await supabaseAdmin
       .from("order_payments")
       .select("id,provider_payment_id")
@@ -377,13 +381,25 @@ export const confirmBankTransferReceived = createServerFn({ method: "POST" })
 
     const reference = data.transferNumber
       ? data.transferNumber
-      : payment?.provider_payment_id ? String(payment.provider_payment_id) : String(data.orderId);
+      : payment?.provider_payment_id ? String(payment.provider_payment_id) : String(target.order_ref ?? String(data.orderId).slice(0, 8));
 
     if (payment?.id) {
       await supabaseAdmin
         .from("order_payments")
         .update({ provider: "bank_transfer", status: "paid", ...(data.transferNumber ? { provider_payment_id: data.transferNumber } : {}) } as never)
         .eq("id", payment.id);
+    } else {
+      // Manual / secure-checkout orders may have no payment row yet — record it.
+      const { data: o } = await supabaseAdmin.from("orders").select("total_cents").eq("id", data.orderId).maybeSingle();
+      await supabaseAdmin.from("order_payments").insert({
+        order_id: data.orderId,
+        provider: "bank_transfer",
+        provider_payment_id: reference,
+        status: "paid",
+        amount_cents: Number(o?.total_cents ?? 0),
+        currency: "GBP",
+        created_by: context.userId,
+      } as never);
     }
 
     const { error: rpcErr } = await supabaseAdmin.rpc("mark_order_paid" as never, {
