@@ -55,7 +55,7 @@ function CopyRow({ label, value }: { label: string; value: string | null }) {
   return (
     <div className="flex items-center justify-between gap-3 py-2.5 border-t border-border first:border-t-0">
       <span className="text-sm text-muted-foreground">{label}</span>
-      <span className={`font-mono text-sm ml-auto break-all ${label === "Reference" ? "text-right" : "text-right"}`}>{value}</span>
+      <span className="font-mono text-sm ml-auto break-all text-right">{value}</span>
       <button type="button" onClick={() => { navigator.clipboard.writeText(value); setDone(true); setTimeout(() => setDone(false), 1500); }} className="inline-flex items-center gap-1 text-xs text-primary hover:underline">
         {done ? <Check className="size-3.5" /> : <Copy className="size-3.5" />} {done ? "Copied" : "Copy"}
       </button>
@@ -143,7 +143,7 @@ export function CheckoutTemplate({ view, preview = false }: { view: CheckoutView
               <p className="text-xs text-center text-muted-foreground">After paying, come back to this page — it updates automatically.</p>
             </section>
           ) : method === "wise" ? (
-            <>
+            <aside className={`min-w-0 space-y-6 ${bankSidebar ? "" : "lg:col-span-1"}`}>
               <section className="rounded-2xl border border-border bg-card p-5">
                 <h2 className="font-semibold">Bank transfer details</h2>
                 <p className="text-xs text-muted-foreground mb-3">Send exactly {GBP(order.totalCents)} to this account.</p>
@@ -158,14 +158,14 @@ export function CheckoutTemplate({ view, preview = false }: { view: CheckoutView
                   </div>
                 ) : <p className="text-sm text-muted-foreground">Bank details are not available right now — please message us in the chat.</p>}
               </section>
-              <section className="rounded-2xl border-2 border-warning bg-warning/10 p-5 flex gap-3">
+              <section className="rounded-2xl border-2 border-warning bg-warning/10 p-5 flex gap-3 min-w-0">
                 <AlertTriangle className="size-6 text-warning shrink-0" />
-                <div className="space-y-1">
-                  <p className="font-bold text-warning">IMPORTANT: You MUST use <span className="font-mono">{order.ref}</span> as your payment reference.</p>
+                <div className="space-y-1 min-w-0">
+                  <p className="font-bold text-warning break-words">IMPORTANT: You MUST use <span className="font-mono break-all">{order.ref}</span> as your payment reference.</p>
                   <p className="text-sm">Do not add anything else to the reference. Payments without this exact reference cannot be matched to your order and will be delayed.</p>
                 </div>
               </section>
-            </>
+            </aside>
           ) : null}
         </div>
       </div>
