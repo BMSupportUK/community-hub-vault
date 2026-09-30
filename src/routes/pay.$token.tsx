@@ -97,7 +97,7 @@ function PayPage() {
 
   return (
     <main className="min-h-screen overflow-y-auto">
-      <CheckoutTemplate view={view} />
+      <CheckoutTemplate view={view} claimToken={token} />
       <CustomerCheckoutChat token={token} password={password} />
     </main>
   );

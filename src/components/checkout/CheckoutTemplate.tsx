@@ -130,9 +130,17 @@ export function CheckoutTemplate({ view, preview = false }: { view: CheckoutView
                   <UserPlus className="size-5 text-primary shrink-0 mt-0.5" />
                   <div className="space-y-2 min-w-0">
                     <p className="font-semibold">Keep updated with the service</p>
-                    <p className="text-sm text-muted-foreground">Create a free account to follow your order, get the latest updates and manage your subscription any time.</p>
-                    <Link to="/signup" className="inline-flex items-center gap-2 h-10 px-4 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90">
-                      Create an account
+                    <p className="text-sm text-muted-foreground">
+                      {order.customerKind === "existing"
+                        ? "Sign in to your account to follow your order, get the latest updates and have your subscription re-applied straight away."
+                        : "Create a free account to follow your order, get the latest updates and manage your subscription any time. Your subscription is added automatically — no waiting for approval."}
+                    </p>
+                    <Link
+                      to={order.customerKind === "existing" ? "/login" : "/signup"}
+                      onClick={() => { if (claimToken) try { localStorage.setItem("bm-checkout-claim", claimToken); } catch { /* ignore */ } }}
+                      className="inline-flex items-center gap-2 h-10 px-4 rounded-xl bg-primary text-primary-foreground text-sm font-semibold hover:opacity-90"
+                    >
+                      {order.customerKind === "existing" ? "Sign in to my account" : "Create an account"}
                     </Link>
                   </div>
                 </div>
