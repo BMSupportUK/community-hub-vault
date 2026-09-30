@@ -109,6 +109,18 @@ function PayPage() {
   const pw = password ?? "";
   return (
     <main className="min-h-screen overflow-y-auto">
+      {/* Members get a way back to their order screen; link-only customers
+          (manual orders) arrived by link, so there is nothing to go back to. */}
+      {user && (
+        <div className="w-full px-3 pt-3">
+          <Link
+            to="/shop"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="size-4" /> Back to my orders
+          </Link>
+        </div>
+      )}
       <CheckoutTemplate
         view={view}
         claimToken={token}
