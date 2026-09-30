@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { ArrowLeft, KeyRound, Loader2, Lock, ShieldCheck, UserCheck } from "lucide-react";
-import { getCheckout, markPaymentSent, startCheckoutAccountSetup } from "@/lib/checkout.functions";
+import { continueCheckoutToAccountSetup, getCheckout, markPaymentSent, startCheckoutAccountSetup } from "@/lib/checkout.functions";
 import { CheckoutTemplate, type CheckoutView } from "@/components/checkout/CheckoutTemplate";
 import { CustomerCheckoutChat } from "@/components/checkout/CheckoutChat";
 import { CheckoutCardPayment } from "@/components/checkout/CheckoutCardPayment";
@@ -37,6 +37,7 @@ function PayPage() {
   const fetchCheckout = useServerFn(getCheckout);
   const sendPaymentSent = useServerFn(markPaymentSent);
   const startAccountSetup = useServerFn(startCheckoutAccountSetup);
+  const continueToAccountSetup = useServerFn(continueCheckoutToAccountSetup);
   const [password, setPassword] = useState<string | null>(null);
   const [unlocked, setUnlocked] = useState(false);
   const [input, setInput] = useState("");
@@ -160,6 +161,15 @@ function PayPage() {
         view={view}
         claimToken={token}
         onPaymentSent={async () => { await sendPaymentSent({ data: { token, password: pw } }); await load(pw); }}
+        onContinueToSetup={async () => {
+          const result = await continueToAccountSetup({ data: { token, password: pw } });
+          if (!result.ok) {
+            toast.error("The order could not be moved to account setup");
+            return;
+          }
+          await load(pw);
+          toast.success("Your order is now in account setup");
+        }}
         cardPayment={(view.order.method === "square" || view.order.method === "stripe" || view.order.method === "crypto") && !view.order.paidAt && !view.order.cancelled ? (
           <CheckoutCardPayment token={token} password={pw} method={view.order.method} amountCents={view.order.totalCents} onPaid={() => { load(pw); }} />
         ) : undefined}

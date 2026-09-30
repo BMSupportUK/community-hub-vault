@@ -186,6 +186,29 @@ export const startCheckoutAccountSetup = createServerFn({ method: "POST" })
     return { startedAt: String(existing.account_setup_started_at) };
   });
 
+/** The customer can continue their own fully paid secure checkout into account setup. */
+export const continueCheckoutToAccountSetup = createServerFn({ method: "POST" })
+  .inputValidator((input) => creds.parse(input))
+  .handler(async ({ data }) => {
+    const u = await unlock(data.token, data.password);
+    if (!u) return { ok: false as const };
+
+    const { data: order, error: orderError } = await u.supabaseAdmin
+      .from("orders")
+      .select("paid_at,status")
+      .eq("id", u.link.order_id)
+      .maybeSingle();
+    if (orderError || !order?.paid_at || order.status === "cancelled") return { ok: false as const };
+
+    const { error } = await u.supabaseAdmin
+      .from("order_checkout_links")
+      .update({ account_setup_started_at: new Date().toISOString() })
+      .eq("order_id", u.link.order_id)
+      .is("account_setup_started_at", null);
+    if (error) return { ok: false as const };
+    return { ok: true as const };
+  });
+
 export const listCheckoutChat = createServerFn({ method: "POST" })
   .inputValidator((d) => creds.parse(d))
   .handler(async ({ data }) => {
