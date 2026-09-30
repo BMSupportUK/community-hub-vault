@@ -1,6 +1,8 @@
 # Roadmap
 
 ## Current
+- [x] Remove automatic support tickets from sales (code + existing order tickets)
+- [x] Shop: duplicate How to Order tab as How to Renew with its own video upload
 - [x] Secure checkout: browse completed/current stages backward and forward without undoing payment
 - [x] Secure checkout: let staff complete a sale from confirmed account setup
 - [x] Paid manual-order checkout: private install-guide card and order-password access
