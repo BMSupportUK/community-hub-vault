@@ -162,14 +162,17 @@ export const checkoutStripeSession = createServerFn({ method: "POST" })
         line_items: [{ price_data: { currency: "gbp", product_data: { name: `Order ${ref}` }, unit_amount: order.total_cents }, quantity: 1 }],
         payment_intent_data: { description: `Order ${ref}`, metadata: { order_id: String(order.id) } },
         metadata: { order_id: String(order.id), ...(order.user_id ? { user_id: String(order.user_id) } : {}) },
-      } as any, { idempotencyKey: `checkout-${order.id}-${Math.floor(Date.now() / 60000)}` });
+      } as any);
       if (!session.client_secret) throw new Error("Stripe did not return a client secret");
       await supabaseAdmin.from("order_payments").upsert({
         order_id: order.id, provider: "stripe", provider_payment_id: session.id, square_payment_id: session.id,
         status: "PENDING", amount_cents: order.total_cents, currency: "GBP", created_by: order.user_id,
       }, { onConflict: "order_id" });
-      return { clientSecret: session.client_secret };
+      return { clientSecret: session.client_secret as string };
+      });
     } catch (e) {
+      const m = (e as Error)?.message ?? "";
+      if (/already|in progress|bank transfer|crypto payment|cancelled/i.test(m)) return { error: m };
       return { error: getStripeErrorMessage(e) };
     }
   });
