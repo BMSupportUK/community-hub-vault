@@ -6467,7 +6467,7 @@ function HowToOrderVideo({ isAdmin, inHero, settingsKey = HOW_TO_ORDER_VIDEO_KEY
     setUploading(true);
     try {
       const ext = (file.name.split(".").pop() || "mp4").toLowerCase();
-      const path = `how-to-order-${Date.now()}.${ext}`;
+      const path = `${pathPrefix}-${Date.now()}.${ext}`;
       const { error: upErr } = await supabase.storage
         .from("shop-media")
         .upload(path, file, { contentType: file.type, upsert: false });
@@ -6475,7 +6475,7 @@ function HowToOrderVideo({ isAdmin, inHero, settingsKey = HOW_TO_ORDER_VIDEO_KEY
       const { error: setErr } = await supabase
         .from("app_settings")
         .upsert(
-          { key: HOW_TO_ORDER_VIDEO_KEY, value: { path } as never },
+          { key: settingsKey, value: { path } as never },
           { onConflict: "key" },
         );
       if (setErr) throw setErr;
