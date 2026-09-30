@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
 import { Check, Copy, ExternalLink, Link2, Loader2 } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { StaffCheckoutChat, secureCheckoutUrl } from "@/components/checkout/CheckoutChat";
+
+
 
 function CopyField({ label, value }: { label: string; value: string }) {
   const [done, setDone] = useState(false);
@@ -45,23 +47,17 @@ export function SecureLinkPanel({ orderId, withChat = true }: { orderId: string;
   );
 }
 
+/** Opens the full-page secure checkout panel for this order. */
 export function ManualOrderLinkButton({ orderId, orderRef }: { orderId: string; orderRef: string | null }) {
-  const [open, setOpen] = useState(false);
-  // Chat alerts link to /admin?tab=order-status&chat=<orderId> — auto-open that order's chat.
-  useEffect(() => {
-    if (new URLSearchParams(window.location.search).get("chat") === orderId) setOpen(true);
-  }, [orderId]);
+  const navigate = useNavigate();
   return (
-    <>
-      <button type="button" onClick={() => setOpen(true)} className="inline-flex items-center gap-1 h-7 px-2 rounded-md border border-border text-xs font-medium hover:bg-surface-2">
-        <Link2 className="size-3.5" /> Secure page
-      </button>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>Secure page · {orderRef ?? orderId.slice(0, 8)}</DialogTitle></DialogHeader>
-          {open && <SecureLinkPanel orderId={orderId} />}
-        </DialogContent>
-      </Dialog>
-    </>
+    <button
+      type="button"
+      onClick={() => navigate({ to: "/admin-secure-page", search: { order: orderId, ref: orderRef ?? undefined } as never })}
+      className="inline-flex items-center gap-1 h-7 px-2 rounded-md border border-border text-xs font-medium hover:bg-surface-2"
+    >
+      <Link2 className="size-3.5" /> Secure page
+    </button>
   );
 }
+

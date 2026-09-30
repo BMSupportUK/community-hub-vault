@@ -68,8 +68,13 @@ function AdminDashboard() {
   const [hasPin, setHasPin] = useState<boolean | null>(null);
   const [unlocked, setUnlocked] = useState(false);
   const [unlockedUntil, setUnlockedUntil] = useState(0);
-  const { next } = Route.useSearch();
+  const { next, chat } = Route.useSearch();
   const navigate = useNavigate();
+  // Old chat alerts link here with ?chat=<orderId> — send them to the full secure page.
+  useEffect(() => {
+    if (chat) navigate({ to: "/admin-secure-page", search: { order: chat } as never });
+  }, [chat, navigate]);
+
 
   useEffect(() => {
     if (!user) return;

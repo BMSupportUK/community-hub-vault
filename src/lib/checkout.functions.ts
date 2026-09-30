@@ -162,7 +162,7 @@ export const sendCheckoutChat = createServerFn({ method: "POST" })
           kind: "checkout_chat",
           title: "New checkout chat message — reply needed",
           body: `Customer wrote: "${preview}"`,
-          link_path: `/admin?tab=order-status&chat=${u.link.order_id}`,
+          link_path: `/admin-secure-page?order=${u.link.order_id}`,
           entity_id: u.link.order_id,
         } as never);
       }

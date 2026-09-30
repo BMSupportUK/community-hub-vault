@@ -70,6 +70,7 @@ import { Route as AuthenticatedApprovedAdminProfitCostsRouteImport } from './rou
 import { Route as AuthenticatedApprovedAdminReportsRouteImport } from './routes/_authenticated/_approved/admin-reports'
 import { Route as AuthenticatedApprovedAdminReviewsRouteImport } from './routes/_authenticated/_approved/admin-reviews'
 import { Route as AuthenticatedApprovedAdminRolesRouteImport } from './routes/_authenticated/_approved/admin-roles'
+import { Route as AuthenticatedApprovedAdminSecurePageRouteImport } from './routes/_authenticated/_approved/admin-secure-page'
 import { Route as AuthenticatedApprovedAdminShiftsRouteImport } from './routes/_authenticated/_approved/admin-shifts'
 import { Route as AuthenticatedApprovedAdminSoundsRouteImport } from './routes/_authenticated/_approved/admin-sounds'
 import { Route as AuthenticatedApprovedAdminSportsImportRouteImport } from './routes/_authenticated/_approved/admin-sports-import'
@@ -497,6 +498,12 @@ const AuthenticatedApprovedAdminRolesRoute =
   AuthenticatedApprovedAdminRolesRouteImport.update({
     id: '/admin-roles',
     path: '/admin-roles',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedAdminSecurePageRoute =
+  AuthenticatedApprovedAdminSecurePageRouteImport.update({
+    id: '/admin-secure-page',
+    path: '/admin-secure-page',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
 const AuthenticatedApprovedAdminShiftsRoute =
@@ -1106,6 +1113,7 @@ export interface FileRoutesByFullPath {
   '/admin-reports': typeof AuthenticatedApprovedAdminReportsRoute
   '/admin-reviews': typeof AuthenticatedApprovedAdminReviewsRoute
   '/admin-roles': typeof AuthenticatedApprovedAdminRolesRoute
+  '/admin-secure-page': typeof AuthenticatedApprovedAdminSecurePageRoute
   '/admin-shifts': typeof AuthenticatedApprovedAdminShiftsRoute
   '/admin-sounds': typeof AuthenticatedApprovedAdminSoundsRoute
   '/admin-sports-import': typeof AuthenticatedApprovedAdminSportsImportRoute
@@ -1257,6 +1265,7 @@ export interface FileRoutesByTo {
   '/admin-reports': typeof AuthenticatedApprovedAdminReportsRoute
   '/admin-reviews': typeof AuthenticatedApprovedAdminReviewsRoute
   '/admin-roles': typeof AuthenticatedApprovedAdminRolesRoute
+  '/admin-secure-page': typeof AuthenticatedApprovedAdminSecurePageRoute
   '/admin-shifts': typeof AuthenticatedApprovedAdminShiftsRoute
   '/admin-sounds': typeof AuthenticatedApprovedAdminSoundsRoute
   '/admin-sports-import': typeof AuthenticatedApprovedAdminSportsImportRoute
@@ -1412,6 +1421,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/admin-reports': typeof AuthenticatedApprovedAdminReportsRoute
   '/_authenticated/_approved/admin-reviews': typeof AuthenticatedApprovedAdminReviewsRoute
   '/_authenticated/_approved/admin-roles': typeof AuthenticatedApprovedAdminRolesRoute
+  '/_authenticated/_approved/admin-secure-page': typeof AuthenticatedApprovedAdminSecurePageRoute
   '/_authenticated/_approved/admin-shifts': typeof AuthenticatedApprovedAdminShiftsRoute
   '/_authenticated/_approved/admin-sounds': typeof AuthenticatedApprovedAdminSoundsRoute
   '/_authenticated/_approved/admin-sports-import': typeof AuthenticatedApprovedAdminSportsImportRoute
@@ -1567,6 +1577,7 @@ export interface FileRouteTypes {
     | '/admin-reports'
     | '/admin-reviews'
     | '/admin-roles'
+    | '/admin-secure-page'
     | '/admin-shifts'
     | '/admin-sounds'
     | '/admin-sports-import'
@@ -1718,6 +1729,7 @@ export interface FileRouteTypes {
     | '/admin-reports'
     | '/admin-reviews'
     | '/admin-roles'
+    | '/admin-secure-page'
     | '/admin-shifts'
     | '/admin-sounds'
     | '/admin-sports-import'
@@ -1872,6 +1884,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/admin-reports'
     | '/_authenticated/_approved/admin-reviews'
     | '/_authenticated/_approved/admin-roles'
+    | '/_authenticated/_approved/admin-secure-page'
     | '/_authenticated/_approved/admin-shifts'
     | '/_authenticated/_approved/admin-sounds'
     | '/_authenticated/_approved/admin-sports-import'
@@ -2462,6 +2475,13 @@ declare module '@tanstack/react-router' {
       path: '/admin-roles'
       fullPath: '/admin-roles'
       preLoaderRoute: typeof AuthenticatedApprovedAdminRolesRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/admin-secure-page': {
+      id: '/_authenticated/_approved/admin-secure-page'
+      path: '/admin-secure-page'
+      fullPath: '/admin-secure-page'
+      preLoaderRoute: typeof AuthenticatedApprovedAdminSecurePageRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
     '/_authenticated/_approved/admin-shifts': {
@@ -3230,6 +3250,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedAdminReportsRoute: typeof AuthenticatedApprovedAdminReportsRoute
   AuthenticatedApprovedAdminReviewsRoute: typeof AuthenticatedApprovedAdminReviewsRoute
   AuthenticatedApprovedAdminRolesRoute: typeof AuthenticatedApprovedAdminRolesRoute
+  AuthenticatedApprovedAdminSecurePageRoute: typeof AuthenticatedApprovedAdminSecurePageRoute
   AuthenticatedApprovedAdminShiftsRoute: typeof AuthenticatedApprovedAdminShiftsRoute
   AuthenticatedApprovedAdminSoundsRoute: typeof AuthenticatedApprovedAdminSoundsRoute
   AuthenticatedApprovedAdminSportsImportRoute: typeof AuthenticatedApprovedAdminSportsImportRoute
@@ -3330,6 +3351,8 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
   AuthenticatedApprovedAdminReviewsRoute:
     AuthenticatedApprovedAdminReviewsRoute,
   AuthenticatedApprovedAdminRolesRoute: AuthenticatedApprovedAdminRolesRoute,
+  AuthenticatedApprovedAdminSecurePageRoute:
+    AuthenticatedApprovedAdminSecurePageRoute,
   AuthenticatedApprovedAdminShiftsRoute: AuthenticatedApprovedAdminShiftsRoute,
   AuthenticatedApprovedAdminSoundsRoute: AuthenticatedApprovedAdminSoundsRoute,
   AuthenticatedApprovedAdminSportsImportRoute:
