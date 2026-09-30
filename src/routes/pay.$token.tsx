@@ -173,6 +173,32 @@ function PayPage() {
           await load(pw);
           toast.success("Your order is now in account setup");
         }}
+        moveToSetup={canMoveToSetup && view.order.id && view.order.paidAt && !view.order.cancelled && !view.order.accountSetupStartedAt && !view.order.accountSetupAt && !view.order.completedAt ? (
+          <button
+            type="button"
+            disabled={movingToSetup}
+            onClick={async () => {
+              setMovingToSetup(true);
+              try {
+                await startAccountSetup({ data: { orderId: view.order.id as string } });
+                await load(pw);
+                toast.success("Order moved to account setup");
+              } catch (cause) {
+                toast.error(cause instanceof Error ? cause.message : "The order could not be moved");
+              } finally {
+                setMovingToSetup(false);
+              }
+            }}
+            className="w-full h-11 px-5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold inline-flex items-center justify-center gap-2 disabled:opacity-60"
+          >
+            {movingToSetup ? <Loader2 className="size-4 animate-spin" /> : <UserCheck className="size-4" />} Move to account setup
+          </button>
+        ) : undefined}
+        addLoginDetails={canManage && view.order.id && view.order.paidAt && view.order.accountSetupStartedAt && !view.order.accountSetupAt && !view.order.cancelled && view.order.customerKind === "new" ? (
+          <button type="button" onClick={() => setLoginOpen(true)} className="w-full h-11 px-5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold inline-flex items-center justify-center gap-2">
+            <KeyRound className="size-4" /> Add customer login details
+          </button>
+        ) : undefined}
         cardPayment={(view.order.method === "square" || view.order.method === "stripe" || view.order.method === "crypto") && !view.order.paidAt && !view.order.cancelled ? (
           <CheckoutCardPayment token={token} password={pw} method={view.order.method} amountCents={view.order.totalCents} onPaid={() => { load(pw); }} />
         ) : undefined}
