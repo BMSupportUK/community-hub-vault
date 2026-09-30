@@ -3900,27 +3900,36 @@ export type Database = {
       }
       order_checkout_links: {
         Row: {
+          account_setup_at: string | null
+          account_setup_by: string | null
           claimed_by: string | null
           created_at: string
           customer_kind: string
           order_id: string
           password: string
+          payment_sent_at: string | null
           token: string
         }
         Insert: {
+          account_setup_at?: string | null
+          account_setup_by?: string | null
           claimed_by?: string | null
           created_at?: string
           customer_kind?: string
           order_id: string
           password: string
+          payment_sent_at?: string | null
           token: string
         }
         Update: {
+          account_setup_at?: string | null
+          account_setup_by?: string | null
           claimed_by?: string | null
           created_at?: string
           customer_kind?: string
           order_id?: string
           password?: string
+          payment_sent_at?: string | null
           token?: string
         }
         Relationships: []
@@ -6495,6 +6504,10 @@ export type Database = {
       admin_revoke_user_sessions: {
         Args: { _keep_session: string; _target: string }
         Returns: number
+      }
+      admin_set_account_setup: {
+        Args: { p_done: boolean; p_order_id: string }
+        Returns: string
       }
       admin_upsert_signup_vpn: {
         Args: {

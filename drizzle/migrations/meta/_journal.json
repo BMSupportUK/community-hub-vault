@@ -351,6 +351,13 @@
       "when": 1790742093494,
       "tag": "0049_checkout_link_allow_crypto",
       "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1790750913084,
+      "tag": "0050_checkout_awaiting_confirmation_and_account_setup",
+      "breakpoints": true
     }
   ]
 }

@@ -100,9 +100,13 @@ export const getCheckout = createServerFn({ method: "POST" })
       const { data: b } = await supabaseAdmin.from("bank_transfer_details").select("account_name,sort_code,account_number,iban,bic").limit(1).maybeSingle();
       bank = b ?? null;
     }
+    const { data: pay } = await supabaseAdmin.from("order_payments").select("provider,status").eq("order_id", link.order_id).maybeSingle();
+    const cryptoConfirming = pay?.provider === "nowpayments" && ["confirming", "confirmed", "sending", "partially_paid"].includes(String(pay.status));
     return {
       ok: true as const,
       order: {
+        paymentSentAt: ((link as any).payment_sent_at as string | null) ?? (cryptoConfirming ? new Date().toISOString() : null),
+        accountSetupAt: ((link as any).account_setup_at as string | null) ?? null,
         ref: order.order_ref ?? String(order.id).slice(0, 8),
         name: order.shipping_name ?? "",
         totalCents: Number(order.total_cents ?? 0),
@@ -164,6 +168,29 @@ export const sendCheckoutChat = createServerFn({ method: "POST" })
       }
     } catch (e) {
       console.error("Checkout chat staff alert failed:", e);
+    }
+    return { ok: true as const };
+  });
+
+/** Customer says they've sent their bank transfer — shows "awaiting confirmation" and alerts staff. */
+export const markPaymentSent = createServerFn({ method: "POST" })
+  .inputValidator((d) => creds.parse(d))
+  .handler(async ({ data }) => {
+    const u = await unlock(data.token, data.password);
+    if (!u) return { ok: false as const };
+    const { data: row } = await u.supabaseAdmin.from("order_checkout_links")
+      .update({ payment_sent_at: new Date().toISOString() } as never)
+      .eq("order_id", u.link.order_id).is("payment_sent_at", null).select("order_id").maybeSingle();
+    if (row) {
+      try {
+        await u.supabaseAdmin.from("staff_notifications").insert({
+          kind: "checkout_chat",
+          title: "Customer says bank transfer sent",
+          body: "Check Wise for the incoming payment and confirm it.",
+          link_path: `/admin-secure-page?order=${u.link.order_id}`,
+          entity_id: u.link.order_id,
+        } as never);
+      } catch { /* best effort */ }
     }
     return { ok: true as const };
   });
