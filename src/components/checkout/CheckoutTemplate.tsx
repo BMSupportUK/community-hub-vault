@@ -1,8 +1,9 @@
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { AlertTriangle, Bitcoin, BookOpen, Check, Clock, Copy, CreditCard, Hourglass, Loader2, Lock, PartyPopper, Send, UserCheck, UserPlus } from "lucide-react";
+import { AlertTriangle, Bitcoin, BookOpen, Check, ChevronLeft, ChevronRight, Clock, Copy, CreditCard, Hourglass, Loader2, Lock, PartyPopper, Send, UserCheck, UserPlus } from "lucide-react";
 import hero from "@/assets/checkout-family-tv.jpg";
 import installGuideIllustration from "@/assets/manual-order-install-guide.jpg";
+import { Button } from "@/components/ui/button";
 
 export type CheckoutView = {
   order: {
@@ -37,22 +38,25 @@ export type CheckoutView = {
 const GBP = (c: number) => new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(c / 100);
 const METHOD: Record<string, string> = { stripe: "Stripe", square: "Square", wise: "bank transfer", cash: "cash", crypto: "crypto (USDT)" };
 
-export function OrderStatusBar({ step, compact = false, awaitingConfirmation = false, accountSetup = false, renewal = false }: { step: number; compact?: boolean; awaitingConfirmation?: boolean; accountSetup?: boolean; renewal?: boolean }) {
+export function OrderStatusBar({ step, compact = false, awaitingConfirmation = false, accountSetup = false, renewal = false, selectedStep, onStepSelect }: { step: number; compact?: boolean; awaitingConfirmation?: boolean; accountSetup?: boolean; renewal?: boolean; selectedStep?: number; onStepSelect?: (step: number) => void }) {
   const labels = ["Created", awaitingConfirmation ? "Awaiting confirmation" : "Awaiting payment", "Paid", renewal ? "Subscription extended" : "Account set up", "Completed"];
   // Map the 4-state step (0-3) onto 5 labels: after paid, "Account set up" is done once confirmed.
   step = step === 3 ? 4 : step === 2 && accountSetup ? 3 : step;
+  const shownStep = selectedStep ?? step;
   return (
-    <div className="flex items-start w-full" aria-label={`Order status: ${labels[step]}`}>
+    <div className="flex items-start w-full" aria-label={`Order status: ${labels[step]}. Viewing ${labels[shownStep]}`}>
       {labels.map((l, i) => {
         const done = i < step || step === 4;
         const current = i === step;
+        const selected = i === shownStep;
+        const available = i <= step;
         return (
           <div key={l} className="flex-1 flex flex-col items-center relative">
             {i > 0 && <div className={`absolute top-[11px] right-1/2 w-full h-0.5 ${i <= step ? "bg-success" : "bg-border"}`} />}
-            <div className={`relative z-10 grid place-items-center rounded-full border-2 ${compact ? "size-5" : "size-6"} ${done ? "bg-success border-success text-background" : current ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-muted-foreground"}`}>
+            <button type="button" disabled={!onStepSelect || !available} onClick={() => onStepSelect?.(i)} aria-label={`${l}${current ? ", current stage" : ""}${selected ? ", selected" : ""}`} className={`relative z-10 grid place-items-center rounded-full border-2 disabled:cursor-default ${compact ? "size-5" : "size-6"} ${selected ? "ring-2 ring-primary ring-offset-2 ring-offset-background" : ""} ${done ? "bg-success border-success text-background" : current ? "border-primary bg-primary text-primary-foreground" : "border-border bg-card text-muted-foreground"}`}>
               {done ? <Check className="size-3" /> : <span className="text-[10px] font-bold">{i + 1}</span>}
-            </div>
-            {!compact && <span className={`mt-1.5 text-[11px] text-center ${current ? "font-semibold text-foreground" : "text-muted-foreground"}`}>{l}</span>}
+            </button>
+            {!compact && <span className={`mt-1.5 text-[11px] text-center ${selected ? "font-semibold text-foreground" : "text-muted-foreground"}`}>{l}</span>}
           </div>
         );
       })}
@@ -81,7 +85,7 @@ function CopyRow({ label, value }: { label: string; value: string | null }) {
 }
 
 
-export function CheckoutTemplate({ view, preview = false, claimToken, cardPayment, onPaymentSent, onContinueToSetup, moveToSetup, addLoginDetails }: { view: CheckoutView; preview?: boolean; claimToken?: string; cardPayment?: ReactNode; onPaymentSent?: () => Promise<void>; onContinueToSetup?: () => Promise<void>; moveToSetup?: ReactNode; addLoginDetails?: ReactNode }) {
+export function CheckoutTemplate({ view, preview = false, claimToken, cardPayment, onPaymentSent, onContinueToSetup, moveToSetup, addLoginDetails, completeSale }: { view: CheckoutView; preview?: boolean; claimToken?: string; cardPayment?: ReactNode; onPaymentSent?: () => Promise<void>; onContinueToSetup?: () => Promise<void>; moveToSetup?: ReactNode; addLoginDetails?: ReactNode; completeSale?: ReactNode }) {
   const [sending, setSending] = useState(false);
   const [continuing, setContinuing] = useState(false);
   const { order, items, invoice, bank } = view;
@@ -92,11 +96,14 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
   const awaitingConfirmation = !paid && !order.cancelled && !!order.paymentSentAt;
   const accountSetupStarted = !!order.accountSetupStartedAt || !!order.accountSetupAt || step === 3;
   const accountSetup = !!order.accountSetupAt;
+  const latestStage = step === 3 ? 4 : step === 2 && accountSetupStarted ? 3 : step;
+  const [visibleStage, setVisibleStage] = useState(latestStage);
+  useEffect(() => setVisibleStage(latestStage), [latestStage]);
   // Payment details (bank info, card form, crypto) sit in a right sidebar on
   // wide screens while the order is awaiting payment.
-  const paymentSidebar = ["wise", "stripe", "square", "crypto"].includes(method) && !paid && !order.cancelled;
-  const accountSidebar = paid && !order.cancelled && accountSetupStarted;
-  const paidSidebar = paid && !order.cancelled && !accountSetupStarted;
+  const paymentSidebar = ["wise", "stripe", "square", "crypto"].includes(method) && !paid && !order.cancelled && visibleStage === 1;
+  const accountSidebar = paid && !order.cancelled && visibleStage >= 3;
+  const paidSidebar = paid && !order.cancelled && visibleStage === 2;
   const splitLayout = paymentSidebar || accountSidebar || paidSidebar;
   const installCard = paid && claimToken ? (
     <section className="overflow-hidden rounded-2xl border border-border bg-card">
@@ -115,10 +122,14 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
   let heading = `Order #${order.ref}`;
   let sub = "Please complete your payment below.";
   if (order.cancelled) { heading = "This order has been cancelled"; sub = "Contact us using the chat if you think this is a mistake."; }
-  else if (step === 3) {
+  else if (visibleStage === 0) { heading = `Order #${order.ref} created`; sub = "Your secure order was created successfully."; }
+  else if (visibleStage === 1 && paid) { heading = "Payment stage"; sub = "This payment step has been completed."; }
+  else if (visibleStage === 4) {
     heading = order.customerKind === "existing" ? "Your subscription has been extended!" : "Your account has been set up!";
     sub = order.customerKind === "existing" ? "Your extension is live now — just restart your app to carry on watching." : "Your new account is ready. Your login details will be sent to you by the team.";
-  } else if (method === "cash") { heading = "Thank you for your cash payment!"; sub = "We'll set everything up and let you know when it's complete."; }
+  } else if (visibleStage === 3) { heading = order.customerKind === "existing" ? "Subscription extension" : "Account setup"; sub = accountSetup ? "This step is complete and the sale is ready to finish." : "Payment is confirmed and setup is in progress."; }
+  else if (visibleStage === 2) { heading = "Thank you — we've got your payment!"; sub = "Your payment has been confirmed."; }
+  else if (method === "cash") { heading = "Thank you for your cash payment!"; sub = "We'll set everything up and let you know when it's complete."; }
   else if (awaitingConfirmation) { heading = "Payment sent — awaiting confirmation"; sub = "Thanks! We're waiting for your payment to arrive. This page updates automatically once it's confirmed."; }
   else if (paid) { heading = "Thank you — we've got your payment!"; sub = "We'll set everything up and let you know when it's complete."; }
 
@@ -139,7 +150,16 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
             </p>
           </div>
 
-          {!order.cancelled && <OrderStatusBar step={step} awaitingConfirmation={awaitingConfirmation} accountSetup={accountSetupStarted} renewal={order.customerKind === "existing"} />}
+          {!order.cancelled && (
+            <div className="space-y-3">
+              <OrderStatusBar step={step} awaitingConfirmation={awaitingConfirmation} accountSetup={accountSetupStarted} renewal={order.customerKind === "existing"} selectedStep={visibleStage} onStepSelect={setVisibleStage} />
+              <div className="flex items-center justify-between gap-3">
+                <Button type="button" variant="outline" size="sm" disabled={visibleStage === 0} onClick={() => setVisibleStage((stage) => Math.max(0, stage - 1))}><ChevronLeft className="size-4" /> Previous step</Button>
+                <span className="text-xs text-muted-foreground">Viewing step {visibleStage + 1} of {latestStage + 1}</span>
+                <Button type="button" variant="outline" size="sm" disabled={visibleStage >= latestStage} onClick={() => setVisibleStage((stage) => Math.min(latestStage, stage + 1))}>Next step <ChevronRight className="size-4" /></Button>
+              </div>
+            </div>
+          )}
 
           {awaitingConfirmation && (
             <div className="rounded-2xl border-2 border-warning bg-warning/10 p-4 flex gap-3 items-start">
@@ -228,7 +248,8 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
               </section>
               {installCard}
               {addLoginDetails}
-              {step === 3 && order.manual && (
+              {visibleStage === 3 && completeSale}
+              {visibleStage === 4 && order.manual && (
                 <section className="rounded-2xl border border-primary/30 bg-primary/5 p-5 flex gap-3 items-start">
                   <UserPlus className="size-5 text-primary shrink-0 mt-0.5" />
                   <div className="space-y-2 min-w-0">

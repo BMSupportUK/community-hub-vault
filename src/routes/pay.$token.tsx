@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, KeyRound, Loader2, Lock, ShieldCheck, UserCheck } from "lucide-react";
-import { continueCheckoutToAccountSetup, getCheckout, markPaymentSent, startCheckoutAccountSetup } from "@/lib/checkout.functions";
+import { ArrowLeft, CheckCircle2, KeyRound, Loader2, Lock, ShieldCheck, UserCheck } from "lucide-react";
+import { completeCheckoutSale, continueCheckoutToAccountSetup, getCheckout, markPaymentSent, startCheckoutAccountSetup } from "@/lib/checkout.functions";
 import { CheckoutTemplate, type CheckoutView } from "@/components/checkout/CheckoutTemplate";
 import { CustomerCheckoutChat } from "@/components/checkout/CheckoutChat";
 import { CheckoutCardPayment } from "@/components/checkout/CheckoutCardPayment";
@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { SecureLinkPanel } from "@/components/checkout/ManualOrderLinkDialog";
 import hero from "@/assets/checkout-family-tv.jpg";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/pay/$token")({
   head: () => ({
@@ -32,12 +33,14 @@ function PayPage() {
   const { user, hasRole } = useAuth();
   const [loginOpen, setLoginOpen] = useState(false);
   const [movingToSetup, setMovingToSetup] = useState(false);
+  const [completingSale, setCompletingSale] = useState(false);
   const canManage = !!user && (hasRole("admin") || hasRole("management"));
   const canMoveToSetup = !!user && (canManage || hasRole("staff"));
   const fetchCheckout = useServerFn(getCheckout);
   const sendPaymentSent = useServerFn(markPaymentSent);
   const startAccountSetup = useServerFn(startCheckoutAccountSetup);
   const continueToAccountSetup = useServerFn(continueCheckoutToAccountSetup);
+  const completeSale = useServerFn(completeCheckoutSale);
   const [password, setPassword] = useState<string | null>(null);
   const [unlocked, setUnlocked] = useState(false);
   const [input, setInput] = useState("");
@@ -198,6 +201,21 @@ function PayPage() {
           <button type="button" onClick={() => setLoginOpen(true)} className="w-full h-11 px-5 rounded-xl bg-primary text-primary-foreground text-sm font-semibold inline-flex items-center justify-center gap-2">
             <KeyRound className="size-4" /> {view.order.customerKind === "existing" ? "Enter renewal expiry date" : "Add customer login details"}
           </button>
+        ) : undefined}
+        completeSale={canMoveToSetup && view.order.id && view.order.paidAt && view.order.accountSetupAt && !view.order.completedAt && !view.order.cancelled ? (
+          <Button type="button" disabled={completingSale} onClick={async () => {
+            if (!window.confirm("Complete this sale? The payment and account setup will remain confirmed.")) return;
+            setCompletingSale(true);
+            try {
+              await completeSale({ data: { orderId: view.order.id as string } });
+              await load(pw);
+              toast.success("Sale completed");
+            } catch (cause) {
+              toast.error(cause instanceof Error ? cause.message : "The sale could not be completed");
+            } finally { setCompletingSale(false); }
+          }} className="w-full">
+            {completingSale ? <Loader2 className="size-4 animate-spin" /> : <CheckCircle2 className="size-4" />} Complete sale
+          </Button>
         ) : undefined}
         cardPayment={(view.order.method === "square" || view.order.method === "stripe" || view.order.method === "crypto") && !view.order.paidAt && !view.order.cancelled ? (
           <CheckoutCardPayment token={token} password={pw} method={view.order.method} amountCents={view.order.totalCents} onPaid={() => { load(pw); }} />
