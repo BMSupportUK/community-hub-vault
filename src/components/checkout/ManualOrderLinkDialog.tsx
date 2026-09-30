@@ -32,6 +32,7 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
   const [accountPassword, setAccountPassword] = useState("");
   const [qdCodes, setQdCodes] = useState<{ id: string; label: string; code: string }[]>([]);
   const [qdCodeId, setQdCodeId] = useState("");
+  const [expiryLocal, setExpiryLocal] = useState("");
   const [busy, setBusy] = useState(false);
   const createCredential = useServerFn(createCredentialForOrder);
   useEffect(() => {
@@ -44,7 +45,7 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
       setOrderPaid(!!(orderData as { paid_at?: string | null } | null)?.paid_at);
       const codes = (codeData ?? []) as { id: string; label: string; code: string }[];
       setQdCodes(codes);
-      if (codes.length === 1) setQdCodeId(codes[0].id);
+      if (codes.length > 0) setQdCodeId(codes[0].id);
     });
   }, [orderId]);
   const toggleSetup = async (done: boolean) => {
@@ -67,6 +68,12 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
       if (result.status !== "applied") {
         toast.error(result.status === "no_term" ? "The subscription length could not be read from the order" : "The account details could not be saved");
         return;
+      }
+      if (expiryLocal) {
+        const chosen = new Date(expiryLocal);
+        const { data: newExp, error: expError } = await supabase.rpc("staff_set_order_credential_expiry" as never, { p_order_id: orderId, p_credential_id: result.credentialId || null, p_expiry: chosen.toISOString() } as never);
+        if (expError) throw expError;
+        result.newExpiry = new Date((newExp as unknown as string) ?? chosen.toISOString()).toISOString();
       }
       const selectedCode = qdCodes.find((code) => code.id === qdCodeId);
       // Remember the chosen QD code on the link so the customer's secure page shows it.
@@ -95,6 +102,16 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
       setBusy(false);
     }
   };
+  const selectedQd = qdCodes.find((code) => code.id === qdCodeId);
+  const extraFields = (
+    <>
+      <label className="block space-y-1"><span className="text-xs font-medium">Subscription expiry date &amp; time</span><input type="datetime-local" value={expiryLocal} onChange={(event) => setExpiryLocal(event.target.value)} className="w-full h-9 rounded-lg border border-border bg-background px-3 text-sm" /><span className="block text-[11px] text-muted-foreground">Leave blank to use the order's subscription length from today.</span></label>
+      <label className="block space-y-1"><span className="text-xs font-medium">QD app login code (DNS code from admin dashboard)</span><select value={qdCodeId} onChange={(event) => setQdCodeId(event.target.value)} className="w-full h-9 rounded-lg border border-border bg-background px-3 text-sm"><option value="">Customer is not using QD</option>{qdCodes.map((code) => <option key={code.id} value={code.id}>{code.label} — {code.code}</option>)}</select></label>
+      {selectedQd ? (
+        <div className="rounded-lg border border-primary/30 bg-primary/5 px-3 py-2"><div className="text-[11px] text-muted-foreground">QD login code that will be sent</div><div className="font-mono text-base font-semibold break-all">{selectedQd.code}</div></div>
+      ) : qdCodes.length === 0 ? <p className="text-[11px] text-warning">No DNS codes saved in the admin dashboard yet.</p> : null}
+    </>
+  );
   const fields = (
     <div className="space-y-3 min-w-0">
       {link.payment_sent_at && (
@@ -113,7 +130,7 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
           <p className="text-xs text-muted-foreground">Enter the service login details. Saving them creates the customer's credential and sends the username, password, subscription length, dates and QD code in the checkout chat.</p>
           <label className="block space-y-1"><span className="text-xs font-medium">Username</span><input value={loginName} onChange={(event) => setLoginName(event.target.value)} autoComplete="off" className="w-full h-9 rounded-lg border border-border bg-background px-3 text-sm" /></label>
           <label className="block space-y-1"><span className="text-xs font-medium">Password</span><input value={accountPassword} onChange={(event) => setAccountPassword(event.target.value)} autoComplete="off" className="w-full h-9 rounded-lg border border-border bg-background px-3 text-sm" /></label>
-          <label className="block space-y-1"><span className="text-xs font-medium">QD app login code</span><select value={qdCodeId} onChange={(event) => setQdCodeId(event.target.value)} className="w-full h-9 rounded-lg border border-border bg-background px-3 text-sm"><option value="">Customer is not using QD / send later</option>{qdCodes.map((code) => <option key={code.id} value={code.id}>{code.label}</option>)}</select></label>
+          {extraFields}
           <button type="button" disabled={busy || !loginName.trim() || !accountPassword.trim()} onClick={sendCredentials} className="inline-flex items-center gap-2 h-9 px-3 rounded-lg bg-primary text-primary-foreground text-xs font-semibold disabled:opacity-50">{busy ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />} Save and send login details</button>
         </div>
       )}
@@ -131,7 +148,7 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
       <div className="space-y-3">
         <label className="block space-y-1"><span className="text-xs font-medium">Username</span><input value={loginName} onChange={(event) => setLoginName(event.target.value)} autoComplete="off" className="w-full h-9 rounded-lg border border-border bg-background px-3 text-sm" /></label>
         <label className="block space-y-1"><span className="text-xs font-medium">Password</span><input value={accountPassword} onChange={(event) => setAccountPassword(event.target.value)} autoComplete="off" className="w-full h-9 rounded-lg border border-border bg-background px-3 text-sm" /></label>
-        <label className="block space-y-1"><span className="text-xs font-medium">QD app login code</span><select value={qdCodeId} onChange={(event) => setQdCodeId(event.target.value)} className="w-full h-9 rounded-lg border border-border bg-background px-3 text-sm"><option value="">Customer is not using QD / send later</option>{qdCodes.map((code) => <option key={code.id} value={code.id}>{code.label}</option>)}</select></label>
+        {extraFields}
         <button type="button" disabled={busy || !loginName.trim() || !accountPassword.trim()} onClick={async () => { await sendCredentials(); onDone?.(); }} className="inline-flex w-full items-center justify-center gap-2 h-10 px-3 rounded-lg bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-50">{busy ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />} Save and send login details</button>
       </div>
     );

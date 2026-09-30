@@ -7117,6 +7117,10 @@ export type Database = {
         Args: { p_by: string; p_pin: string; p_user: string }
         Returns: undefined
       }
+      staff_set_order_credential_expiry: {
+        Args: { p_credential_id: string; p_expiry: string; p_order_id: string }
+        Returns: string
+      }
       staff_stash_order_credential: {
         Args: {
           p_account_type?: string
