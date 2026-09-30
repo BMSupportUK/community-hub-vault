@@ -400,6 +400,13 @@
       "when": 1790786833191,
       "tag": "0056_fix_admin_complete_manual_order_columns",
       "breakpoints": true
+    },
+    {
+      "idx": 57,
+      "version": "7",
+      "when": 1790789988138,
+      "tag": "0057_orders_view_allow_server_payment_updates",
+      "breakpoints": true
     }
   ]
 }
