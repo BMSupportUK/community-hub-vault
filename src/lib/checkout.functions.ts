@@ -114,6 +114,7 @@ export const getCheckout = createServerFn({ method: "POST" })
     return {
       ok: true as const,
       order: {
+        id: String(order.id),
         paymentSentAt: ((link as any).payment_sent_at as string | null) ?? (cryptoConfirming ? new Date().toISOString() : null),
         accountSetupAt: ((link as any).account_setup_at as string | null) ?? null,
         ref: order.order_ref ?? String(order.id).slice(0, 8),

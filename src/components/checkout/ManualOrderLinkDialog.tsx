@@ -25,7 +25,7 @@ function CopyField({ label, value }: { label: string; value: string }) {
 }
 
 /** Secure link + password panel, reused after saving an order and on the orders list. */
-export function SecureLinkPanel({ orderId, withChat = true }: { orderId: string; withChat?: boolean }) {
+export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, onDone }: { orderId: string; withChat?: boolean; loginOnly?: boolean; onDone?: () => void }) {
   const [link, setLink] = useState<{ token: string; password: string; payment_sent_at: string | null; account_setup_at: string | null; customer_kind: string | null } | null | undefined>(undefined);
   const [orderPaid, setOrderPaid] = useState(false);
   const [loginName, setLoginName] = useState("");
@@ -123,6 +123,19 @@ export function SecureLinkPanel({ orderId, withChat = true }: { orderId: string;
       <a href={url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-primary hover:underline"><ExternalLink className="size-3.5" /> Open page</a>
     </div>
   );
+  if (loginOnly) {
+    if (renewal) return <p className="text-sm text-muted-foreground">This is a renewal — no new login details are needed. Confirm the extension on the admin Secure page.</p>;
+    if (!orderPaid) return <p className="text-sm text-muted-foreground">Login details can be added once the order is paid.</p>;
+    if (link.account_setup_at) return <p className="text-sm text-success">Login details already sent on {new Date(link.account_setup_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}.</p>;
+    return (
+      <div className="space-y-3">
+        <label className="block space-y-1"><span className="text-xs font-medium">Username</span><input value={loginName} onChange={(event) => setLoginName(event.target.value)} autoComplete="off" className="w-full h-9 rounded-lg border border-border bg-background px-3 text-sm" /></label>
+        <label className="block space-y-1"><span className="text-xs font-medium">Password</span><input value={accountPassword} onChange={(event) => setAccountPassword(event.target.value)} autoComplete="off" className="w-full h-9 rounded-lg border border-border bg-background px-3 text-sm" /></label>
+        <label className="block space-y-1"><span className="text-xs font-medium">QD app login code</span><select value={qdCodeId} onChange={(event) => setQdCodeId(event.target.value)} className="w-full h-9 rounded-lg border border-border bg-background px-3 text-sm"><option value="">Customer is not using QD / send later</option>{qdCodes.map((code) => <option key={code.id} value={code.id}>{code.label}</option>)}</select></label>
+        <button type="button" disabled={busy || !loginName.trim() || !accountPassword.trim()} onClick={async () => { await sendCredentials(); onDone?.(); }} className="inline-flex w-full items-center justify-center gap-2 h-10 px-3 rounded-lg bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-50">{busy ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />} Save and send login details</button>
+      </div>
+    );
+  }
   if (!withChat) return fields;
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)]">
