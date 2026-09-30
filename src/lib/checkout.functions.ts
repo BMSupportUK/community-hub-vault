@@ -149,5 +149,25 @@ export const sendCheckoutChat = createServerFn({ method: "POST" })
     const { error } = await u.supabaseAdmin.from("checkout_chat_messages")
       .insert({ order_id: u.link.order_id, sender: "customer", content: data.content });
     if (error) return { ok: false as const };
+    // Alert staff (bell + phone/browser push via staff_notifications trigger).
+    // Throttle: one alert per order per 2 minutes so a burst of messages doesn't spam.
+    try {
+      const since = new Date(Date.now() - 2 * 60 * 1000).toISOString();
+      const { count } = await u.supabaseAdmin.from("staff_notifications")
+        .select("id", { count: "exact", head: true })
+        .eq("kind", "checkout_chat").eq("entity_id", u.link.order_id).gte("created_at", since);
+      if (!count) {
+        const preview = data.content.length > 120 ? data.content.slice(0, 117) + "…" : data.content;
+        await u.supabaseAdmin.from("staff_notifications").insert({
+          kind: "checkout_chat",
+          title: "New checkout chat message — reply needed",
+          body: `Customer wrote: "${preview}"`,
+          link_path: "/shop?view=admin",
+          entity_id: u.link.order_id,
+        } as never);
+      }
+    } catch (e) {
+      console.error("Checkout chat staff alert failed:", e);
+    }
     return { ok: true as const };
   });
