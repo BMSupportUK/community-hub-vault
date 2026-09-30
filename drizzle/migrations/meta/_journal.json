@@ -379,6 +379,13 @@
       "when": 1790757001693,
       "tag": "0053_staff_set_order_credential_expiry",
       "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "7",
+      "when": 1790765112147,
+      "tag": "0054_checkout_chat_automated_sales_messages",
+      "breakpoints": true
     }
   ]
 }
