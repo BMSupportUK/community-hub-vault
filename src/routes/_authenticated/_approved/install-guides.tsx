@@ -128,7 +128,7 @@ function InstallGuidesPage() {
   const canManageApps = canManageGuides;
   const canSeeTransfers = hasAny(["admin", "management", "staff"]);
 
-  const { tab: tabParam } = Route.useSearch();
+  const { tab: tabParam, checkout: checkoutToken } = Route.useSearch();
   // Opening the guides screen always starts on the Welcome tab (deep links
   // with an explicit ?tab= still win); we never restore the last viewed tab.
   const [tab, setTab] = useState<string>(() => tabParam || "welcome");
