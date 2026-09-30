@@ -92,3 +92,7 @@ Splitting a multi-event post at the second event must keep both events. A chosen
 
 ## ESPN+ ranked team at line start (permanent)
 `#10 Notre Dame vs. UIC` — a `#` followed by a digit is a ranking, never a markdown heading. Headings need `#` then a non-digit. `vs.` also blocks heading detection. Tested on the real 38-row post: 38 events, 0 issues.
+
+## Tennis TV (VIP | Tennis TV)
+Rows `A vs B @ Sep 30 05:00 AM - ATP Tokyo :Tennis 01` → event "A v B - ATP Tokyo", channel "Tennis 01".
+Untimed follow-on rows `A vs B - WTA Beijing :Tennis 10` are skipped — never attached as channels of the event above (they have no start time). Permanent test in tests/sports-import-formats.test.ts.

@@ -250,4 +250,14 @@ describe("ESPN+ ranked team at line start", () => {
     expect(r.events.every((e) => e.channels.length === 1 && e.channels[0]!.startsWith("HBO Max UK"))).toBe(true);
     expect(r.events.some((e) => e.title.includes("Round 3") && e.title.includes("Selby"))).toBe(true);
   });
+
+  test("Tennis TV untimed follow-on rows never become channels of the timed match above", () => {
+    const raw = "**VIP | Tennis TV**\n\nKhachanov, Karen vs Auger-Aliassime, Felix @ Sep 30 05:10 AM - ATP Beijing :Tennis 07\nTabilo, Alejandro vs Paul, Tommy @ Sep 30 06:25 AM - ATP Tokyo :Tennis 08\nArnaldi, Matteo vs Sakamoto, Rei - ATP Tokyo :Tennis 09\nBai, Zhuoxuan vs Fruhvirtova, Linda - WTA Beijing :Tennis 10";
+    const r = checkSportsImport(raw, "gmt", Date.parse("2026-09-30T03:00:00Z"), "Tennis TV");
+    expect(r.errors).toBe(0);
+    expect(r.warnings).toBe(0);
+    expect(r.events).toHaveLength(2);
+    expect(r.events[1]).toMatchObject({ time: "06:25 BST", title: "Tabilo, Alejandro v Paul, Tommy - ATP Tokyo", channels: ["Tennis 08"] });
+    expect(parseSportsListingBlock(r.formatted)).toEqual(r.events);
+  });
 });

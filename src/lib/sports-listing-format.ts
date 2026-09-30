@@ -1258,6 +1258,14 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
       previousPlainLine = line;
       continue;
     }
+    // Tennis TV / season-pass follow-on rows with no slot:
+    // "Arnaldi, Matteo vs Sakamoto, Rei - ATP Tokyo :Tennis 09". They are a
+    // fixture, never extra channels for the event above, and carry no start
+    // time, so they cannot become guide events — skip them.
+    if (/\s(?:vs?\.?|@|x)\s/i.test(line) && /\s:\s*[A-Za-z][A-Za-z ]{0,30}\d{1,3}\s*$/.test(line)) {
+      lastChannelWasPlain = null;
+      continue;
+    }
     const parts = splitChannelLine(line);
     current.channels.push(...parts);
     lastChannelWasPlain = parts.length === 1 ? parts[0] : null;
