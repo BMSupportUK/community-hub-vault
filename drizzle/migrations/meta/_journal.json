@@ -337,6 +337,13 @@
       "when": 1790741517082,
       "tag": "0047_shop_order_secure_checkout",
       "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1790741717492,
+      "tag": "0048_checkout_link_keep_method",
+      "breakpoints": true
     }
   ]
 }
