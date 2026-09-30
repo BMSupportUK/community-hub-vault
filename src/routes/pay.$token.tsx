@@ -26,6 +26,7 @@ export const Route = createFileRoute("/pay/$token")({
 
 function PayPage() {
   const { token } = Route.useParams();
+  const { user } = useAuth();
   const fetchCheckout = useServerFn(getCheckout);
   const [password, setPassword] = useState<string | null>(null);
   const [unlocked, setUnlocked] = useState(false);
