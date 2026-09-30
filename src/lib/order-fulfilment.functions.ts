@@ -294,7 +294,19 @@ export const getOrderRenewalAccounts = createServerFn({ method: "POST" })
   .inputValidator((input) => z.object({ orderId: z.string().uuid() }).parse(input))
   .handler(async ({ data, context }) => {
     await assertStaff(context.supabase, context.userId);
-    const { order, creds, terms } = await loadOrderContext(data.orderId);
+    const { order, terms, ownerId } = await loadOrderContext(data.orderId);
+    // The credentials view only shows rows to a signed-in staff member, so read
+    // it as the staff user (the admin client sees nothing through it).
+    let creds: CredentialCandidate[] = [];
+    if (ownerId) {
+      const { data: rows, error } = await context.supabase
+        .from("app_credentials")
+        .select("id, account_number, app_login_name, account_type, expiry_at")
+        .eq("owner_id", ownerId)
+        .order("account_number", { ascending: true });
+      if (error) throw new Error(error.message);
+      creds = (rows ?? []) as CredentialCandidate[];
+    }
     const existingLogin = (order.existing_username ?? "").trim().toLowerCase();
     const suggested = creds.find((c) => (c.app_login_name ?? "").trim().toLowerCase() === existingLogin) ?? creds[0] ?? null;
     return { accounts: creds, suggestedId: suggested?.id ?? null, months: terms.months };
