@@ -3909,6 +3909,7 @@ export type Database = {
           customer_kind: string
           order_id: string
           password: string
+          payment_lock_until: string | null
           payment_sent_at: string | null
           qd_code_id: string | null
           token: string
@@ -3923,6 +3924,7 @@ export type Database = {
           customer_kind?: string
           order_id: string
           password: string
+          payment_lock_until?: string | null
           payment_sent_at?: string | null
           qd_code_id?: string | null
           token: string
@@ -3937,6 +3939,7 @@ export type Database = {
           customer_kind?: string
           order_id?: string
           password?: string
+          payment_lock_until?: string | null
           payment_sent_at?: string | null
           qd_code_id?: string | null
           token?: string
@@ -6583,6 +6586,10 @@ export type Database = {
       }
       checkout_order_vals: { Args: { p_order: string }; Returns: Json }
       claim_checkout_access: { Args: { p_token: string }; Returns: boolean }
+      claim_checkout_payment_lock: {
+        Args: { p_order: string; p_seconds?: number }
+        Returns: boolean
+      }
       claim_invite_access: { Args: never; Returns: boolean }
       cleanup_old_chat_messages: { Args: never; Returns: number }
       clear_admin_unlock_failures: { Args: never; Returns: undefined }
@@ -7053,6 +7060,10 @@ export type Database = {
       }
       record_admin_unlock_failure: { Args: never; Returns: Json }
       redeem_invite: { Args: { p_code: string }; Returns: Json }
+      release_checkout_payment_lock: {
+        Args: { p_order: string }
+        Returns: undefined
+      }
       reopen_own_ticket: { Args: { _ticket_id: string }; Returns: boolean }
       replace_discord_import_queue_item_with_split: {
         Args: { p_original_id: string; p_rows: Json }
