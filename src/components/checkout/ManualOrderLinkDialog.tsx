@@ -129,7 +129,7 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
         `Expires: ${expires}`,
         selectedCode ? `QD app login code (${selectedCode.label}): ${selectedCode.code}` : "If you use the QD app, ask us in this chat for your QD login code.",
       ].join("\n");
-      const { error } = await supabase.from("checkout_chat_messages").insert({ order_id: orderId, sender: "staff", content: message });
+      const { error } = await supabase.from("checkout_chat_messages").insert({ order_id: orderId, sender: "staff", staff_id: (await supabase.auth.getUser()).data.user?.id, content: message });
       if (error) throw error;
       const { data, error: setupError } = await supabase.rpc("admin_set_account_setup" as never, { p_order_id: orderId, p_done: true } as never);
       if (setupError) throw setupError;
@@ -137,7 +137,7 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
       setAccountPassword("");
       toast.success("Account saved and login details sent in the chat");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Account details could not be sent");
+      toast.error(error instanceof Error ? error.message : (error as { message?: string })?.message ?? "Account details could not be sent");
     } finally {
       setBusy(false);
     }
@@ -197,7 +197,7 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
           if (error) throw error;
           const account = renewAccounts.find((a) => a.id === renewAccountId);
           const expires = chosen.toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" });
-          const { error: chatError } = await supabase.from("checkout_chat_messages").insert({ order_id: orderId, sender: "staff", content: `Your subscription has been renewed.\n${account?.app_login_name ? `Account: ${account.app_login_name}\n` : ""}New expiry: ${expires}\nJust restart your app to carry on watching.` });
+          const { error: chatError } = await supabase.from("checkout_chat_messages").insert({ order_id: orderId, sender: "staff", staff_id: (await supabase.auth.getUser()).data.user?.id, content: `Your subscription has been renewed.\n${account?.app_login_name ? `Account: ${account.app_login_name}\n` : ""}New expiry: ${expires}\nJust restart your app to carry on watching.` });
           if (chatError) throw chatError;
           const { data, error: setupError } = await supabase.rpc("admin_set_account_setup" as never, { p_order_id: orderId, p_done: true } as never);
           if (setupError) throw setupError;
@@ -205,7 +205,7 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
           toast.success("Renewal expiry saved and sent in the chat");
           onDone?.();
         } catch (error) {
-          toast.error(error instanceof Error ? error.message : "Renewal could not be saved");
+          toast.error(error instanceof Error ? error.message : (error as { message?: string })?.message ?? "Renewal could not be saved");
         } finally {
           setBusy(false);
         }
