@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, Lock, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Loader2, Lock, ShieldCheck } from "lucide-react";
 import { getCheckout } from "@/lib/checkout.functions";
 import { CheckoutTemplate, type CheckoutView } from "@/components/checkout/CheckoutTemplate";
 import { CustomerCheckoutChat } from "@/components/checkout/CheckoutChat";
 import { CheckoutCardPayment } from "@/components/checkout/CheckoutCardPayment";
+import { useAuth } from "@/hooks/use-auth";
 import hero from "@/assets/checkout-family-tv.jpg";
 
 export const Route = createFileRoute("/pay/$token")({
@@ -25,6 +26,7 @@ export const Route = createFileRoute("/pay/$token")({
 
 function PayPage() {
   const { token } = Route.useParams();
+  const { user } = useAuth();
   const fetchCheckout = useServerFn(getCheckout);
   const [password, setPassword] = useState<string | null>(null);
   const [unlocked, setUnlocked] = useState(false);
@@ -107,6 +109,18 @@ function PayPage() {
   const pw = password ?? "";
   return (
     <main className="min-h-screen overflow-y-auto">
+      {/* Members get a way back to their order screen; link-only customers
+          (manual orders) arrived by link, so there is nothing to go back to. */}
+      {user && (
+        <div className="w-full px-3 pt-3">
+          <Link
+            to="/shop"
+            className="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="size-4" /> Back to my orders
+          </Link>
+        </div>
+      )}
       <CheckoutTemplate
         view={view}
         claimToken={token}
