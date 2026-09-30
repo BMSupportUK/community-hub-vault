@@ -7111,6 +7111,16 @@ export type Database = {
         Args: { p_by: string; p_pin: string; p_user: string }
         Returns: undefined
       }
+      staff_stash_order_credential: {
+        Args: {
+          p_account_type?: string
+          p_login_name: string
+          p_months: number
+          p_order_id: string
+          p_password: string
+        }
+        Returns: string
+      }
       submit_appeal: { Args: { p_reason: string }; Returns: Json }
       submit_content_report: {
         Args: { _kind: string; _reason: string; _target: string }
