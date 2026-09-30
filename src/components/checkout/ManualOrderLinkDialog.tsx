@@ -38,18 +38,24 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
   const loadRenewalAccounts = useServerFn(getOrderRenewalAccounts);
   const [renewAccounts, setRenewAccounts] = useState<CredentialCandidate[] | null>(null);
   const [renewAccountId, setRenewAccountId] = useState("");
+  const [renewMonths, setRenewMonths] = useState(0);
+  // Early renewals stack the new months on top of the time the customer still has left.
+  const [stackEarly, setStackEarly] = useState(true);
+  useEffect(() => {
+    if (!renewAccounts || renewMonths <= 0) return;
+    const current = renewAccounts.find((a) => a.id === renewAccountId);
+    const remaining = current?.expiry_at ? new Date(current.expiry_at).getTime() : 0;
+    const base = new Date(stackEarly ? Math.max(remaining, Date.now()) : Date.now());
+    base.setMonth(base.getMonth() + renewMonths);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    setExpiryLocal(`${base.getFullYear()}-${pad(base.getMonth() + 1)}-${pad(base.getDate())}T${pad(base.getHours())}:${pad(base.getMinutes())}`);
+  }, [renewAccounts, renewAccountId, renewMonths, stackEarly]);
   useEffect(() => {
     if (!loginOnly || link?.customer_kind !== "existing") return;
     loadRenewalAccounts({ data: { orderId } }).then((r) => {
       setRenewAccounts(r.accounts);
       setRenewAccountId(r.suggestedId ?? "");
-      const current = r.accounts.find((a) => a.id === r.suggestedId);
-      if (current?.expiry_at && r.months > 0) {
-        const base = new Date(Math.max(new Date(current.expiry_at).getTime(), Date.now()));
-        base.setMonth(base.getMonth() + r.months);
-        const pad = (n: number) => String(n).padStart(2, "0");
-        setExpiryLocal(`${base.getFullYear()}-${pad(base.getMonth() + 1)}-${pad(base.getDate())}T${pad(base.getHours())}:${pad(base.getMinutes())}`);
-      }
+      setRenewMonths(r.months);
     }).catch((e) => { setRenewAccounts([]); toast.error(e instanceof Error ? e.message : "Couldn't load the customer's accounts"); });
   }, [loginOnly, link?.customer_kind, orderId]);
   useEffect(() => {
@@ -189,6 +195,7 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
       return (
         <div className="space-y-3">
           <label className="block space-y-1"><span className="text-xs font-medium">Account to renew</span><select value={renewAccountId} onChange={(event) => setRenewAccountId(event.target.value)} className="w-full h-9 rounded-lg border border-border bg-background px-3 text-sm">{renewAccounts.map((a) => <option key={a.id} value={a.id}>{a.app_login_name?.trim() || `Account ${a.account_number ?? "?"}`}{a.expiry_at ? ` — currently expires ${new Date(a.expiry_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}` : ""}</option>)}</select></label>
+          <label className="flex items-start gap-2 rounded-lg border border-border px-3 py-2 text-xs"><input type="checkbox" checked={stackEarly} onChange={(event) => setStackEarly(event.target.checked)} className="mt-0.5" /><span><span className="font-medium">Early renewal — add the new {renewMonths > 0 ? `${renewMonths} month${renewMonths === 1 ? "" : "s"}` : "months"} on top of the time left</span><span className="block text-muted-foreground">Untick to start the new length from today instead.</span></span></label>
           <label className="block space-y-1"><span className="text-xs font-medium">New subscription expiry date &amp; time</span><input type="datetime-local" value={expiryLocal} onChange={(event) => setExpiryLocal(event.target.value)} className="w-full h-9 rounded-lg border border-border bg-background px-3 text-sm" /><span className="block text-[11px] text-muted-foreground">Pre-filled from the months bought where possible — change it if needed.</span></label>
           <button type="button" disabled={busy || !renewAccountId || !expiryLocal} onClick={saveRenewal} className="inline-flex w-full items-center justify-center gap-2 h-10 px-3 rounded-lg bg-primary text-primary-foreground text-sm font-semibold disabled:opacity-50">{busy ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />} Save renewal expiry</button>
         </div>
