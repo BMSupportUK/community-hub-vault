@@ -6577,6 +6577,11 @@ export type Database = {
       }
       can_pay_by_bank_transfer: { Args: { _user_id: string }; Returns: boolean }
       check_admin_unlock_lockout: { Args: never; Returns: Json }
+      checkout_auto_post: {
+        Args: { p_key: string; p_order: string; p_values: Json }
+        Returns: undefined
+      }
+      checkout_order_vals: { Args: { p_order: string }; Returns: Json }
       claim_checkout_access: { Args: { p_token: string }; Returns: boolean }
       claim_invite_access: { Args: never; Returns: boolean }
       cleanup_old_chat_messages: { Args: never; Returns: number }
