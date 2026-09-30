@@ -5,6 +5,7 @@ import { Loader2, Lock, ShieldCheck } from "lucide-react";
 import { getCheckout } from "@/lib/checkout.functions";
 import { CheckoutTemplate, type CheckoutView } from "@/components/checkout/CheckoutTemplate";
 import { CustomerCheckoutChat } from "@/components/checkout/CheckoutChat";
+import { CheckoutCardPayment } from "@/components/checkout/CheckoutCardPayment";
 import hero from "@/assets/checkout-family-tv.jpg";
 
 export const Route = createFileRoute("/pay/$token")({
@@ -97,7 +98,13 @@ function PayPage() {
 
   return (
     <main className="min-h-screen overflow-y-auto">
-      <CheckoutTemplate view={view} claimToken={token} />
+      <CheckoutTemplate
+        view={view}
+        claimToken={token}
+        cardPayment={(view.order.method === "square" || view.order.method === "stripe") && !view.order.paidAt && !view.order.cancelled ? (
+          <CheckoutCardPayment token={token} password={password} method={view.order.method} amountCents={view.order.totalCents} onPaid={() => { load(password); }} />
+        ) : undefined}
+      />
       <CustomerCheckoutChat token={token} password={password} />
     </main>
   );

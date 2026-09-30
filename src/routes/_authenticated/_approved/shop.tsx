@@ -66,6 +66,7 @@ import {
 import { PaymentStatusTimeline, type PayCheckPhase } from "@/components/app/PaymentStatusTimeline";
 import { BankTransferPanel } from "@/components/app/BankTransferPanel";
 import { getMyBankTransferAccess } from "@/lib/bank-transfer.functions";
+import { SquareCardPanel, SquareLogo } from "@/components/app/SquareCardPanel";
 import {
   createCryptoInvoice,
   getCryptoConfig,
@@ -974,6 +975,15 @@ function OrderProgressStrip({
 }
 
 
+/** Open (creating if needed) the customer's own secure checkout page for an order. */
+async function openSecureCheckout(orderId: string, fallback: (id: string) => void) {
+  const { data, error } = await supabase.rpc("create_my_checkout_link" as never, { p_order_id: orderId, p_method: null } as never);
+  const row = (Array.isArray(data) ? data[0] : data) as { token: string; password: string } | null;
+  if (error || !row?.token) { if (error) toast.error(error.message); return fallback(orderId); }
+  try { sessionStorage.setItem(`bm-pay-${row.token}`, row.password); } catch { /* ignore */ }
+  window.location.assign(`/pay/${row.token}`);
+}
+
 function BuySteps({
   latestOrder,
   onBrowse,
@@ -1017,15 +1027,15 @@ function BuySteps({
         : paid
           ? `Payment confirmed on ${new Date(latestOrder!.paid_at!).toLocaleDateString("en-GB")}.`
           : placed
-            ? "Awaiting your payment — open the support ticket for this order."
-            : "We'll create a support ticket for your order — pay securely by card or bank transfer.",
-      cta: cancelled ? "Browse products" : placed ? (ticketId ? "Open ticket" : "Open order") : undefined,
+            ? ticketId ? "Awaiting your payment — open the support ticket for this order." : "Awaiting your payment — open your secure checkout page to pay."
+            : "You'll get your own secure checkout page — pay by card or bank transfer.",
+      cta: cancelled ? "Browse products" : placed ? (ticketId ? "Open ticket" : "Open secure checkout") : undefined,
       action: cancelled
         ? onBrowse
         : placed
           ? ticketId
             ? () => onViewTicket(ticketId)
-            : () => onViewOrder(latestOrder!.id)
+            : () => openSecureCheckout(latestOrder!.id, onViewOrder)
           : undefined,
     },
     {
@@ -1364,6 +1374,7 @@ function Storefront() {
     wants_adult_content: boolean;
     purchase_kind?: "renewal" | "additional" | "new";
     owned_logins?: string[];
+    pay_method?: "square" | "stripe" | "wise";
   }) => {
 
     if (!user || cartItems.length === 0) return;
@@ -1450,86 +1461,21 @@ function Storefront() {
       toast.error(ie.message);
       return;
     }
-    // Open a support ticket in the admin/management-only "Orders" category.
-    // The ticket replaces the old order chat as the primary communication
-    // channel; the order record itself still drives the payment lifecycle.
-    let newTicketId: string | null = null;
-    try {
-      const { data: ordersCat } = await supabase
-        .from("ticket_categories")
-        .select("id")
-        .eq("slug", "orders")
-        .maybeSingle();
-      if (ordersCat?.id) {
-        const itemLines = cartItems.map((p) => `• ${p.name} × ${cart[p.id]}`).join("\n");
-        const { data: ticket } = await supabase
-          .from("tickets")
-          .insert({
-            user_id: user.id,
-            category_id: ordersCat.id,
-            subject: `New order #${String(order.id).slice(0, 8)}`,
-            priority: "normal",
-            order_id: order.id,
-          } as never)
-          .select()
-          .single();
-        if (ticket?.id) {
-          newTicketId = ticket.id;
-          const ownedLogins = info.owned_logins ?? [];
-          const kind = info.purchase_kind ?? (info.customer_type === "existing" ? "renewal" : "new");
-          const orderType =
-            kind === "renewal"
-              ? `🔁 Renewal — login: ${info.existing_username.trim() || "(not specified)"}`
-              : kind === "additional"
-                ? `➕ Additional account — create a BRAND NEW login (do not renew an existing account)`
-                : `🆕 New customer`;
-          const ticketBody = await getAutomatedMessage("order_placed_ticket", {
-            order_id: String(order.id),
-            order_short: String(order.id).slice(0, 8),
-            order_type: orderType,
-            existing_accounts:
-              ownedLogins.length > 0 && kind === "renewal"
-                ? `\nExisting accounts on file: ${ownedLogins.join(", ")}`
-                : "",
-            adult_access: info.wants_adult_content ? "Yes" : "No",
-            items: itemLines,
-          });
-
-          await supabase.from("ticket_messages").insert({
-            ticket_id: ticket.id,
-            sender_id: user.id,
-            content: ticketBody,
-          } as never);
-          const bankAccess: any = await getMyBankTransferAccess({}).catch(() => null);
-          const payMsg = await getAutomatedMessage(
-            bankAccess?.allowed ? "order_pay_bank" : "order_pay_card",
-            { total: fmt(finalTotal) },
-          );
-          await supabase.from("ticket_messages").insert({
-            ticket_id: ticket.id,
-            sender_id: user.id,
-            content: payMsg,
-          } as never);
-          const oohMsg = await getOutOfHoursMessage();
-          if (oohMsg) {
-            await supabase.from("ticket_messages").insert({
-              ticket_id: ticket.id,
-              sender_id: user.id,
-              content: oohMsg,
-            } as never);
-          }
-        }
-      }
-    } catch (e) {
-      console.warn("[shop] failed to open order ticket", e);
-    }
+    // Every order uses its own secure checkout page (no support ticket).
+    const { data: link, error: le } = await supabase.rpc("create_my_checkout_link" as never, {
+      p_order_id: order.id,
+      p_method: info.pay_method ?? "square",
+    } as never);
     setCart({});
     setShowCheckout(false);
     toast.success("Order placed!");
     reloadLatestOrder();
-    if (newTicketId) {
-      navigate({ to: "/tickets", search: { id: newTicketId } });
+    const row = (Array.isArray(link) ? link[0] : link) as { token: string; password: string } | null;
+    if (!le && row?.token) {
+      try { sessionStorage.setItem(`bm-pay-${row.token}`, row.password); } catch { /* ignore */ }
+      navigate({ to: "/pay/$token", params: { token: row.token } });
     } else {
+      if (le) toast.error(le.message);
       navigate({ to: "/shop", search: { view: "orders", id: order.id ?? undefined } });
     }
   };
@@ -2362,6 +2308,7 @@ function Checkout({
     wants_adult_content: boolean;
     purchase_kind: "renewal" | "additional" | "new";
     owned_logins: string[];
+    pay_method: "square" | "stripe" | "wise";
   }) => void;
   onRemoveItem: (id: string) => void;
 }) {
@@ -2369,6 +2316,15 @@ function Checkout({
   const [name, setName] = useState("");
   const [email, setEmail] = useState(user?.email ?? "");
   const [customerType, setCustomerType] = useState<"new" | "existing">("new");
+  const [payMethod, setPayMethod] = useState<"square" | "stripe" | "wise">("square");
+  const [bankOnly, setBankOnly] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    (getMyBankTransferAccess({}) as Promise<any>)
+      .then((r) => { if (alive && r?.allowed) { setBankOnly(true); setPayMethod("wise"); } })
+      .catch(() => undefined);
+    return () => { alive = false; };
+  }, []);
   const [existingUsername, setExistingUsername] = useState("");
   const [adultContent, setAdultContent] = useState<"yes" | "no" | "">("");
   const [appliedCode, setAppliedCode] = useState<DiscountCode | null>(null);
@@ -2852,6 +2808,25 @@ function Checkout({
             )}
           </div>
         )}
+          <div className="shrink-0 px-3 sm:px-5 pt-3 space-y-2">
+            <div className="text-sm font-medium">Payment method</div>
+            {bankOnly ? (
+              <div className="rounded-lg border border-primary bg-primary/10 p-3 text-sm">
+                <span className="font-semibold">Bank transfer</span>
+                <span className="block text-xs text-muted-foreground">Your bank details and reference will be shown on your secure checkout page.</span>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-2">
+                {(["square", "stripe"] as const).map((m) => (
+                  <button key={m} type="button" onClick={() => setPayMethod(m)} aria-pressed={payMethod === m}
+                    className={`rounded-lg border p-3 text-left text-sm ${payMethod === m ? "border-primary bg-primary/10" : "border-border"}`}>
+                    <span className="font-semibold">{m === "square" ? "Square (card)" : "Stripe (card)"}</span>
+                    {m === "square" && <span className="ml-2 text-[10px] uppercase tracking-wide rounded bg-primary text-primary-foreground px-1.5 py-0.5">Preferred</span>}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
          <div className="shrink-0 p-3 sm:p-5 border-t border-border flex gap-2 justify-end">
           <button onClick={onClose} className="px-4 py-2 rounded-lg bg-surface-2 text-sm">
             Cancel
@@ -2870,7 +2845,7 @@ function Checkout({
                 owned_logins: myCreds
                   .map((c) => c.app_login_name?.trim())
                   .filter(Boolean) as string[],
-
+                pay_method: payMethod,
               })
             }
             disabled={!canSubmit}
@@ -3557,6 +3532,14 @@ function MyOrdersTab({ onOpenOrder }: { onOpenOrder: (id: string) => void }) {
                 >
                   <Package className="size-3.5" /> View order
                 </button>
+                {!ticketId && (
+                  <button
+                    onClick={() => openSecureCheckout(o.id, onOpenOrder)}
+                    className="px-3 py-1.5 rounded-md bg-primary text-primary-foreground text-xs font-medium hover:opacity-90 inline-flex items-center gap-1"
+                  >
+                    <Receipt className="size-3.5" /> Secure checkout
+                  </button>
+                )}
                 {ticketId && (
                   <button
                     onClick={() => navigate({ to: "/tickets", search: { id: ticketId } })}
@@ -4984,17 +4967,6 @@ function SquareInvoicePanel({
   );
 }
 
-// Module-level caches so config + SDK are fetched at most once per page load.
-let _squareConfigPromise: Promise<any> | null = null;
-function prewarmSquareConfig(fn: (...args: any[]) => Promise<any>): Promise<any> {
-  if (!_squareConfigPromise) {
-    _squareConfigPromise = fn().catch((e) => {
-      _squareConfigPromise = null;
-      throw e;
-    });
-  }
-  return _squareConfigPromise;
-}
 
 function StripeLogo({ className = "" }: { className?: string }) {
   return (
@@ -5147,289 +5119,6 @@ function StripePanel({
   );
 }
 
-function loadSquareSdk(env: "sandbox" | "production"): Promise<any> {
-  if (typeof window === "undefined") return Promise.reject(new Error("No window"));
-  if (window.Square) return Promise.resolve(window.Square);
-  const id = "square-web-sdk";
-  const existing = document.getElementById(id) as HTMLScriptElement | null;
-  const src =
-    env === "sandbox"
-      ? "https://sandbox.web.squarecdn.com/v1/square.js"
-      : "https://web.squarecdn.com/v1/square.js";
-  return new Promise((resolve, reject) => {
-    if (existing) {
-      existing.addEventListener("load", () => resolve(window.Square));
-      existing.addEventListener("error", () => reject(new Error("Failed to load Square SDK")));
-      if (window.Square) resolve(window.Square);
-      return;
-    }
-    const s = document.createElement("script");
-    s.id = id;
-    s.src = src;
-    s.async = true;
-    s.onload = () => resolve(window.Square);
-    s.onerror = () => reject(new Error("Failed to load Square SDK"));
-    document.head.appendChild(s);
-  });
-}
-
-function SquareLogo({ className = "" }: { className?: string }) {
-  return (
-    <span className={`inline-flex items-center gap-1.5 ${className}`} aria-label="Square">
-      <svg viewBox="0 0 32 32" className="h-4 w-4" aria-hidden="true">
-        <rect x="1" y="1" width="30" height="30" rx="6" ry="6" fill="#000000" />
-        <rect x="10" y="10" width="12" height="12" rx="2" ry="2" fill="#ffffff" />
-      </svg>
-      <span className="text-[13px] font-semibold tracking-tight text-foreground leading-none">
-        Square
-      </span>
-    </span>
-  );
-}
-
-function SquareCardPanel({
-  orderId,
-  amountCents,
-  canPay,
-  onChange,
-}: {
-  orderId: string;
-  amountCents: number;
-  canPay: boolean;
-  onChange?: () => void | Promise<void>;
-}) {
-  const [paid, setPaid] = useState<any | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [bootError, setBootError] = useState<string | null>(null);
-  const [ready, setReady] = useState(false);
-  const [open, setOpen] = useState(false);
-  const cardRef = useRef<HTMLDivElement | null>(null);
-  const cardInstanceRef = useRef<any>(null);
-  const paymentsRef = useRef<any>(null);
-  const googlePayBtnRef = useRef<HTMLDivElement | null>(null);
-  const googlePayInstanceRef = useRef<any>(null);
-  const [googlePayReady, setGooglePayReady] = useState(false);
-  const { format } = useCurrency();
-  const getConfig = useServerFn(getSquareWebConfig);
-  const chargeFn = useServerFn(chargeOrderWithSquare);
-
-  const loadPayment = async () => {
-    const { data } = await supabase
-      .from("order_payments")
-      .select("*")
-      .eq("order_id", orderId)
-      .maybeSingle();
-    setPaid(data);
-  };
-
-  useEffect(() => {
-    loadPayment();
-  }, [orderId]);
-  useEffect(() => {
-    const ch = supabase
-      .channel(`op-${orderId}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "order_payments", filter: `order_id=eq.${orderId}` },
-        () => loadPayment(),
-      )
-      .subscribe();
-    return () => {
-      supabase.removeChannel(ch);
-    };
-  }, [orderId]);
-
-  useEffect(() => {
-    let cancelled = false;
-    if (!canPay || paid || !open) return;
-    (async () => {
-      try {
-        const cfg = await prewarmSquareConfig(getConfig);
-        const Square = await loadSquareSdk(cfg.environment);
-        if (cancelled) return;
-        const payments = Square.payments(cfg.applicationId, cfg.locationId);
-        paymentsRef.current = payments;
-        const card = await payments.card();
-        if (cancelled) {
-          try {
-            card.destroy();
-          } catch {}
-          return;
-        }
-        if (cardRef.current) {
-          await card.attach(cardRef.current);
-          cardInstanceRef.current = card;
-          setReady(true);
-        }
-        // Wallet payment request (shared by Apple Pay + Google Pay)
-        const buildPaymentRequest = () =>
-          payments.paymentRequest({
-            countryCode: "GB",
-            currencyCode: "GBP",
-            total: { amount: (amountCents / 100).toFixed(2), label: "Total" },
-          });
-        // Google Pay
-        try {
-          const gpReq = buildPaymentRequest();
-          const gp = await payments.googlePay(gpReq);
-          if (cancelled) {
-            try {
-              gp.destroy();
-            } catch {}
-          } else if (googlePayBtnRef.current) {
-            await gp.attach(googlePayBtnRef.current, { buttonType: "pay", buttonSizeMode: "fill" });
-            googlePayInstanceRef.current = gp;
-            setGooglePayReady(true);
-          }
-        } catch (e) {
-          console.warn("[square] Google Pay unavailable", e);
-        }
-      } catch (e) {
-        if (!cancelled) setBootError((e as Error).message);
-      }
-    })();
-    return () => {
-      cancelled = true;
-      try {
-        cardInstanceRef.current?.destroy();
-      } catch {}
-      cardInstanceRef.current = null;
-      try {
-        googlePayInstanceRef.current?.destroy();
-      } catch {}
-      googlePayInstanceRef.current = null;
-      setReady(false);
-      setGooglePayReady(false);
-    };
-  }, [canPay, paid, orderId, amountCents, open]);
-
-  const tokenizeAndCharge = async (instance: any, label: string) => {
-    if (!instance) return;
-    setLoading(true);
-    try {
-      const result = await instance.tokenize();
-      if (result.status !== "OK") {
-        // Apple/Google Pay user-cancel comes through here too — silence it.
-        if (result.status === "Cancel") return;
-        const msg = result.errors?.[0]?.message || `${label} tokenization failed`;
-        throw new Error(msg);
-      }
-      const res = await chargeFn({ data: { orderId, sourceId: result.token } });
-      toast.success(`Paid ${format(amountCents)}`);
-      setPaid({
-        status: res.status,
-        card_brand: res.cardBrand,
-        last_4: res.last4,
-        receipt_url: res.receiptUrl,
-        amount_cents: amountCents,
-      });
-      setOpen(false);
-      await onChange?.();
-    } catch (e) {
-      toast.error((e as Error).message);
-    } finally {
-      setLoading(false);
-    }
-  };
-  const handlePay = () => tokenizeAndCharge(cardInstanceRef.current, "Card");
-  const handleGooglePay = () => tokenizeAndCharge(googlePayInstanceRef.current, "Google Pay");
-
-  if (paid) {
-    // Paid via crypto/NOWPayments — hide the Square block; the order header
-    // already shows the paid method and the CryptoPanel renders its own
-    // confirmation.
-    if (paid.provider === "nowpayments") return null;
-    // Paid via Stripe — StripePanel renders its own confirmation.
-    if (paid.provider === "stripe") return null;
-    return (
-      <div>
-        <SquareLogo className="mb-1.5" />
-        <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
-          Card Payment via Square
-        </div>
-        <div className="rounded-md bg-success/10 border border-success/20 px-2.5 py-2 space-y-1">
-          <div className="flex items-center gap-2 text-success text-xs font-medium">
-            <CreditCard className="size-3.5" /> Paid
-            {paid.card_brand && paid.last_4 && (
-              <span className="font-mono text-muted-foreground">
-                {paid.card_brand} •••• {paid.last_4}
-              </span>
-            )}
-          </div>
-          {paid.receipt_url && (
-            <a
-              href={paid.receipt_url}
-              target="_blank"
-              rel="noreferrer"
-              className="text-[11px] text-primary hover:underline"
-            >
-              View receipt
-            </a>
-          )}
-        </div>
-      </div>
-    );
-  }
-
-  if (!canPay) return null;
-
-  return (
-    <div>
-      <SquareLogo className="mb-1.5" />
-      <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">
-        Pay by card
-      </div>
-      <button
-        onClick={() => setOpen(true)}
-        className="w-full px-2.5 py-2 rounded-md bg-primary text-primary-foreground text-xs font-medium flex items-center justify-center gap-1.5 hover:bg-primary/90"
-      >
-        <CreditCard className="size-3.5" />
-        Pay {format(amountCents)} by card
-      </button>
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <SquareLogo /> Card Payment
-            </DialogTitle>
-          </DialogHeader>
-          {bootError ? (
-            <div className="text-xs text-destructive">{bootError}</div>
-          ) : (
-            <div className="space-y-3">
-              {googlePayReady && (
-                <div className="space-y-1.5">
-                  <div
-                    ref={googlePayBtnRef}
-                    onClick={handleGooglePay}
-                    className="w-full min-h-[44px] cursor-pointer"
-                    aria-disabled={loading}
-                  />
-                  <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                    <div className="flex-1 h-px bg-border" /> or pay by card{" "}
-                    <div className="flex-1 h-px bg-border" />
-                  </div>
-                </div>
-              )}
-              <div
-                ref={cardRef}
-                className="rounded-md bg-surface-2 border border-border px-2 py-2 min-h-[60px]"
-              />
-              <button
-                onClick={handlePay}
-                disabled={!ready || loading}
-                className="w-full px-2.5 py-2 rounded-md bg-primary text-primary-foreground text-xs font-medium flex items-center justify-center gap-1.5 hover:bg-primary/90 disabled:opacity-50"
-              >
-                <CreditCard className="size-3.5" />
-                {loading ? "Processing…" : ready ? `Pay ${format(amountCents)}` : "Loading…"}
-              </button>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-    </div>
-  );
-}
 
 function AdminProductsInner() {
   const [products, setProducts] = useState<Product[]>([]);

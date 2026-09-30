@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { AlertTriangle, Check, Copy, CreditCard, Info, Lock, Mail, PartyPopper, UserPlus } from "lucide-react";
 import hero from "@/assets/checkout-family-tv.jpg";
@@ -64,7 +64,7 @@ function CopyRow({ label, value }: { label: string; value: string | null }) {
   );
 }
 
-export function CheckoutTemplate({ view, preview = false, claimToken }: { view: CheckoutView; preview?: boolean; claimToken?: string }) {
+export function CheckoutTemplate({ view, preview = false, claimToken, cardPayment }: { view: CheckoutView; preview?: boolean; claimToken?: string; cardPayment?: ReactNode }) {
   const { order, items, invoice, bank } = view;
   const step = checkoutStep(order);
   const subtotal = items.reduce((s, i) => s + i.unitCents * i.qty, 0);
@@ -152,17 +152,21 @@ export function CheckoutTemplate({ view, preview = false, claimToken }: { view: 
                 <CreditCard className="size-5 text-primary" />
                 <div>
                   <h2 className="font-semibold">Pay by card with {METHOD[method]}</h2>
-                  <p className="text-xs text-muted-foreground">Secure invoice{invoice?.number ? ` ${invoice.number}` : ""} — card details are handled by {METHOD[method]}.</p>
+                  <p className="text-xs text-muted-foreground">Enter your card below — card details are handled securely by {METHOD[method]}.</p>
                 </div>
               </div>
-              {invoice?.url || preview ? (
-                <a href={invoice?.url ?? "#"} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 h-12 rounded-xl bg-primary text-primary-foreground font-semibold hover:opacity-90">
+              {cardPayment ? cardPayment : preview ? (
+                <div className="flex items-center justify-center gap-2 h-12 rounded-xl bg-primary text-primary-foreground font-semibold">
+                  <Lock className="size-4" /> Pay {GBP(order.totalCents)}
+                </div>
+              ) : invoice?.url ? (
+                <a href={invoice.url} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 h-12 rounded-xl bg-primary text-primary-foreground font-semibold hover:opacity-90">
                   <Lock className="size-4" /> Pay invoice {GBP(order.totalCents)}
                 </a>
               ) : (
-                <p className="text-sm text-muted-foreground">Your invoice is being prepared. Please refresh shortly or message us in the chat.</p>
+                <p className="text-sm text-muted-foreground">Loading secure card form…</p>
               )}
-              <p className="text-xs text-center text-muted-foreground">After paying, come back to this page — it updates automatically.</p>
+              <p className="text-xs text-center text-muted-foreground">This page updates automatically once your payment goes through.</p>
             </section>
           ) : method === "wise" ? (
             <aside className="min-w-0 space-y-6">

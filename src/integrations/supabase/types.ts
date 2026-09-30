@@ -6557,6 +6557,13 @@ export type Database = {
         Args: { _label: string; _name: string }
         Returns: undefined
       }
+      create_my_checkout_link: {
+        Args: { p_method: string; p_order_id: string }
+        Returns: {
+          password: string
+          token: string
+        }[]
+      }
       delete_app_role: { Args: { _name: string }; Returns: undefined }
       directory_member_roles: {
         Args: never

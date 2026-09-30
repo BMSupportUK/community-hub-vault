@@ -9,10 +9,6 @@ import { isAdminUnlocked } from "@/lib/admin-unlock";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { useServerFn } from "@tanstack/react-start";
-import { createSquareInvoiceForOrder } from "@/lib/square-invoices.functions";
-import { createStripeInvoiceForOrder } from "@/lib/stripe-invoices.functions";
-import { getStripeEnvironment } from "@/lib/stripe";
 import { SecureLinkPanel } from "@/components/checkout/ManualOrderLinkDialog";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-add-order")({
@@ -47,8 +43,6 @@ function AddOrderPage() {
   const [discount, setDiscount] = useState("");
   const [customerKind, setCustomerKind] = useState<"" | "new" | "existing">("");
   const [created, setCreated] = useState<{ id: string; ref: string; invoiceError?: string } | null>(null);
-  const makeSquare = useServerFn(createSquareInvoiceForOrder);
-  const makeStripe = useServerFn(createStripeInvoiceForOrder);
 
   useEffect(() => {
     supabase.from("products").select("id, name, price_cents").order("sort_order").then(({ data }) => setProducts((data ?? []) as never));
@@ -87,14 +81,7 @@ function AddOrderPage() {
     } as never);
     if (error) { setBusy(false); return toast.error(error.message); }
     const { data: o } = await supabase.from("orders").select("order_ref").eq("id", id as string).maybeSingle();
-    let invoiceError: string | undefined;
-    try {
-      if (payMethod === "square") await makeSquare({ data: { orderId: id as string } });
-      if (payMethod === "stripe") {
-        const r: any = await makeStripe({ data: { orderId: id as string, environment: getStripeEnvironment() } });
-        if (r && "error" in r) invoiceError = r.error;
-      }
-    } catch (e) { invoiceError = (e as Error).message; }
+    const invoiceError: string | undefined = undefined;
     setBusy(false);
     toast.success(`Order ${o?.order_ref ?? ""} added`);
     if (invoiceError) toast.error(`Invoice not created: ${invoiceError}`);
@@ -166,7 +153,7 @@ function AddOrderPage() {
               <option value="wise">Wise</option>
               <option value="cash">Cash</option>
             </select>
-            <p className="text-xs text-muted-foreground">Stripe and Square create an invoice with a pay button; Wise shows your bank details; Cash shows a thank-you page.</p>
+            <p className="text-xs text-muted-foreground">Stripe and Square show a secure card form on the checkout page; Wise shows your bank details; Cash shows a thank-you page.</p>
           </div>
           <div className="space-y-2 pt-2 border-t border-border">
             <label className="text-sm font-medium" htmlFor="order-date">Order date</label>
