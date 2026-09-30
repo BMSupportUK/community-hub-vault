@@ -103,7 +103,8 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
   // wide screens while the order is awaiting payment.
   const paymentSidebar = ["wise", "stripe", "square", "crypto"].includes(method) && !paid && !order.cancelled;
   const accountSidebar = paid && !order.cancelled && accountSetupStarted;
-  const splitLayout = paymentSidebar || accountSidebar;
+  const paidSidebar = paid && !order.cancelled && !accountSetupStarted;
+  const splitLayout = paymentSidebar || accountSidebar || paidSidebar;
 
   let heading = `Order #${order.ref}`;
   let sub = "Please complete your payment below.";
@@ -144,30 +145,6 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
             </div>
           )}
 
-          {paid && !order.cancelled && !accountSetupStarted && onContinueToSetup && (
-            <section className="rounded-2xl border border-success/40 bg-success/10 p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div className="flex gap-3 items-start">
-                <Check className="size-5 text-success shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-semibold">We’ve received your payment</p>
-                  <p className="text-sm text-muted-foreground">Continue when you’re ready so we can begin setting up your service.</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                disabled={continuing}
-                onClick={async () => {
-                  setContinuing(true);
-                  try { await onContinueToSetup(); } finally { setContinuing(false); }
-                }}
-                className="h-11 px-5 rounded-xl bg-primary text-primary-foreground font-semibold inline-flex items-center justify-center gap-2 shrink-0 disabled:opacity-60"
-              >
-                {continuing ? <Loader2 className="size-4 animate-spin" /> : <UserCheck className="size-4" />}
-                Continue to account setup
-              </button>
-            </section>
-          )}
-
           <div className={splitLayout ? "grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(340px,440px)] lg:items-start" : "space-y-6"}>
             <section className={`rounded-2xl border border-border bg-card p-5 ${splitLayout ? "min-w-0" : ""}`}>
             <h2 className="font-semibold mb-3">Order breakdown</h2>
@@ -202,7 +179,33 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
             </dl>
           </section>
 
-          {accountSidebar ? (
+          {paidSidebar ? (
+            <aside className="min-w-0 space-y-3 lg:sticky lg:top-4">
+              <section className="rounded-2xl border border-success/40 bg-success/10 p-5 space-y-4">
+                <div className="flex gap-3 items-start">
+                  <Check className="size-5 text-success shrink-0 mt-0.5" />
+                  <div>
+                    <p className="font-semibold">Square payment received</p>
+                    <p className="text-sm text-muted-foreground">Your payment is confirmed. Continue when you’re ready so we can begin setting up your service.</p>
+                  </div>
+                </div>
+                {onContinueToSetup && (
+                  <button
+                    type="button"
+                    disabled={continuing}
+                    onClick={async () => {
+                      setContinuing(true);
+                      try { await onContinueToSetup(); } finally { setContinuing(false); }
+                    }}
+                    className="w-full h-11 px-5 rounded-xl bg-primary text-primary-foreground font-semibold inline-flex items-center justify-center gap-2 disabled:opacity-60"
+                  >
+                    {continuing ? <Loader2 className="size-4 animate-spin" /> : <UserCheck className="size-4" />}
+                    Continue to account setup
+                  </button>
+                )}
+              </section>
+            </aside>
+          ) : accountSidebar ? (
             <aside className="min-w-0 space-y-3 lg:sticky lg:top-4">
               <section className={`rounded-2xl border p-5 flex gap-3 items-start ${accountSetup ? "border-success/40 bg-success/10" : "border-border bg-card"}`}>
                 {accountSetup ? <UserCheck className="size-5 text-success shrink-0 mt-0.5" /> : <Clock className="size-5 text-primary shrink-0 mt-0.5" />}
@@ -252,7 +255,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
                 </section>
               )}
             </aside>
-          ) : (method === "stripe" || method === "square") ? (
+          ) : paymentSidebar && (method === "stripe" || method === "square") ? (
             <aside className="min-w-0 rounded-2xl border border-border bg-card p-5 space-y-4 lg:sticky lg:top-4">
               <div className="flex items-center gap-3">
                 <CreditCard className="size-5 text-primary" />
@@ -274,7 +277,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
               )}
               <p className="text-xs text-center text-muted-foreground">This page updates automatically once your payment goes through.</p>
             </aside>
-          ) : method === "crypto" ? (
+          ) : paymentSidebar && method === "crypto" ? (
             <aside className="min-w-0 rounded-2xl border border-border bg-card p-5 space-y-4 lg:sticky lg:top-4">
               <div className="flex items-center gap-3">
                 <Bitcoin className="size-5 text-primary" />
@@ -290,7 +293,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
               )}
               <p className="text-xs text-center text-muted-foreground">Crypto payments can take a few minutes to confirm. This page updates automatically.</p>
             </aside>
-          ) : method === "wise" ? (
+          ) : paymentSidebar && method === "wise" ? (
             <aside className="min-w-0 space-y-6 lg:sticky lg:top-4">
               <section className="rounded-2xl border border-border bg-card p-5">
                 <h2 className="font-semibold">Bank transfer details</h2>

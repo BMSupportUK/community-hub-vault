@@ -44,6 +44,7 @@ function PayPage() {
   const [view, setView] = useState<CheckoutView | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [checkingAccess, setCheckingAccess] = useState(true);
   const validToken = /^[a-f0-9]{64}$/.test(token);
   const key = `bm-pay-${token}`;
 
@@ -55,15 +56,35 @@ function PayPage() {
   }, [fetchCheckout, token]);
 
   useEffect(() => {
-    if (!validToken) return;
+    if (!validToken) {
+      setCheckingAccess(false);
+      return;
+    }
     const saved = sessionStorage.getItem(key);
     if (saved) {
-      load(saved).then((ok) => { if (ok) { setPassword(saved); setUnlocked(true); } else sessionStorage.removeItem(key); });
+      load(saved).then(async (ok) => {
+        if (ok) {
+          setPassword(saved);
+          setUnlocked(true);
+        } else {
+          sessionStorage.removeItem(key);
+          const linkOnly = await load("");
+          if (linkOnly) {
+            setPassword("");
+            setUnlocked(true);
+          }
+        }
+      }).finally(() => setCheckingAccess(false));
       return;
     }
     // Shop orders unlock with the link alone — try it before showing the
     // password form (only manual orders need one).
-    load("").then((ok) => { if (ok) { setPassword(""); setUnlocked(true); } });
+    load("").then((ok) => {
+      if (ok) {
+        setPassword("");
+        setUnlocked(true);
+      }
+    }).finally(() => setCheckingAccess(false));
   }, [key, load, validToken]);
 
   // Keep the page live so payment / completion show without a refresh.
@@ -87,6 +108,14 @@ function PayPage() {
     } catch { setError("Something went wrong. Please try again."); }
     finally { setBusy(false); }
   };
+
+  if (checkingAccess) {
+    return (
+      <main className="min-h-screen grid place-items-center bg-background" aria-label="Opening secure checkout">
+        <Loader2 className="size-8 animate-spin text-primary" />
+      </main>
+    );
+  }
 
   if (!unlocked || !view) {
     return (

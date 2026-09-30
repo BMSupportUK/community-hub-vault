@@ -1,6 +1,8 @@
 # Roadmap
 
 ## Current
+- [ ] Secure checkout: keep paid Square details and continue control in the right sidebar
+- [ ] Secure checkout: prevent the manual-password screen flashing on hard refresh of member orders
 - [x] Secure checkout: require staff to move a paid order into account setup before showing setup and QD details
 - [x] Secure checkout: move paid account status and account sign-up into the right sidebar
 - [x] New-sale completion: save username/password, subscription term and dates, then post them automatically in checkout chat
