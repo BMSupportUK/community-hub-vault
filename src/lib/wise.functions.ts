@@ -240,6 +240,7 @@ export const getWiseIncomingTransfers = createServerFn({ method: "POST" })
       // the order is paid and drops out of the pending list.
       const storedIds = Array.from(new Set(incoming.map((t) => t.storedOrderId).filter(Boolean))) as string[];
       const storedOrders: Record<string, { userId: string; amountCents: number }> = {};
+      const names: Record<string, string> = {};
       if (storedIds.length) {
         const { data: sOrders } = await supabaseAdmin
           .from("orders")

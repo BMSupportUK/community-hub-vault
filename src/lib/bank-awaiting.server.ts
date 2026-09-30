@@ -90,7 +90,7 @@ export async function listAwaitingBankOrders(admin: SupabaseClient | any): Promi
   const userIds = Array.from(new Set(rows.map((r) => r.userId).filter(Boolean))) as string[];
   if (userIds.length) {
     const { data: profiles } = await admin.from("profiles").select("id,display_name").in("id", userIds);
-    const names = new Map((profiles ?? []).map((p: any) => [String(p.id), p.display_name as string | null]));
+    const names = new Map<string, string | null>((profiles ?? []).map((p: any) => [String(p.id), (p.display_name as string | null) ?? null]));
     for (const r of rows) if (r.userId && names.get(r.userId)) r.customerName = names.get(r.userId) ?? r.customerName;
   }
   return rows;
