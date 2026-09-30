@@ -1,7 +1,8 @@
 import { useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { AlertTriangle, Bitcoin, Check, Clock, Copy, CreditCard, Hourglass, Info, Loader2, Lock, PartyPopper, Send, UserCheck, UserPlus } from "lucide-react";
+import { AlertTriangle, Bitcoin, BookOpen, Check, Clock, Copy, CreditCard, Hourglass, Info, Loader2, Lock, PartyPopper, Send, UserCheck, UserPlus } from "lucide-react";
 import hero from "@/assets/checkout-family-tv.jpg";
+import installGuideIllustration from "@/assets/manual-order-install-guide.jpg";
 
 export type CheckoutView = {
   order: {
@@ -105,6 +106,17 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
   const accountSidebar = paid && !order.cancelled && accountSetupStarted;
   const paidSidebar = paid && !order.cancelled && !accountSetupStarted;
   const splitLayout = paymentSidebar || accountSidebar || paidSidebar;
+  const manualInstallCard = paid && order.manual && claimToken ? (
+    <section className="overflow-hidden rounded-2xl border border-border bg-card">
+      <div className="grid grid-cols-[112px_minmax(0,1fr)] items-stretch">
+        <img src={installGuideIllustration} alt="Person on a sofa watching television" loading="lazy" width={992} height={672} className="size-full min-h-36 object-cover" />
+        <div className="min-w-0 p-4 space-y-3">
+          <div><p className="font-semibold">Install the app while we set up your account</p><p className="mt-1 text-sm text-muted-foreground">Use your paid order to open the private install guides now.</p></div>
+          <Link to="/checkout-install/$token" params={{ token: claimToken }} className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground hover:opacity-90"><BookOpen className="size-4" /> Open install guides</Link>
+        </div>
+      </div>
+    </section>
+  ) : null;
 
   let heading = `Order #${order.ref}`;
   let sub = "Please complete your payment below.";
@@ -204,6 +216,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
                   </button>
                 )}
               </section>
+              {manualInstallCard}
               {moveToSetup}
             </aside>
           ) : accountSidebar ? (
@@ -219,6 +232,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
                       : (order.customerKind === "existing" ? "Payment confirmed. We're now extending your subscription." : "Payment confirmed. We're now setting up your account.")}</p>
                 </div>
               </section>
+              {manualInstallCard}
               {addLoginDetails}
               {order.customerKind === "new" && (
                 <section className="rounded-2xl border border-border bg-card p-5 flex gap-3 items-start">

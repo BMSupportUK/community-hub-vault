@@ -14,6 +14,6 @@
 - Talk presence: channel exit broadcasts leave/untracks next task; sign-out also removes the shared channel without respawn, preventing stale online users.
 - Talk staff sidebar status: active DND overrides Working/Off duty text with “Away - From the office.” while retaining the countdown.
 - Android spoken alerts use dedicated versioned notification channels; change the channel ID when correcting a sound because Android keeps a channel's original sound permanently.
-- Manual orders: secure /pay/<token> page (password-gated via order_checkout_links), chat in checkout_chat_messages; created by admin_create_manual_order_v2 — keeps customer page auth-free while gated.
+- Manual orders use password-gated checkout links and order-only chat; paid, non-cancelled orders can open published guides through the same credentials.
 - Shop sales use secure checkout; after payment, staff or the customer starts account setup before QD/fulfilment controls appear.
 - Manual-order login details saved before the customer has an account are held privately per order and moved into their credentials when they claim the checkout — keeps one source of truth in the admin credentials list.
