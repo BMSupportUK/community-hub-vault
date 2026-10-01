@@ -242,29 +242,26 @@ function LeaderboardPage() {
               <p className="mt-4 text-purple-200/70 max-w-2xl">
                 Anyone who signs up using your code skips the gate and joins the server instantly. The more friends you bring in, the higher you climb.
               </p>
-              <div className="mt-8 grid min-w-0 gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.9fr)] lg:items-start">
-                <div className="min-w-0">
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                    <StatCard label="Your invites" value={myStats.total} />
-                    <StatCard label="Successful joins" value={myStats.used} />
-                    <StatCard label="Pending codes" value={myStats.total - myStats.used} />
-                  </div>
-                  <div className="mt-6 flex flex-wrap gap-3">
-                    <Button onClick={() => setTab("invites")} className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0 shadow-lg shadow-purple-900/50">
-                      <Plus className="size-4 mr-1" /> Create an invite
-                    </Button>
-                    <Button onClick={() => setTab("leaderboard")} variant="ghost" className="text-purple-100 hover:bg-purple-800/40 hover:text-white">
-                      See the leaderboard
-                    </Button>
-                  </div>
-                </div>
-                <SecureHowToVideo
-                  canManage={isAdmin}
-                  settingsKey="how_to_refer_video"
-                  pathPrefix="how-to-refer"
-                  title="How to refer a friend"
-                  emptyHint="No video yet — upload the referral walkthrough."
-                />
+              <SecureHowToVideo
+                className="mt-8"
+                canManage={isAdmin}
+                settingsKey="how_to_refer_video"
+                pathPrefix="how-to-refer"
+                title="How to refer a friend"
+                emptyHint="No video yet — upload the referral walkthrough."
+              />
+              <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <StatCard label="Your invites" value={myStats.total} />
+                <StatCard label="Successful joins" value={myStats.used} />
+                <StatCard label="Pending codes" value={myStats.total - myStats.used} />
+              </div>
+              <div className="mt-6 flex flex-wrap justify-center gap-3">
+                <Button onClick={() => setTab("invites")} className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0 shadow-lg shadow-purple-900/50">
+                  <Plus className="size-4 mr-1" /> Create an invite
+                </Button>
+                <Button onClick={() => setTab("leaderboard")} variant="ghost" className="text-purple-100 hover:bg-purple-800/40 hover:text-white">
+                  See the leaderboard
+                </Button>
               </div>
             </div>
           </TabsContent>
