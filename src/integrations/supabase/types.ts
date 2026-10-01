@@ -3898,6 +3898,21 @@ export type Database = {
         }
         Relationships: []
       }
+      order_change_signals: {
+        Row: {
+          changed_at: string
+          id: number
+        }
+        Insert: {
+          changed_at?: string
+          id?: number
+        }
+        Update: {
+          changed_at?: string
+          id?: number
+        }
+        Relationships: []
+      }
       order_checkout_links: {
         Row: {
           account_setup_at: string | null

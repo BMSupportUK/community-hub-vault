@@ -442,6 +442,13 @@
       "when": 1790861085127,
       "tag": "0062_lock_automated_messages_and_avatar_folders",
       "breakpoints": true
+    },
+    {
+      "idx": 63,
+      "version": "7",
+      "when": 1790879297734,
+      "tag": "0063_admin_orders_realtime_signal",
+      "breakpoints": true
     }
   ]
 }
