@@ -160,7 +160,7 @@ function SignupPage() {
   const [emailTaken, setEmailTaken] = useState(false);
   const vpnStatus = useVisitorVpnStatus();
   const [vpnRechecking, setVpnRechecking] = useState(false);
-  const hasReferralLink = Boolean(inviteFromUrl?.trim());
+  const hasReferralLink = Boolean(inviteFromUrl?.trim() || inviteCode.trim());
 
   const recheckVpn = async () => {
     setVpnRechecking(true);
