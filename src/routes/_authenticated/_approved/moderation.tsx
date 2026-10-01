@@ -11,6 +11,7 @@ import { StaffOnDutyStrip } from "@/components/app/StaffOnDutyStrip";
 import { toast } from "sonner";
 import { isAdminUnlocked } from "@/lib/admin-unlock";
 import { SignupInfoDialog } from "@/components/app/SignupInfoDialog";
+import { VpnBadge } from "@/lib/vpn-flags";
 import { MentionText, STAFF_ROLE_TAGS, useMentionAutocomplete } from "@/components/app/mentions";
 
 export const Route = createFileRoute("/_authenticated/_approved/moderation")({
@@ -395,6 +396,7 @@ function ModerationPage() {
                     <div className="flex-1 min-w-0">
                       <div className="font-medium truncate flex items-center gap-2">
                         <span className="truncate">{name}</span>
+                        <VpnBadge userId={a.user_id} />
                         {isAppeal && (
                           <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded-full font-semibold bg-fuchsia-500/15 text-fuchsia-400 shrink-0">
                             Appeal

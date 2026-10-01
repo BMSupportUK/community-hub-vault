@@ -14,6 +14,7 @@ import { playSound } from "@/lib/sound";
 import { MentionText } from "@/components/app/mentions";
 import { GateStaffPresence } from "@/components/app/GateStaffPresence";
 import { BmSplash } from "@/components/app/BmSplash";
+import { useVisitorVpnStatus } from "@/hooks/use-visitor-vpn";
 
 export const Route = createFileRoute("/_authenticated/gate")({
   head: () => ({
@@ -73,6 +74,7 @@ function GatePage() {
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [referralNote, setReferralNote] = useState<string | null>(null);
   const [referralChecking, setReferralChecking] = useState(true);
+  const visitorVpn = useVisitorVpnStatus();
 
   const ACTIVATION_TEXT = "I would like to complete activation of my account.";
   const defaultDraft = (code?: string | null) =>
@@ -385,10 +387,15 @@ function GatePage() {
     const referralLine = referralCode
       ? `\n\n🎟️ Referral code: ${referralCode}${referralNote ? ` (auto-redeem failed: ${referralNote})` : " (already redeemed)"}`
       : "";
+    // Advise staff when the applicant is on a VPN/proxy so they can run checks.
+    const vpnLine =
+      visitorVpn === "protected"
+        ? `\n\n⚠️ VPN/proxy detected on this connection — staff please run extra security checks before approving.`
+        : "";
     await supabase.from("gate_messages").insert({
       application_id: created.id,
       sender_id: user.id,
-      content: `Access ticket #GATE-${String(created.ticket_number).padStart(6, "0")}\n\n${trimmed}${referralLine}`,
+      content: `Access ticket #GATE-${String(created.ticket_number).padStart(6, "0")}\n\n${trimmed}${referralLine}${vpnLine}`,
     } as never);
     setAppId(created.id);
     setTicketNumber(created.ticket_number);

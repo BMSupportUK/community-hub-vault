@@ -7,11 +7,7 @@ import signupIllustration from "@/assets/signup-illustration.webp";
 import { recordSignupInfo } from "@/lib/signup-info.functions";
 import { TurnstileWidget } from "@/components/app/TurnstileWidget";
 import { verifyTurnstile } from "@/lib/turnstile.functions";
-import { useVisitorVpnStatus, refreshVisitorVpn } from "@/hooks/use-visitor-vpn";
-import { assertSignupAllowed } from "@/lib/vpn-public-check.functions";
-import { isVpnBypassEmail } from "@/lib/vpn-bypass";
-import { VpnBlockedDialog } from "@/components/VpnBlockedDialog";
-import { ShieldAlert, Loader2, RefreshCw } from "lucide-react";
+import { ShieldAlert } from "lucide-react";
 import { useViewportLockable } from "@/hooks/use-viewport-lock";
 import { useAuth } from "@/hooks/use-auth";
 import { BmSplash } from "@/components/app/BmSplash";
@@ -110,10 +106,6 @@ function SignupPage() {
   const [busy, setBusy] = useState(false);
   const [captchaToken, setCaptchaToken] = useState("");
   const [intent, setIntent] = useState<"bm-support" | "fan-zone" | "">("");
-  const vpnStatus = useVisitorVpnStatus();
-  const [vpnDialogOpen, setVpnDialogOpen] = useState(false);
-  const [rechecking, setRechecking] = useState(false);
-  const [serverBlock, setServerBlock] = useState<"vpn" | "unverified" | null>(null);
   const [emailTaken, setEmailTaken] = useState(false);
 
   // Live check: warn as soon as a registered email is entered, before submitting.
@@ -140,50 +132,16 @@ function SignupPage() {
     };
   }, [email]);
 
-  const bypass = isVpnBypassEmail(email);
-  const checking = !bypass && (vpnStatus === "checking" || rechecking);
-  const blocked =
-    !bypass && (vpnStatus === "protected" || vpnStatus === "unavailable" || !!serverBlock);
-  const blockedForVpn = vpnStatus === "protected" || serverBlock === "vpn";
   const needsReferral = intent === "bm-support" && !inviteCode.trim();
-
-  const recheck = async () => {
-    setRechecking(true);
-    setServerBlock(null);
-    try {
-      await refreshVisitorVpn();
-    } finally {
-      setRechecking(false);
-    }
-  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (blocked || checking) {
-      setVpnDialogOpen(true);
-      return;
-    }
     if (!intent) return toast.error("Please choose what you'd like access to.");
     if (intent === "bm-support" && !inviteCode.trim()) {
       return toast.error("A referral code is required for BM Support access.");
     }
     if (!captchaToken) return toast.error("Please complete the captcha.");
     setBusy(true);
-    // Server-side gate on the real request IP — must pass before any account exists.
-    try {
-      const gate = await assertSignupAllowed({ data: { email } });
-      if (!gate.allowed) {
-        setBusy(false);
-        setServerBlock(gate.reason === "vpn" ? "vpn" : "unverified");
-        setVpnDialogOpen(true);
-        return;
-      }
-    } catch {
-      setBusy(false);
-      setServerBlock("unverified");
-      setVpnDialogOpen(true);
-      return;
-    }
     const verify = await verifyTurnstile({ data: { token: captchaToken } });
     if (!verify.success) {
       setBusy(false);
@@ -375,58 +333,21 @@ function SignupPage() {
               )}
               <TurnstileWidget onToken={setCaptchaToken} onExpire={() => setCaptchaToken("")} />
 
-              {checking && (
-                <p className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Loader2 className="size-3.5 animate-spin" /> Checking your connection…
+              <button
+                disabled={busy || !intent || needsReferral}
+                className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-medium shadow-glow hover:opacity-90 disabled:opacity-50 disabled:shadow-none"
+              >
+                {busy ? "Creating…" : "Join BM Support"}
+              </button>
+              {!intent && (
+                <p className="text-xs text-muted-foreground text-center -mt-1">
+                  Choose which part of the site you'd like to register for to continue.
                 </p>
               )}
-
-              {!checking && blocked && (
-                <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-3 space-y-2">
-                  <p className="flex items-start gap-2 text-sm font-medium text-destructive">
-                    <ShieldAlert className="size-4 mt-0.5 shrink-0" />
-                    {blockedForVpn
-                      ? "Please disable your VPN or proxy to create an account, then press Re-check."
-                      : "We couldn't verify your connection. Please disable any VPN or proxy and press Re-check."}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={recheck}
-                    className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-muted"
-                  >
-                    <RefreshCw className="size-3.5" /> Re-check
-                  </button>
-                </div>
-              )}
-
-              {blocked || checking ? (
-                <button
-                  type="button"
-                  onClick={() => setVpnDialogOpen(true)}
-                  aria-disabled="true"
-                  className="w-full h-11 rounded-lg bg-primary/50 text-primary-foreground font-medium cursor-not-allowed inline-flex items-center justify-center gap-2"
-                >
-                  <ShieldAlert className="size-4" /> Join BM Support
-                </button>
-              ) : (
-                <>
-                <button
-                  disabled={busy || !intent || needsReferral}
-                  className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-medium shadow-glow hover:opacity-90 disabled:opacity-50 disabled:shadow-none"
-                >
-                  {busy ? "Creating…" : "Join BM Support"}
-                </button>
-                {!intent && (
-                  <p className="text-xs text-muted-foreground text-center -mt-1">
-                    Choose which part of the site you'd like to register for to continue.
-                  </p>
-                )}
-                {intent === "bm-support" && needsReferral && (
-                  <p className="text-xs text-muted-foreground text-center -mt-1">
-                    Enter your referral code to continue.
-                  </p>
-                )}
-                </>
+              {intent === "bm-support" && needsReferral && (
+                <p className="text-xs text-muted-foreground text-center -mt-1">
+                  Enter your referral code to continue.
+                </p>
               )}
             </form>
             <div className="text-sm text-muted-foreground text-center mt-6">
@@ -450,7 +371,6 @@ function SignupPage() {
         </div>
       </aside>
 
-      <VpnBlockedDialog open={vpnDialogOpen} onOpenChange={setVpnDialogOpen} />
     </div>
     </>
   );
