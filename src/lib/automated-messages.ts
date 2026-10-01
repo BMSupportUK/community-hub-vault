@@ -48,8 +48,9 @@ export const AUTOMATED_MESSAGE_FALLBACKS: Record<string, string> = {
 async function loadBodies(): Promise<Record<string, string>> {
   if (cache && Date.now() - cache.at < CACHE_TTL_MS) return cache.map;
   try {
-    const { data, error } = await supabase.from("automated_messages").select("key, body");
-    if (error || !data) return cache?.map ?? {};
+    const { getAutomatedMessageBodies } = await import("@/lib/automated-messages.functions");
+    const data = await getAutomatedMessageBodies();
+    if (!data) return cache?.map ?? {};
     const map: Record<string, string> = {};
     for (const row of data) map[row.key] = row.body;
     cache = { at: Date.now(), map };
