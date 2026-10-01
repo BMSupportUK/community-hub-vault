@@ -470,6 +470,13 @@
       "when": 1790885110414,
       "tag": "0066_appeal_delete_via_private",
       "breakpoints": true
+    },
+    {
+      "idx": 67,
+      "version": "7",
+      "when": 1790885133453,
+      "tag": "0067_appeal_fix_decrypt_schema",
+      "breakpoints": true
     }
   ]
 }
