@@ -1453,9 +1453,10 @@ function ReferralsPanel({
                           <Link
                             to="/u/$username"
                             params={{ username: r.joined_username }}
-                            className="text-white hover:text-amber-200 hover:underline truncate font-medium"
+                            className="min-w-0 text-white hover:text-amber-200 hover:underline"
                           >
-                            {r.joined_name ?? r.joined_username}
+                            <span className="block truncate font-medium">{r.joined_name ?? r.joined_username}</span>
+                            <span className="block truncate text-xs text-white/70">@{r.joined_username}</span>
                           </Link>
                         ) : (
                           <span className="text-white/90">{r.joined_name ?? "Member"}</span>
