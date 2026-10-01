@@ -1,3 +1,4 @@
+import { sortForMerge } from "@/lib/queue-merge-order";
 import { createFileRoute, Navigate, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -320,7 +321,6 @@ function AdminSportsImportPage() {
   const onMergePicked = async () => {
     const items = queue
       .filter((q) => picked.includes(q.id));
-    const ordered = sortForMerge(items);
     if (items.length < 2) return;
     if (!window.confirm(`Join these ${items.length} posts (oldest first) into 1 import?`)) return;
     setCombiningEspn(true);
