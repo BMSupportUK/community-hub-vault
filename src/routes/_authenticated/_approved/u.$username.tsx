@@ -1672,11 +1672,23 @@ function ReferralsPanel({
               <div className="rounded-2xl border border-dashed border-white/30 bg-white/5 p-8 text-center text-sm text-white/70">
                 Nothing under {activeLetter} — pick another letter above.
               </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                {filteredUnused.map((r) => renderReferralCard(r))}
-              </div>
-            )}
+             ) : (
+               <div>
+                 <button
+                   onClick={() => setUnusedExpanded((v) => !v)}
+                   className="mb-3 flex items-center gap-1.5 rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs font-semibold text-white transition-colors hover:bg-white/20"
+                   aria-expanded={unusedExpanded}
+                 >
+                   {unusedExpanded ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
+                   {unusedExpanded ? "Close" : "Expand"} {filteredUnused.length === 1 ? "1 invite" : `${filteredUnused.length} invites`}
+                 </button>
+                 {unusedExpanded && (
+                   <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                     {filteredUnused.map((r) => renderReferralCard(r))}
+                   </div>
+                 )}
+               </div>
+             )}
           </>
         )}
       </div>
