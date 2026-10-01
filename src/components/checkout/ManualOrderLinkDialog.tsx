@@ -108,7 +108,7 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
   const completeSale = async () => {
     if (!confirm(renewal ? "Mark this renewal as complete?" : "Mark this sale as complete?")) return;
     setBusy(true);
-    const { error } = await supabase.rpc("admin_complete_manual_order" as never, { _order_id: orderId } as never);
+    const { error } = await supabase.rpc("admin_complete_paid_order" as never, { _order_id: orderId } as never);
     setBusy(false);
     if (error) return toast.error(error.message);
     setOrderCompleted(true);

@@ -421,6 +421,13 @@
       "when": 1790841536361,
       "tag": "0059_referral_skips_security_gate",
       "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "7",
+      "when": 1790846795007,
+      "tag": "0060_admin_complete_paid_order",
+      "breakpoints": true
     }
   ]
 }
