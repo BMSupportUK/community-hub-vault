@@ -2,7 +2,7 @@ import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Plus, Pencil, Trash2, RefreshCw } from "lucide-react";
+import { Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import {
-  upsertStreamingDevice, deleteStreamingDevice, refreshStreamingPrices,
+  upsertStreamingDevice, deleteStreamingDevice,
 } from "@/lib/streaming-devices.functions";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-streaming-devices")({
@@ -64,9 +64,7 @@ function AdminStreamingDevicesPage() {
   const qc = useQueryClient();
   const upsert = useServerFn(upsertStreamingDevice);
   const remove = useServerFn(deleteStreamingDevice);
-  const refresh = useServerFn(refreshStreamingPrices);
   const [draft, setDraft] = useState<Partial<DeviceRow> | null>(null);
-  const [refreshing, setRefreshing] = useState(false);
 
   const list = useQuery({
     queryKey: ["admin-streaming-devices"],
@@ -127,32 +125,15 @@ function AdminStreamingDevicesPage() {
     }
   };
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    try {
-      const r = await refresh();
-      toast.success(`Refreshed: ${r.updated} updated, ${r.failed} failed`);
-      qc.invalidateQueries({ queryKey: ["streaming-device-prices"] });
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Refresh failed");
-    } finally {
-      setRefreshing(false);
-    }
-  };
-
   return (
     <div className="flex-1 overflow-y-auto">
       <div className="w-full px-4 py-6 space-y-6">
         <header className="flex items-start justify-between gap-3 flex-wrap">
           <div>
             <h1 className="text-2xl font-bold">Streaming devices owner panel</h1>
-            <p className="text-sm text-muted-foreground">Manage the device catalogue and refresh prices.</p>
+            <p className="text-sm text-muted-foreground">Manage the device catalogue.</p>
           </div>
           <div className="flex gap-2">
-            <Button variant="outline" onClick={onRefresh} disabled={refreshing}>
-              <RefreshCw className={`size-4 ${refreshing ? "animate-spin" : ""}`} />
-              Refresh prices now
-            </Button>
             <Button onClick={() => setDraft(emptyDraft())}>
               <Plus className="size-4" /> New device
             </Button>
