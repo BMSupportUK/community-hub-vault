@@ -284,6 +284,22 @@ export function NotificationBell() {
     };
   }, [user, isStaff, isPending, canManageOrders, canHandleTickets, canApproveSignups, channelInstanceId, navigate]);
 
+  // If the popup closes or the header unmounts mid-close (e.g. after
+  // pressing "Open", which navigates and collapses the header), the dialog
+  // can leave the page locked with pointer-events:none. Always release it.
+  useEffect(() => {
+    if (open) return;
+    const t = window.setTimeout(() => {
+      if (document.body.style.pointerEvents === "none") document.body.style.pointerEvents = "";
+    }, 300);
+    return () => window.clearTimeout(t);
+  }, [open]);
+  useEffect(() => () => {
+    document.body.style.pointerEvents = "";
+    document.body.removeAttribute("data-scroll-locked");
+    document.body.style.overflow = "";
+  }, []);
+
   if (!user || isPending) return null;
 
   const unread = items.filter((i) => !readIds.has(i.id));
