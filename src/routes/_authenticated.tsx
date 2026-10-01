@@ -163,7 +163,7 @@ function AuthLayout() {
   const [navOpen, setNavOpen] = useState(false);
   const openSalesChats = () => {
     if (!isAdminUnlocked(user?.id)) {
-      navigate({ to: "/admin", search: { tab: "order-status", next: "/shop?view=orders&scope=all" } as never });
+      navigate({ to: "/admin", search: { tab: "order-status" } as never });
       return;
     }
     navigate({ to: "/admin", search: { tab: "order-status" } as never });
