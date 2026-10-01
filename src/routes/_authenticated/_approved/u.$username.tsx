@@ -1583,112 +1583,75 @@ function ReferralsPanel({
                 Used ({usedReferrals.length})
               </button>
             </div>
-            {shownReferrals.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-white/30 bg-white/5 p-8 text-center text-sm text-white/70">
-                {inviteTab === "used"
-                  ? "None of your invites have been used yet."
-                  : "Every invite you've made has been used — create a new one above."}
-              </div>
-            ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-            {shownReferrals.map((r) => {
-              const used = !!r.used_by;
-              return (
-                <div
-                  key={r.id}
-                  className={cn(
-                    "relative rounded-2xl border backdrop-blur-xl p-5 flex flex-col gap-3 transition-all",
-                    used
-                      ? "bg-white/15 border-emerald-300/40 hover:bg-white/20"
-                      : "bg-white/10 border-white/30 hover:bg-white/15",
-                  )}
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <div className="text-[10px] uppercase tracking-[0.2em] text-white/60 mb-1">Code</div>
-                      <div className="break-all font-mono text-lg font-bold tracking-widest text-amber-100 drop-shadow sm:text-xl">
-                        {r.code}
-                      </div>
-                    </div>
-                    <span
-                      className={cn(
-                        "text-[10px] uppercase tracking-wider px-2 py-1 rounded-full border font-medium shrink-0",
-                        used
-                          ? "bg-emerald-500/25 text-emerald-100 border-emerald-300/40"
-                          : "bg-white/15 text-white border-white/40",
-                      )}
-                    >
-                      {used ? "Joined" : "Active"}
-                    </span>
-                  </div>
-
-                  <div className="text-sm min-h-[1.5rem]">
-                    {used ? (
-                      <div className="flex items-center gap-2">
+            <div className="mb-3 flex flex-wrap items-center gap-1.5">
+              {[
+                ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+                ...(presentLetters.has("#") ? ["#"] : []),
+              ].map((L) => {
+                const present = presentLetters.has(L);
+                const active = activeLetter === L;
+                return (
+                  <button
+                    key={L}
+                    onClick={() => present && setAzLetter(L)}
+                    disabled={!present}
+                    title={present ? `Show names under ${L}` : `Nothing under ${L}`}
+                    className={cn(
+                      "size-8 rounded-full text-xs font-bold border transition-colors",
+                      active
+                        ? "bg-white text-rose-700 border-white"
+                        : present
+                          ? "bg-white/10 text-white border-white/30 hover:bg-white/20"
+                          : "bg-white/5 text-white/30 border-white/10 cursor-not-allowed",
+                    )}
+                  >
+                    {L}
+                  </button>
+                );
+              })}
+            </div>
+            {inviteTab === "used" ? (
+              filteredGroups.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-white/30 bg-white/5 p-8 text-center text-sm text-white/70">
+                  Nothing under {activeLetter} — pick another letter above.
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {filteredGroups.map((g) => (
+                    <div key={g.username ?? g.name}>
+                      <div className="mb-2 flex items-center gap-2">
                         <UserPlus className="size-4 text-emerald-200 shrink-0" />
-                        {r.joined_username ? (
+                        {g.username ? (
                           <Link
                             to="/u/$username"
-                            params={{ username: r.joined_username }}
+                            params={{ username: g.username }}
                             className="min-w-0 text-white hover:text-amber-200 hover:underline"
                           >
-                            <span className="block truncate font-medium">{r.joined_name ?? r.joined_username}</span>
-                            <span className="block truncate text-xs text-white/70">@{r.joined_username}</span>
+                            <span className="font-semibold">{g.name}</span>
+                            <span className="ml-1 text-xs text-white/70">@{g.username}</span>
                           </Link>
                         ) : (
-                          <span className="text-white/90">{r.joined_name ?? "Member"}</span>
+                          <span className="font-semibold">{g.name}</span>
                         )}
+                        <span className="text-[10px] uppercase tracking-wider text-white/60">
+                          {g.items.length === 1 ? "1 invite" : `${g.items.length} invites`}
+                        </span>
                       </div>
-                    ) : (
-                      <span className="text-white/60 italic">Awaiting signup…</span>
-                    )}
-                  </div>
-
-                  {used && isAdmin && (
-                    <div
-                      className={cn(
-                        "inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-md border self-start",
-                        r.referral_bonus_paid
-                          ? "bg-emerald-500/20 text-emerald-100 border-emerald-300/40"
-                          : "bg-rose-500/20 text-rose-100 border-rose-300/40",
-                      )}
-                      title="Referral bonus"
-                    >
-                      <Gift className="size-3.5" />
-                      {r.referral_bonus_paid ? "Bonus paid" : "Bonus pending"}
-                      {r.referral_bonus_paid ? <Check className="size-3" /> : <XIcon className="size-3" />}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                        {g.items.map((r) => renderReferralCard(r))}
+                      </div>
                     </div>
-                  )}
-
-                  {isOwner && (
-                    <div className="flex items-center gap-2 mt-auto pt-2 border-t border-white/15">
-                      <button
-                        onClick={() => onCopy(r.code)}
-                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 text-sm font-medium transition-colors"
-                      >
-                        {copiedCode === r.code ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
-                        {copiedCode === r.code ? "Copied" : "Copy link"}
-                      </button>
-                      {!used && (
-                        <button
-                          onClick={() => onDelete(r.id)}
-                          className="p-2 rounded-lg text-white/70 hover:bg-rose-500/30 hover:text-white transition-colors"
-                          title="Delete invite"
-                        >
-                          <Trash2 className="size-3.5" />
-                        </button>
-                      )}
-                    </div>
-                  )}
-
-                  <div className="text-[10px] text-white/50">
-                    Created {new Date(r.created_at).toLocaleDateString("en-GB")}
-                    {used && r.used_at && ` · Joined ${new Date(r.used_at).toLocaleDateString("en-GB")}`}
-                  </div>
+                  ))}
                 </div>
-              );
-            })}
-          </div>
+              )
+            ) : filteredUnused.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-white/30 bg-white/5 p-8 text-center text-sm text-white/70">
+                Nothing under {activeLetter} — pick another letter above.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                {filteredUnused.map((r) => renderReferralCard(r))}
+              </div>
             )}
           </>
         )}
