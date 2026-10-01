@@ -25,8 +25,8 @@ function normalizeCode(s: string) {
 function extractTransferNumber(...texts: (string | null | undefined)[]) {
   for (const t of texts) {
     if (!t) continue;
-    const m = t.match(/#?\d{6,}/);
-    if (m) return m[0];
+    const m = t.match(/#\s?\d{6,}/) ?? t.match(/\b\d{9,}\b/);
+    if (m) return m[0].startsWith("#") ? m[0].replace(/\s/g, "") : `#${m[0]}`;
   }
   return null;
 }
