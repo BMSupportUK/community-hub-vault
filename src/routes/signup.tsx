@@ -7,11 +7,7 @@ import signupIllustration from "@/assets/signup-illustration.webp";
 import { recordSignupInfo } from "@/lib/signup-info.functions";
 import { TurnstileWidget } from "@/components/app/TurnstileWidget";
 import { verifyTurnstile } from "@/lib/turnstile.functions";
-import { useVisitorVpnStatus, refreshVisitorVpn } from "@/hooks/use-visitor-vpn";
-import { assertSignupAllowed } from "@/lib/vpn-public-check.functions";
-import { isVpnBypassEmail } from "@/lib/vpn-bypass";
-import { VpnBlockedDialog } from "@/components/VpnBlockedDialog";
-import { ShieldAlert, Loader2, RefreshCw } from "lucide-react";
+import { ShieldAlert } from "lucide-react";
 import { useViewportLockable } from "@/hooks/use-viewport-lock";
 import { useAuth } from "@/hooks/use-auth";
 import { BmSplash } from "@/components/app/BmSplash";
@@ -110,10 +106,6 @@ function SignupPage() {
   const [busy, setBusy] = useState(false);
   const [captchaToken, setCaptchaToken] = useState("");
   const [intent, setIntent] = useState<"bm-support" | "fan-zone" | "">("");
-  const vpnStatus = useVisitorVpnStatus();
-  const [vpnDialogOpen, setVpnDialogOpen] = useState(false);
-  const [rechecking, setRechecking] = useState(false);
-  const [serverBlock, setServerBlock] = useState<"vpn" | "unverified" | null>(null);
   const [emailTaken, setEmailTaken] = useState(false);
 
   // Live check: warn as soon as a registered email is entered, before submitting.
