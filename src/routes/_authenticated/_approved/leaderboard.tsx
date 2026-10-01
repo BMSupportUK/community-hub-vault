@@ -4,6 +4,7 @@ import { Trophy, Plus, Copy, Check, Trash2, Ticket, Crown, Medal, Award, X, Gift
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
@@ -453,101 +454,7 @@ function LeaderboardPage() {
 
           {isAdmin && (
             <TabsContent value="referrals" className="mt-6">
-              <div className="mb-4">
-                <h3 className="font-display text-xl font-semibold text-purple-50">Who invited who</h3>
-                <p className="text-sm text-purple-300/70">Every invite grouped by inviter. Shows pending codes and successful joins.</p>
-              </div>
-              {adminInvites.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-purple-500/40 p-12 text-center text-purple-200/70 bg-purple-950/30">
-                  <Users className="size-10 mx-auto mb-3 text-purple-300/60" />
-                  No invites yet.
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                  {Object.values(
-                    adminInvites.reduce<Record<string, { inviter: string; username: string | null; invites: AdminInvite[] }>>((acc, inv) => {
-                      const key = inv.created_by;
-                      if (!acc[key]) {
-                        acc[key] = {
-                          inviter: inv.inviter_name ?? inv.inviter_username ?? "Member",
-                          username: inv.inviter_username,
-                          invites: [],
-                        };
-                      }
-                      acc[key].invites.push(inv);
-                      return acc;
-                    }, {}),
-                  )
-                    .sort((a, b) => b.invites.filter((i) => i.used_by).length - a.invites.filter((i) => i.used_by).length)
-                    .map((group) => {
-                      const joined = group.invites.filter((i) => i.used_by);
-                      return (
-                        <div key={group.inviter + (group.username ?? "")} className="rounded-2xl bg-purple-950/50 border border-purple-500/30 overflow-hidden backdrop-blur hover:border-fuchsia-500/50 transition-colors flex flex-col">
-                          <div className="px-5 py-4 border-b border-purple-500/30 bg-gradient-to-br from-fuchsia-600/15 via-purple-600/10 to-transparent">
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="min-w-0">
-                                <div className="font-display font-semibold text-purple-50 truncate">
-                                {group.inviter}
-                                </div>
-                                {group.username && <div className="text-purple-300/60 text-xs truncate">@{group.username}</div>}
-                              </div>
-                              <div className="text-right shrink-0">
-                                <div className="font-display text-xl font-bold bg-gradient-to-r from-fuchsia-400 to-violet-400 bg-clip-text text-transparent leading-none">
-                                  {joined.length}
-                                </div>
-                                <div className="text-[10px] uppercase tracking-wider text-purple-300/70 mt-1">
-                                  of {group.invites.length}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                          <ul className="divide-y divide-purple-500/20 flex-1">
-                            {group.invites.map((inv) => {
-                              const used = !!inv.used_by;
-                              return (
-                                <li key={inv.id} className="px-5 py-3 space-y-2">
-                                  <div className="flex items-center justify-between gap-2">
-                                    <div className="font-mono text-xs font-bold tracking-widest bg-gradient-to-r from-fuchsia-400 to-violet-400 bg-clip-text text-transparent">
-                                    {inv.code}
-                                    </div>
-                                    <span className={`text-[10px] px-2 py-0.5 rounded-md font-medium border ${used ? "bg-purple-800/40 text-purple-200 border-purple-500/30" : "bg-emerald-500/15 text-emerald-200 border-emerald-500/30"}`}>
-                                      {used ? "Used" : "Active"}
-                                    </span>
-                                  </div>
-                                  <div>
-                                    {used ? (
-                                      <>
-                                        <div className="text-[10px] uppercase tracking-wider text-purple-300/70">Joined</div>
-                                        <div className="text-purple-50 text-sm truncate">
-                                          {inv.used_by_name ?? inv.used_by_username ?? "Member"}
-                                          {inv.used_by_username && <span className="text-purple-300/60 text-xs ml-1">@{inv.used_by_username}</span>}
-                                        </div>
-                                        {inv.used_at && <div className="text-purple-300/60 text-[11px]">{new Date(inv.used_at).toLocaleDateString("en-GB")}</div>}
-                                      </>
-                                    ) : (
-                                      <span className="text-xs text-purple-300/70">Created {new Date(inv.created_at).toLocaleDateString("en-GB")}</span>
-                                    )}
-                                  </div>
-                                  {used && (
-                                    inv.referral_bonus_paid ? (
-                                      <span className="inline-flex items-center gap-1 text-emerald-300 text-[11px] font-medium px-2 py-0.5 rounded-md border border-emerald-500/30 bg-emerald-500/10">
-                                        <Check className="size-3.5" /> Bonus added
-                                      </span>
-                                    ) : (
-                                      <span className="inline-flex items-center gap-1 text-rose-300 text-[11px] font-medium px-2 py-0.5 rounded-md border border-rose-500/30 bg-rose-500/10">
-                                        <X className="size-3.5" /> Bonus pending
-                                      </span>
-                                    )
-                                  )}
-                                </li>
-                              );
-                            })}
-                          </ul>
-                        </div>
-                      );
-                    })}
-                </div>
-              )}
+              <ReferralsAdminTab adminInvites={adminInvites} />
             </TabsContent>
           )}
 
@@ -622,6 +529,168 @@ function StatCard({ label, value }: { label: string; value: number }) {
       <div className="font-display text-2xl font-bold bg-gradient-to-r from-fuchsia-400 to-violet-400 bg-clip-text text-transparent">
         {value}
       </div>
+    </div>
+  );
+}
+
+type InviterGroup = { key: string; inviter: string; username: string | null; invites: AdminInvite[] };
+
+const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+
+function ReferralsAdminTab({ adminInvites }: { adminInvites: AdminInvite[] }) {
+  const [letter, setLetter] = useState<string | null>(null);
+  const [openGroup, setOpenGroup] = useState<InviterGroup | null>(null);
+
+  const groups = Object.values(
+    adminInvites.reduce<Record<string, InviterGroup>>((acc, inv) => {
+      const key = inv.created_by;
+      if (!acc[key]) {
+        acc[key] = {
+          key,
+          inviter: inv.inviter_name ?? inv.inviter_username ?? "Member",
+          username: inv.inviter_username,
+          invites: [],
+        };
+      }
+      acc[key].invites.push(inv);
+      return acc;
+    }, {}),
+  ).sort((a, b) => (a.username ?? a.inviter).localeCompare(b.username ?? b.inviter, "en", { sensitivity: "base" }));
+
+  const letterOf = (g: InviterGroup) => (g.username ?? g.inviter).charAt(0).toUpperCase();
+  const lettersWithMembers = new Set(groups.map(letterOf));
+  const visible = letter ? groups.filter((g) => letterOf(g) === letter) : groups;
+
+  return (
+    <div>
+      <div className="mb-4">
+        <h3 className="font-display text-xl font-semibold text-purple-50">Who invited who</h3>
+        <p className="text-sm text-purple-300/70">Members listed A–Z. Pick a letter, then open a member to see every referral they've made.</p>
+      </div>
+
+      {groups.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-purple-500/40 p-12 text-center text-purple-200/70 bg-purple-950/30">
+          <Users className="size-10 mx-auto mb-3 text-purple-300/60" />
+          No invites yet.
+        </div>
+      ) : (
+        <>
+          <div className="flex flex-wrap gap-1 mb-5">
+            {LETTERS.map((l) => {
+              const has = lettersWithMembers.has(l);
+              const active = letter === l;
+              return (
+                <button
+                  key={l}
+                  type="button"
+                  disabled={!has}
+                  onClick={() => setLetter(active ? null : l)}
+                  className={`w-8 h-8 rounded-md text-xs font-bold transition-colors border ${
+                    active
+                      ? "bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white border-fuchsia-500"
+                      : has
+                        ? "bg-purple-950/50 text-purple-100 border-purple-500/30 hover:border-fuchsia-500/50"
+                        : "bg-purple-950/20 text-purple-300/30 border-purple-500/10 cursor-not-allowed"
+                  }`}
+                >
+                  {l}
+                </button>
+              );
+            })}
+          </div>
+
+          {visible.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-purple-500/40 p-10 text-center text-purple-200/70 bg-purple-950/30">
+              No members under {letter}.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+              {visible.map((group) => {
+                const joined = group.invites.filter((i) => i.used_by).length;
+                return (
+                  <div key={group.key} className="rounded-2xl bg-purple-950/50 border border-purple-500/30 overflow-hidden backdrop-blur hover:border-fuchsia-500/50 transition-colors">
+                    <div className="px-5 py-4 bg-gradient-to-br from-fuchsia-600/15 via-purple-600/10 to-transparent">
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="font-display font-semibold text-purple-50 truncate">{group.inviter}</div>
+                          {group.username && <div className="text-purple-300/60 text-xs truncate">@{group.username}</div>}
+                        </div>
+                        <div className="text-right shrink-0">
+                          <div className="font-display text-xl font-bold bg-gradient-to-r from-fuchsia-400 to-violet-400 bg-clip-text text-transparent leading-none">{joined}</div>
+                          <div className="text-[10px] uppercase tracking-wider text-purple-300/70 mt-1">of {group.invites.length} joined</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="px-5 py-3 border-t border-purple-500/20">
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => setOpenGroup(group)}
+                        className="w-full bg-gradient-to-r from-fuchsia-600 to-purple-600 hover:from-fuchsia-500 hover:to-purple-500 text-white"
+                      >
+                        View {group.invites.length} referral{group.invites.length === 1 ? "" : "s"}
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </>
+      )}
+
+      <Dialog open={!!openGroup} onOpenChange={(open) => !open && setOpenGroup(null)}>
+        <DialogContent className="max-w-lg bg-purple-950 border-purple-500/40 text-purple-50 max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="font-display text-purple-50">
+              {openGroup?.inviter}
+              {openGroup?.username && <span className="text-purple-300/60 text-sm font-normal ml-2">@{openGroup.username}</span>}
+            </DialogTitle>
+          </DialogHeader>
+          <ul className="divide-y divide-purple-500/20">
+            {openGroup?.invites.map((inv) => {
+              const used = !!inv.used_by;
+              return (
+                <li key={inv.id} className="py-3 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="font-mono text-xs font-bold tracking-widest bg-gradient-to-r from-fuchsia-400 to-violet-400 bg-clip-text text-transparent">
+                      {inv.code}
+                    </div>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-md font-medium border ${used ? "bg-purple-800/40 text-purple-200 border-purple-500/30" : "bg-emerald-500/15 text-emerald-200 border-emerald-500/30"}`}>
+                      {used ? "Used" : "Active"}
+                    </span>
+                  </div>
+                  <div>
+                    {used ? (
+                      <>
+                        <div className="text-[10px] uppercase tracking-wider text-purple-300/70">Joined</div>
+                        <div className="text-purple-50 text-sm truncate">
+                          {inv.used_by_name ?? inv.used_by_username ?? "Member"}
+                          {inv.used_by_username && <span className="text-purple-300/60 text-xs ml-1">@{inv.used_by_username}</span>}
+                        </div>
+                        {inv.used_at && <div className="text-purple-300/60 text-[11px]">{new Date(inv.used_at).toLocaleDateString("en-GB")}</div>}
+                      </>
+                    ) : (
+                      <span className="text-xs text-purple-300/70">Created {new Date(inv.created_at).toLocaleDateString("en-GB")}</span>
+                    )}
+                  </div>
+                  {used && (
+                    inv.referral_bonus_paid ? (
+                      <span className="inline-flex items-center gap-1 text-emerald-300 text-[11px] font-medium px-2 py-0.5 rounded-md border border-emerald-500/30 bg-emerald-500/10">
+                        <Check className="size-3.5" /> Bonus added
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-1 text-rose-300 text-[11px] font-medium px-2 py-0.5 rounded-md border border-rose-500/30 bg-rose-500/10">
+                        <X className="size-3.5" /> Bonus pending
+                      </span>
+                    )
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
