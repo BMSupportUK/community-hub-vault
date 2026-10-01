@@ -124,13 +124,20 @@ export const Route = createFileRoute("/api/public/wise-email")({
         const amount = (parsed.amountCents / 100).toFixed(2);
         const who = parsed.senderName ?? "Unknown sender";
 
+        // Wise pads its emails with invisible characters, so pull the transfer
+        // number (e.g. #2392929350) from the full text and keep it up front.
+        const cleanBody = body.replace(/&zwnj;|&nbsp;|[\u200b-\u200d\u00a0\ufeff]/gi, " ").replace(/\s+/g, " ").trim();
+        const fullText = `${cleanBody} ${stripHtml(decodeQuotedPrintable(allText)).replace(/&zwnj;/gi, " ")}`;
+        const transferMatch = fullText.match(/#\s?(\d{6,})/) ?? fullText.match(/transfer[^0-9]{0,40}(\d{8,})/i);
+        const transferTag = transferMatch ? `Transfer #${transferMatch[1]} · ` : "";
+
         const { data: inserted, error } = await supabaseAdmin.from("wise_email_payments").insert({
           amount_cents: parsed.amountCents,
           currency: parsed.currency,
           sender_name: parsed.senderName?.slice(0, 120) ?? null,
           reference: parsed.reference.slice(0, 120),
           subject: subject.slice(0, 300),
-          excerpt: body.replace(/\s+/g, " ").trim().slice(0, 500),
+          excerpt: `${transferTag}${cleanBody}`.slice(0, 500),
           matched_order_id: null,
         }).select("id");
         if (error) return new Response("Save failed", { status: 500 });
