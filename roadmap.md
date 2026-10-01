@@ -1,6 +1,7 @@
 # Roadmap
 
 ## Current
+- [x] Sign-up: block VPNs for direct BM Support registration, bypass referral links, and leave Boro Fan Zone unaffected
 - [x] Remove automatic support tickets from sales (code + existing order tickets)
 - [x] Shop: duplicate How to Order tab as How to Renew with its own video upload
 - [x] Secure checkout: browse completed/current stages backward and forward without undoing payment

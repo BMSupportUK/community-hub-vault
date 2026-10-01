@@ -11,6 +11,14 @@ import { ShieldAlert } from "lucide-react";
 import { useViewportLockable } from "@/hooks/use-viewport-lock";
 import { useAuth } from "@/hooks/use-auth";
 import { BmSplash } from "@/components/app/BmSplash";
+import {
+  refreshVisitorVpn,
+  useVisitorVpnStatus,
+  type VisitorVpnStatus,
+} from "@/hooks/use-visitor-vpn";
+import { assertSignupAllowed } from "@/lib/vpn-public-check.functions";
+import { Button } from "@/components/ui/button";
+import { Loader2, RefreshCw } from "lucide-react";
 
 export const Route = createFileRoute("/signup")({
   head: () => ({
@@ -94,6 +102,49 @@ function IntentChoice({
   );
 }
 
+function BmZoneVpnWarning({
+  intent,
+  referralLink,
+  status,
+  rechecking,
+  onRecheck,
+}: {
+  intent: "bm-support" | "fan-zone" | "";
+  referralLink: boolean;
+  status: VisitorVpnStatus;
+  rechecking: boolean;
+  onRecheck: () => void;
+}) {
+  if (intent !== "bm-support" || referralLink || status === "unprotected") return null;
+
+  const checking = status === "checking" || rechecking;
+  return (
+    <div className="mt-3 rounded-lg border border-destructive/50 bg-destructive/10 p-3" role="alert">
+      <div className="flex items-start gap-2">
+        <ShieldAlert className="mt-0.5 size-4 shrink-0 text-destructive" />
+        <div className="min-w-0 space-y-2">
+          <div>
+            <p className="text-sm font-semibold text-foreground">
+              {checking ? "Checking your connection…" : "Disable your VPN to join BM Support"}
+            </p>
+            {!checking && (
+              <p className="mt-1 text-xs text-muted-foreground">
+                {status === "protected"
+                  ? "A VPN or proxy was detected. Switch it off, then re-check your connection."
+                  : "We couldn't verify your connection. Please try the check again before registering."}
+              </p>
+            )}
+          </div>
+          <Button type="button" variant="outline" size="sm" disabled={checking} onClick={onRecheck}>
+            {checking ? <Loader2 className="animate-spin" /> : <RefreshCw />}
+            Re-check
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function SignupPage() {
   const lockable = useViewportLockable();
   const navigate = useNavigate();
@@ -107,6 +158,16 @@ function SignupPage() {
   const [captchaToken, setCaptchaToken] = useState("");
   const [intent, setIntent] = useState<"bm-support" | "fan-zone" | "">("");
   const [emailTaken, setEmailTaken] = useState(false);
+  const vpnStatus = useVisitorVpnStatus();
+  const [vpnRechecking, setVpnRechecking] = useState(false);
+  const hasReferralLink = Boolean(inviteFromUrl?.trim());
+
+  const recheckVpn = async () => {
+    setVpnRechecking(true);
+    const nextStatus = await refreshVisitorVpn();
+    setVpnRechecking(false);
+    if (nextStatus === "unprotected") toast.success("Connection verified. You can continue registering.");
+  };
 
   // Live check: warn as soon as a registered email is entered, before submitting.
   useEffect(() => {
@@ -140,8 +201,26 @@ function SignupPage() {
     if (intent === "bm-support" && !inviteCode.trim()) {
       return toast.error("A referral code is required for BM Support access.");
     }
+    if (intent === "bm-support" && !hasReferralLink && vpnStatus !== "unprotected") {
+      return toast.error(
+        vpnStatus === "protected"
+          ? "Please disable your VPN and re-check your connection."
+          : "Please wait for the connection check, then try again.",
+      );
+    }
     if (!captchaToken) return toast.error("Please complete the captcha.");
     setBusy(true);
+    if (intent === "bm-support" && !hasReferralLink) {
+      const vpnCheck = await assertSignupAllowed({ data: { email: email.trim() } });
+      if (!vpnCheck.allowed) {
+        setBusy(false);
+        return toast.error(
+          vpnCheck.reason === "vpn"
+            ? "Please disable your VPN and re-check your connection."
+            : "We couldn't verify your connection. Please re-check and try again.",
+        );
+      }
+    }
     const verify = await verifyTurnstile({ data: { token: captchaToken } });
     if (!verify.success) {
       setBusy(false);
@@ -294,6 +373,13 @@ function SignupPage() {
               {/* On small screens the registration choice is part of the form; on lg+ it moves to the sidebar */}
               <div className="lg:hidden">
                 <IntentChoice intent={intent} setIntent={setIntent} />
+                <BmZoneVpnWarning
+                  intent={intent}
+                  referralLink={hasReferralLink}
+                  status={vpnStatus}
+                  rechecking={vpnRechecking}
+                  onRecheck={recheckVpn}
+                />
               </div>
               <Field label="Display name" value={displayName} onChange={setDisplayName} />
               <Field label="Email" type="email" value={email} onChange={setEmail} />
@@ -334,7 +420,12 @@ function SignupPage() {
               <TurnstileWidget onToken={setCaptchaToken} onExpire={() => setCaptchaToken("")} />
 
               <button
-                disabled={busy || !intent || needsReferral}
+                disabled={
+                  busy ||
+                  !intent ||
+                  needsReferral ||
+                  (intent === "bm-support" && !hasReferralLink && vpnStatus !== "unprotected")
+                }
                 className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-medium shadow-glow hover:opacity-90 disabled:opacity-50 disabled:shadow-none"
               >
                 {busy ? "Creating…" : "Join BM Support"}
@@ -367,6 +458,13 @@ function SignupPage() {
         <div className="w-full max-w-md">
           <div className="bg-surface/80 backdrop-blur-sm border border-border rounded-2xl p-5 sm:p-6 shadow-soft">
             <IntentChoice intent={intent} setIntent={setIntent} />
+            <BmZoneVpnWarning
+              intent={intent}
+              referralLink={hasReferralLink}
+              status={vpnStatus}
+              rechecking={vpnRechecking}
+              onRecheck={recheckVpn}
+            />
           </div>
         </div>
       </aside>
