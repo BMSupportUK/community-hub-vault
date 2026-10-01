@@ -1,4 +1,3 @@
-import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Editable automated messages (admin dashboard → Automated messages & emails).
