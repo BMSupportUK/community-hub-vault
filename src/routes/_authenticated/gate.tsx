@@ -14,6 +14,7 @@ import { playSound } from "@/lib/sound";
 import { MentionText } from "@/components/app/mentions";
 import { GateStaffPresence } from "@/components/app/GateStaffPresence";
 import { BmSplash } from "@/components/app/BmSplash";
+import { useVisitorVpnStatus } from "@/hooks/use-visitor-vpn";
 
 export const Route = createFileRoute("/_authenticated/gate")({
   head: () => ({
@@ -73,6 +74,7 @@ function GatePage() {
   const [referralCode, setReferralCode] = useState<string | null>(null);
   const [referralNote, setReferralNote] = useState<string | null>(null);
   const [referralChecking, setReferralChecking] = useState(true);
+  const visitorVpn = useVisitorVpnStatus();
 
   const ACTIVATION_TEXT = "I would like to complete activation of my account.";
   const defaultDraft = (code?: string | null) =>
