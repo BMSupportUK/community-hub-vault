@@ -13,6 +13,8 @@ import {
   MapPin,
   X,
   RefreshCw,
+  Pencil,
+  Check,
   KeyRound,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,7 +23,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { isRolesUnlocked } from "@/lib/roles-unlock";
 import { RolesGate } from "@/components/app/RolesGate";
-import { deleteMember, listMemberEmails } from "@/lib/admin-users.functions";
+import { deleteMember, listMemberEmails, updateMemberUsername } from "@/lib/admin-users.functions";
 import {
   getUserLocationHistory,
   type LocationHistoryRow,
@@ -74,6 +76,7 @@ const CUSTOM_STYLE = "bg-primary/20 text-primary border-primary/40";
 function AdminRolesPage() {
   const { hasAny, user } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
+  const isOwner = hasAny(["admin"]);
   const [rolesUnlocked, setRolesUnlocked] = useState(false);
   useEffect(() => {
     setRolesUnlocked(isRolesUnlocked(user?.id));
@@ -87,6 +90,10 @@ function AdminRolesPage() {
   const [deletingUser, setDeletingUser] = useState<string | null>(null);
   const deleteMemberFn = useServerFn(deleteMember);
   const listEmailsFn = useServerFn(listMemberEmails);
+  const updateUsernameFn = useServerFn(updateMemberUsername);
+  const [editingUsernameFor, setEditingUsernameFor] = useState<string | null>(null);
+  const [usernameDraft, setUsernameDraft] = useState("");
+  const [savingUsername, setSavingUsername] = useState(false);
   const [historyFor, setHistoryFor] = useState<Row | null>(null);
   const [roleFilter, setRoleFilter] = useState<string>("all");
   
@@ -233,6 +240,25 @@ function AdminRolesPage() {
   };
 
   const styleFor = (role: string) => SYSTEM_STYLE[role] ?? CUSTOM_STYLE;
+
+  const saveUsername = async (row: Row) => {
+    const next = usernameDraft.trim();
+    if (!next || next === row.username) {
+      setEditingUsernameFor(null);
+      return;
+    }
+    setSavingUsername(true);
+    try {
+      await updateUsernameFn({ data: { userId: row.id, username: next } });
+      setRows((all) => all.map((r) => (r.id === row.id ? { ...r, username: next } : r)));
+      toast.success(`Username changed to @${next}`);
+      setEditingUsernameFor(null);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to update username");
+    } finally {
+      setSavingUsername(false);
+    }
+  };
 
   const removeMember = async (row: Row) => {
     if (row.id === user?.id) {
@@ -392,9 +418,58 @@ function AdminRolesPage() {
                             <MapPin className="size-3.5" />
                           </button>
                         </div>
-                        <div className="text-xs text-muted-foreground truncate">
-                          @{row.username ?? row.id.slice(0, 8)}
-                        </div>
+                        {isOwner && editingUsernameFor === row.id ? (
+                          <div className="flex items-center gap-1 mt-0.5">
+                            <input
+                              autoFocus
+                              value={usernameDraft}
+                              onChange={(e) => setUsernameDraft(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") void saveUsername(row);
+                                if (e.key === "Escape") setEditingUsernameFor(null);
+                              }}
+                              className="w-full min-w-0 px-2 py-1 rounded-md bg-surface-2 border border-border text-xs focus:outline-none focus:ring-2 focus:ring-primary"
+                              placeholder="username"
+                            />
+                            <button
+                              onClick={() => void saveUsername(row)}
+                              disabled={savingUsername}
+                              title="Save username"
+                              className="shrink-0 p-1 rounded-md text-primary hover:bg-primary/10 disabled:opacity-50"
+                            >
+                              {savingUsername ? (
+                                <Loader2 className="size-3.5 animate-spin" />
+                              ) : (
+                                <Check className="size-3.5" />
+                              )}
+                            </button>
+                            <button
+                              onClick={() => setEditingUsernameFor(null)}
+                              title="Cancel"
+                              className="shrink-0 p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-surface-2"
+                            >
+                              <X className="size-3.5" />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1 min-w-0">
+                            <div className="text-xs text-muted-foreground truncate">
+                              @{row.username ?? row.id.slice(0, 8)}
+                            </div>
+                            {isOwner && (
+                              <button
+                                onClick={() => {
+                                  setEditingUsernameFor(row.id);
+                                  setUsernameDraft(row.username ?? "");
+                                }}
+                                title="Edit username (owners only)"
+                                className="shrink-0 p-0.5 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10"
+                              >
+                                <Pencil className="size-3" />
+                              </button>
+                            )}
+                          </div>
+                        )}
                         <div
                           className="text-xs text-muted-foreground truncate mt-0.5"
                           title={row.email ?? "No email on file"}
