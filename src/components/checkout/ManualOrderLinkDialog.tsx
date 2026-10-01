@@ -5,6 +5,7 @@ import { useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
 import { StaffCheckoutChat, secureCheckoutUrl } from "@/components/checkout/CheckoutChat";
+import { OrderStatusBar } from "@/components/checkout/CheckoutTemplate";
 import { createCredentialForOrder, getOrderRenewalAccounts, type ApplyOrderResult, type CredentialCandidate } from "@/lib/order-fulfilment.functions";
 
 
@@ -175,6 +176,12 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
   );
   const fields = (
     <div className="space-y-3 min-w-0">
+      <OrderStatusBar
+        step={orderCompleted ? 3 : orderPaid ? 2 : 1}
+        awaitingConfirmation={!!link.payment_sent_at && !orderPaid}
+        accountSetup={!!link.account_setup_at}
+        renewal={renewal}
+      />
       {link.payment_sent_at && (
         <div className="flex items-center gap-2 rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-xs"><Hourglass className="size-3.5 text-warning" /> Customer says payment was sent {new Date(link.payment_sent_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })} — awaiting confirmation</div>
       )}
