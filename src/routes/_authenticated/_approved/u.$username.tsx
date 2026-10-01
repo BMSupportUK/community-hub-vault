@@ -1332,6 +1332,7 @@ function ReferralsPanel({
   const canAssign = !!isAdmin && !inviterLabel && !!targetUserId;
   const [assignCode, setAssignCode] = useState("");
   const [assigning, setAssigning] = useState(false);
+  const [inviteTab, setInviteTab] = useState<"unused" | "used">("unused");
   const assignFn = useServerFn(assignReferrer);
   const submitAssign = async () => {
     const code = assignCode.trim().toUpperCase();
