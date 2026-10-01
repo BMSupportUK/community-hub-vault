@@ -1353,6 +1353,9 @@ function ReferralsPanel({
       setAssigning(false);
     }
   };
+  const usedReferrals = referrals.filter((r) => !!r.used_by);
+  const unusedReferrals = referrals.filter((r) => !r.used_by);
+  const shownReferrals = inviteTab === "used" ? usedReferrals : unusedReferrals;
   return (
     <section className="relative text-white">
       <div className="relative px-0 py-2 sm:p-8">
