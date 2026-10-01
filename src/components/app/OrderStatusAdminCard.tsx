@@ -109,9 +109,9 @@ export function OrderStatusAdminCard() {
     const bump = () => { if (t) clearTimeout(t); t = setTimeout(() => setReload((n) => n + 1), 400); };
     const channel = supabase
       .channel(`admin-orders-card-${Math.random().toString(36).slice(2)}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, bump)
+      // public.orders is a view, so order/checkout-link writes bump a signal row instead.
+      .on("postgres_changes", { event: "*", schema: "public", table: "order_change_signals" }, bump)
       .on("postgres_changes", { event: "*", schema: "public", table: "order_payments" }, bump)
-      .on("postgres_changes", { event: "*", schema: "public", table: "order_checkout_links" }, bump)
       .subscribe();
     const interval = setInterval(bump, 60_000);
     return () => { if (t) clearTimeout(t); clearInterval(interval); supabase.removeChannel(channel); };
