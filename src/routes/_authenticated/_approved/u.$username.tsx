@@ -1626,33 +1626,47 @@ function ReferralsPanel({
                   Nothing under {activeLetter} — pick another letter above.
                 </div>
               ) : (
-                <div className="space-y-6">
-                  {filteredGroups.map((g) => (
-                    <div key={g.username ?? g.name}>
-                      <div className="mb-2 flex items-center gap-2">
-                        <UserPlus className="size-4 text-emerald-200 shrink-0" />
-                        {g.username ? (
-                          <Link
-                            to="/u/$username"
-                            params={{ username: g.username }}
-                            className="min-w-0 text-white hover:text-amber-200 hover:underline"
-                          >
-                            <span className="font-semibold">{g.name}</span>
-                            <span className="ml-1 text-xs text-white/70">@{g.username}</span>
-                          </Link>
-                        ) : (
-                          <span className="font-semibold">{g.name}</span>
-                        )}
-                        <span className="text-[10px] uppercase tracking-wider text-white/60">
-                          {g.items.length === 1 ? "1 invite" : `${g.items.length} invites`}
-                        </span>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                        {g.items.map((r) => renderReferralCard(r))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                 <div className="space-y-6">
+                   {filteredGroups.map((g) => {
+                     const gKey = g.username ?? g.name;
+                     const open = expandedGroups.has(gKey);
+                     return (
+                     <div key={gKey}>
+                       <div className="mb-2 flex items-center gap-2">
+                         <UserPlus className="size-4 text-emerald-200 shrink-0" />
+                         {g.username ? (
+                           <Link
+                             to="/u/$username"
+                             params={{ username: g.username }}
+                             className="min-w-0 text-white hover:text-amber-200 hover:underline"
+                           >
+                             <span className="font-semibold">{g.name}</span>
+                             <span className="ml-1 text-xs text-white/70">@{g.username}</span>
+                           </Link>
+                         ) : (
+                           <span className="font-semibold">{g.name}</span>
+                         )}
+                         <span className="text-[10px] uppercase tracking-wider text-white/60">
+                           {g.items.length === 1 ? "1 invite" : `${g.items.length} invites`}
+                         </span>
+                         <button
+                           onClick={() => toggleGroup(gKey)}
+                           className="ml-auto flex items-center gap-1 rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs font-semibold text-white transition-colors hover:bg-white/20"
+                           aria-expanded={open}
+                         >
+                           {open ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
+                           {open ? "Close" : "Expand"}
+                         </button>
+                       </div>
+                       {open && (
+                         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                           {g.items.map((r) => renderReferralCard(r))}
+                         </div>
+                       )}
+                     </div>
+                     );
+                   })}
+                 </div>
               )
             ) : filteredUnused.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-white/30 bg-white/5 p-8 text-center text-sm text-white/70">
