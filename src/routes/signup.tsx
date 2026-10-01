@@ -132,50 +132,16 @@ function SignupPage() {
     };
   }, [email]);
 
-  const bypass = isVpnBypassEmail(email);
-  const checking = !bypass && (vpnStatus === "checking" || rechecking);
-  const blocked =
-    !bypass && (vpnStatus === "protected" || vpnStatus === "unavailable" || !!serverBlock);
-  const blockedForVpn = vpnStatus === "protected" || serverBlock === "vpn";
   const needsReferral = intent === "bm-support" && !inviteCode.trim();
-
-  const recheck = async () => {
-    setRechecking(true);
-    setServerBlock(null);
-    try {
-      await refreshVisitorVpn();
-    } finally {
-      setRechecking(false);
-    }
-  };
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (blocked || checking) {
-      setVpnDialogOpen(true);
-      return;
-    }
     if (!intent) return toast.error("Please choose what you'd like access to.");
     if (intent === "bm-support" && !inviteCode.trim()) {
       return toast.error("A referral code is required for BM Support access.");
     }
     if (!captchaToken) return toast.error("Please complete the captcha.");
     setBusy(true);
-    // Server-side gate on the real request IP — must pass before any account exists.
-    try {
-      const gate = await assertSignupAllowed({ data: { email } });
-      if (!gate.allowed) {
-        setBusy(false);
-        setServerBlock(gate.reason === "vpn" ? "vpn" : "unverified");
-        setVpnDialogOpen(true);
-        return;
-      }
-    } catch {
-      setBusy(false);
-      setServerBlock("unverified");
-      setVpnDialogOpen(true);
-      return;
-    }
     const verify = await verifyTurnstile({ data: { token: captchaToken } });
     if (!verify.success) {
       setBusy(false);
