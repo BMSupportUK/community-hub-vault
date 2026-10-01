@@ -414,6 +414,13 @@
       "when": 1790839353009,
       "tag": "0058_split_keeps_original_post_time",
       "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "7",
+      "when": 1790841536361,
+      "tag": "0059_referral_skips_security_gate",
+      "breakpoints": true
     }
   ]
 }
