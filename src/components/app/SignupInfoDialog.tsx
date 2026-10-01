@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Info } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { locationAccuracyLabel } from "@/lib/location-accuracy";
 import {
   Dialog,
   DialogContent,
@@ -128,6 +129,7 @@ export function SignupInfoDialog({ userId, trigger, displayName }: Props) {
         ],
         ["ISP", info.isp],
         ["Location", [info.city, info.region, info.country].filter(Boolean).join(", ") || null],
+        ["Location accuracy", locationAccuracyLabel(info)],
         [
           "Precise location",
           info.geo_latitude != null && info.geo_longitude != null
