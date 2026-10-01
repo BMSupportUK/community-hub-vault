@@ -333,58 +333,21 @@ function SignupPage() {
               )}
               <TurnstileWidget onToken={setCaptchaToken} onExpire={() => setCaptchaToken("")} />
 
-              {checking && (
-                <p className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Loader2 className="size-3.5 animate-spin" /> Checking your connection…
+              <button
+                disabled={busy || !intent || needsReferral}
+                className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-medium shadow-glow hover:opacity-90 disabled:opacity-50 disabled:shadow-none"
+              >
+                {busy ? "Creating…" : "Join BM Support"}
+              </button>
+              {!intent && (
+                <p className="text-xs text-muted-foreground text-center -mt-1">
+                  Choose which part of the site you'd like to register for to continue.
                 </p>
               )}
-
-              {!checking && blocked && (
-                <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-3 space-y-2">
-                  <p className="flex items-start gap-2 text-sm font-medium text-destructive">
-                    <ShieldAlert className="size-4 mt-0.5 shrink-0" />
-                    {blockedForVpn
-                      ? "Please disable your VPN or proxy to create an account, then press Re-check."
-                      : "We couldn't verify your connection. Please disable any VPN or proxy and press Re-check."}
-                  </p>
-                  <button
-                    type="button"
-                    onClick={recheck}
-                    className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium hover:bg-muted"
-                  >
-                    <RefreshCw className="size-3.5" /> Re-check
-                  </button>
-                </div>
-              )}
-
-              {blocked || checking ? (
-                <button
-                  type="button"
-                  onClick={() => setVpnDialogOpen(true)}
-                  aria-disabled="true"
-                  className="w-full h-11 rounded-lg bg-primary/50 text-primary-foreground font-medium cursor-not-allowed inline-flex items-center justify-center gap-2"
-                >
-                  <ShieldAlert className="size-4" /> Join BM Support
-                </button>
-              ) : (
-                <>
-                <button
-                  disabled={busy || !intent || needsReferral}
-                  className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-medium shadow-glow hover:opacity-90 disabled:opacity-50 disabled:shadow-none"
-                >
-                  {busy ? "Creating…" : "Join BM Support"}
-                </button>
-                {!intent && (
-                  <p className="text-xs text-muted-foreground text-center -mt-1">
-                    Choose which part of the site you'd like to register for to continue.
-                  </p>
-                )}
-                {intent === "bm-support" && needsReferral && (
-                  <p className="text-xs text-muted-foreground text-center -mt-1">
-                    Enter your referral code to continue.
-                  </p>
-                )}
-                </>
+              {intent === "bm-support" && needsReferral && (
+                <p className="text-xs text-muted-foreground text-center -mt-1">
+                  Enter your referral code to continue.
+                </p>
               )}
             </form>
             <div className="text-sm text-muted-foreground text-center mt-6">
@@ -408,7 +371,6 @@ function SignupPage() {
         </div>
       </aside>
 
-      <VpnBlockedDialog open={vpnDialogOpen} onOpenChange={setVpnDialogOpen} />
     </div>
     </>
   );
