@@ -1417,8 +1417,40 @@ function ReferralsPanel({
             </p>
           </div>
         ) : (
+          <>
+            <div className="mb-4 flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => setInviteTab("unused")}
+                className={cn(
+                  "rounded-full px-4 py-1.5 text-sm font-semibold border transition-colors",
+                  inviteTab === "unused"
+                    ? "bg-white text-rose-700 border-white"
+                    : "bg-white/10 text-white border-white/30 hover:bg-white/20",
+                )}
+              >
+                Not used ({unusedReferrals.length})
+              </button>
+              <button
+                onClick={() => setInviteTab("used")}
+                className={cn(
+                  "rounded-full px-4 py-1.5 text-sm font-semibold border transition-colors",
+                  inviteTab === "used"
+                    ? "bg-white text-rose-700 border-white"
+                    : "bg-white/10 text-white border-white/30 hover:bg-white/20",
+                )}
+              >
+                Used ({usedReferrals.length})
+              </button>
+            </div>
+            {shownReferrals.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-white/30 bg-white/5 p-8 text-center text-sm text-white/70">
+                {inviteTab === "used"
+                  ? "None of your invites have been used yet."
+                  : "Every invite you've made has been used — create a new one above."}
+              </div>
+            ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-            {referrals.map((r) => {
+            {shownReferrals.map((r) => {
               const used = !!r.used_by;
               return (
                 <div
