@@ -359,104 +359,118 @@ function LeaderboardPage() {
                         <button
                           key={k}
                           type="button"
-                          onClick={() => { setInviteTab(k); setInviteExpanded(false); }}
+                          onClick={() => setInviteTab(k)}
                           className={`rounded-md px-3 py-1.5 text-sm font-medium ${inviteTab === k ? "bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white" : "text-purple-200 hover:text-white"}`}
                         >
                           {label}
                         </button>
                       ))}
                     </div>
-                    {shown.length > 0 && (
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => setInviteExpanded((v) => !v)}
-                        className="text-purple-100 hover:bg-purple-800/40 hover:text-white"
-                      >
-                        {inviteExpanded ? <ChevronUp className="size-4 mr-1" /> : <ChevronDown className="size-4 mr-1" />}
-                        {inviteExpanded ? "Close" : "Expand"} {shown.length} invite{shown.length === 1 ? "" : "s"}
-                      </Button>
-                    )}
                   </div>
                   {shown.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-purple-500/40 p-12 text-center text-purple-200/70 bg-purple-950/30">
                 <Ticket className="size-10 mx-auto mb-3 text-purple-300/60" />
                 {inviteTab === "active" ? "No active invites. Press New invite to make one." : "None of your invites have been used yet."}
               </div>
-            ) : !inviteExpanded ? null : (
+            ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {shown.map((inv) => {
                   const used = !!inv.used_by;
+                  const open = expandedIds.has(inv.id);
+                  const toggleOpen = () =>
+                    setExpandedIds((prev) => {
+                      const next = new Set(prev);
+                      if (next.has(inv.id)) next.delete(inv.id);
+                      else next.add(inv.id);
+                      return next;
+                    });
                   return (
                     <div
                       key={inv.id}
-                      className={`rounded-2xl border p-5 backdrop-blur transition-colors ${used ? "bg-purple-950/40 border-purple-500/20 opacity-70" : "bg-purple-950/50 border-purple-500/40 hover:border-fuchsia-500/60"}`}
+                      className={`rounded-2xl border backdrop-blur transition-colors ${used ? "bg-purple-950/40 border-purple-500/20" : "bg-purple-950/50 border-purple-500/40 hover:border-fuchsia-500/60"}`}
                     >
-                      <div className="flex items-start justify-between gap-3">
+                      <button
+                        type="button"
+                        onClick={toggleOpen}
+                        className="w-full text-left p-5 flex items-start justify-between gap-3"
+                      >
                         <div className="min-w-0">
                           <div className="text-[11px] uppercase tracking-wider text-purple-300/70 mb-1">Code</div>
                           <div className="font-mono text-2xl font-bold tracking-widest bg-gradient-to-r from-fuchsia-400 to-violet-400 bg-clip-text text-transparent">
                             {inv.code}
                           </div>
+                          {used && (
+                            <div className="mt-1 text-sm text-purple-100 truncate">
+                              Joined: {inv.used_by_name ?? inv.used_by_username ?? "Member"}
+                              {inv.used_by_username && <span className="text-purple-300/60 text-xs ml-1">@{inv.used_by_username}</span>}
+                            </div>
+                          )}
                         </div>
-                        <span className={`text-xs px-2 py-1 rounded-md font-medium border ${used ? "bg-purple-800/40 text-purple-200 border-purple-500/30" : "bg-emerald-500/15 text-emerald-200 border-emerald-500/30"}`}>
-                          {used ? "Used" : "Active"}
-                        </span>
-                      </div>
-                      {used && (
-                        <div className="mt-3 flex items-center justify-between gap-2 rounded-lg border border-purple-500/30 bg-purple-900/30 px-3 py-2">
-                          <div className="flex items-center gap-2 text-sm">
-                            <Gift className="size-4 text-fuchsia-300" />
-                            <span className="text-purple-100">Referral bonus</span>
-                            {inv.referral_bonus_paid ? (
-                              <span className="ml-1 inline-flex items-center gap-1 text-emerald-300 font-medium">
-                                <Check className="size-4" /> Added
-                              </span>
-                            ) : (
-                              <span className="ml-1 inline-flex items-center gap-1 text-rose-300 font-medium">
-                                <X className="size-4" /> Not yet
-                              </span>
-                            )}
-                          </div>
-                          {isAdmin && (
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className={`text-xs px-2 py-1 rounded-md font-medium border ${used ? "bg-purple-800/40 text-purple-200 border-purple-500/30" : "bg-emerald-500/15 text-emerald-200 border-emerald-500/30"}`}>
+                            {used ? "Used" : "Active"}
+                          </span>
+                          {open ? <ChevronUp className="size-4 text-purple-300" /> : <ChevronDown className="size-4 text-purple-300" />}
+                        </div>
+                      </button>
+                      {open && (
+                        <div className="px-5 pb-5">
+                          {used && (
+                            <div className="mt-1 flex items-center justify-between gap-2 rounded-lg border border-purple-500/30 bg-purple-900/30 px-3 py-2">
+                              <div className="flex items-center gap-2 text-sm">
+                                <Gift className="size-4 text-fuchsia-300" />
+                                <span className="text-purple-100">Referral bonus</span>
+                                {inv.referral_bonus_paid ? (
+                                  <span className="ml-1 inline-flex items-center gap-1 text-emerald-300 font-medium">
+                                    <Check className="size-4" /> Added
+                                  </span>
+                                ) : (
+                                  <span className="ml-1 inline-flex items-center gap-1 text-rose-300 font-medium">
+                                    <X className="size-4" /> Not yet
+                                  </span>
+                                )}
+                              </div>
+                              {isAdmin && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => toggleBonus(inv)}
+                                  className="text-purple-100 hover:bg-purple-800/60 hover:text-white h-7"
+                                >
+                                  {inv.referral_bonus_paid ? "Unmark" : "Mark added"}
+                                </Button>
+                              )}
+                            </div>
+                          )}
+                          <div className="mt-4 flex items-center gap-2">
                             <Button
                               size="sm"
-                              variant="ghost"
-                              onClick={() => toggleBonus(inv)}
-                              className="text-purple-100 hover:bg-purple-800/60 hover:text-white h-7"
+                              onClick={() => copyInvite(inv)}
+                              className="flex-1 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0"
                             >
-                              {inv.referral_bonus_paid ? "Unmark" : "Mark added"}
+                              {copiedId === inv.id ? (
+                                <><Check className="size-4 mr-1" /> Copied</>
+                              ) : (
+                                <><Copy className="size-4 mr-1" /> Copy invite link</>
+                              )}
                             </Button>
-                          )}
+                            {!used && (
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => deleteInvite(inv.id)}
+                                className="text-purple-200 hover:text-white hover:bg-purple-800/60"
+                              >
+                                <Trash2 className="size-4" />
+                              </Button>
+                            )}
+                          </div>
+                          <div className="mt-3 text-[11px] text-purple-300/60">
+                            Created {new Date(inv.created_at).toLocaleDateString("en-GB")}
+                            {used && inv.used_at && ` · Used ${new Date(inv.used_at).toLocaleDateString("en-GB")}`}
+                          </div>
                         </div>
                       )}
-                      <div className="mt-4 flex items-center gap-2">
-                        <Button
-                          size="sm"
-                          onClick={() => copyInvite(inv)}
-                          className="flex-1 bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0"
-                        >
-                          {copiedId === inv.id ? (
-                            <><Check className="size-4 mr-1" /> Copied</>
-                          ) : (
-                            <><Copy className="size-4 mr-1" /> Copy invite link</>
-                          )}
-                        </Button>
-                        {!used && (
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => deleteInvite(inv.id)}
-                            className="text-purple-200 hover:text-white hover:bg-purple-800/60"
-                          >
-                            <Trash2 className="size-4" />
-                          </Button>
-                        )}
-                      </div>
-                      <div className="mt-3 text-[11px] text-purple-300/60">
-                        Created {new Date(inv.created_at).toLocaleDateString("en-GB")}
-                        {used && inv.used_at && ` · Used ${new Date(inv.used_at).toLocaleDateString("en-GB")}`}
-                      </div>
                     </div>
                   );
                 })}
