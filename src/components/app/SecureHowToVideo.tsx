@@ -112,6 +112,9 @@ export function SecureHowToVideo({
     const player = playerRef.current;
     if (!player) return;
     setStarted(true);
+    // Start playback from the same user gesture before entering fullscreen.
+    // This keeps autoplay reliable on iPhone/iPad as well as desktop browsers.
+    const playback = player.play().catch(() => undefined);
     try {
       const iosPlayer = player as HTMLVideoElement & { webkitEnterFullscreen?: () => void };
       if (player.requestFullscreen) await player.requestFullscreen();
@@ -119,7 +122,7 @@ export function SecureHowToVideo({
     } catch {
       // Full-screen can be restricted by a device; playback must still work.
     }
-    await player.play().catch(() => undefined);
+    await playback;
   };
 
   return (
