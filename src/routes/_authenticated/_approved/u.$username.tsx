@@ -4,7 +4,7 @@ import {
   Pencil, Camera, Loader2, ShieldCheck, Clock as ClockIcon,
   Coffee, UtensilsCrossed, Ticket, Eye, EyeOff,
   Lock, KeyRound, Copy, Check, Globe, Calendar, StickyNote, AtSign,
-  Trophy, Gift, X as XIcon, UserPlus, Plus, Trash2, Smartphone,
+  Trophy, Gift, X as XIcon, UserPlus, Plus, Trash2, Smartphone, ChevronDown, ChevronUp,
   MapPin,
 } from "lucide-react";
 import { useOnlineUsers, useUserPage } from "@/hooks/use-online-users";
