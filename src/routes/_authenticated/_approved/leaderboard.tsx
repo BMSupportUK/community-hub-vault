@@ -39,6 +39,8 @@ type Invite = {
   created_at: string;
   referral_bonus_paid: boolean;
   referral_bonus_paid_at: string | null;
+  used_by_name?: string | null;
+  used_by_username?: string | null;
 };
 
 type AdminInvite = Invite & {
@@ -67,7 +69,7 @@ function LeaderboardPage() {
   const [creating, setCreating] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [inviteTab, setInviteTab] = useState<"active" | "used">("active");
-  const [inviteExpanded, setInviteExpanded] = useState(false);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
   const loadLeaderboard = async () => {
     setLoading(true);
@@ -85,7 +87,20 @@ function LeaderboardPage() {
       .eq("created_by", user.id)
       .order("created_at", { ascending: false });
     if (error) toast.error(error.message);
-    setInvites((data ?? []) as Invite[]);
+    const rows = (data ?? []) as Invite[];
+    const usedIds = Array.from(new Set(rows.map((r) => r.used_by).filter(Boolean) as string[]));
+    let profileMap: Record<string, { display_name: string | null; username: string | null }> = {};
+    if (usedIds.length) {
+      const { data: profs } = await supabase.from("profiles").select("id, display_name, username").in("id", usedIds);
+      profileMap = Object.fromEntries((profs ?? []).map((p) => [p.id, { display_name: p.display_name, username: p.username }]));
+    }
+    setInvites(
+      rows.map((r) => ({
+        ...r,
+        used_by_name: r.used_by ? profileMap[r.used_by]?.display_name ?? null : null,
+        used_by_username: r.used_by ? profileMap[r.used_by]?.username ?? null : null,
+      })),
+    );
   };
 
   const loadAdminInvites = async () => {
