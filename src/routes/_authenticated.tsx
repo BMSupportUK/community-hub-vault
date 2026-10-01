@@ -116,16 +116,19 @@ function AuthLayout() {
   // viewport. Tickets keep their existing large-screen-only panel behaviour.
   const talkSurface = /^\/home\/[^/]+$/.test(path);
   const chatSurface = talkSurface || (lockable && path === "/tickets");
-  // Every page starts with the main site header collapsed to a slim bar,
-  // except the home page where it stays open. It can be collapsed/expanded
-  // again with the chevron at any time. Talk channels also show the channel
-  // name on the slim bar.
+  // The main site header starts collapsed (slim bar) ONLY on the tickets page
+  // and Talk channels; every other BM Support page keeps it open. It can be
+  // collapsed/expanded again with the chevron at any time, and each navigation
+  // resets to the page's own default. Talk channels also show the channel name
+  // on the slim bar.
   const inTalkChannel = /^\/home\/[^/]+$/.test(path);
-  const [talkHeaderExpanded, setTalkHeaderExpanded] = useState(path === "/home");
+  const autoCollapse =
+    path === "/tickets" || path.startsWith("/tickets/") || path === "/home" || path.startsWith("/home/");
+  const [talkHeaderExpanded, setTalkHeaderExpanded] = useState(!autoCollapse);
   const [talkChannelName, setTalkChannelName] = useState<string | null>(null);
   useEffect(() => {
-    setTalkHeaderExpanded(path === "/home");
-  }, [path]);
+    setTalkHeaderExpanded(!autoCollapse);
+  }, [path, autoCollapse]);
   const talkHeaderCollapsed = !talkHeaderExpanded;
   useEffect(() => {
     if (!inTalkChannel || !talkHeaderCollapsed) return;
