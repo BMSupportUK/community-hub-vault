@@ -322,10 +322,10 @@ function StaffPage() {
               </TabsContent>
             );
           })}
-        </Tabs>
         </div>
       </div>
-    );
+    </Tabs>
+  );
   }
 
 function FriendActionMini({
