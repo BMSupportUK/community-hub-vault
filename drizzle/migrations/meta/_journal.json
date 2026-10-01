@@ -449,6 +449,13 @@
       "when": 1790879297734,
       "tag": "0063_admin_orders_realtime_signal",
       "breakpoints": true
+    },
+    {
+      "idx": 64,
+      "version": "7",
+      "when": 1790885031382,
+      "tag": "0064_appeal_replaces_auto_join_message",
+      "breakpoints": true
     }
   ]
 }
