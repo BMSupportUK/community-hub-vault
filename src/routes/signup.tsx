@@ -194,7 +194,8 @@ function SignupPage() {
     };
   }, [email]);
 
-  const needsReferral = false;
+  const needsReferral =
+    intent === "bm-support" && (hasCode === "" || (hasCode === "yes" && !inviteCode.trim()));
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -206,6 +207,8 @@ function SignupPage() {
           : "Please wait for the connection check, then try again.",
       );
     }
+    if (needsReferral)
+      return toast.error(hasCode === "" ? "Please tell us if you have a referral code." : "Please enter your referral code.");
     if (!captchaToken) return toast.error("Please complete the captcha.");
     setBusy(true);
     if (intent === "bm-support" && !hasReferralLink) {
