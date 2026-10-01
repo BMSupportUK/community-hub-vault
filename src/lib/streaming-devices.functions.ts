@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { refreshAllStreamingPrices } from "./streaming-prices.server";
 
 async function assertAdmin(supabase: any, userId: string) {
   const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", userId);
@@ -72,11 +71,4 @@ export const deleteStreamingDevice = createServerFn({ method: "POST" })
       .eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
-  });
-
-export const refreshStreamingPrices = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    await assertAdmin(context.supabase, context.userId);
-    return refreshAllStreamingPrices();
   });
