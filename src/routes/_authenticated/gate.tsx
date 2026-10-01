@@ -15,6 +15,9 @@ import { MentionText } from "@/components/app/mentions";
 import { GateStaffPresence } from "@/components/app/GateStaffPresence";
 import { BmSplash } from "@/components/app/BmSplash";
 import { useVisitorVpnStatus } from "@/hooks/use-visitor-vpn";
+import { MapPin } from "lucide-react";
+import { recordMyGpsLocation } from "@/lib/gps-capture.functions";
+import { getLocationPermission, readPosition } from "@/lib/location-permission";
 
 export const Route = createFileRoute("/_authenticated/gate")({
   head: () => ({
@@ -75,6 +78,67 @@ function GatePage() {
   const [referralNote, setReferralNote] = useState<string | null>(null);
   const [referralChecking, setReferralChecking] = useState(true);
   const visitorVpn = useVisitorVpnStatus();
+  const recordGps = useServerFn(recordMyGpsLocation);
+  // Direct (non-referral) BM Support applicants must allow location before requesting access.
+  const [locState, setLocState] = useState<"checking" | "ask" | "granted" | "refused" | "skip">("checking");
+  const [locBusy, setLocBusy] = useState(false);
+
+  const saveCoords = async (c: { latitude: number; longitude: number; accuracy?: number | null }) => {
+    await recordGps({ data: { latitude: c.latitude, longitude: c.longitude, accuracy: c.accuracy } }).catch(
+      (err) => console.warn("[gate] GPS save failed", err),
+    );
+  };
+
+  useEffect(() => {
+    if (referralChecking || !user?.id) return;
+    if (isFanZone || referralCode) {
+      setLocState("skip");
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      const perm = await getLocationPermission();
+      if (cancelled) return;
+      if (perm === "granted") {
+        setLocState("granted");
+        const res = await readPosition();
+        if (res.ok) await saveCoords(res.coords);
+      } else if (perm === "denied") {
+        setLocState("refused");
+      } else if (perm === "unsupported") {
+        setLocState("skip");
+      } else {
+        setLocState(sessionStorage.getItem(`gate-loc-refused:${user.id}`) ? "refused" : "ask");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [referralChecking, user?.id, isFanZone, referralCode]);
+
+  const refuseLocation = () => {
+    if (user?.id) sessionStorage.setItem(`gate-loc-refused:${user.id}`, "1");
+    setLocState("refused");
+  };
+
+  const allowLocation = async () => {
+    setLocBusy(true);
+    const res = await readPosition();
+    setLocBusy(false);
+    if (res.ok) {
+      if (user?.id) sessionStorage.removeItem(`gate-loc-refused:${user.id}`);
+      setLocState("granted");
+      await saveCoords(res.coords);
+      toast.success("Thanks — location confirmed.");
+    } else if (res.denied) {
+      if ((await getLocationPermission()) === "denied")
+        toast.error("Location is blocked in your browser. Turn it on in your browser's site settings, then try again.");
+      refuseLocation();
+    } else {
+      toast.error("We couldn't read your location. Please try again.");
+    }
+  };
 
   const ACTIVATION_TEXT = "I would like to complete activation of my account.";
   const defaultDraft = (code?: string | null) =>
@@ -338,7 +402,11 @@ function GatePage() {
     // Appeal path: use SECURITY DEFINER RPC so it works for banned/denied users too
     if (trimmed.toUpperCase().startsWith("[APPEAL]")) {
       setSubmitting(true);
-      const appealText = trimmed.replace(/^\[APPEAL\]\s*/i, "").trim() || trimmed;
+      const baseAppeal = trimmed.replace(/^\[APPEAL\]\s*/i, "").trim() || trimmed;
+      const appealText =
+        locState === "refused"
+          ? `${baseAppeal}\n\n📍 Applicant REFUSED location access at the security gate.`.slice(0, 1000)
+          : baseAppeal;
       const { data, error } = await supabase.rpc("submit_appeal", { p_reason: appealText });
       if (error) {
         setSubmitting(false);
@@ -420,7 +488,49 @@ function GatePage() {
     requestAccess("chat");
   };
 
-  if (referralChecking) return <BmSplash label="Checking your access…" />;
+  if (referralChecking || locState === "checking") return <BmSplash label="Checking your access…" />;
+
+  const isAppealed = (reason ?? "").toUpperCase().startsWith("[APPEAL]");
+  const locationBlocked = locState === "refused" && status !== "approved" && !isAppealed;
+
+  if (locState === "ask" && status !== "approved") {
+    return (
+      <div className="fixed inset-0 overflow-hidden bg-black">
+        <img src={bg} alt="" className="absolute inset-0 w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/80" />
+        <div className="relative z-10 min-h-screen flex flex-col items-center justify-center px-6 text-center">
+          <div className="size-20 rounded-full bg-gradient-to-br from-violet-600 to-blue-600 grid place-items-center ring-2 ring-white/20 mb-6">
+            <MapPin className="size-10 text-white" strokeWidth={2.5} />
+          </div>
+          <h1 className="font-display text-3xl md:text-4xl font-extrabold text-white tracking-tight">
+            Allow location for account security
+          </h1>
+          <p className="mt-4 text-white/80 text-base max-w-md">
+            We use your location to help protect your account and spot suspicious logins. It's only visible to
+            our security staff and never shared. You can turn it off anytime in your browser settings.
+          </p>
+          <p className="mt-3 text-white/60 text-sm max-w-md">
+            Location access is required to request access to BM Support.
+          </p>
+          <button
+            onClick={allowLocation}
+            disabled={locBusy}
+            className="mt-8 w-full max-w-md py-3 rounded-lg font-semibold text-white bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 disabled:opacity-60 inline-flex items-center justify-center gap-2"
+          >
+            {locBusy ? <Loader2 className="size-4 animate-spin" /> : <MapPin className="size-4" />}
+            {locBusy ? "Waiting for your browser…" : "Allow location"}
+          </button>
+          <button
+            onClick={refuseLocation}
+            disabled={locBusy}
+            className="mt-3 w-full max-w-md py-3 rounded-lg font-semibold text-white/80 bg-white/5 hover:bg-white/10 border border-white/20"
+          >
+            Don't allow
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 overflow-hidden bg-black">
@@ -436,17 +546,19 @@ function GatePage() {
         </div>
 
         <h1 className="font-display text-4xl md:text-5xl font-extrabold text-white tracking-tight">
-          {status === "denied" ? "Account Not Activated" : status === "approved" ? "Access Granted" : "Access Required"}
+          {locationBlocked ? "Access Not Granted" : status === "denied" ? "Account Not Activated" : status === "approved" ? "Access Granted" : "Access Required"}
         </h1>
         <p className="mt-3 text-red-200/90 text-base max-w-md">
-          {status === "approved"
+          {locationBlocked
+            ? "Due to security measures we can't grant access to the site because location access was refused. You can create an appeal."
+            : status === "approved"
             ? "Welcome aboard. Refreshing your access…"
             : status === "denied"
             ? "Sorry, we can't activate your account at the moment. If you think this is unfair, please open an appeal."
             : `Your account is awaiting approval for ${intentLabel}.`}
         </p>
 
-        {status !== "approved" && (
+        {status !== "approved" && !locationBlocked && (
           <div className="mt-8 w-full max-w-md rounded-xl border border-red-500/40 bg-red-950/30 backdrop-blur-sm p-5 text-left">
             <div className="text-center font-semibold text-white text-sm">What should I do?</div>
             <p className="text-center text-red-100/80 text-sm mt-2">
@@ -458,7 +570,7 @@ function GatePage() {
           </div>
         )}
 
-        {status !== "approved" && (
+        {status !== "approved" && !locationBlocked && (
           <button
             onClick={openChatOrForm}
             className="mt-6 w-full max-w-md py-3 rounded-lg font-semibold text-white bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 shadow-[0_8px_30px_rgba(220,38,38,0.45)] transition-all"
@@ -467,7 +579,16 @@ function GatePage() {
           </button>
         )}
 
-        {status === "denied" && (
+        {locationBlocked && (
+          <button
+            onClick={() => setLocState("ask")}
+            className="mt-6 w-full max-w-md py-3 rounded-lg font-semibold text-white bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 inline-flex items-center justify-center gap-2"
+          >
+            <MapPin className="size-4" /> I've changed my mind — allow location
+          </button>
+        )}
+
+        {(status === "denied" || locationBlocked) && (
           <button
             onClick={() => {
               setReasonDraft("[APPEAL] ");
