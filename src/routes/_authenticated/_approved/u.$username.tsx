@@ -1333,6 +1333,7 @@ function ReferralsPanel({
   const [assignCode, setAssignCode] = useState("");
   const [assigning, setAssigning] = useState(false);
   const [inviteTab, setInviteTab] = useState<"unused" | "used">("unused");
+  const [azLetter, setAzLetter] = useState<string | null>(null);
   const assignFn = useServerFn(assignReferrer);
   const submitAssign = async () => {
     const code = assignCode.trim().toUpperCase();
@@ -1355,7 +1356,147 @@ function ReferralsPanel({
   };
   const usedReferrals = referrals.filter((r) => !!r.used_by);
   const unusedReferrals = referrals.filter((r) => !r.used_by);
-  const shownReferrals = inviteTab === "used" ? usedReferrals : unusedReferrals;
+
+  // Used invites grouped under each member who joined, sorted A–Z.
+  const usedGroups = (() => {
+    const map = new Map<string, { name: string; username: string | null; items: typeof referrals }>();
+    for (const r of usedReferrals) {
+      const key = r.joined_username ?? r.joined_name ?? r.code;
+      if (!map.has(key)) {
+        map.set(key, {
+          name: r.joined_name ?? r.joined_username ?? "Member",
+          username: r.joined_username ?? null,
+          items: [],
+        });
+      }
+      map.get(key)!.items.push(r);
+    }
+    return Array.from(map.values()).sort((a, b) =>
+      a.name.localeCompare(b.name, "en", { sensitivity: "base" }),
+    );
+  })();
+
+  const unusedSorted = [...unusedReferrals].sort((a, b) => a.code.localeCompare(b.code));
+
+  const letterOf = (s: string) => {
+    const ch = (s.trim()[0] ?? "").toUpperCase();
+    return ch >= "A" && ch <= "Z" ? ch : "#";
+  };
+
+  const presentLetters = new Set<string>();
+  for (const g of usedGroups) presentLetters.add(letterOf(g.name));
+  for (const r of unusedSorted) presentLetters.add(letterOf(r.code));
+
+  const tabLetters =
+    inviteTab === "used"
+      ? Array.from(new Set(usedGroups.map((g) => letterOf(g.name)))).sort()
+      : Array.from(new Set(unusedSorted.map((r) => letterOf(r.code)))).sort();
+  const activeLetter = azLetter && tabLetters.includes(azLetter) ? azLetter : tabLetters[0] ?? null;
+
+  const filteredGroups = activeLetter
+    ? usedGroups.filter((g) => letterOf(g.name) === activeLetter)
+    : [];
+  const filteredUnused = activeLetter
+    ? unusedSorted.filter((r) => letterOf(r.code) === activeLetter)
+    : [];
+
+  const renderReferralCard = (r: (typeof referrals)[number]) => {
+    const used = !!r.used_by;
+    return (
+                    <div
+                  key={r.id}
+                  className={cn(
+                    "relative rounded-2xl border backdrop-blur-xl p-5 flex flex-col gap-3 transition-all",
+                    used
+                      ? "bg-white/15 border-emerald-300/40 hover:bg-white/20"
+                      : "bg-white/10 border-white/30 hover:bg-white/15",
+                  )}
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <div className="text-[10px] uppercase tracking-[0.2em] text-white/60 mb-1">Code</div>
+                      <div className="break-all font-mono text-lg font-bold tracking-widest text-amber-100 drop-shadow sm:text-xl">
+                        {r.code}
+                      </div>
+                    </div>
+                    <span
+                      className={cn(
+                        "text-[10px] uppercase tracking-wider px-2 py-1 rounded-full border font-medium shrink-0",
+                        used
+                          ? "bg-emerald-500/25 text-emerald-100 border-emerald-300/40"
+                          : "bg-white/15 text-white border-white/40",
+                      )}
+                    >
+                      {used ? "Joined" : "Active"}
+                    </span>
+                  </div>
+
+                  <div className="text-sm min-h-[1.5rem]">
+                    {used ? (
+                      <div className="flex items-center gap-2">
+                        <UserPlus className="size-4 text-emerald-200 shrink-0" />
+                        {r.joined_username ? (
+                          <Link
+                            to="/u/$username"
+                            params={{ username: r.joined_username }}
+                            className="min-w-0 text-white hover:text-amber-200 hover:underline"
+                          >
+                            <span className="block truncate font-medium">{r.joined_name ?? r.joined_username}</span>
+                            <span className="block truncate text-xs text-white/70">@{r.joined_username}</span>
+                          </Link>
+                        ) : (
+                          <span className="text-white/90">{r.joined_name ?? "Member"}</span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-white/60 italic">Awaiting signup…</span>
+                    )}
+                  </div>
+
+                  {used && isAdmin && (
+                    <div
+                      className={cn(
+                        "inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-md border self-start",
+                        r.referral_bonus_paid
+                          ? "bg-emerald-500/20 text-emerald-100 border-emerald-300/40"
+                          : "bg-rose-500/20 text-rose-100 border-rose-300/40",
+                      )}
+                      title="Referral bonus"
+                    >
+                      <Gift className="size-3.5" />
+                      {r.referral_bonus_paid ? "Bonus paid" : "Bonus pending"}
+                      {r.referral_bonus_paid ? <Check className="size-3" /> : <XIcon className="size-3" />}
+                    </div>
+                  )}
+
+                  {isOwner && (
+                    <div className="flex items-center gap-2 mt-auto pt-2 border-t border-white/15">
+                      <button
+                        onClick={() => onCopy(r.code)}
+                        className="flex-1 flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 text-sm font-medium transition-colors"
+                      >
+                        {copiedCode === r.code ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+                        {copiedCode === r.code ? "Copied" : "Copy link"}
+                      </button>
+                      {!used && (
+                        <button
+                          onClick={() => onDelete(r.id)}
+                          className="p-2 rounded-lg text-white/70 hover:bg-rose-500/30 hover:text-white transition-colors"
+                          title="Delete invite"
+                        >
+                          <Trash2 className="size-3.5" />
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="text-[10px] text-white/50">
+                    Created {new Date(r.created_at).toLocaleDateString("en-GB")}
+                    {used && r.used_at && ` · Joined ${new Date(r.used_at).toLocaleDateString("en-GB")}`}
+                  </div>
+                </div>
+    );
+  };
   return (
     <section className="relative text-white">
       <div className="relative px-0 py-2 sm:p-8">
