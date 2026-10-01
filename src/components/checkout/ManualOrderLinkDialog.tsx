@@ -104,6 +104,15 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
     setLink((l) => (l ? { ...l, account_setup_at: (data as string | null) ?? null } : l));
     toast.success(done ? (link?.customer_kind === "existing" ? "Extension confirmed — you can now complete the sale" : "Account confirmed as set up — you can now complete the sale") : "Account set-up confirmation removed");
   };
+  const completeSale = async () => {
+    if (!confirm(renewal ? "Mark this renewal as complete?" : "Mark this sale as complete?")) return;
+    setBusy(true);
+    const { error } = await supabase.rpc("admin_complete_manual_order" as never, { _order_id: orderId } as never);
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    setOrderCompleted(true);
+    toast.success(renewal ? "Renewal completed" : "Sale completed");
+  };
   if (link === undefined) return <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" /> Loading…</div>;
   if (!link) return <p className="text-sm text-muted-foreground">This order has no secure checkout page (it was added before secure pages existed).</p>;
   const url = secureCheckoutUrl(link.token);
