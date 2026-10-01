@@ -24,9 +24,9 @@ export const Route = createFileRoute("/signup")({
   head: () => ({
     meta: [
       { title: "Join BM Support" },
-      { name: "description", content: "Create a BM Support account using a member referral code." },
+      { name: "description", content: "Create a BM Support account — join with a member referral code or request access." },
       { property: "og:title", content: "Join BM Support" },
-      { property: "og:description", content: "Create a BM Support account using a member referral code." },
+      { property: "og:description", content: "Create a BM Support account — join with a member referral code or request access." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -193,14 +193,11 @@ function SignupPage() {
     };
   }, [email]);
 
-  const needsReferral = intent === "bm-support" && !inviteCode.trim();
+  const needsReferral = false;
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!intent) return toast.error("Please choose what you'd like access to.");
-    if (intent === "bm-support" && !inviteCode.trim()) {
-      return toast.error("A referral code is required for BM Support access.");
-    }
     if (intent === "bm-support" && !hasReferralLink && vpnStatus !== "unprotected") {
       return toast.error(
         vpnStatus === "protected"
@@ -405,15 +402,14 @@ function SignupPage() {
                     label={
                       <span>
                         Referral code{" "}
-                        <span className="text-destructive">*</span>
+                        <span className="text-muted-foreground">(optional)</span>
                       </span>
                     }
                     value={inviteCode}
                     onChange={setInviteCode}
-                    required
                   />
                   <p className="text-xs text-muted-foreground -mt-1">
-                    BM Support registration requires a referral code from an existing member.
+                    Got a code from a member? Enter it to get straight in. Without one you'll go through the security gate.
                   </p>
                 </>
               )}
@@ -433,11 +429,6 @@ function SignupPage() {
               {!intent && (
                 <p className="text-xs text-muted-foreground text-center -mt-1">
                   Choose which part of the site you'd like to register for to continue.
-                </p>
-              )}
-              {intent === "bm-support" && needsReferral && (
-                <p className="text-xs text-muted-foreground text-center -mt-1">
-                  Enter your referral code to continue.
                 </p>
               )}
             </form>

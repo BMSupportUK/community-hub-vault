@@ -82,6 +82,48 @@ function GatePage() {
   // Direct (non-referral) BM Support applicants must allow location before requesting access.
   const [locState, setLocState] = useState<"checking" | "ask" | "granted" | "refused" | "skip">("checking");
   const [locBusy, setLocBusy] = useState(false);
+  // Backup referral question for applicants who didn't enter a code on the form.
+  const [refAsk, setRefAsk] = useState<"pending" | "question" | "enter" | "done">("pending");
+  const [refInput, setRefInput] = useState("");
+  const [refBusy, setRefBusy] = useState(false);
+  const [refAnswer, setRefAnswer] = useState<"no" | null>(null);
+
+  useEffect(() => {
+    if (referralChecking || !user?.id) return;
+    if (isFanZone || referralCode) {
+      setRefAsk("done");
+      return;
+    }
+    const saved = sessionStorage.getItem(`gate-ref-answer:${user.id}`);
+    if (saved === "no") {
+      setRefAnswer("no");
+      setRefAsk("done");
+    } else {
+      setRefAsk("question");
+    }
+  }, [referralChecking, user?.id, isFanZone, referralCode]);
+
+  const answerNoReferral = () => {
+    if (user?.id) sessionStorage.setItem(`gate-ref-answer:${user.id}`, "no");
+    setRefAnswer("no");
+    setRefAsk("done");
+  };
+
+  const submitReferral = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const code = refInput.trim();
+    if (!code) return toast.error("Please enter your referral code.");
+    setRefBusy(true);
+    const { error } = await supabase.rpc("redeem_invite", { p_code: code });
+    if (error) {
+      setRefBusy(false);
+      return toast.error(`Referral code: ${error.message}`);
+    }
+    await refreshRolesRef.current();
+    setRefBusy(false);
+    toast.success("Referral code accepted — welcome.");
+    navigate({ to: "/home" });
+  };
 
   const saveCoords = async (c: { latitude: number; longitude: number; accuracy?: number | null }) => {
     await recordGps({ data: { latitude: c.latitude, longitude: c.longitude, accuracy: c.accuracy } }).catch(
@@ -456,6 +498,7 @@ function GatePage() {
       ? `\n\n🎟️ Referral code: ${referralCode}${referralNote ? ` (auto-redeem failed: ${referralNote})` : " (already redeemed)"}`
       : "";
     // Advise staff when the applicant is on a VPN/proxy so they can run checks.
+    const noRefLine = refAnswer === "no" ? `\n\n🎟️ Referral code: none (applicant answered No)` : "";
     const vpnLine =
       visitorVpn === "protected"
         ? `\n\n⚠️ VPN/proxy detected on this connection — staff please run extra security checks before approving.`
@@ -463,7 +506,7 @@ function GatePage() {
     await supabase.from("gate_messages").insert({
       application_id: created.id,
       sender_id: user.id,
-      content: `Access ticket #GATE-${String(created.ticket_number).padStart(6, "0")}\n\n${trimmed}${referralLine}${vpnLine}`,
+      content: `Access ticket #GATE-${String(created.ticket_number).padStart(6, "0")}\n\n${trimmed}${referralLine}${noRefLine}${vpnLine}`,
     } as never);
     setAppId(created.id);
     setTicketNumber(created.ticket_number);
@@ -488,7 +531,68 @@ function GatePage() {
     requestAccess("chat");
   };
 
-  if (referralChecking || locState === "checking") return <BmSplash label="Checking your access…" />;
+  if (referralChecking || locState === "checking" || refAsk === "pending")
+    return <BmSplash label="Checking your access…" />;
+
+  if ((refAsk === "question" || refAsk === "enter") && status !== "approved") {
+    return (
+      <div className="fixed inset-0 overflow-hidden bg-black">
+        <img src={bg} alt="" className="absolute inset-0 w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/80" />
+        <div className="relative z-10 min-h-screen flex items-center justify-center px-6">
+          <div className="w-full max-w-md rounded-2xl border border-white/15 bg-black/60 backdrop-blur p-5 space-y-4">
+            <div className="flex items-center gap-2 text-white/70 text-xs font-semibold uppercase tracking-wide">
+              <ShieldCheck className="size-4" /> Security chat
+            </div>
+            <div className="rounded-2xl rounded-tl-sm bg-white/10 px-4 py-3 text-white text-sm">
+              Before we continue — were you given a referral code by an existing BM Support member?
+            </div>
+            {refAsk === "question" ? (
+              <div className="flex gap-2 justify-end">
+                <button
+                  onClick={() => setRefAsk("enter")}
+                  className="px-6 py-2 rounded-full font-semibold text-white bg-gradient-to-r from-violet-600 to-blue-600"
+                >
+                  Yes
+                </button>
+                <button
+                  onClick={answerNoReferral}
+                  className="px-6 py-2 rounded-full font-semibold text-white bg-white/10 border border-white/20"
+                >
+                  No
+                </button>
+              </div>
+            ) : (
+              <>
+                <div className="ml-auto w-fit rounded-2xl rounded-tr-sm bg-blue-600 px-4 py-2 text-white text-sm">Yes</div>
+                <div className="rounded-2xl rounded-tl-sm bg-white/10 px-4 py-3 text-white text-sm">
+                  Great — please type your referral code below.
+                </div>
+                <form onSubmit={submitReferral} className="flex gap-2">
+                  <input
+                    value={refInput}
+                    onChange={(e) => setRefInput(e.target.value)}
+                    placeholder="Referral code"
+                    autoFocus
+                    className="flex-1 h-10 rounded-lg bg-white/10 border border-white/20 px-3 text-white placeholder:text-white/40"
+                  />
+                  <button
+                    disabled={refBusy}
+                    className="px-4 h-10 rounded-lg font-semibold text-white bg-gradient-to-r from-violet-600 to-blue-600 disabled:opacity-60 inline-flex items-center gap-1"
+                  >
+                    {refBusy ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+                  </button>
+                </form>
+                <button onClick={answerNoReferral} className="text-xs text-white/60 underline">
+                  I don't have a code
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   const isAppealed = (reason ?? "").toUpperCase().startsWith("[APPEAL]");
   const locationBlocked = locState === "refused" && status !== "approved" && !isAppealed;
