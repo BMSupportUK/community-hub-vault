@@ -230,38 +230,42 @@ function LeaderboardPage() {
 
           <TabsContent value="welcome" className="mt-6">
             <div className="rounded-2xl bg-gradient-to-br from-fuchsia-600/30 via-purple-600/30 to-violet-700/30 border border-purple-500/40 p-5 shadow-[0_0_60px_-15px_rgba(168,85,247,0.5)] sm:p-10">
-              <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 mb-2">
-                <div className="size-12 rounded-xl bg-gradient-to-br from-violet-600 to-blue-600 grid place-items-center shadow-lg shadow-purple-900/50">
-                  <Trophy className="size-6 text-white" />
+              <div className="grid items-start gap-6 md:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-8">
+                <div className="min-w-0">
+                  <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 mb-2">
+                    <div className="size-12 rounded-xl bg-gradient-to-br from-violet-600 to-blue-600 grid place-items-center shadow-lg shadow-purple-900/50">
+                      <Trophy className="size-6 text-white" />
+                    </div>
+                    <h2 className="min-w-0 font-display text-2xl font-bold bg-gradient-to-r from-violet-600 to-blue-600 bg-clip-text text-transparent sm:text-3xl">Welcome to Referrals</h2>
+                  </div>
+                  <p className="mt-3 text-lg text-purple-100/90 max-w-2xl">
+                    Spread the word and grow our community. Generate single-use invite codes to share with friends — no expiry, no fuss.
+                  </p>
+                  <p className="mt-4 text-purple-200/70 max-w-2xl">
+                    Anyone who signs up using your code skips the gate and joins the server instantly. The more friends you bring in, the higher you climb.
+                  </p>
+                  <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    <StatCard label="Your invites" value={myStats.total} />
+                    <StatCard label="Successful joins" value={myStats.used} />
+                    <StatCard label="Pending codes" value={myStats.total - myStats.used} />
+                  </div>
+                  <div className="mt-5 flex flex-wrap gap-3">
+                    <Button onClick={() => setTab("invites")} className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0 shadow-lg shadow-purple-900/50">
+                      <Plus className="size-4 mr-1" /> Create an invite
+                    </Button>
+                    <Button onClick={() => setTab("leaderboard")} variant="ghost" className="text-purple-100 hover:bg-purple-800/40 hover:text-white">
+                      See the leaderboard
+                    </Button>
+                  </div>
                 </div>
-                <h2 className="min-w-0 font-display text-2xl font-bold bg-gradient-to-r from-violet-600 to-blue-600 bg-clip-text text-transparent sm:text-3xl">Welcome to Referrals</h2>
-              </div>
-              <p className="mt-3 text-lg text-purple-100/90 max-w-2xl">
-                Spread the word and grow our community. Generate single-use invite codes to share with friends — no expiry, no fuss.
-              </p>
-              <p className="mt-4 text-purple-200/70 max-w-2xl">
-                Anyone who signs up using your code skips the gate and joins the server instantly. The more friends you bring in, the higher you climb.
-              </p>
-              <SecureHowToVideo
-                className="mt-8"
-                canManage={isAdmin}
-                settingsKey="how_to_refer_video"
-                pathPrefix="how-to-refer"
-                title="How to refer a friend"
-                emptyHint="No video yet — upload the referral walkthrough."
-              />
-              <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <StatCard label="Your invites" value={myStats.total} />
-                <StatCard label="Successful joins" value={myStats.used} />
-                <StatCard label="Pending codes" value={myStats.total - myStats.used} />
-              </div>
-              <div className="mt-6 flex flex-wrap justify-center gap-3">
-                <Button onClick={() => setTab("invites")} className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0 shadow-lg shadow-purple-900/50">
-                  <Plus className="size-4 mr-1" /> Create an invite
-                </Button>
-                <Button onClick={() => setTab("leaderboard")} variant="ghost" className="text-purple-100 hover:bg-purple-800/40 hover:text-white">
-                  See the leaderboard
-                </Button>
+                <SecureHowToVideo
+                  className="min-w-0"
+                  canManage={isAdmin}
+                  settingsKey="how_to_refer_video"
+                  pathPrefix="how-to-refer"
+                  title="How to refer a friend"
+                  emptyHint="No video yet — upload the referral walkthrough."
+                />
               </div>
             </div>
           </TabsContent>
