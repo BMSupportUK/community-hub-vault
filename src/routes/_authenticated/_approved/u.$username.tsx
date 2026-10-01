@@ -1334,6 +1334,16 @@ function ReferralsPanel({
   const [assigning, setAssigning] = useState(false);
   const [inviteTab, setInviteTab] = useState<"unused" | "used">("unused");
   const [azLetter, setAzLetter] = useState<string | null>(null);
+  const [unusedExpanded, setUnusedExpanded] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  const toggleGroup = (key: string) => {
+    setExpandedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
   const assignFn = useServerFn(assignReferrer);
   const submitAssign = async () => {
     const code = assignCode.trim().toUpperCase();
