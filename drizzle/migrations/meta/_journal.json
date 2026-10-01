@@ -435,6 +435,13 @@
       "when": 1790851407283,
       "tag": "0061_backfill_bank_payment_358be78f",
       "breakpoints": true
+    },
+    {
+      "idx": 62,
+      "version": "7",
+      "when": 1790861085127,
+      "tag": "0062_lock_automated_messages_and_avatar_folders",
+      "breakpoints": true
     }
   ]
 }
