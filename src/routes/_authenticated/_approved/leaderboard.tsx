@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Trophy, Plus, Copy, Check, Trash2, Ticket, Crown, Medal, Award, X, Gift, Users } from "lucide-react";
+import { Trophy, Plus, Copy, Check, Trash2, Ticket, Crown, Medal, Award, X, Gift, Users, ChevronDown, ChevronUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -65,6 +65,8 @@ function LeaderboardPage() {
   const [loading, setLoading] = useState(false);
   const [creating, setCreating] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [inviteTab, setInviteTab] = useState<"active" | "used">("active");
+  const [inviteExpanded, setInviteExpanded] = useState(false);
 
   const loadLeaderboard = async () => {
     setLoading(true);
@@ -329,14 +331,45 @@ function LeaderboardPage() {
               </Button>
             </div>
 
-            {invites.length === 0 ? (
+            {(() => {
+              const activeList = invites.filter((i) => !i.used_by);
+              const usedList = invites.filter((i) => !!i.used_by);
+              const shown = inviteTab === "active" ? activeList : usedList;
+              return (
+                <>
+                  <div className="mb-4 flex flex-wrap items-center gap-2">
+                    <div className="inline-flex rounded-lg border border-purple-500/30 bg-purple-950/60 p-1">
+                      {([["active", `Active (${activeList.length})`], ["used", `Used (${usedList.length})`]] as const).map(([k, label]) => (
+                        <button
+                          key={k}
+                          type="button"
+                          onClick={() => { setInviteTab(k); setInviteExpanded(false); }}
+                          className={`rounded-md px-3 py-1.5 text-sm font-medium ${inviteTab === k ? "bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white" : "text-purple-200 hover:text-white"}`}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                    {shown.length > 0 && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => setInviteExpanded((v) => !v)}
+                        className="text-purple-100 hover:bg-purple-800/40 hover:text-white"
+                      >
+                        {inviteExpanded ? <ChevronUp className="size-4 mr-1" /> : <ChevronDown className="size-4 mr-1" />}
+                        {inviteExpanded ? "Close" : "Expand"} {shown.length} invite{shown.length === 1 ? "" : "s"}
+                      </Button>
+                    )}
+                  </div>
+                  {shown.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-purple-500/40 p-12 text-center text-purple-200/70 bg-purple-950/30">
                 <Ticket className="size-10 mx-auto mb-3 text-purple-300/60" />
-                You haven't created any invites yet.
+                {inviteTab === "active" ? "No active invites. Press New invite to make one." : "None of your invites have been used yet."}
               </div>
-            ) : (
+            ) : !inviteExpanded ? null : (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {invites.map((inv) => {
+                {shown.map((inv) => {
                   const used = !!inv.used_by;
                   return (
                     <div
@@ -413,6 +446,9 @@ function LeaderboardPage() {
                 })}
               </div>
             )}
+                </>
+              );
+            })()}
           </TabsContent>
 
           {isAdmin && (
