@@ -28,6 +28,7 @@ function CopyField({ label, value }: { label: string; value: string }) {
 export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, onDone }: { orderId: string; withChat?: boolean; loginOnly?: boolean; onDone?: () => void }) {
   const [link, setLink] = useState<{ token: string; password: string; payment_sent_at: string | null; account_setup_at: string | null; customer_kind: string | null } | null | undefined>(undefined);
   const [orderPaid, setOrderPaid] = useState(false);
+  const [orderCompleted, setOrderCompleted] = useState(false);
   const [loginName, setLoginName] = useState("");
   const [accountPassword, setAccountPassword] = useState("");
   const [qdCodes, setQdCodes] = useState<{ id: string; label: string; code: string }[]>([]);
@@ -82,12 +83,13 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
   useEffect(() => {
     Promise.all([
       supabase.from("order_checkout_links").select("token,password,payment_sent_at,account_setup_at,customer_kind").eq("order_id", orderId).maybeSingle(),
-      supabase.from("orders").select("paid_at").eq("id", orderId).maybeSingle(),
+      supabase.from("orders").select("paid_at,completed_at").eq("id", orderId).maybeSingle(),
       supabase.from("qd_dns_codes").select("id,label,code").order("label"),
     ]).then(([{ data: linkData }, { data: orderData }, { data: codeData }]) => {
       setLink((linkData as never) ?? null);
       const paidAt = (orderData as { paid_at?: string | null } | null)?.paid_at;
       setOrderPaid(!!paidAt);
+      setOrderCompleted(!!(orderData as { completed_at?: string | null } | null)?.completed_at);
       if (paidAt) setPaidLocal(toLocal(new Date(paidAt)));
       const codes = (codeData ?? []) as { id: string; label: string; code: string }[];
       setQdCodes(codes);
@@ -101,6 +103,15 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
     if (error) return toast.error(error.message);
     setLink((l) => (l ? { ...l, account_setup_at: (data as string | null) ?? null } : l));
     toast.success(done ? (link?.customer_kind === "existing" ? "Extension confirmed — you can now complete the sale" : "Account confirmed as set up — you can now complete the sale") : "Account set-up confirmation removed");
+  };
+  const completeSale = async () => {
+    if (!confirm(renewal ? "Mark this renewal as complete?" : "Mark this sale as complete?")) return;
+    setBusy(true);
+    const { error } = await supabase.rpc("admin_complete_manual_order" as never, { _order_id: orderId } as never);
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    setOrderCompleted(true);
+    toast.success(renewal ? "Renewal completed" : "Sale completed");
   };
   if (link === undefined) return <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" /> Loading…</div>;
   if (!link) return <p className="text-sm text-muted-foreground">This order has no secure checkout page (it was added before secure pages existed).</p>;
@@ -173,6 +184,12 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
         <button type="button" disabled={busy || (!renewal && !link.account_setup_at)} onClick={() => toggleSetup(!link.account_setup_at)} className={`inline-flex items-center gap-1 h-8 px-3 rounded-lg text-xs font-medium disabled:opacity-60 ${link.account_setup_at ? "border border-border text-muted-foreground" : "bg-success text-background"}`}>
           {busy ? <Loader2 className="size-3.5 animate-spin" /> : <Check className="size-3.5" />} {link.account_setup_at ? "Undo confirmation" : (renewal ? "Confirm extension is done" : "Confirm account is set up")}
         </button>
+        {link.account_setup_at && !orderCompleted && (
+          <button type="button" disabled={busy} onClick={completeSale} className="inline-flex items-center gap-1 h-8 px-3 rounded-lg bg-success text-background text-xs font-semibold disabled:opacity-60">
+            {busy ? <Loader2 className="size-3.5 animate-spin" /> : <Check className="size-3.5" />} {renewal ? "Complete renewal" : "Complete sale"}
+          </button>
+        )}
+        {orderCompleted && <p className="text-xs text-success font-medium">Sale completed.</p>}
       </div>
       {!renewal && orderPaid && !link.account_setup_at && (
         <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-3">
