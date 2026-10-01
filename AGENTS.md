@@ -19,3 +19,4 @@
 - Manual-order login details saved before the customer has an account are held privately per order and moved into their credentials when they claim the checkout — keeps one source of truth in the admin credentials list.
 - How-to videos use private storage references and short-lived signed playback links so media is never exposed through a permanent public URL.
 - New-account VPN blocking applies only to direct BM Support registration; any referral code (link or typed in) and Boro Fan Zone registrations bypass it.
+- The location opt-in is asked only on the security gate for direct (non-referral, non-Fan Zone) BM Support applicants; refusal blocks ticket requests and tags any appeal so staff see it. Elsewhere GPS is captured silently only when permission already exists.
