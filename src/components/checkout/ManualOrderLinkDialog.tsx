@@ -184,6 +184,12 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
         <button type="button" disabled={busy || (!renewal && !link.account_setup_at)} onClick={() => toggleSetup(!link.account_setup_at)} className={`inline-flex items-center gap-1 h-8 px-3 rounded-lg text-xs font-medium disabled:opacity-60 ${link.account_setup_at ? "border border-border text-muted-foreground" : "bg-success text-background"}`}>
           {busy ? <Loader2 className="size-3.5 animate-spin" /> : <Check className="size-3.5" />} {link.account_setup_at ? "Undo confirmation" : (renewal ? "Confirm extension is done" : "Confirm account is set up")}
         </button>
+        {link.account_setup_at && !orderCompleted && (
+          <button type="button" disabled={busy} onClick={completeSale} className="inline-flex items-center gap-1 h-8 px-3 rounded-lg bg-success text-background text-xs font-semibold disabled:opacity-60">
+            {busy ? <Loader2 className="size-3.5 animate-spin" /> : <Check className="size-3.5" />} {renewal ? "Complete renewal" : "Complete sale"}
+          </button>
+        )}
+        {orderCompleted && <p className="text-xs text-success font-medium">Sale completed.</p>}
       </div>
       {!renewal && orderPaid && !link.account_setup_at && (
         <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-3">
