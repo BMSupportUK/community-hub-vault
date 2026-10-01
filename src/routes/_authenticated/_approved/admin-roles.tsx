@@ -90,6 +90,10 @@ function AdminRolesPage() {
   const [deletingUser, setDeletingUser] = useState<string | null>(null);
   const deleteMemberFn = useServerFn(deleteMember);
   const listEmailsFn = useServerFn(listMemberEmails);
+  const updateUsernameFn = useServerFn(updateMemberUsername);
+  const [editingUsernameFor, setEditingUsernameFor] = useState<string | null>(null);
+  const [usernameDraft, setUsernameDraft] = useState("");
+  const [savingUsername, setSavingUsername] = useState(false);
   const [historyFor, setHistoryFor] = useState<Row | null>(null);
   const [roleFilter, setRoleFilter] = useState<string>("all");
   
@@ -236,6 +240,25 @@ function AdminRolesPage() {
   };
 
   const styleFor = (role: string) => SYSTEM_STYLE[role] ?? CUSTOM_STYLE;
+
+  const saveUsername = async (row: Row) => {
+    const next = usernameDraft.trim();
+    if (!next || next === row.username) {
+      setEditingUsernameFor(null);
+      return;
+    }
+    setSavingUsername(true);
+    try {
+      await updateUsernameFn({ data: { userId: row.id, username: next } });
+      setRows((all) => all.map((r) => (r.id === row.id ? { ...r, username: next } : r)));
+      toast.success(`Username changed to @${next}`);
+      setEditingUsernameFor(null);
+    } catch (e: any) {
+      toast.error(e?.message ?? "Failed to update username");
+    } finally {
+      setSavingUsername(false);
+    }
+  };
 
   const removeMember = async (row: Row) => {
     if (row.id === user?.id) {
