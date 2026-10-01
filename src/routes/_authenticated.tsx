@@ -163,10 +163,10 @@ function AuthLayout() {
   const [navOpen, setNavOpen] = useState(false);
   const openSalesChats = () => {
     if (!isAdminUnlocked(user?.id)) {
-      navigate({ to: "/admin", search: { next: "/shop?view=orders&scope=all" } as never });
+      navigate({ to: "/admin", search: { tab: "order-status" } as never });
       return;
     }
-    navigate({ to: "/shop", search: { view: "orders", scope: "all" } as never });
+    navigate({ to: "/admin", search: { tab: "order-status" } as never });
   };
   // Close mobile drawer on route change
   useEffect(() => { setNavOpen(false); }, [path]);
