@@ -28,6 +28,7 @@ function CopyField({ label, value }: { label: string; value: string }) {
 export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, onDone }: { orderId: string; withChat?: boolean; loginOnly?: boolean; onDone?: () => void }) {
   const [link, setLink] = useState<{ token: string; password: string; payment_sent_at: string | null; account_setup_at: string | null; customer_kind: string | null } | null | undefined>(undefined);
   const [orderPaid, setOrderPaid] = useState(false);
+  const [orderCompleted, setOrderCompleted] = useState(false);
   const [loginName, setLoginName] = useState("");
   const [accountPassword, setAccountPassword] = useState("");
   const [qdCodes, setQdCodes] = useState<{ id: string; label: string; code: string }[]>([]);
@@ -82,7 +83,7 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
   useEffect(() => {
     Promise.all([
       supabase.from("order_checkout_links").select("token,password,payment_sent_at,account_setup_at,customer_kind").eq("order_id", orderId).maybeSingle(),
-      supabase.from("orders").select("paid_at").eq("id", orderId).maybeSingle(),
+      supabase.from("orders").select("paid_at,completed_at").eq("id", orderId).maybeSingle(),
       supabase.from("qd_dns_codes").select("id,label,code").order("label"),
     ]).then(([{ data: linkData }, { data: orderData }, { data: codeData }]) => {
       setLink((linkData as never) ?? null);
