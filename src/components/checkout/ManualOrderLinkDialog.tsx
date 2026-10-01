@@ -89,6 +89,7 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
       setLink((linkData as never) ?? null);
       const paidAt = (orderData as { paid_at?: string | null } | null)?.paid_at;
       setOrderPaid(!!paidAt);
+      setOrderCompleted(!!(orderData as { completed_at?: string | null } | null)?.completed_at);
       if (paidAt) setPaidLocal(toLocal(new Date(paidAt)));
       const codes = (codeData ?? []) as { id: string; label: string; code: string }[];
       setQdCodes(codes);
