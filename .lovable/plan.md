@@ -1,22 +1,18 @@
-# Paid city-level location for sign-ups and logins
+# Add "Accurate to ~X km" to sign-up location displays
 
 ## Goal
-Get better city/area estimates for each sign-up and login IP so staff can spot mismatches between where someone says they are, their phone GPS trail, and their connection.
+Show staff how much to trust each IP location estimate, without paying for a new provider.
 
-## Provider
-MaxMind GeoIP2 City Plus (web service). It is the industry standard for city accuracy, gives an accuracy radius in km, and costs roughly a fraction of a penny per lookup (pay-as-you-go credit). You'll need a MaxMind account and to give me its Account ID and License Key when asked.
+## How it works
+The existing free location data doesn't come with a true accuracy figure, so the estimate is derived from how specific the result is:
+- City known → "Accurate to ~25 km"
+- Region/county only → "Accurate to ~100 km"
+- Country only → "Accurate to ~1,000 km"
 
 ## What changes for staff
-- Security gate, moderation review and member location views show:
-  - City, region, postcode area (when known)
-  - "Accurate to ~X km" so staff know how far to trust it
-  - A "Location mismatch" badge when the IP city is far from the member's GPS location (over 50 km)
-- Existing VPN detection (the four free checks) stays exactly as is.
-- If MaxMind is unreachable or out of credit, it falls back to the current location source — sign-up never breaks.
+- Security gate, moderation review and member location views show an "Accurate to ~X km" line under the city/region/country for each sign-up and login.
+- Nothing else changes: VPN detection, the data stored, and sign-up flow all stay exactly as they are.
 
 ## Technical details
-- New server-only helper `src/lib/maxmind.server.ts` calling `https://geoip.maxmind.com/geoip/v2.1/city/{ip}` with Basic auth from secrets `MAXMIND_ACCOUNT_ID` / `MAXMIND_LICENSE_KEY` (requested via add_secret).
-- Use it in `signup-info.functions.ts`, `vpn-login-check.functions.ts` and `vpn-backfill.functions.ts` to override city/region/country with MaxMind values; keep proxycheck values as fallback.
-- Migration: add `postal_code`, `accuracy_radius_km`, `geo_source` columns to the signup/login location tables and extend the existing RPCs (`_city` etc.) to accept them.
-- Mismatch: compute distance (haversine) between IP lat/lon and latest GPS point; show badge in admin views. Emails remain admin/management only.
-- Lookups only happen on sign-up and login (not per page view) to keep cost low.
+- Small shared helper (e.g. `locationAccuracyKm(loc)`) that returns the radius from which of city/region/country is present.
+- Render the label in the existing admin/staff location display components; no database migration needed since it's computed from fields already stored.
