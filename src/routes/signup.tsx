@@ -130,8 +130,8 @@ function BmZoneVpnWarning({
             {!checking && (
               <p className="mt-1 text-xs text-muted-foreground">
                 {status === "protected"
-                  ? "A VPN or proxy was detected. Switch it off, then re-check your connection."
-                  : "We couldn't verify your connection. Please try the check again before registering."}
+                  ? "A VPN or proxy was detected. Switch it off, then re-check your connection — or enter a referral code below to skip this check."
+                  : "We couldn't verify your connection. Please try the check again before registering — or enter a referral code below to skip this check."}
               </p>
             )}
           </div>
