@@ -418,9 +418,58 @@ function AdminRolesPage() {
                             <MapPin className="size-3.5" />
                           </button>
                         </div>
-                        <div className="text-xs text-muted-foreground truncate">
-                          @{row.username ?? row.id.slice(0, 8)}
-                        </div>
+                        {isOwner && editingUsernameFor === row.id ? (
+                          <div className="flex items-center gap-1 mt-0.5">
+                            <input
+                              autoFocus
+                              value={usernameDraft}
+                              onChange={(e) => setUsernameDraft(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") void saveUsername(row);
+                                if (e.key === "Escape") setEditingUsernameFor(null);
+                              }}
+                              className="w-full min-w-0 px-2 py-1 rounded-md bg-surface-2 border border-border text-xs focus:outline-none focus:ring-2 focus:ring-primary"
+                              placeholder="username"
+                            />
+                            <button
+                              onClick={() => void saveUsername(row)}
+                              disabled={savingUsername}
+                              title="Save username"
+                              className="shrink-0 p-1 rounded-md text-primary hover:bg-primary/10 disabled:opacity-50"
+                            >
+                              {savingUsername ? (
+                                <Loader2 className="size-3.5 animate-spin" />
+                              ) : (
+                                <Check className="size-3.5" />
+                              )}
+                            </button>
+                            <button
+                              onClick={() => setEditingUsernameFor(null)}
+                              title="Cancel"
+                              className="shrink-0 p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-surface-2"
+                            >
+                              <X className="size-3.5" />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1 min-w-0">
+                            <div className="text-xs text-muted-foreground truncate">
+                              @{row.username ?? row.id.slice(0, 8)}
+                            </div>
+                            {isOwner && (
+                              <button
+                                onClick={() => {
+                                  setEditingUsernameFor(row.id);
+                                  setUsernameDraft(row.username ?? "");
+                                }}
+                                title="Edit username (owners only)"
+                                className="shrink-0 p-0.5 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/10"
+                              >
+                                <Pencil className="size-3" />
+                              </button>
+                            )}
+                          </div>
+                        )}
                         <div
                           className="text-xs text-muted-foreground truncate mt-0.5"
                           title={row.email ?? "No email on file"}
