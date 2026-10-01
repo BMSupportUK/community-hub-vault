@@ -470,6 +470,13 @@ export function WorkingStatusBox({
               </h2>
               <DndCountdown userId={user.id} compact />
             </div>
+            <Link
+              to="/shifts"
+              title="Shifts"
+              className="inline-flex shrink-0 items-center justify-center size-7 rounded-full text-violet-200 hover:text-white hover:bg-violet-500/30 transition"
+            >
+              <Calendar className="size-3.5" />
+            </Link>
             <DndDialogButton
               icon="pencil"
               className="inline-flex items-center justify-center size-7 rounded-full p-0 text-violet-200 hover:text-white hover:bg-violet-500/30 transition"
