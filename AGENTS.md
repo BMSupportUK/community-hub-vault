@@ -17,3 +17,4 @@
 - Manual orders use password-gated checkout links and order-only chat; paid, non-cancelled orders can open published guides through the same credentials.
 - Secure checkout browses only reached stages, never reverses payment; staff completion requires confirmed account setup.
 - Manual-order login details saved before the customer has an account are held privately per order and moved into their credentials when they claim the checkout — keeps one source of truth in the admin credentials list.
+- How-to videos use private storage references and short-lived signed playback links so media is never exposed through a permanent public URL.
