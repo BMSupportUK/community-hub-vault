@@ -544,17 +544,19 @@ function GatePage() {
         </div>
 
         <h1 className="font-display text-4xl md:text-5xl font-extrabold text-white tracking-tight">
-          {status === "denied" ? "Account Not Activated" : status === "approved" ? "Access Granted" : "Access Required"}
+          {locationBlocked ? "Access Not Granted" : status === "denied" ? "Account Not Activated" : status === "approved" ? "Access Granted" : "Access Required"}
         </h1>
         <p className="mt-3 text-red-200/90 text-base max-w-md">
-          {status === "approved"
+          {locationBlocked
+            ? "Due to security measures we can't grant access to the site because location access was refused. You can create an appeal."
+            : status === "approved"
             ? "Welcome aboard. Refreshing your access…"
             : status === "denied"
             ? "Sorry, we can't activate your account at the moment. If you think this is unfair, please open an appeal."
             : `Your account is awaiting approval for ${intentLabel}.`}
         </p>
 
-        {status !== "approved" && (
+        {status !== "approved" && !locationBlocked && (
           <div className="mt-8 w-full max-w-md rounded-xl border border-red-500/40 bg-red-950/30 backdrop-blur-sm p-5 text-left">
             <div className="text-center font-semibold text-white text-sm">What should I do?</div>
             <p className="text-center text-red-100/80 text-sm mt-2">
@@ -566,7 +568,7 @@ function GatePage() {
           </div>
         )}
 
-        {status !== "approved" && (
+        {status !== "approved" && !locationBlocked && (
           <button
             onClick={openChatOrForm}
             className="mt-6 w-full max-w-md py-3 rounded-lg font-semibold text-white bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 shadow-[0_8px_30px_rgba(220,38,38,0.45)] transition-all"
@@ -575,7 +577,16 @@ function GatePage() {
           </button>
         )}
 
-        {status === "denied" && (
+        {locationBlocked && (
+          <button
+            onClick={() => setLocState("ask")}
+            className="mt-6 w-full max-w-md py-3 rounded-lg font-semibold text-white bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 inline-flex items-center justify-center gap-2"
+          >
+            <MapPin className="size-4" /> I've changed my mind — allow location
+          </button>
+        )}
+
+        {(status === "denied" || locationBlocked) && (
           <button
             onClick={() => {
               setReasonDraft("[APPEAL] ");
