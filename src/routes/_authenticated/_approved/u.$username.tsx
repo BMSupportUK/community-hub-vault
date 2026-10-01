@@ -1548,6 +1548,8 @@ function ReferralsPanel({
               );
             })}
           </div>
+            )}
+          </>
         )}
       </div>
     </section>
