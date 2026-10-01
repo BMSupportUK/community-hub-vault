@@ -4,7 +4,7 @@ import {
   Pencil, Camera, Loader2, ShieldCheck, Clock as ClockIcon,
   Coffee, UtensilsCrossed, Ticket, Eye, EyeOff,
   Lock, KeyRound, Copy, Check, Globe, Calendar, StickyNote, AtSign,
-  Trophy, Gift, X as XIcon, UserPlus, Plus, Trash2, Smartphone,
+  Trophy, Gift, X as XIcon, UserPlus, Plus, Trash2, Smartphone, ChevronDown, ChevronUp,
   MapPin,
 } from "lucide-react";
 import { useOnlineUsers, useUserPage } from "@/hooks/use-online-users";
@@ -1334,6 +1334,16 @@ function ReferralsPanel({
   const [assigning, setAssigning] = useState(false);
   const [inviteTab, setInviteTab] = useState<"unused" | "used">("unused");
   const [azLetter, setAzLetter] = useState<string | null>(null);
+  const [unusedExpanded, setUnusedExpanded] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+  const toggleGroup = (key: string) => {
+    setExpandedGroups((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
   const assignFn = useServerFn(assignReferrer);
   const submitAssign = async () => {
     const code = assignCode.trim().toUpperCase();
@@ -1616,43 +1626,69 @@ function ReferralsPanel({
                   Nothing under {activeLetter} — pick another letter above.
                 </div>
               ) : (
-                <div className="space-y-6">
-                  {filteredGroups.map((g) => (
-                    <div key={g.username ?? g.name}>
-                      <div className="mb-2 flex items-center gap-2">
-                        <UserPlus className="size-4 text-emerald-200 shrink-0" />
-                        {g.username ? (
-                          <Link
-                            to="/u/$username"
-                            params={{ username: g.username }}
-                            className="min-w-0 text-white hover:text-amber-200 hover:underline"
-                          >
-                            <span className="font-semibold">{g.name}</span>
-                            <span className="ml-1 text-xs text-white/70">@{g.username}</span>
-                          </Link>
-                        ) : (
-                          <span className="font-semibold">{g.name}</span>
-                        )}
-                        <span className="text-[10px] uppercase tracking-wider text-white/60">
-                          {g.items.length === 1 ? "1 invite" : `${g.items.length} invites`}
-                        </span>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                        {g.items.map((r) => renderReferralCard(r))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                 <div className="space-y-6">
+                   {filteredGroups.map((g) => {
+                     const gKey = g.username ?? g.name;
+                     const open = expandedGroups.has(gKey);
+                     return (
+                     <div key={gKey}>
+                       <div className="mb-2 flex items-center gap-2">
+                         <UserPlus className="size-4 text-emerald-200 shrink-0" />
+                         {g.username ? (
+                           <Link
+                             to="/u/$username"
+                             params={{ username: g.username }}
+                             className="min-w-0 text-white hover:text-amber-200 hover:underline"
+                           >
+                             <span className="font-semibold">{g.name}</span>
+                             <span className="ml-1 text-xs text-white/70">@{g.username}</span>
+                           </Link>
+                         ) : (
+                           <span className="font-semibold">{g.name}</span>
+                         )}
+                         <span className="text-[10px] uppercase tracking-wider text-white/60">
+                           {g.items.length === 1 ? "1 invite" : `${g.items.length} invites`}
+                         </span>
+                         <button
+                           onClick={() => toggleGroup(gKey)}
+                           className="ml-auto flex items-center gap-1 rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs font-semibold text-white transition-colors hover:bg-white/20"
+                           aria-expanded={open}
+                         >
+                           {open ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
+                           {open ? "Close" : "Expand"}
+                         </button>
+                       </div>
+                       {open && (
+                         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                           {g.items.map((r) => renderReferralCard(r))}
+                         </div>
+                       )}
+                     </div>
+                     );
+                   })}
+                 </div>
               )
             ) : filteredUnused.length === 0 ? (
               <div className="rounded-2xl border border-dashed border-white/30 bg-white/5 p-8 text-center text-sm text-white/70">
                 Nothing under {activeLetter} — pick another letter above.
               </div>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-                {filteredUnused.map((r) => renderReferralCard(r))}
-              </div>
-            )}
+             ) : (
+               <div>
+                 <button
+                   onClick={() => setUnusedExpanded((v) => !v)}
+                   className="mb-3 flex items-center gap-1.5 rounded-full border border-white/30 bg-white/10 px-3 py-1 text-xs font-semibold text-white transition-colors hover:bg-white/20"
+                   aria-expanded={unusedExpanded}
+                 >
+                   {unusedExpanded ? <ChevronUp className="size-3.5" /> : <ChevronDown className="size-3.5" />}
+                   {unusedExpanded ? "Close" : "Expand"} {filteredUnused.length === 1 ? "1 invite" : `${filteredUnused.length} invites`}
+                 </button>
+                 {unusedExpanded && (
+                   <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                     {filteredUnused.map((r) => renderReferralCard(r))}
+                   </div>
+                 )}
+               </div>
+             )}
           </>
         )}
       </div>
