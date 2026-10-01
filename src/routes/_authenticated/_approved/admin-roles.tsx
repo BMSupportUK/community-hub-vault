@@ -591,7 +591,10 @@ function LocationHistoryDialog({ row, onClose }: { row: Row; onClose: () => void
 
   const fmtLoc = (r: LocationHistoryRow) => {
     const named = [r.city, r.region, r.country].filter(Boolean).join(", ");
-    if (named) return named;
+    if (named) {
+      const accuracyLabel = locationAccuracyLabel(r);
+      return accuracyLabel ? `${named} · ${accuracyLabel}` : named;
+    }
     const latitudeRaw = r.latitude as unknown;
     const longitudeRaw = r.longitude as unknown;
     const latitude = latitudeRaw == null || latitudeRaw === "" ? null : Number(latitudeRaw);
