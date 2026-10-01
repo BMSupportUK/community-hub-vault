@@ -247,11 +247,11 @@ function AuthLayout() {
             type="button"
             onClick={() => setTalkHeaderExpanded(true)}
             title="Show header"
-            className="h-8 shrink-0 border-b border-border bg-rail/40 backdrop-blur flex items-center gap-2 px-3 text-xs text-muted-foreground hover:text-foreground transition-colors text-left"
+            className="group h-8 shrink-0 border-b border-primary/60 bg-gradient-to-r from-primary/90 via-primary/80 to-accent/80 text-primary-foreground flex items-center gap-2 px-3 text-xs font-semibold tracking-wide text-left shadow-sm hover:from-primary hover:via-primary hover:to-accent transition-colors"
           >
-            <ChevronDown className="size-3.5" />
-            {inTalkChannel && <span className="font-medium truncate">{talkChannelName ?? "Talk channel"}</span>}
-            <span className="hidden sm:inline opacity-70">— show header</span>
+            <ChevronDown className="size-3.5 transition-transform group-hover:translate-y-0.5" />
+            {inTalkChannel && <span className="font-bold truncate">{talkChannelName ?? "Talk channel"}</span>}
+            <span className="hidden sm:inline underline decoration-1 underline-offset-2">— show header</span>
           </button>
         )}
         {!inFanZone && !talkHeaderCollapsed && (<header className="h-14 shrink-0 border-b border-border bg-rail/40 backdrop-blur flex items-center justify-between px-2 lg:px-4 gap-1.5 lg:gap-3 overflow-hidden mb-1">
