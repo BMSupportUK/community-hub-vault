@@ -123,7 +123,7 @@ function AuthLayout() {
   // on the slim bar.
   const inTalkChannel = /^\/home\/[^/]+$/.test(path);
   const autoCollapse =
-    path === "/tickets" || path.startsWith("/tickets/") || path === "/home" || path.startsWith("/home/");
+    path === "/tickets" || path.startsWith("/tickets/") || inTalkChannel;
   const [talkHeaderExpanded, setTalkHeaderExpanded] = useState(!autoCollapse);
   const [talkChannelName, setTalkChannelName] = useState<string | null>(null);
   useEffect(() => {
