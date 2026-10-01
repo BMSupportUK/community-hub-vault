@@ -86,6 +86,7 @@ function GatePage() {
   const [refAsk, setRefAsk] = useState<"pending" | "question" | "enter" | "done">("pending");
   const [refInput, setRefInput] = useState("");
   const [refBusy, setRefBusy] = useState(false);
+  const [refErr, setRefErr] = useState<string | null>(null);
   const [refAnswer, setRefAnswer] = useState<"no" | null>(null);
 
   useEffect(() => {
@@ -114,10 +115,12 @@ function GatePage() {
     const code = refInput.trim();
     if (!code) return toast.error("Please enter your referral code.");
     setRefBusy(true);
+    setRefErr(null);
     const { error } = await supabase.rpc("redeem_invite", { p_code: code });
     if (error) {
       setRefBusy(false);
-      return toast.error(`Referral code: ${error.message}`);
+      setRefErr("That referral code isn't valid. Please check it and try again, or tap \"I don't have a code\" to continue without one.");
+      return;
     }
     await refreshRolesRef.current();
     setRefBusy(false);
@@ -568,10 +571,15 @@ function GatePage() {
                 <div className="rounded-2xl rounded-tl-sm bg-white/10 px-4 py-3 text-white text-sm">
                   Great — please type your referral code below.
                 </div>
+                {refErr && (
+                  <div className="rounded-2xl rounded-tl-sm bg-red-500/20 border border-red-500/40 px-4 py-3 text-red-200 text-sm">
+                    {refErr}
+                  </div>
+                )}
                 <form onSubmit={submitReferral} className="flex gap-2">
                   <input
                     value={refInput}
-                    onChange={(e) => setRefInput(e.target.value)}
+                    onChange={(e) => { setRefInput(e.target.value); setRefErr(null); }}
                     placeholder="Referral code"
                     autoFocus
                     className="flex-1 h-10 rounded-lg bg-white/10 border border-white/20 px-3 text-white placeholder:text-white/40"
