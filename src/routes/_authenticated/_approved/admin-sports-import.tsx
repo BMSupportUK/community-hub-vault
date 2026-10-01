@@ -1,3 +1,4 @@
+import { sortForMerge } from "@/lib/queue-merge-order";
 import { createFileRoute, Navigate, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -289,7 +290,7 @@ function AdminSportsImportPage() {
     return [...groups.entries()]
       .map(([name, items]) => ({
         name,
-        items: items.slice().sort((a, b) => a.created_at.localeCompare(b.created_at)),
+        items: sortForMerge(items),
       }))
       .filter((g) => g.items.length >= 2)
       .sort((a, b) => a.name.localeCompare(b.name));
@@ -319,8 +320,7 @@ function AdminSportsImportPage() {
     setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
   const onMergePicked = async () => {
     const items = queue
-      .filter((q) => picked.includes(q.id))
-      .sort((a, b) => a.created_at.localeCompare(b.created_at));
+      .filter((q) => picked.includes(q.id));
     if (items.length < 2) return;
     if (!window.confirm(`Join these ${items.length} posts (oldest first) into 1 import?`)) return;
     setCombiningEspn(true);

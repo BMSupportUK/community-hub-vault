@@ -41,7 +41,8 @@ function NotFoundComponent() {
   );
 }
 
-function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
+function ErrorComponent({ error: rawError, reset }: import("@tanstack/react-router").ErrorComponentProps) {
+  const error = rawError as Error;
   const router = useRouter();
   const [showError, setShowError] = useState(false);
 

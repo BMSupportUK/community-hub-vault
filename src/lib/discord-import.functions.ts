@@ -1,3 +1,4 @@
+import { sortForMerge } from "./queue-merge-order";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
@@ -937,10 +938,9 @@ export const combineQueueItems = createServerFn({ method: "POST" })
       .select("id, raw_text, parsed_event, created_at, source_ref")
       .in("id", data.ids)
       .eq("status", "pending")
-      .order("created_at", { ascending: true })
-      .order("source_ref", { ascending: true });
+      .order("created_at", { ascending: true });
     if (error) throw new Error(error.message);
-    const items = rows ?? [];
+    const items = sortForMerge((rows ?? []) as any[]);
     if (items.length < 2) throw new Error("Need at least two pending listings to combine");
     const texts = items.map((r: any) => String(r.parsed_event?.raw ?? r.raw_text ?? "").replace(/\s+$/, ""));
     const heading = (texts[0].split("\n").find((l) => l.trim()) ?? "").trim();
