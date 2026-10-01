@@ -104,16 +104,18 @@ function IntentChoice({
 
 function BmZoneVpnWarning({
   intent,
+  referralLink,
   status,
   rechecking,
   onRecheck,
 }: {
   intent: "bm-support" | "fan-zone" | "";
+  referralLink: boolean;
   status: VisitorVpnStatus;
   rechecking: boolean;
   onRecheck: () => void;
 }) {
-  if (intent !== "bm-support" || status === "unprotected") return null;
+  if (intent !== "bm-support" || referralLink || status === "unprotected") return null;
 
   const checking = status === "checking" || rechecking;
   return (
@@ -158,6 +160,7 @@ function SignupPage() {
   const [emailTaken, setEmailTaken] = useState(false);
   const vpnStatus = useVisitorVpnStatus();
   const [vpnRechecking, setVpnRechecking] = useState(false);
+  const hasReferralLink = Boolean(inviteFromUrl?.trim());
 
   const recheckVpn = async () => {
     setVpnRechecking(true);
@@ -198,7 +201,7 @@ function SignupPage() {
     if (intent === "bm-support" && !inviteCode.trim()) {
       return toast.error("A referral code is required for BM Support access.");
     }
-    if (intent === "bm-support" && vpnStatus !== "unprotected") {
+    if (intent === "bm-support" && !hasReferralLink && vpnStatus !== "unprotected") {
       return toast.error(
         vpnStatus === "protected"
           ? "Please disable your VPN and re-check your connection."
@@ -207,7 +210,7 @@ function SignupPage() {
     }
     if (!captchaToken) return toast.error("Please complete the captcha.");
     setBusy(true);
-    if (intent === "bm-support") {
+    if (intent === "bm-support" && !hasReferralLink) {
       const vpnCheck = await assertSignupAllowed({ data: { email: email.trim() } });
       if (!vpnCheck.allowed) {
         setBusy(false);
@@ -372,6 +375,7 @@ function SignupPage() {
                 <IntentChoice intent={intent} setIntent={setIntent} />
                 <BmZoneVpnWarning
                   intent={intent}
+                  referralLink={hasReferralLink}
                   status={vpnStatus}
                   rechecking={vpnRechecking}
                   onRecheck={recheckVpn}
@@ -420,7 +424,7 @@ function SignupPage() {
                   busy ||
                   !intent ||
                   needsReferral ||
-                  (intent === "bm-support" && vpnStatus !== "unprotected")
+                  (intent === "bm-support" && !hasReferralLink && vpnStatus !== "unprotected")
                 }
                 className="w-full h-11 rounded-lg bg-primary text-primary-foreground font-medium shadow-glow hover:opacity-90 disabled:opacity-50 disabled:shadow-none"
               >
@@ -456,6 +460,7 @@ function SignupPage() {
             <IntentChoice intent={intent} setIntent={setIntent} />
             <BmZoneVpnWarning
               intent={intent}
+              referralLink={hasReferralLink}
               status={vpnStatus}
               rechecking={vpnRechecking}
               onRecheck={recheckVpn}

@@ -18,4 +18,4 @@
 - Secure checkout browses only reached stages, never reverses payment; staff completion requires confirmed account setup.
 - Manual-order login details saved before the customer has an account are held privately per order and moved into their credentials when they claim the checkout — keeps one source of truth in the admin credentials list.
 - How-to videos use private storage references and short-lived signed playback links so media is never exposed through a permanent public URL.
-- New-account VPN blocking applies only to BM Support registration; Boro Fan Zone registration remains available without a VPN check.
+- New-account VPN blocking applies only to direct BM Support registration; referral-link and Boro Fan Zone registrations bypass it.
