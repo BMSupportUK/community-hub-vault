@@ -154,6 +154,7 @@ function SignupPage() {
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [inviteCode, setInviteCode] = useState(inviteFromUrl ?? "");
+  const [hasCode, setHasCode] = useState<"yes" | "no" | "">(inviteFromUrl?.trim() ? "yes" : "");
   const [busy, setBusy] = useState(false);
   const [captchaToken, setCaptchaToken] = useState("");
   const [intent, setIntent] = useState<"bm-support" | "fan-zone" | "">("");
@@ -193,7 +194,8 @@ function SignupPage() {
     };
   }, [email]);
 
-  const needsReferral = false;
+  const needsReferral =
+    intent === "bm-support" && (hasCode === "" || (hasCode === "yes" && !inviteCode.trim()));
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -205,6 +207,8 @@ function SignupPage() {
           : "Please wait for the connection check, then try again.",
       );
     }
+    if (needsReferral)
+      return toast.error(hasCode === "" ? "Please tell us if you have a referral code." : "Please enter your referral code.");
     if (!captchaToken) return toast.error("Please complete the captcha.");
     setBusy(true);
     if (intent === "bm-support" && !hasReferralLink) {
@@ -397,21 +401,45 @@ function SignupPage() {
               )}
               <Field label="Password" type="password" value={password} onChange={setPassword} />
               {intent === "bm-support" && (
-                <>
-                  <Field
-                    label={
-                      <span>
-                        Referral code{" "}
-                        <span className="text-muted-foreground">(optional)</span>
-                      </span>
-                    }
-                    value={inviteCode}
-                    onChange={setInviteCode}
-                  />
-                  <p className="text-xs text-muted-foreground -mt-1">
-                    Got a code from a member? Enter it to get straight in. Without one you'll go through the security gate.
-                  </p>
-                </>
+                <div className="space-y-2">
+                  <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Do you have a referral code? <span className="text-destructive">*</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Do you have a referral code?">
+                    {(["yes", "no"] as const).map((v) => (
+                      <button
+                        key={v}
+                        type="button"
+                        role="radio"
+                        aria-checked={hasCode === v}
+                        onClick={() => {
+                          setHasCode(v);
+                          if (v === "no") setInviteCode("");
+                        }}
+                        className={`h-10 rounded-lg border text-sm font-medium transition-colors ${
+                          hasCode === v
+                            ? "border-primary bg-primary/15 text-foreground"
+                            : "border-border bg-background/40 text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        {v === "yes" ? "Yes" : "No"}
+                      </button>
+                    ))}
+                  </div>
+                  {hasCode === "yes" && (
+                    <>
+                      <Field label="Referral code" value={inviteCode} onChange={setInviteCode} required />
+                      <p className="text-xs text-muted-foreground -mt-1">
+                        Your code lets you skip the security gate and the VPN check.
+                      </p>
+                    </>
+                  )}
+                  {hasCode === "no" && (
+                    <p className="text-xs text-muted-foreground">
+                      No problem — you'll go through the security gate after signing up. VPNs must be switched off to join.
+                    </p>
+                  )}
+                </div>
               )}
               <TurnstileWidget onToken={setCaptchaToken} onExpire={() => setCaptchaToken("")} />
 
