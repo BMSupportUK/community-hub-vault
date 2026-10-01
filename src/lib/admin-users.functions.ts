@@ -40,6 +40,54 @@ export const deleteMember = createServerFn({ method: "POST" })
     return { success: true };
   });
 
+export const updateMemberUsername = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input) =>
+    z
+      .object({
+        userId: z.string().uuid(),
+        username: z
+          .string()
+          .trim()
+          .min(3, "Username must be at least 3 characters")
+          .max(30, "Username must be 30 characters or fewer")
+          .regex(/^[a-zA-Z0-9_.-]+$/, "Letters, numbers, dots, dashes and underscores only"),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    const { supabase, userId } = context;
+
+    // Owner (admin) only — management and below cannot edit usernames.
+    const { data: roles, error: rolesError } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId);
+    if (rolesError) throw new Error(rolesError.message);
+    const callerRoles = (roles ?? []).map((r) => String(r.role));
+    if (!callerRoles.includes("admin")) {
+      throw new Error("Forbidden: owners only");
+    }
+
+    const username = data.username.trim();
+
+    const { data: existing } = await supabaseAdmin
+      .from("profiles")
+      .select("id")
+      .ilike("username", username)
+      .neq("id", data.userId)
+      .maybeSingle();
+    if (existing) throw new Error("That username is already taken.");
+
+    const { error: updateError } = await supabaseAdmin
+      .from("profiles")
+      .update({ username })
+      .eq("id", data.userId);
+    if (updateError) throw new Error(updateError.message);
+
+    return { success: true, username };
+  });
+
 export const listMemberEmails = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
