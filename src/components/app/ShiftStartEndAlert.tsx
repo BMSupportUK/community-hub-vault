@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { addDaysToDateStr, useTimezone } from "@/hooks/use-timezone";
 import shiftStartAudio from "@/assets/shift-start.mp3";
-import shiftEndAudio from "@/assets/shift-end.mp3";
+import mentionAudio from "@/assets/mention-notify.mp3";
 import { playSound } from "@/lib/sound";
 import {
   AlertDialog,
@@ -201,7 +201,9 @@ export function ShiftStartEndAlert() {
     const key = `${active.slot.id}:${active.stage}`;
     if (playedRef.current.has(key)) return;
     playedRef.current.add(key);
-    const src = active.stage === "start" ? shiftStartAudio : shiftEndAudio;
+    // The "ending soon" warning uses a plain chime — the "shift has ended"
+    // voice clip only makes sense once the shift is actually over.
+    const src = active.stage === "start" ? shiftStartAudio : mentionAudio;
     playSound(src, { label: `shift-${active.stage}`, gain: 2.2 });
   }, [active]);
 
