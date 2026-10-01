@@ -132,6 +132,8 @@ function GatePage() {
       await saveCoords(res.coords);
       toast.success("Thanks — location confirmed.");
     } else if (res.denied) {
+      if ((await getLocationPermission()) === "denied")
+        toast.error("Location is blocked in your browser. Turn it on in your browser's site settings, then try again.");
       refuseLocation();
     } else {
       toast.error("We couldn't read your location. Please try again.");
