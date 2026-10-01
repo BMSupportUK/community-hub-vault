@@ -137,46 +137,48 @@ function StaffPage() {
   filtered.forEach((p) => grouped[topRole(p.id)].push(p));
 
   return (
-    <div className="flex-1 overflow-y-auto bg-background">
-      <header className="px-8 pt-8 pb-6 border-b border-border bg-surface/70 backdrop-blur flex items-center gap-3">
-        <div className="size-11 rounded-xl bg-gradient-primary grid place-items-center text-primary-foreground shadow-glow">
-          <Briefcase className="size-5" />
-        </div>
-        <div>
-          <h1 className="font-display text-3xl font-bold text-gradient-primary">
-            Staff Directory
-          </h1>
-          <p className="text-muted-foreground mt-1">The people running the show — grouped by role.</p>
-        </div>
-      </header>
-
-      <div className="px-8 py-6">
-        <div className="relative max-w-md">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Search staff…"
-              className="w-full pl-9 pr-3 py-2 rounded-lg bg-surface/70 border border-border text-purple-50 placeholder:text-muted-foreground/50 outline-none focus:border-fuchsia-400 focus:ring-2 focus:ring-fuchsia-500/40"
-            />
+    <Tabs defaultValue="admin">
+      <div className="flex-1 overflow-y-auto bg-background">
+        <header className="px-8 pt-8 pb-6 border-b border-border bg-surface/70 backdrop-blur">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="size-11 rounded-xl bg-gradient-primary grid place-items-center text-primary-foreground shadow-glow shrink-0">
+              <Briefcase className="size-5" />
+            </div>
+            <div className="min-w-0">
+              <h1 className="font-display text-3xl font-bold text-gradient-primary">
+                Staff Directory
+              </h1>
+              <p className="text-muted-foreground mt-1">The people running the show — grouped by role.</p>
+            </div>
+            <div className="ml-auto flex flex-wrap items-center gap-3">
+              <div className="relative w-64 max-w-full shrink-0">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+                <input
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                  placeholder="Search staff…"
+                  className="w-full pl-9 pr-3 py-2 rounded-lg bg-surface/70 border border-border text-purple-50 placeholder:text-muted-foreground/50 outline-none focus:border-fuchsia-400 focus:ring-2 focus:ring-fuchsia-500/40"
+                />
+              </div>
+              <TabsList className="bg-surface/70 border border-border h-auto p-1 flex-wrap">
+                {ROLE_ORDER.map((role) => (
+                  <TabsTrigger
+                    key={role}
+                    value={role}
+                    className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground"
+                  >
+                    {ROLE_LABEL[role]}
+                    <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded-full bg-surface-2/70 border border-border">
+                      {grouped[role].length}
+                    </span>
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </div>
           </div>
+        </header>
 
-        <Tabs defaultValue="admin" className="mt-6">
-          <TabsList className="bg-surface/70 border border-border h-auto p-1 flex-wrap">
-            {ROLE_ORDER.map((role) => (
-              <TabsTrigger
-                key={role}
-                value={role}
-                className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground"
-              >
-                {ROLE_LABEL[role]}
-                <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded-full bg-surface-2/70 border border-border">
-                  {grouped[role].length}
-                </span>
-              </TabsTrigger>
-            ))}
-          </TabsList>
-
+        <div className="px-8 py-6">
           {ROLE_ORDER.map((role) => {
             const list = grouped[role];
             return (
