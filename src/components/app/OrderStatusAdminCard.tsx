@@ -206,7 +206,7 @@ export function OrderStatusAdminCard() {
                         </div>
                       ) : <button type="button" onClick={() => { setCompleting(r.id); setPayMethod(r.manual_pay_method ?? ""); setPayRef(""); }} className="inline-flex items-center gap-1 h-7 px-2 rounded-md border border-success/40 text-success text-xs font-medium hover:bg-success/10"><Check className="size-3.5" /> Mark complete</button>
                       ) : r.completed_at ? new Date(r.completed_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" }) : "—"}</td>
-                      <td className="px-3 py-2 whitespace-nowrap text-xs">{paymentLabel(methods[r.id])}</td>
+                      <td className="px-3 py-2 whitespace-nowrap text-xs">{paymentLabel(methods[r.id] ?? r.manual_pay_method)}</td>
                     </tr>
                   ))}
                 </tbody>
