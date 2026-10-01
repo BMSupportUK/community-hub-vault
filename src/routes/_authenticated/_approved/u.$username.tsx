@@ -1333,6 +1333,7 @@ function ReferralsPanel({
   const [assignCode, setAssignCode] = useState("");
   const [assigning, setAssigning] = useState(false);
   const [inviteTab, setInviteTab] = useState<"unused" | "used">("unused");
+  const [azLetter, setAzLetter] = useState<string | null>(null);
   const assignFn = useServerFn(assignReferrer);
   const submitAssign = async () => {
     const code = assignCode.trim().toUpperCase();
@@ -1355,105 +1356,54 @@ function ReferralsPanel({
   };
   const usedReferrals = referrals.filter((r) => !!r.used_by);
   const unusedReferrals = referrals.filter((r) => !r.used_by);
-  const shownReferrals = inviteTab === "used" ? usedReferrals : unusedReferrals;
-  return (
-    <section className="relative text-white">
-      <div className="relative px-0 py-2 sm:p-8">
-        {canAssign && (
-          <div className="mb-6 rounded-2xl border border-amber-300/40 bg-amber-500/10 backdrop-blur-xl p-5 text-white">
-            <div className="flex items-center gap-2 mb-2">
-              <UserPlus className="size-4 text-amber-200" />
-              <p className="text-xs uppercase tracking-wider text-amber-100">Owner · Redeem referral code</p>
-            </div>
-            <p className="text-sm text-white/80 mb-3">
-              This user has no referrer on record. Enter the referral code the referrer gave them — we'll check it's still active and mark it used.
-            </p>
-            <div className="grid max-w-md grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
-              <input
-                value={assignCode}
-                onChange={(e) => setAssignCode(e.target.value.toUpperCase())}
-                onKeyDown={(e) => { if (e.key === "Enter") submitAssign(); }}
-                placeholder="Invite code"
-                disabled={assigning}
-                className="flex-1 min-w-0 px-3 py-2 rounded-md bg-black/30 border border-white/20 text-white text-sm font-mono tracking-widest placeholder:text-white/40 focus:outline-none focus:border-amber-200/60"
-              />
-              <button
-                onClick={submitAssign}
-                disabled={assigning || !assignCode.trim()}
-                className="px-4 py-2 rounded-md bg-white text-rose-600 text-sm font-semibold hover:bg-amber-50 disabled:opacity-60"
-              >
-                {assigning ? "Saving…" : "Redeem"}
-              </button>
-            </div>
-          </div>
-        )}
-          <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
-          <div className="min-w-0">
-            <h2 className="flex items-center gap-2 font-display text-2xl sm:text-3xl font-bold drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]">
-              <Trophy className="size-6 text-amber-200" /> Referrals
-            </h2>
-            <p className="text-sm text-white/80 mt-1 max-w-md drop-shadow">
-              Bring a friend into the community. Every invite is a hug waiting to happen.
-            </p>
-          </div>
-          {isOwner && (
-            <button
-              onClick={onCreate}
-              disabled={creating}
-              className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-rose-600 shadow-lg shadow-rose-950/40 transition-colors hover:bg-amber-50 disabled:opacity-60 sm:w-auto"
-            >
-              <Plus className="size-4" /> {creating ? "Creating…" : "New invite"}
-            </button>
-          )}
-        </div>
 
-        {referrals.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-white/40 bg-white/10 backdrop-blur-md p-10 text-center">
-            <UserPlus className="size-10 mx-auto mb-3 text-amber-200" />
-            <p className="text-white/90">
-              {isOwner
-                ? "You haven't created any invites yet. Generate one to invite a friend."
-                : "No referrals yet."}
-            </p>
-          </div>
-        ) : (
-          <>
-            <div className="mb-4 flex flex-wrap items-center gap-2">
-              <button
-                onClick={() => setInviteTab("unused")}
-                className={cn(
-                  "rounded-full px-4 py-1.5 text-sm font-semibold border transition-colors",
-                  inviteTab === "unused"
-                    ? "bg-white text-rose-700 border-white"
-                    : "bg-white/10 text-white border-white/30 hover:bg-white/20",
-                )}
-              >
-                Not used ({unusedReferrals.length})
-              </button>
-              <button
-                onClick={() => setInviteTab("used")}
-                className={cn(
-                  "rounded-full px-4 py-1.5 text-sm font-semibold border transition-colors",
-                  inviteTab === "used"
-                    ? "bg-white text-rose-700 border-white"
-                    : "bg-white/10 text-white border-white/30 hover:bg-white/20",
-                )}
-              >
-                Used ({usedReferrals.length})
-              </button>
-            </div>
-            {shownReferrals.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-white/30 bg-white/5 p-8 text-center text-sm text-white/70">
-                {inviteTab === "used"
-                  ? "None of your invites have been used yet."
-                  : "Every invite you've made has been used — create a new one above."}
-              </div>
-            ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-            {shownReferrals.map((r) => {
-              const used = !!r.used_by;
-              return (
-                <div
+  // Used invites grouped under each member who joined, sorted A–Z.
+  const usedGroups = (() => {
+    const map = new Map<string, { name: string; username: string | null; items: typeof referrals }>();
+    for (const r of usedReferrals) {
+      const key = r.joined_username ?? r.joined_name ?? r.code;
+      if (!map.has(key)) {
+        map.set(key, {
+          name: r.joined_name ?? r.joined_username ?? "Member",
+          username: r.joined_username ?? null,
+          items: [],
+        });
+      }
+      map.get(key)!.items.push(r);
+    }
+    return Array.from(map.values()).sort((a, b) =>
+      a.name.localeCompare(b.name, "en", { sensitivity: "base" }),
+    );
+  })();
+
+  const unusedSorted = [...unusedReferrals].sort((a, b) => a.code.localeCompare(b.code));
+
+  const letterOf = (s: string) => {
+    const ch = (s.trim()[0] ?? "").toUpperCase();
+    return ch >= "A" && ch <= "Z" ? ch : "#";
+  };
+
+  const presentLetters = new Set<string>();
+  for (const g of usedGroups) presentLetters.add(letterOf(g.name));
+  for (const r of unusedSorted) presentLetters.add(letterOf(r.code));
+
+  const tabLetters =
+    inviteTab === "used"
+      ? Array.from(new Set(usedGroups.map((g) => letterOf(g.name)))).sort()
+      : Array.from(new Set(unusedSorted.map((r) => letterOf(r.code)))).sort();
+  const activeLetter = azLetter && tabLetters.includes(azLetter) ? azLetter : tabLetters[0] ?? null;
+
+  const filteredGroups = activeLetter
+    ? usedGroups.filter((g) => letterOf(g.name) === activeLetter)
+    : [];
+  const filteredUnused = activeLetter
+    ? unusedSorted.filter((r) => letterOf(r.code) === activeLetter)
+    : [];
+
+  const renderReferralCard = (r: (typeof referrals)[number]) => {
+    const used = !!r.used_by;
+    return (
+                    <div
                   key={r.id}
                   className={cn(
                     "relative rounded-2xl border backdrop-blur-xl p-5 flex flex-col gap-3 transition-all",
@@ -1545,9 +1495,163 @@ function ReferralsPanel({
                     {used && r.used_at && ` · Joined ${new Date(r.used_at).toLocaleDateString("en-GB")}`}
                   </div>
                 </div>
-              );
-            })}
+    );
+  };
+  return (
+    <section className="relative text-white">
+      <div className="relative px-0 py-2 sm:p-8">
+        {canAssign && (
+          <div className="mb-6 rounded-2xl border border-amber-300/40 bg-amber-500/10 backdrop-blur-xl p-5 text-white">
+            <div className="flex items-center gap-2 mb-2">
+              <UserPlus className="size-4 text-amber-200" />
+              <p className="text-xs uppercase tracking-wider text-amber-100">Owner · Redeem referral code</p>
+            </div>
+            <p className="text-sm text-white/80 mb-3">
+              This user has no referrer on record. Enter the referral code the referrer gave them — we'll check it's still active and mark it used.
+            </p>
+            <div className="grid max-w-md grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center">
+              <input
+                value={assignCode}
+                onChange={(e) => setAssignCode(e.target.value.toUpperCase())}
+                onKeyDown={(e) => { if (e.key === "Enter") submitAssign(); }}
+                placeholder="Invite code"
+                disabled={assigning}
+                className="flex-1 min-w-0 px-3 py-2 rounded-md bg-black/30 border border-white/20 text-white text-sm font-mono tracking-widest placeholder:text-white/40 focus:outline-none focus:border-amber-200/60"
+              />
+              <button
+                onClick={submitAssign}
+                disabled={assigning || !assignCode.trim()}
+                className="px-4 py-2 rounded-md bg-white text-rose-600 text-sm font-semibold hover:bg-amber-50 disabled:opacity-60"
+              >
+                {assigning ? "Saving…" : "Redeem"}
+              </button>
+            </div>
           </div>
+        )}
+          <div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+          <div className="min-w-0">
+            <h2 className="flex items-center gap-2 font-display text-2xl sm:text-3xl font-bold drop-shadow-[0_2px_8px_rgba(0,0,0,0.5)]">
+              <Trophy className="size-6 text-amber-200" /> Referrals
+            </h2>
+            <p className="text-sm text-white/80 mt-1 max-w-md drop-shadow">
+              Bring a friend into the community. Every invite is a hug waiting to happen.
+            </p>
+          </div>
+          {isOwner && (
+            <button
+              onClick={onCreate}
+              disabled={creating}
+              className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-rose-600 shadow-lg shadow-rose-950/40 transition-colors hover:bg-amber-50 disabled:opacity-60 sm:w-auto"
+            >
+              <Plus className="size-4" /> {creating ? "Creating…" : "New invite"}
+            </button>
+          )}
+        </div>
+
+        {referrals.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-white/40 bg-white/10 backdrop-blur-md p-10 text-center">
+            <UserPlus className="size-10 mx-auto mb-3 text-amber-200" />
+            <p className="text-white/90">
+              {isOwner
+                ? "You haven't created any invites yet. Generate one to invite a friend."
+                : "No referrals yet."}
+            </p>
+          </div>
+        ) : (
+          <>
+            <div className="mb-4 flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => setInviteTab("unused")}
+                className={cn(
+                  "rounded-full px-4 py-1.5 text-sm font-semibold border transition-colors",
+                  inviteTab === "unused"
+                    ? "bg-white text-rose-700 border-white"
+                    : "bg-white/10 text-white border-white/30 hover:bg-white/20",
+                )}
+              >
+                Not used ({unusedReferrals.length})
+              </button>
+              <button
+                onClick={() => setInviteTab("used")}
+                className={cn(
+                  "rounded-full px-4 py-1.5 text-sm font-semibold border transition-colors",
+                  inviteTab === "used"
+                    ? "bg-white text-rose-700 border-white"
+                    : "bg-white/10 text-white border-white/30 hover:bg-white/20",
+                )}
+              >
+                Used ({usedReferrals.length})
+              </button>
+            </div>
+            <div className="mb-3 flex flex-wrap items-center gap-1.5">
+              {[
+                ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+                ...(presentLetters.has("#") ? ["#"] : []),
+              ].map((L) => {
+                const present = presentLetters.has(L);
+                const active = activeLetter === L;
+                return (
+                  <button
+                    key={L}
+                    onClick={() => present && setAzLetter(L)}
+                    disabled={!present}
+                    title={present ? `Show names under ${L}` : `Nothing under ${L}`}
+                    className={cn(
+                      "size-8 rounded-full text-xs font-bold border transition-colors",
+                      active
+                        ? "bg-white text-rose-700 border-white"
+                        : present
+                          ? "bg-white/10 text-white border-white/30 hover:bg-white/20"
+                          : "bg-white/5 text-white/30 border-white/10 cursor-not-allowed",
+                    )}
+                  >
+                    {L}
+                  </button>
+                );
+              })}
+            </div>
+            {inviteTab === "used" ? (
+              filteredGroups.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-white/30 bg-white/5 p-8 text-center text-sm text-white/70">
+                  Nothing under {activeLetter} — pick another letter above.
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {filteredGroups.map((g) => (
+                    <div key={g.username ?? g.name}>
+                      <div className="mb-2 flex items-center gap-2">
+                        <UserPlus className="size-4 text-emerald-200 shrink-0" />
+                        {g.username ? (
+                          <Link
+                            to="/u/$username"
+                            params={{ username: g.username }}
+                            className="min-w-0 text-white hover:text-amber-200 hover:underline"
+                          >
+                            <span className="font-semibold">{g.name}</span>
+                            <span className="ml-1 text-xs text-white/70">@{g.username}</span>
+                          </Link>
+                        ) : (
+                          <span className="font-semibold">{g.name}</span>
+                        )}
+                        <span className="text-[10px] uppercase tracking-wider text-white/60">
+                          {g.items.length === 1 ? "1 invite" : `${g.items.length} invites`}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                        {g.items.map((r) => renderReferralCard(r))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )
+            ) : filteredUnused.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-white/30 bg-white/5 p-8 text-center text-sm text-white/70">
+                Nothing under {activeLetter} — pick another letter above.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                {filteredUnused.map((r) => renderReferralCard(r))}
+              </div>
             )}
           </>
         )}
