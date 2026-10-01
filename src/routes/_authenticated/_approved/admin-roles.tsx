@@ -13,6 +13,8 @@ import {
   MapPin,
   X,
   RefreshCw,
+  Pencil,
+  Check,
   KeyRound,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -21,7 +23,7 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { isRolesUnlocked } from "@/lib/roles-unlock";
 import { RolesGate } from "@/components/app/RolesGate";
-import { deleteMember, listMemberEmails } from "@/lib/admin-users.functions";
+import { deleteMember, listMemberEmails, updateMemberUsername } from "@/lib/admin-users.functions";
 import {
   getUserLocationHistory,
   type LocationHistoryRow,
@@ -74,6 +76,7 @@ const CUSTOM_STYLE = "bg-primary/20 text-primary border-primary/40";
 function AdminRolesPage() {
   const { hasAny, user } = useAuth();
   const isAdmin = hasAny(["admin", "management"]);
+  const isOwner = hasAny(["admin"]);
   const [rolesUnlocked, setRolesUnlocked] = useState(false);
   useEffect(() => {
     setRolesUnlocked(isRolesUnlocked(user?.id));
