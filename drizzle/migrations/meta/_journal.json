@@ -477,6 +477,13 @@
       "when": 1790885133453,
       "tag": "0067_appeal_fix_decrypt_schema",
       "breakpoints": true
+    },
+    {
+      "idx": 68,
+      "version": "7",
+      "when": 1790927945932,
+      "tag": "0068_suppress_referral_gate_notifications",
+      "breakpoints": true
     }
   ]
 }
