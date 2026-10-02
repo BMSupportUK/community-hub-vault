@@ -176,7 +176,7 @@ function FanZoneProfilePage() {
                   <Clock className="size-3" />
                   Last active <RelativeTime iso={myLastSeen} />
                 </div>
-                <div className="flex flex-wrap gap-2">
+                <div className="grid min-w-0 grid-cols-1 gap-2 sm:flex sm:flex-wrap">
                 {avatarLocked ? (
                   <p className="inline-flex max-w-full items-start gap-1.5 rounded-lg bg-[#E11B22]/20 px-3 py-1 text-[11px] font-semibold text-white ring-1 ring-[#E11B22]/50 sm:rounded-full">
                     <Lock className="size-3.5" />
@@ -184,7 +184,7 @@ function FanZoneProfilePage() {
                   </p>
                 ) : (
                   <>
-                    <Button size="sm" variant="outline" onClick={() => fileRef.current?.click()} disabled={uploading} className="bg-white/10 border-white/30 text-white hover:bg-white/20">
+                    <Button size="sm" variant="outline" onClick={() => fileRef.current?.click()} disabled={uploading} className="min-w-0 bg-white/10 border-white/30 text-white hover:bg-white/20">
                       {uploading ? <Loader2 className="size-3.5 mr-1.5 animate-spin" /> : <ImagePlus className="size-3.5 mr-1.5" />}
                       {avatarUrl ? "Replace picture" : "Upload picture"}
                     </Button>

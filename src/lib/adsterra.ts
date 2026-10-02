@@ -72,64 +72,23 @@ export function adsterraSizeFor(kind: AdsterraSlotKind): AdsterraZoneSize {
   return ZONE_BY_SLOT[kind];
 }
 
-// The classic Adsterra banner code sets one global `atOptions` and loads the
-// zone's invoke.js, which renders the banner. Two banners on one page would
-// race over that global, so injections are serialized: each slot's config is
-// written immediately before its loader runs, and the next slot waits.
-let chain: Promise<void> = Promise.resolve();
-
 /**
- * Injects the Adsterra banner for a zone into the slot's mount element.
- * Every slot gets its own config + loader pair (serialized through the
- * chain), so several slots sharing a zone on one page — or on later pages
- * in the same session — each render their own banner.
+ * Renders Adsterra in an isolated frame. The frame deliberately omits popup
+ * and top-navigation permissions, so a creative cannot take over the app
+ * window when iOS opens the installed web app.
  */
 export function ensureAdsterraBanner(zone: AdsterraZone, mount: HTMLElement) {
   if (!zone.key || typeof document === "undefined") return;
-  chain = chain.then(
-    () =>
-      new Promise<void>((resolve) => {
-        const config = document.createElement("script");
-        config.type = "text/javascript";
-        config.textContent =
-          `atOptions = { 'key' : '${zone.key}', 'format' : 'iframe', ` +
-          `'height' : ${zone.height}, 'width' : ${zone.width}, 'params' : {} };`;
-
-        const invoke = document.createElement("script");
-        invoke.type = "text/javascript";
-        invoke.async = false;
-        invoke.src = `https://${zone.host}/${zone.key}/invoke.js`;
-
-        // Safety net: some Adsterra banner loaders render with
-        // document.write, which after page load would wipe the whole
-        // document. While the loader runs we capture any write and put it
-        // inside the slot's mount instead, then restore the originals.
-        const originalWrite = document.write.bind(document);
-        const originalWriteln = document.writeln.bind(document);
-        let captured = "";
-        const capture = (html: string) => {
-          captured += html;
-        };
-        (document as { write: unknown }).write = capture;
-        (document as { writeln: unknown }).writeln = capture;
-
-        let finished = false;
-        const finish = () => {
-          if (finished) return;
-          finished = true;
-          (document as { write: unknown }).write = originalWrite;
-          (document as { writeln: unknown }).writeln = originalWriteln;
-          if (captured && mount.isConnected) mount.innerHTML = captured;
-          resolve();
-        };
-
-        invoke.onload = finish;
-        invoke.onerror = finish;
-        // Never leave the originals patched if the loader never fires.
-        window.setTimeout(finish, 10000);
-
-        mount.appendChild(config);
-        mount.appendChild(invoke);
-      }),
-  );
+  const frame = document.createElement("iframe");
+  frame.title = "Advertisement";
+  frame.width = String(zone.width);
+  frame.height = String(zone.height);
+  frame.setAttribute("sandbox", "allow-scripts");
+  frame.setAttribute("scrolling", "no");
+  frame.setAttribute("referrerpolicy", "strict-origin-when-cross-origin");
+  frame.style.border = "0";
+  frame.style.display = "block";
+  frame.style.maxWidth = "100%";
+  frame.srcdoc = `<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head><body style="margin:0;overflow:hidden;display:grid;place-items:center;min-height:${zone.height}px"><script>atOptions={key:${JSON.stringify(zone.key)},format:'iframe',height:${zone.height},width:${zone.width},params:{}};<\/script><script src="https://${zone.host}/${zone.key}/invoke.js"><\/script></body></html>`;
+  mount.replaceChildren(frame);
 }

@@ -1,6 +1,8 @@
 # Roadmap
 
 ## Current
+- [x] Make the complete BM Support and Fan Zone profile experience fit iPhone screens, including Credentials
+- [x] Stop installed iPhone app launches from opening an advert
 - [x] Sign-up: block VPNs for direct BM Support registration, bypass referral links, and leave Boro Fan Zone unaffected
 - [x] Remove automatic support tickets from sales (code + existing order tickets)
 - [x] Shop: duplicate How to Order tab as How to Renew with its own video upload
