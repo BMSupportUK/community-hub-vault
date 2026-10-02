@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { AD_SIZES, AD_SIZE_KEYS, type AdSize } from "@/lib/ad-sizes";
+import { AD_SIZES, AD_SIZE_KEYS, ADVERTISE_HERE_NAME, type AdSize } from "@/lib/ad-sizes";
 import { AD_SITES, AD_SITE_KEYS, BM_ZONES, BM_ZONE_SIZES, type AdSite } from "@/lib/ad-zones";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-affiliate-banners")({
@@ -50,6 +50,8 @@ function AdminAffiliateBannersPage() {
   const [newSize, setNewSize] = useState<AdSize>("skyscraper");
   const [newSite, setNewSite] = useState<AdSite>("bm_support");
   const fileRef = useRef<HTMLInputElement>(null);
+  const [placeholders, setPlaceholders] = useState<Banner[]>([]);
+  const [phUploading, setPhUploading] = useState<AdSize | null>(null);
 
   const load = async () => {
     const [{ data: bs }, { data: brds }, { data: asg }] = await Promise.all([
@@ -89,6 +91,33 @@ function AdminAffiliateBannersPage() {
       toast.error(e?.message ?? "Upload failed");
     } finally {
       setUploading(false);
+    }
+  };
+
+  const uploadPlaceholder = async (sizeKey: AdSize, file: File) => {
+    if (!user) return;
+    if (!file.type.startsWith("image/")) { toast.error("Please choose an image file"); return; }
+    if (file.size > 5 * 1024 * 1024) { toast.error("Image must be under 5MB"); return; }
+    setPhUploading(sizeKey);
+    try {
+      const ext = file.name.split(".").pop()?.toLowerCase() || "png";
+      const path = `${user.id}/advertise-${sizeKey}-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from(BUCKET).upload(path, file, { contentType: file.type, upsert: false });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from(BUCKET).getPublicUrl(path);
+      const old = placeholders.filter((p) => p.size === sizeKey);
+      const { error: insErr } = await supabase.from("affiliate_banners").insert({
+        name: ADVERTISE_HERE_NAME, image_url: pub.publicUrl, created_by: user.id, size: sizeKey, site: "bm_support",
+        alt_text: "Advertise here", link_url: "mailto:bmsupport2022@protonmail.com",
+      });
+      if (insErr) throw insErr;
+      if (old.length) await supabase.from("affiliate_banners").delete().in("id", old.map((o) => o.id));
+      toast.success(`"Advertise here" ${AD_SIZES[sizeKey].label} updated`);
+      await load();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Upload failed");
+    } finally {
+      setPhUploading(null);
     }
   };
 
@@ -160,6 +189,33 @@ function AdminAffiliateBannersPage() {
           ))}
         </div>
       </div>
+
+      <section className="rounded-2xl border border-border bg-surface-1 p-4 space-y-3">
+        <h2 className="font-display font-bold text-sm uppercase tracking-wide text-muted-foreground">"Advertise here" banner — one per size</h2>
+        <p className="text-xs text-muted-foreground">Every advert space opens with this banner before rotating. Upload a version for each size; a new upload replaces the old one.</p>
+        <div className="grid gap-3 sm:grid-cols-3">
+          {AD_SIZE_KEYS.map((k) => {
+            const current = placeholders.find((p) => p.size === k);
+            return (
+              <div key={k} className="rounded-xl border border-border bg-background p-3 space-y-2">
+                <div className="font-semibold text-sm">{AD_SIZES[k].label}</div>
+                <div className="text-[11px] font-mono text-muted-foreground">{AD_SIZES[k].recommended}</div>
+                <div className="rounded-lg border border-border bg-surface-1 overflow-hidden grid place-items-center" style={{ aspectRatio: `${AD_SIZES[k].width} / ${AD_SIZES[k].height}`, maxHeight: 220 }}>
+                  {current ? <img src={current.image_url} alt="" className="w-full h-full object-cover" /> : <span className="text-xs text-muted-foreground p-2 text-center">Using built-in default</span>}
+                </div>
+                <label className="block">
+                  <input type="file" accept="image/*" className="hidden" disabled={phUploading !== null}
+                    onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadPlaceholder(k, f); e.currentTarget.value = ""; }} />
+                  <span className="inline-flex w-full items-center justify-center gap-1 h-9 rounded-md bg-primary text-primary-foreground text-sm font-medium cursor-pointer">
+                    {phUploading === k ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
+                    {current ? "Replace" : "Upload"}
+                  </span>
+                </label>
+              </div>
+            );
+          })}
+        </div>
+      </section>
 
       <section className="rounded-2xl border border-border bg-surface-1 p-4 space-y-3">
         <h2 className="font-display font-bold text-sm uppercase tracking-wide text-muted-foreground">Upload a new banner</h2>

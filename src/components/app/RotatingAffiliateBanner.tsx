@@ -1,5 +1,6 @@
 import { memo, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { ADVERTISE_HERE_NAME } from "@/lib/ad-sizes";
 import advertiseLeaderboard from "@/assets/advertise-leaderboard.png";
 import advertiseSkyscraper from "@/assets/advertise-skyscraper.png";
 import { AD_SIZES, type AdSize } from "@/lib/ad-sizes";
@@ -58,6 +59,20 @@ function RotatingAffiliateBannerComponent({
   const [banners, setBanners] = useState<Banner[] | null>(null);
   const [index, setIndex] = useState(0);
   const [fading, setFading] = useState(false);
+  const [placeholderUrl, setPlaceholderUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void supabase
+      .from("affiliate_banners")
+      .select("image_url")
+      .eq("name", ADVERTISE_HERE_NAME)
+      .eq("size", size)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .then(({ data }) => { if (!cancelled) setPlaceholderUrl(data?.[0]?.image_url ?? null); });
+    return () => { cancelled = true; };
+  }, [size]);
 
   useEffect(() => {
     let cancelled = false;
@@ -79,13 +94,14 @@ function RotatingAffiliateBannerComponent({
           .eq("board_id", boardId);
         list = (data ?? [])
           .map((r: any) => r.affiliate_banners)
-          .filter(Boolean) as Banner[];
+          .filter((b: any) => b && b.name !== ADVERTISE_HERE_NAME) as Banner[];
       }
       if (list.length === 0) {
         const { data } = await supabase
           .from("affiliate_banners")
           .select("id, name, image_url, link_url, alt_text, size, site, zones");
         list = ((data ?? []) as Banner[]).filter((b) => {
+          if (b.name === ADVERTISE_HERE_NAME) return false;
           if (site && (b.site ?? "bm_support") !== site) return false;
           if (site === "bm_support" && b.zones && b.zones.length > 0) return !!zone && b.zones.includes(zone);
           return true;
@@ -112,13 +128,13 @@ function RotatingAffiliateBannerComponent({
     const advertiseHere: Banner = {
       id: "__fallback__",
       name: "Advertise here",
-      image_url: fallback?.image_url || (size === "leaderboard" ? advertiseLeaderboard : advertiseSkyscraper),
+      image_url: fallback?.image_url || placeholderUrl || (size === "leaderboard" ? advertiseLeaderboard : advertiseSkyscraper),
       link_url: fallback?.link_url || "mailto:bmsupport2022@protonmail.com",
       alt_text: fallback?.alt_text || "Advertise here",
       size,
     };
     return banners && banners.length > 0 ? [advertiseHere, ...banners] : [advertiseHere];
-  }, [banners, fallback?.image_url, fallback?.link_url, fallback?.alt_text, size]);
+  }, [banners, placeholderUrl, fallback?.image_url, fallback?.link_url, fallback?.alt_text, size]);
 
   useEffect(() => {
     if (paused || list.length <= 1) return;
