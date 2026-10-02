@@ -512,6 +512,13 @@
       "when": 1790935295578,
       "tag": "0072_manual_order_chat_summary",
       "breakpoints": true
+    },
+    {
+      "idx": 73,
+      "version": "7",
+      "when": 1790937502207,
+      "tag": "0073_manual_paid_records_payment",
+      "breakpoints": true
     }
   ]
 }
