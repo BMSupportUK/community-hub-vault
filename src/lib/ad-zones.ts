@@ -26,6 +26,23 @@ export const BM_ZONES = [
 ] as const;
 export type BmZone = (typeof BM_ZONES)[number]["key"];
 
+import type { AdSize } from "@/lib/ad-sizes";
+
+/** Which banner sizes each BM Support zone can show. */
+export const BM_ZONE_SIZES: Record<BmZone, AdSize[]> = {
+  home: ["leaderboard", "skyscraper"],
+  sports_guides: ["leaderboard"],
+  forum: ["leaderboard", "skyscraper"],
+  install_guides: ["skyscraper"],
+  members: ["skyscraper"],
+  packages: ["skyscraper"],
+  faq: ["skyscraper"],
+  about: ["skyscraper"],
+  contact: ["skyscraper"],
+  login: ["skyscraper"],
+  competition_winners: ["skyscraper"],
+};
+
 export function placementForPath(pathname: string): { site: AdSite; zone: BmZone | null } {
   const p = pathname.toLowerCase();
   if (/^\/(fan-zone|fanzone|boro-fantasy|admin-fan-zone)(\/|\.|$)/.test(p)) return { site: "fan_zone", zone: null };
