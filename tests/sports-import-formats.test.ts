@@ -260,4 +260,14 @@ describe("ESPN+ ranked team at line start", () => {
     expect(r.events[1]).toMatchObject({ time: "06:25 BST", title: "Tabilo, Alejandro v Paul, Tommy - ATP Tokyo", channels: ["Tennis 08"] });
     expect(parseSportsListingBlock(r.formatted)).toEqual(r.events);
   });
+
+  test("GAA+ channel-colon rows with weekday time import with their channel", () => {
+    const raw = "**IRE | GAA**\n\nGAA+ 01:  Fri 19:00 | Antrim: Naomh Seamus vs St Mary's Ahoghill";
+    const r = checkSportsImport(raw, "gmt", Date.parse("2026-10-02T18:30:00Z"), "GAA");
+    expect(r.errors).toBe(0);
+    expect(r.warnings).toBe(0);
+    expect(r.events).toHaveLength(1);
+    expect(r.events[0]).toMatchObject({ time: "19:00 BST", title: "Antrim: Naomh Seamus v St Mary's Ahoghill", channels: ["GAA+ 01"] });
+    expect(parseSportsListingBlock(r.formatted)).toEqual(r.events);
+  });
 });
