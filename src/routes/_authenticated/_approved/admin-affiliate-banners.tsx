@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { AD_SIZES, AD_SIZE_KEYS, type AdSize } from "@/lib/ad-sizes";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-affiliate-banners")({
   component: AdminAffiliateBannersPage,
@@ -17,6 +18,7 @@ type Banner = {
   image_url: string;
   link_url: string | null;
   alt_text: string | null;
+  size: AdSize;
   created_at: string;
 };
 type Board = { id: string; name: string; slug: string };
@@ -32,11 +34,12 @@ function AdminAffiliateBannersPage() {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [uploading, setUploading] = useState(false);
   const [newName, setNewName] = useState("");
+  const [newSize, setNewSize] = useState<AdSize>("skyscraper");
   const fileRef = useRef<HTMLInputElement>(null);
 
   const load = async () => {
     const [{ data: bs }, { data: brds }, { data: asg }] = await Promise.all([
-      supabase.from("affiliate_banners").select("id, name, image_url, link_url, alt_text, created_at").order("created_at", { ascending: false }),
+      supabase.from("affiliate_banners").select("id, name, image_url, link_url, alt_text, size, created_at").order("created_at", { ascending: false }),
       supabase.from("forum_boards").select("id, name, slug").order("sort_order"),
       supabase.from("forum_board_affiliate_banners").select("board_id, banner_id"),
     ]);
@@ -62,7 +65,7 @@ function AdminAffiliateBannersPage() {
       if (upErr) throw upErr;
       const { data: pub } = supabase.storage.from(BUCKET).getPublicUrl(path);
       const { error: insErr } = await supabase.from("affiliate_banners").insert({
-        name, image_url: pub.publicUrl, created_by: user.id,
+        name, image_url: pub.publicUrl, created_by: user.id, size: newSize,
       });
       if (insErr) throw insErr;
       setNewName("");
@@ -81,7 +84,7 @@ function AdminAffiliateBannersPage() {
 
   const saveBanner = async (b: Banner) => {
     const { error } = await supabase.from("affiliate_banners").update({
-      name: b.name, link_url: b.link_url || null, alt_text: b.alt_text || null,
+      name: b.name, link_url: b.link_url || null, alt_text: b.alt_text || null, size: b.size,
     }).eq("id", b.id);
     if (error) { toast.error("Save failed", { description: error.message }); return; }
     toast.success("Saved");
