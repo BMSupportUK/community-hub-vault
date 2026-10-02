@@ -206,11 +206,12 @@ export function OrderStatusAdminCard() {
                       <td className="px-3 py-2 min-w-[150px]"><span className={`inline-flex px-2 py-0.5 rounded-full border text-xs capitalize ${statusTone(r.status)}`}>{r.status.toLowerCase()}</span>
                         {r.status.toLowerCase() !== "cancelled" && <div className="mt-1.5 w-32"><OrderStatusBar compact step={r.completed_at ? 3 : r.paid_at ? 2 : 1} /></div>}
                         {(isAdmin || hasRole("management")) && <div className="mt-1.5"><ManualOrderLinkButton orderId={r.id} orderRef={r.order_ref} /></div>}
-                        {(isAdmin || hasRole("management")) && r.customer_type === "manual" && !r.paid_at && !r.completed_at && r.status.toLowerCase() !== "cancelled" && ["bank_transfer", "bank", "cash"].includes((r.manual_pay_method ?? "").toLowerCase()) && (
-                          <div className="mt-1.5"><button type="button" disabled={reminding === r.id} onClick={() => sendReminder(r.id)} className="inline-flex items-center gap-1 h-7 px-2 rounded-md border border-warning/40 text-warning text-xs font-medium hover:bg-warning/10 disabled:opacity-50">{reminding === r.id ? <Loader2 className="size-3.5 animate-spin" /> : <Mail className="size-3.5" />} Payment reminder</button></div>
-                        )}
                       </td>
-                      <td className="px-3 py-2 whitespace-nowrap text-xs text-muted-foreground">{r.paid_at ? new Date(r.paid_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" }) : "—"}</td>
+                      <td className="px-3 py-2 whitespace-nowrap text-xs text-muted-foreground">{r.paid_at ? new Date(r.paid_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" }) : (
+                        r.customer_type === "manual" && !r.completed_at && r.status.toLowerCase() !== "cancelled" && ["bank_transfer", "bank", "cash"].includes((r.manual_pay_method ?? "").toLowerCase()) ? (
+                          <button type="button" disabled={reminding === r.id} onClick={() => sendReminder(r.id)} className="inline-flex items-center gap-1 h-7 px-2 rounded-md border border-warning/40 text-warning text-xs font-medium hover:bg-warning/10 disabled:opacity-50">{reminding === r.id ? <Loader2 className="size-3.5 animate-spin" /> : <Mail className="size-3.5" />} Payment reminder</button>
+                        ) : "—"
+                      )}</td>
                       <td className="px-3 py-2 whitespace-nowrap text-xs text-muted-foreground">{isAdmin && r.customer_type === "manual" && !r.completed_at ? (
                         completing === r.id ? (
                         <div className="flex items-center gap-1.5">
