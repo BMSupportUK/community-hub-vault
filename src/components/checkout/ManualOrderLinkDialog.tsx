@@ -129,6 +129,23 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
     setOrderCompleted(true);
     toast.success(renewal ? "Renewal completed" : "Sale completed");
   };
+  const downloadInvoice = async () => {
+    setBusy(true);
+    try {
+      const [{ data: orderRow, error: orderError }, { data: itemRows, error: itemsError }] = await Promise.all([
+        supabase.from("orders").select("*").eq("id", orderId).maybeSingle(),
+        supabase.from("order_items").select("*").eq("order_id", orderId),
+      ]);
+      if (orderError) throw orderError;
+      if (itemsError) throw itemsError;
+      if (!orderRow) throw new Error("Order not found");
+      await downloadReceipt(orderRow as never, (itemRows ?? []) as never, { manualPayMethod: payMethod ?? undefined } as never);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not generate the invoice PDF");
+    } finally {
+      setBusy(false);
+    }
+  };
   if (link === undefined) return <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" /> Loading…</div>;
   if (!link) return <p className="text-sm text-muted-foreground">This order has no secure checkout page (it was added before secure pages existed).</p>;
   const url = secureCheckoutUrl(link.token);
