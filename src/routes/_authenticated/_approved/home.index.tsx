@@ -209,11 +209,6 @@ function WelcomePage() {
           </div>
       </section>
 
-      {/* Advert */}
-      <section className="shrink-0 min-w-0 px-3 pt-3 xl:px-4 xl:pt-4">
-        <AdSenseSlot slot="home" />
-      </section>
-
       {/* Quick links */}
       <section className="shrink-0 min-w-0 p-3 xl:p-4">
         <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
