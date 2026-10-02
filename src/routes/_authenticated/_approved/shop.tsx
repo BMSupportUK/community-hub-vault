@@ -4353,7 +4353,7 @@ function OrderDetailImpl({
             title={isOrderPaid ? undefined : "Available once the sale is complete"}
             className="px-2.5 py-1 rounded-md bg-surface-2 text-xs font-medium flex items-center gap-1 hover:bg-surface-2/80 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <Download className="size-3.5" /> {order.paid_at ? "Receipt" : "Invoice"} PDF
+            <Download className="size-3.5" /> Download invoice PDF
           </button>
           {linkedTicketId && (
             <button
@@ -5095,16 +5095,6 @@ function StripePanel({
               </span>
             )}
           </div>
-          {paid.receipt_url && (
-            <a
-              href={paid.receipt_url}
-              target="_blank"
-              rel="noreferrer"
-              className="text-[11px] text-primary hover:underline"
-            >
-              View receipt
-            </a>
-          )}
         </div>
       </div>
     );

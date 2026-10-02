@@ -313,12 +313,10 @@ export const confirmStripePayment = createServerFn({ method: "POST" })
       const pi = session.payment_intent as any;
       let cardBrand: string | undefined;
       let last4: string | undefined;
-      let receiptUrl: string | undefined;
       if (pi?.charges?.data?.[0]) {
         const ch = pi.charges.data[0];
         cardBrand = ch?.payment_method_details?.card?.brand ?? undefined;
         last4 = ch?.payment_method_details?.card?.last4 ?? undefined;
-        receiptUrl = ch?.receipt_url ?? undefined;
       }
 
       await supabaseAdmin.from("order_payments").upsert(
@@ -332,7 +330,7 @@ export const confirmStripePayment = createServerFn({ method: "POST" })
           currency: "GBP",
           card_brand: cardBrand,
           last_4: last4,
-          receipt_url: receiptUrl,
+          receipt_url: null,
           created_by: userId,
         },
         { onConflict: "order_id" },
@@ -419,7 +417,6 @@ export const confirmStripePayment = createServerFn({ method: "POST" })
           ` — £${(totalCents / 100).toFixed(2)}.` +
           `\nPayment date: ${paidStamp} (UK time)` +
           `\nPurchase ref: ${pi?.id ?? session.id}` +
-          (receiptUrl ? `\nReceipt: ${receiptUrl}` : "") +
           (itemLines.length ? `\n\n🛒 Items:\n${itemLines.join("\n")}` : "") +
           `\nTotal: £${(totalCents / 100).toFixed(2)} GBP` +
           `\n\n🙏 Thank you for your payment — we really appreciate your custom. Your order is now being processed and we'll update you on this ticket.`;

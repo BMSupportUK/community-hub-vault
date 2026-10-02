@@ -1,9 +1,10 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
-import { AlertTriangle, Bitcoin, BookOpen, Check, ChevronLeft, ChevronRight, Clock, Copy, CreditCard, Hourglass, Loader2, Lock, PartyPopper, Send, UserCheck, UserPlus } from "lucide-react";
+import { AlertTriangle, Bitcoin, BookOpen, Check, ChevronLeft, ChevronRight, Clock, Copy, CreditCard, Download, Hourglass, Loader2, Lock, PartyPopper, Send, UserCheck, UserPlus } from "lucide-react";
 import hero from "@/assets/checkout-family-tv.jpg";
 import installGuideIllustration from "@/assets/manual-order-install-guide.jpg";
 import { Button } from "@/components/ui/button";
+import { downloadReceipt, type InvoiceTemplateSettings } from "@/lib/receipt";
 
 export type CheckoutView = {
   order: {
@@ -33,6 +34,7 @@ export type CheckoutView = {
   invoice: { status: string; url: string | null; number: string | null } | null;
   bank: { account_name: string | null; sort_code: string | null; account_number: string | null; iban: string | null; bic: string | null } | null;
   qdCode?: { label: string; code: string } | null;
+  invoiceTemplate?: InvoiceTemplateSettings;
 };
 
 const GBP = (c: number) => new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(c / 100);
@@ -107,6 +109,23 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
   const accountSidebar = paid && !order.cancelled && visibleStage >= 3;
   const paidSidebar = paid && !order.cancelled && visibleStage === 2;
   const splitLayout = paymentSidebar || accountSidebar || paidSidebar;
+  const downloadInvoice = async () => {
+    if (!order.paidAt || order.cancelled) return;
+    await downloadReceipt({
+      id: order.id || order.ref,
+      order_ref: order.ref,
+      created_at: order.createdAt || order.paidAt,
+      status: order.status || "paid",
+      total_cents: order.totalCents,
+      discount_cents: order.discountCents,
+      discount_code: order.discountCode,
+      shipping_name: order.name,
+      email: order.email,
+      paid_at: order.paidAt,
+      completed_at: order.completedAt,
+      manual_pay_method: order.method,
+    }, items.map((item) => ({ product_name: item.name, quantity: item.qty, unit_price_cents: item.unitCents })), view.invoiceTemplate);
+  };
   const installCard = paid && claimToken ? (
     <section className="overflow-hidden rounded-2xl border border-border bg-card">
       <div className="grid grid-cols-[112px_minmax(0,1fr)] items-stretch">
@@ -217,6 +236,9 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
                     <p className="text-sm text-muted-foreground">Your payment is confirmed. Continue when you’re ready so we can begin setting up your service.</p>
                   </div>
                 </div>
+                <Button type="button" variant="outline" className="w-full" onClick={() => void downloadInvoice()} disabled={preview}>
+                  <Download className="size-4" /> Download invoice PDF
+                </Button>
                 {onContinueToSetup && (
                   <button
                     type="button"

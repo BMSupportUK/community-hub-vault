@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, ExternalLink } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchInChunks } from "@/lib/chunked-in";
 
@@ -132,7 +132,6 @@ export function CardPaymentsAdminCard({ provider }: { provider: Provider }) {
                     <th className="px-3 py-2 font-medium">
                       {provider === "bank_transfer" ? "Reference" : provider === "cash" ? "Method" : "Card"}
                     </th>
-                    <th className="px-3 py-2 font-medium" />
                   </tr>
                 </thead>
                 <tbody>
@@ -156,7 +155,6 @@ export function CardPaymentsAdminCard({ provider }: { provider: Provider }) {
                               ? `${r.card_brand}${r.last_4 ? ` •••• ${r.last_4}` : ""}`
                               : "—"}
                       </td>
-                      <td className="px-3 py-2">{r.receipt_url && <a href={r.receipt_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline">Receipt <ExternalLink className="size-3" /></a>}</td>
                     </tr>
                   ))}
                 </tbody>

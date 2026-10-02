@@ -76,7 +76,7 @@ export async function postOrderPaymentReceivedNotice(input: NoticeInput): Promis
         total: `£${(totalCents / 100).toFixed(2)} GBP`,
         paid_at: paidStamp,
         reference: input.reference ? `\nPurchase ref: ${input.reference}` : "",
-        receipt: input.receiptUrl ? `\nReceipt: ${input.receiptUrl}` : "",
+        receipt: "",
         items: itemLines.length ? `\n\n🛒 Items:\n${itemLines.join("\n")}` : "",
       },
       `✅ Payment received via ${provider} for order #${orderId.slice(0, 8)} — £${(totalCents / 100).toFixed(2)} GBP.`,
