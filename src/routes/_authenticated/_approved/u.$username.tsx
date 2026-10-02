@@ -597,7 +597,7 @@ function ProfilePage() {
 
       <div className={cn("min-w-0 px-4 py-5 sm:px-8 sm:py-6", locked && "flex min-h-0 flex-1 flex-col overflow-hidden")}>
         <Tabs value={mainTab} onValueChange={(v) => setMainTab(v as typeof mainTab)} className={cn("w-full", locked && "flex min-h-0 flex-1 flex-col")}>
-          <TabsList className="flex h-auto w-full justify-start gap-1 overflow-x-auto bg-purple-950/60 p-1 border border-purple-500/30 sm:flex-wrap sm:overflow-visible">
+          <TabsList className="flex h-auto w-full max-w-full justify-start gap-1 overflow-x-auto bg-purple-950/60 p-1 border border-purple-500/30 scrollbar-thin sm:flex-wrap sm:overflow-visible">
             {tabDefs.map((t) => (
               <TabsTrigger
                 key={t.id}
@@ -728,16 +728,18 @@ function ProfilePage() {
             <TabsContent value="creds" className={paneClass}>
               <div className="space-y-6">
                 <div className="rounded-2xl overflow-hidden border border-purple-500/30 bg-purple-950/50 backdrop-blur shadow-[0_0_60px_-15px_rgba(168,85,247,0.5)]">
-                  <div className="grid md:grid-cols-[1.4fr_1fr]">
-                    <img
-                      src={tvLoginIllustration}
-                      alt="Customer relaxing on a sofa logging into their TV app"
-                      width={1920}
-                      height={1080}
-                      loading="lazy"
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="p-6 flex flex-col justify-center text-white bg-gradient-to-br from-fuchsia-600/20 via-purple-600/20 to-violet-700/20">
+                  <div className="grid min-w-0 md:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+                    <div className="aspect-video min-w-0 overflow-hidden md:aspect-auto">
+                      <img
+                        src={tvLoginIllustration}
+                        alt="Customer relaxing on a sofa logging into their TV app"
+                        width={1920}
+                        height={1080}
+                        loading="lazy"
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                    <div className="min-w-0 p-4 flex flex-col justify-center text-white bg-gradient-to-br from-fuchsia-600/20 via-purple-600/20 to-violet-700/20 sm:p-6">
                       <p className="text-xs uppercase tracking-[0.2em] text-fuchsia-200/80 mb-2">Your TV Credentials</p>
                       <h3 className="font-display text-2xl font-bold bg-gradient-to-r from-violet-200 to-blue-200 bg-clip-text text-transparent">
                         Sign in to your TV app
@@ -1739,9 +1741,9 @@ function CredentialsReveal({ targetUserId, isOwner }: { targetUserId: string; is
 
   return (
     <section className="rounded-2xl border border-white/25 bg-white/10 backdrop-blur-xl p-5 text-white shadow-[0_10px_40px_-15px_rgba(0,0,0,0.4)]">
-      <div className="mb-4">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="flex items-center gap-2 font-display text-lg font-bold">
+      <div className="mb-4 min-w-0">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+          <h2 className="flex min-w-0 items-center gap-2 font-display text-base font-bold sm:text-lg">
             <KeyRound className="size-4 text-primary" /> Credentials & DNS
           </h2>
           {unlocked && (
@@ -1813,9 +1815,9 @@ function CredentialsReveal({ targetUserId, isOwner }: { targetUserId: string; is
 
                       <div>
                         <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1 flex items-center gap-1.5"><Lock className="size-3" /> Password</p>
-                        <div className="flex items-center gap-2">
+                        <div className="grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2">
                           <input readOnly type={reveal[c.id] ? "text" : "password"} value={c.password}
-                            className="flex-1 px-2.5 py-1.5 rounded-md bg-background border border-border text-sm font-mono" />
+                            className="min-w-0 w-full px-2.5 py-1.5 rounded-md bg-background border border-border text-sm font-mono" />
                           <button onClick={() => setReveal((r) => ({ ...r, [c.id]: !r[c.id] }))}
                             className="p-2 rounded-md bg-background border border-border hover:border-primary" title={reveal[c.id] ? "Hide" : "Reveal"}>
                             {reveal[c.id] ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
@@ -1852,9 +1854,9 @@ function CredentialsReveal({ targetUserId, isOwner }: { targetUserId: string; is
                     </div>
                     <div>
                       <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1">DNS code</p>
-                      <div className="flex items-center gap-2">
+                      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
                         <input readOnly value={d.code}
-                          className="flex-1 px-2.5 py-1.5 rounded-md bg-background border border-border text-sm font-mono" />
+                          className="min-w-0 w-full px-2.5 py-1.5 rounded-md bg-background border border-border text-sm font-mono" />
                         <button onClick={() => copy(`dns-${d.id}`, d.code)}
                           className="p-2 rounded-md bg-background border border-border hover:border-primary" title="Copy">
                           {copied === `dns-${d.id}` ? <Check className="size-4 text-emerald-500" /> : <Copy className="size-4" />}
@@ -1898,8 +1900,8 @@ function FieldRow({ icon: Icon, label, value, onCopy, copied }: { icon: any; lab
   return (
     <div>
       <p className="text-[11px] uppercase tracking-wider text-muted-foreground mb-1 flex items-center gap-1.5"><Icon className="size-3" /> {label}</p>
-      <div className="flex items-center gap-2">
-        <input readOnly value={value} className="flex-1 px-2.5 py-1.5 rounded-md bg-background border border-border text-sm" />
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2">
+        <input readOnly value={value} className="min-w-0 w-full px-2.5 py-1.5 rounded-md bg-background border border-border text-sm" />
         <button onClick={onCopy} className="p-2 rounded-md bg-background border border-border hover:border-primary" title="Copy">
           {copied ? <Check className="size-4 text-emerald-500" /> : <Copy className="size-4" />}
         </button>
@@ -2180,17 +2182,17 @@ function EditProfileModal({ profile, onClose, onSaved }: { profile: ProfileRow; 
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm grid place-items-center p-4" onClick={onClose}>
-      <div className="w-full max-w-lg rounded-2xl border border-border bg-surface-1 p-6" onClick={(e) => e.stopPropagation()}>
+    <div className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-background/80 p-3 backdrop-blur-sm sm:p-4" onClick={onClose}>
+      <div className="my-auto max-h-[calc(100dvh-1.5rem)] w-full max-w-lg overflow-y-auto rounded-2xl border border-border bg-surface-1 p-4 sm:max-h-[calc(100dvh-2rem)] sm:p-6" onClick={(e) => e.stopPropagation()}>
         <h2 className="font-display text-xl font-bold mb-4">Edit profile</h2>
-        <div className="flex items-center gap-4 mb-4">
+        <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 mb-4 sm:flex sm:gap-4">
           <Avatar url={avatarUrl} name={displayName || username || "?"} size={72} userId={profile.id} />
-          <label className="flex items-center gap-2 px-3 py-2 rounded-lg bg-surface-2 border border-border text-sm cursor-pointer hover:border-primary">
+          <label className="flex min-w-0 items-center justify-center gap-2 px-3 py-2 rounded-lg bg-surface-2 border border-border text-sm cursor-pointer hover:border-primary">
             {uploading ? <Loader2 className="size-4 animate-spin" /> : <Camera className="size-4" />} Upload image
             <input type="file" accept="image/*" className="hidden" onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])} />
           </label>
           {avatarUrl && (
-            <button onClick={() => setAvatarUrl(null)} className="text-xs text-muted-foreground hover:text-destructive">Remove</button>
+            <button onClick={() => setAvatarUrl(null)} className="col-start-2 text-left text-xs text-muted-foreground hover:text-destructive">Remove</button>
           )}
         </div>
         <Field label="Username">
