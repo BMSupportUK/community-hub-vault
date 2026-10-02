@@ -19,3 +19,4 @@ Boro score predictions = Championship (league) fixtures ONLY. Never let cup ties
 - [Boro predictions league-only](mem://constraints/boro-predictions-league-only) — Championship-only predictor: filters, upsert guards and DB trigger that must stay
 
 - [Sports import formats](mem://features/sports-import-formats) — Permanent provider layouts including WST snooker; every format requires regression, safety, and round-trip checks
+- [Affiliate banner shape](mem://design/affiliate-banner-shape) — Wide banners use a shallow 3:1 shape and preserve the full artwork without cropping
