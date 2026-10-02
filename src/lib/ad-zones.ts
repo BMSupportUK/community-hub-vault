@@ -14,7 +14,8 @@ export const AD_SITES: Record<AdSite, string> = {
 export const AD_SITE_KEYS = Object.keys(AD_SITES) as AdSite[];
 
 export const BM_ZONES = [
-  { key: "home", label: "Home" },
+  { key: "home", label: "Member Home" },
+  { key: "landing_page", label: "Public landing page" },
   { key: "sports_guides", label: "Sports guides" },
   { key: "forum", label: "Forum" },
   { key: "install_guides", label: "Install guides" },
@@ -31,6 +32,7 @@ export type BmZone = (typeof BM_ZONES)[number]["key"];
 /** Which banner sizes each BM Support zone can show. */
 export const BM_ZONE_SIZES: Record<BmZone, AdSize[]> = {
   home: ["square"],
+  landing_page: ["skyscraper"],
   sports_guides: ["leaderboard"],
   forum: ["leaderboard", "skyscraper"],
   install_guides: ["skyscraper"],
@@ -48,7 +50,7 @@ export function placementForPath(pathname: string): { site: AdSite; zone: BmZone
   if (/^\/(fan-zone|fanzone|boro-fantasy|admin-fan-zone)(\/|\.|$)/.test(p)) return { site: "fan_zone", zone: null };
   const first = p.split("/")[1] ?? "";
   const map: Record<string, BmZone> = {
-    "": "home",
+    "": "landing_page",
     home: "home",
     guides: "sports_guides",
     "sports-guides": "sports_guides",
