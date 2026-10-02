@@ -144,6 +144,12 @@ const CHANNEL_NAME_NUMBER_TIME_RE = new RegExp(
   "i",
 );
 
+/** "GAA+ 01:  Fri 19:00 | Antrim: Naomh Seamus vs St Mary's Ahoghill". */
+const CHANNEL_NAME_COLON_TIME_RE = new RegExp(
+  `^\\s*([A-Za-z][A-Za-z0-9 +&'./]{1,30}?)\\s+(\\d{1,3})\\s*:\\s+(?:(mon|tue|wed|thu|fri|sat|sun)[a-z]*\\.?\\s+)?(${TIME_WITH_ZONE_SOURCE})\\s*\\|\\s*(.+?)\\s*$`,
+  "i",
+);
+
 function isNoiseLine(line: string): boolean {
   if (!line) return true;
   if (parseClockTime(line)) return false;
@@ -739,6 +745,19 @@ function detectEvent(line: string, date: string | null): SportsListingEvent | nu
       time: normalizeTime(span[2]),
       title: "",
       channels: span[3] ? splitChannelLine(span[3]) : [],
+    };
+  }
+
+  // "GAA+ 01:  Fri 19:00 | Antrim: Naomh Seamus vs St Mary's Ahoghill"
+  const namedColon = line.match(CHANNEL_NAME_COLON_TIME_RE);
+  if (namedColon?.[1] && namedColon[2] && namedColon[4] && namedColon[5]) {
+    const split = splitTitleAndInlineChannels(namedColon[5]);
+    const weekday = namedColon[3] ? pickPrimaryTimePart(`${namedColon[3]} ${namedColon[4]}`).weekday : undefined;
+    return {
+      date: weekday ? resolveWeekdayDate(date, weekday) : date,
+      time: normalizeTime(namedColon[4]),
+      title: split.title,
+      channels: unique([`${namedColon[1].trim()} ${namedColon[2]}`, ...split.channels]),
     };
   }
 
