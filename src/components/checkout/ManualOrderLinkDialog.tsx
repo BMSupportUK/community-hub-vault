@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Check, Copy, ExternalLink, Hourglass, KeyRound, Link2, Loader2, Send, UserCheck } from "lucide-react";
+import { Check, Copy, Download, ExternalLink, Hourglass, KeyRound, Link2, Loader2, Send, UserCheck } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { StaffCheckoutChat, secureCheckoutUrl } from "@/components/checkout/CheckoutChat";
 import { OrderStatusBar } from "@/components/checkout/CheckoutTemplate";
 import { createCredentialForOrder, getOrderRenewalAccounts, type ApplyOrderResult, type CredentialCandidate } from "@/lib/order-fulfilment.functions";
+import { downloadReceipt } from "@/lib/receipt";
 
 
 
