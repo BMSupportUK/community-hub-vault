@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-type OrderRow = { status: string; paid_at: string | null };
+type OrderRow = { status: string; paid_at: string | null; manual_pay_method: string | null };
 
 /**
  * Header badge for the "Admin | Shop Orders" button.
@@ -19,7 +19,7 @@ export function PendingOrdersBadge() {
     const load = async () => {
       const { data } = await supabase
         .from("orders")
-        .select("id,status,paid_at")
+        .select("id,status,paid_at,manual_pay_method")
         .in("status", ["pending", "processing", "paid"]);
       if (!active) return;
       const rows = (data ?? []) as Array<OrderRow & { id: string }>;
@@ -46,8 +46,11 @@ export function PendingOrdersBadge() {
       let s = 0;
       for (const r of rows) {
         const paid = !!r.paid_at;
-        if (r.status === "pending" && !paid && !invoiced.has(r.id)) n += 1;
-        else if (!paid && (r.status === "processing" || invoiced.has(r.id))) a += 1;
+        // Manual orders are created by staff and already sent to the
+        // customer, so they start in "awaiting payment", never "new".
+        const manual = !!r.manual_pay_method;
+        if (r.status === "pending" && !paid && !manual && !invoiced.has(r.id)) n += 1;
+        else if (!paid && (r.status === "processing" || manual || invoiced.has(r.id))) a += 1;
         else s += 1;
       }
       setNewCount(n);
