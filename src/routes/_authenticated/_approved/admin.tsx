@@ -502,7 +502,7 @@ function DashboardBody() {
 
 
 
-  const allTools: { to: string; search?: Record<string, string>; label: string; desc: string; icon: any; adminOnly?: boolean; managementToo?: boolean }[] = [
+  const allTools: { to?: string; search?: Record<string, string>; tabKey?: DashTab; label: string; desc: string; icon: any; adminOnly?: boolean; managementToo?: boolean }[] = [
     { to: "/admin-roles", label: "Members & Role Management", desc: "Assign roles to members and create or delete custom roles.", icon: ShieldCheck },
     { to: "/admin-permissions", label: "Role permissions", desc: "Choose which roles can access pages and what they can do in channels.", icon: Shield },
     { to: "/admin-credentials", label: "User credentials", desc: "Set up app logins assigned to each user.", icon: KeySquare },
@@ -538,6 +538,11 @@ function DashboardBody() {
     { to: "/admin-sounds", label: "Notification sounds", desc: "Play and verify every notification MP3 used across the app, and set volume for this device.", icon: Bell },
     { to: "/admin-ad-stats", label: "Advert performance", desc: "See how many views and clicks each advert unit gets on bmsupport.uk, by page and by day.", icon: BarChart3 },
     { to: "/admin-shifts", label: "Staff shifts", desc: "Review every staff shift, clock-in, clock-out, breaks and auto clock-out, grouped by day.", icon: Users },
+    { tabKey: "theme", label: "Theme", desc: "Choose the default app theme for members.", icon: Palette },
+    { tabKey: "invoice-template", label: "Invoice template", desc: "Edit the branded PDF customers download after payment.", icon: ReceiptText },
+    { tabKey: "header-links", label: "Header links", desc: "Change the public header link order.", icon: PanelTop },
+    { tabKey: "sign-out-devices", label: "Sign out devices", desc: "Sign an account out of every device remotely.", icon: LogOut, managementToo: true },
+    { tabKey: "android-apk", label: "Android app file", desc: "Upload the BM Support APK the download barcode points to.", icon: Smartphone, adminOnly: true },
   ];
   const tools = allTools
     .filter((t) => !t.adminOnly || isAdminOnly || (t.managementToo && hasRole("management")))
@@ -635,93 +640,43 @@ function DashboardBody() {
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px] items-start">
       <section className="min-w-0">
         <h2 className="font-display text-sm uppercase tracking-wide text-muted-foreground mb-3">Owner tools</h2>
-        <div className="grid sm:grid-cols-2 gap-3 mb-3">
-          <button
-            type="button"
-            onClick={() => setTab("theme")}
-            className="group relative text-left rounded-2xl border border-border bg-surface-1 p-4 hover:border-primary hover:shadow-glow transition-all overflow-hidden"
-          >
-            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-accent opacity-0 group-hover:opacity-100 transition-opacity" />
-            <div className="flex items-center gap-3 mb-2">
-              <div className="size-10 rounded-xl bg-gradient-primary grid place-items-center text-primary-foreground shadow-glow"><Palette className="size-5" /></div>
-              <div className="font-display font-bold">Theme</div>
-            </div>
-            <p className="text-xs text-muted-foreground">Choose the default app theme for members.</p>
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab("invoice-template")}
-            className="group relative text-left rounded-2xl border border-border bg-surface-1 p-4 hover:border-primary hover:shadow-glow transition-all overflow-hidden"
-          >
-            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-accent opacity-0 group-hover:opacity-100 transition-opacity" />
-            <div className="flex items-center gap-3 mb-2">
-              <div className="size-10 rounded-xl bg-gradient-primary grid place-items-center text-primary-foreground shadow-glow"><ReceiptText className="size-5" /></div>
-              <div className="font-display font-bold">Invoice template</div>
-            </div>
-            <p className="text-xs text-muted-foreground">Edit the branded PDF customers download after payment.</p>
-          </button>
-          <button
-            type="button"
-            onClick={() => setTab("header-links")}
-            className="group relative text-left rounded-2xl border border-border bg-surface-1 p-4 hover:border-primary hover:shadow-glow transition-all overflow-hidden"
-          >
-            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-accent opacity-0 group-hover:opacity-100 transition-opacity" />
-            <div className="flex items-center gap-3 mb-2">
-              <div className="size-10 rounded-xl bg-gradient-primary grid place-items-center text-primary-foreground shadow-glow"><PanelTop className="size-5" /></div>
-              <div className="font-display font-bold">Header links</div>
-            </div>
-            <p className="text-xs text-muted-foreground">Change the public header link order.</p>
-          </button>
-          {canSeePins && (
-            <button
-              type="button"
-              onClick={() => setTab("sign-out-devices")}
-              className="group relative text-left rounded-2xl border border-border bg-surface-1 p-4 hover:border-primary hover:shadow-glow transition-all overflow-hidden"
-            >
-              <div className="absolute inset-x-0 top-0 h-1 bg-gradient-accent opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="flex items-center gap-3 mb-2">
-                <div className="size-10 rounded-xl bg-gradient-primary grid place-items-center text-primary-foreground shadow-glow"><LogOut className="size-5" /></div>
-                <div className="font-display font-bold">Sign out devices</div>
-              </div>
-              <p className="text-xs text-muted-foreground">Sign an account out of every device remotely.</p>
-            </button>
-          )}
-          {isAdminOnly && (
-            <button
-              type="button"
-              onClick={() => setTab("android-apk")}
-              className="group relative text-left rounded-2xl border border-border bg-surface-1 p-4 hover:border-primary hover:shadow-glow transition-all overflow-hidden"
-            >
-              <div className="absolute inset-x-0 top-0 h-1 bg-gradient-accent opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="flex items-center gap-3 mb-2">
-                <div className="size-10 rounded-xl bg-gradient-primary grid place-items-center text-primary-foreground shadow-glow"><Smartphone className="size-5" /></div>
-                <div className="font-display font-bold">Android app file</div>
-              </div>
-              <p className="text-xs text-muted-foreground">Upload the BM Support APK the download barcode points to.</p>
-            </button>
-          )}
-        </div>
-        <div className="grid sm:grid-cols-2 2xl:grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3">
           {tools.map((t, i) => {
             const letter = t.label[0].toUpperCase();
             const first = i === 0 || tools[i - 1].label[0].toUpperCase() !== letter;
-            return (
-            <Link
-              key={`${t.to}-${t.label}`}
-              id={first ? `tool-letter-${letter}` : undefined}
-              to={t.to}
-              search={t.search as any}
-              className="group relative scroll-mt-4 rounded-2xl border border-border bg-surface-1 p-4 hover:border-primary hover:shadow-glow transition-all overflow-hidden"
-            >
-              <div className="absolute inset-x-0 top-0 h-1 bg-gradient-accent opacity-0 group-hover:opacity-100 transition-opacity" />
-              <div className="flex items-center gap-3 mb-2">
-                <div className="size-10 rounded-xl bg-gradient-primary grid place-items-center text-primary-foreground shadow-glow">
+            const cls = "group relative flex flex-col justify-between gap-3 min-h-[150px] sm:aspect-square scroll-mt-4 rounded-2xl border border-border bg-surface-1 p-4 text-left hover:border-primary hover:shadow-glow transition-all overflow-hidden";
+            const inner = (
+              <>
+                <div className="absolute inset-x-0 top-0 h-1 bg-gradient-accent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="size-10 shrink-0 rounded-xl bg-gradient-primary grid place-items-center text-primary-foreground shadow-glow">
                   <t.icon className="size-5" />
                 </div>
-                <div className="font-display font-bold">{t.label}</div>
-              </div>
-              <p className="text-xs text-muted-foreground">{t.desc}</p>
-            </Link>
+                <div className="min-w-0">
+                  <div className="font-display font-bold leading-snug line-clamp-2 mb-1">{t.label}</div>
+                  <p className="text-xs text-muted-foreground line-clamp-4">{t.desc}</p>
+                </div>
+              </>
+            );
+            return t.tabKey ? (
+              <button
+                key={t.label}
+                type="button"
+                id={first ? `tool-letter-${letter}` : undefined}
+                onClick={() => t.tabKey && setTab(t.tabKey as DashTab)}
+                className={cls}
+              >
+                {inner}
+              </button>
+            ) : (
+              <Link
+                key={`${t.to}-${t.label}`}
+                id={first ? `tool-letter-${letter}` : undefined}
+                to={t.to!}
+                search={t.search as any}
+                className={cls}
+              >
+                {inner}
+              </Link>
             );
           })}
         </div>
