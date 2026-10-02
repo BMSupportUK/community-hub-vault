@@ -66,7 +66,9 @@ export function OrderStatusBar({ step, compact = false, awaitingConfirmation = f
 
 export function checkoutStep(o: { paidAt: string | null; completedAt: string | null; method: string | null }) {
   if (o.completedAt) return 3;
-  if (o.paidAt || o.method === "cash") return 2;
+  // Only a confirmed payment counts as paid — cash orders stay on
+  // "Awaiting payment" until staff tap Payment received.
+  if (o.paidAt) return 2;
   return 1;
 }
 
@@ -101,7 +103,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
   useEffect(() => setVisibleStage(latestStage), [latestStage]);
   // Payment details (bank info, card form, crypto) sit in a right sidebar on
   // wide screens while the order is awaiting payment.
-  const paymentSidebar = ["wise", "stripe", "square", "crypto"].includes(method) && !paid && !order.cancelled && visibleStage === 1;
+  const paymentSidebar = ["wise", "stripe", "square", "crypto", "cash"].includes(method) && !paid && !order.cancelled && visibleStage === 1;
   const accountSidebar = paid && !order.cancelled && visibleStage >= 3;
   const paidSidebar = paid && !order.cancelled && visibleStage === 2;
   const splitLayout = paymentSidebar || accountSidebar || paidSidebar;
@@ -129,7 +131,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
     sub = order.customerKind === "existing" ? "Your extension is live now — just restart your app to carry on watching." : "Your new account is ready. Your login details will be sent to you by the team.";
   } else if (visibleStage === 3) { heading = order.customerKind === "existing" ? "Subscription extension" : "Account setup"; sub = accountSetup ? "This step is complete and the sale is ready to finish." : "Payment is confirmed and setup is in progress."; }
   else if (visibleStage === 2) { heading = "Thank you — we've got your payment!"; sub = "Your payment has been confirmed."; }
-  else if (method === "cash") { heading = "Thank you for your cash payment!"; sub = "We'll set everything up and let you know when it's complete."; }
+  else if (method === "cash") { heading = `Order #${order.ref} — awaiting cash payment`; sub = "Once the team confirms your cash payment, this page will move on automatically."; }
   else if (awaitingConfirmation) { heading = "Payment sent — awaiting confirmation"; sub = "Thanks! We're waiting for your payment to arrive. This page updates automatically once it's confirmed."; }
   else if (paid) { heading = "Thank you — we've got your payment!"; sub = "We'll set everything up and let you know when it's complete."; }
 
@@ -339,6 +341,16 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
                     {sending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />} I've sent the payment
                   </button>
                 )}
+              </section>
+            </aside>
+          ) : paymentSidebar && method === "cash" ? (
+            <aside className="min-w-0 lg:sticky lg:top-4">
+              <section className="rounded-2xl border border-border bg-card p-5 flex gap-3 items-start">
+                <Clock className="size-5 text-primary shrink-0 mt-0.5" />
+                <div className="space-y-1">
+                  <p className="font-semibold">Awaiting your cash payment</p>
+                  <p className="text-sm text-muted-foreground">Please pay {GBP(order.totalCents)} in cash as arranged with the team. As soon as they confirm they've received it, this page updates and we'll start setting up your account.</p>
+                </div>
               </section>
             </aside>
           ) : null}
