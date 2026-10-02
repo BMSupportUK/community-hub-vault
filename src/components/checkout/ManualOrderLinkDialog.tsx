@@ -30,6 +30,7 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
   const [link, setLink] = useState<{ token: string; password: string; payment_sent_at: string | null; account_setup_at: string | null; customer_kind: string | null } | null | undefined>(undefined);
   const [orderPaid, setOrderPaid] = useState(false);
   const [orderCompleted, setOrderCompleted] = useState(false);
+  const [payMethod, setPayMethod] = useState<string | null>(null);
   const [loginName, setLoginName] = useState("");
   const [accountPassword, setAccountPassword] = useState("");
   const [qdCodes, setQdCodes] = useState<{ id: string; label: string; code: string }[]>([]);
@@ -84,13 +85,14 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
   useEffect(() => {
     Promise.all([
       supabase.from("order_checkout_links").select("token,password,payment_sent_at,account_setup_at,customer_kind").eq("order_id", orderId).maybeSingle(),
-      supabase.from("orders").select("paid_at,completed_at").eq("id", orderId).maybeSingle(),
+      supabase.from("orders").select("paid_at,completed_at,manual_pay_method").eq("id", orderId).maybeSingle(),
       supabase.from("qd_dns_codes").select("id,label,code").order("label"),
     ]).then(([{ data: linkData }, { data: orderData }, { data: codeData }]) => {
       setLink((linkData as never) ?? null);
       const paidAt = (orderData as { paid_at?: string | null } | null)?.paid_at;
       setOrderPaid(!!paidAt);
       setOrderCompleted(!!(orderData as { completed_at?: string | null } | null)?.completed_at);
+      setPayMethod(((orderData as { manual_pay_method?: string | null } | null)?.manual_pay_method ?? null)?.toLowerCase() ?? null);
       if (paidAt) setPaidLocal(toLocal(new Date(paidAt)));
       const codes = (codeData ?? []) as { id: string; label: string; code: string }[];
       setQdCodes(codes);
@@ -104,6 +106,18 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
     if (error) return toast.error(error.message);
     setLink((l) => (l ? { ...l, account_setup_at: (data as string | null) ?? null } : l));
     toast.success(done ? (link?.customer_kind === "existing" ? "Extension confirmed — you can now complete the sale" : "Account confirmed as set up — you can now complete the sale") : "Account set-up confirmation removed");
+  };
+  // Bank transfer / cash (and similar) payments are confirmed by hand here —
+  // Stripe and Square orders mark themselves paid via their own webhooks.
+  const markPaid = async () => {
+    if (!confirm("Confirm you've received this payment? The customer will be told their payment is confirmed.")) return;
+    setBusy(true);
+    const { error } = await supabase.rpc("mark_order_paid" as never, { p_order_id: orderId } as never);
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    setOrderPaid(true);
+    setPaidLocal(toLocal(new Date()));
+    toast.success("Payment marked as received");
   };
   const completeSale = async () => {
     if (!confirm(renewal ? "Mark this renewal as complete?" : "Mark this sale as complete?")) return;
@@ -184,6 +198,14 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
       />
       {link.payment_sent_at && (
         <div className="flex items-center gap-2 rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-xs"><Hourglass className="size-3.5 text-warning" /> Customer says payment was sent {new Date(link.payment_sent_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })} — awaiting confirmation</div>
+      )}
+      {!orderPaid && payMethod && !["stripe", "square"].includes(payMethod) && (
+        <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border px-3 py-2.5">
+          <p className="text-xs text-muted-foreground flex-1 min-w-40">Waiting on {payMethod === "bank_transfer" || payMethod === "bank" ? "the bank transfer" : payMethod === "cash" ? "the cash payment" : "payment"}. Confirm it once the money has arrived.</p>
+          <button type="button" disabled={busy} onClick={markPaid} className="inline-flex items-center gap-1 h-8 px-3 rounded-lg bg-success text-background text-xs font-semibold disabled:opacity-60">
+            {busy ? <Loader2 className="size-3.5 animate-spin" /> : <Check className="size-3.5" />} Payment received
+          </button>
+        </div>
       )}
       <div className={`rounded-lg border px-3 py-2.5 space-y-2 ${link.account_setup_at ? "border-success/40 bg-success/10" : "border-border"}`}>
         <div className="flex items-center gap-2 text-sm font-medium"><UserCheck className={`size-4 ${link.account_setup_at ? "text-success" : "text-muted-foreground"}`} /> {renewal ? "Subscription extended (renewal)" : "Account set up"}</div>
