@@ -3,7 +3,7 @@
 - Sports guides preserve published status; headings prefix event names, never channels. Keep the BM loading cover through hydration and router pending.
 - UFC multi-time imports attach all listed channels to every slot. Triller `Event N` becomes channel `Triller TV N`.
 - Public sports guides return only validated date, time and event names; never expose free-text notes, descriptions or channel lines, because channel heuristics can miss unfamiliar feed names.
-- Ads alternate Adsterra/AdSense; refresh visible Adsterra every 60s, never AdSense.
+- Advert slots show only BM Support's own rotating affiliate banners; no third-party ad networks, by owner decision.
 - Header starts collapsed (slim bar) ONLY on the tickets page and Talk channels; every other BM Support page keeps it open. Re-resets per navigation (tickets/Talk re-collapse, others re-open). Talk channels add channel name; Fan Zone never shows it.
 - Back-to-top reacts only to page-level scrollers, never dialogs or inner chat/reply panes.
 - NFL Sunday Ticket uses stated UK time, channel `NFL NN`, next-line fixture; drop its header and never apply the WF rule.
