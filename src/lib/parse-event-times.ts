@@ -919,7 +919,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     }
     const nameEl = document.createElement("div");
     nameEl.className =
-      "min-w-0 break-words whitespace-normal text-white font-bold text-lg md:text-xl leading-snug drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]";
+      "min-w-0 break-words whitespace-normal min-h-[3rem] md:min-h-[3.5rem] text-white font-bold text-lg md:text-xl leading-snug drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]";
     nameEl.textContent = titleText;
     nameCell.appendChild(nameEl);
     if (channel) {
