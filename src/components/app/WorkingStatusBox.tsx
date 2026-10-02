@@ -322,8 +322,12 @@ export function WorkingStatusBox({
         .order("shift_date")
         .order("start_time")
         .limit(10);
-      const upcoming = ((slots ?? []) as NextSlot[]).find(
-        (sl) => sl.shift_date > todayStr || sl.end_time > nowTime,
+      // While signed in, "next shift" means the slot after the current one —
+      // skip any slot already underway so the panel never repeats today's shift.
+      const upcoming = ((slots ?? []) as NextSlot[]).find((sl) =>
+        s
+          ? sl.shift_date > todayStr || (sl.shift_date === todayStr && sl.start_time > nowTime)
+          : sl.shift_date > todayStr || sl.end_time > nowTime,
       );
       setNextSlot(upcoming ?? null);
       // Staff can only sign in on a day they are on the rota — applies to every role.
@@ -706,9 +710,9 @@ export function WorkingStatusBox({
                 </p>
               )}
               {todayWindow && !canSignIn && <SignInOpensNote win={todayWindow} />}
-              {nextSlot && <NextShiftPanel slot={nextSlot} />}
             </>
           )}
+          {nextSlot && <NextShiftPanel slot={nextSlot} />}
           {brk && (
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground font-medium">{breakLabel(brk.kind)}</span>
