@@ -69,6 +69,19 @@ export function ProfitCostsPanel() {
     setLoaded(true);
   };
   useEffect(() => { if (!loaded) void load(); }, [loaded]);
+  // Live: re-load when an order or payment changes, so newly paid orders appear without a refresh.
+  useEffect(() => {
+    let t: ReturnType<typeof setTimeout> | null = null;
+    const bump = () => { if (t) clearTimeout(t); t = setTimeout(() => void load(), 500); };
+    const ch = supabase
+      .channel(`profit-panel-${Math.random().toString(36).slice(2)}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "order_change_signals" }, bump)
+      .on("postgres_changes", { event: "*", schema: "public", table: "order_payments" }, bump)
+      .subscribe();
+    const iv = setInterval(bump, 60_000);
+    return () => { if (t) clearTimeout(t); clearInterval(iv); supabase.removeChannel(ch); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const saveCost = async (id: string) => {
     const v = Math.round(parseFloat(costs[id] ?? "") * 100);
