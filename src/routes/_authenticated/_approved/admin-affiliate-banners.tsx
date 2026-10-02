@@ -59,7 +59,9 @@ function AdminAffiliateBannersPage() {
       supabase.from("forum_boards").select("id, name, slug").order("sort_order"),
       supabase.from("forum_board_affiliate_banners").select("board_id, banner_id"),
     ]);
-    setBanners((bs ?? []) as Banner[]);
+    const all = (bs ?? []) as Banner[];
+    setPlaceholders(all.filter((b) => b.name === ADVERTISE_HERE_NAME));
+    setBanners(all.filter((b) => b.name !== ADVERTISE_HERE_NAME));
     setBoards((brds ?? []) as Board[]);
     setAssignments((asg ?? []) as Assignment[]);
   };
