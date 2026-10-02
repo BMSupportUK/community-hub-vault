@@ -278,6 +278,9 @@ export function WorkingStatusBox({
   const [nextSlot, setNextSlot] = useState<NextSlot | null>(null);
   // Today's rota window: earliest slot start and latest slot end (HH:MM:SS).
   const [todayWindow, setTodayWindow] = useState<{ start: string; end: string } | null>(null);
+  // Rota window of the shift that is actually underway (or the last one started
+  // today) — shown as the "Shift hours" line while the person is signed in.
+  const [currentHours, setCurrentHours] = useState<{ start: string; end: string } | null>(null);
   const [hadShiftToday, setHadShiftToday] = useState(false);
 
   useEffect(() => {
@@ -343,6 +346,16 @@ export function WorkingStatusBox({
         upcomingToday
           ? { start: upcomingToday.start_time, end: upcomingToday.end_time }
           : null,
+      );
+      const underwayToday =
+        todays.find((sl) => sl.start_time <= nowTime && sl.end_time > nowTime) ??
+        (s
+          ? (todays
+              .filter((sl) => sl.start_time <= nowTime)
+              .sort((a, b) => b.start_time.localeCompare(a.start_time))[0] ?? null)
+          : null);
+      setCurrentHours(
+        underwayToday ? { start: underwayToday.start_time, end: underwayToday.end_time } : null,
       );
     };
     refresh();
@@ -686,13 +699,23 @@ export function WorkingStatusBox({
             <ActionIcons />
           </div>
           {shift ? (
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground font-medium">Shift</span>
-              <span className="inline-flex items-center gap-1.5 font-bold tabular-nums text-success text-lg">
-                <CircleDot className="size-5" />
-                {fmtHM(shiftSec)}
-              </span>
-            </div>
+            <>
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground font-medium">Shift</span>
+                <span className="inline-flex items-center gap-1.5 font-bold tabular-nums text-success text-lg">
+                  <CircleDot className="size-5" />
+                  {fmtHM(shiftSec)}
+                </span>
+              </div>
+              {currentHours && (
+                <div className="flex items-center justify-between text-xs">
+                  <span className="text-muted-foreground font-medium">Shift hours</span>
+                  <span className="font-semibold tabular-nums text-foreground/80">
+                    {currentHours.start.slice(0, 5)} – {currentHours.end.slice(0, 5)} UK
+                  </span>
+                </div>
+              )}
+            </>
           ) : (
             <>
               <div className="flex items-center justify-between">
