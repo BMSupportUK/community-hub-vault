@@ -30,7 +30,7 @@ export type BmZone = (typeof BM_ZONES)[number]["key"];
 
 /** Which banner sizes each BM Support zone can show. */
 export const BM_ZONE_SIZES: Record<BmZone, AdSize[]> = {
-  home: ["leaderboard", "skyscraper"],
+  home: ["square"],
   sports_guides: ["leaderboard"],
   forum: ["leaderboard", "skyscraper"],
   install_guides: ["skyscraper"],

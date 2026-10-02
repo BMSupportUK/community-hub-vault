@@ -1,3 +1,4 @@
+import { AdSenseSlot } from "@/components/app/AdSenseSlot";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Headphones, MessageSquare, Activity, Ticket, ShoppingBag, BookOpen, UserPlus, ArrowUp, ArrowDown, Trophy, KeyRound } from "lucide-react";
 import heroImg from "@/assets/member-hero.jpg";
@@ -204,6 +205,7 @@ function WelcomePage() {
             <WorkingStatusBox />
             {/* Staff accounts see their subscription box on their profile instead. */}
             {!isStaffAccount && <SubscriptionDetailsCard />}
+            <AdSenseSlot slot="homeSquare" />
             </div>
           </div>
       </section>

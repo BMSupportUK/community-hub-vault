@@ -3,7 +3,7 @@
  * these two sizes, and each uploaded banner is tagged with the size it was
  * designed for so slots only rotate banners that fit.
  */
-export type AdSize = "leaderboard" | "skyscraper";
+export type AdSize = "leaderboard" | "skyscraper" | "square";
 
 export const AD_SIZES: Record<
   AdSize,
@@ -22,6 +22,13 @@ export const AD_SIZES: Record<
     height: 600,
     recommended: "300×600 px (design at 600×1200 for sharp screens)",
     description: "Tall banner shown in page sidebars.",
+  },
+  square: {
+    label: "Square (1:1)",
+    width: 300,
+    height: 300,
+    recommended: "1:1 — 300×300 px (design at 600×600 for sharp screens)",
+    description: "Square banner shown in the home page side column, under Working Status.",
   },
 };
 
