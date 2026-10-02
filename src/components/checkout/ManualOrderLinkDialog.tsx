@@ -199,11 +199,15 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
       {link.payment_sent_at && (
         <div className="flex items-center gap-2 rounded-lg border border-warning/40 bg-warning/10 px-3 py-2 text-xs"><Hourglass className="size-3.5 text-warning" /> Customer says payment was sent {new Date(link.payment_sent_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })} — awaiting confirmation</div>
       )}
+      <div className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold ${orderPaid ? "border-success/40 bg-success/10 text-success" : "border-destructive/40 bg-destructive/10 text-destructive"}`}>
+        {orderPaid ? <Check className="size-4" /> : <Hourglass className="size-4" />}
+        {orderPaid ? "PAID — payment confirmed by staff" : "NOT PAID YET — no payment has been confirmed"}
+      </div>
       {!orderPaid && payMethod && !["stripe", "square"].includes(payMethod) && (
         <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border px-3 py-2.5">
-          <p className="text-xs text-muted-foreground flex-1 min-w-40">Waiting on {payMethod === "bank_transfer" || payMethod === "bank" ? "the bank transfer" : payMethod === "cash" ? "the cash payment" : "payment"}. Confirm it once the money has arrived.</p>
-          <button type="button" disabled={busy} onClick={markPaid} className="inline-flex items-center gap-1 h-8 px-3 rounded-lg bg-success text-background text-xs font-semibold disabled:opacity-60">
-            {busy ? <Loader2 className="size-3.5 animate-spin" /> : <Check className="size-3.5" />} Payment received
+          <p className="text-xs text-muted-foreground flex-1 min-w-40">Waiting on {payMethod === "bank_transfer" || payMethod === "bank" ? "the bank transfer" : payMethod === "cash" ? "the cash payment" : "payment"}. Tap the button below only once the money has arrived.</p>
+          <button type="button" disabled={busy} onClick={markPaid} className="inline-flex items-center gap-1 h-8 px-3 rounded-lg border-2 border-success text-success bg-background text-xs font-semibold disabled:opacity-60">
+            {busy ? <Loader2 className="size-3.5 animate-spin" /> : null} Mark as paid
           </button>
         </div>
       )}

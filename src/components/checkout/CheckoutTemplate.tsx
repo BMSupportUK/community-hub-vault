@@ -39,7 +39,7 @@ const GBP = (c: number) => new Intl.NumberFormat("en-GB", { style: "currency", c
 const METHOD: Record<string, string> = { stripe: "Stripe", square: "Square", wise: "bank transfer", cash: "cash", crypto: "crypto (USDT)" };
 
 export function OrderStatusBar({ step, compact = false, awaitingConfirmation = false, accountSetup = false, renewal = false, selectedStep, onStepSelect }: { step: number; compact?: boolean; awaitingConfirmation?: boolean; accountSetup?: boolean; renewal?: boolean; selectedStep?: number; onStepSelect?: (step: number) => void }) {
-  const labels = ["Created", awaitingConfirmation ? "Awaiting confirmation" : "Awaiting payment", "Paid", renewal ? "Subscription extended" : "Account set up", "Completed"];
+  const labels = ["Created", awaitingConfirmation ? "Awaiting confirmation" : "Awaiting payment", "Payment confirmed", renewal ? "Subscription extended" : "Account set up", "Completed"];
   // Map the 4-state step (0-3) onto 5 labels: after paid, "Account set up" is done once confirmed.
   step = step === 3 ? 4 : step === 2 && accountSetup ? 3 : step;
   const shownStep = selectedStep ?? step;
