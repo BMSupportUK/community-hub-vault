@@ -285,6 +285,8 @@ function SquareInvoicePanel({
   amountCents: number;
   onChange?: () => void | Promise<void>;
 }) {
+  return <div className="rounded-lg border border-border bg-surface-2 p-3 text-sm text-muted-foreground">Square payment is available through the customer’s secure checkout page. BM Support supplies the paid invoice.</div>;
+  /* Legacy hosted-provider invoice controls retained below for historical reconciliation only.
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [url, setUrl] = useState<string | null>(null);
@@ -355,7 +357,7 @@ function SquareInvoicePanel({
   return (
     <div className="space-y-3">
       <div className="text-xs text-muted-foreground leading-relaxed">
-        Pay securely via a hosted Square invoice. Card, Apple Pay, and Google Pay are supported on
+        Legacy Square invoice flow disabled. Card, Apple Pay, and Google Pay are supported on
         the invoice page. Total {format(amountCents)}.
         <span className="block mt-1 font-medium text-foreground">
           Your payment link is valid for 24 hours from when it's created — after that it expires and
@@ -367,7 +369,7 @@ function SquareInvoicePanel({
           <Button asChild className="w-full h-auto px-4 py-2.5 rounded-lg font-medium">
             <a href={url} target="_blank" rel="noopener noreferrer">
               <CreditCard className="size-4" />
-              Open Square invoice
+              Legacy Square link disabled
             </a>
           </Button>
           {status && <div className="text-[11px] text-muted-foreground text-center">Status: {status}</div>}
@@ -387,6 +389,7 @@ function SquareInvoicePanel({
       {err && <div className="text-xs text-destructive">{err}</div>}
     </div>
   );
+  */
 }
 
 function StripeInvoicePanel({
@@ -398,6 +401,8 @@ function StripeInvoicePanel({
   amountCents: number;
   onChange?: () => void | Promise<void>;
 }) {
+  return <div className="rounded-lg border border-border bg-surface-2 p-3 text-sm text-muted-foreground">Stripe payment is available through the customer’s secure checkout page. BM Support supplies the paid invoice.</div>;
+  /* Legacy hosted-provider invoice controls retained below for historical reconciliation only.
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [url, setUrl] = useState<string | null>(null);
@@ -474,7 +479,7 @@ function StripeInvoicePanel({
   return (
     <div className="space-y-3">
       <div className="text-xs text-muted-foreground leading-relaxed">
-        Pay securely via a hosted Stripe invoice. Card, Apple Pay, and Google Pay are supported on
+        Legacy Stripe invoice flow disabled. Card, Apple Pay, and Google Pay are supported on
         the invoice page. Total {format(amountCents)}.
         <span className="block mt-1 font-medium text-foreground">
           Your payment link is valid for 24 hours from when it's created — after that it expires and
@@ -486,7 +491,7 @@ function StripeInvoicePanel({
           <Button asChild className="w-full h-auto px-4 py-2.5 rounded-lg font-medium">
             <a href={url} target="_blank" rel="noopener noreferrer">
               <CreditCard className="size-4" />
-              Open Stripe invoice
+              Legacy Stripe link disabled
             </a>
           </Button>
           {status && <div className="text-[11px] text-muted-foreground text-center">Status: {status}</div>}
@@ -506,6 +511,7 @@ function StripeInvoicePanel({
       {err && <div className="text-xs text-destructive">{err}</div>}
     </div>
   );
+  */
 }
 
 function UsdtLogo({ className = "" }: { className?: string }) {

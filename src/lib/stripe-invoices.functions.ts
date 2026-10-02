@@ -87,6 +87,7 @@ export const createStripeInvoiceForOrder = createServerFn({ method: "POST" })
     try {
       const { supabase, userId } = context;
       await assertAdminOrOrderOwner(supabase, userId, data.orderId);
+      if (data.orderId) throw new Error("Stripe hosted invoices are no longer used. Send the customer their secure checkout link; BM Support provides the invoice after payment.");
 
       const stripe = createStripeClient(data.environment);
 
@@ -224,16 +225,6 @@ export const createStripeInvoiceForOrder = createServerFn({ method: "POST" })
         .select()
         .single();
       if (upErr) throw new Error(upErr.message);
-
-      // Post the invoice link in the order chat — same message Square posts,
-      // which the support ticket shows.
-      if (saved) {
-        await supabase.from("order_messages").insert({
-          order_id: orderId,
-          sender_id: userId,
-          content: `💳 Pay your invoice here: ${finalized.hosted_invoice_url}`,
-        });
-      }
 
       return {
         id: String((saved as any)?.id ?? ""),

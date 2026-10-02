@@ -87,3 +87,5 @@
 - [x] Unique password per secure page, shown next to link
 - [x] Live chat bubble on secure page (customer <-> admin/management)
 - [x] Audit and fix all remaining BM Support and Fan Zone screens for iPhone widths
+
+- [x] Replace Stripe/Square customer receipts with paid BM Support PDF invoices and add Invoice Template Owner Tool

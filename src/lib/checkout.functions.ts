@@ -61,7 +61,7 @@ async function syncInvoice(supabaseAdmin: any, orderId: string, method: string) 
           orderId,
           provider: method === "stripe" ? "Stripe" : "Square",
           reference: reference ?? undefined,
-          receiptUrl: inv.public_url ?? null,
+          receiptUrl: null,
         } as any).catch(() => undefined);
       }
     } catch { /* status check is best-effort */ }
@@ -92,9 +92,7 @@ export const getCheckout = createServerFn({ method: "POST" })
       const { syncCryptoPayment } = await import("@/lib/checkout-pay.functions");
       await syncCryptoPayment(supabaseAdmin, link.order_id).catch(() => undefined);
     }
-    const invoice = !order.paid_at && (method === "stripe" || method === "square")
-      ? await syncInvoice(supabaseAdmin, link.order_id, method)
-      : null;
+    const invoice = null;
     const { data: fresh } = await supabaseAdmin.from("orders").select("paid_at,completed_at").eq("id", link.order_id).maybeSingle();
     let bank: null | { account_name: string | null; sort_code: string | null; account_number: string | null; iban: string | null; bic: string | null } = null;
     if (method === "wise") {
@@ -102,6 +100,7 @@ export const getCheckout = createServerFn({ method: "POST" })
       bank = b ?? null;
     }
     const { data: pay } = await supabaseAdmin.from("order_payments").select("provider,status").eq("order_id", link.order_id).maybeSingle();
+    const { data: invoiceSetting } = await supabaseAdmin.from("app_settings").select("value").eq("key", "invoice_template").maybeSingle();
     const cryptoConfirming = pay?.provider === "nowpayments" && ["confirming", "confirmed", "sending", "partially_paid"].includes(String(pay.status));
     // QD login code: the one staff picked for this order, else the first DNS code from the admin dashboard.
     let qdCode: { label: string; code: string } | null = null;
@@ -141,6 +140,7 @@ export const getCheckout = createServerFn({ method: "POST" })
       invoice,
       bank,
       qdCode,
+      invoiceTemplate: (invoiceSetting?.value as Record<string, string> | null) ?? undefined,
     };
   });
 

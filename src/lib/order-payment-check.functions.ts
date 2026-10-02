@@ -142,7 +142,7 @@ export const checkOrderPaymentAcrossProviders = createServerFn({ method: "POST" 
       const ref = payment.provider_payment_id ? String(payment.provider_payment_id) : null;
       await markPaid(orderId, ref, userId);
       const providerLabel = payment.provider === "square" ? "Square" : payment.provider === "stripe" ? "Stripe" : String(payment.provider ?? "card");
-      await postNotice({ orderId, provider: providerLabel, reference: ref, amountCents: totalCents, actorId: userId, receiptUrl: payment.receipt_url as string | null });
+      await postNotice({ orderId, provider: providerLabel, reference: ref, amountCents: totalCents, actorId: userId });
       return { paid: true, status: "paid", provider: providerLabel, reference: ref, detail: `Payment confirmed via ${providerLabel}.`, checked: ["stored"] };
     }
 
@@ -175,7 +175,7 @@ export const checkOrderPaymentAcrossProviders = createServerFn({ method: "POST" 
           if (invoice.status === "paid") {
             const ref = invoice.number ?? String(stripeInv.stripe_invoice_id);
             await markPaid(orderId, ref, userId);
-            await postNotice({ orderId, provider: "Stripe", reference: ref, amountCents: totalCents, actorId: userId, receiptUrl: invoice.hosted_invoice_url ?? null });
+            await postNotice({ orderId, provider: "Stripe", reference: ref, amountCents: totalCents, actorId: userId });
             return { paid: true, status: "paid", provider: "Stripe", reference: ref, detail: "Payment confirmed via Stripe invoice.", checked };
           }
         }
@@ -184,7 +184,6 @@ export const checkOrderPaymentAcrossProviders = createServerFn({ method: "POST" 
       let stripeRef: string | null = null;
       let cardBrand: string | null = null;
       let last4: string | null = null;
-      let receiptUrl: string | null = null;
 
       const storedSession = payment?.provider === "stripe" ? String(payment.provider_payment_id ?? "") : "";
       if (storedSession.startsWith("cs_")) {
@@ -195,7 +194,6 @@ export const checkOrderPaymentAcrossProviders = createServerFn({ method: "POST" 
           const ch = pi?.charges?.data?.[0];
           cardBrand = ch?.payment_method_details?.card?.brand ?? null;
           last4 = ch?.payment_method_details?.card?.last4 ?? null;
-          receiptUrl = ch?.receipt_url ?? null;
         }
       }
 
@@ -210,7 +208,6 @@ export const checkOrderPaymentAcrossProviders = createServerFn({ method: "POST" 
           const ch = (pi as any)?.charges?.data?.[0];
           cardBrand = ch?.payment_method_details?.card?.brand ?? null;
           last4 = ch?.payment_method_details?.card?.last4 ?? null;
-          receiptUrl = ch?.receipt_url ?? null;
         }
       }
 
@@ -226,13 +223,13 @@ export const checkOrderPaymentAcrossProviders = createServerFn({ method: "POST" 
             currency: "GBP",
             card_brand: cardBrand,
             last_4: last4,
-            receipt_url: receiptUrl,
+            receipt_url: null,
             created_by: userId,
           },
           { onConflict: "order_id" },
         );
         await markPaid(orderId, stripeRef, userId);
-        await postNotice({ orderId, provider: "Stripe", reference: stripeRef, amountCents: totalCents, actorId: userId, receiptUrl });
+        await postNotice({ orderId, provider: "Stripe", reference: stripeRef, amountCents: totalCents, actorId: userId });
         return { paid: true, status: "paid", provider: "Stripe", reference: stripeRef, detail: "Card payment confirmed via Stripe.", checked };
       }
     } catch (e) {
@@ -265,7 +262,7 @@ export const checkOrderPaymentAcrossProviders = createServerFn({ method: "POST" 
           if (String(invoice.status).toUpperCase() === "PAID") {
             const ref = invoice.invoice_number ?? String(inv.square_invoice_id);
             await markPaid(orderId, ref, userId);
-            await postNotice({ orderId, provider: "Square", reference: ref, amountCents: totalCents, actorId: userId, receiptUrl: invoice.public_url ?? null });
+            await postNotice({ orderId, provider: "Square", reference: ref, amountCents: totalCents, actorId: userId });
             return { paid: true, status: "paid", provider: "Square", reference: ref, detail: "Payment confirmed via Square invoice.", checked };
           }
         }
@@ -303,13 +300,13 @@ export const checkOrderPaymentAcrossProviders = createServerFn({ method: "POST" 
             currency: match?.amount_money?.currency ?? "GBP",
             card_brand: match?.card_details?.card?.card_brand ?? null,
             last_4: match?.card_details?.card?.last_4 ?? null,
-            receipt_url: match?.receipt_url ?? null,
+            receipt_url: null,
             created_by: userId,
           },
           { onConflict: "order_id" },
         );
         await markPaid(orderId, match.id, userId);
-        await postNotice({ orderId, provider: "Square", reference: match.id, amountCents: totalCents, actorId: userId, receiptUrl: match?.receipt_url ?? null });
+        await postNotice({ orderId, provider: "Square", reference: match.id, amountCents: totalCents, actorId: userId });
         return { paid: true, status: "paid", provider: "Square", reference: match.id, detail: "Card payment confirmed via Square.", checked };
       }
     } catch (e) {

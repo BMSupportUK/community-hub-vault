@@ -23,3 +23,4 @@
 - Referral-approved BM Support accounts never retain security-gate access-request notifications, because staff action is not required.
 - The location opt-in is asked only on the security gate for direct (non-referral, non-Fan Zone) BM Support applicants; refusal blocks ticket requests and tags any appeal so staff see it. Elsewhere GPS is captured silently only when permission already exists.
 - Shared dialogs must stay within the dynamic mobile viewport, while dense data views reduce secondary columns on phones so primary actions remain usable.
+- Customer invoices are BM Support PDFs available only after confirmed payment; never expose Stripe or Square hosted invoice/receipt links because the app owns customer billing documents.

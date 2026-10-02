@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { BarChart3, ShieldCheck, Lock, KeyRound, ShieldAlert, KeySquare, Globe, Clock, FileText, Loader2, Shield, Star, Filter, Sparkles, LifeBuoy, RefreshCw, Copy, Download, Ban, Tag, Package, Bell, Trophy, MessageSquare, Image as ImageIcon, MonitorPlay, Eye, EyeOff, Landmark, Users, Palette, PanelTop } from "lucide-react";
+import { BarChart3, ShieldCheck, Lock, KeyRound, ShieldAlert, KeySquare, Globe, Clock, FileText, Loader2, Shield, Star, Filter, Sparkles, LifeBuoy, RefreshCw, Copy, Download, Ban, Tag, Package, Bell, Trophy, MessageSquare, Image as ImageIcon, MonitorPlay, Eye, EyeOff, Landmark, Users, Palette, PanelTop, ReceiptText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -19,6 +19,7 @@ import { ArrowDown, ArrowUp, LogOut, Smartphone } from "lucide-react";
 import { RemoteSignOutCard } from "@/components/app/RemoteSignOutCard";
 import { AndroidApkUploadCard } from "@/components/app/AndroidApkUploadCard";
 import { ThemePicker, APP_THEME_OPTIONS } from "@/components/app/ThemePicker";
+import { InvoiceTemplateCard } from "@/components/app/InvoiceTemplateCard";
 import {
   Dialog,
   DialogContent,
@@ -491,7 +492,7 @@ function DashboardBody() {
   const isAdminOnly = hasRole("admin");
   const canSeePins = isAdminOnly || hasRole("management");
   const { tab: searchTab } = Route.useSearch();
-  const validTabs = ["tools", "order-status", "square", "stripe", "bank-transfer", "bank-transfer-orders", "cash", "staff-pins", "backup-codes", "theme", "header-links", "sign-out-devices", "android-apk"] as const;
+  const validTabs = ["tools", "order-status", "square", "stripe", "bank-transfer", "bank-transfer-orders", "cash", "staff-pins", "backup-codes", "theme", "header-links", "invoice-template", "sign-out-devices", "android-apk"] as const;
   type DashTab = (typeof validTabs)[number];
   const [tab, setTab] = useState<DashTab>(
     (validTabs as readonly string[]).includes(searchTab as string) ? (searchTab as DashTab) : "tools",
@@ -581,7 +582,7 @@ function DashboardBody() {
               type="button"
               onClick={() => setTab(key)}
               className={`px-4 h-9 rounded-lg text-sm font-medium transition-colors ${
-                tab === key || (key === "tools" && (tab === "theme" || tab === "header-links" || tab === "sign-out-devices" || tab === "android-apk"))
+                tab === key || (key === "tools" && (tab === "theme" || tab === "header-links" || tab === "invoice-template" || tab === "sign-out-devices" || tab === "android-apk"))
                   ? "bg-primary text-primary-foreground"
                   : "text-muted-foreground hover:text-foreground"
               }`}
@@ -618,6 +619,10 @@ function DashboardBody() {
         <div className="max-w-2xl">
           <HeaderLinksCard />
         </div>
+      ) : tab === "invoice-template" ? (
+        <div className="max-w-3xl">
+          <InvoiceTemplateCard />
+        </div>
       ) : tab === "sign-out-devices" && canSeePins ? (
         <div className="max-w-2xl">
           <RemoteSignOutCard />
@@ -642,6 +647,18 @@ function DashboardBody() {
               <div className="font-display font-bold">Theme</div>
             </div>
             <p className="text-xs text-muted-foreground">Choose the default app theme for members.</p>
+          </button>
+          <button
+            type="button"
+            onClick={() => setTab("invoice-template")}
+            className="group relative text-left rounded-2xl border border-border bg-surface-1 p-4 hover:border-primary hover:shadow-glow transition-all overflow-hidden"
+          >
+            <div className="absolute inset-x-0 top-0 h-1 bg-gradient-accent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="flex items-center gap-3 mb-2">
+              <div className="size-10 rounded-xl bg-gradient-primary grid place-items-center text-primary-foreground shadow-glow"><ReceiptText className="size-5" /></div>
+              <div className="font-display font-bold">Invoice template</div>
+            </div>
+            <p className="text-xs text-muted-foreground">Edit the branded PDF customers download after payment.</p>
           </button>
           <button
             type="button"

@@ -148,16 +148,6 @@ export function StripeOrderPanel({
               </span>
             )}
           </div>
-          {paid.receipt_url && (
-            <a
-              href={paid.receipt_url}
-              target="_blank"
-              rel="noreferrer"
-              className="text-[11px] text-primary hover:underline"
-            >
-              View receipt
-            </a>
-          )}
         </div>
       </div>
     );

@@ -4347,14 +4347,14 @@ function OrderDetailImpl({
           </div>
         </div>
         <div className="flex items-center gap-2 flex-wrap justify-end">
-          <button
-            onClick={handleDownload}
-            disabled={!isOrderPaid}
-            title={isOrderPaid ? undefined : "Available once the sale is complete"}
-            className="px-2.5 py-1 rounded-md bg-surface-2 text-xs font-medium flex items-center gap-1 hover:bg-surface-2/80 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <Download className="size-3.5" /> {order.paid_at ? "Receipt" : "Invoice"} PDF
-          </button>
+          {isOrderPaid && order.status !== "cancelled" && (
+            <button
+              onClick={handleDownload}
+              className="px-2.5 py-1 rounded-md bg-surface-2 text-xs font-medium flex items-center gap-1 hover:bg-surface-2/80"
+            >
+              <Download className="size-3.5" /> Download invoice PDF
+            </button>
+          )}
           {linkedTicketId && (
             <button
               onClick={() => navigate({ to: "/tickets", search: { id: linkedTicketId } })}
@@ -4858,6 +4858,8 @@ function SquareInvoicePanel({
   amountCents: number;
   onChange?: () => void | Promise<void>;
 }) {
+  return <div className="rounded-md border border-border bg-surface-2 p-3 text-xs text-muted-foreground">Square payment is handled on the secure checkout page. The BM Support invoice becomes available after payment.</div>;
+  /* Legacy hosted-provider invoice controls retained below for historical reconciliation only.
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [url, setUrl] = useState<string | null>(null);
@@ -4936,7 +4938,7 @@ function SquareInvoicePanel({
   return (
     <div className="space-y-3">
       <div className="text-xs text-muted-foreground leading-relaxed">
-        Pay securely via a hosted Square invoice. Card, Apple Pay, and Google Pay are
+        Legacy Square invoice flow disabled. Card, Apple Pay, and Google Pay are
         supported on the invoice page. Total {fmt(amountCents)}.
       </div>
       {url ? (
@@ -4948,7 +4950,7 @@ function SquareInvoicePanel({
             className="w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium hover:opacity-90 transition"
           >
             <CreditCard className="size-4" />
-            Open Square invoice
+            Legacy Square link disabled
           </a>
           {status && (
             <div className="text-[11px] text-muted-foreground text-center">
@@ -4986,6 +4988,7 @@ function SquareInvoicePanel({
       {err && <div className="text-xs text-destructive">{err}</div>}
     </div>
   );
+  */
 }
 
 
@@ -5095,16 +5098,6 @@ function StripePanel({
               </span>
             )}
           </div>
-          {paid.receipt_url && (
-            <a
-              href={paid.receipt_url}
-              target="_blank"
-              rel="noreferrer"
-              className="text-[11px] text-primary hover:underline"
-            >
-              View receipt
-            </a>
-          )}
         </div>
       </div>
     );

@@ -205,7 +205,7 @@ export function SquareCardPanel({
         status: res.status,
         card_brand: res.cardBrand,
         last_4: res.last4,
-        receipt_url: res.receiptUrl,
+        receipt_url: null,
         amount_cents: amountCents,
       });
       setOpen(false);
@@ -241,16 +241,6 @@ export function SquareCardPanel({
               </span>
             )}
           </div>
-          {paid.receipt_url && (
-            <a
-              href={paid.receipt_url}
-              target="_blank"
-              rel="noreferrer"
-              className="text-[11px] text-primary hover:underline"
-            >
-              View receipt
-            </a>
-          )}
         </div>
       </div>
     );

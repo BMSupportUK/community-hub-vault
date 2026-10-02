@@ -111,7 +111,6 @@ export const chargeOrderWithSquare = createServerFn({ method: "POST" })
 
     const cardBrand: string | undefined = payment?.card_details?.card?.card_brand ?? undefined;
     const last4: string | undefined = payment?.card_details?.card?.last_4 ?? undefined;
-    const receiptUrl: string | undefined = payment?.receipt_url ?? undefined;
 
     const { error: upErr } = await supabase
       .from("order_payments")
@@ -123,7 +122,7 @@ export const chargeOrderWithSquare = createServerFn({ method: "POST" })
         currency,
         card_brand: cardBrand,
         last_4: last4,
-        receipt_url: receiptUrl,
+        receipt_url: null,
         created_by: userId,
       }, { onConflict: "order_id" });
     if (upErr) throw new Error(upErr.message);
@@ -156,8 +155,7 @@ export const chargeOrderWithSquare = createServerFn({ method: "POST" })
           `✅ Card payment captured for order #${orderId.slice(0, 8)}` +
           `${cardBrand && last4 ? ` (${cardBrand} •••• ${last4})` : ""}` +
           ` — £${(order.total_cents / 100).toFixed(2)}.` +
-          `\nTransaction ref: ${payment.id}` +
-          (receiptUrl ? `\nReceipt: ${receiptUrl}` : "");
+          `\nTransaction ref: ${payment.id}`;
         await supabase.from("ticket_messages").insert(
           linkedTickets.map((t: { id: string; user_id: string }) => ({
             ticket_id: t.id,
@@ -172,7 +170,7 @@ export const chargeOrderWithSquare = createServerFn({ method: "POST" })
 
     return {
       status,
-      receiptUrl,
+      receiptUrl: null,
       cardBrand,
       last4,
       paymentId: payment.id,
@@ -233,7 +231,6 @@ export const reconcileSquareOrder = createServerFn({ method: "POST" })
 
     const cardBrand: string | undefined = match?.card_details?.card?.card_brand ?? undefined;
     const last4: string | undefined = match?.card_details?.card?.last_4 ?? undefined;
-    const receiptUrl: string | undefined = match?.receipt_url ?? undefined;
 
     await supabaseAdmin.from("order_payments").upsert(
       {
@@ -246,7 +243,7 @@ export const reconcileSquareOrder = createServerFn({ method: "POST" })
         currency: match?.amount_money?.currency ?? "GBP",
         card_brand: cardBrand,
         last_4: last4,
-        receipt_url: receiptUrl,
+        receipt_url: null,
         created_by: userId,
       },
       { onConflict: "order_id" },

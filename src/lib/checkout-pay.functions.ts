@@ -77,7 +77,7 @@ async function withPaymentLock<T>(supabaseAdmin: any, orderId: string, fn: () =>
   }
 }
 
-async function markPaid(supabaseAdmin: any, order: any, provider: "Square" | "Stripe" | "NOWPayments", reference: string, receiptUrl?: string | null) {
+async function markPaid(supabaseAdmin: any, order: any, provider: "Square" | "Stripe" | "NOWPayments", reference: string) {
   const patch: Record<string, string> = { paid_at: new Date().toISOString() };
   if (order.status !== "completed" && order.status !== "cancelled") patch.status = "paid";
   const { error: paidErr } = await supabaseAdmin.from("orders").update(patch).eq("id", order.id).is("paid_at", null);
@@ -87,7 +87,7 @@ async function markPaid(supabaseAdmin: any, order: any, provider: "Square" | "St
   }
   try {
     const { postOrderPaymentReceivedNotice } = await import("@/lib/order-payment-notice.server");
-    await postOrderPaymentReceivedNotice({ orderId: order.id, provider, reference, receiptUrl: receiptUrl ?? null } as any);
+    await postOrderPaymentReceivedNotice({ orderId: order.id, provider, reference } as any);
   } catch { /* best effort */ }
 }
 
@@ -139,14 +139,13 @@ export const checkoutSquareCharge = createServerFn({ method: "POST" })
     }
     const cardBrand = payment?.card_details?.card?.card_brand ?? null;
     const last4 = payment?.card_details?.card?.last_4 ?? null;
-    const receiptUrl = payment?.receipt_url ?? null;
     await supabaseAdmin.from("order_payments").upsert({
       order_id: order.id, provider: "square", provider_payment_id: payment.id, square_payment_id: payment.id,
       status: payment.status, amount_cents: order.total_cents, currency: "GBP",
-      card_brand: cardBrand, last_4: last4, receipt_url: receiptUrl, created_by: order.user_id,
+      card_brand: cardBrand, last_4: last4, receipt_url: null, created_by: order.user_id,
     }, { onConflict: "order_id" });
-    await markPaid(supabaseAdmin, order, "Square", payment.id, receiptUrl);
-    return { status: String(payment.status), cardBrand, last4, receiptUrl };
+    await markPaid(supabaseAdmin, order, "Square", payment.id);
+    return { status: String(payment.status), cardBrand, last4, receiptUrl: null };
     });
   });
 

@@ -129,7 +129,7 @@ export async function reconcileUnpaidOrders(): Promise<{ scanned: number; repair
             currency: "GBP",
             card_brand: cardBrand,
             last_4: last4,
-            receipt_url: charge?.receipt_url ?? null,
+            receipt_url: null,
             created_by: order.user_id,
           },
           { onConflict: "order_id" },
