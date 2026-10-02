@@ -139,7 +139,7 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
       if (orderError) throw orderError;
       if (itemsError) throw itemsError;
       if (!orderRow) throw new Error("Order not found");
-      await downloadReceipt(orderRow as never, (itemRows ?? []) as never, { manualPayMethod: payMethod ?? undefined } as never);
+      await downloadReceipt(orderRow as never, (itemRows ?? []) as never);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Could not generate the invoice PDF");
     } finally {
@@ -221,6 +221,11 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
         {orderPaid ? <Check className="size-4" /> : <Hourglass className="size-4" />}
         {orderPaid ? "PAID — payment confirmed by staff" : "NOT PAID YET — no payment has been confirmed"}
       </div>
+      {orderPaid && (
+        <button type="button" disabled={busy} onClick={downloadInvoice} className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-border bg-surface-2 text-xs font-semibold hover:bg-surface-2/80 disabled:opacity-60">
+          {busy ? <Loader2 className="size-3.5 animate-spin" /> : <Download className="size-3.5" />} Download invoice PDF
+        </button>
+      )}
       {!orderPaid && payMethod && !["stripe", "square"].includes(payMethod) && (
         <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border px-3 py-2.5">
           <p className="text-xs text-muted-foreground flex-1 min-w-40">Waiting on {payMethod === "bank_transfer" || payMethod === "bank" ? "the bank transfer" : payMethod === "cash" ? "the cash payment" : "payment"}. Tap the button below only once the money has arrived.</p>
