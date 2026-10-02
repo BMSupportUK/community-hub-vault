@@ -166,9 +166,6 @@ function WelcomePage() {
                     Access community channels, view schedules, get support and explore our
                     services. Everything you need is just one click away.
                   </p>
-                  <div className="mt-3 max-w-xl">
-                    <AdSenseSlot slot="home" />
-                  </div>
                 </div>
 
                 <div className="relative min-h-56 min-w-0 overflow-hidden rounded-xl bg-blue-950/30 ring-1 ring-white/10 md:h-full">
@@ -208,8 +205,13 @@ function WelcomePage() {
             <WorkingStatusBox />
             {/* Staff accounts see their subscription box on their profile instead. */}
             {!isStaffAccount && <SubscriptionDetailsCard />}
+            </div>
           </div>
-        </div>
+      </section>
+
+      {/* Advert */}
+      <section className="shrink-0 min-w-0 px-3 pt-3 xl:px-4 xl:pt-4">
+        <AdSenseSlot slot="home" />
       </section>
 
       {/* Quick links */}

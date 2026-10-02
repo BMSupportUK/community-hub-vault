@@ -12,8 +12,8 @@ export const AD_SIZES: Record<
   leaderboard: {
     label: "Leaderboard (wide)",
     width: 900,
-    height: 300,
-    recommended: "3:1 — 900×300 px (design at 1800×600 for sharp screens)",
+    height: 450,
+    recommended: "2:1 — 900×450 px (design at 1800×900 for sharp screens)",
     description: "Wide banner shown across the top or middle of pages.",
   },
   skyscraper: {
