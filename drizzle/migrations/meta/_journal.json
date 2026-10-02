@@ -498,6 +498,13 @@
       "when": 1790928386681,
       "tag": "0070_dedupe_order_paid_notifications",
       "breakpoints": true
+    },
+    {
+      "idx": 71,
+      "version": "7",
+      "when": 1790934627103,
+      "tag": "0071_admin_mark_manual_order_paid",
+      "breakpoints": true
     }
   ]
 }
