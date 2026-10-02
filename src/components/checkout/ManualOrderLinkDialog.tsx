@@ -107,6 +107,18 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
     setLink((l) => (l ? { ...l, account_setup_at: (data as string | null) ?? null } : l));
     toast.success(done ? (link?.customer_kind === "existing" ? "Extension confirmed — you can now complete the sale" : "Account confirmed as set up — you can now complete the sale") : "Account set-up confirmation removed");
   };
+  // Bank transfer / cash (and similar) payments are confirmed by hand here —
+  // Stripe and Square orders mark themselves paid via their own webhooks.
+  const markPaid = async () => {
+    if (!confirm("Confirm you've received this payment? The customer will be told their payment is confirmed.")) return;
+    setBusy(true);
+    const { error } = await supabase.rpc("mark_order_paid" as never, { p_order_id: orderId } as never);
+    setBusy(false);
+    if (error) return toast.error(error.message);
+    setOrderPaid(true);
+    setPaidLocal(toLocal(new Date()));
+    toast.success("Payment marked as received");
+  };
   const completeSale = async () => {
     if (!confirm(renewal ? "Mark this renewal as complete?" : "Mark this sale as complete?")) return;
     setBusy(true);
