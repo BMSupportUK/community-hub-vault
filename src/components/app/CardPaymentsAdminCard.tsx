@@ -1,7 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { Download, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchInChunks } from "@/lib/chunked-in";
+import { downloadReceipt } from "@/lib/receipt";
 
 type Provider = "square" | "stripe" | "cash" | "bank_transfer";
 
@@ -23,7 +26,23 @@ type Row = {
   last_4: string | null;
   receipt_url: string | null;
   created_at: string;
-  order?: { status: string | null; shipping_name: string | null; email: string | null; existing_username: string | null; customer_type: string | null } | null;
+  order?: {
+    id: string;
+    order_ref: string | null;
+    created_at: string;
+    status: string | null;
+    total_cents: number;
+    discount_cents: number | null;
+    discount_code: string | null;
+    shipping_name: string | null;
+    shipping_address: string | null;
+    email: string | null;
+    existing_username: string | null;
+    customer_type: string | null;
+    paid_at: string | null;
+    completed_at: string | null;
+    manual_pay_method: string | null;
+  } | null;
 };
 
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -48,6 +67,7 @@ export function CardPaymentsAdminCard({ provider }: { provider: Provider }) {
   const [error, setError] = useState<string | null>(null);
   const [year, setYear] = useState<number | null>(null);
   const [month, setMonth] = useState<number | null>(null);
+  const [downloading, setDownloading] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -67,7 +87,7 @@ export function CardPaymentsAdminCard({ provider }: { provider: Provider }) {
           const o = await fetchInChunks<{ id: string }>(ids, (chunk) =>
             supabase
               .from("orders")
-              .select("id, status, shipping_name, email, existing_username, customer_type")
+              .select("id, order_ref, created_at, status, total_cents, discount_cents, discount_code, shipping_name, shipping_address, email, existing_username, customer_type, paid_at, completed_at, manual_pay_method")
               .in("id", chunk),
           );
           for (const x of o) if (x.id) orders[x.id] = x as never;
@@ -96,6 +116,19 @@ export function CardPaymentsAdminCard({ provider }: { provider: Provider }) {
   const activeMonth = month !== null && months.some(([mm]) => mm === month) ? month : months[0]?.[0] ?? null;
   const shown = list.filter((r) => { const d = new Date(r.created_at); return d.getFullYear() === activeYear && d.getMonth() === activeMonth; });
   const monthTotal = shown.reduce<Record<string, number>>((acc, r) => { acc[r.currency] = (acc[r.currency] ?? 0) + r.amount_cents; return acc; }, {});
+  const downloadInvoice = async (row: Row) => {
+    if (!row.order?.paid_at || row.order.status === "cancelled") return;
+    setDownloading(row.id);
+    try {
+      const { data: items, error } = await supabase.from("order_items").select("product_name,quantity,unit_price_cents").eq("order_id", row.order_id);
+      if (error) throw error;
+      await downloadReceipt({ ...row.order, status: row.order.status || "paid", manual_pay_method: row.provider }, items ?? []);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not create invoice");
+    } finally {
+      setDownloading(null);
+    }
+  };
 
   const pill = (active: boolean) => `px-3 h-8 rounded-lg text-sm font-medium border transition-colors ${active ? "bg-primary text-primary-foreground border-primary" : "bg-surface-2 border-border text-muted-foreground hover:text-foreground"}`;
 
@@ -132,6 +165,7 @@ export function CardPaymentsAdminCard({ provider }: { provider: Provider }) {
                     <th className="px-3 py-2 font-medium">
                       {provider === "bank_transfer" ? "Reference" : provider === "cash" ? "Method" : "Card"}
                     </th>
+                    {(provider === "cash" || provider === "bank_transfer") && <th className="px-3 py-2 font-medium">Invoice</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -155,6 +189,16 @@ export function CardPaymentsAdminCard({ provider }: { provider: Provider }) {
                               ? `${r.card_brand}${r.last_4 ? ` •••• ${r.last_4}` : ""}`
                               : "—"}
                       </td>
+                      {(provider === "cash" || provider === "bank_transfer") && (
+                        <td className="px-3 py-2">
+                          {r.order?.paid_at && r.order.status !== "cancelled" ? (
+                            <Button type="button" variant="outline" size="sm" onClick={() => void downloadInvoice(r)} disabled={downloading === r.id}>
+                              {downloading === r.id ? <Loader2 className="size-3.5 animate-spin" /> : <Download className="size-3.5" />}
+                              Invoice
+                            </Button>
+                          ) : <span className="text-muted-foreground">—</span>}
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
