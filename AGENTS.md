@@ -14,6 +14,7 @@
 - Talk presence: channel exit broadcasts leave/untracks next task; sign-out also removes the shared channel without respawn, preventing stale online users.
 - Talk staff sidebar status: active DND overrides Working/Off duty text with “Away - From the office.” while retaining the countdown.
 - Android spoken alerts use dedicated versioned notification channels; change the channel ID when correcting a sound because Android keeps a channel's original sound permanently.
+- Shift reminders use only the scheduled-reminders path; the legacy shift-phone-alerts cron stays disabled to prevent duplicate or post-clock-in alerts.
 - Manual orders use password-gated checkout links and order-only chat; paid, non-cancelled orders can open published guides through the same credentials.
 - Secure checkout browses only reached stages, never reverses payment; staff completion requires confirmed account setup.
 - Manual-order login details saved before the customer has an account are held privately per order and moved into their credentials when they claim the checkout — keeps one source of truth in the admin credentials list.
