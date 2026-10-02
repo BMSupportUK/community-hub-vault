@@ -502,7 +502,7 @@ function DashboardBody() {
 
 
 
-  const allTools: { to: string; search?: Record<string, string>; label: string; desc: string; icon: any; adminOnly?: boolean; managementToo?: boolean }[] = [
+  const allTools: { to?: string; search?: Record<string, string>; tabKey?: DashTab; label: string; desc: string; icon: any; adminOnly?: boolean; managementToo?: boolean }[] = [
     { to: "/admin-roles", label: "Members & Role Management", desc: "Assign roles to members and create or delete custom roles.", icon: ShieldCheck },
     { to: "/admin-permissions", label: "Role permissions", desc: "Choose which roles can access pages and what they can do in channels.", icon: Shield },
     { to: "/admin-credentials", label: "User credentials", desc: "Set up app logins assigned to each user.", icon: KeySquare },
@@ -538,6 +538,11 @@ function DashboardBody() {
     { to: "/admin-sounds", label: "Notification sounds", desc: "Play and verify every notification MP3 used across the app, and set volume for this device.", icon: Bell },
     { to: "/admin-ad-stats", label: "Advert performance", desc: "See how many views and clicks each advert unit gets on bmsupport.uk, by page and by day.", icon: BarChart3 },
     { to: "/admin-shifts", label: "Staff shifts", desc: "Review every staff shift, clock-in, clock-out, breaks and auto clock-out, grouped by day.", icon: Users },
+    { tabKey: "theme", label: "Theme", desc: "Choose the default app theme for members.", icon: Palette },
+    { tabKey: "invoice-template", label: "Invoice template", desc: "Edit the branded PDF customers download after payment.", icon: ReceiptText },
+    { tabKey: "header-links", label: "Header links", desc: "Change the public header link order.", icon: PanelTop },
+    { tabKey: "sign-out-devices", label: "Sign out devices", desc: "Sign an account out of every device remotely.", icon: LogOut, managementToo: true },
+    { tabKey: "android-apk", label: "Android app file", desc: "Upload the BM Support APK the download barcode points to.", icon: Smartphone, adminOnly: true },
   ];
   const tools = allTools
     .filter((t) => !t.adminOnly || isAdminOnly || (t.managementToo && hasRole("management")))
