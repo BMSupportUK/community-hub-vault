@@ -174,40 +174,55 @@ function ReadPage() {
 
   // Equalize the event-name height within each visual grid row so every
   // card's channel chip list starts at the same height, even when one event
-  // name wraps to more lines than its neighbours. Runs after each page of
-  // the paginated grid renders.
+  // name wraps to more lines than its neighbours. A delayed re-render from
+  // the paginated grid can rewrite the cards and drop the applied heights,
+  // so a DOM observer keeps re-applying the equalizer after each rewrite.
   useLayoutEffect(() => {
     const el = stageRef.current;
     if (!el) return;
-    const rows = Array.from(
-      el.querySelectorAll<HTMLElement>("[data-tz-row][data-tz-utc]"),
-    );
-    if (!rows.length) return;
-    el.dataset.equalized = `${rows.length}`;
-    const groups = new Map<string, HTMLElement[]>();
-    rows.forEach((r) => {
-      const key = String(Math.round(r.getBoundingClientRect().top));
-      const group = groups.get(key) ?? [];
-      group.push(r);
-      groups.set(key, group);
-    });
-    el.dataset.groups = JSON.stringify(Array.from(groups.values()).map((g) => g.length));
-    groups.forEach((group) => {
-      const names = group
-        .map((r) => r.querySelector<HTMLElement>("[data-tz-name]"))
-        .filter((n): n is HTMLElement => !!n);
-      if (names.length < 2) return;
-      names.forEach((n) => {
-        n.style.minHeight = "";
+    let raf = 0;
+    const equalize = () => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const rows = Array.from(
+          el.querySelectorAll<HTMLElement>("[data-tz-row][data-tz-utc]"),
+        );
+        if (!rows.length) return;
+        const groups = new Map<string, HTMLElement[]>();
+        rows.forEach((r) => {
+          const key = String(Math.round(r.getBoundingClientRect().top));
+          const group = groups.get(key) ?? [];
+          group.push(r);
+          groups.set(key, group);
+        });
+        groups.forEach((group) => {
+          const names = group
+            .map((r) => r.querySelector<HTMLElement>("[data-tz-name]"))
+            .filter((n): n is HTMLElement => !!n);
+          if (names.length < 2) return;
+          names.forEach((n) => {
+            n.style.minHeight = "";
+          });
+          let maxH = 0;
+          names.forEach((n) => {
+            maxH = Math.max(maxH, n.getBoundingClientRect().height);
+          });
+          names.forEach((n) => {
+            n.style.minHeight = `${Math.ceil(maxH)}px`;
+          });
+        });
       });
-      let maxH = 0;
-      names.forEach((n) => {
-        maxH = Math.max(maxH, n.getBoundingClientRect().height);
-      });
-      names.forEach((n) => {
-        n.style.minHeight = `${Math.ceil(maxH)}px`;
-      });
-    });
+    };
+    equalize();
+    const mo = new MutationObserver(equalize);
+    mo.observe(el, { childList: true, subtree: true });
+    const ro = new ResizeObserver(equalize);
+    ro.observe(el);
+    return () => {
+      cancelAnimationFrame(raf);
+      mo.disconnect();
+      ro.disconnect();
+    };
   }, [bodyItems, page, pageCount]);
   // Reset to first page when switching guides.
   useEffect(() => {
