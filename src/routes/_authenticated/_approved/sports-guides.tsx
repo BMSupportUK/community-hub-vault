@@ -122,6 +122,12 @@ function SportsGuidesPage() {
   // listings inside guide bodies (never guide names/descriptions).
   const searchQuery = search.trim();
   const activeSearch = searchQuery.length >= SG_MIN_SEARCH ? searchQuery : "";
+  // The search bar lives in the header on every tab, but results render on
+  // Welcome — jump back there as soon as a search goes active.
+  useEffect(() => {
+    if (activeSearch && tab !== "welcome") setTab("welcome");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeSearch]);
   const [resultsOpen, setResultsOpen] = useState(true);
   const [subFilter, setSubFilter] = useState<string | null>(null);
   const [openSubcategoryPopupFor, setOpenSubcategoryPopupFor] = useState<string | null>(null);
@@ -1442,15 +1448,50 @@ function SportsGuidesPage() {
               <h1 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 bg-clip-text text-transparent">Sports Guide</h1>
               <p className="text-purple-200/80 mt-1">Explore guides and news from all major sports</p>
             </div>
-            <TabsList className="flex flex-none rounded-full border border-purple-500/30 bg-purple-950/60 p-1">
-              <TabsTrigger value="welcome" className="rounded-full data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Welcome</TabsTrigger>
-              {activeCat && (
-                <TabsTrigger value="guides" className="rounded-full data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Guides</TabsTrigger>
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="relative w-full sm:w-64 xl:w-80 group">
+                <div className="absolute -inset-0.5 rounded-xl bg-gradient-to-r from-fuchsia-500 via-purple-500 to-indigo-500 opacity-60 blur-sm group-focus-within:opacity-100 group-focus-within:blur-md transition-all duration-300" />
+                <div className="relative flex items-center rounded-xl bg-slate-950/90 ring-1 ring-fuchsia-400/40 shadow-lg shadow-fuchsia-900/40 backdrop-blur-md">
+                  <div className="pl-3 pr-2 py-2 grid place-items-center">
+                    <Search className="size-4 text-fuchsia-300 drop-shadow-[0_0_6px_rgba(232,121,249,0.8)]" />
+                  </div>
+                  <Input
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search events (3+ letters)..."
+                    className="h-10 border-0 bg-transparent text-sm font-medium text-white placeholder:text-purple-200/60 focus-visible:ring-0 focus-visible:ring-offset-0 shadow-none"
+                  />
+                  {search && (
+                    <button
+                      type="button"
+                      onClick={() => setSearch("")}
+                      className="mr-2 px-2 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider text-fuchsia-200 hover:text-white hover:bg-fuchsia-500/20 transition-colors"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
+                {searchQuery.length > 0 && !activeSearch && (
+                  <div className="absolute left-0 top-full mt-1 text-[11px] font-medium text-fuchsia-200/80">
+                    Keep typing — enter at least {SG_MIN_SEARCH} letters to search events.
+                  </div>
+                )}
+              </div>
+              {isMod && (
+                <Button onClick={openNew} className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0 shrink-0">
+                  <Plus className="size-4 mr-1" /> Add Blog
+                </Button>
               )}
-              {canManageCategories && (
-                <TabsTrigger value="categories" className="rounded-full data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Categories</TabsTrigger>
-              )}
-            </TabsList>
+              <TabsList className="flex flex-none rounded-full border border-purple-500/30 bg-purple-950/60 p-1">
+                <TabsTrigger value="welcome" className="rounded-full data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Welcome</TabsTrigger>
+                {activeCat && (
+                  <TabsTrigger value="guides" className="rounded-full data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Guides</TabsTrigger>
+                )}
+                {canManageCategories && (
+                  <TabsTrigger value="categories" className="rounded-full data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white">Categories</TabsTrigger>
+                )}
+              </TabsList>
+            </div>
           </div>
         </header>
 
