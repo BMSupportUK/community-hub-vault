@@ -11,6 +11,16 @@ import { AD_SITES, AD_SITE_KEYS, BM_ZONES, BM_ZONE_SIZES, type AdSite } from "@/
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-affiliate-banners")({
   component: AdminAffiliateBannersPage,
+  head: () => ({
+    meta: [
+      { title: "Affiliate Banners | BM Support" },
+      { name: "description", content: "Manage BM Support and Boro Fan Zone advert banners and page placements." },
+      { property: "og:title", content: "Affiliate Banners | BM Support" },
+      { property: "og:description", content: "Manage BM Support and Boro Fan Zone advert banners and page placements." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
 });
 
 type Banner = {
@@ -137,8 +147,8 @@ function AdminAffiliateBannersPage() {
       <div>
         <h1 className="font-display text-2xl font-bold">Affiliate banners</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Upload your own advert banners and assign them to one or more forum boards.
-          Every banner is one of two sizes — design your artwork to match:
+          Upload your own advert banners and assign them to the exact page zones where they should appear.
+          Member Home and the public landing page are separate zones. Design your artwork to match:
         </p>
         <div className="mt-3 grid gap-2 sm:grid-cols-2">
           {AD_SIZE_KEYS.map((k) => (
