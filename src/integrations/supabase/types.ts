@@ -140,6 +140,7 @@ export type Database = {
           image_url: string
           link_url: string | null
           name: string
+          size: string
           updated_at: string
         }
         Insert: {
@@ -150,6 +151,7 @@ export type Database = {
           image_url: string
           link_url?: string | null
           name: string
+          size?: string
           updated_at?: string
         }
         Update: {
@@ -160,6 +162,7 @@ export type Database = {
           image_url?: string
           link_url?: string | null
           name?: string
+          size?: string
           updated_at?: string
         }
         Relationships: []

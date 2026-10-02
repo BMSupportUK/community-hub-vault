@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { AD_SIZES, AD_SIZE_KEYS, type AdSize } from "@/lib/ad-sizes";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-affiliate-banners")({
   component: AdminAffiliateBannersPage,
@@ -17,6 +18,7 @@ type Banner = {
   image_url: string;
   link_url: string | null;
   alt_text: string | null;
+  size: AdSize;
   created_at: string;
 };
 type Board = { id: string; name: string; slug: string };
@@ -32,11 +34,12 @@ function AdminAffiliateBannersPage() {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [uploading, setUploading] = useState(false);
   const [newName, setNewName] = useState("");
+  const [newSize, setNewSize] = useState<AdSize>("skyscraper");
   const fileRef = useRef<HTMLInputElement>(null);
 
   const load = async () => {
     const [{ data: bs }, { data: brds }, { data: asg }] = await Promise.all([
-      supabase.from("affiliate_banners").select("id, name, image_url, link_url, alt_text, created_at").order("created_at", { ascending: false }),
+      supabase.from("affiliate_banners").select("id, name, image_url, link_url, alt_text, size, created_at").order("created_at", { ascending: false }),
       supabase.from("forum_boards").select("id, name, slug").order("sort_order"),
       supabase.from("forum_board_affiliate_banners").select("board_id, banner_id"),
     ]);
@@ -62,7 +65,7 @@ function AdminAffiliateBannersPage() {
       if (upErr) throw upErr;
       const { data: pub } = supabase.storage.from(BUCKET).getPublicUrl(path);
       const { error: insErr } = await supabase.from("affiliate_banners").insert({
-        name, image_url: pub.publicUrl, created_by: user.id,
+        name, image_url: pub.publicUrl, created_by: user.id, size: newSize,
       });
       if (insErr) throw insErr;
       setNewName("");
@@ -81,7 +84,7 @@ function AdminAffiliateBannersPage() {
 
   const saveBanner = async (b: Banner) => {
     const { error } = await supabase.from("affiliate_banners").update({
-      name: b.name, link_url: b.link_url || null, alt_text: b.alt_text || null,
+      name: b.name, link_url: b.link_url || null, alt_text: b.alt_text || null, size: b.size,
     }).eq("id", b.id);
     if (error) { toast.error("Save failed", { description: error.message }); return; }
     toast.success("Saved");
@@ -130,20 +133,40 @@ function AdminAffiliateBannersPage() {
       <div>
         <h1 className="font-display text-2xl font-bold">Affiliate banners</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Upload sidebar advert images and assign them to one or more forum boards.
-          Recommended size <strong>512×1536 (1:3)</strong> — images are centered and cropped to fit.
+          Upload your own advert banners and assign them to one or more forum boards.
+          Every banner is one of two sizes — design your artwork to match:
         </p>
+        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+          {AD_SIZE_KEYS.map((k) => (
+            <div key={k} className="rounded-xl border border-border bg-surface-1 p-3">
+              <div className="font-semibold text-sm">{AD_SIZES[k].label}</div>
+              <div className="text-xs text-muted-foreground mt-0.5">{AD_SIZES[k].description}</div>
+              <div className="text-xs mt-1.5 font-mono text-foreground">{AD_SIZES[k].recommended}</div>
+            </div>
+          ))}
+        </div>
       </div>
 
       <section className="rounded-2xl border border-border bg-surface-1 p-4 space-y-3">
         <h2 className="font-display font-bold text-sm uppercase tracking-wide text-muted-foreground">Upload a new banner</h2>
-        <div className="grid sm:grid-cols-[1fr_auto] gap-2">
+        <div className="grid sm:grid-cols-[1fr_auto_auto] gap-2">
           <Input
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             placeholder="Banner name (e.g. Acme Telecoms — Spring promo)"
             disabled={uploading}
           />
+          <select
+            value={newSize}
+            onChange={(e) => setNewSize(e.target.value as AdSize)}
+            disabled={uploading}
+            className="h-9 rounded-md border border-border bg-background px-2 text-sm"
+            aria-label="Banner size"
+          >
+            {AD_SIZE_KEYS.map((k) => (
+              <option key={k} value={k}>{AD_SIZES[k].label} — {AD_SIZES[k].width}×{AD_SIZES[k].height}</option>
+            ))}
+          </select>
           <input
             ref={fileRef}
             type="file"
@@ -156,7 +179,7 @@ function AdminAffiliateBannersPage() {
             {uploading ? "Uploading…" : "Upload image"}
           </Button>
         </div>
-        <p className="text-[11px] text-muted-foreground">Max 5MB. Use a tall 1:3 image — 512 wide × 1536 tall is ideal.</p>
+        <p className="text-[11px] text-muted-foreground">Max 5MB. Pick the size your artwork was designed for — slots only rotate banners that fit them.</p>
       </section>
 
       {!banners ? (
@@ -172,10 +195,24 @@ function AdminAffiliateBannersPage() {
             <div key={b.id} className="rounded-2xl border border-border bg-surface-1 overflow-hidden">
               <div className="grid grid-cols-[112px_1fr] gap-3 p-3">
                 <div className="rounded-lg overflow-hidden bg-background border border-border">
-                  <img src={b.image_url} alt={b.alt_text ?? b.name} className="w-full aspect-[1/3] object-cover object-center" />
+                  <img
+                    src={b.image_url}
+                    alt={b.alt_text ?? b.name}
+                    className={`w-full object-cover object-center ${b.size === "leaderboard" ? "aspect-[728/90]" : "aspect-[1/2]"}`}
+                  />
                 </div>
                 <div className="min-w-0 space-y-2">
                   <Input value={b.name} onChange={(e) => updateField(b.id, { name: e.target.value })} placeholder="Name" />
+                  <select
+                    value={b.size}
+                    onChange={(e) => updateField(b.id, { size: e.target.value as AdSize })}
+                    className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm"
+                    aria-label="Banner size"
+                  >
+                    {AD_SIZE_KEYS.map((k) => (
+                      <option key={k} value={k}>{AD_SIZES[k].label} — {AD_SIZES[k].width}×{AD_SIZES[k].height}</option>
+                    ))}
+                  </select>
                   <Input value={b.link_url ?? ""} onChange={(e) => updateField(b.id, { link_url: e.target.value })} placeholder="Click-through URL (optional)" />
                   <Input value={b.alt_text ?? ""} onChange={(e) => updateField(b.id, { alt_text: e.target.value })} placeholder="Alt text (optional)" />
                   <div className="flex items-center justify-between gap-2">
