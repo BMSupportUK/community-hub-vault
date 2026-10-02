@@ -61,7 +61,7 @@ async function syncInvoice(supabaseAdmin: any, orderId: string, method: string) 
           orderId,
           provider: method === "stripe" ? "Stripe" : "Square",
           reference: reference ?? undefined,
-          receiptUrl: inv.public_url ?? null,
+          receiptUrl: null,
         } as any).catch(() => undefined);
       }
     } catch { /* status check is best-effort */ }

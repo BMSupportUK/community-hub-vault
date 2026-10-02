@@ -285,6 +285,8 @@ function SquareInvoicePanel({
   amountCents: number;
   onChange?: () => void | Promise<void>;
 }) {
+  return <div className="rounded-lg border border-border bg-surface-2 p-3 text-sm text-muted-foreground">Square payment is available through the customer’s secure checkout page. BM Support supplies the paid invoice.</div>;
+  /* Legacy hosted-provider invoice controls retained below for historical reconciliation only.
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [url, setUrl] = useState<string | null>(null);
@@ -387,6 +389,7 @@ function SquareInvoicePanel({
       {err && <div className="text-xs text-destructive">{err}</div>}
     </div>
   );
+  */
 }
 
 function StripeInvoicePanel({
@@ -398,6 +401,8 @@ function StripeInvoicePanel({
   amountCents: number;
   onChange?: () => void | Promise<void>;
 }) {
+  return <div className="rounded-lg border border-border bg-surface-2 p-3 text-sm text-muted-foreground">Stripe payment is available through the customer’s secure checkout page. BM Support supplies the paid invoice.</div>;
+  /* Legacy hosted-provider invoice controls retained below for historical reconciliation only.
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [url, setUrl] = useState<string | null>(null);
@@ -506,6 +511,7 @@ function StripeInvoicePanel({
       {err && <div className="text-xs text-destructive">{err}</div>}
     </div>
   );
+  */
 }
 
 function UsdtLogo({ className = "" }: { className?: string }) {

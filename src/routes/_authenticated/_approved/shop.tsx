@@ -4858,6 +4858,8 @@ function SquareInvoicePanel({
   amountCents: number;
   onChange?: () => void | Promise<void>;
 }) {
+  return <div className="rounded-md border border-border bg-surface-2 p-3 text-xs text-muted-foreground">Square payment is handled on the secure checkout page. The BM Support invoice becomes available after payment.</div>;
+  /* Legacy hosted-provider invoice controls retained below for historical reconciliation only.
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [url, setUrl] = useState<string | null>(null);
@@ -4986,6 +4988,7 @@ function SquareInvoicePanel({
       {err && <div className="text-xs text-destructive">{err}</div>}
     </div>
   );
+  */
 }
 
 

@@ -444,7 +444,7 @@ export const confirmStripePayment = createServerFn({ method: "POST" })
         console.error("Failed to post Stripe payment message to ticket:", e);
       }
 
-      return { status: "COMPLETED", amountCents: totalCents, cardBrand, last4, receiptUrl, ticketId };
+      return { status: "COMPLETED", amountCents: totalCents, cardBrand, last4, ticketId };
 
     } catch (error) {
       return { error: getStripeErrorMessage(error) };

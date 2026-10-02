@@ -224,6 +224,11 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
                 <div key={k} className="contents"><dt className="text-muted-foreground">{k}</dt><dd className="break-all text-right font-medium">{v}</dd></div>
               ))}
             </dl>
+            {paid && !order.cancelled && (
+              <Button type="button" variant="outline" className="mt-5 w-full sm:w-auto" onClick={() => void downloadInvoice()} disabled={preview}>
+                <Download className="size-4" /> Download invoice PDF
+              </Button>
+            )}
           </section>
 
           {paidSidebar ? (
@@ -236,9 +241,6 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
                     <p className="text-sm text-muted-foreground">Your payment is confirmed. Continue when you’re ready so we can begin setting up your service.</p>
                   </div>
                 </div>
-                <Button type="button" variant="outline" className="w-full" onClick={() => void downloadInvoice()} disabled={preview}>
-                  <Download className="size-4" /> Download invoice PDF
-                </Button>
                 {onContinueToSetup && (
                   <button
                     type="button"
@@ -303,10 +305,6 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
                 <div className="flex items-center justify-center gap-2 h-12 rounded-xl bg-primary text-primary-foreground font-semibold">
                   <Lock className="size-4" /> Pay {GBP(order.totalCents)}
                 </div>
-              ) : invoice?.url ? (
-                <a href={invoice.url} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 h-12 rounded-xl bg-primary text-primary-foreground font-semibold hover:opacity-90">
-                  <Lock className="size-4" /> Pay invoice {GBP(order.totalCents)}
-                </a>
               ) : (
                 <p className="text-sm text-muted-foreground">Loading secure card form…</p>
               )}
