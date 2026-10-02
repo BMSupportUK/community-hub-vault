@@ -112,7 +112,7 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
   const markPaid = async () => {
     if (!confirm("Confirm you've received this payment? The customer will be told their payment is confirmed.")) return;
     setBusy(true);
-    const { error } = await supabase.rpc("mark_order_paid" as never, { p_order_id: orderId } as never);
+    const { error } = await supabase.rpc("admin_mark_manual_order_paid" as never, { p_order_id: orderId } as never);
     setBusy(false);
     if (error) return toast.error(error.message);
     setOrderPaid(true);

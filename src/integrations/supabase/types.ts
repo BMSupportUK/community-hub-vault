@@ -6540,6 +6540,10 @@ export type Database = {
           user_id: string
         }[]
       }
+      admin_mark_manual_order_paid: {
+        Args: { p_order_id: string }
+        Returns: Json
+      }
       admin_revoke_user_sessions: {
         Args: { _keep_session: string; _target: string }
         Returns: number
@@ -7048,12 +7052,10 @@ export type Database = {
         }[]
       }
       mark_fan_dm_thread_read: { Args: { _thread: string }; Returns: undefined }
-      mark_order_paid:
-        | { Args: { p_order_id: string }; Returns: Json }
-        | {
-            Args: { p_order_id: string; p_transaction_id?: string }
-            Returns: Json
-          }
+      mark_order_paid: {
+        Args: { p_order_id: string; p_transaction_id?: string }
+        Returns: Json
+      }
       member_app_logins: {
         Args: { _user_id: string }
         Returns: {
