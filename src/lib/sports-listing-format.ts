@@ -1506,12 +1506,23 @@ export function mergeSportsListingBlocks(existing: string, incoming: string, inp
 export function dedupeSportsListingEvents(events: SportsListingEvent[]): SportsListingEvent[] {
   const seen = new Set<string>();
   const norm = (v: string | null | undefined) => (v ?? "").replace(/\s+/g, " ").trim().toLowerCase();
+  // Loose text match: ignore punctuation, "vs"/"v" differences and spacing.
+  const loose = (v: string | null | undefined) =>
+    norm(v).replace(/\b(vs\.?|versus|@)\s/g, "v ").replace(/[^\p{L}\p{N}]+/gu, "");
+  const dateKey = (v: string | null | undefined) => {
+    const d = v ? parseListingDate(v) : null;
+    return d ? JSON.stringify(d) : loose(v);
+  };
+  const timeKey = (v: string | null | undefined) => {
+    const c = parseClockTime(v ?? "");
+    return c ? `${c.hour}:${c.minute}` : loose(v);
+  };
   return events.filter((e) => {
     const key = [
-      norm(e.date),
-      norm(e.time).replace(/\s+/g, ""),
-      norm(e.title),
-      (e.channels ?? []).map(norm).sort().join("|"),
+      dateKey(e.date),
+      timeKey(e.time),
+      loose(e.title),
+      (e.channels ?? []).map(loose).sort().join("|"),
     ].join("#");
     if (seen.has(key)) return false;
     seen.add(key);
@@ -1533,10 +1544,19 @@ export function dedupeSportsListingHtml(html: string | null | undefined): string
   const before = normalizeListingBody(html);
   const after = normalizeListingBody(rebuilt);
   if (before === after) return null;
-  // Only rewrite when every original line survives, i.e. the sole change is
-  // dropped repeats — never lose staff-written notes or headings.
-  const keptLines = new Set(after.split("\n"));
-  if (!before.split("\n").every((line) => keptLines.has(line))) return null;
+  // Only rewrite when every original line survives or belongs to a dropped
+  // repeat — never lose staff-written notes or headings.
+  const keptLines = new Set(after.split("\n").map((l) => l.trim().toLowerCase()));
+  const dropped = events.filter((e) => !kept.includes(e));
+  const droppedText = new Set(
+    dropped.flatMap((e) => [e.date ?? "", e.time ?? "", e.title, ...(e.channels ?? [])]).map((s) => s.trim().toLowerCase()).filter(Boolean),
+  );
+  const lineOk = (line: string) => {
+    const l = line.trim().toLowerCase();
+    if (!l || keptLines.has(l)) return true;
+    return [...droppedText].some((t) => l.includes(t));
+  };
+  if (!before.split("\n").every(lineOk)) return null;
   return rebuilt;
 }
 
