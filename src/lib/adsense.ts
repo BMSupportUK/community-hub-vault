@@ -16,7 +16,7 @@ export const ADSENSE_WELCOME_SLOT = "6755403540";
 // AdSense stays OFF until the account is fully approved — flip this to true
 // once Google approves the site and the slots can go back to sharing space
 // with Adsterra.
-export const ADSENSE_APPROVED = false;
+export const ADSENSE_APPROVED = false; // Third-party ads removed; own banners only.
 
 export const ADSENSE_ENABLED =
   ADSENSE_APPROVED &&
