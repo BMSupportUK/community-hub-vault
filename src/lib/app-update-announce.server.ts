@@ -34,6 +34,15 @@ export async function announceAppUpdate(opts: {
     .select("user_id")
     .eq("alert_key", alertKey);
   const alreadySent = new Set((sentRows ?? []).map((r) => r.user_id as string));
+  // Same build already announced in the last 24h (e.g. version label edited
+  // after publish) — never alert the same member twice for one build.
+  const { data: recentRows } = await supabaseAdmin
+    .from("user_notifications")
+    .select("user_id")
+    .eq("kind", "app_update")
+    .eq("source_id", opts.buildId)
+    .gte("created_at", new Date(Date.now() - 24 * 3600 * 1000).toISOString());
+  for (const r of recentRows ?? []) alreadySent.add(r.user_id as string);
   const recipients = audience.filter((id) => !alreadySent.has(id));
   if (recipients.length === 0) return { notified: 0, alertKey };
 
