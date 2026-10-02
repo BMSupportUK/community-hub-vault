@@ -152,21 +152,19 @@ function WelcomePage() {
         <div className="grid min-h-0 min-w-0 w-full grid-cols-1 gap-4 sm:grid-cols-[minmax(0,1fr)_220px] md:h-full lg:grid-cols-[minmax(0,1fr)_minmax(220px,300px)] xl:gap-6">
           <div className="relative flex min-h-0 min-w-0 flex-col pb-8 lg:pb-10">
             <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600 shadow-2xl">
-              <div className="grid min-h-0 flex-1 gap-5 p-4 pb-12 md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] md:items-center lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:items-stretch lg:p-5 lg:pb-14 xl:gap-6 xl:p-6 xl:pb-16">
+              <div className="grid min-h-0 flex-1 gap-4 p-4 pb-16 md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] md:items-center lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:items-stretch lg:p-5 lg:pb-16 xl:gap-6 xl:p-6 xl:pb-18">
                 <div className="flex min-w-0 flex-col justify-center text-white">
                   <div className="mb-2 text-xs uppercase text-sky-200/80">BM Support · Member Hub</div>
                   <h1 className="font-display text-3xl font-bold leading-tight lg:text-4xl xl:text-5xl">
                     Welcome to BM Support
                   </h1>
-                  <p className="mt-3 max-w-xl text-sm text-white/95 lg:text-base xl:text-lg">
-                    Hey {name} — your all-in-one server for BM Support. Stay connected with the
-                    community, manage your account and get help, all in one place.
+                  <p className="mt-2 max-w-xl text-sm text-white/95 lg:text-base">
+                    Hey {name} — stay connected with the community, manage your account and get help.
                   </p>
-                  <p className="mt-2 max-w-xl text-xs text-white/85 lg:text-sm xl:text-base">
-                    Access community channels, view schedules, get support and explore our
-                    services. Everything you need is just one click away.
+                  <p className="mt-1.5 max-w-xl text-xs text-white/85 lg:text-sm">
+                    Access channels, schedules, support and services—all in one place.
                   </p>
-                  <div className="mt-4 w-full max-w-[300px] self-center md:self-start">
+                  <div className="mt-3 mb-6 w-full max-w-[220px] self-center md:self-start xl:max-w-[240px]">
                     <AdSenseSlot slot="homeSquare" />
                   </div>
                 </div>
