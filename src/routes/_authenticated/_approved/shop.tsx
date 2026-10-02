@@ -64,6 +64,7 @@ import {
   confirmStripePayment,
 } from "@/lib/stripe-payments.functions";
 import { PaymentStatusTimeline, type PayCheckPhase } from "@/components/app/PaymentStatusTimeline";
+import { PaymentReminderButton } from "@/components/app/PaymentReminderButton";
 import { BankTransferPanel } from "@/components/app/BankTransferPanel";
 import { getMyBankTransferAccess } from "@/lib/bank-transfer.functions";
 import { SquareCardPanel, SquareLogo } from "@/components/app/SquareCardPanel";
