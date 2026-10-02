@@ -98,8 +98,41 @@ function ReadPage() {
     })();
   }, [id, user?.id, navigate, queryClient]);
 
-  // Annotate the full sanitized guide first, then split into top-level item
-  // strings so each paginated grid item keeps its complete event-card wrapper.
+  // Equalize the event-name height within each visual grid row so every
+  // card's channel chip list starts at the same height, even when one event
+  // name wraps to more lines than its neighbours. Runs after each page of
+  // the paginated grid renders.
+  useLayoutEffect(() => {
+    const el = stageRef.current;
+    if (!el) return;
+    const rows = Array.from(
+      el.querySelectorAll<HTMLElement>("[data-tz-row][data-tz-utc]"),
+    );
+    if (!rows.length) return;
+    const groups = new Map<string, HTMLElement[]>();
+    rows.forEach((r) => {
+      const key = String(Math.round(r.getBoundingClientRect().top));
+      const group = groups.get(key) ?? [];
+      group.push(r);
+      groups.set(key, group);
+    });
+    groups.forEach((group) => {
+      const names = group
+        .map((r) => r.querySelector<HTMLElement>("[data-tz-name]"))
+        .filter((n): n is HTMLElement => !!n);
+      if (names.length < 2) return;
+      names.forEach((n) => {
+        n.style.minHeight = "";
+      });
+      let maxH = 0;
+      names.forEach((n) => {
+        maxH = Math.max(maxH, n.getBoundingClientRect().height);
+      });
+      names.forEach((n) => {
+        n.style.minHeight = `${Math.ceil(maxH)}px`;
+      });
+    });
+  }, [bodyItems, page, pageCount]);
   const bodyItems = useMemo(() => {
     if (!blog?.body) return [] as string[];
     if (typeof document === "undefined") return [];
