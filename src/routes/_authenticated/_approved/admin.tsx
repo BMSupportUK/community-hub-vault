@@ -644,7 +644,7 @@ function DashboardBody() {
           {tools.map((t, i) => {
             const letter = t.label[0].toUpperCase();
             const first = i === 0 || tools[i - 1].label[0].toUpperCase() !== letter;
-            const cls = "group relative flex flex-col justify-between gap-3 aspect-square scroll-mt-4 rounded-2xl border border-border bg-surface-1 p-4 text-left hover:border-primary hover:shadow-glow transition-all overflow-hidden";
+            const cls = "group relative flex flex-col justify-between gap-3 min-h-[150px] sm:aspect-square scroll-mt-4 rounded-2xl border border-border bg-surface-1 p-4 text-left hover:border-primary hover:shadow-glow transition-all overflow-hidden";
             const inner = (
               <>
                 <div className="absolute inset-x-0 top-0 h-1 bg-gradient-accent opacity-0 group-hover:opacity-100 transition-opacity" />
