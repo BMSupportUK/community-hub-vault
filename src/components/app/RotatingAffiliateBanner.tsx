@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import advertiseLeaderboard from "@/assets/advertise-leaderboard.png";
 import advertiseSkyscraper from "@/assets/advertise-skyscraper.png";
 import { AD_SIZES, type AdSize } from "@/lib/ad-sizes";
+import type { AdSite } from "@/lib/ad-zones";
 
 type Banner = {
   id: string;
@@ -11,6 +12,8 @@ type Banner = {
   link_url: string | null;
   alt_text: string | null;
   size: AdSize;
+  site?: AdSite;
+  zones?: string[] | null;
 };
 
 type Fallback = {
@@ -42,7 +45,11 @@ function RotatingAffiliateBannerComponent({
   size = "skyscraper",
   intervalMs = 8000,
   paused = false,
+  site,
+  zone,
 }: {
+  site?: AdSite;
+  zone?: string | null;
   fallback?: Fallback;
   boardId?: string | null;
   size?: AdSize;
@@ -55,7 +62,7 @@ function RotatingAffiliateBannerComponent({
 
   useEffect(() => {
     let cancelled = false;
-    const cacheKey = `${boardId ?? "__all__"}:${size}`;
+    const cacheKey = `${boardId ?? "__all__"}:${size}:${site ?? "*"}:${zone ?? "*"}`;
     const cached = bannerCache.get(cacheKey);
     if (cached) {
       setBanners(cached);
@@ -69,7 +76,7 @@ function RotatingAffiliateBannerComponent({
       if (boardId) {
         const { data } = await supabase
           .from("forum_board_affiliate_banners")
-          .select("affiliate_banners(id, name, image_url, link_url, alt_text, size)")
+          .select("affiliate_banners(id, name, image_url, link_url, alt_text, size, site, zones)")
           .eq("board_id", boardId);
         list = (data ?? [])
           .map((r: any) => r.affiliate_banners)
@@ -78,8 +85,12 @@ function RotatingAffiliateBannerComponent({
       if (list.length === 0) {
         const { data } = await supabase
           .from("affiliate_banners")
-          .select("id, name, image_url, link_url, alt_text, size");
-        list = (data ?? []) as Banner[];
+          .select("id, name, image_url, link_url, alt_text, size, site, zones");
+        list = ((data ?? []) as Banner[]).filter((b) => {
+          if (site && (b.site ?? "bm_support") !== site) return false;
+          if (site === "bm_support" && b.zones && b.zones.length > 0) return !!zone && b.zones.includes(zone);
+          return true;
+        });
       }
       // Only rotate banners designed for this slot's size. If none exist,
       // fall back to every banner so the slot is never empty.
@@ -96,7 +107,7 @@ function RotatingAffiliateBannerComponent({
       cancelled = true;
       window.clearTimeout(loadId);
     };
-  }, [boardId, size]);
+  }, [boardId, size, site, zone]);
 
   const list = useMemo<Banner[]>(() => {
     if (banners && banners.length > 0) return banners;
