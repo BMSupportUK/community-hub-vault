@@ -2934,7 +2934,9 @@ function OrdersView({
     if (order.status === "cancelled") return "cancelled";
     if (order.status === "paid" || !!order.paid_at) return "account-setup";
     // An order with a live invoice (or already processing) is awaiting payment, not new.
-    if (order.status === "processing" || invoicedOrderIds.has(order.id)) return "awaiting-payment";
+    // Manual orders are already sent to the customer, so they start in awaiting payment.
+    const manual = !!(order as { manual_pay_method?: string | null }).manual_pay_method;
+    if (order.status === "processing" || manual || invoicedOrderIds.has(order.id)) return "awaiting-payment";
     return "new";
   };
 
