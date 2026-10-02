@@ -33,3 +33,6 @@ export const AD_SIZES: Record<
 };
 
 export const AD_SIZE_KEYS = Object.keys(AD_SIZES) as AdSize[];
+
+/** Reserved banner name for the per-size "Advertise here" placeholder artwork. */
+export const ADVERTISE_HERE_NAME = "__advertise_here__";
