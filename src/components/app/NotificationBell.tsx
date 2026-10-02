@@ -14,7 +14,6 @@ import outageAudio from "@/assets/outage-notify.mp3";
 import outageResolvedAudio from "@/assets/outage-resolved.mp3";
 import orderAudio from "@/assets/order-notify.mp3";
 import ticketAudio from "@/assets/ticket-notify.mp3";
-import paymentReceivedAudio from "@/assets/payment-received.mp3";
 import newSignupAudio from "@/assets/new-signup-notify.mp3";
 import { playSound } from "@/lib/sound";
 import { cancelOrderAndSquareInvoice } from "@/lib/square-invoices.functions";
@@ -130,14 +129,8 @@ export function NotificationBell() {
                 : undefined,
             });
           } else if (n.kind === "order_paid") {
-            playSound(paymentReceivedAudio, { label: "payment-received", gain: 2.0 });
-            toast(`💳 ${n.title}`, {
-              description: n.body ?? "A payment has been confirmed.",
-              duration: 10000,
-              action: n.link_path
-                ? { label: "Go to order", onClick: () => navigate({ to: n.link_path! } as never) }
-                : undefined,
-            });
+            // PaymentConfirmedAlert owns the sound + popup; a second toast and
+            // sound here duplicated every payment alert.
           } else if (n.kind === "ticket_assigned") {
             playSound(ticketAudio, { label: "ticket-assigned", gain: 2.0 });
             toast(`🎫 ${n.title}`, {
