@@ -1506,12 +1506,23 @@ export function mergeSportsListingBlocks(existing: string, incoming: string, inp
 export function dedupeSportsListingEvents(events: SportsListingEvent[]): SportsListingEvent[] {
   const seen = new Set<string>();
   const norm = (v: string | null | undefined) => (v ?? "").replace(/\s+/g, " ").trim().toLowerCase();
+  // Loose text match: ignore punctuation, "vs"/"v" differences and spacing.
+  const loose = (v: string | null | undefined) =>
+    norm(v).replace(/\b(vs\.?|versus|@)\s/g, "v ").replace(/[^\p{L}\p{N}]+/gu, "");
+  const dateKey = (v: string | null | undefined) => {
+    const d = v ? parseListingDate(v) : null;
+    return d ? JSON.stringify(d) : loose(v);
+  };
+  const timeKey = (v: string | null | undefined) => {
+    const c = parseClockTime(v ?? "");
+    return c ? `${c.hour}:${c.minute}` : loose(v);
+  };
   return events.filter((e) => {
     const key = [
-      norm(e.date),
-      norm(e.time).replace(/\s+/g, ""),
-      norm(e.title),
-      (e.channels ?? []).map(norm).sort().join("|"),
+      dateKey(e.date),
+      timeKey(e.time),
+      loose(e.title),
+      (e.channels ?? []).map(loose).sort().join("|"),
     ].join("#");
     if (seen.has(key)) return false;
     seen.add(key);
