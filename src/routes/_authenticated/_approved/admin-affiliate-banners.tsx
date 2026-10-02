@@ -184,77 +184,93 @@ function AdminAffiliateBannersPage() {
 
       {!banners ? (
         <div className="grid place-items-center py-10 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>
-      ) : banners.length === 0 ? (
-        <div className="rounded-2xl border border-border bg-surface-1 p-8 text-center text-sm text-muted-foreground">
-          <ImageIcon className="size-8 mx-auto mb-2 opacity-60" />
-          No banners uploaded yet. Upload one above to get started.
-        </div>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-          {banners.map((b) => (
-            <div key={b.id} className="rounded-2xl border border-border bg-surface-1 overflow-hidden">
-              <div className="grid grid-cols-[112px_1fr] gap-3 p-3">
-                <div className="rounded-lg overflow-hidden bg-background border border-border">
-                  <img
-                    src={b.image_url}
-                    alt={b.alt_text ?? b.name}
-                    className={`w-full object-cover object-center ${b.size === "leaderboard" ? "aspect-[3/1]" : "aspect-[1/2]"}`}
-                  />
-                </div>
-                <div className="min-w-0 space-y-2">
-                  <Input value={b.name} onChange={(e) => updateField(b.id, { name: e.target.value })} placeholder="Name" />
-                  <select
-                    value={b.size}
-                    onChange={(e) => updateField(b.id, { size: e.target.value as AdSize })}
-                    className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm"
-                    aria-label="Banner size"
-                  >
-                    {AD_SIZE_KEYS.map((k) => (
-                      <option key={k} value={k}>{AD_SIZES[k].label} — {AD_SIZES[k].width}×{AD_SIZES[k].height}</option>
-                    ))}
-                  </select>
-                  <Input value={b.link_url ?? ""} onChange={(e) => updateField(b.id, { link_url: e.target.value })} placeholder="Click-through URL (optional)" />
-                  <Input value={b.alt_text ?? ""} onChange={(e) => updateField(b.id, { alt_text: e.target.value })} placeholder="Alt text (optional)" />
-                  <div className="flex items-center justify-between gap-2">
-                    <a href={b.image_url} target="_blank" rel="noopener noreferrer" className="text-[11px] text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
-                      <ExternalLink className="size-3" /> Open image
-                    </a>
-                    <div className="flex gap-1.5">
-                      <Button size="sm" variant="outline" onClick={() => void saveBanner(b)}>
-                        <Save className="size-3.5 mr-1" />Save
-                      </Button>
-                      <Button size="sm" variant="destructive" onClick={() => void deleteBanner(b)}>
-                        <Trash2 className="size-3.5" />
-                      </Button>
-                    </div>
-                  </div>
-                </div>
+        AD_SIZE_KEYS.map((sizeKey) => {
+          const sizeBanners = banners.filter((b) => (b.size ?? "skyscraper") === sizeKey);
+          return (
+            <section key={sizeKey} className="space-y-3">
+              <div className="rounded-2xl border border-border bg-surface-1 px-4 py-3 flex flex-wrap items-center gap-x-3 gap-y-1">
+                <h2 className="font-display text-lg font-bold">{AD_SIZES[sizeKey].label}</h2>
+                <span className="text-xs rounded-full bg-primary/10 border border-primary/30 px-2 py-0.5 font-semibold">
+                  {sizeBanners.length} {sizeBanners.length === 1 ? "banner" : "banners"}
+                </span>
+                <span className="text-xs text-muted-foreground font-mono">{AD_SIZES[sizeKey].recommended}</span>
+                <span className="text-xs text-muted-foreground sm:hidden md:inline">— {AD_SIZES[sizeKey].description}</span>
               </div>
-              <div className="border-t border-border bg-background/60 p-3">
-                <div className="text-[11px] uppercase tracking-wide text-muted-foreground mb-2">Assign to forum boards</div>
-                {boards.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">No forum boards.</p>
-                ) : (
-                  <div className="grid grid-cols-2 gap-1.5">
-                    {boards.map((br) => {
-                      const checked = assignments.some((a) => a.board_id === br.id && a.banner_id === b.id);
-                      return (
-                        <label key={br.id} className={`flex items-center gap-2 text-xs px-2 py-1.5 rounded-md border ${checked ? "border-primary/50 bg-primary/10" : "border-border bg-surface-2/60"}`}>
-                          <input
-                            type="checkbox"
-                            checked={checked}
-                            onChange={(e) => void toggleBoard(b, br.id, e.target.checked)}
+              {sizeBanners.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-border bg-surface-1 p-6 text-center text-sm text-muted-foreground">
+                  No {AD_SIZES[sizeKey].label.split(" ")[0].toLowerCase()} banners yet — pick "{AD_SIZES[sizeKey].label}" when uploading above.
+                </div>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                  {sizeBanners.map((b) => (
+                    <div key={b.id} className="rounded-2xl border border-border bg-surface-1 overflow-hidden">
+                      <div className="grid grid-cols-[112px_1fr] gap-3 p-3">
+                        <div className="rounded-lg overflow-hidden bg-background border border-border">
+                          <img
+                            src={b.image_url}
+                            alt={b.alt_text ?? b.name}
+                            className={`w-full object-cover object-center ${b.size === "leaderboard" ? "aspect-[3/1]" : "aspect-[1/2]"}`}
                           />
-                          <span className="truncate">{br.name}</span>
-                        </label>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
+                        </div>
+                        <div className="min-w-0 space-y-2">
+                          <Input value={b.name} onChange={(e) => updateField(b.id, { name: e.target.value })} placeholder="Name" />
+                          <select
+                            value={b.size}
+                            onChange={(e) => updateField(b.id, { size: e.target.value as AdSize })}
+                            className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm"
+                            aria-label="Banner size"
+                          >
+                            {AD_SIZE_KEYS.map((k) => (
+                              <option key={k} value={k}>{AD_SIZES[k].label} — {AD_SIZES[k].width}×{AD_SIZES[k].height}</option>
+                            ))}
+                          </select>
+                          <Input value={b.link_url ?? ""} onChange={(e) => updateField(b.id, { link_url: e.target.value })} placeholder="Click-through URL (optional)" />
+                          <Input value={b.alt_text ?? ""} onChange={(e) => updateField(b.id, { alt_text: e.target.value })} placeholder="Alt text (optional)" />
+                          <div className="flex items-center justify-between gap-2">
+                            <a href={b.image_url} target="_blank" rel="noopener noreferrer" className="text-[11px] text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
+                              <ExternalLink className="size-3" /> Open image
+                            </a>
+                            <div className="flex gap-1.5">
+                              <Button size="sm" variant="outline" onClick={() => void saveBanner(b)}>
+                                <Save className="size-3.5 mr-1" />Save
+                              </Button>
+                              <Button size="sm" variant="destructive" onClick={() => void deleteBanner(b)}>
+                                <Trash2 className="size-3.5" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="border-t border-border bg-background/60 p-3">
+                        <div className="text-[11px] uppercase tracking-wide text-muted-foreground mb-2">Assign to forum boards</div>
+                        {boards.length === 0 ? (
+                          <p className="text-xs text-muted-foreground">No forum boards.</p>
+                        ) : (
+                          <div className="grid grid-cols-2 gap-1.5">
+                            {boards.map((br) => {
+                              const checked = assignments.some((a) => a.board_id === br.id && a.banner_id === b.id);
+                              return (
+                                <label key={br.id} className={`flex items-center gap-2 text-xs px-2 py-1.5 rounded-md border ${checked ? "border-primary/50 bg-primary/10" : "border-border bg-surface-2/60"}`}>
+                                  <input
+                                    type="checkbox"
+                                    checked={checked}
+                                    onChange={(e) => void toggleBoard(b, br.id, e.target.checked)}
+                                  />
+                                  <span className="truncate">{br.name}</span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </section>
+          );
+        })
       )}
     </div>
   );
