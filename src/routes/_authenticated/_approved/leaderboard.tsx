@@ -250,8 +250,8 @@ function LeaderboardPage() {
                     <StatCard label="Pending codes" value={myStats.total - myStats.used} />
                   </div>
                   <div className="mt-5 flex flex-wrap gap-3">
-                    <Button onClick={() => setTab("invites")} className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0 shadow-lg shadow-purple-900/50">
-                      <Plus className="size-4 mr-1" /> Create an invite
+                    <Button onClick={async () => { setInviteTab("active"); setTab("invites"); await createInvite(); }} disabled={creating} className="bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 text-white border-0 shadow-lg shadow-purple-900/50">
+                      <Plus className="size-4 mr-1" /> {creating ? "Creating…" : "Create an invite"}
                     </Button>
                     <Button onClick={() => setTab("leaderboard")} variant="ghost" className="text-purple-100 hover:bg-purple-800/40 hover:text-white">
                       See the leaderboard
@@ -411,6 +411,9 @@ function LeaderboardPage() {
                           <div className="text-[11px] uppercase tracking-wider text-purple-300/70 mb-1">Code</div>
                           <div className="font-mono text-2xl font-bold tracking-widest bg-gradient-to-r from-fuchsia-400 to-violet-400 bg-clip-text text-transparent">
                             {inv.code}
+                          </div>
+                          <div className="mt-1 text-xs text-purple-300/70">
+                            Created {new Date(inv.created_at).toLocaleDateString("en-GB")}
                           </div>
                           {used && (
                             <div className="mt-1 text-sm text-purple-100 truncate">
