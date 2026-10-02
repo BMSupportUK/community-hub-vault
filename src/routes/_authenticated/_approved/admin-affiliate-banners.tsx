@@ -198,7 +198,7 @@ function AdminAffiliateBannersPage() {
                   <img
                     src={b.image_url}
                     alt={b.alt_text ?? b.name}
-                    className={`w-full object-cover object-center ${b.size === "leaderboard" ? "aspect-[728/90]" : "aspect-[1/2]"}`}
+                    className={`w-full object-cover object-center ${b.size === "leaderboard" ? "aspect-[3/1]" : "aspect-[1/2]"}`}
                   />
                 </div>
                 <div className="min-w-0 space-y-2">
