@@ -22,9 +22,6 @@ type Row = {
   amount_cents: number;
   currency: string;
   provider_payment_id: string | null;
-  card_brand: string | null;
-  last_4: string | null;
-  receipt_url: string | null;
   created_at: string;
   order?: {
     id: string;
@@ -74,7 +71,7 @@ export function CardPaymentsAdminCard({ provider }: { provider: Provider }) {
     (async () => {
       const { data, error } = await supabase
         .from("order_payments")
-        .select("id, order_id, provider, provider_payment_id, status, amount_cents, currency, card_brand, last_4, receipt_url, created_at")
+        .select("id, order_id, provider, provider_payment_id, status, amount_cents, currency, created_at")
         .in("provider", ["square", "stripe", "cash", "bank_transfer"])
         .order("created_at", { ascending: false })
         .limit(2000);
@@ -163,9 +160,15 @@ export function CardPaymentsAdminCard({ provider }: { provider: Provider }) {
                     <th className="px-3 py-2 font-medium">Payment</th>
                     <th className="px-3 py-2 font-medium">Order</th>
                     <th className="px-3 py-2 font-medium">
-                      {provider === "bank_transfer" ? "Reference" : provider === "cash" ? "Method" : "Card"}
+                      {provider === "stripe"
+                        ? "Stripe transaction"
+                        : provider === "square"
+                          ? "Square transaction"
+                          : provider === "bank_transfer"
+                            ? "Reference"
+                            : "Method"}
                     </th>
-                    {(provider === "cash" || provider === "bank_transfer") && <th className="px-3 py-2 font-medium">Invoice</th>}
+                    <th className="px-3 py-2 font-medium">BM Support invoice</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -180,25 +183,23 @@ export function CardPaymentsAdminCard({ provider }: { provider: Provider }) {
                       <td className="px-3 py-2 whitespace-nowrap">{money(r.amount_cents, r.currency)}</td>
                       <td className="px-3 py-2"><span className={`inline-flex px-2 py-0.5 rounded-full border text-xs capitalize ${statusTone(r.status)}`}>{r.status.toLowerCase()}</span></td>
                       <td className="px-3 py-2 capitalize">{r.order?.status ?? "—"}</td>
-                      <td className="px-3 py-2 whitespace-nowrap">
-                        {provider === "bank_transfer"
-                          ? r.provider_payment_id || "—"
-                          : provider === "cash"
-                            ? "Cash"
-                            : r.card_brand
-                              ? `${r.card_brand}${r.last_4 ? ` •••• ${r.last_4}` : ""}`
-                              : "—"}
+                      <td className="px-3 py-2 max-w-[240px]">
+                        {provider === "cash" ? (
+                          "Cash"
+                        ) : r.provider_payment_id ? (
+                          <span className="font-mono text-xs break-all" title={r.provider_payment_id}>{r.provider_payment_id}</span>
+                        ) : (
+                          <span className="text-muted-foreground">Not recorded</span>
+                        )}
                       </td>
-                      {(provider === "cash" || provider === "bank_transfer") && (
-                        <td className="px-3 py-2">
-                          {r.order?.paid_at && r.order.status !== "cancelled" ? (
-                            <Button type="button" variant="outline" size="sm" onClick={() => void downloadInvoice(r)} disabled={downloading === r.id}>
-                              {downloading === r.id ? <Loader2 className="size-3.5 animate-spin" /> : <Download className="size-3.5" />}
-                              Invoice
-                            </Button>
-                          ) : <span className="text-muted-foreground">—</span>}
-                        </td>
-                      )}
+                      <td className="px-3 py-2">
+                        {r.order?.paid_at && r.order.status !== "cancelled" ? (
+                          <Button type="button" variant="outline" size="sm" onClick={() => void downloadInvoice(r)} disabled={downloading === r.id}>
+                            {downloading === r.id ? <Loader2 className="size-3.5 animate-spin" /> : <Download className="size-3.5" />}
+                            Download PDF
+                          </Button>
+                        ) : <span className="text-muted-foreground">—</span>}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
