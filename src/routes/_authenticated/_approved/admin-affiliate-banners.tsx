@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { AD_SIZES, AD_SIZE_KEYS, type AdSize } from "@/lib/ad-sizes";
-import { AD_SITES, AD_SITE_KEYS, BM_ZONES, type AdSite } from "@/lib/ad-zones";
+import { AD_SITES, AD_SITE_KEYS, BM_ZONES, BM_ZONE_SIZES, type AdSite } from "@/lib/ad-zones";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-affiliate-banners")({
   component: AdminAffiliateBannersPage,
@@ -201,6 +201,21 @@ function AdminAffiliateBannersPage() {
         AD_SITE_KEYS.map((siteKey) => (
         <div key={siteKey} className="space-y-4 rounded-3xl border-2 border-border p-3 md:p-4">
           <h2 className="font-display text-xl font-bold">{AD_SITES[siteKey]}</h2>
+          {siteKey === "bm_support" && (
+            <div className="rounded-2xl border border-border bg-surface-1 px-4 py-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Zones and the sizes each can show</p>
+              <ul className="grid gap-x-6 gap-y-1 sm:grid-cols-2 lg:grid-cols-3 text-xs">
+                {BM_ZONES.map((z) => (
+                  <li key={z.key} className="flex items-baseline justify-between gap-2">
+                    <span className="font-medium">{z.label}</span>
+                    <span className="text-muted-foreground text-right">
+                      {BM_ZONE_SIZES[z.key].map((s) => `${AD_SIZES[s].label.split(" ")[0]} ${AD_SIZES[s].width}×${AD_SIZES[s].height}`).join(" + ")}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         {AD_SIZE_KEYS.map((sizeKey) => {
           const sizeBanners = banners.filter((b) => (b.size ?? "skyscraper") === sizeKey && (b.site ?? "bm_support") === siteKey);
           return (
