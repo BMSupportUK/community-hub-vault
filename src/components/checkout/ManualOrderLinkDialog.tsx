@@ -207,7 +207,7 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
           </button>
         </div>
       )}
-      <div className={`rounded-lg border px-3 py-2.5 space-y-2 ${link.account_setup_at ? "border-success/40 bg-success/10" : "border-border"}`}>
+      {(orderPaid || !!link.account_setup_at) && <div className={`rounded-lg border px-3 py-2.5 space-y-2 ${link.account_setup_at ? "border-success/40 bg-success/10" : "border-border"}`}>
         <div className="flex items-center gap-2 text-sm font-medium"><UserCheck className={`size-4 ${link.account_setup_at ? "text-success" : "text-muted-foreground"}`} /> {renewal ? "Subscription extended (renewal)" : "Account set up"}</div>
         <p className="text-xs text-muted-foreground">{link.account_setup_at ? `Confirmed ${new Date(link.account_setup_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}. The sale can now be completed.` : renewal ? "Confirm the customer's subscription has been extended. The sale can't be completed until you do." : "Confirm the customer's new account is set up. The sale can't be completed until you do."}</p>
         <button type="button" disabled={busy || (!renewal && !link.account_setup_at)} onClick={() => toggleSetup(!link.account_setup_at)} className={`inline-flex items-center gap-1 h-8 px-3 rounded-lg text-xs font-medium disabled:opacity-60 ${link.account_setup_at ? "border border-border text-muted-foreground" : "bg-success text-background"}`}>
@@ -219,7 +219,7 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
           </button>
         )}
         {orderCompleted && <p className="text-xs text-success font-medium">Sale completed.</p>}
-      </div>
+      </div>}
       {!renewal && orderPaid && !link.account_setup_at && (
         <div className="rounded-lg border border-primary/30 bg-primary/5 p-3 space-y-3">
           <div className="flex items-center gap-2 text-sm font-semibold"><KeyRound className="size-4 text-primary" /> Complete the new account</div>
