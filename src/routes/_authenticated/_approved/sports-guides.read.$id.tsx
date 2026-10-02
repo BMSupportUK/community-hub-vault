@@ -183,6 +183,7 @@ function ReadPage() {
       el.querySelectorAll<HTMLElement>("[data-tz-row][data-tz-utc]"),
     );
     if (!rows.length) return;
+    el.dataset.equalized = `${rows.length}`;
     const groups = new Map<string, HTMLElement[]>();
     rows.forEach((r) => {
       const key = String(Math.round(r.getBoundingClientRect().top));
@@ -190,6 +191,7 @@ function ReadPage() {
       group.push(r);
       groups.set(key, group);
     });
+    el.dataset.groups = JSON.stringify(Array.from(groups.values()).map((g) => g.length));
     groups.forEach((group) => {
       const names = group
         .map((r) => r.querySelector<HTMLElement>("[data-tz-name]"))
