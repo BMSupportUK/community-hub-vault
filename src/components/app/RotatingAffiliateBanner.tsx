@@ -171,7 +171,7 @@ function RotatingAffiliateBannerComponent({
           alt={current.alt_text || current.name || "Sponsor"}
           width={spec.width}
           height={spec.height}
-          className={`block w-full transition-opacity duration-300 ${isWide ? "aspect-[2/1] object-cover" : size === "square" ? "aspect-square object-cover" : "h-auto object-contain"} object-center ${fading ? "opacity-0" : "opacity-100"}`}
+          className={`block w-full transition-opacity duration-300 ${isWide ? "aspect-[3/1] object-contain" : size === "square" ? "aspect-square object-cover" : "h-auto object-contain"} object-center ${fading ? "opacity-0" : "opacity-100"}`}
           loading="lazy"
           decoding="async"
           fetchPriority="low"
