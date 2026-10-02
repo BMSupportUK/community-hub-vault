@@ -179,7 +179,7 @@ function AdminAffiliateBannersPage() {
             {uploading ? "Uploading…" : "Upload image"}
           </Button>
         </div>
-        <p className="text-[11px] text-muted-foreground">Max 5MB. Use a tall 1:3 image — 512 wide × 1536 tall is ideal.</p>
+        <p className="text-[11px] text-muted-foreground">Max 5MB. Pick the size your artwork was designed for — slots only rotate banners that fit them.</p>
       </section>
 
       {!banners ? (
@@ -195,10 +195,24 @@ function AdminAffiliateBannersPage() {
             <div key={b.id} className="rounded-2xl border border-border bg-surface-1 overflow-hidden">
               <div className="grid grid-cols-[112px_1fr] gap-3 p-3">
                 <div className="rounded-lg overflow-hidden bg-background border border-border">
-                  <img src={b.image_url} alt={b.alt_text ?? b.name} className="w-full aspect-[1/3] object-cover object-center" />
+                  <img
+                    src={b.image_url}
+                    alt={b.alt_text ?? b.name}
+                    className={`w-full object-cover object-center ${b.size === "leaderboard" ? "aspect-[728/90]" : "aspect-[1/2]"}`}
+                  />
                 </div>
                 <div className="min-w-0 space-y-2">
                   <Input value={b.name} onChange={(e) => updateField(b.id, { name: e.target.value })} placeholder="Name" />
+                  <select
+                    value={b.size}
+                    onChange={(e) => updateField(b.id, { size: e.target.value as AdSize })}
+                    className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm"
+                    aria-label="Banner size"
+                  >
+                    {AD_SIZE_KEYS.map((k) => (
+                      <option key={k} value={k}>{AD_SIZES[k].label} — {AD_SIZES[k].width}×{AD_SIZES[k].height}</option>
+                    ))}
+                  </select>
                   <Input value={b.link_url ?? ""} onChange={(e) => updateField(b.id, { link_url: e.target.value })} placeholder="Click-through URL (optional)" />
                   <Input value={b.alt_text ?? ""} onChange={(e) => updateField(b.id, { alt_text: e.target.value })} placeholder="Alt text (optional)" />
                   <div className="flex items-center justify-between gap-2">
