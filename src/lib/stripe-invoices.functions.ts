@@ -87,7 +87,7 @@ export const createStripeInvoiceForOrder = createServerFn({ method: "POST" })
     try {
       const { supabase, userId } = context;
       await assertAdminOrOrderOwner(supabase, userId, data.orderId);
-      throw new Error("Stripe hosted invoices are no longer used. Send the customer their secure checkout link; BM Support provides the invoice after payment.");
+      if (data.orderId) throw new Error("Stripe hosted invoices are no longer used. Send the customer their secure checkout link; BM Support provides the invoice after payment.");
 
       const stripe = createStripeClient(data.environment);
 
