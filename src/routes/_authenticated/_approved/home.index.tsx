@@ -8,7 +8,6 @@ import { useEffect, useState } from "react";
 import { ServiceStatusPill } from "@/components/app/ServiceStatusPill";
 import { SubscriptionDetailsCard } from "@/components/app/SubscriptionDetailsCard";
 import { WorkingStatusBox } from "@/components/app/WorkingStatusBox";
-import AdSenseSlot from "@/components/app/AdSenseSlot";
 import { useTalkChannelTotalCount } from "@/hooks/use-talk-channel-presence";
 
 export const Route = createFileRoute("/_authenticated/_approved/home/")({
@@ -207,11 +206,6 @@ function WelcomePage() {
             {!isStaffAccount && <SubscriptionDetailsCard />}
             </div>
           </div>
-      </section>
-
-      {/* Advert */}
-      <section className="shrink-0 min-w-0 px-3 pt-3 xl:px-4 xl:pt-4">
-        <AdSenseSlot slot="home" />
       </section>
 
       {/* Quick links */}
