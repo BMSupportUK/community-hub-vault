@@ -471,12 +471,12 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
           ? editing.subcategory
           : defaultSubName,
     };
-    // Publishing clears repeat entries (same time, event and channel).
-    if (payload.published && payload.body) {
+    // Every save (draft or published) clears repeat entries (same date, time, event and channel).
+    if (payload.body) {
       const deduped = dedupeSportsListingHtml(payload.body);
       if (deduped !== null) {
         payload.body = deduped;
-        toast.info("Removed duplicate listings before publishing");
+        toast.info("Removed duplicate listings before saving");
       }
     }
     if (!editing.id) {

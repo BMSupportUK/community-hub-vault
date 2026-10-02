@@ -1544,10 +1544,19 @@ export function dedupeSportsListingHtml(html: string | null | undefined): string
   const before = normalizeListingBody(html);
   const after = normalizeListingBody(rebuilt);
   if (before === after) return null;
-  // Only rewrite when every original line survives, i.e. the sole change is
-  // dropped repeats — never lose staff-written notes or headings.
-  const keptLines = new Set(after.split("\n"));
-  if (!before.split("\n").every((line) => keptLines.has(line))) return null;
+  // Only rewrite when every original line survives or belongs to a dropped
+  // repeat — never lose staff-written notes or headings.
+  const keptLines = new Set(after.split("\n").map((l) => l.trim().toLowerCase()));
+  const dropped = events.filter((e) => !kept.includes(e));
+  const droppedText = new Set(
+    dropped.flatMap((e) => [e.date ?? "", e.time ?? "", e.title, ...(e.channels ?? [])]).map((s) => s.trim().toLowerCase()).filter(Boolean),
+  );
+  const lineOk = (line: string) => {
+    const l = line.trim().toLowerCase();
+    if (!l || keptLines.has(l)) return true;
+    return [...droppedText].some((t) => l.includes(t));
+  };
+  if (!before.split("\n").every(lineOk)) return null;
   return rebuilt;
 }
 
