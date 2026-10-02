@@ -115,7 +115,7 @@ export function FanZoneBannedScreen({ expiresAt, reason, bannedBy, returnTo = "/
             key={c.label}
             className="rounded-lg border border-[#E11B22]/40 bg-[#E11B22]/10 px-1 py-2 text-center sm:px-2"
           >
-            <div className="font-display text-xl font-black leading-none text-white tabular-nums sm:text-2xl lg:text-3xl">
+            <div className="font-display text-lg font-black leading-none text-white tabular-nums sm:text-xl lg:text-2xl">
               {String(c.value).padStart(2, "0")}
             </div>
             <div className="mt-1 text-[9px] uppercase tracking-widest text-white/55 sm:text-[10px]">{c.label}</div>

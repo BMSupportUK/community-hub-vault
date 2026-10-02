@@ -390,15 +390,15 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
         </div>
 
         <div className="relative z-10 flex-1 overflow-auto bg-background/15">
-          <table className="w-full min-w-[900px] border-collapse text-sm">
+          <table className="w-full table-fixed border-collapse text-sm sm:min-w-[900px] sm:table-auto">
             <thead className="sticky top-0 z-10 bg-surface/90 backdrop-blur">
               <tr className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                <th className="px-5 py-3 text-left font-bold">Name</th>
-                <th className="px-4 py-3 text-left font-bold">Member since</th>
+                <th className="px-3 py-3 text-left font-bold sm:px-5">Name</th>
+                <th className="hidden px-4 py-3 text-left font-bold sm:table-cell">Member since</th>
                 <th className="px-4 py-3 text-left font-bold">Status</th>
-                <th className="px-4 py-3 text-left font-bold">Last active</th>
-                <th className="px-4 py-3 text-left font-bold">Roles</th>
-                <th className="px-5 py-3 text-right font-bold">Actions</th>
+                <th className="hidden px-4 py-3 text-left font-bold sm:table-cell">Last active</th>
+                <th className="hidden px-4 py-3 text-left font-bold sm:table-cell">Roles</th>
+                <th className="w-24 px-3 py-3 text-right font-bold sm:w-auto sm:px-5">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -423,7 +423,7 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
                       key={p.id}
                       className="border-t border-border/60 hover:bg-surface-2/50 transition-colors"
                     >
-                      <td className="px-5 py-3">
+                      <td className="min-w-0 px-3 py-3 sm:px-5">
                         <TalkMemberMiniProfile
                           userId={p.id}
                           fallback={{
@@ -470,10 +470,10 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
                           </span>
                         </TalkMemberMiniProfile>
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-xs font-semibold text-foreground/80">
+                      <td className="hidden px-4 py-3 whitespace-nowrap text-xs font-semibold text-foreground/80 sm:table-cell">
                         {relativeSince(p.created_at)}
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap align-top">
+                      <td className="px-2 py-3 whitespace-nowrap align-top sm:px-4">
                         <div className="flex flex-col gap-1">
                           <span
                             className={cn(
@@ -498,10 +498,10 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
                           )}
                         </div>
                       </td>
-                      <td className="px-4 py-3 whitespace-nowrap text-xs font-medium text-muted-foreground">
+                      <td className="hidden px-4 py-3 whitespace-nowrap text-xs font-medium text-muted-foreground sm:table-cell">
                         {isOnline ? "Now" : lastActiveStamp(p.last_seen_at)}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="hidden px-4 py-3 sm:table-cell">
                         <span className="flex flex-wrap gap-1">
                           {roles.length === 0 ? (
                             <span className="text-xs text-muted-foreground/70">—</span>
@@ -517,7 +517,7 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
                           )}
                         </span>
                       </td>
-                      <td className="px-5 py-3">
+                      <td className="px-3 py-3 sm:px-5">
                         <div className="flex items-center justify-end gap-1.5">
                           <TalkMemberMiniProfile
                             userId={p.id}
@@ -533,9 +533,9 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
                             online={isOnline}
                             asDialog
                           >
-                            <span className="flex h-8 items-center gap-1.5 rounded-md border border-border bg-surface-2 px-2.5 text-xs font-medium text-foreground hover:border-primary/60 hover:text-primary cursor-pointer">
+                            <span className="flex h-8 items-center gap-1.5 rounded-md border border-border bg-surface-2 px-2 text-xs font-medium text-foreground hover:border-primary/60 hover:text-primary cursor-pointer sm:px-2.5">
                               <User className="size-3.5" />
-                              Profile
+                              <span className="hidden sm:inline">Profile</span>
                             </span>
                           </TalkMemberMiniProfile>
                           {!isSelf && (
