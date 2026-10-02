@@ -169,7 +169,7 @@ function MessagesLayout() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-[360px_minmax(0,1fr)_240px]">
-        <aside className="rounded-2xl border border-[#E11B22]/30 bg-surface-1/95 backdrop-blur-md shadow-soft overflow-hidden flex flex-col max-h-[calc(100vh-9rem)]">
+        <aside className={`${isNested ? "hidden lg:block" : "block"} rounded-2xl border border-[#E11B22]/30 bg-surface-1/95 backdrop-blur-md shadow-soft overflow-hidden flex flex-col max-h-[calc(100dvh-9rem)]`}>
           <div className="px-4 py-3 border-b border-border/60 flex items-center gap-2">
             <MessageSquare className="size-4 text-[#E11B22]" />
             <h2 className="font-display font-bold text-sm flex-1">Fan zone inbox</h2>
@@ -307,7 +307,7 @@ function MessagesLayout() {
           )}
         </aside>
 
-        <section className="rounded-2xl border border-border bg-surface-1/95 backdrop-blur-md shadow-soft min-h-[calc(100vh-9rem)] overflow-hidden">
+        <section className={`${isNested ? "block" : "hidden lg:block"} rounded-2xl border border-border bg-surface-1/95 backdrop-blur-md shadow-soft min-h-[calc(100dvh-9rem)] overflow-hidden`}>
           {isNested ? (
             <Outlet />
           ) : (

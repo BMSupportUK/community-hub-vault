@@ -167,7 +167,7 @@ export function FanStatsBox({ userId }: { userId: string }) {
       )}
 
       <Dialog open={openList} onOpenChange={(open) => !open && setOpenList(false)}>
-        <DialogContent className="boro-theme h-[92vh] w-[96vw] max-w-none gap-0 overflow-hidden border-[#E11B22]/50 bg-[#07070b]/98 p-0 text-white">
+        <DialogContent className="boro-theme h-[90dvh] w-[96vw] max-w-none gap-0 overflow-hidden border-[#E11B22]/50 bg-[#07070b]/98 p-0 text-white">
           <DialogHeader className="border-b border-white/10 bg-gradient-to-r from-[#E11B22]/30 to-transparent px-5 py-4 text-left sm:px-7">
             <DialogTitle className="font-display text-2xl font-black">
               Friends ({friendCards.length})
@@ -200,7 +200,7 @@ export function FanStatsBox({ userId }: { userId: string }) {
               Mutual Matches ({mutualCards.length})
             </button>
           </div>
-          <div className="h-[calc(92vh-10rem)] overflow-y-auto px-5 py-5 sm:px-7">
+          <div className="h-[calc(90dvh-10rem)] overflow-y-auto px-5 py-5 sm:px-7">
             {visibleCards.length === 0 ? (
               <div className="rounded-xl border border-dashed border-white/20 p-10 text-center text-sm text-white/60">
                 No {tab === "mutual" ? "mutual friendships" : "friends"} yet.

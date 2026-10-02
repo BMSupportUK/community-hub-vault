@@ -130,7 +130,7 @@ function ThreadPage() {
   const otherViewing = otherId ? viewers.some((v) => v.user_id === otherId) : false;
 
   return (
-    <div className="flex flex-col h-[70vh]">
+    <div className="flex flex-col h-[calc(100dvh-12rem)] lg:h-[70vh]">
       <header className="flex items-center gap-3 px-4 py-3 border-b border-border/60">
         {other ? (
           <Link to="/fanzone/u/$userId" params={{ userId: other.user_id }} className="flex items-center gap-3 group min-w-0 flex-1">
