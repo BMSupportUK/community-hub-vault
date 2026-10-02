@@ -3,6 +3,8 @@
  * to, and for BM Support which zone. Banners store `site` + `zones`
  * (empty zones = every BM Support zone).
  */
+import type { AdSize } from "@/lib/ad-sizes";
+
 export type AdSite = "bm_support" | "fan_zone";
 
 export const AD_SITES: Record<AdSite, string> = {
@@ -25,8 +27,6 @@ export const BM_ZONES = [
   { key: "competition_winners", label: "Competition winners" },
 ] as const;
 export type BmZone = (typeof BM_ZONES)[number]["key"];
-
-import type { AdSize } from "@/lib/ad-sizes";
 
 /** Which banner sizes each BM Support zone can show. */
 export const BM_ZONE_SIZES: Record<BmZone, AdSize[]> = {
