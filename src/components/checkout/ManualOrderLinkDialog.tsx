@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Check, Copy, ExternalLink, Hourglass, KeyRound, Link2, Loader2, Send, UserCheck } from "lucide-react";
+import { Check, Copy, Download, ExternalLink, Hourglass, KeyRound, Link2, Loader2, Send, UserCheck } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { StaffCheckoutChat, secureCheckoutUrl } from "@/components/checkout/CheckoutChat";
 import { OrderStatusBar } from "@/components/checkout/CheckoutTemplate";
 import { createCredentialForOrder, getOrderRenewalAccounts, type ApplyOrderResult, type CredentialCandidate } from "@/lib/order-fulfilment.functions";
+import { downloadReceipt } from "@/lib/receipt";
 
 
 
@@ -128,6 +129,23 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
     setOrderCompleted(true);
     toast.success(renewal ? "Renewal completed" : "Sale completed");
   };
+  const downloadInvoice = async () => {
+    setBusy(true);
+    try {
+      const [{ data: orderRow, error: orderError }, { data: itemRows, error: itemsError }] = await Promise.all([
+        supabase.from("orders").select("*").eq("id", orderId).maybeSingle(),
+        supabase.from("order_items").select("*").eq("order_id", orderId),
+      ]);
+      if (orderError) throw orderError;
+      if (itemsError) throw itemsError;
+      if (!orderRow) throw new Error("Order not found");
+      await downloadReceipt(orderRow as never, (itemRows ?? []) as never);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Could not generate the invoice PDF");
+    } finally {
+      setBusy(false);
+    }
+  };
   if (link === undefined) return <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" /> Loading…</div>;
   if (!link) return <p className="text-sm text-muted-foreground">This order has no secure checkout page (it was added before secure pages existed).</p>;
   const url = secureCheckoutUrl(link.token);
@@ -203,6 +221,11 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
         {orderPaid ? <Check className="size-4" /> : <Hourglass className="size-4" />}
         {orderPaid ? "PAID — payment confirmed by staff" : "NOT PAID YET — no payment has been confirmed"}
       </div>
+      {orderPaid && (
+        <button type="button" disabled={busy} onClick={downloadInvoice} className="inline-flex items-center gap-1.5 h-9 px-3 rounded-lg border border-border bg-surface-2 text-xs font-semibold hover:bg-surface-2/80 disabled:opacity-60">
+          {busy ? <Loader2 className="size-3.5 animate-spin" /> : <Download className="size-3.5" />} Download invoice PDF
+        </button>
+      )}
       {!orderPaid && payMethod && !["stripe", "square"].includes(payMethod) && (
         <div className="flex flex-wrap items-center gap-2 rounded-lg border border-border px-3 py-2.5">
           <p className="text-xs text-muted-foreground flex-1 min-w-40">Waiting on {payMethod === "bank_transfer" || payMethod === "bank" ? "the bank transfer" : payMethod === "cash" ? "the cash payment" : "payment"}. Tap the button below only once the money has arrived.</p>
