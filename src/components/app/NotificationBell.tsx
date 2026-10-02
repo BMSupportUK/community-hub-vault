@@ -14,7 +14,6 @@ import outageAudio from "@/assets/outage-notify.mp3";
 import outageResolvedAudio from "@/assets/outage-resolved.mp3";
 import orderAudio from "@/assets/order-notify.mp3";
 import ticketAudio from "@/assets/ticket-notify.mp3";
-import paymentReceivedAudio from "@/assets/payment-received.mp3";
 import newSignupAudio from "@/assets/new-signup-notify.mp3";
 import { playSound } from "@/lib/sound";
 import { cancelOrderAndSquareInvoice } from "@/lib/square-invoices.functions";
