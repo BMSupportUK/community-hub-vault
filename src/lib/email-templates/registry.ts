@@ -36,6 +36,7 @@ import { template as fanZoneApproved } from './fan-zone-approved'
 import { template as accountBanned } from './account-banned'
 import { template as fanZoneBanned } from './fan-zone-banned'
 import { template as fanZoneAppealReply } from './fan-zone-appeal-reply'
+import { template as paymentOutstanding } from './payment-outstanding'
 
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'twofa-reset-admin': twofaResetAdmin,
@@ -57,4 +58,5 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'account-banned': accountBanned,
   'fan-zone-banned': fanZoneBanned,
   'fan-zone-appeal-reply': fanZoneAppealReply,
+  'payment-outstanding': paymentOutstanding,
 }

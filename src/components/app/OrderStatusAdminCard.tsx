@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, Plus, Check, X } from "lucide-react";
+import { Loader2, Plus, Check, X, Mail } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { sendPaymentOutstandingEmail } from "@/lib/payment-outstanding-email.functions";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchInChunks } from "@/lib/chunked-in";
@@ -68,6 +70,22 @@ export function OrderStatusAdminCard() {
     toast.success("Order marked complete");
     setCompleting(null); setPayMethod(""); setPayRef("");
     setReload((n) => n + 1);
+  };
+
+  const sendOutstanding = useServerFn(sendPaymentOutstandingEmail);
+  const [reminding, setReminding] = useState<string | null>(null);
+  const sendReminder = async (id: string) => {
+    if (!confirm("Email the customer that payment is still outstanding?")) return;
+    setReminding(id);
+    try {
+      const res = await sendOutstanding({ data: { orderId: id } });
+      if (res.sent) toast.success("Payment reminder sent");
+      else toast.error(res.reason === "no_email" ? "No email address on this order" : "Customer has unsubscribed from emails");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not send reminder");
+    } finally {
+      setReminding(null);
+    }
   };
 
   useEffect(() => {
@@ -188,6 +206,9 @@ export function OrderStatusAdminCard() {
                       <td className="px-3 py-2 min-w-[150px]"><span className={`inline-flex px-2 py-0.5 rounded-full border text-xs capitalize ${statusTone(r.status)}`}>{r.status.toLowerCase()}</span>
                         {r.status.toLowerCase() !== "cancelled" && <div className="mt-1.5 w-32"><OrderStatusBar compact step={r.completed_at ? 3 : r.paid_at ? 2 : 1} /></div>}
                         {(isAdmin || hasRole("management")) && <div className="mt-1.5"><ManualOrderLinkButton orderId={r.id} orderRef={r.order_ref} /></div>}
+                        {(isAdmin || hasRole("management")) && r.customer_type === "manual" && !r.paid_at && !r.completed_at && r.status.toLowerCase() !== "cancelled" && ["bank_transfer", "bank", "cash"].includes((r.manual_pay_method ?? "").toLowerCase()) && (
+                          <div className="mt-1.5"><button type="button" disabled={reminding === r.id} onClick={() => sendReminder(r.id)} className="inline-flex items-center gap-1 h-7 px-2 rounded-md border border-warning/40 text-warning text-xs font-medium hover:bg-warning/10 disabled:opacity-50">{reminding === r.id ? <Loader2 className="size-3.5 animate-spin" /> : <Mail className="size-3.5" />} Payment reminder</button></div>
+                        )}
                       </td>
                       <td className="px-3 py-2 whitespace-nowrap text-xs text-muted-foreground">{r.paid_at ? new Date(r.paid_at).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" }) : "—"}</td>
                       <td className="px-3 py-2 whitespace-nowrap text-xs text-muted-foreground">{isAdmin && r.customer_type === "manual" && !r.completed_at ? (
