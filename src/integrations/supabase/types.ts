@@ -140,8 +140,10 @@ export type Database = {
           image_url: string
           link_url: string | null
           name: string
+          site: string
           size: string
           updated_at: string
+          zones: string[]
         }
         Insert: {
           alt_text?: string | null
@@ -151,8 +153,10 @@ export type Database = {
           image_url: string
           link_url?: string | null
           name: string
+          site?: string
           size?: string
           updated_at?: string
+          zones?: string[]
         }
         Update: {
           alt_text?: string | null
@@ -162,8 +166,10 @@ export type Database = {
           image_url?: string
           link_url?: string | null
           name?: string
+          site?: string
           size?: string
           updated_at?: string
+          zones?: string[]
         }
         Relationships: []
       }
