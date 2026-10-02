@@ -86,4 +86,4 @@
 - [x] Completed state on secure page: "account set up" (new) / "subscription upgraded" (existing)
 - [x] Unique password per secure page, shown next to link
 - [x] Live chat bubble on secure page (customer <-> admin/management)
-- [ ] Audit and fix all remaining BM Support and Fan Zone screens for iPhone widths
+- [x] Audit and fix all remaining BM Support and Fan Zone screens for iPhone widths

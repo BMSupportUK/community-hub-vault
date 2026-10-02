@@ -216,7 +216,7 @@ function LeaderboardPage() {
 
       <div className="px-4 py-5 sm:px-8 sm:py-6">
         <Tabs value={tab} onValueChange={setTab} className="w-full">
-          <TabsList className={`grid h-auto w-full grid-cols-2 gap-1 bg-purple-950/60 p-1 border border-purple-500/30 sm:gap-0 ${isAdmin ? "sm:grid-cols-5 sm:max-w-4xl" : "sm:grid-cols-3 sm:max-w-2xl"}`}>
+          <TabsList className={`grid h-auto w-full grid-cols-1 gap-1 bg-purple-950/60 p-1 border border-purple-500/30 min-[360px]:grid-cols-2 sm:gap-0 ${isAdmin ? "sm:grid-cols-5 sm:max-w-4xl" : "sm:grid-cols-3 sm:max-w-2xl"}`}>
             <TabsTrigger value="welcome" className="min-w-0 px-2 text-xs data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white sm:text-sm">Welcome</TabsTrigger>
             <TabsTrigger value="leaderboard" className="min-w-0 px-2 text-xs data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white sm:text-sm">Leaderboard</TabsTrigger>
             <TabsTrigger value="invites" className="min-w-0 px-2 text-xs data-[state=active]:bg-gradient-to-r data-[state=active]:from-fuchsia-600 data-[state=active]:to-purple-600 data-[state=active]:text-white sm:text-sm">My Invites</TabsTrigger>

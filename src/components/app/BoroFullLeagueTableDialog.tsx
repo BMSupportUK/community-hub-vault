@@ -36,7 +36,7 @@ export function BoroFullLeagueTableDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl p-0 overflow-hidden border-[#E11B22]/40">
-        <DialogHeader className="px-5 py-4 bg-gradient-to-r from-[#E11B22] to-[#8B0F14] text-white space-y-0.5">
+        <DialogHeader className="px-4 py-4 bg-gradient-to-r from-[#E11B22] to-[#8B0F14] text-white space-y-0.5 sm:px-5">
           <DialogTitle className="font-display font-black tracking-wide flex items-center gap-2 text-white">
             <Trophy className="size-4" /> EFL Championship table
           </DialogTitle>
@@ -60,9 +60,9 @@ export function BoroFullLeagueTableDialog({
                   <th className="px-2 py-2 text-left w-8">#</th>
                   <th className="px-2 py-2 text-left font-sans">Team</th>
                   <th className="px-1.5 py-2 text-center">P</th>
-                  <th className="px-1.5 py-2 text-center">W</th>
-                  <th className="px-1.5 py-2 text-center">D</th>
-                  <th className="px-1.5 py-2 text-center">L</th>
+                  <th className="hidden px-1.5 py-2 text-center sm:table-cell">W</th>
+                  <th className="hidden px-1.5 py-2 text-center sm:table-cell">D</th>
+                  <th className="hidden px-1.5 py-2 text-center sm:table-cell">L</th>
                   <th className="px-1.5 py-2 text-center hidden sm:table-cell">GF</th>
                   <th className="px-1.5 py-2 text-center hidden sm:table-cell">GA</th>
                   <th className="px-1.5 py-2 text-center">GD</th>
@@ -94,9 +94,9 @@ export function BoroFullLeagueTableDialog({
                       </span>
                     </td>
                     <td className="px-1.5 py-1.5 text-center">{r.played}</td>
-                    <td className="px-1.5 py-1.5 text-center">{r.won}</td>
-                    <td className="px-1.5 py-1.5 text-center">{r.drawn}</td>
-                    <td className="px-1.5 py-1.5 text-center">{r.lost}</td>
+                    <td className="hidden px-1.5 py-1.5 text-center sm:table-cell">{r.won}</td>
+                    <td className="hidden px-1.5 py-1.5 text-center sm:table-cell">{r.drawn}</td>
+                    <td className="hidden px-1.5 py-1.5 text-center sm:table-cell">{r.lost}</td>
                     <td className="px-1.5 py-1.5 text-center hidden sm:table-cell">{r.goalsFor}</td>
                     <td className="px-1.5 py-1.5 text-center hidden sm:table-cell">{r.goalsAgainst}</td>
                     <td className="px-1.5 py-1.5 text-center">

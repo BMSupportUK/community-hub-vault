@@ -139,19 +139,19 @@ function StaffPage() {
   return (
     <Tabs defaultValue="admin">
       <div className="flex-1 overflow-y-auto bg-background">
-        <header className="px-8 pt-8 pb-6 border-b border-border bg-surface/70 backdrop-blur">
-          <div className="flex flex-wrap items-center gap-3">
+        <header className="px-4 pt-6 pb-5 border-b border-border bg-surface/70 backdrop-blur sm:px-8 sm:pt-8 sm:pb-6">
+          <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 lg:flex lg:flex-wrap">
             <div className="size-11 rounded-xl bg-gradient-primary grid place-items-center text-primary-foreground shadow-glow shrink-0">
               <Briefcase className="size-5" />
             </div>
             <div className="min-w-0">
-              <h1 className="font-display text-3xl font-bold text-gradient-primary">
+              <h1 className="truncate font-display text-2xl font-bold text-gradient-primary sm:text-3xl">
                 Staff Directory
               </h1>
               <p className="text-muted-foreground mt-1">The people running the show — grouped by role.</p>
             </div>
-            <div className="ml-auto flex flex-wrap items-center gap-3">
-              <div className="relative w-64 max-w-full shrink-0">
+            <div className="col-span-2 grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_auto] lg:col-span-1 lg:ml-auto lg:flex lg:flex-wrap lg:items-center">
+              <div className="relative w-full lg:w-64 lg:shrink-0">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
                 <input
                   value={q}
@@ -160,7 +160,7 @@ function StaffPage() {
                   className="w-full pl-9 pr-3 py-2 rounded-lg bg-surface/70 border border-border text-purple-50 placeholder:text-muted-foreground/50 outline-none focus:border-fuchsia-400 focus:ring-2 focus:ring-fuchsia-500/40"
                 />
               </div>
-              <TabsList className="bg-surface/70 border border-border h-auto p-1 flex-wrap">
+              <TabsList className="grid h-auto w-full grid-cols-2 gap-1 bg-surface/70 border border-border p-1 sm:flex sm:w-auto sm:flex-wrap">
                 {ROLE_ORDER.map((role) => (
                   <TabsTrigger
                     key={role}
@@ -178,7 +178,7 @@ function StaffPage() {
           </div>
         </header>
 
-        <div className="px-8 py-6">
+        <div className="px-4 py-5 sm:px-8 sm:py-6">
           {ROLE_ORDER.map((role) => {
             const list = grouped[role];
             return (

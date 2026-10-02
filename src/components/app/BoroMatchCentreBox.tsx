@@ -286,9 +286,9 @@ export function BoroMatchCentreBox() {
                     <th className="px-1.5 py-1 text-left w-6">#</th>
                     <th className="px-1.5 py-1 text-left">Team</th>
                     <th className="px-1 py-1 text-center">P</th>
-                    <th className="px-1 py-1 text-center">W</th>
-                    <th className="px-1 py-1 text-center">D</th>
-                    <th className="px-1 py-1 text-center">L</th>
+                    <th className="hidden px-1 py-1 text-center sm:table-cell">W</th>
+                    <th className="hidden px-1 py-1 text-center sm:table-cell">D</th>
+                    <th className="hidden px-1 py-1 text-center sm:table-cell">L</th>
                     <th className="px-1 py-1 text-center">GD</th>
                     <th className="px-1 py-1 text-center font-bold">Pts</th>
                   </tr>
@@ -308,9 +308,9 @@ export function BoroMatchCentreBox() {
                         <td className="px-1.5 py-1">{r.position}</td>
                         <td className="px-1.5 py-1 font-sans truncate max-w-[120px]">{r.team}</td>
                         <td className="px-1 py-1 text-center">{r.played}</td>
-                        <td className="px-1 py-1 text-center">{r.won}</td>
-                        <td className="px-1 py-1 text-center">{r.drawn}</td>
-                        <td className="px-1 py-1 text-center">{r.lost}</td>
+                        <td className="hidden px-1 py-1 text-center sm:table-cell">{r.won}</td>
+                        <td className="hidden px-1 py-1 text-center sm:table-cell">{r.drawn}</td>
+                        <td className="hidden px-1 py-1 text-center sm:table-cell">{r.lost}</td>
                         <td className="px-1 py-1 text-center">{r.goalDifference > 0 ? `+${r.goalDifference}` : r.goalDifference}</td>
                         <td className="px-1 py-1 text-center font-bold">{r.points}</td>
                       </tr>

@@ -113,15 +113,15 @@ function AdminDashboard() {
       <div className="w-full px-4 sm:px-6 py-8">
         <div className="relative rounded-3xl overflow-hidden border border-primary/30 shadow-glow bg-gradient-primary p-6 sm:p-8 mb-6">
           <div className="absolute inset-0 bg-gradient-to-tr from-background/40 via-transparent to-transparent pointer-events-none" />
-          <header className="relative flex items-center gap-3">
+          <header className="relative grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3 sm:flex">
             <div className="size-12 rounded-2xl bg-white/15 backdrop-blur grid place-items-center shadow-glow ring-1 ring-white/20">
               <ShieldCheck className="size-6 text-white" />
             </div>
-            <div className="flex-1">
-              <h1 className="font-display text-2xl sm:text-3xl font-bold text-white drop-shadow">BM Support | Admin Dashboard</h1>
+            <div className="min-w-0 flex-1">
+              <h1 className="font-display text-xl sm:text-3xl font-bold text-white drop-shadow">BM Support | Admin Dashboard</h1>
               <p className="text-sm text-white/85">Server-wide controls — staff can see the sections admin allows them to.</p>
             </div>
-          <div className="flex items-center gap-2">
+          <div className="col-span-2 flex min-w-0 flex-wrap items-center gap-2 sm:col-span-1">
             <Link
               to="/admin-sounds"
               className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/15 backdrop-blur border border-white/25 text-sm text-white hover:bg-white/25"
