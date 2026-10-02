@@ -207,9 +207,11 @@ function WelcomePage() {
             {!isStaffAccount && <SubscriptionDetailsCard />}
             </div>
           </div>
-          <div className="mt-4 w-full min-w-0">
-            <AdSenseSlot slot="home" />
-          </div>
+      </section>
+
+      {/* Advert */}
+      <section className="shrink-0 min-w-0 px-3 pt-3 xl:px-4 xl:pt-4">
+        <AdSenseSlot slot="home" />
       </section>
 
       {/* Quick links */}
