@@ -35,15 +35,14 @@ function shuffle<T>(arr: T[]): T[] {
 
 /**
  * Rotates evenly through every banner in the affiliate_banners table that
- * matches the requested `size`. The order is shuffled per page load so
- * impressions are spread evenly across visits, and the visible banner
- * cycles every `intervalMs` ms.
+ * matches the requested `size`. Every slot opens with the "Advertise here"
+ * banner, then cycles through the shuffled saved banners every `intervalMs` ms.
  */
 function RotatingAffiliateBannerComponent({
   fallback,
   boardId,
   size = "skyscraper",
-  intervalMs = 8000,
+  intervalMs = 30000,
   paused = false,
   site,
   zone,
@@ -110,17 +109,15 @@ function RotatingAffiliateBannerComponent({
   }, [boardId, size, site, zone]);
 
   const list = useMemo<Banner[]>(() => {
-    if (banners && banners.length > 0) return banners;
-    return [
-      {
-        id: "__fallback__",
-        name: "Advertise here",
-        image_url: fallback?.image_url || (size === "leaderboard" ? advertiseLeaderboard : advertiseSkyscraper),
-        link_url: fallback?.link_url || "mailto:bmsupport2022@protonmail.com",
-        alt_text: fallback?.alt_text || "Advertise here",
-        size,
-      },
-    ];
+    const advertiseHere: Banner = {
+      id: "__fallback__",
+      name: "Advertise here",
+      image_url: fallback?.image_url || (size === "leaderboard" ? advertiseLeaderboard : advertiseSkyscraper),
+      link_url: fallback?.link_url || "mailto:bmsupport2022@protonmail.com",
+      alt_text: fallback?.alt_text || "Advertise here",
+      size,
+    };
+    return banners && banners.length > 0 ? [advertiseHere, ...banners] : [advertiseHere];
   }, [banners, fallback?.image_url, fallback?.link_url, fallback?.alt_text, size]);
 
   useEffect(() => {
