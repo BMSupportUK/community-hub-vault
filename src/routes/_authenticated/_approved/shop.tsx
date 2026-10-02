@@ -3250,6 +3250,11 @@ function OrdersView({
                 </button>
               )}
             </div>
+            {isAdminOnly && adminUnlocked && (
+              <div onClick={(e) => e.stopPropagation()}>
+                <PaymentReminderButton orderId={o.id} />
+              </div>
+            )}
           </div>
 
         ))}
