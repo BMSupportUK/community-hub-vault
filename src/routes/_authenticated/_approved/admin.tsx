@@ -662,7 +662,7 @@ function DashboardBody() {
                 key={t.label}
                 type="button"
                 id={first ? `tool-letter-${letter}` : undefined}
-                onClick={() => setTab(t.tabKey)}
+                onClick={() => t.tabKey && setTab(t.tabKey as DashTab)}
                 className={cls}
               >
                 {inner}
