@@ -3,6 +3,8 @@
  * to, and for BM Support which zone. Banners store `site` + `zones`
  * (empty zones = every BM Support zone).
  */
+import type { AdSize } from "@/lib/ad-sizes";
+
 export type AdSite = "bm_support" | "fan_zone";
 
 export const AD_SITES: Record<AdSite, string> = {
@@ -25,6 +27,21 @@ export const BM_ZONES = [
   { key: "competition_winners", label: "Competition winners" },
 ] as const;
 export type BmZone = (typeof BM_ZONES)[number]["key"];
+
+/** Which banner sizes each BM Support zone can show. */
+export const BM_ZONE_SIZES: Record<BmZone, AdSize[]> = {
+  home: ["leaderboard", "skyscraper"],
+  sports_guides: ["leaderboard"],
+  forum: ["leaderboard", "skyscraper"],
+  install_guides: ["skyscraper"],
+  members: ["skyscraper"],
+  packages: ["skyscraper"],
+  faq: ["skyscraper"],
+  about: ["skyscraper"],
+  contact: ["skyscraper"],
+  login: ["skyscraper"],
+  competition_winners: ["skyscraper"],
+};
 
 export function placementForPath(pathname: string): { site: AdSite; zone: BmZone | null } {
   const p = pathname.toLowerCase();
