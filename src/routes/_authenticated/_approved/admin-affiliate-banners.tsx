@@ -133,20 +133,40 @@ function AdminAffiliateBannersPage() {
       <div>
         <h1 className="font-display text-2xl font-bold">Affiliate banners</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Upload sidebar advert images and assign them to one or more forum boards.
-          Recommended size <strong>512×1536 (1:3)</strong> — images are centered and cropped to fit.
+          Upload your own advert banners and assign them to one or more forum boards.
+          Every banner is one of two sizes — design your artwork to match:
         </p>
+        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+          {AD_SIZE_KEYS.map((k) => (
+            <div key={k} className="rounded-xl border border-border bg-surface-1 p-3">
+              <div className="font-semibold text-sm">{AD_SIZES[k].label}</div>
+              <div className="text-xs text-muted-foreground mt-0.5">{AD_SIZES[k].description}</div>
+              <div className="text-xs mt-1.5 font-mono text-foreground">{AD_SIZES[k].recommended}</div>
+            </div>
+          ))}
+        </div>
       </div>
 
       <section className="rounded-2xl border border-border bg-surface-1 p-4 space-y-3">
         <h2 className="font-display font-bold text-sm uppercase tracking-wide text-muted-foreground">Upload a new banner</h2>
-        <div className="grid sm:grid-cols-[1fr_auto] gap-2">
+        <div className="grid sm:grid-cols-[1fr_auto_auto] gap-2">
           <Input
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             placeholder="Banner name (e.g. Acme Telecoms — Spring promo)"
             disabled={uploading}
           />
+          <select
+            value={newSize}
+            onChange={(e) => setNewSize(e.target.value as AdSize)}
+            disabled={uploading}
+            className="h-9 rounded-md border border-border bg-background px-2 text-sm"
+            aria-label="Banner size"
+          >
+            {AD_SIZE_KEYS.map((k) => (
+              <option key={k} value={k}>{AD_SIZES[k].label} — {AD_SIZES[k].width}×{AD_SIZES[k].height}</option>
+            ))}
+          </select>
           <input
             ref={fileRef}
             type="file"
