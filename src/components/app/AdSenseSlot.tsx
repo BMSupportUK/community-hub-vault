@@ -1,6 +1,8 @@
 import { memo } from "react";
 import RotatingAffiliateBanner from "@/components/app/RotatingAffiliateBanner";
 import type { AdSize } from "@/lib/ad-sizes";
+import { useRouterState } from "@tanstack/react-router";
+import { placementForPath } from "@/lib/ad-zones";
 
 export type AdSenseSlotKind = "topic" | "sidebar" | "home" | "talk" | "welcome";
 
@@ -22,9 +24,11 @@ const SLOT_SIZE: Record<AdSenseSlotKind, AdSize> = {
  * the affiliate banners admin. Props are kept so existing call sites work.
  */
 function AdSenseSlotComponent({ slot = "home" }: { slot?: AdSenseSlotKind; fitViewport?: boolean }) {
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { site, zone } = placementForPath(pathname);
   return (
     <div className="w-full">
-      <RotatingAffiliateBanner size={SLOT_SIZE[slot]} />
+      <RotatingAffiliateBanner size={SLOT_SIZE[slot]} site={site} zone={zone} />
     </div>
   );
 }

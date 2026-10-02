@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { AD_SIZES, AD_SIZE_KEYS, type AdSize } from "@/lib/ad-sizes";
+import { AD_SITES, AD_SITE_KEYS, BM_ZONES, type AdSite } from "@/lib/ad-zones";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-affiliate-banners")({
   component: AdminAffiliateBannersPage,
@@ -19,6 +20,8 @@ type Banner = {
   link_url: string | null;
   alt_text: string | null;
   size: AdSize;
+  site: AdSite;
+  zones: string[];
   created_at: string;
 };
 type Board = { id: string; name: string; slug: string };
@@ -35,11 +38,12 @@ function AdminAffiliateBannersPage() {
   const [uploading, setUploading] = useState(false);
   const [newName, setNewName] = useState("");
   const [newSize, setNewSize] = useState<AdSize>("skyscraper");
+  const [newSite, setNewSite] = useState<AdSite>("bm_support");
   const fileRef = useRef<HTMLInputElement>(null);
 
   const load = async () => {
     const [{ data: bs }, { data: brds }, { data: asg }] = await Promise.all([
-      supabase.from("affiliate_banners").select("id, name, image_url, link_url, alt_text, size, created_at").order("created_at", { ascending: false }),
+      supabase.from("affiliate_banners").select("id, name, image_url, link_url, alt_text, size, site, zones, created_at").order("created_at", { ascending: false }),
       supabase.from("forum_boards").select("id, name, slug").order("sort_order"),
       supabase.from("forum_board_affiliate_banners").select("board_id, banner_id"),
     ]);
@@ -65,7 +69,7 @@ function AdminAffiliateBannersPage() {
       if (upErr) throw upErr;
       const { data: pub } = supabase.storage.from(BUCKET).getPublicUrl(path);
       const { error: insErr } = await supabase.from("affiliate_banners").insert({
-        name, image_url: pub.publicUrl, created_by: user.id, size: newSize,
+        name, image_url: pub.publicUrl, created_by: user.id, size: newSize, site: newSite,
       });
       if (insErr) throw insErr;
       setNewName("");
@@ -84,7 +88,7 @@ function AdminAffiliateBannersPage() {
 
   const saveBanner = async (b: Banner) => {
     const { error } = await supabase.from("affiliate_banners").update({
-      name: b.name, link_url: b.link_url || null, alt_text: b.alt_text || null, size: b.size,
+      name: b.name, link_url: b.link_url || null, alt_text: b.alt_text || null, size: b.size, site: b.site, zones: b.site === "bm_support" ? b.zones : [],
     }).eq("id", b.id);
     if (error) { toast.error("Save failed", { description: error.message }); return; }
     toast.success("Saved");
@@ -149,13 +153,22 @@ function AdminAffiliateBannersPage() {
 
       <section className="rounded-2xl border border-border bg-surface-1 p-4 space-y-3">
         <h2 className="font-display font-bold text-sm uppercase tracking-wide text-muted-foreground">Upload a new banner</h2>
-        <div className="grid sm:grid-cols-[1fr_auto_auto] gap-2">
+        <div className="grid sm:grid-cols-[1fr_auto_auto_auto] gap-2">
           <Input
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             placeholder="Banner name (e.g. Acme Telecoms — Spring promo)"
             disabled={uploading}
           />
+          <select
+            value={newSite}
+            onChange={(e) => setNewSite(e.target.value as AdSite)}
+            disabled={uploading}
+            className="h-9 rounded-md border border-border bg-background px-2 text-sm"
+            aria-label="Banner site"
+          >
+            {AD_SITE_KEYS.map((k) => <option key={k} value={k}>{AD_SITES[k]}</option>)}
+          </select>
           <select
             value={newSize}
             onChange={(e) => setNewSize(e.target.value as AdSize)}
@@ -185,8 +198,11 @@ function AdminAffiliateBannersPage() {
       {!banners ? (
         <div className="grid place-items-center py-10 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>
       ) : (
-        AD_SIZE_KEYS.map((sizeKey) => {
-          const sizeBanners = banners.filter((b) => (b.size ?? "skyscraper") === sizeKey);
+        AD_SITE_KEYS.map((siteKey) => (
+        <div key={siteKey} className="space-y-4 rounded-3xl border-2 border-border p-3 md:p-4">
+          <h2 className="font-display text-xl font-bold">{AD_SITES[siteKey]}</h2>
+        {AD_SIZE_KEYS.map((sizeKey) => {
+          const sizeBanners = banners.filter((b) => (b.size ?? "skyscraper") === sizeKey && (b.site ?? "bm_support") === siteKey);
           return (
             <section key={sizeKey} className="space-y-3">
               <div className="rounded-2xl border border-border bg-surface-1 px-4 py-3 flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -225,6 +241,14 @@ function AdminAffiliateBannersPage() {
                               <option key={k} value={k}>{AD_SIZES[k].label} — {AD_SIZES[k].width}×{AD_SIZES[k].height}</option>
                             ))}
                           </select>
+                          <select
+                            value={b.site}
+                            onChange={(e) => updateField(b.id, { site: e.target.value as AdSite })}
+                            className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm"
+                            aria-label="Banner site"
+                          >
+                            {AD_SITE_KEYS.map((k) => <option key={k} value={k}>{AD_SITES[k]}</option>)}
+                          </select>
                           <Input value={b.link_url ?? ""} onChange={(e) => updateField(b.id, { link_url: e.target.value })} placeholder="Click-through URL (optional)" />
                           <Input value={b.alt_text ?? ""} onChange={(e) => updateField(b.id, { alt_text: e.target.value })} placeholder="Alt text (optional)" />
                           <div className="flex items-center justify-between gap-2">
@@ -242,6 +266,27 @@ function AdminAffiliateBannersPage() {
                           </div>
                         </div>
                       </div>
+                      {b.site === "bm_support" && (
+                        <div className="border-t border-border bg-background/60 p-3">
+                          <div className="text-[11px] uppercase tracking-wide text-muted-foreground mb-1">Show in zones</div>
+                          <p className="text-[11px] text-muted-foreground mb-2">{b.zones.length === 0 ? "None ticked = shows in every zone." : `${b.zones.length} selected.`} Press Save to apply.</p>
+                          <div className="grid grid-cols-2 gap-1.5">
+                            {BM_ZONES.map((z) => {
+                              const on = b.zones.includes(z.key);
+                              return (
+                                <label key={z.key} className={`flex items-center gap-2 text-xs px-2 py-1.5 rounded-md border ${on ? "border-primary/50 bg-primary/10" : "border-border bg-surface-2/60"}`}>
+                                  <input
+                                    type="checkbox"
+                                    checked={on}
+                                    onChange={(e) => updateField(b.id, { zones: e.target.checked ? [...b.zones, z.key] : b.zones.filter((k) => k !== z.key) })}
+                                  />
+                                  <span className="truncate">{z.label}</span>
+                                </label>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
                       <div className="border-t border-border bg-background/60 p-3">
                         <div className="text-[11px] uppercase tracking-wide text-muted-foreground mb-2">Assign to forum boards</div>
                         {boards.length === 0 ? (
@@ -270,7 +315,9 @@ function AdminAffiliateBannersPage() {
               )}
             </section>
           );
-        })
+        })}
+        </div>
+        ))
       )}
     </div>
   );
