@@ -519,6 +519,13 @@
       "when": 1790937502207,
       "tag": "0073_manual_paid_records_payment",
       "breakpoints": true
+    },
+    {
+      "idx": 74,
+      "version": "7",
+      "when": 1790970443544,
+      "tag": "0074_affiliate_banner_sizes",
+      "breakpoints": true
     }
   ]
 }
