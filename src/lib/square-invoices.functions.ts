@@ -63,6 +63,7 @@ export const createSquareInvoiceForOrder = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     await assertAdminOrOrderOwner(supabase, userId, data.orderId);
+    throw new Error("Square hosted invoices are no longer used. Send the customer their secure checkout link; BM Support provides the invoice after payment.");
 
     const locationId = process.env.SQUARE_LOCATION_ID;
     if (!locationId) throw new Error("SQUARE_LOCATION_ID not configured");
@@ -204,15 +205,6 @@ export const createSquareInvoiceForOrder = createServerFn({ method: "POST" })
       .select()
       .single();
     if (upErr) throw new Error(upErr.message);
-
-    // 6. Post invoice link in order chat
-    if (invoice.public_url) {
-      await supabase.from("order_messages").insert({
-        order_id: orderId,
-        sender_id: userId,
-        content: `💳 Pay your invoice here: ${invoice.public_url}`,
-      });
-    }
 
     return saved;
   });
