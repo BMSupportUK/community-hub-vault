@@ -1006,9 +1006,41 @@ function normalizeBulletChannelListing(raw: string): string {
   return out.join("\n");
 }
 
+/** Rugby Pass channel blocks:
+ *   "Rugby Pass 02:" / "Bordeaux Begles v Lyon 13:30 Sharks v Leinster 17:30"
+ *   "Rugby Pass 01: Lions v Ospreys 12:45" / "Rpass06: Castres v Toulouse 20:00"
+ * Rewrites every fixture as "Channel | Event HH:MM" (one per row), splitting
+ * rows carrying several "Event HH:MM" fixtures. */
+function normalizeChannelHeaderFixtureBlocks(raw: string): string {
+  const header = /^\s*(Rugby\s*Pass|Rpass)\s*0?(\d{1,2})\s*:\s*(.*)$/i;
+  if (!raw.split("\n").some((l) => header.test(l))) return raw;
+  const fixtureRe = /(.+?)\s+(\d{1,2}[:.]\d{2})(?=\s|$)/g;
+  const out: string[] = [];
+  let channel: string | null = null;
+  const emit = (text: string): boolean => {
+    const t = text.trim();
+    if (!t || !channel) return false;
+    const found = [...t.matchAll(fixtureRe)];
+    if (!found.length || found.map((m) => m[0]).join(" ").replace(/\s+/g, " ") !== t.replace(/\s+/g, " ")) return false;
+    for (const m of found) out.push(`${channel} | ${m[1]!.trim()} ${m[2]}`);
+    return true;
+  };
+  for (const line of raw.split("\n")) {
+    const h = line.match(header);
+    if (h) {
+      channel = `Rugby Pass ${h[2]!.padStart(2, "0")}`;
+      if (h[3]!.trim() && !emit(h[3]!)) out.push(line);
+      continue;
+    }
+    if (!line.trim()) { out.push(line); continue; }
+    if (!emit(line)) { channel = null; out.push(line); }
+  }
+  return out.join("\n");
+}
+
 export function parseSportsListingBlock(raw: string | null | undefined): SportsListingEvent[] {
   if (!raw) return [];
-  raw = reorderMarkedTitleTimeBlocks(expandMultiSlotChannelPost(normalizeBulletChannelListing(raw)));
+  raw = reorderMarkedTitleTimeBlocks(expandMultiSlotChannelPost(normalizeBulletChannelListing(normalizeChannelHeaderFixtureBlocks(raw))));
   const explicitHeadings = new Set(sportsListingHeadings(raw).map((heading) => heading.toLowerCase()));
   // Rugby Pass style: "Channel NN | Event HH:MM" rows, optionally with bare
   // "Event HH:MM" continuation rows that belong to the channel above them.
