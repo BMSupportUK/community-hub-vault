@@ -971,7 +971,7 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
     const title = cleanLine(markedTitle);
     const following = cleanLine(rawNonEmptyLines[i + 1] ?? "");
     const slot = detectEvent(following, null);
-    if (title && slot && !slot.title) explicitTitlesAboveTime.add(title);
+    if (title && slot && parseClockTime(slot.time)) explicitTitlesAboveTime.add(title);
   }
   // Rugby Pass style: "Channel NN | Event HH:MM" rows, optionally with bare
   // "Event HH:MM" continuation rows that belong to the channel above them.
