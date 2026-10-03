@@ -107,10 +107,9 @@ function RotatingAffiliateBannerComponent({
           return true;
         });
       }
-      // Only rotate banners designed for this slot's size. If none exist,
-      // fall back to every banner so the slot is never empty.
-      const sized = list.filter((b) => (b.size ?? "skyscraper") === size);
-      if (sized.length > 0) list = sized;
+      // Only rotate banners designed for this slot's size — never fall back
+      // to other shapes. With none, the slot shows just "Advertise here".
+      list = list.filter((b) => (b.size ?? "skyscraper") === size);
       if (cancelled) return;
       const shuffled = shuffle(list);
       bannerCache.set(cacheKey, shuffled);
