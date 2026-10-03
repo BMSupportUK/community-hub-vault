@@ -165,7 +165,7 @@ function WelcomePage() {
                       </div>
                     </>
                   ) : (
-                    <div className="flex min-h-full flex-1 flex-col justify-between gap-6 py-1 md:py-3">
+                    <div className="flex min-h-96 flex-1 flex-col justify-between gap-6 py-1 md:min-h-full md:py-3">
                       <div className="text-xs uppercase text-sky-200/80">BM Support · Member Hub</div>
                       <h1 className="font-display text-2xl font-bold leading-tight lg:text-3xl xl:text-4xl xl:leading-[1.1]">
                         Welcome to BM Support
