@@ -164,7 +164,7 @@ function WelcomePage() {
                   <p className="mt-2 max-w-xl text-sm text-white/85 lg:text-base">
                     Access channels, schedules, support and services—all in one place.
                   </p>
-                  <div className="mt-4 w-full max-w-[280px] self-center md:self-start">
+                  <div className="mt-4 w-full max-w-[280px] self-center md:self-start lg:max-w-[240px]">
                     <AdSenseSlot slot="homeSquare" />
                   </div>
                 </div>
