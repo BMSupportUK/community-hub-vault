@@ -337,3 +337,16 @@ describe("Cycling bullet listings", () => {
     }
   });
 });
+
+describe("Rugby Pass channel blocks", () => {
+  test("channel headings with fixtures below (several per row) each keep their channel", () => {
+    const raw = "**VIP | Rugby Pass**\n\nRugby Pass 01: Lions v Ospreys 12:45\n\nRugby Pass 02: \nBordeaux Begles v Lyon 13:30 Sharks v Leinster 17:30\n\nRugby Pass 03: \nDragons v Scarlets 15:00 \nGlasgow Warriors v Ulster 17:30 \nMunster v Bulls 19:45\n\nRugby Pass 04: \nBristol Bears v Northampton 15:05 \nGloucester v Harlequins 17:30 \nNewcastle v Leicester Tigers 19:45\n\nRugby Pass 05: \nLa Rochelle v Clermont Auvergne 15:30\n\nRpass06: Castres v Toulouse 20:00";
+    const r = checkSportsImport(raw, "gmt", Date.UTC(2026, 9, 3, 9), "Rugby Union");
+    expect(r.errors).toBe(0);
+    expect(r.warnings).toBe(0);
+    expect(r.events).toHaveLength(11);
+    expect(r.events.find((e) => e.title === "Sharks v Leinster")).toMatchObject({ time: "17:30 BST", channels: ["Rugby Pass 02"] });
+    expect(r.events.find((e) => e.title === "Castres v Toulouse")).toMatchObject({ time: "20:00 BST", channels: ["Rugby Pass 06"] });
+    expect(parseSportsListingBlock(r.formatted)).toEqual(r.events);
+  });
+});

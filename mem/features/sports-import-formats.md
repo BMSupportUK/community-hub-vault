@@ -99,3 +99,4 @@ Splitting a multi-event post at the second event must keep both events. A chosen
 ## Tennis TV (VIP | Tennis TV)
 Rows `A vs B @ Sep 30 05:00 AM - ATP Tokyo :Tennis 01` → event "A v B - ATP Tokyo", channel "Tennis 01".
 Untimed follow-on rows `A vs B - WTA Beijing :Tennis 10` are skipped — never attached as channels of the event above (they have no start time). Permanent test in tests/sports-import-formats.test.ts.
+- Rugby Pass channel blocks: "Rugby Pass NN:" (or "RpassNN:") heading, fixtures "Event HH:MM" below or inline, several per row allowed → each fixture becomes its own event on that channel (Rugby Pass NN). Test: 'Rugby Pass channel blocks'.
