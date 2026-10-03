@@ -19,6 +19,7 @@ import profileMatchHeader from "@/assets/boro-profile-match-header.jpg";
 import { FanZoneMuteDialog } from "@/components/app/FanZoneMuteDialog";
 import { FanZoneBanDialog } from "@/components/app/FanZoneBanDialog";
 import { useFanZoneMute } from "@/hooks/use-fan-zone-mute";
+import { useViewportLockable } from "@/hooks/use-viewport-lock";
 import { useFanZoneBan } from "@/hooks/use-fan-zone-ban";
 import { FanRoleBadge, type FanStaffRole } from "@/components/app/FanRoleBadge";
 
