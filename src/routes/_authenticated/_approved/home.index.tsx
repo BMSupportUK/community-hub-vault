@@ -176,6 +176,9 @@ function WelcomePage() {
                       <p className="max-w-xl text-[clamp(0.85rem,min(1.6vw,2vh),1.125rem)] leading-relaxed text-white/85">
                         Access channels, schedules, support and services—all in one place.
                       </p>
+                      <div className="w-full max-w-xl pt-1">
+                        <SubscriptionDetailsCard compact embedded />
+                      </div>
                     </div>
                   )}
                 </div>
@@ -216,9 +219,7 @@ function WelcomePage() {
           </div>
 
           <div className="flex min-h-0 w-full flex-col items-stretch gap-4">
-            {/* Staff accounts see their subscription box on their profile instead. */}
-            {!isStaffAccount && <SubscriptionDetailsCard compact />}
-            <AdSenseSlot slot={isStaffAccount ? "homeSkyscraper" : "homeSquare"} />
+            <AdSenseSlot slot="homeSkyscraper" />
             </div>
           </div>
       </section>
