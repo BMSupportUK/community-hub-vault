@@ -19,6 +19,7 @@ import profileMatchHeader from "@/assets/boro-profile-match-header.jpg";
 import { FanZoneMuteDialog } from "@/components/app/FanZoneMuteDialog";
 import { FanZoneBanDialog } from "@/components/app/FanZoneBanDialog";
 import { useFanZoneMute } from "@/hooks/use-fan-zone-mute";
+import { useViewportLockable } from "@/hooks/use-viewport-lock";
 import { useFanZoneBan } from "@/hooks/use-fan-zone-ban";
 import { FanRoleBadge, type FanStaffRole } from "@/components/app/FanRoleBadge";
 
@@ -60,6 +61,7 @@ function FanProfilePage() {
   const { userId } = Route.useParams();
   const navigate = useNavigate();
   const { user, hasAny } = useAuth();
+  const lockable = useViewportLockable();
   const isStaff = hasAny(["admin", "boro_fan_zone_moderator"]);
   const canModerate = hasAny(["admin", "management", "moderator", "boro_fan_zone_moderator"]);
   const info = useFanZoneMembership(user?.id ?? null);
@@ -179,20 +181,15 @@ function FanProfilePage() {
 
   return (
     <div
-      className="boro-theme relative min-h-[calc(100vh-4rem)] w-full overflow-hidden bg-cover bg-center bg-no-repeat"
-      style={{ backgroundImage: `url(${bgAsset.url})` }}
+      className={`boro-theme relative w-full overflow-y-auto overflow-x-hidden scrollbar-hide bg-cover bg-center bg-no-repeat ${lockable ? "h-full" : "min-h-[calc(100vh-4rem)]"}`}
+      style={{
+        backgroundImage: `linear-gradient(to bottom, rgba(3, 7, 18, 0.78), rgba(3, 7, 18, 0.72), rgba(3, 7, 18, 0.86)), url(${bgAsset.url})`,
+      }}
     >
       <FanZoneNameGate />
       <div
-        className="absolute inset-0"
-        style={{
-          background:
-            "linear-gradient(to bottom, rgba(3, 7, 18, 0.78), rgba(3, 7, 18, 0.72), rgba(3, 7, 18, 0.86))",
-        }}
-        aria-hidden
-      />
-
-      <div className="relative z-10 w-full px-4 sm:px-6 lg:px-10 py-8 space-y-4">
+        className="relative z-10 w-full px-4 sm:px-6 lg:px-10 py-8 space-y-4"
+      >
       <Button asChild variant="ghost" size="sm" className="text-white hover:text-white hover:bg-white/10 -ml-2">
         <Link to="/forum"><ArrowLeft className="size-4 mr-1" />Back to forum</Link>
       </Button>

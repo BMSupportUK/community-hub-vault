@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { BORO_DEFAULT_AVATAR_URL as boroDefaultAvatar } from "@/lib/boro-default-avatar";
 import bgAsset from "@/assets/boro-fan-zone-profile-bg.jpg.asset.json";
 import { useFanAvatarLock } from "@/lib/fan-avatar-lock";
+import { useViewportLockable } from "@/hooks/use-viewport-lock";
 
 export const Route = createFileRoute("/_authenticated/_approved/fanzone/profile")({
   component: FanZoneProfilePage,
@@ -34,6 +35,7 @@ export const Route = createFileRoute("/_authenticated/_approved/fanzone/profile"
 
 function FanZoneProfilePage() {
   const { user, hasAny } = useAuth();
+  const lockable = useViewportLockable();
   const isStaff = hasAny(["admin", "boro_fan_zone_moderator"]);
   const { locked: avatarLocked, forcedAvatar, lockMessage } = useFanAvatarLock();
   const info = useFanZoneMembership(user?.id ?? null);
@@ -126,18 +128,11 @@ function FanZoneProfilePage() {
 
   return (
     <div
-      className="boro-theme relative min-h-[calc(100vh-4rem)] w-full overflow-hidden bg-cover bg-center bg-no-repeat"
-      style={{ backgroundImage: `url(${bgAsset.url})` }}
+      className={`boro-theme relative w-full overflow-y-auto overflow-x-hidden scrollbar-hide bg-cover bg-center bg-no-repeat ${lockable ? "h-full" : "min-h-[calc(100vh-4rem)]"}`}
+      style={{
+        backgroundImage: `linear-gradient(to bottom, rgba(3, 7, 18, 0.78), rgba(3, 7, 18, 0.72), rgba(3, 7, 18, 0.86)), url(${bgAsset.url})`,
+      }}
     >
-      <div
-        className="absolute inset-0"
-        style={{
-          background:
-            "linear-gradient(to bottom, rgba(3, 7, 18, 0.78), rgba(3, 7, 18, 0.72), rgba(3, 7, 18, 0.86))",
-        }}
-        aria-hidden
-      />
-
       <div className="relative z-10 w-full px-3 py-5 sm:px-6 sm:py-8 lg:px-10">
         <Button asChild variant="ghost" size="sm" className="text-white hover:text-white hover:bg-white/10 -ml-2 mb-4">
           <Link to="/forum"><ArrowLeft className="size-4 mr-1" />Back to forum</Link>
