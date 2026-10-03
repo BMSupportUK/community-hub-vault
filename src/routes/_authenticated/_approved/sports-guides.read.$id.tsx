@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import AdSenseSlot from "@/components/app/AdSenseSlot";
 import { toast } from "sonner";
 import { annotateTimesInEl } from "@/lib/parse-event-times";
-import { PagedGrid, PaginationBar } from "@/lib/paginate-by-height";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
 
 export const Route = createFileRoute("/_authenticated/_approved/sports-guides/read/$id")({
@@ -40,9 +39,6 @@ function ReadPage() {
   const [blog, setBlog] = useState<Blog | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
-  const [page, setPage] = useState(0);
-  const [pageCount, setPageCount] = useState(1);
-  const [stageHeight, setStageHeight] = useState(0);
   // Re-run the annotator on an interval so events whose stale window
   // (>10h past start) has elapsed drop out of the reader without the user
   // needing to refresh the page. Multi-date guides otherwise kept showing
@@ -174,9 +170,7 @@ function ReadPage() {
 
   // Equalize the event-name height within each visual grid row so every
   // card's channel chip list starts at the same height, even when one event
-  // name wraps to more lines than its neighbours. A delayed re-render from
-  // the paginated grid can rewrite the cards and drop the applied heights,
-  // so a DOM observer keeps re-applying the equalizer after each rewrite.
+  // name wraps to more lines than its neighbours.
   useLayoutEffect(() => {
     const el = stageRef.current;
     if (!el) return;
@@ -223,40 +217,7 @@ function ReadPage() {
       mo.disconnect();
       ro.disconnect();
     };
-  }, [bodyItems, page, pageCount]);
-  // Reset to first page when switching guides.
-  useEffect(() => {
-    setPage(0);
-  }, [id]);
-
-  useEffect(() => {
-    setPage((current) => Math.min(current, Math.max(0, pageCount - 1)));
-  }, [pageCount]);
-
-  // Measure available height of the body stage.
-  useLayoutEffect(() => {
-    const el = stageRef.current;
-    if (!el) return;
-    const update = () => setStageHeight(el.clientHeight);
-    update();
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [loading]);
-
-  // Arrow-key navigation.
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLElement) {
-        const tag = e.target.tagName;
-        if (tag === "INPUT" || tag === "TEXTAREA" || e.target.isContentEditable) return;
-      }
-      if (e.key === "ArrowLeft") setPage((p) => Math.max(0, p - 1));
-      else if (e.key === "ArrowRight") setPage((p) => Math.min(pageCount - 1, p + 1));
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [pageCount]);
+  }, [bodyItems]);
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-gradient-to-br from-[#1a0b2e] via-[#2d1b4e] to-[#1a0b2e]">
@@ -281,9 +242,7 @@ function ReadPage() {
           <ArrowLeft className="size-4 mr-1" /> Back to guides
         </Button>
         <span className="text-xs text-purple-200/70 font-medium">
-          {pageCount > 1
-            ? `Page ${page + 1} of ${pageCount} · ${bodyItems.length} events`
-            : `${bodyItems.length} ${bodyItems.length === 1 ? "listing" : "listings"}`}
+          {bodyItems.length} {bodyItems.length === 1 ? "listing" : "listings"}
         </span>
       </header>
       <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
@@ -349,26 +308,18 @@ function ReadPage() {
               <p className="text-base text-purple-100/80 italic line-clamp-2">{blog.excerpt}</p>
             )}
             {blog.body && (
-              <div ref={stageRef} className="flex-1 min-h-0 relative overflow-hidden">
-                <PagedGrid
-                  items={bodyItems}
-                  availableHeight={stageHeight}
-                  maxRows={2}
-                  page={page}
-                  onPagesChange={setPageCount}
-                  className="prose prose-invert max-w-none text-purple-50/90 leading-relaxed grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3"
-                  renderItem={(html, i) => (
+              <div
+                ref={stageRef}
+                className="flex-1 min-h-0 overflow-y-auto overscroll-contain pr-1 [scrollbar-gutter:stable]"
+              >
+                <div className="prose prose-invert max-w-none text-purple-50/90 leading-relaxed grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 pb-3">
+                  {bodyItems.map((html, i) => (
                     <div key={`bi-${i}`} dangerouslySetInnerHTML={{ __html: html }} />
-                  )}
-                />
+                  ))}
+                </div>
               </div>
             )}
           </article>
-        )}
-        {pageCount > 1 && (
-          <div className="shrink-0 py-2 border-t border-purple-500/30 bg-purple-950/60 backdrop-blur">
-            <PaginationBar page={page} pageCount={pageCount} onPageChange={setPage} />
-          </div>
         )}
       </div>
     </div>
