@@ -622,7 +622,7 @@ function GatePage() {
             our security staff and never shared. You can turn it off anytime in your browser settings.
           </p>
           <p className="mt-3 text-white/60 text-sm max-w-md">
-            Location access is required to request access to BM Support.
+            Location access is required to request access to BM Support. You can't continue without it.
           </p>
           <button
             onClick={allowLocation}
@@ -631,13 +631,6 @@ function GatePage() {
           >
             {locBusy ? <Loader2 className="size-4 animate-spin" /> : <MapPin className="size-4" />}
             {locBusy ? "Waiting for your browser…" : "Allow location"}
-          </button>
-          <button
-            onClick={refuseLocation}
-            disabled={locBusy}
-            className="mt-3 w-full max-w-md py-3 rounded-lg font-semibold text-white/80 bg-white/5 hover:bg-white/10 border border-white/20"
-          >
-            Don't allow
           </button>
         </div>
       </div>
@@ -658,11 +651,11 @@ function GatePage() {
         </div>
 
         <h1 className="font-display text-4xl md:text-5xl font-extrabold text-white tracking-tight">
-          {locationBlocked ? "Access Not Granted" : status === "denied" ? "Account Not Activated" : status === "approved" ? "Access Granted" : "Access Required"}
+          {locationBlocked ? "Location Required" : status === "denied" ? "Account Not Activated" : status === "approved" ? "Access Granted" : "Access Required"}
         </h1>
         <p className="mt-3 text-red-200/90 text-base max-w-md">
           {locationBlocked
-            ? "Due to security measures we can't grant access to the site because location access was refused. You can create an appeal."
+            ? "Direct sign-ups must share their location before requesting access. If you blocked it, turn location on for this site in your browser's site settings, then use the button below to try again."
             : status === "approved"
             ? "Welcome aboard. Refreshing your access…"
             : status === "denied"
