@@ -619,7 +619,7 @@ function GatePage() {
           </h1>
           <p className="mt-4 text-white/80 text-base max-w-md">
             We use your location to help protect your account and spot suspicious logins. It's only visible to
-            our security staff and never shared. You can turn it off anytime in your browser settings.
+            our security staff and never shared.
           </p>
           <p className="mt-3 text-sm font-semibold text-amber-300 max-w-md">
             Location sharing is mandatory — it's required to protect the security of your account and everyone
