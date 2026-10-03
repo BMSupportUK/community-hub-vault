@@ -14,7 +14,13 @@ interface CredRow {
 }
 
 
-export function SubscriptionDetailsCard({ compact = false }: { compact?: boolean }) {
+export function SubscriptionDetailsCard({
+  compact = false,
+  embedded = false,
+}: {
+  compact?: boolean;
+  embedded?: boolean;
+}) {
   const { user } = useAuth();
   const [creds, setCreds] = useState<CredRow[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -74,10 +80,12 @@ export function SubscriptionDetailsCard({ compact = false }: { compact?: boolean
     return (
       <div
         className={cn(
-          "rounded-2xl border-2 border-violet-500/60 bg-surface shadow-[0_0_30px_rgba(139,92,246,0.25)] overflow-hidden flex flex-col mx-auto animate-pulse",
+          "overflow-hidden flex flex-col animate-pulse",
+          embedded
+            ? "w-full rounded-xl border border-white/25 bg-background/20 shadow-lg backdrop-blur-md"
+            : "mx-auto rounded-2xl border-2 border-violet-500/60 bg-surface shadow-[0_0_30px_rgba(139,92,246,0.25)]",
           !compact && "h-full",
         )}
-        style={{ width: 300, maxWidth: "100%" }}
       >
         <div className={compact ? "aspect-[300/76] bg-muted" : "aspect-[300/140] bg-muted"} />
         <div className="flex-1 p-4 space-y-3">
@@ -102,14 +110,16 @@ export function SubscriptionDetailsCard({ compact = false }: { compact?: boolean
   return (
     <div
       className={cn(
-        "rounded-2xl border-2 border-violet-500/60 bg-surface shadow-[0_0_30px_rgba(139,92,246,0.25)] overflow-hidden flex flex-col mx-auto",
+        "overflow-hidden flex flex-col",
+        embedded
+          ? "w-full rounded-xl border border-white/25 bg-background/20 text-white shadow-lg backdrop-blur-md"
+          : "mx-auto w-[300px] max-w-full rounded-2xl border-2 border-violet-500/60 bg-surface shadow-[0_0_30px_rgba(139,92,246,0.25)]",
         !compact && "h-full",
       )}
-      style={{ width: 300, maxWidth: "100%" }}
     >
       {/* Header */}
       <div className="relative shrink-0 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600" />
+        <div className={cn("absolute inset-0", embedded ? "bg-background/20" : "bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600")} />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.2),transparent_50%)]" />
         <div className={cn(
           "relative flex flex-col items-center justify-center text-white text-center",
@@ -140,20 +150,21 @@ export function SubscriptionDetailsCard({ compact = false }: { compact?: boolean
             <div
               key={c.id}
               className={cn(
-                "flex items-center justify-between gap-2 rounded-lg bg-surface-2/70 border border-border",
+                "flex items-center justify-between gap-2 rounded-lg border",
+                embedded ? "border-white/20 bg-background/20" : "border-border bg-surface-2/70",
                 compact ? "px-2 py-1.5" : "px-2.5 py-2",
               )}
             >
               <div className="min-w-0">
-                <div className="text-xs font-semibold text-foreground truncate">
+                <div className={cn("text-xs font-semibold truncate", embedded ? "text-white" : "text-foreground")}>
                   Account {c.account_number}
-                  <span className="ml-1 text-[10px] font-normal text-muted-foreground">
+                  <span className={cn("ml-1 text-[10px] font-normal", embedded ? "text-white/70" : "text-muted-foreground")}>
                     · {accountTypeLabel(c.account_type)}
                   </span>
                 </div>
                 {c.app_login_name && (
-                  <div className="text-[11px] text-muted-foreground truncate">
-                    Login: <span className="font-semibold text-foreground">{c.app_login_name}</span>
+                  <div className={cn("text-[11px] truncate", embedded ? "text-white/70" : "text-muted-foreground")}>
+                    Login: <span className={cn("font-semibold", embedded ? "text-white" : "text-foreground")}>{c.app_login_name}</span>
                   </div>
                 )}
                 <div className={cn(
