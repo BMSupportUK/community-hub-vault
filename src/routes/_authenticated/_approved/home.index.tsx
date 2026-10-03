@@ -165,15 +165,15 @@ function WelcomePage() {
                       </div>
                     </>
                   ) : (
-                    <div className="flex min-h-96 flex-1 flex-col justify-between gap-6 py-1 md:min-h-full md:py-3">
-                      <div className="text-xs uppercase text-sky-200/80">BM Support · Member Hub</div>
-                      <h1 className="font-display text-2xl font-bold leading-tight lg:text-3xl xl:text-4xl xl:leading-[1.1]">
+                    <div className="flex min-h-96 flex-1 flex-col items-center justify-between gap-5 py-1 text-center md:min-h-full md:py-2">
+                      <div className="text-sm font-semibold uppercase tracking-wide text-sky-200/90">BM Support · Member Hub</div>
+                      <h1 className="font-display text-4xl font-bold leading-tight lg:text-5xl xl:leading-[1.05]">
                         Welcome to BM Support
                       </h1>
-                      <p className="max-w-xl text-xs leading-relaxed text-white/95 lg:text-sm">
+                      <p className="max-w-xl text-base leading-relaxed text-white/95 lg:text-lg">
                         Hey {name} — stay connected with the community, manage your account and get help.
                       </p>
-                      <p className="max-w-xl text-[11px] leading-relaxed text-white/85 lg:text-xs">
+                      <p className="max-w-xl text-sm leading-relaxed text-white/85 lg:text-base">
                         Access channels, schedules, support and services—all in one place.
                       </p>
                     </div>
@@ -218,7 +218,7 @@ function WelcomePage() {
           <div className="flex min-h-0 w-full flex-col items-stretch gap-4">
             {/* Staff accounts see their subscription box on their profile instead. */}
             {!isStaffAccount && <SubscriptionDetailsCard compact />}
-            <AdSenseSlot slot="homeSquare" />
+            <AdSenseSlot slot={isStaffAccount ? "homeSkyscraper" : "homeSquare"} />
             </div>
           </div>
       </section>
