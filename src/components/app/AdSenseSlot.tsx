@@ -4,7 +4,7 @@ import type { AdSize } from "@/lib/ad-sizes";
 import { useRouterState } from "@tanstack/react-router";
 import { placementForPath } from "@/lib/ad-zones";
 
-export type AdSenseSlotKind = "topic" | "sidebar" | "home" | "homeSquare" | "talk" | "welcome";
+export type AdSenseSlotKind = "topic" | "sidebar" | "home" | "homeSquare" | "homeSkyscraper" | "talk" | "welcome";
 
 /**
  * Which banner size each slot kind shows. Sidebar slots take the tall
@@ -15,6 +15,7 @@ const SLOT_SIZE: Record<AdSenseSlotKind, AdSize> = {
   topic: "leaderboard",
   home: "leaderboard",
   homeSquare: "square",
+  homeSkyscraper: "skyscraper",
   talk: "leaderboard",
   welcome: "leaderboard",
 };
