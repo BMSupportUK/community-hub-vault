@@ -224,7 +224,7 @@ function WelcomePage() {
       </section>
 
       {/* Quick links */}
-      <section className="shrink-0 min-w-0 p-3 xl:p-4">
+      <section className="shrink-0 min-w-0 px-3 pt-1 pb-3 xl:px-4 xl:pt-2 xl:pb-4">
         <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
           <h2 className="font-display text-lg font-semibold">Jump back in</h2>
           <Link
