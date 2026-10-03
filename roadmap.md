@@ -1,6 +1,7 @@
 # Roadmap
 
 ## Current
+- [x] Sports Guides: show newly created empty categories to staff while keeping them hidden from members
 - [x] Make the complete BM Support and Fan Zone profile experience fit iPhone screens, including Credentials
 - [x] Stop installed iPhone app launches from opening an advert
 - [x] Sign-up: block VPNs for direct BM Support registration, bypass referral links, and leave Boro Fan Zone unaffected

@@ -1125,8 +1125,10 @@ function SportsGuidesPage() {
                     const kids = childrenByParent[top.id] ?? [];
                     // Only show a row when it (or, for a heading, one of its
                     // categories) holds a guide with listings.
-                    const visibleKids = kids.filter((k) => visibleCatIds.has(k.id));
-                    if (visibleKids.length === 0 && !visibleCatIds.has(top.id)) return null;
+                    const visibleKids = canManageCategories
+                      ? kids
+                      : kids.filter((k) => visibleCatIds.has(k.id));
+                    if (!canManageCategories && visibleKids.length === 0 && !visibleCatIds.has(top.id)) return null;
                     const heading = kids.length > 0;
                     const open = openGroups.includes(top.id);
                     const headingUnread = heading
@@ -1318,7 +1320,7 @@ function SportsGuidesPage() {
                       </div>
                       <div className="grid max-h-[70vh] gap-1 overflow-y-auto">
 
-                        {children.filter((child) => visibleCatIds.has(child.id)).map((child) => {
+                        {children.filter((child) => canManageCategories || visibleCatIds.has(child.id)).map((child) => {
                           const active = child.id === activeCat;
                           const unread = unreadDeep[child.id] ?? 0;
                           return (
