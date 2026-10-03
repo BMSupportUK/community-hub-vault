@@ -689,11 +689,11 @@ function GatePage() {
             onClick={() => setLocState("ask")}
             className="mt-6 w-full max-w-md py-3 rounded-lg font-semibold text-white bg-gradient-to-r from-violet-600 to-blue-600 hover:from-violet-500 hover:to-blue-500 inline-flex items-center justify-center gap-2"
           >
-            <MapPin className="size-4" /> I've changed my mind — allow location
+            <MapPin className="size-4" /> Allow location
           </button>
         )}
 
-        {(status === "denied" || locationBlocked) && (
+        {status === "denied" && (
           <button
             onClick={() => {
               setReasonDraft("[APPEAL] ");
