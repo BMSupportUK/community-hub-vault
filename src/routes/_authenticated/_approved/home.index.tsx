@@ -164,20 +164,27 @@ function WelcomePage() {
                   <p className="mt-2 max-w-xl text-sm text-white/85 lg:text-base">
                     Access channels, schedules, support and services—all in one place.
                   </p>
-                  <div className="mt-4 w-full max-w-[280px] self-center md:self-start lg:max-w-[240px]">
+                  <div className="mt-4 w-full max-w-[300px] self-center md:hidden">
                     <AdSenseSlot slot="homeSquare" />
                   </div>
                 </div>
 
-                <div className="relative min-h-56 min-w-0 overflow-hidden rounded-xl bg-blue-950/30 ring-1 ring-white/10 md:h-full">
-                  <img
-                    src={heroImg}
-                    alt="BM Support — community and support"
-                    width={1280}
-                    height={832}
-                    className="h-full w-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-tr from-blue-950/35 via-transparent to-transparent" />
+                <div className="relative flex min-h-56 min-w-0 flex-col overflow-hidden rounded-xl bg-blue-950/30 ring-1 ring-white/10 md:h-full">
+                  <div className="relative min-h-0 flex-1">
+                    <img
+                      src={heroImg}
+                      alt="BM Support — community and support"
+                      width={1280}
+                      height={832}
+                      className="h-full w-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-tr from-blue-950/35 via-transparent to-transparent" />
+                  </div>
+                  <div className="hidden shrink-0 self-center p-3 md:block">
+                    <div className="w-[200px]">
+                      <AdSenseSlot slot="homeSquare" />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
