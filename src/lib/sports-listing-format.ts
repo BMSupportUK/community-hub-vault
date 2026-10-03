@@ -959,7 +959,7 @@ function reorderMarkedTitleTimeBlocks(raw: string): string {
     let next = i + 1;
     while (next < lines.length && !lines[next]?.trim()) next++;
     const slot = detectEvent(cleanLine(lines[next] ?? ""), null);
-    if (!slot || title.includes("|")) continue;
+    if (!slot || markedTitle.includes("|")) continue;
     const timeLine = lines[next]!;
     lines[i] = timeLine;
     lines[next] = markedTitle;
