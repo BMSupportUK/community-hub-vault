@@ -549,6 +549,9 @@ async function createMatchTopic(
     .select("id, title, author_id")
     .single();
   if (error || !topic) return null;
+  // The match prediction poll is part of the thread itself — create it the
+  // moment the thread opens so no game post can exist without its vote.
+  await ensureMatchPoll(supabaseAdmin, topic.id, authorId, fx).catch(() => false);
   // Open with the "awaiting press conference" fixture graphic straight away —
   // the real video replaces it later via upsertPresserBlock.
   const { error: postErr } = await supabaseAdmin.from("forum_posts").insert({
