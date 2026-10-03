@@ -167,6 +167,9 @@ function WelcomePage() {
                   <div className="mt-4 w-full max-w-[360px] self-center md:hidden">
                     <AdSenseSlot slot="home" />
                   </div>
+                  <div className="mt-4 w-full">
+                    <WorkingStatusBox />
+                  </div>
                 </div>
 
                 <div className="relative flex min-h-56 min-w-0 flex-col overflow-hidden rounded-xl bg-blue-950/30 ring-1 ring-white/10 md:h-full">
@@ -179,9 +182,6 @@ function WelcomePage() {
                       className="h-full w-full object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-tr from-blue-950/35 via-transparent to-transparent" />
-                  </div>
-                  <div className="hidden w-full shrink-0 p-3 md:block">
-                    <AdSenseSlot slot="home" />
                   </div>
                 </div>
               </div>
@@ -208,7 +208,7 @@ function WelcomePage() {
           </div>
 
           <div className="flex min-h-0 w-full flex-col items-stretch gap-4">
-            <WorkingStatusBox />
+            <AdSenseSlot slot="homeSquare" />
             {/* Staff accounts see their subscription box on their profile instead. */}
             {!isStaffAccount && <SubscriptionDetailsCard />}
             </div>
