@@ -125,7 +125,7 @@ export function checkSportsImport(
   //    have become an event. Fewer events than timed rows means lost listings.
   const timedRows = raw
     .split(/\n/)
-    .map((l) => l.trim())
+    .map((l) => l.trim().replace(/\([^)]*\)/g, ""))
     .filter((l) => l && CLOCK_RE.test(l) && !/^(all\s+times|times\s+(are|in))/i.test(l)).length;
   if (timedRows > events.length) {
     issues.push({
