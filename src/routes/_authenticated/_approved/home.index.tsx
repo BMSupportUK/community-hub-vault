@@ -180,10 +180,8 @@ function WelcomePage() {
                     />
                     <div className="absolute inset-0 bg-gradient-to-tr from-blue-950/35 via-transparent to-transparent" />
                   </div>
-                  <div className="hidden shrink-0 self-center p-3 md:block">
-                    <div className="w-[200px]">
-                      <AdSenseSlot slot="homeSquare" />
-                    </div>
+                  <div className="hidden w-full shrink-0 p-3 md:block">
+                    <AdSenseSlot slot="home" />
                   </div>
                 </div>
               </div>
