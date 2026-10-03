@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { AD_SIZES, AD_SIZE_KEYS, ADVERTISE_HERE_NAME, type AdSize } from "@/lib/ad-sizes";
 import { AD_SITES, AD_SITE_KEYS, BM_ZONES, BM_ZONE_SIZES, type AdSite } from "@/lib/ad-zones";
@@ -54,6 +55,7 @@ function AdminAffiliateBannersPage() {
   const [placeholders, setPlaceholders] = useState<Banner[]>([]);
   const [phUploading, setPhUploading] = useState<AdSize | null>(null);
   const [stats, setStats] = useState<Record<string, BannerStat>>({});
+  const [activeTab, setActiveTab] = useState("advertise-here");
 
   const load = async () => {
     const [{ data: bs }, { data: brds }, { data: asg }, { data: statRows }] = await Promise.all([
@@ -100,6 +102,7 @@ function AdminAffiliateBannersPage() {
       if (insErr) throw insErr;
       setNewName("");
       toast.success("Banner uploaded");
+      setActiveTab(newSize);
       await load();
     } catch (e: any) {
       toast.error(e?.message ?? "Upload failed");
@@ -193,93 +196,166 @@ function AdminAffiliateBannersPage() {
           Upload your own advert banners and assign them to the exact page zones where they should appear.
           Member Home and the public landing page are separate zones. Design your artwork to match:
         </p>
-        <div className="mt-3 grid gap-2 sm:grid-cols-2">
-          {AD_SIZE_KEYS.map((k) => (
-            <div key={k} className="rounded-xl border border-border bg-surface-1 p-3">
-              <div className="font-semibold text-sm">{AD_SIZES[k].label}</div>
-              <div className="text-xs text-muted-foreground mt-0.5">{AD_SIZES[k].description}</div>
-              <div className="text-xs mt-1.5 font-mono text-foreground">{AD_SIZES[k].recommended}</div>
-            </div>
-          ))}
-        </div>
       </div>
 
-      <section className="rounded-2xl border border-border bg-surface-1 p-4 space-y-3">
-        <h2 className="font-display font-bold text-lg">Advertise here</h2>
-        <p className="text-xs text-muted-foreground">Upload one version for each size. It receives the same random, equal display time as every other banner.</p>
-        <div className="grid gap-3 sm:grid-cols-3">
-          {AD_SIZE_KEYS.map((k) => {
-            const current = placeholders.find((p) => p.size === k);
-            return (
-              <div key={k} className="rounded-xl border border-border bg-background p-3 space-y-2">
-                <div className="font-semibold text-sm">{AD_SIZES[k].label}</div>
-                <div className="text-[11px] font-mono text-muted-foreground">{AD_SIZES[k].recommended}</div>
-                <div className="rounded-lg border border-border bg-surface-1 overflow-hidden grid place-items-center" style={{ aspectRatio: `${AD_SIZES[k].width} / ${AD_SIZES[k].height}`, maxHeight: 220 }}>
-                  {current ? <img src={current.image_url} alt="" className="w-full h-full object-cover" /> : <span className="text-xs text-muted-foreground p-2 text-center">Using built-in default</span>}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList className="h-auto w-full flex-wrap justify-start gap-1 bg-surface-1 p-1">
+          <TabsTrigger value="advertise-here">Advertise here</TabsTrigger>
+          {AD_SIZE_KEYS.map((k) => (
+            <TabsTrigger key={k} value={k}>
+              {AD_SIZES[k].label}
+              <span className="ml-1.5 rounded-full bg-primary/10 border border-primary/30 px-1.5 text-[11px] font-semibold">
+                {banners ? banners.filter((b) => (b.size ?? "skyscraper") === k).length : "…"}
+              </span>
+            </TabsTrigger>
+          ))}
+          <TabsTrigger value="upload">Upload a new banner</TabsTrigger>
+          <TabsTrigger value="zones">Zones &amp; sizes</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="advertise-here" className="space-y-3">
+          <p className="text-xs text-muted-foreground">Upload one version for each size. It receives the same random, equal display time as every other banner.</p>
+          <div className="grid gap-3 sm:grid-cols-3">
+            {AD_SIZE_KEYS.map((k) => {
+              const current = placeholders.find((p) => p.size === k);
+              return (
+                <div key={k} className="rounded-xl border border-border bg-surface-1 p-3 space-y-2">
+                  <div className="font-semibold text-sm">{AD_SIZES[k].label}</div>
+                  <div className="text-[11px] font-mono text-muted-foreground">{AD_SIZES[k].recommended}</div>
+                  <div className="rounded-lg border border-border bg-background overflow-hidden grid place-items-center" style={{ aspectRatio: `${AD_SIZES[k].width} / ${AD_SIZES[k].height}`, maxHeight: 220 }}>
+                    {current ? <img src={current.image_url} alt="" className="w-full h-full object-cover" /> : <span className="text-xs text-muted-foreground p-2 text-center">Using built-in default</span>}
+                  </div>
+                  <BannerStats stats={stats[current?.id ?? `__advertise_here__:${k}`]} />
+                  <label className="block">
+                    <input type="file" accept="image/*" className="hidden" disabled={phUploading !== null}
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadPlaceholder(k, f); e.currentTarget.value = ""; }} />
+                    <span className="inline-flex w-full items-center justify-center gap-1 h-9 rounded-md bg-primary text-primary-foreground text-sm font-medium cursor-pointer">
+                      {phUploading === k ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
+                      {current ? "Replace" : "Upload"}
+                    </span>
+                  </label>
                 </div>
-                 <BannerStats stats={stats[current?.id ?? `__advertise_here__:${k}`]} />
-                <label className="block">
-                  <input type="file" accept="image/*" className="hidden" disabled={phUploading !== null}
-                    onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadPlaceholder(k, f); e.currentTarget.value = ""; }} />
-                  <span className="inline-flex w-full items-center justify-center gap-1 h-9 rounded-md bg-primary text-primary-foreground text-sm font-medium cursor-pointer">
-                    {phUploading === k ? <Loader2 className="size-4 animate-spin" /> : <Upload className="size-4" />}
-                    {current ? "Replace" : "Upload"}
-                  </span>
-                </label>
+              );
+            })}
+          </div>
+        </TabsContent>
+
+        {AD_SIZE_KEYS.map((sizeKey) => (
+          <TabsContent key={sizeKey} value={sizeKey} className="space-y-4">
+            <section className="space-y-4 rounded-3xl border-2 border-border p-3 md:p-4">
+              <div className="flex flex-wrap items-center gap-3">
+                <h2 className="font-display text-xl font-bold">{AD_SIZES[sizeKey].label}</h2>
+                <span className="text-xs text-muted-foreground font-mono">{AD_SIZES[sizeKey].recommended}</span>
               </div>
-            );
-          })}
-        </div>
-      </section>
+              {banners === null ? (
+                <div className="grid place-items-center py-10 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>
+              ) : (
+                AD_SITE_KEYS.map((siteKey) => {
+                  const sizeBanners = banners.filter((b) => (b.size ?? "skyscraper") === sizeKey && (b.site ?? "bm_support") === siteKey);
+                  return (
+                    <div key={siteKey} className="space-y-3">
+                      <div className="rounded-xl border border-border bg-surface-1 px-4 py-3 flex flex-wrap items-center gap-3">
+                        <h3 className="font-display font-bold">{AD_SITES[siteKey]}</h3>
+                        <span className="text-xs rounded-full bg-primary/10 border border-primary/30 px-2 py-0.5 font-semibold">{sizeBanners.length} {sizeBanners.length === 1 ? "banner" : "banners"}</span>
+                      </div>
+                      {sizeBanners.length === 0 ? (
+                        <div className="rounded-xl border border-dashed border-border bg-surface-1 p-5 text-center text-sm text-muted-foreground">No banners in this section yet.</div>
+                      ) : (
+                        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
+                          {sizeBanners.map((b) => (
+                            <div key={b.id} className="rounded-2xl border border-border bg-surface-1 overflow-hidden">
+                              <div className="grid grid-cols-[112px_1fr] gap-3 p-3">
+                                <div className="space-y-2">
+                                  <div className="rounded-lg overflow-hidden bg-background border border-border">
+                                    <img src={b.image_url} alt={b.alt_text ?? b.name} className={`w-full object-center ${b.size === "leaderboard" ? "aspect-[3/1] object-contain" : b.size === "square" ? "aspect-square object-cover" : "aspect-[1/2] object-cover"}`} />
+                                  </div>
+                                  <BannerStats stats={stats[b.id]} />
+                                </div>
+                                <div className="min-w-0 space-y-2">
+                                  <Input value={b.name} onChange={(e) => updateField(b.id, { name: e.target.value })} placeholder="Name" />
+                                  <select value={b.size} onChange={(e) => updateField(b.id, { size: e.target.value as AdSize })} className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm" aria-label="Banner size">
+                                    {AD_SIZE_KEYS.map((k) => <option key={k} value={k}>{AD_SIZES[k].label} — {AD_SIZES[k].width}×{AD_SIZES[k].height}</option>)}
+                                  </select>
+                                  <select value={b.site} onChange={(e) => updateField(b.id, { site: e.target.value as AdSite })} className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm" aria-label="Banner site">
+                                    {AD_SITE_KEYS.map((k) => <option key={k} value={k}>{AD_SITES[k]}</option>)}
+                                  </select>
+                                  <Input value={b.link_url ?? ""} onChange={(e) => updateField(b.id, { link_url: e.target.value })} placeholder="Click-through URL (optional)" />
+                                  <Input value={b.alt_text ?? ""} onChange={(e) => updateField(b.id, { alt_text: e.target.value })} placeholder="Alt text (optional)" />
+                                  <div className="flex items-center justify-between gap-2">
+                                    <a href={b.image_url} target="_blank" rel="noopener noreferrer" className="text-[11px] text-muted-foreground hover:text-foreground inline-flex items-center gap-1"><ExternalLink className="size-3" /> Open image</a>
+                                    <div className="flex gap-1.5"><Button size="sm" variant="outline" onClick={() => void saveBanner(b)}><Save className="size-3.5 mr-1" />Save</Button><Button size="sm" variant="destructive" onClick={() => void deleteBanner(b)}><Trash2 className="size-3.5" /></Button></div>
+                                  </div>
+                                </div>
+                              </div>
+                              {b.site === "bm_support" && (
+                                <div className="border-t border-border bg-background/60 p-3">
+                                  <div className="text-[11px] uppercase tracking-wide text-muted-foreground mb-1">Show in zones</div>
+                                  <p className="text-[11px] text-muted-foreground mb-2">{b.zones.length === 0 ? "None ticked = shows in every zone." : `${b.zones.length} selected.`} Press Save to apply.</p>
+                                  <div className="grid grid-cols-2 gap-1.5">{BM_ZONES.map((z) => { const on = b.zones.includes(z.key); return <label key={z.key} className={`flex items-center gap-2 text-xs px-2 py-1.5 rounded-md border ${on ? "border-primary/50 bg-primary/10" : "border-border bg-surface-2/60"}`}><input type="checkbox" checked={on} onChange={(e) => updateField(b.id, { zones: e.target.checked ? [...b.zones, z.key] : b.zones.filter((k) => k !== z.key) })} /><span className="truncate">{z.label}</span></label>; })}</div>
+                                </div>
+                              )}
+                              <div className="border-t border-border bg-background/60 p-3">
+                                <div className="text-[11px] uppercase tracking-wide text-muted-foreground mb-2">Assign to forum boards</div>
+                                {boards.length === 0 ? <p className="text-xs text-muted-foreground">No forum boards.</p> : <div className="grid grid-cols-2 gap-1.5">{boards.map((br) => { const checked = assignments.some((a) => a.board_id === br.id && a.banner_id === b.id); return <label key={br.id} className={`flex items-center gap-2 text-xs px-2 py-1.5 rounded-md border ${checked ? "border-primary/50 bg-primary/10" : "border-border bg-surface-2/60"}`}><input type="checkbox" checked={checked} onChange={(e) => void toggleBoard(b, br.id, e.target.checked)} /><span className="truncate">{br.name}</span></label>; })}</div>}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              )}
+            </section>
+          </TabsContent>
+        ))}
 
-      <section className="rounded-2xl border border-border bg-surface-1 p-4 space-y-3">
-        <h2 className="font-display font-bold text-sm uppercase tracking-wide text-muted-foreground">Upload a new banner</h2>
-        <div className="grid sm:grid-cols-[1fr_auto_auto_auto] gap-2">
-          <Input
-            value={newName}
-            onChange={(e) => setNewName(e.target.value)}
-            placeholder="Banner name (e.g. Acme Telecoms — Spring promo)"
-            disabled={uploading}
-          />
-          <select
-            value={newSite}
-            onChange={(e) => setNewSite(e.target.value as AdSite)}
-            disabled={uploading}
-            className="h-9 rounded-md border border-border bg-background px-2 text-sm"
-            aria-label="Banner site"
-          >
-            {AD_SITE_KEYS.map((k) => <option key={k} value={k}>{AD_SITES[k]}</option>)}
-          </select>
-          <select
-            value={newSize}
-            onChange={(e) => setNewSize(e.target.value as AdSize)}
-            disabled={uploading}
-            className="h-9 rounded-md border border-border bg-background px-2 text-sm"
-            aria-label="Banner size"
-          >
-            {AD_SIZE_KEYS.map((k) => (
-              <option key={k} value={k}>{AD_SIZES[k].label} — {AD_SIZES[k].width}×{AD_SIZES[k].height}</option>
-            ))}
-          </select>
-          <input
-            ref={fileRef}
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadBanner(f); e.currentTarget.value = ""; }}
-          />
-          <Button type="button" onClick={() => fileRef.current?.click()} disabled={uploading}>
-            {uploading ? <Loader2 className="size-4 mr-1 animate-spin" /> : <Upload className="size-4 mr-1" />}
-            {uploading ? "Uploading…" : "Upload image"}
-          </Button>
-        </div>
-        <p className="text-[11px] text-muted-foreground">Max 5MB. Pick the size your artwork was designed for — slots only rotate banners that fit them.</p>
-      </section>
+        <TabsContent value="upload">
+          <section className="rounded-2xl border border-border bg-surface-1 p-4 space-y-3">
+            <div className="grid sm:grid-cols-[1fr_auto_auto_auto] gap-2">
+              <Input
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                placeholder="Banner name (e.g. Acme Telecoms — Spring promo)"
+                disabled={uploading}
+              />
+              <select
+                value={newSite}
+                onChange={(e) => setNewSite(e.target.value as AdSite)}
+                disabled={uploading}
+                className="h-9 rounded-md border border-border bg-background px-2 text-sm"
+                aria-label="Banner site"
+              >
+                {AD_SITE_KEYS.map((k) => <option key={k} value={k}>{AD_SITES[k]}</option>)}
+              </select>
+              <select
+                value={newSize}
+                onChange={(e) => setNewSize(e.target.value as AdSize)}
+                disabled={uploading}
+                className="h-9 rounded-md border border-border bg-background px-2 text-sm"
+                aria-label="Banner size"
+              >
+                {AD_SIZE_KEYS.map((k) => (
+                  <option key={k} value={k}>{AD_SIZES[k].label} — {AD_SIZES[k].width}×{AD_SIZES[k].height}</option>
+                ))}
+              </select>
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadBanner(f); e.currentTarget.value = ""; }}
+              />
+              <Button type="button" onClick={() => fileRef.current?.click()} disabled={uploading}>
+                {uploading ? <Loader2 className="size-4 mr-1 animate-spin" /> : <Upload className="size-4 mr-1" />}
+                {uploading ? "Uploading…" : "Upload image"}
+              </Button>
+            </div>
+            <p className="text-[11px] text-muted-foreground">Max 5MB. Pick the size your artwork was designed for — slots only rotate banners that fit them.</p>
+          </section>
+        </TabsContent>
 
-      {!banners ? (
-        <div className="grid place-items-center py-10 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>
-      ) : (
-        <>
+        <TabsContent value="zones">
           <div className="rounded-2xl border border-border bg-surface-1 px-4 py-3">
             <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">BM Support zones and the sizes each can show</p>
             <ul className="grid gap-x-6 gap-y-1 sm:grid-cols-2 lg:grid-cols-3 text-xs">
@@ -293,71 +369,8 @@ function AdminAffiliateBannersPage() {
               ))}
             </ul>
           </div>
-        {AD_SIZE_KEYS.map((sizeKey) => (
-        <section key={sizeKey} className="space-y-4 rounded-3xl border-2 border-border p-3 md:p-4">
-          <div className="flex flex-wrap items-center gap-3">
-            <h2 className="font-display text-xl font-bold">{AD_SIZES[sizeKey].label}</h2>
-            <span className="text-xs text-muted-foreground font-mono">{AD_SIZES[sizeKey].recommended}</span>
-          </div>
-          {AD_SITE_KEYS.map((siteKey) => {
-          const sizeBanners = banners.filter((b) => (b.size ?? "skyscraper") === sizeKey && (b.site ?? "bm_support") === siteKey);
-          return (
-            <div key={siteKey} className="space-y-3">
-              <div className="rounded-xl border border-border bg-surface-1 px-4 py-3 flex flex-wrap items-center gap-3">
-                <h3 className="font-display font-bold">{AD_SITES[siteKey]}</h3>
-                <span className="text-xs rounded-full bg-primary/10 border border-primary/30 px-2 py-0.5 font-semibold">{sizeBanners.length} {sizeBanners.length === 1 ? "banner" : "banners"}</span>
-              </div>
-              {sizeBanners.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-border bg-surface-1 p-5 text-center text-sm text-muted-foreground">No banners in this section yet.</div>
-              ) : (
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-                  {sizeBanners.map((b) => (
-                    <div key={b.id} className="rounded-2xl border border-border bg-surface-1 overflow-hidden">
-                      <div className="grid grid-cols-[112px_1fr] gap-3 p-3">
-                        <div className="space-y-2">
-                          <div className="rounded-lg overflow-hidden bg-background border border-border">
-                            <img src={b.image_url} alt={b.alt_text ?? b.name} className={`w-full object-center ${b.size === "leaderboard" ? "aspect-[3/1] object-contain" : b.size === "square" ? "aspect-square object-cover" : "aspect-[1/2] object-cover"}`} />
-                          </div>
-                          <BannerStats stats={stats[b.id]} />
-                        </div>
-                        <div className="min-w-0 space-y-2">
-                          <Input value={b.name} onChange={(e) => updateField(b.id, { name: e.target.value })} placeholder="Name" />
-                          <select value={b.size} onChange={(e) => updateField(b.id, { size: e.target.value as AdSize })} className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm" aria-label="Banner size">
-                            {AD_SIZE_KEYS.map((k) => <option key={k} value={k}>{AD_SIZES[k].label} — {AD_SIZES[k].width}×{AD_SIZES[k].height}</option>)}
-                          </select>
-                          <select value={b.site} onChange={(e) => updateField(b.id, { site: e.target.value as AdSite })} className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm" aria-label="Banner site">
-                            {AD_SITE_KEYS.map((k) => <option key={k} value={k}>{AD_SITES[k]}</option>)}
-                          </select>
-                          <Input value={b.link_url ?? ""} onChange={(e) => updateField(b.id, { link_url: e.target.value })} placeholder="Click-through URL (optional)" />
-                          <Input value={b.alt_text ?? ""} onChange={(e) => updateField(b.id, { alt_text: e.target.value })} placeholder="Alt text (optional)" />
-                          <div className="flex items-center justify-between gap-2">
-                            <a href={b.image_url} target="_blank" rel="noopener noreferrer" className="text-[11px] text-muted-foreground hover:text-foreground inline-flex items-center gap-1"><ExternalLink className="size-3" /> Open image</a>
-                            <div className="flex gap-1.5"><Button size="sm" variant="outline" onClick={() => void saveBanner(b)}><Save className="size-3.5 mr-1" />Save</Button><Button size="sm" variant="destructive" onClick={() => void deleteBanner(b)}><Trash2 className="size-3.5" /></Button></div>
-                          </div>
-                        </div>
-                      </div>
-                      {b.site === "bm_support" && (
-                        <div className="border-t border-border bg-background/60 p-3">
-                          <div className="text-[11px] uppercase tracking-wide text-muted-foreground mb-1">Show in zones</div>
-                          <p className="text-[11px] text-muted-foreground mb-2">{b.zones.length === 0 ? "None ticked = shows in every zone." : `${b.zones.length} selected.`} Press Save to apply.</p>
-                          <div className="grid grid-cols-2 gap-1.5">{BM_ZONES.map((z) => { const on = b.zones.includes(z.key); return <label key={z.key} className={`flex items-center gap-2 text-xs px-2 py-1.5 rounded-md border ${on ? "border-primary/50 bg-primary/10" : "border-border bg-surface-2/60"}`}><input type="checkbox" checked={on} onChange={(e) => updateField(b.id, { zones: e.target.checked ? [...b.zones, z.key] : b.zones.filter((k) => k !== z.key) })} /><span className="truncate">{z.label}</span></label>; })}</div>
-                        </div>
-                      )}
-                      <div className="border-t border-border bg-background/60 p-3">
-                        <div className="text-[11px] uppercase tracking-wide text-muted-foreground mb-2">Assign to forum boards</div>
-                        {boards.length === 0 ? <p className="text-xs text-muted-foreground">No forum boards.</p> : <div className="grid grid-cols-2 gap-1.5">{boards.map((br) => { const checked = assignments.some((a) => a.board_id === br.id && a.banner_id === b.id); return <label key={br.id} className={`flex items-center gap-2 text-xs px-2 py-1.5 rounded-md border ${checked ? "border-primary/50 bg-primary/10" : "border-border bg-surface-2/60"}`}><input type="checkbox" checked={checked} onChange={(e) => void toggleBoard(b, br.id, e.target.checked)} /><span className="truncate">{br.name}</span></label>; })}</div>}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-          })}
-        </section>
-        ))}
-        </>
-      )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
