@@ -145,9 +145,9 @@ function WelcomePage() {
   };
 
   return (
-    <main className="flex-1 min-h-0 min-w-0 w-full overflow-x-hidden overflow-y-visible md:overflow-hidden">
+    <main className="flex-1 min-h-0 min-w-0 w-full overflow-x-hidden overflow-y-visible md:overflow-y-auto">
       {/* Hero */}
-      <div className="grid min-h-dvh w-full min-w-0 grid-rows-[auto_auto] overflow-x-hidden overflow-y-visible md:h-full md:min-h-0 md:grid-rows-[minmax(0,1fr)_auto] md:overflow-hidden">
+      <div className="grid min-h-dvh w-full min-w-0 grid-rows-[auto_auto] overflow-x-hidden overflow-y-visible md:min-h-full">
       <section className="relative min-h-0 min-w-0 w-full border-b border-border p-4 xl:p-6">
         <div className="grid min-h-0 min-w-0 w-full grid-cols-1 gap-4 sm:grid-cols-[minmax(0,1fr)_220px] md:h-full lg:grid-cols-[minmax(0,1fr)_minmax(220px,300px)] xl:gap-6">
           <div className="relative flex min-h-0 min-w-0 flex-col pb-8 lg:pb-10">
@@ -158,7 +158,7 @@ function WelcomePage() {
                   <h1 className="font-display text-2xl font-bold leading-tight lg:text-3xl xl:text-4xl xl:leading-[1.1]">
                     Welcome to BM Support
                   </h1>
-                  <div className="mt-4 min-h-0 flex-1 overflow-y-auto">
+                  <div className="mt-4">
                     <WorkingStatusBox />
                   </div>
                 </div>
