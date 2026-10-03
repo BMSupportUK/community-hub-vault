@@ -949,30 +949,28 @@ function expandMultiSlotChannelPost(raw: string): string {
   return rows.join("\n\n");
 }
 
+/** Convert repeated bold title → time → channels blocks into the parser's
+ * canonical time → title → channels order before markdown is discarded. */
+function reorderMarkedTitleTimeBlocks(raw: string): string {
+  const lines = decodeListingEntities(raw).split("\n");
+  for (let i = 0; i < lines.length; i++) {
+    const markedTitle = lines[i]?.trim().match(/^(?:\*{2}|__)(?!#)(.+?)(?:\*{2}|__)$/)?.[1];
+    if (!markedTitle) continue;
+    let next = i + 1;
+    while (next < lines.length && !lines[next]?.trim()) next++;
+    const slot = detectEvent(cleanLine(lines[next] ?? ""), null);
+    if (!slot || !parseClockTime(slot.time)) continue;
+    const timeLine = lines[next]!;
+    lines[i] = timeLine;
+    lines[next] = markedTitle;
+  }
+  return lines.join("\n");
+}
+
 export function parseSportsListingBlock(raw: string | null | undefined): SportsListingEvent[] {
   if (!raw) return [];
-  raw = expandMultiSlotChannelPost(raw);
+  raw = reorderMarkedTitleTimeBlocks(expandMultiSlotChannelPost(raw));
   const explicitHeadings = new Set(sportsListingHeadings(raw).map((heading) => heading.toLowerCase()));
-  // Repeated title → dual-zone time → channels layouts mark each event title
-  // in bold. Remember those source markers before cleanLine removes markdown,
-  // so a title such as "UFC 332 : Early Prelims" is not mistaken for a UFC
-  // channel when the next event starts.
-  const rawNonEmptyLines = decodeListingEntities(raw)
-    .replace(/<br\s*\/?\s*>/gi, "\n")
-    .replace(/<\/div>/gi, "\n")
-    .replace(/<[^>]+>/g, " ")
-    .split("\n")
-    .map((line) => line.trim())
-    .filter(Boolean);
-  const explicitTitlesAboveTime = new Set<string>();
-  for (let i = 0; i < rawNonEmptyLines.length - 1; i++) {
-    const markedTitle = rawNonEmptyLines[i]?.match(/^(?:\*{2}|__)(?!#)(.+?)(?:\*{2}|__)$/)?.[1];
-    if (!markedTitle) continue;
-    const title = cleanLine(markedTitle);
-    const following = cleanLine(rawNonEmptyLines[i + 1] ?? "");
-    const slot = detectEvent(following, null);
-    if (title && slot && parseClockTime(slot.time)) explicitTitlesAboveTime.add(title);
-  }
   // Rugby Pass style: "Channel NN | Event HH:MM" rows, optionally with bare
   // "Event HH:MM" continuation rows that belong to the channel above them.
   const hasChannelPipeRows = raw
@@ -1232,13 +1230,12 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
       const below = lines[li + 1] ?? "";
       const belowIsTitle = Boolean(below) && !detectEvent(below, currentDate) && MATCHUP_RE.test(below);
       const aboveIsTitle = Boolean(above) && MATCHUP_RE.test(above ?? "");
-      const explicitlyMarkedTitle = Boolean(above && explicitTitlesAboveTime.has(above));
       const titleAboveTime = Boolean(
         !detected.title &&
         above &&
-        (explicitlyMarkedTitle || !isLikelyChannelLabel(above)) &&
+        !isLikelyChannelLabel(above) &&
         !(belowIsTitle && !aboveIsTitle) &&
-        (explicitlyMarkedTitle || lastChannelWasPlain || above !== above.toUpperCase()),
+        (lastChannelWasPlain || above !== above.toUpperCase()),
       );
       if (titleAboveTime && above) {
         if (lastChannelWasPlain && current && current.channels[current.channels.length - 1] === lastChannelWasPlain) {
@@ -1263,16 +1260,6 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
         titleCameFromAbove = true;
       }
       previousPlainLine = null;
-      continue;
-    }
-
-    // A marked event title immediately followed by a bare slot starts a new
-    // block. Close the preceding event now instead of provisionally attaching
-    // this title as its final channel and trying to recover it one line later.
-    if (explicitTitlesAboveTime.has(line) && detectEvent(lines[li + 1] ?? "", currentDate)) {
-      flush();
-      previousPlainLine = line;
-      lastChannelWasPlain = null;
       continue;
     }
 
