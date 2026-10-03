@@ -1,6 +1,7 @@
 # Roadmap
 
 ## Current
+- [x] Sports Guide reader: keep the guide heading locked and show every event in one scrollable list
 - [x] New sports guides: make manual Add Blog saves use the same canonical event layout as imported guides
 - [x] UFC imports: preserve repeated bold title → UK/ET time → own channels blocks permanently
 - [x] Sports Guides: show newly created empty categories to staff while keeping them hidden from members
