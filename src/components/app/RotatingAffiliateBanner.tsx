@@ -61,19 +61,19 @@ function RotatingAffiliateBannerComponent({
   const [index, setIndex] = useState(0);
   const [cycle, setCycle] = useState(0);
   const [fading, setFading] = useState(false);
-  const [placeholderUrl, setPlaceholderUrl] = useState<string | null>(null);
+  const [placeholder, setPlaceholder] = useState<{ id: string; image_url: string } | null>(null);
   const advertRef = useRef<HTMLAnchorElement>(null);
 
   useEffect(() => {
     let cancelled = false;
     void supabase
       .from("affiliate_banners")
-      .select("image_url")
+      .select("id, image_url")
       .eq("name", ADVERTISE_HERE_NAME)
       .eq("size", size)
       .order("created_at", { ascending: false })
       .limit(1)
-      .then(({ data }) => { if (!cancelled) setPlaceholderUrl(data?.[0]?.image_url ?? null); });
+      .then(({ data }) => { if (!cancelled) setPlaceholder(data?.[0] ?? null); });
     return () => { cancelled = true; };
   }, [size]);
 
@@ -127,16 +127,16 @@ function RotatingAffiliateBannerComponent({
 
   const list = useMemo<Banner[]>(() => {
     const advertiseHere: Banner = {
-      id: "__fallback__",
+      id: placeholder?.id ?? `__advertise_here__:${size}`,
       name: "Advertise here",
-      image_url: fallback?.image_url || placeholderUrl || (size === "leaderboard" ? advertiseLeaderboard : advertiseSkyscraper),
+      image_url: fallback?.image_url || placeholder?.image_url || (size === "leaderboard" ? advertiseLeaderboard : advertiseSkyscraper),
       link_url: fallback?.link_url || "mailto:bmsupport2022@protonmail.com",
       alt_text: fallback?.alt_text || "Advertise here",
       size,
     };
     if (banners === null) return [];
     return shuffle([advertiseHere, ...banners]);
-  }, [banners, placeholderUrl, fallback?.image_url, fallback?.link_url, fallback?.alt_text, size, cycle]);
+  }, [banners, placeholder, fallback?.image_url, fallback?.link_url, fallback?.alt_text, size, cycle]);
 
   useEffect(() => {
     setIndex(0);

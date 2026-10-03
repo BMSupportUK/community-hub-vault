@@ -217,7 +217,7 @@ function AdminAffiliateBannersPage() {
                 <div className="rounded-lg border border-border bg-surface-1 overflow-hidden grid place-items-center" style={{ aspectRatio: `${AD_SIZES[k].width} / ${AD_SIZES[k].height}`, maxHeight: 220 }}>
                   {current ? <img src={current.image_url} alt="" className="w-full h-full object-cover" /> : <span className="text-xs text-muted-foreground p-2 text-center">Using built-in default</span>}
                 </div>
-                 <BannerStats stats={stats.__fallback__} />
+                 <BannerStats stats={stats[current?.id ?? `__advertise_here__:${k}`]} />
                 <label className="block">
                   <input type="file" accept="image/*" className="hidden" disabled={phUploading !== null}
                     onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadPlaceholder(k, f); e.currentTarget.value = ""; }} />
