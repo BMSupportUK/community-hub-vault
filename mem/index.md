@@ -20,3 +20,4 @@ Boro score predictions = Championship (league) fixtures ONLY. Never let cup ties
 
 - [Sports import formats](mem://features/sports-import-formats) — Permanent provider layouts including WST snooker; every format requires regression, safety, and round-trip checks
 - [Affiliate banner shape](mem://design/affiliate-banner-shape) — Wide banners use a shallow 3:1 shape and preserve the full artwork without cropping
+- [Location mandatory for direct sign-ups](mem://constraints/location-mandatory-signup) — No opt-out or appeal until GPS shared; referral/Fan Zone bypass
