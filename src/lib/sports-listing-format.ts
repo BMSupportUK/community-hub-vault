@@ -959,7 +959,7 @@ function reorderMarkedTitleTimeBlocks(raw: string): string {
     let next = i + 1;
     while (next < lines.length && !lines[next]?.trim()) next++;
     const slot = detectEvent(cleanLine(lines[next] ?? ""), null);
-    if (!slot || !parseClockTime(slot.time)) continue;
+    if (!slot || title.includes("|")) continue;
     const timeLine = lines[next]!;
     lines[i] = timeLine;
     lines[next] = markedTitle;
@@ -1228,7 +1228,9 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
       // line above is a channel, not a title.
       const MATCHUP_RE = /\s(?:&|v|vs|v\.|x|-)\s/i;
       const below = lines[li + 1] ?? "";
-      const belowIsTitle = Boolean(below) && !detectEvent(below, currentDate) && MATCHUP_RE.test(below);
+      const belowIsTitle = Boolean(below) && !detectEvent(below, currentDate) && (
+        MATCHUP_RE.test(below) || isLikelyChannelLabel(lines[li + 2] ?? "")
+      );
       const aboveIsTitle = Boolean(above) && MATCHUP_RE.test(above ?? "");
       const titleAboveTime = Boolean(
         !detected.title &&
