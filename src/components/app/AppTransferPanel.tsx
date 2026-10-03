@@ -220,7 +220,7 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
 
   return (
     <>
-       <article className="group flex min-w-0 flex-col overflow-hidden rounded-lg border border-border/70 bg-surface shadow-soft transition-all hover:border-violet-500/40 hover:shadow-[0_0_30px_-10px_rgba(217,70,239,0.6)] md:grid md:grid-cols-[minmax(220px,42%)_minmax(0,1fr)] xl:flex xl:h-full xl:min-h-0">
+       <article className="group flex min-w-0 flex-col overflow-hidden rounded-lg border border-border/70 bg-surface shadow-soft transition-all hover:border-violet-500/40 hover:shadow-[0_0_30px_-10px_rgba(217,70,239,0.6)] md:grid md:grid-cols-[minmax(220px,42%)_minmax(0,1fr)] xl:flex xl:h-full xl:min-h-min">
         <div className="relative aspect-[16/10] overflow-hidden bg-black/70 md:h-full md:min-h-0 md:aspect-auto xl:h-auto xl:min-h-[120px] xl:flex-1 xl:aspect-auto">
           {build.videoPath && videoUrl ? (
             <video
