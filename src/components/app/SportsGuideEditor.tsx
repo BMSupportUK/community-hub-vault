@@ -11,7 +11,14 @@ import { Label } from "@/components/ui/label";
 import { HtmlEditor } from "@/components/ui/html-editor";
 import { toast } from "sonner";
 import { pruneExpiredGuideEvents } from "@/lib/prune-expired-guide-events";
-import { dedupeSportsListingHtml, formatSportsListingBlock, plainListingToHtml } from "@/lib/sports-listing-format";
+import {
+  dedupeSportsListingHtml,
+  formatSportsListingBlock,
+  formatSportsListingEvents,
+  parseSportsListingBlock,
+  plainListingToHtml,
+  sortSportsListingEvents,
+} from "@/lib/sports-listing-format";
 
 type Category = { id: string; name: string; parent_id?: string | null };
 type Subcategory = { id: string; category_id: string; name: string; sort_order: number; is_default: boolean };
@@ -66,13 +73,13 @@ const sameGuideVersion = (draft: EditDraft, row: Blog) =>
 // using: date heading, then each event as time → event name → channels with a
 // blank line between events. Keep this format so cards render correctly.
 const DEFAULT_BODY_TEMPLATE =
-  "<div>Saturday 1 January 2026</div>" +
+  "<div>Saturday, 3rd October</div>" +
   "<div><br></div>" +
-  "<div>19:45 GMT</div>" +
+  "<div>19:45 BST</div>" +
   "<div>Home Team vs Away Team</div>" +
   "<div>Sky Sports Main Event | TNT Sports 1</div>" +
   "<div><br></div>" +
-  "<div>20:00 GMT</div>" +
+  "<div>20:00 BST</div>" +
   "<div>Home Team vs Away Team</div>" +
   "<div>Premier Sports 1</div>";
 
@@ -471,12 +478,25 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
           ? editing.subcategory
           : defaultSubName,
     };
-    // Every save (draft or published) clears repeat entries (same date, time, event and channel).
+    // Manual guides must use the same canonical per-event layout as every
+    // imported guide, even when staff typed or edited the body rather than
+    // pasting it. Rich media is left untouched.
     if (payload.body) {
+      const containsRichContent = /data-link-preview|<img|<iframe|<video|<table/i.test(payload.body);
+      if (!containsRichContent) {
+        const events = parseSportsListingBlock(payload.body);
+        if (events.length > 0) {
+          payload.body = plainListingToHtml(
+            formatSportsListingEvents(sortSportsListingEvents(events), { channels: [] }),
+          );
+        }
+      }
+      // Every save (draft or published) also clears repeat entries with the
+      // same date, time, event and channel.
       const deduped = dedupeSportsListingHtml(payload.body);
       if (deduped !== null) {
         payload.body = deduped;
-        toast.info("Removed duplicate listings before saving");
+        toast.info("Guide formatted and duplicate listings removed before saving");
       }
     }
     if (!editing.id) {
@@ -708,7 +728,7 @@ export function SportsGuideEditor({ blogId }: { blogId?: string }) {
               <HtmlEditor
                 value={editing.body ?? ""}
                 onChange={(html) => setEditing({ ...editing, body: html })}
-                placeholder="Saturday 1 January 2026\n\n19:45 GMT\nHome vs Away\nSky Sports Main Event"
+                placeholder="Saturday, 3rd October\n\n19:45 BST\nHome vs Away\nSky Sports Main Event"
                 pasteTransform={normalizeSportsGuidePaste}
               />
             </div>
