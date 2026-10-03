@@ -547,7 +547,7 @@ export function AppTransferPanel({ onUploadClick }: { onUploadClick?: () => void
                 <p className="mt-2 text-sm text-muted-foreground">No apps in this section yet.</p>
               </div>
             ) : (
-               <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 md:h-full md:auto-rows-fr md:grid-cols-1 lg:gap-5 xl:h-full xl:grid-cols-3">
+               <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 md:h-full md:auto-rows-fr md:grid-cols-1 lg:gap-5 xl:h-full xl:auto-rows-auto xl:grid-cols-3">
                 {(grouped[c.key] ?? []).map((b) => (
                   <AppCard key={b.id} build={b} transfer={byBuild.get(b.id)} now={now} />
                 ))}
