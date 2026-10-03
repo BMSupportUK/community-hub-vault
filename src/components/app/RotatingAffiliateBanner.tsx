@@ -24,8 +24,6 @@ type Fallback = {
   alt_text?: string | null;
 };
 
-const bannerCache = new Map<string, Banner[]>();
-
 function shuffle<T>(arr: T[]): T[] {
   const a = arr.slice();
   for (let i = a.length - 1; i > 0; i--) {
@@ -79,15 +77,6 @@ function RotatingAffiliateBannerComponent({
 
   useEffect(() => {
     let cancelled = false;
-    const cacheKey = `${boardId ?? "__all__"}:${size}:${site ?? "*"}:${zone ?? "*"}`;
-    const cached = bannerCache.get(cacheKey);
-    if (cached) {
-      setBanners(cached);
-      return () => {
-        cancelled = true;
-      };
-    }
-
     const load = async () => {
       let list: Banner[] = [];
       if (boardId) {
@@ -110,24 +99,22 @@ function RotatingAffiliateBannerComponent({
           if (site === "bm_support" && b.zones && b.zones.length > 0) return !!zone && b.zones.includes(zone);
           return true;
         });
-        list = list.filter((b) => (b.size ?? "skyscraper") === size);
 
-        // Fan Zone pages can reuse BM Support banners enabled for the Forum
-        // zone when no Fan Zone banner exists in the required shape.
-        if (site === "fan_zone" && list.length === 0) {
-          list = available.filter((b) =>
+        // Fan Zone pages also use BM Support banners explicitly enabled for
+        // the Forum zone, alongside any dedicated Fan Zone banners.
+        if (site === "fan_zone") {
+          const forumBanners = available.filter((b) =>
             b.name !== ADVERTISE_HERE_NAME
             && (b.site ?? "bm_support") === "bm_support"
-            && (b.size ?? "skyscraper") === size
             && (!b.zones || b.zones.length === 0 || b.zones.includes("forum"))
           );
+          list = [...list, ...forumBanners];
         }
       }
       // Only rotate banners designed for this slot's size — never fall back
       // to other shapes. With none, the slot shows just "Advertise here".
       list = list.filter((b) => (b.size ?? "skyscraper") === size);
       if (cancelled) return;
-      bannerCache.set(cacheKey, list);
       setBanners(list);
     };
 
