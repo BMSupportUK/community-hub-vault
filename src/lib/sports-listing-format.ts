@@ -1266,6 +1266,16 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
       continue;
     }
 
+    // A marked event title immediately followed by a bare slot starts a new
+    // block. Close the preceding event now instead of provisionally attaching
+    // this title as its final channel and trying to recover it one line later.
+    if (explicitTitlesAboveTime.has(line) && detectEvent(lines[li + 1] ?? "", currentDate)) {
+      flush();
+      previousPlainLine = line;
+      lastChannelWasPlain = null;
+      continue;
+    }
+
     if (!current) {
       previousPlainLine = line;
       continue;
