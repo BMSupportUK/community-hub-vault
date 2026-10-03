@@ -967,9 +967,48 @@ function reorderMarkedTitleTimeBlocks(raw: string): string {
   return lines.join("\n");
 }
 
+/** Bullet listings (cycling etc.):
+ *   "1:00pm UK Ireland: Virgin One" / "CYCLING (MEN): X • UK: TNT Sports 1 (until 2pm UK) • 8"
+ *   "12:10pm UK CYCLING (MEN): X" / "UK: TNT Sports 3 (4pm UK) • 9"
+ * Drops bare trailing "• N" counters and time notes in brackets on channel
+ * lines, and moves a "Country: Channel" found on the time line below the title. */
+function normalizeBulletChannelListing(raw: string): string {
+  const COUNTRY = String.raw`(?:UK|Ireland|IRE|USA|US|Canada|Australia|AUS|NZ|New Zealand|South Africa|Germany|France|Spain|Italy|Worldwide|International)`;
+  const countryCh = new RegExp(`^${COUNTRY}\\s*:\\s*\\S`, "i");
+  const timeLead = new RegExp(String.raw`^(\s*\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm)?\s+UK)\s+(.+)$`, "i");
+  const cleanCh = (s: string) =>
+    s.replace(/\s*\((?:until|from|till|to)?\s*\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm)?\s*(?:UK|ET|BST|GMT)?\)/gi, "").trim();
+  const lines = raw.split("\n");
+  const out: string[] = [];
+  for (let i = 0; i < lines.length; i++) {
+    let line = lines[i]!;
+    if (!/•/.test(line) && !timeLead.test(line)) { out.push(line); continue; }
+    line = line.replace(/(?:\s*•\s*\d{1,3})+\s*$/, "");
+    const tm = line.match(timeLead);
+    if (tm && countryCh.test(tm[2]!.trim())) {
+      const next = (lines[i + 1] ?? "").replace(/(?:\s*•\s*\d{1,3})+\s*$/, "");
+      const parts = next.split(/\s*•\s*/).map((p) => p.trim()).filter(Boolean);
+      if (parts.length && !countryCh.test(parts[0]!)) {
+        out.push(`${tm[1]} ${parts[0]}`, cleanCh(tm[2]!), ...parts.slice(1).map(cleanCh));
+        i++;
+        continue;
+      }
+    }
+    if (/•/.test(line) && !tm) {
+      const parts = line.split(/\s*•\s*/).map((p) => p.trim()).filter(Boolean);
+      if (parts.length > 1 && parts.slice(1).every((p) => countryCh.test(p))) {
+        out.push(parts[0]!, ...parts.slice(1).map(cleanCh));
+        continue;
+      }
+    }
+    out.push(countryCh.test(line.trim()) ? cleanCh(line) : line);
+  }
+  return out.join("\n");
+}
+
 export function parseSportsListingBlock(raw: string | null | undefined): SportsListingEvent[] {
   if (!raw) return [];
-  raw = reorderMarkedTitleTimeBlocks(expandMultiSlotChannelPost(raw));
+  raw = reorderMarkedTitleTimeBlocks(expandMultiSlotChannelPost(normalizeBulletChannelListing(raw)));
   const explicitHeadings = new Set(sportsListingHeadings(raw).map((heading) => heading.toLowerCase()));
   // Rugby Pass style: "Channel NN | Event HH:MM" rows, optionally with bare
   // "Event HH:MM" continuation rows that belong to the channel above them.
