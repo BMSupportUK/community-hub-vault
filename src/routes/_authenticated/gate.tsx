@@ -621,8 +621,9 @@ function GatePage() {
             We use your location to help protect your account and spot suspicious logins. It's only visible to
             our security staff and never shared. You can turn it off anytime in your browser settings.
           </p>
-          <p className="mt-3 text-white/60 text-sm max-w-md">
-            Location access is required to request access to BM Support. You can't continue without it.
+          <p className="mt-3 text-sm font-semibold text-amber-300 max-w-md">
+            Location sharing is mandatory — it's required to protect the security of your account and everyone
+            else's. You can't continue without it.
           </p>
           <button
             onClick={allowLocation}
@@ -655,7 +656,7 @@ function GatePage() {
         </h1>
         <p className="mt-3 text-red-200/90 text-base max-w-md">
           {locationBlocked
-            ? "Direct sign-ups must share their location before requesting access. If you blocked it, turn location on for this site in your browser's site settings, then use the button below to try again."
+            ? "Location sharing is mandatory to protect the security of your account. Direct sign-ups must share their location before requesting access. If you blocked it, turn location on for this site in your browser's site settings, then use the button below to try again."
             : status === "approved"
             ? "Welcome aboard. Refreshing your access…"
             : status === "denied"
