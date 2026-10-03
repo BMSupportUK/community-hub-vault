@@ -154,13 +154,30 @@ function WelcomePage() {
             <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600 shadow-2xl">
               <div className="grid min-h-0 flex-1 gap-4 p-4 pb-14 md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] md:items-center lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:items-stretch lg:p-5 lg:pb-14 xl:gap-6 xl:p-6 xl:pb-14">
                 <div className="flex min-h-0 min-w-0 flex-col text-white">
-                  <div className="mb-2 text-sm font-semibold text-sky-100/90">Hey {name}</div>
-                  <h1 className="font-display text-2xl font-bold leading-tight lg:text-3xl xl:text-4xl xl:leading-[1.1]">
-                    Welcome to BM Support
-                  </h1>
-                  <div className="mt-4">
-                    <WorkingStatusBox />
-                  </div>
+                  {isStaffAccount ? (
+                    <>
+                      <div className="mb-2 text-sm font-semibold text-sky-100/90">Hey {name}</div>
+                      <h1 className="font-display text-2xl font-bold leading-tight lg:text-3xl xl:text-4xl xl:leading-[1.1]">
+                        Welcome to BM Support
+                      </h1>
+                      <div className="mt-4">
+                        <WorkingStatusBox />
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="mb-2 text-xs uppercase text-sky-200/80">BM Support · Member Hub</div>
+                      <h1 className="font-display text-2xl font-bold leading-tight lg:text-3xl xl:text-4xl xl:leading-[1.1]">
+                        Welcome to BM Support
+                      </h1>
+                      <p className="mt-2 max-w-xl text-xs text-white/95 lg:text-sm">
+                        Hey {name} — stay connected with the community, manage your account and get help.
+                      </p>
+                      <p className="mt-1.5 max-w-xl text-[11px] text-white/85 lg:text-xs">
+                        Access channels, schedules, support and services—all in one place.
+                      </p>
+                    </>
+                  )}
                 </div>
 
                 <div className="relative flex min-h-56 min-w-0 flex-col overflow-hidden rounded-xl bg-blue-950/30 ring-1 ring-white/10 md:h-full">
@@ -199,9 +216,9 @@ function WelcomePage() {
           </div>
 
           <div className="flex min-h-0 w-full flex-col items-stretch gap-4">
-            <AdSenseSlot slot="homeSquare" />
             {/* Staff accounts see their subscription box on their profile instead. */}
             {!isStaffAccount && <SubscriptionDetailsCard />}
+            <AdSenseSlot slot="homeSquare" />
             </div>
           </div>
       </section>
