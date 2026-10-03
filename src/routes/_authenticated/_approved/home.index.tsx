@@ -165,18 +165,18 @@ function WelcomePage() {
                       </div>
                     </>
                   ) : (
-                    <>
-                      <div className="mb-2 text-xs uppercase text-sky-200/80">BM Support · Member Hub</div>
+                    <div className="flex min-h-96 flex-1 flex-col justify-between gap-6 py-1 md:min-h-full md:py-3">
+                      <div className="text-xs uppercase text-sky-200/80">BM Support · Member Hub</div>
                       <h1 className="font-display text-2xl font-bold leading-tight lg:text-3xl xl:text-4xl xl:leading-[1.1]">
                         Welcome to BM Support
                       </h1>
-                      <p className="mt-2 max-w-xl text-xs text-white/95 lg:text-sm">
+                      <p className="max-w-xl text-xs leading-relaxed text-white/95 lg:text-sm">
                         Hey {name} — stay connected with the community, manage your account and get help.
                       </p>
-                      <p className="mt-1.5 max-w-xl text-[11px] text-white/85 lg:text-xs">
+                      <p className="max-w-xl text-[11px] leading-relaxed text-white/85 lg:text-xs">
                         Access channels, schedules, support and services—all in one place.
                       </p>
-                    </>
+                    </div>
                   )}
                 </div>
 
