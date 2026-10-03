@@ -103,12 +103,25 @@ function RotatingAffiliateBannerComponent({
         const { data } = await supabase
           .from("affiliate_banners")
           .select("id, name, image_url, link_url, alt_text, size, site, zones");
-        list = ((data ?? []) as Banner[]).filter((b) => {
+        const available = (data ?? []) as Banner[];
+        list = available.filter((b) => {
           if (b.name === ADVERTISE_HERE_NAME) return false;
           if (site && (b.site ?? "bm_support") !== site) return false;
           if (site === "bm_support" && b.zones && b.zones.length > 0) return !!zone && b.zones.includes(zone);
           return true;
         });
+        list = list.filter((b) => (b.size ?? "skyscraper") === size);
+
+        // Fan Zone pages can reuse BM Support banners enabled for the Forum
+        // zone when no Fan Zone banner exists in the required shape.
+        if (site === "fan_zone" && list.length === 0) {
+          list = available.filter((b) =>
+            b.name !== ADVERTISE_HERE_NAME
+            && (b.site ?? "bm_support") === "bm_support"
+            && (b.size ?? "skyscraper") === size
+            && (!b.zones || b.zones.length === 0 || b.zones.includes("forum"))
+          );
+        }
       }
       // Only rotate banners designed for this slot's size — never fall back
       // to other shapes. With none, the slot shows just "Advertise here".
