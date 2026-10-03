@@ -165,15 +165,15 @@ function WelcomePage() {
                       </div>
                     </>
                   ) : (
-                    <div className="flex min-h-96 flex-1 flex-col items-center justify-between gap-5 py-1 text-center md:min-h-full md:py-2">
+                    <div className="flex min-h-96 flex-1 flex-col justify-center space-y-4 text-left sm:space-y-5 md:min-h-full [@media(max-height:650px)]:space-y-2">
                       <div className="text-sm font-semibold uppercase tracking-wide text-sky-200/90">BM Support · Member Hub</div>
-                      <h1 className="font-display text-4xl font-bold leading-tight lg:text-5xl xl:leading-[1.05]">
+                      <h1 className="max-w-[16ch] font-display text-[clamp(1.7rem,min(5.5vw,7vh),4.5rem)] font-bold leading-[1.08] sm:max-w-none">
                         Welcome to BM Support
                       </h1>
-                      <p className="max-w-xl text-base leading-relaxed text-white/95 lg:text-lg">
+                      <p className="max-w-xl text-[clamp(1rem,min(2.2vw,2.6vh),1.5rem)] font-medium text-white/95">
                         Hey {name} — stay connected with the community, manage your account and get help.
                       </p>
-                      <p className="max-w-xl text-sm leading-relaxed text-white/85 lg:text-base">
+                      <p className="max-w-xl text-[clamp(0.85rem,min(1.6vw,2vh),1.125rem)] leading-relaxed text-white/85">
                         Access channels, schedules, support and services—all in one place.
                       </p>
                     </div>
