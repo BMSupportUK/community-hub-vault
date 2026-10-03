@@ -167,7 +167,7 @@ function WelcomePage() {
                   <div className="mt-4 w-full max-w-[360px] self-center md:hidden">
                     <AdSenseSlot slot="home" />
                   </div>
-                  <div className="mt-3 w-full min-h-0 md:flex-1 md:overflow-y-auto md:pb-9">
+                  <div className="mt-3 w-full min-h-0 md:mb-6 md:flex-1 md:overflow-y-auto">
                     <WorkingStatusBox />
                   </div>
                 </div>
