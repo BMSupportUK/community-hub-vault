@@ -321,3 +321,19 @@ describe("ESPN+ ranked team at line start", () => {
     expect(parseSportsListingBlock(r.formatted)).toEqual(r.events);
   });
 });
+
+describe("Cycling bullet listings", () => {
+  test("channel on time line and bullet channels with counters import cleanly", () => {
+    const posts = [
+      ["Saturday, 3rd October\n1:00pm UK Ireland: Virgin One\nCYCLING (MEN): Tour of Emilia • UK: TNT Sports 1 (until 2pm UK) • 8", "13:00 BST", "CYCLING (MEN): Tour of Emilia", ["Ireland: Virgin One", "UK: TNT Sports 1"]],
+      ["Saturday, 3rd October\n12:10pm UK CYCLING (MEN): Sparkassen Munsterland Giro\nUK: TNT Sports 3 (4pm UK) • 9", "12:10 BST", "CYCLING (MEN): Sparkassen Munsterland Giro", ["UK: TNT Sports 3"]],
+    ] as const;
+    for (const [raw, time, title, channels] of posts) {
+      const r = checkSportsImport(raw, "gmt", Date.UTC(2026, 9, 3, 9), "Cycling");
+      expect(r.errors).toBe(0);
+      expect(r.warnings).toBe(0);
+      expect(r.events).toEqual([{ date: "Saturday, 3rd October", time, title, channels: [...channels] }]);
+      expect(parseSportsListingBlock(r.formatted)).toEqual(r.events);
+    }
+  });
+});
