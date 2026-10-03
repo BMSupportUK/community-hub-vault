@@ -117,6 +117,56 @@ beIN Sports English 1 & 2`;
     expect(result.every((event) => event.channels.join("|") === "UFC 01|UFC 02|UFC 03")).toBe(true);
   });
 
+  test("UFC repeated title-time-channel blocks keep each title and its own channels", () => {
+    const raw = `**## UFC**
+
+**UFC 332 : Early Prelims**
+\`9:00pm UK | 4:00pm ET\`
+
+UFC Fightpass
+
+**UFC 332 : Early Prelims**
+\`11:00pm UK | 6:00pm ET\`
+
+TNT Sports 1
+Ten 1
+UFC Fightpass
+Supersport Action
+
+**UFC 332 : Silva v Wang**
+\`1:00am UK Sun | 8:00pm ET Sat\`
+
+TNT Sports 1
+Ten 1
+UFC Fightpass
+Supersport Action`;
+    const result = checkSportsImport(raw, "gmt", Date.UTC(2026, 9, 3, 9), "UFC Streams");
+
+    expect(result.errors).toBe(0);
+    expect(result.warnings).toBe(0);
+    expect(result.events).toEqual([
+      {
+        date: "Saturday, 3rd October",
+        time: "21:00 BST",
+        title: "UFC 332 : Early Prelims",
+        channels: ["UFC Fightpass"],
+      },
+      {
+        date: "Saturday, 3rd October",
+        time: "23:00 BST",
+        title: "UFC 332 : Early Prelims",
+        channels: ["TNT Sports 1", "Ten 1", "UFC Fightpass", "Supersport Action"],
+      },
+      {
+        date: "Sunday, 4th October",
+        time: "01:00 BST",
+        title: "UFC 332 : Silva v Wang",
+        channels: ["TNT Sports 1", "Ten 1", "UFC Fightpass", "Supersport Action"],
+      },
+    ]);
+    expect(parseSportsListingBlock(result.formatted)).toEqual(result.events);
+  });
+
   test("merged DAZN inline fixtures and venue qualifiers stay as separate events", () => {
     const rows = [
       ["Eagles @ Bears", "1:12 AM", "Dazn 2 HD"], ["Eagles @ Bears (In French)", "1:12 AM", "Dazn 3 HD"],
