@@ -148,9 +148,11 @@ function TopicReadPage() {
         <Link to="/signup" className="underline font-semibold">request access</Link> to join in.
       </div>
       </div>
-      <aside className="md:sticky md:top-4">
-        <AdSenseSlot slot="sidebar" />
-      </aside>
+      {slug !== "match-day" && (
+        <aside className="md:sticky md:top-4">
+          <AdSenseSlot slot="sidebar" />
+        </aside>
+      )}
       </div>
     </FanZoneShell>
   );
