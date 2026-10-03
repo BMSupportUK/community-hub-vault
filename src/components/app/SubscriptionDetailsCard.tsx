@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
-import { CalendarClock } from "lucide-react";
+import { CalendarClock, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface CredRow {
@@ -18,6 +18,7 @@ export function SubscriptionDetailsCard() {
   const { user } = useAuth();
   const [creds, setCreds] = useState<CredRow[]>([]);
   const [loaded, setLoaded] = useState(false);
+  const [viewIndex, setViewIndex] = useState(0);
 
   useEffect(() => {
     if (!user) {
