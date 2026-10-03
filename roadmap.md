@@ -1,6 +1,7 @@
 # Roadmap
 
 ## Current
+- [x] New sports guides: make manual Add Blog saves use the same canonical event layout as imported guides
 - [x] UFC imports: preserve repeated bold title → UK/ET time → own channels blocks permanently
 - [x] Sports Guides: show newly created empty categories to staff while keeping them hidden from members
 - [x] Make the complete BM Support and Fan Zone profile experience fit iPhone screens, including Credentials
