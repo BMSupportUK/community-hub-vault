@@ -1,6 +1,7 @@
-import { memo, useEffect, useMemo, useState } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ADVERTISE_HERE_NAME } from "@/lib/ad-sizes";
+import { recordAdEvent } from "@/lib/ad-metrics";
 import advertiseLeaderboard from "@/assets/advertise-leaderboard.png";
 import advertiseSkyscraper from "@/assets/advertise-skyscraper.png";
 import { AD_SIZES, type AdSize } from "@/lib/ad-sizes";
@@ -35,9 +36,9 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 /**
- * Rotates evenly through every banner in the affiliate_banners table that
- * matches the requested `size`. Every slot opens with the "Advertise here"
- * banner, then cycles through the shuffled saved banners every `intervalMs` ms.
+ * Rotates evenly through every matching banner. The complete set, including
+ * "Advertise here", is shuffled so every banner receives one equal interval
+ * before a new random cycle begins.
  */
 function RotatingAffiliateBannerComponent({
   fallback,
@@ -58,19 +59,21 @@ function RotatingAffiliateBannerComponent({
 }) {
   const [banners, setBanners] = useState<Banner[] | null>(null);
   const [index, setIndex] = useState(0);
+  const [cycle, setCycle] = useState(0);
   const [fading, setFading] = useState(false);
-  const [placeholderUrl, setPlaceholderUrl] = useState<string | null>(null);
+  const [placeholder, setPlaceholder] = useState<{ id: string; image_url: string } | null>(null);
+  const advertRef = useRef<HTMLAnchorElement>(null);
 
   useEffect(() => {
     let cancelled = false;
     void supabase
       .from("affiliate_banners")
-      .select("image_url")
+      .select("id, image_url")
       .eq("name", ADVERTISE_HERE_NAME)
       .eq("size", size)
       .order("created_at", { ascending: false })
       .limit(1)
-      .then(({ data }) => { if (!cancelled) setPlaceholderUrl(data?.[0]?.image_url ?? null); });
+      .then(({ data }) => { if (!cancelled) setPlaceholder(data?.[0] ?? null); });
     return () => { cancelled = true; };
   }, [size]);
 
@@ -111,9 +114,8 @@ function RotatingAffiliateBannerComponent({
       // to other shapes. With none, the slot shows just "Advertise here".
       list = list.filter((b) => (b.size ?? "skyscraper") === size);
       if (cancelled) return;
-      const shuffled = shuffle(list);
-      bannerCache.set(cacheKey, shuffled);
-      setBanners(shuffled);
+      bannerCache.set(cacheKey, list);
+      setBanners(list);
     };
 
     const loadId = window.setTimeout(() => void load(), 250);
@@ -125,15 +127,20 @@ function RotatingAffiliateBannerComponent({
 
   const list = useMemo<Banner[]>(() => {
     const advertiseHere: Banner = {
-      id: "__fallback__",
+      id: placeholder?.id ?? `__advertise_here__:${size}`,
       name: "Advertise here",
-      image_url: fallback?.image_url || placeholderUrl || (size === "leaderboard" ? advertiseLeaderboard : advertiseSkyscraper),
+      image_url: fallback?.image_url || placeholder?.image_url || (size === "leaderboard" ? advertiseLeaderboard : advertiseSkyscraper),
       link_url: fallback?.link_url || "mailto:bmsupport2022@protonmail.com",
       alt_text: fallback?.alt_text || "Advertise here",
       size,
     };
-    return banners && banners.length > 0 ? [advertiseHere, ...banners] : [advertiseHere];
-  }, [banners, placeholderUrl, fallback?.image_url, fallback?.link_url, fallback?.alt_text, size]);
+    if (banners === null) return [];
+    return shuffle([advertiseHere, ...banners]);
+  }, [banners, placeholder, fallback?.image_url, fallback?.link_url, fallback?.alt_text, size, cycle]);
+
+  useEffect(() => {
+    setIndex(0);
+  }, [list]);
 
   useEffect(() => {
     if (paused || list.length <= 1) return;
@@ -141,7 +148,14 @@ function RotatingAffiliateBannerComponent({
     const id = setInterval(() => {
       setFading(true);
       timeoutId = window.setTimeout(() => {
-        setIndex((i) => (i + 1) % list.length);
+        setIndex((i) => {
+          const next = i + 1;
+          if (next >= list.length) {
+            setCycle((value) => value + 1);
+            return 0;
+          }
+          return next;
+        });
         setFading(false);
       }, 350);
     }, intervalMs);
@@ -154,15 +168,35 @@ function RotatingAffiliateBannerComponent({
   const current = list[Math.min(index, list.length - 1)];
   const spec = AD_SIZES[size];
   const isWide = size === "leaderboard";
+  const slotKey = `${site ?? "all"}:${zone ?? "all"}:${size}`;
+
+  useEffect(() => {
+    const node = advertRef.current;
+    if (!node || !current) return;
+    let recorded = false;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (!recorded && entry?.isIntersecting) {
+        recorded = true;
+        void recordAdEvent({ kind: "impression", slotKey, adSlotId: current.id });
+        observer.disconnect();
+      }
+    }, { threshold: 0.5 });
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [current?.id, slotKey]);
+
+  if (!current) return null;
 
   return (
     <div className="grid w-full min-w-0 place-items-center px-3">
       <a
+        ref={advertRef}
         href={current.link_url || "mailto:bmsupport2022@protonmail.com"}
         target="_blank"
         rel="noopener noreferrer sponsored"
         className={`block w-full mx-auto rounded-xl border border-border bg-surface-1/85 overflow-hidden hover:border-[#E11B22]/70 hover:shadow-[0_8px_30px_-12px_rgba(225,27,34,0.55)] transition-all ${isWide ? "max-w-4xl" : size === "square" ? "max-w-[300px]" : "max-w-64"}`}
         aria-label={current.alt_text || current.name || "Sponsor"}
+        onClick={() => void recordAdEvent({ kind: "click", slotKey, adSlotId: current.id })}
       >
         <img
           key={current.id}

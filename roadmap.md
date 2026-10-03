@@ -1,6 +1,7 @@
 # Roadmap
 
 ## Current
+- [x] Affiliate adverts: random fair rotation, size-based admin sections, and per-banner view/click totals
 - [x] Sports Guide reader: keep the guide heading locked and show every event in one scrollable list
 - [x] New sports guides: make manual Add Blog saves use the same canonical event layout as imported guides
 - [x] UFC imports: preserve repeated bold title → UK/ET time → own channels blocks permanently
