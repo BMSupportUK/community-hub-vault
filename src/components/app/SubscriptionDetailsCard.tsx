@@ -136,10 +136,13 @@ export function SubscriptionDetailsCard({ compact = false }: { compact?: boolean
         const expired = t !== null && t < now;
         const expSoon = t !== null && !expired && t - now < 7 * 86400_000;
         return (
-          <div className="flex-1 min-h-0 overflow-y-auto p-3 flex flex-col gap-2">
+          <div className={cn("flex-1 min-h-0 overflow-y-auto flex flex-col", compact ? "gap-1.5 p-2" : "gap-2 p-3")}>
             <div
               key={c.id}
-              className="flex items-center justify-between gap-2 rounded-lg bg-surface-2/70 border border-border px-2.5 py-2"
+              className={cn(
+                "flex items-center justify-between gap-2 rounded-lg bg-surface-2/70 border border-border",
+                compact ? "px-2 py-1.5" : "px-2.5 py-2",
+              )}
             >
               <div className="min-w-0">
                 <div className="text-xs font-semibold text-foreground truncate">
@@ -179,7 +182,10 @@ export function SubscriptionDetailsCard({ compact = false }: { compact?: boolean
               <button
                 type="button"
                 onClick={() => setViewIndex((safeIndex + 1) % creds.length)}
-                className="mt-auto flex items-center justify-center gap-1.5 rounded-lg border border-violet-400/50 bg-violet-600/80 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-violet-500"
+                className={cn(
+                  "mt-auto flex items-center justify-center gap-1.5 rounded-lg border border-violet-400/50 bg-violet-600/80 font-semibold text-white transition-colors hover:bg-violet-500",
+                  compact ? "px-2.5 py-1.5 text-[11px]" : "px-3 py-2 text-xs",
+                )}
               >
                 View Next Subscription Details
                 <ChevronRight className="size-3.5" />
