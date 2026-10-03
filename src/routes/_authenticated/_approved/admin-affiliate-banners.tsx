@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, Upload, Loader2, Trash2, Save, Image as ImageIcon, ExternalLink } from "lucide-react";
+import { ArrowLeft, Upload, Loader2, Trash2, Save, ExternalLink, Eye, MousePointerClick } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -36,6 +36,7 @@ type Banner = {
 };
 type Board = { id: string; name: string; slug: string };
 type Assignment = { board_id: string; banner_id: string };
+type BannerStat = { impressions: number; clicks: number };
 
 const BUCKET = "affiliate-banners";
 
@@ -52,18 +53,29 @@ function AdminAffiliateBannersPage() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [placeholders, setPlaceholders] = useState<Banner[]>([]);
   const [phUploading, setPhUploading] = useState<AdSize | null>(null);
+  const [stats, setStats] = useState<Record<string, BannerStat>>({});
 
   const load = async () => {
-    const [{ data: bs }, { data: brds }, { data: asg }] = await Promise.all([
+    const [{ data: bs }, { data: brds }, { data: asg }, { data: statRows }] = await Promise.all([
       supabase.from("affiliate_banners").select("id, name, image_url, link_url, alt_text, size, site, zones, created_at").order("created_at", { ascending: false }),
       supabase.from("forum_boards").select("id, name, slug").order("sort_order"),
       supabase.from("forum_board_affiliate_banners").select("board_id, banner_id"),
+      supabase.rpc("ad_event_stats", { _days: 36500 }),
     ]);
     const all = (bs ?? []) as Banner[];
     setPlaceholders(all.filter((b) => b.name === ADVERTISE_HERE_NAME));
     setBanners(all.filter((b) => b.name !== ADVERTISE_HERE_NAME));
     setBoards((brds ?? []) as Board[]);
     setAssignments((asg ?? []) as Assignment[]);
+    const totals: Record<string, BannerStat> = {};
+    for (const row of statRows ?? []) {
+      const id = String(row.ad_slot_id);
+      const current = totals[id] ?? { impressions: 0, clicks: 0 };
+      current.impressions += Number(row.impressions);
+      current.clicks += Number(row.clicks);
+      totals[id] = current;
+    }
+    setStats(totals);
   };
 
   useEffect(() => { if (isAdmin) void load(); }, [isAdmin]);
@@ -193,8 +205,8 @@ function AdminAffiliateBannersPage() {
       </div>
 
       <section className="rounded-2xl border border-border bg-surface-1 p-4 space-y-3">
-        <h2 className="font-display font-bold text-sm uppercase tracking-wide text-muted-foreground">"Advertise here" banner — one per size</h2>
-        <p className="text-xs text-muted-foreground">Every advert space opens with this banner before rotating. Upload a version for each size; a new upload replaces the old one.</p>
+        <h2 className="font-display font-bold text-lg">Advertise here</h2>
+        <p className="text-xs text-muted-foreground">Upload one version for each size. It receives the same random, equal display time as every other banner.</p>
         <div className="grid gap-3 sm:grid-cols-3">
           {AD_SIZE_KEYS.map((k) => {
             const current = placeholders.find((p) => p.size === k);
@@ -205,6 +217,7 @@ function AdminAffiliateBannersPage() {
                 <div className="rounded-lg border border-border bg-surface-1 overflow-hidden grid place-items-center" style={{ aspectRatio: `${AD_SIZES[k].width} / ${AD_SIZES[k].height}`, maxHeight: 220 }}>
                   {current ? <img src={current.image_url} alt="" className="w-full h-full object-cover" /> : <span className="text-xs text-muted-foreground p-2 text-center">Using built-in default</span>}
                 </div>
+                 <BannerStats stats={stats.__fallback__} />
                 <label className="block">
                   <input type="file" accept="image/*" className="hidden" disabled={phUploading !== null}
                     onChange={(e) => { const f = e.target.files?.[0]; if (f) void uploadPlaceholder(k, f); e.currentTarget.value = ""; }} />
@@ -266,86 +279,60 @@ function AdminAffiliateBannersPage() {
       {!banners ? (
         <div className="grid place-items-center py-10 text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>
       ) : (
-        AD_SITE_KEYS.map((siteKey) => (
-        <div key={siteKey} className="space-y-4 rounded-3xl border-2 border-border p-3 md:p-4">
-          <h2 className="font-display text-xl font-bold">{AD_SITES[siteKey]}</h2>
-          {siteKey === "bm_support" && (
-            <div className="rounded-2xl border border-border bg-surface-1 px-4 py-3">
-              <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Zones and the sizes each can show</p>
-              <ul className="grid gap-x-6 gap-y-1 sm:grid-cols-2 lg:grid-cols-3 text-xs">
-                {BM_ZONES.map((z) => (
-                  <li key={z.key} className="flex items-baseline justify-between gap-2">
-                    <span className="font-medium">{z.label}</span>
-                    <span className="text-muted-foreground text-right">
-                      {BM_ZONE_SIZES[z.key].map((s) => `${AD_SIZES[s].label.split(" ")[0]} ${AD_SIZES[s].width}×${AD_SIZES[s].height}`).join(" + ")}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-        {AD_SIZE_KEYS.map((sizeKey) => {
+        <>
+          <div className="rounded-2xl border border-border bg-surface-1 px-4 py-3">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">BM Support zones and the sizes each can show</p>
+            <ul className="grid gap-x-6 gap-y-1 sm:grid-cols-2 lg:grid-cols-3 text-xs">
+              {BM_ZONES.map((z) => (
+                <li key={z.key} className="flex items-baseline justify-between gap-2">
+                  <span className="font-medium">{z.label}</span>
+                  <span className="text-muted-foreground text-right">
+                    {BM_ZONE_SIZES[z.key].map((s) => `${AD_SIZES[s].label.split(" ")[0]} ${AD_SIZES[s].width}×${AD_SIZES[s].height}`).join(" + ")}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        {AD_SIZE_KEYS.map((sizeKey) => (
+        <section key={sizeKey} className="space-y-4 rounded-3xl border-2 border-border p-3 md:p-4">
+          <div className="flex flex-wrap items-center gap-3">
+            <h2 className="font-display text-xl font-bold">{AD_SIZES[sizeKey].label}</h2>
+            <span className="text-xs text-muted-foreground font-mono">{AD_SIZES[sizeKey].recommended}</span>
+          </div>
+          {AD_SITE_KEYS.map((siteKey) => {
           const sizeBanners = banners.filter((b) => (b.size ?? "skyscraper") === sizeKey && (b.site ?? "bm_support") === siteKey);
           return (
-            <section key={sizeKey} className="space-y-3">
-              <div className="rounded-2xl border border-border bg-surface-1 px-4 py-3 flex flex-wrap items-center gap-x-3 gap-y-1">
-                <h2 className="font-display text-lg font-bold">{AD_SIZES[sizeKey].label}</h2>
-                <span className="text-xs rounded-full bg-primary/10 border border-primary/30 px-2 py-0.5 font-semibold">
-                  {sizeBanners.length} {sizeBanners.length === 1 ? "banner" : "banners"}
-                </span>
-                <span className="text-xs text-muted-foreground font-mono">{AD_SIZES[sizeKey].recommended}</span>
-                <span className="text-xs text-muted-foreground sm:hidden md:inline">— {AD_SIZES[sizeKey].description}</span>
+            <div key={siteKey} className="space-y-3">
+              <div className="rounded-xl border border-border bg-surface-1 px-4 py-3 flex flex-wrap items-center gap-3">
+                <h3 className="font-display font-bold">{AD_SITES[siteKey]}</h3>
+                <span className="text-xs rounded-full bg-primary/10 border border-primary/30 px-2 py-0.5 font-semibold">{sizeBanners.length} {sizeBanners.length === 1 ? "banner" : "banners"}</span>
               </div>
               {sizeBanners.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-border bg-surface-1 p-6 text-center text-sm text-muted-foreground">
-                  No {AD_SIZES[sizeKey].label.split(" ")[0].toLowerCase()} banners yet — pick "{AD_SIZES[sizeKey].label}" when uploading above.
-                </div>
+                <div className="rounded-xl border border-dashed border-border bg-surface-1 p-5 text-center text-sm text-muted-foreground">No banners in this section yet.</div>
               ) : (
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
                   {sizeBanners.map((b) => (
                     <div key={b.id} className="rounded-2xl border border-border bg-surface-1 overflow-hidden">
                       <div className="grid grid-cols-[112px_1fr] gap-3 p-3">
-                        <div className="rounded-lg overflow-hidden bg-background border border-border">
-                          <img
-                            src={b.image_url}
-                            alt={b.alt_text ?? b.name}
-                            className={`w-full object-center ${b.size === "leaderboard" ? "aspect-[3/1] object-contain" : b.size === "square" ? "aspect-square object-cover" : "aspect-[1/2] object-cover"}`}
-                          />
+                        <div className="space-y-2">
+                          <div className="rounded-lg overflow-hidden bg-background border border-border">
+                            <img src={b.image_url} alt={b.alt_text ?? b.name} className={`w-full object-center ${b.size === "leaderboard" ? "aspect-[3/1] object-contain" : b.size === "square" ? "aspect-square object-cover" : "aspect-[1/2] object-cover"}`} />
+                          </div>
+                          <BannerStats stats={stats[b.id]} />
                         </div>
                         <div className="min-w-0 space-y-2">
                           <Input value={b.name} onChange={(e) => updateField(b.id, { name: e.target.value })} placeholder="Name" />
-                          <select
-                            value={b.size}
-                            onChange={(e) => updateField(b.id, { size: e.target.value as AdSize })}
-                            className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm"
-                            aria-label="Banner size"
-                          >
-                            {AD_SIZE_KEYS.map((k) => (
-                              <option key={k} value={k}>{AD_SIZES[k].label} — {AD_SIZES[k].width}×{AD_SIZES[k].height}</option>
-                            ))}
+                          <select value={b.size} onChange={(e) => updateField(b.id, { size: e.target.value as AdSize })} className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm" aria-label="Banner size">
+                            {AD_SIZE_KEYS.map((k) => <option key={k} value={k}>{AD_SIZES[k].label} — {AD_SIZES[k].width}×{AD_SIZES[k].height}</option>)}
                           </select>
-                          <select
-                            value={b.site}
-                            onChange={(e) => updateField(b.id, { site: e.target.value as AdSite })}
-                            className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm"
-                            aria-label="Banner site"
-                          >
+                          <select value={b.site} onChange={(e) => updateField(b.id, { site: e.target.value as AdSite })} className="h-9 w-full rounded-md border border-border bg-background px-2 text-sm" aria-label="Banner site">
                             {AD_SITE_KEYS.map((k) => <option key={k} value={k}>{AD_SITES[k]}</option>)}
                           </select>
                           <Input value={b.link_url ?? ""} onChange={(e) => updateField(b.id, { link_url: e.target.value })} placeholder="Click-through URL (optional)" />
                           <Input value={b.alt_text ?? ""} onChange={(e) => updateField(b.id, { alt_text: e.target.value })} placeholder="Alt text (optional)" />
                           <div className="flex items-center justify-between gap-2">
-                            <a href={b.image_url} target="_blank" rel="noopener noreferrer" className="text-[11px] text-muted-foreground hover:text-foreground inline-flex items-center gap-1">
-                              <ExternalLink className="size-3" /> Open image
-                            </a>
-                            <div className="flex gap-1.5">
-                              <Button size="sm" variant="outline" onClick={() => void saveBanner(b)}>
-                                <Save className="size-3.5 mr-1" />Save
-                              </Button>
-                              <Button size="sm" variant="destructive" onClick={() => void deleteBanner(b)}>
-                                <Trash2 className="size-3.5" />
-                              </Button>
-                            </div>
+                            <a href={b.image_url} target="_blank" rel="noopener noreferrer" className="text-[11px] text-muted-foreground hover:text-foreground inline-flex items-center gap-1"><ExternalLink className="size-3" /> Open image</a>
+                            <div className="flex gap-1.5"><Button size="sm" variant="outline" onClick={() => void saveBanner(b)}><Save className="size-3.5 mr-1" />Save</Button><Button size="sm" variant="destructive" onClick={() => void deleteBanner(b)}><Trash2 className="size-3.5" /></Button></div>
                           </div>
                         </div>
                       </div>
@@ -353,55 +340,33 @@ function AdminAffiliateBannersPage() {
                         <div className="border-t border-border bg-background/60 p-3">
                           <div className="text-[11px] uppercase tracking-wide text-muted-foreground mb-1">Show in zones</div>
                           <p className="text-[11px] text-muted-foreground mb-2">{b.zones.length === 0 ? "None ticked = shows in every zone." : `${b.zones.length} selected.`} Press Save to apply.</p>
-                          <div className="grid grid-cols-2 gap-1.5">
-                            {BM_ZONES.map((z) => {
-                              const on = b.zones.includes(z.key);
-                              return (
-                                <label key={z.key} className={`flex items-center gap-2 text-xs px-2 py-1.5 rounded-md border ${on ? "border-primary/50 bg-primary/10" : "border-border bg-surface-2/60"}`}>
-                                  <input
-                                    type="checkbox"
-                                    checked={on}
-                                    onChange={(e) => updateField(b.id, { zones: e.target.checked ? [...b.zones, z.key] : b.zones.filter((k) => k !== z.key) })}
-                                  />
-                                  <span className="truncate">{z.label}</span>
-                                </label>
-                              );
-                            })}
-                          </div>
+                          <div className="grid grid-cols-2 gap-1.5">{BM_ZONES.map((z) => { const on = b.zones.includes(z.key); return <label key={z.key} className={`flex items-center gap-2 text-xs px-2 py-1.5 rounded-md border ${on ? "border-primary/50 bg-primary/10" : "border-border bg-surface-2/60"}`}><input type="checkbox" checked={on} onChange={(e) => updateField(b.id, { zones: e.target.checked ? [...b.zones, z.key] : b.zones.filter((k) => k !== z.key) })} /><span className="truncate">{z.label}</span></label>; })}</div>
                         </div>
                       )}
                       <div className="border-t border-border bg-background/60 p-3">
                         <div className="text-[11px] uppercase tracking-wide text-muted-foreground mb-2">Assign to forum boards</div>
-                        {boards.length === 0 ? (
-                          <p className="text-xs text-muted-foreground">No forum boards.</p>
-                        ) : (
-                          <div className="grid grid-cols-2 gap-1.5">
-                            {boards.map((br) => {
-                              const checked = assignments.some((a) => a.board_id === br.id && a.banner_id === b.id);
-                              return (
-                                <label key={br.id} className={`flex items-center gap-2 text-xs px-2 py-1.5 rounded-md border ${checked ? "border-primary/50 bg-primary/10" : "border-border bg-surface-2/60"}`}>
-                                  <input
-                                    type="checkbox"
-                                    checked={checked}
-                                    onChange={(e) => void toggleBoard(b, br.id, e.target.checked)}
-                                  />
-                                  <span className="truncate">{br.name}</span>
-                                </label>
-                              );
-                            })}
-                          </div>
-                        )}
+                        {boards.length === 0 ? <p className="text-xs text-muted-foreground">No forum boards.</p> : <div className="grid grid-cols-2 gap-1.5">{boards.map((br) => { const checked = assignments.some((a) => a.board_id === br.id && a.banner_id === b.id); return <label key={br.id} className={`flex items-center gap-2 text-xs px-2 py-1.5 rounded-md border ${checked ? "border-primary/50 bg-primary/10" : "border-border bg-surface-2/60"}`}><input type="checkbox" checked={checked} onChange={(e) => void toggleBoard(b, br.id, e.target.checked)} /><span className="truncate">{br.name}</span></label>; })}</div>}
                       </div>
                     </div>
                   ))}
                 </div>
               )}
-            </section>
+            </div>
           );
-        })}
-        </div>
-        ))
+          })}
+        </section>
+        ))}
+        </>
       )}
+    </div>
+  );
+}
+
+function BannerStats({ stats }: { stats?: BannerStat }) {
+  return (
+    <div className="grid grid-cols-2 gap-1 text-[11px] text-muted-foreground">
+      <span className="inline-flex items-center gap-1"><Eye className="size-3" />{(stats?.impressions ?? 0).toLocaleString("en-GB")} views</span>
+      <span className="inline-flex items-center gap-1"><MousePointerClick className="size-3" />{(stats?.clicks ?? 0).toLocaleString("en-GB")} clicks</span>
     </div>
   );
 }
