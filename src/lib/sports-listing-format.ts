@@ -949,9 +949,27 @@ function expandMultiSlotChannelPost(raw: string): string {
   return rows.join("\n\n");
 }
 
+/** Convert repeated bold title → time → channels blocks into the parser's
+ * canonical time → title → channels order before markdown is discarded. */
+function reorderMarkedTitleTimeBlocks(raw: string): string {
+  const lines = decodeListingEntities(raw).split("\n");
+  for (let i = 0; i < lines.length; i++) {
+    const markedTitle = lines[i]?.trim().match(/^(?:\*{2}|__)(?!#)(.+?)(?:\*{2}|__)$/)?.[1];
+    if (!markedTitle) continue;
+    let next = i + 1;
+    while (next < lines.length && !lines[next]?.trim()) next++;
+    const slot = detectEvent(cleanLine(lines[next] ?? ""), null);
+    if (!slot || markedTitle.includes("|")) continue;
+    const timeLine = lines[next]!;
+    lines[i] = timeLine;
+    lines[next] = markedTitle;
+  }
+  return lines.join("\n");
+}
+
 export function parseSportsListingBlock(raw: string | null | undefined): SportsListingEvent[] {
   if (!raw) return [];
-  raw = expandMultiSlotChannelPost(raw);
+  raw = reorderMarkedTitleTimeBlocks(expandMultiSlotChannelPost(raw));
   const explicitHeadings = new Set(sportsListingHeadings(raw).map((heading) => heading.toLowerCase()));
   // Rugby Pass style: "Channel NN | Event HH:MM" rows, optionally with bare
   // "Event HH:MM" continuation rows that belong to the channel above them.
@@ -1210,7 +1228,9 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
       // line above is a channel, not a title.
       const MATCHUP_RE = /\s(?:&|v|vs|v\.|x|-)\s/i;
       const below = lines[li + 1] ?? "";
-      const belowIsTitle = Boolean(below) && !detectEvent(below, currentDate) && MATCHUP_RE.test(below);
+      const belowIsTitle = Boolean(below) && !detectEvent(below, currentDate) && (
+        MATCHUP_RE.test(below) || isLikelyChannelLabel(lines[li + 2] ?? "")
+      );
       const aboveIsTitle = Boolean(above) && MATCHUP_RE.test(above ?? "");
       const titleAboveTime = Boolean(
         !detected.title &&
