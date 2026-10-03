@@ -217,7 +217,7 @@ function WelcomePage() {
 
           <div className="flex min-h-0 w-full flex-col items-stretch gap-4">
             {/* Staff accounts see their subscription box on their profile instead. */}
-            {!isStaffAccount && <SubscriptionDetailsCard />}
+            {!isStaffAccount && <SubscriptionDetailsCard compact />}
             <AdSenseSlot slot="homeSquare" />
             </div>
           </div>

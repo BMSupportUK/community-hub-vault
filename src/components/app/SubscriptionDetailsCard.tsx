@@ -101,19 +101,28 @@ export function SubscriptionDetailsCard({ compact = false }: { compact?: boolean
 
   return (
     <div
-      className="h-full rounded-2xl border-2 border-violet-500/60 bg-surface shadow-[0_0_30px_rgba(139,92,246,0.25)] overflow-hidden flex flex-col mx-auto"
+      className={cn(
+        "rounded-2xl border-2 border-violet-500/60 bg-surface shadow-[0_0_30px_rgba(139,92,246,0.25)] overflow-hidden flex flex-col mx-auto",
+        !compact && "h-full",
+      )}
       style={{ width: 300, maxWidth: "100%" }}
     >
       {/* Header */}
       <div className="relative shrink-0 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.2),transparent_50%)]" />
-        <div className="relative flex flex-col items-center justify-center text-white p-4 text-center">
-          <CalendarClock className="size-10 mb-2 drop-shadow" />
-          <h3 className="font-display font-bold text-lg leading-tight drop-shadow">
+        <div className={cn(
+          "relative flex flex-col items-center justify-center text-white text-center",
+          compact ? "p-2.5" : "p-4",
+        )}>
+          <CalendarClock className={cn("mb-1 drop-shadow", compact ? "size-6" : "size-10 mb-2")} />
+          <h3 className={cn(
+            "font-display font-bold leading-tight drop-shadow",
+            compact ? "text-sm" : "text-lg",
+          )}>
             Your Subscription Details
           </h3>
-          <p className="text-xs text-white/85 mt-1">
+          <p className={cn("text-white/85 mt-0.5", compact ? "text-[10px]" : "text-xs")}>
             {hasCreds ? `${creds.length} active account${creds.length === 1 ? "" : "s"}` : "No accounts assigned"}
           </p>
         </div>
