@@ -155,17 +155,17 @@ function WelcomePage() {
               <div className="grid min-h-0 flex-1 gap-4 p-4 pb-6 md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] md:items-center lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:items-stretch lg:p-5 lg:pb-6 xl:gap-6 xl:p-6 xl:pb-6">
                 <div className="flex min-w-0 flex-col justify-center text-white">
                   <div className="mb-2 text-xs uppercase text-sky-200/80">BM Support · Member Hub</div>
-                  <h1 className="font-display text-4xl font-bold leading-tight lg:text-4xl xl:text-[2.75rem] xl:leading-[1.1]">
+                  <h1 className="font-display text-3xl font-bold leading-tight lg:text-4xl xl:text-5xl xl:leading-[1.1]">
                     Welcome to BM Support
                   </h1>
-                  <p className="mt-3 max-w-xl text-lg text-white/95 lg:text-lg">
+                  <p className="mt-2 max-w-xl text-sm text-white/95 lg:text-base">
                     Hey {name} — stay connected with the community, manage your account and get help.
                   </p>
-                  <p className="mt-2 max-w-xl text-base text-white/85 lg:text-base">
+                  <p className="mt-1.5 max-w-xl text-xs text-white/85 lg:text-sm">
                     Access channels, schedules, support and services—all in one place.
                   </p>
-                  <div className="mt-4 w-full max-w-[300px] self-center md:hidden">
-                    <AdSenseSlot slot="homeSquare" />
+                  <div className="mt-4 w-full max-w-[360px] self-center md:hidden">
+                    <AdSenseSlot slot="home" />
                   </div>
                 </div>
 
@@ -180,10 +180,8 @@ function WelcomePage() {
                     />
                     <div className="absolute inset-0 bg-gradient-to-tr from-blue-950/35 via-transparent to-transparent" />
                   </div>
-                  <div className="hidden shrink-0 self-center p-3 md:block">
-                    <div className="w-[200px]">
-                      <AdSenseSlot slot="homeSquare" />
-                    </div>
+                  <div className="hidden w-full shrink-0 p-3 md:block">
+                    <AdSenseSlot slot="home" />
                   </div>
                 </div>
               </div>
