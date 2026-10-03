@@ -1,6 +1,7 @@
 # Roadmap
 
 ## Current
+- [x] Boro Fan Zone adverts: include matching BM Support banners enabled for the Forum zone
 - [x] Affiliate adverts: random fair rotation, size-based admin sections, and per-banner view/click totals
 - [x] Sports Guide reader: keep the guide heading locked and show every event in one scrollable list
 - [x] New sports guides: make manual Add Blog saves use the same canonical event layout as imported guides
