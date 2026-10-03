@@ -14,7 +14,7 @@ interface CredRow {
 }
 
 
-export function SubscriptionDetailsCard() {
+export function SubscriptionDetailsCard({ compact = false }: { compact?: boolean }) {
   const { user } = useAuth();
   const [creds, setCreds] = useState<CredRow[]>([]);
   const [loaded, setLoaded] = useState(false);
@@ -73,10 +73,13 @@ export function SubscriptionDetailsCard() {
   if (!loaded) {
     return (
       <div
-        className="h-full rounded-2xl border-2 border-violet-500/60 bg-surface shadow-[0_0_30px_rgba(139,92,246,0.25)] overflow-hidden flex flex-col mx-auto animate-pulse"
+        className={cn(
+          "rounded-2xl border-2 border-violet-500/60 bg-surface shadow-[0_0_30px_rgba(139,92,246,0.25)] overflow-hidden flex flex-col mx-auto animate-pulse",
+          !compact && "h-full",
+        )}
         style={{ width: 300, maxWidth: "100%" }}
       >
-        <div className="aspect-[300/140] bg-muted" />
+        <div className={compact ? "aspect-[300/76] bg-muted" : "aspect-[300/140] bg-muted"} />
         <div className="flex-1 p-4 space-y-3">
           <div className="h-4 bg-muted rounded w-3/4" />
           <div className="h-3 bg-muted rounded w-full" />
