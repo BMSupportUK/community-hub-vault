@@ -115,6 +115,7 @@ function AuthLayout() {
   // Talk Channels always pin their composer within the visible phone or desktop
   // viewport. Tickets keep their existing large-screen-only panel behaviour.
   const talkSurface = /^\/home\/[^/]+$/.test(path);
+  const sportsGuideReader = path.startsWith("/sports-guides/read/");
   const chatSurface = talkSurface || (lockable && path === "/tickets");
   // The main site header starts collapsed (slim bar) ONLY on the tickets page
   // and Talk channels; every other BM Support page keeps it open. It can be
@@ -155,10 +156,11 @@ function AuthLayout() {
     path === "/fan-zone-security" ||
     path === "/knowledge-base" ||
     path === "/install-guides" ||
-    path === "/sports-guides";
+    path === "/sports-guides" ||
+    sportsGuideReader;
   // Everything else locks to the viewport on large screens and scrolls
   // normally on smaller ones.
-  const locksToViewport = chatSurface || lockable;
+  const locksToViewport = chatSurface || sportsGuideReader || lockable;
   void shopTab;
   void shopView;
   const logIp = useServerFn(logMyIp);
