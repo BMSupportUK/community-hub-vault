@@ -153,13 +153,13 @@ function WelcomePage() {
           <div className="relative flex min-h-0 min-w-0 flex-col pb-8 lg:pb-10">
             <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600 shadow-2xl">
               <div className="grid min-h-0 flex-1 gap-4 p-4 pb-6 md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] md:items-center lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:items-stretch lg:p-5 lg:pb-6 xl:gap-6 xl:p-6 xl:pb-6">
-                <div className="flex min-h-0 min-w-0 flex-col justify-center text-white">
+                <div className="flex min-h-0 min-w-0 flex-col text-white">
                   <div className="mb-2 text-sm font-semibold text-sky-100/90">Hey {name}</div>
                   <h1 className="font-display text-2xl font-bold leading-tight lg:text-3xl xl:text-4xl xl:leading-[1.1]">
                     Welcome to BM Support
                   </h1>
-                  <div className="mt-4 w-full max-w-[360px] self-center md:hidden">
-                    <AdSenseSlot slot="home" />
+                  <div className="mt-4 min-h-0 flex-1 overflow-y-auto">
+                    <WorkingStatusBox />
                   </div>
                 </div>
 
@@ -199,8 +199,6 @@ function WelcomePage() {
           </div>
 
           <div className="flex min-h-0 w-full flex-col items-stretch gap-4">
-            <WorkingStatusBox />
-            <AdSenseSlot slot="homeSquare" />
             {/* Staff accounts see their subscription box on their profile instead. */}
             {!isStaffAccount && <SubscriptionDetailsCard />}
             </div>
