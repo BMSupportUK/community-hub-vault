@@ -166,6 +166,7 @@ Supersport Action`;
       },
     ]);
     expect(parseSportsListingBlock(result.formatted)).toEqual(result.events);
+    setSystemTime();
   });
 
   test("merged DAZN inline fixtures and venue qualifiers stay as separate events", () => {
