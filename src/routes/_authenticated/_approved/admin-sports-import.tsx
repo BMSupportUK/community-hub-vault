@@ -1513,7 +1513,7 @@ function ListingPreview({
                     </div>
                   ) : (
                     <>
-                      <p className="text-xs font-semibold text-foreground">{event.time}</p>
+                      <p className="text-xs font-semibold text-foreground">{[event.date, event.time].filter(Boolean).join(" · ")}</p>
                       <p className="break-words text-sm font-medium leading-snug">{event.title}</p>
                       {event.channels.length > 0 && (
                         <div className="mt-1 flex flex-wrap gap-1">
