@@ -434,9 +434,6 @@ function KnowledgeBasePage() {
           </Button>
           <div className="grid min-w-0 gap-8 xl:grid-cols-[minmax(0,1fr)_280px] xl:gap-10">
             <div className="min-w-0">
-              {reading.image_url && (
-                <img src={reading.image_url} alt={reading.title} className="mb-6 max-h-64 w-auto max-w-full rounded-lg border border-border object-contain" />
-              )}
               <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                 <span>{categories.find((c) => c.id === reading.category_id)?.name ?? "Knowledge Base"}</span>
                 {reading.badge && <span className="rounded-full border border-primary/30 bg-primary/15 px-2 py-0.5 text-primary">{reading.badge}</span>}
