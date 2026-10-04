@@ -1,6 +1,7 @@
 # Roadmap
 
 ## Current
+- [x] Sports imports: fix NFL spaced/SNF rows and NBA League Pass inline ET/UK rows permanently
 - [x] Knowledge Base: full-page articles, complete video playback, and ratings sidebar
 - [x] Member home: move subscription details into the welcome panel and use a vertical sidebar advert
 - [x] Boro Fan Zone adverts: include matching BM Support banners enabled for the Forum zone

@@ -77,7 +77,10 @@ Format: heading `**US | MLB Extra Innings**` then rows `MLB 1 - Mets vs. Nationa
 ## MLB Extra Innings "event N name:" style (permanent)
 Row: `MLB event 1 name: Mets x Nationals start:2026-09-27 18:05:00 stop:...` → channel `MLB 1`, event `Mets v Nationals`, UK time from `start:` (no BST shift). Tested on the real queued post: 15 events, 0 issues.
 
-NFL Sunday Ticket rows are `NFL NN: ET time | UK time` with the fixture on the next line: use the stated UK time as-is (never convert ET), channel `NFL NN`, and drop the `US | NFL Sunday Ticket` header. Pipe rows must never be split by the FA Player (WF) colon rule.
+NFL Sunday Ticket rows are `NFL NN: ET time | UK time` or `NFL | NN - [SNF] ET time | UK time`, with the fixture on the next line: use the stated UK time as-is (never convert ET), channel `NFL NN`, ignore TNF/SNF/MNF labels, and drop the `US | NFL Sunday Ticket` header. Pipe rows must never be split by the FA Player (WF) colon rule.
+
+## NBA League Pass (permanent)
+Rows are `NBA NN: Fixture ET time | UK time` on one line under `US | NBA League Pass`. Use the stated UK time, remove the ET clock from the fixture, normalize `vs` to `v`, set channel `NBA NN`, and drop the provider header. Evening ET games showing an after-midnight UK time belong to the next UK day.
 
 ## WST / snooker title-time-channel layout (permanent)
 Source repeats `**Event title**`, then ``UK time | ET time``, then one or more channel lines. The title belongs to the time below it, and the channels below that time belong to the same event. Example: `**Shenzhen Open**` / `7:00am UK | 2:00am ET` / `TNT Sports 1 & 2` becomes `07:00 BST`, `WST: Shenzhen Open`, channels `TNT Sports 1` and `TNT Sports 2`. Repeated sessions must never use the event title as a channel or the channel line as the event name.
