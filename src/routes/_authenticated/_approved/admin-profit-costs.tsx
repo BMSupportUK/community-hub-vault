@@ -3,6 +3,7 @@ import { ArrowLeft, PiggyBank } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { isAdminUnlocked } from "@/lib/admin-unlock";
 import { ProfitCostsPanel } from "@/components/app/ProfitCostsPanel";
+import financeTeamBg from "@/assets/finance-team-bg.jpg";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-profit-costs")({
   head: () => ({
@@ -28,8 +29,17 @@ function AdminProfitCostsPage() {
   }
 
   return (
-    <main className="flex-1 overflow-y-auto">
-      <div className="w-full px-6 py-8 space-y-6">
+    <main className="relative flex-1 overflow-y-auto">
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0 bg-cover bg-center opacity-25"
+        style={{ backgroundImage: `url(${financeTeamBg})` }}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none fixed inset-0 bg-gradient-to-b from-background/70 via-background/85 to-background"
+      />
+      <div className="relative w-full max-w-6xl mx-auto px-6 py-8 space-y-6">
         <div className="flex items-center gap-3">
           <Link
             to="/admin"
@@ -41,12 +51,12 @@ function AdminProfitCostsPage() {
           </Link>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="size-10 rounded-xl bg-gradient-primary grid place-items-center text-primary-foreground shadow-glow">
-            <PiggyBank className="size-5" />
+        <div className="flex items-center gap-4 rounded-2xl border border-border/60 bg-card/60 backdrop-blur-md px-5 py-4 shadow-elegant">
+          <div className="size-12 rounded-xl bg-gradient-primary grid place-items-center text-primary-foreground shadow-glow">
+            <PiggyBank className="size-6" />
           </div>
           <div>
-            <h1 className="font-display text-2xl font-bold">Profit & costs</h1>
+            <h1 className="font-display text-3xl font-bold tracking-tight">Profit &amp; costs</h1>
             <p className="text-sm text-muted-foreground">
               See what you are making each year and month, and set what each product costs you.
             </p>
