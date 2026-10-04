@@ -1,7 +1,7 @@
 // ============= Full file contents =============
 
 import { useEffect, useState } from "react";
-import { Video, Clock, X } from "lucide-react";
+import { Video, Clock } from "lucide-react";
 import QRCode from "react-qr-code";
 import { supabase } from "@/integrations/supabase/client";
 import { nextOpeningLabel } from "@/lib/business-hours";
@@ -12,13 +12,13 @@ const WHATSAPP_NUMBER = "447477204735";
 const HELP_MESSAGE =
   "Hi BM Support, I need help with my install — can we do a video call?";
 
-/** Floating "Video call us on WhatsApp" button, only usable during the admin-set opening hours.
- *  When tapped it shows a QR code the customer scans with their phone camera to start a chat. */
+/** Floating "Video call us on WhatsApp" widget, only usable during the admin-set opening hours.
+ *  Shows a QR code the customer scans with their phone camera to open a chat with BM Support. */
 export function WhatsAppVideoCall() {
   const [open, setOpen] = useState<boolean | null>(null);
   const [reopen, setReopen] = useState<string | null>(null);
   const [showInfo, setShowInfo] = useState(false);
-  const [showQr, setShowQr] = useState(false);
+  const [showQr, setShowQr] = useState(true);
 
   useEffect(() => {
     let alive = true;
@@ -54,16 +54,8 @@ export function WhatsAppVideoCall() {
       {open ? (
         <div className="flex flex-col items-start gap-2">
           {showQr && (
-            <div className="relative rounded-xl border border-border bg-card p-4 text-center shadow-xl">
-              <button
-                type="button"
-                aria-label="Close"
-                onClick={() => setShowQr(false)}
-                className="absolute right-1.5 top-1.5 rounded-full p-1 text-muted-foreground hover:text-foreground"
-              >
-                <X className="h-4 w-4" />
-              </button>
-              <p className="mb-2 px-4 text-sm font-semibold text-card-foreground">
+            <div className="rounded-xl border border-border bg-card p-4 text-center shadow-xl">
+              <p className="mb-2 text-sm font-semibold text-card-foreground">
                 Scan with your phone camera
               </p>
               <div className="mx-auto w-fit rounded-lg bg-white p-2">
@@ -84,14 +76,25 @@ export function WhatsAppVideoCall() {
             >
               <Video className="h-4 w-4" /> Video call us on WhatsApp
             </a>
-            <button
-              type="button"
-              aria-label="Show QR code to scan"
-              onClick={() => setShowQr((v) => !v)}
-              className="rounded-full border border-primary bg-background px-3 py-3 text-sm font-semibold text-primary shadow-lg hover:opacity-90"
-            >
-              <span className="block w-10 leading-none">Scan to add us</span>
-            </button>
+            {showQr ? (
+              <button
+                type="button"
+                aria-label="Hide QR code"
+                onClick={() => setShowQr(false)}
+                className="rounded-full border border-border bg-background px-3 py-3 text-xs font-semibold text-muted-foreground shadow-lg hover:opacity-90"
+              >
+                Hide code
+              </button>
+            ) : (
+              <button
+                type="button"
+                aria-label="Show QR code to scan"
+                onClick={() => setShowQr(true)}
+                className="rounded-full border border-primary bg-background px-3 py-3 text-xs font-semibold text-primary shadow-lg hover:opacity-90"
+              >
+                Show scan code
+              </button>
+            )}
           </div>
         </div>
       ) : (
