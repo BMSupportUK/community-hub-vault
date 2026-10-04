@@ -406,56 +406,70 @@ function KnowledgeBasePage() {
   if (reading) {
     const stats = ratingStats[reading.id];
     const mine = myRatingFor(reading.id);
+    const ratingPanel = (
+      <aside className="rounded-lg border border-border bg-surface-2/40 p-5 xl:sticky xl:top-6 xl:self-start">
+        <h2 className="font-display text-lg font-semibold">Article rating</h2>
+        <div className="mt-4 border-b border-border pb-5">
+          <StarRating value={Math.round(stats?.avg ?? 0)} readOnly size={20} />
+          <p className="mt-2 text-sm text-muted-foreground">
+            {stats ? `${stats.avg.toFixed(1)} out of 5 from ${stats.count} rating${stats.count === 1 ? "" : "s"}` : "No ratings yet"}
+          </p>
+        </div>
+        <div className="pt-5">
+          <p className="mb-2 text-sm font-medium">Your rating</p>
+          <StarRating value={mine} onChange={(n) => rateArticle(reading.id, n)} size={24} />
+        </div>
+      </aside>
+    );
     return (
       <main className="min-h-0 flex-1 overflow-y-auto bg-background">
-        <div className="max-w-3xl mx-auto px-6 py-8">
-          <button onClick={() => { setReading(null); scrollBackToArticle(); }} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-6">
+        <div className="w-full px-4 py-6 sm:px-8 lg:px-10 lg:py-8">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => { setReading(null); scrollBackToArticle(); }}
+            className="mb-6 -ml-3 gap-1.5 text-muted-foreground hover:text-foreground"
+          >
             <ArrowLeft className="size-4" /> Back to knowledge base
-          </button>
-          {reading.image_url && (
-            <img src={reading.image_url} alt={reading.title} className="max-h-48 md:max-h-64 w-auto mx-auto rounded-2xl mb-6 border border-border object-contain" />
-          )}
-          <div className="flex items-center gap-2 mb-2 text-xs text-muted-foreground">
-            <span>{categories.find((c) => c.id === reading.category_id)?.name ?? "Knowledge Base"}</span>
-            {reading.badge && <span className="px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/30">{reading.badge}</span>}
-            {!reading.published && <span className="px-2 py-0.5 rounded-full bg-muted text-muted-foreground border border-border">Draft</span>}
-          </div>
-          <h1 className="font-display text-3xl font-bold mb-3">{reading.title}</h1>
-          {reading.excerpt && <p className="text-lg text-muted-foreground mb-4">{reading.excerpt}</p>}
+          </Button>
+          <div className="grid min-w-0 gap-8 xl:grid-cols-[minmax(0,1fr)_280px] xl:gap-10">
+            <div className="min-w-0">
+              {reading.image_url && (
+                <img src={reading.image_url} alt={reading.title} className="mb-6 max-h-64 w-auto max-w-full rounded-lg border border-border object-contain" />
+              )}
+              <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                <span>{categories.find((c) => c.id === reading.category_id)?.name ?? "Knowledge Base"}</span>
+                {reading.badge && <span className="rounded-full border border-primary/30 bg-primary/15 px-2 py-0.5 text-primary">{reading.badge}</span>}
+                {!reading.published && <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-muted-foreground">Draft</span>}
+              </div>
+              <h1 className="mb-3 font-display text-3xl font-bold sm:text-4xl">{reading.title}</h1>
+              {reading.excerpt && <p className="mb-6 max-w-4xl text-lg text-muted-foreground">{reading.excerpt}</p>}
 
-          <div className="flex flex-wrap items-center gap-3 mb-6 p-3 rounded-xl border border-border bg-surface-2/40">
-            <div className="flex items-center gap-2">
-              <StarRating value={Math.round(stats?.avg ?? 0)} readOnly size={16} />
-              <span className="text-sm text-muted-foreground">
-                {stats ? `${stats.avg.toFixed(1)} · ${stats.count} rating${stats.count === 1 ? "" : "s"}` : "No ratings yet"}
-              </span>
-            </div>
-            <div className="ml-auto flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">Your rating:</span>
-              <StarRating value={mine} onChange={(n) => rateArticle(reading.id, n)} size={20} />
-            </div>
-          </div>
+              <div className="mb-7 xl:hidden">{ratingPanel}</div>
 
-          {reading.body ? (
-            <article
-              className="prose prose-invert max-w-none text-foreground/90 leading-relaxed"
-              dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(reading.body) }}
-            />
-          ) : (
-            <article className="prose prose-invert max-w-none text-foreground/90 leading-relaxed">
-              <em className="text-muted-foreground">No content yet.</em>
-            </article>
-          )}
-          {isMod && (
-            <div className="mt-8 flex gap-2 border-t border-border pt-4">
-              <Button variant="secondary" onClick={() => { focusArticleId.current = reading.id; setEditing(reading); setReading(null); }}>
-                <Pencil className="size-4 mr-1.5" /> Edit
-              </Button>
-              <Button variant="destructive" onClick={() => deleteArticle(reading.id)}>
-                <Trash2 className="size-4 mr-1.5" /> Delete
-              </Button>
+              {reading.body ? (
+                <article
+                  className="prose prose-invert max-w-none text-foreground/90 leading-relaxed [&_.video-embed]:relative [&_.video-embed]:aspect-video [&_.video-embed]:h-auto [&_.video-embed]:w-full [&_.video-embed]:overflow-visible [&_.video-embed]:[padding-bottom:0!important] [&_.video-embed_iframe]:absolute [&_.video-embed_iframe]:inset-0 [&_.video-embed_iframe]:size-full [&_iframe]:max-w-full [&_video]:block [&_video]:h-auto [&_video]:max-h-none [&_video]:w-full [&_video]:max-w-full [&_video]:object-contain"
+                  dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(reading.body) }}
+                />
+              ) : (
+                <article className="prose prose-invert max-w-none text-foreground/90 leading-relaxed">
+                  <em className="text-muted-foreground">No content yet.</em>
+                </article>
+              )}
+              {isMod && (
+                <div className="mt-8 flex gap-2 border-t border-border pt-4">
+                  <Button variant="secondary" onClick={() => { focusArticleId.current = reading.id; setEditing(reading); setReading(null); }}>
+                    <Pencil className="size-4 mr-1.5" /> Edit
+                  </Button>
+                  <Button variant="destructive" onClick={() => deleteArticle(reading.id)}>
+                    <Trash2 className="size-4 mr-1.5" /> Delete
+                  </Button>
+                </div>
+              )}
             </div>
-          )}
+            <div className="hidden xl:block">{ratingPanel}</div>
+          </div>
         </div>
         {editing && <ArticleEditor editing={editing} setEditing={setEditing} onClose={closeEditor} categories={categories} onSave={saveArticle} userId={user?.id ?? null} />}
       </main>
