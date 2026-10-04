@@ -447,7 +447,15 @@ function KnowledgeBasePage() {
               {reading.body ? (
                 <article
                   className="prose prose-invert max-w-none text-foreground/90 leading-relaxed [&_.video-embed]:relative [&_.video-embed]:aspect-video [&_.video-embed]:h-auto [&_.video-embed]:w-full [&_.video-embed]:overflow-visible [&_.video-embed]:[padding-bottom:0!important] [&_.video-embed_iframe]:absolute [&_.video-embed_iframe]:inset-0 [&_.video-embed_iframe]:size-full [&_iframe]:max-w-full [&_video]:block [&_video]:aspect-video [&_video]:h-auto [&_video]:max-h-none [&_video]:w-full [&_video]:max-w-full [&_video]:bg-background [&_video]:object-contain"
-                  dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(reading.body) }}
+                  ref={(el) => {
+                    // Write the article HTML only when it actually changes, so
+                    // background re-renders never reset a playing video.
+                    if (!el) return;
+                    const key = `${reading.id}:${reading.body}`;
+                    if (el.dataset.kbKey === key) return;
+                    el.dataset.kbKey = key;
+                    el.innerHTML = sanitizeRichHtml(reading.body ?? "");
+                  }}
                 />
               ) : (
                 <article className="prose prose-invert max-w-none text-foreground/90 leading-relaxed">
