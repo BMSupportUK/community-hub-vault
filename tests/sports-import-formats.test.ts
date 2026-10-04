@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, setSystemTime, test } from "bun:test";
 import { checkSportsImport } from "../src/lib/sports-import-check";
 import { formatSportsListingBlock, parseSportsListingBlock } from "../src/lib/sports-listing-format";
 import { snapSplitToHeading, splitSportsListingAtLine } from "../src/lib/discord-import.functions";
@@ -118,6 +118,7 @@ beIN Sports English 1 & 2`;
   });
 
   test("UFC repeated title-time-channel blocks keep each title and its own channels", () => {
+    setSystemTime(new Date(Date.UTC(2026, 9, 3, 9)));
     const raw = `**## UFC**
 
 **UFC 332 : Early Prelims**
