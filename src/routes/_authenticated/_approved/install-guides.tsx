@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Search, X, Pencil, Trash2, ImageIcon, GripVertical, FileText, Play, Film, Copy, Check, Upload, Loader2, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -1120,6 +1120,11 @@ function SecureGuideVideo({
   onEl?: (el: HTMLVideoElement | null) => void;
 }) {
   const src = useGuideVideoUrl(ref_, blogId);
+  // Stable ref callback: an inline one re-runs on every parent re-render
+  // (the page ticks each second), which restarted finished videos.
+  const onElLatest = useRef(onEl);
+  onElLatest.current = onEl;
+  const onElRef = useCallback((el: HTMLVideoElement | null) => { onElLatest.current?.(el); }, []);
 
   if (!src) {
     return (
@@ -1131,12 +1136,8 @@ function SecureGuideVideo({
 
   return (
     <video
-      ref={(el) => {
-        onEl?.(el);
-        if (el) {
-          el.play().catch(() => { /* autoplay may be blocked */ });
-        }
-      }}
+      ref={onElRef}
+      autoPlay
       src={src}
       controls
       controlsList="nodownload noremoteplayback noplaybackrate"
