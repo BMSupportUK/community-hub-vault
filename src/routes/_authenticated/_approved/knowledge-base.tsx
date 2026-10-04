@@ -481,10 +481,13 @@ function KnowledgeBasePage() {
   const openArticle = (article: Article) => {
     focusArticleId.current = article.id;
     setReading(article);
+    window.requestAnimationFrame(() => {
+      document.querySelector<HTMLElement>("main[data-knowledge-base]")?.scrollTo({ top: 0, behavior: "instant" });
+    });
   };
 
   return (
-    <main className="min-h-0 flex-1 overflow-y-auto bg-background pb-24 md:pb-8">
+    <main data-knowledge-base className="min-h-0 flex-1 overflow-y-auto bg-background pb-24 md:pb-8">
       <div className="mx-auto w-full max-w-6xl px-4 py-5 sm:px-8 lg:py-8">
         <header className="flex items-center justify-between gap-3 border-b border-border pb-4">
           <div className="flex min-w-0 items-center gap-3">
