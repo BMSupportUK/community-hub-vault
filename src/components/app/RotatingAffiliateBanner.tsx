@@ -34,6 +34,24 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 /**
+ * Tracks which banner each slot instance on the page is currently showing,
+ * keyed by slotKey, so sibling slots (e.g. the two adverts either side of a
+ * guide banner) never display the same banner at the same time.
+ */
+const activeBySlot = new Map<string, Map<number, string>>();
+let nextInstanceId = 1;
+
+function siblingBannerIds(slotKey: string, instanceId: number): Set<string> {
+  const ids = new Set<string>();
+  const instances = activeBySlot.get(slotKey);
+  if (!instances) return ids;
+  for (const [id, bannerId] of instances) {
+    if (id !== instanceId) ids.add(bannerId);
+  }
+  return ids;
+}
+
+/**
  * Rotates evenly through every matching banner. The complete set, including
  * "Advertise here", is shuffled so every banner receives one equal interval
  * before a new random cycle begins.
