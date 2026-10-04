@@ -928,10 +928,10 @@ function QueueSetup({
   useEffect(() => setOverride(false), [item?.id, draft.sourceZone]);
 
   const saveListingFn = useServerFn(saveQueueListing);
-  const applyCardEdit = async (index: number, updated: { time: string; title: string; channels: string[] }) => {
+  const applyCardEdit = async (index: number, updated: { date: string; time: string; title: string; channels: string[] }) => {
     if (!item) return;
     const events = check.events.map((event, i) =>
-      i === index ? { ...event, time: updated.time, title: updated.title, channels: updated.channels } : event,
+      i === index ? { ...event, date: updated.date || null, time: updated.time, title: updated.title, channels: updated.channels } : event,
     );
     const raw = formatSportsListingEvents(events, { raw: itemRaw, sourceZone: draft.sourceZone ?? "gmt" });
     try {
@@ -1406,7 +1406,7 @@ function ListingPreview({
   onEditEvent,
 }: {
   check: ImportCheckResult;
-  onEditEvent?: (index: number, updated: { time: string; title: string; channels: string[] }) => void | Promise<void>;
+  onEditEvent?: (index: number, updated: { date: string; time: string; title: string; channels: string[] }) => void | Promise<void>;
 }) {
   // Shows exactly what the save action writes (same formatter, re-read).
   const events = check.events;
@@ -1417,6 +1417,7 @@ function ListingPreview({
     flagReasons.set(n, [...(flagReasons.get(n) ?? []), issue.message]);
   }
   const [editing, setEditing] = useState<number | null>(null);
+  const [editDate, setEditDate] = useState("");
   const [editTime, setEditTime] = useState("");
   const [editTitle, setEditTitle] = useState("");
   const [editChannels, setEditChannels] = useState("");
@@ -1435,6 +1436,7 @@ function ListingPreview({
   const startEdit = (index: number) => {
     const event = events[index];
     setEditing(index);
+    setEditDate(event.date ?? "");
     setEditTime(event.time ?? "");
     setEditTitle(event.title ?? "");
     setEditChannels((event.channels ?? []).join(" | "));
@@ -1445,6 +1447,7 @@ function ListingPreview({
     setSaving(true);
     try {
       await onEditEvent(index, {
+        date: editDate.trim(),
         time: editTime.trim(),
         title: editTitle.trim(),
         channels: editChannels.split("|").map((c) => c.trim()).filter(Boolean),
@@ -1475,6 +1478,12 @@ function ListingPreview({
                 <div className="min-w-0 flex-1">
                   {isEditing ? (
                     <div className="space-y-1.5">
+                      <Input
+                        value={editDate}
+                        onChange={(e) => setEditDate(e.target.value)}
+                        placeholder="Date, e.g. Sunday 5 October"
+                        className="h-7 text-xs"
+                      />
                       <Input
                         value={editTime}
                         onChange={(e) => setEditTime(e.target.value)}
