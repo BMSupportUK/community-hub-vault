@@ -454,12 +454,7 @@ function KnowledgeBasePage() {
           </Button>
           <div className="grid min-w-0 gap-8 xl:grid-cols-[minmax(0,1fr)_280px] xl:gap-10">
             <div className="min-w-0">
-              <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                <span>{categories.find((c) => c.id === reading.category_id)?.name ?? "Knowledge Base"}</span>
-                {reading.badge && <span className="rounded-full border border-primary/30 bg-primary/15 px-2 py-0.5 text-primary">{reading.badge}</span>}
-                {!reading.published && <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-muted-foreground">Draft</span>}
-              </div>
-              <h1 className="mb-3 font-display text-3xl font-bold sm:text-4xl">{reading.title}</h1>
+              <div className="mb-6 xl:hidden">{headerPanel}</div>
               {reading.excerpt && <p className="mb-6 max-w-4xl text-lg text-muted-foreground">{reading.excerpt}</p>}
 
               <div className="mb-7 xl:hidden">{ratingPanel}</div>
