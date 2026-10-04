@@ -158,6 +158,17 @@ export function NotificationBell() {
           if (n.kind === "order_placed" && canManageOrders) {
             playSound(orderAudio, { label: "order", gain: 1.8 });
           }
+          if (n.kind === "live_help" && canManageOrders) {
+            playSound(orderAudio, { label: "live-help", gain: 1.8 });
+            toast(`📹 ${n.title}`, {
+              description: n.body ?? "A customer is waiting for live camera help.",
+              duration: 10000,
+              action: n.link_path
+                ? { label: "Open", onClick: () => navigate({ to: n.link_path! } as never) }
+                : undefined,
+            });
+            return;
+          }
           if (n.kind === "ticket_raised" && canHandleTickets) {
             // Sound + browser alert come from UnclaimedTicketsNotifier (on-shift only).
             toast(`🎫 ${n.title}`, {

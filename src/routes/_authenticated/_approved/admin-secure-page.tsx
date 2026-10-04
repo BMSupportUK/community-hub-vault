@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { SecureLinkPanel } from "@/components/checkout/ManualOrderLinkDialog";
+import { LiveHelpStaff } from "@/components/checkout/LiveHelpStaff";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-secure-page")({
   validateSearch: (search: Record<string, unknown>): { order?: string; ref?: string } => ({
