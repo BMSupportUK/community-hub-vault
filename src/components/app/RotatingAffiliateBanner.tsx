@@ -174,11 +174,15 @@ function RotatingAffiliateBannerComponent({
       setFading(true);
       timeoutId = window.setTimeout(() => {
         setIndex((i) => {
-          const next = i + 1;
+          const siblings = siblingBannerIds(slotKey, instanceIdRef.current);
+          // Advance to the next banner a sibling slot isn't already showing.
+          let next = i + 1;
+          while (next < list.length && siblings.has(list[next].id)) next++;
           if (next >= list.length) {
             setCycle((value) => value + 1);
             return 0;
           }
+          if (next === i) return i;
           return next;
         });
         setFading(false);
@@ -188,12 +192,25 @@ function RotatingAffiliateBannerComponent({
       clearInterval(id);
       if (timeoutId !== null) window.clearTimeout(timeoutId);
     };
-  }, [paused, list.length, intervalMs]);
+  }, [paused, list, intervalMs, slotKey]);
 
   const current = list[Math.min(index, list.length - 1)];
   const spec = AD_SIZES[size];
   const isWide = size === "leaderboard";
-  const slotKey = `${site ?? "all"}:${zone ?? "all"}:${size}`;
+
+  // Publish which banner this instance is showing so sibling slots avoid it.
+  useEffect(() => {
+    if (!current) return;
+    let instances = activeBySlot.get(slotKey);
+    if (!instances) {
+      instances = new Map();
+      activeBySlot.set(slotKey, instances);
+    }
+    instances.set(instanceIdRef.current, current.id);
+    return () => {
+      instances.delete(instanceIdRef.current);
+    };
+  }, [current?.id, slotKey]);
 
   useEffect(() => {
     const node = advertRef.current;
