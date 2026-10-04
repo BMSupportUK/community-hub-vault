@@ -1,9 +1,10 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Plus, Search, X, Pencil, Trash2, GripVertical, BookOpen, ChevronRight, ArrowRight,
-  ArrowLeft, Save, Loader2, FolderPlus, Eye, EyeOff, Star,
+  ArrowLeft, Save, Loader2, FolderPlus, Eye, EyeOff, Star, Home, UserRound,
+  LifeBuoy, Smartphone, Settings, Zap, PlayCircle, LayoutGrid,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -95,7 +96,7 @@ function KnowledgeBasePage() {
   const { isMod, user } = useAuth();
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<string>(() => {
-    try { return sessionStorage.getItem(KB_TAB_KEY) || "welcome"; } catch { return "welcome"; }
+    try { return sessionStorage.getItem(KB_TAB_KEY) || "guides"; } catch { return "welcome"; }
   });
   const [welcome, setWelcome] = useState<Welcome>({ title: "", body: "" });
   const [welcomeDraft, setWelcomeDraft] = useState<Welcome | null>(null);
@@ -104,6 +105,7 @@ function KnowledgeBasePage() {
     try { return sessionStorage.getItem(KB_CAT_KEY); } catch { return null; }
   });
   const [search, setSearch] = useState("");
+  const searchRef = useRef<HTMLInputElement | null>(null);
   const [reading, setReading] = useState<Article | null>(() => {
     try { const raw = sessionStorage.getItem(KB_READ_KEY); return raw ? JSON.parse(raw) as Article : null; } catch { return null; }
   });
@@ -406,65 +408,38 @@ function KnowledgeBasePage() {
   if (reading) {
     const stats = ratingStats[reading.id];
     const mine = myRatingFor(reading.id);
-    // Cover-style header panel (category label + big title on the hero artwork),
-    // moved from the top of the article into the ratings rail.
-    const headerPanel = (
-      <div className="relative overflow-hidden rounded-lg">
-        <img src={kbHero} alt="" aria-hidden="true" className="absolute inset-0 size-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/85 via-primary/70 to-primary/90" aria-hidden="true" />
-        <div className="relative p-5">
-          <span className="text-xs font-medium text-primary-foreground/75">
-            {categories.find((c) => c.id === reading.category_id)?.name ?? "Knowledge Base"}
-          </span>
-          <h1 className="mt-1 font-display text-3xl font-bold leading-tight text-primary-foreground">{reading.title}</h1>
-          {reading.badge && (
-            <span className="mt-3 inline-block rounded-full border border-primary-foreground/30 bg-primary-foreground/10 px-2 py-0.5 text-xs text-primary-foreground">{reading.badge}</span>
-          )}
-          {!reading.published && (
-            <span className="mt-3 ml-2 inline-block rounded-full border border-primary-foreground/30 bg-primary-foreground/10 px-2 py-0.5 text-xs text-primary-foreground">Draft</span>
-          )}
-        </div>
-      </div>
-    );
+    const categoryName = categories.find((c) => c.id === reading.category_id)?.name ?? "Knowledge Base";
     const ratingPanel = (
-      <aside className="rounded-lg border border-border bg-surface-2/40 p-5 xl:sticky xl:top-6 xl:self-start">
-        <h2 className="font-display text-lg font-semibold">Article rating</h2>
-        <div className="mt-4 border-b border-border pb-5">
-          <StarRating value={Math.round(stats?.avg ?? 0)} readOnly size={20} />
-          <p className="mt-2 text-sm text-muted-foreground">
-            {stats ? `${stats.avg.toFixed(1)} out of 5 from ${stats.count} rating${stats.count === 1 ? "" : "s"}` : "No ratings yet"}
-          </p>
-        </div>
-        <div className="pt-5">
-          <p className="mb-2 text-sm font-medium">Your rating</p>
+      <aside className="border-t border-border py-6 xl:sticky xl:top-6 xl:self-start xl:rounded-lg xl:border xl:bg-card xl:p-5">
+        <p className="text-xs font-semibold uppercase tracking-widest text-primary">Was this guide helpful?</p>
+        <div className="mt-3 flex items-center justify-between gap-3">
           <StarRating value={mine} onChange={(n) => rateArticle(reading.id, n)} size={24} />
+          <span className="text-xs text-muted-foreground">
+            {stats ? `${stats.avg.toFixed(1)} · ${stats.count} rating${stats.count === 1 ? "" : "s"}` : "Be the first"}
+          </span>
         </div>
       </aside>
     );
     return (
-      <main className="min-h-0 flex-1 overflow-y-auto bg-background">
-        <div className="w-full px-4 py-6 sm:px-8 lg:px-10 lg:py-8">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={() => { setReading(null); scrollBackToArticle(); }}
-            className="mb-6 -ml-3 gap-1.5 text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="size-4" /> Back to knowledge base
+      <main className="min-h-0 flex-1 overflow-y-auto bg-background pb-24 md:pb-8">
+        <div data-knowledge-article-top className="mx-auto w-full max-w-6xl px-4 py-5 sm:px-8 lg:py-8">
+          <Button type="button" variant="ghost" onClick={() => { setReading(null); scrollBackToArticle(); }} className="mb-5 -ml-3 gap-1.5 text-muted-foreground hover:text-foreground">
+            <ArrowLeft className="size-4" /> Back to guides
           </Button>
           <div className="grid min-w-0 gap-8 xl:grid-cols-[minmax(0,1fr)_280px] xl:gap-10">
             <div className="min-w-0">
-              <div className="mb-6 xl:hidden">{headerPanel}</div>
-              {reading.excerpt && <p className="mb-6 max-w-4xl text-lg text-muted-foreground">{reading.excerpt}</p>}
-
-              <div className="mb-7 xl:hidden">{ratingPanel}</div>
-
+              <div className="mb-6 border-b border-border pb-6">
+                <span className="text-xs font-semibold uppercase tracking-widest text-primary">{categoryName}</span>
+                <h1 className="mt-2 max-w-4xl font-display text-3xl font-bold leading-tight sm:text-4xl">{reading.title}</h1>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {reading.badge && <span className="rounded-md border border-primary/30 bg-primary/15 px-2 py-1 text-xs font-semibold text-primary">{reading.badge}</span>}
+                  {!reading.published && <span className="rounded-md border border-border bg-muted px-2 py-1 text-xs text-muted-foreground">Draft</span>}
+                </div>
+                {reading.excerpt && <p className="mt-4 max-w-3xl text-base leading-relaxed text-muted-foreground sm:text-lg">{reading.excerpt}</p>}
+              </div>
               {reading.body ? (
-                <article
-                  className="prose prose-invert max-w-none text-foreground/90 leading-relaxed [&_.video-embed]:relative [&_.video-embed]:aspect-video [&_.video-embed]:h-auto [&_.video-embed]:w-full [&_.video-embed]:overflow-visible [&_.video-embed]:[padding-bottom:0!important] [&_.video-embed_iframe]:absolute [&_.video-embed_iframe]:inset-0 [&_.video-embed_iframe]:size-full [&_iframe]:max-w-full [&_video]:block [&_video]:aspect-video [&_video]:h-auto [&_video]:max-h-none [&_video]:w-full [&_video]:max-w-full [&_video]:bg-background [&_video]:object-contain"
+                <article className="prose prose-invert max-w-none text-foreground/90 leading-relaxed [&_.video-embed]:relative [&_.video-embed]:aspect-video [&_.video-embed]:h-auto [&_.video-embed]:w-full [&_.video-embed]:overflow-hidden [&_.video-embed]:rounded-lg [&_.video-embed]:[padding-bottom:0!important] [&_.video-embed_iframe]:absolute [&_.video-embed_iframe]:inset-0 [&_.video-embed_iframe]:size-full [&_iframe]:max-w-full [&_video]:block [&_video]:aspect-video [&_video]:h-auto [&_video]:max-h-none [&_video]:w-full [&_video]:max-w-full [&_video]:rounded-lg [&_video]:bg-card [&_video]:object-contain"
                   ref={(el) => {
-                    // Write the article HTML only when it actually changes, so
-                    // background re-renders never reset a playing video.
                     if (!el) return;
                     const key = `${reading.id}:${reading.body}`;
                     if (el.dataset.kbKey === key) return;
@@ -472,319 +447,201 @@ function KnowledgeBasePage() {
                     el.innerHTML = sanitizeRichHtml(reading.body ?? "");
                   }}
                 />
-              ) : (
-                <article className="prose prose-invert max-w-none text-foreground/90 leading-relaxed">
-                  <em className="text-muted-foreground">No content yet.</em>
-                </article>
-              )}
+              ) : <p className="text-muted-foreground">No content yet.</p>}
+              <div className="mt-8 xl:hidden">{ratingPanel}</div>
               {isMod && (
                 <div className="mt-8 flex gap-2 border-t border-border pt-4">
-                  <Button variant="secondary" onClick={() => { focusArticleId.current = reading.id; setEditing(reading); setReading(null); }}>
-                    <Pencil className="size-4 mr-1.5" /> Edit
-                  </Button>
-                  <Button variant="destructive" onClick={() => deleteArticle(reading.id)}>
-                    <Trash2 className="size-4 mr-1.5" /> Delete
-                  </Button>
+                  <Button variant="secondary" onClick={() => { focusArticleId.current = reading.id; setEditing(reading); setReading(null); }}><Pencil className="mr-1.5 size-4" /> Edit</Button>
+                  <Button variant="destructive" onClick={() => deleteArticle(reading.id)}><Trash2 className="mr-1.5 size-4" /> Delete</Button>
                 </div>
               )}
             </div>
-            <div className="hidden xl:block">
-              {headerPanel}
-              <div className="mt-4">{ratingPanel}</div>
-            </div>
+            <div className="hidden xl:block">{ratingPanel}</div>
           </div>
         </div>
+        <KnowledgeBottomNav onGuides={() => setReading(null)} onSearch={() => { setReading(null); window.setTimeout(() => searchRef.current?.focus(), 80); }} />
         {editing && <ArticleEditor editing={editing} setEditing={setEditing} onClose={closeEditor} categories={categories} onSave={saveArticle} userId={user?.id ?? null} />}
       </main>
     );
   }
 
+  const featured = filtered[0] ?? null;
+  const remaining = filtered.slice(1);
+  const categoryTones = [
+    "bg-primary/20 text-primary border-primary/35",
+    "bg-success/15 text-success border-success/30",
+    "bg-warning/15 text-warning border-warning/30",
+    "bg-accent/20 text-accent border-accent/35",
+  ];
+  const categoryIcons = [LifeBuoy, Smartphone, Settings, Zap];
+  const readTime = (article: Article) => {
+    const words = `${article.excerpt ?? ""} ${(article.body ?? "").replace(/<[^>]+>/g, " ")}`.trim().split(/\s+/).filter(Boolean).length;
+    return `${Math.max(2, Math.ceil(words / 180))} min read`;
+  };
+  const openArticle = (article: Article) => {
+    focusArticleId.current = article.id;
+    setReading(article);
+    window.setTimeout(() => {
+      document.querySelector<HTMLElement>("[data-knowledge-article-top]")?.scrollIntoView({ block: "start", behavior: "instant" });
+    }, 50);
+  };
+
   return (
-    <main className="min-h-0 flex-1 overflow-y-auto bg-background">
-      <Tabs value={tab} onValueChange={setTab} className="w-full">
-        <header className="relative px-4 py-5 sm:px-8 lg:py-4 border-b border-border bg-surface-2/40 backdrop-blur">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="min-w-0">
-              <h1 className="font-display text-3xl font-bold bg-gradient-to-r from-violet-600 via-fuchsia-600 to-blue-600 bg-clip-text text-transparent leading-[1.2] pb-1">
-                Knowledge Base
-              </h1>
-              <p className="text-muted-foreground mt-1">Guides, answers and how-tos — all in one place.</p>
+    <main data-knowledge-base className="min-h-0 flex-1 overflow-y-auto bg-background pb-24 md:pb-8">
+      <div className="mx-auto w-full max-w-6xl px-4 py-5 sm:px-8 lg:py-8">
+        <header className="flex items-center justify-between gap-3 border-b border-border pb-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="grid size-10 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground shadow-soft">
+              <BookOpen className="size-5" />
             </div>
-            <TabsList className="flex max-w-full flex-none flex-wrap h-auto gap-1 rounded-full border border-border bg-surface-2/60 p-1">
-              <TabsTrigger value="welcome" className="shrink-0 rounded-full">Welcome</TabsTrigger>
-              <TabsTrigger value="guides" className="shrink-0 rounded-full">Guides</TabsTrigger>
-              {isMod && <TabsTrigger value="categories" className="shrink-0 rounded-full">Categories</TabsTrigger>}
-            </TabsList>
+            <div className="min-w-0">
+              <p className="truncate font-display text-base font-bold">BM Support</p>
+              <p className="text-xs text-muted-foreground">Knowledge Base</p>
+            </div>
           </div>
+          <Link to="/profile" aria-label="Open profile" className="grid size-10 shrink-0 place-items-center rounded-full border border-border bg-card text-muted-foreground hover:border-primary/50 hover:text-foreground">
+            <UserRound className="size-5" />
+          </Link>
         </header>
 
-      <div className="px-4 py-5 sm:px-8 lg:py-4">
-          {isMod && tab === "guides" && (
-            <div className="flex justify-end mb-6 lg:mb-4">
-              <Button onClick={openNewArticle} className="gap-1.5">
-                <Plus className="size-4" /> New article
-              </Button>
+        <section className="pt-7">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h1 className="font-display text-3xl font-bold leading-tight sm:text-4xl">How can we help?</h1>
+              <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">{welcome.body || "Find clear answers, setup guides and fixes."}</p>
             </div>
-          )}
-
-
-          {/* WELCOME */}
-          <TabsContent value="welcome" className="mt-0">
-            <div
-              className="relative overflow-hidden rounded-2xl border border-border p-6 sm:p-8 lg:p-6 shadow-lg grid md:grid-cols-[1fr_auto] gap-6 lg:gap-8 items-center"
-              style={{ background: "var(--gradient-primary)" }}
-            >
-              <div className="relative z-10">
-                <h2 className="font-display text-3xl md:text-4xl font-bold text-primary-foreground">{welcome.title}</h2>
-                <p className="mt-3 text-lg text-primary-foreground/90 max-w-xl">{welcome.body}</p>
-                <div className="mt-6 flex flex-wrap gap-2">
-                  <Button variant="secondary" onClick={() => setTab("guides")}>
-                    Browse guides
-                  </Button>
-                  {isMod && (
-                    <Button variant="outline" className="bg-white/10 border-white/30 text-primary-foreground hover:bg-white/20" onClick={() => setWelcomeDraft(welcome)}>
-                      <Pencil className="size-4 mr-1.5" /> Edit message
-                    </Button>
-                  )}
-                </div>
+            {isMod && (
+              <div className="flex flex-wrap gap-2">
+                <Button size="sm" variant="outline" onClick={() => setWelcomeDraft(welcome)}><Pencil className="mr-1.5 size-4" /> Edit intro</Button>
+                <Button size="sm" onClick={openNewArticle}><Plus className="mr-1.5 size-4" /> New article</Button>
               </div>
-              <img
-                src={kbHero}
-                alt="Knowledge base illustration"
-                width={420}
-                height={420}
-                className="relative z-10 w-56 md:w-72 lg:w-60 h-auto rounded-2xl shadow-xl ring-1 ring-white/20 justify-self-end"
-              />
-            </div>
+            )}
+          </div>
+          <div className="relative mt-5">
+            <Search className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" />
+            <Input ref={searchRef} value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search articles..." className="h-12 rounded-xl border-border bg-card pl-12 text-base shadow-soft" />
+            {search && <Button type="button" size="icon" variant="ghost" aria-label="Clear search" onClick={() => setSearch("")} className="absolute right-1.5 top-1/2 size-9 -translate-y-1/2"><X className="size-4" /></Button>}
+          </div>
+        </section>
 
-            {!loading && categories.length > 0 && (
-              <div className="mt-6 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {categories.map((c) => {
-                  const list = articles.filter((a) => a.category_id === c.id && (isMod || a.published));
+        {isMod && (
+          <div className="mt-5 flex gap-2 border-b border-border pb-4">
+            <Button size="sm" variant={tab === "guides" ? "default" : "ghost"} onClick={() => setTab("guides")}><BookOpen className="mr-1.5 size-4" /> Guides</Button>
+            <Button size="sm" variant={tab === "categories" ? "default" : "ghost"} onClick={() => setTab("categories")}><LayoutGrid className="mr-1.5 size-4" /> Categories</Button>
+          </div>
+        )}
+
+        {isMod && welcomeDraft && (
+          <section className="mt-5 border-b border-border pb-5">
+            <h2 className="font-display text-lg font-bold">Edit introduction</h2>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <Input value={welcomeDraft.title} onChange={(e) => setWelcomeDraft({ ...welcomeDraft, title: e.target.value })} placeholder="Title" />
+              <Input value={welcomeDraft.body} onChange={(e) => setWelcomeDraft({ ...welcomeDraft, body: e.target.value })} placeholder="Introduction" />
+            </div>
+            <div className="mt-3 flex justify-end gap-2"><Button variant="ghost" onClick={() => setWelcomeDraft(null)}>Cancel</Button><Button onClick={saveWelcome} disabled={savingWelcome}>{savingWelcome ? <Loader2 className="mr-1.5 size-4 animate-spin" /> : <Save className="mr-1.5 size-4" />} Save</Button></div>
+          </section>
+        )}
+
+        {(!isMod || tab === "guides") ? (
+          <>
+            <section className="mt-7">
+              <div className="mb-3 flex items-center justify-between">
+                <h2 className="font-display text-lg font-bold">Categories</h2>
+                {isMod && <Button size="sm" variant="ghost" onClick={openNewCategory}><FolderPlus className="mr-1.5 size-4" /> New</Button>}
+              </div>
+              <div className="-mx-4 flex snap-x gap-3 overflow-x-auto px-4 pb-2 scrollbar-hide sm:mx-0 sm:grid sm:grid-cols-4 sm:overflow-visible sm:px-0">
+                {categories.map((c, index) => {
+                  const Icon = categoryIcons[index % categoryIcons.length];
+                  const active = c.id === activeCat && !search;
                   return (
-                    <button
-                      key={c.id}
-                      onClick={() => { setActiveCat(c.id); setTab("guides"); }}
-                      className="text-left rounded-2xl border border-border bg-surface-2/40 hover:bg-surface-2/70 hover:border-primary/50 hover:shadow-glow p-5 lg:p-4 transition-all"
-                    >
-                      <div className="size-11 rounded-xl grid place-items-center mb-4 lg:mb-2" style={{ background: "var(--gradient-primary)" }}>
-                        <BookOpen className="size-5 text-primary-foreground" />
-                      </div>
-                      <h3 className="font-display font-bold text-lg mb-1">{c.name}</h3>
-                      <p className="text-xs text-muted-foreground">{list.length} {list.length === 1 ? "article" : "articles"}</p>
-                    </button>
+                    <Button key={c.id} variant="ghost" onClick={() => { setSearch(""); setActiveCat(c.id); }} className={cn("h-32 w-32 shrink-0 snap-start flex-col items-start justify-between rounded-xl border p-4 text-left sm:w-auto", categoryTones[index % categoryTones.length], active && "ring-2 ring-primary ring-offset-2 ring-offset-background")}>
+                      <span className="grid size-10 place-items-center rounded-lg bg-background/35"><Icon className="size-5" /></span>
+                      <span className="w-full"><span className="block truncate text-sm font-bold text-foreground">{c.name}</span><span className="mt-0.5 block text-xs opacity-75">{counts[c.id] ?? 0} articles</span></span>
+                    </Button>
                   );
                 })}
               </div>
-            )}
+            </section>
 
-            {isMod && welcomeDraft && (
-              <div className="mt-6 rounded-2xl border border-border bg-surface-2/40 p-6 max-w-2xl">
-                <h3 className="font-display text-lg font-bold mb-1">Edit welcome message</h3>
-                <p className="text-sm text-muted-foreground mb-4">Shown in the hero above.</p>
-                <div className="space-y-3">
-                  <Label>Title</Label>
-                  <Input value={welcomeDraft.title} onChange={(e) => setWelcomeDraft({ ...welcomeDraft, title: e.target.value })} />
-                  <Label>Body</Label>
-                  <Textarea rows={4} value={welcomeDraft.body} onChange={(e) => setWelcomeDraft({ ...welcomeDraft, body: e.target.value })} />
-                </div>
-                <div className="flex justify-end gap-2 mt-4">
-                  <Button variant="outline" onClick={() => setWelcomeDraft(null)}>Cancel</Button>
-                  <Button onClick={saveWelcome} disabled={savingWelcome} className="gap-1.5">
-                    {savingWelcome ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />} Save
-                  </Button>
-                </div>
+            <section className="mt-7">
+              <div className="mb-4 flex items-end justify-between gap-3">
+                <div><h2 className="font-display text-xl font-bold">{search ? "Search results" : "Featured guides"}</h2><p className="mt-1 text-xs text-muted-foreground">{activeCategory?.name ?? "All knowledge"}</p></div>
+                <span className="text-xs font-medium text-primary">{filtered.length} result{filtered.length === 1 ? "" : "s"}</span>
               </div>
-            )}
-          </TabsContent>
-
-          {/* GUIDES */}
-          <TabsContent value="guides" className="mt-0">
-            <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
-              <aside className="rounded-2xl border border-border bg-surface-2/40 p-3 h-fit">
-                <div className="flex items-center justify-between px-2 pb-2">
-                  <h3 className="font-display font-semibold text-sm">Categories</h3>
-                  {isMod && (
-                    <button onClick={openNewCategory} className="text-xs text-primary hover:underline inline-flex items-center gap-1"><FolderPlus className="size-3.5" /> New</button>
-                  )}
-                </div>
-                <div className="space-y-1">
-                  {categories.map((c) => {
-                    const active = c.id === activeCat;
-                    const n = counts[c.id] ?? 0;
-                    return (
-                      <div
-                        key={c.id}
-                        draggable={isMod}
-                        onDragStart={() => { dragCatId.current = c.id; }}
-                        onDragOver={(e) => { if (isMod) e.preventDefault(); }}
-                        onDrop={(e) => { if (!isMod) return; e.preventDefault(); if (dragCatId.current) reorderCategories(dragCatId.current, c.id); dragCatId.current = null; }}
-                        className={cn("group flex items-center gap-1 rounded-lg", active ? "bg-primary text-primary-foreground" : "hover:bg-muted")}
-                      >
-                        {isMod && <GripVertical className="size-3.5 opacity-40 group-hover:opacity-80 cursor-grab shrink-0 ml-1" />}
-                        <button onClick={() => setActiveCat(c.id)} className="flex-1 flex items-center justify-between px-2 py-2 text-sm text-left min-w-0">
-                          <span className="truncate">{c.name}</span>
-                          {n > 0 && <span className={cn("text-xs px-1.5 py-0.5 rounded-full", active ? "bg-white/20" : "bg-muted")}>{n}</span>}
-                        </button>
+              {loading ? <div className="grid min-h-48 place-items-center text-muted-foreground"><Loader2 className="size-6 animate-spin" /></div> : !featured ? (
+                <EmptyState text={search ? "No articles match your search." : "No articles in this category yet."} cta={isMod ? { label: "Add article", onClick: openNewArticle } : undefined} />
+              ) : (
+                <div className="space-y-3">
+                  <article data-article-id={featured.id} className="group overflow-hidden rounded-xl border border-border bg-card shadow-soft sm:grid sm:grid-cols-[minmax(0,1.2fr)_minmax(220px,.8fr)]">
+                    <div className="relative min-h-52 overflow-hidden bg-surface-2">
+                      {featured.image_url ? <img src={featured.image_url} alt="" className="absolute inset-0 size-full object-cover" /> : <img src={kbHero} alt="" className="absolute inset-0 size-full object-cover opacity-70" />}
+                      <div className="absolute inset-0 bg-gradient-to-t from-card via-card/20 to-transparent" />
+                      <div className="absolute inset-x-0 bottom-0 p-5">
+                        <span className="rounded-md bg-primary px-2 py-1 text-[11px] font-bold uppercase tracking-wider text-primary-foreground">Featured</span>
+                        <h3 className="mt-3 max-w-xl font-display text-2xl font-bold leading-tight">{featured.title}</h3>
                       </div>
-                    );
-                  })}
-                </div>
-              </aside>
-
-              <section>
-                <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-                    <Input
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      placeholder="Search articles…"
-                      className="pl-9"
-                    />
-                  </div>
-                  {isMod && activeCategory && (
-                    <div className="flex gap-1">
-                      <Button variant="outline" size="sm" onClick={() => { setEditingCat(activeCategory); setShowCatEditor(true); }}>
-                        <Pencil className="size-3.5 mr-1" /> Edit category
-                      </Button>
-                      <Button variant="outline" size="sm" onClick={() => deleteCategory(activeCategory.id)} className="text-destructive hover:text-destructive">
-                        <Trash2 className="size-3.5" />
-                      </Button>
                     </div>
-                  )}
-                </div>
+                    <div className="flex flex-col justify-between p-5">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-widest text-primary">{categories.find((c) => c.id === featured.category_id)?.name}</p>
+                        <p className="mt-3 line-clamp-4 text-sm leading-relaxed text-muted-foreground">{featured.excerpt || "Open this guide for clear step-by-step help."}</p>
+                      </div>
+                      <Button onClick={() => openArticle(featured)} className="mt-5 w-full justify-between">Read guide <ChevronRight className="size-4" /></Button>
+                    </div>
+                  </article>
 
-                {activeCategory && !search && (
-                  <h2 className="font-display text-2xl font-bold mb-4">{activeCategory.name}</h2>
-                )}
-
-                {loading ? (
-                  <div className="py-16 grid place-items-center text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>
-                ) : filtered.length === 0 ? (
-                  <EmptyState text={search ? "No articles match your search." : "No articles in this category yet."} cta={isMod ? { label: "Add article", onClick: openNewArticle } : undefined} />
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-                    {filtered.map((a) => {
+                  <div className="grid gap-3 md:grid-cols-2">
+                    {remaining.map((a) => {
+                      const hasVideo = /<(?:video|iframe)\b/i.test(a.body ?? "");
                       const stats = ratingStats[a.id];
-                      const mine = myRatingFor(a.id);
                       return (
-                        <article
-                          key={a.id}
-                          data-article-id={a.id}
-                          draggable={isMod}
-                          onDragStart={() => { dragArtId.current = a.id; }}
-                          onDragOver={(e) => { if (isMod) e.preventDefault(); }}
-                          onDrop={(e) => { if (!isMod) return; e.preventDefault(); if (dragArtId.current) reorderArticles(dragArtId.current, a.id); dragArtId.current = null; }}
-                          className="rounded-2xl border border-border bg-surface-2/40 overflow-hidden flex flex-col group hover:border-primary/50 hover:shadow-glow transition-all"
-                        >
-                          {a.image_url && (
-                            <div className="w-full bg-surface-1/40 flex items-center justify-center p-3">
-                              <img src={a.image_url} alt="" className="max-h-40 w-auto object-contain" />
-                            </div>
-                          )}
-                          <div className="p-4 flex-1 flex flex-col">
-                            <div className="flex items-center gap-2 mb-1.5 text-[11px]">
-                              {a.badge && <span className="px-1.5 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/30">{a.badge}</span>}
-                              {!a.published && <span className="px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground border border-border inline-flex items-center gap-1"><EyeOff className="size-3" /> Draft</span>}
-                            </div>
-                            <h3 className="font-display font-bold leading-tight mb-1">{a.title}</h3>
-                            {a.excerpt && <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{a.excerpt}</p>}
-
-                            <div className="mt-2 flex items-center justify-between gap-2 text-xs">
-                              <div className="flex items-center gap-1.5">
-                                <StarRating value={Math.round(stats?.avg ?? 0)} readOnly size={14} />
-                                <span className="text-muted-foreground">
-                                  {stats ? `${stats.avg.toFixed(1)} (${stats.count})` : "No ratings"}
-                                </span>
-                              </div>
-                              <div className="flex items-center gap-1" title="Your rating">
-                                <StarRating value={mine} onChange={(n) => rateArticle(a.id, n)} size={14} />
-                              </div>
-                            </div>
-
-                            <div className="mt-3 flex items-center justify-between pt-2 border-t border-border">
-                              <button onClick={() => { focusArticleId.current = a.id; setReading(a); }} className="text-sm font-medium text-primary inline-flex items-center gap-1 hover:underline">
-                                Read <ChevronRight className="size-3.5" />
-                              </button>
-                              {isMod && (
-                                <div className="flex gap-0.5 items-center">
-                                  {!search && (
-                                    <>
-                                      <button aria-label="Move earlier" title="Move earlier" onClick={() => moveArticle(a.id, -1)} className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground"><ArrowLeft className="size-3.5" /></button>
-                                      <button aria-label="Move later" title="Move later" onClick={() => moveArticle(a.id, 1)} className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground"><ArrowRight className="size-3.5" /></button>
-                                    </>
-                                  )}
-                                  <GripVertical className="size-3.5 text-muted-foreground cursor-grab self-center" />
-                                  <button onClick={() => { focusArticleId.current = a.id; setEditing(a); }} className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-foreground"><Pencil className="size-3.5" /></button>
-                                  <button onClick={() => deleteArticle(a.id)} className="p-1.5 rounded hover:bg-muted text-muted-foreground hover:text-destructive"><Trash2 className="size-3.5" /></button>
-                                </div>
-                              )}
+                        <article key={a.id} data-article-id={a.id} draggable={isMod} onDragStart={() => { dragArtId.current = a.id; }} onDragOver={(e) => { if (isMod) e.preventDefault(); }} onDrop={(e) => { if (!isMod) return; e.preventDefault(); if (dragArtId.current) reorderArticles(dragArtId.current, a.id); dragArtId.current = null; }} className="group flex min-h-32 gap-3 rounded-xl border border-border bg-card p-3 hover:border-primary/45">
+                          <div className="relative size-24 shrink-0 overflow-hidden rounded-lg bg-surface-2 sm:size-28">
+                            {a.image_url ? <img src={a.image_url} alt="" className="size-full object-cover" /> : <div className="grid size-full place-items-center text-primary">{hasVideo ? <PlayCircle className="size-9" /> : <BookOpen className="size-9" />}</div>}
+                          </div>
+                          <div className="flex min-w-0 flex-1 flex-col py-1">
+                            <div className="flex items-center gap-2 text-[11px] text-muted-foreground"><span>{readTime(a)}</span>{stats && <><span>•</span><span className="inline-flex items-center gap-1"><Star className="size-3 fill-warning text-warning" /> {stats.avg.toFixed(1)}</span></>}{!a.published && <span className="rounded bg-muted px-1.5 py-0.5">Draft</span>}</div>
+                            <h3 className="mt-1 line-clamp-2 font-display font-bold leading-snug">{a.title}</h3>
+                            <div className="mt-auto flex items-center justify-between gap-2 pt-2">
+                              <Button variant="link" onClick={() => openArticle(a)} className="h-auto p-0 text-primary">{hasVideo ? "Watch guide" : "Read guide"}<ChevronRight className="ml-1 size-3.5" /></Button>
+                              {isMod && <div className="flex gap-1"><Button size="icon" variant="ghost" aria-label="Edit article" onClick={() => { focusArticleId.current = a.id; setEditing(a); }} className="size-8"><Pencil className="size-3.5" /></Button><Button size="icon" variant="ghost" aria-label="Delete article" onClick={() => deleteArticle(a.id)} className="size-8 text-destructive"><Trash2 className="size-3.5" /></Button></div>}
                             </div>
                           </div>
                         </article>
                       );
                     })}
                   </div>
-                )}
-              </section>
+                </div>
+              )}
+            </section>
+          </>
+        ) : (
+          <section className="mt-7">
+            <div className="mb-4 flex items-center justify-between"><h2 className="font-display text-xl font-bold">Manage categories</h2><Button onClick={openNewCategory}><FolderPlus className="mr-1.5 size-4" /> New category</Button></div>
+            <div className="divide-y divide-border border-y border-border">
+              {categories.map((c) => <div key={c.id} draggable onDragStart={() => { dragCatId.current = c.id; }} onDragOver={(e) => e.preventDefault()} onDrop={(e) => { e.preventDefault(); if (dragCatId.current) reorderCategories(dragCatId.current, c.id); dragCatId.current = null; }} className="flex items-center gap-3 py-3"><GripVertical className="size-4 cursor-grab text-muted-foreground" /><div className="min-w-0 flex-1"><p className="font-medium">{c.name}</p><p className="text-xs text-muted-foreground">{counts[c.id] ?? 0} articles</p></div><Button size="icon" variant="ghost" aria-label="Edit category" onClick={() => { setEditingCat(c); setShowCatEditor(true); }}><Pencil className="size-4" /></Button><Button size="icon" variant="ghost" aria-label="Delete category" onClick={() => deleteCategory(c.id)} className="text-destructive"><Trash2 className="size-4" /></Button></div>)}
             </div>
-          </TabsContent>
-
-          {/* CATEGORIES admin */}
-          {isMod && (
-            <TabsContent value="categories" className="mt-0">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-display text-xl font-bold">Manage categories</h2>
-                <Button onClick={openNewCategory} className="gap-1.5"><FolderPlus className="size-4" /> New category</Button>
-              </div>
-              <div className="rounded-2xl border border-border bg-surface-2/40 divide-y divide-border">
-                {categories.map((c) => (
-                  <div
-                    key={c.id}
-                    draggable
-                    onDragStart={() => { dragCatId.current = c.id; }}
-                    onDragOver={(e) => e.preventDefault()}
-                    onDrop={(e) => { e.preventDefault(); if (dragCatId.current) reorderCategories(dragCatId.current, c.id); dragCatId.current = null; }}
-                    className="flex items-center gap-3 px-4 py-3"
-                  >
-                    <GripVertical className="size-4 text-muted-foreground cursor-grab" />
-                    <div className="flex-1 min-w-0">
-                      <div className="font-medium">{c.name}</div>
-                      <div className="text-xs text-muted-foreground">/{c.slug} · {counts[c.id] ?? 0} articles</div>
-                    </div>
-                    <Button variant="outline" size="sm" onClick={() => { setEditingCat(c); setShowCatEditor(true); }}><Pencil className="size-3.5" /></Button>
-                    <Button variant="outline" size="sm" onClick={() => deleteCategory(c.id)} className="text-destructive hover:text-destructive"><Trash2 className="size-3.5" /></Button>
-                  </div>
-                ))}
-                {categories.length === 0 && <div className="px-4 py-8 text-center text-sm text-muted-foreground">No categories yet.</div>}
-              </div>
-            </TabsContent>
-          )}
-
+          </section>
+        )}
       </div>
-      </Tabs>
 
+      <KnowledgeBottomNav onGuides={() => { setTab("guides"); window.scrollTo({ top: 0, behavior: "smooth" }); }} onSearch={() => searchRef.current?.focus()} />
       {editing && <ArticleEditor editing={editing} setEditing={setEditing} onClose={closeEditor} categories={categories} onSave={saveArticle} userId={user?.id ?? null} />}
-
       <Dialog open={showCatEditor} onOpenChange={(o) => { if (!o) { setShowCatEditor(false); setEditingCat(null); } }}>
-        <DialogContent>
-          <DialogHeader><DialogTitle>{editingCat?.id ? "Edit category" : "New category"}</DialogTitle></DialogHeader>
-          {editingCat && (
-            <div className="space-y-3">
-              <Label>Name</Label>
-              <Input value={editingCat.name} onChange={(e) => setEditingCat({ ...editingCat, name: e.target.value })} />
-              <Label>Slug (optional)</Label>
-              <Input value={editingCat.slug} placeholder="auto" onChange={(e) => setEditingCat({ ...editingCat, slug: e.target.value })} />
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => { setShowCatEditor(false); setEditingCat(null); }}>Cancel</Button>
-            <Button onClick={saveCategory}>Save</Button>
-          </DialogFooter>
-        </DialogContent>
+        <DialogContent><DialogHeader><DialogTitle>{editingCat?.id ? "Edit category" : "New category"}</DialogTitle></DialogHeader>{editingCat && <div className="space-y-3"><Label>Name</Label><Input value={editingCat.name} onChange={(e) => setEditingCat({ ...editingCat, name: e.target.value })} /><Label>Slug (optional)</Label><Input value={editingCat.slug} placeholder="auto" onChange={(e) => setEditingCat({ ...editingCat, slug: e.target.value })} /></div>}<DialogFooter><Button variant="outline" onClick={() => { setShowCatEditor(false); setEditingCat(null); }}>Cancel</Button><Button onClick={saveCategory}>Save</Button></DialogFooter></DialogContent>
       </Dialog>
     </main>
+  );
+}
+
+function KnowledgeBottomNav({ onGuides, onSearch }: { onGuides: () => void; onSearch: () => void }) {
+  return (
+    <nav aria-label="Knowledge Base navigation" className="fixed inset-x-0 bottom-0 z-40 grid h-18 grid-cols-4 border-t border-border bg-card/95 px-2 pb-[env(safe-area-inset-bottom)] shadow-soft backdrop-blur md:hidden">
+      <Link to="/home" className="flex flex-col items-center justify-center gap-1 text-[11px] text-muted-foreground"><Home className="size-5" />Home</Link>
+      <Button variant="ghost" onClick={onGuides} className="h-full flex-col gap-1 rounded-none text-[11px] text-primary"><BookOpen className="size-5" />Guides</Button>
+      <Button variant="ghost" onClick={onSearch} className="h-full flex-col gap-1 rounded-none text-[11px] text-muted-foreground"><Search className="size-5" />Search</Button>
+      <Link to="/profile" className="flex flex-col items-center justify-center gap-1 text-[11px] text-muted-foreground"><UserRound className="size-5" />Profile</Link>
+    </nav>
   );
 }
 
