@@ -750,7 +750,7 @@ function InstallGuidesPage() {
                                 }}
                               />
                             ) : (
-                              <Button size="sm" className="flex-1 bg-gradient-primary text-primary-foreground hover:opacity-90" onClick={() => { focusGuideId.current = b.id; setReading(b); }}>
+                              <Button size="sm" className="flex-1 bg-gradient-primary text-primary-foreground hover:opacity-90" onClick={() => { focusGuideId.current = b.id; if (b.video_url || b.video_steps?.length) setPlayingVideo(b); else setReading(b); }}>
                                  {b.video_url || b.video_steps?.length ? "Click to Watch" : "Click to Read"}
                               </Button>
                             )}
