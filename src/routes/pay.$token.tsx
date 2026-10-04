@@ -234,7 +234,6 @@ function PayPage() {
         </Dialog>
       )}
       <CustomerCheckoutChat token={token} password={pw} orderRef={view.order.ref} />
-      <WhatsAppVideoCall />
     </main>
   );
 }
