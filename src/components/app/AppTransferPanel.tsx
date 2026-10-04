@@ -360,9 +360,6 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
                   <Copy className="size-4" />
                 </Button>
               </div>
-              <p className="mt-1.5 text-[11px] text-muted-foreground">
-                Code: <span className="font-mono tracking-[0.2em] text-foreground">{transfer?.token}</span>
-              </p>
             </div>
           )}
 
