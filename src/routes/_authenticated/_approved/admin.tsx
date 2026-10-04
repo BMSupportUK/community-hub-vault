@@ -487,6 +487,20 @@ function BankTransferOrdersTabs() {
   );
 }
 
+import toolArtSecurity from "@/assets/tools/security.png";
+import toolArtSports from "@/assets/tools/sports.png";
+import toolArtShop from "@/assets/tools/shop.png";
+import toolArtChat from "@/assets/tools/chat.png";
+import toolArtAlerts from "@/assets/tools/alerts.png";
+import toolArtDocs from "@/assets/tools/docs.png";
+import toolArtDesign from "@/assets/tools/design.png";
+import toolArtMoney from "@/assets/tools/money.png";
+import toolArtDevices from "@/assets/tools/devices.png";
+import toolArtTime from "@/assets/tools/time.png";
+import toolArtGlobe from "@/assets/tools/globe.png";
+import toolArtReviews from "@/assets/tools/reviews.png";
+import toolArtTeam from "@/assets/tools/team.png";
+
 function DashboardBody() {
   const { hasRole } = useAuth();
   const isAdminOnly = hasRole("admin");
@@ -502,47 +516,47 @@ function DashboardBody() {
 
 
 
-  const allTools: { to?: string; search?: Record<string, string>; tabKey?: DashTab; label: string; desc: string; icon: any; adminOnly?: boolean; managementToo?: boolean }[] = [
-    { to: "/admin-roles", label: "Members & Role Management", desc: "Assign roles to members and create or delete custom roles.", icon: ShieldCheck },
-    { to: "/admin-permissions", label: "Role permissions", desc: "Choose which roles can access pages and what they can do in channels.", icon: Shield },
-    { to: "/admin-credentials", label: "User credentials", desc: "Set up app logins assigned to each user.", icon: KeySquare },
-    { to: "/admin-dns", label: "QD DNS codes", desc: "Add and edit shared DNS codes for all members.", icon: Globe },
-    { to: "/moderation", label: "BM Support | Access Requests", desc: "Approve access requests and appeals.", icon: ShieldAlert },
-    { to: "/shifts", label: "Shifts overview", desc: "Review staff shifts and break history.", icon: Clock },
-    { to: "/sports-guides", label: "Sports content", desc: "Publish blogs and manage categories.", icon: FileText },
-    { to: "/admin-sports-import", label: "Sports import", desc: "Paste Discord listings — AI splits them into events and routes them to the right category.", icon: Sparkles },
-    { to: "/admin-reviews", label: "Customer reviews", desc: "Approve, reject or delete customer feedback.", icon: Star },
-    { to: "/admin-profanity", label: "Chat word filter", desc: "Manage the UK swear list and add custom blocked words.", icon: Filter },
-    { to: "/admin-hero-boxes", label: "Landing hero boxes", desc: "Edit the three boxes shown on the public landing page.", icon: Sparkles },
-    { to: "/admin-packages", label: "Support packages", desc: "Edit the price boxes shown on the public packages page.", icon: Sparkles },
-    { to: "/admin-blacklist", label: "Blacklist", desc: "Ban accounts by email address or IP — applied immediately and at signup.", icon: Ban },
-    { to: "/admin-business-hours", label: "Business hours", desc: "Set opening hours per day. Auto-replies when orders or tickets open out of hours.", icon: Clock },
-    { to: "/admin-nameplates", label: "Nameplates", desc: "Manage the catalog of decorative nameplates and assign them to members.", icon: Sparkles },
-    { to: "/admin-notifications", label: "Telegram alerts", desc: "Send a Telegram message when a new signup, ticket or sale comes in.", icon: Bell },
-    { to: "/admin-automated-messages", label: "Automated messages & emails", desc: "Edit the wording of every message and email the system sends on its own.", icon: MessageSquare, adminOnly: true },
-    { to: "/admin-ticket-categories", label: "Ticket categories", desc: "Edit the names and descriptions of support ticket categories.", icon: LifeBuoy },
-    { to: "/admin-archived-tickets", label: "Archived tickets", desc: "Browse and restore tickets auto-archived 7 days after closing.", icon: LifeBuoy },
-    { to: "/admin-fan-zone", label: "Boro Fan Zone", desc: "Approve, reject or revoke fan-zone access for Middlesbrough F.C. supporters.", icon: Trophy },
-    { to: "/admin-boro-team-sheet", label: "Boro team sheets", desc: "Watch the official Middlesbrough line-up post and add it to the match day thread automatically.", icon: Trophy },
-    { to: "/admin-predictions", label: "World Cup predictions", desc: "Manage fixtures, scores, leaderboard and prize settings for the 2026 predictions game.", icon: Trophy },
-    { to: "/admin-fantasy-motm", label: "Fantasy Man of the Match", desc: "Award the 3-point Man of the Match bonus for each MFC Fantasy Manager gameweek.", icon: Trophy },
-    { to: "/admin-fantasy-scoring", label: "Fantasy points scoring", desc: "Change or remove the points awarded for every match stat in the MFC Fantasy Manager.", icon: Trophy, adminOnly: true },
-    { to: "/admin-fantasy-injuries", label: "Fantasy injuries", desc: "Flag injured, doubtful or suspended players in the MFC Fantasy Manager squad lists.", icon: Trophy },
-    { to: "/admin-fantasy-squad-numbers", label: "Fantasy squad numbers & extra positions", desc: "Set or change each player's squad number, and give a player an extra position they can be picked in.", icon: Trophy },
-    { to: "/admin-forum", label: "Forum boards", desc: "Create boards, pin/lock them, and assign board-specific moderators.", icon: MessageSquare },
-    { to: "/admin-affiliate-banners", label: "Affiliate banners", desc: "Upload sidebar advert images and assign them to forum boards.", icon: ImageIcon },
-    { to: "/admin-streaming-devices", label: "Streaming devices", desc: "Manage the streaming device catalogue and refresh UK retailer prices.", icon: MonitorPlay },
-    { to: "/shop", search: { view: "admin" }, label: "Shop products", desc: "Add, edit and reorder shop products and categories.", icon: Package, adminOnly: true },
-    { to: "/shop", search: { view: "discounts" }, label: "Discount codes", desc: "Create and manage promotional discount codes.", icon: Tag, adminOnly: true },
-    { to: "/install-guides", search: { tab: "app-apk" }, label: "App APK & transfers", desc: "Upload the Android APK and monitor the live 24-hour install links members have requested.", icon: Package },
-    { to: "/admin-sounds", label: "Notification sounds", desc: "Play and verify every notification MP3 used across the app, and set volume for this device.", icon: Bell },
-    { to: "/admin-ad-stats", label: "Advert performance", desc: "See how many views and clicks each advert unit gets on bmsupport.uk, by page and by day.", icon: BarChart3 },
-    { to: "/admin-shifts", label: "Staff shifts", desc: "Review every staff shift, clock-in, clock-out, breaks and auto clock-out, grouped by day.", icon: Users },
-    { tabKey: "theme", label: "Theme", desc: "Choose the default app theme for members.", icon: Palette },
-    { tabKey: "invoice-template", label: "Invoice template", desc: "Edit the branded PDF customers download after payment.", icon: ReceiptText },
-    { tabKey: "header-links", label: "Header links", desc: "Change the public header link order.", icon: PanelTop },
-    { tabKey: "sign-out-devices", label: "Sign out devices", desc: "Sign an account out of every device remotely.", icon: LogOut, managementToo: true },
-    { tabKey: "android-apk", label: "Android app file", desc: "Upload the BM Support APK the download barcode points to.", icon: Smartphone, adminOnly: true },
+  const allTools: { to?: string; search?: Record<string, string>; tabKey?: DashTab; label: string; desc: string; icon: any; art: string; adminOnly?: boolean; managementToo?: boolean }[] = [
+    { to: "/admin-roles", label: "Members & Role Management", desc: "Assign roles to members and create or delete custom roles.", icon: ShieldCheck, art: toolArtTeam },
+    { to: "/admin-permissions", label: "Role permissions", desc: "Choose which roles can access pages and what they can do in channels.", icon: Shield, art: toolArtSecurity },
+    { to: "/admin-credentials", label: "User credentials", desc: "Set up app logins assigned to each user.", icon: KeySquare, art: toolArtSecurity },
+    { to: "/admin-dns", label: "QD DNS codes", desc: "Add and edit shared DNS codes for all members.", icon: Globe, art: toolArtGlobe },
+    { to: "/moderation", label: "BM Support | Access Requests", desc: "Approve access requests and appeals.", icon: ShieldAlert, art: toolArtSecurity },
+    { to: "/shifts", label: "Shifts overview", desc: "Review staff shifts and break history.", icon: Clock, art: toolArtTime },
+    { to: "/sports-guides", label: "Sports content", desc: "Publish blogs and manage categories.", icon: FileText, art: toolArtDocs },
+    { to: "/admin-sports-import", label: "Sports import", desc: "Paste Discord listings — AI splits them into events and routes them to the right category.", icon: Sparkles, art: toolArtDocs },
+    { to: "/admin-reviews", label: "Customer reviews", desc: "Approve, reject or delete customer feedback.", icon: Star, art: toolArtReviews },
+    { to: "/admin-profanity", label: "Chat word filter", desc: "Manage the UK swear list and add custom blocked words.", icon: Filter, art: toolArtChat },
+    { to: "/admin-hero-boxes", label: "Landing hero boxes", desc: "Edit the three boxes shown on the public landing page.", icon: Sparkles, art: toolArtDesign },
+    { to: "/admin-packages", label: "Support packages", desc: "Edit the price boxes shown on the public packages page.", icon: Sparkles, art: toolArtDesign },
+    { to: "/admin-blacklist", label: "Blacklist", desc: "Ban accounts by email address or IP — applied immediately and at signup.", icon: Ban, art: toolArtSecurity },
+    { to: "/admin-business-hours", label: "Business hours", desc: "Set opening hours per day. Auto-replies when orders or tickets open out of hours.", icon: Clock, art: toolArtTime },
+    { to: "/admin-nameplates", label: "Nameplates", desc: "Manage the catalog of decorative nameplates and assign them to members.", icon: Sparkles, art: toolArtDesign },
+    { to: "/admin-notifications", label: "Telegram alerts", desc: "Send a Telegram message when a new signup, ticket or sale comes in.", icon: Bell, art: toolArtAlerts },
+    { to: "/admin-automated-messages", label: "Automated messages & emails", desc: "Edit the wording of every message and email the system sends on its own.", icon: MessageSquare, adminOnly: true, art: toolArtChat },
+    { to: "/admin-ticket-categories", label: "Ticket categories", desc: "Edit the names and descriptions of support ticket categories.", icon: LifeBuoy, art: toolArtChat },
+    { to: "/admin-archived-tickets", label: "Archived tickets", desc: "Browse and restore tickets auto-archived 7 days after closing.", icon: LifeBuoy, art: toolArtDocs },
+    { to: "/admin-fan-zone", label: "Boro Fan Zone", desc: "Approve, reject or revoke fan-zone access for Middlesbrough F.C. supporters.", icon: Trophy, art: toolArtSports },
+    { to: "/admin-boro-team-sheet", label: "Boro team sheets", desc: "Watch the official Middlesbrough line-up post and add it to the match day thread automatically.", icon: Trophy, art: toolArtSports },
+    { to: "/admin-predictions", label: "World Cup predictions", desc: "Manage fixtures, scores, leaderboard and prize settings for the 2026 predictions game.", icon: Trophy, art: toolArtSports },
+    { to: "/admin-fantasy-motm", label: "Fantasy Man of the Match", desc: "Award the 3-point Man of the Match bonus for each MFC Fantasy Manager gameweek.", icon: Trophy, art: toolArtSports },
+    { to: "/admin-fantasy-scoring", label: "Fantasy points scoring", desc: "Change or remove the points awarded for every match stat in the MFC Fantasy Manager.", icon: Trophy, adminOnly: true, art: toolArtSports },
+    { to: "/admin-fantasy-injuries", label: "Fantasy injuries", desc: "Flag injured, doubtful or suspended players in the MFC Fantasy Manager squad lists.", icon: Trophy, art: toolArtSports },
+    { to: "/admin-fantasy-squad-numbers", label: "Fantasy squad numbers & extra positions", desc: "Set or change each player's squad number, and give a player an extra position they can be picked in.", icon: Trophy, art: toolArtSports },
+    { to: "/admin-forum", label: "Forum boards", desc: "Create boards, pin/lock them, and assign board-specific moderators.", icon: MessageSquare, art: toolArtChat },
+    { to: "/admin-affiliate-banners", label: "Affiliate banners", desc: "Upload sidebar advert images and assign them to forum boards.", icon: ImageIcon, art: toolArtMoney },
+    { to: "/admin-streaming-devices", label: "Streaming devices", desc: "Manage the streaming device catalogue and refresh UK retailer prices.", icon: MonitorPlay, art: toolArtDevices },
+    { to: "/shop", search: { view: "admin" }, label: "Shop products", desc: "Add, edit and reorder shop products and categories.", icon: Package, adminOnly: true, art: toolArtShop },
+    { to: "/shop", search: { view: "discounts" }, label: "Discount codes", desc: "Create and manage promotional discount codes.", icon: Tag, adminOnly: true, art: toolArtShop },
+    { to: "/install-guides", search: { tab: "app-apk" }, label: "App APK & transfers", desc: "Upload the Android APK and monitor the live 24-hour install links members have requested.", icon: Package, art: toolArtDevices },
+    { to: "/admin-sounds", label: "Notification sounds", desc: "Play and verify every notification MP3 used across the app, and set volume for this device.", icon: Bell, art: toolArtAlerts },
+    { to: "/admin-ad-stats", label: "Advert performance", desc: "See how many views and clicks each advert unit gets on bmsupport.uk, by page and by day.", icon: BarChart3, art: toolArtMoney },
+    { to: "/admin-shifts", label: "Staff shifts", desc: "Review every staff shift, clock-in, clock-out, breaks and auto clock-out, grouped by day.", icon: Users, art: toolArtTeam },
+    { tabKey: "theme", label: "Theme", desc: "Choose the default app theme for members.", icon: Palette, art: toolArtDesign },
+    { tabKey: "invoice-template", label: "Invoice template", desc: "Edit the branded PDF customers download after payment.", icon: ReceiptText, art: toolArtDocs },
+    { tabKey: "header-links", label: "Header links", desc: "Change the public header link order.", icon: PanelTop, art: toolArtDesign },
+    { tabKey: "sign-out-devices", label: "Sign out devices", desc: "Sign an account out of every device remotely.", icon: LogOut, managementToo: true, art: toolArtSecurity },
+    { tabKey: "android-apk", label: "Android app file", desc: "Upload the BM Support APK the download barcode points to.", icon: Smartphone, adminOnly: true, art: toolArtDevices },
   ];
   const tools = allTools
     .filter((t) => !t.adminOnly || isAdminOnly || (t.managementToo && hasRole("management")))
@@ -648,10 +662,20 @@ function DashboardBody() {
             const inner = (
               <>
                 <div className="absolute inset-x-0 top-0 h-1 bg-gradient-accent opacity-0 group-hover:opacity-100 transition-opacity" />
-                <div className="size-10 shrink-0 rounded-xl bg-gradient-primary grid place-items-center text-primary-foreground shadow-glow">
+                <img
+                  src={t.art}
+                  alt=""
+                  aria-hidden
+                  loading="lazy"
+                  width={512}
+                  height={512}
+                  className="pointer-events-none absolute -bottom-6 -right-6 size-32 sm:size-36 rounded-2xl object-cover opacity-35 saturate-[.85] transition-all duration-300 group-hover:opacity-60 group-hover:scale-105"
+                  style={{ maskImage: "radial-gradient(circle at 70% 70%, black 40%, transparent 78%)", WebkitMaskImage: "radial-gradient(circle at 70% 70%, black 40%, transparent 78%)" }}
+                />
+                <div className="relative size-10 shrink-0 rounded-xl bg-gradient-primary grid place-items-center text-primary-foreground shadow-glow">
                   <t.icon className="size-5" />
                 </div>
-                <div className="min-w-0">
+                <div className="relative min-w-0">
                   <div className="font-display font-bold leading-snug line-clamp-2 mb-1">{t.label}</div>
                   <p className="text-xs text-muted-foreground line-clamp-4">{t.desc}</p>
                 </div>
