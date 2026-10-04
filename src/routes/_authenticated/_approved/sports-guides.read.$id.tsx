@@ -290,15 +290,19 @@ function ReadPage() {
                 </div>
               </div>
             ) : null}
-            {blog.refresh_notice && (
-              <div className="flex items-start gap-2 rounded-xl border border-amber-400/40 bg-amber-500/10 px-3 py-2 text-amber-100">
-                <RefreshCw className="size-4 shrink-0 mt-0.5" />
-                <div className="text-sm leading-relaxed">{blog.refresh_notice}</div>
-              </div>
-            )}
-            {blog.not_guaranteed && (
-              <div className="rounded-xl border border-rose-400/40 bg-rose-500/10 px-3 py-2 text-rose-100 text-sm leading-relaxed">
-                These are not guaranteed and no reports allowed to source.
+            {(blog.refresh_notice || blog.not_guaranteed) && (
+              <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
+                {blog.refresh_notice && (
+                  <div className="flex items-start gap-2 rounded-xl border border-amber-400/40 bg-amber-500/10 px-3 py-2 text-amber-100">
+                    <RefreshCw className="size-4 shrink-0 mt-0.5" />
+                    <div className="text-sm leading-relaxed">{blog.refresh_notice}</div>
+                  </div>
+                )}
+                {blog.not_guaranteed && (
+                  <div className="flex items-center rounded-xl border border-rose-400/40 bg-rose-500/10 px-3 py-2 text-rose-100 text-sm leading-relaxed">
+                    These are not guaranteed and no reports allowed to source.
+                  </div>
+                )}
               </div>
             )}
             {blog.excerpt && (
