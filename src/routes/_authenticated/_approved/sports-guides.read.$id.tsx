@@ -269,7 +269,8 @@ function ReadPage() {
               {blog.title}
             </h1>
             {blog.image_url ? (
-              <div className="relative shrink-0 w-full h-32 sm:h-40 lg:h-48 rounded-2xl overflow-hidden border border-purple-500/30 bg-purple-950/60">
+              <div className="grid shrink-0 grid-cols-1 gap-4 xl:grid-cols-2 xl:items-stretch">
+                <div className="relative h-32 min-w-0 overflow-hidden rounded-2xl border border-purple-500/30 bg-purple-950/60 sm:h-40 lg:h-48 xl:h-auto xl:aspect-[3/1]">
                   <img
                     src={blog.image_url}
                     alt=""
@@ -281,17 +282,13 @@ function ReadPage() {
                     alt={blog.title}
                     className="absolute inset-0 w-full h-full object-contain"
                   />
-                  <div className="absolute inset-y-0 left-3 z-10 hidden xl:flex w-[468px] items-center">
-                    <div className="w-[468px]">
-                      <AdSenseSlot slot="home" />
-                    </div>
-                  </div>
-                  <div className="absolute inset-y-0 right-3 z-10 hidden xl:flex w-[468px] items-center">
-                    <div className="w-[468px]">
-                      <AdSenseSlot slot="home" />
-                    </div>
+                </div>
+                <div className="hidden min-w-0 xl:flex xl:aspect-[3/1] xl:items-center">
+                  <div className="w-full">
+                    <AdSenseSlot slot="home" />
                   </div>
                 </div>
+              </div>
             ) : null}
             {blog.refresh_notice && (
               <div className="flex items-start gap-2 rounded-xl border border-amber-400/40 bg-amber-500/10 px-3 py-2 text-amber-100">
