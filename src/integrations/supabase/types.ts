@@ -3441,6 +3441,7 @@ export type Database = {
           sort_order: number
           title: string
           updated_at: string
+          video_steps: Json
           video_url: string | null
         }
         Insert: {
@@ -3461,6 +3462,7 @@ export type Database = {
           sort_order?: number
           title: string
           updated_at?: string
+          video_steps?: Json
           video_url?: string | null
         }
         Update: {
@@ -3481,6 +3483,7 @@ export type Database = {
           sort_order?: number
           title?: string
           updated_at?: string
+          video_steps?: Json
           video_url?: string | null
         }
         Relationships: [

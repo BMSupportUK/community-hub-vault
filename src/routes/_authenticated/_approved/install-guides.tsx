@@ -90,6 +90,7 @@ function CopyPasswordButton({ code, className = "" }: { code: string; className?
 }
 
 type Category = { id: string; name: string; slug: string; sort_order: number };
+type VideoStep = { id: string; title: string; video_url: string };
 type Blog = {
   id: string;
   category_id: string;
@@ -99,6 +100,7 @@ type Blog = {
   image_url: string | null;
   pdf_url: string | null;
   video_url: string | null;
+  video_steps: VideoStep[];
   badge: string | null;
   published: boolean;
   created_at: string;
@@ -245,7 +247,10 @@ function InstallGuidesPage() {
       ]);
       return {
         categories: (cats ?? []) as Category[],
-        blogs: (bs ?? []) as Blog[],
+        blogs: (bs ?? []).map((blog) => ({
+          ...blog,
+          video_steps: Array.isArray(blog.video_steps) ? blog.video_steps as unknown as VideoStep[] : [],
+        })) as Blog[],
       };
     },
     staleTime: 5 * 60 * 1000,
@@ -316,6 +321,7 @@ function InstallGuidesPage() {
       image_url: draft?.image_url ?? "",
       pdf_url: draft?.pdf_url ?? "",
       video_url: draft?.video_url ?? "",
+      video_steps: draft?.video_steps ?? [],
       badge: draft?.badge ?? "",
       published: draft?.published ?? true,
       created_at: "",
@@ -371,6 +377,7 @@ function InstallGuidesPage() {
       image_url: editing.image_url?.trim() || null,
       pdf_url: editing.pdf_url?.trim() || null,
       video_url: editing.video_url?.trim() || null,
+      video_steps: editing.video_steps ?? [],
       badge: editing.badge?.trim() || null,
       published: editing.published,
       file_path: editing.file_path || null,
@@ -679,7 +686,7 @@ function InstallGuidesPage() {
                         <div className="aspect-[16/10] bg-surface-2/70 relative overflow-hidden">
                           {b.image_url ? (
                             <img src={b.image_url} alt={b.title} className="w-full h-full object-contain group-hover:scale-105 transition-transform" />
-                          ) : b.video_url ? (
+                          ) : b.video_url || b.video_steps?.length ? (
                             <div className="w-full h-full grid place-items-center bg-gradient-to-br from-violet-900/60 to-black text-white/70">
                               <Film className="size-10" />
                             </div>
@@ -688,7 +695,7 @@ function InstallGuidesPage() {
                               {b.pdf_url ? <FileText className="size-10" /> : <ImageIcon className="size-10" />}
                             </div>
                           )}
-                          {b.video_url && (
+                          {(b.video_url || b.video_steps?.length > 0) && (
                             <button
                               type="button"
                               onClick={() => setPlayingVideo(b)}
@@ -700,7 +707,7 @@ function InstallGuidesPage() {
                               </span>
                             </button>
                           )}
-                          {b.video_url && (
+                          {(b.video_url || b.video_steps?.length > 0) && (
                             <span className="absolute top-2 left-2 text-[10px] uppercase tracking-wider px-2 py-1 rounded-md bg-primary text-primary-foreground font-semibold flex items-center gap-1">
                               <Film className="size-3" /> Video
                             </span>
@@ -743,8 +750,8 @@ function InstallGuidesPage() {
                                 }}
                               />
                             ) : (
-                              <Button size="sm" className="flex-1 bg-gradient-primary text-primary-foreground hover:opacity-90" onClick={() => { focusGuideId.current = b.id; setReading(b); }}>
-                                {b.video_url ? "Click to Watch" : "Click to Read"}
+                              <Button size="sm" className="flex-1 bg-gradient-primary text-primary-foreground hover:opacity-90" onClick={() => { focusGuideId.current = b.id; if (b.video_url || b.video_steps?.length) setPlayingVideo(b); else setReading(b); }}>
+                                 {b.video_url || b.video_steps?.length ? "Click to Watch" : "Click to Read"}
                               </Button>
                             )}
 
@@ -954,16 +961,12 @@ function InstallGuidesPage() {
       {/* Fullscreen video player (view-only, short-lived signed link) */}
       <Dialog open={!!playingVideo} onOpenChange={(o) => { if (!o) setPlayingVideo(null); }}>
         <DialogContent className="max-w-6xl p-0 bg-black border-violet-500/30">
-          {playingVideo?.video_url && (
+          {playingVideo && (playingVideo.video_url || playingVideo.video_steps?.length > 0) && (
             <>
               <DialogHeader className="px-4 pt-3 pb-2">
                 <DialogTitle className="text-white font-display text-lg">{playingVideo.title}</DialogTitle>
               </DialogHeader>
-              <SecureGuideVideo
-                blogId={playingVideo.id}
-                ref_={playingVideo.video_url}
-                onEl={(el) => { videoElRef.current = el; }}
-              />
+              <SecureGuideVideoSteps blog={playingVideo} onEl={(el) => { videoElRef.current = el; }} />
             </>
           )}
         </DialogContent>
@@ -1054,6 +1057,16 @@ function InstallGuidesPage() {
                   secure
                 />
               </div>
+              <div className="space-y-2 rounded-md border border-border p-3">
+                <div className="flex items-center justify-between gap-3">
+                  <Label>Separate video steps</Label>
+                  <Button type="button" size="sm" variant="outline" onClick={() => setEditing({ ...editing, video_steps: [...(editing.video_steps ?? []), { id: crypto.randomUUID(), title: `Step ${(editing.video_steps?.length ?? 0) + 1}`, video_url: "" }] })}><Plus className="size-4" /> Add step</Button>
+                </div>
+                {(editing.video_steps ?? []).map((step, index) => <div key={step.id} className="space-y-2 rounded-md bg-muted/50 p-2">
+                  <div className="flex items-center gap-2"><span className="text-sm font-semibold">{index + 1}</span><Input value={step.title} onChange={(event) => setEditing({ ...editing, video_steps: editing.video_steps.map((item, itemIndex) => itemIndex === index ? { ...item, title: event.target.value } : item) })} /><Button type="button" size="icon" variant="ghost" onClick={() => setEditing({ ...editing, video_steps: editing.video_steps.filter((_, itemIndex) => itemIndex !== index) })}><Trash2 className="size-4" /></Button></div>
+                  <HeaderVideoUpload value={step.video_url} onChange={(url) => setEditing({ ...editing, video_steps: editing.video_steps.map((item, itemIndex) => itemIndex === index ? { ...item, video_url: url ?? "" } : item) })} folder="install-guides" secure />
+                </div>)}
+              </div>
               <div>
                 <Label>Header image</Label>
                 <HeaderImageUpload
@@ -1122,12 +1135,6 @@ function SecureGuideVideo({
         onEl?.(el);
         if (el) {
           el.play().catch(() => { /* autoplay may be blocked */ });
-          const req = (el as any).requestFullscreen
-            || (el as any).webkitRequestFullscreen
-            || (el as any).webkitEnterFullscreen;
-          if (req) {
-            try { req.call(el); } catch { /* user gesture required on some browsers */ }
-          }
         }
       }}
       src={src}
@@ -1139,6 +1146,18 @@ function SecureGuideVideo({
       className="w-full max-h-[80vh] bg-black"
     />
   );
+}
+
+function SecureGuideVideoSteps({ blog, onEl }: { blog: Blog; onEl?: (el: HTMLVideoElement | null) => void }) {
+  const steps = blog.video_steps ?? [];
+  const [active, setActive] = useState(0);
+  const selected = steps[active];
+  const ref = selected?.video_url || blog.video_url;
+  if (!ref) return null;
+  return <div className="space-y-2">
+    {steps.length > 0 && <div className="flex gap-2 overflow-x-auto px-3 pb-1">{steps.map((step, index) => <Button key={step.id} size="sm" variant={active === index ? "default" : "outline"} onClick={() => setActive(index)}>Step {index + 1}: {step.title}</Button>)}</div>}
+    <SecureGuideVideo key={ref} blogId={blog.id} ref_={ref} onEl={onEl} />
+  </div>;
 }
 
 /** Framed hero whose own content lives inside it; fills the screen on large displays, scrolls on smaller ones. */

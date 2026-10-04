@@ -3,7 +3,7 @@ import { z } from "zod";
 import { unlock } from "@/lib/checkout.server";
 
 const accessInput = z.object({ token: z.string().regex(/^[a-f0-9]{64}$/), password: z.string().max(64) });
-const guideInput = accessInput.extend({ blogId: z.string().uuid() });
+const guideInput = accessInput.extend({ blogId: z.string().uuid(), stepIndex: z.number().int().min(0).optional() });
 const SIGNED_URL_SECONDS = 600;
 const VIDEO_BUCKET = "guide-videos";
 
@@ -27,7 +27,7 @@ export const getCheckoutInstallGuides = createServerFn({ method: "POST" })
     if (!access) return { ok: false as const };
     const [{ data: categories }, { data: guides }] = await Promise.all([
       access.supabaseAdmin.from("install_categories").select("id,name,sort_order").order("sort_order"),
-      access.supabaseAdmin.from("install_blogs").select("id,category_id,title,excerpt,body,image_url,pdf_url,video_url,file_path,file_name,file_mime,sort_order").eq("published", true).order("sort_order").order("created_at", { ascending: false }),
+      access.supabaseAdmin.from("install_blogs").select("id,category_id,title,excerpt,body,image_url,pdf_url,video_url,video_steps,file_path,file_name,file_mime,sort_order").eq("published", true).order("sort_order").order("created_at", { ascending: false }),
     ]);
     return { ok: true as const, orderRef: String(access.order.order_ref ?? access.link.order_id).slice(0, 64), categories: categories ?? [], guides: guides ?? [] };
   });
@@ -53,8 +53,13 @@ export const openCheckoutGuideVideo = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const access = await paidOrderAccess(data.token, data.password);
     if (!access) return { ok: false as const };
-    const { data: guide } = await access.supabaseAdmin.from("install_blogs").select("video_url").eq("id", data.blogId).eq("published", true).maybeSingle();
-    const ref = String(guide?.video_url ?? "").trim();
+    const { data: guide } = await access.supabaseAdmin.from("install_blogs").select("video_url,video_steps").eq("id", data.blogId).eq("published", true).maybeSingle();
+    const steps = Array.isArray(guide?.video_steps) ? guide.video_steps : [];
+    const requestedStep = data.stepIndex === undefined ? null : steps[data.stepIndex];
+    const stepRef = requestedStep && typeof requestedStep === "object" && "video_url" in requestedStep
+      ? String(requestedStep.video_url ?? "")
+      : "";
+    const ref = (data.stepIndex === undefined ? String(guide?.video_url ?? "") : stepRef).trim();
     if (!ref) return { ok: false as const };
     const sign = async (path: string) => {
       const { data: signed, error } = await access.supabaseAdmin.storage.from(VIDEO_BUCKET).createSignedUrl(path, SIGNED_URL_SECONDS);
