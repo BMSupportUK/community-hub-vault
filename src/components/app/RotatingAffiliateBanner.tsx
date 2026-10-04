@@ -144,6 +144,8 @@ function RotatingAffiliateBannerComponent({
     };
   }, [boardId, size, site, zone]);
 
+  const slotKey = `${site ?? "all"}:${zone ?? "all"}:${size}`;
+
   const list = useMemo<Banner[]>(() => {
     const advertiseHere: Banner = {
       id: placeholder?.id ?? `__advertise_here__:${size}`,
@@ -154,8 +156,12 @@ function RotatingAffiliateBannerComponent({
       size,
     };
     if (banners === null) return [];
-    return shuffle([advertiseHere, ...banners]);
-  }, [banners, placeholder, fallback?.image_url, fallback?.link_url, fallback?.alt_text, size, cycle]);
+    const all = [advertiseHere, ...banners];
+    // Never start on a banner a sibling slot on this page is already showing.
+    const siblings = siblingBannerIds(slotKey, instanceIdRef.current);
+    const free = all.filter((b) => !siblings.has(b.id));
+    return shuffle(free.length > 0 ? free : all);
+  }, [banners, placeholder, fallback?.image_url, fallback?.link_url, fallback?.alt_text, size, cycle, slotKey]);
 
   useEffect(() => {
     setIndex(0);
