@@ -986,7 +986,13 @@ function normalizeBulletChannelListing(raw: string): string {
   const out: string[] = [];
   for (let i = 0; i < lines.length; i++) {
     let line = lines[i]!;
-    if (!/•/.test(line) && !timeLead.test(line)) { out.push(line); continue; }
+    if (!/•/.test(line) && !timeLead.test(line)) {
+      // "UK: TNT Sports 1 (until 2:30pm UK)" / "UK: TNT Sports 3 (3:30pm UK)":
+      // time notes on channel lines are dropped so the bracketed time is
+      // never read as a new slot (which lost the second channel's note).
+      out.push(countryCh.test(line.trim()) ? cleanCh(line) : line);
+      continue;
+    }
     line = line.replace(/(?:\s*•\s*\d{1,3})+\s*$/, "");
     const tm = line.match(timeLead);
     if (tm && countryCh.test(tm[2]!.trim())) {

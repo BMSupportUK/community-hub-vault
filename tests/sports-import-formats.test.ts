@@ -336,6 +336,15 @@ describe("Cycling bullet listings", () => {
       expect(parseSportsListingBlock(r.formatted)).toEqual(r.events);
     }
   });
+
+  test("stacked country channel lines with bracketed times keep both channels", () => {
+    const raw = "**OTHER SPORT: SUNDAY 4 OCTOBER**\n\n\n11:15am UK / 6:15am ET\nCYCLING (MEN): UEC Road European Championships\nUK: TNT Sports 1 (until 2:30pm UK)\nUK: TNT Sports 3 (3:30pm UK)\n\n2:40pm UK / 9:40am ET\nCYCLING (MEN): Coppa Agostini\nUK: TNT Sports 8";
+    const r = checkSportsImport(raw, "gmt", Date.UTC(2026, 9, 4, 9), "Cycling");
+    expect(r.errors).toBe(0);
+    expect(r.events[0]).toMatchObject({ time: "11:15 BST", title: "CYCLING (MEN): UEC Road European Championships", channels: ["UK: TNT Sports 1", "UK: TNT Sports 3"] });
+    expect(r.events).toHaveLength(2);
+    expect(parseSportsListingBlock(r.formatted)).toEqual(r.events);
+  });
 });
 
 describe("Rugby Pass channel blocks", () => {
