@@ -964,20 +964,6 @@ function reorderMarkedTitleTimeBlocks(raw: string): string {
     // an event title — moving it below the first time would swallow the
     // first event's real title and drop that event.
     if (listingDateFromLine(cleanLine(markedTitle))) continue;
-    // When the time line already has its own title beneath it, the bold line
-    // above is a section heading, not this slot's title.
-    let after = next + 1;
-    while (after < lines.length && !lines[after]?.trim()) after++;
-    const afterLine = cleanLine(lines[after] ?? "");
-    const afterMarked = /^(?:\*{2}|__)(?!#)(.+?)(?:\*{2}|__)$/.test(lines[after]?.trim() ?? "");
-    if (
-      after === next + 1 &&
-      afterLine &&
-      !afterMarked &&
-      !isLikelyChannelLabel(afterLine) &&
-      !detectEvent(afterLine, null)
-    )
-      continue;
     const timeLine = lines[next]!;
     lines[i] = timeLine;
     lines[next] = markedTitle;
