@@ -56,12 +56,12 @@ export const reportNativeInstall = createServerFn({ method: "POST" })
   });
 
 const TRANSFER_TTL_MS = 24 * 60 * 60 * 1000;
-// Unambiguous on a TV remote keypad: no O/0, I/1, L.
-const ALPHABET = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
 
-function makeToken(len = 8) {
+// 7-digit numeric code — the shortest thing a member can type into the
+// Downloader app on a TV remote: bmsupport.uk/4839201
+function makeToken(len = 7) {
   let out = "";
-  for (let i = 0; i < len; i++) out += ALPHABET[randomInt(ALPHABET.length)];
+  for (let i = 0; i < len; i++) out += String(randomInt(10));
   return out;
 }
 

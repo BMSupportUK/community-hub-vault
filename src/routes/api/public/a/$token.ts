@@ -7,7 +7,9 @@ import { deviceFromUserAgent, clientIpFromHeaders } from "@/lib/device-from-user
 // The Downloader app on Fire OS is not signed in, so the token itself is the
 // credential: unknown, deleted or expired tokens get a bare 404.
 
-const SAFE_TOKEN = /^[A-Za-z0-9]{6,16}$/;
+// New codes are 7 digits; older 6-16 char alphanumeric tokens keep working
+// until they expire (24h max).
+const SAFE_TOKEN = /^(?:\d{7}|[A-Za-z0-9]{6,16})$/;
 
 export const Route = createFileRoute("/api/public/a/$token")({
   server: {
