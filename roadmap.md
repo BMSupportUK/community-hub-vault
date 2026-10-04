@@ -70,6 +70,7 @@
 - [x] Telegram → Sports Guide importer: imported listings save as drafts and open directly in the guide editor for date entry
 - [x] Greyhound import: retain a shared date embedded in a multi-sport heading and repair the affected draft
 - [x] Wise incoming-transfer feed on the Bank Transfer page: live read of payments, auto-matching to pending orders, one-tap confirm
+- [x] Download BM Support Apps: make the BM Support App Store tab first and default (verified in the signed-in preview)
 
 ## Done (recent)
 - [x] UFC Streams multi-time imports: attach every listed channel to every time and retain next-day rollover
