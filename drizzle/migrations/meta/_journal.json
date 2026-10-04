@@ -540,6 +540,13 @@
       "when": 1790972288487,
       "tag": "0076_affiliate_banner_square_size",
       "breakpoints": true
+    },
+    {
+      "idx": 77,
+      "version": "7",
+      "when": 1791122126662,
+      "tag": "0077_create_order_support_sessions",
+      "breakpoints": true
     }
   ]
 }
