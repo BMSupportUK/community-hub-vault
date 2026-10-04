@@ -547,6 +547,13 @@
       "when": 1791122126662,
       "tag": "0077_create_order_support_sessions",
       "breakpoints": true
+    },
+    {
+      "idx": 78,
+      "version": "7",
+      "when": 1791140287133,
+      "tag": "0078_add_install_guide_video_steps",
+      "breakpoints": true
     }
   ]
 }
