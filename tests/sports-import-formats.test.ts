@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, setSystemTime, test } from "bun:test";
 import { checkSportsImport } from "../src/lib/sports-import-check";
 import { formatSportsListingBlock, parseSportsListingBlock } from "../src/lib/sports-listing-format";
 import { snapSplitToHeading, splitSportsListingAtLine } from "../src/lib/discord-import.functions";
@@ -118,6 +118,7 @@ beIN Sports English 1 & 2`;
   });
 
   test("UFC repeated title-time-channel blocks keep each title and its own channels", () => {
+    setSystemTime(new Date(Date.UTC(2026, 9, 3, 9)));
     const raw = `**## UFC**
 
 **UFC 332 : Early Prelims**
@@ -165,6 +166,7 @@ Supersport Action`;
       },
     ]);
     expect(parseSportsListingBlock(result.formatted)).toEqual(result.events);
+    setSystemTime();
   });
 
   test("merged DAZN inline fixtures and venue qualifiers stay as separate events", () => {
@@ -337,12 +339,14 @@ describe("Cycling bullet listings", () => {
     }
   });
 
-  test("stacked country channel lines with bracketed times keep both channels", () => {
+  test("channel handover: end time on first slot, new slot at the change time", () => {
     const raw = "**OTHER SPORT: SUNDAY 4 OCTOBER**\n\n\n11:15am UK / 6:15am ET\nCYCLING (MEN): UEC Road European Championships\nUK: TNT Sports 1 (until 2:30pm UK)\nUK: TNT Sports 3 (3:30pm UK)\n\n2:40pm UK / 9:40am ET\nCYCLING (MEN): Coppa Agostini\nUK: TNT Sports 8";
     const r = checkSportsImport(raw, "gmt", Date.UTC(2026, 9, 4, 9), "Cycling");
     expect(r.errors).toBe(0);
-    expect(r.events[0]).toMatchObject({ time: "11:15 BST", title: "CYCLING (MEN): UEC Road European Championships", channels: ["UK: TNT Sports 1", "UK: TNT Sports 3"] });
-    expect(r.events).toHaveLength(2);
+    expect(r.events[0]).toMatchObject({ time: "11:15 BST", title: "CYCLING (MEN): UEC Road European Championships (until 14:30)", channels: ["UK: TNT Sports 1"] });
+    expect(r.events[1]).toMatchObject({ time: "14:40 BST", title: "CYCLING (MEN): Coppa Agostini", channels: ["UK: TNT Sports 8"] });
+    expect(r.events[2]).toMatchObject({ time: "15:30 BST", title: "CYCLING (MEN): UEC Road European Championships", channels: ["UK: TNT Sports 3"] });
+    expect(r.events).toHaveLength(3);
     expect(parseSportsListingBlock(r.formatted)).toEqual(r.events);
   });
 });

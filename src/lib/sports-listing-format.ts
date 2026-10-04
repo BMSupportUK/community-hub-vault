@@ -976,7 +976,47 @@ function reorderMarkedTitleTimeBlocks(raw: string): string {
  *   "12:10pm UK CYCLING (MEN): X" / "UK: TNT Sports 3 (4pm UK) • 9"
  * Drops bare trailing "• N" counters and time notes in brackets on channel
  * lines, and moves a "Country: Channel" found on the time line below the title. */
+/** Channel handover inside one slot:
+ *   "11:15am UK / 6:15am ET" / "CYCLING (MEN): X"
+ *   "UK: TNT Sports 1 (until 2:30pm UK)" / "UK: TNT Sports 3 (3:30pm UK)"
+ * The first slot keeps its end time in the title ("X (until 14:30)") with the
+ * channels that end then; a new slot starts at the later time with the channel
+ * it moves to. */
+function splitChannelHandoverSlots(raw: string): string {
+  const T = String.raw`(\d{1,2})(?:[:.](\d{2}))?\s*(am|pm)?\s*(?:UK|BST|GMT)?`;
+  const untilRe = new RegExp(String.raw`\s*\((?:until|till|to)\s*${T}\)`, "i");
+  const fromRe = new RegExp(String.raw`\s*\((?:from\s*)?${T}\)`, "i");
+  const timeLine = /^\s*\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm)?\s*UK\b/i;
+  const hhmm = (h: string, m: string | undefined, ap: string | undefined) => {
+    let hr = Number(h);
+    if (ap?.toLowerCase() === "pm" && hr < 12) hr += 12;
+    if (ap?.toLowerCase() === "am" && hr === 12) hr = 0;
+    return `${String(hr).padStart(2, "0")}:${m ?? "00"}`;
+  };
+  const toUk = (h: string, m: string | undefined, ap: string | undefined) => `${h}:${m ?? "00"}${ap ?? ""} UK`;
+  const blocks = raw.split(/\n\s*\n/);
+  return blocks.map((block) => {
+    const lines = block.split("\n");
+    const ti = lines.findIndex((l) => l.trim());
+    if (ti < 0 || !timeLine.test(lines[ti]!) || lines.length < ti + 3) return block;
+    const title = lines[ti + 1]!.trim();
+    const chans = lines.slice(ti + 2).filter((l) => l.trim());
+    const until = chans.map((c) => c.match(untilRe));
+    const from = chans.map((c, i) => (until[i] ? null : c.match(fromRe)));
+    const ui = until.findIndex(Boolean);
+    const fi = from.findIndex(Boolean);
+    if (ui < 0 || fi < 0) return block;
+    const u = until[ui]!, f = from[fi]!;
+    const first = [lines[ti]!, `${title} (until ${hhmm(u[1]!, u[2], u[3])})`,
+      ...chans.filter((_, i) => !from[i]).map((c) => c.replace(untilRe, "").trim())];
+    const second = [toUk(f[1]!, f[2], f[3]), title,
+      ...chans.filter((_, i) => from[i]).map((c) => c.replace(fromRe, "").trim())];
+    return [...lines.slice(0, ti), ...first, "", ...second].join("\n");
+  }).join("\n\n");
+}
+
 function normalizeBulletChannelListing(raw: string): string {
+  raw = splitChannelHandoverSlots(raw);
   const COUNTRY = String.raw`(?:UK|Ireland|IRE|USA|US|Canada|Australia|AUS|NZ|New Zealand|South Africa|Germany|France|Spain|Italy|Worldwide|International)`;
   const countryCh = new RegExp(`^${COUNTRY}\\s*:\\s*\\S`, "i");
   const timeLead = new RegExp(String.raw`^(\s*\d{1,2}(?:[:.]\d{2})?\s*(?:am|pm)?\s+UK)\s+(.+)$`, "i");
