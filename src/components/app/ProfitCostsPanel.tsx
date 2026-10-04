@@ -118,9 +118,9 @@ export function ProfitCostsPanel() {
   const sum = (os: Order[]) => os.reduce((a, o) => { const c = calc(o); return { revenue: a.revenue + c.revenue, cost: a.cost + c.cost }; }, { revenue: 0, cost: 0 });
   const yT = sum(yearOrders), mT = sum(am != null ? yearOrders.filter((o) => new Date(o.created_at).getMonth() === am) : []);
 
-  const pill = (a: boolean) => `px-3 h-8 rounded-lg text-sm font-medium border transition-colors ${a ? "bg-primary text-primary-foreground border-primary" : "bg-surface-2 border-border text-muted-foreground hover:text-foreground"}`;
+  const pill = (a: boolean) => `px-3 h-8 rounded-lg text-sm font-medium border backdrop-blur-md transition-colors ${a ? "bg-primary text-primary-foreground border-primary shadow-glow" : "bg-surface-2/70 border-border text-muted-foreground hover:text-foreground"}`;
   const Stat = ({ label, value, tone }: { label: string; value: string; tone?: string }) => (
-    <div className="rounded-xl border border-border bg-surface-2 p-3"><div className="text-xs text-muted-foreground">{label}</div><div className={`text-lg font-semibold ${tone ?? ""}`}>{value}</div></div>
+    <div className="rounded-xl border border-border/60 bg-surface-2/70 backdrop-blur-md p-4 shadow-elegant"><div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div><div className={`text-xl font-semibold ${tone ?? ""}`}>{value}</div></div>
   );
   const Totals = ({ t }: { t: { revenue: number; cost: number } }) => {
     const p = t.revenue - t.cost;
