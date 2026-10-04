@@ -53,6 +53,7 @@ function SecurePageAdmin() {
         <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
           <SecureLinkPanel orderId={order} />
         </div>
+        <LiveHelpStaff orderId={order} />
       </div>
     </main>
   );
