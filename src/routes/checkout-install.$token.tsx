@@ -50,7 +50,12 @@ function CheckoutInstallGuidesPage() {
     setPassword(saved);
     fetchGuides({ data: { token, password: saved } }).then((result) => {
       if (!result.ok) { setDenied(true); return; }
-      setCategories(result.categories); setGuides(result.guides as Guide[]); setOrderRef(result.orderRef); setActiveCategory(result.categories[0]?.id ?? null);
+      setCategories(result.categories);
+      setGuides(result.guides.map((guide) => ({
+        ...guide,
+        video_steps: Array.isArray(guide.video_steps) ? guide.video_steps as unknown as VideoStep[] : [],
+      })) as Guide[]);
+      setOrderRef(result.orderRef); setActiveCategory(result.categories[0]?.id ?? null);
     }).catch(() => setDenied(true)).finally(() => setLoading(false));
   }, [fetchGuides, token]);
 

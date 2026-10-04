@@ -247,7 +247,10 @@ function InstallGuidesPage() {
       ]);
       return {
         categories: (cats ?? []) as Category[],
-        blogs: (bs ?? []) as Blog[],
+        blogs: (bs ?? []).map((blog) => ({
+          ...blog,
+          video_steps: Array.isArray(blog.video_steps) ? blog.video_steps as unknown as VideoStep[] : [],
+        })) as Blog[],
       };
     },
     staleTime: 5 * 60 * 1000,
