@@ -100,7 +100,7 @@ export function checkSportsImport(
     ) channelAsTitle.push(n);
     if (
       title.replace(/[^A-Za-z0-9]/g, "").length < 3 ||
-      SLOT_JUNK_RE.test(title) ||
+      SLOT_JUNK_RE.test(title.replace(/\s*\(until \d{2}:\d{2}\)$/, "")) ||
       HEADING_JUNK_RE.test(title) ||
       /^[\d\s.:\-–—/]+$/.test(title)
     ) junkTitle.push(n);
