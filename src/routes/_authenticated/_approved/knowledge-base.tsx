@@ -481,9 +481,9 @@ function KnowledgeBasePage() {
   const openArticle = (article: Article) => {
     focusArticleId.current = article.id;
     setReading(article);
-    window.requestAnimationFrame(() => {
-      document.querySelector<HTMLElement>("main[data-knowledge-base]")?.scrollTo({ top: 0, behavior: "instant" });
-    });
+    window.setTimeout(() => {
+      document.querySelector<HTMLElement>("[data-knowledge-article-top]")?.scrollIntoView({ block: "start", behavior: "instant" });
+    }, 50);
   };
 
   return (
