@@ -4171,6 +4171,85 @@ export type Database = {
           },
         ]
       }
+      order_support_session_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          sender: string
+          session_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          sender: string
+          session_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          sender?: string
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_support_session_messages_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "order_support_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      order_support_sessions: {
+        Row: {
+          created_at: string
+          ended_at: string | null
+          ended_by: string | null
+          id: string
+          joined_at: string | null
+          joined_by: string | null
+          order_id: string
+          requested_at: string
+          staff_note: string | null
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          ended_at?: string | null
+          ended_by?: string | null
+          id?: string
+          joined_at?: string | null
+          joined_by?: string | null
+          order_id: string
+          requested_at?: string
+          staff_note?: string | null
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          ended_at?: string | null
+          ended_by?: string | null
+          id?: string
+          joined_at?: string | null
+          joined_by?: string | null
+          order_id?: string
+          requested_at?: string
+          staff_note?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_support_sessions_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       packages_faqs: {
         Row: {
           answer: string
