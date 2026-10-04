@@ -9,28 +9,36 @@ On the "View Your Download URL" tab, each app card currently shows **View Downlo
 
 File: `src/components/app/AppTransferPanel.tsx`.
 
-## 2. Live "Show Us" support sessions (camera-only, inside secure orders)
+## 2. Live "Show Us" support sessions (camera-only, inside secure orders, with WhatsApp invite)
 
 ### What it is
-A customer having install trouble starts a live session **from their secure order page** — the same password-gated checkout/order pages they already use. They point their phone camera at their Android box or Fire Stick TV, and staff watch live and talk them through it. No screen sharing, no app rebuilds — just the phone camera, which works on every phone. The feature exists **only inside the secure orders area** — no link anywhere else in the app.
+A customer having install trouble joins a live session **from their secure order page**. They point their phone camera at their Android box or Fire Stick TV, and staff watch live and talk them through it. No screen sharing, no app rebuilds — just the phone camera, which works on every phone. The feature exists **only inside the secure orders area** — no link anywhere else in the app.
+
+### About WhatsApp
+WhatsApp's business tools **cannot make video calls** — there is no way to start a WhatsApp video chat from the business account. What it can do is send the customer a message. So the plan uses WhatsApp as the doorbell, not the camera:
+
+- Staff press **Invite via WhatsApp** on the order. The customer gets a WhatsApp message from the BM Support business number: "We're ready to help — tap this link and point your camera at your device."
+- The link opens the secure order page straight into the live camera session. The video itself runs in the browser, not inside WhatsApp.
 
 ```text
-Customer side (secure order page)      Staff side
-Order page → Get Live Help button  →   Order's admin view shows "Live help requested"
-Point camera at the TV/device      →   Join → large live camera view
-Small chat box in the session      ←→  Chat back, drop "press here" pointer
-Red "Staff can see you" bar + Stop     End session, add a short note
+Customer side                           Staff side
+Gets WhatsApp invite → taps link    ←   Order admin: "Invite via WhatsApp"
+Order page → Get Live Help button   →   Order admin shows "Live help requested"
+Point camera at the TV/device       →   Join → large live camera view
+Small chat box in the session       ←→  Chat back, drop "press here" pointer
+Red "Staff can see you" bar + Stop      End session, add a short note
 ```
 
 ### Customer experience
-1. On their secure order page (the existing password-gated checkout link), a **Get Live Help** button appears.
-2. Pressing it starts a session tied to that order and waits for a staff member to join.
+1. On their secure order page (the existing password-gated checkout link), a **Get Live Help** button appears — or they arrive via the WhatsApp invite link.
+2. Starting a session waits for a staff member to join.
 3. When staff join, the phone asks for camera permission; the customer accepts and the rear camera opens.
 4. A red "Staff can see your camera" bar stays on screen the whole time, with a **Stop** button.
 5. A small chat box lets them type while the camera runs.
 
 ### Staff experience
 - On the order's admin view, a **Live Help** section shows when a customer has requested a session, with a sound alert.
+- **Invite via WhatsApp** sends the customer a WhatsApp message with their session link (uses the approved WhatsApp business number; first invites may need a message template approved by Meta, which can take up to 48 hours).
 - **Join** opens a large live view of the customer's camera, plus the chat.
 - Staff can tap the view to drop a pointer circle the customer sees ("press here").
 - **End session** closes it. Staff can add a short note recording what the problem was, saved against the order.
@@ -45,5 +53,6 @@ Red "Staff can see you" bar + Stop     End session, add a short note
 - WebRTC peer-to-peer video using the rear camera (`getUserMedia` with `facingMode: "environment"`). Signalling over a dedicated realtime channel per session (unique topic, so it doesn't touch the locked Talk/ticket code).
 - New tables: `order_support_sessions` (order_id, customer token, staff user, status, timestamps, note) and `order_support_session_messages`. RLS mirrors the existing order checkout access rules; staff access via existing role checks. Both tables get GRANTs in the same migration.
 - Sessions attach to the existing `order_checkout_links` access model — the same credentials that open the order open live help.
+- WhatsApp invites go through the WhatsApp Business connector (gateway `/messages`). Outside the 24-hour customer-service window the invite must use a Meta-approved template, so a `live_help_invite` UTILITY template will be created; sends are logged with their provider message id.
 - A TURN relay is needed for mobile networks that block direct connections. This needs a TURN provider account (for example Cloudflare Calls or Twilio) and its key, which you'll be asked for.
 - UI lives in the existing secure checkout/order page component and the order admin card — no new public routes.
