@@ -480,9 +480,12 @@ export function AppTransferPanel({ onUploadClick }: { onUploadClick?: () => void
     return map;
   }, [builds]);
 
-  const firstTab =
-    APP_BUILD_CATEGORIES.find((c) => c.key === "official_server")?.key ??
-    APP_BUILD_CATEGORIES[0].key;
+  // BM Support App Store is the default and shows first in the download tabs.
+  const orderedCategories = useMemo(
+    () => [...APP_BUILD_CATEGORIES].sort((a, b) => (a.key === "bm_store" ? -1 : b.key === "bm_store" ? 1 : 0)),
+    [],
+  );
+  const firstTab = "bm_store";
 
   if (!canDownload) return <RequestAccessPanel />;
 
@@ -529,7 +532,7 @@ export function AppTransferPanel({ onUploadClick }: { onUploadClick?: () => void
         <div className="min-w-0 p-3 sm:p-5 md:flex md:min-h-0 md:flex-1 md:flex-col md:p-3 lg:p-4">
         <Tabs defaultValue={firstTab} className="min-w-0 w-full md:flex md:min-h-0 md:flex-1 md:flex-col">
           <TabsList className="grid h-auto w-full min-w-0 shrink-0 grid-cols-2 gap-1 bg-surface-2/80 p-1 sm:flex sm:flex-wrap sm:justify-start">
-          {APP_BUILD_CATEGORIES.map((c) => (
+          {orderedCategories.map((c) => (
              <TabsTrigger key={c.key} value={c.key} className="min-w-0 whitespace-normal px-2 text-xs leading-tight sm:shrink-0 sm:text-sm">
               {c.label}
               <span className="ml-1.5 text-[10px] opacity-70">{(grouped[c.key] ?? []).length}</span>
