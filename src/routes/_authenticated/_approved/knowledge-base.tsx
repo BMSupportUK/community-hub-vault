@@ -406,6 +406,26 @@ function KnowledgeBasePage() {
   if (reading) {
     const stats = ratingStats[reading.id];
     const mine = myRatingFor(reading.id);
+    // Cover-style header panel (category label + big title on the hero artwork),
+    // moved from the top of the article into the ratings rail.
+    const headerPanel = (
+      <div className="relative overflow-hidden rounded-lg">
+        <img src={kbHero} alt="" aria-hidden="true" className="absolute inset-0 size-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/85 via-primary/70 to-primary/90" aria-hidden="true" />
+        <div className="relative p-5">
+          <span className="text-xs font-medium text-primary-foreground/75">
+            {categories.find((c) => c.id === reading.category_id)?.name ?? "Knowledge Base"}
+          </span>
+          <h1 className="mt-1 font-display text-3xl font-bold leading-tight text-primary-foreground">{reading.title}</h1>
+          {reading.badge && (
+            <span className="mt-3 inline-block rounded-full border border-primary-foreground/30 bg-primary-foreground/10 px-2 py-0.5 text-xs text-primary-foreground">{reading.badge}</span>
+          )}
+          {!reading.published && (
+            <span className="mt-3 ml-2 inline-block rounded-full border border-primary-foreground/30 bg-primary-foreground/10 px-2 py-0.5 text-xs text-primary-foreground">Draft</span>
+          )}
+        </div>
+      </div>
+    );
     const ratingPanel = (
       <aside className="rounded-lg border border-border bg-surface-2/40 p-5 xl:sticky xl:top-6 xl:self-start">
         <h2 className="font-display text-lg font-semibold">Article rating</h2>
@@ -434,12 +454,7 @@ function KnowledgeBasePage() {
           </Button>
           <div className="grid min-w-0 gap-8 xl:grid-cols-[minmax(0,1fr)_280px] xl:gap-10">
             <div className="min-w-0">
-              <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                <span>{categories.find((c) => c.id === reading.category_id)?.name ?? "Knowledge Base"}</span>
-                {reading.badge && <span className="rounded-full border border-primary/30 bg-primary/15 px-2 py-0.5 text-primary">{reading.badge}</span>}
-                {!reading.published && <span className="rounded-full border border-border bg-muted px-2 py-0.5 text-muted-foreground">Draft</span>}
-              </div>
-              <h1 className="mb-3 font-display text-3xl font-bold sm:text-4xl">{reading.title}</h1>
+              <div className="mb-6 xl:hidden">{headerPanel}</div>
               {reading.excerpt && <p className="mb-6 max-w-4xl text-lg text-muted-foreground">{reading.excerpt}</p>}
 
               <div className="mb-7 xl:hidden">{ratingPanel}</div>
@@ -473,7 +488,10 @@ function KnowledgeBasePage() {
                 </div>
               )}
             </div>
-            <div className="hidden xl:block">{ratingPanel}</div>
+            <div className="hidden xl:block">
+              {headerPanel}
+              <div className="mt-4">{ratingPanel}</div>
+            </div>
           </div>
         </div>
         {editing && <ArticleEditor editing={editing} setEditing={setEditing} onClose={closeEditor} categories={categories} onSave={saveArticle} userId={user?.id ?? null} />}
