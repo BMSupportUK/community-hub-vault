@@ -669,8 +669,8 @@ function DashboardBody() {
                   loading="lazy"
                   width={512}
                   height={512}
-                  className="pointer-events-none absolute -bottom-6 -right-6 size-32 sm:size-36 rounded-2xl object-cover opacity-35 saturate-[.85] transition-all duration-300 group-hover:opacity-60 group-hover:scale-105"
-                  style={{ maskImage: "radial-gradient(circle at 70% 70%, black 40%, transparent 78%)", WebkitMaskImage: "radial-gradient(circle at 70% 70%, black 40%, transparent 78%)" }}
+                  className="pointer-events-none absolute -bottom-8 -right-8 size-40 sm:size-48 rounded-2xl object-cover opacity-50 transition-all duration-300 group-hover:opacity-75 group-hover:scale-105"
+                  style={{ maskImage: "radial-gradient(circle at 65% 65%, black 45%, transparent 82%)", WebkitMaskImage: "radial-gradient(circle at 65% 65%, black 45%, transparent 82%)" }}
                 />
                 <div className="relative size-10 shrink-0 rounded-xl bg-gradient-primary grid place-items-center text-primary-foreground shadow-glow">
                   <t.icon className="size-5" />
