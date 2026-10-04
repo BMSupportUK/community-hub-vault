@@ -118,11 +118,8 @@ function PublicGuidePage() {
           </p>
 
           {guide.image_url && (
-            <div className="mt-6 flex items-stretch justify-center gap-4">
-              <div className="hidden w-[468px] shrink-0 items-center xl:flex">
-                <AdSenseSlot slot="home" />
-              </div>
-              <div className="relative h-32 min-w-0 flex-1 overflow-hidden rounded-2xl border border-purple-500/30 bg-purple-950/60 sm:h-40 lg:h-48">
+            <div className="mt-6 grid grid-cols-1 gap-4 xl:grid-cols-2 xl:items-stretch">
+              <div className="relative h-32 min-w-0 overflow-hidden rounded-2xl border border-purple-500/30 bg-purple-950/60 sm:h-40 lg:h-48 xl:mx-3 xl:h-auto xl:aspect-[3/1]">
                 <img
                   src={guide.image_url}
                   alt=""
@@ -135,7 +132,7 @@ function PublicGuidePage() {
                   className="absolute inset-0 h-full w-full object-contain"
                 />
               </div>
-              <div className="hidden w-[468px] shrink-0 items-center xl:flex">
+              <div className="hidden min-w-0 xl:block xl:aspect-[3/1]">
                 <AdSenseSlot slot="home" />
               </div>
             </div>
