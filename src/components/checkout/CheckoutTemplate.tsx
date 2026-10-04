@@ -3,6 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { AlertTriangle, Bitcoin, BookOpen, Check, ChevronLeft, ChevronRight, Clock, Copy, CreditCard, Download, Hourglass, Loader2, Lock, PartyPopper, Send, UserCheck, UserPlus } from "lucide-react";
 import hero from "@/assets/checkout-family-tv.jpg";
 import installGuideIllustration from "@/assets/manual-order-install-guide.jpg";
+import { WhatsAppVideoCall } from "@/components/checkout/WhatsAppVideoCall";
 import { Button } from "@/components/ui/button";
 import { downloadReceipt, type InvoiceTemplateSettings } from "@/lib/receipt";
 
@@ -257,6 +258,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
                 )}
               </section>
               {installCard}
+              {!preview && <WhatsAppVideoCall />}
               {moveToSetup}
             </aside>
           ) : accountSidebar ? (
@@ -273,6 +275,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
                 </div>
               </section>
               {installCard}
+              {!preview && <WhatsAppVideoCall />}
               {addLoginDetails}
               {visibleStage === 3 && completeSale}
               {visibleStage === 4 && order.manual && (

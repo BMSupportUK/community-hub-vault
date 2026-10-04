@@ -5,7 +5,6 @@ import { ArrowLeft, CheckCircle2, KeyRound, Loader2, Lock, ShieldCheck, UserChec
 import { completeCheckoutSale, continueCheckoutToAccountSetup, getCheckout, markPaymentSent, startCheckoutAccountSetup } from "@/lib/checkout.functions";
 import { CheckoutTemplate, type CheckoutView } from "@/components/checkout/CheckoutTemplate";
 import { CustomerCheckoutChat } from "@/components/checkout/CheckoutChat";
-import { WhatsAppVideoCall } from "@/components/checkout/WhatsAppVideoCall";
 import { CheckoutCardPayment } from "@/components/checkout/CheckoutCardPayment";
 import { useAuth } from "@/hooks/use-auth";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -234,7 +233,6 @@ function PayPage() {
         </Dialog>
       )}
       <CustomerCheckoutChat token={token} password={pw} orderRef={view.order.ref} />
-      <WhatsAppVideoCall />
     </main>
   );
 }
