@@ -406,6 +406,26 @@ function KnowledgeBasePage() {
   if (reading) {
     const stats = ratingStats[reading.id];
     const mine = myRatingFor(reading.id);
+    // Cover-style header panel (category label + big title on the hero artwork),
+    // moved from the top of the article into the ratings rail.
+    const headerPanel = (
+      <div className="relative overflow-hidden rounded-lg">
+        <img src={kbHero} alt="" aria-hidden="true" className="absolute inset-0 size-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/85 via-primary/70 to-primary/90" aria-hidden="true" />
+        <div className="relative p-5">
+          <span className="text-xs font-medium text-primary-foreground/75">
+            {categories.find((c) => c.id === reading.category_id)?.name ?? "Knowledge Base"}
+          </span>
+          <h1 className="mt-1 font-display text-3xl font-bold leading-tight text-primary-foreground">{reading.title}</h1>
+          {reading.badge && (
+            <span className="mt-3 inline-block rounded-full border border-primary-foreground/30 bg-primary-foreground/10 px-2 py-0.5 text-xs text-primary-foreground">{reading.badge}</span>
+          )}
+          {!reading.published && (
+            <span className="mt-3 ml-2 inline-block rounded-full border border-primary-foreground/30 bg-primary-foreground/10 px-2 py-0.5 text-xs text-primary-foreground">Draft</span>
+          )}
+        </div>
+      </div>
+    );
     const ratingPanel = (
       <aside className="rounded-lg border border-border bg-surface-2/40 p-5 xl:sticky xl:top-6 xl:self-start">
         <h2 className="font-display text-lg font-semibold">Article rating</h2>
