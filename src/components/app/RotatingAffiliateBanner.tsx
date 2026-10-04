@@ -34,6 +34,24 @@ function shuffle<T>(arr: T[]): T[] {
 }
 
 /**
+ * Tracks which banner each slot instance on the page is currently showing,
+ * keyed by slotKey, so sibling slots (e.g. the two adverts either side of a
+ * guide banner) never display the same banner at the same time.
+ */
+const activeBySlot = new Map<string, Map<number, string>>();
+let nextInstanceId = 1;
+
+function siblingBannerIds(slotKey: string, instanceId: number): Set<string> {
+  const ids = new Set<string>();
+  const instances = activeBySlot.get(slotKey);
+  if (!instances) return ids;
+  for (const [id, bannerId] of instances) {
+    if (id !== instanceId) ids.add(bannerId);
+  }
+  return ids;
+}
+
+/**
  * Rotates evenly through every matching banner. The complete set, including
  * "Advertise here", is shuffled so every banner receives one equal interval
  * before a new random cycle begins.
@@ -61,6 +79,7 @@ function RotatingAffiliateBannerComponent({
   const [fading, setFading] = useState(false);
   const [placeholder, setPlaceholder] = useState<{ id: string; image_url: string } | null>(null);
   const advertRef = useRef<HTMLAnchorElement>(null);
+  const instanceIdRef = useRef<number>(nextInstanceId++);
 
   useEffect(() => {
     let cancelled = false;
@@ -125,6 +144,8 @@ function RotatingAffiliateBannerComponent({
     };
   }, [boardId, size, site, zone]);
 
+  const slotKey = `${site ?? "all"}:${zone ?? "all"}:${size}`;
+
   const list = useMemo<Banner[]>(() => {
     const advertiseHere: Banner = {
       id: placeholder?.id ?? `__advertise_here__:${size}`,
@@ -135,8 +156,12 @@ function RotatingAffiliateBannerComponent({
       size,
     };
     if (banners === null) return [];
-    return shuffle([advertiseHere, ...banners]);
-  }, [banners, placeholder, fallback?.image_url, fallback?.link_url, fallback?.alt_text, size, cycle]);
+    const all = [advertiseHere, ...banners];
+    // Never start on a banner a sibling slot on this page is already showing.
+    const siblings = siblingBannerIds(slotKey, instanceIdRef.current);
+    const free = all.filter((b) => !siblings.has(b.id));
+    return shuffle(free.length > 0 ? free : all);
+  }, [banners, placeholder, fallback?.image_url, fallback?.link_url, fallback?.alt_text, size, cycle, slotKey]);
 
   useEffect(() => {
     setIndex(0);
@@ -149,11 +174,15 @@ function RotatingAffiliateBannerComponent({
       setFading(true);
       timeoutId = window.setTimeout(() => {
         setIndex((i) => {
-          const next = i + 1;
+          const siblings = siblingBannerIds(slotKey, instanceIdRef.current);
+          // Advance to the next banner a sibling slot isn't already showing.
+          let next = i + 1;
+          while (next < list.length && siblings.has(list[next].id)) next++;
           if (next >= list.length) {
             setCycle((value) => value + 1);
             return 0;
           }
+          if (next === i) return i;
           return next;
         });
         setFading(false);
@@ -163,12 +192,25 @@ function RotatingAffiliateBannerComponent({
       clearInterval(id);
       if (timeoutId !== null) window.clearTimeout(timeoutId);
     };
-  }, [paused, list.length, intervalMs]);
+  }, [paused, list, intervalMs, slotKey]);
 
   const current = list[Math.min(index, list.length - 1)];
   const spec = AD_SIZES[size];
   const isWide = size === "leaderboard";
-  const slotKey = `${site ?? "all"}:${zone ?? "all"}:${size}`;
+
+  // Publish which banner this instance is showing so sibling slots avoid it.
+  useEffect(() => {
+    if (!current) return;
+    let instances = activeBySlot.get(slotKey);
+    if (!instances) {
+      instances = new Map();
+      activeBySlot.set(slotKey, instances);
+    }
+    instances.set(instanceIdRef.current, current.id);
+    return () => {
+      instances.delete(instanceIdRef.current);
+    };
+  }, [current?.id, slotKey]);
 
   useEffect(() => {
     const node = advertRef.current;
