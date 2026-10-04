@@ -539,7 +539,7 @@ export function AppTransferPanel({ onUploadClick }: { onUploadClick?: () => void
             </TabsTrigger>
           ))}
         </TabsList>
-        {APP_BUILD_CATEGORIES.map((c) => (
+        {orderedCategories.map((c) => (
           <TabsContent key={c.key} value={c.key} className="mt-4 md:min-h-0 md:flex-1 md:overflow-y-auto md:mt-2 lg:mt-3">
             {(grouped[c.key] ?? []).length === 0 ? (
               <div className="grid place-items-center rounded-xl border border-dashed border-border/70 bg-surface/60 px-6 py-12 text-center">
