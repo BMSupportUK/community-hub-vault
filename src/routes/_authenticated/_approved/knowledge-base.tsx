@@ -488,7 +488,10 @@ function KnowledgeBasePage() {
                 </div>
               )}
             </div>
-            <div className="hidden xl:block">{ratingPanel}</div>
+            <div className="hidden xl:block">
+              {headerPanel}
+              <div className="mt-4">{ratingPanel}</div>
+            </div>
           </div>
         </div>
         {editing && <ArticleEditor editing={editing} setEditing={setEditing} onClose={closeEditor} categories={categories} onSave={saveArticle} userId={user?.id ?? null} />}
