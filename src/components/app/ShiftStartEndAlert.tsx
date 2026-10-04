@@ -358,11 +358,27 @@ export function ShiftStartEndAlert() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [now, autoEndAt, openShift?.id, endsAtMs]);
 
-  if (!askOpen || !openShift || autoEndAt === null) return null;
-  const remaining = autoEndAt - now;
+  const dialogOpen = askOpen && !!openShift && autoEndAt !== null;
+  const remaining = autoEndAt !== null ? autoEndAt - now : 0;
+
+  // Safety net: a dialog that disappears while open can leave the page with
+  // clicks disabled. If nothing is actually open, give the page its clicks back.
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    const body = document.body;
+    if (body.style.pointerEvents !== "none") return;
+    const anyOpen = document.querySelector(
+      '[role="dialog"][data-state="open"], [role="alertdialog"][data-state="open"], [data-radix-popper-content-wrapper]',
+    );
+    if (!anyOpen) body.style.pointerEvents = "";
+  }, [now]);
+
+  if (!dialogOpen || !openShift) {
+    return <AlertDialog open={false}><AlertDialogContent className="hidden" /></AlertDialog>;
+  }
 
   return (
-    <AlertDialog open onOpenChange={(o) => { if (!o) setAskOpen(false); }}>
+    <AlertDialog open={dialogOpen} onOpenChange={(o) => { if (!o) setAskOpen(false); }}>
       <AlertDialogContent className="border-amber-500/60">
         <AlertDialogHeader>
           <div className="mx-auto mb-2 grid place-items-center size-14 rounded-full bg-amber-500/15 text-amber-500">
