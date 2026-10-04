@@ -257,6 +257,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
                 )}
               </section>
               {installCard}
+              {!preview && <WhatsAppVideoCall />}
               {moveToSetup}
             </aside>
           ) : accountSidebar ? (
@@ -273,6 +274,7 @@ export function CheckoutTemplate({ view, preview = false, claimToken, cardPaymen
                 </div>
               </section>
               {installCard}
+              {!preview && <WhatsAppVideoCall />}
               {addLoginDetails}
               {visibleStage === 3 && completeSale}
               {visibleStage === 4 && order.manual && (
