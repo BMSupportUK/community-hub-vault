@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CodeRouteImport } from './routes/$code'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as AboutRouteImport } from './routes/about'
 import { Route as BoroFantasyRouteImport } from './routes/boro-fantasy'
@@ -167,6 +168,11 @@ import { Route as AuthenticatedApprovedSportsGuidesReadIdRouteImport } from './r
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CodeRoute = CodeRouteImport.update({
+  id: '/$code',
+  path: '/$code',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRoute = AuthenticatedRouteImport.update({
@@ -1054,6 +1060,7 @@ const AuthenticatedApprovedSportsGuidesReadIdRoute =
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/$code': typeof CodeRoute
   '/about': typeof AboutRoute
   '/boro-fantasy': typeof BoroFantasyRoute
   '/boro-predictions': typeof BoroPredictionsRoute
@@ -1208,6 +1215,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/$code': typeof CodeRoute
   '/about': typeof AboutRoute
   '/boro-fantasy': typeof BoroFantasyRoute
   '/boro-predictions': typeof BoroPredictionsRoute
@@ -1360,6 +1368,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/$code': typeof CodeRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/about': typeof AboutRoute
   '/boro-fantasy': typeof BoroFantasyRoute
@@ -1518,6 +1527,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/$code'
     | '/about'
     | '/boro-fantasy'
     | '/boro-predictions'
@@ -1672,6 +1682,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/$code'
     | '/about'
     | '/boro-fantasy'
     | '/boro-predictions'
@@ -1823,6 +1834,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/$code'
     | '/_authenticated'
     | '/about'
     | '/boro-fantasy'
@@ -1980,6 +1992,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CodeRoute: typeof CodeRoute
   AuthenticatedRoute: typeof AuthenticatedRouteWithChildren
   AboutRoute: typeof AboutRoute
   BoroFantasyRoute: typeof BoroFantasyRoute
@@ -2054,6 +2067,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$code': {
+      id: '/$code'
+      path: '/$code'
+      fullPath: '/$code'
+      preLoaderRoute: typeof CodeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -3463,6 +3483,7 @@ const FanZoneRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CodeRoute: CodeRoute,
   AuthenticatedRoute: AuthenticatedRouteWithChildren,
   AboutRoute: AboutRoute,
   BoroFantasyRoute: BoroFantasyRoute,

@@ -152,7 +152,7 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
   const shortUrl = useMemo(() => {
     if (!transfer) return null;
     const host = typeof window === "undefined" ? "bmsupport.uk" : window.location.host;
-    return `${host}/a/${transfer.token}`;
+    return `${host}/${transfer.token}`;
   }, [transfer]);
 
   const remaining = countdown(transfer?.expiresAt, now);
