@@ -960,6 +960,10 @@ function reorderMarkedTitleTimeBlocks(raw: string): string {
     while (next < lines.length && !lines[next]?.trim()) next++;
     const slot = detectEvent(cleanLine(lines[next] ?? ""), null);
     if (!slot || markedTitle.includes("|")) continue;
+    // "**OTHER MOTORSPORT: SUNDAY 4 OCTOBER**" is a dated post heading, not
+    // an event title — moving it below the first time would swallow the
+    // first event's real title and drop that event.
+    if (listingDateFromLine(cleanLine(markedTitle))) continue;
     const timeLine = lines[next]!;
     lines[i] = timeLine;
     lines[next] = markedTitle;

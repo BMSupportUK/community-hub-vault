@@ -350,3 +350,20 @@ describe("Rugby Pass channel blocks", () => {
     expect(parseSportsListingBlock(r.formatted)).toEqual(r.events);
   });
 });
+
+describe("Dated bold post headings", () => {
+  test("bold 'SPORT: DAY DATE' heading never swallows the first event", () => {
+    const raw = "**OTHER MOTORSPORT: SUNDAY 4 OCTOBER**\n\n12:00pm UK / 7:00am ET\nMOTOCROSS OF NATIONS: Race 1\nUK: TNT Sports 4\nAustralia: Stan Sport\n\n1:00pm UK / 8:00am ET\nBRITISH SUPERBIKES: Donington Park\nUK: TNT Sports 4\nAustralia: Fox Sports 506 \n\n1:30pm UK / 8:30am ET\nMOTOCROSS OF NATIONS: Race 2\nUK: TNT Sports 6\nAustralia: Stan Sport\n\n3:00pm UK / 10:00am ET\nMOTOCROSS OF NATIONS: Race 3\nUK: TNT Sports 6\nAustralia: Stan Sport";
+    const events = parseSportsListingBlock(raw);
+    expect(events.map((e) => e.title)).toEqual([
+      "MOTOCROSS OF NATIONS: Race 1",
+      "BRITISH SUPERBIKES: Donington Park",
+      "MOTOCROSS OF NATIONS: Race 2",
+      "MOTOCROSS OF NATIONS: Race 3",
+    ]);
+    expect(events[0]).toMatchObject({ time: "12:00pm UK", channels: ["UK: TNT Sports 4", "Australia: Stan Sport"] });
+    const r = checkSportsImport(raw, "gmt", Date.UTC(2026, 9, 4, 9), "Motorsport");
+    expect(r.events).toHaveLength(4);
+    expect(parseSportsListingBlock(r.formatted)).toEqual(r.events);
+  });
+});
