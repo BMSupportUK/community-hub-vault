@@ -1135,12 +1135,6 @@ function SecureGuideVideo({
         onEl?.(el);
         if (el) {
           el.play().catch(() => { /* autoplay may be blocked */ });
-          const req = (el as any).requestFullscreen
-            || (el as any).webkitRequestFullscreen
-            || (el as any).webkitEnterFullscreen;
-          if (req) {
-            try { req.call(el); } catch { /* user gesture required on some browsers */ }
-          }
         }
       }}
       src={src}
