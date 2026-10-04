@@ -7,7 +7,7 @@
 - Member Home embeds non-staff subscription details beneath the welcome text and uses only a skyscraper advert in the right rail; staff retain Working Status in the hero.
 - Header starts collapsed (slim bar) ONLY on the tickets page and Talk channels; every other BM Support page keeps it open. Re-resets per navigation (tickets/Talk re-collapse, others re-open). Talk channels add channel name; Fan Zone never shows it.
 - Back-to-top reacts only to page-level scrollers, never dialogs or inner chat/reply panes.
-- NFL Sunday Ticket uses stated UK time, channel `NFL NN`, next-line fixture; drop its header and never apply the WF rule.
+- NFL Sunday Ticket uses stated UK time, channel `NFL NN`, next-line fixture, and ignores TNF/SNF/MNF labels; NBA League Pass uses its inline stated UK time, clean fixture, and `NBA NN` channel. Drop both provider headers.
 - Corrected sports formats need permanent split/safety/read-back tests. DAZN inline slots stay separate; qualifiers extend the title above.
 - Manual sports splits preserve both halves; only adjacent headings move, and shared headings copy to the second half.
 - Gmail forwarding confirmations are captured by the email receiver and shown only to admins on the Bank Transfer page.

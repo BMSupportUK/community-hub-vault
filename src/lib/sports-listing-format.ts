@@ -1210,12 +1210,12 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
   for (let i = lines.length - 1; i >= 0; i--) {
     if (/^(US|USA)\s*\|\s*NHL Center Ice$/i.test(lines[i])) lines.splice(i, 1);
   }
-  // NFL Sunday Ticket: "NFL 02: 1pm ET | 6pm UK" then the fixture on the
-  // next line. Same handling as NHL Center Ice — stated UK time as-is,
-  // channel "NFL 02", and the "US | NFL Sunday Ticket" header is dropped.
+  // NFL Sunday Ticket: "NFL 02: 1pm ET | 6pm UK" or
+  // "NFL | 02 - SNF 8:20pm ET | 1:20am UK", then the fixture on the next
+  // line. Use the stated UK time and ignore schedule labels such as SNF.
   for (let i = 0; i < lines.length; i++) {
     const m = lines[i].match(
-      new RegExp(String.raw`^([A-Za-z][A-Za-z+ ]*?)\s+(\d{1,3})\s*:\s*(?:${TIME_SOURCE})\s*ET\s*\|\s*(${TIME_SOURCE})\s*UK\s*$`, "i"),
+      new RegExp(String.raw`^(NFL)\s*(?:\|\s*)?(\d{1,3})\s*(?::|[-–—])\s*(?:(?:TNF|SNF|MNF)\s+)?(?:${TIME_SOURCE})\s*ET\s*\|\s*(${TIME_SOURCE})\s*UK\s*$`, "i"),
     );
     if (m && i + 1 < lines.length) {
       const etPm = /pm/i.test(lines[i].split("|")[0] ?? "");
@@ -1232,6 +1232,27 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
   }
   for (let i = lines.length - 1; i >= 0; i--) {
     if (/^(US|USA)\s*\|\s*NFL Sunday Ticket$/i.test(lines[i])) lines.splice(i, 1);
+  }
+  // NBA League Pass puts its fixture and both clocks on one row. Keep only
+  // the stated UK time and turn the numbered NBA feed into the channel.
+  for (let i = 0; i < lines.length; i++) {
+    const m = lines[i].match(
+      new RegExp(String.raw`^(NBA)\s*(?:\|\s*)?(\d{1,3})\s*:\s*(.+?)\s+(${TIME_SOURCE})\s*ET\s*\|\s*(${TIME_SOURCE})\s*UK\s*$`, "i"),
+    );
+    if (!m) continue;
+    const etPm = /pm/i.test(m[4]);
+    const ukAm = /^(12|[1-9])(?::\d{2})?\s*am$/i.test(m[5].trim());
+    let slot = m[5];
+    if (etPm && ukAm) {
+      const days = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+      const london = new Date(new Date().toLocaleString("en-US", { timeZone: "Europe/London" }));
+      slot = `${m[5]} UK ${days[(london.getDay() + 1) % 7]}`;
+    }
+    lines.splice(i, 1, slot, m[3].trim(), `${m[1]} ${m[2].padStart(2, "0")}`);
+    i += 2;
+  }
+  for (let i = lines.length - 1; i >= 0; i--) {
+    if (/^(US|USA)\s*\|\s*NBA League Pass$/i.test(lines[i])) lines.splice(i, 1);
   }
   // DAZN merges can put a fixture or venue qualifier before the dated slot.
   // Split complete fixtures out; join qualifiers to the programme name above.

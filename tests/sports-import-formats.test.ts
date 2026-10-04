@@ -111,6 +111,43 @@ beIN Sports English 1 & 2`;
     expect(result).toEqual([{ date: null, time: "6pm", title: "Falcons v Packers", channels: ["NFL 02"] }]);
   });
 
+  test("NFL Sunday Ticket spaced pipe rows and SNF labels keep every fixture", () => {
+    setSystemTime(new Date(Date.UTC(2026, 9, 4, 12)));
+    const raw = `US | NFL Sunday Ticket
+NFL  | 02 - 9:30am ET | 2:30pm UK
+Colts at Commanders
+NFL  | 03 - 1pm ET | 6pm UK
+Patriots at Bills
+NFL  | 04 - 1pm ET | 6pm UK
+Jets at Bears
+NFL  | 15 - SNF 8:20pm ET | 1:20am UK
+Lions at Panthers`;
+    const result = checkSportsImport(raw, "gmt", Date.UTC(2026, 9, 4, 12), "NFL Sunday Ticket");
+    expect(result.errors).toBe(0);
+    expect(result.warnings).toBe(0);
+    expect(result.events).toEqual([
+      { date: "Sunday, 4th October", time: "14:30 BST", title: "Colts at Commanders", channels: ["NFL 02"] },
+      { date: "Sunday, 4th October", time: "18:00 BST", title: "Patriots at Bills", channels: ["NFL 03"] },
+      { date: "Sunday, 4th October", time: "18:00 BST", title: "Jets at Bears", channels: ["NFL 04"] },
+      { date: "Monday, 5th October", time: "01:20 BST", title: "Lions at Panthers", channels: ["NFL 15"] },
+    ]);
+    expect(parseSportsListingBlock(result.formatted)).toEqual(result.events);
+    setSystemTime();
+  });
+
+  test("NBA League Pass inline ET and UK clocks keep a clean fixture and numbered channel", () => {
+    setSystemTime(new Date(Date.UTC(2026, 9, 4, 12)));
+    const raw = "US | NBA League Pass\nNBA  01: Jazz vs Nuggets 7pm ET | 12:00am UK";
+    const result = checkSportsImport(raw, "gmt", Date.UTC(2026, 9, 4, 12), "NBA League Pass");
+    expect(result.errors).toBe(0);
+    expect(result.warnings).toBe(0);
+    expect(result.events).toEqual([
+      { date: "Monday, 5th October", time: "00:00 BST", title: "Jazz v Nuggets", channels: ["NBA 01"] },
+    ]);
+    expect(parseSportsListingBlock(result.formatted)).toEqual(result.events);
+    setSystemTime();
+  });
+
   test("UFC multi-time slots each retain the complete channel set", () => {
     const result = parseSportsListingBlock("**UFC Fight Night: A vs. B**\n`10pm | 11pm | 1am UK`\nUFC 01\nUFC 02\nUFC 03");
     expect(result).toHaveLength(3);
