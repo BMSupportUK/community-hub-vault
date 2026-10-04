@@ -26,3 +26,4 @@
 - Shared dialogs must stay within the dynamic mobile viewport, while dense data views reduce secondary columns on phones so primary actions remain usable.
 - Customer invoices are BM Support PDFs available only after confirmed payment; never expose Stripe or Square hosted invoice/receipt links because the app owns customer billing documents.
 - Knowledge Base article reading uses the full available page with a responsive ratings rail, so long guides and media remain readable.
+- Live "Show Us" camera help lives only inside secure orders: customer side in pay.$token.tsx (LiveHelpCustomer), staff side in admin-secure-page.tsx (LiveHelpStaff); WebRTC signalled over a per-session broadcast channel live-help-<sessionId>, state in order_support_sessions(+_messages), never recorded.
