@@ -419,7 +419,7 @@ export function HtmlEditor({ value, onChange, className, placeholder, videoUploa
       return;
     }
     ref.current?.focus();
-    const html = `<div class="video-embed" style="position:relative;padding-bottom:56.25%;height:0;overflow:hidden;margin:0;width:100%;border-radius:0.5rem;"><iframe src="https://www.youtube.com/embed/${id}" title="YouTube video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:0;"></iframe></div><p><br/></p>`;
+    const html = `<div class="video-embed" style="position:relative;aspect-ratio:16/9;width:100%;margin:1rem 0;border-radius:0.5rem;"><iframe src="https://www.youtube.com/embed/${id}" title="YouTube video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen style="position:absolute;inset:0;width:100%;height:100%;border:0;"></iframe></div><p><br/></p>`;
     exec("insertHTML", html);
     handleInput();
   };
@@ -440,7 +440,7 @@ export function HtmlEditor({ value, onChange, className, placeholder, videoUploa
     if (error) { setUploadingVideo(false); toast.error(error.message); return; }
     const { data } = supabase.storage.from(bucket).getPublicUrl(path);
     ref.current?.focus();
-    const html = `<p><video src="${data.publicUrl}" controls playsinline style="max-width:100%;border-radius:0.5rem;margin:1rem 0;"></video></p><p><br/></p>`;
+    const html = `<p><video src="${data.publicUrl}" controls playsinline preload="metadata" style="display:block;width:100%;height:auto;max-width:100%;object-fit:contain;border-radius:0.5rem;margin:1rem 0;"></video></p><p><br/></p>`;
     exec("insertHTML", html);
     handleInput();
     setUploadingVideo(false);
