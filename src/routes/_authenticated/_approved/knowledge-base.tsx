@@ -449,7 +449,7 @@ function KnowledgeBasePage() {
 
               {reading.body ? (
                 <article
-                  className="prose prose-invert max-w-none text-foreground/90 leading-relaxed [&_.video-embed]:relative [&_.video-embed]:aspect-video [&_.video-embed]:h-auto [&_.video-embed]:w-full [&_.video-embed]:overflow-visible [&_.video-embed]:[padding-bottom:0!important] [&_.video-embed_iframe]:absolute [&_.video-embed_iframe]:inset-0 [&_.video-embed_iframe]:size-full [&_iframe]:max-w-full [&_video]:block [&_video]:h-auto [&_video]:max-h-none [&_video]:w-full [&_video]:max-w-full [&_video]:object-contain"
+                  className="prose prose-invert max-w-none text-foreground/90 leading-relaxed [&_.video-embed]:relative [&_.video-embed]:aspect-video [&_.video-embed]:h-auto [&_.video-embed]:w-full [&_.video-embed]:overflow-visible [&_.video-embed]:[padding-bottom:0!important] [&_.video-embed_iframe]:absolute [&_.video-embed_iframe]:inset-0 [&_.video-embed_iframe]:size-full [&_iframe]:max-w-full [&_video]:block [&_video]:aspect-video [&_video]:h-auto [&_video]:max-h-none [&_video]:w-full [&_video]:max-w-full [&_video]:bg-background [&_video]:object-contain"
                   dangerouslySetInnerHTML={{ __html: sanitizeRichHtml(reading.body) }}
                 />
               ) : (

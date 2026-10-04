@@ -1,7 +1,7 @@
 # Roadmap
 
 ## Current
-- [ ] Knowledge Base: full-page articles, complete video playback, and ratings sidebar
+- [x] Knowledge Base: full-page articles, complete video playback, and ratings sidebar
 - [x] Member home: move subscription details into the welcome panel and use a vertical sidebar advert
 - [x] Boro Fan Zone adverts: include matching BM Support banners enabled for the Forum zone
 - [x] Affiliate adverts: random fair rotation, size-based admin sections, and per-banner view/click totals
