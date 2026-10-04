@@ -422,7 +422,7 @@ function KnowledgeBasePage() {
     );
     return (
       <main className="min-h-0 flex-1 overflow-y-auto bg-background pb-24 md:pb-8">
-        <div className="mx-auto w-full max-w-6xl px-4 py-5 sm:px-8 lg:py-8">
+        <div data-knowledge-article-top className="mx-auto w-full max-w-6xl px-4 py-5 sm:px-8 lg:py-8">
           <Button type="button" variant="ghost" onClick={() => { setReading(null); scrollBackToArticle(); }} className="mb-5 -ml-3 gap-1.5 text-muted-foreground hover:text-foreground">
             <ArrowLeft className="size-4" /> Back to guides
           </Button>
