@@ -6,7 +6,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import mentionAudio from "@/assets/mention-notify.mp3";
@@ -416,7 +415,7 @@ export function NotificationBell() {
           )}
         </div>
 
-        <ScrollArea className="flex-1 min-h-0">
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
           {items.length === 0 && (
             <div className="px-4 py-12 text-center text-sm text-muted-foreground">You're all caught up.</div>
           )}
@@ -497,7 +496,7 @@ export function NotificationBell() {
               );
             })}
           </ul>
-        </ScrollArea>
+        </div>
       </DialogContent>
     </Dialog>
   );
