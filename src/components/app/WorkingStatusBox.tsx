@@ -776,7 +776,7 @@ export function WorkingStatusBox({
                       narrow — the card width, not the screen width, decides. */}
                   <div className="flex flex-col items-start gap-0.5 rounded-xl bg-white/[0.07] px-3 py-1.5 ring-1 ring-white/25 @min-[19rem]:flex-row @min-[19rem]:items-center @min-[19rem]:justify-between @min-[19rem]:gap-3 @min-[19rem]:rounded-full">
                     <span className="whitespace-nowrap text-muted-foreground font-medium">UK office</span>
-                    {currentShiftUk && <ShiftTimes {...currentShiftUk} className="text-foreground" />}
+                    {currentShiftUk && <ShiftTimes {...currentShiftUk} className="text-foreground @max-[12rem]:whitespace-normal" />}
                   </div>
 
                   {currentShiftLocal && (
