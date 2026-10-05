@@ -134,6 +134,18 @@ export function Nameplate({ id, className, style, fallbackStyle, children }: Nam
           <span className="nameplate-retrotv-knob k2" aria-hidden />
         </span>
       )}
+      {(() => {
+        const staffIcon = STAFF_ICONS[cls];
+        return staffIcon ? (
+          <img
+            src={staffIcon.url}
+            alt=""
+            aria-hidden
+            loading="lazy"
+            className="nameplate-staff-icon"
+          />
+        ) : null;
+      })()}
       {mascot && (
         <img
           src={mascot.url}

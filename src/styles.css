@@ -1676,6 +1676,40 @@ html.boro-bg-active .min-h-dvh.bg-background {
   filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
 }
 .np2 > *:not(.nameplate-mascot) { position: relative; z-index: 2; }
+
+/* Default staff role plates — animated role icon over the gradient artwork. */
+.nameplate-staff-icon {
+  position: absolute !important;
+  right: 6px;
+  top: 50%;
+  height: 88%;
+  max-height: 100%;
+  width: auto;
+  max-width: 30%;
+  object-fit: contain;
+  z-index: 3;
+  transform: translateY(-50%);
+  pointer-events: none;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+}
+@keyframes np-staff-bob {
+  0%, 100% { transform: translateY(-50%); }
+  50%      { transform: translateY(-62%); }
+}
+@keyframes np-staff-sway {
+  0%, 100% { transform: translateY(-50%) rotate(-4deg); }
+  50%      { transform: translateY(-50%) rotate(4deg); }
+}
+@keyframes np-staff-pulse {
+  0%, 100% { transform: translateY(-50%) scale(1); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
+  50%      { transform: translateY(-50%) scale(1.08); filter: drop-shadow(0 0 10px rgba(196,181,253,0.8)); }
+}
+.nameplate-staff .nameplate-staff-icon { animation: np-staff-bob 2.6s ease-in-out infinite; }
+.nameplate-moderator .nameplate-staff-icon { animation: np-staff-sway 3.2s ease-in-out infinite; transform-origin: 50% 90%; }
+.nameplate-management .nameplate-staff-icon { animation: np-staff-pulse 2.8s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .nameplate-staff-icon { animation: none !important; }
+}
 .np2::before,
 .np2::after { content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none; }
 
