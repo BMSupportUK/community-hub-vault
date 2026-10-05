@@ -183,7 +183,7 @@ function WelcomePage() {
                   )}
                 </div>
 
-                <div className="relative aspect-video w-full min-w-0 self-center overflow-hidden rounded-xl bg-blue-950/30 ring-1 ring-white/10">
+                <div className="relative aspect-video w-full min-w-0 self-start overflow-hidden rounded-xl bg-blue-950/30 ring-1 ring-white/10">
                   <div className="absolute inset-0">
                     <img
                       src={heroImg}
