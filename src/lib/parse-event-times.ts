@@ -943,7 +943,8 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     if (chanParts.length) {
       const badge = document.createElement("span");
       badge.className =
-        "shrink-0 px-2.5 py-1 rounded-md bg-purple-600/20 text-purple-300 text-xs font-bold tracking-wider uppercase border border-purple-500/30";
+        "min-w-0 truncate px-2.5 py-1 rounded-md bg-purple-600/20 text-purple-300 text-xs font-bold tracking-wider uppercase border border-purple-500/30";
+      badge.title = chanParts[0];
       badge.textContent = chanParts[0];
       topRow.appendChild(badge);
     } else {
@@ -1020,9 +1021,8 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
           : "h-1.5 w-1.5 shrink-0 rounded-full bg-fuchsia-500 shadow-[0_0_8px_rgba(217,70,239,0.7)]";
         const label = document.createElement("span");
         label.className =
-          "min-w-0 truncate text-[10px] font-semibold leading-tight text-white/90";
+          "min-w-0 line-clamp-2 break-words text-[10px] font-semibold leading-tight text-white/90";
         label.textContent = part;
-        label.title = part;
         item.appendChild(dot);
         item.appendChild(label);
         chanGrid.appendChild(item);
