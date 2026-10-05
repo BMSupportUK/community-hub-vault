@@ -736,9 +736,9 @@ export function WorkingStatusBox({
                     </span>
                   </div>
                   {currentShiftLocal && (
-                    <div className="flex items-center justify-between gap-3 rounded-md bg-primary/10 px-2 py-1 ring-1 ring-primary/25">
+                    <div className="flex flex-col gap-0.5 rounded-md bg-primary/10 px-2 py-1 ring-1 ring-primary/25 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
                       <span className="font-medium text-primary">Your local time</span>
-                      <span className="text-right font-semibold tabular-nums text-foreground">
+                      <span className="whitespace-nowrap text-[11px] font-semibold tabular-nums text-foreground sm:text-xs">
                         {currentShiftLocal.startDate} · {currentShiftLocal.startTime} – {currentShiftLocal.endDate} · {currentShiftLocal.endTime}
                       </span>
                     </div>
