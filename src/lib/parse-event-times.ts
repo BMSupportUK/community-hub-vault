@@ -940,7 +940,10 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     topRow.className = "flex items-start justify-between gap-3 mb-3";
     block.appendChild(topRow);
 
-    if (chanParts.length) {
+    // Multi-channel events list every channel in the "Available channels"
+    // panel below — no top-left badge, so the first channel is never shown
+    // twice. Single-channel events keep the plain top-left badge.
+    if (chanParts.length === 1) {
       const badge = document.createElement("span");
       badge.className =
         "min-w-0 truncate px-2.5 py-1 rounded-md bg-purple-600/20 text-purple-300 text-xs font-bold tracking-wider uppercase border border-purple-500/30";
