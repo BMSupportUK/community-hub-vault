@@ -13,8 +13,8 @@ import androidApkAsset from "@/assets/BMSupport.apk.asset.json";
  * "new version available" notification for every member.
  */
 export const ANDROID_RELEASE = {
-  versionName: "1.1.5",
-  versionCode: 7,
+  versionName: "1.1.7",
+  versionCode: 9,
   /** Raw CDN asset (served as application/zip) — proxied by /api/public/android-apk. */
   assetUrl: androidApkAsset.url,
   /** Always use this for downloads/QR: correct .apk filename + mime type. */
