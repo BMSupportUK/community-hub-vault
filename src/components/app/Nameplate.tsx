@@ -13,6 +13,9 @@ import npIceRider from "@/assets/np-ice-rider.png.asset.json";
 import npDesertPod from "@/assets/np-desert-pod.png.asset.json";
 import npBerryKitty from "@/assets/np-berry-kitty.png.asset.json";
 import npMidnightKitty from "@/assets/np-midnight-kitty.png.asset.json";
+import iconStaff from "@/assets/nameplates/icon-staff.png";
+import iconMod from "@/assets/nameplates/icon-mod.png";
+import iconMgmt from "@/assets/nameplates/icon-mgmt.png";
 
 /** Nameplate pack v2: animation class -> mascot artwork (original designs). */
 const MASCOTS: Record<string, { url: string; alt: string }> = {
@@ -37,6 +40,13 @@ const V2_CLASSES = new Set([
   "nameplate-static",
   "nameplate-weblines",
 ]);
+
+/** Default staff role plates: animation class -> role icon artwork. */
+const STAFF_ICONS: Record<string, { url: string; alt: string }> = {
+  "nameplate-staff": { url: iconStaff, alt: "" },
+  "nameplate-moderator": { url: iconMod, alt: "" },
+  "nameplate-management": { url: iconMgmt, alt: "" },
+};
 
 interface NameplateProps {
   id: string | null | undefined;
@@ -124,6 +134,18 @@ export function Nameplate({ id, className, style, fallbackStyle, children }: Nam
           <span className="nameplate-retrotv-knob k2" aria-hidden />
         </span>
       )}
+      {(() => {
+        const staffIcon = STAFF_ICONS[cls];
+        return staffIcon ? (
+          <img
+            src={staffIcon.url}
+            alt=""
+            aria-hidden
+            loading="lazy"
+            className="nameplate-staff-icon"
+          />
+        ) : null;
+      })()}
       {mascot && (
         <img
           src={mascot.url}
