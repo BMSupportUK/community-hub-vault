@@ -309,7 +309,7 @@ Supersport Action`;
     {
       name: "NHL Center Ice next-line fixture",
       raw: "US | NHL Center Ice\nNHL | 01 - 7pm ET | 12am UK\nBruins at Capitals",
-      expected: { time: "12am UK", title: "Bruins at Capitals", channels: ["NHL 01"] },
+      expected: { time: "7pm ET", title: "Bruins at Capitals", channels: ["NHL 01"] },
     },
   ];
 
@@ -320,6 +320,32 @@ Supersport Action`;
       expect(result[0]).toMatchObject(fixture.expected);
     });
   }
+});
+
+describe("NHL Center Ice Eastern time", () => {
+  test("uses ET rather than an incorrect supplied UK clock", () => {
+    const raw = "US | NHL Center Ice\nNHL | 02 - 6pm ET | 6pm UK\nMammoth at Rangers";
+    const result = checkSportsImport(raw, "gmt", Date.UTC(2026, 9, 5, 12), "NHL Center Ice");
+    expect(result.errors).toBe(0);
+    expect(result.events).toEqual([{
+      date: "Monday, 5th October",
+      time: "23:00 BST",
+      title: "Mammoth at Rangers",
+      channels: ["NHL 02"],
+    }]);
+    expect(parseSportsListingBlock(result.formatted)).toEqual(result.events);
+  });
+
+  test("treats unlabelled Center Ice listing clocks as ET", () => {
+    const raw = "NHL | 01 - 7pm Flyers at Lightning\nNHL | 02 - 7:30pm Senators at Bruins";
+    const result = checkSportsImport(raw, "gmt", Date.UTC(2026, 9, 5, 12), "NHL Center Ice");
+    expect(result.errors).toBe(0);
+    expect(result.events).toEqual([
+      { date: "Tuesday, 6th October", time: "00:00 BST", title: "Flyers at Lightning", channels: ["NHL 01"] },
+      { date: "Tuesday, 6th October", time: "00:30 BST", title: "Senators at Bruins", channels: ["NHL 02"] },
+    ]);
+    expect(parseSportsListingBlock(result.formatted)).toEqual(result.events);
+  });
 });
 describe("ESPN+ ranked team at line start", () => {
   test("#10 Notre Dame vs. UIC is an event, not a heading", () => {

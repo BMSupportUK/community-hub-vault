@@ -8,7 +8,7 @@
 - Member Home: non-staff embed subscription details under welcome text, advert only as right-rail skyscraper; staff show compact Working Status right of hero image, shift encouragement under it, greeting (name + role pill beside it, shift welcome) below, image first on phones.
 - Header starts collapsed (slim bar) ONLY on the tickets page and Talk channels; every other BM Support page keeps it open. Re-resets on each navigation. Talk channels add channel name; Fan Zone never shows it.
 - Back-to-top reacts only to page-level scrollers, never dialogs or inner chat/reply panes.
-- NFL Sunday Ticket uses stated UK time, channel `NFL NN`, next-line fixture, and ignores TNF/SNF/MNF labels; NBA League Pass uses its inline stated UK time, clean fixture, and `NBA NN` channel. Drop both provider headers.
+- NHL Center Ice always treats its listing clock as ET and converts it to the correct UK date/time, ignoring supplied UK clocks; NFL Sunday Ticket and NBA League Pass use their stated UK times.
 - Corrected sports formats need permanent split/safety/read-back tests. DAZN inline slots stay separate; qualifiers extend the title above.
 - Manual sports splits preserve both halves; only adjacent headings move, and shared headings copy to the second half.
 - Gmail forwarding confirmations are captured by the email receiver and shown only to admins on the Bank Transfer page.
