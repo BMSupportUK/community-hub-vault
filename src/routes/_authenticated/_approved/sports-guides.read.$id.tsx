@@ -12,6 +12,16 @@ import { annotateTimesInEl } from "@/lib/parse-event-times";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
 
 export const Route = createFileRoute("/_authenticated/_approved/sports-guides/read/$id")({
+  head: () => ({
+    meta: [
+      { title: "Sports Guide Reader — BM Support" },
+      { name: "description", content: "Read BM Support sports event times and available channels in your member guide." },
+      { property: "og:title", content: "Sports Guide Reader — BM Support" },
+      { property: "og:description", content: "Read BM Support sports event times and available channels in your member guide." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   component: ReadPage,
 });
 
