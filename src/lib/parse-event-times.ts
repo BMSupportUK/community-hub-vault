@@ -934,6 +934,12 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     }).format(new Date(m.utcMs));
     const ukZone = tzAbbrev(m.utcMs, "Europe/London") || "UK";
     const localDiffers = m.localDate !== ukDate || m.localTime !== ukTime || m.localZone !== ukZone;
+    const ukDayKey = dateInTimeZone(new Date(m.utcMs), "Europe/London");
+    const localDayKey = dateInTimeZone(new Date(m.utcMs), viewerTz);
+    const dayDifference = Math.round(
+      (Date.parse(`${localDayKey}T00:00:00Z`) - Date.parse(`${ukDayKey}T00:00:00Z`)) /
+        (24 * 60 * 60 * 1000),
+    );
 
     // Top row: channel badge on the left, compact time badges stacked right.
     const topRow = document.createElement("div");
@@ -973,6 +979,28 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
         "px-2 py-0.5 rounded bg-fuchsia-600 text-white text-[10px] font-bold uppercase tracking-tighter tabular-nums shadow-sm shadow-fuchsia-900/50";
       localBadge.textContent = `${m.localTime} ${m.localZone}`;
       timeCol.appendChild(localBadge);
+
+      if (dayDifference !== 0) {
+        const localDateShort = new Intl.DateTimeFormat("en-GB", {
+          timeZone: viewerTz,
+          weekday: "short",
+          day: "numeric",
+          month: "short",
+        }).format(new Date(m.utcMs));
+        const dayNotice = document.createElement("span");
+        dayNotice.setAttribute("data-tz-day-notice", "1");
+        dayNotice.className =
+          "rounded border border-amber-400/40 bg-amber-400/10 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-200";
+        const relativeDay = dayDifference === 1
+          ? "Next day"
+          : dayDifference === -1
+            ? "Previous day"
+            : dayDifference > 0
+              ? `${dayDifference} days later`
+              : `${Math.abs(dayDifference)} days earlier`;
+        dayNotice.textContent = `${relativeDay} · ${localDateShort}`;
+        timeCol.appendChild(dayNotice);
+      }
     }
 
     const dateLine = document.createElement("span");
