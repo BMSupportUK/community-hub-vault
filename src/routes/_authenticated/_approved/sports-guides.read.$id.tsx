@@ -305,29 +305,11 @@ function ReadPage() {
                 </div>
               </div>
             ) : null}
-            {(blog.refresh_notice || blog.not_guaranteed) && (
-              <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
-                {blog.refresh_notice && (
-                  <div className="flex items-start gap-2 rounded-xl border border-amber-400/40 bg-amber-500/10 px-3 py-2 text-amber-100">
-                    <RefreshCw className="size-4 shrink-0 mt-0.5" />
-                    <div className="text-sm leading-relaxed">{blog.refresh_notice}</div>
-                  </div>
-                )}
-                {blog.not_guaranteed && (
-                  <div className="flex items-center rounded-xl border border-rose-400/40 bg-rose-500/10 px-3 py-2 text-rose-100 text-sm leading-relaxed">
-                    These are not guaranteed and no reports allowed to source.
-                  </div>
-                )}
-              </div>
-            )}
             {blog.excerpt && (
               <p className="text-base text-purple-100/80 italic line-clamp-2">{blog.excerpt}</p>
             )}
             {blog.body && (
-              <div
-                ref={stageRef}
-                className="flex-1 min-h-0 overflow-y-auto overscroll-contain pr-1 [scrollbar-gutter:stable]"
-              >
+              <div ref={stageRef}>
                 <div className="prose prose-invert max-w-none text-purple-50/90 leading-relaxed grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 pb-3">
                   {bodyItems.map((html, i) => (
                     <div key={`bi-${i}`} dangerouslySetInnerHTML={{ __html: html }} />
