@@ -223,6 +223,8 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
         const roles = rolesByUser[p.id] ?? [];
         if (roles.some((r) => HIDDEN_ROLES.has(r))) return false;
         if (roles.some((r) => STAFF_ROLES.has(r))) return false;
+        // Boro Fan Zone-only accounts have no BM Support access — hide them.
+        if (bmSupportRoles(roles).length === 0) return false;
         return true;
       }),
     [profiles, rolesByUser],
