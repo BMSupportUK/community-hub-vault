@@ -782,7 +782,7 @@ export function WorkingStatusBox({
                   {currentShiftLocal && (
                     <div className="flex flex-col items-start gap-0.5 rounded-xl bg-primary/10 px-3 py-1.5 ring-1 ring-primary/30 @min-[19rem]:flex-row @min-[19rem]:items-center @min-[19rem]:justify-between @min-[19rem]:gap-3 @min-[19rem]:rounded-full">
                       <span className="whitespace-nowrap font-medium text-primary">Your local time</span>
-                      <ShiftTimes {...currentShiftLocal} className="text-[11px] text-foreground @min-[19rem]:text-xs" />
+                      <ShiftTimes {...currentShiftLocal} className="text-[11px] text-foreground @min-[19rem]:text-xs @max-[12rem]:whitespace-normal" />
                     </div>
                   )}
                 </div>
