@@ -986,19 +986,68 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     nameEl.textContent = titleText;
     block.appendChild(nameEl);
 
-    // Remaining channels (beyond the badge) as chips under the title.
+    // Multi-channel events use a "broadcast matrix": a bordered panel under
+    // the title holding every channel as a compact two-column grid, so 2-8
+    // channels stay scannable instead of turning into a wrapping chip stack.
     if (chanParts.length > 1) {
-      const chanWrap = document.createElement("div");
-      chanWrap.className =
-        "mt-2 min-w-0 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-xs font-semibold tracking-wide text-fuchsia-100";
-      chanParts.slice(1).forEach((part) => {
-        const chip = document.createElement("span");
-        chip.className =
-          "break-words rounded-full border border-fuchsia-300/45 bg-fuchsia-950/55 px-2.5 py-1 text-fuchsia-100 shadow-[0_0_12px_rgba(217,70,239,0.16)]";
-        chip.textContent = part;
-        chanWrap.appendChild(chip);
+      const matrix = document.createElement("div");
+      matrix.className = "mt-3 rounded-lg border border-white/5 bg-black/20 p-2.5";
+
+      const matrixHead = document.createElement("div");
+      matrixHead.className =
+        "mb-2 flex items-center gap-2 text-[9px] font-bold uppercase tracking-widest text-purple-300/80";
+      const lineL = document.createElement("span");
+      lineL.className = "h-px flex-1 bg-purple-900/50";
+      const lineR = document.createElement("span");
+      lineR.className = "h-px flex-1 bg-purple-900/50";
+      const headText = document.createElement("span");
+      headText.textContent = "Available channels";
+      matrixHead.appendChild(lineL);
+      matrixHead.appendChild(headText);
+      matrixHead.appendChild(lineR);
+      matrix.appendChild(matrixHead);
+
+      const chanGrid = document.createElement("div");
+      chanGrid.className = "grid grid-cols-2 gap-1.5";
+      chanParts.forEach((part, idx) => {
+        const item = document.createElement("div");
+        item.className = idx === 0
+          ? "flex min-w-0 items-center gap-2 rounded border border-purple-400/40 bg-purple-500/15 px-2 py-1.5"
+          : "flex min-w-0 items-center gap-2 rounded border border-fuchsia-500/20 bg-fuchsia-500/10 px-2 py-1.5 transition-colors hover:bg-fuchsia-500/20";
+        const dot = document.createElement("span");
+        dot.className = idx === 0
+          ? "h-1.5 w-1.5 shrink-0 rounded-full bg-purple-300 shadow-[0_0_8px_rgba(216,180,254,0.8)]"
+          : "h-1.5 w-1.5 shrink-0 rounded-full bg-fuchsia-500 shadow-[0_0_8px_rgba(217,70,239,0.7)]";
+        const label = document.createElement("span");
+        label.className =
+          "min-w-0 truncate text-[10px] font-semibold leading-tight text-white/90";
+        label.textContent = part;
+        label.title = part;
+        item.appendChild(dot);
+        item.appendChild(label);
+        chanGrid.appendChild(item);
       });
-      block.appendChild(chanWrap);
+      matrix.appendChild(chanGrid);
+
+      if (groupedChannels && groupedChannels.length) {
+        for (const g of groupedChannels) {
+          const sec = document.createElement("div");
+          sec.className = "mt-2 border-t border-white/5 pt-1.5 text-[10px] leading-snug";
+          const lbl = document.createElement("div");
+          lbl.className = "font-bold uppercase tracking-wider text-fuchsia-200/80";
+          lbl.textContent = g.label;
+          sec.appendChild(lbl);
+          if (g.items.length) {
+            const list = document.createElement("div");
+            list.className = "text-purple-100/70";
+            list.textContent = g.items.join(" · ");
+            sec.appendChild(list);
+          }
+          matrix.appendChild(sec);
+        }
+      }
+
+      block.appendChild(matrix);
     }
     if (caption) {
       const capEl = document.createElement("div");
@@ -1006,7 +1055,9 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
       capEl.textContent = caption;
       block.appendChild(capEl);
     }
-    if (groupedChannels && groupedChannels.length) {
+    // Single-channel events with no caption keep the plain top-left badge —
+    // no matrix panel, matching the original one-channel card design.
+    if (groupedChannels && groupedChannels.length && chanParts.length <= 1) {
       for (const g of groupedChannels) {
         const sec = document.createElement("div");
         sec.className = "mt-1.5 text-sm text-purple-100/80 break-words leading-snug";
