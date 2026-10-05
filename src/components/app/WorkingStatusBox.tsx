@@ -18,6 +18,7 @@ import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { resolveAvatarUrl, useRoleFlashMap } from "@/lib/role-flash";
+import { Nameplate } from "@/components/app/Nameplate";
 import { useDndStatus } from "@/hooks/use-dnd";
 import { Moon } from "lucide-react";
 import { DndCountdown } from "@/components/app/DndCountdown";
@@ -482,16 +483,20 @@ export function WorkingStatusBox({
   // profile photo is set, matching the header menu.
   const roleFlashMap = useRoleFlashMap();
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [nameplateId, setNameplateId] = useState<string | null>(null);
   useEffect(() => {
     if (!user) return;
     let alive = true;
     supabase
       .from("profiles")
-      .select("avatar_url")
+      .select("avatar_url, equipped_nameplate_id")
       .eq("id", user.id)
       .maybeSingle()
       .then(({ data }) => {
-        if (alive) setAvatarUrl((data as { avatar_url: string | null } | null)?.avatar_url ?? null);
+        if (!alive) return;
+        const row = data as { avatar_url: string | null; equipped_nameplate_id: string | null } | null;
+        setAvatarUrl(row?.avatar_url ?? null);
+        setNameplateId(row?.equipped_nameplate_id ?? null);
       });
     return () => {
       alive = false;
@@ -543,14 +548,20 @@ export function WorkingStatusBox({
                   {avatarInitial}
                 </AvatarFallback>
               </Avatar>
-              <span className="font-display font-semibold text-sm text-violet-100 truncate">
-                {displayName}
-              </span>
-              {staffRoleLabel && (
-                <span className="inline-flex items-center rounded-full bg-violet-500/20 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-violet-200 ring-1 ring-violet-500/30">
-                  {staffRoleLabel}
-                </span>
-              )}
+              {/* Name plate sits right beside the avatar, same as the header menu. */}
+              <div className="relative min-w-0 flex-1 overflow-hidden rounded-lg">
+                <Nameplate id={nameplateId} className="absolute inset-0" fallbackStyle={{ background: "linear-gradient(to bottom right, hsl(var(--primary)/0.3), hsl(330 80% 60% / 0.2), hsl(220 80% 60% / 0.2))" }} />
+                <div className="relative flex min-w-0 items-center gap-2 px-2.5 py-1.5">
+                  <span className="font-display font-semibold text-sm text-violet-100 truncate">
+                    {displayName}
+                  </span>
+                  {staffRoleLabel && (
+                    <span className="inline-flex shrink-0 items-center rounded-full bg-violet-500/20 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-violet-200 ring-1 ring-violet-500/30">
+                      {staffRoleLabel}
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
             {dnd.note && <p className="text-foreground/90">{dnd.note}</p>}
             {until && (
@@ -784,7 +795,7 @@ export function WorkingStatusBox({
               stackActions ? "flex flex-col items-start" : "flex items-center justify-between",
             )}
           >
-            <div className="flex items-center gap-2.5 min-w-0">
+            <div className="flex min-w-0 flex-1 items-center gap-2.5">
               <Avatar
                 className={cn(
                   "shrink-0 ring-2 ring-primary/40",
@@ -801,15 +812,19 @@ export function WorkingStatusBox({
                   {avatarInitial}
                 </AvatarFallback>
               </Avatar>
-              <div className="flex flex-col gap-1.5 min-w-0">
-                <span className={cn("font-display font-bold text-foreground truncate", compact ? "text-sm" : "text-lg")}>
-                  {displayName}
-                </span>
-                {staffRoleLabel && (
-                  <span className="inline-flex items-center self-start rounded-full bg-warning px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-background shadow-lg shadow-warning/20">
-                    {staffRoleLabel}
+              {/* Name plate sits right beside the avatar, same as the header menu. */}
+              <div className="relative min-w-0 flex-1 overflow-hidden rounded-lg">
+                <Nameplate id={nameplateId} className="absolute inset-0" fallbackStyle={{ background: "linear-gradient(to bottom right, hsl(var(--primary)/0.3), hsl(330 80% 60% / 0.2), hsl(220 80% 60% / 0.2))" }} />
+                <div className={cn("relative flex flex-col gap-1 min-w-0", compact ? "px-2.5 py-1" : "px-3 py-1.5")}>
+                  <span className={cn("font-display font-bold text-foreground truncate", compact ? "text-sm" : "text-lg")}>
+                    {displayName}
                   </span>
-                )}
+                  {staffRoleLabel && (
+                    <span className="inline-flex items-center self-start rounded-full bg-warning px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-background shadow-lg shadow-warning/20">
+                      {staffRoleLabel}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
             <ActionIcons compact={compact} />
