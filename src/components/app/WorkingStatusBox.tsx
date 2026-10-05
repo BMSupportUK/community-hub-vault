@@ -773,13 +773,13 @@ export function WorkingStatusBox({
                 <div className="grid gap-2.5 text-xs">
                   {/* Both shift rows are pills so the office and local times read as a pair. */}
                   <div className="flex items-center justify-between gap-3 rounded-xl bg-white/[0.07] px-3 py-1.5 ring-1 ring-white/25 sm:rounded-full">
-                    <span className="text-muted-foreground font-medium">UK office</span>
+                    <span className="whitespace-nowrap text-muted-foreground font-medium">UK office</span>
                     {currentShiftUk && <ShiftTimes {...currentShiftUk} className="text-foreground" />}
                   </div>
 
                   {currentShiftLocal && (
                     <div className="flex flex-col gap-0.5 rounded-xl bg-primary/10 px-3 py-1.5 ring-1 ring-primary/30 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:rounded-full">
-                      <span className="font-medium text-primary">Your local time</span>
+                      <span className="whitespace-nowrap font-medium text-primary">Your local time</span>
                       <ShiftTimes {...currentShiftLocal} className="text-[11px] text-foreground sm:text-xs" />
                     </div>
                   )}
