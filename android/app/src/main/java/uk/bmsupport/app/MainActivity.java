@@ -3,6 +3,10 @@ package uk.bmsupport.app;
 import android.app.DownloadManager;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
+import android.app.Notification;
+import android.content.Intent;
+import android.os.PowerManager;
+import android.provider.Settings;
 import android.content.Context;
 import android.media.AudioAttributes;
 import android.media.RingtoneManager;
@@ -31,6 +35,8 @@ public class MainActivity extends BridgeActivity {
         createSpokenChannel("bm_support_outage_resolved_v2", "Outage resolved", R.raw.outage_resolved_notify);
         createSpokenChannel("bm_support_orders_v1", "New orders", R.raw.order_notify);
         createSpokenChannel("bm_support_payments_v1", "Payments received", R.raw.payment_received_notify);
+        createSpokenChannel("bm_support_mentions_v1", "Mentions", R.raw.mention_notify);
+        requestIgnoreBatteryOptimizations();
         enableWebViewDownloads();
     }
 
@@ -89,6 +95,8 @@ public class MainActivity extends BridgeActivity {
         channel.setDescription(channelDescription);
         channel.enableVibration(true);
         channel.enableLights(true);
+        channel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
+        channel.setBypassDnd(false);
         // Ensure the OS plays a sound for this channel when the app is in the
         // background or fully closed. Without an explicit sound URI some OEMs
         // mute heads-up notifications even on IMPORTANCE_HIGH.
@@ -125,6 +133,8 @@ public class MainActivity extends BridgeActivity {
         channel.setDescription("Spoken alert when a customer replies to an assigned ticket");
         channel.enableVibration(true);
         channel.enableLights(true);
+        channel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
+        channel.setBypassDnd(false);
         channel.setSound(soundUri, audioAttrs);
 
         NotificationManager notificationManager = getSystemService(NotificationManager.class);
@@ -145,8 +155,25 @@ public class MainActivity extends BridgeActivity {
         channel.setDescription("Spoken BM Support alert");
         channel.enableVibration(true);
         channel.enableLights(true);
+        channel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
+        channel.setBypassDnd(false);
         channel.setSound(soundUri, audioAttrs);
         NotificationManager nm = getSystemService(NotificationManager.class);
         if (nm != null) nm.createNotificationChannel(channel);
+    }
+
+    /**
+     * Doze / OEM battery savers stop the app receiving alerts while the screen
+     * is locked. Ask once to exempt BM Support so locked-phone alerts ring.
+     */
+    private void requestIgnoreBatteryOptimizations() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.M) return;
+        try {
+            PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+            if (pm == null || pm.isIgnoringBatteryOptimizations(getPackageName())) return;
+            Intent intent = new Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
+            intent.setData(Uri.parse("package:" + getPackageName()));
+            startActivity(intent);
+        } catch (Exception ignored) { }
     }
 }

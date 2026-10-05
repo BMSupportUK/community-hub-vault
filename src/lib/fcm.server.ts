@@ -234,6 +234,8 @@ async function sendFcmToTokens(
               default_sound: !spokenExtra && !isTicketRaised && !isTicketReply && !isMention && !isShiftStart && !isShiftEnd && !isOutage && !isOutageResolved,
               default_vibrate_timings: true,
               notification_priority: "PRIORITY_HIGH",
+              // Show and ring on the lock screen, not just when unlocked.
+              visibility: "PUBLIC",
             },
           },
           apns: {
