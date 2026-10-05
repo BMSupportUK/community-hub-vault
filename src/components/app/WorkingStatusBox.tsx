@@ -170,7 +170,7 @@ export function NextShiftPanel({
         )}
       </div>
 
-      {/* Starts → ends, each with its own date so a two-day shift reads plainly. */}
+      {/* Starts → ends, each with its date above the time so a two-day shift reads plainly. */}
       <div className="mt-2 flex items-stretch gap-2">
         {(
           [
@@ -201,19 +201,19 @@ export function NextShiftPanel({
               </div>
               <div
                 className={cn(
-                  "whitespace-nowrap font-mono text-[15px] font-bold leading-tight tabular-nums",
-                  amber ? "text-white" : "text-foreground",
-                )}
-              >
-                {leg.time}
-              </div>
-              <div
-                className={cn(
                   "truncate text-[10px] leading-tight",
                   amber ? "text-amber-100/80" : "text-muted-foreground",
                 )}
               >
                 {leg.date ?? (i === 1 ? "same day" : startDate)}
+              </div>
+              <div
+                className={cn(
+                  "whitespace-nowrap font-mono text-[15px] font-bold leading-tight tabular-nums",
+                  amber ? "text-white" : "text-foreground",
+                )}
+              >
+                {leg.time}
               </div>
             </div>
           </Fragment>
@@ -732,14 +732,14 @@ export function WorkingStatusBox({
                   <div className="flex items-center justify-between gap-3">
                     <span className="text-muted-foreground font-medium">UK office</span>
                     <span className="whitespace-nowrap font-semibold tabular-nums text-foreground/80">
-                      {currentHours.start_time.slice(0, 5)} – {currentHours.end_time.slice(0, 5)} · {new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "Europe/London" }).format(shiftWindowToUtcMs(currentHours.shift_date, currentHours.start_time, currentHours.end_time, "Europe/London").startsAt)}
+                      {new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "Europe/London" }).format(shiftWindowToUtcMs(currentHours.shift_date, currentHours.start_time, currentHours.end_time, "Europe/London").startsAt)} · {currentHours.start_time.slice(0, 5)} – {currentHours.end_time.slice(0, 5)}
                     </span>
                   </div>
                   {currentShiftLocal && (
                     <div className="flex items-center justify-between gap-3 rounded-md bg-primary/10 px-2 py-1 ring-1 ring-primary/25">
                       <span className="font-medium text-primary">Your local time</span>
                       <span className="text-right font-semibold tabular-nums text-foreground">
-                        {currentShiftLocal.startTime} · {currentShiftLocal.startDate} – {currentShiftLocal.endTime} · {currentShiftLocal.endDate}
+                        {currentShiftLocal.startDate} · {currentShiftLocal.startTime} – {currentShiftLocal.endDate} · {currentShiftLocal.endTime}
                       </span>
                     </div>
                   )}
