@@ -943,7 +943,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
 
     // Top row: channel badge on the left, compact time badges stacked right.
     const topRow = document.createElement("div");
-    topRow.className = "flex items-start justify-between gap-3 mb-3";
+    topRow.className = "flex items-center justify-between gap-3 mb-3";
     block.appendChild(topRow);
 
     // Multi-channel events list every channel in the "Available channels"
@@ -952,7 +952,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     if (chanParts.length === 1) {
       const badge = document.createElement("span");
       badge.className =
-        "min-w-0 truncate px-2.5 py-1 rounded-md bg-purple-600/20 text-purple-300 text-xs font-bold tracking-wider uppercase border border-purple-500/30";
+        "px-2.5 py-1 rounded-md bg-purple-600/20 text-purple-300 text-xs font-bold tracking-wider uppercase border border-purple-500/30 leading-tight text-center";
       badge.title = chanParts[0];
       badge.textContent = chanParts[0];
       topRow.appendChild(badge);
@@ -961,35 +961,43 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
       topRow.appendChild(spacer);
     }
 
+    // Times sit side by side, each time joined with its own date on one
+    // line, separated by a glowing divider so the split pops out.
     const timeCol = document.createElement("div");
-    timeCol.className = "flex flex-col gap-1 items-end shrink-0";
+    timeCol.className = "flex items-center gap-2 shrink-0 whitespace-nowrap";
     topRow.appendChild(timeCol);
 
-    // UK time with its own date directly beneath it.
     const ukGroup = document.createElement("div");
-    ukGroup.className = "flex flex-col items-end gap-0.5";
+    ukGroup.className = "flex items-center gap-1.5 whitespace-nowrap";
     const ukBadge = document.createElement("span");
     ukBadge.setAttribute("data-tz-pill", "1");
     ukBadge.className =
-      "px-2 py-0.5 rounded bg-zinc-700/50 text-zinc-300 text-[10px] font-bold uppercase tracking-tighter tabular-nums";
+      "px-2 py-0.5 rounded-md bg-zinc-100 text-zinc-900 text-[10px] font-extrabold uppercase tabular-nums shadow-sm";
     ukBadge.textContent = `${ukTime} ${ukZone}`;
     ukGroup.appendChild(ukBadge);
     const ukDateSpan = document.createElement("span");
-    ukDateSpan.className = "text-[10px] text-zinc-500 font-medium uppercase";
+    ukDateSpan.className = "text-[10px] font-bold uppercase text-zinc-200";
     ukDateSpan.textContent = ukDateShort;
     ukGroup.appendChild(ukDateSpan);
     timeCol.appendChild(ukGroup);
 
     if (localDiffers) {
-      // Customer time with its own local date beneath it. When the converted
+      // The glowing divider between UK and customer time.
+      const divider = document.createElement("span");
+      divider.setAttribute("aria-hidden", "true");
+      divider.className =
+        "h-5 w-0.5 rounded-full bg-fuchsia-400 shadow-[0_0_10px_rgba(217,70,239,0.9)]";
+      timeCol.appendChild(divider);
+
+      // Customer time and its local date share one line. When the converted
       // time falls on a different calendar day from UK time the date is
       // highlighted amber so the day difference is unmistakable.
       const localGroup = document.createElement("div");
-      localGroup.className = "flex flex-col items-end gap-0.5";
+      localGroup.className = "flex items-center gap-1.5 whitespace-nowrap";
       const localBadge = document.createElement("span");
       localBadge.setAttribute("data-tz-pill", "1");
       localBadge.className =
-        "px-2 py-0.5 rounded bg-fuchsia-600 text-white text-[10px] font-bold uppercase tracking-tighter tabular-nums shadow-sm shadow-fuchsia-900/50";
+        "px-2 py-0.5 rounded-md bg-fuchsia-500 text-white text-[10px] font-extrabold uppercase tabular-nums shadow-sm shadow-fuchsia-900/60";
       localBadge.textContent = `${m.localTime} ${m.localZone}`;
       localGroup.appendChild(localBadge);
       const localDateShort = new Intl.DateTimeFormat("en-GB", {
@@ -1001,8 +1009,8 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
       const localDateSpan = document.createElement("span");
       localDateSpan.setAttribute("data-tz-day-notice", "1");
       localDateSpan.className = dayDifference !== 0
-        ? "text-[10px] font-bold uppercase text-amber-200"
-        : "text-[10px] text-zinc-500 font-medium uppercase";
+        ? "text-[10px] font-extrabold uppercase text-amber-300"
+        : "text-[10px] font-bold uppercase text-zinc-200";
       localDateSpan.textContent = localDateShort;
       localGroup.appendChild(localDateSpan);
       timeCol.appendChild(localGroup);
