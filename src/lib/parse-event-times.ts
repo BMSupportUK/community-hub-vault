@@ -981,9 +981,9 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
       timeCol.appendChild(localBadge);
 
       if (dayDifference !== 0) {
-        const localDateShort = new Intl.DateTimeFormat("en-GB", {
+        const localWeekday = new Intl.DateTimeFormat("en-GB", {
           timeZone: viewerTz,
-          weekday: "short",
+          weekday: "long",
           day: "numeric",
           month: "short",
         }).format(new Date(m.utcMs));
@@ -991,14 +991,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
         dayNotice.setAttribute("data-tz-day-notice", "1");
         dayNotice.className =
           "rounded border border-amber-400/40 bg-amber-400/10 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-200";
-        const relativeDay = dayDifference === 1
-          ? "Next day"
-          : dayDifference === -1
-            ? "Previous day"
-            : dayDifference > 0
-              ? `${dayDifference} days later`
-              : `${Math.abs(dayDifference)} days earlier`;
-        dayNotice.textContent = `${relativeDay} · ${localDateShort}`;
+        dayNotice.textContent = `Local: ${localWeekday}`;
         timeCol.appendChild(dayNotice);
       }
     }
