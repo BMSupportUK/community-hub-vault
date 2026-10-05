@@ -898,16 +898,10 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     block.dataset.tzUtc = String(m.utcMs);
     if (rowSourceDate) block.dataset.tzSrcDate = rowSourceDate;
     block.className =
-      "group not-prose list-none m-0 flex h-full min-h-[12.5rem] flex-col gap-3 overflow-hidden p-4 rounded-xl bg-purple-950/40 border border-purple-500/20 hover:border-fuchsia-500/60 transition-colors";
+      "group not-prose list-none m-0 flex h-full min-h-[10rem] flex-col overflow-hidden p-5 rounded-2xl bg-[#1e0f35] border border-white/5 hover:bg-[#251242] hover:border-white/20 hover:shadow-2xl hover:shadow-purple-900/20 transition-all duration-300";
 
     block.innerHTML = "";
 
-    // Header row: event name and channel details use the full card width.
-    const header = document.createElement("div");
-    header.className = "flex min-w-0 items-start";
-
-    const nameCell = document.createElement("div");
-    nameCell.className = "min-w-0 flex-1";
     // Preserve the complete event name. Punctuation such as colons, dashes,
     // bullets and pipes can be part of a legitimate title and must never be
     // used on its own to infer that part of the title is a channel.
@@ -917,33 +911,100 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
       const existing = channel ? channel.split(/\s*\|\s*/).filter(Boolean) : [];
       channel = [...existing, ...extraChannelLines].join(" | ");
     }
+    const chanParts = channel ? channel.split(/\s*\|\s*/).filter(Boolean) : [];
+
+    const ukDate = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Europe/London",
+      weekday: "long",
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    }).format(new Date(m.utcMs));
+    const ukDateShort = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Europe/London",
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+    }).format(new Date(m.utcMs));
+    const ukTime = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Europe/London",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).format(new Date(m.utcMs));
+    const ukZone = tzAbbrev(m.utcMs, "Europe/London") || "UK";
+    const localDiffers = m.localDate !== ukDate || m.localTime !== ukTime || m.localZone !== ukZone;
+
+    // Top row: channel badge on the left, compact time badges stacked right.
+    const topRow = document.createElement("div");
+    topRow.className = "flex items-start justify-between gap-3 mb-3";
+    block.appendChild(topRow);
+
+    if (chanParts.length) {
+      const badge = document.createElement("span");
+      badge.className =
+        "shrink-0 px-2.5 py-1 rounded-md bg-purple-600/20 text-purple-300 text-xs font-bold tracking-wider uppercase border border-purple-500/30";
+      badge.textContent = chanParts[0];
+      topRow.appendChild(badge);
+    } else {
+      const spacer = document.createElement("span");
+      topRow.appendChild(spacer);
+    }
+
+    const timeCol = document.createElement("div");
+    timeCol.className = "flex flex-col gap-1 items-end shrink-0";
+    topRow.appendChild(timeCol);
+
+    const ukBadge = document.createElement("span");
+    ukBadge.setAttribute("data-tz-pill", "1");
+    ukBadge.className =
+      "px-2 py-0.5 rounded bg-zinc-700/50 text-zinc-300 text-[10px] font-bold uppercase tracking-tighter tabular-nums";
+    ukBadge.textContent = `${ukTime} ${ukZone}`;
+    timeCol.appendChild(ukBadge);
+
+    if (localDiffers) {
+      const localBadge = document.createElement("span");
+      localBadge.setAttribute("data-tz-pill", "1");
+      localBadge.className =
+        "px-2 py-0.5 rounded bg-fuchsia-600 text-white text-[10px] font-bold uppercase tracking-tighter tabular-nums shadow-sm shadow-fuchsia-900/50";
+      localBadge.textContent = `${m.localTime} ${m.localZone}`;
+      timeCol.appendChild(localBadge);
+    }
+
+    const dateLine = document.createElement("span");
+    dateLine.className = "text-[10px] text-zinc-500 font-medium";
+    dateLine.textContent = ukDateShort;
+    timeCol.appendChild(dateLine);
+
+    // Event name beneath the top row.
     const nameEl = document.createElement("div");
     // data-tz-name marks the title so the reader can equalize its height per
     // grid row, keeping every card's channel list at the same start height.
     nameEl.setAttribute("data-tz-name", "1");
     nameEl.className =
-      "min-w-0 break-words whitespace-normal min-h-[3rem] md:min-h-[3.5rem] text-white font-bold text-lg md:text-xl leading-snug drop-shadow-[0_1px_2px_rgba(0,0,0,0.45)]";
+      "min-w-0 break-words whitespace-normal min-h-[3rem] text-white font-semibold text-lg leading-tight group-hover:text-purple-200 transition-colors";
     nameEl.textContent = titleText;
-    nameCell.appendChild(nameEl);
-    if (channel) {
+    block.appendChild(nameEl);
+
+    // Remaining channels (beyond the badge) as chips under the title.
+    if (chanParts.length > 1) {
       const chanWrap = document.createElement("div");
       chanWrap.className =
-        "mt-2 min-w-0 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-xs md:text-sm font-semibold tracking-wide text-fuchsia-100";
-      const chanParts = channel.split(/\s*\|\s*/).filter(Boolean);
-      chanParts.forEach((part, idx) => {
+        "mt-2 min-w-0 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-xs font-semibold tracking-wide text-fuchsia-100";
+      chanParts.slice(1).forEach((part) => {
         const chip = document.createElement("span");
         chip.className =
           "break-words rounded-full border border-fuchsia-300/45 bg-fuchsia-950/55 px-2.5 py-1 text-fuchsia-100 shadow-[0_0_12px_rgba(217,70,239,0.16)]";
         chip.textContent = part;
         chanWrap.appendChild(chip);
       });
-      nameCell.appendChild(chanWrap);
+      block.appendChild(chanWrap);
     }
     if (caption) {
       const capEl = document.createElement("div");
       capEl.className = "mt-1.5 text-sm text-purple-100/80 break-words leading-snug";
       capEl.textContent = caption;
-      nameCell.appendChild(capEl);
+      block.appendChild(capEl);
     }
     if (groupedChannels && groupedChannels.length) {
       for (const g of groupedChannels) {
@@ -958,81 +1019,23 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
           list.textContent = g.items.join(" · ");
           sec.appendChild(list);
         }
-        nameCell.appendChild(sec);
+        block.appendChild(sec);
       }
     }
-    // Time row goes at the TOP of the card: start time first, then the event
-    // name, then the channels. ET is only an import/source interpretation and
-    // is never shown as an additional card time. Show UK first, then the
-    // viewer's local time only when its date, time, or zone genuinely differs.
-    const pillsRow = document.createElement("div");
-    pillsRow.className = "grid w-full grid-cols-1 gap-2";
-    block.appendChild(pillsRow);
 
-    const ukDate = new Intl.DateTimeFormat("en-GB", {
-      timeZone: "Europe/London",
-      weekday: "long",
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    }).format(new Date(m.utcMs));
-    const ukTime = new Intl.DateTimeFormat("en-GB", {
-      timeZone: "Europe/London",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    }).format(new Date(m.utcMs));
-    const ukZone = tzAbbrev(m.utcMs, "Europe/London") || "UK";
-    const localDiffers = m.localDate !== ukDate || m.localTime !== ukTime || m.localZone !== ukZone;
-    if (localDiffers) {
-      pillsRow.classList.replace("grid-cols-1", "grid-cols-2");
-    } else {
-      // Single time pill: centre it rather than stretching across the card.
-      pillsRow.classList.remove("grid", "grid-cols-1");
-      pillsRow.classList.add("flex", "justify-center");
-    }
-
-    const firstPill = document.createElement("span");
-    firstPill.setAttribute("data-tz-pill", "1");
-    firstPill.className = `inline-flex ${localDiffers ? "w-full min-w-0" : "w-auto min-w-[9rem]"} max-w-full flex-col items-center justify-center px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-purple-100/80`;
-    const firstDate = document.createElement("span");
-    firstDate.className = "block w-full text-center text-[11px] md:text-xs font-bold uppercase tracking-wider text-fuchsia-200 leading-tight mb-0.5";
-    firstDate.textContent = ukDate;
-    const firstTime = document.createElement("span");
-    firstTime.className = "block w-full text-center font-bold text-sm tabular-nums leading-tight";
-    firstTime.textContent = ukTime;
-    const firstZone = document.createElement("span");
-    firstZone.className = "block w-full text-center text-[10px] uppercase tracking-wide text-purple-200/60 leading-tight";
-    firstZone.textContent = ukZone;
-    firstPill.appendChild(firstDate);
-    firstPill.appendChild(firstTime);
-    firstPill.appendChild(firstZone);
-    pillsRow.appendChild(firstPill);
-
-    if (localDiffers) {
-      const secondPill = document.createElement("span");
-      secondPill.setAttribute("data-tz-pill", "1");
-      secondPill.className = "inline-flex w-full min-w-0 max-w-full flex-col items-center justify-center px-3 py-1.5 rounded-lg bg-fuchsia-600 text-white shadow-[0_0_15px_rgba(192,38,211,0.25)]";
-      const secondDate = document.createElement("span");
-      secondDate.className = "block w-full text-center text-[11px] md:text-xs font-bold uppercase tracking-wider text-white leading-tight mb-0.5";
-      secondDate.textContent = m.localDate;
-      const secondTime = document.createElement("span");
-      secondTime.className = "block w-full text-center font-bold text-sm tabular-nums leading-tight";
-      secondTime.textContent = m.localTime;
-      const secondZone = document.createElement("span");
-      secondZone.className = "block w-full text-center text-[10px] uppercase tracking-wide text-white/80 leading-tight";
-      secondZone.textContent = m.localZone;
-      secondPill.appendChild(secondDate);
-      secondPill.appendChild(secondTime);
-      secondPill.appendChild(secondZone);
-      pillsRow.appendChild(secondPill);
-    }
-
-    // Event name and channels sit beneath the start time.
-    header.appendChild(nameCell);
-    block.appendChild(header);
-
-    // Keep transformed content to two text lines plus the time pills.
+    // Footer: live / upcoming status pinned to the card bottom.
+    const footer = document.createElement("div");
+    footer.className = "mt-auto pt-4 flex items-center gap-2 text-zinc-500 text-xs";
+    const dot = document.createElement("div");
+    const isLive = Date.now() >= m.utcMs;
+    dot.className = isLive
+      ? "w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"
+      : "w-1.5 h-1.5 rounded-full bg-zinc-600";
+    const status = document.createElement("span");
+    status.textContent = isLive ? "Live now" : "Upcoming event";
+    footer.appendChild(dot);
+    footer.appendChild(status);
+    block.appendChild(footer);
   }
 
   // Sort all transformed event rows by earliest source time.
