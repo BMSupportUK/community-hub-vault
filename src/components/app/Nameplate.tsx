@@ -13,9 +13,9 @@ import npIceRider from "@/assets/np-ice-rider.png.asset.json";
 import npDesertPod from "@/assets/np-desert-pod.png.asset.json";
 import npBerryKitty from "@/assets/np-berry-kitty.png.asset.json";
 import npMidnightKitty from "@/assets/np-midnight-kitty.png.asset.json";
-import iconStaff from "@/assets/nameplates/icon-staff.png";
-import iconMod from "@/assets/nameplates/icon-mod.png";
-import iconMgmt from "@/assets/nameplates/icon-mgmt.png";
+import iconStaff from "@/assets/nameplates/icon-staff-v2.png";
+import iconMod from "@/assets/nameplates/icon-mod-v2.png";
+import iconMgmt from "@/assets/nameplates/icon-mgmt-v2.png";
 
 /** Nameplate pack v2: animation class -> mascot artwork (original designs). */
 const MASCOTS: Record<string, { url: string; alt: string }> = {
