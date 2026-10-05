@@ -1034,19 +1034,19 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
       matrix.appendChild(matrixHead);
 
       const chanGrid = document.createElement("div");
-      chanGrid.className = "grid grid-cols-2 gap-1.5";
+      chanGrid.className = "grid grid-cols-2 gap-2";
       chanParts.forEach((part, idx) => {
         const item = document.createElement("div");
         item.className = idx === 0
-          ? "flex min-w-0 items-center gap-2 rounded border border-purple-400/40 bg-purple-500/15 px-2 py-1.5"
-          : "flex min-w-0 items-center gap-2 rounded border border-fuchsia-500/20 bg-fuchsia-500/10 px-2 py-1.5 transition-colors hover:bg-fuchsia-500/20";
+          ? "flex min-w-0 items-center gap-2 rounded-lg border border-purple-400/40 bg-purple-500/15 px-2.5 py-2"
+          : "flex min-w-0 items-center gap-2 rounded-lg border border-fuchsia-500/20 bg-fuchsia-500/10 px-2.5 py-2 transition-colors hover:bg-fuchsia-500/20";
         const dot = document.createElement("span");
         dot.className = idx === 0
-          ? "h-1.5 w-1.5 shrink-0 rounded-full bg-purple-300 shadow-[0_0_8px_rgba(216,180,254,0.8)]"
-          : "h-1.5 w-1.5 shrink-0 rounded-full bg-fuchsia-500 shadow-[0_0_8px_rgba(217,70,239,0.7)]";
+          ? "h-2 w-2 shrink-0 rounded-full bg-purple-300 shadow-[0_0_8px_rgba(216,180,254,0.8)]"
+          : "h-2 w-2 shrink-0 rounded-full bg-fuchsia-500 shadow-[0_0_8px_rgba(217,70,239,0.7)]";
         const label = document.createElement("span");
         label.className =
-          "min-w-0 break-words text-[10px] font-semibold leading-tight text-white/90";
+          "min-w-0 break-words text-[13px] font-bold leading-snug text-white";
         label.textContent = part;
         item.appendChild(dot);
         item.appendChild(label);
