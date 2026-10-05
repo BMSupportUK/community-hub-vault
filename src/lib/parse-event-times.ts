@@ -947,9 +947,11 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     block.appendChild(topRow);
 
     // Times sit side by side, each time joined with its own date on one
-    // line, separated by a glowing divider so the split pops out.
+    // line, separated by a glowing divider so the split pops out. The row may
+    // wrap to a second line when the card is too narrow for both zones, so a
+    // time is never clipped by the card edge.
     const timeCol = document.createElement("div");
-    timeCol.className = "flex items-center gap-2 shrink-0 whitespace-nowrap";
+    timeCol.className = "flex flex-wrap items-center justify-end gap-x-2 gap-y-1";
     topRow.appendChild(timeCol);
 
     const ukGroup = document.createElement("div");
