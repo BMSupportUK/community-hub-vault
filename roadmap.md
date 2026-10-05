@@ -104,3 +104,4 @@
 - [x] Audit and fix all remaining BM Support and Fan Zone screens for iPhone widths
 
 - [x] Replace Stripe/Square customer receipts with paid BM Support PDF invoices and add Invoice Template Owner Tool
+- [x] Staff status: shift times that fall on different days break onto separate lines

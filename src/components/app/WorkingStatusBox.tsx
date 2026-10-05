@@ -561,6 +561,43 @@ export function WorkingStatusBox({
       })()
     : null;
 
+  const currentShiftUk = currentHours ? (() => {
+    const { startsAt, endsAt } = shiftWindowToUtcMs(currentHours.shift_date, currentHours.start_time, currentHours.end_time, "Europe/London");
+    const date = (value: number) => new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Europe/London", weekday: "short", day: "numeric", month: "short",
+    }).format(value);
+    const time = (value: number) => new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Europe/London", hour: "2-digit", minute: "2-digit", hour12: false,
+    }).format(value);
+    return { startDate: date(startsAt), endDate: date(endsAt), startTime: time(startsAt), endTime: time(endsAt) };
+  })() : null;
+
+  // A shift that runs into the next day reads as two lines, one per day.
+  const ShiftTimes = ({
+    startDate,
+    startTime,
+    endDate,
+    endTime,
+    className,
+  }: {
+    startDate: string;
+    startTime: string;
+    endDate: string;
+    endTime: string;
+    className?: string;
+  }) =>
+    startDate === endDate ? (
+      <span className={cn("whitespace-nowrap font-semibold tabular-nums", className)}>
+        {startDate} · {startTime} – {endTime}
+      </span>
+    ) : (
+      <span className={cn("flex flex-col items-end gap-0.5 font-semibold tabular-nums", className)}>
+        <span className="whitespace-nowrap">{startDate} · {startTime}</span>
+        <span className="whitespace-nowrap">{endDate} · {endTime}</span>
+      </span>
+    );
+
+
   const ActionIcons = ({ compact = false }: { compact?: boolean }) => {
     const iconButtonClass = compact ? "size-8" : "size-10";
     const iconClass = compact ? "size-4" : "size-5";
@@ -731,16 +768,14 @@ export function WorkingStatusBox({
                 <div className="grid gap-1 text-xs">
                   <div className="flex items-center justify-between gap-3">
                     <span className="text-muted-foreground font-medium">UK office</span>
-                    <span className="whitespace-nowrap font-semibold tabular-nums text-foreground/80">
-                      {new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "Europe/London" }).format(shiftWindowToUtcMs(currentHours.shift_date, currentHours.start_time, currentHours.end_time, "Europe/London").startsAt)} · {currentHours.start_time.slice(0, 5)} – {currentHours.end_time.slice(0, 5)}
-                    </span>
+                    {currentShiftUk && <ShiftTimes {...currentShiftUk} className="text-foreground/80" />}
                   </div>
+
                   {currentShiftLocal && (
                     <div className="flex flex-col gap-0.5 rounded-md bg-primary/10 px-2 py-1 ring-1 ring-primary/25 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
                       <span className="font-medium text-primary">Your local time</span>
-                      <span className="whitespace-nowrap text-[11px] font-semibold tabular-nums text-foreground sm:text-xs">
-                        {currentShiftLocal.startDate} · {currentShiftLocal.startTime} – {currentShiftLocal.endDate} · {currentShiftLocal.endTime}
-                      </span>
+                      <ShiftTimes {...currentShiftLocal} className="text-[11px] text-foreground sm:text-xs" />
+
                     </div>
                   )}
                 </div>
