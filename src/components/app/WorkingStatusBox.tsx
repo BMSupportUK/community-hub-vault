@@ -16,6 +16,8 @@ import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { resolveAvatarUrl, useRoleFlashMap } from "@/lib/role-flash";
 import { useDndStatus } from "@/hooks/use-dnd";
 import { Moon } from "lucide-react";
 import { DndCountdown } from "@/components/app/DndCountdown";
