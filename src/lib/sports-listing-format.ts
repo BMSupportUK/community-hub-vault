@@ -1186,7 +1186,8 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
     }
   }
   // NHL Center Ice: "NHL | 01 - 7pm ET | 12am UK" then the fixture on the
-  // next line. Use the stated UK time as-is (never convert ET), channel
+  // next line. The ET clock is authoritative because supplied UK clocks can
+  // be wrong; conversion to UK time happens after parsing. Channel
   // becomes "NHL 01". The "US | NHL Center Ice" header is not an event.
   for (let i = 0; i < lines.length; i++) {
     const m = lines[i].match(
@@ -1195,14 +1196,8 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
     if (m && i + 1 < lines.length) {
       // Evening ET slots land after midnight UK — tag the UK weekday so the
       // event belongs to the next day instead of being swept as stale.
-      const etPm = /pm/i.test(lines[i].split("|")[1] ?? "");
-      const ukAm = /^(12|[1-9])(?::\d{2})?\s*am$/i.test(m[3].trim());
-      let slot = m[3];
-      if (etPm && ukAm) {
-        const days = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
-        const london = new Date(new Date().toLocaleString("en-US", { timeZone: "Europe/London" }));
-        slot = `${m[3]} UK ${days[(london.getDay() + 1) % 7]}`;
-      }
+      const etClock = lines[i].match(new RegExp(String.raw`[-–—]\s*(${TIME_SOURCE})\s*ET`, "i"))?.[1];
+      const slot = etClock ? `${etClock} ET` : m[3];
       lines.splice(i, 2, slot, lines[i + 1], `${m[1].trim()} ${m[2]}`);
       i += 2;
     }
@@ -1545,10 +1540,14 @@ function rollOvernightEvents(events: SportsListingEvent[]): SportsListingEvent[]
 
 /** Times that already name a UK zone are never reinterpreted as ET. */
 const UK_LABELLED_TIME_RE = /\b(uk|gmt|bst)\b/i;
+const ET_LABELLED_TIME_RE = /\b(et|est|edt|eastern)\b/i;
 
 function eventTimeForOutput(event: SportsListingEvent, input: ListingInput): string {
   if (UK_LABELLED_TIME_RE.test(event.time ?? "")) {
     return sourceTimeToUk(event.time, event.date ?? input.date ?? undefined, "gmt") ?? event.time;
+  }
+  if (ET_LABELLED_TIME_RE.test(event.time ?? "")) {
+    return sourceTimeToUk(event.time, event.date ?? input.date ?? undefined, "et") ?? event.time;
   }
   if (input.sourceZone) {
     const converted = sourceTimeToUk(event.time, event.date ?? input.date ?? undefined, input.sourceZone);
@@ -1575,7 +1574,10 @@ export function importDayListingDate(nowMs: number = Date.now()): string {
 function convertEventsToUk(events: SportsListingEvent[], input: ListingInput): SportsListingEvent[] {
   return events.map((event) => {
     const labelled = UK_LABELLED_TIME_RE.test(event.time ?? "");
-    const zone: TimeZoneChoice | null = labelled ? "gmt" : (input.sourceZone ?? null);
+    const etLabelled = ET_LABELLED_TIME_RE.test(event.time ?? "");
+    const centerIce = /\b(?:nhl\s+)?center\s+ice\b/i.test(input.guideTitle ?? "") &&
+      event.channels.some((channel) => /^NHL\s+\d+/i.test(channel));
+    const zone: TimeZoneChoice | null = labelled ? "gmt" : etLabelled || centerIce ? "et" : (input.sourceZone ?? null);
     if (!zone) return event;
     const date = event.date ?? input.date ?? null;
     const parts = sourceTimeToUkParts(event.time, date ?? undefined, zone);
