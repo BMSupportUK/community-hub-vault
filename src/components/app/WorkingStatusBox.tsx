@@ -716,7 +716,7 @@ export function WorkingStatusBox({
   }
 
   return (
-    <section className={cn(compact ? "w-full self-start md:aspect-video" : "px-2 pt-4")}>
+    <section className={cn(compact ? "w-full self-start @container md:aspect-video" : "px-2 pt-4")}>
       <div className={cn("bg-card border border-white/10 shadow-2xl overflow-hidden", compact ? "flex min-h-full flex-col rounded-xl" : "rounded-2xl")}>
         <div className={cn("flex items-center justify-between border-b border-white/10 bg-gradient-to-r from-success/80 to-primary/80", compact ? "px-3 py-2" : "px-4 py-3")}>
           <div className="flex items-center gap-2.5">
@@ -775,15 +775,17 @@ export function WorkingStatusBox({
               {currentHours && (
                 <div className="grid gap-2.5 text-xs">
                   {/* Both shift rows are pills so the office and local times read as a pair. */}
-                  <div className="flex items-center justify-between gap-3 rounded-xl bg-white/[0.07] px-3 py-1.5 ring-1 ring-white/25 sm:rounded-full">
+                  {/* Pills stack their label above the times when the card itself is
+                      narrow — the card width, not the screen width, decides. */}
+                  <div className="flex flex-col items-start gap-0.5 rounded-xl bg-white/[0.07] px-3 py-1.5 ring-1 ring-white/25 @min-[16rem]:flex-row @min-[16rem]:items-center @min-[16rem]:justify-between @min-[16rem]:gap-3 @min-[16rem]:rounded-full">
                     <span className="whitespace-nowrap text-muted-foreground font-medium">UK office</span>
                     {currentShiftUk && <ShiftTimes {...currentShiftUk} className="text-foreground" />}
                   </div>
 
                   {currentShiftLocal && (
-                    <div className="flex flex-col gap-0.5 rounded-xl bg-primary/10 px-3 py-1.5 ring-1 ring-primary/30 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:rounded-full">
+                    <div className="flex flex-col items-start gap-0.5 rounded-xl bg-primary/10 px-3 py-1.5 ring-1 ring-primary/30 @min-[16rem]:flex-row @min-[16rem]:items-center @min-[16rem]:justify-between @min-[16rem]:gap-3 @min-[16rem]:rounded-full">
                       <span className="whitespace-nowrap font-medium text-primary">Your local time</span>
-                      <ShiftTimes {...currentShiftLocal} className="text-[11px] text-foreground sm:text-xs" />
+                      <ShiftTimes {...currentShiftLocal} className="text-[11px] text-foreground @min-[16rem]:text-xs" />
                     </div>
                   )}
                 </div>
