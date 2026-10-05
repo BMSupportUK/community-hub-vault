@@ -965,41 +965,48 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     timeCol.className = "flex flex-col gap-1 items-end shrink-0";
     topRow.appendChild(timeCol);
 
+    // UK time with its own date directly beneath it.
+    const ukGroup = document.createElement("div");
+    ukGroup.className = "flex flex-col items-end gap-0.5";
     const ukBadge = document.createElement("span");
     ukBadge.setAttribute("data-tz-pill", "1");
     ukBadge.className =
       "px-2 py-0.5 rounded bg-zinc-700/50 text-zinc-300 text-[10px] font-bold uppercase tracking-tighter tabular-nums";
     ukBadge.textContent = `${ukTime} ${ukZone}`;
-    timeCol.appendChild(ukBadge);
+    ukGroup.appendChild(ukBadge);
+    const ukDateSpan = document.createElement("span");
+    ukDateSpan.className = "text-[10px] text-zinc-500 font-medium uppercase";
+    ukDateSpan.textContent = ukDateShort;
+    ukGroup.appendChild(ukDateSpan);
+    timeCol.appendChild(ukGroup);
 
     if (localDiffers) {
+      // Customer time with its own local date beneath it. When the converted
+      // time falls on a different calendar day from UK time the date is
+      // highlighted amber so the day difference is unmistakable.
+      const localGroup = document.createElement("div");
+      localGroup.className = "flex flex-col items-end gap-0.5";
       const localBadge = document.createElement("span");
       localBadge.setAttribute("data-tz-pill", "1");
       localBadge.className =
         "px-2 py-0.5 rounded bg-fuchsia-600 text-white text-[10px] font-bold uppercase tracking-tighter tabular-nums shadow-sm shadow-fuchsia-900/50";
       localBadge.textContent = `${m.localTime} ${m.localZone}`;
-      timeCol.appendChild(localBadge);
-
-      if (dayDifference !== 0) {
-        const localWeekday = new Intl.DateTimeFormat("en-GB", {
-          timeZone: viewerTz,
-          weekday: "long",
-          day: "numeric",
-          month: "short",
-        }).format(new Date(m.utcMs));
-        const dayNotice = document.createElement("span");
-        dayNotice.setAttribute("data-tz-day-notice", "1");
-        dayNotice.className =
-          "rounded border border-amber-400/40 bg-amber-400/10 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-200";
-        dayNotice.textContent = `Local: ${localWeekday}`;
-        timeCol.appendChild(dayNotice);
-      }
+      localGroup.appendChild(localBadge);
+      const localDateShort = new Intl.DateTimeFormat("en-GB", {
+        timeZone: viewerTz,
+        weekday: "short",
+        day: "numeric",
+        month: "short",
+      }).format(new Date(m.utcMs));
+      const localDateSpan = document.createElement("span");
+      localDateSpan.setAttribute("data-tz-day-notice", "1");
+      localDateSpan.className = dayDifference !== 0
+        ? "text-[10px] font-bold uppercase text-amber-200"
+        : "text-[10px] text-zinc-500 font-medium uppercase";
+      localDateSpan.textContent = localDateShort;
+      localGroup.appendChild(localDateSpan);
+      timeCol.appendChild(localGroup);
     }
-
-    const dateLine = document.createElement("span");
-    dateLine.className = "text-[10px] text-zinc-500 font-medium";
-    dateLine.textContent = ukDateShort;
-    timeCol.appendChild(dateLine);
 
     // Event name beneath the top row.
     const nameEl = document.createElement("div");
