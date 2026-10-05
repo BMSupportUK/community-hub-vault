@@ -2,7 +2,7 @@ import { AdSenseSlot } from "@/components/app/AdSenseSlot";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Headphones, MessageSquare, Activity, Ticket, ShoppingBag, BookOpen, UserPlus, ArrowUp, ArrowDown, Trophy, KeyRound } from "lucide-react";
 import heroImg from "@/assets/member-hero.jpg";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
@@ -10,6 +10,7 @@ import { ServiceStatusPill } from "@/components/app/ServiceStatusPill";
 import { SubscriptionDetailsCard } from "@/components/app/SubscriptionDetailsCard";
 import { WorkingStatusBox } from "@/components/app/WorkingStatusBox";
 import { useTalkChannelTotalCount } from "@/hooks/use-talk-channel-presence";
+import { formatRoleLabel } from "@/lib/role-label";
 
 export const Route = createFileRoute("/_authenticated/_approved/home/")({
   component: WelcomePage,
@@ -26,13 +27,17 @@ export const Route = createFileRoute("/_authenticated/_approved/home/")({
 });
 
 function WelcomePage() {
-  const { user, hasRole } = useAuth();
+  const { user, hasRole, roles } = useAuth();
   // LOCKED: "N in chat" counter on the chatroom link. Do not change, restyle, or remove
   // without explicit authorisation. See mem://constraints/chat-counters-locked
   const chatroomCount = useTalkChannelTotalCount();
   const canManage = hasRole("admin") || hasRole("management");
   const isStaffAccount =
     hasRole("admin") || hasRole("management") || hasRole("staff") || hasRole("moderator");
+  // Highest-priority staff role, used for the greeting line under the hero image.
+  const STAFF_ROLE_PRIORITY: AppRole[] = ["admin", "management", "moderator", "staff"];
+  const staffRole = STAFF_ROLE_PRIORITY.find((r) => roles.includes(r));
+  const staffRoleLabel = formatRoleLabel(staffRole);
   const fallbackName = (user?.email ?? "there").split("@")[0];
   const [displayName, setDisplayName] = useState<string>(fallbackName);
   const name = displayName;
@@ -154,7 +159,7 @@ function WelcomePage() {
             <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600 shadow-2xl">
               <div className={`grid min-h-0 flex-1 gap-4 p-4 pb-14 md:items-start lg:p-5 lg:pb-14 xl:gap-6 xl:p-6 xl:pb-14 ${isStaffAccount ? "md:grid-cols-2" : "md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]"}`}>
                 {isStaffAccount ? (
-                  <div className="min-h-0 min-w-0 self-stretch">
+                  <div className="order-2 min-h-0 min-w-0 self-stretch">
                     <WorkingStatusBox compact />
                   </div>
                 ) : (
@@ -177,7 +182,7 @@ function WelcomePage() {
                   </div>
                 )}
 
-                <div className="flex min-w-0 flex-col gap-3 self-start text-white">
+                <div className={`flex min-w-0 flex-col gap-3 self-start text-white ${isStaffAccount ? "order-1" : ""}`}>
                   <div className="relative aspect-video w-full min-w-0 overflow-hidden rounded-xl bg-blue-950/30 ring-1 ring-white/10">
                     <div className="absolute inset-0">
                       <img
@@ -193,7 +198,12 @@ function WelcomePage() {
                   {isStaffAccount && (
                     <div className="px-1">
                       <div className="text-sm font-semibold text-sky-100/90">Hey {name}</div>
-                      <h1 className="font-display text-xl font-bold leading-tight lg:text-2xl xl:text-3xl">Welcome to BM Support</h1>
+                      {staffRoleLabel && (
+                        <div className="mt-1.5 inline-flex items-center rounded-full border border-white/25 bg-white/15 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-white">
+                          {staffRoleLabel}
+                        </div>
+                      )}
+                      <h1 className="mt-1.5 font-display text-xl font-bold leading-tight lg:text-2xl xl:text-3xl">Welcome to your shift</h1>
                     </div>
                   )}
                 </div>
