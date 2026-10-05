@@ -588,8 +588,11 @@ export function WorkingStatusBox({
     className?: string;
   }) =>
     startDate === endDate ? (
-      <span className={cn("whitespace-nowrap font-semibold tabular-nums", className)}>
-        {startDate} · {startTime} – {endTime}
+      // Date and time range are separate nowrap units so a narrow pill drops the
+      // time onto its own line instead of clipping the end time.
+      <span className={cn("flex flex-wrap items-center justify-end gap-x-1.5 font-semibold tabular-nums", className)}>
+        <span className="whitespace-nowrap">{startDate}</span>
+        <span className="whitespace-nowrap">{startTime} – {endTime}</span>
       </span>
     ) : (
       <span className={cn("flex flex-wrap items-center justify-end gap-x-3 gap-y-1 font-semibold tabular-nums", className)}>
