@@ -90,6 +90,7 @@
 
 ## Manual order secure checkout pages
 - [x] Draft checkout template designs for approval (Stripe/Square/Wise/Cash/Paid)
+- [x] Manual order: email + discount fields, remove crypto
 - [x] Staff home: hero image and greeting first with status box to the right; role and shift welcome under the name
 - [x] Unique secure page per order, copy-link button, status bar
 - [x] Stripe/Square invoices + pay buttons; Wise bank details + strict reference
