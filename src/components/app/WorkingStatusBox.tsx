@@ -774,15 +774,15 @@ export function WorkingStatusBox({
                   {/* Both shift rows are pills so the office and local times read as a pair. */}
                   {/* Pills stack their label above the times when the card itself is
                       narrow — the card width, not the screen width, decides. */}
-                  <div className="flex flex-col items-start gap-0.5 rounded-xl bg-white/[0.07] px-3 py-1.5 ring-1 ring-white/25 @min-[16rem]:flex-row @min-[16rem]:items-center @min-[16rem]:justify-between @min-[16rem]:gap-3 @min-[16rem]:rounded-full">
+                  <div className="flex flex-col items-start gap-0.5 rounded-xl bg-white/[0.07] px-3 py-1.5 ring-1 ring-white/25 @min-[19rem]:flex-row @min-[19rem]:items-center @min-[19rem]:justify-between @min-[19rem]:gap-3 @min-[19rem]:rounded-full">
                     <span className="whitespace-nowrap text-muted-foreground font-medium">UK office</span>
                     {currentShiftUk && <ShiftTimes {...currentShiftUk} className="text-foreground" />}
                   </div>
 
                   {currentShiftLocal && (
-                    <div className="flex flex-col items-start gap-0.5 rounded-xl bg-primary/10 px-3 py-1.5 ring-1 ring-primary/30 @min-[16rem]:flex-row @min-[16rem]:items-center @min-[16rem]:justify-between @min-[16rem]:gap-3 @min-[16rem]:rounded-full">
+                    <div className="flex flex-col items-start gap-0.5 rounded-xl bg-primary/10 px-3 py-1.5 ring-1 ring-primary/30 @min-[19rem]:flex-row @min-[19rem]:items-center @min-[19rem]:justify-between @min-[19rem]:gap-3 @min-[19rem]:rounded-full">
                       <span className="whitespace-nowrap font-medium text-primary">Your local time</span>
-                      <ShiftTimes {...currentShiftLocal} className="text-[11px] text-foreground @min-[16rem]:text-xs" />
+                      <ShiftTimes {...currentShiftLocal} className="text-[11px] text-foreground @min-[19rem]:text-xs" />
                     </div>
                   )}
                 </div>
