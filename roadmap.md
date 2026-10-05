@@ -76,6 +76,7 @@
 - [x] Member sports guides: list every event channel beneath Available channels, including single-channel events
 - [x] Staff home: align compact Working Status with the hero image, move the greeting beneath it, and show local current-shift time when different
 - [x] Staff home: role pill beside the name, and a shift encouragement beneath the Working Status box
+- [x] Staff home: restore the next shift in compact Working Status and change the message while signed out
 
 ## Done (recent)
 - [x] UFC Streams multi-time imports: attach every listed channel to every time and retain next-day rollover

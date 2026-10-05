@@ -263,10 +263,12 @@ export function WorkingStatusBox({
   stackActions = false,
   variant = "card",
   compact = false,
+  onShiftStatusChange,
 }: {
   stackActions?: boolean;
   variant?: "card" | "header";
   compact?: boolean;
+  onShiftStatusChange?: (isActive: boolean) => void;
 } = {}) {
   const { user, roles, hasAny } = useAuth();
   const canAnswerTickets = hasAny(["admin", "management", "staff"]);
@@ -295,6 +297,10 @@ export function WorkingStatusBox({
     const t = window.setInterval(() => setDeviceTz(browserTimezone()), 30_000);
     return () => window.clearInterval(t);
   }, []);
+
+  useEffect(() => {
+    onShiftStatusChange?.(Boolean(shift));
+  }, [shift, onShiftStatusChange]);
 
   useEffect(() => {
     if (!user) return;
@@ -523,7 +529,7 @@ export function WorkingStatusBox({
               </p>
             )}
             {!dnd.note && !until && <p className="text-muted-foreground">Notifications muted.</p>}
-            {nextSlot && !compact && <NextShiftPanel slot={nextSlot} />}
+            {nextSlot && <NextShiftPanel slot={nextSlot} />}
           </div>
         </div>
       </section>
@@ -807,7 +813,7 @@ export function WorkingStatusBox({
               {todayWindow && !canSignIn && <SignInOpensNote win={todayWindow} />}
             </>
           )}
-          {nextSlot && !compact && <NextShiftPanel slot={nextSlot} />}
+          {nextSlot && <NextShiftPanel slot={nextSlot} />}
           {brk && (
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground font-medium">{breakLabel(brk.kind)}</span>
