@@ -156,11 +156,10 @@ function AuthLayout() {
     path === "/fan-zone-security" ||
     path === "/knowledge-base" ||
     path === "/install-guides" ||
-    path === "/sports-guides" ||
-    sportsGuideReader;
+    path === "/sports-guides";
   // Everything else locks to the viewport on large screens and scrolls
   // normally on smaller ones.
-  const locksToViewport = chatSurface || sportsGuideReader || lockable;
+  const locksToViewport = chatSurface || (lockable && !sportsGuideReader);
   void shopTab;
   void shopView;
   const logIp = useServerFn(logMyIp);

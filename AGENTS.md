@@ -1,6 +1,6 @@
 # Project Architecture Rules
 
-- Sports guides preserve published status; headings prefix event names, never channels. Keep the BM loading cover through hydration and router pending.
+- Sports guides preserve published status; headings prefix event names, never channels. Guide readers use whole-page document scrolling. Keep the BM loading cover through hydration and router pending.
 - UFC multi-time imports attach all listed channels to every slot. Triller `Event N` becomes channel `Triller TV N`.
 - Public sports guides return only validated date, time and event names; never expose free-text notes, descriptions or channel lines, because channel heuristics can miss unfamiliar feed names.
 - Advert slots show only BM Support's own affiliate banners in random, equal-time cycles; track each displayed banner's views and clicks, keep Member Home and the public landing page as separate zones, and include BM Support banners enabled for Forum throughout Boro Fan Zone alongside dedicated Fan Zone banners.
