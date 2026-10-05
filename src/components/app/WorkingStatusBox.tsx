@@ -262,9 +262,11 @@ export function NextShiftPanel({
 export function WorkingStatusBox({
   stackActions = false,
   variant = "card",
+  compact = false,
 }: {
   stackActions?: boolean;
   variant?: "card" | "header";
+  compact?: boolean;
 } = {}) {
   const { user, roles, hasAny } = useAuth();
   const canAnswerTickets = hasAny(["admin", "management", "staff"]);
@@ -276,16 +278,22 @@ export function WorkingStatusBox({
   const [now, setNow] = useState(() => Date.now());
   const [busy, setBusy] = useState(false);
   const [nextSlot, setNextSlot] = useState<NextSlot | null>(null);
+  const [deviceTz, setDeviceTz] = useState(() => browserTimezone());
   // Today's rota window: earliest slot start and latest slot end (HH:MM:SS).
   const [todayWindow, setTodayWindow] = useState<{ start: string; end: string } | null>(null);
   // Rota window of the shift that is actually underway (or the last one started
   // today) — shown as the "Shift hours" line while the person is signed in.
-  const [currentHours, setCurrentHours] = useState<{ start: string; end: string } | null>(null);
+  const [currentHours, setCurrentHours] = useState<NextSlot | null>(null);
   const [hadShiftToday, setHadShiftToday] = useState(false);
 
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
+  }, []);
+
+  useEffect(() => {
+    const t = window.setInterval(() => setDeviceTz(browserTimezone()), 30_000);
+    return () => window.clearInterval(t);
   }, []);
 
   useEffect(() => {
@@ -354,9 +362,7 @@ export function WorkingStatusBox({
               .filter((sl) => sl.start_time <= nowTime)
               .sort((a, b) => b.start_time.localeCompare(a.start_time))[0] ?? null)
           : null);
-      setCurrentHours(
-        underwayToday ? { start: underwayToday.start_time, end: underwayToday.end_time } : null,
-      );
+      setCurrentHours(underwayToday ?? null);
     };
     refresh();
     const ch = supabase
@@ -477,7 +483,7 @@ export function WorkingStatusBox({
         })
       : null;
     return (
-      <section className="px-2 pt-4">
+      <section className={cn(compact ? "h-full" : "px-2 pt-4")}>
         <div className="rounded-lg bg-surface-2/60 border border-violet-500/40 overflow-hidden">
           <div className="flex items-center justify-between px-3 py-2 border-b border-violet-500/30 bg-gradient-to-r from-violet-600/20 to-fuchsia-600/10">
             <div className="flex items-center gap-2">
@@ -517,7 +523,7 @@ export function WorkingStatusBox({
               </p>
             )}
             {!dnd.note && !until && <p className="text-muted-foreground">Notifications muted.</p>}
-            {nextSlot && <NextShiftPanel slot={nextSlot} />}
+            {nextSlot && !compact && <NextShiftPanel slot={nextSlot} />}
           </div>
         </div>
       </section>
@@ -541,6 +547,19 @@ export function WorkingStatusBox({
       .toString()
       .padStart(2, "0")}:${(s % 60).toString().padStart(2, "0")}`;
   };
+
+  const currentShiftLocal = currentHours && deviceTz !== "Europe/London"
+    ? (() => {
+        const { startsAt, endsAt } = shiftWindowToUtcMs(currentHours.shift_date, currentHours.start_time, currentHours.end_time, "Europe/London");
+        const date = (value: number) => new Intl.DateTimeFormat("en-GB", {
+          timeZone: deviceTz, weekday: "short", day: "numeric", month: "short",
+        }).format(value);
+        const time = (value: number) => new Intl.DateTimeFormat("en-GB", {
+          timeZone: deviceTz, hour: "2-digit", minute: "2-digit", hour12: false,
+        }).format(value);
+        return { startDate: date(startsAt), endDate: date(endsAt), startTime: time(startsAt), endTime: time(endsAt) };
+      })()
+    : null;
 
   const ActionIcons = ({ compact = false }: { compact?: boolean }) => {
     const iconButtonClass = compact ? "size-8" : "size-10";
@@ -652,11 +671,11 @@ export function WorkingStatusBox({
   }
 
   return (
-    <section className="px-2 pt-4">
-      <div className="rounded-2xl bg-card border border-white/10 shadow-2xl overflow-hidden">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-white/10 bg-gradient-to-r from-success/80 to-primary/80">
+    <section className={cn(compact ? "aspect-video w-full self-start" : "px-2 pt-4")}>
+      <div className={cn("bg-card border border-white/10 shadow-2xl overflow-hidden", compact ? "flex h-full flex-col rounded-xl" : "rounded-2xl")}>
+        <div className={cn("flex items-center justify-between border-b border-white/10 bg-gradient-to-r from-success/80 to-primary/80", compact ? "px-3 py-2" : "px-4 py-3")}>
           <div className="flex items-center gap-2.5">
-            <Briefcase className="size-5 text-white/90" />
+            <Briefcase className={cn("text-white/90", compact ? "size-4" : "size-5")} />
             <h2 className="font-display text-[11px] font-bold tracking-widest uppercase text-white">
               Working Status
             </h2>
@@ -679,15 +698,16 @@ export function WorkingStatusBox({
             <DndDialogButton className="inline-flex shrink-0 items-center justify-center size-8 rounded-full text-white/80 hover:text-white hover:bg-white/10 transition" />
           </div>
         </div>
-        <div className="px-5 py-5 space-y-4 text-sm">
+        <div className={cn("text-sm", compact ? "flex min-h-0 flex-1 flex-col justify-center space-y-2 px-3 py-2.5" : "px-5 py-5 space-y-4")}>
           <div
             className={cn(
-              "gap-4 pb-4 border-b border-white/10",
+              "border-b border-white/10",
+              compact ? "gap-2 pb-2" : "gap-4 pb-4",
               stackActions ? "flex flex-col items-start" : "flex items-center justify-between",
             )}
           >
             <div className="flex flex-col gap-1.5 min-w-0">
-              <span className="font-display font-bold text-lg text-foreground truncate">
+              <span className={cn("font-display font-bold text-foreground truncate", compact ? "text-sm" : "text-lg")}>
                 {displayName}
               </span>
               {staffRoleLabel && (
@@ -696,23 +716,33 @@ export function WorkingStatusBox({
                 </span>
               )}
             </div>
-            <ActionIcons />
+            <ActionIcons compact={compact} />
           </div>
           {shift ? (
             <>
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground font-medium">Shift</span>
-                <span className="inline-flex items-center gap-1.5 font-bold tabular-nums text-success text-lg">
-                  <CircleDot className="size-5" />
+                <span className={cn("inline-flex items-center gap-1.5 font-bold tabular-nums text-success", compact ? "text-sm" : "text-lg")}>
+                  <CircleDot className={compact ? "size-4" : "size-5"} />
                   {fmtHM(shiftSec)}
                 </span>
               </div>
               {currentHours && (
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-muted-foreground font-medium">Shift hours</span>
-                  <span className="font-semibold tabular-nums text-foreground/80">
-                    {currentHours.start.slice(0, 5)} – {currentHours.end.slice(0, 5)} UK
-                  </span>
+                <div className="grid gap-1 text-xs">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-muted-foreground font-medium">UK office</span>
+                    <span className="whitespace-nowrap font-semibold tabular-nums text-foreground/80">
+                      {currentHours.start_time.slice(0, 5)} – {currentHours.end_time.slice(0, 5)} · {new Intl.DateTimeFormat("en-GB", { weekday: "short", day: "numeric", month: "short", timeZone: "Europe/London" }).format(shiftWindowToUtcMs(currentHours.shift_date, currentHours.start_time, currentHours.end_time, "Europe/London").startsAt)}
+                    </span>
+                  </div>
+                  {currentShiftLocal && (
+                    <div className="flex items-center justify-between gap-3 rounded-md bg-primary/10 px-2 py-1 ring-1 ring-primary/25">
+                      <span className="font-medium text-primary">Your local time</span>
+                      <span className="text-right font-semibold tabular-nums text-foreground">
+                        {currentShiftLocal.startTime} · {currentShiftLocal.startDate} – {currentShiftLocal.endTime} · {currentShiftLocal.endDate}
+                      </span>
+                    </div>
+                  )}
                 </div>
               )}
             </>
@@ -735,7 +765,7 @@ export function WorkingStatusBox({
               {todayWindow && !canSignIn && <SignInOpensNote win={todayWindow} />}
             </>
           )}
-          {nextSlot && <NextShiftPanel slot={nextSlot} />}
+          {nextSlot && !compact && <NextShiftPanel slot={nextSlot} />}
           {brk && (
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground font-medium">{breakLabel(brk.kind)}</span>

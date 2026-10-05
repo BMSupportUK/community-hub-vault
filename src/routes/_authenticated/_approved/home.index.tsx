@@ -152,19 +152,13 @@ function WelcomePage() {
         <div className="grid min-h-0 min-w-0 w-full grid-cols-1 gap-4 sm:grid-cols-[minmax(0,1fr)_220px] md:h-full lg:grid-cols-[minmax(0,1fr)_minmax(220px,300px)] xl:gap-6">
           <div className="relative flex min-h-0 min-w-0 flex-col pb-8 lg:pb-10">
             <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600 shadow-2xl">
-              <div className="grid min-h-0 flex-1 gap-4 p-4 pb-14 md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] md:items-center lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:items-stretch lg:p-5 lg:pb-14 xl:gap-6 xl:p-6 xl:pb-14">
-                <div className="flex min-h-0 min-w-0 flex-col text-white">
-                  {isStaffAccount ? (
-                    <>
-                      <div className="mb-2 text-sm font-semibold text-sky-100/90">Hey {name}</div>
-                      <h1 className="font-display text-2xl font-bold leading-tight lg:text-3xl xl:text-4xl xl:leading-[1.1]">
-                        Welcome to BM Support
-                      </h1>
-                      <div className="mt-4">
-                        <WorkingStatusBox />
-                      </div>
-                    </>
-                  ) : (
+              <div className={`grid min-h-0 flex-1 gap-4 p-4 pb-14 md:items-start lg:p-5 lg:pb-14 xl:gap-6 xl:p-6 xl:pb-14 ${isStaffAccount ? "md:grid-cols-2" : "md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]"}`}>
+                {isStaffAccount ? (
+                  <div className="min-h-0 min-w-0 self-stretch">
+                    <WorkingStatusBox compact />
+                  </div>
+                ) : (
+                  <div className="flex min-h-0 min-w-0 flex-col text-white">
                     <div className="flex min-h-96 flex-1 flex-col justify-center space-y-4 text-left sm:space-y-5 md:min-h-full [@media(max-height:650px)]:space-y-2">
                       <div className="text-sm font-semibold uppercase tracking-wide text-sky-200/90">BM Support · Member Hub</div>
                       <h1 className="max-w-[16ch] font-display text-[clamp(1.7rem,min(5.5vw,7vh),4.5rem)] font-bold leading-[1.08] sm:max-w-none">
@@ -180,20 +174,28 @@ function WelcomePage() {
                         <SubscriptionDetailsCard compact embedded />
                       </div>
                     </div>
-                  )}
-                </div>
-
-                <div className="relative aspect-video w-full min-w-0 self-start overflow-hidden rounded-xl bg-blue-950/30 ring-1 ring-white/10">
-                  <div className="absolute inset-0">
-                    <img
-                      src={heroImg}
-                      alt="BM Support — community and support"
-                      width={1920}
-                      height={1080}
-                      className="h-full w-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-tr from-blue-950/35 via-transparent to-transparent" />
                   </div>
+                )}
+
+                <div className="flex min-w-0 flex-col gap-3 self-start text-white">
+                  <div className="relative aspect-video w-full min-w-0 overflow-hidden rounded-xl bg-blue-950/30 ring-1 ring-white/10">
+                    <div className="absolute inset-0">
+                      <img
+                        src={heroImg}
+                        alt="BM Support — community and support"
+                        width={1920}
+                        height={1080}
+                        className="h-full w-full object-cover"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-tr from-blue-950/35 via-transparent to-transparent" />
+                    </div>
+                  </div>
+                  {isStaffAccount && (
+                    <div className="px-1">
+                      <div className="text-sm font-semibold text-sky-100/90">Hey {name}</div>
+                      <h1 className="font-display text-xl font-bold leading-tight lg:text-2xl xl:text-3xl">Welcome to BM Support</h1>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
