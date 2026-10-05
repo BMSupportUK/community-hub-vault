@@ -1,5 +1,6 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { guideEventUtcMs, formatZone } from "@/lib/public-guide-time";
 import { LandingHeader } from "@/components/LandingHeader";
 import { BmSplash } from "@/components/app/BmSplash";
 import AdSenseSlot from "@/components/app/AdSenseSlot";
@@ -79,6 +80,12 @@ function PublicGuidePage() {
     }
   }, [guide.id]);
 
+  // Viewer zone is read after hydration so server and client markup match.
+  const [viewerTz, setViewerTz] = useState<string | null>(null);
+  useEffect(() => {
+    try { setViewerTz(Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/London"); } catch { setViewerTz("Europe/London"); }
+  }, []);
+
   return (
     <div className="relative flex min-h-screen flex-col bg-background text-foreground" style={{ minHeight: "100dvh" }}>
       <img
@@ -138,26 +145,51 @@ function PublicGuidePage() {
             </div>
           )}
 
-          <ul className="mt-8 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {guide.events.map((e, i) => (
-              <li
-                key={i}
-                className="rounded-2xl border border-white/5 bg-[#1e0f35] p-5 backdrop-blur transition hover:border-white/20 hover:bg-[#251242] hover:shadow-2xl hover:shadow-purple-900/20"
-              >
-                <div className="flex flex-wrap items-center justify-end gap-1.5">
-                  {e.time && (
-                    <span className="inline-flex items-center gap-1 rounded-md bg-fuchsia-600 px-2 py-1 text-xs font-semibold text-white">
-                      <Clock className="h-3.5 w-3.5" />
-                      {e.time}
-                    </span>
+          <ul className="mt-8 grid grid-cols-1 gap-3 lg:grid-cols-2 2xl:grid-cols-3">
+            {guide.events.map((e, i) => {
+              const utc = viewerTz ? guideEventUtcMs(e.date, e.time) : null;
+              const uk = utc != null ? formatZone(utc, "Europe/London") : null;
+              const local = utc != null && viewerTz && viewerTz !== "Europe/London" ? formatZone(utc, viewerTz) : null;
+              const showLocal = !!(uk && local && (local.time !== uk.time || local.dayKey !== uk.dayKey));
+              return (
+                <li
+                  key={i}
+                  className="rounded-2xl border border-white/5 bg-[#1e0f35] p-5 backdrop-blur transition hover:border-white/20 hover:bg-[#251242] hover:shadow-2xl hover:shadow-purple-900/20"
+                >
+                  <div className="flex flex-wrap items-center justify-end gap-2">
+                    {uk ? (
+                      <>
+                        <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md bg-zinc-100 px-2 py-1 text-xs font-bold text-zinc-900">
+                          <Clock className="h-3.5 w-3.5" />
+                          {uk.time} {uk.zone}
+                          <span className="font-semibold text-zinc-500">{uk.date}</span>
+                        </span>
+                        {showLocal && local && (
+                          <>
+                            <span aria-hidden className="h-5 w-0.5 rounded-full bg-fuchsia-400 shadow-[0_0_10px_rgba(217,70,239,0.9)]" />
+                            <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-md bg-fuchsia-500 px-2 py-1 text-xs font-bold text-white">
+                              {local.time} {local.zone}
+                              <span className={local.dayKey !== uk.dayKey ? "font-semibold text-amber-300" : "font-semibold text-zinc-200"}>{local.date}</span>
+                            </span>
+                          </>
+                        )}
+                      </>
+                    ) : (
+                      e.time && (
+                        <span className="inline-flex items-center gap-1 rounded-md bg-fuchsia-600 px-2 py-1 text-xs font-semibold text-white">
+                          <Clock className="h-3.5 w-3.5" />
+                          {e.time}
+                        </span>
+                      )
+                    )}
+                  </div>
+                  {!uk && e.date && (
+                    <p className="mt-1 text-right text-[11px] text-purple-200/50">{e.date}</p>
                   )}
-                </div>
-                {e.date && (
-                  <p className="mt-1 text-right text-[11px] text-purple-200/50">{e.date}</p>
-                )}
-                <p className="mt-3 font-display text-base font-bold leading-snug text-white">{e.title}</p>
-              </li>
-            ))}
+                  <p className="mt-3 font-display text-base font-bold leading-snug text-white">{e.title}</p>
+                </li>
+              );
+            })}
           </ul>
 
         </main>
