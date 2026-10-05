@@ -1074,19 +1074,6 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
       }
     }
 
-    // Footer: live / upcoming status pinned to the card bottom.
-    const footer = document.createElement("div");
-    footer.className = "mt-auto pt-4 flex items-center gap-2 text-zinc-500 text-xs";
-    const dot = document.createElement("div");
-    const isLive = Date.now() >= m.utcMs;
-    dot.className = isLive
-      ? "w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"
-      : "w-1.5 h-1.5 rounded-full bg-zinc-600";
-    const status = document.createElement("span");
-    status.textContent = isLive ? "Live now" : "Upcoming event";
-    footer.appendChild(dot);
-    footer.appendChild(status);
-    block.appendChild(footer);
   }
 
   // Sort all transformed event rows by earliest source time.
