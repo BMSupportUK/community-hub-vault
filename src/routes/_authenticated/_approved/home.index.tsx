@@ -164,8 +164,8 @@ function WelcomePage() {
                     <WorkingStatusBox compact onShiftStatusChange={setIsStaffShiftActive} />
                     {/* Encouragement for the shift, sitting under the status box and
                         right-aligned so it balances the greeting on the opposite side. */}
-                    <p className="mt-3 flex flex-wrap items-center justify-start gap-1.5 px-1 text-sm font-medium text-white/90 md:justify-end md:text-right">
-                      <Sparkles className="size-4 shrink-0 text-amber-200" />
+                    <p className={`mt-3 flex flex-wrap items-center gap-1.5 px-1 ${isStaffShiftActive ? "justify-start text-sm font-medium text-white/90 md:justify-end md:text-right" : "justify-center text-center text-lg font-semibold text-white"}`}>
+                      <Sparkles className={`shrink-0 text-amber-200 ${isStaffShiftActive ? "size-4" : "size-5"}`} />
                       <span>
                         {isStaffShiftActive
                           ? `Have a great shift, ${name} — thanks for being on. We've got your back if anything comes up.`
