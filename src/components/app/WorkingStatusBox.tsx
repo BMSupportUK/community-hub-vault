@@ -592,7 +592,7 @@ export function WorkingStatusBox({
         {startDate} · {startTime} – {endTime}
       </span>
     ) : (
-      <span className={cn("flex flex-wrap items-center justify-end gap-x-2 gap-y-1 font-semibold tabular-nums", className)}>
+      <span className={cn("flex flex-wrap items-center justify-end gap-x-3 gap-y-1 font-semibold tabular-nums", className)}>
         <span className="whitespace-nowrap">{startDate} · {startTime}</span>
         <span
           aria-hidden="true"
@@ -713,8 +713,8 @@ export function WorkingStatusBox({
   }
 
   return (
-    <section className={cn(compact ? "w-full self-start md:aspect-video" : "px-2 pt-4")}>
-      <div className={cn("bg-card border border-white/10 shadow-2xl overflow-hidden", compact ? "flex h-full flex-col rounded-xl" : "rounded-2xl")}>
+    <section className={cn(compact ? "w-full self-start @container md:aspect-video" : "px-2 pt-4")}>
+      <div className={cn("bg-card border border-white/10 shadow-2xl overflow-hidden", compact ? "flex min-h-full flex-col rounded-xl" : "rounded-2xl")}>
         <div className={cn("flex items-center justify-between border-b border-white/10 bg-gradient-to-r from-success/80 to-primary/80", compact ? "px-3 py-2" : "px-4 py-3")}>
           <div className="flex items-center gap-2.5">
             <Briefcase className={cn("text-white/90", compact ? "size-4" : "size-5")} />
@@ -770,17 +770,19 @@ export function WorkingStatusBox({
                 </span>
               </div>
               {currentHours && (
-                <div className="grid gap-1 text-xs">
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="text-muted-foreground font-medium">UK office</span>
-                    {currentShiftUk && <ShiftTimes {...currentShiftUk} className="text-foreground/80" />}
+                <div className="grid gap-2.5 text-xs">
+                  {/* Both shift rows are pills so the office and local times read as a pair. */}
+                  {/* Pills stack their label above the times when the card itself is
+                      narrow — the card width, not the screen width, decides. */}
+                  <div className="flex flex-col items-start gap-0.5 rounded-xl bg-white/[0.07] px-3 py-1.5 ring-1 ring-white/25 @min-[19rem]:flex-row @min-[19rem]:items-center @min-[19rem]:justify-between @min-[19rem]:gap-3 @min-[19rem]:rounded-full">
+                    <span className="whitespace-nowrap text-muted-foreground font-medium">UK office</span>
+                    {currentShiftUk && <ShiftTimes {...currentShiftUk} className="text-foreground @max-[12rem]:whitespace-normal" />}
                   </div>
 
                   {currentShiftLocal && (
-                    <div className="flex flex-col gap-0.5 rounded-md bg-primary/10 px-2 py-1 ring-1 ring-primary/25 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
-                      <span className="font-medium text-primary">Your local time</span>
-                      <ShiftTimes {...currentShiftLocal} className="text-[11px] text-foreground sm:text-xs" />
-
+                    <div className="flex flex-col items-start gap-0.5 rounded-xl bg-primary/10 px-3 py-1.5 ring-1 ring-primary/30 @min-[19rem]:flex-row @min-[19rem]:items-center @min-[19rem]:justify-between @min-[19rem]:gap-3 @min-[19rem]:rounded-full">
+                      <span className="whitespace-nowrap font-medium text-primary">Your local time</span>
+                      <ShiftTimes {...currentShiftLocal} className="text-[11px] text-foreground @min-[19rem]:text-xs @max-[12rem]:whitespace-normal" />
                     </div>
                   )}
                 </div>
