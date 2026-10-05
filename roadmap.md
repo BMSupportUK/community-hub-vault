@@ -6,7 +6,7 @@
 - [x] Member home: move subscription details into the welcome panel and use a vertical sidebar advert
 - [x] Boro Fan Zone adverts: include matching BM Support banners enabled for the Forum zone
 - [x] Affiliate adverts: random fair rotation, size-based admin sections, and per-banner view/click totals
-- [x] Sports Guide reader: keep the guide heading locked and show every event in one scrollable list
+- [x] Sports Guide reader: use whole-page scrolling and show every event in one continuous list
 - [x] New sports guides: make manual Add Blog saves use the same canonical event layout as imported guides
 - [x] UFC imports: preserve repeated bold title → UK/ET time → own channels blocks permanently
 - [x] Sports Guides: show newly created empty categories to staff while keeping them hidden from members
