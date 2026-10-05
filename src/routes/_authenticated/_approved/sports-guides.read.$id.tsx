@@ -250,38 +250,34 @@ function ReadPage() {
           <div className="px-6 py-12 text-center text-purple-200/70">Loading…</div>
         ) : (
           <article className="w-full max-w-none mx-auto px-3 sm:px-6 py-4 flex flex-col gap-3">
-            <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
+            <div className="flex flex-wrap items-center gap-2">
               <h1 className="min-w-0 font-display text-2xl md:text-3xl font-bold text-white">
                 {blog.title}
               </h1>
-              <div className="flex w-full flex-col items-start gap-2 lg:w-96 lg:items-end">
-                <div className="flex flex-wrap gap-2 lg:justify-end">
-                  <span className="text-xs px-2 py-1 rounded-md bg-fuchsia-500/30 text-white font-semibold border border-fuchsia-400/50">
-                    {(() => {
-                      const cat = categories.find((c) => c.id === blog.category_id);
-                      if (!cat) return null;
-                      const parent = cat.parent_id ? categories.find((p) => p.id === cat.parent_id)?.name : null;
-                      return parent ? `${parent} / ${cat.name}` : cat.name;
-                    })()}
-                  </span>
-                  {blog.badge && (
-                    <span className="text-xs px-2 py-1 rounded-md bg-violet-500/20 text-violet-200 font-medium border border-violet-500/30">
-                      {blog.badge}
-                    </span>
-                  )}
-                </div>
-                {blog.refresh_notice && (
-                  <div className="flex w-full items-start gap-2 rounded-xl border border-amber-400/40 bg-amber-500/10 px-3 py-2 text-amber-100">
-                    <RefreshCw className="size-4 shrink-0 mt-0.5" />
-                    <div className="text-sm leading-relaxed">{blog.refresh_notice}</div>
-                  </div>
-                )}
-                {blog.not_guaranteed && (
-                  <div className="flex w-full items-center rounded-xl border border-rose-400/40 bg-rose-500/10 px-3 py-2 text-rose-100 text-sm leading-relaxed">
-                    These are not guaranteed and no reports allowed to source.
-                  </div>
-                )}
-              </div>
+              <span className="text-xs px-2 py-1 rounded-md bg-fuchsia-500/30 text-white font-semibold border border-fuchsia-400/50">
+                {(() => {
+                  const cat = categories.find((c) => c.id === blog.category_id);
+                  if (!cat) return null;
+                  const parent = cat.parent_id ? categories.find((p) => p.id === cat.parent_id)?.name : null;
+                  return parent ? `${parent} / ${cat.name}` : cat.name;
+                })()}
+              </span>
+              {blog.badge && (
+                <span className="text-xs px-2 py-1 rounded-md bg-violet-500/20 text-violet-200 font-medium border border-violet-500/30">
+                  {blog.badge}
+                </span>
+              )}
+              {blog.refresh_notice && (
+                <span className="inline-flex items-center gap-1.5 rounded-md border border-amber-400/40 bg-amber-500/10 px-2 py-1 text-xs font-medium text-amber-100">
+                  <RefreshCw className="size-3.5 shrink-0" />
+                  {blog.refresh_notice}
+                </span>
+              )}
+              {blog.not_guaranteed && (
+                <span className="rounded-md border border-rose-400/40 bg-rose-500/10 px-2 py-1 text-xs font-medium text-rose-100">
+                  These are not guaranteed and no reports allowed to source.
+                </span>
+              )}
             </div>
             {blog.image_url ? (
               <div className="grid shrink-0 grid-cols-1 gap-4 xl:grid-cols-2 xl:items-stretch">
