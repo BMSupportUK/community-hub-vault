@@ -73,6 +73,7 @@
 - [x] Download BM Support Apps: make the BM Support App Store tab first and default (verified in the signed-in preview)
 - [x] Member sports guides: flag converted local times that fall on the next or previous day from UK time
 - [x] Member sports guides: list every event channel beneath Available channels, including single-channel events
+- [x] Staff home: align compact Working Status with the hero image, move the greeting beneath it, and show local current-shift time when different
 
 ## Done (recent)
 - [x] UFC Streams multi-time imports: attach every listed channel to every time and retain next-day rollover
