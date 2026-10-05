@@ -561,6 +561,20 @@
       "when": 1791227259626,
       "tag": "0079_staff_default_nameplates",
       "breakpoints": true
+    },
+    {
+      "idx": 80,
+      "version": "7",
+      "when": 1791231354036,
+      "tag": "0080_add_staff_gender_nameplate_defaults",
+      "breakpoints": true
+    },
+    {
+      "idx": 81,
+      "version": "7",
+      "when": 1791231465542,
+      "tag": "0081_tighten_staff_gender_nameplate_grants",
+      "breakpoints": true
     }
   ]
 }

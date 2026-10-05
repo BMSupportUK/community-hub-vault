@@ -4520,6 +4520,7 @@ export type Database = {
           new_content_baseline_at: string | null
           preferred_theme: string | null
           sports_blogs_baseline_at: string | null
+          staff_gender: string
           timezone: string | null
           updated_at: string
           username: string | null
@@ -4537,6 +4538,7 @@ export type Database = {
           new_content_baseline_at?: string | null
           preferred_theme?: string | null
           sports_blogs_baseline_at?: string | null
+          staff_gender?: string
           timezone?: string | null
           updated_at?: string
           username?: string | null
@@ -4554,6 +4556,7 @@ export type Database = {
           new_content_baseline_at?: string | null
           preferred_theme?: string | null
           sports_blogs_baseline_at?: string | null
+          staff_gender?: string
           timezone?: string | null
           updated_at?: string
           username?: string | null
@@ -7242,6 +7245,10 @@ export type Database = {
           expiry_at: string
         }[]
       }
+      staff_default_nameplate_for_user: {
+        Args: { _gender?: string; _user_id: string }
+        Returns: string
+      }
       staff_extend_credential: {
         Args: {
           p_account_type?: string
@@ -7250,9 +7257,21 @@ export type Database = {
         }
         Returns: string
       }
-      staff_nameplate_for_role: {
-        Args: { _role: Database["public"]["Enums"]["app_role"] }
-        Returns: string
+      staff_nameplate_for_role:
+        | {
+            Args: { _role: Database["public"]["Enums"]["app_role"] }
+            Returns: string
+          }
+        | {
+            Args: {
+              _gender?: string
+              _role: Database["public"]["Enums"]["app_role"]
+            }
+            Returns: string
+          }
+      staff_nameplate_is_default: {
+        Args: { _nameplate_id: string }
+        Returns: boolean
       }
       staff_pin_check: {
         Args: { p_pin: string; p_user: string }

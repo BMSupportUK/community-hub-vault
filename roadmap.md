@@ -1,6 +1,7 @@
 # Roadmap
 
 ## Current
+- [x] Staff nameplates: male/female role defaults selected from Edit profile without replacing custom choices
 - [x] Sports imports: fix NFL spaced/SNF rows and NBA League Pass inline ET/UK rows permanently
 - [x] NHL Center Ice: always use ET listing times and repair the incorrect current event
 - [x] Knowledge Base: full-page articles, complete video playback, and ratings sidebar
