@@ -13,12 +13,12 @@ import androidApkAsset from "@/assets/BMSupport.apk.asset.json";
  * "new version available" notification for every member.
  */
 export const ANDROID_RELEASE = {
-  versionName: "1.1.5",
-  versionCode: 7,
+  versionName: "1.1.7",
+  versionCode: 9,
   /** Raw CDN asset (served as application/zip) — proxied by /api/public/android-apk. */
   assetUrl: androidApkAsset.url,
   /** Always use this for downloads/QR: correct .apk filename + mime type. */
   url: "/api/public/android-apk",
   absoluteUrl: "https://bmsupport.uk/api/public/android-apk",
-  notes: "Spoken alert sounds for new tickets, shifts and outages now play even when the app is closed.",
+  notes: "Alerts now ring and show on the lock screen, and the app asks to be left out of battery saving so notifications keep working when the phone is locked.",
 } as const;
