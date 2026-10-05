@@ -61,6 +61,7 @@ interface ProfileRow {
   last_seen_at: string | null;
   equipped_nameplate_id: string | null;
   custom_status: string | null;
+  staff_gender: "male" | "female";
 }
 
 interface ShiftRow { id: string; user_id: string; clock_in: string; clock_out: string | null; }
@@ -843,6 +844,7 @@ function ProfilePage() {
       {editing && isOwner && (
         <EditProfileModal
           profile={profile}
+          isStaffProfile={isStaffProfile}
           onClose={() => setEditing(false)}
           onSaved={() => { setEditing(false); load(); }}
         />
@@ -2125,12 +2127,13 @@ function RevealGate({ hasPin, onUnlocked, onPinSet }: { hasPin: boolean | null; 
 
 /* ---------------- Edit profile modal ---------------- */
 
-function EditProfileModal({ profile, onClose, onSaved }: { profile: ProfileRow; onClose: () => void; onSaved: () => void }) {
+function EditProfileModal({ profile, isStaffProfile, onClose, onSaved }: { profile: ProfileRow; isStaffProfile: boolean; onClose: () => void; onSaved: () => void }) {
   const { user } = useAuth();
   const [displayName, setDisplayName] = useState(profile.display_name ?? "");
   const [username, setUsername] = useState(profile.username ?? "");
   const [bio, setBio] = useState(profile.bio ?? "");
   const [customStatus, setCustomStatus] = useState(profile.custom_status ?? "");
+  const [staffGender, setStaffGender] = useState<"male" | "female">(profile.staff_gender ?? "male");
   const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url);
   const [isPrivate, setIsPrivate] = useState<boolean>(!!profile.is_private);
   const detectedTimezone = useUserTimezone();
@@ -2170,6 +2173,7 @@ function EditProfileModal({ profile, onClose, onSaved }: { profile: ProfileRow; 
       avatar_url: avatarUrl,
       is_private: isPrivate,
       timezone: detectedTimezone,
+      ...(isStaffProfile ? { staff_gender: staffGender } : {}),
     }).eq("id", user.id);
     setSaving(false);
     if (error) return toast.error(error.message);
@@ -2215,6 +2219,36 @@ function EditProfileModal({ profile, onClose, onSaved }: { profile: ProfileRow; 
             Shown under your nameplate in Talk channels.
           </span>
         </Field>
+        {isStaffProfile && (
+          <Field label="Default staff name plate icon">
+            <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Default staff name plate icon">
+              {(["male", "female"] as const).map((option) => (
+                <label
+                  key={option}
+                  className={cn(
+                    "flex min-h-10 cursor-pointer items-center justify-center rounded-lg border px-3 py-2 text-sm font-medium capitalize transition",
+                    staffGender === option
+                      ? "border-primary bg-primary/15 text-primary ring-1 ring-primary/40"
+                      : "border-border bg-surface-2 text-muted-foreground hover:border-primary/50 hover:text-foreground",
+                  )}
+                >
+                  <input
+                    type="radio"
+                    name="staff-gender"
+                    value={option}
+                    checked={staffGender === option}
+                    onChange={() => setStaffGender(option)}
+                    className="sr-only"
+                  />
+                  {option}
+                </label>
+              ))}
+            </div>
+            <span className="mt-1 block text-[11px] text-muted-foreground">
+              This selects your automatic role name plate. A name plate you choose yourself will not be replaced.
+            </span>
+          </Field>
+        )}
         <Field label="Bio">
           <HtmlEditor value={bio} onChange={setBio} placeholder="Tell us about yourself…" />
         </Field>

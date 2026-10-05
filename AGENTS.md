@@ -29,4 +29,4 @@
 - Customer invoices are BM Support PDFs available only after confirmed payment; never expose Stripe or Square hosted invoice/receipt links because the app owns customer billing documents.
 - Knowledge Base article reading uses the full available page with a responsive ratings rail, so long guides and media remain readable.
 - Secure order pages offer WhatsApp video help via a wa.me link, shown only while is_business_open (admin opening hours, UK bank holidays closed) — WhatsApp calls cannot be embedded, so the in-browser camera session is no longer shown to customers.
-- Staff nameplates use the themed gradient plus one separately rendered role icon; never show legacy artwork beneath it.
+- Staff role plates use one gender-aware icon; defaults never replace custom picks.

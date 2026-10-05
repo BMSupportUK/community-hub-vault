@@ -1705,9 +1705,12 @@ html.boro-bg-active .min-h-dvh.bg-background {
   0%, 100% { transform: translateY(-50%) scale(1); filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
   50%      { transform: translateY(-50%) scale(1.08); filter: drop-shadow(0 0 10px rgba(196,181,253,0.8)); }
 }
-.nameplate-staff .nameplate-staff-icon { animation: np-staff-bob 2.6s ease-in-out infinite; }
-.nameplate-moderator .nameplate-staff-icon { animation: np-staff-sway 3.2s ease-in-out infinite; transform-origin: 50% 90%; }
-.nameplate-management .nameplate-staff-icon { animation: np-staff-pulse 2.8s ease-in-out infinite; }
+.nameplate-staff .nameplate-staff-icon,
+.nameplate-staff-female .nameplate-staff-icon { animation: np-staff-bob 2.6s ease-in-out infinite; }
+.nameplate-moderator .nameplate-staff-icon,
+.nameplate-moderator-female .nameplate-staff-icon { animation: np-staff-sway 3.2s ease-in-out infinite; transform-origin: 50% 90%; }
+.nameplate-management .nameplate-staff-icon,
+.nameplate-management-female .nameplate-staff-icon { animation: np-staff-pulse 2.8s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) {
   .nameplate-staff-icon { animation: none !important; }
 }

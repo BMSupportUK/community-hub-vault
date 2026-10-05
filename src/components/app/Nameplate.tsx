@@ -16,6 +16,9 @@ import npMidnightKitty from "@/assets/np-midnight-kitty.png.asset.json";
 import iconStaff from "@/assets/nameplates/icon-staff-v2.png";
 import iconMod from "@/assets/nameplates/icon-mod-v2.png";
 import iconMgmt from "@/assets/nameplates/icon-mgmt-v2.png";
+import iconStaffFemale from "@/assets/nameplates/icon-staff-female-v2.png";
+import iconModFemale from "@/assets/nameplates/icon-mod-female-v2.png";
+import iconMgmtFemale from "@/assets/nameplates/icon-mgmt-female-v2.png";
 
 /** Nameplate pack v2: animation class -> mascot artwork (original designs). */
 const MASCOTS: Record<string, { url: string; alt: string }> = {
@@ -46,6 +49,9 @@ const STAFF_ICONS: Record<string, { url: string; alt: string }> = {
   "nameplate-staff": { url: iconStaff, alt: "" },
   "nameplate-moderator": { url: iconMod, alt: "" },
   "nameplate-management": { url: iconMgmt, alt: "" },
+  "nameplate-staff-female": { url: iconStaffFemale, alt: "" },
+  "nameplate-moderator-female": { url: iconModFemale, alt: "" },
+  "nameplate-management-female": { url: iconMgmtFemale, alt: "" },
 };
 
 interface NameplateProps {
@@ -142,6 +148,8 @@ export function Nameplate({ id, className, style, fallbackStyle, children }: Nam
             alt=""
             aria-hidden
             loading="lazy"
+            width={816}
+            height={816}
             className="nameplate-staff-icon"
           />
         ) : null;
