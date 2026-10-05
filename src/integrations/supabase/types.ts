@@ -4521,6 +4521,7 @@ export type Database = {
           preferred_theme: string | null
           sports_blogs_baseline_at: string | null
           staff_gender: string
+          staff_gender_confirmed_at: string | null
           timezone: string | null
           updated_at: string
           username: string | null
@@ -4539,6 +4540,7 @@ export type Database = {
           preferred_theme?: string | null
           sports_blogs_baseline_at?: string | null
           staff_gender?: string
+          staff_gender_confirmed_at?: string | null
           timezone?: string | null
           updated_at?: string
           username?: string | null
@@ -4557,6 +4559,7 @@ export type Database = {
           preferred_theme?: string | null
           sports_blogs_baseline_at?: string | null
           staff_gender?: string
+          staff_gender_confirmed_at?: string | null
           timezone?: string | null
           updated_at?: string
           username?: string | null
