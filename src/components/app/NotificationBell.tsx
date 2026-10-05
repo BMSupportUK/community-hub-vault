@@ -416,7 +416,7 @@ export function NotificationBell() {
           )}
         </div>
 
-        <ScrollArea className="flex-1 min-h-0">
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain">
           {items.length === 0 && (
             <div className="px-4 py-12 text-center text-sm text-muted-foreground">You're all caught up.</div>
           )}
