@@ -278,7 +278,7 @@ function AuthLayout() {
                 className="hidden md:flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-3 py-1.5 bg-surface-2 hover:bg-primary hover:text-primary-foreground text-xs font-medium transition-colors"
               >
                 <LayoutDashboard className="size-4" />
-                <span className="hidden xl:inline">Admin | Admin Panel</span>
+                <span className="hidden min-[1700px]:inline">Admin | Admin Panel</span>
               </Link>
             )}
             {isAdmin && (
@@ -288,7 +288,7 @@ function AuthLayout() {
                 className="hidden md:flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-3 py-1.5 bg-surface-2 hover:bg-primary hover:text-primary-foreground text-xs font-medium transition-colors"
               >
                 <Shield className="size-4" />
-                <span className="hidden xl:inline">Admin | Access Requests</span>
+                <span className="hidden min-[1700px]:inline">Admin | Access Requests</span>
                 <DeferUntilIdle><ModerationPendingBadge /></DeferUntilIdle>
               </Link>
             )}
@@ -300,7 +300,7 @@ function AuthLayout() {
                 onClick={openSalesChats}
               >
                 <Receipt className="size-4" />
-                <span className="hidden xl:inline">Admin | Shop Orders</span>
+                <span className="hidden min-[1700px]:inline">Admin | Shop Orders</span>
                 <DeferUntilIdle><PendingOrdersBadge /></DeferUntilIdle>
               </button>
             )}
@@ -311,7 +311,7 @@ function AuthLayout() {
                 className="hidden md:flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-3 py-1.5 bg-surface-2 hover:bg-primary hover:text-primary-foreground text-xs font-medium transition-colors"
               >
                 <ShieldCheck className="size-4" />
-                <span className="hidden xl:inline">Members &amp; Role Management</span>
+                <span className="hidden min-[1700px]:inline">Members &amp; Role Management</span>
               </Link>
             )}
             {user && (
