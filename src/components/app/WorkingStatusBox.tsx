@@ -572,7 +572,8 @@ export function WorkingStatusBox({
     return { startDate: date(startsAt), endDate: date(endsAt), startTime: time(startsAt), endTime: time(endsAt) };
   })() : null;
 
-  // A shift that runs into the next day reads as two lines, one per day.
+  // Same-day shifts read on one line; shifts that run into the next day stay
+  // on one line too, with a glowing divider between the two days.
   const ShiftTimes = ({
     startDate,
     startTime,
@@ -591,8 +592,12 @@ export function WorkingStatusBox({
         {startDate} · {startTime} – {endTime}
       </span>
     ) : (
-      <span className={cn("flex flex-col items-end gap-0.5 font-semibold tabular-nums", className)}>
+      <span className={cn("flex flex-wrap items-center justify-end gap-x-2 gap-y-1 font-semibold tabular-nums", className)}>
         <span className="whitespace-nowrap">{startDate} · {startTime}</span>
+        <span
+          aria-hidden="true"
+          className="h-5 w-0.5 shrink-0 rounded-full bg-primary shadow-[0_0_10px_rgba(99,102,241,0.9)]"
+        />
         <span className="whitespace-nowrap">{endDate} · {endTime}</span>
       </span>
     );
