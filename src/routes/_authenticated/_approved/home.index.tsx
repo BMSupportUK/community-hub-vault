@@ -214,7 +214,7 @@ function WelcomePage() {
                           </span>
                         )}
                       </div>
-                      <h1 className="mt-1.5 font-display text-xl font-bold leading-tight lg:text-2xl xl:text-3xl">Welcome to your shift</h1>
+                      <h1 className="mt-1.5 font-display text-xl font-bold leading-tight lg:text-2xl xl:text-3xl">Welcome to The Staff Portal</h1>
                     </div>
                   )}
                 </div>
