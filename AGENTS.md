@@ -6,7 +6,7 @@
 - Public sports guides return only validated date, time and event names; never expose free-text notes, descriptions or channel lines, because channel heuristics can miss unfamiliar feed names.
 - Advert slots show only BM Support's own affiliate banners in random, equal-time cycles; track each displayed banner's views and clicks, keep Member Home and the public landing page as separate zones, and include BM Support banners enabled for Forum throughout Boro Fan Zone alongside dedicated Fan Zone banners.
 - Member Home embeds non-staff subscription details beneath the welcome text and uses only a right-rail skyscraper advert; staff show compact Working Status right of the hero image, greeting (name, role, shift welcome) below, image first on phones.
-- Header starts collapsed (slim bar) ONLY on the tickets page and Talk channels; every other BM Support page keeps it open. Re-resets per navigation (tickets/Talk re-collapse, others re-open). Talk channels add channel name; Fan Zone never shows it.
+- Header starts collapsed (slim bar) ONLY on the tickets page and Talk channels; every other BM Support page keeps it open. Re-resets on each navigation. Talk channels add channel name; Fan Zone never shows it.
 - Back-to-top reacts only to page-level scrollers, never dialogs or inner chat/reply panes.
 - NFL Sunday Ticket uses stated UK time, channel `NFL NN`, next-line fixture, and ignores TNF/SNF/MNF labels; NBA League Pass uses its inline stated UK time, clean fixture, and `NBA NN` channel. Drop both provider headers.
 - Corrected sports formats need permanent split/safety/read-back tests. DAZN inline slots stay separate; qualifiers extend the title above.
