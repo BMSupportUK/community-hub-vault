@@ -3,13 +3,13 @@
 - Sports guides preserve published status; headings prefix event names, never channels. Guide readers use whole-page document scrolling. Every event channel renders only beneath Available channels, even if it is the sole channel, so placement remains consistent. Keep the BM loading cover through hydration and router pending.
 - Member sports-guide cards explicitly flag when the viewer's converted local time falls on a different calendar day from UK time, preventing date ambiguity.
 - UFC multi-time imports attach all listed channels to every slot. Triller `Event N` becomes channel `Triller TV N`.
-- Public sports guides return only validated date, time and event names; never expose free-text notes, descriptions or channel lines, because channel heuristics can miss unfamiliar feed names.
+- Public sports guides expose only validated dates, times, and event names; never free-text notes, descriptions, or channel lines.
 - Advert slots show only BM Support's own affiliate banners in random, equal-time cycles; track each displayed banner's views and clicks, keep Member Home and the public landing page as separate zones, and include BM Support banners enabled for Forum throughout Boro Fan Zone alongside dedicated Fan Zone banners.
 - Member Home: non-staff embed subscription details under welcome text, advert only as right-rail skyscraper; staff show compact Working Status right of hero image, shift encouragement under it, greeting (name + role pill beside it, shift welcome) below, image first on phones.
 - Header starts collapsed (slim bar) ONLY on the tickets page and Talk channels; every other BM Support page keeps it open. Re-resets on each navigation. Talk channels add channel name; Fan Zone never shows it.
 - Back-to-top reacts only to page-level scrollers, never dialogs or inner chat/reply panes.
 - NHL Center Ice always treats its listing clock as ET and converts it to the correct UK date/time, ignoring supplied UK clocks; NFL Sunday Ticket and NBA League Pass use their stated UK times.
-- Corrected sports formats need permanent split/safety/read-back tests. DAZN inline slots stay separate; qualifiers extend the title above.
+- Corrected sports formats need split/safety/read-back tests. DAZN inline slots stay separate; qualifiers extend titles.
 - Manual sports splits preserve both halves; only adjacent headings move, and shared headings copy to the second half.
 - Gmail forwarding confirmations are captured by the email receiver and shown only to admins on the Bank Transfer page.
 - Talk: show all staff/channel; fit composer and people. Mobile guide PDFs render in-page.
@@ -29,3 +29,4 @@
 - Customer invoices are BM Support PDFs available only after confirmed payment; never expose Stripe or Square hosted invoice/receipt links because the app owns customer billing documents.
 - Knowledge Base article reading uses the full available page with a responsive ratings rail, so long guides and media remain readable.
 - Secure order pages offer WhatsApp video help via a wa.me link, shown only while is_business_open (admin opening hours, UK bank holidays closed) — WhatsApp calls cannot be embedded, so the in-browser camera session is no longer shown to customers.
+- Staff nameplates use the themed gradient plus one separately rendered role icon; never show legacy artwork beneath it.

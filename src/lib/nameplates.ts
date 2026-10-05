@@ -70,6 +70,14 @@ export function useNameplate(id: string | null | undefined): NameplateRow | null
 
 export function nameplateBackgroundStyle(np: NameplateRow | null | undefined): React.CSSProperties | undefined {
   if (!np) return undefined;
+  // Role artwork is rendered separately; do not show the legacy baked-in icon.
+  if (
+    np.animation_class === "nameplate-staff" ||
+    np.animation_class === "nameplate-moderator" ||
+    np.animation_class === "nameplate-management"
+  ) {
+    return { background: "var(--gradient-primary)" };
+  }
   if (np.image_url) {
     return {
       backgroundImage: `url(${np.image_url})`,
