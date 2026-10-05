@@ -316,7 +316,7 @@ function ReadPage() {
             )}
             {blog.body && (
               <div ref={stageRef}>
-                <div className="prose prose-invert max-w-none text-purple-50/90 leading-relaxed grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 pb-3">
+                <div className="prose prose-invert max-w-none text-purple-50/90 leading-relaxed grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-2 2xl:grid-cols-3 gap-3 pb-3">
                   {bodyItems.map((html, i) => (
                     <div key={`bi-${i}`} dangerouslySetInnerHTML={{ __html: html }} />
                   ))}
