@@ -1021,7 +1021,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
           : "h-1.5 w-1.5 shrink-0 rounded-full bg-fuchsia-500 shadow-[0_0_8px_rgba(217,70,239,0.7)]";
         const label = document.createElement("span");
         label.className =
-          "min-w-0 line-clamp-2 break-words text-[10px] font-semibold leading-tight text-white/90";
+          "min-w-0 break-words text-[10px] font-semibold leading-tight text-white/90";
         label.textContent = part;
         item.appendChild(dot);
         item.appendChild(label);
