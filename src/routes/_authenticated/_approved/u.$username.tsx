@@ -2173,7 +2173,7 @@ function EditProfileModal({ profile, isStaffProfile, onClose, onSaved }: { profi
       avatar_url: avatarUrl,
       is_private: isPrivate,
       timezone: detectedTimezone,
-      ...(isStaffProfile ? { staff_gender: staffGender } : {}),
+      ...(isStaffProfile ? { staff_gender: staffGender, staff_gender_confirmed_at: new Date().toISOString() } : {}),
     }).eq("id", user.id);
     setSaving(false);
     if (error) return toast.error(error.message);
