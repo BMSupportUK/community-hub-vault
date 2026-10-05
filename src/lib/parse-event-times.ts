@@ -952,7 +952,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     if (chanParts.length === 1) {
       const badge = document.createElement("span");
       badge.className =
-        "min-w-0 truncate px-2.5 py-1 rounded-md bg-purple-600/20 text-purple-300 text-xs font-bold tracking-wider uppercase border border-purple-500/30";
+        "px-2.5 py-1 rounded-md bg-purple-600/20 text-purple-300 text-xs font-bold tracking-wider uppercase border border-purple-500/30 leading-tight text-center";
       badge.title = chanParts[0];
       badge.textContent = chanParts[0];
       topRow.appendChild(badge);
