@@ -183,13 +183,13 @@ function WelcomePage() {
                   )}
                 </div>
 
-                <div className="relative flex min-h-56 min-w-0 flex-col overflow-hidden rounded-xl bg-blue-950/30 ring-1 ring-white/10 md:h-full">
-                  <div className="relative min-h-0 flex-1">
+                <div className="relative aspect-video w-full min-w-0 self-center overflow-hidden rounded-xl bg-blue-950/30 ring-1 ring-white/10">
+                  <div className="absolute inset-0">
                     <img
                       src={heroImg}
                       alt="BM Support — community and support"
-                      width={1280}
-                      height={832}
+                      width={1920}
+                      height={1080}
                       className="h-full w-full object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-tr from-blue-950/35 via-transparent to-transparent" />
