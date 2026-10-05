@@ -1057,7 +1057,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
       if (groupedChannels && groupedChannels.length) {
         for (const g of groupedChannels) {
           const sec = document.createElement("div");
-          sec.className = "mt-2 border-t border-white/5 pt-1.5 text-[10px] leading-snug";
+          sec.className = "mt-2 border-t border-white/5 pt-1.5 text-xs leading-snug";
           const lbl = document.createElement("div");
           lbl.className = "font-bold uppercase tracking-wider text-fuchsia-200/80";
           lbl.textContent = g.label;
