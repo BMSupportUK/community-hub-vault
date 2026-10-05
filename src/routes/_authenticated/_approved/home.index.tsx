@@ -1,6 +1,6 @@
 import { AdSenseSlot } from "@/components/app/AdSenseSlot";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Headphones, MessageSquare, Activity, Ticket, ShoppingBag, BookOpen, UserPlus, ArrowUp, ArrowDown, Trophy, KeyRound } from "lucide-react";
+import { Headphones, MessageSquare, Activity, Ticket, ShoppingBag, BookOpen, UserPlus, ArrowUp, ArrowDown, Trophy, KeyRound, Sparkles } from "lucide-react";
 import heroImg from "@/assets/member-hero.jpg";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
@@ -159,8 +159,17 @@ function WelcomePage() {
             <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600 shadow-2xl">
               <div className={`grid min-h-0 flex-1 gap-4 p-4 pb-14 md:items-start lg:p-5 lg:pb-14 xl:gap-6 xl:p-6 xl:pb-14 ${isStaffAccount ? "md:grid-cols-2" : "md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]"}`}>
                 {isStaffAccount ? (
-                  <div className="order-2 min-h-0 min-w-0 self-stretch">
+                  <div className="order-2 flex min-h-0 min-w-0 flex-col self-stretch">
                     <WorkingStatusBox compact />
+                    {/* Encouragement for the shift, sitting under the status box and
+                        right-aligned so it balances the greeting on the opposite side. */}
+                    <p className="mt-3 flex flex-wrap items-center justify-start gap-1.5 px-1 text-sm font-medium text-white/90 md:justify-end md:text-right">
+                      <Sparkles className="size-4 shrink-0 text-amber-200" />
+                      <span>
+                        Have a great shift, {name} — thanks for being on. We&apos;ve got your back if
+                        anything comes up.
+                      </span>
+                    </p>
                   </div>
                 ) : (
                   <div className="flex min-h-0 min-w-0 flex-col text-white">
@@ -197,12 +206,14 @@ function WelcomePage() {
                   </div>
                   {isStaffAccount && (
                     <div className="px-1">
-                      <div className="text-sm font-semibold text-sky-100/90">Hey {name}</div>
-                      {staffRoleLabel && (
-                        <div className="mt-1.5 inline-flex items-center rounded-full border border-white/25 bg-white/15 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-white">
-                          {staffRoleLabel}
-                        </div>
-                      )}
+                      <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                        <span className="text-sm font-semibold text-sky-100/90">Hey {name}</span>
+                        {staffRoleLabel && (
+                          <span className="inline-flex items-center rounded-full border border-white/25 bg-white/15 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-white">
+                            {staffRoleLabel}
+                          </span>
+                        )}
+                      </div>
                       <h1 className="mt-1.5 font-display text-xl font-bold leading-tight lg:text-2xl xl:text-3xl">Welcome to your shift</h1>
                     </div>
                   )}
