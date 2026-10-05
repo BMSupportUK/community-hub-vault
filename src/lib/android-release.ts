@@ -20,5 +20,5 @@ export const ANDROID_RELEASE = {
   /** Always use this for downloads/QR: correct .apk filename + mime type. */
   url: "/api/public/android-apk",
   absoluteUrl: "https://bmsupport.uk/api/public/android-apk",
-  notes: "Spoken alert sounds for new tickets, shifts and outages now play even when the app is closed.",
+  notes: "Alerts now ring and show on the lock screen, and the app asks to be left out of battery saving so notifications keep working when the phone is locked.",
 } as const;
