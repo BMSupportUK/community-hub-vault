@@ -7250,6 +7250,10 @@ export type Database = {
         }
         Returns: string
       }
+      staff_nameplate_for_role: {
+        Args: { _role: Database["public"]["Enums"]["app_role"] }
+        Returns: string
+      }
       staff_pin_check: {
         Args: { p_pin: string; p_user: string }
         Returns: boolean
