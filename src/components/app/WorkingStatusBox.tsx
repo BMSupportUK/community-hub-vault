@@ -478,6 +478,28 @@ export function WorkingStatusBox({
     user.email?.split("@")[0] ||
     "User";
 
+  // Avatar shown beside the name plate — resolves the staff default when no
+  // profile photo is set, matching the header menu.
+  const roleFlashMap = useRoleFlashMap();
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!user) return;
+    let alive = true;
+    supabase
+      .from("profiles")
+      .select("avatar_url")
+      .eq("id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (alive) setAvatarUrl((data as { avatar_url: string | null } | null)?.avatar_url ?? null);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [user?.id]);
+  const avatar = resolveAvatarUrl(user.id, avatarUrl, roleFlashMap);
+  const avatarInitial = displayName.trim().charAt(0).toUpperCase() || "?";
+
   // DND overrides the card status, while the talk-channel header keeps its controls available.
   if (dnd?.active && variant === "card") {
     const until = dnd.endsAt
