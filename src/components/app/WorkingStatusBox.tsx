@@ -592,7 +592,7 @@ export function WorkingStatusBox({
         {startDate} · {startTime} – {endTime}
       </span>
     ) : (
-      <span className={cn("flex flex-wrap items-center justify-end gap-x-2 gap-y-1 font-semibold tabular-nums", className)}>
+      <span className={cn("flex flex-wrap items-center justify-end gap-x-3 gap-y-1 font-semibold tabular-nums", className)}>
         <span className="whitespace-nowrap">{startDate} · {startTime}</span>
         <span
           aria-hidden="true"
@@ -770,17 +770,17 @@ export function WorkingStatusBox({
                 </span>
               </div>
               {currentHours && (
-                <div className="grid gap-1 text-xs">
-                  <div className="flex items-center justify-between gap-3">
+                <div className="grid gap-2.5 text-xs">
+                  {/* Both shift rows are pills so the office and local times read as a pair. */}
+                  <div className="flex items-center justify-between gap-3 rounded-xl bg-white/5 px-3 py-1.5 ring-1 ring-white/10 sm:rounded-full">
                     <span className="text-muted-foreground font-medium">UK office</span>
-                    {currentShiftUk && <ShiftTimes {...currentShiftUk} className="text-foreground/80" />}
+                    {currentShiftUk && <ShiftTimes {...currentShiftUk} className="text-foreground" />}
                   </div>
 
                   {currentShiftLocal && (
-                    <div className="flex flex-col gap-0.5 rounded-md bg-primary/10 px-2 py-1 ring-1 ring-primary/25 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+                    <div className="flex flex-col gap-0.5 rounded-xl bg-primary/10 px-3 py-1.5 ring-1 ring-primary/30 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:rounded-full">
                       <span className="font-medium text-primary">Your local time</span>
                       <ShiftTimes {...currentShiftLocal} className="text-[11px] text-foreground sm:text-xs" />
-
                     </div>
                   )}
                 </div>
