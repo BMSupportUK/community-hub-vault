@@ -16,6 +16,8 @@ import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { resolveAvatarUrl, useRoleFlashMap } from "@/lib/role-flash";
 import { useDndStatus } from "@/hooks/use-dnd";
 import { Moon } from "lucide-react";
 import { DndCountdown } from "@/components/app/DndCountdown";
@@ -476,6 +478,28 @@ export function WorkingStatusBox({
     user.email?.split("@")[0] ||
     "User";
 
+  // Avatar shown beside the name plate — resolves the staff default when no
+  // profile photo is set, matching the header menu.
+  const roleFlashMap = useRoleFlashMap();
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!user) return;
+    let alive = true;
+    supabase
+      .from("profiles")
+      .select("avatar_url")
+      .eq("id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (alive) setAvatarUrl((data as { avatar_url: string | null } | null)?.avatar_url ?? null);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [user?.id]);
+  const avatar = resolveAvatarUrl(user.id, avatarUrl, roleFlashMap);
+  const avatarInitial = displayName.trim().charAt(0).toUpperCase() || "?";
+
   // DND overrides the card status, while the talk-channel header keeps its controls available.
   if (dnd?.active && variant === "card") {
     const until = dnd.endsAt
@@ -513,7 +537,13 @@ export function WorkingStatusBox({
           </div>
           <div className="px-3 py-3 space-y-2 text-xs">
             <div className="flex items-center gap-2 pb-1 border-b border-violet-500/30">
-              <span className="font-display font-semibold text-sm text-violet-100">
+              <Avatar className="h-9 w-9 shrink-0 ring-2 ring-violet-400/50">
+                <AvatarImage src={avatar} alt={displayName} />
+                <AvatarFallback className="text-[11px] font-bold bg-gradient-primary text-primary-foreground">
+                  {avatarInitial}
+                </AvatarFallback>
+              </Avatar>
+              <span className="font-display font-semibold text-sm text-violet-100 truncate">
                 {displayName}
               </span>
               {staffRoleLabel && (
@@ -754,15 +784,33 @@ export function WorkingStatusBox({
               stackActions ? "flex flex-col items-start" : "flex items-center justify-between",
             )}
           >
-            <div className="flex flex-col gap-1.5 min-w-0">
-              <span className={cn("font-display font-bold text-foreground truncate", compact ? "text-sm" : "text-lg")}>
-                {displayName}
-              </span>
-              {staffRoleLabel && (
-                <span className="inline-flex items-center self-start rounded-full bg-warning px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-background shadow-lg shadow-warning/20">
-                  {staffRoleLabel}
+            <div className="flex items-center gap-2.5 min-w-0">
+              <Avatar
+                className={cn(
+                  "shrink-0 ring-2 ring-primary/40",
+                  compact ? "h-9 w-9" : "h-11 w-11",
+                )}
+              >
+                <AvatarImage src={avatar} alt={displayName} />
+                <AvatarFallback
+                  className={cn(
+                    "font-bold bg-gradient-primary text-primary-foreground",
+                    compact ? "text-[11px]" : "text-sm",
+                  )}
+                >
+                  {avatarInitial}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col gap-1.5 min-w-0">
+                <span className={cn("font-display font-bold text-foreground truncate", compact ? "text-sm" : "text-lg")}>
+                  {displayName}
                 </span>
-              )}
+                {staffRoleLabel && (
+                  <span className="inline-flex items-center self-start rounded-full bg-warning px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-background shadow-lg shadow-warning/20">
+                    {staffRoleLabel}
+                  </span>
+                )}
+              </div>
             </div>
             <ActionIcons compact={compact} />
           </div>
