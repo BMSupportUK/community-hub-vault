@@ -72,6 +72,7 @@
 - [x] Wise incoming-transfer feed on the Bank Transfer page: live read of payments, auto-matching to pending orders, one-tap confirm
 - [x] Download BM Support Apps: make the BM Support App Store tab first and default (verified in the signed-in preview)
 - [x] Member sports guides: flag converted local times that fall on the next or previous day from UK time
+- [x] Member sports guides: list every event channel beneath Available channels, including single-channel events
 
 ## Done (recent)
 - [x] UFC Streams multi-time imports: attach every listed channel to every time and retain next-day rollover

@@ -941,25 +941,10 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
         (24 * 60 * 60 * 1000),
     );
 
-    // Top row: channel badge on the left, compact time badges stacked right.
+    // Keep the top row for times only; all channels belong below the event name.
     const topRow = document.createElement("div");
-    topRow.className = "flex items-center justify-between gap-3 mb-3";
+    topRow.className = "flex items-center justify-end gap-3 mb-3";
     block.appendChild(topRow);
-
-    // Multi-channel events list every channel in the "Available channels"
-    // panel below — no top-left badge, so the first channel is never shown
-    // twice. Single-channel events keep the plain top-left badge.
-    if (chanParts.length === 1) {
-      const badge = document.createElement("span");
-      badge.className =
-        "px-2.5 py-1 rounded-md bg-purple-600/20 text-purple-300 text-xs font-bold tracking-wider uppercase border border-purple-500/30 leading-tight text-center";
-      badge.title = chanParts[0];
-      badge.textContent = chanParts[0];
-      topRow.appendChild(badge);
-    } else {
-      const spacer = document.createElement("span");
-      topRow.appendChild(spacer);
-    }
 
     // Times sit side by side, each time joined with its own date on one
     // line, separated by a glowing divider so the split pops out.
@@ -1026,10 +1011,9 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
     nameEl.textContent = titleText;
     block.appendChild(nameEl);
 
-    // Multi-channel events use a "broadcast matrix": a bordered panel under
-    // the title holding every channel as a compact two-column grid, so 2-8
-    // channels stay scannable instead of turning into a wrapping chip stack.
-    if (chanParts.length > 1) {
+    // Every event with channels uses the same list below its title, including
+    // single-channel and grouped-channel events. Never duplicate a channel above.
+    if (chanParts.length > 0 || (groupedChannels && groupedChannels.length > 0)) {
       const matrix = document.createElement("div");
       matrix.className = "mt-3 rounded-lg border border-white/5 bg-black/20 p-2.5";
 
@@ -1066,7 +1050,7 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
         item.appendChild(label);
         chanGrid.appendChild(item);
       });
-      matrix.appendChild(chanGrid);
+      if (chanParts.length) matrix.appendChild(chanGrid);
 
       if (groupedChannels && groupedChannels.length) {
         for (const g of groupedChannels) {
@@ -1094,25 +1078,6 @@ export function annotateTimesInEl(root: HTMLElement, viewerTz: string, defaultZo
       capEl.textContent = caption;
       block.appendChild(capEl);
     }
-    // Single-channel events with no caption keep the plain top-left badge —
-    // no matrix panel, matching the original one-channel card design.
-    if (groupedChannels && groupedChannels.length && chanParts.length <= 1) {
-      for (const g of groupedChannels) {
-        const sec = document.createElement("div");
-        sec.className = "mt-1.5 text-sm text-purple-100/80 break-words leading-snug";
-        const lbl = document.createElement("div");
-        lbl.className = "font-bold text-fuchsia-200";
-        lbl.textContent = g.label;
-        sec.appendChild(lbl);
-        if (g.items.length) {
-          const list = document.createElement("div");
-          list.textContent = g.items.join(" · ");
-          sec.appendChild(list);
-        }
-        block.appendChild(sec);
-      }
-    }
-
   }
 
   // Sort all transformed event rows by earliest source time.
