@@ -152,7 +152,7 @@ function WelcomePage() {
         <div className="grid min-h-0 min-w-0 w-full grid-cols-1 gap-4 sm:grid-cols-[minmax(0,1fr)_220px] md:h-full lg:grid-cols-[minmax(0,1fr)_minmax(220px,300px)] xl:gap-6">
           <div className="relative flex min-h-0 min-w-0 flex-col pb-8 lg:pb-10">
             <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600 shadow-2xl">
-              <div className="grid min-h-0 flex-1 gap-4 p-4 pb-14 md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] md:items-center lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] lg:items-stretch lg:p-5 lg:pb-14 xl:gap-6 xl:p-6 xl:pb-14">
+              <div className={`grid min-h-0 flex-1 gap-4 p-4 pb-14 md:items-start lg:p-5 lg:pb-14 xl:gap-6 xl:p-6 xl:pb-14 ${isStaffAccount ? "md:grid-cols-2" : "md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]"}`}>
                 {isStaffAccount ? (
                   <div className="min-h-0 min-w-0 self-stretch">
                     <WorkingStatusBox compact />

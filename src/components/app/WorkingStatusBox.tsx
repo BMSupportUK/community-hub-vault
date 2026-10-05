@@ -523,7 +523,7 @@ export function WorkingStatusBox({
               </p>
             )}
             {!dnd.note && !until && <p className="text-muted-foreground">Notifications muted.</p>}
-            {nextSlot && <NextShiftPanel slot={nextSlot} />}
+            {nextSlot && !compact && <NextShiftPanel slot={nextSlot} />}
           </div>
         </div>
       </section>
@@ -671,7 +671,7 @@ export function WorkingStatusBox({
   }
 
   return (
-    <section className={cn(compact ? "h-full" : "px-2 pt-4")}>
+    <section className={cn(compact ? "aspect-video w-full self-start" : "px-2 pt-4")}>
       <div className={cn("bg-card border border-white/10 shadow-2xl overflow-hidden", compact ? "flex h-full flex-col rounded-xl" : "rounded-2xl")}>
         <div className={cn("flex items-center justify-between border-b border-white/10 bg-gradient-to-r from-success/80 to-primary/80", compact ? "px-3 py-2" : "px-4 py-3")}>
           <div className="flex items-center gap-2.5">
@@ -765,7 +765,7 @@ export function WorkingStatusBox({
               {todayWindow && !canSignIn && <SignInOpensNote win={todayWindow} />}
             </>
           )}
-          {nextSlot && <NextShiftPanel slot={nextSlot} />}
+          {nextSlot && !compact && <NextShiftPanel slot={nextSlot} />}
           {brk && (
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground font-medium">{breakLabel(brk.kind)}</span>
