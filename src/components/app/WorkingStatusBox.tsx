@@ -784,15 +784,33 @@ export function WorkingStatusBox({
               stackActions ? "flex flex-col items-start" : "flex items-center justify-between",
             )}
           >
-            <div className="flex flex-col gap-1.5 min-w-0">
-              <span className={cn("font-display font-bold text-foreground truncate", compact ? "text-sm" : "text-lg")}>
-                {displayName}
-              </span>
-              {staffRoleLabel && (
-                <span className="inline-flex items-center self-start rounded-full bg-warning px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-background shadow-lg shadow-warning/20">
-                  {staffRoleLabel}
+            <div className="flex items-center gap-2.5 min-w-0">
+              <Avatar
+                className={cn(
+                  "shrink-0 ring-2 ring-primary/40",
+                  compact ? "h-9 w-9" : "h-11 w-11",
+                )}
+              >
+                <AvatarImage src={avatar} alt={displayName} />
+                <AvatarFallback
+                  className={cn(
+                    "font-bold bg-gradient-primary text-primary-foreground",
+                    compact ? "text-[11px]" : "text-sm",
+                  )}
+                >
+                  {avatarInitial}
+                </AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col gap-1.5 min-w-0">
+                <span className={cn("font-display font-bold text-foreground truncate", compact ? "text-sm" : "text-lg")}>
+                  {displayName}
                 </span>
-              )}
+                {staffRoleLabel && (
+                  <span className="inline-flex items-center self-start rounded-full bg-warning px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider text-background shadow-lg shadow-warning/20">
+                    {staffRoleLabel}
+                  </span>
+                )}
+              </div>
             </div>
             <ActionIcons compact={compact} />
           </div>
