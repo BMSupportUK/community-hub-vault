@@ -220,7 +220,7 @@ function ReadPage() {
   }, [bodyItems]);
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden bg-gradient-to-br from-[#1a0b2e] via-[#2d1b4e] to-[#1a0b2e]">
+    <div className="flex-1 flex flex-col bg-gradient-to-br from-[#1a0b2e] via-[#2d1b4e] to-[#1a0b2e]">
       <header className="flex items-center justify-between gap-4 px-8 py-5 border-b border-purple-500/30 bg-purple-950/60 backdrop-blur shrink-0">
         <Button
           variant="ghost"
@@ -245,29 +245,44 @@ function ReadPage() {
           {bodyItems.length} {bodyItems.length === 1 ? "listing" : "listings"}
         </span>
       </header>
-      <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+      <div className="flex-1 flex flex-col">
         {loading || !blog ? (
           <div className="px-6 py-12 text-center text-purple-200/70">Loading…</div>
         ) : (
-          <article className="flex-1 min-h-0 w-full max-w-none mx-auto px-3 sm:px-6 py-4 flex flex-col gap-3 overflow-hidden">
-            <div className="flex flex-wrap gap-2">
-              <span className="text-xs px-2 py-1 rounded-md bg-fuchsia-500/30 text-white font-semibold border border-fuchsia-400/50">
-                {(() => {
-                  const cat = categories.find((c) => c.id === blog.category_id);
-                  if (!cat) return null;
-                  const parent = cat.parent_id ? categories.find((p) => p.id === cat.parent_id)?.name : null;
-                  return parent ? `${parent} / ${cat.name}` : cat.name;
-                })()}
-              </span>
-              {blog.badge && (
-                <span className="text-xs px-2 py-1 rounded-md bg-violet-500/20 text-violet-200 font-medium border border-violet-500/30">
-                  {blog.badge}
-                </span>
-              )}
+          <article className="w-full max-w-none mx-auto px-3 sm:px-6 py-4 flex flex-col gap-3">
+            <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
+              <h1 className="min-w-0 font-display text-2xl md:text-3xl font-bold text-white">
+                {blog.title}
+              </h1>
+              <div className="flex w-full flex-col items-start gap-2 lg:w-96 lg:items-end">
+                <div className="flex flex-wrap gap-2 lg:justify-end">
+                  <span className="text-xs px-2 py-1 rounded-md bg-fuchsia-500/30 text-white font-semibold border border-fuchsia-400/50">
+                    {(() => {
+                      const cat = categories.find((c) => c.id === blog.category_id);
+                      if (!cat) return null;
+                      const parent = cat.parent_id ? categories.find((p) => p.id === cat.parent_id)?.name : null;
+                      return parent ? `${parent} / ${cat.name}` : cat.name;
+                    })()}
+                  </span>
+                  {blog.badge && (
+                    <span className="text-xs px-2 py-1 rounded-md bg-violet-500/20 text-violet-200 font-medium border border-violet-500/30">
+                      {blog.badge}
+                    </span>
+                  )}
+                </div>
+                {blog.refresh_notice && (
+                  <div className="flex w-full items-start gap-2 rounded-xl border border-amber-400/40 bg-amber-500/10 px-3 py-2 text-amber-100">
+                    <RefreshCw className="size-4 shrink-0 mt-0.5" />
+                    <div className="text-sm leading-relaxed">{blog.refresh_notice}</div>
+                  </div>
+                )}
+                {blog.not_guaranteed && (
+                  <div className="flex w-full items-center rounded-xl border border-rose-400/40 bg-rose-500/10 px-3 py-2 text-rose-100 text-sm leading-relaxed">
+                    These are not guaranteed and no reports allowed to source.
+                  </div>
+                )}
+              </div>
             </div>
-            <h1 className="font-display text-2xl md:text-3xl font-bold text-white">
-              {blog.title}
-            </h1>
             {blog.image_url ? (
               <div className="grid shrink-0 grid-cols-1 gap-4 xl:grid-cols-2 xl:items-stretch">
                 <div className="relative h-32 min-w-0 overflow-hidden rounded-2xl border border-purple-500/30 bg-purple-950/60 sm:h-40 lg:h-48 xl:h-auto xl:aspect-[3/1]">
@@ -290,29 +305,11 @@ function ReadPage() {
                 </div>
               </div>
             ) : null}
-            {(blog.refresh_notice || blog.not_guaranteed) && (
-              <div className="grid grid-cols-1 gap-2 lg:grid-cols-2">
-                {blog.refresh_notice && (
-                  <div className="flex items-start gap-2 rounded-xl border border-amber-400/40 bg-amber-500/10 px-3 py-2 text-amber-100">
-                    <RefreshCw className="size-4 shrink-0 mt-0.5" />
-                    <div className="text-sm leading-relaxed">{blog.refresh_notice}</div>
-                  </div>
-                )}
-                {blog.not_guaranteed && (
-                  <div className="flex items-center rounded-xl border border-rose-400/40 bg-rose-500/10 px-3 py-2 text-rose-100 text-sm leading-relaxed">
-                    These are not guaranteed and no reports allowed to source.
-                  </div>
-                )}
-              </div>
-            )}
             {blog.excerpt && (
               <p className="text-base text-purple-100/80 italic line-clamp-2">{blog.excerpt}</p>
             )}
             {blog.body && (
-              <div
-                ref={stageRef}
-                className="flex-1 min-h-0 overflow-y-auto overscroll-contain pr-1 [scrollbar-gutter:stable]"
-              >
+              <div ref={stageRef}>
                 <div className="prose prose-invert max-w-none text-purple-50/90 leading-relaxed grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 pb-3">
                   {bodyItems.map((html, i) => (
                     <div key={`bi-${i}`} dangerouslySetInnerHTML={{ __html: html }} />
