@@ -537,7 +537,13 @@ export function WorkingStatusBox({
           </div>
           <div className="px-3 py-3 space-y-2 text-xs">
             <div className="flex items-center gap-2 pb-1 border-b border-violet-500/30">
-              <span className="font-display font-semibold text-sm text-violet-100">
+              <Avatar className="h-9 w-9 shrink-0 ring-2 ring-violet-400/50">
+                <AvatarImage src={avatar} alt={displayName} />
+                <AvatarFallback className="text-[11px] font-bold bg-gradient-primary text-primary-foreground">
+                  {avatarInitial}
+                </AvatarFallback>
+              </Avatar>
+              <span className="font-display font-semibold text-sm text-violet-100 truncate">
                 {displayName}
               </span>
               {staffRoleLabel && (
