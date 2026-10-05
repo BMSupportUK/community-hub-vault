@@ -47,7 +47,7 @@ export function StaffGenderPrompt() {
       .eq("id", user.id);
     setSaving(false);
     if (error) return toast.error(error.message);
-    clearNameplateCache?.();
+    clearNameplateCache();
     toast.success("Profile updated");
     setOpen(false);
   };
