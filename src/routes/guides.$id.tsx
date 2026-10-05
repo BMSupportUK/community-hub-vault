@@ -142,20 +142,20 @@ function PublicGuidePage() {
             {guide.events.map((e, i) => (
               <li
                 key={i}
-                className="rounded-xl border border-purple-500/30 bg-purple-950/50 p-4 backdrop-blur"
+                className="rounded-2xl border border-white/5 bg-[#1e0f35] p-5 backdrop-blur transition hover:border-white/20 hover:bg-[#251242] hover:shadow-2xl hover:shadow-purple-900/20"
               >
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-                  {e.date && (
-                    <span className="font-semibold text-fuchsia-200">{e.date}</span>
-                  )}
+                <div className="flex flex-wrap items-center justify-end gap-1.5">
                   {e.time && (
-                    <span className="inline-flex items-center gap-1 font-semibold text-purple-50">
+                    <span className="inline-flex items-center gap-1 rounded-md bg-fuchsia-600 px-2 py-1 text-xs font-semibold text-white">
                       <Clock className="h-3.5 w-3.5" />
                       {e.time}
                     </span>
                   )}
                 </div>
-                <p className="mt-1.5 font-medium text-purple-50">{e.title}</p>
+                {e.date && (
+                  <p className="mt-1 text-right text-[11px] text-purple-200/50">{e.date}</p>
+                )}
+                <p className="mt-3 font-display text-base font-bold leading-snug text-white">{e.title}</p>
               </li>
             ))}
           </ul>
