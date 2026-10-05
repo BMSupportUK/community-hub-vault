@@ -40,6 +40,7 @@ function WelcomePage() {
   const staffRoleLabel = formatRoleLabel(staffRole);
   const fallbackName = (user?.email ?? "there").split("@")[0];
   const [displayName, setDisplayName] = useState<string>(fallbackName);
+  const [isStaffShiftActive, setIsStaffShiftActive] = useState(false);
   const name = displayName;
   const navigate = useNavigate();
 
@@ -160,14 +161,15 @@ function WelcomePage() {
               <div className={`grid min-h-0 flex-1 gap-4 p-4 pb-14 md:items-start lg:p-5 lg:pb-14 xl:gap-6 xl:p-6 xl:pb-14 ${isStaffAccount ? "md:grid-cols-2" : "md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]"}`}>
                 {isStaffAccount ? (
                   <div className="order-2 flex min-h-0 min-w-0 flex-col self-stretch">
-                    <WorkingStatusBox compact />
+                    <WorkingStatusBox compact onShiftStatusChange={setIsStaffShiftActive} />
                     {/* Encouragement for the shift, sitting under the status box and
                         right-aligned so it balances the greeting on the opposite side. */}
                     <p className="mt-3 flex flex-wrap items-center justify-start gap-1.5 px-1 text-sm font-medium text-white/90 md:justify-end md:text-right">
                       <Sparkles className="size-4 shrink-0 text-amber-200" />
                       <span>
-                        Have a great shift, {name} — thanks for being on. We&apos;ve got your back if
-                        anything comes up.
+                        {isStaffShiftActive
+                          ? `Have a great shift, ${name} — thanks for being on. We've got your back if anything comes up.`
+                          : `See you on your next shift, ${name} — enjoy your time away.`}
                       </span>
                     </p>
                   </div>
