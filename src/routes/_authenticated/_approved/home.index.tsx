@@ -208,14 +208,14 @@ function WelcomePage() {
                       </div>
                       <h1 className="mt-1.5 font-display text-xl font-bold leading-tight lg:text-2xl xl:text-3xl">Welcome to The Staff Portal</h1>
                       {/* Shift encouragement now sits directly under the staff welcome heading. */}
-                      <p className={`mt-2.5 flex flex-wrap items-center gap-1.5 px-1 ${isStaffShiftActive ? "justify-start text-sm font-medium text-white/90" : "justify-start text-base font-semibold text-white"}`}>
-                        <Star className={`shrink-0 text-amber-200 ${isStaffShiftActive ? "size-4" : "size-5"}`} />
+                      <p className={`mt-2.5 px-1 ${isStaffShiftActive ? "text-sm font-medium text-white/90" : "text-base font-semibold text-white"}`}>
+                        <Star className={`mr-1 inline-block size-4 shrink-0 -translate-y-px text-amber-200 align-middle ${isStaffShiftActive ? "" : "size-5"}`} />
                         <span>
                           {isStaffShiftActive
                             ? `Have a great shift, ${name} — thanks for being on. We've got your back if anything comes up.`
                             : `See you on your next shift, ${name} — enjoy your time away.`}
                         </span>
-                        <Star className={`shrink-0 text-amber-200 ${isStaffShiftActive ? "size-4" : "size-5"}`} />
+                        <Star className={`ml-1 inline-block size-4 shrink-0 -translate-y-px text-amber-200 align-middle ${isStaffShiftActive ? "" : "size-5"}`} />
                       </p>
                     </div>
                   )}
