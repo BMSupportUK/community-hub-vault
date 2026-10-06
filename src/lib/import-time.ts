@@ -204,11 +204,12 @@ export function sourceTimeToUk(
   time: string | null | undefined,
   date: string | null | undefined,
   source: TimeZoneChoice,
+  nowMs: number = Date.now(),
 ): string | null {
   const clock = parseClockTime(time);
   if (!clock) return null;
   const day = parseListingDate(date) ?? (() => {
-    const now = new Date();
+    const now = new Date(nowMs);
     return { y: now.getFullYear(), m: now.getMonth(), d: now.getDate() };
   })();
   const instant = wallTimeToInstant(day, clock, source === "gmt" ? UK_TZ : ET_TZ);
@@ -224,11 +225,12 @@ export function sourceTimeToUkParts(
   time: string | null | undefined,
   date: string | null | undefined,
   source: TimeZoneChoice,
+  nowMs: number = Date.now(),
 ): { time: string; dayShift: number } | null {
   const clock = parseClockTime(time);
   if (!clock) return null;
   const day = parseListingDate(date) ?? (() => {
-    const now = new Date();
+    const now = new Date(nowMs);
     return { y: now.getFullYear(), m: now.getMonth(), d: now.getDate() };
   })();
   const instant = wallTimeToInstant(day, clock, source === "gmt" ? UK_TZ : ET_TZ);
