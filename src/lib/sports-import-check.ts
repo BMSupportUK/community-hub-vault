@@ -41,7 +41,7 @@ export function checkSportsImport(
   guideTitle?: string | null,
 ): ImportCheckResult {
   const issues: ImportCheckIssue[] = [];
-  const formatted = formatSportsListingBlock({ raw, sourceZone, guideTitle });
+  const formatted = formatSportsListingBlock({ raw, sourceZone, guideTitle, nowMs });
   const events = formatted ? parseSportsListingBlock(formatted) : [];
 
   // Every explicit competition heading is carried onto every event name.
@@ -55,7 +55,7 @@ export function checkSportsImport(
 
   // 1. Round trip: the saved body must read back identically, otherwise the
   //    guide changes the next time it is opened, merged or auto-cleared.
-  const again = formatSportsListingBlock({ raw: formatted, sourceZone: "gmt" });
+  const again = formatSportsListingBlock({ raw: formatted, sourceZone: "gmt", nowMs });
   const sig = (list: SportsListingEvent[]) =>
     list
       .map((e) => {

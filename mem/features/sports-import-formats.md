@@ -106,3 +106,7 @@ Untimed follow-on rows `A vs B - WTA Beijing :Tennis 10` are skipped — never a
 
 ## NBA League Pass weekday-clock rows (permanent)
 New style: `NBA  01: Nets vs Hornets 12:00am Wed` — fixture and a UK clock with its weekday on one row, no ET|UK pair. The clock is the stated UK time; the weekday pins the date. Output: `00:00 BST` on that weekday, `Nets v Hornets`, channel `NBA 01`. The older `NBA 01: Fixture 7pm ET | 12:00am UK` layout still works. Test: 'NBA League Pass rows with a UK clock and weekday import on the stated day'.
+
+## Date handling (permanent)
+
+ET→UK conversion (`sourceTimeToUk`/`sourceTimeToUkParts` in src/lib/import-time.ts) takes an optional `nowMs`; `checkSportsImport` passes its pinned `nowMs` through `formatSportsListingBlock` so date-pinned tests never depend on the real clock. Default is `Date.now()`, so live imports are unchanged.
