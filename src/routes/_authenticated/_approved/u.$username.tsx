@@ -517,6 +517,7 @@ function ProfilePage() {
   // Shift history is only meaningful for staff-side roles, and is visible to the
   // staff member themselves plus the wider support team.
   const isStaffProfile = sortedRoles.some((r) => ["admin", "management", "staff", "moderator"].includes(r));
+  const isBmSupportProfile = sortedRoles.length === 0 || sortedRoles.some((r) => isSupportRole(r));
   const canSeeShifts = isStaffProfile && (isOwner || hasAny(["admin", "management", "staff", "moderator"]));
   const canSeeSubscription = isStaffProfile && isOwner && hasAssignedCreds;
 
@@ -634,7 +635,16 @@ function ProfilePage() {
                   <Avatar url={profile.avatar_url} name={display} size={96} ring userId={profile.id} />
                   <div className="flex-1 min-w-0">
                     <div className="flex min-w-0 flex-wrap items-center gap-2">
-                      <h2 className={cn("max-w-full truncate font-display text-xl font-bold sm:text-2xl", roleFlashClass(roleFlashMap.get(profile.id)))}>{display}</h2>
+                      {isBmSupportProfile ? (
+                        <Nameplate
+                          id={profile.equipped_nameplate_id}
+                          className="flex h-[50px] w-[189px] min-w-0 max-w-full flex-col justify-center rounded-lg px-3 py-1 pr-14 shadow-sm isolate"
+                        >
+                          <h2 className={cn("relative z-10 max-w-full truncate font-display text-lg font-bold drop-shadow-sm", roleFlashClass(roleFlashMap.get(profile.id)))}>{display}</h2>
+                        </Nameplate>
+                      ) : (
+                        <h2 className={cn("max-w-full truncate font-display text-xl font-bold sm:text-2xl", roleFlashClass(roleFlashMap.get(profile.id)))}>{display}</h2>
+                      )}
                       <VpnBadge userId={profile.id} size={18} />
                       {sortedRoles.map((r) => (
                         <span key={r} className={cn("text-xs px-2 py-0.5 rounded-full border font-medium", ROLE_STYLES[r])}>
@@ -2173,7 +2183,8 @@ function EditProfileModal({ profile, isStaffProfile, onClose, onSaved }: { profi
       avatar_url: avatarUrl,
       is_private: isPrivate,
       timezone: detectedTimezone,
-      ...(isStaffProfile ? { staff_gender: staffGender, staff_gender_confirmed_at: new Date().toISOString() } : {}),
+      staff_gender: staffGender,
+      staff_gender_confirmed_at: new Date().toISOString(),
     }).eq("id", user.id);
     setSaving(false);
     if (error) return toast.error(error.message);
@@ -2219,9 +2230,8 @@ function EditProfileModal({ profile, isStaffProfile, onClose, onSaved }: { profi
             Shown under your nameplate in Talk channels.
           </span>
         </Field>
-        {isStaffProfile && (
-          <Field label="Default staff name plate icon">
-            <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Default staff name plate icon">
+        <Field label={isStaffProfile ? "Default staff name plate icon" : "Default member name plate icon"}>
+            <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Default name plate icon">
               {(["male", "female"] as const).map((option) => (
                 <label
                   key={option}
@@ -2248,7 +2258,6 @@ function EditProfileModal({ profile, isStaffProfile, onClose, onSaved }: { profi
               This selects your automatic role name plate. A name plate you choose yourself will not be replaced.
             </span>
           </Field>
-        )}
         <Field label="Bio">
           <HtmlEditor value={bio} onChange={setBio} placeholder="Tell us about yourself…" />
         </Field>

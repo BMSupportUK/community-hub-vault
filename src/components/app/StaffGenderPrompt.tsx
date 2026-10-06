@@ -13,17 +13,22 @@ import {
 import { Button } from "@/components/ui/button";
 
 const STAFF = ["admin", "management", "staff", "moderator"];
+const EXCLUDED = ["pending", "banned", "rejected"];
+const FAN_ZONE = ["boro_fan_zone_member", "boro_fan_zone_moderator"];
 
-/** Asks staff once to pick Male/Female so their default name plate is right. */
+/** Asks BM Support users once to pick Male/Female for their default name plate. */
 export function StaffGenderPrompt() {
   const { user, roles } = useAuth();
   const isStaff = roles.some((r) => STAFF.includes(r as string));
+  const isExcluded = roles.some((r) => EXCLUDED.includes(r as string));
+  const hasSupportRole = roles.some((r) => !FAN_ZONE.includes(r as string));
+  const isBmSupportUser = isStaff || (!isExcluded && (roles.length === 0 || hasSupportRole));
   const [open, setOpen] = useState(false);
   const [choice, setChoice] = useState<"male" | "female" | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (!user || !isStaff) return;
+    if (!user || !isBmSupportUser) return;
     let cancelled = false;
     supabase
       .from("profiles")
@@ -36,7 +41,7 @@ export function StaffGenderPrompt() {
     return () => {
       cancelled = true;
     };
-  }, [user, isStaff]);
+  }, [user, isBmSupportUser]);
 
   const save = async () => {
     if (!user || !choice) return;
@@ -58,7 +63,7 @@ export function StaffGenderPrompt() {
         <DialogHeader>
           <DialogTitle>Complete your profile</DialogTitle>
           <DialogDescription>
-            Please choose Male or Female so your staff name plate shows the right icon. You can change this later in Edit profile.
+            Please choose Male or Female so your default name plate shows the right icon. You can change this later in Edit profile.
           </DialogDescription>
         </DialogHeader>
         <div className="grid grid-cols-2 gap-3">

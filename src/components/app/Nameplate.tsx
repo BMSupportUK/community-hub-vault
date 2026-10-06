@@ -20,6 +20,7 @@ import iconStaffFemale from "@/assets/nameplates/icon-staff-female-v2.png";
 import iconModFemale from "@/assets/nameplates/icon-mod-female-v2.png";
 import iconMgmtFemale from "@/assets/nameplates/icon-mgmt-female-v2.png";
 import iconCustomer from "@/assets/nameplates/icon-customer.png";
+import iconCustomerMale from "@/assets/nameplates/icon-customer-male.png";
 
 /** Nameplate pack v2: animation class -> mascot artwork (original designs). */
 const MASCOTS: Record<string, { url: string; alt: string }> = {
@@ -54,6 +55,8 @@ const STAFF_ICONS: Record<string, { url: string; alt: string }> = {
   "nameplate-moderator-female": { url: iconModFemale, alt: "" },
   "nameplate-management-female": { url: iconMgmtFemale, alt: "" },
   "nameplate-customer": { url: iconCustomer, alt: "" },
+  "nameplate-customer-female": { url: iconCustomer, alt: "" },
+  "nameplate-customer-male": { url: iconCustomerMale, alt: "" },
 };
 
 interface NameplateProps {

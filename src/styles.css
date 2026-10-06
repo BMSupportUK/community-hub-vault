@@ -1711,7 +1711,9 @@ html.boro-bg-active .min-h-dvh.bg-background {
 .nameplate-moderator-female .nameplate-staff-icon { animation: np-staff-sway 3.2s ease-in-out infinite; transform-origin: 50% 90%; }
 .nameplate-management .nameplate-staff-icon,
 .nameplate-management-female .nameplate-staff-icon { animation: np-staff-pulse 2.8s ease-in-out infinite; }
-.nameplate-customer .nameplate-staff-icon { animation: np-staff-bob 3s ease-in-out infinite; }
+.nameplate-customer .nameplate-staff-icon,
+.nameplate-customer-female .nameplate-staff-icon,
+.nameplate-customer-male .nameplate-staff-icon { animation: np-staff-bob 3s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) {
   .nameplate-staff-icon { animation: none !important; }
 }
