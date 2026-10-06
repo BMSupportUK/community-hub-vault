@@ -217,6 +217,15 @@ function WelcomePage() {
                         )}
                       </div>
                       <h1 className="mt-1.5 font-display text-xl font-bold leading-tight lg:text-2xl xl:text-3xl">Welcome to The Staff Portal</h1>
+                      {/* Shift encouragement now sits directly under the staff welcome heading. */}
+                      <p className={`mt-2.5 flex flex-wrap items-center gap-1.5 px-1 ${isStaffShiftActive ? "justify-start text-sm font-medium text-white/90" : "justify-start text-base font-semibold text-white"}`}>
+                        <Sparkles className={`shrink-0 text-amber-200 ${isStaffShiftActive ? "size-4" : "size-5"}`} />
+                        <span>
+                          {isStaffShiftActive
+                            ? `Have a great shift, ${name} — thanks for being on. We've got your back if anything comes up.`
+                            : `See you on your next shift, ${name} — enjoy your time away.`}
+                        </span>
+                      </p>
                     </div>
                   )}
                 </div>
