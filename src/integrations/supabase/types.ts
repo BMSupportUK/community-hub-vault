@@ -6726,6 +6726,10 @@ export type Database = {
           token: string
         }[]
       }
+      customer_nameplate_is_default: {
+        Args: { _nameplate_id: string }
+        Returns: boolean
+      }
       delete_app_role: { Args: { _name: string }; Returns: undefined }
       directory_member_roles: {
         Args: never
