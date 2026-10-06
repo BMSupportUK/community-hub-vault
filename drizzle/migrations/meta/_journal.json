@@ -603,6 +603,13 @@
       "when": 1791279267971,
       "tag": "0085_preserve_customer_default_after_staff_demotion",
       "breakpoints": true
+    },
+    {
+      "idx": 86,
+      "version": "7",
+      "when": 1791279278507,
+      "tag": "0086_lock_customer_nameplate_helpers",
+      "breakpoints": true
     }
   ]
 }
