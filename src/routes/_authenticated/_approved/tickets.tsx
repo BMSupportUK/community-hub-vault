@@ -2119,7 +2119,7 @@ function TicketDetail({
                 <div className="flex flex-wrap items-center gap-2 mb-2">
                   <Nameplate
                     id={meta?.equipped_nameplate_id}
-                    className="inline-flex items-center rounded-md px-3 py-1 min-w-0 h-7 max-h-7 pr-12 shadow-sm isolate"
+                    className="inline-flex h-9 min-h-9 w-[151px] min-w-0 max-w-full items-center rounded-md px-2 py-1 pr-7 shadow-sm isolate sm:pr-12 xl:w-[183px]"
                     fallbackStyle={{
                       background: "linear-gradient(135deg, #1a4a2a 0%, #2d6a3f 50%, #1a4a2a 100%)",
                     }}
