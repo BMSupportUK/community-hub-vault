@@ -112,3 +112,4 @@
 - [x] Replace Stripe/Square customer receipts with paid BM Support PDF invoices and add Invoice Template Owner Tool
 - [x] Staff status: shift times that fall on different days break onto separate lines
 - [x] Sports guide: fewer card columns so both time zones stay visible
+- [x] NBA League Pass imports: support `NBA NN: Fixture 12:00am Wed` weekday-clock rows (stated UK time, weekday pins the date)

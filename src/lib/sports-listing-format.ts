@@ -1228,6 +1228,16 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
   for (let i = lines.length - 1; i >= 0; i--) {
     if (/^(US|USA)\s*\|\s*NFL Sunday Ticket$/i.test(lines[i])) lines.splice(i, 1);
   }
+  // NBA League Pass (new style): "NBA 01: Nets vs Hornets 12:00am Wed" —
+  // fixture and a UK clock with its weekday on one row, no ET|UK pair.
+  for (let i = 0; i < lines.length; i++) {
+    const m = lines[i].match(
+      new RegExp(String.raw`^(NBA)\s*(?:\|\s*)?(\d{1,3})\s*:\s*(.+?)\s+(${TIME_SOURCE})\s+(${WEEKDAY_HINT_SOURCE})\s*$`, "i"),
+    );
+    if (!m) continue;
+    lines.splice(i, 1, `${m[4]} UK ${m[5]}`, m[3].trim(), `${m[1]} ${m[2].padStart(2, "0")}`);
+    i += 2;
+  }
   // NBA League Pass puts its fixture and both clocks on one row. Keep only
   // the stated UK time and turn the numbered NBA feed into the channel.
   for (let i = 0; i < lines.length; i++) {

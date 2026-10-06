@@ -148,6 +148,20 @@ Lions at Panthers`;
     setSystemTime();
   });
 
+  test("NBA League Pass rows with a UK clock and weekday import on the stated day", () => {
+    setSystemTime(new Date(Date.UTC(2026, 9, 6, 12)));
+    const raw = "US | NBA League Pass\nNBA  01: Nets vs Hornets 12:00am Wed\nNBA 02: Lakers vs Warriors 03:00am Wed";
+    const result = checkSportsImport(raw, "gmt", Date.UTC(2026, 9, 6, 12), "NBA League Pass");
+    expect(result.errors).toBe(0);
+    expect(result.warnings).toBe(0);
+    expect(result.events).toEqual([
+      { date: "Wednesday, 7th October", time: "00:00 BST", title: "Nets v Hornets", channels: ["NBA 01"] },
+      { date: "Wednesday, 7th October", time: "03:00 BST", title: "Lakers v Warriors", channels: ["NBA 02"] },
+    ]);
+    expect(parseSportsListingBlock(result.formatted)).toEqual(result.events);
+    setSystemTime();
+  });
+
   test("UFC multi-time slots each retain the complete channel set", () => {
     const result = parseSportsListingBlock("**UFC Fight Night: A vs. B**\n`10pm | 11pm | 1am UK`\nUFC 01\nUFC 02\nUFC 03");
     expect(result).toHaveLength(3);
