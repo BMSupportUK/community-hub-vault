@@ -787,7 +787,7 @@ export function WorkingStatusBox({
             <DndDialogButton className="inline-flex shrink-0 items-center justify-center size-8 rounded-full text-white/80 hover:text-white hover:bg-white/10 transition" />
           </div>
         </div>
-        <div className={cn("text-sm", compact ? "flex min-h-0 flex-1 flex-col justify-center space-y-2 px-3 py-2.5" : "px-5 py-5 space-y-4")}>
+        <div className={cn("text-sm", compact ? "flex min-h-0 flex-1 flex-col justify-start space-y-2 px-3 py-2.5" : "px-5 py-5 space-y-4")}>
           <div
             className={cn(
               "border-b border-white/10",
