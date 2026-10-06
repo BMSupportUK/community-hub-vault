@@ -582,6 +582,34 @@
       "when": 1791231914615,
       "tag": "0082_staff_gender_confirmed",
       "breakpoints": true
+    },
+    {
+      "idx": 83,
+      "version": "7",
+      "when": 1791279171051,
+      "tag": "0083_add_customer_default_nameplate",
+      "breakpoints": true
+    },
+    {
+      "idx": 84,
+      "version": "7",
+      "when": 1791279208675,
+      "tag": "0084_include_approved_roleless_customer_nameplates",
+      "breakpoints": true
+    },
+    {
+      "idx": 85,
+      "version": "7",
+      "when": 1791279267971,
+      "tag": "0085_preserve_customer_default_after_staff_demotion",
+      "breakpoints": true
+    },
+    {
+      "idx": 86,
+      "version": "7",
+      "when": 1791279278507,
+      "tag": "0086_lock_customer_nameplate_helpers",
+      "breakpoints": true
     }
   ]
 }
