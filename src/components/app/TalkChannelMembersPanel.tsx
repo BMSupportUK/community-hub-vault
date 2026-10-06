@@ -95,8 +95,10 @@ export function TalkChannelMembersPanel({
         const roles = r.roles ?? [];
         if (roles.some((role) => HIDDEN_ROLES.has(role))) return false;
         if (roles.some((role) => STAFF_ROLES.has(role))) return false;
-        // BM Support directory: exclude Fan-Zone-only accounts.
-        if (!roles.some((role) => isSupportRole(role))) return false;
+        // BM Support directory: exclude Fan-Zone-only accounts. An empty role
+        // list is NOT excluded — role-less BM Support members are expected
+        // (surfaced as "Expired Subscription") and must stay visible.
+        if (roles.length > 0 && !roles.some((role) => isSupportRole(role))) return false;
         return true;
       }),
     [rows],
