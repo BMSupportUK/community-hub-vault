@@ -113,3 +113,4 @@
 - [x] Staff status: shift times that fall on different days break onto separate lines
 - [x] Sports guide: fewer card columns so both time zones stay visible
 - [x] NBA League Pass imports: support `NBA NN: Fixture 12:00am Wed` weekday-clock rows (stated UK time, weekday pins the date)
+- [x] Sports import: ET→UK conversion uses the import time (nowMs) instead of the real clock, so date-pinned tests stay stable
