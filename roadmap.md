@@ -1,3 +1,4 @@
+- [x] Member name cards: male/female defaults, one-time confirmation, Talk member identity, and BM Support profile display
 # Roadmap
 
 ## Current

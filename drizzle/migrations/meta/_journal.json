@@ -610,6 +610,13 @@
       "when": 1791279278507,
       "tag": "0086_lock_customer_nameplate_helpers",
       "breakpoints": true
+    },
+    {
+      "idx": 87,
+      "version": "7",
+      "when": 1791280880092,
+      "tag": "0087_add_male_customer_nameplate_and_gender_defaults",
+      "breakpoints": true
     }
   ]
 }

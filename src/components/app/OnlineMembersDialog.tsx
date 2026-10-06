@@ -456,21 +456,24 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
                                 )}
                               />
                             </span>
-                            <div className="flex flex-col min-w-0">
+                            <Nameplate
+                              id={p.equipped_nameplate_id}
+                              className="flex h-9 w-[151px] min-w-0 max-w-full flex-col justify-center rounded-md px-2 py-1 pr-7 shadow-sm isolate sm:pr-12 xl:w-[183px]"
+                            >
                               <span
                                 className={cn(
-                                  "truncate text-sm font-bold text-foreground transition-colors group-hover/name:text-primary",
+                                  "relative z-10 truncate text-xs font-semibold text-foreground drop-shadow-sm",
                                   roleFlashClass(role),
                                 )}
                               >
                                 {name}
                               </span>
                               {p.username && (
-                                <span className="truncate text-xs text-muted-foreground">
+                                <span className="relative z-10 truncate text-[9px] text-muted-foreground">
                                   @{p.username}
                                 </span>
                               )}
-                            </div>
+                            </Nameplate>
                           </span>
                         </TalkMemberMiniProfile>
                       </td>
