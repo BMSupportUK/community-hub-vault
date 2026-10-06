@@ -77,7 +77,8 @@ export function nameplateBackgroundStyle(np: NameplateRow | null | undefined): R
     np.animation_class === "nameplate-management" ||
     np.animation_class === "nameplate-staff-female" ||
     np.animation_class === "nameplate-moderator-female" ||
-    np.animation_class === "nameplate-management-female"
+    np.animation_class === "nameplate-management-female" ||
+    np.animation_class === "nameplate-customer"
   ) {
     return { background: "var(--gradient-primary)" };
   }
