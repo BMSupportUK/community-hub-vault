@@ -2,7 +2,7 @@
 # Roadmap
 
 ## Current
-- [ ] Home loading: stop the Working Status name plate moving upward when shift details arrive
+- [x] Home loading: stop the Working Status name plate moving upward when shift details arrive
 - [x] Customer name cards: give approved BM Support customers a person-icon default without replacing their chosen card
 - [x] Staff nameplates: male/female role defaults selected from Edit profile without replacing custom choices
 - [x] Sports imports: fix NFL spaced/SNF rows and NBA League Pass inline ET/UK rows permanently
