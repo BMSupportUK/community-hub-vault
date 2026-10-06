@@ -6730,6 +6730,10 @@ export type Database = {
           token: string
         }[]
       }
+      customer_nameplate_for_gender: {
+        Args: { _gender?: string }
+        Returns: string
+      }
       customer_nameplate_is_default: {
         Args: { _nameplate_id: string }
         Returns: boolean
