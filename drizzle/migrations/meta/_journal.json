@@ -589,6 +589,13 @@
       "when": 1791279171051,
       "tag": "0083_add_customer_default_nameplate",
       "breakpoints": true
+    },
+    {
+      "idx": 84,
+      "version": "7",
+      "when": 1791279208675,
+      "tag": "0084_include_approved_roleless_customer_nameplates",
+      "breakpoints": true
     }
   ]
 }

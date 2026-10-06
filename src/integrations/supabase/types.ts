@@ -6690,6 +6690,10 @@ export type Database = {
       app_encrypt: { Args: { p: string }; Returns: string }
       app_login_name_exists: { Args: { _name: string }; Returns: boolean }
       apply_blacklist_ban: { Args: { _user_id: string }; Returns: undefined }
+      apply_customer_nameplate: {
+        Args: { _user_id: string }
+        Returns: undefined
+      }
       archive_old_closed_tickets: { Args: never; Returns: number }
       assign_pending_tickets: { Args: never; Returns: number }
       auto_travel_home_breaks: { Args: never; Returns: undefined }
@@ -7361,6 +7365,10 @@ export type Database = {
           _vpn_raw: Json
         }
         Returns: undefined
+      }
+      user_qualifies_for_customer_nameplate: {
+        Args: { _user_id: string }
+        Returns: boolean
       }
       wc_calc_points: {
         Args: {
