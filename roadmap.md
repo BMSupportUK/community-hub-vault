@@ -116,4 +116,4 @@
 - [x] NBA League Pass imports: support `NBA NN: Fixture 12:00am Wed` weekday-clock rows (stated UK time, weekday pins the date)
 - [x] Sports import: ET→UK conversion uses the import time (nowMs) instead of the real clock, so date-pinned tests stay stable
 
-- [ ] Stop the profile location line flashing between competing page labels.
+- [x] Stop the profile location line flashing between competing page labels.
