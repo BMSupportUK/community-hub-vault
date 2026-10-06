@@ -14,6 +14,7 @@ type ListingInput = {
   channels?: string[] | null;
   sourceZone?: TimeZoneChoice | null;
   guideTitle?: string | null;
+  nowMs?: number;
 };
 
 const ZONE = "GMT|UTC|UK|BST|ET|EST|EDT|CT|CST|CDT|MT|MST|MDT|PT|PST|PDT|CET|CEST|AEST|AEDT|JST|IST";
@@ -1554,13 +1555,13 @@ const ET_LABELLED_TIME_RE = /\b(et|est|edt|eastern)\b/i;
 
 function eventTimeForOutput(event: SportsListingEvent, input: ListingInput): string {
   if (UK_LABELLED_TIME_RE.test(event.time ?? "")) {
-    return sourceTimeToUk(event.time, event.date ?? input.date ?? undefined, "gmt") ?? event.time;
+    return sourceTimeToUk(event.time, event.date ?? input.date ?? undefined, "gmt", input.nowMs) ?? event.time;
   }
   if (ET_LABELLED_TIME_RE.test(event.time ?? "")) {
-    return sourceTimeToUk(event.time, event.date ?? input.date ?? undefined, "et") ?? event.time;
+    return sourceTimeToUk(event.time, event.date ?? input.date ?? undefined, "et", input.nowMs) ?? event.time;
   }
   if (input.sourceZone) {
-    const converted = sourceTimeToUk(event.time, event.date ?? input.date ?? undefined, input.sourceZone);
+    const converted = sourceTimeToUk(event.time, event.date ?? input.date ?? undefined, input.sourceZone, input.nowMs);
     if (converted) return converted;
   }
   return event.time;
@@ -1590,7 +1591,7 @@ function convertEventsToUk(events: SportsListingEvent[], input: ListingInput): S
     const zone: TimeZoneChoice | null = labelled ? "gmt" : etLabelled || centerIce ? "et" : (input.sourceZone ?? null);
     if (!zone) return event;
     const date = event.date ?? input.date ?? null;
-    const parts = sourceTimeToUkParts(event.time, date ?? undefined, zone);
+    const parts = sourceTimeToUkParts(event.time, date ?? undefined, zone, input.nowMs);
     if (!parts) return event;
 
     let nextDate = date;
@@ -1605,7 +1606,7 @@ function convertEventsToUk(events: SportsListingEvent[], input: ListingInput): S
 export function formatSportsListingBlock(input: ListingInput): string | null {
   // No date written anywhere in the post: date it from the import day rather
   // than leaving the guide dateless for someone to fill in afterwards.
-  const base = input.date ?? importDayListingDate();
+  const base = input.date ?? importDayListingDate(input.nowMs);
   const processSection = (text: string): SportsListingEvent[] => {
     const parsed = parseSportsListingBlock(text);
     const dated = rollOvernightEvents(applyImplicitDateRollover(parsed, base));
