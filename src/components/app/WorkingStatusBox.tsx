@@ -549,7 +549,7 @@ export function WorkingStatusBox({
                 </AvatarFallback>
               </Avatar>
               {/* Name plate sits right beside the avatar, same as the header menu. */}
-              <div className="relative min-w-0 flex-1 overflow-hidden rounded-lg">
+              <div className="relative h-[50px] w-[189px] min-w-0 max-w-full shrink-0 overflow-hidden rounded-lg">
                 <Nameplate id={nameplateId} className="absolute inset-0" fallbackStyle={{ background: "linear-gradient(to bottom right, hsl(var(--primary)/0.3), hsl(330 80% 60% / 0.2), hsl(220 80% 60% / 0.2))" }} />
                 <div className="relative flex min-w-0 items-center gap-2 px-2.5 py-1.5">
                   <span className="font-display font-semibold text-sm text-violet-100 truncate">
@@ -813,7 +813,7 @@ export function WorkingStatusBox({
                 </AvatarFallback>
               </Avatar>
               {/* Name plate sits right beside the avatar, same as the header menu. */}
-              <div className="relative min-w-0 flex-1 overflow-hidden rounded-lg">
+              <div className="relative h-[50px] w-[189px] min-w-0 max-w-full shrink-0 overflow-hidden rounded-lg">
                 <Nameplate id={nameplateId} className="absolute inset-0" fallbackStyle={{ background: "linear-gradient(to bottom right, hsl(var(--primary)/0.3), hsl(330 80% 60% / 0.2), hsl(220 80% 60% / 0.2))" }} />
                 <div className={cn("relative flex flex-col gap-1 min-w-0", compact ? "px-2.5 py-1" : "px-3 py-1.5")}>
                   <span className={cn("font-display font-bold text-foreground truncate", compact ? "text-sm" : "text-lg")}>
