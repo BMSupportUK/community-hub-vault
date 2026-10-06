@@ -224,7 +224,9 @@ export function OnlineMembersDialog({ className }: { className?: string }) {
         if (roles.some((r) => HIDDEN_ROLES.has(r))) return false;
         if (roles.some((r) => STAFF_ROLES.has(r))) return false;
         // Boro Fan Zone-only accounts have no BM Support access — hide them.
-        if (bmSupportRoles(roles).length === 0) return false;
+        // An empty role list is NOT hidden: role-less BM Support members are
+        // expected data (surfaced as "Expired Subscription") and must stay.
+        if (roles.length > 0 && bmSupportRoles(roles).length === 0) return false;
         return true;
       }),
     [profiles, rolesByUser],
