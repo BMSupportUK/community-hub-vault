@@ -874,10 +874,15 @@ function ProfilePage() {
 
 /** Stacked activity lines under the bio: last active, then the page being viewed. */
 function ProfileActivity({ userId, lastSeenAt: seedLastSeen }: { userId: string; lastSeenAt: string | null }) {
+  const { user } = useAuth();
   const onlineUsers = useOnlineUsers();
   const isOnline = onlineUsers.has(userId);
   const page = useUserPage(userId);
   const { lastSeenAt } = useLiveLastSeen(userId, seedLastSeen);
+  // The viewer is already on their own profile, so keep this label authoritative.
+  // Presence can briefly return another open tab's page (or no page) for the
+  // same account, which previously made this line flash between two messages.
+  const currentPage = user?.id === userId ? "Member profile" : page;
   return (
     <div className="mt-3 space-y-1 text-xs text-purple-200/80">
       <div className="flex items-center gap-1.5">
@@ -886,7 +891,7 @@ function ProfileActivity({ userId, lastSeenAt: seedLastSeen }: { userId: string;
       </div>
       <div className="flex items-center gap-1.5">
         <MapPin className="size-3.5 shrink-0 text-amber-100/80" />
-        <span>{isOnline ? page ?? "Online now" : `Last seen ${formatLastSeen(lastSeenAt)}`}</span>
+        <span>{isOnline ? currentPage ?? "Online now" : `Last seen ${formatLastSeen(lastSeenAt)}`}</span>
       </div>
     </div>
   );
