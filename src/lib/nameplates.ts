@@ -22,10 +22,47 @@ function notify() {
   for (const fn of listeners) fn();
 }
 
+let allPromise: Promise<void> | null = null;
+
+/** Load every nameplate in one request (the table is small) and preload
+ * their images, so plates appear together with the rest of the page instead
+ * of popping in one by one. */
+export function prefetchAllNameplates(): Promise<void> {
+  if (allPromise) return allPromise;
+  allPromise = (async () => {
+    const { data } = await supabase
+      .from("nameplates")
+      .select("id,name,description,image_url,gradient_css,animation_class,is_active,sort_order");
+    for (const r of (data as NameplateRow[] | null) ?? []) {
+      cache.set(r.id, r);
+      if (r.image_url && typeof window !== "undefined") {
+        const img = new Image();
+        img.decoding = "async";
+        img.src = r.image_url;
+      }
+    }
+    notify();
+  })().catch(() => {
+    allPromise = null;
+  });
+  return allPromise;
+}
+
+if (typeof window !== "undefined") {
+  void prefetchAllNameplates();
+}
+
 async function fetchOne(id: string): Promise<NameplateRow | null> {
   if (cache.has(id)) return cache.get(id) ?? null;
   if (pending.has(id)) return pending.get(id)!;
   const p = (async () => {
+    if (allPromise) {
+      await allPromise;
+      if (cache.has(id)) {
+        pending.delete(id);
+        return cache.get(id) ?? null;
+      }
+    }
     const { data } = await supabase
       .from("nameplates")
       .select("id,name,description,image_url,gradient_css,animation_class,is_active,sort_order")
