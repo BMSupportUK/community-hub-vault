@@ -827,7 +827,18 @@ export function WorkingStatusBox({
                 </div>
               </div>
             </div>
-            <ActionIcons compact={compact} />
+            <div className={cn("flex items-center", compact ? "gap-1" : "gap-3")}>
+              {(canAnswerTickets || roles.includes("moderator")) && (
+                <StaffTicketsButton
+                  staffId={user.id}
+                  staffName={displayName}
+                  placement="below"
+                  className="shrink-0"
+                  readOnly={!canAnswerTickets}
+                />
+              )}
+              <ActionIcons compact={compact} />
+            </div>
           </div>
           {shift ? (
             <>
