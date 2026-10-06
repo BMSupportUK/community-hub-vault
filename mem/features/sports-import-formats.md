@@ -103,3 +103,6 @@ Splitting a multi-event post at the second event must keep both events. A chosen
 Rows `A vs B @ Sep 30 05:00 AM - ATP Tokyo :Tennis 01` → event "A v B - ATP Tokyo", channel "Tennis 01".
 Untimed follow-on rows `A vs B - WTA Beijing :Tennis 10` are skipped — never attached as channels of the event above (they have no start time). Permanent test in tests/sports-import-formats.test.ts.
 - Rugby Pass channel blocks: "Rugby Pass NN:" (or "RpassNN:") heading, fixtures "Event HH:MM" below or inline, several per row allowed → each fixture becomes its own event on that channel (Rugby Pass NN). Test: 'Rugby Pass channel blocks'.
+
+## NBA League Pass weekday-clock rows (permanent)
+New style: `NBA  01: Nets vs Hornets 12:00am Wed` — fixture and a UK clock with its weekday on one row, no ET|UK pair. The clock is the stated UK time; the weekday pins the date. Output: `00:00 BST` on that weekday, `Nets v Hornets`, channel `NBA 01`. The older `NBA 01: Fixture 7pm ET | 12:00am UK` layout still works. Test: 'NBA League Pass rows with a UK clock and weekday import on the stated day'.
