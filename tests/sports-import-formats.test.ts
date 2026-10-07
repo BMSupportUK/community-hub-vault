@@ -162,6 +162,18 @@ Lions at Panthers`;
     setSystemTime();
   });
 
+  test("NBA time-first slots with @ matchups keep each game's own channels", () => {
+    const raw = "# NBA\n\n\n\n\n12:00am UK THU / 7:00pm ET WED\n**TIMBERWOLVES @ PACERS**\n\nNBA TV CA\n\n\n\n3:00am UK THU / 10:00pm ET WED\n**WARRIORS @ TRAIL BLAZERS**\n\nNBA TV CA\nNBA TV US";
+    const result = checkSportsImport(raw, "gmt", Date.UTC(2026, 9, 7, 9), "NBA League Pass");
+    expect(result.errors).toBe(0);
+    expect(result.warnings).toBe(0);
+    expect(result.events).toEqual([
+      { date: "Thursday, 8th October", time: "00:00 BST", title: "NBA: TIMBERWOLVES v PACERS", channels: ["NBA TV CA"] },
+      { date: "Thursday, 8th October", time: "03:00 BST", title: "NBA: WARRIORS v TRAIL BLAZERS", channels: ["NBA TV CA", "NBA TV US"] },
+    ]);
+    expect(parseSportsListingBlock(result.formatted)).toEqual(result.events);
+  });
+
   test("UFC multi-time slots each retain the complete channel set", () => {
     const result = parseSportsListingBlock("**UFC Fight Night: A vs. B**\n`10pm | 11pm | 1am UK`\nUFC 01\nUFC 02\nUFC 03");
     expect(result).toHaveLength(3);

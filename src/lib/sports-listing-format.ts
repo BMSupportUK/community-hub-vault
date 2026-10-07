@@ -1161,7 +1161,11 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
       !isNoiseLine(title) &&
       !explicitHeadings.has(title.toLowerCase()) &&
       !isLikelyChannelLabel(title) &&
-      isLikelyChannelLabel(channel)
+      isLikelyChannelLabel(channel) &&
+      // NBA time-first layout: "3:00am UK THU / 10:00pm ET WED" then
+      // "WARRIORS @ TRAIL BLAZERS" — a matchup below the slot is the event
+      // title, so the channel line above the slot must stay a channel.
+      !/\s(?:@|vs?\.?|x)\s/i.test(channel)
     ) {
       lines.splice(i, 3, slot, title, channel);
       i += 2;
@@ -1374,7 +1378,8 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
       // next clock is the previous event's channel. If the line BELOW the
       // clock is a matchup ("A & B", "A v B") and the line above isn't, the
       // line above is a channel, not a title.
-      const MATCHUP_RE = /\s(?:&|v|vs|v\.|x|-)\s/i;
+      // "@" covers NBA "WARRIORS @ TRAIL BLAZERS" below a time-first slot.
+      const MATCHUP_RE = /\s(?:&|v|vs|v\.|x|-|@)\s/i;
       const below = lines[li + 1] ?? "";
       const belowIsTitle = Boolean(below) && !detectEvent(below, currentDate) && (
         MATCHUP_RE.test(below) || isLikelyChannelLabel(lines[li + 2] ?? "")
