@@ -128,16 +128,16 @@ export function SubscriptionDetailsCard({
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.2),transparent_50%)]" />
         <div className={cn(
           "relative flex flex-col items-center justify-center text-white text-center",
-          fill ? "p-6" : compact ? "p-2.5" : "p-4",
+          fill ? "p-2.5 md:p-6" : compact ? "p-2.5" : "p-4",
         )}>
-          <CalendarClock className={cn("shrink-0 drop-shadow", fill ? "size-10 mb-2" : compact ? "size-6 mb-1" : "size-10 mb-1")} />
+          <CalendarClock className={cn("shrink-0 drop-shadow", fill ? "size-6 mb-1 md:size-10 md:mb-2" : compact ? "size-6 mb-1" : "size-10 mb-1")} />
           <h3 className={cn(
             "font-display font-bold leading-tight drop-shadow",
-            fill ? "text-2xl" : compact ? "text-sm" : "text-lg",
+            fill ? "text-sm md:text-2xl" : compact ? "text-sm" : "text-lg",
           )}>
             Your Subscription Details
           </h3>
-          <p className={cn("text-white/85", fill ? "text-sm mt-1.5" : compact ? "text-[10px] mt-0.5" : "text-xs mt-0.5")}>
+          <p className={cn("text-white/85", fill ? "text-[10px] mt-0.5 md:text-sm md:mt-1.5" : compact ? "text-[10px] mt-0.5" : "text-xs mt-0.5")}>
             {hasCreds ? `${creds.length} active account${creds.length === 1 ? "" : "s"}` : "No accounts assigned"}
           </p>
         </div>
@@ -151,30 +151,30 @@ export function SubscriptionDetailsCard({
         const expired = t !== null && t < now;
         const expSoon = t !== null && !expired && t - now < 7 * 86400_000;
         return (
-          <div className={cn("flex-1 min-h-0 overflow-y-auto flex flex-col", fill ? "gap-4 p-4 justify-center" : compact ? "gap-1.5 p-2" : "gap-2 p-3")}>
+          <div className={cn("flex-1 min-h-0 overflow-y-auto flex flex-col", fill ? "gap-1.5 p-2 md:gap-4 md:p-4 justify-center" : compact ? "gap-1.5 p-2" : "gap-2 p-3")}>
             <div
               key={c.id}
               className={cn(
                 "flex items-center justify-between gap-2 rounded-lg border",
                 embedded ? "border-white/20 bg-background/20" : "border-border bg-surface-2/70",
-                fill ? "flex-1 min-h-0 px-5 py-5" : compact ? "px-2 py-1.5" : "px-2.5 py-2",
+                fill ? "px-2 py-1.5 md:flex-1 md:min-h-0 md:px-5 md:py-5" : compact ? "px-2 py-1.5" : "px-2.5 py-2",
               )}
             >
               <div className="min-w-0">
-                <div className={cn("font-semibold truncate", fill ? "text-lg" : "text-xs", embedded ? "text-white" : "text-foreground")}>
+                <div className={cn("font-semibold truncate", fill ? "text-xs md:text-lg" : "text-xs", embedded ? "text-white" : "text-foreground")}>
                   Account {c.account_number}
-                  <span className={cn("ml-1 font-normal", fill ? "text-sm" : "text-[10px]", embedded ? "text-white/70" : "text-muted-foreground")}>
+                  <span className={cn("ml-1 font-normal", fill ? "text-[10px] md:text-sm" : "text-[10px]", embedded ? "text-white/70" : "text-muted-foreground")}>
                     · {accountTypeLabel(c.account_type)}
                   </span>
                 </div>
                 {c.app_login_name && (
-                  <div className={cn("truncate", fill ? "text-base mt-1" : "text-[11px]", embedded ? "text-white/70" : "text-muted-foreground")}>
+                  <div className={cn("truncate", fill ? "text-[11px] md:text-base md:mt-1" : "text-[11px]", embedded ? "text-white/70" : "text-muted-foreground")}>
                     Login: <span className={cn("font-semibold", embedded ? "text-white" : "text-foreground")}>{c.app_login_name}</span>
                   </div>
                 )}
                 <div className={cn(
                   "font-medium",
-                  fill ? "text-base mt-2" : "text-[11px] mt-0.5",
+                  fill ? "text-[11px] mt-0.5 md:text-base md:mt-2" : "text-[11px] mt-0.5",
                   expired ? "text-red-300" : expSoon ? "text-amber-300" : "text-emerald-300"
                 )}>
                   Expiry date: {c.expiry_at ? fmtDate(new Date(c.expiry_at)) : "No expiry date"}
@@ -184,7 +184,7 @@ export function SubscriptionDetailsCard({
                 <span
                   className={cn(
                     "rounded-full border whitespace-nowrap shrink-0 font-semibold",
-                    fill ? "text-sm px-3 py-1" : "text-[10px] px-1.5 py-0.5",
+                    fill ? "text-[10px] px-1.5 py-0.5 md:text-sm md:px-3 md:py-1" : "text-[10px] px-1.5 py-0.5",
                     expired
                       ? "text-white border-red-400/50 bg-red-600 expiry-date-flash"
                       : expSoon
@@ -202,7 +202,7 @@ export function SubscriptionDetailsCard({
                 onClick={() => setViewIndex((safeIndex + 1) % creds.length)}
                 className={cn(
                   "mt-auto flex items-center justify-center gap-1.5 rounded-lg border border-violet-400/50 bg-violet-600/80 font-semibold text-white transition-colors hover:bg-violet-500",
-                  fill ? "px-4 py-3 text-base" : compact ? "px-2.5 py-1.5 text-[11px]" : "px-3 py-2 text-xs",
+                  fill ? "px-2.5 py-1.5 text-[11px] md:px-4 md:py-3 md:text-base" : compact ? "px-2.5 py-1.5 text-[11px]" : "px-3 py-2 text-xs",
                 )}
               >
                 View Next Subscription Details
