@@ -28,5 +28,6 @@
 - Shared dialogs must stay within the dynamic mobile viewport, while dense data views reduce secondary columns on phones so primary actions remain usable.
 - Customer invoices are BM Support PDFs available only after confirmed payment; never expose Stripe or Square hosted invoice/receipt links because the app owns customer billing documents.
 - Knowledge Base article reading uses the full available page with a responsive ratings rail, so long guides and media remain readable.
-- Secure order pages offer WhatsApp video help via a wa.me link, shown only while is_business_open (admin opening hours, UK bank holidays closed) — WhatsApp calls cannot be embedded, so the in-browser camera session is no longer shown to customers.
+- Secure orders show wa.me video help only while is_business_open; never embed customer camera sessions.
 - Gender-matched customer defaults never replace custom picks and exclude staff/Fan Zone-only users.
+- BM inbox uses participant-only tables and authenticated RPCs; reports retain snapshots visible only to admin/management, separate from Fan Zone and Talk.
