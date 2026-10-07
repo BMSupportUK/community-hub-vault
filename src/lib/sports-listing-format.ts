@@ -1161,7 +1161,11 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
       !isNoiseLine(title) &&
       !explicitHeadings.has(title.toLowerCase()) &&
       !isLikelyChannelLabel(title) &&
-      isLikelyChannelLabel(channel)
+      isLikelyChannelLabel(channel) &&
+      // NBA time-first layout: "3:00am UK THU / 10:00pm ET WED" then
+      // "WARRIORS @ TRAIL BLAZERS" — a matchup below the slot is the event
+      // title, so the channel line above the slot must stay a channel.
+      !/\s(?:@|vs?\.?|x)\s/i.test(channel)
     ) {
       lines.splice(i, 3, slot, title, channel);
       i += 2;
