@@ -2,6 +2,7 @@
 # Roadmap
 
 ## Current
+- [x] Add secure checkout to the continuous narrated demo using actual checkout templates with sample orders; narrow checkout masking to prices and private values (other chapters retain previous footage)
 - [x] Correct demo delivery: one continuous 7m30 narrated video with nine embedded labelled chapters and chapter descriptions, keeping privacy redactions
 - [x] Sectioned privacy-safe app feature overview: nine described videos covering public joining, referral sign-up, illustrated security gate and principal app sections; action-by-action/member-session coverage limitations included with the downloads
 - [x] Sports guides: preserve supplied @ matchups across all sports and formatted read-back
