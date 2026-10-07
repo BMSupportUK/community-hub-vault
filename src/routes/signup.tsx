@@ -158,6 +158,7 @@ function SignupPage() {
   const [busy, setBusy] = useState(false);
   const [captchaToken, setCaptchaToken] = useState("");
   const [intent, setIntent] = useState<"bm-support" | "fan-zone" | "">("");
+  const [gender, setGender] = useState<"male" | "female" | "">("");
   const [emailTaken, setEmailTaken] = useState(false);
   const vpnStatus = useVisitorVpnStatus();
   const [vpnRechecking, setVpnRechecking] = useState(false);
@@ -207,6 +208,7 @@ function SignupPage() {
           : "Please wait for the connection check, then try again.",
       );
     }
+    if (intent === "bm-support" && !gender) return toast.error("Please choose Male or Female.");
     if (needsReferral)
       return toast.error(hasCode === "" ? "Please tell us if you have a referral code." : "Please enter your referral code.");
     if (!captchaToken) return toast.error("Please complete the captcha.");
@@ -263,6 +265,13 @@ function SignupPage() {
       return toast.error(error.message);
     }
     if (inviteCode.trim() && signupData.user?.id) window.sessionStorage.setItem("bm-referral-setup", signupData.user.id);
+    if (intent === "bm-support" && gender && signupData.user?.id && signupData.session) {
+      const { error: genderError } = await supabase
+        .from("profiles")
+        .update({ staff_gender: gender, staff_gender_confirmed_at: new Date().toISOString() })
+        .eq("id", signupData.user.id);
+      if (genderError) console.warn("[signup] gender save failed", genderError);
+    }
     // Capture as much client/browser info as we can for owner review
     try {
       const nav = navigator as Navigator & {
@@ -400,6 +409,31 @@ function SignupPage() {
                 </div>
               )}
               <Field label="Password" type="password" value={password} onChange={setPassword} />
+              {intent === "bm-support" && (
+                <div className="space-y-2">
+                  <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Gender <span className="text-destructive">*</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Gender">
+                    {(["male", "female"] as const).map((g) => (
+                      <button
+                        key={g}
+                        type="button"
+                        role="radio"
+                        aria-checked={gender === g}
+                        onClick={() => setGender(g)}
+                        className={`h-10 rounded-lg border text-sm font-medium transition-colors ${
+                          gender === g
+                            ? "border-primary bg-primary/15 text-foreground"
+                            : "border-border bg-background/40 text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        {g === "male" ? "Male" : "Female"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
               {intent === "bm-support" && (
                 <div className="space-y-2">
                   <div className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
