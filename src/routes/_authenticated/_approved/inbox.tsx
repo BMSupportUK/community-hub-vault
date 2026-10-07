@@ -4,7 +4,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Check, Flag, LoaderCircle, MessagesSquare, Pencil, Plus, Search, Send, ShieldCheck, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
-import { inboxAction, useBmInbox, type InboxMember, type InboxMessage } from "@/lib/bm-inbox";
+import { inboxAction, isInboxStaff, useBmInbox, type InboxMember, type InboxMessage } from "@/lib/bm-inbox";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
