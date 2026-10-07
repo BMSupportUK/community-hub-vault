@@ -163,8 +163,8 @@ function WelcomePage() {
             <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600 shadow-2xl">
               <div className="grid min-h-0 flex-1 gap-4 p-4 pb-14 md:items-start md:grid-cols-2 lg:p-5 lg:pb-14 xl:gap-6 xl:p-6 xl:pb-14">
                 {/* Left column — hero image with the greeting beneath, mirroring the staff home. */}
-                <div className={`order-1 flex min-w-0 flex-col gap-3 text-white ${isStaffAccount ? "self-start" : "self-start md:self-stretch"}`}>
-                  <div className={`relative w-full min-w-0 overflow-hidden rounded-xl bg-blue-950/30 ring-1 ring-white/10 ${isStaffAccount ? "aspect-video" : "aspect-video md:min-h-0 md:flex-1"}`}>
+                <div className="order-1 flex min-w-0 flex-col gap-3 self-start text-white">
+                  <div className="relative aspect-video w-full min-w-0 overflow-hidden rounded-xl bg-blue-950/30 ring-1 ring-white/10">
                     <div className="absolute inset-0">
                       <img
                         src={heroImg}
