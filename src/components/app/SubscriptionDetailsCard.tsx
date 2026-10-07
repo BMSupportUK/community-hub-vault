@@ -154,9 +154,9 @@ export function SubscriptionDetailsCard({
           "relative flex flex-col items-center justify-center text-white text-center",
           compact ? "p-2.5" : "p-4",
         )}>
-          {/* Name plate sits at the left of the header, same style as the status box. */}
-          {identity && (
-            <div className="mb-2 flex w-full justify-start">
+          {/* Name plate sits at the left of the header, clock icon to the right. */}
+          <div className="mb-1.5 flex w-full items-center justify-between gap-2">
+            {identity ? (
               <div className="relative h-9 w-[151px] max-w-full shrink-0 overflow-hidden rounded-lg xl:w-[183px]">
                 <Nameplate
                   id={identity.nameplateId}
@@ -169,9 +169,11 @@ export function SubscriptionDetailsCard({
                   </span>
                 </div>
               </div>
-            </div>
-          )}
-          <CalendarClock className={cn("mb-1 drop-shadow", compact ? "size-6" : "size-10 mb-2")} />
+            ) : (
+              <span className="h-9" />
+            )}
+            <CalendarClock className={cn("shrink-0 drop-shadow", compact ? "size-6" : "size-10")} />
+          </div>
           <h3 className={cn(
             "font-display font-bold leading-tight drop-shadow",
             compact ? "text-sm" : "text-lg",
