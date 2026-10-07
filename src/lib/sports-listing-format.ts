@@ -1378,7 +1378,8 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
       // next clock is the previous event's channel. If the line BELOW the
       // clock is a matchup ("A & B", "A v B") and the line above isn't, the
       // line above is a channel, not a title.
-      const MATCHUP_RE = /\s(?:&|v|vs|v\.|x|-)\s/i;
+      // "@" covers NBA "WARRIORS @ TRAIL BLAZERS" below a time-first slot.
+      const MATCHUP_RE = /\s(?:&|v|vs|v\.|x|-|@)\s/i;
       const below = lines[li + 1] ?? "";
       const belowIsTitle = Boolean(below) && !detectEvent(below, currentDate) && (
         MATCHUP_RE.test(below) || isLikelyChannelLabel(lines[li + 2] ?? "")
