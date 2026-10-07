@@ -2,7 +2,7 @@
 # Roadmap
 
 ## Current
-- [ ] Correct demo delivery: one continuous narrated video with labelled chapters and chapter descriptions, keeping privacy redactions
+- [x] Correct demo delivery: one continuous 7m30 narrated video with nine embedded labelled chapters and chapter descriptions, keeping privacy redactions
 - [x] Sectioned privacy-safe app feature overview: nine described videos covering public joining, referral sign-up, illustrated security gate and principal app sections; action-by-action/member-session coverage limitations included with the downloads
 - [x] Sports guides: preserve supplied @ matchups across all sports and formatted read-back
 - [x] BM Support inbox: private messaging, unread rail badge, pub background, edit/delete and admin/management reports
