@@ -5,7 +5,7 @@
 - UFC multi-time imports attach all listed channels to every slot. Triller `Event N` becomes channel `Triller TV N`.
 - Public sports guides expose only validated dates, times, and event names; never free-text notes, descriptions, or channel lines.
 - Advert slots show only BM Support's own affiliate banners in random, equal-time cycles; track each displayed banner's views and clicks, keep Member Home and the public landing page as separate zones, and include BM Support banners enabled for Forum throughout Boro Fan Zone alongside dedicated Fan Zone banners.
-- Member Home: staff keep image + greeting beneath (left column); members' greeting + "Welcome to The Customer Portal" sits above the subscription box (right column), whose header shows the name plate left, clock right. Top-align status content.
+- Member Home: staff keep image + greeting beneath (left column); members' greeting ("Hey" + name plate, no name text) + "Welcome to The Customer Portal" sits above the subscription box (right column), whose header shows only the clock. Top-align status content.
 - Header starts collapsed (slim bar) ONLY on the tickets page and Talk channels; every other BM Support page keeps it open. Re-resets on each navigation. Talk channels add channel name; Fan Zone never shows it.
 - Back-to-top reacts only to page-level scrollers, never dialogs or inner chat/reply panes.
 - NHL Center Ice always treats its listing clock as ET and converts it to the correct UK date/time, ignoring supplied UK clocks; NFL Sunday Ticket and NBA League Pass use their stated UK times.
