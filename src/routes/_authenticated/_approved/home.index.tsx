@@ -229,13 +229,13 @@ function WelcomePage() {
                           Member
                         </span>
                       </div>
-                      <h1 className="mt-3 font-display text-2xl font-bold leading-tight xl:text-3xl">
+                      <h1 className="mt-4 font-display text-3xl font-bold leading-tight xl:text-4xl">
                         Welcome to The Customer Portal
                       </h1>
-                      <p className="mt-4 text-base font-medium leading-relaxed text-white/90 xl:text-lg">
+                      <p className="mt-5 text-lg font-medium leading-relaxed text-white/90 xl:text-xl">
                         Stay connected with the community, manage your account and get help.
                       </p>
-                      <p className="mt-3 text-sm leading-relaxed text-white/85 xl:text-base">
+                      <p className="mt-4 text-lg leading-relaxed text-white/85 xl:text-xl">
                         Access channels, schedules, support and services—all in one place.
                       </p>
                     </div>
@@ -243,11 +243,7 @@ function WelcomePage() {
                   {isStaffAccount ? (
                     <WorkingStatusBox compact onShiftStatusChange={setIsStaffShiftActive} />
                   ) : (
-                    // The box grows to close the gap under the welcome text, but
-                    // stops there so a very tall viewport can't stretch it hollow.
-                    <div className="flex min-h-0 max-h-[320px] flex-1 flex-col">
-                      <SubscriptionDetailsCard compact embedded fill />
-                    </div>
+                    <SubscriptionDetailsCard compact embedded />
                   )}
                 </div>
               </div>
