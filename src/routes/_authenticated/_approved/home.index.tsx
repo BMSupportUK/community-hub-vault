@@ -207,9 +207,11 @@ function WelcomePage() {
                     or the member subscription details. */}
                 <div className="order-2 flex min-h-0 min-w-0 flex-col gap-3 self-stretch">
                   {!isStaffAccount && (
-                    <div className="min-w-0 text-white">
+                    // The welcome copy owns the column's spare height so the text
+                    // reads large instead of bunched above the box.
+                    <div className="flex min-h-0 flex-1 flex-col justify-center min-w-0 text-white">
                       <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                        <span className="text-xs font-semibold text-sky-100/90">Hey</span>
+                        <span className="text-sm font-semibold text-sky-100/90">Hey</span>
                         {/* The member's name plate stands in for their name text. */}
                         <div className="relative h-9 w-[151px] max-w-full shrink-0 overflow-hidden rounded-lg xl:w-[183px]">
                           <Nameplate
@@ -227,13 +229,13 @@ function WelcomePage() {
                           Member
                         </span>
                       </div>
-                      <h1 className="mt-1 font-display text-lg font-bold leading-tight lg:text-xl xl:text-2xl">
+                      <h1 className="mt-3 font-display text-2xl font-bold leading-tight xl:text-3xl">
                         Welcome to The Customer Portal
                       </h1>
-                      <p className="mt-1.5 text-[0.8rem] font-medium leading-snug text-white/90">
+                      <p className="mt-4 text-base font-medium leading-relaxed text-white/90 xl:text-lg">
                         Stay connected with the community, manage your account and get help.
                       </p>
-                      <p className="mt-1 text-[0.75rem] leading-snug text-white/85">
+                      <p className="mt-3 text-sm leading-relaxed text-white/85 xl:text-base">
                         Access channels, schedules, support and services—all in one place.
                       </p>
                     </div>
@@ -241,7 +243,11 @@ function WelcomePage() {
                   {isStaffAccount ? (
                     <WorkingStatusBox compact onShiftStatusChange={setIsStaffShiftActive} />
                   ) : (
-                    <SubscriptionDetailsCard compact embedded />
+                    // The box grows to close the gap under the welcome text, but
+                    // stops there so a very tall viewport can't stretch it hollow.
+                    <div className="flex min-h-0 max-h-[320px] flex-1 flex-col">
+                      <SubscriptionDetailsCard compact embedded fill />
+                    </div>
                   )}
                 </div>
               </div>
