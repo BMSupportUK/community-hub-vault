@@ -1353,6 +1353,7 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
       continue;
     }
 
+    if (process.env.DBG_SPORTS) console.log("L", JSON.stringify(line), JSON.stringify(detected), current && JSON.stringify(current));
     const detected = detectEvent(line, currentDate);
     if (detected) {
       // "Azerbaijan : Practice 1" / "9:30am UK | 4:30am ET" / channels —
