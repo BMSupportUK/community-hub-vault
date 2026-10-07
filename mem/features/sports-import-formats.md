@@ -110,3 +110,6 @@ New style: `NBA  01: Nets vs Hornets 12:00am Wed` — fixture and a UK clock wit
 ## Date handling (permanent)
 
 ET→UK conversion (`sourceTimeToUk`/`sourceTimeToUkParts` in src/lib/import-time.ts) takes an optional `nowMs`; `checkSportsImport` passes its pinned `nowMs` through `formatSportsListingBlock` so date-pinned tests never depend on the real clock. Default is `Date.now()`, so live imports are unchanged.
+
+## NBA time-first "@" layout (permanent)
+`# NBA`, then `12:00am UK THU / 7:00pm ET WED`, `**TIMBERWOLVES @ PACERS**`, then channel lines (`NBA TV CA`, `NBA TV US`). `@` is a matchup separator: the line below the time is the title, the line above the next time stays the previous game's channel. Output `00:00 BST` Thursday, `NBA: TIMBERWOLVES v PACERS`, channel `NBA TV CA`. Test: 'NBA time-first slots with @ matchups'.
