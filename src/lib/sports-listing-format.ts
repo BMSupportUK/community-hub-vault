@@ -1313,6 +1313,7 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
 
   const events: SportsListingEvent[] = [];
   let currentDate: string | null = null;
+  if (process.env.DBG_SPORTS) console.log("LINES", JSON.stringify(lines));
   let current: SportsListingEvent | null = null;
   // Provider dumps name the programme on the line above its time slot.
   let previousPlainLine: string | null = null;
