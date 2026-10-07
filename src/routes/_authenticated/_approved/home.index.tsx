@@ -200,8 +200,28 @@ function WelcomePage() {
                   )}
                 </div>
 
-                {/* Right column — staff Working Status, or the member subscription details. */}
-                <div className="order-2 flex min-h-0 min-w-0 flex-col self-stretch">
+                {/* Right column — the welcome message above the staff status box
+                    or the member subscription details. */}
+                <div className="order-2 flex min-h-0 min-w-0 flex-col gap-3 self-stretch">
+                  {!isStaffAccount && (
+                    <div className="min-w-0 text-white">
+                      <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                        <span className="text-xs font-semibold text-sky-100/90">Hey {name}</span>
+                        <span className="inline-flex items-center rounded-full border border-white/25 bg-white/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+                          Member
+                        </span>
+                      </div>
+                      <h1 className="mt-1 font-display text-lg font-bold leading-tight lg:text-xl xl:text-2xl">
+                        Welcome to The Customer Portal
+                      </h1>
+                      <p className="mt-1.5 text-[0.8rem] font-medium leading-snug text-white/90">
+                        Stay connected with the community, manage your account and get help.
+                      </p>
+                      <p className="mt-1 text-[0.75rem] leading-snug text-white/85">
+                        Access channels, schedules, support and services—all in one place.
+                      </p>
+                    </div>
+                  )}
                   {isStaffAccount ? (
                     <WorkingStatusBox compact onShiftStatusChange={setIsStaffShiftActive} />
                   ) : (
