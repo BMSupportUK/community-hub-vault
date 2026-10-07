@@ -207,7 +207,9 @@ function WelcomePage() {
                     or the member subscription details. */}
                 <div className="order-2 flex min-h-0 min-w-0 flex-col gap-3 self-stretch">
                   {!isStaffAccount && (
-                    <div className="min-w-0 text-white">
+                    // The welcome copy owns the column's spare height so the text
+                    // reads large instead of bunched above the box.
+                    <div className="flex min-h-0 flex-1 flex-col justify-center min-w-0 text-white">
                       <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
                         <span className="text-sm font-semibold text-sky-100/90">Hey</span>
                         {/* The member's name plate stands in for their name text. */}
@@ -243,7 +245,7 @@ function WelcomePage() {
                   ) : (
                     // The box grows to close the gap under the welcome text, but
                     // stops there so a very tall viewport can't stretch it hollow.
-                    <div className="flex min-h-0 max-h-[420px] flex-1 flex-col">
+                    <div className="flex min-h-0 max-h-[320px] flex-1 flex-col">
                       <SubscriptionDetailsCard compact embedded fill />
                     </div>
                   )}
