@@ -2,7 +2,7 @@
 # Roadmap
 
 ## Current
-- [ ] Create separate narrated BM Support App Store installation videos for Android TV and Amazon Fire TV
+- [x] Create separate narrated BM Support App Store installation videos for Android TV and Amazon Fire TV
 - [x] Member home: enlarge the welcome copy and let the subscription box fill the space beneath it, with no empty gap and no clipped text on phones
 - [x] Revise continuous demo with actual sample user profile and security-gate screenshots using test data — delivered narrated v5
 - [x] Re-capture the full narrated demo with selective masks only: preserve usernames, office times, feature text and images; conceal prices and sensitive personal/account values; delivered v4 (gate remains labelled illustrated overview)
