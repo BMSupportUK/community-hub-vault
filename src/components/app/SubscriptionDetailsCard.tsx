@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { CalendarClock, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Nameplate } from "@/components/app/Nameplate";
 
 interface CredRow {
   id: string;
@@ -25,6 +26,8 @@ export function SubscriptionDetailsCard({
   const [creds, setCreds] = useState<CredRow[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [viewIndex, setViewIndex] = useState(0);
+  // Display name + equipped name plate for the card header.
+  const [identity, setIdentity] = useState<{ name: string; nameplateId: string | null } | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -67,6 +70,32 @@ export function SubscriptionDetailsCard({
       supabase.removeChannel(channel);
     };
   }, [user]);
+
+  useEffect(() => {
+    if (!user?.id) {
+      setIdentity(null);
+      return;
+    }
+    let alive = true;
+    supabase
+      .from("profiles")
+      .select("display_name, username, equipped_nameplate_id")
+      .eq("id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!alive) return;
+        const row = data as
+          | { display_name: string | null; username: string | null; equipped_nameplate_id: string | null }
+          | null;
+        setIdentity({
+          name: row?.display_name || row?.username || "",
+          nameplateId: row?.equipped_nameplate_id ?? null,
+        });
+      });
+    return () => {
+      alive = false;
+    };
+  }, [user?.id]);
 
   const accountTypeLabel = (type: string | null) => {
     const t = (type ?? "single").toLowerCase();
@@ -125,6 +154,23 @@ export function SubscriptionDetailsCard({
           "relative flex flex-col items-center justify-center text-white text-center",
           compact ? "p-2.5" : "p-4",
         )}>
+          {/* Name plate sits at the left of the header, same style as the status box. */}
+          {identity && (
+            <div className="mb-2 flex w-full justify-start">
+              <div className="relative h-9 w-[151px] max-w-full shrink-0 overflow-hidden rounded-lg xl:w-[183px]">
+                <Nameplate
+                  id={identity.nameplateId}
+                  className="absolute inset-0"
+                  fallbackStyle={{ background: "linear-gradient(to bottom right, hsl(var(--primary)/0.3), hsl(330 80% 60% / 0.2), hsl(220 80% 60% / 0.2))" }}
+                />
+                <div className="relative flex h-full items-center px-2.5">
+                  <span className="truncate font-display text-sm font-semibold text-white">
+                    {identity.name}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
           <CalendarClock className={cn("mb-1 drop-shadow", compact ? "size-6" : "size-10 mb-2")} />
           <h3 className={cn(
             "font-display font-bold leading-tight drop-shadow",
