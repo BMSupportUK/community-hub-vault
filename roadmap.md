@@ -2,6 +2,7 @@
 # Roadmap
 
 ## Current
+- [ ] Sectioned privacy-safe app demo: member and non-member features, referral sign-up, security gate, and descriptions for every video
 - [x] Sports guides: preserve supplied @ matchups across all sports and formatted read-back
 - [x] BM Support inbox: private messaging, unread rail badge, pub background, edit/delete and admin/management reports
 - [x] Home loading: stop the Working Status name plate moving upward when shift details arrive
