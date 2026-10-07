@@ -291,9 +291,18 @@ export function normalizeSportsEventTitle(value: string): string {
     // not "versus".
     .replace(/\s+(?:x|vs\.?|v\.?)\s+(?!\d{4}\b|\d{1,2}[./-]\d{1,2}[./-]\d{2,4}\b)/gi, " v ")
     .trim();
+  // Keep "@" only as a separator between two team names. Provider rows also
+  // use it before a slot date; that marker must never leak into the event
+  // title as "@ Wednesday..." or remain as a trailing orphan.
+  const atParts = text.split(/\s+@\s+/);
+  const withoutDateMarker = atParts.length === 2 && parseListingDate(atParts[1])
+    ? atParts[0].trim()
+    : text.replace(/^@\s+|\s+@$/, "").trim();
   // A spaced ampersand is the matchup only when no other separator exists —
   // "London City v Brighton & Hove Albion" keeps the club's own "&".
-  return / (?:v|@) /.test(text) ? text : text.replace(/\s+&\s+/g, " v ");
+  return / (?:v|@) /.test(withoutDateMarker)
+    ? withoutDateMarker
+    : withoutDateMarker.replace(/\s+&\s+/g, " v ");
 }
 
 /**

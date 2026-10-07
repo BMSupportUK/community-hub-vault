@@ -14,6 +14,9 @@ describe("remembered sports import layouts", () => {
       expect(parseSportsListingBlock(result.formatted)).toEqual(result.events);
     }
     expect(normalizeSportsEventTitle("Lions vs Tigers")).toBe("Lions v Tigers");
+    expect(normalizeSportsEventTitle("NBA @ Wednesday, 7th October")).toBe("NBA");
+    expect(normalizeSportsEventTitle("NBA @ 07/10/2026")).toBe("NBA");
+    expect(normalizeSportsEventTitle("NBA @")).toBe("NBA");
   });
 
   test("manual split never jumps backwards to an unrelated post heading", () => {
