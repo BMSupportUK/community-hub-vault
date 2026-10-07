@@ -173,26 +173,20 @@ function WelcomePage() {
                       <div className="absolute inset-0 bg-gradient-to-tr from-blue-950/35 via-transparent to-transparent" />
                     </div>
                   </div>
-                  <div className="px-1">
-                    <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                      <span className="text-sm font-semibold text-sky-100/90">Hey {name}</span>
-                      {isStaffAccount ? (
-                        staffRoleLabel && (
+                  {isStaffAccount && (
+                    <div className="px-1">
+                      <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                        <span className="text-sm font-semibold text-sky-100/90">Hey {name}</span>
+                        {staffRoleLabel && (
                           <span className="inline-flex items-center rounded-full border border-white/25 bg-white/15 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-white">
                             {staffRoleLabel}
                           </span>
-                        )
-                      ) : (
-                        <span className="inline-flex items-center rounded-full border border-white/25 bg-white/15 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-white">
-                          Member
-                        </span>
-                      )}
-                    </div>
-                    <h1 className="mt-1.5 font-display text-xl font-bold leading-tight lg:text-2xl xl:text-3xl">
-                      {isStaffAccount ? "Welcome to The Staff Portal" : "Welcome to The Customer Portal"}
-                    </h1>
-                    {isStaffAccount ? (
-                      /* Shift encouragement now sits directly under the staff welcome heading. */
+                        )}
+                      </div>
+                      <h1 className="mt-1.5 font-display text-xl font-bold leading-tight lg:text-2xl xl:text-3xl">
+                        Welcome to The Staff Portal
+                      </h1>
+                      {/* Shift encouragement sits directly under the staff welcome heading. */}
                       <p className={`mt-2.5 px-1 ${isStaffShiftActive ? "text-sm font-medium text-white/90" : "text-base font-semibold text-white"}`}>
                         <Star className={`mr-1 inline-block size-4 shrink-0 -translate-y-px text-amber-200 align-middle ${isStaffShiftActive ? "" : "size-5"}`} />
                         <span>
@@ -202,17 +196,8 @@ function WelcomePage() {
                         </span>
                         <Star className={`ml-1 inline-block size-4 shrink-0 -translate-y-px text-amber-200 align-middle ${isStaffShiftActive ? "" : "size-5"}`} />
                       </p>
-                    ) : (
-                      <>
-                        <p className="mt-2.5 px-1 text-sm font-medium text-white/90">
-                          Stay connected with the community, manage your account and get help.
-                        </p>
-                        <p className="mt-1 px-1 text-[0.85rem] leading-relaxed text-white/85">
-                          Access channels, schedules, support and services—all in one place.
-                        </p>
-                      </>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Right column — staff Working Status, or the member subscription details. */}
