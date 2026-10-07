@@ -547,6 +547,161 @@ export type Database = {
         }
         Relationships: []
       }
+      bm_inbox_messages: {
+        Row: {
+          body: string
+          created_at: string
+          deleted_at: string | null
+          edited_at: string | null
+          id: string
+          sender_id: string
+          thread_id: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          deleted_at?: string | null
+          edited_at?: string | null
+          id?: string
+          sender_id: string
+          thread_id: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          deleted_at?: string | null
+          edited_at?: string | null
+          id?: string
+          sender_id?: string
+          thread_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bm_inbox_messages_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bm_inbox_messages_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "bm_inbox_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bm_inbox_reports: {
+        Row: {
+          created_at: string
+          id: string
+          message_id: string
+          message_snapshot: string
+          reason: string
+          reporter_id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          sender_id: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message_id: string
+          message_snapshot: string
+          reason: string
+          reporter_id: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          sender_id: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message_id?: string
+          message_snapshot?: string
+          reason?: string
+          reporter_id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          sender_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bm_inbox_reports_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "bm_inbox_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bm_inbox_reports_reporter_id_fkey"
+            columns: ["reporter_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bm_inbox_reports_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bm_inbox_reports_sender_id_fkey"
+            columns: ["sender_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      bm_inbox_threads: {
+        Row: {
+          created_at: string
+          id: string
+          read_high: string
+          read_low: string
+          user_high: string
+          user_low: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          read_high?: string
+          read_low?: string
+          user_high: string
+          user_low: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          read_high?: string
+          read_low?: string
+          user_high?: string
+          user_low?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bm_inbox_threads_user_high_fkey"
+            columns: ["user_high"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bm_inbox_threads_user_low_fkey"
+            columns: ["user_low"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       boro_entrants: {
         Row: {
           created_at: string
@@ -6697,6 +6852,16 @@ export type Database = {
       archive_old_closed_tickets: { Args: never; Returns: number }
       assign_pending_tickets: { Args: never; Returns: number }
       auto_travel_home_breaks: { Args: never; Returns: undefined }
+      bm_inbox_action: {
+        Args: { _action: string; _body?: string; _target: string }
+        Returns: string
+      }
+      bm_inbox_allowed: { Args: { _uid: string }; Returns: boolean }
+      bm_inbox_review: {
+        Args: { _id?: string; _status?: string }
+        Returns: Json
+      }
+      bm_inbox_state: { Args: { _thread?: string }; Returns: Json }
       boro_score_fixture: { Args: { _fixture_id: string }; Returns: undefined }
       can_in_channel: {
         Args: { _action: string; _channel: string; _user: string }

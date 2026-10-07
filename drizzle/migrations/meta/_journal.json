@@ -617,6 +617,13 @@
       "when": 1791280880092,
       "tag": "0087_add_male_customer_nameplate_and_gender_defaults",
       "breakpoints": true
+    },
+    {
+      "idx": 88,
+      "version": "7",
+      "when": 1791362038727,
+      "tag": "0088_bm_support_private_inbox",
+      "breakpoints": true
     }
   ]
 }
