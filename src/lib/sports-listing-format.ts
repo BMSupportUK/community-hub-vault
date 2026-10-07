@@ -952,7 +952,7 @@ function expandMultiSlotChannelPost(raw: string): string {
 
 /** Convert repeated bold title → time → channels blocks into the parser's
  * canonical time → title → channels order before markdown is discarded. */
-function reorderMarkedTitleTimeBlocks(raw: string): string {
+export function reorderMarkedTitleTimeBlocks(raw: string): string {
   const lines = decodeListingEntities(raw).split("\n");
   for (let i = 0; i < lines.length; i++) {
     const markedTitle = lines[i]?.trim().match(/^(?:\*{2}|__)(?!#)(.+?)(?:\*{2}|__)$/)?.[1];
