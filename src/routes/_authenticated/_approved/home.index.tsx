@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import { ServiceStatusPill } from "@/components/app/ServiceStatusPill";
 import { SubscriptionDetailsCard } from "@/components/app/SubscriptionDetailsCard";
+import { Nameplate } from "@/components/app/Nameplate";
 import { WorkingStatusBox } from "@/components/app/WorkingStatusBox";
 import { useTalkChannelTotalCount } from "@/hooks/use-talk-channel-presence";
 import { formatRoleLabel } from "@/lib/role-label";
@@ -40,6 +41,7 @@ function WelcomePage() {
   const staffRoleLabel = formatRoleLabel(staffRole);
   const fallbackName = (user?.email ?? "there").split("@")[0];
   const [displayName, setDisplayName] = useState<string>(fallbackName);
+  const [nameplateId, setNameplateId] = useState<string | null>(null);
   const [isStaffShiftActive, setIsStaffShiftActive] = useState(false);
   const name = displayName;
   const navigate = useNavigate();
@@ -49,11 +51,12 @@ function WelcomePage() {
     (async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("display_name, username")
+        .select("display_name, username, equipped_nameplate_id")
         .eq("id", user.id)
         .maybeSingle();
       const n = data?.display_name || data?.username;
       if (n) setDisplayName(n);
+      setNameplateId(data?.equipped_nameplate_id ?? null);
     })();
   }, [user?.id]);
 
@@ -206,7 +209,20 @@ function WelcomePage() {
                   {!isStaffAccount && (
                     <div className="min-w-0 text-white">
                       <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                        <span className="text-xs font-semibold text-sky-100/90">Hey {name}</span>
+                        <span className="text-xs font-semibold text-sky-100/90">Hey</span>
+                        {/* The member's name plate stands in for their name text. */}
+                        <div className="relative h-9 w-[151px] max-w-full shrink-0 overflow-hidden rounded-lg xl:w-[183px]">
+                          <Nameplate
+                            id={nameplateId}
+                            className="absolute inset-0"
+                            fallbackStyle={{ background: "linear-gradient(to bottom right, hsl(var(--primary)/0.3), hsl(330 80% 60% / 0.2), hsl(220 80% 60% / 0.2))" }}
+                          />
+                          <div className="relative flex h-full items-center px-2.5">
+                            <span className="truncate font-display text-sm font-semibold text-white">
+                              {name}
+                            </span>
+                          </div>
+                        </div>
                         <span className="inline-flex items-center rounded-full border border-white/25 bg-white/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
                           Member
                         </span>
