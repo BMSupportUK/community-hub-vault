@@ -1,9 +1,21 @@
 import { describe, expect, setSystemTime, test } from "bun:test";
 import { checkSportsImport } from "../src/lib/sports-import-check";
-import { formatSportsListingBlock, parseSportsListingBlock } from "../src/lib/sports-listing-format";
+import { formatSportsListingBlock, normalizeSportsEventTitle, parseSportsListingBlock } from "../src/lib/sports-listing-format";
 import { snapSplitToHeading, splitSportsListingAtLine } from "../src/lib/discord-import.functions";
 
 describe("remembered sports import layouts", () => {
+  test("all sports preserve @ matchups, including ampersands within team names", () => {
+    for (const title of ["Falcons @ Packers", "TIMBERWOLVES @ PACERS", "Boston Red Sox @ New York Yankees", "London City @ Brighton & Hove Albion"]) {
+      expect(normalizeSportsEventTitle(title)).toBe(title);
+      const raw = `Wednesday, 7th October\n12:00 UK\n${title}\nSky Sports 1`;
+      const result = checkSportsImport(raw, "gmt", Date.UTC(2026, 9, 7, 9));
+      expect(result.errors).toBe(0);
+      expect(result.events[0]?.title).toBe(title);
+      expect(parseSportsListingBlock(result.formatted)).toEqual(result.events);
+    }
+    expect(normalizeSportsEventTitle("Lions vs Tigers")).toBe("Lions v Tigers");
+  });
+
   test("manual split never jumps backwards to an unrelated post heading", () => {
     const lines = [
       "-", "", "**## OTHER SPORT: MONDAY 28 SEPTEMBER**", "",
@@ -108,7 +120,7 @@ beIN Sports English 1 & 2`;
 
   test("NFL Sunday Ticket uses the stated UK time and next-line fixture", () => {
     const result = parseSportsListingBlock("US | NFL Sunday Ticket\nNFL 02: 1pm ET | 6pm UK\nFalcons @ Packers");
-    expect(result).toEqual([{ date: null, time: "6pm", title: "Falcons v Packers", channels: ["NFL 02"] }]);
+    expect(result).toEqual([{ date: null, time: "6pm", title: "Falcons @ Packers", channels: ["NFL 02"] }]);
   });
 
   test("NFL Sunday Ticket spaced pipe rows and SNF labels keep every fixture", () => {
@@ -168,8 +180,8 @@ Lions at Panthers`;
     expect(result.errors).toBe(0);
     expect(result.warnings).toBe(0);
     expect(result.events).toEqual([
-      { date: "Thursday, 8th October", time: "00:00 BST", title: "NBA: TIMBERWOLVES v PACERS", channels: ["NBA TV CA"] },
-      { date: "Thursday, 8th October", time: "03:00 BST", title: "NBA: WARRIORS v TRAIL BLAZERS", channels: ["NBA TV CA", "NBA TV US"] },
+      { date: "Thursday, 8th October", time: "00:00 BST", title: "NBA: TIMBERWOLVES @ PACERS", channels: ["NBA TV CA"] },
+      { date: "Thursday, 8th October", time: "03:00 BST", title: "NBA: WARRIORS @ TRAIL BLAZERS", channels: ["NBA TV CA", "NBA TV US"] },
     ]);
     expect(parseSportsListingBlock(result.formatted)).toEqual(result.events);
   });
