@@ -2,7 +2,7 @@
 # Roadmap
 
 ## Current
-- [ ] BM Support inbox: private messaging, unread rail badge, pub background, edit/delete and admin/management reports
+- [x] BM Support inbox: private messaging, unread rail badge, pub background, edit/delete and admin/management reports
 - [x] Home loading: stop the Working Status name plate moving upward when shift details arrive
 - [x] Customer name cards: give approved BM Support customers a person-icon default without replacing their chosen card
 - [x] Staff nameplates: male/female role defaults selected from Edit profile without replacing custom choices
