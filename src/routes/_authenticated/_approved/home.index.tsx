@@ -158,32 +158,9 @@ function WelcomePage() {
         <div className="grid min-h-0 min-w-0 w-full grid-cols-1 gap-4 sm:grid-cols-[minmax(0,1fr)_220px] md:h-full lg:grid-cols-[minmax(0,1fr)_minmax(220px,300px)] xl:gap-6">
           <div className="relative flex min-h-0 min-w-0 flex-col pb-8 lg:pb-10">
             <div className="relative flex min-h-0 flex-1 flex-col overflow-hidden rounded-2xl border border-white/15 bg-gradient-to-br from-violet-600 via-fuchsia-600 to-blue-600 shadow-2xl">
-              <div className={`grid min-h-0 flex-1 gap-4 p-4 pb-14 md:items-start lg:p-5 lg:pb-14 xl:gap-6 xl:p-6 xl:pb-14 ${isStaffAccount ? "md:grid-cols-2" : "md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]"}`}>
-                {isStaffAccount ? (
-                  <div className="order-2 flex min-h-0 min-w-0 flex-col self-stretch">
-                    <WorkingStatusBox compact onShiftStatusChange={setIsStaffShiftActive} />
-                  </div>
-                ) : (
-                  <div className="flex min-h-0 min-w-0 flex-col text-white">
-                    <div className="flex min-h-96 flex-1 flex-col justify-center space-y-4 text-left sm:space-y-5 md:min-h-full [@media(max-height:650px)]:space-y-2">
-                      <div className="text-sm font-semibold uppercase tracking-wide text-sky-200/90">BM Support · Member Hub</div>
-                      <h1 className="max-w-[16ch] font-display text-[clamp(1.7rem,min(5.5vw,7vh),4.5rem)] font-bold leading-[1.08] sm:max-w-none">
-                        Welcome to BM Support
-                      </h1>
-                      <p className="max-w-xl text-[clamp(1rem,min(2.2vw,2.6vh),1.5rem)] font-medium text-white/95">
-                        Hey {name} — stay connected with the community, manage your account and get help.
-                      </p>
-                      <p className="max-w-xl text-[clamp(0.85rem,min(1.6vw,2vh),1.125rem)] leading-relaxed text-white/85">
-                        Access channels, schedules, support and services—all in one place.
-                      </p>
-                      <div className="w-full max-w-xl pt-1">
-                        <SubscriptionDetailsCard compact embedded />
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                <div className={`flex min-w-0 flex-col gap-3 self-start text-white ${isStaffAccount ? "order-1" : ""}`}>
+              <div className="grid min-h-0 flex-1 gap-4 p-4 pb-14 md:items-start md:grid-cols-2 lg:p-5 lg:pb-14 xl:gap-6 xl:p-6 xl:pb-14">
+                {/* Left column — hero image with the greeting beneath, mirroring the staff home. */}
+                <div className="order-1 flex min-w-0 flex-col gap-3 self-start text-white">
                   <div className="relative aspect-video w-full min-w-0 overflow-hidden rounded-xl bg-blue-950/30 ring-1 ring-white/10">
                     <div className="absolute inset-0">
                       <img
@@ -196,18 +173,26 @@ function WelcomePage() {
                       <div className="absolute inset-0 bg-gradient-to-tr from-blue-950/35 via-transparent to-transparent" />
                     </div>
                   </div>
-                  {isStaffAccount && (
-                    <div className="px-1">
-                      <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-                        <span className="text-sm font-semibold text-sky-100/90">Hey {name}</span>
-                        {staffRoleLabel && (
+                  <div className="px-1">
+                    <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                      <span className="text-sm font-semibold text-sky-100/90">Hey {name}</span>
+                      {isStaffAccount ? (
+                        staffRoleLabel && (
                           <span className="inline-flex items-center rounded-full border border-white/25 bg-white/15 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-white">
                             {staffRoleLabel}
                           </span>
-                        )}
-                      </div>
-                      <h1 className="mt-1.5 font-display text-xl font-bold leading-tight lg:text-2xl xl:text-3xl">Welcome to The Staff Portal</h1>
-                      {/* Shift encouragement now sits directly under the staff welcome heading. */}
+                        )
+                      ) : (
+                        <span className="inline-flex items-center rounded-full border border-white/25 bg-white/15 px-2.5 py-0.5 text-[11px] font-bold uppercase tracking-wider text-white">
+                          Member
+                        </span>
+                      )}
+                    </div>
+                    <h1 className="mt-1.5 font-display text-xl font-bold leading-tight lg:text-2xl xl:text-3xl">
+                      {isStaffAccount ? "Welcome to The Staff Portal" : "Welcome to The Customer Portal"}
+                    </h1>
+                    {isStaffAccount ? (
+                      /* Shift encouragement now sits directly under the staff welcome heading. */
                       <p className={`mt-2.5 px-1 ${isStaffShiftActive ? "text-sm font-medium text-white/90" : "text-base font-semibold text-white"}`}>
                         <Star className={`mr-1 inline-block size-4 shrink-0 -translate-y-px text-amber-200 align-middle ${isStaffShiftActive ? "" : "size-5"}`} />
                         <span>
@@ -217,7 +202,25 @@ function WelcomePage() {
                         </span>
                         <Star className={`ml-1 inline-block size-4 shrink-0 -translate-y-px text-amber-200 align-middle ${isStaffShiftActive ? "" : "size-5"}`} />
                       </p>
-                    </div>
+                    ) : (
+                      <>
+                        <p className="mt-2.5 px-1 text-sm font-medium text-white/90">
+                          Stay connected with the community, manage your account and get help.
+                        </p>
+                        <p className="mt-1 px-1 text-[0.85rem] leading-relaxed text-white/85">
+                          Access channels, schedules, support and services—all in one place.
+                        </p>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Right column — staff Working Status, or the member subscription details. */}
+                <div className="order-2 flex min-h-0 min-w-0 flex-col self-stretch">
+                  {isStaffAccount ? (
+                    <WorkingStatusBox compact onShiftStatusChange={setIsStaffShiftActive} />
+                  ) : (
+                    <SubscriptionDetailsCard compact embedded />
                   )}
                 </div>
               </div>
