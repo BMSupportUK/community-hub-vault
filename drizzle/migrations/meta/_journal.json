@@ -624,6 +624,13 @@
       "when": 1791362038727,
       "tag": "0088_bm_support_private_inbox",
       "breakpoints": true
+    },
+    {
+      "idx": 89,
+      "version": "7",
+      "when": 1791363263017,
+      "tag": "0089_bm_inbox_member_roles",
+      "breakpoints": true
     }
   ]
 }

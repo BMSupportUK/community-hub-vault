@@ -4,7 +4,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 
 export const INBOX_ROLES = ["admin", "management", "staff", "moderator", "subscriber", "nonsubscriber"];
-export type InboxMember = { id: string; name: string; username: string | null; avatar: string | null; plate: string | null };
+export type InboxMember = { id: string; name: string; username: string | null; avatar: string | null; plate: string | null; roles?: string[] };
+export const INBOX_STAFF_ROLES = ["admin", "management", "staff", "moderator"];
+export const isInboxStaff = (m: InboxMember) => (m.roles ?? []).some(r => INBOX_STAFF_ROLES.includes(r));
 export type InboxMessage = { id: string; sender_id: string; body: string; created_at: string; edited_at: string | null; deleted_at: string | null };
 export type InboxState = { members: InboxMember[]; threads: { id: string; other_id: string; last_body: string | null; last_at: string | null; unread: number }[]; messages: InboxMessage[]; unread: number };
 
