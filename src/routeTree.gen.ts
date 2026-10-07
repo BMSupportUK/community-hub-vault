@@ -85,6 +85,7 @@ import { Route as AuthenticatedApprovedFanZoneSecurityRouteImport } from './rout
 import { Route as AuthenticatedApprovedForumRouteImport } from './routes/_authenticated/_approved/forum'
 import { Route as AuthenticatedApprovedHomeRouteImport } from './routes/_authenticated/_approved/home'
 import { Route as AuthenticatedApprovedInboxRouteImport } from './routes/_authenticated/_approved/inbox'
+import { Route as AuthenticatedApprovedInboxReportsRouteImport } from './routes/_authenticated/_approved/inbox-reports'
 import { Route as AuthenticatedApprovedInstallGuidesRouteImport } from './routes/_authenticated/_approved/install-guides'
 import { Route as AuthenticatedApprovedKnowledgeBaseRouteImport } from './routes/_authenticated/_approved/knowledge-base'
 import { Route as AuthenticatedApprovedLeaderboardRouteImport } from './routes/_authenticated/_approved/leaderboard'
@@ -588,6 +589,12 @@ const AuthenticatedApprovedInboxRoute =
   AuthenticatedApprovedInboxRouteImport.update({
     id: '/inbox',
     path: '/inbox',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedInboxReportsRoute =
+  AuthenticatedApprovedInboxReportsRouteImport.update({
+    id: '/inbox-reports',
+    path: '/inbox-reports',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
 const AuthenticatedApprovedInstallGuidesRoute =
@@ -1140,6 +1147,7 @@ export interface FileRoutesByFullPath {
   '/forum': typeof AuthenticatedApprovedForumRouteWithChildren
   '/home': typeof AuthenticatedApprovedHomeRouteWithChildren
   '/inbox': typeof AuthenticatedApprovedInboxRoute
+  '/inbox-reports': typeof AuthenticatedApprovedInboxReportsRoute
   '/install-guides': typeof AuthenticatedApprovedInstallGuidesRoute
   '/knowledge-base': typeof AuthenticatedApprovedKnowledgeBaseRoute
   '/leaderboard': typeof AuthenticatedApprovedLeaderboardRoute
@@ -1293,6 +1301,7 @@ export interface FileRoutesByTo {
   '/fan-zone-security': typeof AuthenticatedApprovedFanZoneSecurityRoute
   '/forum': typeof AuthenticatedApprovedForumRouteWithChildren
   '/inbox': typeof AuthenticatedApprovedInboxRoute
+  '/inbox-reports': typeof AuthenticatedApprovedInboxReportsRoute
   '/install-guides': typeof AuthenticatedApprovedInstallGuidesRoute
   '/knowledge-base': typeof AuthenticatedApprovedKnowledgeBaseRoute
   '/leaderboard': typeof AuthenticatedApprovedLeaderboardRoute
@@ -1452,6 +1461,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/forum': typeof AuthenticatedApprovedForumRouteWithChildren
   '/_authenticated/_approved/home': typeof AuthenticatedApprovedHomeRouteWithChildren
   '/_authenticated/_approved/inbox': typeof AuthenticatedApprovedInboxRoute
+  '/_authenticated/_approved/inbox-reports': typeof AuthenticatedApprovedInboxReportsRoute
   '/_authenticated/_approved/install-guides': typeof AuthenticatedApprovedInstallGuidesRoute
   '/_authenticated/_approved/knowledge-base': typeof AuthenticatedApprovedKnowledgeBaseRoute
   '/_authenticated/_approved/leaderboard': typeof AuthenticatedApprovedLeaderboardRoute
@@ -1610,6 +1620,7 @@ export interface FileRouteTypes {
     | '/forum'
     | '/home'
     | '/inbox'
+    | '/inbox-reports'
     | '/install-guides'
     | '/knowledge-base'
     | '/leaderboard'
@@ -1763,6 +1774,7 @@ export interface FileRouteTypes {
     | '/fan-zone-security'
     | '/forum'
     | '/inbox'
+    | '/inbox-reports'
     | '/install-guides'
     | '/knowledge-base'
     | '/leaderboard'
@@ -1921,6 +1933,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/forum'
     | '/_authenticated/_approved/home'
     | '/_authenticated/_approved/inbox'
+    | '/_authenticated/_approved/inbox-reports'
     | '/_authenticated/_approved/install-guides'
     | '/_authenticated/_approved/knowledge-base'
     | '/_authenticated/_approved/leaderboard'
@@ -2605,6 +2618,13 @@ declare module '@tanstack/react-router' {
       path: '/inbox'
       fullPath: '/inbox'
       preLoaderRoute: typeof AuthenticatedApprovedInboxRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/inbox-reports': {
+      id: '/_authenticated/_approved/inbox-reports'
+      path: '/inbox-reports'
+      fullPath: '/inbox-reports'
+      preLoaderRoute: typeof AuthenticatedApprovedInboxReportsRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
     '/_authenticated/_approved/install-guides': {
@@ -3302,6 +3322,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedForumRoute: typeof AuthenticatedApprovedForumRouteWithChildren
   AuthenticatedApprovedHomeRoute: typeof AuthenticatedApprovedHomeRouteWithChildren
   AuthenticatedApprovedInboxRoute: typeof AuthenticatedApprovedInboxRoute
+  AuthenticatedApprovedInboxReportsRoute: typeof AuthenticatedApprovedInboxReportsRoute
   AuthenticatedApprovedInstallGuidesRoute: typeof AuthenticatedApprovedInstallGuidesRoute
   AuthenticatedApprovedKnowledgeBaseRoute: typeof AuthenticatedApprovedKnowledgeBaseRoute
   AuthenticatedApprovedLeaderboardRoute: typeof AuthenticatedApprovedLeaderboardRoute
@@ -3411,6 +3432,8 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
   AuthenticatedApprovedForumRoute: AuthenticatedApprovedForumRouteWithChildren,
   AuthenticatedApprovedHomeRoute: AuthenticatedApprovedHomeRouteWithChildren,
   AuthenticatedApprovedInboxRoute: AuthenticatedApprovedInboxRoute,
+  AuthenticatedApprovedInboxReportsRoute:
+    AuthenticatedApprovedInboxReportsRoute,
   AuthenticatedApprovedInstallGuidesRoute:
     AuthenticatedApprovedInstallGuidesRoute,
   AuthenticatedApprovedKnowledgeBaseRoute:
