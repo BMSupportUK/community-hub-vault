@@ -1313,7 +1313,6 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
 
   const events: SportsListingEvent[] = [];
   let currentDate: string | null = null;
-  if (process.env.DBG_SPORTS) console.log("LINES", JSON.stringify(lines));
   let current: SportsListingEvent | null = null;
   // Provider dumps name the programme on the line above its time slot.
   let previousPlainLine: string | null = null;
@@ -1354,7 +1353,6 @@ export function parseSportsListingBlock(raw: string | null | undefined): SportsL
     }
 
     const detected = detectEvent(line, currentDate);
-    if (process.env.DBG_SPORTS) console.log("L", JSON.stringify(line), JSON.stringify(detected), current && JSON.stringify(current));
     if (detected) {
       // "Azerbaijan : Practice 1" / "9:30am UK | 4:30am ET" / channels —
       // the title sits ABOVE a bare time line and channels follow below.
