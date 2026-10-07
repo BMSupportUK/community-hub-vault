@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import firestickCompatibility from "@/assets/firestick-compatibility.png.asset.json";
+import firestickCompatibility from "@/assets/firestick-compatibility-2026.png.asset.json";
 import tvLoginIllustration from "@/assets/tv-login-illustration.jpg";
 
 type Device = {
