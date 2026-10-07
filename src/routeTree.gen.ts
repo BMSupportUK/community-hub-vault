@@ -84,6 +84,7 @@ import { Route as AuthenticatedApprovedFanZoneSanctionsRouteImport } from './rou
 import { Route as AuthenticatedApprovedFanZoneSecurityRouteImport } from './routes/_authenticated/_approved/fan-zone-security'
 import { Route as AuthenticatedApprovedForumRouteImport } from './routes/_authenticated/_approved/forum'
 import { Route as AuthenticatedApprovedHomeRouteImport } from './routes/_authenticated/_approved/home'
+import { Route as AuthenticatedApprovedInboxRouteImport } from './routes/_authenticated/_approved/inbox'
 import { Route as AuthenticatedApprovedInstallGuidesRouteImport } from './routes/_authenticated/_approved/install-guides'
 import { Route as AuthenticatedApprovedKnowledgeBaseRouteImport } from './routes/_authenticated/_approved/knowledge-base'
 import { Route as AuthenticatedApprovedLeaderboardRouteImport } from './routes/_authenticated/_approved/leaderboard'
@@ -581,6 +582,12 @@ const AuthenticatedApprovedHomeRoute =
   AuthenticatedApprovedHomeRouteImport.update({
     id: '/home',
     path: '/home',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedInboxRoute =
+  AuthenticatedApprovedInboxRouteImport.update({
+    id: '/inbox',
+    path: '/inbox',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
 const AuthenticatedApprovedInstallGuidesRoute =
@@ -1132,6 +1139,7 @@ export interface FileRoutesByFullPath {
   '/fan-zone-security': typeof AuthenticatedApprovedFanZoneSecurityRoute
   '/forum': typeof AuthenticatedApprovedForumRouteWithChildren
   '/home': typeof AuthenticatedApprovedHomeRouteWithChildren
+  '/inbox': typeof AuthenticatedApprovedInboxRoute
   '/install-guides': typeof AuthenticatedApprovedInstallGuidesRoute
   '/knowledge-base': typeof AuthenticatedApprovedKnowledgeBaseRoute
   '/leaderboard': typeof AuthenticatedApprovedLeaderboardRoute
@@ -1284,6 +1292,7 @@ export interface FileRoutesByTo {
   '/fan-zone-sanctions': typeof AuthenticatedApprovedFanZoneSanctionsRoute
   '/fan-zone-security': typeof AuthenticatedApprovedFanZoneSecurityRoute
   '/forum': typeof AuthenticatedApprovedForumRouteWithChildren
+  '/inbox': typeof AuthenticatedApprovedInboxRoute
   '/install-guides': typeof AuthenticatedApprovedInstallGuidesRoute
   '/knowledge-base': typeof AuthenticatedApprovedKnowledgeBaseRoute
   '/leaderboard': typeof AuthenticatedApprovedLeaderboardRoute
@@ -1442,6 +1451,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/fan-zone-security': typeof AuthenticatedApprovedFanZoneSecurityRoute
   '/_authenticated/_approved/forum': typeof AuthenticatedApprovedForumRouteWithChildren
   '/_authenticated/_approved/home': typeof AuthenticatedApprovedHomeRouteWithChildren
+  '/_authenticated/_approved/inbox': typeof AuthenticatedApprovedInboxRoute
   '/_authenticated/_approved/install-guides': typeof AuthenticatedApprovedInstallGuidesRoute
   '/_authenticated/_approved/knowledge-base': typeof AuthenticatedApprovedKnowledgeBaseRoute
   '/_authenticated/_approved/leaderboard': typeof AuthenticatedApprovedLeaderboardRoute
@@ -1599,6 +1609,7 @@ export interface FileRouteTypes {
     | '/fan-zone-security'
     | '/forum'
     | '/home'
+    | '/inbox'
     | '/install-guides'
     | '/knowledge-base'
     | '/leaderboard'
@@ -1751,6 +1762,7 @@ export interface FileRouteTypes {
     | '/fan-zone-sanctions'
     | '/fan-zone-security'
     | '/forum'
+    | '/inbox'
     | '/install-guides'
     | '/knowledge-base'
     | '/leaderboard'
@@ -1908,6 +1920,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/fan-zone-security'
     | '/_authenticated/_approved/forum'
     | '/_authenticated/_approved/home'
+    | '/_authenticated/_approved/inbox'
     | '/_authenticated/_approved/install-guides'
     | '/_authenticated/_approved/knowledge-base'
     | '/_authenticated/_approved/leaderboard'
@@ -2585,6 +2598,13 @@ declare module '@tanstack/react-router' {
       path: '/home'
       fullPath: '/home'
       preLoaderRoute: typeof AuthenticatedApprovedHomeRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/inbox': {
+      id: '/_authenticated/_approved/inbox'
+      path: '/inbox'
+      fullPath: '/inbox'
+      preLoaderRoute: typeof AuthenticatedApprovedInboxRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
     '/_authenticated/_approved/install-guides': {
@@ -3281,6 +3301,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedFanZoneSecurityRoute: typeof AuthenticatedApprovedFanZoneSecurityRoute
   AuthenticatedApprovedForumRoute: typeof AuthenticatedApprovedForumRouteWithChildren
   AuthenticatedApprovedHomeRoute: typeof AuthenticatedApprovedHomeRouteWithChildren
+  AuthenticatedApprovedInboxRoute: typeof AuthenticatedApprovedInboxRoute
   AuthenticatedApprovedInstallGuidesRoute: typeof AuthenticatedApprovedInstallGuidesRoute
   AuthenticatedApprovedKnowledgeBaseRoute: typeof AuthenticatedApprovedKnowledgeBaseRoute
   AuthenticatedApprovedLeaderboardRoute: typeof AuthenticatedApprovedLeaderboardRoute
@@ -3389,6 +3410,7 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
     AuthenticatedApprovedFanZoneSecurityRoute,
   AuthenticatedApprovedForumRoute: AuthenticatedApprovedForumRouteWithChildren,
   AuthenticatedApprovedHomeRoute: AuthenticatedApprovedHomeRouteWithChildren,
+  AuthenticatedApprovedInboxRoute: AuthenticatedApprovedInboxRoute,
   AuthenticatedApprovedInstallGuidesRoute:
     AuthenticatedApprovedInstallGuidesRoute,
   AuthenticatedApprovedKnowledgeBaseRoute:
