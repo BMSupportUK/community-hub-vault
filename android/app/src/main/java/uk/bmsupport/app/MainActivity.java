@@ -145,6 +145,16 @@ public class MainActivity extends BridgeActivity {
         }
     }
 
+    /** Old shift channels kept a phone-changed sound forever; delete them so only the fresh ones show. */
+    private void removeOldChannels(String... ids) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return;
+        NotificationManager nm = getSystemService(NotificationManager.class);
+        if (nm == null) return;
+        for (String id : ids) {
+            try { nm.deleteNotificationChannel(id); } catch (Exception ignored) { }
+        }
+    }
+
     /** Spoken channels are created natively so closed-app pushes always find them with their MP3. */
     private void createSpokenChannel(String id, String name, int rawRes) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return;
