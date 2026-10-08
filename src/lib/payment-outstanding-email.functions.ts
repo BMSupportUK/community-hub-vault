@@ -29,14 +29,22 @@ export const sendPaymentOutstandingEmail = createServerFn({ method: "POST" })
     }
     if (!to) return { sent: false, reason: "no_email" as const };
 
+    const { data: link } = await supabaseAdmin
+      .from("order_checkout_links")
+      .select("token, password")
+      .eq("order_id", String(order.id))
+      .maybeSingle();
+
     const { sendAndLogEmail } = await import("@/lib/email-templates/send-and-log");
-    return sendAndLogEmail(supabaseAdmin, "payment-outstanding", to, {
+    return sendAndLogEmail(supabaseAdmin, "payment-outstanding", String(to), {
       templateData: {
         customerName: order.shipping_name || order.existing_username || undefined,
         orderRef: order.order_ref ?? `#${String(order.id).slice(0, 8)}`,
         amount: `£${((order.total_cents ?? 0) / 100).toFixed(2)}`,
         paymentMethod: method === "cash" ? "Cash" : "Bank transfer",
         orderDate: order.created_at ? new Date(order.created_at).toLocaleDateString("en-GB", { dateStyle: "medium", timeZone: "Europe/London" }) : undefined,
+        checkoutUrl: link?.token ? `https://bmsupport.uk/pay/${link.token}` : undefined,
+        checkoutPassword: link?.password || undefined,
       },
       idempotencyKey: `payment-outstanding-${order.id}-${Date.now()}`,
     });
