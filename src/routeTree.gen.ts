@@ -22,6 +22,7 @@ import { Route as FanzoneBanDemoRouteImport } from './routes/fanzone-ban-demo'
 import { Route as FanzoneMuteDemoRouteImport } from './routes/fanzone-mute-demo'
 import { Route as FaqRouteImport } from './routes/faq'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as GetAndroidAppRouteImport } from './routes/get-android-app'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MfaChallengeRouteImport } from './routes/mfa-challenge'
 import { Route as PackagesRouteImport } from './routes/packages'
@@ -229,6 +230,11 @@ const FaqRoute = FaqRouteImport.update({
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
   id: '/forgot-password',
   path: '/forgot-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GetAndroidAppRoute = GetAndroidAppRouteImport.update({
+  id: '/get-android-app',
+  path: '/get-android-app',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -1085,6 +1091,7 @@ export interface FileRoutesByFullPath {
   '/fanzone-mute-demo': typeof FanzoneMuteDemoRoute
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/get-android-app': typeof GetAndroidAppRoute
   '/login': typeof LoginRoute
   '/mfa-challenge': typeof MfaChallengeRoute
   '/packages': typeof PackagesRoute
@@ -1241,6 +1248,7 @@ export interface FileRoutesByTo {
   '/fanzone-mute-demo': typeof FanzoneMuteDemoRoute
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/get-android-app': typeof GetAndroidAppRoute
   '/login': typeof LoginRoute
   '/mfa-challenge': typeof MfaChallengeRoute
   '/packages': typeof PackagesRoute
@@ -1398,6 +1406,7 @@ export interface FileRoutesById {
   '/fanzone-mute-demo': typeof FanzoneMuteDemoRoute
   '/faq': typeof FaqRoute
   '/forgot-password': typeof ForgotPasswordRoute
+  '/get-android-app': typeof GetAndroidAppRoute
   '/login': typeof LoginRoute
   '/mfa-challenge': typeof MfaChallengeRoute
   '/packages': typeof PackagesRoute
@@ -1558,6 +1567,7 @@ export interface FileRouteTypes {
     | '/fanzone-mute-demo'
     | '/faq'
     | '/forgot-password'
+    | '/get-android-app'
     | '/login'
     | '/mfa-challenge'
     | '/packages'
@@ -1714,6 +1724,7 @@ export interface FileRouteTypes {
     | '/fanzone-mute-demo'
     | '/faq'
     | '/forgot-password'
+    | '/get-android-app'
     | '/login'
     | '/mfa-challenge'
     | '/packages'
@@ -1870,6 +1881,7 @@ export interface FileRouteTypes {
     | '/fanzone-mute-demo'
     | '/faq'
     | '/forgot-password'
+    | '/get-android-app'
     | '/login'
     | '/mfa-challenge'
     | '/packages'
@@ -2030,6 +2042,7 @@ export interface RootRouteChildren {
   FanzoneMuteDemoRoute: typeof FanzoneMuteDemoRoute
   FaqRoute: typeof FaqRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
+  GetAndroidAppRoute: typeof GetAndroidAppRoute
   LoginRoute: typeof LoginRoute
   MfaChallengeRoute: typeof MfaChallengeRoute
   PackagesRoute: typeof PackagesRoute
@@ -2177,6 +2190,13 @@ declare module '@tanstack/react-router' {
       path: '/forgot-password'
       fullPath: '/forgot-password'
       preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/get-android-app': {
+      id: '/get-android-app'
+      path: '/get-android-app'
+      fullPath: '/get-android-app'
+      preLoaderRoute: typeof GetAndroidAppRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -3540,6 +3560,7 @@ const rootRouteChildren: RootRouteChildren = {
   FanzoneMuteDemoRoute: FanzoneMuteDemoRoute,
   FaqRoute: FaqRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
+  GetAndroidAppRoute: GetAndroidAppRoute,
   LoginRoute: LoginRoute,
   MfaChallengeRoute: MfaChallengeRoute,
   PackagesRoute: PackagesRoute,
