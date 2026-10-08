@@ -13,12 +13,12 @@ import androidApkAsset from "@/assets/BMSupport.apk.asset.json";
  * "new version available" notification for every member.
  */
 export const ANDROID_RELEASE = {
-  versionName: "1.1.7",
-  versionCode: 9,
+  versionName: "1.1.8",
+  versionCode: 10,
   /** Raw CDN asset (served as application/zip) — proxied by /api/public/android-apk. */
   assetUrl: androidApkAsset.url,
   /** Always use this for downloads/QR: correct .apk filename + mime type. */
   url: "/api/public/android-apk",
   absoluteUrl: "https://bmsupport.uk/api/public/android-apk",
-  notes: "Alerts now ring and show on the lock screen, and the app asks to be left out of battery saving so notifications keep working when the phone is locked.",
+  notes: "Shift start and shift end alerts play their spoken message again — the alert sounds have been refreshed so Android no longer silences them.",
 } as const;
