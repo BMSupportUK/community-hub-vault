@@ -9,13 +9,13 @@
 1. **Find the member’s secure details**
    - Open BM Support on iPhone and go to **Profile → Credentials**.
    - Demonstrate unlocking **Credentials & DNS** with test-only account details and a test vault PIN.
-   - Follow the existing **BM Install Purple Lite App** PDF guide to show where Purple Lite’s own **secure login code**, **App login name**, and **Password** are found.
+   - Follow the existing **BM Install Purple Lite App** PDF guide to show the provider-supplied **BM Secure Code**, followed by the member’s **App login name** and **Password**.
    - Keep all displayed values fictional and clearly marked **EXAMPLE ONLY**.
 2. **Install Purple Lite**
    - Open the iPhone App Store, search for **Purple Lite – IPTV Player**, confirm the correct app, tap **Get**, and open it.
 3. **Enter the secure login code**
    - On Purple Lite, choose **Login with Code**.
-   - Enter the example secure code and submit it.
+   - Enter a fictional example **BM Secure Code** and submit it.
 4. **Complete the login**
    - Continue to the next screen, select the available server if shown, then enter the example app login name and password from BM Support.
    - Enable **Remember Me** if present and tap **Login**.
@@ -32,7 +32,8 @@
 ## Privacy and accuracy
 - Use only fictional login code, username, password, account password, and vault PIN values.
 - Never show a real name, email address, credential, payment detail, or live member account.
-- Keep Purple Lite’s secure login code completely separate from QD DNS codes; the guide must use the Purple Lite code source and steps documented in the existing PDF.
+- Present the **BM Secure Code** as a provider-supplied code used by BM Support. It is not a Purple Lite code and is completely separate from QD DNS codes.
+- Follow the secure-code sequence documented in the existing BM Install Purple Lite App PDF.
 - Match the confirmed flow: **Purple Lite → Login with Code → submit code → username and password**.
 - Allow for minor wording differences between Purple Lite versions without showing unsupported shortcuts.
 
