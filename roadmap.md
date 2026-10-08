@@ -2,7 +2,7 @@
 # Roadmap
 
 ## Current
-- [ ] Create the narrated iPhone Purple Player Lite installation guide using the provider-supplied BM Secure Code, then example username and password
+- [x] Create the narrated iPhone Purple Player Lite installation guide using the provider-supplied BM Secure Code, then example username and password
 - [x] Create separate narrated BM Support App Store installation videos for Android TV and Amazon Fire TV
 - [x] Member home: enlarge the welcome copy and let the subscription box fill the space beneath it, with no empty gap and no clipped text on phones
 - [x] Revise continuous demo with actual sample user profile and security-gate screenshots using test data — delivered narrated v5
