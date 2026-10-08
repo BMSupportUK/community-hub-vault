@@ -31,6 +31,8 @@ public class MainActivity extends BridgeActivity {
         createSpokenChannel("bm_support_tickets_v3", "New support tickets", R.raw.ticket_notify);
         createSpokenChannel("bm_support_shift_start_v4", "Shift starting", R.raw.shift_start_notify);
         createSpokenChannel("bm_support_shift_end_v4", "Shift ending", R.raw.shift_end_notify);
+        removeOldChannels("bm_support_shift_start_v1", "bm_support_shift_start_v2", "bm_support_shift_start_v3",
+                "bm_support_shift_end_v1", "bm_support_shift_end_v2", "bm_support_shift_end_v3");
         createSpokenChannel("bm_support_outage_v2", "Service outage", R.raw.outage_notify);
         createSpokenChannel("bm_support_outage_resolved_v2", "Outage resolved", R.raw.outage_resolved_notify);
         createSpokenChannel("bm_support_orders_v1", "New orders", R.raw.order_notify);
