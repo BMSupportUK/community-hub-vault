@@ -32,7 +32,7 @@ export const sendPaymentOutstandingEmail = createServerFn({ method: "POST" })
     const { data: link } = await supabaseAdmin
       .from("order_checkout_links")
       .select("token, password")
-      .eq("order_id", order.id)
+      .eq("order_id", String(order.id))
       .maybeSingle();
 
     const { sendAndLogEmail } = await import("@/lib/email-templates/send-and-log");
