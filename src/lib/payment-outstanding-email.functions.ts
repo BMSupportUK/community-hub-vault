@@ -36,7 +36,7 @@ export const sendPaymentOutstandingEmail = createServerFn({ method: "POST" })
       .maybeSingle();
 
     const { sendAndLogEmail } = await import("@/lib/email-templates/send-and-log");
-    return sendAndLogEmail(supabaseAdmin, "payment-outstanding", to, {
+    return sendAndLogEmail(supabaseAdmin, "payment-outstanding", String(to), {
       templateData: {
         customerName: order.shipping_name || order.existing_username || undefined,
         orderRef: order.order_ref ?? `#${String(order.id).slice(0, 8)}`,
