@@ -611,13 +611,14 @@ export function AppTransferPanel({ onUploadClick }: { onUploadClick?: () => void
         </TabsList>
         {orderedCategories.map((c) => (
           <TabsContent key={c.key} value={c.key} className="mt-4 md:min-h-0 md:flex-1 md:overflow-y-auto md:mt-2 lg:mt-3">
-            {(grouped[c.key] ?? []).length === 0 ? (
+            {(grouped[c.key] ?? []).length === 0 && c.key !== "bm_store" ? (
               <div className="grid place-items-center rounded-xl border border-dashed border-border/70 bg-surface/60 px-6 py-12 text-center">
                 <Smartphone className="size-8 text-muted-foreground/50" />
                 <p className="mt-2 text-sm text-muted-foreground">No apps in this section yet.</p>
               </div>
             ) : (
                <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 md:h-full md:auto-rows-fr md:grid-cols-1 lg:gap-5 xl:h-full xl:auto-rows-auto xl:grid-cols-3">
+                {c.key === "bm_store" && <IosPurpleCard />}
                 {(grouped[c.key] ?? []).map((b) => (
                   <AppCard key={b.id} build={b} transfer={byBuild.get(b.id)} now={now} />
                 ))}
