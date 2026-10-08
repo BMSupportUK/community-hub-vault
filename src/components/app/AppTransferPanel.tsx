@@ -403,8 +403,9 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
 /** Apple App Store listing for Purple Player Lite — the iOS Purple Player card links here. */
 const IOS_PURPLE_STORE_URL = "https://apps.apple.com/gb/app/purple-lite-iptv-player/id6749171817";
 
-/** Static iOS Purple Player card: scan the QR to open the App Store listing. */
+/** Static iOS card with App Store download information in a dialog. */
 function IosPurpleCard() {
+  const [open, setOpen] = useState(false);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -424,19 +425,11 @@ function IosPurpleCard() {
   }, []);
 
   return (
+    <>
     <article className="group flex min-w-0 flex-col overflow-hidden rounded-lg border border-border/70 bg-surface shadow-soft transition-all hover:border-violet-500/40 hover:shadow-[0_0_30px_-10px_rgba(217,70,239,0.6)] md:grid md:grid-cols-[minmax(220px,42%)_minmax(0,1fr)] xl:flex xl:h-full xl:min-h-min">
-      <div className="relative aspect-[16/10] overflow-hidden bg-black/70 md:h-full md:min-h-0 md:aspect-auto xl:h-auto xl:min-h-[120px] xl:flex-1">
-        <div className="absolute inset-0 grid place-items-center gap-2 p-4">
-          <div className="rounded-xl bg-white p-2 shadow-soft">
-            {qrDataUrl ? (
-              <img src={qrDataUrl} alt="Apple App Store QR code for Purple Player Lite" className="block size-32 sm:size-40" />
-            ) : (
-              <div className="flex size-32 items-center justify-center sm:size-40">
-                <Loader2 className="size-5 animate-spin text-violet-600" />
-              </div>
-            )}
-          </div>
-          <p className="text-center text-[10px] text-muted-foreground">Scan with your iPhone camera</p>
+      <div className="relative aspect-[16/10] overflow-hidden bg-background md:h-full md:min-h-0 md:aspect-auto xl:h-auto xl:min-h-[120px] xl:flex-1">
+        <div className="absolute inset-0 grid place-items-center p-4">
+          <Apple className="size-16 text-primary" aria-hidden="true" />
         </div>
       </div>
 
@@ -444,29 +437,49 @@ function IosPurpleCard() {
         <h4 className="flex min-w-0 items-center gap-1.5 break-words font-display text-base font-semibold leading-snug text-foreground sm:text-lg">
           <Apple className="size-4 text-violet-300 shrink-0" /> iOS Purple Player
         </h4>
-        <p className="text-sm text-violet-200/70">
-          Install Purple Player Lite straight from the Apple App Store — scan the QR code with your
-          iPhone camera, or open the listing on your device below.
+        <p className="text-sm text-muted-foreground">
+          Purple Player Lite for iPhone and iPad.
         </p>
-
-        <div className="rounded-lg border border-violet-500/30 bg-violet-500/10 p-3">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-violet-200">App Information</p>
-          <p className="mt-1.5 text-xs text-foreground/85">Login Code is Added.</p>
-        </div>
 
         <div className="mt-auto pt-3 flex items-center gap-2">
           <Button
             size="sm"
-            asChild
-            className="bg-gradient-primary text-primary-foreground shadow-glow hover:opacity-90 flex-1 h-auto min-h-9 whitespace-normal py-2"
+            variant="secondary"
+            onClick={() => setOpen(true)}
+            className="flex-1 h-auto min-h-9 whitespace-normal py-2"
           >
-            <a href={IOS_PURPLE_STORE_URL} target="_blank" rel="noreferrer">
-              <ExternalLink className="size-3.5 mr-1 shrink-0" /> <span>View in the App Store</span>
-            </a>
+            <Eye className="size-3.5 mr-1 shrink-0" /> <span>View download options</span>
           </Button>
         </div>
       </div>
     </article>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogContent className="max-h-[calc(100dvh-1rem)] w-[calc(100vw-1rem)] max-w-sm overflow-x-hidden overflow-y-auto border-border bg-surface p-4 sm:max-w-md sm:p-6">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 font-display text-base">
+            <Apple className="size-4 text-primary" /> iOS Purple Player
+          </DialogTitle>
+          <DialogDescription>Scan with your iPhone camera to open Purple Player Lite in the Apple App Store.</DialogDescription>
+        </DialogHeader>
+        <div className="rounded-lg border border-border bg-background p-3">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">App Information</p>
+          <p className="mt-1.5 text-xs text-foreground">Login Code is Added.</p>
+        </div>
+        <div className="flex justify-center">
+          {qrDataUrl ? (
+            <img src={qrDataUrl} alt="Apple App Store QR code for Purple Player Lite" className="block size-48 rounded-lg" />
+          ) : (
+            <div className="grid size-48 place-items-center bg-muted"><Loader2 className="size-5 animate-spin text-primary" /></div>
+          )}
+        </div>
+        <Button asChild className="bg-gradient-primary text-primary-foreground shadow-glow hover:opacity-90">
+          <a href={IOS_PURPLE_STORE_URL} target="_blank" rel="noreferrer">
+            <ExternalLink className="mr-1 size-3.5 shrink-0" /> View in the App Store
+          </a>
+        </Button>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }
 
