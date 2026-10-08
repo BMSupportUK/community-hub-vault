@@ -9,7 +9,7 @@
 1. **Find the member’s secure details**
    - Open BM Support on iPhone and go to **Profile → Credentials**.
    - Demonstrate unlocking **Credentials & DNS** with test-only account details and a test vault PIN.
-   - Show where to find the **QD DNS code**, **App login name**, and **Password**.
+   - Follow the existing **BM Install Purple Lite App** PDF guide to show where Purple Lite’s own **secure login code**, **App login name**, and **Password** are found.
    - Keep all displayed values fictional and clearly marked **EXAMPLE ONLY**.
 2. **Install Purple Lite**
    - Open the iPhone App Store, search for **Purple Lite – IPTV Player**, confirm the correct app, tap **Get**, and open it.
@@ -32,6 +32,7 @@
 ## Privacy and accuracy
 - Use only fictional login code, username, password, account password, and vault PIN values.
 - Never show a real name, email address, credential, payment detail, or live member account.
+- Keep Purple Lite’s secure login code completely separate from QD DNS codes; the guide must use the Purple Lite code source and steps documented in the existing PDF.
 - Match the confirmed flow: **Purple Lite → Login with Code → submit code → username and password**.
 - Allow for minor wording differences between Purple Lite versions without showing unsupported shortcuts.
 
