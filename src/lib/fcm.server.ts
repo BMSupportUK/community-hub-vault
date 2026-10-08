@@ -208,9 +208,9 @@ async function sendFcmToTokens(
                 : isMention
                   ? "bm_support_mentions_v1"
                   : isShiftStart
-                    ? "bm_support_shift_start_v2"
+                    ? "bm_support_shift_start_v3"
                     : isShiftEnd
-                      ? "bm_support_shift_end_v2"
+                      ? "bm_support_shift_end_v3"
                       : isOutage
                         ? "bm_support_outage_v2"
                         : isOutageResolved
