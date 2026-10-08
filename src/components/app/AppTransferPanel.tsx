@@ -565,7 +565,10 @@ export function AppTransferPanel({ onUploadClick }: { onUploadClick?: () => void
 
   // BM Support App Store is the default and shows first in the download tabs.
   const orderedCategories = useMemo(
-    () => [...APP_BUILD_CATEGORIES].sort((a, b) => (a.key === "bm_store" ? -1 : b.key === "bm_store" ? 1 : 0)),
+    () => [
+      ...[...APP_BUILD_CATEGORIES].sort((a, b) => (a.key === "bm_store" ? -1 : b.key === "bm_store" ? 1 : 0)),
+      { key: "ios", label: "iOS" },
+    ],
     [],
   );
   const firstTab = "bm_store";
@@ -618,13 +621,13 @@ export function AppTransferPanel({ onUploadClick }: { onUploadClick?: () => void
           {orderedCategories.map((c) => (
              <TabsTrigger key={c.key} value={c.key} className="min-w-0 whitespace-normal px-2 text-xs leading-tight sm:shrink-0 sm:text-sm">
               {c.label}
-              <span className="ml-1.5 text-[10px] opacity-70">{(grouped[c.key] ?? []).length}</span>
+              <span className="ml-1.5 text-[10px] opacity-70">{(grouped[c.key] ?? []).length + (c.key === "ios" ? 1 : 0)}</span>
             </TabsTrigger>
           ))}
         </TabsList>
         {orderedCategories.map((c) => (
           <TabsContent key={c.key} value={c.key} className="mt-4 md:min-h-0 md:flex-1 md:overflow-y-auto md:mt-2 lg:mt-3">
-            {(grouped[c.key] ?? []).length === 0 && c.key !== "bm_store" ? (
+            {(grouped[c.key] ?? []).length === 0 && c.key !== "ios" ? (
               <div className="grid place-items-center rounded-xl border border-dashed border-border/70 bg-surface/60 px-6 py-12 text-center">
                 <Smartphone className="size-8 text-muted-foreground/50" />
                 <p className="mt-2 text-sm text-muted-foreground">No apps in this section yet.</p>
@@ -634,7 +637,7 @@ export function AppTransferPanel({ onUploadClick }: { onUploadClick?: () => void
                 {(grouped[c.key] ?? []).map((b) => (
                   <AppCard key={b.id} build={b} transfer={byBuild.get(b.id)} now={now} />
                 ))}
-                {c.key === "bm_store" && <IosPurpleCard />}
+                {c.key === "ios" && <IosPurpleCard />}
               </div>
             )}
           </TabsContent>
