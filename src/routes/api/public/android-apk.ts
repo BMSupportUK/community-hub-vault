@@ -19,6 +19,16 @@ export const Route = createFileRoute("/api/public/android-apk")({
   },
 });
 
+function compareVersions(a: string, b: string): number {
+  const pa = a.split(".").map((n) => parseInt(n, 10) || 0);
+  const pb = b.split(".").map((n) => parseInt(n, 10) || 0);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const d = (pa[i] ?? 0) - (pb[i] ?? 0);
+    if (d !== 0) return d;
+  }
+  return 0;
+}
+
 /** Admin-uploaded APK (Owner tools) wins over the bundled release. */
 async function uploadedApk(): Promise<{ url: string; version: string } | null> {
   try {
@@ -26,6 +36,8 @@ async function uploadedApk(): Promise<{ url: string; version: string } | null> {
     const { data } = await supabaseAdmin.from("app_settings").select("value").eq("key", "android_apk_upload").maybeSingle();
     const v = data?.value as { path?: string; version?: string } | null;
     if (!v?.path) return null;
+    // An older admin upload must never shadow a newer bundled release.
+    if (compareVersions(v.version || "0", ANDROID_RELEASE.versionName) < 0) return null;
     const { data: signed } = await supabaseAdmin.storage.from("android-app").createSignedUrl(v.path, 600);
     return signed?.signedUrl ? { url: signed.signedUrl, version: v.version || "latest" } : null;
   } catch (e) {

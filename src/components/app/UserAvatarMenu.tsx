@@ -56,7 +56,6 @@ import { announceAndroidRelease } from "@/lib/android-release.functions";
 import { WindowsInstallDialog } from "@/components/app/WindowsInstallDialog";
 import { IosInstallDialog } from "@/components/app/IosInstallDialog";
 
-const ANDROID_APK_URL = ANDROID_RELEASE.url;
 const ANDROID_APK_ABSOLUTE_URL = ANDROID_RELEASE.qrUrl;
 const ANDROID_ANNOUNCE_KEY = `bm-android-announced:${ANDROID_RELEASE.versionName}`;
 
@@ -292,11 +291,6 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
               <div className="size-[200px] animate-pulse rounded bg-muted" />
             )}
           </div>
-          <Button asChild size="sm" className="w-full bg-gradient-primary text-primary-foreground hover:opacity-90">
-            <a href={ANDROID_APK_URL} download={`BMSupport-${ANDROID_RELEASE.versionName}.apk`}>
-              Download on this device
-            </a>
-          </Button>
         </div>
       </DialogContent>
     </Dialog>
