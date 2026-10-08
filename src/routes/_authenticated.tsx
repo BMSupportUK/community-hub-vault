@@ -112,11 +112,11 @@ function AuthLayout() {
   const shopView = typeof search.view === "string" ? search.view : undefined;
   const lockable = useViewportLockable();
   const isMobile = useIsMobile();
-  // Talk Channels always pin their composer within the visible phone or desktop
-  // viewport. Tickets keep their existing large-screen-only panel behaviour.
+  // Bound chat pages on phones too, so messages scroll rather than expanding
+  // the page and pushing the composer out of reach.
   const talkSurface = /^\/home\/[^/]+$/.test(path);
   const sportsGuideReader = path.startsWith("/sports-guides/read/");
-  const chatSurface = talkSurface || (lockable && path === "/tickets");
+  const chatSurface = talkSurface || path === "/tickets";
   // The main site header starts collapsed (slim bar) ONLY on the tickets page
   // and Talk channels; every other BM Support page keeps it open. It can be
   // collapsed/expanded again with the chevron at any time, and each navigation
