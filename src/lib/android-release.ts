@@ -20,5 +20,8 @@ export const ANDROID_RELEASE = {
   /** Always use this for downloads/QR: correct .apk filename + mime type. */
   url: "/api/public/android-apk",
   absoluteUrl: "https://bmsupport.uk/api/public/android-apk",
+  /** QR target: a landing page with one tap-to-download button, so camera
+   *  apps / link previews opening the URL can't start duplicate downloads. */
+  qrUrl: "https://bmsupport.uk/get-android-app",
   notes: "Shift start and shift end alerts play their spoken message again — the alert sounds have been refreshed so Android no longer silences them.",
 } as const;

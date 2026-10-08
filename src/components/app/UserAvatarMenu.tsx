@@ -57,7 +57,7 @@ import { WindowsInstallDialog } from "@/components/app/WindowsInstallDialog";
 import { IosInstallDialog } from "@/components/app/IosInstallDialog";
 
 const ANDROID_APK_URL = ANDROID_RELEASE.url;
-const ANDROID_APK_ABSOLUTE_URL = ANDROID_RELEASE.absoluteUrl;
+const ANDROID_APK_ABSOLUTE_URL = ANDROID_RELEASE.qrUrl;
 const ANDROID_ANNOUNCE_KEY = `bm-android-announced:${ANDROID_RELEASE.versionName}`;
 
 interface MiniProfile {
