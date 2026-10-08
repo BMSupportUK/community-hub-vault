@@ -132,7 +132,7 @@ export function usePushRegister() {
             ? { channelId: "bm_support_ticket_replies_v2", sound: "ticket_reply_notify.mp3", fallback: "Support ticket reply" }
             : kind === "mention"
               ? { channelId: "bm_support_mentions_v1", sound: "mention_notify.mp3", fallback: "New mention" }
-              : kind === "ticket_raised"
+              : kind === "ticket_raised" || kind === "ticket"
                 ? { channelId: "bm_support_tickets_v3", sound: "ticket_notify.mp3", fallback: "New support ticket" }
                 : typeof kind === "string" && kind.startsWith("shift_start")
                   ? { channelId: "bm_support_shift_start_v2", sound: "shift_start_notify.mp3", fallback: "Shift starts soon" }
