@@ -6,20 +6,14 @@
 - Save the finished video to Files for review. Do not replace or publish any live install-guide video.
 
 ## Video walkthrough
-1. **Find the member’s secure details**
-   - Open BM Support on iPhone and go to **Profile → Credentials**.
-   - Demonstrate unlocking **Credentials & DNS** with test-only account details and a test vault PIN.
-   - Follow the existing **BM Install Purple Lite App** PDF guide to show the provider-supplied **BM Secure Code**, followed by the member’s **App login name** and **Password**.
-   - Keep all displayed values fictional and clearly marked **EXAMPLE ONLY**.
-2. **Install Purple Lite**
-   - Open the iPhone App Store, search for **Purple Lite – IPTV Player**, confirm the correct app, tap **Get**, and open it.
-3. **Enter the secure login code**
+1. **Enter the BM Secure Code**
+   - Begin with Purple Lite already installed and open on its login screen.
    - On Purple Lite, choose **Login with Code**.
    - Enter a fictional example **BM Secure Code** and submit it.
-4. **Complete the login**
+2. **Complete the login**
    - Continue to the next screen, select the available server if shown, then enter the example app login name and password from BM Support.
    - Enable **Remember Me** if present and tap **Login**.
-5. **Finish ready to use**
+3. **Finish ready to use**
    - Show the successful Purple Lite home screen and remind members that their own details are in BM Support under **Profile → Credentials**.
 
 ## Visual and audio direction
