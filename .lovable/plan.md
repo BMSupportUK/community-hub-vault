@@ -6,14 +6,15 @@
 - Save the finished video to Files for review. Do not replace or publish any live install-guide video.
 
 ## Video walkthrough
-1. **Enter the BM Secure Code**
-   - Begin with Purple Lite already installed and open on its login screen.
+1. **Find and install Purple Player Lite**
+   - Open the iPhone App Store, search for **Purple Player Lite**, confirm the correct app, tap **Get**, and open it.
+2. **Enter the BM Secure Code**
    - On Purple Lite, choose **Login with Code**.
    - Enter a fictional example **BM Secure Code** and submit it.
-2. **Complete the login**
+3. **Complete the login**
    - Continue to the next screen, select the available server if shown, then enter the example app login name and password from BM Support.
    - Enable **Remember Me** if present and tap **Login**.
-3. **Finish ready to use**
+4. **Finish ready to use**
    - Show the successful Purple Lite home screen and remind members that their own details are in BM Support under **Profile → Credentials**.
 
 ## Visual and audio direction
