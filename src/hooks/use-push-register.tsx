@@ -100,8 +100,8 @@ export function usePushRegister() {
         // retained the silent sound setting from the first v1 installation.
         const spokenChannels = [
           { id: "bm_support_tickets_v3", name: "New support tickets", sound: "ticket_notify.mp3" },
-          { id: "bm_support_shift_start_v2", name: "Shift starting", sound: "shift_start_notify.mp3" },
-          { id: "bm_support_shift_end_v2", name: "Shift ending", sound: "shift_end_notify.mp3" },
+          { id: "bm_support_shift_start_v3", name: "Shift starting", sound: "shift_start_notify.mp3" },
+          { id: "bm_support_shift_end_v3", name: "Shift ending", sound: "shift_end_notify.mp3" },
           { id: "bm_support_outage_v2", name: "Service outage", sound: "outage_notify.mp3" },
           { id: "bm_support_outage_resolved_v2", name: "Outage resolved", sound: "outage_resolved_notify.mp3" },
           { id: "bm_support_orders_v1", name: "New orders", sound: "order_notify.mp3" },
@@ -135,9 +135,9 @@ export function usePushRegister() {
               : kind === "ticket_raised" || kind === "ticket"
                 ? { channelId: "bm_support_tickets_v3", sound: "ticket_notify.mp3", fallback: "New support ticket" }
                 : typeof kind === "string" && kind.startsWith("shift_start")
-                  ? { channelId: "bm_support_shift_start_v2", sound: "shift_start_notify.mp3", fallback: "Shift starts soon" }
+                  ? { channelId: "bm_support_shift_start_v3", sound: "shift_start_notify.mp3", fallback: "Shift starts soon" }
                   : typeof kind === "string" && kind.startsWith("shift_end")
-                    ? { channelId: "bm_support_shift_end_v2", sound: "shift_end_notify.mp3", fallback: "Shift ends soon" }
+                    ? { channelId: "bm_support_shift_end_v3", sound: "shift_end_notify.mp3", fallback: "Shift ends soon" }
                     : kind === "incident" && incidentEvent === "created"
                       ? { channelId: "bm_support_outage_v2", sound: "outage_notify.mp3", fallback: "Service outage" }
                       : kind === "incident" && incidentEvent === "resolved"
