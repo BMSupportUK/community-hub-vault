@@ -11,9 +11,10 @@ interface Props {
   paymentMethod?: string
   orderDate?: string
   checkoutUrl?: string
+  checkoutPassword?: string
 }
 
-const PaymentOutstandingEmail = ({ customerName, orderRef, amount, paymentMethod, orderDate, checkoutUrl }: Props) => (
+const PaymentOutstandingEmail = ({ customerName, orderRef, amount, paymentMethod, orderDate, checkoutUrl, checkoutPassword }: Props) => (
   <Html lang="en" dir="ltr">
     <Head />
     <Preview>{`Payment is still outstanding${orderRef ? ` for order ${orderRef}` : ''}`}</Preview>
@@ -34,6 +35,14 @@ const PaymentOutstandingEmail = ({ customerName, orderRef, amount, paymentMethod
         <Text style={text}>
           If you have already paid, please ignore this message — it can take a little while for payments to show on our side.
         </Text>
+        {checkoutUrl ? (
+          <Section style={card}>
+            <Text style={row}><strong>Your secure order link:</strong></Text>
+            <Text style={row}><Link href={checkoutUrl} style={link}>{checkoutUrl}</Link></Text>
+            {checkoutPassword ? <Text style={row}><strong>Secure password:</strong> {checkoutPassword}</Text> : null}
+            <Text style={row}>Open the link and enter the password to view and pay for your order.</Text>
+          </Section>
+        ) : null}
         {checkoutUrl ? (
           <Section style={{ textAlign: 'center' as const, margin: '20px 0' }}>
             <Button href={checkoutUrl} style={btn}>View my order</Button>
