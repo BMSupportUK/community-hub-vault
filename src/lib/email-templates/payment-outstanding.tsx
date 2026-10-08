@@ -1,5 +1,5 @@
 import React from 'react'
-import { Body, Button, Container, Head, Heading, Html, Preview, Text, Section, Hr } from '@react-email/components'
+import { Body, Button, Container, Head, Heading, Html, Link, Preview, Text, Section, Hr } from '@react-email/components'
 import type { TemplateEntry } from './registry'
 
 const SITE_NAME = 'BM Support'
@@ -60,7 +60,7 @@ export const template = {
   subject: (data: Record<string, any>) =>
     data?.orderRef ? `Payment outstanding for order ${data.orderRef}` : 'Payment outstanding for your order',
   displayName: 'Payment outstanding (manual orders)',
-  previewData: { customerName: 'Jane', orderRef: 'BM-1042', amount: '£45.00', paymentMethod: 'Bank transfer', orderDate: '1 Oct 2026', checkoutUrl: 'https://bmsupport.uk/home' },
+  previewData: { customerName: 'Jane', orderRef: 'BM-1042', amount: '£45.00', paymentMethod: 'Bank transfer', orderDate: '1 Oct 2026', checkoutUrl: 'https://bmsupport.uk/pay/example', checkoutPassword: 'example-pass' },
 } satisfies TemplateEntry
 
 const main = { backgroundColor: '#ffffff', fontFamily: 'Arial, sans-serif' }
@@ -70,5 +70,6 @@ const text = { fontSize: '14px', color: '#444', lineHeight: '1.6', margin: '0 0 
 const row = { fontSize: '14px', color: '#333', lineHeight: '1.5', margin: '0 0 6px' }
 const card = { background: '#f6f6f8', borderRadius: '8px', padding: '14px 18px', margin: '12px 0' }
 const btn = { background: '#0d0d0d', color: '#ffffff', padding: '12px 20px', borderRadius: '8px', textDecoration: 'none', fontSize: '14px', fontWeight: 'bold' as const }
+const link = { color: '#0d0d0d', wordBreak: 'break-all' as const }
 const hr = { borderColor: '#eee', margin: '24px 0' }
 const footer = { fontSize: '12px', color: '#999', margin: 0 }
