@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import QRCode from "qrcode";
-import { Smartphone, Copy, Download, Trash2, Loader2, ShieldCheck, Clock, Eye, Lock, ZoomIn, ZoomOut } from "lucide-react";
+import { Smartphone, Copy, Download, Trash2, Loader2, ShieldCheck, Clock, Eye, Lock, ZoomIn, ZoomOut, Apple, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
@@ -400,6 +400,76 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
   );
 }
 
+/** Apple App Store listing for Purple Player Lite — the iOS Purple Player card links here. */
+const IOS_PURPLE_STORE_URL = "https://apps.apple.com/gb/app/purple-lite-iptv-player/id6749171817";
+
+/** Static iOS Purple Player card: scan the QR to open the App Store listing. */
+function IosPurpleCard() {
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancel = false;
+    QRCode.toDataURL(IOS_PURPLE_STORE_URL, {
+      width: 192,
+      margin: 2,
+      color: { dark: "#0b0616", light: "#ffffff" },
+    })
+      .then((url) => {
+        if (!cancel) setQrDataUrl(url);
+      })
+      .catch(() => {});
+    return () => {
+      cancel = true;
+    };
+  }, []);
+
+  return (
+    <article className="group flex min-w-0 flex-col overflow-hidden rounded-lg border border-border/70 bg-surface shadow-soft transition-all hover:border-violet-500/40 hover:shadow-[0_0_30px_-10px_rgba(217,70,239,0.6)] md:grid md:grid-cols-[minmax(220px,42%)_minmax(0,1fr)] xl:flex xl:h-full xl:min-h-min">
+      <div className="relative aspect-[16/10] overflow-hidden bg-black/70 md:h-full md:min-h-0 md:aspect-auto xl:h-auto xl:min-h-[120px] xl:flex-1">
+        <div className="absolute inset-0 grid place-items-center gap-2 p-4">
+          <div className="rounded-xl bg-white p-2 shadow-soft">
+            {qrDataUrl ? (
+              <img src={qrDataUrl} alt="Apple App Store QR code for Purple Player Lite" className="block size-32 sm:size-40" />
+            ) : (
+              <div className="flex size-32 items-center justify-center sm:size-40">
+                <Loader2 className="size-5 animate-spin text-violet-600" />
+              </div>
+            )}
+          </div>
+          <p className="text-center text-[10px] text-muted-foreground">Scan with your iPhone camera</p>
+        </div>
+      </div>
+
+      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-3 sm:p-4 xl:flex-none xl:overflow-visible">
+        <h4 className="flex min-w-0 items-center gap-1.5 break-words font-display text-base font-semibold leading-snug text-foreground sm:text-lg">
+          <Apple className="size-4 text-violet-300 shrink-0" /> iOS Purple Player
+        </h4>
+        <p className="text-sm text-violet-200/70">
+          Install Purple Player Lite straight from the Apple App Store — scan the QR code with your
+          iPhone camera, or open the listing on your device below.
+        </p>
+
+        <div className="rounded-lg border border-violet-500/30 bg-violet-500/10 p-3">
+          <p className="text-[10px] font-semibold uppercase tracking-wide text-violet-200">App Information</p>
+          <p className="mt-1.5 text-xs text-foreground/85">Login Code is Added.</p>
+        </div>
+
+        <div className="mt-auto pt-3 flex items-center gap-2">
+          <Button
+            size="sm"
+            asChild
+            className="bg-gradient-primary text-primary-foreground shadow-glow hover:opacity-90 flex-1 h-auto min-h-9 whitespace-normal py-2"
+          >
+            <a href={IOS_PURPLE_STORE_URL} target="_blank" rel="noreferrer">
+              <ExternalLink className="size-3.5 mr-1 shrink-0" /> <span>View in the App Store</span>
+            </a>
+          </Button>
+        </div>
+      </div>
+    </article>
+  );
+}
+
 /** Members without the subscriber role ask staff for access instead of getting a link. */
 function RequestAccessPanel() {
   const askAccess = useServerFn(requestAppDownloadAccess);
@@ -541,13 +611,14 @@ export function AppTransferPanel({ onUploadClick }: { onUploadClick?: () => void
         </TabsList>
         {orderedCategories.map((c) => (
           <TabsContent key={c.key} value={c.key} className="mt-4 md:min-h-0 md:flex-1 md:overflow-y-auto md:mt-2 lg:mt-3">
-            {(grouped[c.key] ?? []).length === 0 ? (
+            {(grouped[c.key] ?? []).length === 0 && c.key !== "bm_store" ? (
               <div className="grid place-items-center rounded-xl border border-dashed border-border/70 bg-surface/60 px-6 py-12 text-center">
                 <Smartphone className="size-8 text-muted-foreground/50" />
                 <p className="mt-2 text-sm text-muted-foreground">No apps in this section yet.</p>
               </div>
             ) : (
                <div className="grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-2 md:h-full md:auto-rows-fr md:grid-cols-1 lg:gap-5 xl:h-full xl:auto-rows-auto xl:grid-cols-3">
+                {c.key === "bm_store" && <IosPurpleCard />}
                 {(grouped[c.key] ?? []).map((b) => (
                   <AppCard key={b.id} build={b} transfer={byBuild.get(b.id)} now={now} />
                 ))}
