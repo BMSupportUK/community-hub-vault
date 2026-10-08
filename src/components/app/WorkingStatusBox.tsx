@@ -887,7 +887,8 @@ export function WorkingStatusBox({
               {todayWindow && !canSignIn && <SignInOpensNote win={todayWindow} />}
             </>
           )}
-          {nextSlot && <NextShiftPanel slot={nextSlot} />}
+          {/* Break time reads before the next shift, so the live break timer
+              is never pushed below the rota information. */}
           {brk && (
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground font-medium">{breakLabel(brk.kind)}</span>
@@ -907,6 +908,8 @@ export function WorkingStatusBox({
               </span>
             </div>
           )}
+          {nextSlot && <NextShiftPanel slot={nextSlot} />}
+
         </div>
       </div>
     </section>
