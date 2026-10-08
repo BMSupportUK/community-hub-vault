@@ -127,3 +127,4 @@
 - [x] Sports import: ET→UK conversion uses the import time (nowMs) instead of the real clock, so date-pinned tests stay stable
 
 - [x] Stop the profile location line flashing between competing page labels.
+- [x] Download BM Support Apps: add an iOS Purple Player card with an App Store QR code, App Information text "Login Code is Added", and a store link (frontend-only, no database row)
