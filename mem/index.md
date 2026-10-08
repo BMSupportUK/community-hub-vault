@@ -24,3 +24,5 @@ Boro score predictions = Championship (league) fixtures ONLY. Never let cup ties
 - [Location mandatory for direct sign-ups](mem://constraints/location-mandatory-signup) — No opt-out or appeal until GPS shared; referral/Fan Zone bypass
 - [Day and date before shift time](mem://preferences/date-before-time) — Shift times read "Mon, 5 Oct · 09:00 – 19:00"; different days stay on one line joined by a glowing divider
 - [Member home hero spacing](mem://design/member-home-hero) — Welcome copy large and evenly spaced; subscription box closes the space beneath it, capped, compact on phones
+- [Working Status break row above next shift](mem://design/working-status-break-order) — Live break timer renders above the Next shift panel
+
