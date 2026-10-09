@@ -13,7 +13,6 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import mfcBadge from "@/assets/mfc-badge.png.asset.json";
 import { useTalkChannelTotalCount } from "@/hooks/use-talk-channel-presence";
 import { useFanZoneFriendRequestCount } from "@/hooks/use-fan-zone-friend-request-count";
-import { useBmInbox } from "@/lib/bm-inbox";
 
 import fantasyBench from "@/assets/boro-fantasy-bench.png.asset.json";
 import sportsGuideIcon from "@/assets/sports-guide-rail.png.asset.json";
@@ -124,7 +123,6 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
   // Do not change, restyle, or remove without explicit authorisation. See mem://constraints/chat-counters-locked
   const chatroomCount = useTalkChannelTotalCount();
   const fanFriendRequests = useFanZoneFriendRequestCount();
-  const bmInbox = useBmInbox();
 
   const [order, setOrder] = useState<NavOrderMap>(cachedNavOrder);
   const [pagePerms, setPagePerms] = useState<PagePermMap>(cachedPagePerms);
@@ -235,7 +233,7 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
 
   const supportItems: RailItem[] = [
     { to: "/home", label: "Home", icon: Home, show: true },
-    { to: "/inbox", label: "BM Support Inbox", icon: MessagesSquare, show: bmInbox.enabled, badge: bmInbox.data?.unread ?? 0 },
+    // BM Support Inbox lives in the top header (before the mentions icon), not the rail.
     { to: "/home/$channel", label: "Customer Chatroom", icon: MessageSquare, show: true, params: { channel: "welcome" }, badge: chatroomCount, badgeVariant: "online" },
     { to: "/tickets", label: "Tickets", icon: Ticket, show: !hasRole("moderator") },
     { to: "/shop", label: "Shop", icon: ShoppingCart, show: true },
