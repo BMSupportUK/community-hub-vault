@@ -17,7 +17,7 @@ export type WiseMatch = {
   kind: "reference" | "amount";
 };
 
-export type WiseRow = WiseIncoming & { match: WiseMatch | null; autoMatched?: boolean };
+export type WiseRow = WiseIncoming & { match: WiseMatch | null; autoMatched?: boolean; bmRelated?: boolean };
 
 export type WiseFeed = {
   configured: boolean;
@@ -204,9 +204,11 @@ export const getWiseIncomingTransfers = createServerFn({ method: "POST" })
 
     // Pending bank-transfer orders — shared with the automatic matcher so
     // manual orders (no account) and secure-checkout references are included.
+    let awaitingRefs: Array<{ references: string[]; amountCents: number }> = [];
     {
       const { listAwaitingBankOrders } = await import("@/lib/bank-awaiting.server");
       const rows = await listAwaitingBankOrders(supabaseAdmin);
+      awaitingRefs = rows.map((r) => ({ references: r.references, amountCents: r.amountCents }));
       feed.pending = rows.map((p) => ({
         orderId: p.orderId,
         reference: p.reference,
@@ -256,6 +258,7 @@ export const getWiseIncomingTransfers = createServerFn({ method: "POST" })
         }
       }
       // Only manual allocations count — no automatic matching.
+      const { isBmSupportPayment } = await import("@/lib/wise-relevance");
       feed.transactions = incoming.map((t) => {
         let match: WiseMatch | null = null;
         if (t.storedOrderId && storedOrders[t.storedOrderId]) {
@@ -269,7 +272,11 @@ export const getWiseIncomingTransfers = createServerFn({ method: "POST" })
             kind: "reference",
           };
         }
-        return { ...t, match };
+        const bmRelated = isBmSupportPayment(
+          { reference: t.reference, description: t.description, amountCents: t.amountCents, matched: Boolean(t.storedOrderId) },
+          awaitingRefs,
+        );
+        return { ...t, match, bmRelated };
       });
     } catch (e) {
       feed.error = e instanceof Error ? e.message : "Could not load payments";

@@ -187,7 +187,9 @@ export function WiseIncomingCard({
     );
   }
 
-  const transactions = feed?.transactions ?? [];
+  const allTx = feed?.transactions ?? [];
+  const otherCount = allTx.filter((t) => t.bmRelated === false).length;
+  const transactions = showOther ? allTx : allTx.filter((t) => t.bmRelated !== false);
   const pending = feed?.pending ?? [];
   const pendingConfirmed = (orderId: string) => confirmed.has(orderId);
   const tDate = (t: { date: string | null }) => new Date(t.date ?? 0);
@@ -345,6 +347,12 @@ export function WiseIncomingCard({
 
       {transactions.length === 0 && !feed?.error ? (
         <p className="text-xs text-muted-foreground">No incoming payments yet.</p>
+      ) : null}
+
+      {otherCount > 0 ? (
+        <button type="button" onClick={() => setShowOther((v) => !v)} className="text-[11px] text-muted-foreground hover:text-foreground underline">
+          {showOther ? "Hide non-BM Support payments" : `Show other payments (${otherCount})`}
+        </button>
       ) : null}
 
       {years.length > 0 ? (
