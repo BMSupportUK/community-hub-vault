@@ -238,15 +238,8 @@ export function NextShiftPanel({
       </div>
       {/* Stacked full-width rows — side-by-side columns overflow in narrow panels. */}
       <div className="grid gap-2">
-        <Row
-          label="UK office"
-          startDate={ukDate}
-          endDate={ukEndDate}
-          startTime={slot.start_time.slice(0, 5)}
-          endTime={slot.end_time.slice(0, 5)}
-          crosses={ukCrosses}
-        />
-        {showDevice && (
+        {/* One row only: the staff member's own time when abroad, otherwise UK office time. */}
+        {showDevice ? (
           <Row
             accent
             label={`Your time · ${deviceTz.split("/").pop()?.replace(/_/g, " ")}`}
@@ -255,6 +248,15 @@ export function NextShiftPanel({
             startTime={fmtTime(startsAt, deviceTz)}
             endTime={fmtTime(endsAt, deviceTz)}
             crosses={devCrosses}
+          />
+        ) : (
+          <Row
+            label="UK office"
+            startDate={ukDate}
+            endDate={ukEndDate}
+            startTime={slot.start_time.slice(0, 5)}
+            endTime={slot.end_time.slice(0, 5)}
+            crosses={ukCrosses}
           />
         )}
       </div>
