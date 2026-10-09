@@ -1,6 +1,6 @@
 # Project Architecture Rules
 
-- Sports guides preserve published status; headings prefix event names, never channels. Guide readers use whole-page document scrolling. Every event channel renders only beneath Available channels, even if it is the sole channel, so placement remains consistent. Keep BM loading through hydration/router pending.
+- Sports guides preserve published status; headings prefix event names, not channels. Readers use document scrolling. All channels appear only beneath Available channels, including sole channels, for consistent placement. Keep BM loading through hydration/router pending.
 - Sports cards flag local times on a different day from UK time to prevent date ambiguity.
 - UFC multi-time imports attach all listed channels to every slot. Triller `Event N` becomes channel `Triller TV N`.
 - Public sports guides expose only validated dates, times, and event names; never free-text notes, descriptions, or channel lines.
