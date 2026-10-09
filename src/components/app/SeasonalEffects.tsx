@@ -6,6 +6,7 @@ import easterArt from "@/assets/talk-easter-bg.jpg";
 import stGeorgeArt from "@/assets/talk-st-george-bg.jpg";
 import newYearArt from "@/assets/talk-new-year-bg.jpg";
 import stPatrickArt from "@/assets/talk-st-patrick-bg.jpg";
+import supportArt from "@/assets/talk-support-bg.jpg";
 import { getSeason, type Season } from "@/lib/seasonal-theme";
 
 const seasonalArt: Record<Season, string> = { halloween: halloweenArt, christmas: christmasArt, bonfire: bonfireArt, easter: easterArt, "st-george": stGeorgeArt, "new-year": newYearArt, "st-patrick": stPatrickArt };
