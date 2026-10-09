@@ -2012,3 +2012,6 @@ html.boro-bg-active .min-h-dvh.bg-background {
 
 /* Shift/break alerts stay visible above the inactivity lock screen. */
 body:has([data-screen-lock-alerts]) [role="alertdialog"] { z-index: 400; }
+
+/* Faint seasonal illustration behind the message area; text stays readable. */
+.seasonal-fx__art { position: absolute; inset: 0; background-size: cover; background-position: center bottom; opacity: 0.14; mix-blend-mode: screen; }

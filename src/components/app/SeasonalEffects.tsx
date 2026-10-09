@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import halloweenArt from "@/assets/talk-halloween-bg.jpg";
+import christmasArt from "@/assets/talk-christmas-bg.jpg";
 import { getSeason, type Season } from "@/lib/seasonal-theme";
 
 /** Decorative, non-interactive seasonal overlay for Talk channels. */
@@ -25,6 +27,10 @@ export function SeasonalEffects() {
 
   return (
     <div aria-hidden className={`seasonal-fx seasonal-fx--${season}`}>
+      <div
+        className="seasonal-fx__art"
+        style={{ backgroundImage: `url(${season === "christmas" ? christmasArt : halloweenArt})` }}
+      />
       <div className="seasonal-fx__glow" />
       {particles.map((p, i) => (
         <span
