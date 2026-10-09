@@ -61,10 +61,21 @@ function acronym(name: string): string {
   return words.map((w) => w[0]).join("");
 }
 
-function matchesOpponent(title: string, opponent: string): boolean {
+// Nicknames the club uses in video titles that share no token with the full name.
+const NICKNAMES: Record<string, string[]> = {
+  wolverhampton: ["wolves"],
+  tottenham: ["spurs"],
+  sheffield: ["blades", "owls"],
+  brighton: ["seagulls"],
+  manchester: ["man"],
+  nottingham: ["forest"],
+};
+
+export function matchesOpponent(title: string, opponent: string): boolean {
   const t = title.toLowerCase();
   const oppTokens = tokens(opponent);
   const titleTokens = tokens(title);
+  if (oppTokens.some((ot) => (NICKNAMES[ot] ?? []).some((n) => titleTokens.includes(n)))) return true;
   // Club acronyms as used in official titles ("QPR" for Queens Park Rangers).
   const acro = acronym(opponent);
   if (acro.length >= 3 && titleTokens.includes(acro)) return true;
