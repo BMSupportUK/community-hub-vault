@@ -2,6 +2,7 @@
 # Roadmap
 
 ## Current
+- [ ] Keep tall ticket headers scrollable on phones while preserving conversation space and the reply box
 - [x] Restore ticket message scrolling on phones without changing messages, alerts or realtime behaviour
 - [x] Create the narrated iPhone Purple Player Lite installation guide using the provider-supplied BM Secure Code, then example username and password
 - [x] Create separate narrated BM Support App Store installation videos for Android TV and Amazon Fire TV

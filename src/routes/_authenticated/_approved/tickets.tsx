@@ -2000,7 +2000,7 @@ function TicketDetail({
   return (
     <div className="flex h-full max-h-full min-h-0 flex-1 flex-col overflow-hidden lg:flex-row">
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <header className="shrink-0 border-b border-white/20 px-3 sm:px-5 py-2 sm:py-3 space-y-2 sm:space-y-3 bg-white/5 backdrop-blur">
+      <header className="min-h-0 max-h-[35%] shrink-0 overflow-y-auto overscroll-contain lg:max-h-none lg:overflow-visible border-b border-white/20 px-3 sm:px-5 py-2 sm:py-3 space-y-2 sm:space-y-3 bg-white/5 backdrop-blur">
         <div className="flex flex-wrap sm:flex-nowrap items-start sm:items-center gap-2 sm:gap-3">
           <div className="hidden sm:grid size-9 shrink-0 rounded-lg bg-white/25 place-items-center"><CatIcon className="size-4 text-white" /></div>
           <div className="min-w-0 flex-1">
@@ -2039,7 +2039,7 @@ function TicketDetail({
           </div>
         </div>
         {linkedOrder && (
-          <div className="lg:hidden rounded-lg border border-white/25 bg-white/10 backdrop-blur p-3 max-h-[55vh] overflow-y-auto overscroll-contain">
+          <div className="lg:hidden rounded-lg border border-white/25 bg-white/10 backdrop-blur p-3">
             {orderPanelInner}
           </div>
         )}
