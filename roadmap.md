@@ -2,6 +2,7 @@
 # Roadmap
 
 ## Current
+- [ ] Add St George’s Day and New Year’s Day pictures and effects to Talk and inbox on their UK event dates
 - [x] Add Bonfire Night and Easter Sunday pictures and effects to Talk and inbox on their UK event dates
 - [x] BM Support inbox: move its icon out of the side rail into the top header, directly before the mentions icon
 - [x] Keep tall ticket headers scrollable on phones while preserving conversation space and the reply box

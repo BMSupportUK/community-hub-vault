@@ -1,4 +1,4 @@
-export type Season = "halloween" | "christmas" | "bonfire" | "easter";
+export type Season = "halloween" | "christmas" | "bonfire" | "easter" | "st-george" | "new-year";
 
 /** Gregorian Easter Sunday (Meeus/Jones/Butcher algorithm). */
 function easterSunday(year: number) {
@@ -29,6 +29,8 @@ export function getSeason(date: Date = new Date()): Season | null {
   if (month === 10) return "halloween";
   if (month === 12) return "christmas";
   if (month === 11 && day === 5) return "bonfire";
+  if (month === 4 && day === 23) return "st-george";
+  if (month === 1 && day === 1) return "new-year";
   const easter = easterSunday(part("year"));
   if (month === easter.month && day === easter.day) return "easter";
   return null;
