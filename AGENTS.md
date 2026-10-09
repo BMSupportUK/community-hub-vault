@@ -1,6 +1,6 @@
 # Project Architecture Rules
 
-- Sports guides preserve published status; headings prefix event names, never channels. Guide readers use whole-page document scrolling. Every event channel renders only beneath Available channels, even if it is the sole channel, so placement remains consistent. Keep the BM loading cover through hydration and router pending.
+- Sports guides preserve published status; headings prefix event names, not channels. Readers use document scrolling. All channels appear only beneath Available channels, including sole channels, for consistent placement. Keep BM loading through hydration/router pending.
 - Sports cards flag local times on a different day from UK time to prevent date ambiguity.
 - UFC multi-time imports attach all listed channels to every slot. Triller `Event N` becomes channel `Triller TV N`.
 - Public sports guides expose only validated dates, times, and event names; never free-text notes, descriptions, or channel lines.
@@ -30,4 +30,5 @@
 - Knowledge Base article reading uses the full available page with a responsive ratings rail, so long guides and media remain readable.
 - Secure orders show wa.me video help only while is_business_open; never embed customer camera sessions.
 - Gender-matched customer defaults never replace custom picks and exclude staff/Fan Zone-only users.
-- BM inbox uses participant-only tables and authenticated RPCs; reports retain snapshots visible only to admin/management, separate from Fan Zone and Talk.
+- BM inbox stays separate from Fan Zone/Talk: participant-only tables, authenticated RPCs, admin/management-only report snapshots.
+- Seasonal Talk/inbox uses one date helper and overlay; locked chat stays untouched.
