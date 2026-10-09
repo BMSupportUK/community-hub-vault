@@ -32,6 +32,14 @@ test("Easter 2026 is only 5 April in UK time", () => {
   expect(getSeason(new Date("2026-04-05T22:59:59Z"))).toBe("easter");
   expect(getSeason(new Date("2026-04-05T23:00:00Z"))).toBeNull();
 });
+
+test("St Patrick’s Day is only 17 March in UK time", () => {
+  expect(getSeason(new Date("2026-03-16T23:59:59Z"))).toBeNull();
+  expect(getSeason(new Date("2026-03-17T00:00:00Z"))).toBe("st-patrick");
+  expect(getSeason(new Date("2026-03-17T12:00:00Z"))).toBe("st-patrick");
+  expect(getSeason(new Date("2026-03-17T23:59:59Z"))).toBe("st-patrick");
+  expect(getSeason(new Date("2026-03-18T00:00:00Z"))).toBeNull();
+});
 test("Easter moves annually: 2027 is 28 March, not April", () => {
   expect(getSeason(new Date("2027-03-28T00:00:00Z"))).toBe("easter");
   expect(getSeason(new Date("2027-03-28T22:59:59Z"))).toBe("easter");

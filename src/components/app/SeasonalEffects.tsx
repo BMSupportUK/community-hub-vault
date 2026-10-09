@@ -5,9 +5,10 @@ import bonfireArt from "@/assets/talk-bonfire-bg.jpg";
 import easterArt from "@/assets/talk-easter-bg.jpg";
 import stGeorgeArt from "@/assets/talk-st-george-bg.jpg";
 import newYearArt from "@/assets/talk-new-year-bg.jpg";
+import stPatrickArt from "@/assets/talk-st-patrick-bg.jpg";
 import { getSeason, type Season } from "@/lib/seasonal-theme";
 
-const seasonalArt: Record<Season, string> = { halloween: halloweenArt, christmas: christmasArt, bonfire: bonfireArt, easter: easterArt, "st-george": stGeorgeArt, "new-year": newYearArt };
+const seasonalArt: Record<Season, string> = { halloween: halloweenArt, christmas: christmasArt, bonfire: bonfireArt, easter: easterArt, "st-george": stGeorgeArt, "new-year": newYearArt, "st-patrick": stPatrickArt };
 
 /** Decorative, non-interactive seasonal overlay for Talk channels. */
 export function SeasonalEffects() {
@@ -25,7 +26,7 @@ export function SeasonalEffects() {
       delay: -((i * 37) % 20),
       duration: season === "christmas" ? 10 + ((i * 13) % 10) : 18 + ((i * 7) % 12),
       size: season === "christmas" ? 4 + ((i * 5) % 6) : 18 + ((i * 3) % 10),
-      glyph: season === "halloween" ? (i % 3 === 0 ? "🎃" : "🦇") : "",
+      glyph: season === "halloween" ? (i % 3 === 0 ? "🎃" : "🦇") : season === "st-patrick" ? "☘️" : "",
     }));
   }, [season]);
 
