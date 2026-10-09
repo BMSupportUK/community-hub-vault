@@ -1997,6 +1997,10 @@ html.boro-bg-active .min-h-dvh.bg-background {
   --seasonal-bonfire: oklch(0.8 0.16 80);
   --seasonal-easter: oklch(0.83 0.12 155);
   --seasonal-blossom: oklch(0.82 0.12 350);
+  --seasonal-st-george-red: oklch(0.64 0.2 25);
+  --seasonal-st-george-white: oklch(0.97 0.01 100);
+  --seasonal-new-year-gold: oklch(0.85 0.15 85);
+  --seasonal-new-year-ruby: oklch(0.72 0.18 15);
 }
 .seasonal-fx { position: fixed; inset: 0; pointer-events: none; z-index: 30; overflow: hidden; }
 .seasonal-fx__glow { position: absolute; inset: 0; }
@@ -2026,3 +2030,12 @@ body:has([data-screen-lock-alerts]) [role="alertdialog"] { z-index: 400; }
 .seasonal-fx--easter .seasonal-fx__particle { width: 9px; height: 13px; border-radius: 80% 0 80% 20%; background: var(--seasonal-blossom); animation: seasonal-drift ease-in-out infinite; }
 .seasonal-fx--easter .seasonal-fx__particle:nth-child(3n) { background: var(--seasonal-easter); }
 @keyframes seasonal-embers { 0% { transform: translate3d(0, 0, 0); opacity: 0; } 15% { opacity: 0.6; } 85% { opacity: 0.35; } 100% { transform: translate3d(45px, -100vh, 0); opacity: 0; } }
+
+.seasonal-fx--st-george .seasonal-fx__glow { box-shadow: inset 0 0 120px color-mix(in oklch, var(--seasonal-st-george-red) 20%, transparent); }
+.seasonal-fx--st-george .seasonal-fx__particle { width: 7px; height: 14px; border-radius: 2px; background: var(--seasonal-st-george-red); animation: seasonal-drift ease-in-out infinite; }
+.seasonal-fx--st-george .seasonal-fx__particle:nth-child(even) { background: var(--seasonal-st-george-white); }
+.seasonal-fx--new-year .seasonal-fx__glow { box-shadow: inset 0 0 120px color-mix(in oklch, var(--seasonal-new-year-gold) 23%, transparent); }
+.seasonal-fx--new-year .seasonal-fx__particle { width: 6px; height: 10px; border-radius: 1px; background: var(--seasonal-new-year-gold); box-shadow: 0 0 6px var(--seasonal-new-year-gold); animation: seasonal-confetti linear infinite; }
+.seasonal-fx--new-year .seasonal-fx__particle:nth-child(3n) { background: var(--seasonal-new-year-ruby); box-shadow: none; }
+.seasonal-fx--new-year .seasonal-fx__particle:nth-child(3n + 1) { background: var(--seasonal-st-george-white); }
+@keyframes seasonal-confetti { 0% { transform: translate3d(0, 0, 0) rotate(0deg); } 50% { transform: translate3d(-35px, 55vh, 0) rotate(180deg); } 100% { transform: translate3d(30px, 110vh, 0) rotate(360deg); } }
