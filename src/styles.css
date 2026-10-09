@@ -2023,5 +2023,6 @@ body:has([data-screen-lock-alerts]) [role="alertdialog"] { z-index: 400; }
 .seasonal-fx--easter .seasonal-fx__glow { box-shadow: inset 0 0 120px color-mix(in oklch, var(--seasonal-easter) 22%, transparent); }
 .seasonal-fx--bonfire .seasonal-fx__particle { top: auto; bottom: -10px; width: 3px; height: 7px; border-radius: 50%; background: var(--seasonal-bonfire); box-shadow: 0 0 7px var(--seasonal-bonfire); animation: seasonal-embers linear infinite; }
 .seasonal-fx--bonfire .seasonal-fx__particle:nth-child(3n) { background: var(--seasonal-blossom); }
-.seasonal-fx--easter .seasonal-fx__particle { animation: seasonal-drift ease-in-out infinite; }
+.seasonal-fx--easter .seasonal-fx__particle { width: 9px; height: 13px; border-radius: 80% 0 80% 20%; background: var(--seasonal-blossom); animation: seasonal-drift ease-in-out infinite; }
+.seasonal-fx--easter .seasonal-fx__particle:nth-child(3n) { background: var(--seasonal-easter); }
 @keyframes seasonal-embers { 0% { transform: translate3d(0, 0, 0); opacity: 0; } 15% { opacity: 0.6; } 85% { opacity: 0.35; } 100% { transform: translate3d(45px, -100vh, 0); opacity: 0; } }

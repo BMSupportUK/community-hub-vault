@@ -23,7 +23,7 @@ export function SeasonalEffects() {
       delay: -((i * 37) % 20),
       duration: season === "christmas" ? 10 + ((i * 13) % 10) : 18 + ((i * 7) % 12),
       size: season === "christmas" ? 4 + ((i * 5) % 6) : 18 + ((i * 3) % 10),
-      glyph: season === "halloween" ? (i % 3 === 0 ? "🎃" : "🦇") : season === "easter" ? (i % 3 === 0 ? "🥚" : "🌸") : "",
+      glyph: season === "halloween" ? (i % 3 === 0 ? "🎃" : "🦇") : "",
     }));
   }, [season]);
 
