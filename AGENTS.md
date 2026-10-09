@@ -7,7 +7,7 @@
 - Advert slots show only BM Support's own affiliate banners in random, equal-time cycles; track each displayed banner's views and clicks, keep Member Home and the public landing page as separate zones, and include BM Support banners enabled for Forum throughout Boro Fan Zone alongside dedicated Fan Zone banners.
 - Member Home: staff keep image + greeting beneath (left column); members' "Hey" + name plate (no name text) + "Welcome to The Customer Portal" fills the right column above a subscription box that grows to close the gap (capped; compact on phones), its header showing only the clock.
 - Header starts collapsed (slim bar) ONLY on the tickets page and Talk channels; every other BM Support page keeps it open. Re-resets on each navigation. Talk channels add channel name; Fan Zone never shows it.
-- Back-to-top ignores dialogs and inner panes. Ticket/Talk viewports stay bounded on all screens so messages scroll and composers stay reachable.
+- Back-to-top ignores dialogs/inner panes. Bound Ticket/Talk viewports; cap and scroll mobile ticket headers to preserve messages and composers.
 - NHL Center Ice always treats its listing clock as ET and converts it to the correct UK date/time, ignoring supplied UK clocks; NFL Sunday Ticket and NBA League Pass use their stated UK times.
 - Corrected sports formats need split/safety/read-back tests. DAZN inline slots stay separate; qualifiers extend titles.
 - Manual sports splits preserve both halves; only adjacent headings move, and shared headings copy to the second half.
