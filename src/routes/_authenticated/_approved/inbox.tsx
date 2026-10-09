@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Nameplate } from "@/components/app/Nameplate";
-import pubImage from "@/assets/bm-inbox-pub.jpg";
+import supportImage from "@/assets/talk-support-bg.jpg";
 import { InboxPrivacyButton } from "@/components/app/InboxPrivacyButton";
 import { getSeason } from "@/lib/seasonal-theme";
 
