@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { TRANSFER_TTL_MS, isSafeToken, isTransferLive } from "@/src/lib/app-transfer";
+import { TRANSFER_TTL_MS, isSafeToken, isTransferLive } from "../src/lib/app-transfer";
 
 describe("APK transfer link expiry", () => {
   test("transfers are issued for exactly 24 hours", () => {
