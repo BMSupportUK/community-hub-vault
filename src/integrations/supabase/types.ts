@@ -4670,6 +4670,7 @@ export type Database = {
           display_name: string | null
           equipped_nameplate_id: string | null
           id: string
+          inbox_privacy: string
           is_private: boolean
           last_seen_at: string | null
           new_content_baseline_at: string | null
@@ -4689,6 +4690,7 @@ export type Database = {
           display_name?: string | null
           equipped_nameplate_id?: string | null
           id: string
+          inbox_privacy?: string
           is_private?: boolean
           last_seen_at?: string | null
           new_content_baseline_at?: string | null
@@ -4708,6 +4710,7 @@ export type Database = {
           display_name?: string | null
           equipped_nameplate_id?: string | null
           id?: string
+          inbox_privacy?: string
           is_private?: boolean
           last_seen_at?: string | null
           new_content_baseline_at?: string | null
@@ -6857,10 +6860,16 @@ export type Database = {
         Returns: string
       }
       bm_inbox_allowed: { Args: { _uid: string }; Returns: boolean }
+      bm_inbox_can_message: {
+        Args: { _recipient: string; _sender: string }
+        Returns: boolean
+      }
+      bm_inbox_my_privacy: { Args: never; Returns: string }
       bm_inbox_review: {
         Args: { _id?: string; _status?: string }
         Returns: Json
       }
+      bm_inbox_set_privacy: { Args: { _value: string }; Returns: string }
       bm_inbox_state: { Args: { _thread?: string }; Returns: Json }
       boro_score_fixture: { Args: { _fixture_id: string }; Returns: undefined }
       can_in_channel: {
