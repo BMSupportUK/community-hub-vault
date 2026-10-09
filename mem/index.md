@@ -26,3 +26,4 @@ Boro score predictions = Championship (league) fixtures ONLY. Never let cup ties
 - [Member home hero spacing](mem://design/member-home-hero) — Welcome copy large and evenly spaced; subscription box closes the space beneath it, capped, compact on phones
 - [Working Status break row above next shift](mem://design/working-status-break-order) — Live break timer renders above the Next shift panel
 
+- [Seasonal Talk effects](mem://features/seasonal-talk-effects.md) — Halloween all October, Christmas snow all December (UK time), Talk channels only

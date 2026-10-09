@@ -1989,3 +1989,23 @@ html.boro-bg-active .min-h-dvh.bg-background {
 @media (prefers-reduced-motion: reduce) {
   .bm-screen-shake, .bm-screen-shake body { animation: none !important; }
 }
+
+/* Seasonal Talk channel effects */
+:root {
+  --seasonal-halloween: oklch(0.72 0.18 55);
+  --seasonal-christmas: oklch(0.97 0.02 230);
+}
+.seasonal-fx { position: fixed; inset: 0; pointer-events: none; z-index: 30; overflow: hidden; }
+.seasonal-fx__glow { position: absolute; inset: 0; }
+.seasonal-fx--halloween .seasonal-fx__glow { box-shadow: inset 0 0 120px color-mix(in oklch, var(--seasonal-halloween) 28%, transparent); }
+.seasonal-fx--christmas .seasonal-fx__glow { box-shadow: inset 0 0 120px color-mix(in oklch, var(--seasonal-christmas) 22%, transparent); }
+.seasonal-fx__particle { position: absolute; top: -40px; line-height: 1; opacity: 0.35; will-change: transform; }
+.seasonal-fx--christmas .seasonal-fx__particle { border-radius: 9999px; background: var(--seasonal-christmas); opacity: 0.55; animation: seasonal-snow linear infinite; }
+.seasonal-fx--halloween .seasonal-fx__particle { animation: seasonal-drift ease-in-out infinite; }
+@keyframes seasonal-snow { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(30px, 110vh, 0); } }
+@keyframes seasonal-drift {
+  0% { transform: translate3d(0, 0, 0) rotate(0deg); }
+  50% { transform: translate3d(-40px, 55vh, 0) rotate(12deg); }
+  100% { transform: translate3d(30px, 110vh, 0) rotate(-8deg); }
+}
+@media (prefers-reduced-motion: reduce) { .seasonal-fx__particle { display: none; } }

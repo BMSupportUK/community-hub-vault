@@ -37,6 +37,7 @@ const ShiftStartEndAlert = lazy(() => import("@/components/app/ShiftStartEndAler
 const ModerationPendingBadge = lazy(() => import("@/components/app/ModerationPendingBadge").then((m) => ({ default: m.ModerationPendingBadge })));
 const PendingOrdersBadge = lazy(() => import("@/components/app/PendingOrdersBadge").then((m) => ({ default: m.PendingOrdersBadge })));
 const GpsCapture = lazy(() => import("@/components/app/GpsCapture").then((m) => ({ default: m.GpsCapture })));
+const SeasonalEffects = lazy(() => import("@/components/app/SeasonalEffects").then((m) => ({ default: m.SeasonalEffects })));
 
 function DeferUntilIdle({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
@@ -368,6 +369,11 @@ function AuthLayout() {
         >
           <Outlet />
         </div>
+        {talkSurface && (
+          <DeferUntilIdle>
+            <SeasonalEffects />
+          </DeferUntilIdle>
+        )}
         <DeferUntilIdle>
           <BreakEndingAlert />
         </DeferUntilIdle>
