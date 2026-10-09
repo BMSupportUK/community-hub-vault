@@ -31,16 +31,16 @@ export function SeasonalEffects() {
     }));
   }, [season]);
 
-  if (!season) return null;
+  const art = season ? seasonalArt[season] : supportArt;
 
   return (
-    <div aria-hidden className={`seasonal-fx seasonal-fx--${season}`}>
+    <div aria-hidden className={`seasonal-fx${season ? ` seasonal-fx--${season}` : " seasonal-fx--default"}`}>
       <div
         className="seasonal-fx__art"
-        style={{ backgroundImage: `url(${seasonalArt[season]})` }}
+        style={{ backgroundImage: `url(${art})` }}
       />
-      <div className="seasonal-fx__glow" />
-      {particles.map((p, i) => (
+      {season && <div className="seasonal-fx__glow" />}
+      {season && particles.map((p, i) => (
         <span
           key={i}
           className="seasonal-fx__particle"
