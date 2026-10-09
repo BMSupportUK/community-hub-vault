@@ -244,7 +244,14 @@ function AuthLayout() {
   }
 
   return (
-    <ScreenLockProvider>
+    <ScreenLockProvider
+      lockedExtras={
+        <Suspense fallback={null}>
+          <BreakEndingAlert />
+          <ShiftStartEndAlert />
+        </Suspense>
+      }
+    >
       <div className={locksToViewport ? "fixed inset-0 flex h-dvh w-dvw overflow-hidden bg-background" : "relative flex min-h-dvh w-full bg-background"}>
         <IconRail />
         <div className={locksToViewport ? "flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden" : "flex min-h-dvh min-w-0 flex-1 flex-col"}>
