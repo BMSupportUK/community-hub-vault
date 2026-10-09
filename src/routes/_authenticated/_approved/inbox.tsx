@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Nameplate } from "@/components/app/Nameplate";
 import pubImage from "@/assets/bm-inbox-pub.jpg";
 import { InboxPrivacyButton } from "@/components/app/InboxPrivacyButton";
+import { getSeason } from "@/lib/seasonal-theme";
 
 export const Route = createFileRoute("/_authenticated/_approved/inbox")({
   head: () => ({ meta: [ { title: "BM Support Inbox" }, { name: "description", content: "Private conversations for BM Support members and staff." }, { property: "og:title", content: "BM Support Inbox" }, { property: "og:description", content: "Private conversations for BM Support members and staff." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" } ] }),
@@ -49,6 +50,13 @@ function InboxPage() {
     catch (e) { toast.error(/not accepting messages/i.test(String((e as { message?: string })?.message ?? e)) ? "This person isn't accepting inbox messages." : "Could not complete that action. Please try again."); return null; }
     finally { setBusy(false); }
   }
+  // Hide the pub background while a seasonal theme (Halloween/Christmas) is active.
+  const [season, setSeason] = useState<ReturnType<typeof getSeason>>(null);
+  useEffect(() => {
+    setSeason(getSeason());
+    const id = window.setInterval(() => setSeason(getSeason()), 60 * 60 * 1000);
+    return () => window.clearInterval(id);
+  }, []);
   useEffect(() => {
     if (!thread) return;
     void inboxAction("read", thread).then(refresh).catch(() => {});
