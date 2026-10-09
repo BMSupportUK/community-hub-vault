@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { randomInt } from "node:crypto";
+import { TRANSFER_TTL_MS } from "@/lib/app-transfer";
 
 /**
  * The installed Android/Fire TV app calls this once after the member signs in
@@ -54,8 +55,6 @@ export const reportNativeInstall = createServerFn({ method: "POST" })
     }
     return { ok: true as const };
   });
-
-const TRANSFER_TTL_MS = 24 * 60 * 60 * 1000;
 
 // 7-digit numeric code — the shortest thing a member can type into the
 // Downloader app on a TV remote: bmsupport.uk/4839201

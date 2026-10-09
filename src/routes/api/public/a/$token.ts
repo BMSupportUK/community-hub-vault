@@ -1,31 +1,29 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { deviceFromUserAgent, clientIpFromHeaders } from "@/lib/device-from-user-agent";
+import { isSafeToken, isTransferLive } from "@/lib/app-transfer";
 
 // GET /api/public/a/:token
 // Streams the current APK to a device that presents a live transfer token.
 // The Downloader app on Fire OS is not signed in, so the token itself is the
 // credential: unknown, deleted or expired tokens get a bare 404.
 
-// New codes are 7 digits; older 6-16 char alphanumeric tokens keep working
-// until they expire (24h max).
-const SAFE_TOKEN = /^(?:\d{7}|[A-Za-z0-9]{6,16})$/;
-
 export const Route = createFileRoute("/api/public/a/$token")({
   server: {
     handlers: {
       GET: async ({ params, request }) => {
         const token = (params.token ?? "").toUpperCase();
-        if (!SAFE_TOKEN.test(token)) return new Response("Not found", { status: 404 });
+        if (!isSafeToken(token)) return new Response("Not found", { status: 404 });
 
         const nowIso = new Date().toISOString();
         const { data: transfer } = await supabaseAdmin
           .from("app_transfers")
           .select("id, build_id, expires_at, download_count, last_download_started_at")
           .eq("token", token)
-          .gt("expires_at", nowIso)
           .maybeSingle();
-        if (!transfer) return new Response("Not found", { status: 404 });
+        if (!transfer || !isTransferLive(transfer.expires_at as string, nowIso)) {
+          return new Response("Not found", { status: 404 });
+        }
 
         const { data: build } = await supabaseAdmin
           .from("app_builds")
