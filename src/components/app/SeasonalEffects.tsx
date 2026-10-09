@@ -3,9 +3,11 @@ import halloweenArt from "@/assets/talk-halloween-bg.jpg";
 import christmasArt from "@/assets/talk-christmas-bg.jpg";
 import bonfireArt from "@/assets/talk-bonfire-bg.jpg";
 import easterArt from "@/assets/talk-easter-bg.jpg";
+import stGeorgeArt from "@/assets/talk-st-george-bg.jpg";
+import newYearArt from "@/assets/talk-new-year-bg.jpg";
 import { getSeason, type Season } from "@/lib/seasonal-theme";
 
-const seasonalArt: Record<Season, string> = { halloween: halloweenArt, christmas: christmasArt, bonfire: bonfireArt, easter: easterArt };
+const seasonalArt: Record<Season, string> = { halloween: halloweenArt, christmas: christmasArt, bonfire: bonfireArt, easter: easterArt, "st-george": stGeorgeArt, "new-year": newYearArt };
 
 /** Decorative, non-interactive seasonal overlay for Talk channels. */
 export function SeasonalEffects() {
@@ -17,7 +19,7 @@ export function SeasonalEffects() {
   }, []);
 
   const particles = useMemo(() => {
-    const count = season === "christmas" ? 40 : season === "bonfire" ? 24 : 12;
+    const count = season === "christmas" ? 40 : season === "bonfire" || season === "new-year" ? 24 : 12;
     return Array.from({ length: count }, (_, i) => ({
       left: (i * 97) % 100,
       delay: -((i * 37) % 20),
