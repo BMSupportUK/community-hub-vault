@@ -1,24 +1,23 @@
-# Hide the bmsupport.uk name in APK download links
+# APK download links: 24-hour expiry — already in place
 
-## Goal
-Download links shown in Install Guides → "Download the BM Support app" should not show `bmsupport.uk`. Dane accepted a random made-up name isn't possible — the address has to really exist — so the workable option is a second, plain domain used only for download links.
+## What Dane asked
+He's fine leaving the links on bmsupport.uk, provided each link is disabled after 24 hours and can't be viewed afterwards.
 
-## How it works
-1. **Register/connect one neutral domain** (e.g. a plain name with no "bmsupport" in it — Dane picks the name). Cheapest route: buy it in Project Settings → Domains (paid plans), or connect one he already owns. One domain is enough — we don't need a new one per link, because the random 7-digit code already makes every link unique.
-2. **Domain setup**: add the domain in Project Settings → Domains with the A/TXT records Lovable provides, wait for it to go Active. Then **unset bmsupport.uk as Primary** (Project Settings → Domains → ⋯ → Unset as primary) so the new domain serves the app at its own address instead of redirecting to bmsupport.uk. Note: with no Primary set, the whole site is also reachable on the new domain — only the download links will ever show it to members.
-3. **Code change (small)**: in `src/lib/app-transfer.functions.ts` and `src/components/app/AppTransferPanel.tsx`, build the displayed link/QR from the new domain (e.g. `https://<plain-domain>/4839201`) instead of `bmsupport.uk`. The existing `/4839201` → `/api/public/a/<code>` redirect works on any connected domain with no other changes. Old bmsupport.uk links keep working until they expire.
+## What I verified in the code (already true today, no behaviour change needed)
+1. Every transfer is issued with a 24-hour expiry (`TRANSFER_TTL_MS = 24 * 60 * 60 * 1000` in `src/lib/app-transfer.functions.ts`).
+2. The short link `bmsupport.uk/4839201` (`src/routes/$code.ts`) is only a redirect — it holds nothing to view.
+3. The download route (`src/routes/api/public/a/$token.ts`) only serves the APK while `expires_at` is in the future; an expired or unknown code gets a bare "Not found" (404) — no download, no page, no member information.
+4. The nightly cleanup in `src/routes/api/public/hooks/scheduled-reminders.ts` (line ~358) deletes expired transfers from the database, so dead codes stop existing rather than lingering.
+5. Members' Download tab and staff lists filter out expired transfers; staff/admin can also kill a link immediately.
+
+## The one gap worth closing
+No automated test locks this rule in — nothing would catch it if a future edit accidentally served expired codes.
+
+## Plan
+1. Extract a small pure helper `isTransferLive(expiresAt, nowIso)` (and the token format check) into `src/lib/app-transfer.ts` and use it in `src/routes/api/public/a/$token.ts` — same behaviour, just testable.
+2. Add `tests/app-transfer-expiry.test.ts` (bun test) asserting: expiry is exactly 24 hours, a live token passes, a token expired even one second fails, and malformed tokens are rejected.
+3. Run the test suite; confirm the build stays clean. No UI or APK changes; nothing to republish for behaviour.
 
 ## What this does NOT do
-- The link can't be a completely random invented name each time — it must be a real registered domain.
-- Anyone who visits the new domain can reach the site; the code check still protects the actual download.
-
-## Steps
-1. Dane picks/buys the plain domain (his action — needs his choice of name and a paid plan if buying through Lovable).
-2. I verify the domain is Active and primary is unset.
-3. I update the two files to use the new domain for transfer links and QR codes.
-4. Verify in preview: request a transfer, confirm the link shows the new domain and downloads the APK.
-
-## Technical details
-- Files: `src/lib/app-transfer.functions.ts` (link builder), `src/components/app/AppTransferPanel.tsx` (display + QR).
-- No database change; no change to `src/routes/$code.ts` or `src/routes/api/public/a/$token.ts` (domain-agnostic).
-- Keep the domain name in one constant so it can be swapped later.
+- No change to link format, domain, or how members request transfers.
+- The 24-hour rule itself already works — this only protects it from future regressions.
