@@ -64,7 +64,7 @@ function InboxPage() {
   useEffect(() => { bottom.current?.scrollIntoView({ block: "nearest" }); }, [thread, data?.messages.length]);
   if (!enabled) return <div className="p-8"><h1 className="font-display text-2xl">BM Support Inbox</h1><p className="mt-3 text-muted-foreground">Your account does not have inbox access.</p></div>;
   return <section className="relative isolate flex min-h-[calc(100dvh-180px)] w-full min-w-0 flex-col overflow-hidden">
-    <img src={pubImage} alt="" className="pointer-events-none absolute inset-0 -z-20 size-full object-cover" />
+    {!season && <img src={pubImage} alt="" className="pointer-events-none absolute inset-0 -z-20 size-full object-cover" />}
     <div className="pointer-events-none absolute inset-0 -z-10 bg-background/65" />
     <header className="flex items-center justify-between gap-3 border-b border-border bg-background/80 px-4 py-4 backdrop-blur-sm md:px-6"><h1 className="flex items-center gap-3 font-display text-2xl font-bold"><MessagesSquare className="size-6 text-primary" />BM Support Inbox</h1><div className="flex gap-2"><InboxPrivacyButton />{hasAny(["admin", "management"]) && <Button variant="outline" size="icon" asChild><Link to="/inbox-reports" title="Inbox reports" aria-label="Inbox reports"><ShieldCheck className="size-4" /></Link></Button>}<Button size="icon" title="New message" aria-label="New message" onClick={() => { setSearch(""); setNewOpen(true); }}><Plus className="size-5" /></Button></div></header>
     <div className="grid min-h-0 flex-1 md:grid-cols-[300px_minmax(0,1fr)]">
