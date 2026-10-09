@@ -2,6 +2,7 @@
 # Roadmap
 
 ## Current
+- [x] Add St Patrick’s Day pictures and effects to Talk and inbox on 17 March, UK time
 - [x] Add St George’s Day and New Year’s Day pictures and effects to Talk and inbox on their UK event dates
 - [x] Add Bonfire Night and Easter Sunday pictures and effects to Talk and inbox on their UK event dates
 - [x] BM Support inbox: move its icon out of the side rail into the top header, directly before the mentions icon

@@ -1999,8 +1999,10 @@ html.boro-bg-active .min-h-dvh.bg-background {
   --seasonal-blossom: oklch(0.82 0.12 350);
   --seasonal-st-george-red: oklch(0.64 0.2 25);
   --seasonal-st-george-white: oklch(0.97 0.01 100);
-  --seasonal-new-year-gold: oklch(0.85 0.15 85);
+ --seasonal-new-year-gold: oklch(0.85 0.15 85);
   --seasonal-new-year-ruby: oklch(0.72 0.18 15);
+  --seasonal-st-patrick-green: oklch(0.7 0.17 145);
+  --seasonal-st-patrick-gold: oklch(0.85 0.15 85);
 }
 .seasonal-fx { position: fixed; inset: 0; pointer-events: none; z-index: 30; overflow: hidden; }
 .seasonal-fx__glow { position: absolute; inset: 0; }
@@ -2039,3 +2041,5 @@ body:has([data-screen-lock-alerts]) [role="alertdialog"] { z-index: 400; }
 .seasonal-fx--new-year .seasonal-fx__particle:nth-child(3n) { background: var(--seasonal-new-year-ruby); box-shadow: none; }
 .seasonal-fx--new-year .seasonal-fx__particle:nth-child(3n + 1) { background: var(--seasonal-st-george-white); }
 @keyframes seasonal-confetti { 0% { transform: translate3d(0, 0, 0) rotate(0deg); } 50% { transform: translate3d(-35px, 55vh, 0) rotate(180deg); } 100% { transform: translate3d(30px, 110vh, 0) rotate(360deg); } }
+.seasonal-fx--st-patrick .seasonal-fx__glow { box-shadow: inset 0 0 120px color-mix(in oklch, var(--seasonal-st-patrick-green) 22%, transparent); }
+.seasonal-fx--st-patrick .seasonal-fx__particle { animation: seasonal-drift ease-in-out infinite; filter: drop-shadow(0 0 4px var(--seasonal-st-patrick-green)); }
