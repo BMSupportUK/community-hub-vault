@@ -2009,3 +2009,6 @@ html.boro-bg-active .min-h-dvh.bg-background {
   100% { transform: translate3d(30px, 110vh, 0) rotate(-8deg); }
 }
 @media (prefers-reduced-motion: reduce) { .seasonal-fx__particle { display: none; } }
+
+/* Shift/break alerts stay visible above the inactivity lock screen. */
+body:has([data-screen-lock-alerts]) [role="alertdialog"] { z-index: 400; }

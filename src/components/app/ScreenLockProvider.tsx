@@ -29,7 +29,7 @@ export function lockScreenNow() {
   window.dispatchEvent(new Event(LOCK_NOW_EVENT));
 }
 
-export function ScreenLockProvider({ children }: { children: ReactNode }) {
+export function ScreenLockProvider({ children, lockedExtras }: { children: ReactNode; lockedExtras?: ReactNode }) {
   const { user, hasAny } = useAuth();
   const isStaff = hasAny(["admin", "management", "staff", "moderator"]);
   const [settings, setSettings] = useState<ScreenLockSettings | null>(null);
@@ -446,7 +446,14 @@ export function ScreenLockProvider({ children }: { children: ReactNode }) {
   // A known-locked screen goes straight to the lock screen: no reason to make
   // someone stare at the loading screen before they can type their code.
   if (user && ready && settings && locked) {
-    return <ScreenLockOverlay settings={settings} onUnlock={() => doUnlock()} />;
+    // Shift and break alerts must keep firing on time while locked, so they
+    // render alongside the lock screen and sit above it (see styles.css).
+    return (
+      <>
+        <ScreenLockOverlay settings={settings} onUnlock={() => doUnlock()} />
+        <div data-screen-lock-alerts>{lockedExtras}</div>
+      </>
+    );
   }
   // Never hold a loading screen over an app that has nothing to hide: if no
   // saved lock and no expired idle timer suggest a lock, show the app while the
