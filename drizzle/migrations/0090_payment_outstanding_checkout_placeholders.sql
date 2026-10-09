@@ -1,0 +1,1 @@
+UPDATE public.automated_messages SET placeholders = ARRAY['customerName','orderRef','orderDate','amount','paymentMethod','checkoutUrl','checkoutPassword'] WHERE key = 'email:payment-outstanding';
