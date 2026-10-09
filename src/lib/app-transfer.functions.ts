@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { randomInt } from "node:crypto";
+import { TRANSFER_TTL_MS } from "@/lib/app-transfer";
 
 /**
  * The installed Android/Fire TV app calls this once after the member signs in
