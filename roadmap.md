@@ -134,3 +134,5 @@
 
 - [x] Stop the profile location line flashing between competing page labels.
 - [x] Download BM Support Apps: add an iOS Purple Player card with an App Store QR code, App Information text "Login Code is Added", and a store link (frontend-only, no database row)
+
+- [x] Default background for Talk + inbox on non-themed dates: digital illustration of a customer on the phone to a call centre worker (replaces pub picture)
