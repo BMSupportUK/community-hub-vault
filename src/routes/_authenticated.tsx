@@ -369,7 +369,7 @@ function AuthLayout() {
         >
           <Outlet />
         </div>
-        {talkSurface && (
+        {(talkSurface || path === "/inbox") && (
           <DeferUntilIdle>
             <SeasonalEffects />
           </DeferUntilIdle>

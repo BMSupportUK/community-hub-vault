@@ -45,7 +45,7 @@ function InboxPage() {
   async function act(action: Parameters<typeof inboxAction>[0], target: string, body = "") {
     setBusy(true);
     try { const id = await inboxAction(action, target, body); await refresh(); return id; }
-    catch { toast.error("Could not complete that action. Please try again."); return null; }
+    catch (e) { toast.error(/not accepting messages/i.test(String((e as { message?: string })?.message ?? e)) ? "This person isn't accepting inbox messages." : "Could not complete that action. Please try again."); return null; }
     finally { setBusy(false); }
   }
   useEffect(() => {
