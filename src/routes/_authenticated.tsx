@@ -25,6 +25,7 @@ import { ANDROID_RELEASE } from "@/lib/android-release";
 
 // Defer non-critical header widgets & alerts so the shell paints immediately.
 const MentionsBadge = lazy(() => import("@/components/app/MentionsBadge").then((m) => ({ default: m.MentionsBadge })));
+const BmInboxBell = lazy(() => import("@/components/app/BmInboxBell").then((m) => ({ default: m.BmInboxBell })));
 const NotificationBell = lazy(() => import("@/components/app/NotificationBell").then((m) => ({ default: m.NotificationBell })));
 const TwoFactorPill = lazy(() => import("@/components/app/TwoFactorBanner").then((m) => ({ default: m.TwoFactorPill })));
 const VpnPill = lazy(() => import("@/components/app/TwoFactorBanner").then((m) => ({ default: m.VpnPill })));
@@ -313,6 +314,11 @@ function AuthLayout() {
                 <ShieldCheck className="size-4" />
                 <span className="hidden min-[1700px]:inline">Members &amp; Role Management</span>
               </Link>
+            )}
+            {user && (
+              <DeferUntilIdle>
+                <BmInboxBell />
+              </DeferUntilIdle>
             )}
             {user && (
               <DeferUntilIdle>
