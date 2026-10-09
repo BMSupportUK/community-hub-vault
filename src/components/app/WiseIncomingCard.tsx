@@ -43,6 +43,7 @@ export function WiseIncomingCard({
 
   const [feed, setFeed] = useState<WiseFeed | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showOther, setShowOther] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [busyOrder, setBusyOrder] = useState<string | null>(null);
   const [confirmed, setConfirmed] = useState<Set<string>>(new Set());
