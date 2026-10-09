@@ -50,11 +50,11 @@ function InboxPage() {
     catch (e) { toast.error(/not accepting messages/i.test(String((e as { message?: string })?.message ?? e)) ? "This person isn't accepting inbox messages." : "Could not complete that action. Please try again."); return null; }
     finally { setBusy(false); }
   }
-  // Hide the pub background while a seasonal theme (Halloween/Christmas) is active.
+  // Hide the pub background while any seasonal theme is active.
   const [season, setSeason] = useState<ReturnType<typeof getSeason>>(null);
   useEffect(() => {
     setSeason(getSeason());
-    const id = window.setInterval(() => setSeason(getSeason()), 60 * 60 * 1000);
+    const id = window.setInterval(() => setSeason(getSeason()), 1000);
     return () => window.clearInterval(id);
   }, []);
   useEffect(() => {

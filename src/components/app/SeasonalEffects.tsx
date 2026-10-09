@@ -1,25 +1,29 @@
 import { useEffect, useMemo, useState } from "react";
 import halloweenArt from "@/assets/talk-halloween-bg.jpg";
 import christmasArt from "@/assets/talk-christmas-bg.jpg";
+import bonfireArt from "@/assets/talk-bonfire-bg.jpg";
+import easterArt from "@/assets/talk-easter-bg.jpg";
 import { getSeason, type Season } from "@/lib/seasonal-theme";
+
+const seasonalArt: Record<Season, string> = { halloween: halloweenArt, christmas: christmasArt, bonfire: bonfireArt, easter: easterArt };
 
 /** Decorative, non-interactive seasonal overlay for Talk channels. */
 export function SeasonalEffects() {
   const [season, setSeason] = useState<Season | null>(null);
   useEffect(() => {
     setSeason(getSeason());
-    const id = window.setInterval(() => setSeason(getSeason()), 60 * 60 * 1000);
+    const id = window.setInterval(() => setSeason(getSeason()), 1000);
     return () => window.clearInterval(id);
   }, []);
 
   const particles = useMemo(() => {
-    const count = season === "christmas" ? 40 : 12;
+    const count = season === "christmas" ? 40 : season === "bonfire" ? 24 : 12;
     return Array.from({ length: count }, (_, i) => ({
       left: (i * 97) % 100,
       delay: -((i * 37) % 20),
       duration: season === "christmas" ? 10 + ((i * 13) % 10) : 18 + ((i * 7) % 12),
       size: season === "christmas" ? 4 + ((i * 5) % 6) : 18 + ((i * 3) % 10),
-      glyph: season === "halloween" ? (i % 3 === 0 ? "🎃" : "🦇") : "",
+      glyph: season === "halloween" ? (i % 3 === 0 ? "🎃" : "🦇") : season === "easter" ? (i % 3 === 0 ? "🥚" : "🌸") : "",
     }));
   }, [season]);
 
@@ -29,7 +33,7 @@ export function SeasonalEffects() {
     <div aria-hidden className={`seasonal-fx seasonal-fx--${season}`}>
       <div
         className="seasonal-fx__art"
-        style={{ backgroundImage: `url(${season === "christmas" ? christmasArt : halloweenArt})` }}
+        style={{ backgroundImage: `url(${seasonalArt[season]})` }}
       />
       <div className="seasonal-fx__glow" />
       {particles.map((p, i) => (
