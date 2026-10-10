@@ -493,12 +493,17 @@ export function WorkingStatusBox({
       toast.error(kind === "lunch" ? "You've already had your lunch break this shift." : "You've used both of your breaks this shift.");
       return;
     }
+    if (busy) return;
     setBusy(true);
-    const { error } = await supabase
+    const { data: inserted, error } = await supabase
       .from("breaks")
-      .insert({ shift_id: shift.id, user_id: user.id, kind });
+      .insert({ shift_id: shift.id, user_id: user.id, kind })
+      .select()
+      .single();
     setBusy(false);
     if (error) return toast.error(error.message);
+    // Show the running break straight away instead of waiting for the live update.
+    if (inserted) setBrk(inserted as Break);
     setUsedKinds((k) => [...k, kind]);
     toast.success(kind === "lunch" ? "Lunch started" : "Break started");
     notifyBreak({ data: { kind: "start", breakKind: kind } }).catch(() => {});
@@ -742,14 +747,13 @@ export function WorkingStatusBox({
     }
     if (brk) {
       return (
-        <button
-          type="button"
-          onClick={endBreak}
-          title="End break"
-          className={cn("inline-flex items-center justify-center rounded-full border border-primary/30 bg-primary/10 text-primary hover:bg-primary/20 transition-all", iconButtonClass)}
+        <span
+          title="On break — it ends automatically when the time is up"
+          aria-label="On break, ends automatically"
+          className={cn("inline-flex items-center justify-center rounded-full border border-border bg-muted/30 text-muted-foreground opacity-60 cursor-not-allowed", iconButtonClass)}
         >
           <PlayCircle className={iconClass} />
-        </button>
+        </span>
       );
     }
     return (
