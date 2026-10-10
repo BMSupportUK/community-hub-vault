@@ -248,12 +248,30 @@ export async function fetchFantasyStatsForFixture(
   const subInMinute = new Map<string, number>();
   const pensMissed = new Map<string, number>();
   let boroPensSaved = 0;
+  // FotMob's player-stat table often omits cards, so count them from the timeline too.
+  const yellowsSeen = new Map<string, number>();
+  const redsSeen = new Map<string, number>();
+  const boroTeamId = String((boroSide.team as { id?: unknown } | undefined)?.id ?? "");
   for (const ev of summary.keyEvents ?? []) {
     const kind = (ev.type?.type ?? ev.type?.text ?? "").toLowerCase();
-    const isBoroTeam = BORO_RE.test(ev.team?.displayName ?? "");
+    // Timeline events carry the team id, not always its name.
+    const evTeamId = String((ev.team as { id?: unknown } | undefined)?.id ?? "");
+    const isBoroTeam = BORO_RE.test(ev.team?.displayName ?? "") || (!!boroTeamId && evTeamId === boroTeamId);
+    const flags = ev as { yellowCard?: boolean; redCard?: boolean };
+    if (kind.includes("card") && isBoroTeam) {
+      const who = ev.participants?.[0]?.athlete?.id;
+      if (who != null) {
+        const key = String(who);
+        if (flags.redCard || kind.includes("red")) redsSeen.set(key, (redsSeen.get(key) ?? 0) + 1);
+        else if (flags.yellowCard || kind.includes("yellow")) yellowsSeen.set(key, (yellowsSeen.get(key) ?? 0) + 1);
+      }
+      continue;
+    }
     if (kind.includes("substitution")) {
-      const inA = ev.participants?.[0]?.athlete?.id;
-      const outA = ev.participants?.[1]?.athlete?.id;
+      const inRaw = ev.participants?.[0]?.athlete?.id;
+      const outRaw = ev.participants?.[1]?.athlete?.id;
+      const inA = inRaw != null ? String(inRaw) : undefined;
+      const outA = outRaw != null ? String(outRaw) : undefined;
       const m = eventMinute(ev);
       if (inA) subInMinute.set(inA, m);
       if (outA) subOutMinute.set(outA, m);
@@ -261,7 +279,8 @@ export async function fetchFantasyStatsForFixture(
     }
     if (kind.includes("penalty") && (kind.includes("miss") || kind.includes("saved"))) {
       if (isBoroTeam) {
-        const taker = ev.participants?.[0]?.athlete?.id;
+        const takerRaw = ev.participants?.[0]?.athlete?.id;
+        const taker = takerRaw != null ? String(takerRaw) : undefined;
         if (taker) pensMissed.set(taker, (pensMissed.get(taker) ?? 0) + 1);
       } else if (kind.includes("saved")) {
         boroPensSaved += 1;
@@ -321,8 +340,8 @@ export async function fetchFantasyStatsForFixture(
       // Always store the real goals conceded: whether it costs points depends on
       // the position the manager picked the player in, decided when scoring.
       goals_conceded: conceded,
-      yellows: statVal(rp, "yellowCards"),
-      reds: statVal(rp, "redCards"),
+      yellows: Math.max(statVal(rp, "yellowCards"), yellowsSeen.get(String(athleteId)) ?? 0),
+      reds: Math.max(statVal(rp, "redCards"), redsSeen.get(String(athleteId)) ?? 0),
       own_goals: statVal(rp, "ownGoals"),
       // Straight from the match report "player stats" table.
       shots: statVal(rp, "totalShots"),
