@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Clock as ClockIcon, LogIn, LogOut, CheckCircle2, HelpCircle, Loader2, ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
+import { Clock as ClockIcon, LogIn, LogOut, CheckCircle2, HelpCircle, Loader2, ChevronLeft, ChevronRight, CalendarDays, Moon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { type BreakKind, breakLabel, breakIcon } from "@/lib/breaks";
 
@@ -23,6 +23,23 @@ interface BreakRow {
   kind: BreakKind;
   started_at: string;
   ended_at: string | null;
+}
+
+/** One logged Away period, written by the away_log trigger. */
+interface AwayRow {
+  id: string;
+  reason: string;
+  starts_at: string;
+  ends_at: string | null;
+}
+
+/** Away periods that fall inside a shift's clocked window. */
+function awayForShift(rows: AwayRow[], s: ShiftHistoryRow) {
+  const from = new Date(s.clock_in).getTime();
+  const to = s.clock_out ? new Date(s.clock_out).getTime() : Date.now();
+  return rows.filter(
+    (a) => new Date(a.starts_at).getTime() < to && (!a.ends_at || new Date(a.ends_at).getTime() > from),
+  );
 }
 
 /** Hourly rota slot a moderator claimed for themselves. */
@@ -124,6 +141,7 @@ function dayIndexOfIso(iso: string) {
 export default function ShiftHistoryPanel({ userId, name }: { userId: string; name: string }) {
   const [rows, setRows] = useState<ShiftHistoryRow[]>([]);
   const [breaksByShift, setBreaksByShift] = useState<Record<string, BreakRow[]>>({});
+  const [awayRows, setAwayRows] = useState<AwayRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
@@ -213,16 +231,31 @@ export default function ShiftHistoryPanel({ userId, name }: { userId: string; na
     return map;
   }, []);
 
+  // Away periods for the selected week; matched to each shift when rendering.
+  const fetchAway = useCallback(async () => {
+    const { data } = await supabase
+      .from("away_log")
+      .select("id, reason, starts_at, ends_at")
+      .eq("user_id", userId)
+      .gte("starts_at", new Date(weekFrom).toISOString())
+      .lt("starts_at", new Date(weekTo).toISOString())
+      .order("starts_at", { ascending: true });
+    return (data ?? []) as AwayRow[];
+  }, [userId, weekFrom, weekTo]);
+
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setRows([]);
     setBreaksByShift({});
+    setAwayRows([]);
     fetchPage(0).then(async ({ rows: first, count }) => {
       const bmap = await fetchBreaks(first.map((r) => r.id));
+      const away = await fetchAway();
       if (cancelled) return;
       setRows(first);
       setBreaksByShift(bmap);
+      setAwayRows(away);
       setTotal(count);
       setHasMore(first.length === PAGE_SIZE && count > first.length);
       setLoading(false);
@@ -230,7 +263,7 @@ export default function ShiftHistoryPanel({ userId, name }: { userId: string; na
     return () => {
       cancelled = true;
     };
-  }, [fetchPage, fetchBreaks]);
+  }, [fetchPage, fetchBreaks, fetchAway]);
 
   const loadMore = async () => {
     setLoadingMore(true);
@@ -448,6 +481,21 @@ export default function ShiftHistoryPanel({ userId, name }: { userId: string; na
                       </div>
                     );
                   })}
+                </div>
+              )}
+
+              {awayForShift(awayRows, s).length > 0 && (
+                <div className="mt-2 space-y-1.5 border-t border-purple-500/20 pt-2 text-sm">
+                  {awayForShift(awayRows, s).map((a) => (
+                    <div key={a.id} className="flex items-center gap-2 text-purple-100/90">
+                      <Moon className="size-4 text-violet-300" />
+                      <span className="text-purple-200/70">Away · {a.reason}</span>
+                      <span className="ml-auto font-medium tabular-nums">
+                        {fmtTime(a.starts_at)} · {fmtDuration(a.starts_at, a.ends_at)}
+                        {!a.ends_at ? " (ongoing)" : ""}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               )}
 
