@@ -14,6 +14,8 @@ export type EntrantSquadPickDTO = {
   autoSubbed: boolean;
   /** Note explaining an automatic swap when the official XI was announced. */
   lineupSwapNote: string | null;
+  minutes: number | null;
+  matchdayMembership: "named" | "absent" | "unknown";
   isCaptain: boolean;
   isVice: boolean;
 };
@@ -46,7 +48,7 @@ export const getEntrantFantasySquad = createServerFn({ method: "GET" })
 
     const { data: gw, error: gwErr } = await admin
       .from("fantasy_gameweeks")
-      .select("id, lock_at, status")
+      .select("id, lock_at, status, fixture_id, fixture:boro_fixtures(home_team, away_team, kickoff_at)")
       .eq("id", data.gameweekId)
       .maybeSingle();
     if (gwErr) throw new Error(gwErr.message);
@@ -73,9 +75,18 @@ export const getEntrantFantasySquad = createServerFn({ method: "GET" })
       ...new Set(((s.picks ?? []) as any[]).map((p) => p.player_id as string)),
     ];
     const { data: players } = ids.length
-      ? await admin.from("fantasy_players").select("id, name, shirt_number, position").in("id", ids)
+      ? await admin.from("fantasy_players").select("id, name, shirt_number, position")
       : { data: [] as any[] };
     const pMap = new Map<string, any>(((players ?? []) as any[]).map((p) => [p.id, p]));
+    const { readFantasyMatchdaySquad } = await import("@/lib/fantasy-matchday.server");
+    const { matchdayMembership } = await import("@/lib/fantasy-matchday");
+    const fixture = (gw as any).fixture;
+    const [official, statRes] = await Promise.all([
+      fixture ? readFantasyMatchdaySquad({ homeTeam: fixture.home_team, awayTeam: fixture.away_team, kickoffAt: fixture.kickoff_at }, players ?? []) : Promise.resolve(null),
+      admin.from("fantasy_player_stats").select("player_id, minutes").eq("fixture_id", (gw as any).fixture_id),
+    ]);
+    if (statRes.error) throw new Error(statRes.error.message);
+    const minutes = new Map<string, number>((statRes.data ?? []).map((r: any) => [r.player_id, Number(r.minutes) || 0]));
 
     const picks: EntrantSquadPickDTO[] = ((s.picks ?? []) as any[])
       .map((p) => {
@@ -91,6 +102,8 @@ export const getEntrantFantasySquad = createServerFn({ method: "GET" })
           points: p.points ?? null,
           autoSubbed: !!p.auto_subbed,
           lineupSwapNote: (p.lineup_swap_note ?? null) as string | null,
+          minutes: minutes.get(p.player_id) ?? null,
+          matchdayMembership: matchdayMembership(p.player_id, official, minutes.get(p.player_id)),
           isCaptain: p.player_id === s.captain_id,
           isVice: p.player_id === s.vice_id,
         };

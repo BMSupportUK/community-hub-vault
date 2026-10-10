@@ -89,6 +89,19 @@ const PlayerStatsCtx = createContext<
   () => {},
 );
 
+/** Weekly labels reflect official matchday membership, not zero minutes alone. */
+function WeeklyPickStatus({ pick }: { pick?: { minutes?: number | null; matchdayMembership?: "named" | "absent" | "unknown"; lineupSwapNote?: string | null; isStarter: boolean; autoSubbed?: boolean } }) {
+  if (!pick) return null;
+  const exchanged = !!pick.lineupSwapNote;
+  const played = (pick.minutes ?? 0) > 0;
+  return (
+    <div className="mt-1 space-y-0.5 text-[10px] font-semibold leading-tight break-words">
+      {played ? <div>{pick.minutes}′ played</div> : pick.matchdayMembership === "absent" ? <div>Not In Matchday Squad</div> : pick.matchdayMembership === "named" ? <div>Unused Substitute</div> : null}
+      {exchanged && <div title={pick.lineupSwapNote ?? undefined} className="font-bold"><div>Exchanged</div><div>{pick.isStarter ? "Moved into the Starter 11" : "Moved To The Bench"}</div></div>}
+    </div>
+  );
+}
+
 /** 0-10 match rating pill shown beside a player's name on the pitch. */
 function RatingPill({ rating, dark = false }: { rating?: number | null; dark?: boolean }) {
   if (rating == null || rating <= 0) return null;
@@ -2371,6 +2384,7 @@ function SquadBuilder({
               viceId={viceId}
               pointsByPlayer={hasGwPoints ? pointsByPlayer : undefined}
               minutesByPlayer={minutesByPlayer.size ? minutesByPlayer : undefined}
+               weeklyPicks={existing?.picks}
               autoSubbedIds={autoSubbedIds}
               onSlotOpen={(positions, slotIndex, replaceId) => setPicker({ mode: "xi", positions, slotIndex, replaceId })}
               ratingByPlayer={ratingByPlayer.size ? ratingByPlayer : undefined}
@@ -2415,6 +2429,7 @@ function SquadBuilder({
                 benchSize={benchRules.size}
                 pointsByPlayer={hasGwPoints ? pointsByPlayer : undefined}
                 minutesByPlayer={minutesByPlayer.size ? minutesByPlayer : undefined}
+               weeklyPicks={existing?.picks}
                 autoSubbedIds={autoSubbedIds}
                 ratingByPlayer={ratingByPlayer.size ? ratingByPlayer : undefined}
                 onDropStart={(playerId) => {
@@ -2815,7 +2830,7 @@ function PlayerPickerDialog({
 function PitchView({
   formation, onFormationChange, formationLocked = false, editable, dragEnabled = false, playerById, selected, starters, slotPositions, onSlotPosition, bench, captainId, viceId,
   pointsByPlayer, minutesByPlayer, autoSubbedIds, onDropStart, onBench, onRemove, onCaptain, onVice,
-  onSlotOpen, gw, ratingByPlayer,
+  onSlotOpen, gw, ratingByPlayer, weeklyPicks,
 }: {
   formation: FormationKey;
   onFormationChange: (f: FormationKey) => void;
@@ -2833,6 +2848,7 @@ function PitchView({
   viceId: string;
   pointsByPlayer?: Map<string, number | null>;
   minutesByPlayer?: Map<string, number | null>;
+  weeklyPicks?: FantasyStateDTO["squads"][number]["picks"];
   autoSubbedIds?: Set<string>;
   ratingByPlayer?: Map<string, number>;
   onSlotOpen: (positions: FantasyPosition[], slotIndex: number, replaceId?: string) => void;
@@ -3009,11 +3025,7 @@ function PitchView({
                             {pointsByPlayer.get(p.id) ?? 0} pts
                           </div>
                         )}
-                        {minutesByPlayer?.has(p.id) && (
-                          <div className="mt-0.5 text-[10px] font-semibold tabular-nums text-white/80">
-                            {(minutesByPlayer.get(p.id) ?? 0) > 0 ? `${minutesByPlayer.get(p.id)}′ played` : "Didn't play"}
-                          </div>
-                        )}
+                        <WeeklyPickStatus pick={weeklyPicks?.find((pick) => pick.playerId === p.id)} />
                         {editable && (
                           <div className="mt-1 flex flex-col gap-0.5 sm:flex-row sm:gap-1 items-center justify-center">
                             <div className="flex items-center justify-center gap-0.5 sm:gap-1">
@@ -3116,7 +3128,7 @@ function PitchView({
 /** Substitutes panel — lives beside the pitch so it can sit in its own column. */
 function BenchPanel({
   editable, dragEnabled = false, playerById, bench, benchPositions, onBenchPosition, benchSize, pointsByPlayer, minutesByPlayer, autoSubbedIds,
-  onDropStart, onDropBench, onRemove, onBenchSlotOpen, gw, ratingByPlayer, variant = "panel",
+  onDropStart, onDropBench, onRemove, onBenchSlotOpen, gw, ratingByPlayer, weeklyPicks, variant = "panel",
 }: {
   editable: boolean;
   /** Drag and drop is enabled while the gameweek is still open. */
@@ -3128,6 +3140,7 @@ function BenchPanel({
   benchSize: number;
   pointsByPlayer?: Map<string, number | null>;
   minutesByPlayer?: Map<string, number | null>;
+  weeklyPicks?: FantasyStateDTO["squads"][number]["picks"];
   autoSubbedIds?: Set<string>;
   ratingByPlayer?: Map<string, number>;
   onDropStart: (playerId: string) => void;
@@ -3270,14 +3283,7 @@ function BenchPanel({
                         {pointsByPlayer.get(p.id) ?? 0} pts
                       </div>
                     )}
-                    {minutesByPlayer?.has(p.id) && (
-                      <div className={`mt-0.5 text-[10px] font-semibold tabular-nums ${onPitch ? "text-white/75" : "text-muted-foreground"}`}>
-                        {(minutesByPlayer.get(p.id) ?? 0) > 0 ? `${minutesByPlayer.get(p.id)}′ played` : "Didn't play"}
-                      </div>
-                    )}
-                    {autoSubbedIds?.has(p.id) && (
-                      <div className="mt-0.5 text-[9px] font-bold uppercase text-sky-400">Subbed on</div>
-                    )}
+                    <WeeklyPickStatus pick={weeklyPicks?.find((pick) => pick.playerId === p.id)} />
                     {editable && (
                       <div className="mt-1.5 flex items-center justify-center gap-0.5 sm:gap-1">
                         <button type="button" title="Into the XI" onClick={() => onDropStart(p.id)} className="rounded p-0.5 text-muted-foreground hover:text-emerald-400">
@@ -3683,12 +3689,9 @@ function EntrantSquadDialog({
       <span className="w-7 text-xs tabular-nums text-muted-foreground">
         {p.shirtNumber ? `#${p.shirtNumber}` : "—"}
       </span>
-      <span className="min-w-0 flex-1 truncate text-sm font-medium">{p.name}</span>
+      <div className="min-w-0 flex-1 text-sm font-medium"><div className="break-words">{p.name}</div><WeeklyPickStatus pick={p} /></div>
       {p.isCaptain && <Crown className="size-3.5 text-amber-400" aria-label="Captain" />}
       {p.isVice && <Star className="size-3.5 text-sky-400" aria-label="Vice captain" />}
-      {p.autoSubbed && (
-        <span className="rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold text-primary">SUB IN</span>
-      )}
       <span className="w-14 shrink-0 text-right text-[11px] uppercase text-muted-foreground">
         {POSITION_SHORT[(p.pickedPosition ?? p.position) as FantasyPosition]}
       </span>
@@ -3802,12 +3805,9 @@ function PreviousGameweekTable({ data }: { data: FantasyPreviousGwScoreDTO | nul
       <span className="w-7 text-xs tabular-nums text-muted-foreground">
         {p.shirtNumber ? `#${p.shirtNumber}` : "—"}
       </span>
-      <span className="min-w-0 flex-1 truncate text-sm font-medium">{p.name}</span>
+      <div className="min-w-0 flex-1 text-sm font-medium"><div className="break-words">{p.name}</div><WeeklyPickStatus pick={p} /></div>
       {p.isCaptain && <Crown className="size-3.5 text-amber-400" aria-label="Captain" />}
       {p.isVice && <Star className="size-3.5 text-sky-400" aria-label="Vice captain" />}
-      {p.autoSubbed && (
-        <span className="rounded bg-primary/15 px-1.5 py-0.5 text-[10px] font-semibold text-primary">SUB IN</span>
-      )}
       <span className="w-14 shrink-0 text-right text-[11px] uppercase text-muted-foreground">
         {POSITION_SHORT[(p.pickedPosition ?? p.position) as FantasyPosition]}
       </span>
