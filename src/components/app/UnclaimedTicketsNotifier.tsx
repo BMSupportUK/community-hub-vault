@@ -37,6 +37,10 @@ async function claimTicket(id: string, userId: string): Promise<"claimed" | "tak
   return data?.length ? "claimed" : "taken";
 }
 
+// Module-level so the memory survives the screen lock unmounting and
+// remounting the app — otherwise the new-ticket sound replays on unlock.
+let knownTicketIds: Set<string> | null = null;
+
 /**
  * Tickets are claimed, not auto-assigned. For staff who are clocked in this
  * shows a sticky banner on every page (a pinned card with claim buttons in
@@ -53,12 +57,11 @@ export function UnclaimedTicketsNotifier() {
   const [rows, setRows] = useState<Row[]>([]);
   const [claiming, setClaiming] = useState<string | null>(null);
   const [collapsed, setCollapsed] = useState(false);
-  const known = knownTicketIdsRef;
 
   const load = useCallback(async () => {
     const list = await fetchUnclaimed();
-    if (known.current) {
-      const fresh = list.filter((r) => !known.current!.has(r.id));
+    if (knownTicketIds) {
+      const fresh = list.filter((r) => !knownTicketIds!.has(r.id));
       if (fresh.length) {
         void playSound(ticketAudio, { label: "ticket", gain: 2.0 });
         for (const r of fresh) {
@@ -67,7 +70,7 @@ export function UnclaimedTicketsNotifier() {
         setCollapsed(false);
       }
     }
-    known.current = new Set(list.map((r) => r.id));
+    knownTicketIds = new Set(list.map((r) => r.id));
     setRows(list);
   }, []);
 
@@ -87,7 +90,7 @@ export function UnclaimedTicketsNotifier() {
   }, [user, isStaff]);
 
   useEffect(() => {
-    if (!onShift) { setRows([]); known.current = null; return; }
+    if (!onShift) { setRows([]); knownTicketIds = null; return; }
     void load();
     const ch = supabase
       .channel(`claim-notifier-tickets-${Math.random().toString(36).slice(2)}`)
