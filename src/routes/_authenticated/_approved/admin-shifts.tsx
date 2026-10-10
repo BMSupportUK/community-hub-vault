@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { type BreakKind, breakIcon, breakLabel } from "@/lib/breaks";
-import { awayForShift } from "@/lib/staff-away";
+import { awayForShift, awayIcon } from "@/lib/staff-away";
 import { EarlyFinishRequestsPanel } from "@/components/app/EarlyFinishRequestsPanel";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-shifts")({

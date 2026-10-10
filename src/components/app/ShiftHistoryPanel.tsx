@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Clock as ClockIcon, LogIn, LogOut, CheckCircle2, HelpCircle, Loader2, ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { type BreakKind, breakLabel, breakIcon } from "@/lib/breaks";
-import { awayForShift } from "@/lib/staff-away";
+import { awayForShift, awayIcon } from "@/lib/staff-away";
 
 const PAGE_SIZE = 20;
 const AUTO_OUT_GRACE_MS = 15 * 60 * 1000;
