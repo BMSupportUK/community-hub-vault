@@ -10,7 +10,7 @@ import clockBg from "@/assets/clock-bg.jpg";
 import { useServerFn } from "@tanstack/react-start";
 import { sendShiftEventPush, sendBreakEventPush } from "@/lib/push.functions";
 import { PushNotificationsToggle } from "@/components/app/PushNotificationsToggle";
-import { type BreakKind, BREAK_LIMITS, breakLabel } from "@/lib/breaks";
+import { type BreakKind, BREAK_LIMITS, breakLabel, breaksLeft } from "@/lib/breaks";
 import { StaffOnDutyStrip } from "@/components/app/StaffOnDutyStrip";
 
 export const Route = createFileRoute("/_authenticated/_approved/clock")({
@@ -58,6 +58,10 @@ function ClockPage() {
     return () => clearInterval(t);
   }, []);
 
+  const [usedKinds, setUsedKinds] = useState<string[]>([]);
+  const breakLeft = breaksLeft("break", usedKinds);
+  const lunchLeft = breaksLeft("lunch", usedKinds);
+
   const refresh = async () => {
     if (!user) return;
     const [{ data: mine }, { data: allShifts }, { data: allBreaks }] = await Promise.all([
@@ -73,8 +77,11 @@ function ClockPage() {
       const { data: br } = await supabase
         .from("breaks").select("*").eq("shift_id", (mine as Shift).id).is("ended_at", null).order("started_at", { ascending: false }).limit(1).maybeSingle();
       setMyBreak((br as Break) ?? null);
+      const { data: all } = await supabase.from("breaks").select("kind").eq("shift_id", (mine as Shift).id);
+      setUsedKinds(((all as { kind: string }[]) ?? []).map((r) => r.kind));
     } else {
       setMyBreak(null);
+      setUsedKinds([]);
     }
 
     setLoading(false);
@@ -119,6 +126,7 @@ function ClockPage() {
 
   const startBreak = async (kind: BreakKind) => {
     if (!myShift || myBreak) return;
+    if (kind !== "travel" && breaksLeft(kind, usedKinds) <= 0) return;
     setBusy(true);
     const { error } = await supabase.from("breaks").insert({ shift_id: myShift.id, user_id: user!.id, kind });
     setBusy(false);
@@ -211,10 +219,10 @@ function ClockPage() {
                 <div className="text-sm text-muted-foreground">Started {fmtTime(myShift.clock_in)}</div>
               </div>
               <div className="flex items-center gap-2">
-                <button onClick={() => startBreak("break")} disabled={busy} className="px-4 py-2 rounded-lg bg-surface-2 border border-border hover:border-primary inline-flex items-center gap-2 text-sm">
+                <button onClick={() => startBreak("break")} disabled={busy || breakLeft <= 0} title={breakLeft > 0 ? `${breakLeft} of 2 breaks left` : "No breaks left this shift"} className="px-4 py-2 rounded-lg bg-surface-2 border border-border hover:border-primary inline-flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-border">
                   <Coffee className="size-4" /> Start break (15m)
                 </button>
-                <button onClick={() => startBreak("lunch")} disabled={busy} className="px-4 py-2 rounded-lg bg-surface-2 border border-border hover:border-primary inline-flex items-center gap-2 text-sm">
+                <button onClick={() => startBreak("lunch")} disabled={busy || lunchLeft <= 0} title={lunchLeft > 0 ? "Start lunch" : "Lunch already taken this shift"} className="px-4 py-2 rounded-lg bg-surface-2 border border-border hover:border-primary inline-flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-border">
                   <UtensilsCrossed className="size-4" /> Start lunch (30m)
                 </button>
                 <button onClick={clockOut} disabled={busy} className="px-4 py-2 rounded-lg bg-destructive text-destructive-foreground inline-flex items-center gap-2 text-sm">
