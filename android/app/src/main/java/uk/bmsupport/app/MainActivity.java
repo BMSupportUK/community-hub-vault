@@ -30,16 +30,19 @@ public class MainActivity extends BridgeActivity {
         createTicketReplyNotificationChannel();
         createDingChannel("bm_support_alerts_v4", "BM Support alerts",
                 "Signups, tickets, orders, inbox messages and staff alerts");
-        createSpokenChannel("bm_support_tickets_v3", "New support tickets", R.raw.ticket_notify);
-        createSpokenChannel("bm_support_shift_start_v4", "Shift starting", R.raw.shift_start_notify);
-        createSpokenChannel("bm_support_shift_end_v4", "Shift ending", R.raw.shift_end_notify);
-        removeOldChannels("bm_support_shift_start_v1", "bm_support_shift_start_v2", "bm_support_shift_start_v3",
-                "bm_support_shift_end_v1", "bm_support_shift_end_v2", "bm_support_shift_end_v3");
-        createSpokenChannel("bm_support_outage_v2", "Service outage", R.raw.outage_notify);
-        createSpokenChannel("bm_support_outage_resolved_v2", "Outage resolved", R.raw.outage_resolved_notify);
-        createSpokenChannel("bm_support_orders_v1", "New orders", R.raw.order_notify);
-        createSpokenChannel("bm_support_payments_v1", "Payments received", R.raw.payment_received_notify);
-        createSpokenChannel("bm_support_mentions_v1", "Mentions", R.raw.mention_notify);
+        createSpokenChannel("bm_support_tickets_v4", "New support tickets", R.raw.ticket_ding);
+        createSpokenChannel("bm_support_shift_start_v5", "Shift starting", R.raw.shift_start_ding);
+        createSpokenChannel("bm_support_shift_end_v5", "Shift ending", R.raw.shift_end_ding);
+        removeOldChannels("bm_support_shift_start_v1", "bm_support_shift_start_v2", "bm_support_shift_start_v3", "bm_support_shift_start_v4",
+                "bm_support_shift_end_v1", "bm_support_shift_end_v2", "bm_support_shift_end_v3", "bm_support_shift_end_v4",
+                "bm_support_tickets_v1", "bm_support_tickets_v2", "bm_support_tickets_v3",
+                "bm_support_outage_v1", "bm_support_outage_v2", "bm_support_outage_resolved_v1", "bm_support_outage_resolved_v2",
+                "bm_support_orders_v1", "bm_support_payments_v1", "bm_support_mentions_v1", "bm_support_ticket_replies_v2");
+        createSpokenChannel("bm_support_outage_v3", "Service outage", R.raw.outage_ding);
+        createSpokenChannel("bm_support_outage_resolved_v3", "Outage resolved", R.raw.outage_resolved_ding);
+        createSpokenChannel("bm_support_orders_v2", "New orders", R.raw.order_ding);
+        createSpokenChannel("bm_support_payments_v2", "Payments received", R.raw.payment_ding);
+        createSpokenChannel("bm_support_mentions_v2", "Mentions", R.raw.mention_ding);
         requestIgnoreBatteryOptimizations();
         enableWebViewDownloads();
     }
@@ -127,14 +130,14 @@ public class MainActivity extends BridgeActivity {
                 .setUsage(AudioAttributes.USAGE_NOTIFICATION)
                 .build();
         Uri soundUri = Uri.parse(
-                "android.resource://" + getPackageName() + "/" + R.raw.ticket_reply_notify
+                "android.resource://" + getPackageName() + "/" + R.raw.ticket_reply_ding
         );
         NotificationChannel channel = new NotificationChannel(
-                "bm_support_ticket_replies_v2",
+                "bm_support_ticket_replies_v3",
                 "Support ticket replies",
                 NotificationManager.IMPORTANCE_HIGH
         );
-        channel.setDescription("Spoken alert when a customer replies to an assigned ticket");
+        channel.setDescription("Ding alert when a customer replies to an assigned ticket");
         channel.enableVibration(true);
         channel.enableLights(true);
         channel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
@@ -179,7 +182,7 @@ public class MainActivity extends BridgeActivity {
         }
     }
 
-    /** Spoken channels are created natively so closed-app pushes always find them with their MP3. */
+    /** Alert channels are created natively so closed-app pushes always find them with their ding. */
     private void createSpokenChannel(String id, String name, int rawRes) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return;
         AudioAttributes audioAttrs = new AudioAttributes.Builder()
