@@ -70,7 +70,7 @@ export async function buildPlayerBreakdown(
 
   const matches: FantasyPlayerMatchStats[] = (rows ?? []).map((r: any) => {
     const f = fixtures.get(r.fixture_id);
-    const opponent = f ? (BORO.test(f.home_team ?? "") ? `${f.away_team} (A)` : `${f.home_team} (H)`) : "Fixture";
+    const opponent = f ? (BORO.test(f.home_team ?? "") ? `${f.away_team} (H)` : `${f.home_team} (A)`) : "Fixture";
     const stats: Record<string, number> = {};
     for (const [key, col] of STAT_COLUMNS) stats[key] = Number(r[col] ?? 0) || 0;
     return {
