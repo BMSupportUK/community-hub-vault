@@ -11,8 +11,8 @@ test("Split into single events breaks Premier League fixtures into one block per
   expect(arsenal).toHaveLength(3);
   expect(arsenal.every((e) => e.time.startsWith("12:30"))).toBe(true);
   expect(arsenal.map((e) => e.channels)).toEqual([
-    ["EPL Premier League", "Arsenal EPL ˢᴰ", "Leeds United EPL ˢᴰ"],
-    ["EPL Premier League Hub", "Stan Sport", "Now HK 1", "Hub Premier 1", "MonoMax"],
+    ["Arsenal EPL ˢᴰ", "Leeds United EPL ˢᴰ"],
+    ["Stan Sport", "Now HK 1", "Hub Premier 1", "MonoMax"],
     ["TNT Sport 1", "Supersport Premier League"],
   ]);
 });
@@ -24,10 +24,25 @@ test("Premier League fixtures split into one block per channel group, keeping fi
   const arsenal = r.events.filter((e) => e.title === "PREMIER LEAGUE: Arsenal v Leeds United");
   expect(arsenal).toHaveLength(3);
   expect(arsenal.every((e) => e.time.startsWith("12:30"))).toBe(true);
-  expect(arsenal[0].channels).toEqual(["EPL Premier League", "Arsenal EPL ˢᴰ", "Leeds United EPL ˢᴰ"]);
+  expect(arsenal[0].channels).toEqual(["Arsenal EPL ˢᴰ", "Leeds United EPL ˢᴰ"]);
   expect(arsenal[2].channels).toEqual(["TNT Sport 1", "Supersport Premier League"]);
   expect(r.events.filter((e) => e.title.includes("Ipswich"))).toHaveLength(2);
   expect(r.events).toHaveLength(17);
+});
+
+test("Team Channels guide keeps only the two team SD channels per fixture", async () => {
+  const raw = await Bun.file(new URL("./fixtures-epl-2026-10-10.txt", import.meta.url)).text();
+  const r = checkSportsImport(raw, "gmt", Date.UTC(2026, 9, 10, 7), "English Premier League Team Channels");
+  expect(r.errors).toBe(0);
+  expect(r.events).toHaveLength(6);
+  const arsenal = r.events.filter((e) => e.title.includes("Arsenal v Leeds United"));
+  expect(arsenal).toHaveLength(1);
+  expect(arsenal[0].time.startsWith("12:30")).toBe(true);
+  expect(arsenal[0].channels).toEqual(["Arsenal EPL ˢᴰ", "Leeds United EPL ˢᴰ"]);
+  for (const e of r.events) {
+    expect(e.channels).toHaveLength(2);
+    expect(e.channels.every((c) => c.endsWith("EPL ˢᴰ"))).toBe(true);
+  }
 });
 
 test("Premier League fixtures split into one section per fixture for separate filing", async () => {

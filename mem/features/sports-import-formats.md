@@ -116,3 +116,6 @@ ET→UK conversion (`sourceTimeToUk`/`sourceTimeToUkParts` in src/lib/import-tim
 
 - Premier League fixture layout (`## Home v Away`, `12:30pm UK / 7:30am ET`, blank-separated channel groups): each channel group becomes its own block with the same fixture name and KO time (usually 3 blocks). `EPL | Premier League` → `EPL Premier League`; `Hub Premier 1 & 5` → two channels.
 - EPL queue cards show a single one-press "EPL split — one listing per fixture" button (isEplFixturePost detection) that replaces the generic split buttons; it runs the per-fixture section split and each fixture imports into its channel-group blocks.
+
+## EPL Team Channels guide (permanent)
+`EPL | Premier League` and `EPL | Premier League Hub` are provider headings, never channels — dropped in every guide. The "Team Channels" guide (title match /team channels/i) keeps ONLY the two team `… EPL ˢᴰ` feeds per fixture (splitFixtureChannelBlocks sdOnly). Stored guide repaired 2026-10-10. Test: 'Team Channels guide keeps only the two team SD channels per fixture'.

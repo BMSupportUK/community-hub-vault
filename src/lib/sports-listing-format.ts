@@ -1653,7 +1653,9 @@ export function formatSportsListingBlock(input: ListingInput): string | null {
   // into its sections so each event carries its own section's heading —
   // never the first heading of the whole post. Do not duplicate a heading
   // when the event name already begins with it.
-  const sections = splitSportsListingSections(splitFixtureChannelBlocks(input.raw ?? ""));
+  const sections = splitSportsListingSections(
+    splitFixtureChannelBlocks(input.raw ?? "", { sdOnly: /team channels/i.test(input.guideTitle ?? "") }),
+  );
   const labelled = sections.flatMap((section) => {
     const events = processSection(section.text);
     if (!section.heading) return events;
@@ -1895,7 +1897,8 @@ export function isEplFixturePost(raw: string): boolean {
   return lines.some((_, i) => eplFixtureLineAt(lines, i));
 }
 
-export function splitFixtureChannelBlocks(raw: string): string {
+export function splitFixtureChannelBlocks(raw: string, opts?: { sdOnly?: boolean }): string {
+  const sdOnly = opts?.sdOnly ?? false;
   const lines = raw.replace(/\r/g, "").split("\n");
   const fixtureAt = (i: number) => eplFixtureLineAt(lines, i);
   if (!lines.some((_, i) => fixtureAt(i))) return raw;
@@ -1913,11 +1916,15 @@ export function splitFixtureChannelBlocks(raw: string): string {
       i++;
       if (!l) { if (cur.length) groups.push(cur); cur = []; continue; }
       const flat = l.replace(/\s*\|\s*/g, " ");
-      // "EPL | Premier League" / "EPL | Premier League Hub" are provider
-      // headings, not channels — never list them. Only the team's own
-      // "… EPL ˢᴰ" feed is a real channel (two per fixture).
-      if (/^EPL Premier League/i.test(flat)) continue;
-      if (!/EPL ˢᴰ$/i.test(flat)) continue;
+      if (sdOnly) {
+        // Team Channels guide: "EPL | Premier League" / "EPL | Premier
+        // League Hub" are provider headings, not channels. Only the team's
+        // own "… EPL ˢᴰ" feed is a real channel (two per fixture).
+        if (!/EPL ˢᴰ$/i.test(flat)) continue;
+      } else if (/^EPL Premier League/i.test(flat)) {
+        // Provider headings are never channels in any guide.
+        continue;
+      }
       const amp = flat.match(/^(.*?)(\d+)\s*&\s*(\d+)$/);
       if (amp) cur.push(`${amp[1]}${amp[2]}`, `${amp[1]}${amp[3]}`);
       else cur.push(flat);
