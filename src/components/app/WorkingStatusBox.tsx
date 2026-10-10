@@ -849,7 +849,6 @@ export function WorkingStatusBox({
                 />
               )}
               <ActionIcons compact={compact} />
-              {awayPill}
               <DndDialogButton
                 className={cn(
                   "inline-flex shrink-0 items-center justify-center rounded-full border border-border bg-muted/30 transition hover:bg-muted",
@@ -923,6 +922,25 @@ export function WorkingStatusBox({
                   return <Icon className="size-3.5" />;
                 })()}
                 {over ? `+${fmtMS(-brRemain)}` : fmtMS(brRemain)}
+              </span>
+            </div>
+          )}
+          {/* Away reads exactly like a break row: under the shift, above the next shift. */}
+          {dnd?.active && (
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-muted-foreground font-medium">
+                Away{dnd.reason ? ` — ${dnd.reason}` : ""}
+              </span>
+              <span
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-violet-500/15 px-2.5 py-1 font-bold tabular-nums text-violet-200 ring-1 ring-violet-500/40"
+                title={`Away — ${dnd.reason ?? "on"}`}
+              >
+                {(() => { const AwayIcon = awayIcon(dnd.reason); return <AwayIcon className="size-3.5" />; })()}
+                {awayElapsed
+                  ? awayElapsed
+                  : dnd.endsAt
+                    ? `${awayElapsedLabel(now, dnd.endsAt.getTime())} left`
+                    : "Away"}
               </span>
             </div>
           )}
