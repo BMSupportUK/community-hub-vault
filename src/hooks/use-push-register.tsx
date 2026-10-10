@@ -139,7 +139,9 @@ export function usePushRegister() {
         const received = await PushNotifications.addListener("pushNotificationReceived", async (notification) => {
           const kind = notification.data?.kind;
           const incidentEvent = notification.data?.event;
-          const spoken = kind === "ticket_reply"
+          const spoken = kind === "dm"
+            ? { channelId: "bm_support_alerts_v4", sound: undefined as string | undefined, fallback: "New message" }
+            : kind === "ticket_reply"
             ? { channelId: "bm_support_ticket_replies_v2", sound: "ticket_reply_notify.mp3", fallback: "Support ticket reply" }
             : kind === "mention"
               ? { channelId: "bm_support_mentions_v1", sound: "mention_notify.mp3", fallback: "New mention" }
