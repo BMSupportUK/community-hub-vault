@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { comparePackages } from "@/lib/package-order";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const money = (c: number) => new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(c / 100);
@@ -139,7 +140,7 @@ export function ProfitCostsPanel() {
   const packageCards = [
     ...(products ?? []).map((p) => ({ key: p.id, name: p.name, price: p.price_cents as number | null })),
     ...[...pkgYear.keys()].filter((k) => k.startsWith("name:")).map((k) => ({ key: k, name: k.slice(5), price: null })),
-  ].sort((a, b) => (pkgYear.get(b.key)?.revenue ?? 0) - (pkgYear.get(a.key)?.revenue ?? 0));
+  ].sort((a, b) => comparePackages(a, b) || (pkgYear.get(b.key)?.revenue ?? 0) - (pkgYear.get(a.key)?.revenue ?? 0));
   const empty = { revenue: 0, cost: 0, missing: false, qty: 0 };
   const selection = (active: boolean) => `h-auto min-h-9 rounded-md px-3 py-2 text-sm ${active ? "bg-primary text-primary-foreground shadow-soft" : "text-muted-foreground hover:bg-surface-2 hover:text-foreground"}`;
 
