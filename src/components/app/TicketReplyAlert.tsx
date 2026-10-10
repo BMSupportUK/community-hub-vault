@@ -25,6 +25,10 @@ interface ReplyPayload {
   link_path: string | null;
 }
 
+// Module-level so the memory survives the screen lock unmounting and
+// remounting the app — otherwise every alert replays its sound on unlock.
+const announcedReplyIds = new Set<string>();
+
 /**
  * Alerts the staff member assigned to a ticket when the customer replies:
  * plays the spoken "reply to support ticket" chime and offers a button that
