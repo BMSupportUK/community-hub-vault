@@ -596,6 +596,8 @@ function StaffShiftsPage() {
           })}
         </div>
       )}
+      </div>
+      </div>
     </div>
   );
 }
