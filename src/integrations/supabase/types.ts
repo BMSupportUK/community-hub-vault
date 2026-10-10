@@ -2529,6 +2529,7 @@ export type Database = {
           shots_faced: number
           shots_on_goal_against: number
           shots_on_target: number
+          started: boolean | null
           touches: number
           unclaimed_crosses: number
           updated_at: string
@@ -2567,6 +2568,7 @@ export type Database = {
           shots_faced?: number
           shots_on_goal_against?: number
           shots_on_target?: number
+          started?: boolean | null
           touches?: number
           unclaimed_crosses?: number
           updated_at?: string
@@ -2605,6 +2607,7 @@ export type Database = {
           shots_faced?: number
           shots_on_goal_against?: number
           shots_on_target?: number
+          started?: boolean | null
           touches?: number
           unclaimed_crosses?: number
           updated_at?: string
