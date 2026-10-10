@@ -367,18 +367,26 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
             </div>
           )}
 
-          <div className="flex flex-col items-center gap-3">
-             <div className="max-w-full rounded-xl bg-white p-2">
-              {qrDataUrl ? (
-                 <img src={qrDataUrl} alt="Secure install link QR code" className="block size-40 sm:size-[192px]" />
-              ) : (
-                 <div className="flex size-40 items-center justify-center sm:size-[192px]">
-                  <Loader2 className="size-5 animate-spin text-violet-600" />
-                </div>
-              )}
+          {isMobile ? (
+            <Button size="lg" asChild className="w-full bg-gradient-primary text-primary-foreground shadow-glow hover:opacity-90 h-auto min-h-12 whitespace-normal py-3 text-base">
+              <a href={`/api/public/a/${transfer?.token}`}>
+                <Download className="size-5 mr-2 shrink-0" /> <span>Download to this device</span>
+              </a>
+            </Button>
+          ) : (
+            <div className="flex flex-col items-center gap-3">
+               <div className="max-w-full rounded-xl bg-white p-2">
+                {qrDataUrl ? (
+                   <img src={qrDataUrl} alt="Secure install link QR code" className="block size-40 sm:size-[192px]" />
+                ) : (
+                   <div className="flex size-40 items-center justify-center sm:size-[192px]">
+                    <Loader2 className="size-5 animate-spin text-violet-600" />
+                  </div>
+                )}
+              </div>
+              <p className="text-xs text-center text-muted-foreground">Scan with your phone camera</p>
             </div>
-            <p className="text-xs text-center text-muted-foreground">Scan with your phone camera</p>
-          </div>
+          )}
 
           <p className="text-xs text-violet-200 flex items-center justify-center gap-1.5">
             <Clock className="size-3.5" /> Expires in {remaining} · downloads: {transfer?.downloads ?? 0}
