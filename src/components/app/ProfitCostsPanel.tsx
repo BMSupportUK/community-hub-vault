@@ -189,8 +189,8 @@ export function ProfitCostsPanel() {
                     <span className="text-xs text-muted-foreground">{p.price != null ? `Sells for ${money(p.price)} · ` : ""}{y.qty} sold in {ay}</span>
                   </header>
                   <div className="grid gap-4 sm:grid-cols-2">
-                    {am != null && <ProfitSummaryChart title={`${MONTHS[am]} ${ay} · Month total`} revenue={mo.revenue} cost={mo.cost} missing={mo.missing} />}
-                    <ProfitSummaryChart title={`${ay} · Year total`} revenue={y.revenue} cost={y.cost} missing={y.missing} />
+                    {am != null && <ProfitSummaryChart title={`${MONTHS[am]} ${ay} · Month total`} revenue={mo.revenue} cost={mo.cost} missing={mo.missing} sales={mo.qty} />}
+                    <ProfitSummaryChart title={`${ay} · Year total`} revenue={y.revenue} cost={y.cost} missing={y.missing} sales={y.qty} />
                   </div>
                 </article>
               );

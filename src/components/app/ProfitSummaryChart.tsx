@@ -1,16 +1,17 @@
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
-import { ChartPie, TrendingUp, Wallet } from "lucide-react";
+import { ChartPie, Package, TrendingUp, Wallet } from "lucide-react";
 
 type Props = {
   title: string;
   revenue: number;
   cost: number;
   missing: boolean;
+  sales?: number;
 };
 
 const money = (value: number) => new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(value / 100);
 
-export function ProfitSummaryChart({ title, revenue, cost, missing }: Props) {
+export function ProfitSummaryChart({ title, revenue, cost, missing, sales }: Props) {
   const profit = revenue - cost;
   const margin = revenue ? (profit / revenue) * 100 : 0;
   const data = [
@@ -34,6 +35,7 @@ export function ProfitSummaryChart({ title, revenue, cost, missing }: Props) {
         </div>
       </div>
       <dl className="space-y-3 text-sm">
+        {sales != null && <div className="flex items-center justify-between gap-2"><dt className="flex items-center gap-2 text-muted-foreground"><Package className="size-3.5" />Total sales</dt><dd className="font-semibold tabular-nums">{sales}</dd></div>}
         <div className="flex items-center justify-between gap-2"><dt className="flex items-center gap-2 text-muted-foreground"><Wallet className="size-3.5" />Revenue</dt><dd className="font-semibold tabular-nums">{money(revenue)}</dd></div>
         <div className="flex items-center justify-between gap-2"><dt className="flex items-center gap-2 text-muted-foreground"><span className="size-2 rounded-full bg-warning" />Costs</dt><dd className="font-semibold tabular-nums">{money(cost)}</dd></div>
         <div className="flex items-center justify-between gap-2 border-t border-border pt-3"><dt className="flex items-center gap-2"><TrendingUp className={`size-3.5 ${profit < 0 ? "text-destructive" : "text-success"}`} />{profit < 0 ? "Loss" : "Profit"}</dt><dd className={`font-semibold tabular-nums ${profit < 0 ? "text-destructive" : "text-success"}`}>{money(Math.abs(profit))}</dd></div>
