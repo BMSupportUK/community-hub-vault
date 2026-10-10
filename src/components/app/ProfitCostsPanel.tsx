@@ -148,7 +148,7 @@ export function ProfitCostsPanel() {
             </div>
           </section>
         ) : list.length === 0 ? <div className="flex flex-col items-center gap-3 bg-card/85 py-16 text-muted-foreground"><Wallet className="size-8 text-accent" /><p>{tab === "profit" ? "No paid orders yet." : `No ${METHOD_LABELS[tab] ?? tab} orders yet.`}</p></div> : (
-          <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_280px] xl:grid-cols-[minmax(0,1fr)_300px]">
+          <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_640px]">
             <div className="min-w-0 space-y-6">
               <div className="flex flex-wrap items-center gap-3 border-b border-border/60 pb-4">
                 <span className="flex items-center gap-2 text-sm font-medium"><CalendarDays className="size-4 text-accent" />Financial year</span>
