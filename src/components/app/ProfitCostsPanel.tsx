@@ -173,9 +173,9 @@ export function ProfitCostsPanel() {
                 </div>}
               </section>
             </div>
-            <aside aria-label="Profit statistics" className="grid min-w-0 gap-4 sm:grid-cols-2 lg:sticky lg:top-6 lg:grid-cols-1">
-              <ProfitSummaryChart title={`${ay} · Year total`} revenue={yT.revenue} cost={yT.cost} missing={yearMissing} />
+            <aside aria-label="Profit statistics" className="grid min-w-0 gap-4 sm:grid-cols-2 lg:sticky lg:top-6 lg:grid-cols-1 xl:grid-cols-2">
               {am != null && <ProfitSummaryChart title={`${MONTHS[am]} ${ay} · Month total`} revenue={mT.revenue} cost={mT.cost} missing={monthMissing} />}
+              <ProfitSummaryChart title={`${ay} · Year total`} revenue={yT.revenue} cost={yT.cost} missing={yearMissing} />
             </aside>
           </div>
         )}
