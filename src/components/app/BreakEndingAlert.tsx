@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { AlertTriangle, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -36,14 +36,17 @@ const AUTO_END_AFTER_OVER = 10; // seconds past the limit before auto-ending
 // status is restored in real time instead of showing an over-run.
 const autoEndGrace = (kind: BreakKind) => (kind === "travel" ? 0 : AUTO_END_AFTER_OVER);
 
+// Module-level so the memory survives the screen lock unmounting and
+// remounting the app — otherwise break warnings replay their sound on unlock.
+const shownBreakStages: Record<string, Set<Stage>> = {};
+const autoEndedBreaks = new Set<string>();
+
 export function BreakEndingAlert() {
   const { user, isStaff } = useAuth();
   const navigate = useNavigate();
   const [active, setActive] = useState<BreakRow | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [stage, setStage] = useState<Stage>(null);
-  const shownRef = useRef<Record<string, Set<Stage>>>({});
-  const autoEndedRef = useRef<Set<string>>(new Set());
 
   // tick every second while a break is active
   useEffect(() => {
@@ -104,7 +107,7 @@ export function BreakEndingAlert() {
     if (active.kind === "travel") { setStage(null); return; }
     const elapsed = (now - new Date(active.started_at).getTime()) / 1000;
     const remaining = BREAK_LIMITS[active.kind] - elapsed;
-    const seen = (shownRef.current[active.id] ??= new Set());
+    const seen = (shownBreakStages[active.id] ??= new Set());
 
     if (remaining <= 0 && !seen.has("over")) {
       seen.add("over");
@@ -130,8 +133,8 @@ export function BreakEndingAlert() {
     const startMs = new Date(active.started_at).getTime();
     const endAt = startMs + (BREAK_LIMITS[active.kind] + autoEndGrace(active.kind)) * 1000;
     if (now < endAt) return;
-    if (autoEndedRef.current.has(active.id)) return;
-    autoEndedRef.current.add(active.id);
+    if (autoEndedBreaks.has(active.id)) return;
+    autoEndedBreaks.add(active.id);
     const id = active.id;
     const label = breakLabel(active.kind);
     (async () => {
@@ -141,7 +144,7 @@ export function BreakEndingAlert() {
         .eq("id", id)
         .is("ended_at", null);
       if (error) {
-        autoEndedRef.current.delete(id);
+        autoEndedBreaks.delete(id);
         return;
       }
       setStage(null);

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { Capacitor } from "@capacitor/core";
 import { MessageSquareReply } from "lucide-react";
@@ -25,6 +25,10 @@ interface ReplyPayload {
   link_path: string | null;
 }
 
+// Module-level so the memory survives the screen lock unmounting and
+// remounting the app — otherwise every alert replays its sound on unlock.
+const announcedReplyIds = new Set<string>();
+
 /**
  * Alerts the staff member assigned to a ticket when the customer replies:
  * plays the spoken "reply to support ticket" chime and offers a button that
@@ -43,7 +47,6 @@ export function TicketReplyAlert() {
       return false;
     }
   });
-  const seenRef = useRef<Set<string>>(new Set());
   const current = queue[0] ?? null;
 
   useEffect(() => {
@@ -59,8 +62,8 @@ export function TicketReplyAlert() {
     if (!user || !isStaffRole) return;
 
     const announce = (n: ReplyPayload) => {
-      if (seenRef.current.has(n.id)) return;
-      seenRef.current.add(n.id);
+      if (announcedReplyIds.has(n.id)) return;
+      announcedReplyIds.add(n.id);
       // The native shell handles foreground replies with a local notification
       // bound to the custom MP3 channel. Browser/PWA sessions use web audio.
       if (!Capacitor.isNativePlatform()) {

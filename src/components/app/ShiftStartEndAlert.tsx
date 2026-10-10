@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Play, StopCircle, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -44,6 +44,14 @@ interface OpenShift {
 
 type Stage = "start" | "end";
 
+// Module-level so the memory survives the screen lock unmounting and
+// remounting the app — otherwise shift warnings replay their sound on unlock.
+const autoClockedSlots = new Set<string>();
+const autoEndedShifts = new Set<string>();
+const playedStageAlerts = new Set<string>();
+const stillWorkingShifts = new Set<string>();
+const askedAtWrittenShifts = new Set<string>();
+
 function fmtCountdown(ms: number) {
   const s = Math.max(0, Math.round(ms / 1000));
   const m = Math.floor(s / 60);
@@ -59,8 +67,6 @@ export function ShiftStartEndAlert() {
   const [now, setNow] = useState(() => Date.now());
   const [pageVisible, setPageVisible] = useState(false);
   const [active, setActive] = useState<{ slot: Slot; stage: Stage } | null>(null);
-  const autoClockedRef = useRef<Set<string>>(new Set());
-  const autoEndedRef = useRef<Set<string>>(new Set());
   const [autoEndAt, setAutoEndAt] = useState<number | null>(null);
   const localDate = useMemo(() => dateInTimeZone(now), [dateInTimeZone, now]);
 
@@ -136,11 +142,11 @@ export function ShiftStartEndAlert() {
     if (!user || !isStaff) return;
     if (openShift) return;
     for (const slot of slots) {
-      if (autoClockedRef.current.has(slot.id)) continue;
+      if (autoClockedSlots.has(slot.id)) continue;
       const { startsAt, endsAt } = shiftWindowToUtcMs(slot.shift_date, slot.start_time, slot.end_time);
       if (isNaN(startsAt) || isNaN(endsAt)) continue;
       if (now >= startsAt + AUTO_CLOCK_IN_AFTER && now < endsAt) {
-        autoClockedRef.current.add(slot.id);
+        autoClockedSlots.add(slot.id);
         (async () => {
           const { data: existing } = await supabase
             .from("shifts")
@@ -195,12 +201,11 @@ export function ShiftStartEndAlert() {
   }, [candidate, active]);
 
   // Play the matching voice clip when a warning first appears for a given slot.
-  const playedRef = useRef<Set<string>>(new Set());
   useEffect(() => {
     if (!active) return;
     const key = `${active.slot.id}:${active.stage}`;
-    if (playedRef.current.has(key)) return;
-    playedRef.current.add(key);
+    if (playedStageAlerts.has(key)) return;
+    playedStageAlerts.add(key);
     // The "ending soon" warning uses a plain chime — the "shift has ended"
     // voice clip only makes sense once the shift is actually over.
     const src = active.stage === "start" ? shiftStartAudio : mentionAudio;
@@ -280,9 +285,7 @@ export function ShiftStartEndAlert() {
     return isNaN(endsAt) ? null : endsAt;
   }, [active, shiftWindowToUtcMs]);
 
-  const stillWorkingRef = useRef<Set<string>>(new Set());
   const [askOpen, setAskOpen] = useState(false);
-  const askedAtWrittenRef = useRef<Set<string>>(new Set());
 
   // The "Yes, still working" answer and the moment the question was first asked
   // live on the shift row in the database, so a refresh, a restart or another
@@ -294,8 +297,8 @@ export function ShiftStartEndAlert() {
       setAutoEndAt(null);
       return;
     }
-    if (stillWorkingRef.current.has(openShift.id) || openShift.still_working_ack_at) {
-      stillWorkingRef.current.add(openShift.id);
+    if (stillWorkingShifts.has(openShift.id) || openShift.still_working_ack_at) {
+      stillWorkingShifts.add(openShift.id);
       setAskOpen(false);
       setAutoEndAt(null);
       return;
@@ -304,8 +307,8 @@ export function ShiftStartEndAlert() {
     let askedAt = Number.isFinite(storedAskedAt) && storedAskedAt > 0 ? storedAskedAt : 0;
     if (!askedAt) {
       askedAt = Date.now();
-      if (!askedAtWrittenRef.current.has(openShift.id)) {
-        askedAtWrittenRef.current.add(openShift.id);
+      if (!askedAtWrittenShifts.has(openShift.id)) {
+        askedAtWrittenShifts.add(openShift.id);
         const shiftId = openShift.id;
         const askedAtIso = new Date(askedAt).toISOString();
         void supabase
@@ -329,15 +332,15 @@ export function ShiftStartEndAlert() {
 
   const clockOut = async (at: number) => {
     if (!openShift) return;
-    if (autoEndedRef.current.has(openShift.id)) return;
-    autoEndedRef.current.add(openShift.id);
+    if (autoEndedShifts.has(openShift.id)) return;
+    autoEndedShifts.add(openShift.id);
     const { data: stillOpen } = await supabase
       .from("shifts")
       .select("id")
       .eq("id", openShift.id)
       .is("clock_out", null)
       .maybeSingle();
-    askedAtWrittenRef.current.delete(openShift.id);
+    askedAtWrittenShifts.delete(openShift.id);
     setAskOpen(false);
     setAutoEndAt(null);
     setActive(null);
@@ -396,7 +399,7 @@ export function ShiftStartEndAlert() {
         <AlertDialogFooter className="sm:justify-center gap-2">
           <AlertDialogCancel
             onClick={() => {
-              stillWorkingRef.current.add(openShift.id);
+              stillWorkingShifts.add(openShift.id);
               {
                 const shiftId = openShift.id;
                 const ackIso = new Date().toISOString();

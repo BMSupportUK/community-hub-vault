@@ -25,10 +25,13 @@ const DANE_USER_ID = "73c113ce-ce1b-43f0-af24-c2a36cf0d8e7";
 /** Boro Fan Zone mentions get their own clip, kept separate from BM Support. */
 const isFanZoneMention = (row: MentionNotification) => !!row.link_path && row.link_path.startsWith("/forum");
 
+// Module-level so the memory survives the screen lock unmounting and
+// remounting the app — otherwise every alert replays its sound on unlock.
+const announcedMentionIds = new Set<string>();
+
 /** App-wide mention audio, independent of where the notification bell renders. */
 export function MentionSoundAlert() {
   const { user } = useAuth();
-  const seen = useRef(new Set<string>());
   const mountedAt = useRef(Date.now());
 
   useEffect(() => {
@@ -38,8 +41,8 @@ export function MentionSoundAlert() {
 
 
     const announce = (row: MentionNotification) => {
-      if (seen.current.has(row.id)) return;
-      seen.current.add(row.id);
+      if (announcedMentionIds.has(row.id)) return;
+      announcedMentionIds.add(row.id);
       const kind = row.kind ?? "mention";
       if (kind === "mention" && isFanZoneMention(row)) {
         const fanZone = getSound("fan-zone-mention");
