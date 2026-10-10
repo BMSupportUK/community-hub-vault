@@ -14,6 +14,7 @@ interface ShiftHistoryRow {
   clock_out: string | null;
   end_prompt_asked_at: string | null;
   still_working_ack_at: string | null;
+  early_finish_at?: string | null;
 }
 
 interface BreakRow {
@@ -185,7 +186,7 @@ export default function ShiftHistoryPanel({ userId, name }: { userId: string; na
     async (offset: number) => {
       const { data, error, count } = await supabase
         .from("shifts")
-        .select("id, clock_in, clock_out, end_prompt_asked_at, still_working_ack_at", { count: "exact" })
+        .select("id, clock_in, clock_out, end_prompt_asked_at, still_working_ack_at, early_finish_at", { count: "exact" })
         .eq("user_id", userId)
         .gte("clock_in", new Date(weekFrom).toISOString())
         .lt("clock_in", new Date(weekTo).toISOString())
@@ -410,6 +411,8 @@ export default function ShiftHistoryPanel({ userId, name }: { userId: string; na
                 </div>
                 {open ? (
                   <Pill icon={ClockIcon} label="On shift" tone="ok" />
+                ) : s.early_finish_at ? (
+                  <Pill icon={ClockIcon} label="Early finish" tone="warn" />
                 ) : autoOut ? (
                   <Pill icon={ClockIcon} label="Auto clocked out" tone="warn" />
                 ) : (
