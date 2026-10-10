@@ -2,6 +2,7 @@
 # Roadmap
 
 ## Current
+- [ ] Scottish Premier League Streams: add “Under Team Channels” on import and repair the saved fixtures
 - [x] Add St Patrick’s Day pictures and effects to Talk and inbox on 17 March, UK time
 - [x] Add St George’s Day and New Year’s Day pictures and effects to Talk and inbox on their UK event dates
 - [x] Add Bonfire Night and Easter Sunday pictures and effects to Talk and inbox on their UK event dates
