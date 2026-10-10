@@ -6,7 +6,6 @@ import {
   LogOut,
   Coffee,
   UtensilsCrossed,
-  PlayCircle,
   Loader2,
   Calendar,
   Clock,
@@ -509,18 +508,6 @@ export function WorkingStatusBox({
     notifyBreak({ data: { kind: "start", breakKind: kind } }).catch(() => {});
   };
 
-  const endBreak = async () => {
-    if (!brk) return;
-    setBusy(true);
-    const { error } = await supabase
-      .from("breaks")
-      .update({ ended_at: new Date().toISOString() })
-      .eq("id", brk.id);
-    setBusy(false);
-    if (error) return toast.error(error.message);
-    toast.success("Break ended");
-    notifyBreak({ data: { kind: "end", breakKind: brk.kind } }).catch(() => {});
-  };
 
   if (!user) return null;
 
@@ -746,16 +733,10 @@ export function WorkingStatusBox({
       );
     }
     if (brk) {
-      return (
-        <span
-          title="On break — it ends automatically when the time is up"
-          aria-label="On break, ends automatically"
-          className={cn("inline-flex items-center justify-center rounded-full border border-border bg-muted/30 text-muted-foreground opacity-60 cursor-not-allowed", iconButtonClass)}
-        >
-          <PlayCircle className={iconClass} />
-        </span>
-      );
+      // Breaks end automatically when the time is up — no end-break control at all.
+      return null;
     }
+
     return (
       <div className={cn("flex items-center", compact ? "gap-1" : "gap-3")}>
         <button
