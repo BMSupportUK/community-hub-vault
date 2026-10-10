@@ -431,11 +431,11 @@ function StaffShiftsPage() {
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_15rem]">
       <aside className="order-first xl:order-last">
         <div className="grid gap-3 sm:grid-cols-2 xl:sticky xl:top-4 xl:grid-cols-1">
-          <StatCard label="Shifts" value={totals.shifts.toLocaleString("en-GB")} />
-          <StatCard label="Staff" value={totals.staff.toLocaleString("en-GB")} />
-          <StatCard label="Hours worked" value={fmtMs(totals.worked)} />
-          <StatCard label="Still on shift" value={totals.open.toLocaleString("en-GB")} />
-          <StatCard label="Auto clocked out" value={totals.auto.toLocaleString("en-GB")} />
+          <StatCard label="Shifts" value={totals.shifts.toLocaleString("en-GB")} icon={CalendarDays} tone="primary" />
+          <StatCard label="Staff" value={totals.staff.toLocaleString("en-GB")} icon={Users} tone="accent" />
+          <StatCard label="Hours worked" value={fmtMs(totals.worked)} icon={Hourglass} tone="success" />
+          <StatCard label="Still on shift" value={totals.open.toLocaleString("en-GB")} icon={UserCheck} tone="success" />
+          <StatCard label="Auto clocked out" value={totals.auto.toLocaleString("en-GB")} icon={TimerReset} tone="warning" />
         </div>
       </aside>
 
