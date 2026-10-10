@@ -480,7 +480,7 @@ export default function ShiftHistoryPanel({ userId, name }: { userId: string; na
                 <div className="mt-2 space-y-1.5 border-t border-purple-500/20 pt-2 text-sm">
                   {awayForShift(awayRows, s).map((a) => (
                     <div key={a.id} className="flex items-center gap-2 text-purple-100/90">
-                      <Moon className="size-4 text-violet-300" />
+                      {(() => { const Icon = awayIcon(a.reason); return <Icon className="size-4 text-violet-300" />; })()}
                       <span className="text-purple-200/70">Away · {a.reason}</span>
                       <span className="ml-auto font-medium tabular-nums">
                         {fmtTime(a.starts_at)} · {fmtDuration(a.starts_at, a.ends_at)}

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Moon, Pencil, Play, Square, Save } from "lucide-react";
+import { Pencil, Play, Square, Save } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { refreshDndStatus, useDndStatus } from "@/hooks/use-dnd";
@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { AWAY_REASONS, awayWindow, isScheduledAway, type AwayReason } from "@/lib/staff-away";
+import { AWAY_REASONS, awayIcon, awayWindow, isScheduledAway, type AwayReason } from "@/lib/staff-away";
 import { toast } from "sonner";
 
 function timeInZone(d: Date, timeZone: string) {
@@ -75,11 +75,11 @@ export function DndDialogButton({ className, icon = "moon" }: { className?: stri
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="ghost" size="icon" aria-label={icon === "pencil" ? "Edit Away" : "Away"} title={active ? `Away — ${info?.reason ?? "on"}` : "Away"} className={cn(active && "text-primary", className)}>
-          {icon === "pencil" ? <Pencil className="size-4" /> : <Moon className="size-4" />}
+          {(() => { const Icon = icon === "pencil" ? Pencil : awayIcon(active ? info?.reason : null); return <Icon className="size-4" />; })()}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-md max-h-[90dvh] overflow-y-auto">
-        <DialogHeader><DialogTitle className="flex items-center gap-2"><Moon className="size-5 text-primary" /> Away</DialogTitle></DialogHeader>
+        <DialogHeader><DialogTitle className="flex items-center gap-2">{(() => { const Icon = awayIcon(active ? info?.reason : null); return <Icon className="size-5 text-primary" />; })()} Away</DialogTitle></DialogHeader>
         {active && <p className="text-sm text-primary">Away — {info?.reason}</p>}
         <div className="space-y-4">
           <div className="space-y-1.5">

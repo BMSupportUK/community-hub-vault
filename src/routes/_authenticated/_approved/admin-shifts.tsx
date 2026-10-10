@@ -640,7 +640,7 @@ function StaffShiftsPage() {
                         <div className="mt-2 space-y-1.5 border-t border-border/60 pt-2 text-sm">
                           {awayForShift(awayByUser[s.user_id] ?? [], s).map((a) => (
                             <div key={a.id} className="flex items-center gap-2">
-                              <Moon className="size-4 text-violet-400" />
+                              {(() => { const Icon = awayIcon(a.reason); return <Icon className="size-4 text-violet-400" />; })()}
                               <span className="text-muted-foreground">Away · {a.reason}</span>
                               <span className="ml-auto font-medium tabular-nums">
                                 {fmtTime(a.starts_at)} · {fmtMs(durationMs(a.starts_at, a.ends_at))}

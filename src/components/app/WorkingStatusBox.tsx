@@ -567,7 +567,7 @@ export function WorkingStatusBox({
         <div className="rounded-lg bg-surface-2/60 border border-violet-500/40 overflow-hidden">
           <div className="flex items-center justify-between px-3 py-2 border-b border-violet-500/30 bg-gradient-to-r from-violet-600/20 to-fuchsia-600/10">
             <div className="flex items-center gap-2">
-              <Moon className="size-3.5 text-violet-300" />
+              {(() => { const AwayIcon = awayIcon(dnd.reason); return <AwayIcon className="size-3.5 text-violet-300" />; })()}
               <h2 className="font-display text-[11px] font-bold tracking-wider uppercase text-violet-200">
                 Away
               </h2>
