@@ -87,6 +87,7 @@ export type FantasyPickDTO = {
   lineupSwapNote?: string | null;
   /** Minutes the player actually played in this gameweek's fixture (null = no stats yet). */
   minutes?: number | null;
+  matchdayMembership?: "named" | "absent" | "unknown";
   /** 0-10 match rating for this gameweek's fixture (null = no stats yet / didn't play). */
   rating?: number | null;
 };
@@ -397,6 +398,11 @@ export async function loadState(admin: any, owner: Owner | null): Promise<Fantas
         minMap.set(`${r.fixture_id}:${r.player_id}`, Number(r.minutes) || 0);
         ratingMap.set(`${r.fixture_id}:${r.player_id}`, computeStarRating(r));
       }
+      const { readFantasyMatchdaySquad } = await import("@/lib/fantasy-matchday.server");
+      const { matchdayMembership } = await import("@/lib/fantasy-matchday");
+      const officialByGw = new Map(await Promise.all(gameweeks
+        .filter((g) => squads.some((s) => s.gameweekId === g.id) && Date.parse(g.lockAt) <= Date.now())
+        .map(async (g) => [g.id, await readFantasyMatchdaySquad(g, players)] as const)));
       squads = squads.map((s) => {
         const fx = fixtureByGw.get(s.gameweekId);
         return {
@@ -404,6 +410,7 @@ export async function loadState(admin: any, owner: Owner | null): Promise<Fantas
           picks: s.picks.map((p) => ({
             ...p,
             minutes: fx ? (minMap.get(`${fx}:${p.playerId}`) ?? null) : null,
+            matchdayMembership: matchdayMembership(p.playerId, officialByGw.get(s.gameweekId) ?? null, fx ? minMap.get(`${fx}:${p.playerId}`) : null),
             rating: fx ? (ratingMap.get(`${fx}:${p.playerId}`) ?? null) : null,
           })),
         };
