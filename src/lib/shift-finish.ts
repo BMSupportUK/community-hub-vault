@@ -13,3 +13,31 @@ export function shiftFinishAction(now: number, rotaEnd: string | null, pending: 
   if (rotaEnd && ukClock(now).time < rotaEnd) return pending ? "wait" : "request";
   return "clock-out";
 }
+
+/**
+ * Early finish reasons are required: the request goes to admin and management,
+ * who need to see why the staff member wants off before they approve it.
+ * Returns null when the text is empty, whitespace-only or unusable.
+ */
+export function normalizeEarlyFinishReason(value: unknown): string | null {
+  const reason = String(value ?? "").replace(/\s+/g, " ").trim().slice(0, 300);
+  return reason.length > 0 ? reason : null;
+}
+
+/**
+ * Ask the staff member for a reason, repeating until one is actually given.
+ * Returns null when they cancel, so the caller can back out without sending.
+ */
+export function askEarlyFinishReason(): string | null {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const answer = window.prompt(
+      attempt === 0
+        ? "Request an early finish — admin or management must approve it.\n\nReason (required):"
+        : "A reason is required so admin or management can see why.\n\nReason (required):",
+    );
+    if (answer === null) return null;
+    const reason = normalizeEarlyFinishReason(answer);
+    if (reason) return reason;
+  }
+  return null;
+}
