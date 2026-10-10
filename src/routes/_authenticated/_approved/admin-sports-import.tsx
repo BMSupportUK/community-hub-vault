@@ -12,7 +12,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { ArrowLeft, Loader2, Sparkles, Send, Trash2, Inbox, Clock, Check, Scissors, Settings2, X } from "lucide-react";
 import { firstClockIn, firstDateIn, parseClockTime, toSingleZoneTime, type TimeZoneChoice } from "@/lib/import-time";
-import { formatSportsListingBlock, formatSportsListingEvents, normalizeSportsListingText, parseSportsListingBlock, splitListingSections } from "@/lib/sports-listing-format";
+import { formatSportsListingBlock, formatSportsListingEvents, normalizeSportsListingText, parseSportsListingBlock, splitFixtureChannelBlocks, splitListingSections } from "@/lib/sports-listing-format";
 import { suggestListingFixes, saveQueueListing, type ListingFixSuggestion } from "@/lib/listing-web-fix.functions";
 import { checkSportsImport, type ImportCheckResult } from "@/lib/sports-import-check";
 import {
