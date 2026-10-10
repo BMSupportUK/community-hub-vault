@@ -61,14 +61,6 @@ interface AwayRow {
   ends_at: string | null;
 }
 
-/** Hourly rota slot claimed by a moderator. */
-interface ClaimedSlotRow {
-  id: string;
-  user_id: string;
-  shift_date: string;
-  start_time: string;
-  end_time: string;
-}
 
 interface PersonRow {
   id: string;
@@ -124,11 +116,6 @@ function fmtDayHeading(key: string) {
   return label;
 }
 
-function slotMins(start: string, end: string) {
-  const [sh, sm] = start.split(":").map(Number);
-  const [eh, em] = end.split(":").map(Number);
-  return Math.max(0, (eh! * 60 + em!) - (sh! * 60 + sm!));
-}
 
 function fmtTime(iso: string) {
   return new Date(iso).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
@@ -187,7 +174,6 @@ function StaffShiftsPage() {
   const [awayByUser, setAwayByUser] = useState<Record<string, AwayRow[]>>({});
   const [people, setPeople] = useState<Record<string, PersonRow>>({});
   const [rolesByUser, setRolesByUser] = useState<Record<string, string[]>>({});
-  const [claimedSlots, setClaimedSlots] = useState<ClaimedSlotRow[]>([]);
   const [role, setRole] = useState<RoleKey>("admin");
   const [weekday, setWeekday] = useState<DayKey>(new Date().getDay());
 
@@ -203,25 +189,6 @@ function StaffShiftsPage() {
       .order("clock_in", { ascending: false });
     const rows = (data ?? []) as ShiftRow[];
     setShifts(rows);
-
-    // Hourly rota slots moderators claimed in the same window.
-    const fromDate = `${from.getFullYear()}-${String(from.getMonth() + 1).padStart(2, "0")}-${String(from.getDate()).padStart(2, "0")}`;
-    const { data: slotData } = await supabase
-      .from("shift_slots")
-      .select("id, assigned_to, shift_date, start_time, end_time")
-      .eq("slot_type", "hourly")
-      .not("assigned_to", "is", null)
-      .gte("shift_date", fromDate)
-      .order("shift_date", { ascending: false })
-      .order("start_time", { ascending: true });
-    const claimedRows: ClaimedSlotRow[] = (slotData ?? []).map((r: any) => ({
-      id: r.id as string,
-      user_id: r.assigned_to as string,
-      shift_date: r.shift_date as string,
-      start_time: String(r.start_time),
-      end_time: String(r.end_time),
-    }));
-    setClaimedSlots(claimedRows);
 
     const ids = [...new Set(rows.map((r) => r.id))];
     const bmap: Record<string, BreakRow[]> = {};
@@ -349,15 +316,6 @@ function StaffShiftsPage() {
       });
   }, [visible, primaryRole]);
 
-  // Claimed moderator hours for the selected weekday, grouped by day.
-  const claimedByDay = useMemo(() => {
-    const map = new Map<string, ClaimedSlotRow[]>();
-    for (const c of claimedSlots) {
-      if (new Date(c.shift_date + "T00:00:00").getDay() !== weekday) continue;
-      (map.get(c.shift_date) ?? map.set(c.shift_date, []).get(c.shift_date)!).push(c);
-    }
-    return [...map.entries()].sort((a, b) => (a[0] < b[0] ? 1 : -1));
-  }, [claimedSlots, weekday]);
 
   const totals = useMemo(() => {
     let worked = 0;
