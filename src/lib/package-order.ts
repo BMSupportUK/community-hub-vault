@@ -35,8 +35,10 @@ export function packageSortKey(name: string): PackageSortKey {
   return { roomTier, months };
 }
 
-export function comparePackages(a: { name: string }, b: { name: string }): number {
-  const ka = packageSortKey(a.name);
-  const kb = packageSortKey(b.name);
-  return ka.roomTier - kb.roomTier || kb.months - ka.months || a.name.localeCompare(b.name);
+export function comparePackages(a: string | { name: string }, b: string | { name: string }): number {
+  const na = typeof a === "string" ? a : a.name;
+  const nb = typeof b === "string" ? b : b.name;
+  const ka = packageSortKey(na);
+  const kb = packageSortKey(nb);
+  return ka.roomTier - kb.roomTier || kb.months - ka.months || na.localeCompare(nb);
 }
