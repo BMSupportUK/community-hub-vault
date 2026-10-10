@@ -742,6 +742,7 @@ export function WorkingStatusBox({
           Staff Shift Controls
         </span>
         <ActionIcons compact />
+        {awayPill}
         <DndDialogButton className="inline-flex size-8 shrink-0 items-center justify-center rounded-full border border-border bg-muted/30 transition hover:bg-muted" />
         {(canAnswerTickets || roles.includes("moderator")) && (
           <StaffTicketsButton staffId={user.id} staffName={displayName} placement="below" className="shrink-0" readOnly={!canAnswerTickets} />
