@@ -1749,16 +1749,38 @@ export function dedupeSportsListingEvents(events: SportsListingEvent[]): SportsL
     return c ? `${c.hour}:${c.minute}` : loose(v);
   };
   return events.filter((e) => {
-    const key = [
-      dateKey(e.date),
-      timeKey(e.time),
-      loose(e.title),
-      (e.channels ?? []).map(loose).sort().join("|"),
-    ].join("#");
+    const slot = [dateKey(e.date), timeKey(e.time), (e.channels ?? []).map(loose).sort().join("|")].join("#");
+    const key = `${slot}#${loose(e.title)}`;
     if (seen.has(key)) return false;
+    // Same fixture re-imported under different wording, e.g.
+    // "SOUTH AFRICA v AUSTRALIA: DAY 2" and "ICC TEST MATCH: SOUTH AFRICA v
+    // AUSTRALIA" in the same slot on the same channel(s).
+    const core = sportsFixtureCore(e.title);
+    const coreKey = core ? `${slot}#fixture:${core}` : null;
+    if (coreKey && seen.has(coreKey)) return false;
     seen.add(key);
+    if (coreKey) seen.add(coreKey);
     return true;
   });
+}
+
+/**
+ * The "Home v Away" part of an event name, normalised for comparison, with
+ * competition prefixes and day/stage suffixes removed. Null when the name
+ * has no head-to-head matchup.
+ */
+export function sportsFixtureCore(title: string | null | undefined): string | null {
+  const segments = (title ?? "").split(/\s*[:|–—]\s*|\s+-\s+/);
+  const vs = /^(.+?)\s+(?:v|vs\.?|versus|@)\s+(.+)$/i;
+  for (const seg of segments) {
+    const m = seg.trim().match(vs);
+    if (!m) continue;
+    const side = (s: string) => s.toLowerCase().replace(/^#\d+\s*/, "").replace(/[^\p{L}\p{N}]+/gu, "");
+    const a = side(m[1]);
+    const b = side(m[2]);
+    if (a && b) return `${a}v${b}`;
+  }
+  return null;
 }
 
 /**
