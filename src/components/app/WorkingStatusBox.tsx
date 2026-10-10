@@ -32,7 +32,6 @@ import { requestEarlyFinish } from "@/lib/early-finish.functions";
 import { formatRoleLabel } from "@/lib/role-label";
 import { browserTimezone } from "@/hooks/use-user-timezone";
 import { shiftWindowToUtcMs } from "@/hooks/use-timezone";
-import { shiftFinishAction } from "@/lib/shift-finish";
 
 type Shift = { id: string; clock_in: string };
 type Break = { id: string; kind: BreakKind; started_at: string };
