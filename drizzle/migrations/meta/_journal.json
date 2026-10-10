@@ -680,6 +680,13 @@
       "when": 1791662770322,
       "tag": "0096_fantasy_real_match_starter",
       "breakpoints": true
+    },
+    {
+      "idx": 97,
+      "version": "7",
+      "when": 1791663517133,
+      "tag": "0097_fantasy_exact_half_points",
+      "breakpoints": true
     }
   ]
 }
