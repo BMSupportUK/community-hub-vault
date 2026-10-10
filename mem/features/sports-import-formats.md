@@ -119,3 +119,6 @@ ET→UK conversion (`sourceTimeToUk`/`sourceTimeToUkParts` in src/lib/import-tim
 
 ## EPL Team Channels guide (permanent)
 `EPL | Premier League` and `EPL | Premier League Hub` are provider headings, never channels — dropped in every guide. The "Team Channels" guide (title match /team channels/i) keeps ONLY the two team `… EPL ˢᴰ` feeds per fixture (splitFixtureChannelBlocks sdOnly). Stored guide repaired 2026-10-10. Test: 'Team Channels guide keeps only the two team SD channels per fixture'.
+
+## Scotland Premier League Streams (permanent)
+Every fixture in this guide gets the exact channel label `Under Team Channels`; retain any supplied channels and do not duplicate the label on read-back or merge. The label belongs beneath Available channels, never in the event title. Do not apply this rule to the separate Scotland Premier League Channels guide.
