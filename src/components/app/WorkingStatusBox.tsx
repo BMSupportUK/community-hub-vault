@@ -6,7 +6,6 @@ import {
   LogOut,
   Coffee,
   UtensilsCrossed,
-  PlayCircle,
   Loader2,
   Calendar,
   Clock,
