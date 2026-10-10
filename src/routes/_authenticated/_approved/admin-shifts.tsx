@@ -8,6 +8,8 @@ import { cn } from "@/lib/utils";
 import { type BreakKind, breakIcon, breakLabel } from "@/lib/breaks";
 import { awayForShift, awayIcon } from "@/lib/staff-away";
 import { EarlyFinishRequestsPanel } from "@/components/app/EarlyFinishRequestsPanel";
+import { ShiftBreakdownCard } from "@/components/app/ShiftBreakdownCard";
+import { shiftBreakdown } from "@/lib/shift-breakdown";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-shifts")({
   component: StaffShiftsPage,
@@ -241,7 +243,7 @@ function StaffShiftsPage() {
         .from("away_log")
         .select("id, user_id, reason, starts_at, ends_at")
         .in("user_id", awayIds)
-        .gte("starts_at", from.toISOString())
+        .or(`ends_at.is.null,ends_at.gt.${from.toISOString()}`)
         .order("starts_at", { ascending: true });
       for (const a of (ad ?? []) as AwayRow[]) (amap[a.user_id] ??= []).push(a);
     }
@@ -277,6 +279,7 @@ function StaffShiftsPage() {
       .channel(`admin-shifts-live-${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "breaks" }, refresh)
       .on("postgres_changes", { event: "*", schema: "public", table: "shifts" }, refresh)
+      .on("postgres_changes", { event: "*", schema: "public", table: "away_log" }, refresh)
       .subscribe();
     const poll = setInterval(refresh, 20_000);
     const onWake = () => { if (document.visibilityState === "visible") refresh(); };
@@ -361,7 +364,7 @@ function StaffShiftsPage() {
     let open = 0;
     let auto = 0;
     for (const s of visible) {
-      worked += durationMs(s.clock_in, s.clock_out);
+      worked += shiftBreakdown(s, breaksByShift[s.id] ?? [], awayByUser[s.user_id] ?? []).workedMs;
       if (!s.clock_out) open += 1;
       if (isAutoOut(s)) auto += 1;
     }
@@ -372,7 +375,7 @@ function StaffShiftsPage() {
       open,
       auto,
     };
-  }, [visible]);
+  }, [visible, breaksByShift, awayByUser]);
 
   if (!canView) return <Navigate to="/admin" />;
 
@@ -541,7 +544,7 @@ function StaffShiftsPage() {
                 <h2 className="font-display font-bold">{fmtDayHeading(key)}</h2>
                 <span className="text-xs text-muted-foreground">
                   {dayRows.length} shift{dayRows.length === 1 ? "" : "s"} ·{" "}
-                  {fmtMs(dayRows.reduce((a, s) => a + durationMs(s.clock_in, s.clock_out), 0))} worked
+                  {fmtMs(dayRows.reduce((a, s) => a + shiftBreakdown(s, breaksByShift[s.id] ?? [], awayByUser[s.user_id] ?? []).workedMs, 0))} worked
                 </span>
               </div>
               {sections.map(([roleKey, rows]) => (
@@ -552,17 +555,17 @@ function StaffShiftsPage() {
                     </h3>
                     <span className="text-xs text-muted-foreground">
                       {rows.length} shift{rows.length === 1 ? "" : "s"} ·{" "}
-                      {fmtMs(rows.reduce((a, s) => a + durationMs(s.clock_in, s.clock_out), 0))} worked
+                      {fmtMs(rows.reduce((a, s) => a + shiftBreakdown(s, breaksByShift[s.id] ?? [], awayByUser[s.user_id] ?? []).workedMs, 0))} worked
                     </span>
                   </div>
-                  <div className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-3">
+                  <div className="grid gap-4 2xl:grid-cols-2">
                 {rows.map((s) => {
                   const open = !s.clock_out;
                   const auto = isAutoOut(s);
                   const p = people[s.user_id];
                   return (
+                    <div key={s.id} className="grid min-w-0 gap-3 xl:grid-cols-2">
                     <div
-                      key={s.id}
                       className={cn(
                         "rounded-2xl border p-4",
                         open ? "border-emerald-400/40 bg-emerald-500/5" : "border-border bg-surface-1",
@@ -584,7 +587,7 @@ function StaffShiftsPage() {
                           )}
                           <p className="text-xs text-muted-foreground">
                             {fmtMs(durationMs(s.clock_in, s.clock_out))}
-                            {open ? " so far" : " worked"}
+                            {open ? " on shift so far" : " on shift"}
                           </p>
                         </div>
                         {open ? (
@@ -666,6 +669,8 @@ function StaffShiftsPage() {
                       <p className="mt-2 inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
                         <ClockIcon className="size-3" /> Shift {s.id.slice(0, 8)}
                       </p>
+                    </div>
+                    <ShiftBreakdownCard shift={s} breaks={breaksByShift[s.id] ?? []} away={awayByUser[s.user_id] ?? []} />
                     </div>
                   );
                  })}
