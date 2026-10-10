@@ -24,6 +24,11 @@ test("overlaps are counted once and periods are clipped to the shift", () => {
   expect(result.breakMs).toBe(0.5 * hour);
   expect(result.awayMs).toBe(2.5 * hour);
   expect(result.workedMs).toBe(5 * hour);
+  expect(result.awayReasons).toEqual([
+    { reason: "Meeting", ms: hour, percent: 12.5 },
+    { reason: "Toilet Break", ms: hour, percent: 12.5 },
+    { reason: "Smoking Break", ms: 0.5 * hour, percent: 6.25 },
+  ]);
 });
 
 test("open breaks stop at the automatic 15-minute short and 30-minute lunch limits", () => {
@@ -36,7 +41,7 @@ test("open breaks stop at the automatic 15-minute short and 30-minute lunch limi
 
 test("active shifts and Away use the same live clock", () => {
   const active = { ...shift, clock_out: null };
-  const away = [{ starts_at: "2026-10-10T10:00:00Z", ends_at: null }];
+  const away = [{ reason: "Meeting", starts_at: "2026-10-10T10:00:00Z", ends_at: null }];
   const first = shiftBreakdown(active, [], away, Date.parse("2026-10-10T11:00:00Z"));
   const next = shiftBreakdown(active, [], away, Date.parse("2026-10-10T12:00:00Z"));
   expect(first.awayMs).toBe(hour);
