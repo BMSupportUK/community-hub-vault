@@ -113,3 +113,5 @@ ET→UK conversion (`sourceTimeToUk`/`sourceTimeToUkParts` in src/lib/import-tim
 
 ## NBA time-first "@" layout (permanent)
 `# NBA`, then `12:00am UK THU / 7:00pm ET WED`, `**TIMBERWOLVES @ PACERS**`, then channel lines (`NBA TV CA`, `NBA TV US`). `@` is a matchup separator: the line below the time is the title, the line above the next time stays the previous game's channel. Output `00:00 BST` Thursday, `NBA: TIMBERWOLVES v PACERS`, channel `NBA TV CA`. Test: 'NBA time-first slots with @ matchups'.
+
+- Premier League fixture layout (`## Home v Away`, `12:30pm UK / 7:30am ET`, blank-separated channel groups): each channel group becomes its own block with the same fixture name and KO time (usually 3 blocks). `EPL | Premier League` → `EPL Premier League`; `Hub Premier 1 & 5` → two channels.
