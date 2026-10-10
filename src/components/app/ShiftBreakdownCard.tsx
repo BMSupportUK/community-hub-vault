@@ -29,28 +29,28 @@ export function ShiftBreakdownCard({ shift, breaks, away }: Props) {
         <h4 className="text-sm font-semibold">Shift breakdown</h4>
         <span className="text-xs text-muted-foreground">{shift.clock_out ? "Full shift" : "Shift so far"} · {shiftHours(result.totalMs)}</span>
       </div>
-      <div className="mt-4 flex flex-wrap items-center justify-center gap-4">
-        <div className="size-32 shrink-0" role="img" aria-label={segments.map((s) => `${s.name} ${s.percent.toFixed(1)}%`).join(", ")}>
+      <div className="mt-4 flex flex-col items-center gap-4 sm:flex-row sm:flex-wrap sm:justify-center">
+        <div className="size-40 shrink-0 sm:size-32" role="img" aria-label={segments.map((s) => `${s.name} ${s.percent.toFixed(1)}%`).join(", ")}>
           {now !== null && result.totalMs > 0 ? (
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart><Pie data={segments} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={60} stroke="var(--card)" strokeWidth={2} isAnimationActive={false}>
+              <PieChart><Pie data={segments} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius="95%" stroke="var(--card)" strokeWidth={2} isAnimationActive={false}>
                 {segments.map((s) => <Cell key={s.name} fill={s.color} />)}
               </Pie></PieChart>
             </ResponsiveContainer>
-          ) : <div className="size-32 rounded-full bg-muted" />}
+          ) : <div className="size-40 rounded-full bg-muted sm:size-32" />}
         </div>
-        <dl className="min-w-0 flex-1 space-y-3">
+        <dl className="w-full min-w-0 space-y-3 sm:w-auto sm:flex-1">
           {segments.map((s) => (
-            <div key={s.name} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 text-xs">
-              <dt className="flex items-center gap-2"><span className={`size-2.5 shrink-0 rounded-full ${s.name === "Working" ? "bg-success" : s.name === "Breaks" ? "bg-warning" : "bg-accent"}`} />{s.name}</dt>
-              <dd className="text-right tabular-nums"><span className="font-semibold">{s.percent.toFixed(1)}%</span><span className="block text-muted-foreground">{shiftHours(s.value)}</span></dd>
+            <div key={s.name} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 text-sm sm:text-xs">
+              <dt className="flex min-w-0 items-center gap-2"><span className={`size-2.5 shrink-0 rounded-full ${s.name === "Working" ? "bg-success" : s.name === "Breaks" ? "bg-warning" : "bg-accent"}`} />{s.name}</dt>
+              <dd className="shrink-0 text-right tabular-nums"><span className="font-semibold">{s.percent.toFixed(1)}%</span><span className="block text-muted-foreground">{shiftHours(s.value)}</span></dd>
             </div>
           ))}
         </dl>
       </div>
-      <div className="mt-4 flex flex-wrap items-baseline justify-between gap-2 border-t border-border pt-3">
-        <span className="text-xs text-muted-foreground">Actual worked</span>
-        <strong className="text-xl tabular-nums text-success">{shiftHours(result.workedMs)}</strong>
+      <div className="mt-4 grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-2 border-t border-border pt-3">
+        <span className="min-w-0 text-xs text-muted-foreground">Actual worked</span>
+        <strong className="shrink-0 text-xl tabular-nums text-success">{shiftHours(result.workedMs)}</strong>
       </div>
     </section>
   );
