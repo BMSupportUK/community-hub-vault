@@ -1895,7 +1895,8 @@ export function isEplFixturePost(raw: string): boolean {
   return lines.some((_, i) => eplFixtureLineAt(lines, i));
 }
 
-export function splitFixtureChannelBlocks(raw: string): string {
+export function splitFixtureChannelBlocks(raw: string, opts?: { sdOnly?: boolean }): string {
+  const sdOnly = opts?.sdOnly ?? false;
   const lines = raw.replace(/\r/g, "").split("\n");
   const fixtureAt = (i: number) => eplFixtureLineAt(lines, i);
   if (!lines.some((_, i) => fixtureAt(i))) return raw;
