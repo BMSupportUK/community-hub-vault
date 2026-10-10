@@ -34,6 +34,7 @@ const LockNowPill = lazy(() => import("@/components/app/ScreenLockProvider").the
 
 const BreakEndingAlert = lazy(() => import("@/components/app/BreakEndingAlert").then((m) => ({ default: m.BreakEndingAlert })));
 const ShiftStartEndAlert = lazy(() => import("@/components/app/ShiftStartEndAlert").then((m) => ({ default: m.ShiftStartEndAlert })));
+const EarlyFinishAlert = lazy(() => import("@/components/app/EarlyFinishAlert").then((m) => ({ default: m.EarlyFinishAlert })));
 const ModerationPendingBadge = lazy(() => import("@/components/app/ModerationPendingBadge").then((m) => ({ default: m.ModerationPendingBadge })));
 const PendingOrdersBadge = lazy(() => import("@/components/app/PendingOrdersBadge").then((m) => ({ default: m.PendingOrdersBadge })));
 const GpsCapture = lazy(() => import("@/components/app/GpsCapture").then((m) => ({ default: m.GpsCapture })));
@@ -386,6 +387,9 @@ function AuthLayout() {
         </DeferUntilIdle>
         <DeferUntilIdle>
           <ShiftStartEndAlert />
+        </DeferUntilIdle>
+        <DeferUntilIdle>
+          <EarlyFinishAlert />
         </DeferUntilIdle>
         <DeferUntilIdle>
           <GpsCapture />
