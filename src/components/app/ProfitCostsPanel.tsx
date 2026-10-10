@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { CalendarDays, ChartNoAxesCombined, CircleAlert, Loader2, Package, Save, TrendingUp, Wallet } from "lucide-react";
+import { CalendarDays, ChartNoAxesCombined, ChartPie, CircleAlert, Loader2, Package, Save, TrendingUp, Wallet } from "lucide-react";
 import { ProfitSummaryChart } from "@/components/app/ProfitSummaryChart";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -103,7 +103,7 @@ export function ProfitCostsPanel() {
     for (const o of all) { const m = paymentGroup(methodOf[o.id]); if (m) seen.add(m); }
     return [...seen].sort((a, b) => (METHOD_LABELS[a] ?? a).localeCompare(METHOD_LABELS[b] ?? b));
   }, [all, methodOf]);
-  const list = tab === "profit" || tab === "costs" ? all : all.filter((o) => paymentGroup(methodOf[o.id]) === tab);
+  const list = tab === "profit" || tab === "costs" || tab === "packages" ? all : all.filter((o) => paymentGroup(methodOf[o.id]) === tab);
   const years = useMemo(() => [...new Set(list.map((o) => new Date(o.created_at).getFullYear()))].sort((a, b) => b - a), [list]);
   const ay = year && years.includes(year) ? year : years[0] ?? null;
   const yearOrders = list.filter((o) => new Date(o.created_at).getFullYear() === ay);
@@ -123,6 +123,23 @@ export function ProfitCostsPanel() {
   const monthOrders = am != null ? yearOrders.filter((o) => new Date(o.created_at).getMonth() === am) : [];
   const yearMissing = yearOrders.some((o) => calc(o).missing);
   const monthMissing = monthOrders.some((o) => calc(o).missing);
+  const pkgStats = (os: Order[]) => {
+    const m = new Map<string, { revenue: number; cost: number; missing: boolean; qty: number }>();
+    for (const o of os) for (const i of o.order_items ?? []) {
+      const k = i.product_id ?? `name:${i.product_name}`;
+      const e = m.get(k) ?? { revenue: 0, cost: 0, missing: false, qty: 0 };
+      e.revenue += i.unit_price_cents * i.quantity; e.qty += i.quantity;
+      if (i.unit_cost_cents == null) e.missing = true; else e.cost += i.unit_cost_cents * i.quantity;
+      m.set(k, e);
+    }
+    return m;
+  };
+  const pkgYear = pkgStats(yearOrders), pkgMonth = pkgStats(monthOrders);
+  const packageCards = [
+    ...(products ?? []).map((p) => ({ key: p.id, name: p.name, price: p.price_cents as number | null })),
+    ...[...pkgYear.keys()].filter((k) => k.startsWith("name:")).map((k) => ({ key: k, name: k.slice(5), price: null })),
+  ].sort((a, b) => (pkgYear.get(b.key)?.revenue ?? 0) - (pkgYear.get(a.key)?.revenue ?? 0));
+  const empty = { revenue: 0, cost: 0, missing: false, qty: 0 };
   const selection = (active: boolean) => `h-auto min-h-9 rounded-md px-3 py-2 text-sm ${active ? "bg-primary text-primary-foreground shadow-soft" : "text-muted-foreground hover:bg-surface-2 hover:text-foreground"}`;
 
   return (
@@ -131,6 +148,7 @@ export function ProfitCostsPanel() {
         <Button variant="ghost" className={selection(tab === "profit")} aria-pressed={tab === "profit"} onClick={() => setTab("profit")}><ChartNoAxesCombined className="size-4" />Total profit</Button>
         {methodTabs.map((m) => <Button variant="ghost" key={m} className={selection(tab === m)} aria-pressed={tab === m} onClick={() => setTab(m)}>{METHOD_LABELS[m] ?? m}</Button>)}
         <Button variant="ghost" className={`${selection(tab === "costs")} sm:ml-auto`} aria-pressed={tab === "costs"} onClick={() => setTab("costs")}><Package className="size-4" />Product costs</Button>
+        <Button variant="ghost" className={selection(tab === "packages")} aria-pressed={tab === "packages"} onClick={() => setTab("packages")}><ChartPie className="size-4" />Packages</Button>
       </nav>
       {products === null ? <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" /> Loading…</div>
         : tab === "costs" ? (
@@ -147,7 +165,33 @@ export function ProfitCostsPanel() {
               ))}
             </div>
           </section>
-        ) : list.length === 0 ? <div className="flex flex-col items-center gap-3 bg-card/85 py-16 text-muted-foreground"><Wallet className="size-8 text-accent" /><p>{tab === "profit" ? "No paid orders yet." : `No ${METHOD_LABELS[tab] ?? tab} orders yet.`}</p></div> : (
+        ) : tab === "packages" && list.length > 0 ? (
+          <section className="space-y-5">
+            <div className="flex flex-wrap items-center gap-3 border-b border-border/60 pb-4">
+              <span className="flex items-center gap-2 text-sm font-medium"><CalendarDays className="size-4 text-accent" />Financial year</span>
+              <div className="flex flex-wrap gap-1">{years.map((y) => <Button variant="ghost" key={y} className={selection(y === ay)} aria-pressed={y === ay} onClick={() => { setYear(y); setMonth(null); }}>{y}</Button>)}</div>
+              <span className="flex items-center gap-2 text-sm font-medium sm:ml-4">Month</span>
+              <div className="flex flex-wrap gap-1">{byMonth.map(([k]) => <Button variant="ghost" key={k} className={selection(k === am)} aria-pressed={k === am} onClick={() => setMonth(k)}>{MONTHS[k]}</Button>)}</div>
+            </div>
+            <div className="grid gap-5 2xl:grid-cols-2">
+              {packageCards.map((p) => {
+                const y = pkgYear.get(p.key) ?? empty, mo = pkgMonth.get(p.key) ?? empty;
+                return (
+                  <article key={p.key} aria-label={`${p.name} package`} className="rounded-xl border border-border/70 bg-card/85 p-4 shadow-elegant backdrop-blur-md sm:p-5">
+                    <header className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
+                      <h3 className="flex items-center gap-2 font-display text-lg font-semibold break-words"><Package className="size-4 text-accent" />{p.name}</h3>
+                      <span className="text-xs text-muted-foreground">{p.price != null ? `Sells for ${money(p.price)} · ` : ""}{y.qty} sold in {ay}</span>
+                    </header>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      {am != null && <ProfitSummaryChart title={`${MONTHS[am]} ${ay} · Month total`} revenue={mo.revenue} cost={mo.cost} missing={mo.missing} />}
+                      <ProfitSummaryChart title={`${ay} · Year total`} revenue={y.revenue} cost={y.cost} missing={y.missing} />
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          </section>
+        ) : list.length === 0 ? <div className="flex flex-col items-center gap-3 bg-card/85 py-16 text-muted-foreground"><Wallet className="size-8 text-accent" /><p>{tab === "profit" || tab === "packages" ? "No paid orders yet." : `No ${METHOD_LABELS[tab] ?? tab} orders yet.`}</p></div> : (
           <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_640px]">
             <div className="min-w-0 space-y-6">
               <div className="flex flex-wrap items-center gap-3 border-b border-border/60 pb-4">
