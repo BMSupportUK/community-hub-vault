@@ -82,7 +82,7 @@ export function DndDialogButton({ className, icon = "moon" }: { className?: stri
             <label htmlFor="away-reason" className="text-sm font-medium">Away reason</label>
             <Select value={reason} onValueChange={(value) => { const selected = AWAY_REASONS.find((item) => item === value); if (selected) setReason(selected); }}>
               <SelectTrigger id="away-reason"><SelectValue /></SelectTrigger>
-              <SelectContent>{AWAY_REASONS.map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}</SelectContent>
+              <SelectContent className="z-[120]">{AWAY_REASONS.map((item) => <SelectItem key={item} value={item}>{item}</SelectItem>)}</SelectContent>
             </Select>
           </div>
           {scheduled && <>
