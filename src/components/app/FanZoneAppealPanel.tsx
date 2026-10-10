@@ -22,6 +22,10 @@ type Props = {
  * The appeal form and thread shown on the Fan Zone ban screen: the member
  * writes their appeal here and sees the moderator's replies in the same place.
  */
+// Module-level so the memory survives the screen lock unmounting and
+// remounting the app — otherwise the staff-reply sound replays on unlock.
+let seenStaffReplyIds: Set<string> | null = null;
+
 export function FanZoneAppealPanel({ onAppealKnown }: Props) {
   const { user } = useAuth();
   const send = useServerFn(submitFanZoneAppeal);
@@ -29,7 +33,6 @@ export function FanZoneAppealPanel({ onAppealKnown }: Props) {
   const [msgs, setMsgs] = useState<Msg[] | null>(null);
   const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);
-  const seenStaff = useRef<Set<string> | null>(null);
 
   const load = useCallback(async () => {
     if (!user?.id) return;
@@ -54,11 +57,11 @@ export function FanZoneAppealPanel({ onAppealKnown }: Props) {
       .order("created_at", { ascending: true });
     const rows = (data ?? []) as Msg[];
     const staffIds = rows.filter((m) => m.from_staff).map((m) => m.id);
-    if (seenStaff.current === null) {
-      seenStaff.current = new Set(staffIds);
+    if (seenStaffReplyIds === null) {
+      seenStaffReplyIds = new Set(staffIds);
     } else {
-      const fresh = staffIds.filter((id) => !seenStaff.current!.has(id));
-      fresh.forEach((id) => seenStaff.current!.add(id));
+      const fresh = staffIds.filter((id) => !seenStaffReplyIds!.has(id));
+      fresh.forEach((id) => seenStaffReplyIds!.add(id));
       if (fresh.length) {
         const sound = getSound("fan-zone-appeal-staff-reply");
         if (sound) void playSound(sound.src, { gain: sound.gain, label: sound.label });

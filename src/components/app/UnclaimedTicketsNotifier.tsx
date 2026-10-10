@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useLocation } from "@tanstack/react-router";
 import { ArrowRight, BellRing, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
