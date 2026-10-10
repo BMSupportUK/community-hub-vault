@@ -53,7 +53,7 @@ export function UnclaimedTicketsNotifier() {
   const [rows, setRows] = useState<Row[]>([]);
   const [claiming, setClaiming] = useState<string | null>(null);
   const [collapsed, setCollapsed] = useState(false);
-  const known = useRef<Set<string> | null>(null);
+  const known = knownTicketIdsRef;
 
   const load = useCallback(async () => {
     const list = await fetchUnclaimed();
