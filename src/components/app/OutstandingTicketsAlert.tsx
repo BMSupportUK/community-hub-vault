@@ -58,7 +58,7 @@ export function OutstandingTicketsAlert() {
         if (isTalkChannel) {
           toast.info("Outstanding support tickets", {
             description: `${total} ticket${total === 1 ? " is" : "s are"} waiting for a response.`,
-            duration: Infinity,
+            duration: 10000,
             action: {
               label: "View tickets",
               onClick: () => navigate({ to: "/tickets", search: { view: "all" } }),
