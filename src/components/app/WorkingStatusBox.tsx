@@ -15,7 +15,7 @@ import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
-import { shiftFinishAction } from "@/lib/shift-finish";
+import { askEarlyFinishReason, shiftFinishAction } from "@/lib/shift-finish";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { resolveAvatarUrl, useRoleFlashMap } from "@/lib/role-flash";
 import { Nameplate } from "@/components/app/Nameplate";
@@ -456,8 +456,8 @@ export function WorkingStatusBox({
 
   const requestEarly = async () => {
     if (!shift || earlyPending) return;
-    const reason = window.prompt("Request an early finish — admin or management must approve it.\n\nReason (optional):");
-    if (reason === null) return;
+    const reason = askEarlyFinishReason();
+    if (!reason) return;
     setBusy(true);
     try {
       await askEarlyFinish({ data: { reason } });

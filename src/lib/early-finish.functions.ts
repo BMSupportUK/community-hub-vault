@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { normalizeEarlyFinishReason } from "@/lib/shift-finish";
 
 async function notify(userIds: string[], title: string, body: string, link: string, sourceId: string) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -28,7 +29,11 @@ async function notify(userIds: string[], title: string, body: string, link: stri
 /** Staff asks to finish their open shift early; admin + management are alerted. */
 export const requestEarlyFinish = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { reason: string }) => ({ reason: String(d?.reason ?? "").trim().slice(0, 300) }))
+  .inputValidator((d: { reason: string }) => {
+    const reason = normalizeEarlyFinishReason(d?.reason);
+    if (!reason) throw new Error("A reason is required so admin or management can see why.");
+    return { reason };
+  })
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { data: shift } = await supabase
@@ -36,7 +41,7 @@ export const requestEarlyFinish = createServerFn({ method: "POST" })
     if (!shift) throw new Error("You're not on shift.");
     const { data: req, error } = await supabase
       .from("early_finish_requests")
-      .insert({ shift_id: shift.id, user_id: userId, reason: data.reason || null })
+      .insert({ shift_id: shift.id, user_id: userId, reason: data.reason })
       .select("id").single();
     if (error) {
       if (error.code === "23505") throw new Error("You already have an early finish request waiting.");
@@ -49,7 +54,7 @@ export const requestEarlyFinish = createServerFn({ method: "POST" })
     ]);
     const who = (prof as any)?.display_name || (prof as any)?.username || "A staff member";
     const ids = [...new Set(((managers ?? []) as { user_id: string }[]).map((m) => m.user_id))].filter((id) => id !== userId);
-    await notify(ids, `${who} asked to finish early`, data.reason || "No reason given", "/admin-shifts", req.id);
+    await notify(ids, `${who} asked to finish early`, data.reason, "/admin-shifts", req.id);
     return { ok: true };
   });
 
