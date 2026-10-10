@@ -32,6 +32,8 @@ export function packageSortKey(name: string): PackageSortKey {
       break;
     }
   }
+  // Anything we can't read a length from (a one-off or legacy name) goes last of all.
+  if (months === 0) roomTier = 99;
   return { roomTier, months };
 }
 
