@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Clock as ClockIcon, Loader2, LogIn, LogOut, RefreshCw, Users } from "lucide-react";
+import { ArrowLeft, CalendarDays, Clock as ClockIcon, Hourglass, Loader2, LogIn, LogOut, RefreshCw, TimerReset, UserCheck, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -155,11 +155,22 @@ function Pill({ label, tone }: { label: string; tone: "ok" | "warn" | "muted" | 
   );
 }
 
-function StatCard({ label, value }: { label: string; value: string }) {
+function StatCard({ label, value, icon: Icon, tone }: { label: string; value: string; icon: typeof Users; tone: "primary" | "success" | "warning" | "accent" }) {
+  const tones: Record<string, string> = {
+    primary: "bg-primary/15 text-primary",
+    success: "bg-emerald-500/15 text-emerald-400",
+    warning: "bg-amber-500/15 text-amber-400",
+    accent: "bg-accent/15 text-accent",
+  };
   return (
-    <div className="rounded-2xl border border-border bg-surface-1 p-4">
-      <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
-      <div className="font-display text-2xl font-bold">{value}</div>
+    <div className="group rounded-2xl border border-border bg-surface-1 p-4 shadow-sm transition-shadow hover:shadow-md">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</span>
+        <span className={cn("grid size-8 shrink-0 place-items-center rounded-xl", tones[tone])}>
+          <Icon className="size-4" />
+        </span>
+      </div>
+      <div className="mt-1 font-display text-2xl font-bold tabular-nums">{value}</div>
     </div>
   );
 }
