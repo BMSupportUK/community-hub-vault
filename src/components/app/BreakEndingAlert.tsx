@@ -11,11 +11,11 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { toast } from "sonner";
 import endLunchSfx from "@/assets/end-lunch.mp3";
 import endBreakSfx from "@/assets/end-break.mp3";
 import { playSound } from "@/lib/sound";
 import { type BreakKind, BREAK_LIMITS, breakLabel, breakIcon } from "@/lib/breaks";
+import { claimBreakAlert } from "@/lib/break-alerts";
 
 const WARN_AT = 2 * 60; // 2 minutes remaining
 
@@ -36,7 +36,7 @@ const autoEndGrace = (kind: BreakKind) => (kind === "travel" ? 0 : AUTO_END_AFTE
 
 // Module-level so the memory survives the screen lock unmounting and
 // remounting the app — otherwise break warnings replay their sound on unlock.
-const shownBreakStages: Record<string, Set<Stage>> = {};
+const shownBreakAlerts = new Set<string>();
 const autoEndedBreaks = new Set<string>();
 
 export function BreakEndingAlert() {
@@ -104,23 +104,19 @@ export function BreakEndingAlert() {
     if (active.kind === "travel") { setStage(null); return; }
     const elapsed = (now - new Date(active.started_at).getTime()) / 1000;
     const remaining = BREAK_LIMITS[active.kind] - elapsed;
-    const seen = (shownBreakStages[active.id] ??= new Set());
-
-    if (remaining <= 0 && !seen.has("over")) {
-      seen.add("over");
-      setStage("over");
-      playSound(active.kind === "lunch" ? endLunchSfx : endBreakSfx, {
-        label: `break-over-${active.kind}`,
-        gain: 2.2,
-      });
-    } else if (remaining > 0 && remaining <= WARN_AT && !seen.has("warn") && !seen.has("over")) {
-      seen.add("warn");
-      setStage("warn");
-      playSound(active.kind === "lunch" ? endLunchSfx : endBreakSfx, {
-        label: `break-warn-${active.kind}`,
-        gain: 2.2,
-      });
+    if (remaining > WARN_AT) return;
+    let storage: Storage | undefined;
+    try { storage = window.sessionStorage; } catch { /* Use the in-memory guard. */ }
+    if (!claimBreakAlert(active.id, shownBreakAlerts, storage)) {
+      // Update an open warning silently; never reopen a dismissed one.
+      if (remaining <= 0) setStage((current) => current === "warn" ? "over" : current);
+      return;
     }
+    setStage(remaining <= 0 ? "over" : "warn");
+    playSound(active.kind === "lunch" ? endLunchSfx : endBreakSfx, {
+      label: `break-alert-${active.id}`,
+      gain: 2.2,
+    });
   }, [active, now]);
 
   // Automatically end the break/lunch after the existing expiry grace.
@@ -132,7 +128,6 @@ export function BreakEndingAlert() {
     if (autoEndedBreaks.has(active.id)) return;
     autoEndedBreaks.add(active.id);
     const id = active.id;
-    const label = breakLabel(active.kind);
     (async () => {
       const { error } = await supabase
         .from("breaks")
@@ -145,7 +140,6 @@ export function BreakEndingAlert() {
       }
       setStage(null);
       setActive(null);
-      toast.info(`${label} automatically ended`);
     })();
   }, [active, now]);
 
