@@ -57,3 +57,17 @@ test("isEplFixturePost detects the Premier League fixture layout only", async ()
   expect(isEplFixturePost("Tennis 01 | A v B 12:00")).toBe(false);
   expect(isEplFixturePost("NBA 01: Nets v Hornets 12:00am Wed")).toBe(false);
 });
+
+test("EPL button cards: each channel card re-reads as one event with its fixture, KO time and channels", async () => {
+  // Card text written by splitQueueItem for each channel group.
+  const raw = normalizeSportsListingText(await Bun.file(new URL("./fixtures-epl-2026-10-10.txt", import.meta.url)).text());
+  const events = sortSportsListingEvents(parseSportsListingBlock(splitFixtureChannelBlocks(raw)));
+  for (const e of events) {
+    const card = [e.date, [e.time, e.title].filter(Boolean).join(" "), e.channels.join(" • ")].filter(Boolean).join("\n");
+    const back = parseSportsListingBlock(splitFixtureChannelBlocks(normalizeSportsListingText(card)));
+    expect(back).toHaveLength(1);
+    expect(back[0].title).toBe(e.title);
+    expect(back[0].time).toBe(e.time);
+    expect(back[0].channels).toEqual(e.channels);
+  }
+});
