@@ -2,6 +2,8 @@
 # Roadmap
 
 ## Current
+- [x] Staff Away: all staff, fixed reasons, manual start/end and scheduled Outside Of Office Hours
+- [x] Show the selected Away reason consistently on staff cards and Talk
 - [x] Scottish Premier League Streams: add “Under Team Channels” on import and repair the saved fixtures
 - [x] Add St Patrick’s Day pictures and effects to Talk and inbox on 17 March, UK time
 - [x] Add St George’s Day and New Year’s Day pictures and effects to Talk and inbox on their UK event dates

@@ -608,13 +608,13 @@ export function WorkingStatusBox({
                 </div>
               </div>
             </div>
-            {dnd.note && <p className="text-foreground/90">{dnd.note}</p>}
+            {dnd.reason && <p className="text-foreground/90">{dnd.reason}</p>}
             {until && (
               <p className="text-muted-foreground">
                 Until <span className="tabular-nums text-foreground/80">{until}</span>
               </p>
             )}
-            {!dnd.note && !until && <p className="text-muted-foreground">Notifications muted.</p>}
+            {!dnd.reason && !until && <p className="text-muted-foreground">Notifications muted.</p>}
             {nextSlot && <NextShiftPanel slot={nextSlot} />}
           </div>
         </div>

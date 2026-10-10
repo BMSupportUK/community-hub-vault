@@ -67,7 +67,7 @@ function TalkStaffStatusLine({
 }) {
   const dnd = useDndStatus(userId);
   if (dnd?.active) {
-    return <span className="font-semibold text-violet-300">Away - From the office.</span>;
+    return <span className="font-semibold text-primary">Away{dnd.reason ? ` — ${dnd.reason}` : ""}</span>;
   }
   if (shift) {
     return (
@@ -505,9 +505,8 @@ export function StaffOnDutyStrip({
                 <DaneStatusLine userId={s.user_id} />
               ) : null}
             </div>
-            <div className="mt-1 flex items-center gap-1 text-[10px] font-semibold text-emerald-300">
-              <Clock className="size-3 shrink-0" />
-              <span>Working {fmtHMS(shiftElapsed)}</span>
+            <div className="mt-1 text-[10px]">
+              <TalkStaffStatusLine userId={s.user_id} shift={s} online shiftElapsed={shiftElapsed} />
             </div>
             <ViewingLine userId={s.user_id} />
 
@@ -585,13 +584,7 @@ export function StaffOnDutyStrip({
               )}
             </Nameplate>
             <div className="mt-1">
-              {dane ? (
-                <DaneStatusLine userId={p.id} />
-              ) : inChat ? (
-                <div className="text-[10px] font-semibold text-emerald-500">Off duty but chatting</div>
-              ) : (
-                <div className="text-[10px] font-semibold text-amber-300">Off duty</div>
-              )}
+              <TalkStaffStatusLine userId={p.id} online={dane || inChat} shiftElapsed={0} />
             </div>
             <ViewingLine userId={p.id} />
 

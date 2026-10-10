@@ -6052,6 +6052,7 @@ export type Database = {
           enabled: boolean
           ends_at: string | null
           note: string | null
+          reason: string | null
           starts_at: string | null
           updated_at: string
           user_id: string
@@ -6060,6 +6061,7 @@ export type Database = {
           enabled?: boolean
           ends_at?: string | null
           note?: string | null
+          reason?: string | null
           starts_at?: string | null
           updated_at?: string
           user_id: string
@@ -6068,6 +6070,7 @@ export type Database = {
           enabled?: boolean
           ends_at?: string | null
           note?: string | null
+          reason?: string | null
           starts_at?: string | null
           updated_at?: string
           user_id?: string
