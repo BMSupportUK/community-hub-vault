@@ -24,7 +24,7 @@ import { Moon } from "lucide-react";
 import { DndCountdown } from "@/components/app/DndCountdown";
 import { DndDialogButton } from "@/components/app/DndDialogButton";
 import { StaffTicketsButton } from "@/components/app/StaffTicketsDialog";
-import { type BreakKind, BREAK_LIMITS as LIMITS, breakLabel, breakIcon } from "@/lib/breaks";
+import { type BreakKind, BREAK_LIMITS as LIMITS, breakLabel, breakIcon, breaksLeft } from "@/lib/breaks";
 import { useServerFn } from "@tanstack/react-start";
 import { sendShiftEventPush, sendBreakEventPush } from "@/lib/push.functions";
 import { toast } from "sonner";
