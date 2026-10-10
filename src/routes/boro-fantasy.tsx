@@ -92,12 +92,12 @@ const PlayerStatsCtx = createContext<
 /** Weekly labels reflect official matchday membership, not zero minutes alone. */
 function WeeklyPickStatus({ pick }: { pick?: { minutes?: number | null; matchdayMembership?: "named" | "absent" | "unknown"; lineupSwapNote?: string | null; isStarter: boolean; autoSubbed?: boolean } }) {
   if (!pick) return null;
-  const exchanged = !!pick.lineupSwapNote || !!pick.autoSubbed;
+  const exchanged = !!pick.lineupSwapNote;
   const played = (pick.minutes ?? 0) > 0;
   return (
     <div className="mt-1 space-y-0.5 text-[10px] font-semibold leading-tight break-words">
       {played ? <div>{pick.minutes}′ played</div> : pick.matchdayMembership === "absent" ? <div>Not In Matchday Squad</div> : pick.matchdayMembership === "named" ? <div>Unused Substitute</div> : null}
-      {exchanged && <div title={pick.lineupSwapNote ?? undefined} className="font-bold"><div>Exchanged</div><div>{pick.isStarter || pick.autoSubbed ? "Moved into the Starter 11" : "Moved To The Bench"}</div></div>}
+      {exchanged && <div title={pick.lineupSwapNote ?? undefined} className="font-bold"><div>Exchanged</div><div>{pick.isStarter ? "Moved into the Starter 11" : "Moved To The Bench"}</div></div>}
     </div>
   );
 }
