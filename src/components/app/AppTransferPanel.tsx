@@ -148,6 +148,8 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [infoZoom, setInfoZoom] = useState(1);
   const videoUrl = useDemoVideoUrl(build.videoPath);
+  const isMobile =
+    typeof navigator !== "undefined" && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   const shortUrl = useMemo(() => {
     if (!transfer) return null;
@@ -299,7 +301,9 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
               <Smartphone className="size-4 text-violet-300" /> {build.appName || build.fileName}
             </DialogTitle>
             <DialogDescription>
-              24-hour secure install link. Scan the QR code or type the URL into Downloader on your device.
+              {isMobile
+                ? "24-hour secure install link. Tap Download to install it straight onto this device."
+                : "24-hour secure install link. Scan the QR code or type the URL into Downloader on your device."}
             </DialogDescription>
           </DialogHeader>
 
@@ -363,18 +367,26 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
             </div>
           )}
 
-          <div className="flex flex-col items-center gap-3">
-             <div className="max-w-full rounded-xl bg-white p-2">
-              {qrDataUrl ? (
-                 <img src={qrDataUrl} alt="Secure install link QR code" className="block size-40 sm:size-[192px]" />
-              ) : (
-                 <div className="flex size-40 items-center justify-center sm:size-[192px]">
-                  <Loader2 className="size-5 animate-spin text-violet-600" />
-                </div>
-              )}
+          {isMobile ? (
+            <Button size="lg" asChild className="w-full bg-gradient-primary text-primary-foreground shadow-glow hover:opacity-90 h-auto min-h-12 whitespace-normal py-3 text-base">
+              <a href={`/api/public/a/${transfer?.token}`}>
+                <Download className="size-5 mr-2 shrink-0" /> <span>Download to this device</span>
+              </a>
+            </Button>
+          ) : (
+            <div className="flex flex-col items-center gap-3">
+               <div className="max-w-full rounded-xl bg-white p-2">
+                {qrDataUrl ? (
+                   <img src={qrDataUrl} alt="Secure install link QR code" className="block size-40 sm:size-[192px]" />
+                ) : (
+                   <div className="flex size-40 items-center justify-center sm:size-[192px]">
+                    <Loader2 className="size-5 animate-spin text-violet-600" />
+                  </div>
+                )}
+              </div>
+              <p className="text-xs text-center text-muted-foreground">Scan with your phone camera</p>
             </div>
-            <p className="text-xs text-center text-muted-foreground">Scan with your phone camera</p>
-          </div>
+          )}
 
           <p className="text-xs text-violet-200 flex items-center justify-center gap-1.5">
             <Clock className="size-3.5" /> Expires in {remaining} · downloads: {transfer?.downloads ?? 0}
@@ -383,11 +395,13 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
           {transfer && <TransferStatusSteps transfer={transfer} />}
 
           <div className="flex flex-col sm:flex-row flex-wrap gap-2 justify-center">
-            <Button size="sm" asChild className="bg-gradient-primary text-primary-foreground hover:opacity-90 h-auto min-h-9 w-full sm:w-auto whitespace-normal">
-              <a href={`/api/public/a/${transfer?.token}`}>
-                <Download className="size-4 mr-1 shrink-0" /> <span>Download to this device</span>
-              </a>
-            </Button>
+            {!isMobile && (
+              <Button size="sm" asChild className="bg-gradient-primary text-primary-foreground hover:opacity-90 h-auto min-h-9 w-full sm:w-auto whitespace-normal">
+                <a href={`/api/public/a/${transfer?.token}`}>
+                  <Download className="size-4 mr-1 shrink-0" /> <span>Download to this device</span>
+                </a>
+              </Button>
+            )}
             <Button size="sm" variant="secondary" className="h-auto min-h-9 w-full sm:w-auto whitespace-normal" disabled={busy === "delete"} onClick={onDelete}>
               {busy === "delete" ? <Loader2 className="size-4 mr-1 animate-spin shrink-0" /> : <Trash2 className="size-4 mr-1 shrink-0" />}
               <span>Delete link</span>
