@@ -2,6 +2,7 @@
 # Roadmap
 
 ## Current
+- [ ] Refresh Profit & costs with a clearer background and right-sidebar pie-chart statistics; verify signed-in preview
 - [x] Shift breakdown pie chart: show the staff username on its own line at the bottom of every card
 - [x] Add separate staff shift pie-chart breakdown cards on profiles and admin staff shifts; verify actual worked hours and percentages
 - [x] Away status: log every Away period so it appears in the staff shift reports and shift history
