@@ -80,6 +80,7 @@ export async function buildPlayerBreakdown(
       kickoffAt: f?.kickoff_at ?? null,
       points: Number(r.points ?? 0) || 0,
       stats,
+      started: r.started !== false,
     };
   });
 

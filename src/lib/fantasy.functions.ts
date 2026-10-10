@@ -847,6 +847,8 @@ export type FantasyPlayerMatchStats = {
   kickoffAt: string | null;
   points: number;
   stats: Record<string, number>;
+  /** False when he came off the bench in the real match. */
+  started?: boolean;
 };
 
 export type FantasyPlayerBreakdown = {

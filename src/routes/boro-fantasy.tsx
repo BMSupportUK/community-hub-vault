@@ -120,7 +120,7 @@ function PlayerNameButton({
   name,
   className = "",
   scoringAs = null,
-  asSub = false,
+  asSub: benchPick = false,
   gameweekNumber = null,
 }: {
   playerId: string;
@@ -223,6 +223,8 @@ function PlayerStatsDialog({
     () => gameweekNumber == null ? matches.slice(0, 1) : matches.filter((match) => match.gwNumber === gameweekNumber),
     [matches, gameweekNumber],
   );
+  // Half rate when named on your bench OR he came off the bench in the real match.
+  const asSub = benchPick || gameweekMatches.some((m) => (m.stats.minutes ?? 0) > 0 && m.started === false);
   const pos = (scoringAs ?? (data?.position || "mid")) as FantasyPosition;
   const picked = !!scoringAs && scoringAs !== (data?.position as FantasyPosition | undefined);
   /** Subs score half of every line — apply the exact rate with no whole-point rounding. */
