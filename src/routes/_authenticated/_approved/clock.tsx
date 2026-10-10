@@ -14,7 +14,7 @@ import { type BreakKind, BREAK_LIMITS, breakLabel, breaksLeft } from "@/lib/brea
 import { StaffOnDutyStrip } from "@/components/app/StaffOnDutyStrip";
 import { Button } from "@/components/ui/button";
 import { requestEarlyFinish } from "@/lib/early-finish.functions";
-import { shiftFinishAction, ukClock } from "@/lib/shift-finish";
+import { askEarlyFinishReason, shiftFinishAction, ukClock } from "@/lib/shift-finish";
 
 export const Route = createFileRoute("/_authenticated/_approved/clock")({
   head: () => ({ meta: [
@@ -142,8 +142,8 @@ function ClockPage() {
     const action = shiftFinishAction(Date.now(), rotaEnd, earlyPending, finishReady);
     if (action === "wait") return;
     if (action === "request") {
-      const reason = window.prompt("Request an early finish — admin or management must approve it.\n\nReason (optional):");
-      if (reason === null) return;
+      const reason = askEarlyFinishReason();
+      if (!reason) return;
       setBusy(true);
       try {
         await askEarlyFinish({ data: { reason } });
