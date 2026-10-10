@@ -12,7 +12,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { ArrowLeft, Loader2, Sparkles, Send, Trash2, Inbox, Clock, Check, Scissors, Settings2, X } from "lucide-react";
 import { firstClockIn, firstDateIn, parseClockTime, toSingleZoneTime, type TimeZoneChoice } from "@/lib/import-time";
-import { formatSportsListingBlock, formatSportsListingEvents, normalizeSportsListingText, parseSportsListingBlock, splitFixtureChannelBlocks, splitListingSections } from "@/lib/sports-listing-format";
+import { formatSportsListingBlock, formatSportsListingEvents, isEplFixturePost, normalizeSportsListingText, parseSportsListingBlock, splitFixtureChannelBlocks, splitListingSections } from "@/lib/sports-listing-format";
 import { suggestListingFixes, saveQueueListing, type ListingFixSuggestion } from "@/lib/listing-web-fix.functions";
 import { checkSportsImport, type ImportCheckResult } from "@/lib/sports-import-check";
 import {
@@ -725,6 +725,9 @@ function QueueRow({
     () => splitListingSections(normalizedRaw),
     [normalizedRaw],
   );
+  // Premier League fixture posts get a one-press split: one listing per
+  // fixture, and each fixture imports into its channel-group blocks.
+  const isEpl = useMemo(() => isEplFixturePost(normalizedRaw), [normalizedRaw]);
   const [pickingSplit, setPickingSplit] = useState(false);
   const rawLines = useMemo(
     () => normalizedRaw.split("\n"),
