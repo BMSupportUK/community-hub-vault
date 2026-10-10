@@ -28,7 +28,7 @@ export function ShiftBreakdownCard({ shift, breaks, away, username }: Props) {
     { name: "Away", value: result.awayMs, percent: result.awayPercent, color: "var(--accent)" },
   ];
   return (
-    <section aria-label="Shift time breakdown" className="min-w-0 rounded-lg border border-border bg-card p-4 text-card-foreground">
+    <section aria-label={username ? `Shift time breakdown for ${username}` : "Shift time breakdown"} className="min-w-0 rounded-lg border border-border bg-card p-4 text-card-foreground">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h4 className="text-sm font-semibold">Shift breakdown</h4>
         <span className="text-xs text-muted-foreground">{shift.clock_out ? "Full shift" : "Shift so far"} · {shiftHours(result.totalMs)}</span>
@@ -71,6 +71,12 @@ export function ShiftBreakdownCard({ shift, breaks, away, username }: Props) {
         <span className="min-w-0 text-xs text-muted-foreground">Actual worked</span>
         <strong className="shrink-0 text-xl tabular-nums text-success">{shiftHours(result.workedMs)}</strong>
       </div>
+      {username && (
+        <p className="mt-2 flex min-w-0 items-center justify-center gap-1.5 border-t border-border pt-2 text-sm font-semibold">
+          <AtSign className="size-3.5 shrink-0 text-primary" />
+          <span className="truncate">{username}</span>
+        </p>
+      )}
     </section>
   );
 }
