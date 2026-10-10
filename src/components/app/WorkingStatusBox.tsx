@@ -20,7 +20,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { resolveAvatarUrl, useRoleFlashMap } from "@/lib/role-flash";
 import { Nameplate } from "@/components/app/Nameplate";
 import { useDndStatus } from "@/hooks/use-dnd";
-import { Moon } from "lucide-react";
+import { awayIcon } from "@/lib/staff-away";
 import { DndCountdown } from "@/components/app/DndCountdown";
 import { DndDialogButton } from "@/components/app/DndDialogButton";
 import { StaffTicketsButton } from "@/components/app/StaffTicketsDialog";
