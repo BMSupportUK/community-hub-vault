@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { Loader2 } from "lucide-react";
+import { CalendarDays, ChartNoAxesCombined, CircleAlert, Loader2, Package, Save, TrendingUp, Wallet } from "lucide-react";
+import { ProfitSummaryChart } from "@/components/app/ProfitSummaryChart";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -48,7 +49,8 @@ export function ProfitCostsPanel() {
       supabase.from("product_costs").select("product_id, cost_cents"),
       supabase.from("orders").select("id, status, total_cents, created_at, shipping_name, existing_username").order("created_at", { ascending: false }).limit(5000),
     ]);
-    if (p.error || c.error || o.error) { toast.error((p.error ?? c.error ?? o.error)!.message); return; }
+    const loadError = p.error ?? c.error ?? o.error;
+    if (loadError) { toast.error(loadError.message); return; }
     setProducts((p.data ?? []) as Product[]);
     const m: Record<string, string> = {};
     for (const r of c.data ?? []) m[r.product_id] = (r.cost_cents / 100).toFixed(2);
@@ -118,54 +120,63 @@ export function ProfitCostsPanel() {
   const sum = (os: Order[]) => os.reduce((a, o) => { const c = calc(o); return { revenue: a.revenue + c.revenue, cost: a.cost + c.cost }; }, { revenue: 0, cost: 0 });
   const yT = sum(yearOrders), mT = sum(am != null ? yearOrders.filter((o) => new Date(o.created_at).getMonth() === am) : []);
 
-  const pill = (a: boolean) => `px-3 h-8 rounded-lg text-sm font-medium border backdrop-blur-md transition-colors ${a ? "bg-primary text-primary-foreground border-primary shadow-glow" : "bg-surface-2/70 border-border text-muted-foreground hover:text-foreground"}`;
-  const Stat = ({ label, value, tone }: { label: string; value: string; tone?: string }) => (
-    <div className="rounded-xl border border-border/60 bg-surface-2/70 backdrop-blur-md p-4 shadow-elegant"><div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div><div className={`text-xl font-semibold ${tone ?? ""}`}>{value}</div></div>
-  );
-  const Totals = ({ t }: { t: { revenue: number; cost: number } }) => {
-    const p = t.revenue - t.cost;
-    return <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-      <Stat label="Revenue" value={money(t.revenue)} /><Stat label="Costs" value={money(t.cost)} />
-      <Stat label="Profit" value={money(p)} tone={p >= 0 ? "text-success" : "text-destructive"} />
-      <Stat label="Margin" value={t.revenue ? `${Math.round((p / t.revenue) * 100)}%` : "—"} />
-    </div>;
-  };
+  const monthOrders = am != null ? yearOrders.filter((o) => new Date(o.created_at).getMonth() === am) : [];
+  const yearMissing = yearOrders.some((o) => calc(o).missing);
+  const monthMissing = monthOrders.some((o) => calc(o).missing);
+  const selection = (active: boolean) => `h-auto min-h-9 rounded-md px-3 py-2 text-sm ${active ? "bg-primary text-primary-foreground shadow-soft" : "text-muted-foreground hover:bg-surface-2 hover:text-foreground"}`;
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap gap-2">
-        <button type="button" className={pill(tab === "profit")} onClick={() => setTab("profit")}>Total profit</button>
-        {methodTabs.map((m) => <button key={m} type="button" className={pill(tab === m)} onClick={() => setTab(m)}>{METHOD_LABELS[m] ?? m}</button>)}
-        <button type="button" className={pill(tab === "costs")} onClick={() => setTab("costs")}>Product costs</button>
-      </div>
+    <div className="space-y-6">
+      <nav aria-label="Profit views" className="flex flex-wrap items-center gap-1 border-y border-border/70 bg-card/85 p-2 backdrop-blur-md">
+        <Button variant="ghost" className={selection(tab === "profit")} aria-pressed={tab === "profit"} onClick={() => setTab("profit")}><ChartNoAxesCombined className="size-4" />Total profit</Button>
+        {methodTabs.map((m) => <Button variant="ghost" key={m} className={selection(tab === m)} aria-pressed={tab === m} onClick={() => setTab(m)}>{METHOD_LABELS[m] ?? m}</Button>)}
+        <Button variant="ghost" className={`${selection(tab === "costs")} sm:ml-auto`} aria-pressed={tab === "costs"} onClick={() => setTab("costs")}><Package className="size-4" />Product costs</Button>
+      </nav>
       {products === null ? <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="size-4 animate-spin" /> Loading…</div>
         : tab === "costs" ? (
-          <div className="max-w-2xl space-y-2">
-            <p className="text-sm text-muted-foreground">Enter what each product costs you. Past orders without a cost get filled in; later changes only affect new orders.</p>
-            {products.map((p) => (
-              <div key={p.id} className="flex items-center gap-3 rounded-lg border border-border p-2">
-                <div className="flex-1 min-w-0"><div className="font-medium truncate">{p.name}</div><div className="text-xs text-muted-foreground">Sells for {money(p.price_cents)}</div></div>
-                <span className="text-sm text-muted-foreground">Cost £</span>
-                <Input className="w-24" inputMode="decimal" value={costs[p.id] ?? ""} placeholder="0.00" onChange={(e) => setCosts((c) => ({ ...c, [p.id]: e.target.value }))} />
-                <Button size="sm" variant="outline" disabled={saving === p.id} onClick={() => saveCost(p.id)}>{saving === p.id ? <Loader2 className="size-4 animate-spin" /> : "Save"}</Button>
-              </div>
-            ))}
-          </div>
-        ) : list.length === 0 ? <p className="text-sm text-muted-foreground">{tab === "profit" ? "No paid orders yet." : `No ${METHOD_LABELS[tab] ?? tab} orders yet.`}</p> : (
-          <div className="space-y-4">
-            <div className="flex flex-wrap gap-2">{years.map((y) => <button key={y} type="button" className={pill(y === ay)} onClick={() => { setYear(y); setMonth(null); }}>{y}</button>)}</div>
-            <div><h3 className="text-sm font-semibold mb-2">{ay} total</h3><Totals t={yT} /></div>
-            <div className="flex flex-wrap gap-2">{byMonth.map(([k, v]) => <button key={k} type="button" className={pill(k === am)} onClick={() => setMonth(k)}>{MONTHS[k]} · {money(v.revenue - v.cost)}{v.missing ? " ⚠" : ""}</button>)}
+          <section className="space-y-4">
+            <h2 className="flex items-center gap-2 font-display text-xl font-semibold"><Package className="size-5 text-accent" />Product costs</h2>
+            <p className="max-w-2xl text-sm text-muted-foreground">Enter what each product costs you. Past orders without a cost get filled in; later changes only affect new orders.</p>
+            <div className="grid gap-3 xl:grid-cols-2">
+              {products.map((p) => (
+                <div key={p.id} className="flex flex-wrap items-center gap-3 rounded-lg border border-border/70 bg-card/90 p-4 shadow-soft backdrop-blur-md">
+                  <div className="min-w-0 flex-1 basis-40"><div className="font-semibold break-words">{p.name}</div><div className="mt-1 text-xs text-muted-foreground">Sells for {money(p.price_cents)}</div></div>
+                  <label className="flex items-center gap-2 text-sm text-muted-foreground">Cost £<Input aria-label={`Cost for ${p.name}`} className="w-24 bg-background/70" inputMode="decimal" value={costs[p.id] ?? ""} placeholder="0.00" onChange={(e) => setCosts((c) => ({ ...c, [p.id]: e.target.value }))} /></label>
+                  <Button size="sm" variant="outline" disabled={saving === p.id} onClick={() => saveCost(p.id)}>{saving === p.id ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}Save</Button>
+                </div>
+              ))}
             </div>
-            {am != null && (
-              <div>
-                <h3 className="text-sm font-semibold mb-2">{MONTHS[am]} {ay}</h3>
-                <span className="px-3 h-8 rounded-lg text-sm font-medium inline-flex items-center bg-surface-2 border border-border text-muted-foreground mb-2">
-                  {yearOrders.filter((o) => new Date(o.created_at).getMonth() === am).length} orders
-                </span>
-                <Totals t={mT} />
+          </section>
+        ) : list.length === 0 ? <div className="flex flex-col items-center gap-3 bg-card/85 py-16 text-muted-foreground"><Wallet className="size-8 text-accent" /><p>{tab === "profit" ? "No paid orders yet." : `No ${METHOD_LABELS[tab] ?? tab} orders yet.`}</p></div> : (
+          <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_280px] xl:grid-cols-[minmax(0,1fr)_300px]">
+            <div className="min-w-0 space-y-6">
+              <div className="flex flex-wrap items-center gap-3 border-b border-border/60 pb-4">
+                <span className="flex items-center gap-2 text-sm font-medium"><CalendarDays className="size-4 text-accent" />Financial year</span>
+                <div className="flex flex-wrap gap-1">{years.map((y) => <Button variant="ghost" key={y} className={selection(y === ay)} aria-pressed={y === ay} onClick={() => { setYear(y); setMonth(null); }}>{y}</Button>)}</div>
               </div>
-            )}
+              <section aria-label="Annual overview" className="border-b border-border/70 bg-card/85 p-5 shadow-soft backdrop-blur-md sm:p-6">
+                <div className="flex items-center justify-between gap-3"><h2 className="font-display text-xl font-semibold">{ay} overview</h2><span className="text-xs text-muted-foreground">{yearOrders.length} orders</span></div>
+                <div className="my-6"><p className="flex items-center gap-2 text-sm text-muted-foreground"><TrendingUp className="size-4 text-success" />{yearMissing ? "Provisional profit" : "Total profit"}</p><p className={`mt-2 break-words font-display text-4xl font-bold tabular-nums ${yT.revenue >= yT.cost ? "text-success" : "text-destructive"}`}>{money(yT.revenue - yT.cost)}</p></div>
+                <dl className="grid grid-cols-2 gap-4 border-t border-border/70 pt-4"><div><dt className="text-xs text-muted-foreground">Revenue</dt><dd className="mt-1 text-lg font-semibold tabular-nums">{money(yT.revenue)}</dd></div><div><dt className="text-xs text-muted-foreground">Product costs</dt><dd className="mt-1 text-lg font-semibold tabular-nums text-warning">{money(yT.cost)}</dd></div></dl>
+                {yearMissing && <p className="mt-4 flex items-center gap-2 text-xs text-warning"><CircleAlert className="size-4 shrink-0" />Some orders have missing costs.</p>}
+              </section>
+              <section className="space-y-4">
+                <h2 className="flex items-center gap-2 font-display text-xl font-semibold"><CalendarDays className="size-5 text-accent" />Monthly breakdown</h2>
+                <div className="flex flex-wrap gap-2">{byMonth.map(([k, v]) => <Button key={k} variant="outline" className={`${selection(k === am)} flex-col items-start gap-1 border-border/70 ${k !== am ? "bg-card/90" : "border-primary"}`} aria-pressed={k === am} onClick={() => setMonth(k)}><span className="flex items-center gap-2 font-semibold">{MONTHS[k]}{v.missing && <CircleAlert className="size-3" />}</span><span className="text-xs tabular-nums">{money(v.revenue - v.cost)}</span></Button>)}</div>
+                {am != null && <div className="border-y border-border/70 bg-card/90 px-5 py-5 backdrop-blur-md">
+                  <div className="mb-5 flex items-center justify-between gap-2"><h3 className="font-semibold">{MONTHS[am]} {ay}</h3><span className="text-xs text-muted-foreground">{monthOrders.length} orders</span></div>
+                  <dl className="grid grid-cols-2 gap-5 sm:grid-cols-3">
+                    <div><dt className="text-xs text-muted-foreground">Revenue</dt><dd className="mt-1 text-lg font-semibold tabular-nums">{money(mT.revenue)}</dd></div>
+                    <div><dt className="text-xs text-muted-foreground">Costs</dt><dd className="mt-1 text-lg font-semibold tabular-nums text-warning">{money(mT.cost)}</dd></div>
+                    <div><dt className="text-xs text-muted-foreground">{monthMissing ? "Provisional profit" : "Profit"}</dt><dd className={`mt-1 text-lg font-semibold tabular-nums ${mT.revenue >= mT.cost ? "text-success" : "text-destructive"}`}>{money(mT.revenue - mT.cost)}</dd></div>
+                  </dl>
+                </div>}
+              </section>
+            </div>
+            <aside aria-label="Profit statistics" className="grid min-w-0 gap-4 sm:grid-cols-2 lg:sticky lg:top-6 lg:grid-cols-1">
+              <ProfitSummaryChart title={`${ay} · Year total`} revenue={yT.revenue} cost={yT.cost} missing={yearMissing} />
+              {am != null && <ProfitSummaryChart title={`${MONTHS[am]} ${ay} · Month total`} revenue={mT.revenue} cost={mT.cost} missing={monthMissing} />}
+            </aside>
           </div>
         )}
     </div>
