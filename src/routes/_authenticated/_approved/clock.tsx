@@ -57,9 +57,9 @@ function ClockPage() {
   const fmtTime = (iso: string) =>
     new Date(iso).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: tz });
   const fmtDateTime = (ms: number) =>
-    new Date(ms).toLocaleString("en-GB", { timeZone: tz });
-  const fmtClock = (ms: number) =>
-    new Date(ms).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit", timeZone: tz });
+    new Date(ms).toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric", timeZone: "Europe/London" });
+  const fmtClock = (ms: number, timeZone: string) =>
+    new Date(ms).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", second: "2-digit", timeZone });
   const [now, setNow] = useState(() => Date.now());
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -210,9 +210,20 @@ function ClockPage() {
           </div>
           <div className="flex-1 min-w-0">
             <h1 className="font-display text-2xl sm:text-3xl font-bold drop-shadow">Time Tracking</h1>
-            <p className="text-sm text-muted-foreground">{fmtDateTime(now)} <span className="opacity-70">({tz})</span></p>
+            <p className="text-sm text-muted-foreground">{fmtDateTime(now)}</p>
           </div>
-          <div className="font-mono text-3xl tabular-nums drop-shadow">{fmtClock(now)}</div>
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2" aria-label="Time Tracking clocks">
+            <div className="flex items-center gap-2 whitespace-nowrap">
+              <span className="text-sm font-medium text-muted-foreground">Office Time</span>
+              <span className="font-mono text-2xl sm:text-3xl tabular-nums drop-shadow">{fmtClock(now, "Europe/London")}</span>
+            </div>
+            {tz !== "Europe/London" && (
+              <div className="flex items-center gap-2 whitespace-nowrap">
+                <span className="text-sm font-medium text-muted-foreground">Your Time</span>
+                <span className="font-mono text-2xl sm:text-3xl tabular-nums drop-shadow">{fmtClock(now, tz)}</span>
+              </div>
+            )}
+          </div>
         </header>
 
         {/* Push notifications toggle */}
