@@ -282,6 +282,7 @@ export function WorkingStatusBox({
   const notifyBreak = useServerFn(sendBreakEventPush);
   const [shift, setShift] = useState<Shift | null>(null);
   const [brk, setBrk] = useState<Break | null>(null);
+  const [usedKinds, setUsedKinds] = useState<string[]>([]);
   const [now, setNow] = useState(() => Date.now());
   const [busy, setBusy] = useState(false);
   const [nextSlot, setNextSlot] = useState<NextSlot | null>(null);
@@ -329,8 +330,14 @@ export function WorkingStatusBox({
           .limit(1)
           .maybeSingle();
         setBrk((b as Break) ?? null);
+        const { data: all } = await supabase
+          .from("breaks")
+          .select("kind")
+          .eq("shift_id", (s as Shift).id);
+        setUsedKinds(((all as { kind: string }[]) ?? []).map((r) => r.kind));
       } else {
         setBrk(null);
+        setUsedKinds([]);
       }
       // Next claimed rota slot (today, still to come — or any future day).
       const london = londonNow();
@@ -425,8 +432,14 @@ export function WorkingStatusBox({
     notifyShift({ data: { kind: "clock_in" } }).catch(() => {});
   };
 
+  const breakLeft = breaksLeft("break", usedKinds);
+  const lunchLeft = breaksLeft("lunch", usedKinds);
+  // Shift sign-out stays greyed out until the rota end time so it can't be
+  // pressed by accident mid-shift. No rota slot today = always allowed.
+  const canClockOut = !todayWindow || londonNow(now).time >= todayWindow.end;
+
   const clockOut = async () => {
-    if (!shift) return;
+    if (!shift || !canClockOut) return;
     setBusy(true);
     if (brk) {
       await supabase.from("breaks").update({ ended_at: new Date().toISOString() }).eq("id", brk.id);
@@ -444,12 +457,17 @@ export function WorkingStatusBox({
 
   const startBreak = async (kind: BreakKind) => {
     if (!user || !shift || brk) return;
+    if (kind !== "travel" && breaksLeft(kind, usedKinds) <= 0) {
+      toast.error(kind === "lunch" ? "You've already had your lunch break this shift." : "You've used both of your breaks this shift.");
+      return;
+    }
     setBusy(true);
     const { error } = await supabase
       .from("breaks")
       .insert({ shift_id: shift.id, user_id: user.id, kind });
     setBusy(false);
     if (error) return toast.error(error.message);
+    setUsedKinds((k) => [...k, kind]);
     toast.success(kind === "lunch" ? "Lunch started" : "Break started");
     notifyBreak({ data: { kind: "start", breakKind: kind } }).catch(() => {});
   };
@@ -707,24 +725,45 @@ export function WorkingStatusBox({
         <button
           type="button"
           onClick={() => startBreak("break")}
-          title="Take a break"
-          className={cn("inline-flex items-center justify-center rounded-full border border-warning/30 bg-warning/10 text-warning hover:bg-warning/20 transition-all", iconButtonClass)}
+          disabled={busy || breakLeft <= 0}
+          title={breakLeft > 0 ? `Take a break — ${breakLeft} of 2 left` : "No breaks left this shift"}
+          className={cn(
+            "inline-flex items-center justify-center rounded-full border transition-all",
+            breakLeft > 0
+              ? "border-warning/30 bg-warning/10 text-warning hover:bg-warning/20"
+              : "border-border bg-muted/30 text-muted-foreground cursor-not-allowed opacity-50",
+            iconButtonClass,
+          )}
         >
           <Coffee className={iconClass} />
         </button>
         <button
           type="button"
           onClick={() => startBreak("lunch")}
-          title="Start lunch"
-          className={cn("inline-flex items-center justify-center rounded-full border border-accent/30 bg-accent/10 text-accent hover:bg-accent/20 transition-all", iconButtonClass)}
+          disabled={busy || lunchLeft <= 0}
+          title={lunchLeft > 0 ? "Start lunch" : "Lunch already taken this shift"}
+          className={cn(
+            "inline-flex items-center justify-center rounded-full border transition-all",
+            lunchLeft > 0
+              ? "border-accent/30 bg-accent/10 text-accent hover:bg-accent/20"
+              : "border-border bg-muted/30 text-muted-foreground cursor-not-allowed opacity-50",
+            iconButtonClass,
+          )}
         >
           <UtensilsCrossed className={iconClass} />
         </button>
         <button
           type="button"
           onClick={clockOut}
-          title="Sign out"
-          className={cn("inline-flex items-center justify-center rounded-full border border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/20 transition-all", iconButtonClass)}
+          disabled={busy || !canClockOut}
+          title={canClockOut ? "Sign out of shift" : `Shift sign-out unlocks at ${todayWindow?.end.slice(0, 5)} UK — signing out of the site ends your shift automatically`}
+          className={cn(
+            "inline-flex items-center justify-center rounded-full border transition-all",
+            canClockOut
+              ? "border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/20"
+              : "border-border bg-muted/30 text-muted-foreground cursor-not-allowed opacity-50",
+            iconButtonClass,
+          )}
         >
           <LogOut className={iconClass} />
         </button>

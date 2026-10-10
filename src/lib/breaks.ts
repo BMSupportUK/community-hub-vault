@@ -20,3 +20,15 @@ export function breakIcon(kind: BreakKind) {
   if (kind === "lunch") return UtensilsCrossed;
   return Coffee;
 }
+
+/** How many times each break kind may be taken per shift. */
+export const BREAK_ALLOWANCE: Record<"break" | "lunch", number> = {
+  break: 2,
+  lunch: 1,
+};
+
+/** Breaks of this kind still available on the current shift. */
+export function breaksLeft(kind: "break" | "lunch", kindsUsed: readonly string[]): number {
+  const used = kindsUsed.filter((k) => k === kind).length;
+  return Math.max(0, BREAK_ALLOWANCE[kind] - used);
+}
