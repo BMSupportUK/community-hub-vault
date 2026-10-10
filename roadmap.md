@@ -2,6 +2,8 @@
 # Roadmap
 
 ## Current
+- [x] Away status: log every Away period so it appears in the staff shift reports and shift history
+- [x] Working Status box: move the Away icon next to the sign-in and sign-out icons
 - [x] Early finish requests: a reason is required before admin or management are asked to approve
 - [x] Staff Away: all staff, fixed reasons, manual start/end and scheduled Outside Of Office Hours
 - [x] Show the selected Away reason consistently on staff cards and Talk

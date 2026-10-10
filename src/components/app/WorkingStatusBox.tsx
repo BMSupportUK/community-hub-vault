@@ -802,6 +802,7 @@ export function WorkingStatusBox({
           Staff Shift Controls
         </span>
         <ActionIcons compact />
+        <DndDialogButton className="inline-flex size-8 shrink-0 items-center justify-center rounded-full border border-border bg-muted/30 transition hover:bg-muted" />
         {(canAnswerTickets || roles.includes("moderator")) && (
           <StaffTicketsButton staffId={user.id} staffName={displayName} placement="below" className="shrink-0" readOnly={!canAnswerTickets} />
         )}
@@ -819,7 +820,6 @@ export function WorkingStatusBox({
         >
           <Calendar className="size-4" />
         </Link>
-        <DndDialogButton className="inline-flex size-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition hover:bg-surface-2 hover:text-foreground" />
       </div>
     );
   }
@@ -849,7 +849,6 @@ export function WorkingStatusBox({
             >
               <Calendar className="size-4" />
             </Link>
-            <DndDialogButton className="inline-flex shrink-0 items-center justify-center size-8 rounded-full text-white/80 hover:text-white hover:bg-white/10 transition" />
           </div>
         </div>
         <div className={cn("text-sm", compact ? "flex min-h-0 flex-1 flex-col justify-start space-y-2 px-3 py-2.5" : "px-5 py-5 space-y-4")}>
@@ -903,6 +902,12 @@ export function WorkingStatusBox({
                 />
               )}
               <ActionIcons compact={compact} />
+              <DndDialogButton
+                className={cn(
+                  "inline-flex shrink-0 items-center justify-center rounded-full border border-border bg-muted/30 transition hover:bg-muted",
+                  compact ? "size-8" : "size-10",
+                )}
+              />
             </div>
           </div>
           {shift ? (
