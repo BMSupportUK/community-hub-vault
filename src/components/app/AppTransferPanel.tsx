@@ -301,7 +301,9 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
               <Smartphone className="size-4 text-violet-300" /> {build.appName || build.fileName}
             </DialogTitle>
             <DialogDescription>
-              24-hour secure install link. Scan the QR code or type the URL into Downloader on your device.
+              {isMobile
+                ? "24-hour secure install link. Tap Download to install it straight onto this device."
+                : "24-hour secure install link. Scan the QR code or type the URL into Downloader on your device."}
             </DialogDescription>
           </DialogHeader>
 
