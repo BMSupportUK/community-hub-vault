@@ -9,6 +9,7 @@ Boro score predictions = Championship (league) fixtures ONLY. Never let cup ties
 
 
 ## Memories
+- [Profit and costs presentation](mem://design/profit-costs.md) — Visible background, professional finance layout and right-sidebar pie statistics
 - [BM Support App Store installation videos](mem://features/app-store-install-videos.md) — Android TV, Amazon Fire TV, and iPhone Purple Player guides, secure-code naming, narration and privacy rules
 - [Admin owner tools](mem://features/admin-owner-tools) — Theme and Header links live inside Owner tools; Orders keeps the admin Add manual order action
 - [Profit payment groups](mem://features/profit-payment-groups) — Crypto is grouped under NOWPayments; bank transfers are grouped under Wise in Profit & costs

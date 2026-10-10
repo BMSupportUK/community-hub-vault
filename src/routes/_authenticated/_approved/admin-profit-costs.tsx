@@ -32,14 +32,14 @@ function AdminProfitCostsPage() {
     <main className="relative flex-1 overflow-y-auto">
       <div
         aria-hidden
-        className="pointer-events-none fixed inset-0 bg-cover bg-center opacity-25"
+         className="pointer-events-none absolute inset-0 bg-cover bg-center opacity-70"
         style={{ backgroundImage: `url(${financeTeamBg})` }}
       />
       <div
         aria-hidden
-        className="pointer-events-none fixed inset-0 bg-gradient-to-b from-background/70 via-background/85 to-background"
+         className="pointer-events-none absolute inset-0 bg-background/35"
       />
-      <div className="relative w-full max-w-6xl mx-auto px-6 py-8 space-y-6">
+       <div className="relative mx-auto w-full max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
         <div className="flex items-center gap-3">
           <Link
             to="/admin"
@@ -51,15 +51,13 @@ function AdminProfitCostsPage() {
           </Link>
         </div>
 
-        <div className="flex items-center gap-4 rounded-2xl border border-border/60 bg-card/60 backdrop-blur-md px-5 py-4 shadow-elegant">
-          <div className="size-12 rounded-xl bg-gradient-primary grid place-items-center text-primary-foreground shadow-glow">
+         <div className="flex items-center gap-4 py-5 sm:py-8">
+           <div className="grid size-14 shrink-0 place-items-center rounded-lg border border-accent/40 bg-card/90 text-accent shadow-elegant">
             <PiggyBank className="size-6" />
           </div>
           <div>
-            <h1 className="font-display text-3xl font-bold tracking-tight">Profit &amp; costs</h1>
-            <p className="text-sm text-muted-foreground">
-              See what you are making each year and month, and set what each product costs you.
-            </p>
+             <p className="mb-1 text-xs font-semibold text-foreground">BM SUPPORT · FINANCE</p>
+             <h1 className="font-display text-3xl font-bold sm:text-4xl">Profit &amp; costs</h1>
           </div>
         </div>
 
