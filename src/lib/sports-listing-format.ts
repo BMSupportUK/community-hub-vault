@@ -1913,6 +1913,11 @@ export function splitFixtureChannelBlocks(raw: string): string {
       i++;
       if (!l) { if (cur.length) groups.push(cur); cur = []; continue; }
       const flat = l.replace(/\s*\|\s*/g, " ");
+      // "EPL | Premier League" / "EPL | Premier League Hub" are provider
+      // headings, not channels — never list them. Only the team's own
+      // "… EPL ˢᴰ" feed is a real channel (two per fixture).
+      if (/^EPL Premier League/i.test(flat)) continue;
+      if (!/EPL ˢᴰ$/i.test(flat)) continue;
       const amp = flat.match(/^(.*?)(\d+)\s*&\s*(\d+)$/);
       if (amp) cur.push(`${amp[1]}${amp[2]}`, `${amp[1]}${amp[3]}`);
       else cur.push(flat);
