@@ -47,7 +47,6 @@ export function TicketReplyAlert() {
       return false;
     }
   });
-  const seenRef = useRef<Set<string>>(new Set());
   const current = queue[0] ?? null;
 
   useEffect(() => {

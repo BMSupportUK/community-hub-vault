@@ -41,8 +41,8 @@ export function MentionSoundAlert() {
 
 
     const announce = (row: MentionNotification) => {
-      if (seen.current.has(row.id)) return;
-      seen.current.add(row.id);
+      if (announcedMentionIds.has(row.id)) return;
+      announcedMentionIds.add(row.id);
       const kind = row.kind ?? "mention";
       if (kind === "mention" && isFanZoneMention(row)) {
         const fanZone = getSound("fan-zone-mention");
