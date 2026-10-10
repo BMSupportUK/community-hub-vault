@@ -170,7 +170,7 @@ export function ProfitCostsPanel() {
           <section className="space-y-5">
             <nav aria-label="Packages" className="flex flex-wrap items-center gap-1 rounded-lg border border-border/70 bg-card/85 p-2 backdrop-blur-md">
               {packageCards.map((p) => (
-                <Button variant="ghost" key={p.key} className={selection((pkg ?? packageCards[0]?.key) === p.key)} aria-pressed={(pkg ?? packageCards[0]?.key) === p.key} onClick={() => setPkg(p.key)}><Package className="size-4" />{p.name}</Button>
+                <Button variant="ghost" key={p.key} className={`${selection((pkg ?? packageCards[0]?.key) === p.key)} h-auto whitespace-normal text-left`} aria-pressed={(pkg ?? packageCards[0]?.key) === p.key} onClick={() => setPkg(p.key)}><Package className="size-4 shrink-0" />{p.name}</Button>
               ))}
             </nav>
             <div className="flex flex-wrap items-center gap-3 border-b border-border/60 pb-4">
