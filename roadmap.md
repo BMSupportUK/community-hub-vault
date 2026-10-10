@@ -2,6 +2,7 @@
 # Roadmap
 
 ## Current
+- [x] Early finish requests: a reason is required before admin or management are asked to approve
 - [x] Staff Away: all staff, fixed reasons, manual start/end and scheduled Outside Of Office Hours
 - [x] Show the selected Away reason consistently on staff cards and Talk
 - [x] Scottish Premier League Streams: add “Under Team Channels” on import and repair the saved fixtures
