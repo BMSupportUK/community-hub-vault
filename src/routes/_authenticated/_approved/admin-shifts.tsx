@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Clock as ClockIcon, Loader2, LogIn, LogOut, RefreshCw, Users } from "lucide-react";
+import { ArrowLeft, CalendarDays, Clock as ClockIcon, Hourglass, Loader2, LogIn, LogOut, RefreshCw, TimerReset, UserCheck, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -155,11 +155,22 @@ function Pill({ label, tone }: { label: string; tone: "ok" | "warn" | "muted" | 
   );
 }
 
-function StatCard({ label, value }: { label: string; value: string }) {
+function StatCard({ label, value, icon: Icon, tone }: { label: string; value: string; icon: typeof Users; tone: "primary" | "success" | "warning" | "accent" }) {
+  const tones: Record<string, string> = {
+    primary: "bg-primary/15 text-primary",
+    success: "bg-emerald-500/15 text-emerald-400",
+    warning: "bg-amber-500/15 text-amber-400",
+    accent: "bg-accent/15 text-accent",
+  };
   return (
-    <div className="rounded-2xl border border-border bg-surface-1 p-4">
-      <div className="text-xs uppercase tracking-wide text-muted-foreground">{label}</div>
-      <div className="font-display text-2xl font-bold">{value}</div>
+    <div className="group rounded-2xl border border-border bg-surface-1 p-4 shadow-sm transition-shadow hover:shadow-md">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</span>
+        <span className={cn("grid size-8 shrink-0 place-items-center rounded-xl", tones[tone])}>
+          <Icon className="size-4" />
+        </span>
+      </div>
+      <div className="mt-1 font-display text-2xl font-bold tabular-nums">{value}</div>
     </div>
   );
 }
@@ -345,96 +356,86 @@ function StaffShiftsPage() {
   return (
     <div className="space-y-6 p-4 md:p-6">
       <EarlyFinishRequestsPanel />
-      <div className="flex flex-wrap items-center gap-3">
-        <Link to="/admin" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="size-4" /> Back to admin
-        </Link>
-        <h1 className="font-display text-xl font-bold inline-flex items-center gap-2">
-          <Users className="size-5 text-primary" /> Staff shifts
-        </h1>
-        <div className="ml-auto flex items-center gap-2">
-          {RANGES.map((r) => (
-            <Button key={r.days} size="sm" variant={days === r.days ? "default" : "outline"} onClick={() => setDays(r.days)}>
-              {r.label}
+      <header className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-primary/15 via-surface-1 to-accent/10 p-5 shadow-sm md:p-6">
+        <div className="pointer-events-none absolute -right-16 -top-16 size-48 rounded-full bg-primary/10 blur-2xl" />
+        <div className="pointer-events-none absolute -bottom-20 right-24 size-40 rounded-full bg-accent/10 blur-2xl" />
+        <div className="relative flex flex-wrap items-center gap-4">
+          <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-gradient-primary text-white shadow-lg">
+            <Users className="size-6" />
+          </span>
+          <div className="min-w-0">
+            <Link to="/admin" className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground">
+              <ArrowLeft className="size-3.5" /> Back to admin
+            </Link>
+            <h1 className="font-display text-2xl font-bold tracking-tight md:text-3xl">Staff shifts</h1>
+            <p className="mt-0.5 max-w-2xl text-xs text-muted-foreground md:text-sm">
+              Clock-ins, breaks, away time and auto clock-outs — grouped by day so you never have to open each profile.
+            </p>
+          </div>
+          <div className="ml-auto flex items-center gap-2">
+            <div className="flex items-center gap-1 rounded-xl border border-border bg-background/60 p-1 backdrop-blur">
+              {RANGES.map((r) => (
+                <button
+                  key={r.days}
+                  type="button"
+                  onClick={() => setDays(r.days)}
+                  className={cn(
+                    "rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors",
+                    days === r.days ? "bg-gradient-primary text-white shadow" : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {r.label}
+                </button>
+              ))}
+            </div>
+            <Button size="icon" variant="outline" className="rounded-xl" onClick={() => void load(days)} disabled={loading} aria-label="Refresh shifts">
+              {loading ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
             </Button>
-          ))}
-          <Button size="sm" variant="outline" onClick={() => void load(days)} disabled={loading}>
-            {loading ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
-          </Button>
+          </div>
         </div>
-      </div>
+      </header>
 
-      <p className="text-xs text-muted-foreground max-w-3xl">
-        Every staff shift grouped by day, with clock-in and clock-out times, breaks, away
-        periods, the
-        &ldquo;still working?&rdquo; answer, and which shifts were clocked out automatically — so you
-        don&apos;t have to open each profile.
-      </p>
-
-      <div className="flex flex-wrap gap-2 rounded-2xl border border-border bg-surface-1 p-2">
-        {ROLE_TABS.map((t) => {
-          const count = roleCounts[t.key] ?? 0;
-          const active = role === t.key;
-          return (
-            <button
-              key={t.key}
-              type="button"
-              onClick={() => setRole(t.key)}
-              className={cn(
-                "inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-sm font-medium transition-colors",
-                active ? "bg-gradient-primary text-white" : "text-muted-foreground hover:bg-muted hover:text-foreground",
-              )}
-            >
-              {t.label}
-              <span
-                className={cn(
-                  "rounded-full px-1.5 text-[11px] tabular-nums",
-                  active ? "bg-white/20" : "bg-muted text-muted-foreground",
-                )}
-              >
-                {count}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-
-      <div className="flex flex-wrap gap-2 rounded-2xl border border-border bg-surface-1 p-2">
-        {DAY_TABS.map((t) => {
-          const count = weekdayCounts[t.key] ?? 0;
-          const active = weekday === t.key;
-          return (
-            <button
-              key={String(t.key)}
-              type="button"
-              onClick={() => setWeekday(t.key)}
-              className={cn(
-                "inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-sm font-medium transition-colors",
-                active ? "bg-gradient-primary text-white" : "text-muted-foreground hover:bg-muted hover:text-foreground",
-              )}
-            >
-              {t.label}
-              <span
-                className={cn(
-                  "rounded-full px-1.5 text-[11px] tabular-nums",
-                  active ? "bg-white/20" : "bg-muted text-muted-foreground",
-                )}
-              >
-                {count}
-              </span>
-            </button>
-          );
-        })}
+      <div className="grid gap-3 md:grid-cols-2">
+        {[
+          { tabs: ROLE_TABS, counts: roleCounts, current: role, set: (k: any) => setRole(k), label: "Role" },
+          { tabs: DAY_TABS, counts: weekdayCounts, current: weekday, set: (k: any) => setWeekday(k), label: "Day" },
+        ].map((group) => (
+          <div key={group.label} className="rounded-2xl border border-border bg-surface-1 p-2 shadow-sm">
+            <p className="px-2 pb-1.5 pt-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">{group.label}</p>
+            <div className="flex flex-wrap gap-1">
+              {group.tabs.map((t) => {
+                const count = (group.counts as Record<string | number, number>)[t.key] ?? 0;
+                const active = group.current === t.key;
+                return (
+                  <button
+                    key={String(t.key)}
+                    type="button"
+                    onClick={() => group.set(t.key)}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all",
+                      active ? "bg-gradient-primary text-white shadow" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                    )}
+                  >
+                    {t.label}
+                    <span className={cn("rounded-full px-1.5 text-[10px] tabular-nums", active ? "bg-white/20" : "bg-muted text-muted-foreground")}>
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_15rem]">
       <aside className="order-first xl:order-last">
         <div className="grid gap-3 sm:grid-cols-2 xl:sticky xl:top-4 xl:grid-cols-1">
-          <StatCard label="Shifts" value={totals.shifts.toLocaleString("en-GB")} />
-          <StatCard label="Staff" value={totals.staff.toLocaleString("en-GB")} />
-          <StatCard label="Hours worked" value={fmtMs(totals.worked)} />
-          <StatCard label="Still on shift" value={totals.open.toLocaleString("en-GB")} />
-          <StatCard label="Auto clocked out" value={totals.auto.toLocaleString("en-GB")} />
+          <StatCard label="Shifts" value={totals.shifts.toLocaleString("en-GB")} icon={CalendarDays} tone="primary" />
+          <StatCard label="Staff" value={totals.staff.toLocaleString("en-GB")} icon={Users} tone="accent" />
+          <StatCard label="Hours worked" value={fmtMs(totals.worked)} icon={Hourglass} tone="success" />
+          <StatCard label="Still on shift" value={totals.open.toLocaleString("en-GB")} icon={UserCheck} tone="success" />
+          <StatCard label="Auto clocked out" value={totals.auto.toLocaleString("en-GB")} icon={TimerReset} tone="warning" />
         </div>
       </aside>
 
@@ -454,9 +455,10 @@ function StaffShiftsPage() {
             const dayRows = sections.flatMap(([, r]) => r);
             return (
             <section key={key} className="space-y-4">
-              <div className="flex flex-wrap items-center gap-2">
-                <h2 className="font-display font-bold">{fmtDayHeading(key)}</h2>
-                <span className="text-xs text-muted-foreground">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="h-6 w-1 rounded-full bg-gradient-primary" />
+                <h2 className="font-display text-lg font-bold tracking-tight">{fmtDayHeading(key)}</h2>
+                <span className="rounded-full border border-border bg-surface-1 px-2.5 py-0.5 text-xs font-medium text-muted-foreground tabular-nums">
                   {dayRows.length} shift{dayRows.length === 1 ? "" : "s"} ·{" "}
                   {fmtMs(dayRows.reduce((a, s) => a + shiftBreakdown(s, breaksByShift[s.id] ?? [], awayByUser[s.user_id] ?? []).workedMs, 0))} worked
                 </span>
@@ -481,12 +483,22 @@ function StaffShiftsPage() {
                     <div key={s.id} className="grid min-w-0 gap-3 xl:grid-cols-2">
                     <div
                       className={cn(
-                        "rounded-2xl border p-4",
+                        "rounded-2xl border p-4 shadow-sm transition-shadow hover:shadow-md",
                         open ? "border-emerald-400/40 bg-emerald-500/5" : "border-border bg-surface-1",
                       )}
                     >
                       <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <span
+                            className={cn(
+                              "grid size-10 shrink-0 place-items-center rounded-full font-display text-sm font-bold",
+                              open ? "bg-emerald-500/20 text-emerald-300" : "bg-primary/15 text-primary",
+                            )}
+                            aria-hidden
+                          >
+                            {nameOf(s.user_id).slice(0, 2).toUpperCase()}
+                          </span>
+                          <div className="min-w-0">
                           {p?.username ? (
                             <Link
                               to="/u/$username"
@@ -499,10 +511,11 @@ function StaffShiftsPage() {
                           ) : (
                             <p className="font-semibold truncate">{nameOf(s.user_id)}</p>
                           )}
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs text-muted-foreground tabular-nums">
                             {fmtMs(durationMs(s.clock_in, s.clock_out))}
                             {open ? " on shift so far" : " on shift"}
                           </p>
+                          </div>
                         </div>
                         {open ? (
                           <Pill label="On shift" tone="ok" />
