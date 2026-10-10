@@ -13,8 +13,8 @@ import androidApkAsset from "@/assets/BMSupport.apk.asset.json";
  * "new version available" notification for every member.
  */
 export const ANDROID_RELEASE = {
-  versionName: "1.1.9",
-  versionCode: 11,
+  versionName: "1.2.0",
+  versionCode: 12,
   /** Raw CDN asset (served as application/zip) — proxied by /api/public/android-apk. */
   assetUrl: androidApkAsset.url,
   /** Always use this for downloads/QR: correct .apk filename + mime type. */
@@ -23,5 +23,5 @@ export const ANDROID_RELEASE = {
   /** QR target: a landing page with one tap-to-download button, so camera
    *  apps / link previews opening the URL can't start duplicate downloads. */
   qrUrl: "https://bmsupport.uk/get-android-app",
-  notes: "Shift start and shift end alerts have brand-new sound settings so they play their spoken message again, and the old duplicate shift alert entries are removed.",
+  notes: "New inbox message alerts now ding on your phone even when the app is closed, and the alert sound setting is created by the app itself so it can't go missing.",
 } as const;

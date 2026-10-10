@@ -28,6 +28,8 @@ public class MainActivity extends BridgeActivity {
         super.onCreate(savedInstanceState);
         createDefaultNotificationChannel();
         createTicketReplyNotificationChannel();
+        createDingChannel("bm_support_alerts_v4", "BM Support alerts",
+                "Signups, tickets, orders, inbox messages and staff alerts");
         createSpokenChannel("bm_support_tickets_v3", "New support tickets", R.raw.ticket_notify);
         createSpokenChannel("bm_support_shift_start_v4", "Shift starting", R.raw.shift_start_notify);
         createSpokenChannel("bm_support_shift_end_v4", "Shift ending", R.raw.shift_end_notify);
@@ -143,6 +145,28 @@ public class MainActivity extends BridgeActivity {
         if (notificationManager != null) {
             notificationManager.createNotificationChannel(channel);
         }
+    }
+
+    /**
+     * Ding channels use the phone's standard notification sound. Created
+     * natively so a closed-app push finds the channel even before the web
+     * layer has run (the JS copy in use-push-register matches these settings).
+     */
+    private void createDingChannel(String id, String name, String description) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return;
+        AudioAttributes audioAttrs = new AudioAttributes.Builder()
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+                .build();
+        NotificationChannel channel = new NotificationChannel(id, name, NotificationManager.IMPORTANCE_HIGH);
+        channel.setDescription(description);
+        channel.enableVibration(true);
+        channel.enableLights(true);
+        channel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
+        channel.setBypassDnd(false);
+        channel.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION), audioAttrs);
+        NotificationManager nm = getSystemService(NotificationManager.class);
+        if (nm != null) nm.createNotificationChannel(channel);
     }
 
     /** Old shift channels kept a phone-changed sound forever; delete them so only the fresh ones show. */
