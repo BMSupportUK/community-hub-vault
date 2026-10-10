@@ -265,45 +265,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               new Promise((resolve) => window.setTimeout(resolve, 1500)),
             ]);
           }
-          // Auto-clock-out any active shift (and end any active break) so the
-          // staff member doesn't stay "on shift" after leaving. This is
-          // best-effort only: it must never be able to block or delay the
-          // actual sign out (a slow/failing query used to leave the user
-          // stuck signed in).
-          const autoClockOut = async () => {
+          // Signing out mid-shift must not end the shift silently: it creates
+          // an early-finish request for admin/management to approve. The shift
+          // (and any open break) stays open until they confirm. Best-effort
+          // only: it must never block or delay the actual sign out.
+          const requestEarlyFinishOnSignOut = async () => {
             if (!signingOutUser) return;
-            const { data: shift } = await supabase
-              .from("shifts")
-              .select("id")
-              .eq("user_id", signingOutUser.id)
-              .is("clock_out", null)
-              .order("clock_in", { ascending: true })
-              .limit(1)
-              .maybeSingle();
-            if (!shift?.id) return;
-            const { data: brk } = await supabase
-              .from("breaks")
-              .select("id,kind")
-              .eq("shift_id", shift.id)
-              .is("ended_at", null)
-              .maybeSingle();
-            if (brk?.id) {
-              await supabase
-                .from("breaks")
-                .update({ ended_at: new Date().toISOString() })
-                .eq("id", brk.id);
-              sendBreakEventPush({ data: { kind: "end", breakKind: brk.kind as "break" | "lunch" } }).catch(() => {});
-            }
-            await supabase
-              .from("shifts")
-              .update({ clock_out: new Date().toISOString() })
-              .eq("id", shift.id);
-            sendShiftEventPush({ data: { kind: "clock_out" } }).catch(() => {});
+            const { requestEarlyFinish } = await import("@/lib/early-finish.functions");
+            await requestEarlyFinish({ data: { reason: "Signed out mid-shift" } });
           };
 
           await Promise.race([
-            autoClockOut().catch((err) => {
-              console.warn("[auth] auto clock-out on sign out failed", err);
+            requestEarlyFinishOnSignOut().catch((err) => {
+              // "Not on shift" / duplicate pending request are fine — ignore.
+              console.warn("[auth] early-finish request on sign out skipped", err);
             }),
             new Promise((resolve) => window.setTimeout(resolve, 2500)),
           ]);
