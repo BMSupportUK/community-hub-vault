@@ -798,7 +798,7 @@ function ProfilePage() {
 
           {canSeeShifts && (
             <TabsContent value="shifts" className={paneClass}>
-              <ShiftHistoryPanel userId={profile.id} name={display} />
+              <ShiftHistoryPanel userId={profile.id} name={display} username={profile.username} />
             </TabsContent>
           )}
 

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
+import { AtSign } from "lucide-react";
 import { shiftBreakdown, shiftHours } from "@/lib/shift-breakdown";
 import { awayIcon } from "@/lib/staff-away";
 import type { BreakKind } from "@/lib/breaks";
@@ -8,9 +9,11 @@ interface Props {
   shift: { clock_in: string; clock_out: string | null };
   breaks: { kind: BreakKind; started_at: string; ended_at: string | null }[];
   away: { reason: string; starts_at: string; ends_at: string | null }[];
+  /** Staff username shown at the bottom of the card so a chart stays identifiable on its own. */
+  username?: string | null;
 }
 
-export function ShiftBreakdownCard({ shift, breaks, away }: Props) {
+export function ShiftBreakdownCard({ shift, breaks, away, username }: Props) {
   const [now, setNow] = useState<number | null>(null);
   useEffect(() => {
     setNow(Date.now());

@@ -584,7 +584,7 @@ function StaffShiftsPage() {
                         <ClockIcon className="size-3" /> Shift {s.id.slice(0, 8)}
                       </p>
                     </div>
-                    <ShiftBreakdownCard shift={s} breaks={breaksByShift[s.id] ?? []} away={awayByUser[s.user_id] ?? []} />
+                    <ShiftBreakdownCard shift={s} breaks={breaksByShift[s.id] ?? []} away={awayByUser[s.user_id] ?? []} username={p?.username} />
                     </div>
                   );
                  })}
