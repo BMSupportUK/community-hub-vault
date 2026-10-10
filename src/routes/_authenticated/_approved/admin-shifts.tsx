@@ -404,7 +404,7 @@ function StaffShiftsPage() {
             <p className="px-2 pb-1.5 pt-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">{group.label}</p>
             <div className="flex flex-wrap gap-1">
               {group.tabs.map((t) => {
-                const count = group.counts[t.key] ?? 0;
+                const count = (group.counts as Record<string | number, number>)[t.key] ?? 0;
                 const active = group.current === t.key;
                 return (
                   <button
