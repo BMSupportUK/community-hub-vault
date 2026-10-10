@@ -931,7 +931,12 @@ export function splitListingSections(raw: string | null | undefined): ListingSec
   // A provider counts even when its own rows need extra work later, so long
   // as it wrote something under its name.
   const filled = sections.filter((section) => section.raw.split("\n").some((line) => cleanLine(line)));
-  return filled.length >= 2 ? filled : [];
+  // Drop banner-only sections (a competition name with no times of its own)
+  // when the other sections carry the actual listings.
+  const hasClock = (s: ListingSection) => /\d{1,2}\s*[:.]\s*\d{2}|\d{1,2}\s*(?:am|pm)\b/i.test(s.raw);
+  const timed = filled.filter(hasClock);
+  const usable = timed.length >= 2 ? timed : filled;
+  return usable.length >= 2 ? usable : [];
 }
 
 const SMALL_LETTERS: Record<string, string> = {
