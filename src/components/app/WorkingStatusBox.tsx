@@ -406,6 +406,11 @@ export function WorkingStatusBox({
         { event: "*", schema: "public", table: "breaks", filter: `user_id=eq.${user.id}` },
         () => refresh(),
       )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "early_finish_requests", filter: `user_id=eq.${user.id}` },
+        () => refresh(),
+      )
       .on("postgres_changes", { event: "*", schema: "public", table: "shift_slots" }, () =>
         refresh(),
       )
