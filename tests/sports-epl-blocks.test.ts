@@ -1,6 +1,6 @@
 import { expect, test } from "bun:test";
 import { checkSportsImport } from "../src/lib/sports-import-check";
-import { normalizeSportsListingText, parseSportsListingBlock, sortSportsListingEvents, splitFixtureChannelBlocks } from "../src/lib/sports-listing-format";
+import { cardRawForEplEvent, normalizeSportsListingText, parseSportsListingBlock, sortSportsListingEvents, splitFixtureChannelBlocks } from "../src/lib/sports-listing-format";
 
 test("Split into single events breaks Premier League fixtures into one block per channel group", async () => {
   // Same sequence as splitQueueItem in discord-import.functions.ts.
@@ -56,4 +56,18 @@ test("isEplFixturePost detects the Premier League fixture layout only", async ()
   expect(isEplFixturePost(raw)).toBe(true);
   expect(isEplFixturePost("Tennis 01 | A v B 12:00")).toBe(false);
   expect(isEplFixturePost("NBA 01: Nets v Hornets 12:00am Wed")).toBe(false);
+});
+
+test("EPL button cards: each channel card re-reads as one event with its fixture, KO time and channels", async () => {
+  // Card text written by splitQueueItem for each channel group.
+  const raw = normalizeSportsListingText(await Bun.file(new URL("./fixtures-epl-2026-10-10.txt", import.meta.url)).text());
+  const events = sortSportsListingEvents(parseSportsListingBlock(splitFixtureChannelBlocks(raw)));
+  for (const e of events) {
+    const card = cardRawForEplEvent(e);
+    const back = parseSportsListingBlock(splitFixtureChannelBlocks(normalizeSportsListingText(card)));
+    expect(back).toHaveLength(1);
+    expect(back[0].title).toBe(e.title);
+    expect(back[0].time).toBe(e.time);
+    expect(back[0].channels).toEqual(e.channels);
+  }
 });

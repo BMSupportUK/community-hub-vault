@@ -785,14 +785,14 @@ function QueueRow({
           <Button
             size="sm"
             className="h-7 px-2 text-xs"
-            disabled={splittingProvider || providerSections.length < 2}
-            onClick={onSplitProvider}
+            disabled={splitting || splitCount < 1}
+            onClick={onSplit}
           >
-            {splittingProvider ? <Loader2 className="size-3 animate-spin" /> : <Scissors className="size-3" />}
-            EPL split — one listing per fixture ({providerSections.length})
+            {splitting ? <Loader2 className="size-3 animate-spin" /> : <Scissors className="size-3" />}
+            EPL split — {splitCount} channel cards ({providerSections.length} fixtures)
           </Button>
           <span className="text-[11px] text-muted-foreground">
-            Each fixture keeps its kick-off time and splits into its channel blocks on import
+            One card per channel group, each keeping the fixture name and kick-off time
           </span>
         </div>
       ) : (

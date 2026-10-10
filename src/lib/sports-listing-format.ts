@@ -1924,3 +1924,12 @@ export function splitFixtureChannelBlocks(raw: string): string {
   }
   return out.join("\n");
 }
+
+/**
+ * Queue-card text for one Premier League channel block: date, kick-off time,
+ * fixture and each channel on its own line, so it re-reads as exactly one
+ * event (a "Sunderland v …" title never loses its "Sun" to the day reader).
+ */
+export function cardRawForEplEvent(e: { date?: string | null; time?: string | null; title: string; channels: string[] }): string {
+  return [e.date, e.time, e.title, ...e.channels].filter(Boolean).join("\n");
+}
