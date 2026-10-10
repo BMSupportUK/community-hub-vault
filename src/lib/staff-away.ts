@@ -1,5 +1,15 @@
+import { Cigarette, Moon, Toilet, Users } from "lucide-react";
+
 export const AWAY_REASONS = ["Toilet Break", "Smoking Break", "Meeting", "Outside Of Office Hours"] as const;
 export type AwayReason = (typeof AWAY_REASONS)[number];
+
+/** Each Away reason gets its own icon, the same way break kinds do. */
+export function awayIcon(reason: string | null | undefined) {
+  if (reason === "Toilet Break") return Toilet;
+  if (reason === "Smoking Break") return Cigarette;
+  if (reason === "Meeting") return Users;
+  return Moon; // Outside Of Office Hours and anything unknown keeps the moon.
+}
 export function isScheduledAway(reason: AwayReason) {
   return reason === "Outside Of Office Hours";
 }
