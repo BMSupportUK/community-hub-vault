@@ -843,6 +843,7 @@ export function WorkingStatusBox({
                 />
               )}
               <ActionIcons compact={compact} />
+              {awayPill}
               <DndDialogButton
                 className={cn(
                   "inline-flex shrink-0 items-center justify-center rounded-full border border-border bg-muted/30 transition hover:bg-muted",
