@@ -35,3 +35,4 @@
 <!-- LOVABLE:BEGIN -->
 - Break popup/sound shares one session-persisted per-break claim; expiry updates silently to prevent replay after dismiss, lock or reload.
 <!-- LOVABLE:END -->
+- Fantasy scoring gives full rates only to players who are in the manager's XI AND started the real match (stored per stat row as `started` from the FotMob team sheet); cards are counted from the match timeline as well as player stats, because FotMob's player table often omits them.
