@@ -49,3 +49,11 @@ test("Premier League fixtures split into one section per fixture for separate fi
   expect(events).toHaveLength(3);
   expect(events.every((e) => e.title === "Arsenal v Leeds United" && e.time.startsWith("12:30"))).toBe(true);
 });
+
+test("isEplFixturePost detects the Premier League fixture layout only", async () => {
+  const { isEplFixturePost } = await import("../src/lib/sports-listing-format");
+  const raw = await Bun.file(new URL("./fixtures-epl-2026-10-10.txt", import.meta.url)).text();
+  expect(isEplFixturePost(raw)).toBe(true);
+  expect(isEplFixturePost("Tennis 01 | A v B 12:00")).toBe(false);
+  expect(isEplFixturePost("NBA 01: Nets v Hornets 12:00am Wed")).toBe(false);
+});
