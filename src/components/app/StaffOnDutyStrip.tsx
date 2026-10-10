@@ -66,8 +66,9 @@ function TalkStaffStatusLine({
   shiftElapsed: number;
 }) {
   const dnd = useDndStatus(userId);
+  // Away is already shown by the DndCountdown pill below — don't repeat it here.
   if (dnd?.active) {
-    return <span className="font-semibold text-primary">Away{dnd.reason ? ` — ${dnd.reason}` : ""}</span>;
+    return null;
   }
   if (shift) {
     return (
