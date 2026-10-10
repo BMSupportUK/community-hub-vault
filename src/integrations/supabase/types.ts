@@ -1697,6 +1697,47 @@ export type Database = {
         }
         Relationships: []
       }
+      early_finish_requests: {
+        Row: {
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          id: string
+          reason: string | null
+          shift_id: string
+          status: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          id?: string
+          reason?: string | null
+          shift_id: string
+          status?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          id?: string
+          reason?: string | null
+          shift_id?: string
+          status?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "early_finish_requests_shift_id_fkey"
+            columns: ["shift_id"]
+            isOneToOne: false
+            referencedRelation: "shifts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       email_forwarding_confirmations: {
         Row: {
           confirmation_code: string | null
@@ -5055,6 +5096,9 @@ export type Database = {
           clock_in: string
           clock_out: string | null
           created_at: string
+          early_finish_approved_by: string | null
+          early_finish_at: string | null
+          early_finish_reason: string | null
           end_prompt_asked_at: string | null
           id: string
           still_working_ack_at: string | null
@@ -5064,6 +5108,9 @@ export type Database = {
           clock_in?: string
           clock_out?: string | null
           created_at?: string
+          early_finish_approved_by?: string | null
+          early_finish_at?: string | null
+          early_finish_reason?: string | null
           end_prompt_asked_at?: string | null
           id?: string
           still_working_ack_at?: string | null
@@ -5073,6 +5120,9 @@ export type Database = {
           clock_in?: string
           clock_out?: string | null
           created_at?: string
+          early_finish_approved_by?: string | null
+          early_finish_at?: string | null
+          early_finish_reason?: string | null
           end_prompt_asked_at?: string | null
           id?: string
           still_working_ack_at?: string | null
@@ -6932,6 +6982,10 @@ export type Database = {
       customer_nameplate_is_default: {
         Args: { _nameplate_id: string }
         Returns: boolean
+      }
+      decide_early_finish: {
+        Args: { _approve: boolean; _id: string }
+        Returns: string
       }
       delete_app_role: { Args: { _name: string }; Returns: undefined }
       directory_member_roles: {
