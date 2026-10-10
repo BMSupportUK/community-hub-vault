@@ -1,4 +1,5 @@
 import type { FotmobEventDetail, FotmobEventPlayer } from "@/lib/fotmob-boro.types";
+import { fotmobEventKey } from "@/lib/fotmob-event-key";
 // Server-side Boro match feed. FotMob is used because its data endpoint is
 // reachable from the production worker, unlike ESPN's site API.
 
@@ -287,9 +288,8 @@ export async function fetchFotmobSummary(input: {
     const stableId = ["fotmob", type || "event", event?.time ?? event?.timeStr ?? index, event?.isHome ? "home" : "away", playerIds]
       .join("-")
       .replace(/[^a-zA-Z0-9-]/g, "-");
-    const providerId = event?.eventId ?? event?.reactKey;
     return {
-      id: providerId != null && !String(providerId).startsWith("undefined") ? String(providerId) : stableId,
+      id: fotmobEventKey(event, stableId),
       type: {
         type: isGoal
           ? (event?.ownGoal ? "own-goal" : "goal")
