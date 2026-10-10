@@ -395,11 +395,13 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
           {transfer && <TransferStatusSteps transfer={transfer} />}
 
           <div className="flex flex-col sm:flex-row flex-wrap gap-2 justify-center">
-            <Button size="sm" asChild className="bg-gradient-primary text-primary-foreground hover:opacity-90 h-auto min-h-9 w-full sm:w-auto whitespace-normal">
-              <a href={`/api/public/a/${transfer?.token}`}>
-                <Download className="size-4 mr-1 shrink-0" /> <span>Download to this device</span>
-              </a>
-            </Button>
+            {!isMobile && (
+              <Button size="sm" asChild className="bg-gradient-primary text-primary-foreground hover:opacity-90 h-auto min-h-9 w-full sm:w-auto whitespace-normal">
+                <a href={`/api/public/a/${transfer?.token}`}>
+                  <Download className="size-4 mr-1 shrink-0" /> <span>Download to this device</span>
+                </a>
+              </Button>
+            )}
             <Button size="sm" variant="secondary" className="h-auto min-h-9 w-full sm:w-auto whitespace-normal" disabled={busy === "delete"} onClick={onDelete}>
               {busy === "delete" ? <Loader2 className="size-4 mr-1 animate-spin shrink-0" /> : <Trash2 className="size-4 mr-1 shrink-0" />}
               <span>Delete link</span>
