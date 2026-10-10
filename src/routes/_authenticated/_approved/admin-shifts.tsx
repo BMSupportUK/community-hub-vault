@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, Clock as ClockIcon, Loader2, LogIn, LogOut, RefreshCw, Users } from "lucide-react";
+import { ArrowLeft, Clock as ClockIcon, Loader2, LogIn, LogOut, Moon, RefreshCw, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -47,6 +47,24 @@ interface BreakRow {
   kind: BreakKind;
   started_at: string;
   ended_at: string | null;
+}
+
+/** One logged Away period, written by the away_log trigger. */
+interface AwayRow {
+  id: string;
+  user_id: string;
+  reason: string;
+  starts_at: string;
+  ends_at: string | null;
+}
+
+/** Away periods that fall inside a shift's clocked window. */
+function awayForShift(rows: AwayRow[], s: ShiftRow) {
+  const from = new Date(s.clock_in).getTime();
+  const to = s.clock_out ? new Date(s.clock_out).getTime() : Date.now();
+  return rows.filter(
+    (a) => new Date(a.starts_at).getTime() < to && (!a.ends_at || new Date(a.ends_at).getTime() > from),
+  );
 }
 
 /** Hourly rota slot claimed by a moderator. */
@@ -172,6 +190,7 @@ function StaffShiftsPage() {
   const [loading, setLoading] = useState(true);
   const [shifts, setShifts] = useState<ShiftRow[]>([]);
   const [breaksByShift, setBreaksByShift] = useState<Record<string, BreakRow[]>>({});
+  const [awayByUser, setAwayByUser] = useState<Record<string, AwayRow[]>>({});
   const [people, setPeople] = useState<Record<string, PersonRow>>({});
   const [rolesByUser, setRolesByUser] = useState<Record<string, string[]>>({});
   const [claimedSlots, setClaimedSlots] = useState<ClaimedSlotRow[]>([]);
@@ -221,6 +240,20 @@ function StaffShiftsPage() {
       for (const b of (bd ?? []) as BreakRow[]) (bmap[b.shift_id] ??= []).push(b);
     }
     setBreaksByShift(bmap);
+
+    // Away periods for the same people, matched to each shift when rendering.
+    const awayIds = [...new Set(rows.map((r) => r.user_id))];
+    const amap: Record<string, AwayRow[]> = {};
+    if (awayIds.length) {
+      const { data: ad } = await supabase
+        .from("away_log")
+        .select("id, user_id, reason, starts_at, ends_at")
+        .in("user_id", awayIds)
+        .gte("starts_at", from.toISOString())
+        .order("starts_at", { ascending: true });
+      for (const a of (ad ?? []) as AwayRow[]) (amap[a.user_id] ??= []).push(a);
+    }
+    setAwayByUser(amap);
 
     const userIds = [...new Set([...rows.map((r) => r.user_id), ...claimedRows.map((r) => r.user_id)])];
     if (userIds.length) {
@@ -379,7 +412,8 @@ function StaffShiftsPage() {
       </div>
 
       <p className="text-xs text-muted-foreground max-w-3xl">
-        Every staff shift grouped by day, with clock-in and clock-out times, breaks, the
+        Every staff shift grouped by day, with clock-in and clock-out times, breaks, away
+        periods, the
         &ldquo;still working?&rdquo; answer, and which shifts were clocked out automatically — so you
         don&apos;t have to open each profile.
       </p>
@@ -607,6 +641,21 @@ function StaffShiftsPage() {
                               </div>
                             );
                           })}
+                        </div>
+                      )}
+
+                      {awayForShift(awayByUser[s.user_id] ?? [], s).length > 0 && (
+                        <div className="mt-2 space-y-1.5 border-t border-border/60 pt-2 text-sm">
+                          {awayForShift(awayByUser[s.user_id] ?? [], s).map((a) => (
+                            <div key={a.id} className="flex items-center gap-2">
+                              <Moon className="size-4 text-violet-400" />
+                              <span className="text-muted-foreground">Away · {a.reason}</span>
+                              <span className="ml-auto font-medium tabular-nums">
+                                {fmtTime(a.starts_at)} · {fmtMs(durationMs(a.starts_at, a.ends_at))}
+                                {!a.ends_at ? " (ongoing)" : ""}
+                              </span>
+                            </div>
+                          ))}
                         </div>
                       )}
 
