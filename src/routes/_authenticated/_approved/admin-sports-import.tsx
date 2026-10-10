@@ -12,7 +12,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { ArrowLeft, Loader2, Sparkles, Send, Trash2, Inbox, Clock, Check, Scissors, Settings2, X } from "lucide-react";
 import { firstClockIn, firstDateIn, parseClockTime, toSingleZoneTime, type TimeZoneChoice } from "@/lib/import-time";
-import { formatSportsListingBlock, formatSportsListingEvents, normalizeSportsListingText, parseSportsListingBlock, splitListingSections } from "@/lib/sports-listing-format";
+import { formatSportsListingBlock, formatSportsListingEvents, normalizeSportsListingText, parseSportsListingBlock, splitFixtureChannelBlocks, splitListingSections } from "@/lib/sports-listing-format";
 import { suggestListingFixes, saveQueueListing, type ListingFixSuggestion } from "@/lib/listing-web-fix.functions";
 import { checkSportsImport, type ImportCheckResult } from "@/lib/sports-import-check";
 import {
@@ -716,7 +716,8 @@ function QueueRow({
   // Always offer the choice so a wrong pick can be changed before importing.
   const needsZone = parseClockTime(zoneSource) !== null;
   const splitCount = useMemo(
-    () => parseSportsListingBlock(normalizedRaw).length,
+    // Premier League fixture posts count one block per channel group.
+    () => parseSportsListingBlock(splitFixtureChannelBlocks(normalizedRaw)).length,
     [normalizedRaw],
   );
   // Names listed inside the post that each have their own guide.

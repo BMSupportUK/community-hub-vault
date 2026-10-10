@@ -10,6 +10,7 @@ import {
   parseSportsListingBlock,
   plainListingToHtml,
   sortSportsListingEvents,
+  splitFixtureChannelBlocks,
   splitListingSections,
   headlineListingDate,
   listingBlockHasDate,
@@ -438,7 +439,9 @@ export const splitQueueItem = createServerFn({ method: "POST" })
 
     const raw = normalizeSportsListingText(String((item.parsed_event as any)?.raw ?? item.raw_text ?? ""));
     const headDate = headlineListingDate(raw);
-    const events = sortSportsListingEvents(parseSportsListingBlock(raw)).map((e) => ({ ...e, date: e.date || headDate }));
+    // Premier League fixture posts split into one block per channel group
+    // first, so each block keeps the fixture name and kick-off time.
+    const events = sortSportsListingEvents(parseSportsListingBlock(splitFixtureChannelBlocks(raw))).map((e) => ({ ...e, date: e.date || headDate }));
     if (!events.length) throw new Error("Couldn't read any events in this post");
 
     const rows = events.map((e, i) => ({
