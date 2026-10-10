@@ -848,7 +848,7 @@ function QueueRow({
           </div>
         </div>
       )}
-      {providerSections.length > 1 && (
+      {!isEpl && providerSections.length > 1 && (
         <div className="flex flex-wrap items-center gap-2" onClick={(e) => e.stopPropagation()}>
           <Button
             size="sm"
