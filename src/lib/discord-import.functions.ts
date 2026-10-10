@@ -11,6 +11,8 @@ import {
   plainListingToHtml,
   sortSportsListingEvents,
   splitFixtureChannelBlocks,
+  isEplFixturePost,
+  cardRawForEplEvent,
   splitListingSections,
   headlineListingDate,
   listingBlockHasDate,
@@ -469,7 +471,8 @@ export const splitQueueItem = createServerFn({ method: "POST" })
       source_ref: `${item.source_ref ?? `split:${item.id}`}#${i + 1}`,
       forwarded_from: item.forwarded_from ?? null,
       created_by: userId,
-    }));
+      };
+    });
 
     const { error: splitErr } = await supabaseAdmin.rpc("replace_discord_import_queue_item_with_split", {
       p_original_id: item.id,
