@@ -28,6 +28,7 @@ import { type BreakKind, BREAK_LIMITS as LIMITS, breakLabel, breakIcon, breaksLe
 import { useServerFn } from "@tanstack/react-start";
 import { sendShiftEventPush, sendBreakEventPush } from "@/lib/push.functions";
 import { toast } from "sonner";
+import { requestEarlyFinish } from "@/lib/early-finish.functions";
 import { formatRoleLabel } from "@/lib/role-label";
 import { browserTimezone } from "@/hooks/use-user-timezone";
 import { shiftWindowToUtcMs } from "@/hooks/use-timezone";
@@ -283,6 +284,8 @@ export function WorkingStatusBox({
   const [shift, setShift] = useState<Shift | null>(null);
   const [brk, setBrk] = useState<Break | null>(null);
   const [usedKinds, setUsedKinds] = useState<string[]>([]);
+  const [earlyPending, setEarlyPending] = useState(false);
+  const askEarlyFinish = useServerFn(requestEarlyFinish);
   const [now, setNow] = useState(() => Date.now());
   const [busy, setBusy] = useState(false);
   const [nextSlot, setNextSlot] = useState<NextSlot | null>(null);
@@ -335,7 +338,15 @@ export function WorkingStatusBox({
           .select("kind")
           .eq("shift_id", (s as Shift).id);
         setUsedKinds(((all as { kind: string }[]) ?? []).map((r) => r.kind));
+        const { data: ef } = await supabase
+          .from("early_finish_requests")
+          .select("id")
+          .eq("shift_id", (s as Shift).id)
+          .eq("status", "pending")
+          .limit(1);
+        setEarlyPending((ef ?? []).length > 0);
       } else {
+        setEarlyPending(false);
         setBrk(null);
         setUsedKinds([]);
       }
@@ -438,8 +449,24 @@ export function WorkingStatusBox({
   // pressed by accident mid-shift. No rota slot today = always allowed.
   const canClockOut = !todayWindow || londonNow(now).time >= todayWindow.end;
 
+  const requestEarly = async () => {
+    if (!shift || earlyPending) return;
+    const reason = window.prompt("Request an early finish — admin or management must approve it.\n\nReason (optional):");
+    if (reason === null) return;
+    setBusy(true);
+    try {
+      await askEarlyFinish({ data: { reason } });
+      setEarlyPending(true);
+      toast.success("Early finish requested — you'll be signed off once it's approved.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Couldn't send the request");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const clockOut = async () => {
-    if (!shift || !canClockOut) return;
+    if (!shift || !canClockOut) return requestEarly();
     setBusy(true);
     if (brk) {
       await supabase.from("breaks").update({ ended_at: new Date().toISOString() }).eq("id", brk.id);
@@ -755,8 +782,14 @@ export function WorkingStatusBox({
         <button
           type="button"
           onClick={clockOut}
-          disabled={busy || !canClockOut}
-          title={canClockOut ? "Sign out of shift" : `Shift sign-out unlocks at ${todayWindow?.end.slice(0, 5)} UK — signing out of the site ends your shift automatically`}
+          disabled={busy || (!canClockOut && earlyPending)}
+          title={
+            canClockOut
+              ? "Sign out of shift"
+              : earlyPending
+                ? "Early finish requested — waiting for admin or management"
+                : `Shift sign-out unlocks at ${todayWindow?.end.slice(0, 5)} UK — tap to request an early finish`
+          }
           className={cn(
             "inline-flex items-center justify-center rounded-full border transition-all",
             canClockOut
