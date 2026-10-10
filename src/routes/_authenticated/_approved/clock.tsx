@@ -12,8 +12,19 @@ import { sendShiftEventPush, sendBreakEventPush } from "@/lib/push.functions";
 import { PushNotificationsToggle } from "@/components/app/PushNotificationsToggle";
 import { type BreakKind, BREAK_LIMITS, breakLabel, breaksLeft } from "@/lib/breaks";
 import { StaffOnDutyStrip } from "@/components/app/StaffOnDutyStrip";
+import { Button } from "@/components/ui/button";
+import { requestEarlyFinish } from "@/lib/early-finish.functions";
+import { shiftFinishAction, ukClock } from "@/lib/shift-finish";
 
 export const Route = createFileRoute("/_authenticated/_approved/clock")({
+  head: () => ({ meta: [
+    { title: "Time Tracking — BM Support" },
+    { name: "description", content: "BM Support staff shift hours, breaks and early-finish requests." },
+    { property: "og:title", content: "Time Tracking — BM Support" },
+    { property: "og:description", content: "Manage BM Support staff shifts and break times." },
+    { property: "og:type", content: "website" },
+    { name: "twitter:card", content: "summary" },
+  ] }),
   component: ClockPage,
 });
 
@@ -38,6 +49,10 @@ function ClockPage() {
   const { user, isStaff } = useAuth();
   const notifyShift = useServerFn(sendShiftEventPush);
   const notifyBreak = useServerFn(sendBreakEventPush);
+  const askEarlyFinish = useServerFn(requestEarlyFinish);
+  const [rotaEnd, setRotaEnd] = useState<string | null>(null);
+  const [finishReady, setFinishReady] = useState(false);
+  const [earlyPending, setEarlyPending] = useState(false);
   const tz = useUserTimezone();
   const fmtTime = (iso: string) =>
     new Date(iso).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: tz });
@@ -73,6 +88,17 @@ function ClockPage() {
     setActiveShifts((allShifts as Shift[]) ?? []);
     setActiveBreaks((allBreaks as Break[]) ?? []);
 
+    const london = ukClock(Date.now());
+    const [{ data: slots, error: rotaError }, { data: requests, error: requestError }] = await Promise.all([
+      supabase.from("shift_slots").select("start_time,end_time").eq("assigned_to", user.id)
+        .eq("shift_date", london.date).order("start_time"),
+      mine ? supabase.from("early_finish_requests").select("id").eq("shift_id", mine.id)
+        .eq("status", "pending").limit(1) : Promise.resolve({ data: [], error: null }),
+    ]);
+    setRotaEnd(slots?.find((slot) => slot.end_time > london.time)?.end_time ?? null);
+    setEarlyPending((requests ?? []).length > 0);
+    setFinishReady(!rotaError && !requestError);
+
     if (mine) {
       const { data: br } = await supabase
         .from("breaks").select("*").eq("shift_id", (mine as Shift).id).is("ended_at", null).order("started_at", { ascending: false }).limit(1).maybeSingle();
@@ -90,9 +116,11 @@ function ClockPage() {
   useEffect(() => {
     refresh();
     const ch = supabase
-      .channel("clock")
+      .channel(`clock-${user?.id}-${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "shifts" }, () => refresh())
       .on("postgres_changes", { event: "*", schema: "public", table: "breaks" }, () => refresh())
+      .on("postgres_changes", { event: "*", schema: "public", table: "shift_slots" }, () => refresh())
+      .on("postgres_changes", { event: "*", schema: "public", table: "early_finish_requests" }, () => refresh())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -110,7 +138,24 @@ function ClockPage() {
   };
 
   const clockOut = async () => {
-    if (!myShift) return;
+    if (!myShift || busy) return;
+    const action = shiftFinishAction(Date.now(), rotaEnd, earlyPending, finishReady);
+    if (action === "wait") return;
+    if (action === "request") {
+      const reason = window.prompt("Request an early finish — admin or management must approve it.\n\nReason (optional):");
+      if (reason === null) return;
+      setBusy(true);
+      try {
+        await askEarlyFinish({ data: { reason } });
+        setEarlyPending(true);
+        toast.success("Early finish requested — you'll be signed off once it's approved.");
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Couldn't send the request");
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
     setBusy(true);
     if (myBreak) {
       await supabase.from("breaks").update({ ended_at: new Date().toISOString() }).eq("id", myBreak.id);
@@ -125,10 +170,10 @@ function ClockPage() {
   };
 
   const startBreak = async (kind: BreakKind) => {
-    if (!myShift || myBreak) return;
+    if (!user || !myShift || myBreak || busy) return;
     if (kind !== "travel" && breaksLeft(kind, usedKinds) <= 0) return;
     setBusy(true);
-    const { error } = await supabase.from("breaks").insert({ shift_id: myShift.id, user_id: user!.id, kind });
+    const { error } = await supabase.from("breaks").insert({ shift_id: myShift.id, user_id: user.id, kind });
     setBusy(false);
     if (error) return toast.error(error.message);
     toast.success(kind === "lunch" ? "Lunch started — 30 min" : "Break started — 15 min");
@@ -141,6 +186,7 @@ function ClockPage() {
   const breakElapsed = myBreak ? (now - new Date(myBreak.started_at).getTime()) / 1000 : 0;
   const breakRemaining = myBreak ? BREAK_LIMITS[myBreak.kind] - breakElapsed : 0;
   const overBreak = breakRemaining < 0;
+  const finishAction = shiftFinishAction(now, rotaEnd, earlyPending, finishReady);
 
 
 
@@ -208,16 +254,21 @@ function ClockPage() {
                 <div className="font-semibold text-emerald-400">Working — {fmt(sessionSeconds)}</div>
                 <div className="text-sm text-muted-foreground">Started {fmtTime(myShift.clock_in)}</div>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <button onClick={() => startBreak("break")} disabled={busy || breakLeft <= 0} title={breakLeft > 0 ? `${breakLeft} of 2 breaks left` : "No breaks left this shift"} className="px-4 py-2 rounded-lg bg-surface-2 border border-border hover:border-primary inline-flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-border">
                   <Coffee className="size-4" /> Start break (15m)
                 </button>
                 <button onClick={() => startBreak("lunch")} disabled={busy || lunchLeft <= 0} title={lunchLeft > 0 ? "Start lunch" : "Lunch already taken this shift"} className="px-4 py-2 rounded-lg bg-surface-2 border border-border hover:border-primary inline-flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-border">
                   <UtensilsCrossed className="size-4" /> Start lunch (30m)
                 </button>
-                <button onClick={clockOut} disabled={busy} className="px-4 py-2 rounded-lg bg-destructive text-destructive-foreground inline-flex items-center gap-2 text-sm">
-                  <LogOut className="size-4" /> Clock Out
-                </button>
+                <Button onClick={clockOut} disabled={busy || finishAction === "wait"}
+                  variant={finishAction === "clock-out" ? "destructive" : "outline"}
+                  title={finishAction === "clock-out" ? "Sign out of shift" : earlyPending
+                    ? "Early finish requested — waiting for admin or management"
+                    : `Shift sign-out unlocks at ${rotaEnd?.slice(0, 5) ?? "shift end"} UK — request an early finish`}
+                  className={cn(finishAction !== "clock-out" && "text-muted-foreground bg-muted/30 opacity-50")}>
+                  <LogOut className="size-4" /> {finishAction === "clock-out" ? "Clock Out" : earlyPending ? "Awaiting approval" : "Request early finish"}
+                </Button>
               </div>
             </div>
           )}
