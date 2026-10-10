@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { AlertTriangle, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -144,7 +144,7 @@ export function BreakEndingAlert() {
         .eq("id", id)
         .is("ended_at", null);
       if (error) {
-        autoEndedRef.current.delete(id);
+        autoEndedBreaks.delete(id);
         return;
       }
       setStage(null);
