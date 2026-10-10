@@ -10,6 +10,7 @@ import {
   parseSportsListingBlock,
   plainListingToHtml,
   sortSportsListingEvents,
+  splitFixtureChannelBlocks,
   splitListingSections,
   headlineListingDate,
   listingBlockHasDate,
