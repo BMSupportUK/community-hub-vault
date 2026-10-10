@@ -148,6 +148,8 @@ function AppCard({ build, transfer, now }: { build: Build; transfer: Transfer | 
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [infoZoom, setInfoZoom] = useState(1);
   const videoUrl = useDemoVideoUrl(build.videoPath);
+  const isMobile =
+    typeof navigator !== "undefined" && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   const shortUrl = useMemo(() => {
     if (!transfer) return null;
