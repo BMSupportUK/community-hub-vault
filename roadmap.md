@@ -2,7 +2,7 @@
 # Roadmap
 
 ## Current
-- [ ] Add separate staff shift pie-chart breakdown cards on profiles and admin staff shifts; verify actual worked hours and percentages
+- [x] Add separate staff shift pie-chart breakdown cards on profiles and admin staff shifts; verify actual worked hours and percentages
 - [x] Away status: log every Away period so it appears in the staff shift reports and shift history
 - [x] Working Status box: move the Away icon next to the sign-in and sign-out icons
 - [x] Early finish requests: a reason is required before admin or management are asked to approve

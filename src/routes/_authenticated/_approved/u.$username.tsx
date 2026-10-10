@@ -47,6 +47,16 @@ export const Route = createFileRoute("/_authenticated/_approved/u/$username")({
     edit: search.edit ? 1 : undefined,
   }),
   component: ProfilePage,
+  head: ({ params }) => ({
+    meta: [
+      { title: `${params.username} — BM Support profile` },
+      { name: "description", content: "BM Support member profile and authorised account and staff shift information." },
+      { property: "og:title", content: `${params.username} — BM Support profile` },
+      { property: "og:description", content: "BM Support member profile and authorised account and staff shift information." },
+      { property: "og:type", content: "profile" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
 });
 
 interface ProfileRow {
