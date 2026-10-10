@@ -5,6 +5,7 @@ import { Clock as ClockIcon, LogIn, LogOut, CheckCircle2, HelpCircle, Loader2, C
 import { cn } from "@/lib/utils";
 import { type BreakKind, breakLabel, breakIcon } from "@/lib/breaks";
 import { awayForShift, awayIcon } from "@/lib/staff-away";
+import { ShiftBreakdownCard } from "@/components/app/ShiftBreakdownCard";
 
 const PAGE_SIZE = 20;
 const AUTO_OUT_GRACE_MS = 15 * 60 * 1000;
@@ -229,7 +230,7 @@ export default function ShiftHistoryPanel({ userId, name }: { userId: string; na
       .from("away_log")
       .select("id, reason, starts_at, ends_at")
       .eq("user_id", userId)
-      .gte("starts_at", new Date(weekFrom).toISOString())
+      .or(`ends_at.is.null,ends_at.gt.${new Date(weekFrom).toISOString()}`)
       .lt("starts_at", new Date(weekTo).toISOString())
       .order("starts_at", { ascending: true });
     return (data ?? []) as AwayRow[];
@@ -408,7 +409,7 @@ export default function ShiftHistoryPanel({ userId, name }: { userId: string; na
           No shifts on {DAY_LABELS[selectedDay]} ({selectedDate.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}).
         </div>
       ) : (
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-4">
         {filteredRows.map((s) => {
           const open = !s.clock_out;
           const acked = !!s.still_working_ack_at;
@@ -417,8 +418,8 @@ export default function ShiftHistoryPanel({ userId, name }: { userId: string; na
             !!s.end_prompt_asked_at &&
             Math.abs(new Date(s.clock_out).getTime() - (new Date(s.end_prompt_asked_at).getTime() + AUTO_OUT_GRACE_MS)) < 60_000;
           return (
+            <div key={s.id} className="grid min-w-0 gap-3 xl:grid-cols-2">
             <div
-              key={s.id}
               className={cn(
                 "rounded-2xl border p-4 text-white shadow-[0_0_40px_-20px_rgba(168,85,247,0.6)]",
                 open
@@ -431,7 +432,7 @@ export default function ShiftHistoryPanel({ userId, name }: { userId: string; na
                   <p className="font-semibold truncate">{fmtDate(s.clock_in)}</p>
                   <p className="text-xs text-purple-200/70">
                     {fmtDuration(s.clock_in, s.clock_out)}
-                    {open ? " so far" : " worked"}
+                    {open ? " on shift so far" : " on shift"}
                   </p>
                 </div>
                 {open ? (
@@ -499,11 +500,13 @@ export default function ShiftHistoryPanel({ userId, name }: { userId: string; na
                   <Pill icon={HelpCircle} label="Never asked" tone="muted" />
                 )}
                 {acked ? (
-                  <Pill icon={CheckCircle2} label={`Said still working at ${fmtTime(s.still_working_ack_at!)}`} tone="ok" />
+                  <Pill icon={CheckCircle2} label={`Said still working at ${fmtTime(s.still_working_ack_at ?? s.clock_in)}`} tone="ok" />
                 ) : s.end_prompt_asked_at ? (
                   <Pill icon={HelpCircle} label="No answer given" tone="warn" />
                 ) : null}
               </div>
+            </div>
+            <ShiftBreakdownCard shift={s} breaks={breaksByShift[s.id] ?? []} away={awayRows} />
             </div>
           );
         })}
