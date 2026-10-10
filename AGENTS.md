@@ -32,3 +32,6 @@
 - Gender-matched customer defaults never replace custom picks and exclude staff/Fan Zone-only users.
 - BM inbox stays separate from Fan Zone/Talk: participant-only tables, authenticated RPCs, admin/management-only report snapshots.
 - Seasonal Talk/inbox uses one date helper and overlay; locked chat stays untouched.
+<!-- LOVABLE:BEGIN -->
+- Break popup/sound shares one session-persisted per-break claim; expiry updates silently to prevent replay after dismiss, lock or reload.
+<!-- LOVABLE:END -->
