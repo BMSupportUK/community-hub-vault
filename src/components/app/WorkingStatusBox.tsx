@@ -15,6 +15,7 @@ import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, type AppRole } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
+import { shiftFinishAction } from "@/lib/shift-finish";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { resolveAvatarUrl, useRoleFlashMap } from "@/lib/role-flash";
 import { Nameplate } from "@/components/app/Nameplate";
@@ -451,7 +452,7 @@ export function WorkingStatusBox({
   const lunchLeft = breaksLeft("lunch", usedKinds);
   // Shift sign-out stays greyed out until the rota end time so it can't be
   // pressed by accident mid-shift. No rota slot today = always allowed.
-  const canClockOut = !todayWindow || londonNow(now).time >= todayWindow.end;
+  const canClockOut = shiftFinishAction(now, todayWindow?.end ?? null, earlyPending) === "clock-out";
 
   const requestEarly = async () => {
     if (!shift || earlyPending) return;
