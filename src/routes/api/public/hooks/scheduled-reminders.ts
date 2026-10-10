@@ -359,6 +359,21 @@ export const Route = createFileRoute("/api/public/hooks/scheduled-reminders")({
           .delete()
           .lt("expires_at", new Date(now).toISOString());
 
+        // Temporary guest logins: wipe all their data and the account itself.
+        const { data: expiredTemp } = await adminAny
+          .from("temporary_accounts")
+          .select("user_id")
+          .lt("expires_at", new Date(now).toISOString());
+        for (const t of (expiredTemp ?? []) as { user_id: string }[]) {
+          try {
+            await adminAny.rpc("purge_user_data", { _uid: t.user_id });
+            await adminAny.auth.admin.deleteUser(t.user_id);
+            await adminAny.from("temporary_accounts").delete().eq("user_id", t.user_id);
+          } catch (e) {
+            console.error("[temp-accounts] delete failed", t.user_id, e);
+          }
+        }
+
         return Response.json({
           ok: true,
           evaluated: jobs.length,
