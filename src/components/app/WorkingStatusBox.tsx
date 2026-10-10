@@ -550,77 +550,17 @@ export function WorkingStatusBox({
   const avatar = resolveAvatarUrl(user.id, avatarUrl, roleFlashMap);
   const avatarInitial = displayName.trim().charAt(0).toUpperCase() || "?";
 
-  // DND overrides the card status, while the talk-channel header keeps its controls available.
-  if (dnd?.active && variant === "card") {
-    const until = dnd.endsAt
-      ? dnd.endsAt.toLocaleString("en-GB", {
-          weekday: "short",
-          day: "2-digit",
-          month: "short",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-        })
-      : null;
-    return (
-      <section className={cn(compact ? "h-full" : "px-2 pt-4")}>
-        <div className="rounded-lg bg-surface-2/60 border border-violet-500/40 overflow-hidden">
-          <div className="flex items-center justify-between px-3 py-2 border-b border-violet-500/30 bg-gradient-to-r from-violet-600/20 to-fuchsia-600/10">
-            <div className="flex items-center gap-2">
-              {(() => { const AwayIcon = awayIcon(dnd.reason); return <AwayIcon className="size-3.5 text-violet-300" />; })()}
-              <h2 className="font-display text-[11px] font-bold tracking-wider uppercase text-violet-200">
-                Away
-              </h2>
-              <DndCountdown userId={user.id} compact />
-            </div>
-            <Link
-              to="/shifts"
-              title="Shifts"
-              className="inline-flex shrink-0 items-center justify-center size-7 rounded-full text-violet-200 hover:text-white hover:bg-violet-500/30 transition"
-            >
-              <Calendar className="size-3.5" />
-            </Link>
-            <DndDialogButton
-              icon="pencil"
-              className="inline-flex items-center justify-center size-7 rounded-full p-0 text-violet-200 hover:text-white hover:bg-violet-500/30 transition"
-            />
-          </div>
-          <div className="px-3 py-3 space-y-2 text-xs">
-            <div className="flex items-center gap-2 pb-1 border-b border-violet-500/30">
-              <Avatar className="h-9 w-9 shrink-0 ring-2 ring-violet-400/50">
-                <AvatarImage src={avatar} alt={displayName} />
-                <AvatarFallback className="text-[11px] font-bold bg-gradient-primary text-primary-foreground">
-                  {avatarInitial}
-                </AvatarFallback>
-              </Avatar>
-              {/* Name plate sits right beside the avatar, same as the header menu. */}
-              <div className="relative h-[50px] w-[189px] min-w-0 max-w-full shrink-0 overflow-hidden rounded-lg">
-                <Nameplate id={nameplateId} className="absolute inset-0" fallbackStyle={{ background: "linear-gradient(to bottom right, hsl(var(--primary)/0.3), hsl(330 80% 60% / 0.2), hsl(220 80% 60% / 0.2))" }} />
-                <div className="relative flex min-w-0 items-center gap-2 px-2.5 py-1.5">
-                  <span className="font-display font-semibold text-sm text-violet-100 truncate">
-                    {displayName}
-                  </span>
-                  {staffRoleLabel && (
-                    <span className="inline-flex shrink-0 items-center rounded-full bg-violet-500/20 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-violet-200 ring-1 ring-violet-500/30">
-                      {staffRoleLabel}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-            {dnd.reason && <p className="text-foreground/90">{dnd.reason}</p>}
-            {until && (
-              <p className="text-muted-foreground">
-                Until <span className="tabular-nums text-foreground/80">{until}</span>
-              </p>
-            )}
-            {!dnd.reason && !until && <p className="text-muted-foreground">Notifications muted.</p>}
-            {nextSlot && <NextShiftPanel slot={nextSlot} />}
-          </div>
-        </div>
-      </section>
-    );
-  }
+  // Away shows as an icon + pill inside the Working Status box (next to the
+  // sign-in/out controls) instead of replacing the whole box.
+  const awayPill = dnd?.active ? (
+    <span
+      className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-violet-500/15 px-2.5 py-1 text-[11px] font-semibold text-violet-200 ring-1 ring-violet-500/40"
+      title={`Away — ${dnd.reason ?? "on"}`}
+    >
+      {(() => { const AwayIcon = awayIcon(dnd.reason); return <AwayIcon className="size-3.5" />; })()}
+      Away{dnd.reason ? ` — ${dnd.reason}` : ""}
+    </span>
+  ) : null;
 
   const shiftSec = shift ? (now - new Date(shift.clock_in).getTime()) / 1000 : 0;
   const brSec = brk ? (now - new Date(brk.started_at).getTime()) / 1000 : 0;
@@ -802,6 +742,7 @@ export function WorkingStatusBox({
           Staff Shift Controls
         </span>
         <ActionIcons compact />
+        {awayPill}
         <DndDialogButton className="inline-flex size-8 shrink-0 items-center justify-center rounded-full border border-border bg-muted/30 transition hover:bg-muted" />
         {(canAnswerTickets || roles.includes("moderator")) && (
           <StaffTicketsButton staffId={user.id} staffName={displayName} placement="below" className="shrink-0" readOnly={!canAnswerTickets} />
@@ -902,6 +843,7 @@ export function WorkingStatusBox({
                 />
               )}
               <ActionIcons compact={compact} />
+              {awayPill}
               <DndDialogButton
                 className={cn(
                   "inline-flex shrink-0 items-center justify-center rounded-full border border-border bg-muted/30 transition hover:bg-muted",
