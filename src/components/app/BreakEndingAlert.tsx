@@ -107,7 +107,7 @@ export function BreakEndingAlert() {
     if (active.kind === "travel") { setStage(null); return; }
     const elapsed = (now - new Date(active.started_at).getTime()) / 1000;
     const remaining = BREAK_LIMITS[active.kind] - elapsed;
-    const seen = (shownRef.current[active.id] ??= new Set());
+    const seen = (shownBreakStages[active.id] ??= new Set());
 
     if (remaining <= 0 && !seen.has("over")) {
       seen.add("over");
@@ -133,8 +133,8 @@ export function BreakEndingAlert() {
     const startMs = new Date(active.started_at).getTime();
     const endAt = startMs + (BREAK_LIMITS[active.kind] + autoEndGrace(active.kind)) * 1000;
     if (now < endAt) return;
-    if (autoEndedRef.current.has(active.id)) return;
-    autoEndedRef.current.add(active.id);
+    if (autoEndedBreaks.has(active.id)) return;
+    autoEndedBreaks.add(active.id);
     const id = active.id;
     const label = breakLabel(active.kind);
     (async () => {
