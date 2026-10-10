@@ -130,14 +130,14 @@ public class MainActivity extends BridgeActivity {
                 .setUsage(AudioAttributes.USAGE_NOTIFICATION)
                 .build();
         Uri soundUri = Uri.parse(
-                "android.resource://" + getPackageName() + "/" + R.raw.ticket_reply_notify
+                "android.resource://" + getPackageName() + "/" + R.raw.ticket_reply_ding
         );
         NotificationChannel channel = new NotificationChannel(
-                "bm_support_ticket_replies_v2",
+                "bm_support_ticket_replies_v3",
                 "Support ticket replies",
                 NotificationManager.IMPORTANCE_HIGH
         );
-        channel.setDescription("Spoken alert when a customer replies to an assigned ticket");
+        channel.setDescription("Ding alert when a customer replies to an assigned ticket");
         channel.enableVibration(true);
         channel.enableLights(true);
         channel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
