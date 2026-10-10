@@ -44,8 +44,12 @@ export function DndDialogButton({ className, icon = "moon" }: { className?: stri
   const scheduled = isScheduledAway(reason);
   const active = !!info?.active;
   const hasWindow = !!info?.enabled && (!info.endsAt || info.endsAt.getTime() > Date.now());
+  // A manual Away (Toilet/Smoking/Meeting) already running: Start is greyed out until it's ended.
+  const manualRunning = hasWindow && !isScheduledAway(info?.reason ?? "Outside Of Office Hours");
+  const startLocked = manualRunning && !scheduled;
   const save = async (endAway = false) => {
     if (saving) return;
+    if (!endAway && startLocked) return;
     let window;
     try {
       window = endAway ? null : awayWindow(reason, zonedWallTimeToUtcMs(startDay, startTime, tz), zonedWallTimeToUtcMs(endDay, endTime, tz));
@@ -104,8 +108,8 @@ export function DndDialogButton({ className, icon = "moon" }: { className?: stri
           </>}
         </div>
         <DialogFooter className="gap-2">
-          {hasWindow && !isScheduledAway(info?.reason ?? "Outside Of Office Hours") && <Button variant="outline" disabled={saving} onClick={() => void save(true)}><Square className="size-4" /> End Away</Button>}
-          <Button disabled={saving} onClick={() => void save()}>{scheduled ? <Save className="size-4" /> : <Play className="size-4" />}{saving ? "Saving…" : scheduled ? "Save schedule" : "Start Away"}</Button>
+          {manualRunning && <Button variant="outline" disabled={saving} onClick={() => void save(true)}><Square className="size-4" /> End Away</Button>}
+          <Button disabled={saving || startLocked} title={startLocked ? "Away has already started — end it first" : undefined} onClick={() => void save()}>{scheduled ? <Save className="size-4" /> : <Play className="size-4" />}{saving ? "Saving…" : scheduled ? "Save schedule" : startLocked ? "Away started" : "Start Away"}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
