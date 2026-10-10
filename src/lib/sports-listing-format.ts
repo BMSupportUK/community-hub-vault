@@ -1632,7 +1632,7 @@ export function formatSportsListingBlock(input: ListingInput): string | null {
   // into its sections so each event carries its own section's heading —
   // never the first heading of the whole post. Do not duplicate a heading
   // when the event name already begins with it.
-  const sections = splitSportsListingSections(input.raw ?? "");
+  const sections = splitSportsListingSections(splitFixtureChannelBlocks(input.raw ?? ""));
   const labelled = sections.flatMap((section) => {
     const events = processSection(section.text);
     if (!section.heading) return events;
@@ -1854,4 +1854,44 @@ export function headlineListingDate(raw: string | null | undefined): string | nu
 /** True when a block already carries its own date line. */
 export function listingBlockHasDate(raw: string): boolean {
   return raw.split("\n").map(cleanLine).some((line) => !!line && listingDateFromLine(line) !== null);
+}
+
+/**
+ * Premier League fixture layout: `## Home v Away`, a `12:30pm UK / 7:30am ET`
+ * line, then channel groups separated by blank lines. Each channel group
+ * becomes its own event block carrying the fixture name and kick-off time.
+ * Pipes inside channel names (`EPL | Premier League`) are flattened so they
+ * aren't read as channel separators; `Hub Premier 1 & 5` becomes two channels.
+ */
+export function splitFixtureChannelBlocks(raw: string): string {
+  const lines = raw.replace(/\r/g, "").split("\n");
+  const fixtureAt = (i: number) =>
+    /^##\s+\S/.test(lines[i]?.trim() ?? "") &&
+    /\bUK\s*\/\s*[^\n]*\bET\b/i.test(lines[i + 1]?.trim() ?? "") &&
+    /\d/.test(lines[i + 1] ?? "");
+  if (!lines.some((_, i) => fixtureAt(i))) return raw;
+  const out: string[] = [];
+  let i = 0;
+  while (i < lines.length) {
+    if (!fixtureAt(i)) { out.push(lines[i]); i++; continue; }
+    const title = lines[i].trim().replace(/^##\s+/, "");
+    const time = lines[i + 1].trim();
+    i += 2;
+    const groups: string[][] = [];
+    let cur: string[] = [];
+    while (i < lines.length && !fixtureAt(i) && !/^#\s/.test(lines[i].trim())) {
+      const l = lines[i].trim();
+      i++;
+      if (!l) { if (cur.length) groups.push(cur); cur = []; continue; }
+      const flat = l.replace(/\s*\|\s*/g, " ");
+      const amp = flat.match(/^(.*?)(\d+)\s*&\s*(\d+)$/);
+      if (amp) cur.push(`${amp[1]}${amp[2]}`, `${amp[1]}${amp[3]}`);
+      else cur.push(flat);
+    }
+    if (cur.length) groups.push(cur);
+    for (const g of groups.length ? groups : [[]]) {
+      out.push(time, title, ...g, "");
+    }
+  }
+  return out.join("\n");
 }
