@@ -444,18 +444,23 @@ export const splitQueueItem = createServerFn({ method: "POST" })
     const events = sortSportsListingEvents(parseSportsListingBlock(splitFixtureChannelBlocks(raw))).map((e) => ({ ...e, date: e.date || headDate }));
     if (!events.length) throw new Error("Couldn't read any events in this post");
 
-    const rows = events.map((e, i) => ({
-      raw_text: [e.date, [e.time, e.title].filter(Boolean).join(" "), e.channels.join(" • ")]
-        .filter(Boolean)
-        .join("\n"),
+    const epl = isEplFixturePost(raw);
+    const rows = events.map((e, i) => {
+      // Premier League cards keep time, fixture and each channel on their own
+      // line so titles like "Sunderland v …" never lose a day-like prefix.
+      const cardRaw = epl
+        ? cardRawForEplEvent(e)
+        : [e.date, [e.time, e.title].filter(Boolean).join(" "), e.channels.join(" • ")]
+            .filter(Boolean)
+            .join("\n");
+      return {
+      raw_text: cardRaw,
       parsed_event: {
         title: e.title,
         time: e.time || null,
         date: e.date || null,
         channels: e.channels,
-        raw: [e.date, [e.time, e.title].filter(Boolean).join(" "), e.channels.join(" • ")]
-          .filter(Boolean)
-          .join("\n"),
+        raw: cardRaw,
         suggested_category: null,
         suggested_subcategory: null,
       } as any,
