@@ -54,8 +54,8 @@ export function DndCountdown({
         minute: "2-digit",
       })}`
     : "";
-  const title = info.note
-    ? `Away — ${info.note}${endsLabel ? ` (${endsLabel})` : ""}`
+  const title = info.reason
+    ? `Away — ${info.reason}${endsLabel ? ` (${endsLabel})` : ""}`
     : `Away${endsLabel ? ` ${endsLabel}` : ""}`;
 
   return (
@@ -69,7 +69,7 @@ export function DndCountdown({
     >
       <span className="flex items-center gap-1">
         <Moon className={compact ? "size-3" : "size-3.5"} />
-        <span>Away</span>
+        <span className="whitespace-normal">Away{info.reason ? ` — ${info.reason}` : ""}</span>
       </span>
       {remaining !== null && (
         <span className="font-semibold text-violet-100/95 leading-none">

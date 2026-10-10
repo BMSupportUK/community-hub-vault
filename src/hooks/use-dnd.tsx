@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { AWAY_REASONS, type AwayReason } from "@/lib/staff-away";
 
 export type DndInfo = {
   enabled: boolean;
   startsAt: Date | null;
   endsAt: Date | null;
   note: string | null;
+  reason: AwayReason | null;
   active: boolean;
 };
 
@@ -14,6 +16,7 @@ type Row = {
   starts_at: string | null;
   ends_at: string | null;
   note: string | null;
+  reason: string | null;
 };
 
 function computeActive(row: { enabled: boolean; starts_at: string | null; ends_at: string | null }): boolean {
@@ -30,6 +33,7 @@ function toInfo(row: Row): DndInfo {
     startsAt: row.starts_at ? new Date(row.starts_at) : null,
     endsAt: row.ends_at ? new Date(row.ends_at) : null,
     note: row.note,
+    reason: AWAY_REASONS.find((reason) => reason === row.reason) ?? null,
     active: computeActive(row),
   };
 }
@@ -44,6 +48,7 @@ type Store = {
   loaded: boolean;
   listeners: Set<(v: DndInfo | null) => void>;
   cleanup: () => void;
+  load: () => Promise<void>;
 };
 
 const stores = new Map<string, Store>();
@@ -56,19 +61,20 @@ function getStore(userId: string): Store {
   const existing = stores.get(userId);
   if (existing) return existing;
 
-  const store: Store = { info: null, loaded: false, listeners: new Set(), cleanup: () => {} };
+  const store: Store = { info: null, loaded: false, listeners: new Set(), cleanup: () => {}, load: async () => {} };
   stores.set(userId, store);
 
   const load = async () => {
     const { data } = await supabase
       .from("user_dnd_status")
-      .select("enabled,starts_at,ends_at,note")
+      .select("enabled,starts_at,ends_at,note,reason")
       .eq("user_id", userId)
       .maybeSingle();
     store.info = data ? toInfo(data as Row) : null;
     store.loaded = true;
     publish(store);
   };
+  store.load = load;
   void load();
 
   // A unique topic per store instance: reusing `dnd-<userId>` could pick up a
@@ -99,7 +105,7 @@ function getStore(userId: string): Store {
       store.info = { ...store.info, active };
       publish(store);
     }
-  }, 5_000);
+  }, 1_000);
 
   const onVisible = () => {
     if (document.visibilityState === "visible") void load();
@@ -117,6 +123,10 @@ function getStore(userId: string): Store {
 }
 
 /** Subscribe to a single user's DND status with realtime updates. */
+export async function refreshDndStatus(userId: string) {
+  await getStore(userId).load();
+}
+
 export function useDndStatus(userId: string | null | undefined): DndInfo | null {
   const [info, setInfo] = useState<DndInfo | null>(() =>
     userId ? (stores.get(userId)?.info ?? null) : null,

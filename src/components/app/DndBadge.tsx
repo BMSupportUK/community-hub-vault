@@ -15,8 +15,8 @@ export function DndBadge({
   const info = useDndStatus(userId);
   if (!info?.active) return null;
 
-  const title = info.note
-    ? `Away — ${info.note}`
+  const title = info.reason
+    ? `Away — ${info.reason}`
     : info.endsAt
       ? `Away until ${info.endsAt.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`
       : "Away";
@@ -31,7 +31,7 @@ export function DndBadge({
       title={title}
     >
       <Moon className={compact ? "size-2.5" : "size-3"} />
-      {!compact && "Away"}
+      {!compact && <span className="whitespace-normal">Away{info.reason ? ` — ${info.reason}` : ""}</span>}
     </span>
   );
 }
