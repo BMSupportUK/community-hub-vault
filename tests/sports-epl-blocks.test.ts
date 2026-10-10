@@ -1,5 +1,21 @@
 import { expect, test } from "bun:test";
 import { checkSportsImport } from "../src/lib/sports-import-check";
+import { normalizeSportsListingText, parseSportsListingBlock, sortSportsListingEvents, splitFixtureChannelBlocks } from "../src/lib/sports-listing-format";
+
+test("Split into single events breaks Premier League fixtures into one block per channel group", async () => {
+  // Same sequence as splitQueueItem in discord-import.functions.ts.
+  const raw = normalizeSportsListingText(await Bun.file(new URL("./fixtures-epl-2026-10-10.txt", import.meta.url)).text());
+  const events = sortSportsListingEvents(parseSportsListingBlock(splitFixtureChannelBlocks(raw)));
+  expect(events).toHaveLength(17);
+  const arsenal = events.filter((e) => e.title === "Arsenal v Leeds United");
+  expect(arsenal).toHaveLength(3);
+  expect(arsenal.every((e) => e.time.startsWith("12:30"))).toBe(true);
+  expect(arsenal.map((e) => e.channels)).toEqual([
+    ["EPL Premier League", "Arsenal EPL ˢᴰ", "Leeds United EPL ˢᴰ"],
+    ["EPL Premier League Hub", "Stan Sport", "Now HK 1", "Hub Premier 1", "MonoMax"],
+    ["TNT Sport 1", "Supersport Premier League"],
+  ]);
+});
 
 test("Premier League fixtures split into one block per channel group, keeping fixture and KO time", async () => {
   const raw = await Bun.file(new URL("./fixtures-epl-2026-10-10.txt", import.meta.url)).text();
