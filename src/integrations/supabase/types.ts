@@ -5792,6 +5792,27 @@ export type Database = {
         }
         Relationships: []
       }
+      temporary_accounts: {
+        Row: {
+          created_at: string
+          email: string
+          expires_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          expires_at: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          expires_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ticket_categories: {
         Row: {
           color: string
@@ -7357,6 +7378,7 @@ export type Database = {
         Args: { _body: string; _id: string }
         Returns: undefined
       }
+      purge_user_data: { Args: { _uid: string }; Returns: undefined }
       queue_shift_phone_alerts: { Args: never; Returns: number }
       reassign_ticket: {
         Args: { _ticket_id: string; _to_user: string }
