@@ -44,6 +44,14 @@ interface OpenShift {
 
 type Stage = "start" | "end";
 
+// Module-level so the memory survives the screen lock unmounting and
+// remounting the app — otherwise shift warnings replay their sound on unlock.
+const autoClockedSlots = new Set<string>();
+const autoEndedShifts = new Set<string>();
+const playedStageAlerts = new Set<string>();
+const stillWorkingShifts = new Set<string>();
+const askedAtWrittenShifts = new Set<string>();
+
 function fmtCountdown(ms: number) {
   const s = Math.max(0, Math.round(ms / 1000));
   const m = Math.floor(s / 60);
