@@ -143,6 +143,7 @@ import { Route as ApiPublicHooksDeviceReleaseWatchRouteImport } from './routes/a
 import { Route as ApiPublicHooksFantasySquadRemindersRouteImport } from './routes/api/public/hooks/fantasy-squad-reminders'
 import { Route as ApiPublicHooksFantasySquadSyncRouteImport } from './routes/api/public/hooks/fantasy-squad-sync'
 import { Route as ApiPublicHooksFinalLockRemindersRouteImport } from './routes/api/public/hooks/final-lock-reminders'
+import { Route as ApiPublicHooksInboxMessagePushRouteImport } from './routes/api/public/hooks/inbox-message-push'
 import { Route as ApiPublicHooksNotifyRouteImport } from './routes/api/public/hooks/notify'
 import { Route as ApiPublicHooksNowpaymentsRouteImport } from './routes/api/public/hooks/nowpayments'
 import { Route as ApiPublicHooksRotaAutofillRouteImport } from './routes/api/public/hooks/rota-autofill'
@@ -936,6 +937,12 @@ const ApiPublicHooksFinalLockRemindersRoute =
     path: '/api/public/hooks/final-lock-reminders',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksInboxMessagePushRoute =
+  ApiPublicHooksInboxMessagePushRouteImport.update({
+    id: '/api/public/hooks/inbox-message-push',
+    path: '/api/public/hooks/inbox-message-push',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicHooksNotifyRoute = ApiPublicHooksNotifyRouteImport.update({
   id: '/api/public/hooks/notify',
   path: '/api/public/hooks/notify',
@@ -1210,6 +1217,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/fantasy-squad-reminders': typeof ApiPublicHooksFantasySquadRemindersRoute
   '/api/public/hooks/fantasy-squad-sync': typeof ApiPublicHooksFantasySquadSyncRoute
   '/api/public/hooks/final-lock-reminders': typeof ApiPublicHooksFinalLockRemindersRoute
+  '/api/public/hooks/inbox-message-push': typeof ApiPublicHooksInboxMessagePushRoute
   '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
   '/api/public/hooks/nowpayments': typeof ApiPublicHooksNowpaymentsRoute
   '/api/public/hooks/rota-autofill': typeof ApiPublicHooksRotaAutofillRoute
@@ -1365,6 +1373,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/fantasy-squad-reminders': typeof ApiPublicHooksFantasySquadRemindersRoute
   '/api/public/hooks/fantasy-squad-sync': typeof ApiPublicHooksFantasySquadSyncRoute
   '/api/public/hooks/final-lock-reminders': typeof ApiPublicHooksFinalLockRemindersRoute
+  '/api/public/hooks/inbox-message-push': typeof ApiPublicHooksInboxMessagePushRoute
   '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
   '/api/public/hooks/nowpayments': typeof ApiPublicHooksNowpaymentsRoute
   '/api/public/hooks/rota-autofill': typeof ApiPublicHooksRotaAutofillRoute
@@ -1526,6 +1535,7 @@ export interface FileRoutesById {
   '/api/public/hooks/fantasy-squad-reminders': typeof ApiPublicHooksFantasySquadRemindersRoute
   '/api/public/hooks/fantasy-squad-sync': typeof ApiPublicHooksFantasySquadSyncRoute
   '/api/public/hooks/final-lock-reminders': typeof ApiPublicHooksFinalLockRemindersRoute
+  '/api/public/hooks/inbox-message-push': typeof ApiPublicHooksInboxMessagePushRoute
   '/api/public/hooks/notify': typeof ApiPublicHooksNotifyRoute
   '/api/public/hooks/nowpayments': typeof ApiPublicHooksNowpaymentsRoute
   '/api/public/hooks/rota-autofill': typeof ApiPublicHooksRotaAutofillRoute
@@ -1686,6 +1696,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/fantasy-squad-reminders'
     | '/api/public/hooks/fantasy-squad-sync'
     | '/api/public/hooks/final-lock-reminders'
+    | '/api/public/hooks/inbox-message-push'
     | '/api/public/hooks/notify'
     | '/api/public/hooks/nowpayments'
     | '/api/public/hooks/rota-autofill'
@@ -1841,6 +1852,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/fantasy-squad-reminders'
     | '/api/public/hooks/fantasy-squad-sync'
     | '/api/public/hooks/final-lock-reminders'
+    | '/api/public/hooks/inbox-message-push'
     | '/api/public/hooks/notify'
     | '/api/public/hooks/nowpayments'
     | '/api/public/hooks/rota-autofill'
@@ -2001,6 +2013,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/fantasy-squad-reminders'
     | '/api/public/hooks/fantasy-squad-sync'
     | '/api/public/hooks/final-lock-reminders'
+    | '/api/public/hooks/inbox-message-push'
     | '/api/public/hooks/notify'
     | '/api/public/hooks/nowpayments'
     | '/api/public/hooks/rota-autofill'
@@ -2079,6 +2092,7 @@ export interface RootRouteChildren {
   ApiPublicHooksFantasySquadRemindersRoute: typeof ApiPublicHooksFantasySquadRemindersRoute
   ApiPublicHooksFantasySquadSyncRoute: typeof ApiPublicHooksFantasySquadSyncRoute
   ApiPublicHooksFinalLockRemindersRoute: typeof ApiPublicHooksFinalLockRemindersRoute
+  ApiPublicHooksInboxMessagePushRoute: typeof ApiPublicHooksInboxMessagePushRoute
   ApiPublicHooksNotifyRoute: typeof ApiPublicHooksNotifyRoute
   ApiPublicHooksNowpaymentsRoute: typeof ApiPublicHooksNowpaymentsRoute
   ApiPublicHooksRotaAutofillRoute: typeof ApiPublicHooksRotaAutofillRoute
@@ -3039,6 +3053,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicHooksFinalLockRemindersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/inbox-message-push': {
+      id: '/api/public/hooks/inbox-message-push'
+      path: '/api/public/hooks/inbox-message-push'
+      fullPath: '/api/public/hooks/inbox-message-push'
+      preLoaderRoute: typeof ApiPublicHooksInboxMessagePushRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/hooks/notify': {
       id: '/api/public/hooks/notify'
       path: '/api/public/hooks/notify'
@@ -3600,6 +3621,7 @@ const rootRouteChildren: RootRouteChildren = {
     ApiPublicHooksFantasySquadRemindersRoute,
   ApiPublicHooksFantasySquadSyncRoute: ApiPublicHooksFantasySquadSyncRoute,
   ApiPublicHooksFinalLockRemindersRoute: ApiPublicHooksFinalLockRemindersRoute,
+  ApiPublicHooksInboxMessagePushRoute: ApiPublicHooksInboxMessagePushRoute,
   ApiPublicHooksNotifyRoute: ApiPublicHooksNotifyRoute,
   ApiPublicHooksNowpaymentsRoute: ApiPublicHooksNowpaymentsRoute,
   ApiPublicHooksRotaAutofillRoute: ApiPublicHooksRotaAutofillRoute,
