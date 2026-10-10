@@ -36,14 +36,17 @@ const AUTO_END_AFTER_OVER = 10; // seconds past the limit before auto-ending
 // status is restored in real time instead of showing an over-run.
 const autoEndGrace = (kind: BreakKind) => (kind === "travel" ? 0 : AUTO_END_AFTER_OVER);
 
+// Module-level so the memory survives the screen lock unmounting and
+// remounting the app — otherwise break warnings replay their sound on unlock.
+const shownBreakStages: Record<string, Set<Stage>> = {};
+const autoEndedBreaks = new Set<string>();
+
 export function BreakEndingAlert() {
   const { user, isStaff } = useAuth();
   const navigate = useNavigate();
   const [active, setActive] = useState<BreakRow | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [stage, setStage] = useState<Stage>(null);
-  const shownRef = useRef<Record<string, Set<Stage>>>({});
-  const autoEndedRef = useRef<Set<string>>(new Set());
 
   // tick every second while a break is active
   useEffect(() => {
