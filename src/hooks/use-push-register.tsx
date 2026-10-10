@@ -45,6 +45,17 @@ export function usePushRegister() {
           // lets Android use the system default notification ringtone.
         });
 
+        // Default alerts channel for plain dings (e.g. inbox DMs) while the
+        // app is in the foreground. No custom sound = system default ding.
+        await LocalNotifications.createChannel({
+          id: "bm_support_alerts_v4",
+          name: "BM Support alerts",
+          description: "Signups, tickets, orders and staff alerts",
+          importance: 5,
+          visibility: 1,
+          vibration: true,
+        });
+
         // Ticket replies use the exact spoken MP3 bundled in res/raw. Android
         // notification-channel sounds only work from native resources; a web
         // asset URL cannot be used while the app is backgrounded or closed.
