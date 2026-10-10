@@ -2,6 +2,7 @@
 # Roadmap
 
 ## Current
+- [ ] Investigate and restore missing Boro matchday goal updates; verify the affected thread
 - [x] Profit & costs Packages: tabs always ordered single 12, single 6, single 1 month, then Multi Room, then Triple Room
 - [x] Refresh Profit & costs with a clearer background and right-sidebar pie-chart statistics; verify signed-in preview
 - [x] Shift breakdown pie chart: show the staff username on its own line at the bottom of every card
