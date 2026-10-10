@@ -16,7 +16,7 @@ describe("Rugby Pass post with a fixture wrapped over two lines", () => {
     expect(events.find((e) => e.title === "Lyon v La Rochelle")?.channels).toEqual(["Rugby Pass 02"]);
   });
   test("every event has a channel and the saved guide reads back the same", () => {
-    const res = checkSportsImport(raw, "uk" as never, nowMs, "Rugby Pass");
+    const res = checkSportsImport(raw, "gmt", nowMs, "Rugby Pass");
     expect(res.issues.filter((i) => i.level === "error")).toEqual([]);
     expect(res.issues.some((i) => /no channel/i.test(i.message))).toBe(false);
   });
