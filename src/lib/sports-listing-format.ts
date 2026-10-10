@@ -232,8 +232,11 @@ function dateOnWeekday(dateLabel: string | null, weekday: number | null): string
  */
 function resolveWeekdayDate(date: string | null, weekday: number | null): string | null {
   if (weekday === null) return date;
-  return dateOnWeekday(date ?? importDayListingDate(), weekday);
+  return dateOnWeekday(date ?? importDayListingDate(importNowOverride ?? Date.now()), weekday);
 }
+
+/** The import's own "now" while formatSportsListingBlock runs, so undated weekday slots count from the import day. */
+let importNowOverride: number | null = null;
 
 function unique(values: string[]): string[] {
   const out: string[] = [];
@@ -1639,6 +1642,16 @@ function convertEventsToUk(events: SportsListingEvent[], input: ListingInput): S
 }
 
 export function formatSportsListingBlock(input: ListingInput): string | null {
+  const previousNow = importNowOverride;
+  importNowOverride = input.nowMs ?? null;
+  try {
+    return formatSportsListingBlockAt(input);
+  } finally {
+    importNowOverride = previousNow;
+  }
+}
+
+function formatSportsListingBlockAt(input: ListingInput): string | null {
   // No date written anywhere in the post: date it from the import day rather
   // than leaving the guide dateless for someone to fill in afterwards.
   const base = input.date ?? importDayListingDate(input.nowMs);
