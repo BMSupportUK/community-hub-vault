@@ -1,5 +1,5 @@
 import { test, expect } from "bun:test";
-import { awayWindow, awayIcon } from "../src/lib/staff-away";
+import { awayWindow, awayIcon, awayElapsedLabel } from "../src/lib/staff-away";
 import { Toilet, Cigarette, Users, Moon } from "lucide-react";
 
 test("each Away reason has its own icon", () => {

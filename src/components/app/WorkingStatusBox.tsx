@@ -20,7 +20,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { resolveAvatarUrl, useRoleFlashMap } from "@/lib/role-flash";
 import { Nameplate } from "@/components/app/Nameplate";
 import { useDndStatus } from "@/hooks/use-dnd";
-import { awayIcon } from "@/lib/staff-away";
+import { awayIcon, awayElapsedLabel } from "@/lib/staff-away";
 import { DndCountdown } from "@/components/app/DndCountdown";
 import { DndDialogButton } from "@/components/app/DndDialogButton";
 import { StaffTicketsButton } from "@/components/app/StaffTicketsDialog";
@@ -552,13 +552,19 @@ export function WorkingStatusBox({
 
   // Away shows as an icon + pill inside the Working Status box (next to the
   // sign-in/out controls) instead of replacing the whole box.
+  // The three manually-started reasons have no finish time, so the pill counts
+  // up live and tells staff how long they have been away. Scheduled Outside Of
+  // Office Hours keeps its own finish countdown instead.
+  const awayElapsed =
+    dnd?.active && !dnd.endsAt && dnd.startsAt ? awayElapsedLabel(dnd.startsAt.getTime(), now) : "";
   const awayPill = dnd?.active ? (
     <span
       className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-violet-500/15 px-2.5 py-1 text-[11px] font-semibold text-violet-200 ring-1 ring-violet-500/40"
-      title={`Away — ${dnd.reason ?? "on"}`}
+      title={`Away — ${dnd.reason ?? "on"}${awayElapsed ? ` (away for ${awayElapsed})` : ""}`}
     >
       {(() => { const AwayIcon = awayIcon(dnd.reason); return <AwayIcon className="size-3.5" />; })()}
       Away{dnd.reason ? ` — ${dnd.reason}` : ""}
+      {awayElapsed && <span className="tabular-nums font-bold text-violet-100">· {awayElapsed}</span>}
     </span>
   ) : null;
 

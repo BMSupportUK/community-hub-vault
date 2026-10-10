@@ -13,6 +13,22 @@ export function awayIcon(reason: string | null | undefined) {
 export function isScheduledAway(reason: AwayReason) {
   return reason === "Outside Of Office Hours";
 }
+
+/**
+ * Live "how long have you been Away" label for the manually-started reasons
+ * (Toilet Break, Smoking Break, Meeting), which have no automatic finish.
+ * Render it with a clock that ticks every second and it updates live.
+ */
+export function awayElapsedLabel(startMs: number, nowMs: number): string {
+  const sec = Math.max(0, Math.floor((nowMs - startMs) / 1000));
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = sec % 60;
+  if (h > 0) return `${h}h ${pad(m)}m ${pad(s)}s`;
+  if (m > 0) return `${m}m ${pad(s)}s`;
+  return `${s}s`;
+}
 export function awayWindow(reason: AwayReason, start: number, end: number, now = Date.now()) {
   if (!isScheduledAway(reason)) return { starts_at: new Date(now).toISOString(), ends_at: null };
   if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start || end <= now) throw new Error("Choose a finish after the start and in the future");
