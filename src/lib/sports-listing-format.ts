@@ -903,7 +903,23 @@ export function splitListingSections(raw: string | null | undefined): ListingSec
   const sections: ListingSection[] = [];
   let current: ListingSection | null = null;
 
-  for (const line of listingLines(raw)) {
+  const lines = listingLines(raw);
+  for (let idx = 0; idx < lines.length; idx++) {
+    const line = lines[idx]!;
+    // Premier League fixture posts: "## Home v Away" (or a bare "Home v Away"
+    // line) followed by a "12:30pm UK / 7:30am ET" line. Each fixture is its
+    // own section so it can be filed into its own category and guide.
+    const fixture = line.trim().match(/^##\s+(\S.*)$/)?.[1] ??
+      (/\S\s+v\s+\S/i.test(line.trim()) ? line.trim() : null);
+    if (
+      fixture &&
+      /\bUK\s*\/\s*[^\n]*\bET\b/i.test(lines[idx + 1]?.trim() ?? "") &&
+      /\d/.test(lines[idx + 1] ?? "")
+    ) {
+      current = { name: cleanLine(fixture), raw: "" };
+      sections.push(current);
+      continue;
+    }
     if (isSectionHeading(line)) {
       current = { name: cleanLine(line), raw: "" };
       sections.push(current);
