@@ -39,7 +39,7 @@ function AdminProfitCostsPage() {
         aria-hidden
          className="pointer-events-none absolute inset-0 bg-background/35"
       />
-       <div className="relative mx-auto w-full max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+       <div className="relative w-full space-y-6 px-4 py-8 sm:px-6 lg:px-8">
         <div className="flex items-center gap-3">
           <Link
             to="/admin"
