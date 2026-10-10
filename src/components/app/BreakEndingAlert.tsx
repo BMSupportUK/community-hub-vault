@@ -1,11 +1,9 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "@tanstack/react-router";
 import { AlertTriangle, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -43,7 +41,6 @@ const autoEndedBreaks = new Set<string>();
 
 export function BreakEndingAlert() {
   const { user, isStaff } = useAuth();
-  const navigate = useNavigate();
   const [active, setActive] = useState<BreakRow | null>(null);
   const [now, setNow] = useState(() => Date.now());
   const [stage, setStage] = useState<Stage>(null);
@@ -126,8 +123,7 @@ export function BreakEndingAlert() {
     }
   }, [active, now]);
 
-  // Auto-end the break/lunch 10 seconds after it expires if the user
-  // hasn't ended it themselves.
+  // Automatically end the break/lunch after the existing expiry grace.
   useEffect(() => {
     if (!active) return;
     const startMs = new Date(active.started_at).getTime();
@@ -162,16 +158,6 @@ export function BreakEndingAlert() {
   const overBy = Math.max(0, Math.round(elapsed - BREAK_LIMITS[active.kind]));
   const mm = (s: number) => `${Math.floor(s / 60)}m ${s % 60}s`;
 
-  const endNow = async () => {
-    const { error } = await supabase
-      .from("breaks")
-      .update({ ended_at: new Date().toISOString() })
-      .eq("id", active.id);
-    if (error) toast.error(error.message);
-    else toast.success(`${label} ended`);
-    setStage(null);
-  };
-
   const isOver = stage === "over";
 
   return (
@@ -187,7 +173,7 @@ export function BreakEndingAlert() {
           <AlertDialogDescription className="text-center">
             {isOver ? (
               <>
-                You're <span className="font-semibold text-red-500">over by {mm(overBy)}</span>. Please clock back in.
+                Your break time is up <span className="font-semibold text-red-500">({mm(overBy)} ago)</span>. Your break ends automatically.
               </>
             ) : (
               <>
@@ -202,12 +188,6 @@ export function BreakEndingAlert() {
         </AlertDialogHeader>
         <AlertDialogFooter className="sm:justify-center gap-2">
           <AlertDialogCancel>Dismiss</AlertDialogCancel>
-          <AlertDialogAction onClick={() => navigate({ to: "/clock" })}>
-            Open clock
-          </AlertDialogAction>
-          <AlertDialogAction onClick={endNow} className={isOver ? "bg-red-600 hover:bg-red-700" : ""}>
-            End {label.toLowerCase()} now
-          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
