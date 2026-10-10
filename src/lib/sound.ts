@@ -1,4 +1,5 @@
 // Shared audio playback helper.
+import { Capacitor } from "@capacitor/core";
 import { shakeScreen } from "@/lib/screen-shake";
 //
 // Playback strategy (in order):
@@ -220,6 +221,10 @@ export function playSound(
   opts: { volume?: number; gain?: number; label?: string } = {},
 ): Promise<boolean> {
   if (typeof window === "undefined") return Promise.resolve(false);
+  // Spoken in-app alerts are browser-only. Inside the Android app the native
+  // notification channels play their own per-type ding, so web audio stays
+  // silent to avoid double / spoken playback.
+  if (Capacitor.isNativePlatform()) return Promise.resolve(false);
   if (typeof src !== "string" || !src) {
     console.warn("[sound] ignored playback with no source", opts.label ?? "");
     return Promise.resolve(false);
