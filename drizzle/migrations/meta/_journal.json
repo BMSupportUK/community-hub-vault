@@ -666,6 +666,13 @@
       "when": 1791634863399,
       "tag": "0094_staff_away_reasons",
       "breakpoints": true
+    },
+    {
+      "idx": 95,
+      "version": "7",
+      "when": 1791635647894,
+      "tag": "0095_away_log",
+      "breakpoints": true
     }
   ]
 }
