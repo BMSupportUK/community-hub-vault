@@ -131,7 +131,7 @@ function dayIndexOfIso(iso: string) {
   return (d.getDay() + 6) % 7;
 }
 
-export default function ShiftHistoryPanel({ userId, name }: { userId: string; name: string }) {
+export default function ShiftHistoryPanel({ userId, name, username }: { userId: string; name: string; username?: string | null }) {
   const [rows, setRows] = useState<ShiftHistoryRow[]>([]);
   const [breaksByShift, setBreaksByShift] = useState<Record<string, BreakRow[]>>({});
   const [awayRows, setAwayRows] = useState<AwayRow[]>([]);
@@ -506,7 +506,7 @@ export default function ShiftHistoryPanel({ userId, name }: { userId: string; na
                 ) : null}
               </div>
             </div>
-            <ShiftBreakdownCard shift={s} breaks={breaksByShift[s.id] ?? []} away={awayRows} />
+            <ShiftBreakdownCard shift={s} breaks={breaksByShift[s.id] ?? []} away={awayRows} username={username} />
             </div>
           );
         })}
