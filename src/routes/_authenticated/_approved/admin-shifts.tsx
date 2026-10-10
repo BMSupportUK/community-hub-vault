@@ -455,9 +455,10 @@ function StaffShiftsPage() {
             const dayRows = sections.flatMap(([, r]) => r);
             return (
             <section key={key} className="space-y-4">
-              <div className="flex flex-wrap items-center gap-2">
-                <h2 className="font-display font-bold">{fmtDayHeading(key)}</h2>
-                <span className="text-xs text-muted-foreground">
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="h-6 w-1 rounded-full bg-gradient-primary" />
+                <h2 className="font-display text-lg font-bold tracking-tight">{fmtDayHeading(key)}</h2>
+                <span className="rounded-full border border-border bg-surface-1 px-2.5 py-0.5 text-xs font-medium text-muted-foreground tabular-nums">
                   {dayRows.length} shift{dayRows.length === 1 ? "" : "s"} ·{" "}
                   {fmtMs(dayRows.reduce((a, s) => a + shiftBreakdown(s, breaksByShift[s.id] ?? [], awayByUser[s.user_id] ?? []).workedMs, 0))} worked
                 </span>
@@ -482,12 +483,22 @@ function StaffShiftsPage() {
                     <div key={s.id} className="grid min-w-0 gap-3 xl:grid-cols-2">
                     <div
                       className={cn(
-                        "rounded-2xl border p-4",
+                        "rounded-2xl border p-4 shadow-sm transition-shadow hover:shadow-md",
                         open ? "border-emerald-400/40 bg-emerald-500/5" : "border-border bg-surface-1",
                       )}
                     >
                       <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <span
+                            className={cn(
+                              "grid size-10 shrink-0 place-items-center rounded-full font-display text-sm font-bold",
+                              open ? "bg-emerald-500/20 text-emerald-300" : "bg-primary/15 text-primary",
+                            )}
+                            aria-hidden
+                          >
+                            {nameOf(s.user_id).slice(0, 2).toUpperCase()}
+                          </span>
+                          <div className="min-w-0">
                           {p?.username ? (
                             <Link
                               to="/u/$username"
@@ -500,10 +511,11 @@ function StaffShiftsPage() {
                           ) : (
                             <p className="font-semibold truncate">{nameOf(s.user_id)}</p>
                           )}
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs text-muted-foreground tabular-nums">
                             {fmtMs(durationMs(s.clock_in, s.clock_out))}
                             {open ? " on shift so far" : " on shift"}
                           </p>
+                          </div>
                         </div>
                         {open ? (
                           <Pill label="On shift" tone="ok" />
