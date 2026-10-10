@@ -716,7 +716,8 @@ function QueueRow({
   // Always offer the choice so a wrong pick can be changed before importing.
   const needsZone = parseClockTime(zoneSource) !== null;
   const splitCount = useMemo(
-    () => parseSportsListingBlock(normalizedRaw).length,
+    // Premier League fixture posts count one block per channel group.
+    () => parseSportsListingBlock(splitFixtureChannelBlocks(normalizedRaw)).length,
     [normalizedRaw],
   );
   // Names listed inside the post that each have their own guide.
