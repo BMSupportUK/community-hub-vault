@@ -40,6 +40,7 @@ export function ProfitCostsPanel() {
   const [methodOf, setMethodOf] = useState<Record<string, string>>({});
   const [year, setYear] = useState<number | null>(null);
   const [month, setMonth] = useState<number | null>(null);
+  const [pkg, setPkg] = useState<string | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
 
@@ -167,29 +168,32 @@ export function ProfitCostsPanel() {
           </section>
         ) : tab === "packages" && list.length > 0 ? (
           <section className="space-y-5">
+            <nav aria-label="Packages" className="flex flex-wrap items-center gap-1 rounded-lg border border-border/70 bg-card/85 p-2 backdrop-blur-md">
+              {packageCards.map((p) => (
+                <Button variant="ghost" key={p.key} className={`${selection((pkg ?? packageCards[0]?.key) === p.key)} h-auto whitespace-normal text-left`} aria-pressed={(pkg ?? packageCards[0]?.key) === p.key} onClick={() => setPkg(p.key)}><Package className="size-4 shrink-0" />{p.name}</Button>
+              ))}
+            </nav>
             <div className="flex flex-wrap items-center gap-3 border-b border-border/60 pb-4">
               <span className="flex items-center gap-2 text-sm font-medium"><CalendarDays className="size-4 text-accent" />Financial year</span>
               <div className="flex flex-wrap gap-1">{years.map((y) => <Button variant="ghost" key={y} className={selection(y === ay)} aria-pressed={y === ay} onClick={() => { setYear(y); setMonth(null); }}>{y}</Button>)}</div>
               <span className="flex items-center gap-2 text-sm font-medium sm:ml-4">Month</span>
               <div className="flex flex-wrap gap-1">{byMonth.map(([k]) => <Button variant="ghost" key={k} className={selection(k === am)} aria-pressed={k === am} onClick={() => setMonth(k)}>{MONTHS[k]}</Button>)}</div>
             </div>
-            <div className="grid gap-5 2xl:grid-cols-2">
-              {packageCards.map((p) => {
-                const y = pkgYear.get(p.key) ?? empty, mo = pkgMonth.get(p.key) ?? empty;
-                return (
-                  <article key={p.key} aria-label={`${p.name} package`} className="rounded-xl border border-border/70 bg-card/85 p-4 shadow-elegant backdrop-blur-md sm:p-5">
-                    <header className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
-                      <h3 className="flex items-center gap-2 font-display text-lg font-semibold break-words"><Package className="size-4 text-accent" />{p.name}</h3>
-                      <span className="text-xs text-muted-foreground">{p.price != null ? `Sells for ${money(p.price)} · ` : ""}{y.qty} sold in {ay}</span>
-                    </header>
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      {am != null && <ProfitSummaryChart title={`${MONTHS[am]} ${ay} · Month total`} revenue={mo.revenue} cost={mo.cost} missing={mo.missing} />}
-                      <ProfitSummaryChart title={`${ay} · Year total`} revenue={y.revenue} cost={y.cost} missing={y.missing} />
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
+            {packageCards.filter((p) => p.key === (pkg ?? packageCards[0]?.key)).map((p) => {
+              const y = pkgYear.get(p.key) ?? empty, mo = pkgMonth.get(p.key) ?? empty;
+              return (
+                <article key={p.key} aria-label={`${p.name} package`} className="rounded-xl border border-border/70 bg-card/85 p-4 shadow-elegant backdrop-blur-md sm:p-5">
+                  <header className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
+                    <h3 className="flex items-center gap-2 font-display text-lg font-semibold break-words"><Package className="size-4 text-accent" />{p.name}</h3>
+                    <span className="text-xs text-muted-foreground">{p.price != null ? `Sells for ${money(p.price)} · ` : ""}{y.qty} sold in {ay}</span>
+                  </header>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {am != null && <ProfitSummaryChart title={`${MONTHS[am]} ${ay} · Month total`} revenue={mo.revenue} cost={mo.cost} missing={mo.missing} />}
+                    <ProfitSummaryChart title={`${ay} · Year total`} revenue={y.revenue} cost={y.cost} missing={y.missing} />
+                  </div>
+                </article>
+              );
+            })}
           </section>
         ) : list.length === 0 ? <div className="flex flex-col items-center gap-3 bg-card/85 py-16 text-muted-foreground"><Wallet className="size-8 text-accent" /><p>{tab === "profit" || tab === "packages" ? "No paid orders yet." : `No ${METHOD_LABELS[tab] ?? tab} orders yet.`}</p></div> : (
           <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_640px]">
