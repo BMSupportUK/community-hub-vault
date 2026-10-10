@@ -1098,6 +1098,9 @@ function normalizeBulletChannelListing(raw: string): string {
 function normalizeChannelHeaderFixtureBlocks(raw: string): string {
   const header = /^\s*(Rugby\s*Pass|Rpass)\s*0?(\d{1,2})\s*:\s*(.*)$/i;
   if (!raw.split("\n").some((l) => header.test(l))) return raw;
+  // A fixture wrapped over two lines ("Clermont Auvergne v" / "Bordeaux Begles 20:00")
+  // is joined back into one row so it keeps its channel.
+  raw = raw.replace(/([^\n]*\S)\s+(v|vs\.?)[ \t]*\n[ \t]*(?=\S)/gi, "$1 $2 ");
   const fixtureRe = /(.+?)\s+(\d{1,2}[:.]\d{2})(?=\s|$)/g;
   const out: string[] = [];
   let channel: string | null = null;
