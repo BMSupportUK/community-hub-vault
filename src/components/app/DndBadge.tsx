@@ -1,6 +1,6 @@
-import { Moon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDndStatus } from "@/hooks/use-dnd";
+import { awayIcon } from "@/lib/staff-away";
 
 /** Renders a small "DND" pill if the given user is currently in Away mode. */
 export function DndBadge({
@@ -30,7 +30,7 @@ export function DndBadge({
       )}
       title={title}
     >
-      <Moon className={compact ? "size-2.5" : "size-3"} />
+      {(() => { const Icon = awayIcon(info.reason); return <Icon className={compact ? "size-2.5" : "size-3"} />; })()}
       {!compact && <span className="whitespace-normal">Away{info.reason ? ` — ${info.reason}` : ""}</span>}
     </span>
   );

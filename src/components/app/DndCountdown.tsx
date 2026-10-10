@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { Moon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDndStatus } from "@/hooks/use-dnd";
+import { awayIcon } from "@/lib/staff-away";
 
 function formatRemaining(ms: number): string {
   const total = Math.max(0, Math.floor(ms / 1000));
@@ -68,7 +68,7 @@ export function DndCountdown({
       title={title}
     >
       <span className="flex items-center gap-1">
-        <Moon className={compact ? "size-3" : "size-3.5"} />
+        {(() => { const Icon = awayIcon(info.reason); return <Icon className={compact ? "size-3" : "size-3.5"} />; })()}
         <span className="whitespace-normal">Away{info.reason ? ` — ${info.reason}` : ""}</span>
       </span>
       {remaining !== null && (
