@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
 import { shiftBreakdown, shiftHours } from "@/lib/shift-breakdown";
+import { awayIcon } from "@/lib/staff-away";
 import type { BreakKind } from "@/lib/breaks";
 
 interface Props {
   shift: { clock_in: string; clock_out: string | null };
   breaks: { kind: BreakKind; started_at: string; ended_at: string | null }[];
-  away: { starts_at: string; ends_at: string | null }[];
+  away: { reason: string; starts_at: string; ends_at: string | null }[];
 }
 
 export function ShiftBreakdownCard({ shift, breaks, away }: Props) {
@@ -41,9 +42,24 @@ export function ShiftBreakdownCard({ shift, breaks, away }: Props) {
         </div>
         <dl className="w-full min-w-0 space-y-3 sm:w-auto sm:flex-1">
           {segments.map((s) => (
-            <div key={s.name} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 text-sm sm:text-xs">
-              <dt className="flex min-w-0 items-center gap-2"><span className={`size-2.5 shrink-0 rounded-full ${s.name === "Working" ? "bg-success" : s.name === "Breaks" ? "bg-warning" : "bg-accent"}`} />{s.name}</dt>
-              <dd className="shrink-0 text-right tabular-nums"><span className="font-semibold">{s.percent.toFixed(1)}%</span><span className="block text-muted-foreground">{shiftHours(s.value)}</span></dd>
+            <div key={s.name}>
+              <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 text-sm sm:text-xs">
+                <dt className="flex min-w-0 items-center gap-2"><span className={`size-2.5 shrink-0 rounded-full ${s.name === "Working" ? "bg-success" : s.name === "Breaks" ? "bg-warning" : "bg-accent"}`} />{s.name}</dt>
+                <dd className="shrink-0 text-right tabular-nums"><span className="font-semibold">{s.percent.toFixed(1)}%</span><span className="block text-muted-foreground">{shiftHours(s.value)}</span></dd>
+              </div>
+              {s.name === "Away" && result.awayReasons.length > 0 && (
+                <div className="mt-1.5 space-y-1.5 border-l-2 border-accent/40 pl-3">
+                  {result.awayReasons.map((r) => {
+                    const Icon = awayIcon(r.reason);
+                    return (
+                      <div key={r.reason} className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-2 text-xs sm:text-[11px]">
+                        <span className="flex min-w-0 items-center gap-1.5 text-muted-foreground"><Icon className="size-3.5 shrink-0 text-accent" /><span className="truncate">{r.reason}</span></span>
+                        <span className="shrink-0 text-right tabular-nums"><span className="font-medium">{r.percent.toFixed(1)}%</span><span className="block text-muted-foreground">{shiftHours(r.ms)}</span></span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           ))}
         </dl>
