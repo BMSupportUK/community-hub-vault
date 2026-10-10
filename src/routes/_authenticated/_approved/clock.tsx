@@ -136,16 +136,6 @@ function ClockPage() {
     refresh();
   };
 
-  const endBreak = async () => {
-    if (!myBreak) return;
-    setBusy(true);
-    const { error } = await supabase.from("breaks").update({ ended_at: new Date().toISOString() }).eq("id", myBreak.id);
-    setBusy(false);
-    if (error) return toast.error(error.message);
-    toast.success("Break ended");
-    notifyBreak({ data: { kind: "end", breakKind: myBreak.kind } }).catch(() => {});
-    refresh();
-  };
 
   const sessionSeconds = myShift ? (now - new Date(myShift.clock_in).getTime()) / 1000 : 0;
   const breakElapsed = myBreak ? (now - new Date(myBreak.started_at).getTime()) / 1000 : 0;
@@ -237,13 +227,11 @@ function ClockPage() {
                 <div className={cn("font-semibold", overBreak ? "text-destructive" : "text-amber-400")}>
                   On {breakLabel(myBreak.kind).toLowerCase()} — {overBreak ? `over by ${fmtMin(-breakRemaining)}` : `${fmtMin(breakRemaining)} left`}
                 </div>
-                <div className="text-sm text-muted-foreground">Elapsed {fmtMin(breakElapsed)} of {BREAK_LIMITS[myBreak.kind] / 60}m</div>
+                <div className="text-sm text-muted-foreground">Elapsed {fmtMin(breakElapsed)} of {BREAK_LIMITS[myBreak.kind] / 60}m — ends automatically when the time is up</div>
               </div>
-              <button onClick={endBreak} disabled={busy} className="px-4 py-2 rounded-lg bg-primary text-primary-foreground inline-flex items-center gap-2 text-sm">
-                <PlayCircle className="size-4" /> End break
-              </button>
             </div>
           )}
+
         </div>
 
         {/* Staff status panel — staff strip cards, side by side */}
