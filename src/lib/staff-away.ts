@@ -8,3 +8,21 @@ export function awayWindow(reason: AwayReason, start: number, end: number, now =
   if (!Number.isFinite(start) || !Number.isFinite(end) || end <= start || end <= now) throw new Error("Choose a finish after the start and in the future");
   return { starts_at: new Date(start).toISOString(), ends_at: new Date(end).toISOString() };
 }
+
+/** One logged Away period from the away_log table. */
+export type AwayLogRow = { id: string; reason: string; starts_at: string; ends_at: string | null };
+
+/**
+ * Away periods that fall inside a shift's clocked window, so every shift report
+ * can list them next to the breaks. An open period counts until the shift ends.
+ */
+export function awayForShift(
+  rows: AwayLogRow[],
+  shift: { clock_in: string; clock_out: string | null },
+) {
+  const from = new Date(shift.clock_in).getTime();
+  const to = shift.clock_out ? new Date(shift.clock_out).getTime() : Date.now();
+  return rows.filter(
+    (a) => new Date(a.starts_at).getTime() < to && (!a.ends_at || new Date(a.ends_at).getTime() > from),
+  );
+}

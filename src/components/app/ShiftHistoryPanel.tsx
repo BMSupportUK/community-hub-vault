@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Clock as ClockIcon, LogIn, LogOut, CheckCircle2, HelpCircle, Loader2, ChevronLeft, ChevronRight, CalendarDays, Moon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { type BreakKind, breakLabel, breakIcon } from "@/lib/breaks";
+import { awayForShift } from "@/lib/staff-away";
 
 const PAGE_SIZE = 20;
 const AUTO_OUT_GRACE_MS = 15 * 60 * 1000;
@@ -31,15 +32,6 @@ interface AwayRow {
   reason: string;
   starts_at: string;
   ends_at: string | null;
-}
-
-/** Away periods that fall inside a shift's clocked window. */
-function awayForShift(rows: AwayRow[], s: ShiftHistoryRow) {
-  const from = new Date(s.clock_in).getTime();
-  const to = s.clock_out ? new Date(s.clock_out).getTime() : Date.now();
-  return rows.filter(
-    (a) => new Date(a.starts_at).getTime() < to && (!a.ends_at || new Date(a.ends_at).getTime() > from),
-  );
 }
 
 /** Hourly rota slot a moderator claimed for themselves. */

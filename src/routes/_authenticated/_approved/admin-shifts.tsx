@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { type BreakKind, breakIcon, breakLabel } from "@/lib/breaks";
+import { awayForShift } from "@/lib/staff-away";
 import { EarlyFinishRequestsPanel } from "@/components/app/EarlyFinishRequestsPanel";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-shifts")({
@@ -56,15 +57,6 @@ interface AwayRow {
   reason: string;
   starts_at: string;
   ends_at: string | null;
-}
-
-/** Away periods that fall inside a shift's clocked window. */
-function awayForShift(rows: AwayRow[], s: ShiftRow) {
-  const from = new Date(s.clock_in).getTime();
-  const to = s.clock_out ? new Date(s.clock_out).getTime() : Date.now();
-  return rows.filter(
-    (a) => new Date(a.starts_at).getTime() < to && (!a.ends_at || new Date(a.ends_at).getTime() > from),
-  );
 }
 
 /** Hourly rota slot claimed by a moderator. */
