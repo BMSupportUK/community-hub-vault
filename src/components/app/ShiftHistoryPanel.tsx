@@ -1,10 +1,10 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Clock as ClockIcon, LogIn, LogOut, CheckCircle2, HelpCircle, Loader2, ChevronLeft, ChevronRight, CalendarDays, Moon } from "lucide-react";
+import { Clock as ClockIcon, LogIn, LogOut, CheckCircle2, HelpCircle, Loader2, ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { type BreakKind, breakLabel, breakIcon } from "@/lib/breaks";
-import { awayForShift } from "@/lib/staff-away";
+import { awayForShift, awayIcon } from "@/lib/staff-away";
 
 const PAGE_SIZE = 20;
 const AUTO_OUT_GRACE_MS = 15 * 60 * 1000;
@@ -480,7 +480,7 @@ export default function ShiftHistoryPanel({ userId, name }: { userId: string; na
                 <div className="mt-2 space-y-1.5 border-t border-purple-500/20 pt-2 text-sm">
                   {awayForShift(awayRows, s).map((a) => (
                     <div key={a.id} className="flex items-center gap-2 text-purple-100/90">
-                      <Moon className="size-4 text-violet-300" />
+                      {(() => { const Icon = awayIcon(a.reason); return <Icon className="size-4 text-violet-300" />; })()}
                       <span className="text-purple-200/70">Away · {a.reason}</span>
                       <span className="ml-auto font-medium tabular-nums">
                         {fmtTime(a.starts_at)} · {fmtDuration(a.starts_at, a.ends_at)}
