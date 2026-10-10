@@ -120,7 +120,7 @@ function PlayerNameButton({
   name,
   className = "",
   scoringAs = null,
-  asSub: benchPick = false,
+  asSub = false,
   gameweekNumber = null,
 }: {
   playerId: string;
@@ -198,7 +198,7 @@ function StatAbbrLabel({
 function PlayerStatsDialog({
   playerId,
   scoringAs,
-  asSub = false,
+  asSub: benchPick = false,
   gameweekNumber = null,
   onClose,
 }: {
