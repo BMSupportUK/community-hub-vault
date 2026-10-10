@@ -1884,12 +1884,20 @@ export function listingBlockHasDate(raw: string): boolean {
  * Pipes inside channel names (`EPL | Premier League`) are flattened so they
  * aren't read as channel separators; `Hub Premier 1 & 5` becomes two channels.
  */
+const eplFixtureLineAt = (lines: string[], i: number) =>
+  (/^##\s+\S/.test(lines[i]?.trim() ?? "") || /\S\s+v\s+\S/i.test(lines[i]?.trim() ?? "")) &&
+  /\bUK\s*\/\s*[^\n]*\bET\b/i.test(lines[i + 1]?.trim() ?? "") &&
+  /\d/.test(lines[i + 1] ?? "");
+
+/** True when a post uses the Premier League fixture layout above. */
+export function isEplFixturePost(raw: string): boolean {
+  const lines = raw.replace(/\r/g, "").split("\n");
+  return lines.some((_, i) => eplFixtureLineAt(lines, i));
+}
+
 export function splitFixtureChannelBlocks(raw: string): string {
   const lines = raw.replace(/\r/g, "").split("\n");
-  const fixtureAt = (i: number) =>
-    (/^##\s+\S/.test(lines[i]?.trim() ?? "") || /\S\s+v\s+\S/i.test(lines[i]?.trim() ?? "")) &&
-    /\bUK\s*\/\s*[^\n]*\bET\b/i.test(lines[i + 1]?.trim() ?? "") &&
-    /\d/.test(lines[i + 1] ?? "");
+  const fixtureAt = (i: number) => eplFixtureLineAt(lines, i);
   if (!lines.some((_, i) => fixtureAt(i))) return raw;
   const out: string[] = [];
   let i = 0;
