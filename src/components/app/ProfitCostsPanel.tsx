@@ -40,6 +40,7 @@ export function ProfitCostsPanel() {
   const [methodOf, setMethodOf] = useState<Record<string, string>>({});
   const [year, setYear] = useState<number | null>(null);
   const [month, setMonth] = useState<number | null>(null);
+  const [pkg, setPkg] = useState<string | null>(null);
   const [saving, setSaving] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
 
