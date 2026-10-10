@@ -2,7 +2,6 @@ import { createContext, useContext, useEffect, useRef, useState, type ReactNode 
 import type { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { checkMyVpnOnLogin } from "@/lib/vpn-login-check.functions";
-import { sendShiftEventPush, sendBreakEventPush } from "@/lib/push.functions";
 import { isFanZoneOnlyRoles } from "@/lib/fan-zone-nav";
 import { sortRolesByPriority } from "@/lib/role-rank";
 import { leaveTalkChannelsOnSignOut } from "@/hooks/use-talk-channel-presence";
