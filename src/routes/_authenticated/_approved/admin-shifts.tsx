@@ -356,31 +356,44 @@ function StaffShiftsPage() {
   return (
     <div className="space-y-6 p-4 md:p-6">
       <EarlyFinishRequestsPanel />
-      <div className="flex flex-wrap items-center gap-3">
-        <Link to="/admin" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="size-4" /> Back to admin
-        </Link>
-        <h1 className="font-display text-xl font-bold inline-flex items-center gap-2">
-          <Users className="size-5 text-primary" /> Staff shifts
-        </h1>
-        <div className="ml-auto flex items-center gap-2">
-          {RANGES.map((r) => (
-            <Button key={r.days} size="sm" variant={days === r.days ? "default" : "outline"} onClick={() => setDays(r.days)}>
-              {r.label}
+      <header className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-primary/15 via-surface-1 to-accent/10 p-5 shadow-sm md:p-6">
+        <div className="pointer-events-none absolute -right-16 -top-16 size-48 rounded-full bg-primary/10 blur-2xl" />
+        <div className="pointer-events-none absolute -bottom-20 right-24 size-40 rounded-full bg-accent/10 blur-2xl" />
+        <div className="relative flex flex-wrap items-center gap-4">
+          <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-gradient-primary text-white shadow-lg">
+            <Users className="size-6" />
+          </span>
+          <div className="min-w-0">
+            <Link to="/admin" className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground">
+              <ArrowLeft className="size-3.5" /> Back to admin
+            </Link>
+            <h1 className="font-display text-2xl font-bold tracking-tight md:text-3xl">Staff shifts</h1>
+            <p className="mt-0.5 max-w-2xl text-xs text-muted-foreground md:text-sm">
+              Clock-ins, breaks, away time and auto clock-outs — grouped by day so you never have to open each profile.
+            </p>
+          </div>
+          <div className="ml-auto flex items-center gap-2">
+            <div className="flex items-center gap-1 rounded-xl border border-border bg-background/60 p-1 backdrop-blur">
+              {RANGES.map((r) => (
+                <button
+                  key={r.days}
+                  type="button"
+                  onClick={() => setDays(r.days)}
+                  className={cn(
+                    "rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors",
+                    days === r.days ? "bg-gradient-primary text-white shadow" : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {r.label}
+                </button>
+              ))}
+            </div>
+            <Button size="icon" variant="outline" className="rounded-xl" onClick={() => void load(days)} disabled={loading} aria-label="Refresh shifts">
+              {loading ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
             </Button>
-          ))}
-          <Button size="sm" variant="outline" onClick={() => void load(days)} disabled={loading}>
-            {loading ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
-          </Button>
+          </div>
         </div>
-      </div>
-
-      <p className="text-xs text-muted-foreground max-w-3xl">
-        Every staff shift grouped by day, with clock-in and clock-out times, breaks, away
-        periods, the
-        &ldquo;still working?&rdquo; answer, and which shifts were clocked out automatically — so you
-        don&apos;t have to open each profile.
-      </p>
+      </header>
 
       <div className="flex flex-wrap gap-2 rounded-2xl border border-border bg-surface-1 p-2">
         {ROLE_TABS.map((t) => {
