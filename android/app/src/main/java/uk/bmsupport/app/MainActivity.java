@@ -182,7 +182,7 @@ public class MainActivity extends BridgeActivity {
         }
     }
 
-    /** Spoken channels are created natively so closed-app pushes always find them with their MP3. */
+    /** Alert channels are created natively so closed-app pushes always find them with their ding. */
     private void createSpokenChannel(String id, String name, int rawRes) {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return;
         AudioAttributes audioAttrs = new AudioAttributes.Builder()
