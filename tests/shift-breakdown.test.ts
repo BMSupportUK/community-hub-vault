@@ -10,16 +10,16 @@ test("working excludes breaks and Away and all percentages use clocked shift hou
     { kind: "lunch", started_at: "2026-10-10T12:00:00Z", ended_at: "2026-10-10T12:30:00Z" },
     { kind: "break", started_at: "2026-10-10T10:00:00Z", ended_at: "2026-10-10T10:15:00Z" },
     { kind: "break", started_at: "2026-10-10T15:00:00Z", ended_at: "2026-10-10T15:15:00Z" },
-  ], [{ starts_at: "2026-10-10T13:00:00Z", ends_at: "2026-10-10T14:00:00Z" }], now);
-  expect(result).toEqual({ totalMs: 8 * hour, workedMs: 6 * hour, breakMs: hour, awayMs: hour, workedPercent: 75, breakPercent: 12.5, awayPercent: 12.5 });
+  ], [{ reason: "Toilet Break", starts_at: "2026-10-10T13:00:00Z", ends_at: "2026-10-10T14:00:00Z" }], now);
+  expect(result).toEqual({ totalMs: 8 * hour, workedMs: 6 * hour, breakMs: hour, awayMs: hour, awayReasons: [{ reason: "Toilet Break", ms: hour, percent: 12.5 }], workedPercent: 75, breakPercent: 12.5, awayPercent: 12.5 });
 });
 
 test("overlaps are counted once and periods are clipped to the shift", () => {
   const result = shiftBreakdown(shift, [{ kind: "lunch", started_at: "2026-10-10T12:00:00Z", ended_at: "2026-10-10T12:30:00Z" }], [
-    { starts_at: "2026-10-10T08:00:00Z", ends_at: "2026-10-10T10:00:00Z" },
-    { starts_at: "2026-10-10T12:00:00Z", ends_at: "2026-10-10T13:00:00Z" },
-    { starts_at: "2026-10-10T12:15:00Z", ends_at: "2026-10-10T13:00:00Z" },
-    { starts_at: "2026-10-10T16:00:00Z", ends_at: null },
+    { reason: "Meeting", starts_at: "2026-10-10T08:00:00Z", ends_at: "2026-10-10T10:00:00Z" },
+    { reason: "Smoking Break", starts_at: "2026-10-10T12:00:00Z", ends_at: "2026-10-10T13:00:00Z" },
+    { reason: "Smoking Break", starts_at: "2026-10-10T12:15:00Z", ends_at: "2026-10-10T13:00:00Z" },
+    { reason: "Toilet Break", starts_at: "2026-10-10T16:00:00Z", ends_at: null },
   ], now);
   expect(result.breakMs).toBe(0.5 * hour);
   expect(result.awayMs).toBe(2.5 * hour);
