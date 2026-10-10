@@ -395,60 +395,37 @@ function StaffShiftsPage() {
         </div>
       </header>
 
-      <div className="flex flex-wrap gap-2 rounded-2xl border border-border bg-surface-1 p-2">
-        {ROLE_TABS.map((t) => {
-          const count = roleCounts[t.key] ?? 0;
-          const active = role === t.key;
-          return (
-            <button
-              key={t.key}
-              type="button"
-              onClick={() => setRole(t.key)}
-              className={cn(
-                "inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-sm font-medium transition-colors",
-                active ? "bg-gradient-primary text-white" : "text-muted-foreground hover:bg-muted hover:text-foreground",
-              )}
-            >
-              {t.label}
-              <span
-                className={cn(
-                  "rounded-full px-1.5 text-[11px] tabular-nums",
-                  active ? "bg-white/20" : "bg-muted text-muted-foreground",
-                )}
-              >
-                {count}
-              </span>
-            </button>
-          );
-        })}
-      </div>
-
-      <div className="flex flex-wrap gap-2 rounded-2xl border border-border bg-surface-1 p-2">
-        {DAY_TABS.map((t) => {
-          const count = weekdayCounts[t.key] ?? 0;
-          const active = weekday === t.key;
-          return (
-            <button
-              key={String(t.key)}
-              type="button"
-              onClick={() => setWeekday(t.key)}
-              className={cn(
-                "inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-sm font-medium transition-colors",
-                active ? "bg-gradient-primary text-white" : "text-muted-foreground hover:bg-muted hover:text-foreground",
-              )}
-            >
-              {t.label}
-              <span
-                className={cn(
-                  "rounded-full px-1.5 text-[11px] tabular-nums",
-                  active ? "bg-white/20" : "bg-muted text-muted-foreground",
-                )}
-              >
-                {count}
-              </span>
-            </button>
-          );
-        })}
+      <div className="grid gap-3 md:grid-cols-2">
+        {[
+          { tabs: ROLE_TABS, counts: roleCounts, current: role, set: (k: any) => setRole(k), label: "Role" },
+          { tabs: DAY_TABS, counts: weekdayCounts, current: weekday, set: (k: any) => setWeekday(k), label: "Day" },
+        ].map((group) => (
+          <div key={group.label} className="rounded-2xl border border-border bg-surface-1 p-2 shadow-sm">
+            <p className="px-2 pb-1.5 pt-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">{group.label}</p>
+            <div className="flex flex-wrap gap-1">
+              {group.tabs.map((t) => {
+                const count = group.counts[t.key] ?? 0;
+                const active = group.current === t.key;
+                return (
+                  <button
+                    key={String(t.key)}
+                    type="button"
+                    onClick={() => group.set(t.key)}
+                    className={cn(
+                      "inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-all",
+                      active ? "bg-gradient-primary text-white shadow" : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                    )}
+                  >
+                    {t.label}
+                    <span className={cn("rounded-full px-1.5 text-[10px] tabular-nums", active ? "bg-white/20" : "bg-muted text-muted-foreground")}>
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </div>
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_15rem]">
