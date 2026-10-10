@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { type BreakKind, breakIcon, breakLabel } from "@/lib/breaks";
+import { EarlyFinishRequestsPanel } from "@/components/app/EarlyFinishRequestsPanel";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-shifts")({
   component: StaffShiftsPage,
@@ -36,6 +37,8 @@ interface ShiftRow {
   clock_out: string | null;
   end_prompt_asked_at: string | null;
   still_working_ack_at: string | null;
+  early_finish_at: string | null;
+  early_finish_reason: string | null;
 }
 
 interface BreakRow {
@@ -182,7 +185,7 @@ function StaffShiftsPage() {
     from.setDate(from.getDate() - (d - 1));
     const { data } = await supabase
       .from("shifts")
-      .select("id, user_id, clock_in, clock_out, end_prompt_asked_at, still_working_ack_at")
+      .select("id, user_id, clock_in, clock_out, end_prompt_asked_at, still_working_ack_at, early_finish_at, early_finish_reason")
       .gte("clock_in", from.toISOString())
       .order("clock_in", { ascending: false });
     const rows = (data ?? []) as ShiftRow[];
@@ -355,6 +358,7 @@ function StaffShiftsPage() {
 
   return (
     <div className="space-y-6 p-4 md:p-6">
+      <EarlyFinishRequestsPanel />
       <div className="flex flex-wrap items-center gap-3">
         <Link to="/admin" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="size-4" /> Back to admin
@@ -559,6 +563,8 @@ function StaffShiftsPage() {
                         </div>
                         {open ? (
                           <Pill label="On shift" tone="ok" />
+                        ) : s.early_finish_at ? (
+                          <Pill label="Early finish" tone="warn" />
                         ) : auto ? (
                           <Pill label="Auto clocked out" tone="warn" />
                         ) : (
@@ -579,6 +585,11 @@ function StaffShiftsPage() {
                             {s.clock_out ? fmtTime(s.clock_out) : "—"}
                           </span>
                         </div>
+                        {s.early_finish_at && (
+                          <p className="text-xs text-warning">
+                            Early finish approved{s.early_finish_reason ? ` · ${s.early_finish_reason}` : ""}
+                          </p>
+                        )}
                       </div>
 
                       {(breaksByShift[s.id] ?? []).length > 0 && (
