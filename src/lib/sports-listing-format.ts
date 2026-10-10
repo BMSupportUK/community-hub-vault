@@ -1707,9 +1707,9 @@ export function formatSportsListingEvents(events: SportsListingEvent[], input: L
     const channels = normalizeChannels(
       event.channels?.length ? event.channels : (input.channels ?? []).filter(Boolean),
     );
-    // iFollow fixtures are found under the team's own channel rather than a
-    // numbered feed. Give every fixture in that guide the same channel label.
-    if (/^iFollow\b/i.test(input.guideTitle?.trim() ?? "")) {
+    // These fixtures are found under the team's own channel rather than a
+    // numbered feed. Keep the same label on imports, merges and guide saves.
+    if (/^iFollow\b|^(?:Scotland|Scottish)\s+(?:Premier League|Premiership)\s+Streams$/i.test(input.guideTitle?.trim() ?? "")) {
       if (!channels.some((channel) => channel.toLowerCase() === "under team channels")) channels.push("Under Team Channels");
     }
     // Scottish Cup posts list each regional feed on its own line
