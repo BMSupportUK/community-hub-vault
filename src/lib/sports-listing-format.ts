@@ -903,7 +903,23 @@ export function splitListingSections(raw: string | null | undefined): ListingSec
   const sections: ListingSection[] = [];
   let current: ListingSection | null = null;
 
-  for (const line of listingLines(raw)) {
+  const lines = listingLines(raw);
+  for (let idx = 0; idx < lines.length; idx++) {
+    const line = lines[idx]!;
+    // Premier League fixture posts: "## Home v Away" (or a bare "Home v Away"
+    // line) followed by a "12:30pm UK / 7:30am ET" line. Each fixture is its
+    // own section so it can be filed into its own category and guide.
+    const fixture = line.trim().match(/^##\s+(\S.*)$/)?.[1] ??
+      (/\S\s+v\s+\S/i.test(line.trim()) ? line.trim() : null);
+    if (
+      fixture &&
+      /\bUK\s*\/\s*[^\n]*\bET\b/i.test(lines[idx + 1]?.trim() ?? "") &&
+      /\d/.test(lines[idx + 1] ?? "")
+    ) {
+      current = { name: cleanLine(fixture), raw: "" };
+      sections.push(current);
+      continue;
+    }
     if (isSectionHeading(line)) {
       current = { name: cleanLine(line), raw: "" };
       sections.push(current);
@@ -915,7 +931,12 @@ export function splitListingSections(raw: string | null | undefined): ListingSec
   // A provider counts even when its own rows need extra work later, so long
   // as it wrote something under its name.
   const filled = sections.filter((section) => section.raw.split("\n").some((line) => cleanLine(line)));
-  return filled.length >= 2 ? filled : [];
+  // Drop banner-only sections (a competition name with no times of its own)
+  // when the other sections carry the actual listings.
+  const hasClock = (s: ListingSection) => /\d{1,2}\s*[:.]\s*\d{2}|\d{1,2}\s*(?:am|pm)\b/i.test(s.raw);
+  const timed = filled.filter(hasClock);
+  const usable = timed.length >= 2 ? timed : filled;
+  return usable.length >= 2 ? usable : [];
 }
 
 const SMALL_LETTERS: Record<string, string> = {
@@ -1866,7 +1887,7 @@ export function listingBlockHasDate(raw: string): boolean {
 export function splitFixtureChannelBlocks(raw: string): string {
   const lines = raw.replace(/\r/g, "").split("\n");
   const fixtureAt = (i: number) =>
-    /^##\s+\S/.test(lines[i]?.trim() ?? "") &&
+    (/^##\s+\S/.test(lines[i]?.trim() ?? "") || /\S\s+v\s+\S/i.test(lines[i]?.trim() ?? "")) &&
     /\bUK\s*\/\s*[^\n]*\bET\b/i.test(lines[i + 1]?.trim() ?? "") &&
     /\d/.test(lines[i + 1] ?? "");
   if (!lines.some((_, i) => fixtureAt(i))) return raw;
