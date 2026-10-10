@@ -559,7 +559,6 @@ export function WorkingStatusBox({
     >
       {(() => { const AwayIcon = awayIcon(dnd.reason); return <AwayIcon className="size-3.5" />; })()}
       Away{dnd.reason ? ` — ${dnd.reason}` : ""}
-      <DndCountdown userId={user.id} compact />
     </span>
   ) : null;
 
