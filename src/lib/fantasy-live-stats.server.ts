@@ -62,6 +62,7 @@ export type FantasyStatRow = {
   pens_saved: number;
   pens_missed: number;
   goals_conceded: number;
+  started?: boolean;
   yellows: number;
   reds: number;
   own_goals: number;
@@ -311,6 +312,7 @@ export async function fetchFantasyStatsForFixture(
       fixture_id: fixture.id,
       player_id: target.id,
       minutes,
+      started: !!rp.starter,
       goals: statVal(rp, "totalGoals"),
       assists: statVal(rp, "goalAssists"),
       saves: statVal(rp, "saves"),
