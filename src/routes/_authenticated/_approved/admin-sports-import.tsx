@@ -776,34 +776,54 @@ function QueueRow({
         </div>
       )}
       {/* Splitting is offered on every queued post, whatever the sport, so any
-          listing can be filed one event at a time. */}
-      <div className="flex flex-wrap items-center gap-2" onClick={(e) => e.stopPropagation()}>
-        <Button
-          size="sm"
-          variant="outline"
-          className="h-7 px-2 text-xs"
-          disabled={splitting || splitCount < 1}
-          onClick={onSplit}
-        >
-          {splitting ? <Loader2 className="size-3 animate-spin" /> : <Scissors className="size-3" />}
-          {splitCount > 1 ? `Split into ${splitCount} single events` : "Split into single events"}
-        </Button>
-        <span className="text-[11px] text-muted-foreground">
-          {splitCount < 1
-            ? "No events read from this post yet"
-            : "Pick a guide for each event separately"}
-        </span>
-        <Button
-          size="sm"
-          variant="outline"
-          className="h-7 px-2 text-xs"
-          disabled={splitting}
-          onClick={() => setPickingSplit((v) => !v)}
-        >
-          <Scissors className="size-3" />
-          Split in two…
-        </Button>
-      </div>
+          listing can be filed one event at a time. Premier League fixture
+          posts get a single one-press button instead: it splits into one
+          listing per fixture, and each fixture imports into its
+          channel-group blocks with the match and kick-off time kept. */}
+      {isEpl ? (
+        <div className="flex flex-wrap items-center gap-2" onClick={(e) => e.stopPropagation()}>
+          <Button
+            size="sm"
+            className="h-7 px-2 text-xs"
+            disabled={splittingProvider || providerSections.length < 2}
+            onClick={onSplitProvider}
+          >
+            {splittingProvider ? <Loader2 className="size-3 animate-spin" /> : <Scissors className="size-3" />}
+            EPL split — one listing per fixture ({providerSections.length})
+          </Button>
+          <span className="text-[11px] text-muted-foreground">
+            Each fixture keeps its kick-off time and splits into its channel blocks on import
+          </span>
+        </div>
+      ) : (
+        <div className="flex flex-wrap items-center gap-2" onClick={(e) => e.stopPropagation()}>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 px-2 text-xs"
+            disabled={splitting || splitCount < 1}
+            onClick={onSplit}
+          >
+            {splitting ? <Loader2 className="size-3 animate-spin" /> : <Scissors className="size-3" />}
+            {splitCount > 1 ? `Split into ${splitCount} single events` : "Split into single events"}
+          </Button>
+          <span className="text-[11px] text-muted-foreground">
+            {splitCount < 1
+              ? "No events read from this post yet"
+              : "Pick a guide for each event separately"}
+          </span>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 px-2 text-xs"
+            disabled={splitting}
+            onClick={() => setPickingSplit((v) => !v)}
+          >
+            <Scissors className="size-3" />
+            Split in two…
+          </Button>
+        </div>
+      )}
       {pickingSplit && (
         <div className="rounded-md border border-border bg-muted/30 p-2" onClick={(e) => e.stopPropagation()}>
           <p className="mb-1 text-[11px] text-muted-foreground">
