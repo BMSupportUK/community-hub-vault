@@ -1882,7 +1882,7 @@ export function listingBlockHasDate(raw: string): boolean {
 export function splitFixtureChannelBlocks(raw: string): string {
   const lines = raw.replace(/\r/g, "").split("\n");
   const fixtureAt = (i: number) =>
-    /^##\s+\S/.test(lines[i]?.trim() ?? "") &&
+    (/^##\s+\S/.test(lines[i]?.trim() ?? "") || /\S\s+v\s+\S/i.test(lines[i]?.trim() ?? "")) &&
     /\bUK\s*\/\s*[^\n]*\bET\b/i.test(lines[i + 1]?.trim() ?? "") &&
     /\d/.test(lines[i + 1] ?? "");
   if (!lines.some((_, i) => fixtureAt(i))) return raw;
