@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { issueStaffPin, listStaffPinRequests, revealStaffPinForAdmin } from "@/lib/staff-pin.functions";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import pinIllustration from "@/assets/staff-pin-illustration.jpg";
 
 type Data = Awaited<ReturnType<typeof listStaffPinRequests>>;
 
@@ -86,9 +87,9 @@ export function StaffPinAdminCard() {
       </div>
 
       {!data ? (
-        <div className="py-6 grid place-items-center text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>
+        <div className="relative py-6 grid place-items-center text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>
       ) : (
-        <Tabs value={tab} onValueChange={(value) => { setTab(value); setRevealed({}); }}>
+        <Tabs className="relative" value={tab} onValueChange={(value) => { setTab(value); setRevealed({}); }}>
           <TabsList className="mb-4">
             <TabsTrigger value="requests">Reset requests</TabsTrigger>
             <TabsTrigger value="all">All staff PINs</TabsTrigger>
