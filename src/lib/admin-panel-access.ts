@@ -98,17 +98,18 @@ export function isFanZoneAdminPath(to: string | undefined): boolean {
 }
 
 export function canOpenFanZoneAdminPanel(roles: readonly string[]): boolean {
-  return canOpenAdminPanel(roles) || roles.some((r) => r.startsWith("boro_fan_zone"));
+  // BM Support staff and management have nothing to do with the Fan Zone:
+  // only the owner and Boro Fan Zone roles may open its dashboard.
+  return roles.includes("admin") || roles.some((r) => r.startsWith("boro_fan_zone"));
 }
 
-/** Fan Zone dashboard cards: owner/management see all; others need a ticked role (Fan Zone roles count here). */
+/** Fan Zone dashboard cards: the owner sees all; otherwise only ticked Boro Fan Zone roles count (never BM staff/management). */
 export function fanZoneToolAllowed(tool: AdminPanelTool, roles: readonly string[], perms: PagePermMap | null): boolean {
-  const isAdmin = roles.includes("admin");
-  const isManagement = roles.includes("management");
-  if (tool.adminOnly && !isAdmin && !(tool.managementToo && isManagement)) return false;
-  if (isAdmin || isManagement) return true;
-  if (!tool.to || !perms) return false;
+  if (roles.includes("admin")) return true;
+  if (tool.adminOnly) return false;
+  const fz = roles.filter((r) => r.startsWith("boro_fan_zone"));
+  if (!fz.length || !tool.to || !perms) return false;
   const allowed = perms[tool.to.replace(/^\//, "").split("/")[0] ?? ""];
-  if (!allowed) return canOpenFanZoneAdminPanel(roles);
-  return roles.some((r) => allowed.includes(r));
+  if (!allowed) return true;
+  return fz.some((r) => allowed.includes(r));
 }
