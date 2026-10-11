@@ -7,8 +7,8 @@ const STEP = 15;
 const DUR = { break: 15, lunch: 30 } as const;
 
 /** When `nowMin` is given, breaks are only planned into the rest of today: past slots are re-spread over [nowMin, shift end]. */
-export function planBreaks(slots: readonly PlanSlot[], minCover = 1, nowMin?: number): Map<string, UserPlan> {
-  const taken: { start: number; end: number }[] = [];
+export function planBreaks(slots: readonly PlanSlot[], minCover = 1, nowMin?: number, reserved: readonly { start: number; end: number }[] = []): Map<string, UserPlan> {
+  const taken: { start: number; end: number }[] = [...reserved];
   const result = new Map<string, UserPlan>();
   const onShift = (from: number, to: number) => slots.filter((s) => s.start <= from && s.end >= to).length;
   const awayAt = (from: number, to: number) => taken.filter((t) => t.start < to && t.end > from).length;

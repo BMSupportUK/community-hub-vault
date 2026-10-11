@@ -27,14 +27,22 @@ export function BreakPlanRows({ userId, usedKinds }: { userId: string; usedKinds
       const eligible = new Set(((roles ?? []) as { user_id: string; role: string }[]).filter((r) => r.role === "staff" || r.role === "management").map((r) => r.user_id));
       const rows = (slots ?? []).filter((s) => s.slot_type === "shift" && s.assigned_to && eligible.has(s.assigned_to))
         .map((s) => ({ userId: s.assigned_to as string, start: toMinutes(s.start_time), end: toMinutes(s.end_time) }));
+      const { data: stored } = await supabase.from("break_plan_times").select("label,kind,start_min").eq("user_id", userId).eq("shift_date", today);
+      if (stored && stored.length >= 3) {
+        const by = (l: string) => { const r = stored.find((x) => x.label === l); return { kind: (r?.kind === "lunch" ? "lunch" : "break") as "break" | "lunch", label: l, start: r?.start_min ?? null }; };
+        if (alive) setPlan({ break1: by("Break 1"), lunch: by("Lunch"), break2: by("Break 2") });
+        return;
+      }
       if (alive) setPlan(planBreaks(rows, 1, ukNow().minutes).get(userId) ?? null);
     };
     void load();
     const ch = supabase.channel(`break-plan-${userId}-${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "shift_slots" }, () => void load()).subscribe();
-    const t = setInterval(() => setNowMin(ukNow().minutes), 30_000);
-    return () => { alive = false; supabase.removeChannel(ch); clearInterval(t); };
-  }, [userId, nowMin]);
+    const r = setInterval(() => void load(), 60_000);
+    return () => { alive = false; supabase.removeChannel(ch); clearInterval(r); };
+  }, [userId]);
+
+  useEffect(() => { const t = setInterval(() => setNowMin(ukNow().minutes), 30_000); return () => clearInterval(t); }, []);
 
   const items = useMemo(() => {
     if (!plan) return [];
