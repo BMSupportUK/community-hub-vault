@@ -715,6 +715,13 @@
       "when": 1791721123195,
       "tag": "0101_fan_zone_members_read_mods",
       "breakpoints": true
+    },
+    {
+      "idx": 102,
+      "version": "7",
+      "when": 1791724187627,
+      "tag": "0102_cover_sign_in_requests",
+      "breakpoints": true
     }
   ]
 }

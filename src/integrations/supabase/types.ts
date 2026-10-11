@@ -1509,6 +1509,45 @@ export type Database = {
         }
         Relationships: []
       }
+      cover_requests: {
+        Row: {
+          cover_until: string
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          id: string
+          reason: string
+          shift_id: string | null
+          slot_id: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          cover_until: string
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          id?: string
+          reason: string
+          shift_id?: string | null
+          slot_id?: string | null
+          status?: string
+          user_id: string
+        }
+        Update: {
+          cover_until?: string
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          id?: string
+          reason?: string
+          shift_id?: string | null
+          slot_id?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       credential_change_events: {
         Row: {
           changed_at: string
@@ -5146,6 +5185,8 @@ export type Database = {
         Row: {
           clock_in: string
           clock_out: string | null
+          cover_reason: string | null
+          cover_request_id: string | null
           created_at: string
           early_finish_approved_by: string | null
           early_finish_at: string | null
@@ -5158,6 +5199,8 @@ export type Database = {
         Insert: {
           clock_in?: string
           clock_out?: string | null
+          cover_reason?: string | null
+          cover_request_id?: string | null
           created_at?: string
           early_finish_approved_by?: string | null
           early_finish_at?: string | null
@@ -5170,6 +5213,8 @@ export type Database = {
         Update: {
           clock_in?: string
           clock_out?: string | null
+          cover_reason?: string | null
+          cover_request_id?: string | null
           created_at?: string
           early_finish_approved_by?: string | null
           early_finish_at?: string | null
@@ -7036,6 +7081,10 @@ export type Database = {
       customer_nameplate_is_default: {
         Args: { _nameplate_id: string }
         Returns: boolean
+      }
+      decide_cover_request: {
+        Args: { _approve: boolean; _id: string }
+        Returns: string
       }
       decide_early_finish: {
         Args: { _approve: boolean; _id: string }
