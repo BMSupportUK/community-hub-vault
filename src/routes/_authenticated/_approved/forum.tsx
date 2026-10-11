@@ -7,7 +7,8 @@ import { useFanZoneMembership } from "@/hooks/use-fan-zone";
 import { getIcon } from "@/components/app/IconPicker";
 import { formatLastSeen } from "@/lib/relative-time";
 import { Button } from "@/components/ui/button";
-import { Ban, BarChart3, UserCog, Search as SearchIcon, ShieldAlert, MailQuestion, ArrowLeftRight, Sparkles } from "lucide-react";
+import { Ban, BarChart3, UserCog, Search as SearchIcon, ShieldAlert, ShieldCheck, MailQuestion, ArrowLeftRight, Sparkles } from "lucide-react";
+import { canOpenFanZoneAdminPanel } from "@/lib/admin-panel-access";
 import { isFanZoneOnlyRoles } from "@/lib/fan-zone-nav";
 import { FanZoneStaffBox } from "@/components/app/FanZoneStaffBox";
 import { BoroMatchCentreBox } from "@/components/app/BoroMatchCentreBox";
@@ -247,6 +248,14 @@ function ForumLayout() {
                 <Link to="/home">
                   <ArrowLeftRight className="size-4 mr-1.5" />
                   Switch to BM Support
+                </Link>
+              </Button>
+            )}
+            {canOpenFanZoneAdminPanel((roles ?? []) as string[]) && (
+              <Button asChild size="sm" variant="outline" className="bg-black/40 backdrop-blur border-white/30 text-white hover:bg-black/60 hover:text-white justify-center col-span-2 sm:col-span-1">
+                <Link to="/fan-zone-admin">
+                  <ShieldCheck className="size-4 mr-1.5" />
+                  Fan Zone | Admin Panel
                 </Link>
               </Button>
             )}
