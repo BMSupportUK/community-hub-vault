@@ -176,7 +176,7 @@ export function ShiftStartEndAlert() {
 
       const toEnd = endsAt - now;
       const isOpenForThisSlot = openShift && !isNaN(openShiftClockIn) && openShiftClockIn <= endsAt && now >= startsAt - WARN_BEFORE;
-      if (isOpenForThisSlot && toEnd <= 0) {
+      if (isOpenForThisSlot && toEnd <= WARN_BEFORE) {
         return { slot, stage: "end" as Stage };
       }
 
