@@ -5,7 +5,6 @@ import { toast } from "sonner";
 import { issueStaffPin, listStaffPinRequests, revealStaffPinForAdmin } from "@/lib/staff-pin.functions";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import pinIllustration from "@/assets/staff-pin-illustration.jpg";
 
 type Data = Awaited<ReturnType<typeof listStaffPinRequests>>;
 
