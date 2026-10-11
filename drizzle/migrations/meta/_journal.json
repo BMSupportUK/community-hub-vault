@@ -687,6 +687,13 @@
       "when": 1791663517133,
       "tag": "0097_fantasy_exact_half_points",
       "breakpoints": true
+    },
+    {
+      "idx": 98,
+      "version": "7",
+      "when": 1791713231579,
+      "tag": "0098_notification_sound_overrides",
+      "breakpoints": true
     }
   ]
 }
