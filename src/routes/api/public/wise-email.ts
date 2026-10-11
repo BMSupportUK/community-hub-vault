@@ -156,17 +156,32 @@ export const Route = createFileRoute("/api/public/wise-email")({
           console.error("Wise auto-match after webhook failed:", e);
         }
 
-        // Alert admin/management in the staff notification bell.
-        await supabaseAdmin.from("staff_notifications").insert({
-          kind: "wise_payment",
-          title: autoMatched
-            ? `Wise payment auto-marked as received: ${parsed.currency} ${amount}`
-            : `Wise payment received: ${parsed.currency} ${amount}`,
-          body: autoMatched
-            ? `${who} paid ${parsed.currency} ${amount} — reference "${parsed.reference}". It matched one awaiting order exactly and was marked as received automatically.`
-            : `${who} paid ${parsed.currency} ${amount} — reference "${parsed.reference}". Allocate it to its order on the Bank Transfer page.`,
-          link_path: "/admin?tab=bank-transfer-orders",
-        });
+        // Alert admin/management in the staff notification bell — but only when
+        // there is at least one order still awaiting a bank transfer. Money sent
+        // to a personal account (no outstanding order) must not ring the
+        // payment alert on staff phones.
+        let hasOutstandingOrder = autoMatched;
+        if (!hasOutstandingOrder) {
+          try {
+            const { listAwaitingBankOrders } = await import("@/lib/bank-awaiting.server");
+            hasOutstandingOrder = (await listAwaitingBankOrders(supabaseAdmin)).length > 0;
+          } catch (e) {
+            console.error("Wise outstanding-order check failed:", e);
+            hasOutstandingOrder = true; // fail safe: still alert when the check breaks
+          }
+        }
+        if (hasOutstandingOrder) {
+          await supabaseAdmin.from("staff_notifications").insert({
+            kind: "wise_payment",
+            title: autoMatched
+              ? `Wise payment auto-marked as received: ${parsed.currency} ${amount}`
+              : `Wise payment received: ${parsed.currency} ${amount}`,
+            body: autoMatched
+              ? `${who} paid ${parsed.currency} ${amount} — reference "${parsed.reference}". It matched one awaiting order exactly and was marked as received automatically.`
+              : `${who} paid ${parsed.currency} ${amount} — reference "${parsed.reference}". Allocate it to its order on the Bank Transfer page.`,
+            link_path: "/admin?tab=bank-transfer-orders",
+          });
+        }
         return new Response("ok");
       },
     },
