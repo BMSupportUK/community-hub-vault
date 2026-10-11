@@ -77,3 +77,21 @@ describe("admin panel tool cards", () => {
     expect(staffAllowedPageKeys(["admin"], p, new Set(), () => false)).toEqual([]);
   });
 });
+
+import { canOpenFanZoneAdminPanel as fzOpen, fanZoneToolAllowed as fzTool } from "../src/lib/admin-panel-access";
+describe("Fan Zone dashboard is not for BM Support staff", () => {
+  const perms = { "admin-fan-zone": ["admin", "management", "staff", "boro_fan_zone_moderator"] };
+  it("staff and management cannot open it", () => {
+    expect(fzOpen(["staff"])).toBe(false);
+    expect(fzOpen(["management"])).toBe(false);
+  });
+  it("owner and Fan Zone moderators can", () => {
+    expect(fzOpen(["admin"])).toBe(true);
+    expect(fzOpen(["boro_fan_zone_moderator"])).toBe(true);
+  });
+  it("ticked staff/management roles never show Fan Zone cards", () => {
+    expect(fzTool({ to: "/admin-fan-zone" }, ["management"], perms)).toBe(false);
+    expect(fzTool({ to: "/admin-fan-zone" }, ["staff"], perms)).toBe(false);
+    expect(fzTool({ to: "/admin-fan-zone" }, ["boro_fan_zone_moderator"], perms)).toBe(true);
+  });
+});
