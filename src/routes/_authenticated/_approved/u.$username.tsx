@@ -174,8 +174,8 @@ function ProfilePage() {
   const [friends, setFriends] = useState<FriendRow[]>([]);
   const [rel, setRel] = useState<FriendRel>({ kind: "none" });
   const [relBusy, setRelBusy] = useState(false);
-  const initialTab = (["profile","creds","tickets","referrals","friends","shifts","subscription"].includes(search.tab ?? "") ? search.tab : "profile") as "profile" | "creds" | "tickets" | "referrals" | "friends" | "shifts" | "subscription";
-  const allowedTabs = ["profile","creds","tickets","referrals","friends","shifts","notifications","theme","subscription"] as const;
+  const initialTab = (["profile","creds","tickets","referrals","friends","subscription"].includes(search.tab ?? "") ? search.tab : "profile") as "profile" | "creds" | "tickets" | "referrals" | "friends" | "subscription";
+  const allowedTabs = ["profile","creds","tickets","referrals","friends","notifications","theme","subscription"] as const;
   type TabId = typeof allowedTabs[number];
   const initialTabSafe = (allowedTabs.includes((search.tab ?? "") as TabId) ? search.tab : initialTab) as TabId;
   const [mainTab, setMainTab] = useState<TabId>(initialTabSafe);
