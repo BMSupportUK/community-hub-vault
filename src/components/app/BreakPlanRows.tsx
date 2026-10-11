@@ -1,9 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, Coffee } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { breakIcon } from "@/lib/breaks";
 import { planBreaks, toMinutes, fromMinutes, type UserPlan } from "@/lib/break-plan";
+import { countOpenTickets, passTicketsForBreak } from "@/lib/break-handover";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 const ukNow = () => {
   const p = Object.fromEntries(new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false }).formatToParts(new Date()).map((x) => [x.type, x.value]));
@@ -87,18 +90,31 @@ export function BreakPlanRows({ userId, usedKinds, onStartBreak }: { userId: str
 
   const items = useMemo(() => planItems(plan, usedKinds, nowMin), [plan, usedKinds, nowMin]);
 
-  // When an allocated time arrives, start the break straight away. startBreak
-  // offers the ticket handover first (only when they're on a ticket). No
-  // reminder/snooze popup.
-  const startedRef = useRef<Set<string>>(new Set());
+  // When an allocated time arrives, show a popup. If the staff member is on a
+  // ticket they must press "Pass ticket over" first, then "Start break".
+  // No snooze / remind-me option and it can't be dismissed.
   const dueItem = items.find((it) => !it.done && !it.missed && it.start !== null && nowMin >= it.start);
+  const dueKey = dueItem && dueItem.start !== null ? `${dueItem.label}@${dueItem.start}` : null;
+  const [ticketCount, setTicketCount] = useState<number | null>(null);
+  const [passed, setPassed] = useState(false);
+  const [working, setWorking] = useState(false);
   useEffect(() => {
-    if (!dueItem || dueItem.start === null || !onStartBreak) return;
-    const key = `${dueItem.label}@${dueItem.start}`;
-    if (startedRef.current.has(key)) return;
-    startedRef.current.add(key);
-    onStartBreak(dueItem.kind);
-  }, [dueItem?.label, dueItem?.start, onStartBreak]);
+    setPassed(false);
+    setTicketCount(null);
+    if (!dueKey) return;
+    let alive = true;
+    void countOpenTickets(userId).then((n) => { if (alive) setTicketCount(n); });
+    return () => { alive = false; };
+  }, [dueKey, userId]);
+
+  const onTicket = (ticketCount ?? 0) > 0 && !passed;
+  const passOver = async () => {
+    if (!dueItem) return;
+    setWorking(true);
+    const ok = await passTicketsForBreak(dueItem.kind);
+    setWorking(false);
+    if (ok) setPassed(true);
+  };
 
   if (!plan) return null;
   const next = items.find((i) => !i.done && !i.missed && i.start !== null);
@@ -117,6 +133,32 @@ export function BreakPlanRows({ userId, usedKinds, onStartBreak }: { userId: str
           );
         })}
       </div>
+      <Dialog open={!!dueKey && !!onStartBreak && ticketCount !== null}>
+        <DialogContent
+          className="w-[calc(100vw-2rem)] max-w-md overflow-x-hidden [&>button]:hidden"
+          onEscapeKeyDown={(e) => e.preventDefault()}
+          onInteractOutside={(e) => e.preventDefault()}
+        >
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Coffee className="size-5 text-warning" />{dueItem?.label} time</DialogTitle>
+            <DialogDescription>
+              {onTicket
+                ? `You're dealing with ${ticketCount} ticket${ticketCount === 1 ? "" : "s"}. Pass ${ticketCount === 1 ? "it" : "them"} over, then start your ${dueItem?.label.toLowerCase()}.`
+                : `Start your ${dueItem?.label.toLowerCase()}. It ends on its own.`}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-2">
+            {onTicket && (
+              <Button variant="outline" className="w-full" disabled={working} onClick={() => void passOver()}>
+                Pass ticket{ticketCount === 1 ? "" : "s"} over
+              </Button>
+            )}
+            <Button className="w-full" disabled={onTicket || working} onClick={() => { if (dueItem) onStartBreak?.(dueItem.kind); }}>
+              Start {dueItem?.label.toLowerCase()}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

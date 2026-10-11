@@ -29,3 +29,27 @@ export async function offerTicketHandover(userId: string, kind: "break" | "lunch
   if (r.kept) toast.warning(`${r.kept} ticket${r.kept === 1 ? "" : "s"} kept — no one else is free to take ${r.kept === 1 ? "it" : "them"}`);
   return true;
 }
+
+/** Number of open tickets currently assigned to this staff member. */
+export async function countOpenTickets(userId: string): Promise<number> {
+  const { count } = await supabase
+    .from("tickets")
+    .select("id", { count: "exact", head: true })
+    .eq("assigned_to", userId)
+    .in("status", ["open", "in_progress"])
+    .is("archived_at", null);
+  return count ?? 0;
+}
+
+/** Pass this staff member's open tickets to a covering colleague (no confirm prompt). */
+export async function passTicketsForBreak(kind: "break" | "lunch"): Promise<boolean> {
+  const { data, error } = await supabase.rpc("handover_tickets_for_break", { _kind: kind });
+  if (error) {
+    toast.error("Couldn't pass tickets over: " + error.message);
+    return false;
+  }
+  const r = (data ?? {}) as { passed?: number; kept?: number };
+  if (r.passed) toast.success(`${r.passed} ticket${r.passed === 1 ? "" : "s"} passed to another member of staff`);
+  if (r.kept) toast.warning(`${r.kept} ticket${r.kept === 1 ? "" : "s"} kept — no one else is free to take ${r.kept === 1 ? "it" : "them"}`);
+  return true;
+}
