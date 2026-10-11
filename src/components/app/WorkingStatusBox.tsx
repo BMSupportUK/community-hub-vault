@@ -678,26 +678,21 @@ export function WorkingStatusBox({
         <button
           type="button"
           onClick={clockIn}
-          disabled={!canSignIn}
+          disabled={coverPending}
           title={
             canSignIn
               ? "Sign in"
-              : todayWindow
-                ? `Shift starts ${todayWindow.start.slice(0, 5)} UK — sign-in opens at ${(() => {
-                    const [sh, sm] = todayWindow.start.split(":").map(Number);
-                    const m = sh * 60 + sm - 15;
-                    const mm = ((m % 1440) + 1440) % 1440;
-                    return `${Math.floor(mm / 60)
-                      .toString()
-                      .padStart(2, "0")}:${(mm % 60).toString().padStart(2, "0")}`;
-                  })()}`
-                : "No shift on the rota today"
+              : coverPending
+                ? "Cover request waiting for admin or management"
+                : "Not on the rota now — request to sign in to cover (needs approval)"
           }
           className={cn(
             "inline-flex items-center justify-center rounded-full border transition-all",
             canSignIn
               ? "border-success/30 bg-success/10 text-success hover:bg-success/20"
-              : "border-white/10 bg-white/5 text-muted-foreground cursor-not-allowed opacity-60",
+              : coverPending
+                ? "border-white/10 bg-white/5 text-muted-foreground cursor-not-allowed opacity-60"
+                : "border-primary/30 bg-primary/10 text-primary hover:bg-primary/20",
             iconButtonClass,
           )}
         >
