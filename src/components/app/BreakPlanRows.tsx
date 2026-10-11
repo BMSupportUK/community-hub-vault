@@ -125,7 +125,7 @@ export function BreakPlanRows({ userId, usedKinds, onStartBreak }: { userId: str
         })}
       </div>
       <Dialog open={dueOpen} onOpenChange={(o) => { if (!o) snooze(); }}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="w-[calc(100vw-2rem)] max-w-md overflow-x-hidden">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2"><Coffee className="size-5 text-warning" />{dueItem?.label} is due</DialogTitle>
             <DialogDescription>
@@ -133,9 +133,9 @@ export function BreakPlanRows({ userId, usedKinds, onStartBreak }: { userId: str
               If you're on a ticket, starting the break offers to pass it to a covering colleague first. It ends on its own.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="gap-2 sm:gap-2">
-            <Button variant="outline" onClick={snooze}>Not yet — remind me in 5 min</Button>
-            <Button onClick={() => { setDueOpen(false); if (dueItem) onStartBreak?.(dueItem.kind); }}>Start {dueItem?.label.toLowerCase()}</Button>
+          <DialogFooter className="flex-col gap-2 sm:flex-row">
+            <Button variant="outline" className="w-full sm:flex-1" onClick={snooze}>Not yet — remind me in 5 min</Button>
+            <Button className="w-full sm:flex-1" onClick={() => { setDueOpen(false); if (dueItem) onStartBreak?.(dueItem.kind); }}>Start {dueItem?.label.toLowerCase()}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
