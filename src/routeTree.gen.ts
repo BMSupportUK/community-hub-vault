@@ -80,6 +80,7 @@ import { Route as AuthenticatedApprovedAdminSportsImportRouteImport } from './ro
 import { Route as AuthenticatedApprovedAdminStreamingDevicesRouteImport } from './routes/_authenticated/_approved/admin-streaming-devices'
 import { Route as AuthenticatedApprovedAdminTicketCategoriesRouteImport } from './routes/_authenticated/_approved/admin-ticket-categories'
 import { Route as AuthenticatedApprovedClockRouteImport } from './routes/_authenticated/_approved/clock'
+import { Route as AuthenticatedApprovedFanZoneAdminRouteImport } from './routes/_authenticated/_approved/fan-zone-admin'
 import { Route as AuthenticatedApprovedFanZoneAppealsRouteImport } from './routes/_authenticated/_approved/fan-zone-appeals'
 import { Route as AuthenticatedApprovedFanZoneSanctionsRouteImport } from './routes/_authenticated/_approved/fan-zone-sanctions'
 import { Route as AuthenticatedApprovedFanZoneSecurityRouteImport } from './routes/_authenticated/_approved/fan-zone-security'
@@ -560,6 +561,12 @@ const AuthenticatedApprovedClockRoute =
   AuthenticatedApprovedClockRouteImport.update({
     id: '/clock',
     path: '/clock',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
+const AuthenticatedApprovedFanZoneAdminRoute =
+  AuthenticatedApprovedFanZoneAdminRouteImport.update({
+    id: '/fan-zone-admin',
+    path: '/fan-zone-admin',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
 const AuthenticatedApprovedFanZoneAppealsRoute =
@@ -1155,6 +1162,7 @@ export interface FileRoutesByFullPath {
   '/admin-streaming-devices': typeof AuthenticatedApprovedAdminStreamingDevicesRoute
   '/admin-ticket-categories': typeof AuthenticatedApprovedAdminTicketCategoriesRoute
   '/clock': typeof AuthenticatedApprovedClockRoute
+  '/fan-zone-admin': typeof AuthenticatedApprovedFanZoneAdminRoute
   '/fan-zone-appeals': typeof AuthenticatedApprovedFanZoneAppealsRoute
   '/fan-zone-sanctions': typeof AuthenticatedApprovedFanZoneSanctionsRoute
   '/fan-zone-security': typeof AuthenticatedApprovedFanZoneSecurityRoute
@@ -1312,6 +1320,7 @@ export interface FileRoutesByTo {
   '/admin-streaming-devices': typeof AuthenticatedApprovedAdminStreamingDevicesRoute
   '/admin-ticket-categories': typeof AuthenticatedApprovedAdminTicketCategoriesRoute
   '/clock': typeof AuthenticatedApprovedClockRoute
+  '/fan-zone-admin': typeof AuthenticatedApprovedFanZoneAdminRoute
   '/fan-zone-appeals': typeof AuthenticatedApprovedFanZoneAppealsRoute
   '/fan-zone-sanctions': typeof AuthenticatedApprovedFanZoneSanctionsRoute
   '/fan-zone-security': typeof AuthenticatedApprovedFanZoneSecurityRoute
@@ -1473,6 +1482,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/admin-streaming-devices': typeof AuthenticatedApprovedAdminStreamingDevicesRoute
   '/_authenticated/_approved/admin-ticket-categories': typeof AuthenticatedApprovedAdminTicketCategoriesRoute
   '/_authenticated/_approved/clock': typeof AuthenticatedApprovedClockRoute
+  '/_authenticated/_approved/fan-zone-admin': typeof AuthenticatedApprovedFanZoneAdminRoute
   '/_authenticated/_approved/fan-zone-appeals': typeof AuthenticatedApprovedFanZoneAppealsRoute
   '/_authenticated/_approved/fan-zone-sanctions': typeof AuthenticatedApprovedFanZoneSanctionsRoute
   '/_authenticated/_approved/fan-zone-security': typeof AuthenticatedApprovedFanZoneSecurityRoute
@@ -1634,6 +1644,7 @@ export interface FileRouteTypes {
     | '/admin-streaming-devices'
     | '/admin-ticket-categories'
     | '/clock'
+    | '/fan-zone-admin'
     | '/fan-zone-appeals'
     | '/fan-zone-sanctions'
     | '/fan-zone-security'
@@ -1791,6 +1802,7 @@ export interface FileRouteTypes {
     | '/admin-streaming-devices'
     | '/admin-ticket-categories'
     | '/clock'
+    | '/fan-zone-admin'
     | '/fan-zone-appeals'
     | '/fan-zone-sanctions'
     | '/fan-zone-security'
@@ -1951,6 +1963,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/admin-streaming-devices'
     | '/_authenticated/_approved/admin-ticket-categories'
     | '/_authenticated/_approved/clock'
+    | '/_authenticated/_approved/fan-zone-admin'
     | '/_authenticated/_approved/fan-zone-appeals'
     | '/_authenticated/_approved/fan-zone-sanctions'
     | '/_authenticated/_approved/fan-zone-security'
@@ -2610,6 +2623,13 @@ declare module '@tanstack/react-router' {
       path: '/clock'
       fullPath: '/clock'
       preLoaderRoute: typeof AuthenticatedApprovedClockRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
+    '/_authenticated/_approved/fan-zone-admin': {
+      id: '/_authenticated/_approved/fan-zone-admin'
+      path: '/fan-zone-admin'
+      fullPath: '/fan-zone-admin'
+      preLoaderRoute: typeof AuthenticatedApprovedFanZoneAdminRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
     '/_authenticated/_approved/fan-zone-appeals': {
@@ -3357,6 +3377,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedAdminStreamingDevicesRoute: typeof AuthenticatedApprovedAdminStreamingDevicesRoute
   AuthenticatedApprovedAdminTicketCategoriesRoute: typeof AuthenticatedApprovedAdminTicketCategoriesRoute
   AuthenticatedApprovedClockRoute: typeof AuthenticatedApprovedClockRoute
+  AuthenticatedApprovedFanZoneAdminRoute: typeof AuthenticatedApprovedFanZoneAdminRoute
   AuthenticatedApprovedFanZoneAppealsRoute: typeof AuthenticatedApprovedFanZoneAppealsRoute
   AuthenticatedApprovedFanZoneSanctionsRoute: typeof AuthenticatedApprovedFanZoneSanctionsRoute
   AuthenticatedApprovedFanZoneSecurityRoute: typeof AuthenticatedApprovedFanZoneSecurityRoute
@@ -3464,6 +3485,8 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
   AuthenticatedApprovedAdminTicketCategoriesRoute:
     AuthenticatedApprovedAdminTicketCategoriesRoute,
   AuthenticatedApprovedClockRoute: AuthenticatedApprovedClockRoute,
+  AuthenticatedApprovedFanZoneAdminRoute:
+    AuthenticatedApprovedFanZoneAdminRoute,
   AuthenticatedApprovedFanZoneAppealsRoute:
     AuthenticatedApprovedFanZoneAppealsRoute,
   AuthenticatedApprovedFanZoneSanctionsRoute:
