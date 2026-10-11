@@ -85,3 +85,30 @@ export function staffAllowedPageKeys(
     )
     .map(([key]) => key);
 }
+
+/** Pages that belong on the Boro Fan Zone admin dashboard, not BM Support's. */
+export const FAN_ZONE_ADMIN_PATHS = [
+  "/admin-fan-zone", "/admin-boro-team-sheet", "/admin-predictions", "/admin-fantasy-motm",
+  "/admin-fantasy-scoring", "/admin-fantasy-injuries", "/admin-fantasy-squad-numbers", "/admin-forum",
+  "/fan-zone-appeals", "/fan-zone-sanctions", "/fan-zone-security",
+] as const;
+
+export function isFanZoneAdminPath(to: string | undefined): boolean {
+  return !!to && (FAN_ZONE_ADMIN_PATHS as readonly string[]).includes(to);
+}
+
+export function canOpenFanZoneAdminPanel(roles: readonly string[]): boolean {
+  return canOpenAdminPanel(roles) || roles.some((r) => r.startsWith("boro_fan_zone"));
+}
+
+/** Fan Zone dashboard cards: owner/management see all; others need a ticked role (Fan Zone roles count here). */
+export function fanZoneToolAllowed(tool: AdminPanelTool, roles: readonly string[], perms: PagePermMap | null): boolean {
+  const isAdmin = roles.includes("admin");
+  const isManagement = roles.includes("management");
+  if (tool.adminOnly && !isAdmin && !(tool.managementToo && isManagement)) return false;
+  if (isAdmin || isManagement) return true;
+  if (!tool.to || !perms) return false;
+  const allowed = perms[tool.to.replace(/^\//, "").split("/")[0] ?? ""];
+  if (!allowed) return canOpenFanZoneAdminPanel(roles);
+  return roles.some((r) => allowed.includes(r));
+}
