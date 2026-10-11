@@ -5,6 +5,7 @@ import { LocalNotifications } from "@capacitor/local-notifications";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
 import { registerDeviceToken } from "@/lib/push.functions";
+import { resyncPushSubscription } from "@/lib/push-client";
 
 /**
  * Registers the native device with FCM and saves the token server-side.
@@ -13,6 +14,17 @@ import { registerDeviceToken } from "@/lib/push.functions";
 export function usePushRegister() {
   const { user } = useAuth();
   const register = useServerFn(registerDeviceToken);
+
+  // Web browsers: silently re-save an already-allowed browser subscription
+  // so a device that never saved (or whose endpoint rotated) gets alerts.
+  useEffect(() => {
+    if (!user) return;
+    if (Capacitor.isNativePlatform()) return;
+    void resyncPushSubscription().catch((e) =>
+      console.warn("[push] browser re-sync failed", e),
+    );
+  }, [user?.id]);
+
 
   useEffect(() => {
     if (!user) return;
