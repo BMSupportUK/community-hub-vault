@@ -582,7 +582,7 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
   const tools = [...zoneTools, ...extraPageCards]
     .sort((a, b) => a.label.localeCompare(b.label, "en-GB", { sensitivity: "base" }));
 
-  const tabs = (isFz ? ([["tools", "Fan Zone tools", false]] as const) : [
+  const allTabs: readonly (readonly [string, string, boolean | string])[] = isFz ? [["tools", "Fan Zone tools", false]] : [
     ["tools", toolsHeading, false],
     ["order-status", "Orders", true],
     ["profit-costs", "Profit & costs", "profit"],
@@ -593,7 +593,8 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
     ["bank-transfer", "Bank Settings", "bank"],
     ["staff-pins", "Staff PINs", true],
     ["backup-codes", "Backup codes", true],
-  ] as const) as readonly (readonly [string, string, boolean | string])[]).filter(([, , gate]) =>
+  ];
+  const tabs = allTabs.filter(([, , gate]) =>
     gate === "bank" ? isAdminOnly : !gate || canSeePins,
   );
 
