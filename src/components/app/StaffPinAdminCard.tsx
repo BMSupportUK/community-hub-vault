@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { issueStaffPin, listStaffPinRequests, revealStaffPinForAdmin } from "@/lib/staff-pin.functions";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import pinIllustration from "@/assets/staff-pin-illustration.jpg";
 
 type Data = Awaited<ReturnType<typeof listStaffPinRequests>>;
 
@@ -71,8 +72,12 @@ export function StaffPinAdminCard() {
   const pending = (data?.requests ?? []).filter((r: any) => r.status === "pending");
 
   return (
-    <section className="rounded-2xl border border-border bg-surface-1 p-5">
-      <div className="flex items-center gap-3 mb-4">
+    <section className="relative overflow-hidden rounded-2xl border border-border bg-surface-1 p-5">
+      <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+        <img src={pinIllustration} alt="" className="h-full w-full object-cover object-center opacity-25" />
+        <div className="absolute inset-0 bg-background/40" />
+      </div>
+      <div className="relative flex items-center gap-3 mb-4">
         <div className="size-10 rounded-xl bg-gradient-primary grid place-items-center text-primary-foreground"><KeyRound className="size-5" /></div>
         <div className="flex-1">
           <h2 className="font-display font-bold">Staff PINs</h2>
@@ -82,9 +87,9 @@ export function StaffPinAdminCard() {
       </div>
 
       {!data ? (
-        <div className="py-6 grid place-items-center text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>
+        <div className="relative py-6 grid place-items-center text-muted-foreground"><Loader2 className="size-5 animate-spin" /></div>
       ) : (
-        <Tabs value={tab} onValueChange={(value) => { setTab(value); setRevealed({}); }}>
+        <Tabs className="relative" value={tab} onValueChange={(value) => { setTab(value); setRevealed({}); }}>
           <TabsList className="mb-4">
             <TabsTrigger value="requests">Reset requests</TabsTrigger>
             <TabsTrigger value="all">All staff PINs</TabsTrigger>
