@@ -266,88 +266,95 @@ function ClockPage() {
           </div>
         </header>
 
-        {/* Push notifications toggle */}
-        <div className="rounded-2xl border border-border bg-surface-1/70 backdrop-blur-md p-4 flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex items-center gap-3">
-            <div className="size-9 rounded-xl bg-primary/15 grid place-items-center">
-              <Bell className="size-4 text-primary" />
-            </div>
-            <div>
-              <div className="text-sm font-medium">Shift & break alerts</div>
-              <div className="text-xs text-muted-foreground">Get notified when your shift or break is about to end, even with the app closed.</div>
-            </div>
-          </div>
-          <PushNotificationsToggle />
-        </div>
-
-        {/* Status banner */}
-        <div className={cn(
-          "rounded-2xl p-5 border backdrop-blur-md",
-          !myShift && "bg-surface-1/70 border-border",
-          myShift && !myBreak && "bg-emerald-500/15 border-emerald-500/40",
-          myBreak && !overBreak && "bg-amber-500/15 border-amber-500/40",
-          myBreak && overBreak && "bg-destructive/15 border-destructive/50",
-        )}>
-          {!myShift && (
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <div className="font-semibold">Not clocked in</div>
-                <div className="text-sm text-muted-foreground">Start your shift to track hours.</div>
-              </div>
-              <button onClick={clockIn} disabled={busy || (!canSignIn && coverPending)} title={canSignIn ? "Clock in" : coverPending ? "Cover request waiting for admin or management" : "Not on the rota now — request to sign in to cover (needs approval)"} className="px-5 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium inline-flex items-center gap-2 disabled:opacity-60">
-                <LogIn className="size-4" /> {canSignIn ? "Clock In" : coverPending ? "Cover request pending" : "Request to cover"}
-              </button>
-            </div>
-          )}
-          {myShift && !myBreak && (
-            <div className="flex items-center justify-between gap-4 flex-wrap">
-              <div>
-                <div className="font-semibold text-emerald-400">Working — {fmt(sessionSeconds)}</div>
-                <div className="text-sm text-muted-foreground">Started {fmtTime(myShift.clock_in)}</div>
-              </div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <button onClick={() => startBreak("break")} disabled={busy || breakLeft <= 0} title={breakLeft > 0 ? `${breakLeft} of 2 breaks left` : "No breaks left this shift"} className="px-4 py-2 rounded-lg bg-surface-2 border border-border hover:border-primary inline-flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-border">
-                  <Coffee className="size-4" /> Start break (15m)
-                </button>
-                <button onClick={() => startBreak("lunch")} disabled={busy || lunchLeft <= 0} title={lunchLeft > 0 ? "Start lunch" : "Lunch already taken this shift"} className="px-4 py-2 rounded-lg bg-surface-2 border border-border hover:border-primary inline-flex items-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-border">
-                  <UtensilsCrossed className="size-4" /> Start lunch (30m)
-                </button>
-                <Button onClick={clockOut} disabled={busy || finishAction === "wait"}
-                  variant={finishAction === "clock-out" ? "destructive" : "outline"}
-                  title={finishAction === "clock-out" ? "Sign out of shift" : earlyPending
-                    ? "Early finish requested — waiting for admin or management"
-                    : `Shift sign-out unlocks at ${rotaEnd?.slice(0, 5) ?? "shift end"} UK — request an early finish`}
-                  className={cn(finishAction !== "clock-out" && "text-muted-foreground bg-muted/30 opacity-50")}>
-                  <LogOut className="size-4" /> {finishAction === "clock-out" ? "Clock Out" : earlyPending ? "Awaiting approval" : "Request early finish"}
-                </Button>
-              </div>
-            </div>
-          )}
-          {myBreak && (
-            <div className="flex items-center justify-between gap-4 flex-wrap">
-              <div>
-                <div className={cn("font-semibold", overBreak ? "text-destructive" : "text-amber-400")}>
-                  On {breakLabel(myBreak.kind).toLowerCase()} — {overBreak ? `over by ${fmtMin(-breakRemaining)}` : `${fmtMin(breakRemaining)} left`}
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start">
+          {/* Right sidebar: status first, then notifications */}
+          <aside className="order-1 lg:order-2 space-y-6 min-w-0">
+            {/* Status banner */}
+            <div className={cn(
+              "rounded-2xl p-5 border backdrop-blur-md",
+              !myShift && "bg-surface-1/70 border-border",
+              myShift && !myBreak && "bg-emerald-500/15 border-emerald-500/40",
+              myBreak && !overBreak && "bg-amber-500/15 border-amber-500/40",
+              myBreak && overBreak && "bg-destructive/15 border-destructive/50",
+            )}>
+              {!myShift && (
+                <div className="flex flex-col gap-4">
+                  <div>
+                    <div className="font-semibold">Not clocked in</div>
+                    <div className="text-sm text-muted-foreground">Start your shift to track hours.</div>
+                  </div>
+                  <button onClick={clockIn} disabled={busy || (!canSignIn && coverPending)} title={canSignIn ? "Clock in" : coverPending ? "Cover request waiting for admin or management" : "Not on the rota now — request to sign in to cover (needs approval)"} className="w-full px-5 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium inline-flex items-center justify-center gap-2 disabled:opacity-60">
+                    <LogIn className="size-4" /> {canSignIn ? "Clock In" : coverPending ? "Cover request pending" : "Request to cover"}
+                  </button>
                 </div>
-                <div className="text-sm text-muted-foreground">Elapsed {fmtMin(breakElapsed)} of {BREAK_LIMITS[myBreak.kind] / 60}m — ends automatically when the time is up</div>
+              )}
+              {myShift && !myBreak && (
+                <div className="flex flex-col gap-4">
+                  <div>
+                    <div className="font-semibold text-emerald-400">Working — {fmt(sessionSeconds)}</div>
+                    <div className="text-sm text-muted-foreground">Started {fmtTime(myShift.clock_in)}</div>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <button onClick={() => startBreak("break")} disabled={busy || breakLeft <= 0} title={breakLeft > 0 ? `${breakLeft} of 2 breaks left` : "No breaks left this shift"} className="w-full px-4 py-2 rounded-lg bg-surface-2 border border-border hover:border-primary inline-flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-border">
+                      <Coffee className="size-4" /> Start break (15m)
+                    </button>
+                    <button onClick={() => startBreak("lunch")} disabled={busy || lunchLeft <= 0} title={lunchLeft > 0 ? "Start lunch" : "Lunch already taken this shift"} className="w-full px-4 py-2 rounded-lg bg-surface-2 border border-border hover:border-primary inline-flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-border">
+                      <UtensilsCrossed className="size-4" /> Start lunch (30m)
+                    </button>
+                    <Button onClick={clockOut} disabled={busy || finishAction === "wait"}
+                      variant={finishAction === "clock-out" ? "destructive" : "outline"}
+                      title={finishAction === "clock-out" ? "Sign out of shift" : earlyPending
+                        ? "Early finish requested — waiting for admin or management"
+                        : `Shift sign-out unlocks at ${rotaEnd?.slice(0, 5) ?? "shift end"} UK — request an early finish`}
+                      className={cn("w-full", finishAction !== "clock-out" && "text-muted-foreground bg-muted/30 opacity-50")}>
+                      <LogOut className="size-4" /> {finishAction === "clock-out" ? "Clock Out" : earlyPending ? "Awaiting approval" : "Request early finish"}
+                    </Button>
+                  </div>
+                </div>
+              )}
+              {myBreak && (
+                <div className="flex flex-col gap-1">
+                  <div>
+                    <div className={cn("font-semibold", overBreak ? "text-destructive" : "text-amber-400")}>
+                      On {breakLabel(myBreak.kind).toLowerCase()} — {overBreak ? `over by ${fmtMin(-breakRemaining)}` : `${fmtMin(breakRemaining)} left`}
+                    </div>
+                    <div className="text-sm text-muted-foreground">Elapsed {fmtMin(breakElapsed)} of {BREAK_LIMITS[myBreak.kind] / 60}m — ends automatically when the time is up</div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Push notifications toggle */}
+            <div className="rounded-2xl border border-border bg-surface-1/70 backdrop-blur-md p-4 flex flex-col gap-3">
+              <div className="flex items-center gap-3">
+                <div className="size-9 rounded-xl bg-primary/15 grid place-items-center shrink-0">
+                  <Bell className="size-4 text-primary" />
+                </div>
+                <div>
+                  <div className="text-sm font-medium">Shift & break alerts</div>
+                  <div className="text-xs text-muted-foreground">Get notified when your shift or break is about to end, even with the app closed.</div>
+                </div>
               </div>
+              <PushNotificationsToggle />
             </div>
-          )}
+          </aside>
 
+          {/* Main column */}
+          <div className="order-2 lg:order-1 space-y-6 min-w-0">
+            {/* Staff status panel — staff strip cards, side by side */}
+            {isStaff && (
+              <section className="rounded-2xl border border-border bg-surface-1/70 backdrop-blur-md overflow-hidden">
+                <div className="px-5 py-3 border-b border-border bg-surface-2/70 flex items-center justify-between gap-3 flex-wrap">
+                  <div className="text-sm font-semibold">On shift right now</div>
+                  <div className="text-xs text-muted-foreground">{activeShifts.length} working · {activeBreaks.length} on break</div>
+                </div>
+                <div className="p-4">
+                  <StaffOnDutyStrip variant="tickets" />
+                </div>
+              </section>
+            )}
+          </div>
         </div>
-
-        {/* Staff status panel — staff strip cards, side by side */}
-        {isStaff && (
-          <section className="rounded-2xl border border-border bg-surface-1/70 backdrop-blur-md overflow-hidden">
-            <div className="px-5 py-3 border-b border-border bg-surface-2/70 flex items-center justify-between gap-3 flex-wrap">
-              <div className="text-sm font-semibold">On shift right now</div>
-              <div className="text-xs text-muted-foreground">{activeShifts.length} working · {activeBreaks.length} on break</div>
-            </div>
-            <div className="p-4">
-              <StaffOnDutyStrip variant="tickets" />
-            </div>
-          </section>
-        )}
 
       </div>
     </main>
