@@ -14,6 +14,7 @@ import {
   Monitor,
   Apple,
   Lock,
+  Download,
 } from "lucide-react";
 import QRCode from "qrcode";
 import { supabase } from "@/integrations/supabase/client";
