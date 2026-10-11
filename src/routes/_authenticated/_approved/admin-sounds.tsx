@@ -1,9 +1,10 @@
 import { createFileRoute, Navigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Play, Loader2, CheckCircle2, XCircle, Volume2, Square } from "lucide-react";
+import { ArrowLeft, Play, Loader2, CheckCircle2, XCircle, Volume2, Square, Send, Smartphone } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { SoundSettings } from "@/components/app/SoundSettings";
 import { playSoundFromGesture, getSoundPrefs } from "@/lib/sound";
+import { sendTestPush } from "@/lib/test-push.functions";
 import { toast } from "sonner";
 
 import mentionAudio from "@/assets/mention-notify.mp3";
@@ -82,6 +83,38 @@ function AdminSounds() {
   const [nowPlaying, setNowPlaying] = useState<string | null>(null);
   const sequenceRef = useRef<number | null>(null);
   const [running, setRunning] = useState(false);
+  const [pushBusy, setPushBusy] = useState<string | null>(null);
+
+  const PUSH_KINDS: { key: string; label: string }[] = [
+    { key: "ticket", label: "New ticket" },
+    { key: "ticket_reply", label: "Ticket reply" },
+    { key: "mention", label: "Mention" },
+    { key: "shift_start", label: "Shift start" },
+    { key: "shift_end", label: "Shift end" },
+    { key: "outage", label: "Outage" },
+    { key: "outage_resolved", label: "Outage resolved" },
+    { key: "order", label: "New order" },
+    { key: "payment", label: "Payment" },
+  ];
+
+  const sendPush = async (kind: string) => {
+    if (pushBusy) return;
+    setPushBusy(kind);
+    try {
+      const results = await sendTestPush({ data: { kind } });
+      const entries = Object.entries(results);
+      const skipped = entries.find(([, r]) => r.skipped)?.[1].skipped;
+      const failed = entries.reduce((n, [, r]) => n + r.failed, 0);
+      const sent = entries.reduce((n, [, r]) => n + r.sent, 0);
+      if (skipped) toast.error(`Not sent: ${skipped}`);
+      else if (sent === 0) toast.error(`No phone received it (${failed} failed). Is the app installed and signed in on your phone?`);
+      else toast.success(`Sent to ${sent} device${sent === 1 ? "" : "s"} — lock your phone to hear the sound.`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Test push failed");
+    } finally {
+      setPushBusy(null);
+    }
+  };
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -272,6 +305,43 @@ function AdminSounds() {
             </div>
           );
         })}
+      </div>
+
+      <div className="rounded-2xl border border-border bg-surface-1 p-4 space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="font-display font-bold flex items-center gap-2">
+              <Smartphone className="size-4" /> Test on my phone
+            </h2>
+            <p className="text-xs text-muted-foreground mt-1">
+              Sends a real push notification to every phone where you're signed in, using the exact
+              alert type — lock the phone or close the app to hear its sound.
+            </p>
+          </div>
+          <button
+            type="button"
+            disabled={!!pushBusy}
+            onClick={() => void sendPush("all")}
+            className="inline-flex items-center gap-2 rounded-xl bg-gradient-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-glow disabled:opacity-50"
+          >
+            {pushBusy === "all" ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+            {pushBusy === "all" ? "Sending all…" : "Send all to my phone"}
+          </button>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {PUSH_KINDS.map((k) => (
+            <button
+              key={k.key}
+              type="button"
+              disabled={!!pushBusy}
+              onClick={() => void sendPush(k.key)}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-surface-2 px-3 py-2 text-xs font-semibold hover:border-primary disabled:opacity-50"
+            >
+              {pushBusy === k.key ? <Loader2 className="size-3.5 animate-spin" /> : <Send className="size-3.5" />}
+              {k.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <SoundSettings />
