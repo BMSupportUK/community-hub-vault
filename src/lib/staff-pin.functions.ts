@@ -104,9 +104,12 @@ export const listStaffPinRequests = createServerFn({ method: "POST" })
     const { data: pins } = ids.length
       ? await supabaseAdmin.from("vault_pins").select("user_id, issued_at, updated_at").in("user_id", ids)
       : { data: [] as any[] };
+    const { data: myRoles } = await context.supabase.from("user_roles").select("role").eq("user_id", context.userId);
+    const canRevoke = canRevokeStaffPins((myRoles ?? []).map((r: any) => String(r.role)));
     const name = new Map((profs ?? []).map((p: any) => [p.id, p.display_name || p.username || "Unknown"]));
     const pinAt = new Map((pins ?? []).map((p: any) => [p.user_id, p.issued_at ?? p.updated_at]));
     return {
+      canRevoke,
       requests: (reqs ?? []).map((r: any) => ({ ...r, name: name.get(r.user_id) ?? "Unknown" })),
       staff: Array.from(new Set((staffRoles ?? []).map((r: any) => r.user_id)))
         .map((id) => ({ id, name: name.get(id) ?? "Unknown", pinIssuedAt: pinAt.get(id) ?? null }))

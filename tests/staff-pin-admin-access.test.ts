@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { canManageStaffPins, isStaffPinHolder } from "../src/lib/staff-pin-admin-access";
+import { canRevokeStaffPins, canManageStaffPins, isStaffPinHolder } from "../src/lib/staff-pin-admin-access";
 
 describe("staff PIN reveal access", () => {
   test("only admin and management may reveal staff PINs", () => {
@@ -14,4 +14,9 @@ describe("staff PIN reveal access", () => {
     expect(isStaffPinHolder(["member"])).toBe(false);
     expect(isStaffPinHolder([])).toBe(false);
   });
+});
+test("only the admin role may revoke staff PINs", () => {
+  expect(canRevokeStaffPins(["admin"])).toBe(true);
+  expect(canRevokeStaffPins(["management"])).toBe(false);
+  expect(canRevokeStaffPins(["staff", "moderator"])).toBe(false);
 });
