@@ -176,7 +176,7 @@ export function ShiftStartEndAlert() {
 
       const toEnd = endsAt - now;
       const isOpenForThisSlot = openShift && !isNaN(openShiftClockIn) && openShiftClockIn <= endsAt && now >= startsAt - WARN_BEFORE;
-      if (isOpenForThisSlot && toEnd <= 0) {
+      if (isOpenForThisSlot && toEnd <= WARN_BEFORE) {
         return { slot, stage: "end" as Stage };
       }
 
@@ -286,6 +286,8 @@ export function ShiftStartEndAlert() {
   }, [active, shiftWindowToUtcMs]);
 
   const [askOpen, setAskOpen] = useState(false);
+  const [finishedConfirmed, setFinishedConfirmed] = useState(false);
+  useEffect(() => { if (!askOpen) setFinishedConfirmed(false); }, [askOpen]);
 
   // The "Yes, still working" answer and the moment the question was first asked
   // live on the shift row in the database, so a refresh, a restart or another
@@ -396,6 +398,15 @@ export function ShiftStartEndAlert() {
             .
           </AlertDialogDescription>
         </AlertDialogHeader>
+        <label className="flex items-center justify-center gap-2 text-sm cursor-pointer">
+          <input
+            type="checkbox"
+            className="size-4 accent-primary"
+            checked={finishedConfirmed}
+            onChange={(e) => setFinishedConfirmed(e.target.checked)}
+          />
+          I confirm I'm no longer working
+        </label>
         <AlertDialogFooter className="sm:justify-center gap-2">
           <AlertDialogCancel
             onClick={() => {
@@ -411,10 +422,14 @@ export function ShiftStartEndAlert() {
               setAutoEndAt(null);
             }}
           >
-            Yes, still working
+            Still working
           </AlertDialogCancel>
-          <AlertDialogAction onClick={() => void clockOut(Date.now())}>
-            Clock out now
+          <AlertDialogAction
+            disabled={!finishedConfirmed}
+            className="disabled:opacity-50 disabled:pointer-events-none"
+            onClick={() => void clockOut(Date.now())}
+          >
+            Sign out
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
