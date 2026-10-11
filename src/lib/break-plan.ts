@@ -6,7 +6,8 @@ export type UserPlan = { break1: PlanItem; lunch: PlanItem; break2: PlanItem };
 const STEP = 15;
 const DUR = { break: 15, lunch: 30 } as const;
 
-export function planBreaks(slots: readonly PlanSlot[], minCover = 1): Map<string, UserPlan> {
+/** When `nowMin` is given, breaks are only planned into the rest of today: past slots are re-spread over [nowMin, shift end]. */
+export function planBreaks(slots: readonly PlanSlot[], minCover = 1, nowMin?: number): Map<string, UserPlan> {
   const taken: { start: number; end: number }[] = [];
   const result = new Map<string, UserPlan>();
   const onShift = (from: number, to: number) => slots.filter((s) => s.start <= from && s.end >= to).length;
@@ -26,7 +27,17 @@ export function planBreaks(slots: readonly PlanSlot[], minCover = 1): Map<string
   };
 
   for (const s of ordered) {
-    const len = s.end - s.start;
+    const start = nowMin === undefined ? s.start : Math.max(s.start, Math.ceil(nowMin / STEP) * STEP);
+    if (start >= s.end - DUR.break) {
+      result.set(s.userId, {
+        break1: { kind: "break", label: "Break 1", start: null },
+        lunch: { kind: "lunch", label: "Lunch", start: null },
+        break2: { kind: "break", label: "Break 2", start: null },
+      });
+      continue;
+    }
+    const eff = { ...s, start };
+    const len = eff.end - eff.start;
     const reserve = (start: number | null, dur: number) => { if (start !== null) taken.push({ start, end: start + dur }); return start; };
     const lunch = reserve(pick(s, s.start + len / 2, DUR.lunch, s.start + 60, s.end - 60), DUR.lunch);
     const mid = lunch ?? s.start + len / 2;
