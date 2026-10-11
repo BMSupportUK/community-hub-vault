@@ -179,8 +179,11 @@ function PagesTab({ pages, roles, onChanged, canEditManagement }: { pages: PageP
     if (error) toast.error(error.message); else onChanged();
   };
 
-  const adminPages = pages.filter((p) => p.page_key.startsWith("admin")).sort((a, b) => a.label.localeCompare(b.label));
-  const otherPages = pages.filter((p) => !p.page_key.startsWith("admin")).sort((a, b) => a.label.localeCompare(b.label));
+  const [section, setSection] = useState<PermissionSection>("bm");
+  const inSection = pages.filter((p) => permissionSection(p.page_key) === section);
+  const adminPages = inSection.filter((p) => p.page_key.startsWith("admin")).sort((a, b) => a.label.localeCompare(b.label));
+  const otherPages = inSection.filter((p) => !p.page_key.startsWith("admin")).sort((a, b) => a.label.localeCompare(b.label));
+  const count = (s: PermissionSection) => pages.filter((p) => permissionSection(p.page_key) === s).length;
 
   const renderRow = (p: PagePerm) => (
     <tr key={p.page_key} className="border-t border-border">
