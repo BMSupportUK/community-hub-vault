@@ -2,6 +2,7 @@
 # Roadmap
 
 ## Current
+- [ ] Match admin PIN unlock background to Staff PIN and add all-staff PIN tab with individual hidden/reveal controls
 - [x] Make Staff PIN and shift history illustrations full-page backgrounds and verify full-width shift history
 - [x] Weekly fantasy squads: distinguish matchday absence from unused substitutes and label both directions of exchanges
 - [x] Restore Boro matchday goal updates: reject FotMob zero event IDs, recover today's goal/bookings and verify thread read-back; permanent fix awaits publishing
