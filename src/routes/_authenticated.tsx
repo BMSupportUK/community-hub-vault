@@ -10,6 +10,8 @@ import { IconRail } from "@/components/app/IconRail";
 import { logMyIp } from "@/lib/ip-log.functions";
 import { useOnlineUsers, setPresencePage } from "@/hooks/use-online-users";
 import { pageLabelForPath } from "@/lib/page-labels";
+import { isPageAllowed, usePagePermissions } from "@/lib/page-access";
+import { adminPanelLabel, canOpenAdminPanel } from "@/lib/admin-panel-access";
 
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { isAllowedForFanZoneOnly, isFanZonePath } from "@/lib/fan-zone-nav";
@@ -102,11 +104,17 @@ export const Route = createFileRoute("/_authenticated")({
 });
 
 function AuthLayout() {
-  const { loading, isPending, isBanned, isRejected, isMod, isStaff, hasAny, user, isFanZoneOnly } = useAuth();
+  const { loading, isPending, isBanned, isRejected, isMod, isStaff, hasAny, user, isFanZoneOnly, roles } = useAuth();
   // Fan Zone applicants wait on the Fan Zone screen, never the BM Support gate.
   const { info: fanZoneInfo } = useFanZoneMembershipState(user?.id);
   const fanZoneApplicant = fanZoneInfo?.status === "pending";
   const isAdmin = hasAny(["admin", "management"]);
+  // Staff and management get the same dashboard button as the owner, named
+  // "Staff | Admin Panel". Hidden if the owner has unticked the dashboard for
+  // their roles, so nobody is left with a button that bounces them to Home.
+  const perms = usePagePermissions();
+  const canOpenPanel = canOpenAdminPanel(roles) && isPageAllowed("admin", roles, perms);
+  const panelLabel = adminPanelLabel(roles);
   const navigate = useNavigate();
   const path = useRouterState({ select: (r) => r.location.pathname });
   const inFanZone = isFanZonePath(path);
@@ -281,14 +289,14 @@ function AuthLayout() {
                 {navOpen ? <IconRail inSheet /> : null}
               </SheetContent>
             </Sheet>
-            {isAdmin && (
+            {canOpenPanel && (
               <Link
                 to="/admin"
-                title="Admin | Admin Panel"
+                title={panelLabel}
                 className="hidden md:flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-3 py-1.5 bg-surface-2 hover:bg-primary hover:text-primary-foreground text-xs font-medium transition-colors"
               >
                 <LayoutDashboard className="size-4" />
-                <span className="hidden min-[1700px]:inline">Admin | Admin Panel</span>
+                <span className="hidden min-[1700px]:inline">{panelLabel}</span>
               </Link>
             )}
             {isAdmin && (
