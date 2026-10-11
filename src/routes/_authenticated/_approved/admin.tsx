@@ -15,6 +15,7 @@ import { StaffPinAdminCard } from "@/components/app/StaffPinAdminCard";
 import { CardPaymentsAdminCard } from "@/components/app/CardPaymentsAdminCard";
 import { OrderStatusAdminCard } from "@/components/app/OrderStatusAdminCard";
 import shopHero from "@/assets/shop-hero.jpg";
+import pinIllustration from "@/assets/staff-pin-illustration.jpg";
 import { AwaitingPaymentsSidebar } from "@/components/app/AwaitingPaymentsSidebar";
 import { WiseIncomingCard } from "@/components/app/WiseIncomingCard";
 import { BankTransferAdminCard } from "@/components/app/BankTransferAdminCard";
@@ -125,7 +126,13 @@ export function AdminDashboard({ zone = "bm" }: { zone?: "bm" | "fanzone" }) {
   if (!(isFz ? canOpenFanZoneAdminPanel(roles) : canOpenAdminPanel(roles))) return <Navigate to="/home" />;
 
   return (
-    <main className="h-full min-h-0 flex-1 overflow-y-auto overscroll-contain">
+    <main className="relative isolate h-full min-h-0 flex-1 overflow-y-auto overscroll-contain">
+      {!unlocked && (
+        <div className="absolute inset-0 -z-10 pointer-events-none" aria-hidden="true">
+          <img src={pinIllustration} alt="" className="h-full w-full object-cover object-center" />
+          <div className="absolute inset-0 bg-background/60" />
+        </div>
+      )}
       <div className="w-full px-4 sm:px-6 py-8">
         <div className="relative rounded-3xl overflow-hidden border border-primary/30 shadow-glow bg-gradient-primary p-6 sm:p-8 mb-6">
           <div className="absolute inset-0 bg-gradient-to-tr from-background/40 via-transparent to-transparent pointer-events-none" />

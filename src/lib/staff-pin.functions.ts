@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { canManageStaffPins, isStaffPinHolder } from "@/lib/staff-pin-admin-access";
 
 // Staff PINs are issued by admins, stored encrypted + hashed in the database,
 // and only ever checked or revealed on the server after re-confirming the
@@ -38,7 +39,7 @@ async function emailFor(userId: string, claims: any): Promise<string | null> {
 async function requireAdmin(supabase: any, userId: string) {
   const { data } = await supabase.from("user_roles").select("role").eq("user_id", userId);
   const roles = (data ?? []).map((r: any) => String(r.role));
-  if (!roles.some((r: string) => r === "admin" || r === "management")) throw new Error("Forbidden");
+  if (!canManageStaffPins(roles)) throw new Error("Forbidden");
 }
 
 export const unlockWithStaffPin = createServerFn({ method: "POST" })
@@ -138,4 +139,21 @@ export const issueStaffPin = createServerFn({ method: "POST" })
       source_type: "staff_pin",
     } as any);
     return { ok: true };
+  });
+
+// Never include decrypted PINs in the list response: reveal only the requested
+// staff member after validating the caller's stored roles on every request.
+export const revealStaffPinForAdmin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ userId: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    await requireAdmin(context.supabase, context.userId);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: targetRoles, error: roleError } = await supabaseAdmin
+      .from("user_roles").select("role").eq("user_id", data.userId);
+    if (roleError) throw new Error("Could not verify staff account");
+    if (!isStaffPinHolder((targetRoles ?? []).map((row) => String(row.role)))) throw new Error("Not a staff account");
+    const { data: pin, error } = await supabaseAdmin.rpc("staff_pin_reveal" as any, { p_user: data.userId });
+    if (error) throw new Error("Could not reveal staff PIN");
+    return { pin: (pin as string | null) ?? null };
   });
