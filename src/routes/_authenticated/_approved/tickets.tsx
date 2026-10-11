@@ -555,9 +555,9 @@ function TicketsPage() {
 
           <TabsContent value="welcome" className="mt-4">
             <div className="rounded-2xl bg-gradient-to-br from-rose-600/30 via-fuchsia-600/20 to-violet-700/30 border border-rose-500/30 p-4 md:p-5 lg:p-6 shadow-[0_0_60px_-15px_rgba(244,63,94,0.4)]">
-              {/* Intro sits beside the duty strip so the week of hours below can
-                  use the full width and show every day at once. */}
-              <div className="flex flex-col lg:flex-row lg:items-start gap-4 lg:gap-6">
+              {/* Intro on the left; staff cards live in a right sidebar split
+                  by role, like the Talk channel staff list. */}
+               <div className="flex flex-col lg:flex-row lg:items-stretch gap-4 lg:gap-6">
                 <div className="min-w-0 flex-1">
                   <h2 className="font-display text-2xl md:text-3xl font-bold">Welcome to the Help Desk</h2>
                   <p className="mt-2 text-base md:text-lg text-rose-100/90 max-w-3xl">
@@ -567,10 +567,10 @@ function TicketsPage() {
                   <p className="mt-2 text-rose-200/80 max-w-3xl text-sm md:text-base">
                     Once your ticket is resolved, leave a rating so we know how we did.
                   </p>
-                </div>
-                <div className="w-full lg:w-auto lg:max-w-2xl shrink-0 [&>div]:px-0 [&>div]:pt-0">
-                  <StaffOnDutyStrip variant="tickets" hideRoles={["moderator"]} />
-                </div>
+                 </div>
+                <aside className="w-full lg:w-80 xl:w-[22rem] shrink-0 lg:max-h-[560px] min-h-0">
+                  <StaffOnDutyStrip variant="tickets-sidebar" hideRoles={["moderator"]} />
+                </aside>
               </div>
               <OfficeHoursPanel />
             </div>
