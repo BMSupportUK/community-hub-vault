@@ -2,6 +2,7 @@
 # Roadmap
 
 ## Current
+- [ ] Make Staff PIN and shift history illustrations full-page backgrounds and verify full-width shift history
 - [x] Weekly fantasy squads: distinguish matchday absence from unused substitutes and label both directions of exchanges
 - [x] Restore Boro matchday goal updates: reject FotMob zero event IDs, recover today's goal/bookings and verify thread read-back; permanent fix awaits publishing
 - [x] Profit & costs Packages: tabs always ordered single 12, single 6, single 1 month, then Multi Room, then Triple Room
