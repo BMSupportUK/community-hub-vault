@@ -43,6 +43,28 @@ public class MainActivity extends BridgeActivity {
         createSpokenChannel("bm_support_orders_v3", "New orders", R.raw.order_tone);
         createSpokenChannel("bm_support_payments_v3", "Payments received", R.raw.payment_tone);
         createSpokenChannel("bm_support_mentions_v3", "Mentions", R.raw.mention_tone);
+        createSpokenChannel("bm_alert_ticket_assigned_v1", "Ticket assigned", R.raw.ticket_assigned_tone);
+        createSpokenChannel("bm_alert_ticket_handover_v1", "Ticket handed over", R.raw.ticket_handover_tone);
+        createSpokenChannel("bm_alert_ticket_help_v1", "Ticket help requested", R.raw.ticket_help_tone);
+        createSpokenChannel("bm_alert_dm_v1", "Inbox / direct message", R.raw.dm_tone);
+        createSpokenChannel("bm_alert_checkout_chat_v1", "Checkout chat", R.raw.checkout_chat_tone);
+        createSpokenChannel("bm_alert_live_help_v1", "Live help request", R.raw.live_help_tone);
+        createSpokenChannel("bm_alert_signup_v1", "New signup / access request", R.raw.signup_tone);
+        createSpokenChannel("bm_alert_gate_message_v1", "Gate message", R.raw.gate_message_tone);
+        createSpokenChannel("bm_alert_guide_access_v1", "Guide / app access", R.raw.guide_access_tone);
+        createSpokenChannel("bm_alert_content_report_v1", "Content reported", R.raw.content_report_tone);
+        createSpokenChannel("bm_alert_auto_clock_in_v1", "Auto clock-in", R.raw.auto_clock_in_tone);
+        createSpokenChannel("bm_alert_shift_over_v1", "Shift has ended", R.raw.shift_over_tone);
+        createSpokenChannel("bm_alert_cover_request_v1", "Cover sign-in request", R.raw.cover_request_tone);
+        createSpokenChannel("bm_alert_cover_approved_v1", "Cover approved", R.raw.cover_approved_tone);
+        createSpokenChannel("bm_alert_cover_declined_v1", "Cover declined", R.raw.cover_declined_tone);
+        createSpokenChannel("bm_alert_early_finish_v1", "Early finish", R.raw.early_finish_tone);
+        createSpokenChannel("bm_alert_break_due_v1", "Break due", R.raw.break_due_tone);
+        createSpokenChannel("bm_alert_break_ending_v1", "Break ending", R.raw.break_ending_tone);
+        createSpokenChannel("bm_alert_main_break_ending_v1", "Main break ending", R.raw.main_break_ending_tone);
+        createSpokenChannel("bm_alert_staff_pin_v1", "Staff PIN reset", R.raw.staff_pin_tone);
+        createSpokenChannel("bm_alert_app_update_v1", "App / site update", R.raw.app_update_tone);
+        createSpokenChannel("bm_alert_device_release_v1", "New device release", R.raw.device_release_tone);
         requestIgnoreBatteryOptimizations();
         enableWebViewDownloads();
     }
