@@ -252,7 +252,6 @@ export function IconRail({ inSheet = false }: { inSheet?: boolean } = {}) {
     // Switching back to BM Support lives on the Fan Zone header, not the rail.
     { to: user ? "/forum" : "/fan-zone", label: "Boro Fan Zone", icon: BoroBadgeIcon, show: true },
     { to: "/fanzone/messages", label: "Inbox", icon: MessagesSquare, show: !!user },
-    { to: "/admin-fan-zone", label: "Members", icon: Users, show: !!user && canSeeFanZoneMembers },
     { to: "/fanzone/friend-requests", label: "Friend requests", icon: UserPlus, show: !!user, badge: fanFriendRequests },
 
     user?.id
