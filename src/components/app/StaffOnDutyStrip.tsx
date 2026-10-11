@@ -758,6 +758,37 @@ export function StaffOnDutyStrip({
     </div>
   ) : null;
 
+  // Rotates through a group's cards one at a time every 15 seconds when the
+  // group has more than one member; a single card just stays put.
+  const RotatingCards = <T,>({ items, render }: { items: T[]; render: (item: T) => React.ReactNode }) => {
+    const [index, setIndex] = useState(0);
+    useEffect(() => {
+      if (items.length <= 1) return;
+      const timer = setInterval(() => setIndex((i) => (i + 1) % items.length), 15000);
+      return () => clearInterval(timer);
+    }, [items.length]);
+    if (items.length === 0) return null;
+    const shown = items[index % items.length];
+    return (
+      <div className="flex flex-col gap-1.5">
+        {render(shown)}
+        {items.length > 1 && (
+          <div className="flex items-center justify-center gap-1">
+            {items.map((_, i) => (
+              <span
+                key={i}
+                className={cn(
+                  "h-1 rounded-full transition-all",
+                  i === index % items.length ? "w-3 bg-white/90" : "w-1 bg-white/40",
+                )}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   // Tickets page right sidebar: staff stacked vertically and split into role
   // groups (Owner, Admin, Management, Staff) like the Talk channel sidebar.
   if (variant === "tickets-sidebar") {
@@ -818,9 +849,7 @@ export function StaffOnDutyStrip({
               onDutyGroups.map((g, i) => (
                 <div key={g.role}>
                   {groupHeading(formatRoleLabel(g.role), g.shifts.length, i === 0)}
-                  <div className="flex flex-col gap-2">
-                    {g.shifts.map((s) => renderOnDutyCard(s))}
-                  </div>
+                  <RotatingCards items={g.shifts} render={(s) => renderOnDutyCard(s)} />
                 </div>
               ))
             )}
@@ -832,9 +861,7 @@ export function StaffOnDutyStrip({
                 {offDutyGroups.map((g, i) => (
                   <div key={g.role}>
                     {groupHeading(formatRoleLabel(g.role), g.people.length, i === 0)}
-                    <div className="flex flex-col gap-2">
-                      {g.people.map((p) => renderOffDutyCard(p))}
-                    </div>
+                    <RotatingCards items={g.people} render={(p) => renderOffDutyCard(p)} />
                   </div>
                 ))}
               </div>
