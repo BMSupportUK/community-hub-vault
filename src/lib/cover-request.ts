@@ -36,6 +36,10 @@ export function askCoverRequest(presetUntil?: string): { reason: string; until: 
     reason = normalizeCoverReason(a);
   }
   if (!reason) return null;
+  if (presetUntil) {
+    const until = normalizeCoverUntil(presetUntil);
+    if (until) return { reason, until };
+  }
   let until: string | null = null;
   for (let i = 0; i < 3 && !until; i += 1) {
     const a = window.prompt("Cover until what time? (UK time, 24h e.g. 18:00) — required:");
