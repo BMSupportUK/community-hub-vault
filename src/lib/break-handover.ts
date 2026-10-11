@@ -11,7 +11,7 @@ export async function offerTicketHandover(userId: string, kind: "break" | "lunch
     .from("tickets")
     .select("id", { count: "exact", head: true })
     .eq("assigned_to", userId)
-    .in("status", ["open", "in_progress"])
+    .in("status", ["open", "in_progress", "assigned"])
     .is("archived_at", null);
   if (!count) return true;
   const label = kind === "lunch" ? "your main break" : "your break";
@@ -36,7 +36,7 @@ export async function countOpenTickets(userId: string): Promise<number> {
     .from("tickets")
     .select("id", { count: "exact", head: true })
     .eq("assigned_to", userId)
-    .in("status", ["open", "in_progress"])
+    .in("status", ["open", "in_progress", "assigned"])
     .is("archived_at", null);
   return count ?? 0;
 }
