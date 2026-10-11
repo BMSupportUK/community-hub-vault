@@ -3,6 +3,9 @@ import { normalizeCoverReason, normalizeCoverUntil, coverUntilIsValid, askCoverR
 describe("cover sign-in requests", () => {
   it("requires a reason", () => { expect(normalizeCoverReason("   ")).toBeNull(); expect(normalizeCoverReason(" Covering Dan ")).toBe("Covering Dan"); });
   it("parses end time", () => { expect(normalizeCoverUntil("18:00")).toBe("18:00:00"); expect(normalizeCoverUntil("25:00")).toBeNull(); });
+  it("server accepts the time the app already normalised", () => {
+    expect(normalizeCoverUntil(normalizeCoverUntil("18:00"))).toBe("18:00:00");
+  });
   it("end must be later today", () => { expect(coverUntilIsValid("18:00:00","14:10:00")).toBe(true); expect(coverUntilIsValid("13:00:00","14:10:00")).toBe(false); });
   it("staff get the business closing time pre-filled without being asked for a time", () => {
     const prompt = vi.fn().mockReturnValueOnce("Covering Dan");
