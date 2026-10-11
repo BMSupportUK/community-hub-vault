@@ -12,11 +12,16 @@ const ukNow = () => {
   return { date: `${p.year}-${p.month}-${p.day}`, minutes: (Number(p.hour) % 24) * 60 + Number(p.minute) };
 };
 
-/** Planned Break 1 / Main break / Break 2 times for staff and management on today's rota. */
-export function BreakPlanRows({ userId, usedKinds, onStartBreak }: { userId: string; usedKinds: readonly string[]; onStartBreak?: (kind: "break" | "lunch") => void }) {
-  const [plan, setPlan] = useState<UserPlan | null>(null);
+function useUkMinuteTicker() {
   const [nowMin, setNowMin] = useState(() => ukNow().minutes);
+  useEffect(() => { const t = setInterval(() => setNowMin(ukNow().minutes), 30_000); return () => clearInterval(t); }, []);
+  return nowMin;
+}
 
+/** Shared loader: planned Break 1 / Main break / Break 2 times for a staff member's rota slot today. */
+export function useBreakPlan(userId: string) {
+  const [plan, setPlan] = useState<UserPlan | null>(null);
+  const nowMin = useUkMinuteTicker();
   useEffect(() => {
     let alive = true;
     const load = async () => {
@@ -48,19 +53,41 @@ export function BreakPlanRows({ userId, usedKinds, onStartBreak }: { userId: str
     const r = setInterval(() => void load(), 60_000);
     return () => { alive = false; supabase.removeChannel(ch); clearInterval(r); };
   }, [userId]);
+  return { plan, nowMin };
+}
 
-  useEffect(() => { const t = setInterval(() => setNowMin(ukNow().minutes), 30_000); return () => clearInterval(t); }, []);
+function planItems(plan: UserPlan | null, usedKinds: readonly string[], nowMin: number) {
+  if (!plan) return [];
+  const breaksUsed = usedKinds.filter((k) => k === "break").length;
+  const lunchUsed = usedKinds.includes("lunch");
+  return [
+    { ...plan.break1, done: breaksUsed >= 1 },
+    { ...plan.lunch, done: lunchUsed },
+    { ...plan.break2, done: breaksUsed >= 2 },
+  ].map((it) => ({ ...it, missed: !it.done && it.start !== null && nowMin > it.start + 15 }));
+}
 
-  const items = useMemo(() => {
-    if (!plan) return [];
-    const breaksUsed = usedKinds.filter((k) => k === "break").length;
-    const lunchUsed = usedKinds.includes("lunch");
-    return [
-      { ...plan.break1, done: breaksUsed >= 1 },
-      { ...plan.lunch, done: lunchUsed },
-      { ...plan.break2, done: breaksUsed >= 2 },
-    ].map((it) => ({ ...it, missed: !it.done && it.start !== null && nowMin > it.start + 15 }));
-  }, [plan, usedKinds, nowMin]);
+/** Compact "next upcoming break" pill for the Talk channel staff controls header. */
+export function NextBreakPill({ userId, usedKinds }: { userId: string; usedKinds: readonly string[] }) {
+  const { plan, nowMin } = useBreakPlan(userId);
+  const next = planItems(plan, usedKinds, nowMin).find((i) => !i.done && !i.missed && i.start !== null);
+  if (!next || next.start === null) return null;
+  return (
+    <span
+      title={`Next break: ${next.label} at ${fromMinutes(next.start)} UK office time`}
+      className="inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-semibold text-warning ring-1 ring-warning/40"
+    >
+      <Coffee className="size-3" />
+      {next.label} · {fromMinutes(next.start)}
+    </span>
+  );
+}
+
+/** Planned Break 1 / Main break / Break 2 times for staff and management on today's rota. */
+export function BreakPlanRows({ userId, usedKinds, onStartBreak }: { userId: string; usedKinds: readonly string[]; onStartBreak?: (kind: "break" | "lunch") => void }) {
+  const { plan, nowMin } = useBreakPlan(userId);
+
+  const items = useMemo(() => planItems(plan, usedKinds, nowMin), [plan, usedKinds, nowMin]);
 
   // When an allocated time arrives, pop a dialog so the staff member starts
   // the break themselves (they may be mid-ticket and want to hand it over).
