@@ -523,7 +523,7 @@ export function WorkingStatusBox({
   const startBreak = async (kind: BreakKind) => {
     if (!user || !shift || brk) return;
     if (kind !== "travel" && breaksLeft(kind, usedKinds) <= 0) {
-      toast.error(kind === "lunch" ? "You've already had your lunch break this shift." : "You've used both of your breaks this shift.");
+      toast.error(kind === "lunch" ? "You've already had your main break this shift." : "You've used both of your breaks this shift.");
       return;
     }
     if (busy) return;
@@ -539,7 +539,7 @@ export function WorkingStatusBox({
     // Show the running break straight away instead of waiting for the live update.
     if (inserted) setBrk(inserted as Break);
     setUsedKinds((k) => [...k, kind]);
-    toast.success(kind === "lunch" ? "Lunch started" : "Break started");
+    toast.success(kind === "lunch" ? "Main break started" : "Break started");
     notifyBreak({ data: { kind: "start", breakKind: kind } }).catch(() => {});
   };
 
@@ -734,7 +734,7 @@ export function WorkingStatusBox({
           type="button"
           onClick={() => startBreak("lunch")}
           disabled={busy || lunchLeft <= 0}
-          title={lunchLeft > 0 ? "Start lunch" : "Lunch already taken this shift"}
+          title={lunchLeft > 0 ? "Start main break" : "Main break already taken this shift"}
           className={cn(
             "inline-flex items-center justify-center rounded-full border transition-all",
             lunchLeft > 0

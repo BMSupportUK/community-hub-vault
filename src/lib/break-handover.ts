@@ -14,7 +14,7 @@ export async function offerTicketHandover(userId: string, kind: "break" | "lunch
     .in("status", ["open", "in_progress"])
     .is("archived_at", null);
   if (!count) return true;
-  const label = kind === "lunch" ? "lunch" : "your break";
+  const label = kind === "lunch" ? "your main break" : "your break";
   const pass = window.confirm(
     `You're dealing with ${count} ticket${count === 1 ? "" : "s"}.\n\nPress OK to pass ${count === 1 ? "it" : "them"} to another member of staff before ${label}, or Cancel to keep ${count === 1 ? "it" : "them"}.`,
   );

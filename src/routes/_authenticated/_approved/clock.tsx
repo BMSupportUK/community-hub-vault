@@ -218,7 +218,7 @@ function ClockPage() {
     const { error } = await supabase.from("breaks").insert({ shift_id: myShift.id, user_id: user.id, kind });
     setBusy(false);
     if (error) return toast.error(error.message);
-    toast.success(kind === "lunch" ? "Lunch started — 30 min" : "Break started — 15 min");
+    toast.success(kind === "lunch" ? "Main break started — 30 min" : "Break started — 15 min");
     notifyBreak({ data: { kind: "start", breakKind: kind } }).catch(() => {});
     refresh();
   };
@@ -300,8 +300,8 @@ function ClockPage() {
                     <button onClick={() => startBreak("break")} disabled={busy || breakLeft <= 0} title={breakLeft > 0 ? `${breakLeft} of 2 breaks left` : "No breaks left this shift"} className="w-full px-4 py-2 rounded-lg bg-surface-2 border border-border hover:border-primary inline-flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-border">
                       <Coffee className="size-4" /> Start break (15m)
                     </button>
-                    <button onClick={() => startBreak("lunch")} disabled={busy || lunchLeft <= 0} title={lunchLeft > 0 ? "Start lunch" : "Lunch already taken this shift"} className="w-full px-4 py-2 rounded-lg bg-surface-2 border border-border hover:border-primary inline-flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-border">
-                      <UtensilsCrossed className="size-4" /> Start lunch (30m)
+                    <button onClick={() => startBreak("lunch")} disabled={busy || lunchLeft <= 0} title={lunchLeft > 0 ? "Start main break" : "Main break already taken this shift"} className="w-full px-4 py-2 rounded-lg bg-surface-2 border border-border hover:border-primary inline-flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-border">
+                      <UtensilsCrossed className="size-4" /> Start main break (30m)
                     </button>
                     <Button onClick={clockOut} disabled={busy || finishAction === "wait"}
                       variant={finishAction === "clock-out" ? "destructive" : "outline"}

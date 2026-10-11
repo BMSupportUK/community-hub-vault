@@ -64,7 +64,7 @@ export const Route = createFileRoute("/api/public/hooks/scheduled-reminders")({
 
         const jobs: AlertJob[] = [];
 
-        // --- Planned breaks (Break 1 / Lunch / Break 2) -----------------------
+        // --- Planned breaks (Break 1 / Main break / Break 2) ------------------
         try {
           const p = Object.fromEntries(new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false }).formatToParts(new Date(now)).map((x) => [x.type, x.value]));
           const ukDate = `${p.year}-${p.month}-${p.day}`;
@@ -317,7 +317,7 @@ export const Route = createFileRoute("/api/public/hooks/scheduled-reminders")({
           if (!limit) continue;
           const elapsed = (now - new Date(b.started_at as string).getTime()) / 1000;
           const remaining = limit - elapsed;
-          const label = b.kind === "lunch" ? "Lunch break" : "Break";
+          const label = b.kind === "lunch" ? "Main break" : "Break";
 
           if (remaining <= 0) {
             jobs.push({

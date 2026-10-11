@@ -718,7 +718,7 @@ function ProfilePage() {
                       <StatusPill
                         icon={breakRow.kind === "lunch" ? UtensilsCrossed : Coffee}
                         tone={breakRemaining < 0 ? "danger" : "warn"}
-                        label={`On ${breakRow.kind} — ${fmt(Math.max(0, breakRemaining))}${breakRemaining < 0 ? " over" : " left"}`}
+                        label={`On ${breakRow.kind === "lunch" ? "main break" : "break"} — ${fmt(Math.max(0, breakRemaining))}${breakRemaining < 0 ? " over" : " left"}`}
                       />
                     ) : shift ? (
                       <StatusPill icon={ClockIcon} tone="ok" label={`On shift — ${fmt(onShiftSeconds)}`} />
