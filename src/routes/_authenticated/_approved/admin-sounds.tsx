@@ -1,9 +1,10 @@
 import { createFileRoute, Navigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Play, Loader2, CheckCircle2, XCircle, Volume2, Square } from "lucide-react";
+import { ArrowLeft, Play, Loader2, CheckCircle2, XCircle, Volume2, Square, Send, Smartphone } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { SoundSettings } from "@/components/app/SoundSettings";
 import { playSoundFromGesture, getSoundPrefs } from "@/lib/sound";
+import { sendTestPush } from "@/lib/test-push.functions";
 import { toast } from "sonner";
 
 import mentionAudio from "@/assets/mention-notify.mp3";
