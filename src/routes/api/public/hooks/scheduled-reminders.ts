@@ -121,18 +121,29 @@ export const Route = createFileRoute("/api/public/hooks/scheduled-reminders")({
             const dueUsers = Array.from(new Set(due.map((d) => d.user_id)));
             const { data: openShifts } = await db.from("shifts").select("id,user_id").in("user_id", dueUsers).is("clock_out", null);
             const shiftIds = ((openShifts ?? []) as { id: string }[]).map((s) => s.id);
-            const { data: taken } = shiftIds.length ? await db.from("breaks").select("user_id,kind").in("shift_id", shiftIds) : { data: [] };
-            const onShift = new Set(((openShifts ?? []) as { user_id: string }[]).map((s) => s.user_id));
+            const { data: taken } = shiftIds.length ? await db.from("breaks").select("user_id,kind,ended_at").in("shift_id", shiftIds) : { data: [] };
+            const shiftByUser = new Map(((openShifts ?? []) as { id: string; user_id: string }[]).map((s) => [s.user_id, s.id]));
             for (const d of due) {
-              if (!onShift.has(d.user_id)) continue;
-              const used = ((taken ?? []) as { user_id: string; kind: string }[]).filter((b) => b.user_id === d.user_id && b.kind === d.kind).length;
+              const shiftId = shiftByUser.get(d.user_id);
+              if (!shiftId) continue;
+              const mine = ((taken ?? []) as { user_id: string; kind: string; ended_at: string | null }[]).filter((b) => b.user_id === d.user_id);
+              // Never start a second break while one is already running.
+              if (mine.some((b) => b.ended_at === null)) continue;
+              const used = mine.filter((b) => b.kind === d.kind).length;
               const need = d.label === "Break 2" ? 2 : 1;
               if (used >= need) continue;
+              // Breaks are fully automated: start the break at its planned
+              // time, pass any open tickets to a covering colleague, and tell
+              // the staff member it has started.
+              const { error: insErr } = await db.from("breaks").insert({ shift_id: shiftId, user_id: d.user_id, kind: d.kind });
+              if (insErr) continue;
+              (taken ?? []).push({ user_id: d.user_id, kind: d.kind, ended_at: null });
+              await db.rpc("handover_tickets_for_break", { _kind: d.kind, _for: d.user_id }).then(() => {}, () => {});
               jobs.push({
                 key: `bplan:${d.user_id}:${ukDate}:${d.label}`,
                 userId: d.user_id,
-                title: `${d.label} is due now`,
-                body: `Your ${d.label.toLowerCase()} is planned for ${fromMinutes(d.start_min as number)}. Start it from Working Status when you're ready.`,
+                title: `${d.label} started`,
+                body: `Your ${d.label.toLowerCase()} planned for ${fromMinutes(d.start_min as number)} has started automatically. It ends on its own — no need to clock back in manually.`,
                 url: "/home",
                 kind: "break_warn",
               });
