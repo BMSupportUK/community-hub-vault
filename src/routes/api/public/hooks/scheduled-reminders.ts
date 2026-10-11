@@ -368,7 +368,7 @@ export const Route = createFileRoute("/api/public/hooks/scheduled-reminders")({
               title: `${label} ending soon`,
               body: `Your ${label.toLowerCase()} ends in ${Math.max(1, Math.round(remaining / 60))} min.`,
               url: "/clock",
-              kind: "break_warn",
+              kind: b.kind === "lunch" ? "main_break_ending" : "break_ending",
             });
           }
         }
