@@ -27,14 +27,14 @@ export function BreakPlanRows({ userId, usedKinds }: { userId: string; usedKinds
       const eligible = new Set(((roles ?? []) as { user_id: string; role: string }[]).filter((r) => r.role === "staff" || r.role === "management").map((r) => r.user_id));
       const rows = (slots ?? []).filter((s) => s.slot_type === "shift" && s.assigned_to && eligible.has(s.assigned_to))
         .map((s) => ({ userId: s.assigned_to as string, start: toMinutes(s.start_time), end: toMinutes(s.end_time) }));
-      if (alive) setPlan(planBreaks(rows, 1).get(userId) ?? null);
+      if (alive) setPlan(planBreaks(rows, 1, ukNow().minutes).get(userId) ?? null);
     };
     void load();
     const ch = supabase.channel(`break-plan-${userId}-${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "shift_slots" }, () => void load()).subscribe();
     const t = setInterval(() => setNowMin(ukNow().minutes), 30_000);
     return () => { alive = false; supabase.removeChannel(ch); clearInterval(t); };
-  }, [userId]);
+  }, [userId, nowMin]);
 
   const items = useMemo(() => {
     if (!plan) return [];
