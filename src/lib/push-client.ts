@@ -47,6 +47,34 @@ export async function getPushStatus(): Promise<"unsupported" | "denied" | "subsc
   }
 }
 
+/**
+ * If this browser already has notification permission, make sure its push
+ * subscription is saved server-side. Fixes browsers (e.g. Edge) whose toggle
+ * showed "enabled" while the server never stored the device.
+ */
+export async function resyncPushSubscription(): Promise<boolean> {
+  if (!pushSupported() || isInIframe() || isPreviewHost()) return false;
+  if (Notification.permission !== "granted") return false;
+  const reg = await getRegistration();
+  let sub = await reg.pushManager.getSubscription();
+  if (!sub) {
+    sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+    });
+  }
+  const json = sub.toJSON();
+  await saveSubscription({
+    data: {
+      endpoint: sub.endpoint,
+      p256dh: json.keys?.p256dh ?? "",
+      auth: json.keys?.auth ?? "",
+      userAgent: navigator.userAgent.slice(0, 500),
+    },
+  });
+  return true;
+}
+
 export async function enablePush() {
   if (!pushSupported()) throw new Error("Push notifications are not supported on this device/browser.");
   const perm = await Notification.requestPermission();
