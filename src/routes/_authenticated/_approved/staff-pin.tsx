@@ -33,7 +33,7 @@ function StaffPinPage() {
   return (
     <div className="relative isolate h-full min-h-dvh w-full min-w-0 flex-1 overflow-y-auto lg:min-h-0">
       <img src={pinIllustration} alt="" aria-hidden="true" className="absolute inset-0 -z-20 size-full object-cover object-center" />
-      <div className="absolute inset-0 -z-10 bg-background/80" />
+      <div className="absolute inset-0 -z-10 bg-background/60" />
       <div className="relative w-full space-y-6 p-4 sm:p-8 lg:p-10">
         <Link to="/home" className="inline-flex items-center gap-1.5 text-xs text-foreground hover:text-primary">
           <ArrowLeft className="size-3.5" /> Back
