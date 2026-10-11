@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, redirect, useRouterState, Navigate, useNavigate } from "@tanstack/react-router";
 import { Link } from "@tanstack/react-router";
-import { LayoutDashboard, Shield, ShieldCheck, Menu, Receipt, ChevronDown, ChevronUp } from "lucide-react";
+import { LayoutDashboard, Shield, ShieldCheck, Menu, Receipt, ChevronDown, ChevronUp, KeyRound } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState, lazy, Suspense, type ReactNode } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
@@ -310,6 +310,16 @@ function AuthLayout() {
               >
                 <ShieldCheck className="size-4" />
                 <span className="hidden min-[1700px]:inline">Fan Zone | Admin Panel</span>
+              </Link>
+            )}
+            {hasAny(["admin", "management", "staff", "moderator"]) && (
+              <Link
+                to="/staff-pin"
+                title="Staff PIN"
+                className="hidden md:flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-3 py-1.5 bg-surface-2 hover:bg-primary hover:text-primary-foreground text-xs font-medium transition-colors"
+              >
+                <KeyRound className="size-4" />
+                <span className="hidden min-[1700px]:inline">Staff PIN</span>
               </Link>
             )}
             {isAdmin && (

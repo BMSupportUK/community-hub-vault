@@ -23,7 +23,6 @@ import tvLoginIllustration from "@/assets/tv-login-illustration.jpg";
 import referralsBg from "@/assets/referrals-bg.jpg";
 import friendsBg from "@/assets/friends-bg.jpg";
 import ticketsBg from "@/assets/tickets-bg.jpg";
-import { StaffPinPanel } from "@/components/app/StaffPinPanel";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
 import { Nameplate } from "@/components/app/Nameplate";
@@ -177,7 +176,7 @@ function ProfilePage() {
   const [rel, setRel] = useState<FriendRel>({ kind: "none" });
   const [relBusy, setRelBusy] = useState(false);
   const initialTab = (["profile","creds","tickets","referrals","friends","shifts","subscription"].includes(search.tab ?? "") ? search.tab : "profile") as "profile" | "creds" | "tickets" | "referrals" | "friends" | "shifts" | "subscription";
-  const allowedTabs = ["profile","creds","tickets","referrals","friends","shifts","notifications","theme","subscription","staff-pin"] as const;
+  const allowedTabs = ["profile","creds","tickets","referrals","friends","shifts","notifications","theme","subscription"] as const;
   type TabId = typeof allowedTabs[number];
   const initialTabSafe = (allowedTabs.includes((search.tab ?? "") as TabId) ? search.tab : initialTab) as TabId;
   const [mainTab, setMainTab] = useState<TabId>(initialTabSafe);
@@ -539,7 +538,6 @@ function ProfilePage() {
     { id: "friends", label: `Friends (${friends.length})` },
     ...(canSeeShifts ? [{ id: "shifts", label: "Shift history" }] : []),
     ...(canSeeReferrals ? [{ id: "referrals", label: `Referrals (${referrals.length})` }] : []),
-    ...(isOwner && isStaffProfile ? [{ id: "staff-pin", label: "Staff PIN" }] : []),
     ...(isOwner ? [{ id: "notifications", label: "Notifications" }] : []),
     ...(isOwner ? [{ id: "theme", label: "Theme" }] : []),
   ];
@@ -790,11 +788,6 @@ function ProfilePage() {
             <TicketMonthsPanel tickets={tickets} canReopen={isOwner} onChanged={load} />
           </TabsContent>
 
-          {isOwner && isStaffProfile && (
-            <TabsContent value="staff-pin" className={paneClass}>
-              <StaffPinPanel />
-            </TabsContent>
-          )}
 
           {canSeeShifts && (
             <TabsContent value="shifts" className={paneClass}>
