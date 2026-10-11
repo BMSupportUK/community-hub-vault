@@ -83,18 +83,35 @@ export function BreakPlanRows({ userId, usedKinds, onStartBreak }: { userId: str
   if (!plan) return null;
   const next = items.find((i) => !i.done && !i.missed && i.start !== null);
   return (
-    <div className="grid gap-1.5 text-xs">
-      <span className="text-muted-foreground font-medium">Allocated breaks (UK office)</span>
-      {items.map((it) => {
-        const Icon = it.done ? CheckCircle2 : breakIcon(it.kind);
-        return (
-          <div key={it.label} className={cn("flex items-center justify-between rounded-full px-3 py-1 ring-1",
-            it.done ? "bg-muted/20 ring-border text-muted-foreground line-through" : it.missed ? "bg-muted/10 ring-border text-muted-foreground/60" : it === next ? "bg-warning/15 ring-warning/40 text-warning" : "bg-white/[0.05] ring-white/15")}>
-            <span className="inline-flex items-center gap-1.5 font-medium"><Icon className="size-3.5" />{it.label}</span>
-            <span className="tabular-nums font-semibold">{it.start === null ? "No slot – ask a manager" : it.missed ? "Missed" : fromMinutes(it.start)}</span>
-          </div>
-        );
-      })}
-    </div>
+    <>
+      <div className="grid gap-1.5 text-xs">
+        <span className="text-muted-foreground font-medium">Allocated breaks (UK office)</span>
+        {items.map((it) => {
+          const Icon = it.done ? CheckCircle2 : breakIcon(it.kind);
+          return (
+            <div key={it.label} className={cn("flex items-center justify-between rounded-full px-3 py-1 ring-1",
+              it.done ? "bg-muted/20 ring-border text-muted-foreground line-through" : it.missed ? "bg-muted/10 ring-border text-muted-foreground/60" : it === next ? "bg-warning/15 ring-warning/40 text-warning" : "bg-white/[0.05] ring-white/15")}>
+              <span className="inline-flex items-center gap-1.5 font-medium"><Icon className="size-3.5" />{it.label}</span>
+              <span className="tabular-nums font-semibold">{it.start === null ? "No slot – ask a manager" : it.missed ? "Missed" : fromMinutes(it.start)}</span>
+            </div>
+          );
+        })}
+      </div>
+      <Dialog open={dueOpen} onOpenChange={(o) => { if (!o) snooze(); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><Coffee className="size-5 text-warning" />{dueItem?.label} is due</DialogTitle>
+            <DialogDescription>
+              Your {dueItem?.label.toLowerCase()} was planned for {dueItem?.start !== null && dueItem ? fromMinutes(dueItem.start) : ""} (UK office time).
+              If you're on a ticket, starting the break offers to pass it to a covering colleague first. It ends on its own.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={snooze}>Not yet — remind me in 5 min</Button>
+            <Button onClick={() => { setDueOpen(false); if (dueItem) onStartBreak?.(dueItem.kind); }}>Start {dueItem?.label.toLowerCase()}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
