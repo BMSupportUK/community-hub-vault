@@ -452,7 +452,11 @@ export function WorkingStatusBox({
         toast.info("Your cover request is waiting for admin or management.");
         return;
       }
-      const ask = askCoverRequest();
+      // Moderators work their own hours, so they enter the end time; staff,
+      // management and admin get today's business closing time pre-filled.
+      const isModerator = roles.includes("moderator") && !hasAny(["admin", "management", "staff"]);
+      const preset = isModerator ? undefined : ((await todayClosingTime()) ?? undefined);
+      const ask = askCoverRequest(preset);
       if (!ask) return;
       setBusy(true);
       try {
