@@ -5,7 +5,8 @@ export const normalizeCoverReason = normalizeEarlyFinishReason;
 
 /** Accepts "HH:MM" (24h) and returns "HH:MM:00", or null when invalid. */
 export function normalizeCoverUntil(value: unknown): string | null {
-  const m = String(value ?? "").trim().match(/^(\d{1,2})[:.](\d{2})$/);
+  // Optional ":SS" so an already-normalised "HH:MM:00" round-trips (client → server).
+  const m = String(value ?? "").trim().match(/^(\d{1,2})[:.](\d{2})(?::\d{2})?$/);
   if (!m) return null;
   const h = Number(m[1]);
   const min = Number(m[2]);
