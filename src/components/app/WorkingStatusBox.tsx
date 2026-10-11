@@ -31,6 +31,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { sendShiftEventPush, sendBreakEventPush } from "@/lib/push.functions";
 import { toast } from "sonner";
 import { requestEarlyFinish } from "@/lib/early-finish.functions";
+import { requestCoverSignIn } from "@/lib/cover-request.functions";
+import { askCoverRequest } from "@/lib/cover-request";
 import { formatRoleLabel } from "@/lib/role-label";
 import { browserTimezone } from "@/hooks/use-user-timezone";
 import { shiftWindowToUtcMs } from "@/hooks/use-timezone";
@@ -288,6 +290,8 @@ export function WorkingStatusBox({
   const [usedKinds, setUsedKinds] = useState<string[]>([]);
   const [earlyPending, setEarlyPending] = useState(false);
   const askEarlyFinish = useServerFn(requestEarlyFinish);
+  const askCover = useServerFn(requestCoverSignIn);
+  const [coverPending, setCoverPending] = useState(false);
   const [now, setNow] = useState(() => Date.now());
   const [busy, setBusy] = useState(false);
   const [nextSlot, setNextSlot] = useState<NextSlot | null>(null);
@@ -352,6 +356,9 @@ export function WorkingStatusBox({
         setBrk(null);
         setUsedKinds([]);
       }
+      const { data: cov } = await supabase
+        .from("cover_requests").select("id").eq("user_id", user.id).eq("status", "pending").limit(1);
+      setCoverPending((cov ?? []).length > 0);
       // Next claimed rota slot (today, still to come — or any future day).
       const london = londonNow();
       const todayStr = london.date;
@@ -410,6 +417,11 @@ export function WorkingStatusBox({
       )
       .on(
         "postgres_changes",
+        { event: "*", schema: "public", table: "cover_requests", filter: `user_id=eq.${user.id}` },
+        () => refresh(),
+      )
+      .on(
+        "postgres_changes",
         { event: "*", schema: "public", table: "early_finish_requests", filter: `user_id=eq.${user.id}` },
         () => refresh(),
       )
@@ -434,12 +446,24 @@ export function WorkingStatusBox({
 
   const clockIn = async () => {
     if (!user) return;
-    if (!todayWindow) {
-      toast.error("You have no shift on the rota today, so you can't sign in.");
-      return;
-    }
     if (!canSignIn) {
-      toast.error("Sign-in opens 15 minutes before your shift starts.");
+      // Not on the rota right now — ask admin/management to approve a cover sign-in.
+      if (coverPending) {
+        toast.info("Your cover request is waiting for admin or management.");
+        return;
+      }
+      const ask = askCoverRequest();
+      if (!ask) return;
+      setBusy(true);
+      try {
+        await askCover({ data: ask });
+        setCoverPending(true);
+        toast.success("Cover request sent to admin and management");
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Couldn't send the cover request");
+      } finally {
+        setBusy(false);
+      }
       return;
     }
     setBusy(true);
