@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import ShiftHistoryPanel from "@/components/app/ShiftHistoryPanel";
+import { staffDisplayName } from "@/lib/staff-display-name";
 import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/_authenticated/_approved/shift-history")({
@@ -47,8 +48,8 @@ function ShiftHistoryPage() {
   }
 
   // Never fall back to the email address — usernames only, then the display name.
-  const username = profile?.username || "";
-  const name = username || profile?.display_name || "Staff";
+  const username = profile?.username?.trim() || "";
+  const name = staffDisplayName(profile);
 
   return (
     <div className="h-full overflow-y-auto p-4 sm:p-6">
