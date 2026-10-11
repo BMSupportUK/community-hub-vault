@@ -115,6 +115,9 @@ function AuthLayout() {
   const perms = usePagePermissions();
   const canOpenPanel = canOpenAdminPanel(roles) && isPageAllowed("admin", roles, perms);
   const panelLabel = adminPanelLabel(roles);
+  // Fan Zone moderators who aren't staff get their own header button to the
+  // Fan Zone dashboard; staff/management reach it from the BM dashboard.
+  const canOpenFanZonePanel = !canOpenPanel && canOpenFanZoneAdminPanel(roles);
   const navigate = useNavigate();
   const path = useRouterState({ select: (r) => r.location.pathname });
   const inFanZone = isFanZonePath(path);
