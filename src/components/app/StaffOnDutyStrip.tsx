@@ -226,7 +226,7 @@ export function StaffOnDutyStrip({
   channelId = null,
   onOnlineCountChange,
 }: {
-  variant?: "strip" | "sidebar" | "tickets";
+  variant?: "strip" | "sidebar" | "tickets" | "tickets-sidebar";
   hideRoles?: string[];
   /** When set, the strip only shows staff who can view this talk channel,
    *  and presence reflects that channel specifically. */
