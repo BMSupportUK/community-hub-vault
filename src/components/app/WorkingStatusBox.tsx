@@ -607,6 +607,42 @@ export function WorkingStatusBox({
   const brRemain = brk ? LIMITS[brk.kind] - brSec : 0;
   const over = brRemain < 0;
 
+  // Visible shift-end countdown: shows for the last 10 minutes of the rota
+  // slot and stays up after the end while still clocked in, so the countdown
+  // is always on screen — not just in a toast.
+  const shiftEndInfo = (() => {
+    if (!shift || !currentHours) return null;
+    const { endsAt } = shiftWindowToUtcMs(currentHours.shift_date, currentHours.start_time, currentHours.end_time, "Europe/London");
+    if (!Number.isFinite(endsAt)) return null;
+    const remainingMs = endsAt - now;
+    if (remainingMs > 10 * 60 * 1000) return null;
+    return { remainingMs };
+  })();
+  const fmtEndCountdown = (ms: number) => {
+    const s = Math.max(0, Math.round(ms / 1000));
+    const m = Math.floor(s / 60);
+    return m > 0 ? `${m}m ${(s % 60).toString().padStart(2, "0")}s` : `${s}s`;
+  };
+  const ShiftEndCountdown = ({ compact = false }: { compact?: boolean }) => {
+    if (!shiftEndInfo) return null;
+    const ended = shiftEndInfo.remainingMs <= 0;
+    return (
+      <span
+        className={cn(
+          "inline-flex shrink-0 items-center gap-1.5 rounded-full font-bold tabular-nums ring-1",
+          ended
+            ? "bg-destructive/15 text-destructive ring-destructive/40 animate-pulse"
+            : "bg-warning/15 text-warning ring-warning/40",
+          compact ? "px-2.5 py-1 text-[11px]" : "px-3 py-1.5 text-xs",
+        )}
+        title={ended ? "Your shift has ended" : "Time left until your shift ends"}
+      >
+        <Clock className={compact ? "size-3" : "size-3.5"} />
+        {ended ? "Shift has ended" : `Shift ends in ${fmtEndCountdown(shiftEndInfo.remainingMs)}`}
+      </span>
+    );
+  };
+
   const fmtHM = (sec: number) => {
     const s = Math.max(0, Math.floor(sec));
     const h = Math.floor(s / 3600);
