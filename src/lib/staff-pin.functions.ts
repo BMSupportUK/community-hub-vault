@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { canManageStaffPins, isStaffPinHolder } from "@/lib/staff-pin-admin-access";
+import { canRevokeStaffPins, canManageStaffPins, isStaffPinHolder } from "@/lib/staff-pin-admin-access";
 
 // Staff PINs are issued by admins, stored encrypted + hashed in the database,
 // and only ever checked or revealed on the server after re-confirming the
@@ -104,9 +104,12 @@ export const listStaffPinRequests = createServerFn({ method: "POST" })
     const { data: pins } = ids.length
       ? await supabaseAdmin.from("vault_pins").select("user_id, issued_at, updated_at").in("user_id", ids)
       : { data: [] as any[] };
+    const { data: myRoles } = await context.supabase.from("user_roles").select("role").eq("user_id", context.userId);
+    const canRevoke = canRevokeStaffPins((myRoles ?? []).map((r: any) => String(r.role)));
     const name = new Map((profs ?? []).map((p: any) => [p.id, p.display_name || p.username || "Unknown"]));
     const pinAt = new Map((pins ?? []).map((p: any) => [p.user_id, p.issued_at ?? p.updated_at]));
     return {
+      canRevoke,
       requests: (reqs ?? []).map((r: any) => ({ ...r, name: name.get(r.user_id) ?? "Unknown" })),
       staff: Array.from(new Set((staffRoles ?? []).map((r: any) => r.user_id)))
         .map((id) => ({ id, name: name.get(id) ?? "Unknown", pinIssuedAt: pinAt.get(id) ?? null }))
@@ -156,4 +159,17 @@ export const revealStaffPinForAdmin = createServerFn({ method: "POST" })
     const { data: pin, error } = await supabaseAdmin.rpc("staff_pin_reveal" as any, { p_user: data.userId });
     if (error) throw new Error("Could not reveal staff PIN");
     return { pin: (pin as string | null) ?? null };
+  });
+
+// Admin role only: removes the staff member's PIN so it stops working.
+export const revokeStaffPin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ userId: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    const { data: rows } = await context.supabase.from("user_roles").select("role").eq("user_id", context.userId);
+    if (!canRevokeStaffPins((rows ?? []).map((r: any) => String(r.role)))) throw new Error("Only admins can revoke staff PINs");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("vault_pins").delete().eq("user_id", data.userId);
+    if (error) throw new Error("Could not revoke staff PIN");
+    return { ok: true };
   });

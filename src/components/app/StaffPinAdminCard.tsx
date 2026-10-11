@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Copy, Eye, EyeOff, KeyRound, Loader2, RefreshCw } from "lucide-react";
+import { Copy, Eye, EyeOff, KeyRound, Loader2, RefreshCw, ShieldOff } from "lucide-react";
 import { toast } from "sonner";
-import { issueStaffPin, listStaffPinRequests, revealStaffPinForAdmin } from "@/lib/staff-pin.functions";
+import { issueStaffPin, listStaffPinRequests, revealStaffPinForAdmin, revokeStaffPin } from "@/lib/staff-pin.functions";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
@@ -12,6 +12,7 @@ export function StaffPinAdminCard() {
   const listFn = useServerFn(listStaffPinRequests);
   const issueFn = useServerFn(issueStaffPin);
   const revealFn = useServerFn(revealStaffPinForAdmin);
+  const revokeFn = useServerFn(revokeStaffPin);
   const [data, setData] = useState<Data | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [pick, setPick] = useState("");
@@ -68,6 +69,17 @@ export function StaffPinAdminCard() {
     finally { setBusyId(null); }
   };
 
+  const revoke = async (userId: string, name: string) => {
+    if (!confirm(`Revoke ${name}'s staff PIN? It stops working immediately and they will need a new PIN issued.`)) return;
+    setBusyId(userId);
+    try {
+      await revokeFn({ data: { userId } });
+      toast.success(`${name}'s staff PIN has been revoked.`);
+      await load();
+    } catch (e: any) { toast.error(e.message ?? "Couldn't revoke PIN"); }
+    finally { setBusyId(null); }
+  };
+
   const pending = (data?.requests ?? []).filter((r: any) => r.status === "pending");
 
   return (
@@ -103,6 +115,11 @@ export function StaffPinAdminCard() {
                 <Button size="icon" variant="outline" className="shrink-0" disabled={!revealed[staff.id]} onClick={() => void copyPin(staff.id)} aria-label={`Copy PIN for ${staff.name}`} title={revealed[staff.id] ? "Copy PIN" : "Reveal PIN to copy"}>
                   <Copy className="size-4" />
                 </Button>
+                {data.canRevoke && (
+                  <Button size="icon" variant="destructive" className="shrink-0" disabled={!staff.pinIssuedAt || busyId === staff.id} onClick={() => void revoke(staff.id, staff.name)} aria-label={`Revoke PIN for ${staff.name}`} title="Revoke PIN (admin only)">
+                    {busyId === staff.id ? <Loader2 className="animate-spin" /> : <ShieldOff className="size-4" />}
+                  </Button>
+                )}
               </div>
             ))}
           </TabsContent>
