@@ -26,7 +26,7 @@ import { awayIcon, awayElapsedLabel } from "@/lib/staff-away";
 import { DndCountdown } from "@/components/app/DndCountdown";
 import { DndDialogButton } from "@/components/app/DndDialogButton";
 import { StaffTicketsButton } from "@/components/app/StaffTicketsDialog";
-import { type BreakKind, BREAK_LIMITS as LIMITS, breakLabel, breakIcon, breaksLeft } from "@/lib/breaks";
+import { type BreakKind, BREAK_LIMITS as LIMITS, breakLabel, breakIcon, breaksLeft, ukMinutes } from "@/lib/breaks";
 import { useServerFn } from "@tanstack/react-start";
 import { sendShiftEventPush, sendBreakEventPush } from "@/lib/push.functions";
 import { toast } from "sonner";
@@ -344,9 +344,9 @@ export function WorkingStatusBox({
         setBrk((b as Break) ?? null);
         const { data: all } = await supabase
           .from("breaks")
-          .select("kind")
+          .select("kind, started_at")
           .eq("shift_id", (s as Shift).id);
-        setUsedKinds(((all as { kind: string }[]) ?? []).map((r) => r.kind));
+        setUsedKinds(((all as { kind: string; started_at: string }[]) ?? []).map((r) => `${r.kind}@${ukMinutes(r.started_at)}`));
         const { data: ef } = await supabase
           .from("early_finish_requests")
           .select("id")
@@ -538,7 +538,7 @@ export function WorkingStatusBox({
     if (error) return toast.error(error.message);
     // Show the running break straight away instead of waiting for the live update.
     if (inserted) setBrk(inserted as Break);
-    setUsedKinds((k) => [...k, kind]);
+    setUsedKinds((k) => [...k, `${kind}@${ukMinutes(new Date().toISOString())}`]);
     toast.success(kind === "lunch" ? "Main break started" : "Break started");
     notifyBreak({ data: { kind: "start", breakKind: kind } }).catch(() => {});
   };

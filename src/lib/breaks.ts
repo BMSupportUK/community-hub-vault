@@ -29,6 +29,14 @@ export const BREAK_ALLOWANCE: Record<"break" | "lunch", number> = {
 
 /** Breaks of this kind still available on the current shift. */
 export function breaksLeft(kind: "break" | "lunch", kindsUsed: readonly string[]): number {
-  const used = kindsUsed.filter((k) => k === kind).length;
+  const used = kindsUsed.filter((k) => k === kind || k.startsWith(`${kind}@`)).length;
   return Math.max(0, BREAK_ALLOWANCE[kind] - used);
+}
+
+/** Minutes since midnight in UK office time for an ISO timestamp. */
+export function ukMinutes(iso: string): number {
+  const parts = new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).formatToParts(new Date(iso));
+  const h = Number(parts.find((p) => p.type === "hour")?.value ?? 0);
+  const m = Number(parts.find((p) => p.type === "minute")?.value ?? 0);
+  return h * 60 + m;
 }
