@@ -520,7 +520,7 @@ export function WorkingStatusBox({
     notifyShift({ data: { kind: "clock_out" } }).catch(() => {});
   };
 
-  const startBreak = async (kind: BreakKind) => {
+  const startBreak = async (kind: BreakKind, opts?: { skipHandover?: boolean }) => {
     if (!user || !shift || brk) return;
     if (kind !== "travel" && breaksLeft(kind, usedKinds) <= 0) {
       toast.error(kind === "lunch" ? "You've already had your main break this shift." : "You've used both of your breaks this shift.");
@@ -528,7 +528,7 @@ export function WorkingStatusBox({
     }
     if (busy) return;
     setBusy(true);
-    if (kind !== "travel") await offerTicketHandover(user.id, kind);
+    if (kind !== "travel" && !opts?.skipHandover) await offerTicketHandover(user.id, kind);
     const { data: inserted, error } = await supabase
       .from("breaks")
       .insert({ shift_id: shift.id, user_id: user.id, kind })
@@ -902,7 +902,7 @@ export function WorkingStatusBox({
                 </div>
               )}
               {(roles.includes("staff") || roles.includes("management") || roles.includes("admin")) && (
-                <BreakPlanRows userId={user.id} usedKinds={usedKinds} onStartBreak={(kind) => void startBreak(kind)} />
+                <BreakPlanRows userId={user.id} usedKinds={usedKinds} onStartBreak={(kind) => void startBreak(kind, { skipHandover: true })} />
               )}
             </>
           ) : (
