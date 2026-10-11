@@ -9,6 +9,10 @@ export const Route = createFileRoute("/_authenticated/_approved/staff-pin")({
     meta: [
       { title: "Staff PIN | BM Support" },
       { name: "description", content: "View your staff PIN and request a reset." },
+      { property: "og:title", content: "Staff PIN | BM Support" },
+      { property: "og:description", content: "View your staff PIN and request a reset." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: StaffPinPage,
@@ -27,31 +31,18 @@ function StaffPinPage() {
   }
 
   return (
-    <div className="h-full overflow-y-auto p-4 sm:p-6">
-      <div className="max-w-2xl mx-auto space-y-5">
-        <Link to="/home" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground">
+    <div className="relative isolate h-full min-h-dvh w-full min-w-0 flex-1 overflow-y-auto lg:min-h-0">
+      <img src={pinIllustration} alt="" aria-hidden="true" className="absolute inset-0 -z-20 size-full object-cover object-center" />
+      <div className="absolute inset-0 -z-10 bg-background/35" />
+      <div className="relative w-full space-y-6 p-4 sm:p-8 lg:p-10">
+        <Link to="/home" className="inline-flex items-center gap-1.5 text-xs text-foreground hover:text-primary">
           <ArrowLeft className="size-3.5" /> Back
         </Link>
 
-        <div className="relative overflow-hidden rounded-3xl border border-border shadow-xl">
-          <img
-            src={pinIllustration}
-            alt="A member of staff looking at a locked screen"
-            className="absolute inset-0 size-full object-cover"
-            width={1024}
-            height={768}
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/70 to-background/20" />
-          <div className="relative p-6 sm:p-8 max-w-sm">
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-primary mb-1">Staff security</p>
-            <h1 className="font-display text-2xl sm:text-3xl font-bold leading-tight">Your staff PIN</h1>
-            <p className="text-sm text-muted-foreground mt-2">
-              Your PIN works with your password to unlock the admin dashboard. View it here, or request a new one if it's been compromised.
-            </p>
-          </div>
+        <h1 className="font-display text-3xl sm:text-4xl font-bold leading-tight text-foreground">Your staff PIN</h1>
+        <div className="w-full max-w-lg">
+          <StaffPinPanel />
         </div>
-
-        <StaffPinPanel />
       </div>
     </div>
   );

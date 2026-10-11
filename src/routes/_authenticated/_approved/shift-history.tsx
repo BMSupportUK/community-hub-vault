@@ -5,12 +5,17 @@ import { supabase } from "@/integrations/supabase/client";
 import ShiftHistoryPanel from "@/components/app/ShiftHistoryPanel";
 import { staffDisplayName } from "@/lib/staff-display-name";
 import { useAuth } from "@/hooks/use-auth";
+import officeIllustration from "@/assets/staff-office-illustration.jpg";
 
 export const Route = createFileRoute("/_authenticated/_approved/shift-history")({
   head: () => ({
     meta: [
       { title: "Shift History | BM Support" },
       { name: "description", content: "Your shift history, breaks and Away time." },
+      { property: "og:title", content: "Shift History | BM Support" },
+      { property: "og:description", content: "Your shift history, breaks and Away time." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: ShiftHistoryPage,
@@ -52,9 +57,11 @@ function ShiftHistoryPage() {
   const name = staffDisplayName(profile);
 
   return (
-    <div className="h-full overflow-y-auto p-4 sm:p-6">
-      <div className="w-full space-y-4">
-        <Link to="/home" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground">
+    <div className="relative isolate h-full min-h-dvh w-full min-w-0 flex-1 overflow-y-auto lg:min-h-0">
+      <img src={officeIllustration} alt="" aria-hidden="true" className="absolute inset-0 -z-20 size-full object-cover object-center" />
+      <div className="absolute inset-0 -z-10 bg-background/35" />
+      <div className="relative w-full min-w-0 space-y-4 p-4 sm:p-6 lg:p-8">
+        <Link to="/home" className="inline-flex items-center gap-1.5 text-xs text-foreground hover:text-primary">
           <ArrowLeft className="size-3.5" /> Back
         </Link>
         <ShiftHistoryPanel userId={user.id} name={name} username={username} />
