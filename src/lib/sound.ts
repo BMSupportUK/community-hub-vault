@@ -1,3 +1,4 @@
+import { resolveSoundSrc } from "@/lib/sound-overrides";
 // Shared audio playback helper.
 import { Capacitor } from "@capacitor/core";
 import { shakeScreen } from "@/lib/screen-shake";
@@ -229,6 +230,7 @@ export function playSound(
     console.warn("[sound] ignored playback with no source", opts.label ?? "");
     return Promise.resolve(false);
   }
+  src = resolveSoundSrc(src);
   // Visual alert: shake even when sound is muted or the user is signed out,
   // so the alert is still noticed on screen.
   shakeScreen();
@@ -372,6 +374,7 @@ export function playSoundFromGesture(
     console.warn("[sound] ignored gesture playback with no source", opts.label ?? "");
     return Promise.resolve(false);
   }
+  src = resolveSoundSrc(src);
 
   const prefs = getSoundPrefs();
   if (prefs.muted && !opts.ignoreMute) return Promise.resolve(false);

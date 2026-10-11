@@ -2,12 +2,14 @@ import { useEffect } from "react";
 import { playSound } from "@/lib/sound";
 import { getSound } from "@/lib/notification-sounds";
 import { shakeScreen } from "@/lib/screen-shake";
+import { loadSoundOverrides } from "@/lib/sound-overrides";
 
 /**
  * Plays the uploaded voice clips when a web push arrives, so staff hear the
  * recorded message rather than the generic OS notification chime.
  */
 export function PushSoundBridge() {
+  useEffect(() => { void loadSoundOverrides(); }, []);
   useEffect(() => {
     if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) return;
     const onMessage = async (event: MessageEvent) => {
