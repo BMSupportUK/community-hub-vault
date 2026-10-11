@@ -13,7 +13,7 @@ const ukNow = () => {
 };
 
 /** Planned Break 1 / Main break / Break 2 times for staff and management on today's rota. */
-export function BreakPlanRows({ userId, usedKinds }: { userId: string; usedKinds: readonly string[] }) {
+export function BreakPlanRows({ userId, usedKinds, onStartBreak }: { userId: string; usedKinds: readonly string[]; onStartBreak?: (kind: "break" | "lunch") => void }) {
   const [plan, setPlan] = useState<UserPlan | null>(null);
   const [nowMin, setNowMin] = useState(() => ukNow().minutes);
 
