@@ -297,12 +297,7 @@ function ClockPage() {
                     <div className="text-sm text-muted-foreground">Started {fmtTime(myShift.clock_in)}</div>
                   </div>
                   <div className="flex flex-col gap-2">
-                    <button onClick={() => startBreak("break")} disabled={busy || breakLeft <= 0} title={breakLeft > 0 ? `${breakLeft} of 2 breaks left` : "No breaks left this shift"} className="w-full px-4 py-2 rounded-lg bg-surface-2 border border-border hover:border-primary inline-flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-border">
-                      <Coffee className="size-4" /> Start break (15m)
-                    </button>
-                    <button onClick={() => startBreak("lunch")} disabled={busy || lunchLeft <= 0} title={lunchLeft > 0 ? "Start main break" : "Main break already taken this shift"} className="w-full px-4 py-2 rounded-lg bg-surface-2 border border-border hover:border-primary inline-flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:border-border">
-                      <UtensilsCrossed className="size-4" /> Start main break (30m)
-                    </button>
+                    <p className="text-xs text-muted-foreground">Breaks start automatically at your allocated times ({breakLeft} of 2 breaks and {lunchLeft} main break left).</p>
                     <Button onClick={clockOut} disabled={busy || finishAction === "wait"}
                       variant={finishAction === "clock-out" ? "destructive" : "outline"}
                       title={finishAction === "clock-out" ? "Sign out of shift" : earlyPending
