@@ -38,6 +38,7 @@ import { formatRoleLabel } from "@/lib/role-label";
 import { browserTimezone } from "@/hooks/use-user-timezone";
 import { shiftWindowToUtcMs } from "@/hooks/use-timezone";
 import { BreakPlanRows } from "@/components/app/BreakPlanRows";
+import { offerTicketHandover } from "@/lib/break-handover";
 
 type Shift = { id: string; clock_in: string };
 type Break = { id: string; kind: BreakKind; started_at: string };
@@ -527,6 +528,7 @@ export function WorkingStatusBox({
     }
     if (busy) return;
     setBusy(true);
+    if (kind !== "travel") await offerTicketHandover(user.id, kind);
     const { data: inserted, error } = await supabase
       .from("breaks")
       .insert({ shift_id: shift.id, user_id: user.id, kind })

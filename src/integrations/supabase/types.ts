@@ -7408,6 +7408,7 @@ export type Database = {
           recipient_email: string
         }[]
       }
+      handover_tickets_for_break: { Args: { _kind: string }; Returns: Json }
       has_any_role: {
         Args: {
           _roles: Database["public"]["Enums"]["app_role"][]

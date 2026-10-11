@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Clock, LogIn, LogOut, Coffee, UtensilsCrossed, Loader2, Bell } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { offerTicketHandover } from "@/lib/break-handover";
 import { useAuth } from "@/hooks/use-auth";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
 import { cn } from "@/lib/utils";
@@ -213,6 +214,7 @@ function ClockPage() {
     if (!user || !myShift || myBreak || busy) return;
     if (kind !== "travel" && breaksLeft(kind, usedKinds) <= 0) return;
     setBusy(true);
+    if (kind !== "travel") await offerTicketHandover(user.id, kind);
     const { error } = await supabase.from("breaks").insert({ shift_id: myShift.id, user_id: user.id, kind });
     setBusy(false);
     if (error) return toast.error(error.message);
