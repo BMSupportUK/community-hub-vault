@@ -708,6 +708,13 @@
       "when": 1791721111136,
       "tag": "0100_fan_zone_moderators_approve",
       "breakpoints": true
+    },
+    {
+      "idx": 101,
+      "version": "7",
+      "when": 1791721123195,
+      "tag": "0101_fan_zone_members_read_mods",
+      "breakpoints": true
     }
   ]
 }
