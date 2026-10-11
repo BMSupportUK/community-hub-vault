@@ -23,6 +23,12 @@ import endBreakAudio from "@/assets/end-break.mp3";
 import endLunchAudio from "@/assets/end-lunch.mp3";
 import outageAudio from "@/assets/outage-notify.mp3";
 import outageResolvedAudio from "@/assets/outage-resolved.mp3";
+import fanZoneAppealAsset from "@/assets/fan-zone-appeal-alert.mp3.asset.json";
+import fanZoneAppealMsgAsset from "@/assets/fan-zone-appeal-message.mp3.asset.json";
+import fanZoneAppealStaffAsset from "@/assets/fan-zone-appeal-staff-reply.mp3.asset.json";
+import contentReportedAsset from "@/assets/content-reported.mp3.asset.json";
+import fanZoneMentionAsset from "@/assets/fan-zone-mention.mp3.asset.json";
+import daneBmSupportAsset from "@/assets/dane-bm-support-needed.mp3.asset.json";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-sounds")({
   component: AdminSounds,
@@ -62,6 +68,42 @@ const SOUNDS: SoundDef[] = [
   { key: "end-lunch", label: "Main break ending", file: "end-lunch.mp3", src: endLunchAudio, gain: 2.2, trigger: "Your main break is nearly over (auto-ends after 10s)." },
   { key: "outage", label: "Outage raised", file: "outage-notify.mp3", src: outageAudio, gain: 2.2, trigger: "A service outage is published on the status page." },
   { key: "outage-resolved", label: "Outage resolved", file: "outage-resolved.mp3", src: outageResolvedAudio, gain: 1.8, trigger: "An outage is marked resolved." },
+  { key: "fan-zone-mention", label: "Fan Zone mention", file: "fan-zone-mention.mp3", src: fanZoneMentionAsset.url, gain: 2.0, trigger: "Someone @mentions you in Boro Fan Zone." },
+  { key: "fan-zone-appeal", label: "Fan Zone ban appeal", file: "fan-zone-appeal-alert.mp3", src: fanZoneAppealAsset.url, gain: 2.0, trigger: "A banned Fan Zone member submits an appeal." },
+  { key: "fan-zone-appeal-message", label: "Fan Zone appeal message", file: "fan-zone-appeal-message.mp3", src: fanZoneAppealMsgAsset.url, gain: 2.0, trigger: "A member sends a new message on their appeal." },
+  { key: "fan-zone-appeal-staff-reply", label: "Fan Zone appeal reply", file: "fan-zone-appeal-staff-reply.mp3", src: fanZoneAppealStaffAsset.url, gain: 2.0, trigger: "A moderator replies to a member's appeal." },
+  { key: "content-reported", label: "Content reported", file: "content-reported.mp3", src: contentReportedAsset.url, gain: 2.0, trigger: "A post or message is reported for moderation." },
+  { key: "dane-bm-support", label: "Needed in BM Support", file: "dane-bm-support-needed.mp3", src: daneBmSupportAsset.url, gain: 2.0, trigger: "You're called to BM Support." },
+];
+
+/** Every notification in the app and the MP3 (if any) it currently uses. */
+const ALL_NOTIFICATIONS: { label: string; when: string; sound: string | null; phone: string | null }[] = [
+  { label: "New ticket", when: "Ticket opened / left unanswered", sound: "ticket", phone: "ticket_tone.mp3" },
+  { label: "Ticket reply", when: "Customer replies to your ticket", sound: "ticket-reply", phone: "ticket_reply_tone.mp3" },
+  { label: "Mention", when: "@mention in chat or forum", sound: "mention", phone: "mention_tone.mp3" },
+  { label: "Staff mention", when: "Member mentions staff", sound: "staff-mention", phone: null },
+  { label: "Fan Zone mention", when: "@mention in Boro Fan Zone", sound: "fan-zone-mention", phone: null },
+  { label: "Broadcast", when: "Admin announcement posted", sound: "broadcast", phone: null },
+  { label: "Sale / Order", when: "New order placed", sound: "order", phone: "order_tone.mp3" },
+  { label: "Payment confirmed", when: "Payment confirmed on an outstanding order", sound: "payment-received", phone: "payment_tone.mp3" },
+  { label: "New signup", when: "New member hits the gate", sound: "signup", phone: null },
+  { label: "Shift start", when: "Rota shift about to start", sound: "shift-start", phone: "shift_start_tone.mp3" },
+  { label: "Cover approved", when: "Cover sign-in request approved", sound: "shift-start", phone: "shift_start_tone.mp3" },
+  { label: "Cover declined", when: "Cover sign-in request declined", sound: null, phone: null },
+  { label: "Shift end", when: "Rota shift about to end", sound: "shift-end", phone: "shift_end_tone.mp3" },
+  { label: "Shift over-run", when: "Still clocked in after shift end", sound: null, phone: null },
+  { label: "Auto clock-in", when: "Shift auto clocked in", sound: null, phone: null },
+  { label: "Break due", when: "Allocated Break 1 / Main break / Break 2 time arrives", sound: null, phone: null },
+  { label: "Break ending", when: "Break nearly over", sound: "end-break", phone: null },
+  { label: "Main break ending", when: "Main break nearly over", sound: "end-lunch", phone: null },
+  { label: "Outage raised", when: "Outage published", sound: "outage", phone: "outage_tone.mp3" },
+  { label: "Outage resolved", when: "Outage resolved", sound: "outage-resolved", phone: "outage_resolved_tone.mp3" },
+  { label: "Inbox / direct message", when: "New private message", sound: null, phone: null },
+  { label: "Fan Zone ban appeal", when: "Appeal submitted", sound: "fan-zone-appeal", phone: null },
+  { label: "Fan Zone appeal message", when: "Member messages on appeal", sound: "fan-zone-appeal-message", phone: null },
+  { label: "Fan Zone appeal reply", when: "Moderator replies to appeal", sound: "fan-zone-appeal-staff-reply", phone: null },
+  { label: "Content reported", when: "Post/message reported", sound: "content-reported", phone: null },
+  { label: "Needed in BM Support", when: "Called to BM Support", sound: "dane-bm-support", phone: null },
 ];
 
 type Check = {
