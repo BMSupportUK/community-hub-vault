@@ -14,6 +14,7 @@ import {
   Monitor,
   Apple,
   Lock,
+  Download,
 } from "lucide-react";
 import QRCode from "qrcode";
 import { supabase } from "@/integrations/supabase/client";
@@ -78,6 +79,11 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
   const [winOpen, setWinOpen] = useState(false);
   const [iosOpen, setIosOpen] = useState(false);
   const [apkQr, setApkQr] = useState<string | null>(null);
+  // Phones can't scan their own screen — show a download link instead.
+  const [isPhone, setIsPhone] = useState(false);
+  useEffect(() => {
+    setIsPhone(/Android|iPhone|iPad|iPod/i.test(navigator.userAgent));
+  }, []);
   const isAdmin = hasAny(["admin", "management"]);
   const roleFlashMap = useRoleFlashMap();
   const instanceId = useRef(Math.random().toString(36).slice(2)).current;
@@ -280,18 +286,28 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
             <Smartphone className="size-4 text-primary" /> Get the Android app
           </DialogTitle>
           <DialogDescription>
-            Scan this QR code with your phone camera to download the BM Support app.
+            {isPhone
+              ? "Tap the button below to download the BM Support app onto this phone."
+              : "Scan this QR code with your phone camera to download the BM Support app."}
           </DialogDescription>
         </DialogHeader>
-        <div className="flex flex-col items-center gap-3">
-          <div className="rounded-xl bg-white p-2">
-            {apkQr ? (
-              <img src={apkQr} alt="QR code to download the BM Support Android app" className="block size-[200px]" />
-            ) : (
-              <div className="size-[200px] animate-pulse rounded bg-muted" />
-            )}
+        {isPhone ? (
+          <Button asChild size="lg" className="w-full">
+            <a href={ANDROID_RELEASE.url} onClick={() => setApkOpen(false)}>
+              <Download className="mr-2 size-5" /> Download to this phone
+            </a>
+          </Button>
+        ) : (
+          <div className="flex flex-col items-center gap-3">
+            <div className="rounded-xl bg-white p-2">
+              {apkQr ? (
+                <img src={apkQr} alt="QR code to download the BM Support Android app" className="block size-[200px]" />
+              ) : (
+                <div className="size-[200px] animate-pulse rounded bg-muted" />
+              )}
+            </div>
           </div>
-        </div>
+        )}
       </DialogContent>
     </Dialog>
     <DropdownMenu>
