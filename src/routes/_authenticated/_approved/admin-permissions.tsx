@@ -234,6 +234,7 @@ function PagesTab({ pages, roles, onChanged, canEditManagement }: { pages: PageP
         </table>
       </div>
     </div>
+    </div>
   );
 }
 
