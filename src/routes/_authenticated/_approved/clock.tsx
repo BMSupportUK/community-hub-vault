@@ -17,6 +17,7 @@ import { requestEarlyFinish } from "@/lib/early-finish.functions";
 import { askEarlyFinishReason, shiftFinishAction, ukClock } from "@/lib/shift-finish";
 import { requestCoverSignIn } from "@/lib/cover-request.functions";
 import { askCoverRequest } from "@/lib/cover-request";
+import { todayClosingTime } from "@/lib/business-hours";
 
 export const Route = createFileRoute("/_authenticated/_approved/clock")({
   head: () => ({ meta: [
@@ -48,7 +49,7 @@ function fmtMin(seconds: number) {
 }
 
 function ClockPage() {
-  const { user, isStaff } = useAuth();
+  const { user, isStaff, roles, hasAny } = useAuth();
   const notifyShift = useServerFn(sendShiftEventPush);
   const notifyBreak = useServerFn(sendBreakEventPush);
   const askEarlyFinish = useServerFn(requestEarlyFinish);

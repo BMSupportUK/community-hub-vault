@@ -33,6 +33,7 @@ import { toast } from "sonner";
 import { requestEarlyFinish } from "@/lib/early-finish.functions";
 import { requestCoverSignIn } from "@/lib/cover-request.functions";
 import { askCoverRequest } from "@/lib/cover-request";
+import { todayClosingTime } from "@/lib/business-hours";
 import { formatRoleLabel } from "@/lib/role-label";
 import { browserTimezone } from "@/hooks/use-user-timezone";
 import { shiftWindowToUtcMs } from "@/hooks/use-timezone";
