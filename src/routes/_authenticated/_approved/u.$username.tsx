@@ -23,7 +23,6 @@ import tvLoginIllustration from "@/assets/tv-login-illustration.jpg";
 import referralsBg from "@/assets/referrals-bg.jpg";
 import friendsBg from "@/assets/friends-bg.jpg";
 import ticketsBg from "@/assets/tickets-bg.jpg";
-import { StaffPinPanel } from "@/components/app/StaffPinPanel";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
 import { Nameplate } from "@/components/app/Nameplate";
