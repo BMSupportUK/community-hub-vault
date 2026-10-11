@@ -8,6 +8,7 @@ import { sendTestPush } from "@/lib/test-push.functions";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { SOUND_BUCKET, loadSoundOverrides, getOverrideUrl, onOverridesChange } from "@/lib/sound-overrides";
+import { PHONE_ALERTS } from "@/lib/phone-alerts";
 
 import mentionAudio from "@/assets/mention-notify.mp3";
 import staffMentionAudio from "@/assets/staff-mention.mp3";
@@ -76,35 +77,6 @@ const SOUNDS: SoundDef[] = [
   { key: "dane-bm-support", label: "Needed in BM Support", file: "dane-bm-support-needed.mp3", src: daneBmSupportAsset.url, gain: 2.0, trigger: "You're called to BM Support." },
 ];
 
-/** Every notification in the app and the MP3 (if any) it currently uses. */
-const ALL_NOTIFICATIONS: { label: string; when: string; sound: string | null; phone: string | null }[] = [
-  { label: "New ticket", when: "Ticket opened / left unanswered", sound: "ticket", phone: "ticket_tone.mp3" },
-  { label: "Ticket reply", when: "Customer replies to your ticket", sound: "ticket-reply", phone: "ticket_reply_tone.mp3" },
-  { label: "Mention", when: "@mention in chat or forum", sound: "mention", phone: "mention_tone.mp3" },
-  { label: "Staff mention", when: "Member mentions staff", sound: "staff-mention", phone: null },
-  { label: "Fan Zone mention", when: "@mention in Boro Fan Zone", sound: "fan-zone-mention", phone: null },
-  { label: "Broadcast", when: "Admin announcement posted", sound: "broadcast", phone: null },
-  { label: "Sale / Order", when: "New order placed", sound: "order", phone: "order_tone.mp3" },
-  { label: "Payment confirmed", when: "Payment confirmed on an outstanding order", sound: "payment-received", phone: "payment_tone.mp3" },
-  { label: "New signup", when: "New member hits the gate", sound: "signup", phone: null },
-  { label: "Shift start", when: "Rota shift about to start", sound: "shift-start", phone: "shift_start_tone.mp3" },
-  { label: "Cover approved", when: "Cover sign-in request approved", sound: "shift-start", phone: "shift_start_tone.mp3" },
-  { label: "Cover declined", when: "Cover sign-in request declined", sound: null, phone: null },
-  { label: "Shift end", when: "Rota shift about to end", sound: "shift-end", phone: "shift_end_tone.mp3" },
-  { label: "Shift over-run", when: "Still clocked in after shift end", sound: null, phone: null },
-  { label: "Auto clock-in", when: "Shift auto clocked in", sound: null, phone: null },
-  { label: "Break due", when: "Allocated Break 1 / Main break / Break 2 time arrives", sound: null, phone: null },
-  { label: "Break ending", when: "Break nearly over", sound: "end-break", phone: null },
-  { label: "Main break ending", when: "Main break nearly over", sound: "end-lunch", phone: null },
-  { label: "Outage raised", when: "Outage published", sound: "outage", phone: "outage_tone.mp3" },
-  { label: "Outage resolved", when: "Outage resolved", sound: "outage-resolved", phone: "outage_resolved_tone.mp3" },
-  { label: "Inbox / direct message", when: "New private message", sound: null, phone: null },
-  { label: "Fan Zone ban appeal", when: "Appeal submitted", sound: "fan-zone-appeal", phone: null },
-  { label: "Fan Zone appeal message", when: "Member messages on appeal", sound: "fan-zone-appeal-message", phone: null },
-  { label: "Fan Zone appeal reply", when: "Moderator replies to appeal", sound: "fan-zone-appeal-staff-reply", phone: null },
-  { label: "Content reported", when: "Post/message reported", sound: "content-reported", phone: null },
-  { label: "Needed in BM Support", when: "Called to BM Support", sound: "dane-bm-support", phone: null },
-];
 
 type Check = {
   status: "pending" | "ok" | "fail";
@@ -162,17 +134,6 @@ function AdminSounds() {
     toast.success("Back to the original sound.");
   };
 
-  const PUSH_KINDS: { key: string; label: string }[] = [
-    { key: "ticket", label: "New ticket" },
-    { key: "ticket_reply", label: "Ticket reply" },
-    { key: "mention", label: "Mention" },
-    { key: "shift_start", label: "Shift start" },
-    { key: "shift_end", label: "Shift end" },
-    { key: "outage", label: "Outage" },
-    { key: "outage_resolved", label: "Outage resolved" },
-    { key: "order", label: "New order" },
-    { key: "payment", label: "Payment" },
-  ];
 
   const sendPush = async (kind: string) => {
     if (pushBusy) return;
@@ -319,56 +280,9 @@ function AdminSounds() {
         </div>
       </div>
 
-      <div className="rounded-2xl border border-border bg-surface-1 p-4">
-        <h2 className="font-display font-bold">All notifications</h2>
-        <p className="text-xs text-muted-foreground mt-1">
-          {ALL_NOTIFICATIONS.length} notifications · {ALL_NOTIFICATIONS.filter((n) => n.sound).length} have an MP3 ·{" "}
-          {ALL_NOTIFICATIONS.filter((n) => !n.sound).length} have none yet
-        </p>
-        <div className="mt-3 overflow-x-auto">
-          <table className="w-full text-xs">
-            <thead className="text-left text-muted-foreground">
-              <tr>
-                <th className="py-2 pr-3">Notification</th>
-                <th className="py-2 pr-3 hidden sm:table-cell">When</th>
-                <th className="py-2 pr-3">Website MP3</th>
-                <th className="py-2 pr-3 hidden md:table-cell">Android tone</th>
-                <th className="py-2"></th>
-              </tr>
-            </thead>
-            <tbody>
-              {ALL_NOTIFICATIONS.map((n) => {
-                const s = n.sound ? SOUNDS.find((x) => x.key === n.sound) : undefined;
-                const custom = s ? !!getOverrideUrl(s.key) : false;
-                return (
-                  <tr key={n.label} className="border-t border-border">
-                    <td className="py-2 pr-3 font-semibold">{n.label}</td>
-                    <td className="py-2 pr-3 text-muted-foreground hidden sm:table-cell">{n.when}</td>
-                    <td className="py-2 pr-3">
-                      {s ? (
-                        <span className="font-mono">{custom ? "Custom upload" : s.file}</span>
-                      ) : (
-                        <span className="rounded-full bg-destructive/15 text-destructive px-2 py-0.5">No MP3 allocated</span>
-                      )}
-                    </td>
-                    <td className="py-2 pr-3 font-mono text-muted-foreground hidden md:table-cell">{n.phone ?? "Phone default"}</td>
-                    <td className="py-2 text-right">
-                      {s && (
-                        <button type="button" onClick={() => void play(s)} className="inline-flex items-center gap-1 rounded-lg border border-border bg-surface-2 px-2 py-1 font-semibold hover:border-primary">
-                          <Play className="size-3" /> Play
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      </div>
 
       <div className="inline-flex rounded-xl border border-border bg-surface-1 p-1">
-        {([["spoken", "Spoken / in-app sounds", Volume2], ["mobile", "Mobile phone alerts", Smartphone]] as const).map(([k, label, Icon]) => (
+        {([["spoken", `Voice / in-app sounds (${SOUNDS.length})`, Volume2], ["mobile", `Phone alerts (${PHONE_ALERTS.length})`, Smartphone]] as const).map(([k, label, Icon]) => (
           <button
             key={k}
             type="button"
@@ -494,23 +408,44 @@ function AdminSounds() {
             {pushBusy === "all" ? "Sending all…" : "Send all to my phone"}
           </button>
         </div>
-        <div className="flex flex-wrap gap-2">
-          {PUSH_KINDS.map((k) => (
-            <button
-              key={k.key}
-              type="button"
-              disabled={!!pushBusy}
-              onClick={() => void sendPush(k.key)}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-surface-2 px-3 py-2 text-xs font-semibold hover:border-primary disabled:opacity-50"
-            >
-              {pushBusy === k.key ? <Loader2 className="size-3.5 animate-spin" /> : <Send className="size-3.5" />}
-              {k.label}
-            </button>
-          ))}
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead className="text-left text-muted-foreground">
+              <tr>
+                <th className="py-2 pr-3 w-8">Tone</th>
+                <th className="py-2 pr-3">Notification</th>
+                <th className="py-2 pr-3 hidden sm:table-cell">When</th>
+                <th className="py-2 pr-3 hidden md:table-cell">Android tone</th>
+                <th className="py-2"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {PHONE_ALERTS.map((a) => (
+                <tr key={a.key} className="border-t border-border">
+                  <td className="py-2 pr-3"><CheckCircle2 className="size-4 text-emerald-400" aria-label="Has its own tone" /></td>
+                  <td className="py-2 pr-3 font-semibold">
+                    {a.label}
+                    {a.isNew && <span className="ml-2 rounded-full bg-primary/15 text-primary px-2 py-0.5 text-[10px]">New unique tone</span>}
+                  </td>
+                  <td className="py-2 pr-3 text-muted-foreground hidden sm:table-cell">{a.when}</td>
+                  <td className="py-2 pr-3 font-mono text-muted-foreground hidden md:table-cell">{a.tone}.mp3</td>
+                  <td className="py-2 text-right">
+                    <button
+                      type="button"
+                      disabled={!!pushBusy}
+                      onClick={() => void sendPush(a.key)}
+                      className="inline-flex items-center gap-1 rounded-lg border border-border bg-surface-2 px-2 py-1 font-semibold hover:border-primary disabled:opacity-50"
+                    >
+                      {pushBusy === a.key ? <Loader2 className="size-3 animate-spin" /> : <Send className="size-3" />} Test
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
         <p className="text-xs text-muted-foreground">
-          Phone alerts with the app closed use the tones built into the Android app. Uploaded replacements play
-          straight away on the website; to put them on phones with the app closed, a new Android app version is built with them.
+          Every phone alert now has its own tone. Tones are built into the Android app, so phones need Android version 1.2.3 to hear the new ones.
         </p>
       </div>
       )}

@@ -1,3 +1,4 @@
+import { phoneAlertFor, DEFAULT_PHONE_CHANNEL } from "@/lib/phone-alerts";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 async function getFcmAccessToken(): Promise<{ token: string; projectId: string }> {
@@ -168,22 +169,7 @@ async function sendFcmToTokens(
   let sent = 0;
   let failed = 0;
   const stale: string[] = [];
-  // Admin new-ticket alerts (notify.ts) send kind "ticket"; staff ones send "ticket_raised".
-  const isTicketRaised = args.data?.kind === "ticket_raised" || args.data?.kind === "ticket";
-  const isTicketReply = args.data?.kind === "ticket_reply";
-  const isMention = args.data?.kind === "mention";
-  // Scheduled reminders use phase-specific kinds (for example
-  // shift_end_warn). Route every phase through the same spoken channel.
-  const isShiftStart = args.data?.kind?.startsWith("shift_start") === true;
-  const isShiftEnd = args.data?.kind?.startsWith("shift_end") === true;
-  const isOutage = args.data?.kind === "incident" && args.data?.event === "created";
-  const isOutageResolved = args.data?.kind === "incident" && args.data?.event === "resolved";
-  const k = args.data?.kind;
-  const spokenExtra = k === "order" || k === "order_placed"
-    ? { channel: "bm_support_orders_v3", sound: "order_tone" }
-    : k === "order_paid" || k === "invoice_paid" || k === "wise_payment"
-      ? { channel: "bm_support_payments_v3", sound: "payment_tone" }
-      : null;
+  const alert = phoneAlertFor(args.data?.kind, args.data?.event);
   for (const token of tokens) {
     const res = await fetch(url, {
       method: "POST",
@@ -201,37 +187,9 @@ async function sendFcmToTokens(
             notification: {
               // Spoken alerts have dedicated native channels so Android uses
               // the bundled uploaded MP3 while the app is backgrounded/closed.
-              channel_id: spokenExtra ? spokenExtra.channel : isTicketRaised
-                ? "bm_support_tickets_v5"
-                : isTicketReply
-                ? "bm_support_ticket_replies_v4"
-                : isMention
-                  ? "bm_support_mentions_v3"
-                  : isShiftStart
-                    ? "bm_support_shift_start_v6"
-                    : isShiftEnd
-                      ? "bm_support_shift_end_v6"
-                      : isOutage
-                        ? "bm_support_outage_v4"
-                        : isOutageResolved
-                          ? "bm_support_outage_resolved_v4"
-                          : "bm_support_alerts_v4",
-              sound: spokenExtra ? spokenExtra.sound : isTicketRaised
-                ? "ticket_tone"
-                : isTicketReply
-                ? "ticket_reply_tone"
-                : isMention
-                  ? "mention_tone"
-                  : isShiftStart
-                    ? "shift_start_tone"
-                    : isShiftEnd
-                      ? "shift_end_tone"
-                      : isOutage
-                        ? "outage_tone"
-                        : isOutageResolved
-                          ? "outage_resolved_tone"
-                          : undefined,
-              default_sound: !spokenExtra && !isTicketRaised && !isTicketReply && !isMention && !isShiftStart && !isShiftEnd && !isOutage && !isOutageResolved,
+              channel_id: alert ? alert.channel : DEFAULT_PHONE_CHANNEL,
+              sound: alert ? alert.tone : undefined,
+              default_sound: !alert,
               default_vibrate_timings: true,
               notification_priority: "PRIORITY_HIGH",
               // Show and ring on the lock screen, not just when unlocked.
