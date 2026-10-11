@@ -1,4 +1,4 @@
-import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate, useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { BarChart3, ShieldCheck, Lock, KeyRound, ShieldAlert, KeySquare, Globe, Clock, Loader2, Shield, Star, Filter, Sparkles, LifeBuoy, RefreshCw, Copy, Download, Ban, Tag, Package, Bell, Trophy, MessageSquare, Image as ImageIcon, MonitorPlay, Eye, EyeOff, Landmark, Users, Palette, PanelTop, ReceiptText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { backfillVpnDetection } from "@/lib/vpn-backfill.functions";
 import { unlockWithStaffPin, requestStaffPinReset } from "@/lib/staff-pin.functions";
-import { adminPanelToolAllowed, canOpenAdminPanel, staffAllowedPageKeys } from "@/lib/admin-panel-access";
+import { adminPanelToolAllowed, canOpenAdminPanel, canOpenFanZoneAdminPanel, fanZoneToolAllowed, isFanZoneAdminPath, staffAllowedPageKeys } from "@/lib/admin-panel-access";
 import { usePagePermissions, pageKeyForPath, pagePermissionLabel } from "@/lib/page-access";
 import { permissionSection } from "@/lib/permission-sections";
 import { LayoutGrid } from "lucide-react";
@@ -619,7 +619,7 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
             <button
               key={key}
               type="button"
-              onClick={() => setTab(key)}
+              onClick={() => setTab(key as DashTab)}
               className={`px-4 h-9 rounded-lg text-sm font-medium transition-colors ${
                 tab === key || (key === "tools" && (tab === "theme" || tab === "header-links" || tab === "invoice-template" || tab === "sign-out-devices" || tab === "android-apk"))
                   ? "bg-primary text-primary-foreground"
