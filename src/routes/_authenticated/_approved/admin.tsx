@@ -15,6 +15,7 @@ import { StaffPinAdminCard } from "@/components/app/StaffPinAdminCard";
 import { CardPaymentsAdminCard } from "@/components/app/CardPaymentsAdminCard";
 import { OrderStatusAdminCard } from "@/components/app/OrderStatusAdminCard";
 import pinIllustration from "@/assets/staff-pin-illustration.jpg";
+import shopHero from "@/assets/shop-hero.jpg";
 import { AwaitingPaymentsSidebar } from "@/components/app/AwaitingPaymentsSidebar";
 import { WiseIncomingCard } from "@/components/app/WiseIncomingCard";
 import { BankTransferAdminCard } from "@/components/app/BankTransferAdminCard";
@@ -651,8 +652,14 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
       </div>
 
       {tab === "order-status" && canSeePins ? (
-        <div className="[&>div]:bg-card/85 [&>div]:backdrop-blur-sm">
-          <OrderStatusAdminCard />
+        <div className="relative isolate -mx-4 sm:-mx-6 -mb-8 min-h-[calc(100dvh-16rem)] overflow-hidden">
+          <div className="absolute inset-0 -z-10 pointer-events-none" aria-hidden="true">
+            <img src={shopHero} alt="" className="h-full w-full object-cover object-center" />
+            <div className="absolute inset-0 bg-background/55" />
+          </div>
+          <div className="px-4 sm:px-6 pb-8 [&>div]:bg-card/85 [&>div]:backdrop-blur-sm">
+            <OrderStatusAdminCard />
+          </div>
         </div>
       ) : tab === "square" && canSeePins ? (
         <CardPaymentsAdminCard provider="square" />
