@@ -72,11 +72,7 @@ export function StaffPinAdminCard() {
   const pending = (data?.requests ?? []).filter((r: any) => r.status === "pending");
 
   return (
-    <section className="relative overflow-hidden rounded-2xl border border-border bg-surface-1 p-5">
-      <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-        <img src={pinIllustration} alt="" className="h-full w-full object-cover object-center opacity-25" />
-        <div className="absolute inset-0 bg-background/40" />
-      </div>
+    <section className="relative overflow-hidden rounded-2xl border border-border p-5">
       <div className="relative flex items-center gap-3 mb-4">
         <div className="size-10 rounded-xl bg-gradient-primary grid place-items-center text-primary-foreground"><KeyRound className="size-5" /></div>
         <div className="flex-1">
