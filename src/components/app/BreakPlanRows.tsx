@@ -70,8 +70,9 @@ export function planItems(plan: UserPlan | null, usedKinds: readonly string[], n
     const s2 = plan.break2.start;
     // A break taken nearer Break 2's slot counts as Break 2, not Break 1.
     const prefer2 = !Number.isNaN(at) && s2 !== null && (s1 === null || Math.abs(at - s2) < Math.abs(at - s1));
-    if (prefer2 ? !b2 : b1) { if (!b2) b2 = true; else b1 = true; }
-    else b1 = true;
+    if (prefer2 && !b2) b2 = true;
+    else if (!b1) b1 = true;
+    else b2 = true;
   }
   return [
     { ...plan.break1, done: b1 },
