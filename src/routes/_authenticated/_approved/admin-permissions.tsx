@@ -1,6 +1,7 @@
 import { createFileRoute, Navigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Loader2, Shield, Layers, Hash, ArrowLeft, RefreshCw } from "lucide-react";
+import { Loader2, Shield, Layers, Hash, ArrowLeft, RefreshCw, Users } from "lucide-react";
+import { permissionSection, type PermissionSection } from "@/lib/permission-sections";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -179,8 +180,11 @@ function PagesTab({ pages, roles, onChanged, canEditManagement }: { pages: PageP
     if (error) toast.error(error.message); else onChanged();
   };
 
-  const adminPages = pages.filter((p) => p.page_key.startsWith("admin")).sort((a, b) => a.label.localeCompare(b.label));
-  const otherPages = pages.filter((p) => !p.page_key.startsWith("admin")).sort((a, b) => a.label.localeCompare(b.label));
+  const [section, setSection] = useState<PermissionSection>("bm");
+  const inSection = pages.filter((p) => permissionSection(p.page_key) === section);
+  const adminPages = inSection.filter((p) => p.page_key.startsWith("admin")).sort((a, b) => a.label.localeCompare(b.label));
+  const otherPages = inSection.filter((p) => !p.page_key.startsWith("admin")).sort((a, b) => a.label.localeCompare(b.label));
+  const count = (s: PermissionSection) => pages.filter((p) => permissionSection(p.page_key) === s).length;
 
   const renderRow = (p: PagePerm) => (
     <tr key={p.page_key} className="border-t border-border">
@@ -198,6 +202,11 @@ function PagesTab({ pages, roles, onChanged, canEditManagement }: { pages: PageP
   );
 
   return (
+    <div>
+    <div className="flex gap-2 mb-3">
+      <TabBtn active={section === "bm"} onClick={() => setSection("bm")} icon={Shield}>BM Support ({count("bm")})</TabBtn>
+      <TabBtn active={section === "fanzone"} onClick={() => setSection("fanzone")} icon={Users}>Boro Fan Zone ({count("fanzone")})</TabBtn>
+    </div>
     <div className="rounded-2xl border border-border bg-surface-1 overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
@@ -224,6 +233,7 @@ function PagesTab({ pages, roles, onChanged, canEditManagement }: { pages: PageP
           </tbody>
         </table>
       </div>
+    </div>
     </div>
   );
 }
