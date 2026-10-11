@@ -100,6 +100,11 @@ export function TicketReplyAlert() {
     // Polling fallback — realtime events can be dropped (sleeping tab, socket
     // reconnect, mobile app resume), which previously meant no chime at all.
     let cancelled = false;
+    // On the first poll after sign-in, silently mark the existing unread
+    // backlog as seen instead of replaying every alert with sound — signing
+    // in on a new device should not re-announce replies you already know
+    // about. Only replies that arrive after this session started announce.
+    let primed = false;
     const poll = async () => {
       const { data } = await supabase
         .from("user_notifications")
