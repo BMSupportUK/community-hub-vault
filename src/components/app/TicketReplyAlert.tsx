@@ -116,12 +116,18 @@ export function TicketReplyAlert() {
         .order("created_at", { ascending: true })
         .limit(10);
       if (cancelled) return;
-      for (const row of (data ?? []) as Array<{
+      const rows = (data ?? []) as Array<{
         id: string;
         title: string;
         body: string | null;
         link_path: string | null;
-      }>) {
+      }>;
+      if (!primed) {
+        primed = true;
+        for (const row of rows) announcedReplyIds.add(row.id);
+        return;
+      }
+      for (const row of rows) {
         announce({ id: row.id, title: row.title, body: row.body, link_path: row.link_path });
       }
     };
