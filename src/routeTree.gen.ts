@@ -97,6 +97,7 @@ import { Route as AuthenticatedApprovedNewContentRouteImport } from './routes/_a
 import { Route as AuthenticatedApprovedProfileRouteImport } from './routes/_authenticated/_approved/profile'
 import { Route as AuthenticatedApprovedResponsiveCheckRouteImport } from './routes/_authenticated/_approved/responsive-check'
 import { Route as AuthenticatedApprovedReviewsRouteImport } from './routes/_authenticated/_approved/reviews'
+import { Route as AuthenticatedApprovedShiftHistoryRouteImport } from './routes/_authenticated/_approved/shift-history'
 import { Route as AuthenticatedApprovedShiftsRouteImport } from './routes/_authenticated/_approved/shifts'
 import { Route as AuthenticatedApprovedShopRouteImport } from './routes/_authenticated/_approved/shop'
 import { Route as AuthenticatedApprovedSportsGuidesRouteImport } from './routes/_authenticated/_approved/sports-guides'
@@ -670,6 +671,12 @@ const AuthenticatedApprovedReviewsRoute =
       (d) => d.Route,
     ),
   )
+const AuthenticatedApprovedShiftHistoryRoute =
+  AuthenticatedApprovedShiftHistoryRouteImport.update({
+    id: '/shift-history',
+    path: '/shift-history',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
 const AuthenticatedApprovedShiftsRoute =
   AuthenticatedApprovedShiftsRouteImport.update({
     id: '/shifts',
@@ -1186,6 +1193,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof AuthenticatedApprovedProfileRoute
   '/responsive-check': typeof AuthenticatedApprovedResponsiveCheckRoute
   '/reviews': typeof AuthenticatedApprovedReviewsRoute
+  '/shift-history': typeof AuthenticatedApprovedShiftHistoryRoute
   '/shifts': typeof AuthenticatedApprovedShiftsRoute
   '/shop': typeof AuthenticatedApprovedShopRoute
   '/sports-guides': typeof AuthenticatedApprovedSportsGuidesRouteWithChildren
@@ -1344,6 +1352,7 @@ export interface FileRoutesByTo {
   '/profile': typeof AuthenticatedApprovedProfileRoute
   '/responsive-check': typeof AuthenticatedApprovedResponsiveCheckRoute
   '/reviews': typeof AuthenticatedApprovedReviewsRoute
+  '/shift-history': typeof AuthenticatedApprovedShiftHistoryRoute
   '/shifts': typeof AuthenticatedApprovedShiftsRoute
   '/shop': typeof AuthenticatedApprovedShopRoute
   '/sports-guides': typeof AuthenticatedApprovedSportsGuidesRouteWithChildren
@@ -1508,6 +1517,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/profile': typeof AuthenticatedApprovedProfileRoute
   '/_authenticated/_approved/responsive-check': typeof AuthenticatedApprovedResponsiveCheckRoute
   '/_authenticated/_approved/reviews': typeof AuthenticatedApprovedReviewsRoute
+  '/_authenticated/_approved/shift-history': typeof AuthenticatedApprovedShiftHistoryRoute
   '/_authenticated/_approved/shifts': typeof AuthenticatedApprovedShiftsRoute
   '/_authenticated/_approved/shop': typeof AuthenticatedApprovedShopRoute
   '/_authenticated/_approved/sports-guides': typeof AuthenticatedApprovedSportsGuidesRouteWithChildren
@@ -1671,6 +1681,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/responsive-check'
     | '/reviews'
+    | '/shift-history'
     | '/shifts'
     | '/shop'
     | '/sports-guides'
@@ -1829,6 +1840,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/responsive-check'
     | '/reviews'
+    | '/shift-history'
     | '/shifts'
     | '/shop'
     | '/sports-guides'
@@ -1992,6 +2004,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/profile'
     | '/_authenticated/_approved/responsive-check'
     | '/_authenticated/_approved/reviews'
+    | '/_authenticated/_approved/shift-history'
     | '/_authenticated/_approved/shifts'
     | '/_authenticated/_approved/shop'
     | '/_authenticated/_approved/sports-guides'
@@ -2757,6 +2770,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedReviewsRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
+    '/_authenticated/_approved/shift-history': {
+      id: '/_authenticated/_approved/shift-history'
+      path: '/shift-history'
+      fullPath: '/shift-history'
+      preLoaderRoute: typeof AuthenticatedApprovedShiftHistoryRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
     '/_authenticated/_approved/shifts': {
       id: '/_authenticated/_approved/shifts'
       path: '/shifts'
@@ -3414,6 +3434,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedProfileRoute: typeof AuthenticatedApprovedProfileRoute
   AuthenticatedApprovedResponsiveCheckRoute: typeof AuthenticatedApprovedResponsiveCheckRoute
   AuthenticatedApprovedReviewsRoute: typeof AuthenticatedApprovedReviewsRoute
+  AuthenticatedApprovedShiftHistoryRoute: typeof AuthenticatedApprovedShiftHistoryRoute
   AuthenticatedApprovedShiftsRoute: typeof AuthenticatedApprovedShiftsRoute
   AuthenticatedApprovedShopRoute: typeof AuthenticatedApprovedShopRoute
   AuthenticatedApprovedSportsGuidesRoute: typeof AuthenticatedApprovedSportsGuidesRouteWithChildren
@@ -3531,6 +3552,8 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
   AuthenticatedApprovedResponsiveCheckRoute:
     AuthenticatedApprovedResponsiveCheckRoute,
   AuthenticatedApprovedReviewsRoute: AuthenticatedApprovedReviewsRoute,
+  AuthenticatedApprovedShiftHistoryRoute:
+    AuthenticatedApprovedShiftHistoryRoute,
   AuthenticatedApprovedShiftsRoute: AuthenticatedApprovedShiftsRoute,
   AuthenticatedApprovedShopRoute: AuthenticatedApprovedShopRoute,
   AuthenticatedApprovedSportsGuidesRoute:

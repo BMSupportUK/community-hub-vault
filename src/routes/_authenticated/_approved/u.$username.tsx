@@ -36,7 +36,6 @@ import { ThemePicker, APP_THEME_OPTIONS } from "@/components/app/ThemePicker";
 import { setPersonalAppTheme, useAppTheme } from "@/hooks/use-app-theme";
 import { useServerFn } from "@tanstack/react-start";
 import { assignReferrer } from "@/lib/referrals.functions";
-import ShiftHistoryPanel from "@/components/app/ShiftHistoryPanel";
 import { SubscriptionDetailsCard } from "@/components/app/SubscriptionDetailsCard";
 import { useViewportLockable } from "@/hooks/use-viewport-lock";
 
@@ -175,8 +174,8 @@ function ProfilePage() {
   const [friends, setFriends] = useState<FriendRow[]>([]);
   const [rel, setRel] = useState<FriendRel>({ kind: "none" });
   const [relBusy, setRelBusy] = useState(false);
-  const initialTab = (["profile","creds","tickets","referrals","friends","shifts","subscription"].includes(search.tab ?? "") ? search.tab : "profile") as "profile" | "creds" | "tickets" | "referrals" | "friends" | "shifts" | "subscription";
-  const allowedTabs = ["profile","creds","tickets","referrals","friends","shifts","notifications","theme","subscription"] as const;
+  const initialTab = (["profile","creds","tickets","referrals","friends","subscription"].includes(search.tab ?? "") ? search.tab : "profile") as "profile" | "creds" | "tickets" | "referrals" | "friends" | "subscription";
+  const allowedTabs = ["profile","creds","tickets","referrals","friends","notifications","theme","subscription"] as const;
   type TabId = typeof allowedTabs[number];
   const initialTabSafe = (allowedTabs.includes((search.tab ?? "") as TabId) ? search.tab : initialTab) as TabId;
   const [mainTab, setMainTab] = useState<TabId>(initialTabSafe);
@@ -523,11 +522,10 @@ function ProfilePage() {
     );
   }
 
-  // Shift history is only meaningful for staff-side roles, and is visible to the
+  // Shift history lives on its own page (/shift-history) via the header button.
   // staff member themselves plus the wider support team.
   const isStaffProfile = sortedRoles.some((r) => ["admin", "management", "staff", "moderator"].includes(r));
   const isBmSupportProfile = sortedRoles.length === 0 || sortedRoles.some((r) => isSupportRole(r));
-  const canSeeShifts = isStaffProfile && (isOwner || hasAny(["admin", "management", "staff", "moderator"]));
   const canSeeSubscription = isStaffProfile && isOwner && hasAssignedCreds;
 
   const tabDefs = [
@@ -536,7 +534,6 @@ function ProfilePage() {
     ...(canSeeCreds ? [{ id: "creds", label: "Credentials" }] : []),
     { id: "tickets", label: `Tickets (${tickets.length})` },
     { id: "friends", label: `Friends (${friends.length})` },
-    ...(canSeeShifts ? [{ id: "shifts", label: "Shift history" }] : []),
     ...(canSeeReferrals ? [{ id: "referrals", label: `Referrals (${referrals.length})` }] : []),
     ...(isOwner ? [{ id: "notifications", label: "Notifications" }] : []),
     ...(isOwner ? [{ id: "theme", label: "Theme" }] : []),
@@ -789,11 +786,6 @@ function ProfilePage() {
           </TabsContent>
 
 
-          {canSeeShifts && (
-            <TabsContent value="shifts" className={paneClass}>
-              <ShiftHistoryPanel userId={profile.id} name={display} username={profile.username} />
-            </TabsContent>
-          )}
 
 
           <TabsContent value="friends" className={paneClass}>
