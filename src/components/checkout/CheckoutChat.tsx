@@ -132,8 +132,8 @@ export function CustomerCheckoutChat({ token, password, orderRef }: { token: str
   );
 }
 
-/** Admin/management side of the same chat, shown on the order in Admin. */
-export function StaffCheckoutChat({ orderId, token }: { orderId: string; token: string }) {
+/** Shared data + realtime wiring for the staff side of a sale's chat. */
+function useStaffCheckoutChat(orderId: string, token: string) {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Msg[]>([]);
   const chRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
@@ -150,15 +150,78 @@ export function StaffCheckoutChat({ orderId, token }: { orderId: string; token: 
     chRef.current = bc;
     return () => { supabase.removeChannel(db); supabase.removeChannel(bc); };
   }, [load, orderId, token]);
+  const send = useCallback(async (content: string) => {
+    const { error } = await supabase.from("checkout_chat_messages").insert({ order_id: orderId, sender: "staff", staff_id: user?.id, content });
+    if (error) throw error;
+    await load();
+    chRef.current?.send({ type: "broadcast", event: "new", payload: {} });
+  }, [orderId, user?.id, load]);
+  return { messages, send };
+}
+
+/** Admin/management side of the same chat, shown inline on the order in Admin. */
+export function StaffCheckoutChat({ orderId, token }: { orderId: string; token: string }) {
+  const { messages, send } = useStaffCheckoutChat(orderId, token);
   return (
     <div className="h-80 flex flex-col rounded-xl border border-border overflow-hidden">
       <Thread messages={messages} mine="staff" />
-      <Composer onSend={async (t) => {
-        const { error } = await supabase.from("checkout_chat_messages").insert({ order_id: orderId, sender: "staff", staff_id: user?.id, content: t });
-        if (error) throw error;
-        await load();
-        chRef.current?.send({ type: "broadcast", event: "new", payload: {} });
-      }} />
+      <Composer onSend={send} />
     </div>
+  );
+}
+
+/**
+ * Staff side as a bottom-corner bubble — the same shape and behaviour the
+ * customer sees on their secure page, so both sides look and act alike.
+ */
+export function StaffCheckoutChatBubble({ orderId, token, orderRef }: { orderId: string; token: string; orderRef?: string | null }) {
+  const { messages, send } = useStaffCheckoutChat(orderId, token);
+  const [open, setOpen] = useState(false);
+  const [unread, setUnread] = useState(0);
+  const openRef = useRef(open);
+  openRef.current = open;
+  const readKey = `bm-staff-chat-read-${orderId}`;
+
+  const markCustomerMessagesRead = useCallback((items: Msg[]) => {
+    const latest = items.filter((m) => m.sender === "customer").at(-1);
+    if (latest && typeof window !== "undefined") window.localStorage.setItem(readKey, latest.created_at);
+    setUnread(0);
+  }, [readKey]);
+
+  // Count customer replies that landed while the panel is shut, so the badge
+  // stays honest as new messages arrive.
+  useEffect(() => {
+    if (openRef.current) { markCustomerMessagesRead(messages); return; }
+    const lastRead = typeof window !== "undefined" ? window.localStorage.getItem(readKey) : null;
+    setUnread(messages.filter((m) => m.sender === "customer" && (!lastRead || m.created_at > lastRead)).length);
+  }, [messages, readKey, markCustomerMessagesRead]);
+
+  const toggleChat = () => {
+    setOpen((wasOpen) => {
+      const willOpen = !wasOpen;
+      openRef.current = willOpen;
+      if (willOpen) markCustomerMessagesRead(messages);
+      return willOpen;
+    });
+  };
+
+  return (
+    <>
+      {open && (
+        <div className="fixed bottom-24 right-4 z-50 w-[min(360px,calc(100vw-2rem))] h-[min(480px,70vh)] flex flex-col rounded-2xl border border-border bg-card shadow-2xl overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3 bg-primary text-primary-foreground">
+            <div><div className="font-semibold text-sm">Order {orderRef ? `#${orderRef}` : "chat"}</div><div className="text-[11px] opacity-80">Private chat for this sale only</div></div>
+            <button type="button" onClick={() => setOpen(false)} aria-label="Close chat"><X className="size-5" /></button>
+          </div>
+          <Thread messages={messages} mine="staff" />
+          <Composer onSend={send} />
+        </div>
+      )}
+      <button type="button" onClick={toggleChat} aria-label={unread > 0 ? `Chat about this sale, ${unread} unread ${unread === 1 ? "message" : "messages"}` : "Chat about this sale"} className={`fixed bottom-5 right-4 z-50 size-14 rounded-full bg-primary text-primary-foreground grid place-items-center shadow-xl hover:scale-105 transition-transform ${unread > 0 && !open ? "animate-bounce" : ""}`}>
+        {unread > 0 && !open && <span className="absolute inset-0 rounded-full bg-primary/60 animate-ping" aria-hidden />}
+        {open ? <X className="size-6" /> : <MessageCircle className="size-6" />}
+        {unread > 0 && !open && <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 rounded-full bg-destructive text-destructive-foreground text-[11px] font-bold grid place-items-center z-10">{unread}</span>}
+      </button>
+    </>
   );
 }

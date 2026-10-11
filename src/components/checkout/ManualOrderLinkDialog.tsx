@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { supabase } from "@/integrations/supabase/client";
-import { StaffCheckoutChat, secureCheckoutUrl } from "@/components/checkout/CheckoutChat";
+import { StaffCheckoutChat, StaffCheckoutChatBubble, secureCheckoutUrl } from "@/components/checkout/CheckoutChat";
 import { OrderStatusBar } from "@/components/checkout/CheckoutTemplate";
 import { createCredentialForOrder, getOrderRenewalAccounts, type ApplyOrderResult, type CredentialCandidate } from "@/lib/order-fulfilment.functions";
 import { downloadReceipt } from "@/lib/receipt";
@@ -27,7 +27,7 @@ function CopyField({ label, value }: { label: string; value: string }) {
 }
 
 /** Secure link + password panel, reused after saving an order and on the orders list. */
-export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, onDone }: { orderId: string; withChat?: boolean; loginOnly?: boolean; onDone?: () => void }) {
+export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, chatBubble = false, orderRef, onDone }: { orderId: string; withChat?: boolean; loginOnly?: boolean; chatBubble?: boolean; orderRef?: string | null; onDone?: () => void }) {
   const [link, setLink] = useState<{ token: string; password: string; payment_sent_at: string | null; account_setup_at: string | null; customer_kind: string | null } | null | undefined>(undefined);
   const [orderPaid, setOrderPaid] = useState(false);
   const [orderCompleted, setOrderCompleted] = useState(false);
@@ -313,6 +313,14 @@ export function SecureLinkPanel({ orderId, withChat = true, loginOnly = false, o
     );
   }
   if (!withChat) return fields;
+  // The full-page secure checkout panel keeps the chat as a bottom-corner
+  // bubble like the customer's own page, so the details get the whole width.
+  if (chatBubble) return (
+    <>
+      {fields}
+      <StaffCheckoutChatBubble orderId={orderId} token={link.token} orderRef={orderRef} />
+    </>
+  );
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)]">
       {fields}

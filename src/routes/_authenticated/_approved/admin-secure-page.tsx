@@ -59,7 +59,7 @@ function SecurePageAdmin() {
           <p className="text-sm text-muted-foreground">Copy the link and password to send to the customer, and reply to their messages here.</p>
         </div>
         <div className="rounded-2xl border border-border bg-card/85 backdrop-blur-sm p-5 space-y-4">
-          <SecureLinkPanel orderId={order} />
+          <SecureLinkPanel orderId={order} chatBubble orderRef={orderRef} />
         </div>
       </div>
     </main>
