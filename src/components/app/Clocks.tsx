@@ -87,7 +87,8 @@ function isOfficeOpen(hours: OfficeHour[], now: Date, holidays: BankHolidayMap =
 export function OfficeHoursSchedule({
   channelName = "office-hours-live",
   layout = "table",
-}: { channelName?: string; layout?: "table" | "compact" }) {
+  splitWeekend = false,
+}: { channelName?: string; layout?: "table" | "compact"; splitWeekend?: boolean }) {
   const timezone = useUserTimezone();
   const holidays = useUkBankHolidays();
   const [hours, setHours] = useState<OfficeHour[]>([]);
@@ -186,8 +187,21 @@ export function OfficeHoursSchedule({
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:grid-cols-7">
-          {orderedDays.map((hour) => {
+        {(splitWeekend
+          ? [
+              orderedDays.filter((d) => d.day_of_week >= 1 && d.day_of_week <= 5),
+              orderedDays.filter((d) => d.day_of_week === 0 || d.day_of_week === 6),
+            ]
+          : [orderedDays]
+        ).map((group, gi) => (
+        <div
+          key={gi}
+          className={cn(
+            "grid gap-2",
+            splitWeekend ? "grid-cols-2 sm:grid-cols-3 xl:grid-cols-5" : "grid-cols-2 sm:grid-cols-4 lg:grid-cols-7",
+          )}
+        >
+          {group.map((hour) => {
             const rowDate = londonTimeToDate(hour.day_of_week, "12:00");
             const holidayName = holidays[londonDateKey(rowDate)] ?? null;
             const closed = hour.is_closed || Boolean(holidayName);
@@ -218,7 +232,7 @@ export function OfficeHoursSchedule({
                 <div className="text-xs text-muted-foreground">{officeDate}</div>
                 {/* UK hours and your local times sit side by side so the whole
                     week still fits the screen without scrolling. */}
-                <div className={cn("border-t border-border/50 pt-1.5", showUserColumn && "grid grid-cols-2 gap-1.5")}>
+                <div className={cn("border-t border-border/50 pt-1.5", showUserColumn && (splitWeekend ? "space-y-1.5" : "grid grid-cols-2 gap-1.5"))}>
                   <div>
                     <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">UK</div>
                     {closed ? (
@@ -266,6 +280,7 @@ export function OfficeHoursSchedule({
             );
           })}
         </div>
+        ))}
       </div>
     );
   }

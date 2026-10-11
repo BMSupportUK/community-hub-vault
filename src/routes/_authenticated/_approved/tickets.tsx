@@ -557,7 +557,7 @@ function TicketsPage() {
             <div className="rounded-2xl bg-gradient-to-br from-rose-600/30 via-fuchsia-600/20 to-violet-700/30 border border-rose-500/30 p-4 md:p-5 lg:p-6 shadow-[0_0_60px_-15px_rgba(244,63,94,0.4)]">
               {/* Intro on the left; staff cards live in a right sidebar split
                   by role, like the Talk channel staff list. */}
-               <div className="flex flex-col lg:flex-row lg:items-stretch gap-4 lg:gap-6">
+                <div className="flex flex-col lg:flex-row lg:items-stretch gap-4 lg:gap-6">
                 <div className="min-w-0 flex-1">
                   <h2 className="font-display text-2xl md:text-3xl font-bold">Welcome to the Help Desk</h2>
                   <p className="mt-2 text-base md:text-lg text-rose-100/90 max-w-3xl">
@@ -567,12 +567,12 @@ function TicketsPage() {
                   <p className="mt-2 text-rose-200/80 max-w-3xl text-sm md:text-base">
                     Once your ticket is resolved, leave a rating so we know how we did.
                   </p>
-                 </div>
-                <aside className="w-full lg:w-80 xl:w-[22rem] shrink-0 lg:max-h-[560px] min-h-0">
+                  <OfficeHoursPanel />
+                </div>
+                <aside className="w-full lg:w-80 xl:w-[22rem] shrink-0 min-h-0 lg:self-stretch">
                   <StaffOnDutyStrip variant="tickets-sidebar" hideRoles={["moderator"]} />
                 </aside>
               </div>
-              <OfficeHoursPanel />
             </div>
           </TabsContent>
 
@@ -1012,7 +1012,7 @@ function OfficeHoursPanel() {
         <span className="ml-auto text-xs text-muted-foreground">Our UK support hours, with your local times alongside.</span>
       </div>
       <div className="px-4 py-3">
-        <OfficeHoursSchedule channelName="ticket-office-hours-live" layout="compact" />
+        <OfficeHoursSchedule channelName="ticket-office-hours-live" layout="compact" splitWeekend />
       </div>
     </section>
   );
