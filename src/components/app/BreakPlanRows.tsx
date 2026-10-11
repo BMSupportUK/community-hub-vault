@@ -58,8 +58,8 @@ export function BreakPlanRows({ userId, usedKinds }: { userId: string; usedKinds
       { ...plan.break1, done: breaksUsed >= 1 },
       { ...plan.lunch, done: lunchUsed },
       { ...plan.break2, done: breaksUsed >= 2 },
-    ];
-  }, [plan, usedKinds]);
+    ].map((it) => ({ ...it, missed: !it.done && it.start !== null && nowMin > it.start + 15 }));
+  }, [plan, usedKinds, nowMin]);
 
   // Reminder when an allocated time arrives (staff still tap to start it).
   useEffect(() => {
@@ -72,7 +72,7 @@ export function BreakPlanRows({ userId, usedKinds }: { userId: string; usedKinds
   }, [items, nowMin, userId]);
 
   if (!plan) return null;
-  const next = items.find((i) => !i.done && i.start !== null);
+  const next = items.find((i) => !i.done && !i.missed && i.start !== null);
   return (
     <div className="grid gap-1.5 text-xs">
       <span className="text-muted-foreground font-medium">Allocated breaks (UK office)</span>
@@ -80,9 +80,9 @@ export function BreakPlanRows({ userId, usedKinds }: { userId: string; usedKinds
         const Icon = it.done ? CheckCircle2 : breakIcon(it.kind);
         return (
           <div key={it.label} className={cn("flex items-center justify-between rounded-full px-3 py-1 ring-1",
-            it.done ? "bg-muted/20 ring-border text-muted-foreground line-through" : it === next ? "bg-warning/15 ring-warning/40 text-warning" : "bg-white/[0.05] ring-white/15")}>
+            it.done ? "bg-muted/20 ring-border text-muted-foreground line-through" : it.missed ? "bg-muted/10 ring-border text-muted-foreground/60" : it === next ? "bg-warning/15 ring-warning/40 text-warning" : "bg-white/[0.05] ring-white/15")}>
             <span className="inline-flex items-center gap-1.5 font-medium"><Icon className="size-3.5" />{it.label}</span>
-            <span className="tabular-nums font-semibold">{it.start === null ? "No slot – ask a manager" : fromMinutes(it.start)}</span>
+            <span className="tabular-nums font-semibold">{it.start === null ? "No slot – ask a manager" : it.missed ? "Missed" : fromMinutes(it.start)}</span>
           </div>
         );
       })}
