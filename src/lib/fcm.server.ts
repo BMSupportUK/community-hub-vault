@@ -180,9 +180,9 @@ async function sendFcmToTokens(
   const isOutageResolved = args.data?.kind === "incident" && args.data?.event === "resolved";
   const k = args.data?.kind;
   const spokenExtra = k === "order" || k === "order_placed"
-    ? { channel: "bm_support_orders_v2", sound: "order_ding" }
+    ? { channel: "bm_support_orders_v3", sound: "order_tone" }
     : k === "order_paid" || k === "invoice_paid" || k === "wise_payment"
-      ? { channel: "bm_support_payments_v2", sound: "payment_ding" }
+      ? { channel: "bm_support_payments_v3", sound: "payment_tone" }
       : null;
   for (const token of tokens) {
     const res = await fetch(url, {
@@ -202,34 +202,34 @@ async function sendFcmToTokens(
               // Spoken alerts have dedicated native channels so Android uses
               // the bundled uploaded MP3 while the app is backgrounded/closed.
               channel_id: spokenExtra ? spokenExtra.channel : isTicketRaised
-                ? "bm_support_tickets_v4"
+                ? "bm_support_tickets_v5"
                 : isTicketReply
-                ? "bm_support_ticket_replies_v3"
+                ? "bm_support_ticket_replies_v4"
                 : isMention
-                  ? "bm_support_mentions_v2"
+                  ? "bm_support_mentions_v3"
                   : isShiftStart
-                    ? "bm_support_shift_start_v5"
+                    ? "bm_support_shift_start_v6"
                     : isShiftEnd
-                      ? "bm_support_shift_end_v5"
+                      ? "bm_support_shift_end_v6"
                       : isOutage
-                        ? "bm_support_outage_v3"
+                        ? "bm_support_outage_v4"
                         : isOutageResolved
-                          ? "bm_support_outage_resolved_v3"
+                          ? "bm_support_outage_resolved_v4"
                           : "bm_support_alerts_v4",
               sound: spokenExtra ? spokenExtra.sound : isTicketRaised
-                ? "ticket_ding"
+                ? "ticket_tone"
                 : isTicketReply
-                ? "ticket_reply_ding"
+                ? "ticket_reply_tone"
                 : isMention
-                  ? "mention_ding"
+                  ? "mention_tone"
                   : isShiftStart
-                    ? "shift_start_ding"
+                    ? "shift_start_tone"
                     : isShiftEnd
-                      ? "shift_end_ding"
+                      ? "shift_end_tone"
                       : isOutage
-                        ? "outage_ding"
+                        ? "outage_tone"
                         : isOutageResolved
-                          ? "outage_resolved_ding"
+                          ? "outage_resolved_tone"
                           : undefined,
               default_sound: !spokenExtra && !isTicketRaised && !isTicketReply && !isMention && !isShiftStart && !isShiftEnd && !isOutage && !isOutageResolved,
               default_vibrate_timings: true,
