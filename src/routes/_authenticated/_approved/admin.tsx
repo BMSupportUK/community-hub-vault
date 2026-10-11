@@ -623,13 +623,7 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
   };
 
   return (
-    <div className="relative isolate space-y-6">
-      {!isFz && tab === "order-status" && canSeePins && (
-        <div className="fixed inset-0 -z-10 pointer-events-none" aria-hidden="true">
-          <img src={shopHero} alt="" className="h-full w-full object-cover" />
-          <div className="absolute inset-0 bg-background/60" />
-        </div>
-      )}
+    <div className="space-y-6">
       <div className="inline-flex flex-wrap p-1 rounded-xl bg-surface-2 border border-border">
         {tabs.map(([key, label]) =>
           key === "profit-costs" ? (
