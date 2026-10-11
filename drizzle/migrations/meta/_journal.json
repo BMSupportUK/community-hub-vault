@@ -722,6 +722,13 @@
       "when": 1791724187627,
       "tag": "0102_cover_sign_in_requests",
       "breakpoints": true
+    },
+    {
+      "idx": 103,
+      "version": "7",
+      "when": 1791727354111,
+      "tag": "0103_ticket_break_handover",
+      "breakpoints": true
     }
   ]
 }
