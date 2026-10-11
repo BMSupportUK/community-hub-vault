@@ -11,7 +11,7 @@ import { logMyIp } from "@/lib/ip-log.functions";
 import { useOnlineUsers, setPresencePage } from "@/hooks/use-online-users";
 import { pageLabelForPath } from "@/lib/page-labels";
 import { isPageAllowed, usePagePermissions } from "@/lib/page-access";
-import { adminPanelLabel, canOpenAdminPanel } from "@/lib/admin-panel-access";
+import { adminPanelLabel, canOpenAdminPanel, canOpenFanZoneAdminPanel } from "@/lib/admin-panel-access";
 
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { isAllowedForFanZoneOnly, isFanZonePath } from "@/lib/fan-zone-nav";
@@ -115,6 +115,9 @@ function AuthLayout() {
   const perms = usePagePermissions();
   const canOpenPanel = canOpenAdminPanel(roles) && isPageAllowed("admin", roles, perms);
   const panelLabel = adminPanelLabel(roles);
+  // Fan Zone moderators who aren't staff get their own header button to the
+  // Fan Zone dashboard; staff/management reach it from the BM dashboard.
+  const canOpenFanZonePanel = !canOpenPanel && canOpenFanZoneAdminPanel(roles);
   const navigate = useNavigate();
   const path = useRouterState({ select: (r) => r.location.pathname });
   const inFanZone = isFanZonePath(path);
@@ -297,6 +300,16 @@ function AuthLayout() {
               >
                 <LayoutDashboard className="size-4" />
                 <span className="hidden min-[1700px]:inline">{panelLabel}</span>
+              </Link>
+            )}
+            {canOpenFanZonePanel && (
+              <Link
+                to="/fan-zone-admin"
+                title="Fan Zone | Admin Panel"
+                className="hidden md:flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-3 py-1.5 bg-surface-2 hover:bg-primary hover:text-primary-foreground text-xs font-medium transition-colors"
+              >
+                <ShieldCheck className="size-4" />
+                <span className="hidden min-[1700px]:inline">Fan Zone | Admin Panel</span>
               </Link>
             )}
             {isAdmin && (
