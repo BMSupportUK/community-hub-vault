@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { Clock, LogIn, LogOut, Coffee, UtensilsCrossed, Loader2, Bell } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { offerTicketHandover } from "@/lib/break-handover";
 import { useAuth } from "@/hooks/use-auth";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
 import { cn } from "@/lib/utils";
