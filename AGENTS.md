@@ -26,8 +26,8 @@
 - Referral-approved BM Support accounts never retain security-gate access-request notifications, because staff action is not required.
 - The location opt-in is asked only on the security gate for direct (non-referral, non-Fan Zone) BM Support applicants; refusal blocks ticket requests and tags any appeal so staff see it. Elsewhere GPS is captured silently only when permission already exists.
 - Shared dialogs must stay within the dynamic mobile viewport, while dense data views reduce secondary columns on phones so primary actions remain usable.
-- Customer invoices are BM Support PDFs available only after confirmed payment; never expose Stripe or Square hosted invoice/receipt links because the app owns customer billing documents.
-- Knowledge Base article reading uses the full available page with a responsive ratings rail, so long guides and media remain readable.
+- Customer invoices are BM Support PDFs after confirmed payment; never expose Stripe/Square hosted links.
+- Knowledge Base articles use the full page with a responsive ratings rail.
 - Secure orders show wa.me video help only while is_business_open; never embed customer camera sessions.
 - Gender-matched customer defaults never replace custom picks and exclude staff/Fan Zone-only users.
 - BM inbox stays separate from Fan Zone/Talk: participant-only tables, authenticated RPCs, admin/management-only report snapshots.
