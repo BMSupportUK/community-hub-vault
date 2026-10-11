@@ -37,6 +37,7 @@ import { todayClosingTime } from "@/lib/business-hours";
 import { formatRoleLabel } from "@/lib/role-label";
 import { browserTimezone } from "@/hooks/use-user-timezone";
 import { shiftWindowToUtcMs } from "@/hooks/use-timezone";
+import { BreakPlanRows } from "@/components/app/BreakPlanRows";
 
 type Shift = { id: string; clock_in: string };
 type Break = { id: string; kind: BreakKind; started_at: string };
@@ -925,6 +926,9 @@ export function WorkingStatusBox({
                     </div>
                   )}
                 </div>
+              )}
+              {(roles.includes("staff") || roles.includes("management")) && (
+                <BreakPlanRows userId={user.id} usedKinds={usedKinds} />
               )}
             </>
           ) : (
