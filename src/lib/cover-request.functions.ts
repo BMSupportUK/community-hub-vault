@@ -3,19 +3,17 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { normalizeCoverReason, normalizeCoverUntil, coverUntilIsValid } from "@/lib/cover-request";
 import { ukClock } from "@/lib/shift-finish";
 
-async function notify(userIds: string[], title: string, body: string, link: string, sourceId: string) {
+// Inserting a user_notifications row fires the phone + browser push via its
+// database trigger, so no separate push call is needed here.
+async function notify(userIds: string[], title: string, body: string, link: string, sourceId: string, kind = "cover_request") {
   if (userIds.length === 0) return;
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   await supabaseAdmin.from("user_notifications").insert(
     userIds.map((user_id) => ({
-      user_id, kind: "cover_request", title, body, link_path: link,
+      user_id, kind, title, body, link_path: link,
       source_type: "cover_request", source_id: sourceId,
     })) as never,
   );
-  try {
-    const { broadcastToUser } = await import("@/lib/push.functions");
-    await Promise.all(userIds.map((u) => broadcastToUser(u, title, body, link, `cover-${sourceId}`, "early-finish")));
-  } catch { /* best-effort */ }
 }
 
 /** Staff not on the rota asks to sign in to cover; admin + management are alerted. */
@@ -65,7 +63,9 @@ export const decideCoverRequest = createServerFn({ method: "POST" })
       await notify([(req as any).user_id],
         data.approve ? "Cover approved — you're signed in" : "Cover request declined",
         data.approve ? `Added to the rota until ${String((req as any).cover_until).slice(0, 5)} UK.` : "You haven't been signed in.",
-        "/clock", data.id);
+        "/clock", data.id,
+        // Approved uses the shift-start tone (they're now signed in); declined uses the standard alert.
+        data.approve ? "shift_start_cover_approved" : "cover_declined");
     }
     return { result };
   });
