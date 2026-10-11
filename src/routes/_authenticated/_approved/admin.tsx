@@ -1,4 +1,4 @@
-import { createFileRoute, Link, Navigate, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, Navigate, useNavigate, useSearch } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { BarChart3, ShieldCheck, Lock, KeyRound, ShieldAlert, KeySquare, Globe, Clock, Loader2, Shield, Star, Filter, Sparkles, LifeBuoy, RefreshCw, Copy, Download, Ban, Tag, Package, Bell, Trophy, MessageSquare, Image as ImageIcon, MonitorPlay, Eye, EyeOff, Landmark, Users, Palette, PanelTop, ReceiptText } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { backfillVpnDetection } from "@/lib/vpn-backfill.functions";
 import { unlockWithStaffPin, requestStaffPinReset } from "@/lib/staff-pin.functions";
-import { adminPanelToolAllowed, canOpenAdminPanel, staffAllowedPageKeys } from "@/lib/admin-panel-access";
+import { adminPanelToolAllowed, canOpenAdminPanel, canOpenFanZoneAdminPanel, fanZoneToolAllowed, isFanZoneAdminPath, staffAllowedPageKeys } from "@/lib/admin-panel-access";
 import { usePagePermissions, pageKeyForPath, pagePermissionLabel } from "@/lib/page-access";
 import { permissionSection } from "@/lib/permission-sections";
 import { LayoutGrid } from "lucide-react";
@@ -39,7 +39,7 @@ export const Route = createFileRoute("/_authenticated/_approved/admin")({
     tab: typeof search.tab === "string" ? (search.tab as string) : undefined,
     chat: typeof search.chat === "string" ? (search.chat as string) : undefined,
   }),
-  component: AdminDashboard,
+  component: () => <AdminDashboard zone="bm" />,
 });
 
 async function sha256Hex(input: string) {
@@ -67,12 +67,13 @@ const UNLOCK_KEY = (uid: string) => `admin_unlock_until:${uid}`;
 
 
 
-function AdminDashboard() {
+export function AdminDashboard({ zone = "bm" }: { zone?: "bm" | "fanzone" }) {
   const { user, roles } = useAuth();
+  const isFz = zone === "fanzone";
   const [hasPin, setHasPin] = useState<boolean | null>(null);
   const [unlocked, setUnlocked] = useState(false);
   const [unlockedUntil, setUnlockedUntil] = useState(0);
-  const { next, chat } = Route.useSearch();
+  const { next, chat } = useSearch({ strict: false }) as { next?: string; chat?: string };
   const navigate = useNavigate();
   // Old chat alerts link here with ?chat=<orderId> — send them to the full secure page.
   useEffect(() => {
@@ -110,7 +111,7 @@ function AdminDashboard() {
     if (user) { try { sessionStorage.removeItem(UNLOCK_KEY(user.id)); } catch {} }
   };
 
-  if (!canOpenAdminPanel(roles)) return <Navigate to="/home" />;
+  if (!(isFz ? canOpenFanZoneAdminPanel(roles) : canOpenAdminPanel(roles))) return <Navigate to="/home" />;
 
   return (
     <main className="h-full min-h-0 flex-1 overflow-y-auto overscroll-contain">
@@ -122,10 +123,15 @@ function AdminDashboard() {
               <ShieldCheck className="size-6 text-white" />
             </div>
             <div className="min-w-0 flex-1">
-              <h1 className="font-display text-xl sm:text-3xl font-bold text-white drop-shadow">BM Support | Admin Dashboard</h1>
+              <h1 className="font-display text-xl sm:text-3xl font-bold text-white drop-shadow">{isFz ? "Boro Fan Zone | Admin Dashboard" : "BM Support | Admin Dashboard"}</h1>
               <p className="text-sm text-white/85">Server-wide controls — staff can see the sections admin allows them to.</p>
             </div>
           <div className="col-span-2 flex min-w-0 flex-wrap items-center gap-2 sm:col-span-1">
+            {(isFz ? canOpenAdminPanel(roles) : canOpenFanZoneAdminPanel(roles)) && (
+              <Link to={isFz ? "/admin" : "/fan-zone-admin"} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/15 backdrop-blur border border-white/25 text-sm text-white hover:bg-white/25">
+                {isFz ? "BM Support dashboard" : "Boro Fan Zone dashboard"}
+              </Link>
+            )}
             {unlocked && (
               <button onClick={lockNow} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/15 backdrop-blur border border-white/25 text-sm text-white hover:bg-white/25">
                 <Lock className="size-4" /> Lock
@@ -156,7 +162,7 @@ function AdminDashboard() {
             }}
           />
         ) : (
-          <DashboardBody />
+          <DashboardBody zone={zone} />
         )}
       </div>
     </main>
@@ -498,13 +504,14 @@ import toolArtGlobe from "@/assets/tools/globe.png";
 import toolArtReviews from "@/assets/tools/reviews.png";
 import toolArtTeam from "@/assets/tools/team.png";
 
-function DashboardBody() {
+function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
+  const isFz = zone === "fanzone";
   const { hasRole, roles } = useAuth();
   const isAdminOnly = hasRole("admin");
   const canSeePins = isAdminOnly || hasRole("management");
   const perms = usePagePermissions();
   const toolsHeading = canSeePins ? "Owner tools" : "Staff tools";
-  const { tab: searchTab } = Route.useSearch();
+  const { tab: searchTab } = useSearch({ strict: false }) as { tab?: string };
   const validTabs = ["tools", "order-status", "square", "stripe", "bank-transfer", "bank-transfer-orders", "cash", "staff-pins", "backup-codes", "theme", "header-links", "invoice-template", "sign-out-devices", "android-apk"] as const;
   type DashTab = (typeof validTabs)[number];
   const [tab, setTab] = useState<DashTab>(
@@ -557,17 +564,25 @@ function DashboardBody() {
     { tabKey: "android-apk", label: "Android app file", desc: "Upload the BM Support APK the download barcode points to.", icon: Smartphone, adminOnly: true, art: toolArtDevices },
   ];
   const cardKeys = new Set(allTools.filter((t) => t.to).map((t) => pageKeyForPath(t.to!)));
-  const extraPageCards: typeof allTools = staffAllowedPageKeys(roles, perms, cardKeys, (k) => permissionSection(k) === "fanzone").map((key) => ({
+  const extraPageCards: typeof allTools = isFz ? [] : staffAllowedPageKeys(roles, perms, cardKeys, (k) => permissionSection(k) === "fanzone").map((key) => ({
     to: `/${key}`,
     label: pagePermissionLabel(key),
     desc: `Open ${pagePermissionLabel(key)}.`,
     icon: LayoutGrid,
     art: toolArtDocs,
   }));
-  const tools = [...allTools.filter((t) => adminPanelToolAllowed(t, roles, perms)), ...extraPageCards]
+  const zoneTools = isFz
+    ? [
+        ...allTools.filter((t) => isFanZoneAdminPath(t.to)),
+        { to: "/fan-zone-appeals", label: "Fan Zone appeals", desc: "Review ban and access appeals from Fan Zone members.", icon: ShieldAlert, art: toolArtSecurity },
+        { to: "/fan-zone-sanctions", label: "Fan Zone sanctions", desc: "Manage Fan Zone bans and mutes.", icon: Ban, art: toolArtSecurity },
+        { to: "/fan-zone-security", label: "Fan Zone security", desc: "Fan Zone security settings and checks.", icon: Shield, art: toolArtSecurity },
+      ].filter((t) => fanZoneToolAllowed(t, roles, perms))
+    : allTools.filter((t) => !isFanZoneAdminPath(t.to) && adminPanelToolAllowed(t, roles, perms));
+  const tools = [...zoneTools, ...extraPageCards]
     .sort((a, b) => a.label.localeCompare(b.label, "en-GB", { sensitivity: "base" }));
 
-  const tabs = ([
+  const allTabs: readonly (readonly [string, string, boolean | string])[] = isFz ? [["tools", "Fan Zone tools", false]] : [
     ["tools", toolsHeading, false],
     ["order-status", "Orders", true],
     ["profit-costs", "Profit & costs", "profit"],
@@ -578,7 +593,8 @@ function DashboardBody() {
     ["bank-transfer", "Bank Settings", "bank"],
     ["staff-pins", "Staff PINs", true],
     ["backup-codes", "Backup codes", true],
-  ] as const).filter(([, , gate]) =>
+  ];
+  const tabs = allTabs.filter(([, , gate]) =>
     gate === "bank" ? isAdminOnly : !gate || canSeePins,
   );
 
@@ -604,7 +620,7 @@ function DashboardBody() {
             <button
               key={key}
               type="button"
-              onClick={() => setTab(key)}
+              onClick={() => setTab(key as DashTab)}
               className={`px-4 h-9 rounded-lg text-sm font-medium transition-colors ${
                 tab === key || (key === "tools" && (tab === "theme" || tab === "header-links" || tab === "invoice-template" || tab === "sign-out-devices" || tab === "android-apk"))
                   ? "bg-primary text-primary-foreground"
