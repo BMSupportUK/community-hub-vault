@@ -747,6 +747,7 @@ export function WorkingStatusBox({
         <span className="font-display text-[10px] font-bold tracking-wider uppercase text-muted-foreground whitespace-nowrap hidden lg:inline">
           Staff Shift Controls
         </span>
+        <NextBreakPill userId={user.id} usedKinds={usedKinds} />
         <ActionIcons compact />
         {awayPill}
         <DndDialogButton className="inline-flex size-8 shrink-0 items-center justify-center rounded-full border border-border bg-muted/30 transition hover:bg-muted" />
