@@ -72,7 +72,7 @@ export const Route = createFileRoute("/api/public/hooks/scheduled-reminders")({
           const db = supabaseAdmin as any;
           const [{ data: daySlots }, { data: roleRows }, { data: stored }] = await Promise.all([
             db.from("shift_slots").select("assigned_to,start_time,end_time").eq("shift_date", ukDate).eq("slot_type", "shift"),
-            db.from("user_roles").select("user_id,role").in("role", ["staff", "management"]),
+            db.from("user_roles").select("user_id,role").in("role", ["staff", "management", "admin"]),
             db.from("break_plan_times").select("user_id,label,kind,start_min").eq("shift_date", ukDate),
           ]);
           const eligible = new Set(((roleRows ?? []) as { user_id: string }[]).map((r) => r.user_id));
