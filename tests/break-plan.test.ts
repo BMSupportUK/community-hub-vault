@@ -44,8 +44,8 @@ test("no time left today means no slots", () => {
 test("already-planned breaks count against cover for newly planned staff", () => {
   // Two people on 09:00–17:00; A's lunch is fixed at 13:00, so B can't also take 13:00.
   const slots = [{ userId: "b", start: 540, end: 1020 }, { userId: "a", start: 540, end: 1020 }];
-  const p = planBreaks([slots[0]!], 1, undefined, [{ start: 780, end: 810 }]);
-  // Only B is planned here, and only B is on the passed slot list, so cover rule counts the slot list.
+  const p = planBreaks(slots, 1, undefined, [{ start: 780, end: 810 }], new Set(["a"]));
+  expect(p.has("a")).toBe(false);
   const lunch = p.get("b")!.lunch.start;
   expect(lunch === null || lunch < 780 || lunch >= 810).toBe(true);
 });

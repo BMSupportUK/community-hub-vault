@@ -84,7 +84,7 @@ export const Route = createFileRoute("/api/public/hooks/scheduled-reminders")({
           const fresh = rows.filter((r) => !planned.has(r.userId) && ukMin < r.end);
           if (fresh.length) {
             const reserved = plans.filter((r) => r.start_min !== null).map((r) => ({ start: r.start_min as number, end: (r.start_min as number) + (r.kind === "lunch" ? 30 : 15) }));
-            const result = planBreaks(rows.filter((r) => !planned.has(r.userId)), 1, ukMin, reserved);
+            const result = planBreaks(rows, 1, ukMin, reserved, planned);
             const inserts: typeof plans = [];
             for (const f of fresh) {
               const up = result.get(f.userId);
