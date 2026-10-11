@@ -89,23 +89,18 @@ export function BreakPlanRows({ userId, usedKinds, onStartBreak }: { userId: str
 
   const items = useMemo(() => planItems(plan, usedKinds, nowMin), [plan, usedKinds, nowMin]);
 
-  // When an allocated time arrives, pop a dialog so the staff member starts
-  // the break themselves (they may be mid-ticket and want to hand it over).
-  // Dismissing snoozes it for a few minutes; it keeps coming back until the
-  // break is taken or the slot is missed.
-  const [dueOpen, setDueOpen] = useState(false);
-  const [snoozedUntil, setSnoozedUntil] = useState<Record<string, number>>({});
+  // When an allocated time arrives, start the break straight away. startBreak
+  // offers the ticket handover first (only when they're on a ticket). No
+  // reminder/snooze popup.
+  const startedRef = useRef<Set<string>>(new Set());
   const dueItem = items.find((it) => !it.done && !it.missed && it.start !== null && nowMin >= it.start);
   useEffect(() => {
-    if (!dueItem || dueItem.start === null) { setDueOpen(false); return; }
-    if ((snoozedUntil[dueItem.label] ?? 0) > nowMin) { setDueOpen(false); return; }
-    setDueOpen(true);
-  }, [dueItem?.label, dueItem?.start, dueItem?.done, nowMin, snoozedUntil]);
-
-  const snooze = () => {
-    if (dueItem) setSnoozedUntil((s) => ({ ...s, [dueItem.label]: nowMin + 5 }));
-    setDueOpen(false);
-  };
+    if (!dueItem || dueItem.start === null || !onStartBreak) return;
+    const key = `${dueItem.label}@${dueItem.start}`;
+    if (startedRef.current.has(key)) return;
+    startedRef.current.add(key);
+    onStartBreak(dueItem.kind);
+  }, [dueItem?.label, dueItem?.start, onStartBreak]);
 
   if (!plan) return null;
   const next = items.find((i) => !i.done && !i.missed && i.start !== null);
@@ -124,21 +119,6 @@ export function BreakPlanRows({ userId, usedKinds, onStartBreak }: { userId: str
           );
         })}
       </div>
-      <Dialog open={dueOpen} onOpenChange={(o) => { if (!o) snooze(); }}>
-        <DialogContent className="w-[calc(100vw-2rem)] max-w-md overflow-x-hidden">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2"><Coffee className="size-5 text-warning" />{dueItem?.label} is due</DialogTitle>
-            <DialogDescription>
-              Your {dueItem?.label.toLowerCase()} was planned for {dueItem?.start !== null && dueItem ? fromMinutes(dueItem.start) : ""} (UK office time).
-              If you're on a ticket, starting the break offers to pass it to a covering colleague first. It ends on its own.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="flex-col gap-2 sm:flex-row">
-            <Button variant="outline" className="w-full sm:flex-1" onClick={snooze}>Not yet — remind me in 5 min</Button>
-            <Button className="w-full sm:flex-1" onClick={() => { setDueOpen(false); if (dueItem) onStartBreak?.(dueItem.kind); }}>Start {dueItem?.label.toLowerCase()}</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </>
   );
 }
