@@ -5,7 +5,7 @@
 - UFC multi-time imports attach all listed channels to every slot. Triller `Event N` becomes channel `Triller TV N`.
 - Public sports guides expose only validated dates, times, and event names; never free-text notes, descriptions, or channel lines.
 - Advert slots show only BM Support's own affiliate banners in random, equal-time cycles; track each displayed banner's views and clicks, keep Member Home and the public landing page as separate zones, and include BM Support banners enabled for Forum throughout Boro Fan Zone alongside dedicated Fan Zone banners.
-- Member Home: staff keep image + greeting beneath (left column); members' "Hey" + name plate (no name text) + "Welcome to The Customer Portal" fills the right column above a subscription box that grows to close the gap (capped; compact on phones), its header showing only the clock.
+- Member Home: staff keep image + greeting in the left column; members get "Hey" + nameplate + "Welcome to The Customer Portal" above a subscription box that closes the gap (capped; compact on phones).
 - Header starts collapsed (slim bar) ONLY on the tickets page and Talk channels; every other BM Support page keeps it open. Re-resets on each navigation. Talk channels add channel name; Fan Zone never shows it.
 - Back-to-top ignores dialogs/inner panes. Bound Ticket/Talk viewports; cap and scroll mobile ticket headers to preserve messages and composers.
 - NHL Center Ice always treats its listing clock as ET and converts it to the correct UK date/time, ignoring supplied UK clocks; NFL Sunday Ticket and NBA League Pass use their stated UK times.
@@ -32,6 +32,7 @@
 - Gender-matched customer defaults never replace custom picks and exclude staff/Fan Zone-only users.
 - BM inbox stays separate from Fan Zone/Talk: participant-only tables, authenticated RPCs, admin/management-only report snapshots.
 - Seasonal Talk/inbox uses one date helper and overlay; locked chat stays untouched.
+- Dashboard access and the header button label come from `src/lib/admin-panel-access.ts`; tool cards follow the page permission list.
 <!-- LOVABLE:BEGIN -->
 - Break popup/sound shares one session-persisted per-break claim; expiry updates silently to prevent replay after dismiss, lock or reload.
 - Fantasy scoring gives full rates only to players who are in the manager's XI AND started the real match (stored per stat row as `started` from the FotMob team sheet); cards are counted from the match timeline as well as player stats, because FotMob's player table often omits them.
