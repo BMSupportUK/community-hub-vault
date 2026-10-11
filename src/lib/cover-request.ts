@@ -18,8 +18,13 @@ export function coverUntilIsValid(until: string, ukNowTime: string): boolean {
   return until > ukNowTime;
 }
 
-/** Asks for the required cover reason and end time. Returns null if cancelled. */
-export function askCoverRequest(): { reason: string; until: string } | null {
+/**
+ * Asks for the required cover reason and end time. Returns null if cancelled.
+ * When presetUntil is given (staff/management/admin), the end time is taken
+ * from today's business closing time and the staff member is not asked.
+ * Moderators work their own hours, so they still enter the time themselves.
+ */
+export function askCoverRequest(presetUntil?: string): { reason: string; until: string } | null {
   let reason: string | null = null;
   for (let i = 0; i < 3 && !reason; i += 1) {
     const a = window.prompt(
