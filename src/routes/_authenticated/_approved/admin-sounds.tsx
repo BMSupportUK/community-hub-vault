@@ -319,6 +319,54 @@ function AdminSounds() {
         </div>
       </div>
 
+      <div className="rounded-2xl border border-border bg-surface-1 p-4">
+        <h2 className="font-display font-bold">All notifications</h2>
+        <p className="text-xs text-muted-foreground mt-1">
+          {ALL_NOTIFICATIONS.length} notifications · {ALL_NOTIFICATIONS.filter((n) => n.sound).length} have an MP3 ·{" "}
+          {ALL_NOTIFICATIONS.filter((n) => !n.sound).length} have none yet
+        </p>
+        <div className="mt-3 overflow-x-auto">
+          <table className="w-full text-xs">
+            <thead className="text-left text-muted-foreground">
+              <tr>
+                <th className="py-2 pr-3">Notification</th>
+                <th className="py-2 pr-3 hidden sm:table-cell">When</th>
+                <th className="py-2 pr-3">Website MP3</th>
+                <th className="py-2 pr-3 hidden md:table-cell">Android tone</th>
+                <th className="py-2"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {ALL_NOTIFICATIONS.map((n) => {
+                const s = n.sound ? SOUNDS.find((x) => x.key === n.sound) : undefined;
+                const custom = s ? !!getOverrideUrl(s.key) : false;
+                return (
+                  <tr key={n.label} className="border-t border-border">
+                    <td className="py-2 pr-3 font-semibold">{n.label}</td>
+                    <td className="py-2 pr-3 text-muted-foreground hidden sm:table-cell">{n.when}</td>
+                    <td className="py-2 pr-3">
+                      {s ? (
+                        <span className="font-mono">{custom ? "Custom upload" : s.file}</span>
+                      ) : (
+                        <span className="rounded-full bg-destructive/15 text-destructive px-2 py-0.5">No MP3 allocated</span>
+                      )}
+                    </td>
+                    <td className="py-2 pr-3 font-mono text-muted-foreground hidden md:table-cell">{n.phone ?? "Phone default"}</td>
+                    <td className="py-2 text-right">
+                      {s && (
+                        <button type="button" onClick={() => void play(s)} className="inline-flex items-center gap-1 rounded-lg border border-border bg-surface-2 px-2 py-1 font-semibold hover:border-primary">
+                          <Play className="size-3" /> Play
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       <div className="inline-flex rounded-xl border border-border bg-surface-1 p-1">
         {([["spoken", "Spoken / in-app sounds", Volume2], ["mobile", "Mobile phone alerts", Smartphone]] as const).map(([k, label, Icon]) => (
           <button
