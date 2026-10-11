@@ -49,5 +49,39 @@ export function adminPanelToolAllowed(
   const pageKey = tool.to.replace(/^\//, "").split("/")[0] ?? "";
   const allowed = perms[pageKey];
   if (!allowed) return true; // page not registered = open (same rule as the route guard)
-  return roles.some((r) => allowed.includes(r));
+  const bm = bmSupportRoles(roles);
+  return bm.some((r) => allowed.includes(r));
+}
+
+/**
+ * Boro Fan Zone roles never add cards to the BM Support dashboard — only the
+ * person's BM Support roles (e.g. staff) count there.
+ */
+export function bmSupportRoles(roles: readonly string[]): string[] {
+  return roles.filter((r) => !r.startsWith("boro_fan_zone"));
+}
+
+/**
+ * Extra dashboard cards for staff: every BM Support page the permission list
+ * ticks for their BM Support roles that has no tool card of its own, so each
+ * allowed section shows up. Excludes the dashboard itself.
+ */
+export function staffAllowedPageKeys(
+  roles: readonly string[],
+  perms: PagePermMap | null,
+  existingKeys: ReadonlySet<string>,
+  isFanZonePage: (key: string) => boolean,
+): string[] {
+  if (!perms) return [];
+  if (roles.includes("admin") || roles.includes("management")) return [];
+  if (!canOpenAdminPanel(roles)) return [];
+  const bm = bmSupportRoles(roles);
+  return Object.entries(perms)
+    .filter(([key, allowed]) =>
+      key !== "admin" &&
+      !existingKeys.has(key) &&
+      !isFanZonePage(key) &&
+      bm.some((r) => allowed.includes(r)),
+    )
+    .map(([key]) => key);
 }

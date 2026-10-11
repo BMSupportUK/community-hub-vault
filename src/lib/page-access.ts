@@ -7,16 +7,25 @@ let cached: PagePermMap | null = null;
 let inflight: Promise<PagePermMap> | null = null;
 const listeners = new Set<() => void>();
 let realtimeStarted = false;
+let labels: Record<string, string> = {};
+
+/** The name the owner gave a page in Role permissions (falls back to the key). */
+export function pagePermissionLabel(key: string): string {
+  return labels[key] ?? key.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
 
 async function load(): Promise<PagePermMap> {
   if (cached) return cached;
   if (inflight) return inflight;
   inflight = (async () => {
-    const { data } = await supabase.from("page_permissions").select("page_key,allowed_roles");
+    const { data } = await supabase.from("page_permissions").select("page_key,allowed_roles,label");
     const map: PagePermMap = {};
-    (data ?? []).forEach((r: { page_key: string; allowed_roles: string[] | null }) => {
+    const names: Record<string, string> = {};
+    (data ?? []).forEach((r: { page_key: string; allowed_roles: string[] | null; label: string | null }) => {
       map[r.page_key] = r.allowed_roles ?? [];
+      if (r.label) names[r.page_key] = r.label;
     });
+    labels = names;
     cached = map;
     inflight = null;
     for (const l of listeners) l();
