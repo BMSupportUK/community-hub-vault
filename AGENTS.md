@@ -15,7 +15,7 @@
 - Talk: show all staff/channel; fit composer and people. Mobile guide PDFs render in-page.
 - Talk presence: channel exit broadcasts leave/untracks next task; sign-out also removes the shared channel without respawn, preventing stale online users.
 - Staff Away reads shared user_dnd_status; because it holds only the current window, Away history lives in a trigger-written table matched to shifts.
-- Android spoken alerts use dedicated versioned notification channels; change the channel ID when correcting a sound because Android keeps a channel's original sound permanently.
+- Android alerts use a distinct tone per alert type on dedicated versioned notification channels; change the channel ID when correcting a sound because Android keeps a channel's original sound permanently.
 - Shift reminders use only the scheduled-reminders path; the legacy shift-phone-alerts cron stays disabled to prevent duplicate or post-clock-in alerts.
 - Manual orders use password-gated checkout links and order-only chat; paid, non-cancelled orders can open published guides through the same credentials.
 - Secure checkout browses only reached stages, never reverses payment; staff completion requires confirmed account setup.
