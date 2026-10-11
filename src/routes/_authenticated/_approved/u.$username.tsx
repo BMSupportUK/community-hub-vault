@@ -36,7 +36,6 @@ import { ThemePicker, APP_THEME_OPTIONS } from "@/components/app/ThemePicker";
 import { setPersonalAppTheme, useAppTheme } from "@/hooks/use-app-theme";
 import { useServerFn } from "@tanstack/react-start";
 import { assignReferrer } from "@/lib/referrals.functions";
-import ShiftHistoryPanel from "@/components/app/ShiftHistoryPanel";
 import { SubscriptionDetailsCard } from "@/components/app/SubscriptionDetailsCard";
 import { useViewportLockable } from "@/hooks/use-viewport-lock";
 
@@ -523,11 +522,10 @@ function ProfilePage() {
     );
   }
 
-  // Shift history is only meaningful for staff-side roles, and is visible to the
+  // Shift history lives on its own page (/shift-history) via the header button.
   // staff member themselves plus the wider support team.
   const isStaffProfile = sortedRoles.some((r) => ["admin", "management", "staff", "moderator"].includes(r));
   const isBmSupportProfile = sortedRoles.length === 0 || sortedRoles.some((r) => isSupportRole(r));
-  const canSeeShifts = isStaffProfile && (isOwner || hasAny(["admin", "management", "staff", "moderator"]));
   const canSeeSubscription = isStaffProfile && isOwner && hasAssignedCreds;
 
   const tabDefs = [
@@ -788,11 +786,6 @@ function ProfilePage() {
           </TabsContent>
 
 
-          {false && canSeeShifts && (
-            <TabsContent value="shifts" className={paneClass}>
-              <ShiftHistoryPanel userId={profile.id} name={display} username={profile.username} />
-            </TabsContent>
-          )}
 
 
           <TabsContent value="friends" className={paneClass}>
