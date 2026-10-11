@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Eye, EyeOff, KeyRound, Loader2, RefreshCw } from "lucide-react";
+import { Copy, Eye, EyeOff, KeyRound, Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { issueStaffPin, listStaffPinRequests, revealStaffPinForAdmin } from "@/lib/staff-pin.functions";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,17 @@ export function StaffPinAdminCard() {
   const [tab, setTab] = useState("requests");
   const [revealed, setRevealed] = useState<Record<string, string>>({});
   const [revealingId, setRevealingId] = useState<string | null>(null);
+
+  const copyPin = async (userId: string) => {
+    const pin = revealed[userId];
+    if (!pin) return;
+    try {
+      await navigator.clipboard.writeText(pin);
+      toast.success("Staff PIN copied");
+    } catch {
+      toast.error("Couldn't copy PIN — please copy it manually");
+    }
+  };
 
   const togglePin = async (userId: string) => {
     if (revealed[userId] !== undefined) {
@@ -88,6 +99,9 @@ export function StaffPinAdminCard() {
                 <span className="w-20 shrink-0 text-center font-mono text-lg" aria-label={revealed[staff.id] ? "Staff PIN revealed" : "Staff PIN hidden"}>{staff.pinIssuedAt ? revealed[staff.id] ?? "••••••" : "—"}</span>
                 <Button size="icon" variant="outline" disabled={!staff.pinIssuedAt || revealingId !== null} onClick={() => void togglePin(staff.id)} aria-label={`${revealed[staff.id] ? "Hide" : "Show"} PIN for ${staff.name}`} title={revealed[staff.id] ? "Hide PIN" : "Show PIN"}>
                   {revealingId === staff.id ? <Loader2 className="animate-spin" /> : revealed[staff.id] ? <EyeOff /> : <Eye />}
+                </Button>
+                <Button size="icon" variant="outline" className="shrink-0" disabled={!revealed[staff.id]} onClick={() => void copyPin(staff.id)} aria-label={`Copy PIN for ${staff.name}`} title={revealed[staff.id] ? "Copy PIN" : "Reveal PIN to copy"}>
+                  <Copy className="size-4" />
                 </Button>
               </div>
             ))}
