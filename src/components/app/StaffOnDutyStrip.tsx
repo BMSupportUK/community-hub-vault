@@ -758,6 +758,93 @@ export function StaffOnDutyStrip({
     </div>
   ) : null;
 
+  // Tickets page right sidebar: staff stacked vertically and split into role
+  // groups (Owner, Admin, Management, Staff) like the Talk channel sidebar.
+  if (variant === "tickets-sidebar") {
+    const roleOf = (id: string, fallback?: string) => roleFlashMap.get(id) ?? fallback ?? "staff";
+    const onDutyGroups = ROLE_ORDER
+      .map((role) => ({ role, shifts: orderedShifts.filter((s) => roleOf(s.user_id) === role) }))
+      .filter((g) => g.shifts.length > 0);
+    const offDutyGroups = OFF_ORDER
+      .map((role) => ({ role, people: visibleOffDuty.filter((p) => roleOf(p.id, p.role) === role) }))
+      .filter((g) => g.people.length > 0);
+    const groupHeading = (label: string, count: number, first: boolean) => (
+      <div className={cn("flex items-center gap-2 px-0.5", first ? "mb-1.5" : "mt-3 mb-1.5")}>
+        <span className="text-[10px] font-bold uppercase tracking-wider text-white/90">{label}</span>
+        <span className="px-1.5 py-0.5 rounded-full bg-white/10 text-[9px] text-white/80">{count}</span>
+        <div className="h-0.5 flex-1 rounded-full bg-white/25" />
+      </div>
+    );
+    return (
+      <div className="flex h-full min-h-0 flex-col gap-3">
+        {(daneShift || daneOff) && (
+          <div className="rounded-xl border border-amber-200/30 p-3 shadow-lg relative overflow-hidden bg-gradient-to-r from-amber-600/40 via-orange-500/30 to-amber-600/40 backdrop-blur shrink-0">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-amber-200 mb-1.5">
+              Owner
+            </div>
+            <div className="flex flex-col gap-2 min-w-0">
+              {daneShift ? renderOnDutyCard(daneShift) : renderOffDutyCard(daneOff!)}
+            </div>
+          </div>
+        )}
+
+        <div className="rounded-xl border border-white/15 p-3 shadow-lg relative overflow-hidden bg-gradient-to-b from-violet-600/40 via-fuchsia-600/40 to-blue-600/40 backdrop-blur flex-1 min-h-0 flex flex-col">
+          <div className="flex items-center justify-between mb-2 shrink-0">
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-white/90">
+              Staff on duty · {orderedShifts.length}
+            </div>
+            <div className="flex items-center gap-1 text-[10px] text-white/80">
+              <span className="size-2 rounded-full bg-emerald-400 animate-pulse" /> live
+            </div>
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain scrollbar-hide">
+            {orderedShifts.length === 0 ? (
+              <div className="flex flex-col items-center text-center px-2 py-3">
+                <img
+                  src={noStaffOnlineImg}
+                  alt=""
+                  loading="lazy"
+                  width={816}
+                  height={816}
+                  className="size-20 shrink-0 rounded-xl object-cover"
+                />
+                <div className="mt-2 text-sm font-bold uppercase tracking-wider text-white">No staff online</div>
+                <p className="mt-1 text-xs text-white/80">
+                  Our team is currently offline — this may be outside of our opening hours.
+                  Open a ticket and we'll get back to you as soon as someone is on duty.
+                </p>
+              </div>
+            ) : (
+              onDutyGroups.map((g, i) => (
+                <div key={g.role}>
+                  {groupHeading(formatRoleLabel(g.role), g.shifts.length, i === 0)}
+                  <div className="flex flex-col gap-2">
+                    {g.shifts.map((s) => renderOnDutyCard(s))}
+                  </div>
+                </div>
+              ))
+            )}
+            {offDutyGroups.length > 0 && (
+              <div className="mt-3 pt-3 border-t border-white/15">
+                <div className="text-[11px] font-semibold uppercase tracking-wider text-white/70 mb-2">
+                  Off duty · {visibleOffDuty.length}
+                </div>
+                {offDutyGroups.map((g, i) => (
+                  <div key={g.role}>
+                    {groupHeading(formatRoleLabel(g.role), g.people.length, i === 0)}
+                    <div className="flex flex-col gap-2">
+                      {g.people.map((p) => renderOffDutyCard(p))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (isTickets) {
     return (
       <div className="px-4 pt-4 space-y-3">
