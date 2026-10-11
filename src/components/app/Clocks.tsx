@@ -232,7 +232,7 @@ export function OfficeHoursSchedule({
                 <div className="text-xs text-muted-foreground">{officeDate}</div>
                 {/* UK hours and your local times sit side by side so the whole
                     week still fits the screen without scrolling. */}
-                <div className={cn("border-t border-border/50 pt-1.5", showUserColumn && "grid grid-cols-2 gap-1.5")}>
+                <div className={cn("border-t border-border/50 pt-1.5", showUserColumn && (splitWeekend ? "space-y-1.5" : "grid grid-cols-2 gap-1.5"))}>
                   <div>
                     <div className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">UK</div>
                     {closed ? (
