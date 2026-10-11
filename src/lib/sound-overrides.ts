@@ -22,7 +22,7 @@ export function getOverrideUrl(key: string): string | undefined {
 
 export function onOverridesChange(cb: () => void) {
   listeners.add(cb);
-  return () => listeners.delete(cb);
+  return () => { listeners.delete(cb); };
 }
 
 export function loadSoundOverrides(force = false): Promise<void> {
