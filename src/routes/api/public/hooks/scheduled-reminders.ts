@@ -347,14 +347,12 @@ export const Route = createFileRoute("/api/public/hooks/scheduled-reminders")({
           const label = b.kind === "lunch" ? "Main break" : "Break";
 
           if (remaining <= 0) {
-            jobs.push({
-              key: `break:${b.id}:over`,
-              userId: b.user_id as string,
-              title: `${label} is over`,
-              body: `You're over by ${Math.round(-remaining / 60)} min. Please clock back in.`,
-              url: "/clock",
-              kind: "break_over",
-            });
+            // Breaks end automatically — close it silently at its limit, no alert.
+            await supabaseAdmin
+              .from("breaks")
+              .update({ ended_at: new Date(new Date(b.started_at as string).getTime() + limit * 1000).toISOString() })
+              .eq("id", b.id as string)
+              .is("ended_at", null);
           } else if (remaining <= BREAK_WARN_SEC) {
             jobs.push({
               key: `break:${b.id}:warn`,
