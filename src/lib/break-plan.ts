@@ -39,10 +39,10 @@ export function planBreaks(slots: readonly PlanSlot[], minCover = 1, nowMin?: nu
     const eff = { ...s, start };
     const len = eff.end - eff.start;
     const reserve = (start: number | null, dur: number) => { if (start !== null) taken.push({ start, end: start + dur }); return start; };
-    const lunch = reserve(pick(s, s.start + len / 2, DUR.lunch, s.start + 60, s.end - 60), DUR.lunch);
-    const mid = lunch ?? s.start + len / 2;
-    const b1 = reserve(pick(s, s.start + len / 4, DUR.break, s.start + 30, mid - DUR.break), DUR.break);
-    const b2 = reserve(pick(s, s.start + (3 * len) / 4, DUR.break, mid + DUR.lunch, s.end - 30), DUR.break);
+    const lunch = reserve(pick(eff, eff.start + len / 2, DUR.lunch, eff.start, eff.end - 15), DUR.lunch);
+    const mid = lunch ?? eff.start + len / 2;
+    const b1 = reserve(pick(eff, eff.start + len / 4, DUR.break, eff.start, mid - DUR.break), DUR.break);
+    const b2 = reserve(pick(eff, eff.start + (3 * len) / 4, DUR.break, mid + DUR.lunch, eff.end), DUR.break);
     result.set(s.userId, {
       break1: { kind: "break", label: "Break 1", start: b1 },
       lunch: { kind: "lunch", label: "Lunch", start: lunch },
