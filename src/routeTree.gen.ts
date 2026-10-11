@@ -101,6 +101,7 @@ import { Route as AuthenticatedApprovedShiftsRouteImport } from './routes/_authe
 import { Route as AuthenticatedApprovedShopRouteImport } from './routes/_authenticated/_approved/shop'
 import { Route as AuthenticatedApprovedSportsGuidesRouteImport } from './routes/_authenticated/_approved/sports-guides'
 import { Route as AuthenticatedApprovedStaffRouteImport } from './routes/_authenticated/_approved/staff'
+import { Route as AuthenticatedApprovedStaffPinRouteImport } from './routes/_authenticated/_approved/staff-pin'
 import { Route as AuthenticatedApprovedStatusRouteImport } from './routes/_authenticated/_approved/status'
 import { Route as AuthenticatedApprovedStreamingDevicesRouteImport } from './routes/_authenticated/_approved/streaming-devices'
 import { Route as AuthenticatedApprovedTicketsRouteImport } from './routes/_authenticated/_approved/tickets'
@@ -693,6 +694,12 @@ const AuthenticatedApprovedStaffRoute =
     path: '/staff',
     getParentRoute: () => AuthenticatedApprovedRoute,
   } as any)
+const AuthenticatedApprovedStaffPinRoute =
+  AuthenticatedApprovedStaffPinRouteImport.update({
+    id: '/staff-pin',
+    path: '/staff-pin',
+    getParentRoute: () => AuthenticatedApprovedRoute,
+  } as any)
 const AuthenticatedApprovedStatusRoute =
   AuthenticatedApprovedStatusRouteImport.update({
     id: '/status',
@@ -1183,6 +1190,7 @@ export interface FileRoutesByFullPath {
   '/shop': typeof AuthenticatedApprovedShopRoute
   '/sports-guides': typeof AuthenticatedApprovedSportsGuidesRouteWithChildren
   '/staff': typeof AuthenticatedApprovedStaffRoute
+  '/staff-pin': typeof AuthenticatedApprovedStaffPinRoute
   '/status': typeof AuthenticatedApprovedStatusRoute
   '/streaming-devices': typeof AuthenticatedApprovedStreamingDevicesRoute
   '/tickets': typeof AuthenticatedApprovedTicketsRoute
@@ -1340,6 +1348,7 @@ export interface FileRoutesByTo {
   '/shop': typeof AuthenticatedApprovedShopRoute
   '/sports-guides': typeof AuthenticatedApprovedSportsGuidesRouteWithChildren
   '/staff': typeof AuthenticatedApprovedStaffRoute
+  '/staff-pin': typeof AuthenticatedApprovedStaffPinRoute
   '/status': typeof AuthenticatedApprovedStatusRoute
   '/streaming-devices': typeof AuthenticatedApprovedStreamingDevicesRoute
   '/tickets': typeof AuthenticatedApprovedTicketsRoute
@@ -1503,6 +1512,7 @@ export interface FileRoutesById {
   '/_authenticated/_approved/shop': typeof AuthenticatedApprovedShopRoute
   '/_authenticated/_approved/sports-guides': typeof AuthenticatedApprovedSportsGuidesRouteWithChildren
   '/_authenticated/_approved/staff': typeof AuthenticatedApprovedStaffRoute
+  '/_authenticated/_approved/staff-pin': typeof AuthenticatedApprovedStaffPinRoute
   '/_authenticated/_approved/status': typeof AuthenticatedApprovedStatusRoute
   '/_authenticated/_approved/streaming-devices': typeof AuthenticatedApprovedStreamingDevicesRoute
   '/_authenticated/_approved/tickets': typeof AuthenticatedApprovedTicketsRoute
@@ -1665,6 +1675,7 @@ export interface FileRouteTypes {
     | '/shop'
     | '/sports-guides'
     | '/staff'
+    | '/staff-pin'
     | '/status'
     | '/streaming-devices'
     | '/tickets'
@@ -1822,6 +1833,7 @@ export interface FileRouteTypes {
     | '/shop'
     | '/sports-guides'
     | '/staff'
+    | '/staff-pin'
     | '/status'
     | '/streaming-devices'
     | '/tickets'
@@ -1984,6 +1996,7 @@ export interface FileRouteTypes {
     | '/_authenticated/_approved/shop'
     | '/_authenticated/_approved/sports-guides'
     | '/_authenticated/_approved/staff'
+    | '/_authenticated/_approved/staff-pin'
     | '/_authenticated/_approved/status'
     | '/_authenticated/_approved/streaming-devices'
     | '/_authenticated/_approved/tickets'
@@ -2772,6 +2785,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedApprovedStaffRouteImport
       parentRoute: typeof AuthenticatedApprovedRoute
     }
+    '/_authenticated/_approved/staff-pin': {
+      id: '/_authenticated/_approved/staff-pin'
+      path: '/staff-pin'
+      fullPath: '/staff-pin'
+      preLoaderRoute: typeof AuthenticatedApprovedStaffPinRouteImport
+      parentRoute: typeof AuthenticatedApprovedRoute
+    }
     '/_authenticated/_approved/status': {
       id: '/_authenticated/_approved/status'
       path: '/status'
@@ -3398,6 +3418,7 @@ interface AuthenticatedApprovedRouteChildren {
   AuthenticatedApprovedShopRoute: typeof AuthenticatedApprovedShopRoute
   AuthenticatedApprovedSportsGuidesRoute: typeof AuthenticatedApprovedSportsGuidesRouteWithChildren
   AuthenticatedApprovedStaffRoute: typeof AuthenticatedApprovedStaffRoute
+  AuthenticatedApprovedStaffPinRoute: typeof AuthenticatedApprovedStaffPinRoute
   AuthenticatedApprovedStatusRoute: typeof AuthenticatedApprovedStatusRoute
   AuthenticatedApprovedStreamingDevicesRoute: typeof AuthenticatedApprovedStreamingDevicesRoute
   AuthenticatedApprovedTicketsRoute: typeof AuthenticatedApprovedTicketsRoute
@@ -3515,6 +3536,7 @@ const AuthenticatedApprovedRouteChildren: AuthenticatedApprovedRouteChildren = {
   AuthenticatedApprovedSportsGuidesRoute:
     AuthenticatedApprovedSportsGuidesRouteWithChildren,
   AuthenticatedApprovedStaffRoute: AuthenticatedApprovedStaffRoute,
+  AuthenticatedApprovedStaffPinRoute: AuthenticatedApprovedStaffPinRoute,
   AuthenticatedApprovedStatusRoute: AuthenticatedApprovedStatusRoute,
   AuthenticatedApprovedStreamingDevicesRoute:
     AuthenticatedApprovedStreamingDevicesRoute,
