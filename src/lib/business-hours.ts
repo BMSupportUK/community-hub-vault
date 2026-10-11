@@ -70,6 +70,29 @@ export async function nextOpeningLabel(now = new Date()): Promise<string | null>
 }
 
 /**
+ * Today's closing time as "HH:MM" (UK), or null when the office is closed
+ * today or has already closed. Used to pre-fill cover sign-in end times.
+ */
+export async function todayClosingTime(now = new Date()): Promise<string | null> {
+  try {
+    const { data } = await supabase
+      .from("business_hours")
+      .select("day_of_week, open_time, close_time, is_closed")
+      .eq("day_of_week", londonDayIndex(now))
+      .maybeSingle();
+    const row = data as HourRow | null;
+    if (!row || row.is_closed || !row.close_time) return null;
+    const [h, m] = row.close_time.split(":");
+    const close = `${String(h).padStart(2, "0")}:${String(m ?? "00").padStart(2, "0")}`;
+    const parts = londonParts(now);
+    const nowTime = `${parts.hour}:${parts.minute}`;
+    return close > nowTime ? close : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Returns the out-of-hours message to post, or null if currently open.
  * UK public holidays always count as closed and get their own message.
  * Wording comes from the editable automated messages in the admin dashboard.

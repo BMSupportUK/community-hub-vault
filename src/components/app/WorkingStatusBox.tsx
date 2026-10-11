@@ -33,6 +33,7 @@ import { toast } from "sonner";
 import { requestEarlyFinish } from "@/lib/early-finish.functions";
 import { requestCoverSignIn } from "@/lib/cover-request.functions";
 import { askCoverRequest } from "@/lib/cover-request";
+import { todayClosingTime } from "@/lib/business-hours";
 import { formatRoleLabel } from "@/lib/role-label";
 import { browserTimezone } from "@/hooks/use-user-timezone";
 import { shiftWindowToUtcMs } from "@/hooks/use-timezone";
@@ -452,7 +453,11 @@ export function WorkingStatusBox({
         toast.info("Your cover request is waiting for admin or management.");
         return;
       }
-      const ask = askCoverRequest();
+      // Moderators work their own hours, so they enter the end time; staff,
+      // management and admin get today's business closing time pre-filled.
+      const isModerator = roles.includes("moderator") && !hasAny(["admin", "management", "staff"]);
+      const preset = isModerator ? undefined : ((await todayClosingTime()) ?? undefined);
+      const ask = askCoverRequest(preset);
       if (!ask) return;
       setBusy(true);
       try {
