@@ -61,13 +61,13 @@ export function BreakPlanRows({ userId, usedKinds }: { userId: string; usedKinds
     ].map((it) => ({ ...it, missed: !it.done && it.start !== null && nowMin > it.start + 15 }));
   }, [plan, usedKinds, nowMin]);
 
-  // Reminder when an allocated time arrives (staff still tap to start it).
+  // Notice when an allocated time arrives (the break starts automatically).
   useEffect(() => {
     for (const it of items) {
       if (it.done || it.start === null || nowMin < it.start || nowMin > it.start + 15) continue;
       const key = `break-plan-${userId}-${ukNow().date}-${it.label}`;
       try { if (sessionStorage.getItem(key)) continue; sessionStorage.setItem(key, "1"); } catch { /* ignore */ }
-      toast.info(`${it.label} is due now (${fromMinutes(it.start)}) — start it from Working Status.`, { duration: 15_000 });
+      toast.info(`${it.label} is due now (${fromMinutes(it.start)}) — it starts automatically.`, { duration: 15_000 });
     }
   }, [items, nowMin, userId]);
 
