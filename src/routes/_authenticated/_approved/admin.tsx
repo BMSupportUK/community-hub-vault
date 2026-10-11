@@ -7,6 +7,8 @@ import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { backfillVpnDetection } from "@/lib/vpn-backfill.functions";
 import { unlockWithStaffPin, requestStaffPinReset } from "@/lib/staff-pin.functions";
+import { adminPanelToolAllowed, canOpenAdminPanel } from "@/lib/admin-panel-access";
+import { usePagePermissions } from "@/lib/page-access";
 import { StaffPinAdminCard } from "@/components/app/StaffPinAdminCard";
 import { CardPaymentsAdminCard } from "@/components/app/CardPaymentsAdminCard";
 import { OrderStatusAdminCard } from "@/components/app/OrderStatusAdminCard";
@@ -64,8 +66,7 @@ const UNLOCK_KEY = (uid: string) => `admin_unlock_until:${uid}`;
 
 
 function AdminDashboard() {
-  const { user, hasAny } = useAuth();
-  const isAdmin = hasAny(["admin", "management"]);
+  const { user, roles } = useAuth();
   const [hasPin, setHasPin] = useState<boolean | null>(null);
   const [unlocked, setUnlocked] = useState(false);
   const [unlockedUntil, setUnlockedUntil] = useState(0);
@@ -107,7 +108,7 @@ function AdminDashboard() {
     if (user) { try { sessionStorage.removeItem(UNLOCK_KEY(user.id)); } catch {} }
   };
 
-  if (!isAdmin) return <Navigate to="/home" />;
+  if (!canOpenAdminPanel(roles)) return <Navigate to="/home" />;
 
   return (
     <main className="h-full min-h-0 flex-1 overflow-y-auto overscroll-contain">
@@ -496,9 +497,11 @@ import toolArtReviews from "@/assets/tools/reviews.png";
 import toolArtTeam from "@/assets/tools/team.png";
 
 function DashboardBody() {
-  const { hasRole } = useAuth();
+  const { hasRole, roles } = useAuth();
   const isAdminOnly = hasRole("admin");
   const canSeePins = isAdminOnly || hasRole("management");
+  const perms = usePagePermissions();
+  const toolsHeading = canSeePins ? "Owner tools" : "Staff tools";
   const { tab: searchTab } = Route.useSearch();
   const validTabs = ["tools", "order-status", "square", "stripe", "bank-transfer", "bank-transfer-orders", "cash", "staff-pins", "backup-codes", "theme", "header-links", "invoice-template", "sign-out-devices", "android-apk"] as const;
   type DashTab = (typeof validTabs)[number];
@@ -542,7 +545,7 @@ function DashboardBody() {
     { to: "/admin-streaming-devices", label: "Streaming devices", desc: "Manage the streaming device catalogue and refresh UK retailer prices.", icon: MonitorPlay, art: toolArtDevices },
     { to: "/shop", search: { view: "admin" }, label: "Shop products", desc: "Add, edit and reorder shop products and categories.", icon: Package, adminOnly: true, art: toolArtShop },
     { to: "/shop", search: { view: "discounts" }, label: "Discount codes", desc: "Create and manage promotional discount codes.", icon: Tag, adminOnly: true, art: toolArtShop },
-    { to: "/install-guides", search: { tab: "app-apk" }, label: "App APK & transfers", desc: "Upload the Android APK and monitor the live 24-hour install links members have requested.", icon: Package, art: toolArtDevices },
+    { to: "/install-guides", search: { tab: "app-apk" }, label: "App APK & transfers", desc: "Upload the Android APK and monitor the live 24-hour install links members have requested.", icon: Package, adminOnly: true, managementToo: true, art: toolArtDevices },
     { to: "/admin-sounds", label: "Notification sounds", desc: "Test spoken and phone alerts, and upload replacement sounds.", icon: Bell, art: toolArtAlerts },
     { to: "/admin-ad-stats", label: "Advert performance", desc: "See how many views and clicks each advert unit gets on bmsupport.uk, by page and by day.", icon: BarChart3, art: toolArtMoney },
     { to: "/admin-shifts", label: "Staff shifts", desc: "Review every staff shift, clock-in, clock-out, breaks and auto clock-out, grouped by day.", icon: Users, art: toolArtTeam },
@@ -553,11 +556,11 @@ function DashboardBody() {
     { tabKey: "android-apk", label: "Android app file", desc: "Upload the BM Support APK the download barcode points to.", icon: Smartphone, adminOnly: true, art: toolArtDevices },
   ];
   const tools = allTools
-    .filter((t) => !t.adminOnly || isAdminOnly || (t.managementToo && hasRole("management")))
+    .filter((t) => adminPanelToolAllowed(t, roles, perms))
     .sort((a, b) => a.label.localeCompare(b.label, "en-GB", { sensitivity: "base" }));
 
   const tabs = ([
-    ["tools", "Owner tools", false],
+    ["tools", toolsHeading, false],
     ["order-status", "Orders", true],
     ["profit-costs", "Profit & costs", "profit"],
     ["square", "Square", true],
@@ -647,7 +650,7 @@ function DashboardBody() {
       ) : (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px] items-start">
       <section className="min-w-0">
-        <h2 className="font-display text-sm uppercase tracking-wide text-muted-foreground mb-3">Owner tools</h2>
+        <h2 className="font-display text-sm uppercase tracking-wide text-muted-foreground mb-3">{toolsHeading}</h2>
         <div className="grid grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-3">
           {tools.map((t, i) => {
             const letter = t.label[0].toUpperCase();
