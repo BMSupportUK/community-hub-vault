@@ -270,6 +270,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // only: it must never block or delay the actual sign out.
           const requestEarlyFinishOnSignOut = async () => {
             if (!signingOutUser) return;
+            const { data: open } = await supabase.from("shifts").select("id")
+              .eq("user_id", signingOutUser.id).is("clock_out", null)
+              .order("clock_in", { ascending: false }).limit(1).maybeSingle();
+            if (!open) return;
+            // Same rota-end gate as the clock page and Working Status box.
+            const { shiftFinishAction, ukClock } = await import("@/lib/shift-finish");
+            const london = ukClock(Date.now());
+            const { data: slots, error: rotaError } = await supabase.from("shift_slots")
+              .select("end_time").eq("assigned_to", signingOutUser.id)
+              .eq("shift_date", london.date).order("start_time");
+            if (rotaError) throw rotaError;
+            const rotaEnd = slots?.find((slot) => slot.end_time > london.time)?.end_time ?? null;
+            if (shiftFinishAction(Date.now(), rotaEnd, false) === "clock-out") {
+              const nowIso = new Date().toISOString();
+              await supabase.from("breaks").update({ ended_at: nowIso })
+                .eq("shift_id", open.id).is("ended_at", null);
+              await supabase.from("shifts").update({ clock_out: nowIso }).eq("id", open.id);
+              return;
+            }
             const { requestEarlyFinish } = await import("@/lib/early-finish.functions");
             await requestEarlyFinish({ data: { reason: "Signed out mid-shift" } });
           };
