@@ -6,6 +6,7 @@ export type PagePermMap = Record<string, string[]>;
 let cached: PagePermMap | null = null;
 let inflight: Promise<PagePermMap> | null = null;
 const listeners = new Set<() => void>();
+let realtimeStarted = false;
 
 async function load(): Promise<PagePermMap> {
   if (cached) return cached;
@@ -29,12 +30,25 @@ export function refreshPagePermissions() {
   void load();
 }
 
-/** Shared, cached page-permission map. Returns null until it has loaded. */
+/** Reload the shared map whenever the owner changes any page permission. */
+function ensureRealtime() {
+  if (realtimeStarted) return;
+  realtimeStarted = true;
+  supabase
+    .channel("page-permissions-live")
+    .on("postgres_changes", { event: "*", schema: "public", table: "page_permissions" }, () => {
+      refreshPagePermissions();
+    })
+    .subscribe();
+}
+
+/** Shared, cached page-permission map. Returns null until it has loaded. Updates live. */
 export function usePagePermissions(): PagePermMap | null {
   const [, force] = useState(0);
   useEffect(() => {
     const l = () => force((n) => n + 1);
     listeners.add(l);
+    ensureRealtime();
     if (!cached) void load();
     return () => {
       listeners.delete(l);
