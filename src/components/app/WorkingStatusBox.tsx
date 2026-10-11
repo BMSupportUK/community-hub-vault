@@ -37,7 +37,7 @@ import { todayClosingTime } from "@/lib/business-hours";
 import { formatRoleLabel } from "@/lib/role-label";
 import { browserTimezone } from "@/hooks/use-user-timezone";
 import { shiftWindowToUtcMs } from "@/hooks/use-timezone";
-import { BreakPlanRows } from "@/components/app/BreakPlanRows";
+import { BreakPlanRows, NextBreakPill } from "@/components/app/BreakPlanRows";
 import { offerTicketHandover } from "@/lib/break-handover";
 
 type Shift = { id: string; clock_in: string };
