@@ -12,7 +12,7 @@
 - Corrected sports formats need split/safety/read-back tests. DAZN inline slots stay separate; qualifiers extend titles.
 - Manual sports splits preserve both halves; only adjacent headings move, and shared headings copy to the second half.
 - Gmail forwarding confirmations are captured by the email receiver and shown only to admins on the Bank Transfer page.
-- Talk: show all staff/channel; fit composer and people. Mobile guide PDFs render in-page.
+- Talk: show all staff/channel; fit composer and people.
 - Talk presence: channel exit broadcasts leave/untracks next task; sign-out also removes the shared channel without respawn, preventing stale online users.
 - Staff Away reads shared user_dnd_status; because it holds only the current window, Away history lives in a trigger-written table matched to shifts.
 - Android alerts use distinct per-type tones on versioned channels; change the channel ID when correcting a sound because Android keeps a channel's original sound permanently.
@@ -36,4 +36,4 @@
 - Break popup/sound shares one session-persisted per-break claim; expiry updates silently to prevent replay after dismiss, lock or reload.
 - Fantasy scoring gives full rates only to players who are in the manager's XI AND started the real match (stored per stat row as `started` from the FotMob team sheet); cards are counted from the match timeline as well as player stats, because FotMob's player table often omits them.
 <!-- LOVABLE:END -->
-- Admin-uploaded notification sounds override by sound key inside playSound (private bucket, signed links), so every web caller picks them up; closed-app Android tones stay baked into the APK and need a rebuild with new channel IDs.
+- Uploaded sound overrides resolve inside playSound so all web callers use them; closed-app Android tones need an APK rebuild.
