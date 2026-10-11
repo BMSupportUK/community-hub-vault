@@ -1,11 +1,13 @@
 import { createFileRoute, Navigate, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Play, Loader2, CheckCircle2, XCircle, Volume2, Square, Send, Smartphone } from "lucide-react";
+import { ArrowLeft, Play, Loader2, CheckCircle2, XCircle, Volume2, Square, Send, Smartphone, Upload, RotateCcw } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { SoundSettings } from "@/components/app/SoundSettings";
 import { playSoundFromGesture, getSoundPrefs } from "@/lib/sound";
 import { sendTestPush } from "@/lib/test-push.functions";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { SOUND_BUCKET, loadSoundOverrides, getOverrideUrl, onOverridesChange } from "@/lib/sound-overrides";
 
 import mentionAudio from "@/assets/mention-notify.mp3";
 import staffMentionAudio from "@/assets/staff-mention.mp3";
@@ -52,7 +54,7 @@ const SOUNDS: SoundDef[] = [
   { key: "order", label: "Sale / Order", file: "order-notify.mp3", src: orderAudio, gain: 1.8, trigger: "A customer places a new order." },
   { key: "ticket", label: "New ticket", file: "ticket-notify.mp3", src: ticketAudio, gain: 2.0, trigger: "A new support ticket is opened / left unanswered." },
   { key: "ticket-reply", label: "Ticket reply", file: "ticket-reply-notify.mp3", src: ticketReplyAudio, gain: 2.0, trigger: "A customer replies to a ticket you are assigned to." },
-  { key: "payment", label: "Payment confirmed", file: "payment-received.mp3", src: paymentReceivedAudio, gain: 2.0, trigger: "An order payment is confirmed (card or bank transfer)." },
+  { key: "payment-received", label: "Payment confirmed", file: "payment-received.mp3", src: paymentReceivedAudio, gain: 2.0, trigger: "An order payment is confirmed (card or bank transfer)." },
   { key: "signup", label: "New signup", file: "new-signup-notify.mp3", src: newSignupAudio, gain: 1.8, trigger: "A new member signs up and hits the gate." },
   { key: "shift-start", label: "Shift start", file: "shift-start.mp3", src: shiftStartAudio, gain: 2.2, trigger: "Your rota shift is about to start." },
   { key: "shift-end", label: "Shift end", file: "shift-end.mp3", src: shiftEndAudio, gain: 2.2, trigger: "Your rota shift is about to end." },
@@ -84,6 +86,39 @@ function AdminSounds() {
   const sequenceRef = useRef<number | null>(null);
   const [running, setRunning] = useState(false);
   const [pushBusy, setPushBusy] = useState<string | null>(null);
+  const [tab, setTab] = useState<"spoken" | "mobile">("spoken");
+  const [, setOvVersion] = useState(0);
+  const [uploading, setUploading] = useState<string | null>(null);
+  useEffect(() => {
+    void loadSoundOverrides(true);
+    return onOverridesChange(() => setOvVersion((v) => v + 1));
+  }, []);
+
+  const replaceSound = async (key: string, file: File) => {
+    if (!file.type.startsWith("audio/")) return toast.error("Choose an audio file (MP3).");
+    setUploading(key);
+    try {
+      const ext = file.name.split(".").pop() || "mp3";
+      const path = `${key}/${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage.from(SOUND_BUCKET).upload(path, file, { contentType: file.type });
+      if (upErr) throw upErr;
+      const { error } = await supabase.from("notification_sound_overrides").upsert({ sound_key: key, url: path, updated_at: new Date().toISOString() });
+      if (error) throw error;
+      await loadSoundOverrides(true);
+      toast.success("Sound replaced — everyone hears the new one from now on.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Upload failed");
+    } finally {
+      setUploading(null);
+    }
+  };
+
+  const resetSound = async (key: string) => {
+    const { error } = await supabase.from("notification_sound_overrides").delete().eq("sound_key", key);
+    if (error) return toast.error(error.message);
+    await loadSoundOverrides(true);
+    toast.success("Back to the original sound.");
+  };
 
   const PUSH_KINDS: { key: string; label: string }[] = [
     { key: "ticket", label: "New ticket" },
@@ -242,9 +277,24 @@ function AdminSounds() {
         </div>
       </div>
 
+      <div className="inline-flex rounded-xl border border-border bg-surface-1 p-1">
+        {([["spoken", "Spoken / in-app sounds", Volume2], ["mobile", "Mobile phone alerts", Smartphone]] as const).map(([k, label, Icon]) => (
+          <button
+            key={k}
+            type="button"
+            onClick={() => setTab(k)}
+            className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold ${tab === k ? "bg-gradient-primary text-primary-foreground shadow-glow" : "text-muted-foreground hover:text-foreground"}`}
+          >
+            <Icon className="size-4" /> {label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "spoken" && (<>
       <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
         {SOUNDS.map((s) => {
           const c = checks[s.key];
+          const ov = getOverrideUrl(s.key);
           const active = nowPlaying === s.key;
           return (
             <div
@@ -277,7 +327,7 @@ function AdminSounds() {
               <audio
                 controls
                 preload="metadata"
-                src={s.src}
+                src={ov ?? s.src}
                 className="mt-3 h-10 w-full"
                 aria-label={`Native player for ${s.label}`}
               >
@@ -302,11 +352,37 @@ function AdminSounds() {
               {c?.status === "fail" && (
                 <p className="mt-2 text-xs text-rose-300">Failed: {c.error}</p>
               )}
+
+              <div className="mt-3 flex flex-wrap items-center gap-2">
+                <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-xl border border-border bg-surface-2 px-3 py-2 text-xs font-semibold hover:border-primary">
+                  {uploading === s.key ? <Loader2 className="size-3.5 animate-spin" /> : <Upload className="size-3.5" />}
+                  Upload & replace
+                  <input
+                    type="file"
+                    accept="audio/*"
+                    className="hidden"
+                    disabled={!!uploading}
+                    onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) void replaceSound(s.key, f); }}
+                  />
+                </label>
+                {ov && (
+                  <>
+                    <span className="text-[11px] rounded-full bg-primary/15 text-primary px-2 py-0.5">Custom sound</span>
+                    <button type="button" onClick={() => void resetSound(s.key)} className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+                      <RotateCcw className="size-3.5" /> Use original
+                    </button>
+                  </>
+                )}
+              </div>
             </div>
           );
         })}
       </div>
 
+      <SoundSettings />
+      </>)}
+
+      {tab === "mobile" && (
       <div className="rounded-2xl border border-border bg-surface-1 p-4 space-y-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -342,9 +418,12 @@ function AdminSounds() {
             </button>
           ))}
         </div>
+        <p className="text-xs text-muted-foreground">
+          Phone alerts with the app closed use the tones built into the Android app. Uploaded replacements play
+          straight away on the website; to put them on phones with the app closed, a new Android app version is built with them.
+        </p>
       </div>
-
-      <SoundSettings />
+      )}
     </div>
   );
 }

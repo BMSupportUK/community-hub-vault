@@ -4136,6 +4136,27 @@ export type Database = {
         }
         Relationships: []
       }
+      notification_sound_overrides: {
+        Row: {
+          sound_key: string
+          updated_at: string
+          updated_by: string | null
+          url: string
+        }
+        Insert: {
+          sound_key: string
+          updated_at?: string
+          updated_by?: string | null
+          url: string
+        }
+        Update: {
+          sound_key?: string
+          updated_at?: string
+          updated_by?: string | null
+          url?: string
+        }
+        Relationships: []
+      }
       order_change_signals: {
         Row: {
           changed_at: string

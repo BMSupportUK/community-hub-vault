@@ -12,7 +12,7 @@
 - Corrected sports formats need split/safety/read-back tests. DAZN inline slots stay separate; qualifiers extend titles.
 - Manual sports splits preserve both halves; only adjacent headings move, and shared headings copy to the second half.
 - Gmail forwarding confirmations are captured by the email receiver and shown only to admins on the Bank Transfer page.
-- Talk: show all staff/channel; fit composer and people. Mobile guide PDFs render in-page.
+- Talk: show all staff/channel; fit composer and people.
 - Talk presence: channel exit broadcasts leave/untracks next task; sign-out also removes the shared channel without respawn, preventing stale online users.
 - Staff Away reads shared user_dnd_status; because it holds only the current window, Away history lives in a trigger-written table matched to shifts.
 - Android alerts use distinct per-type tones on versioned channels; change the channel ID when correcting a sound because Android keeps a channel's original sound permanently.
@@ -26,8 +26,8 @@
 - Referral-approved BM Support accounts never retain security-gate access-request notifications, because staff action is not required.
 - The location opt-in is asked only on the security gate for direct (non-referral, non-Fan Zone) BM Support applicants; refusal blocks ticket requests and tags any appeal so staff see it. Elsewhere GPS is captured silently only when permission already exists.
 - Shared dialogs must stay within the dynamic mobile viewport, while dense data views reduce secondary columns on phones so primary actions remain usable.
-- Customer invoices are BM Support PDFs available only after confirmed payment; never expose Stripe or Square hosted invoice/receipt links because the app owns customer billing documents.
-- Knowledge Base article reading uses the full available page with a responsive ratings rail, so long guides and media remain readable.
+- Customer invoices are BM Support PDFs after confirmed payment; never expose Stripe/Square hosted links.
+- Knowledge Base articles use the full page with a responsive ratings rail.
 - Secure orders show wa.me video help only while is_business_open; never embed customer camera sessions.
 - Gender-matched customer defaults never replace custom picks and exclude staff/Fan Zone-only users.
 - BM inbox stays separate from Fan Zone/Talk: participant-only tables, authenticated RPCs, admin/management-only report snapshots.
@@ -36,3 +36,4 @@
 - Break popup/sound shares one session-persisted per-break claim; expiry updates silently to prevent replay after dismiss, lock or reload.
 - Fantasy scoring gives full rates only to players who are in the manager's XI AND started the real match (stored per stat row as `started` from the FotMob team sheet); cards are counted from the match timeline as well as player stats, because FotMob's player table often omits them.
 <!-- LOVABLE:END -->
+- Uploaded sound overrides resolve inside playSound so all web callers use them; closed-app Android tones need an APK rebuild.
