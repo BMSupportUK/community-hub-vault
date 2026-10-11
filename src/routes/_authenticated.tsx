@@ -11,7 +11,7 @@ import { logMyIp } from "@/lib/ip-log.functions";
 import { useOnlineUsers, setPresencePage } from "@/hooks/use-online-users";
 import { pageLabelForPath } from "@/lib/page-labels";
 import { isPageAllowed, usePagePermissions } from "@/lib/page-access";
-import { adminPanelLabel, canOpenAdminPanel } from "@/lib/admin-panel-access";
+import { adminPanelLabel, canOpenAdminPanel, canOpenFanZoneAdminPanel } from "@/lib/admin-panel-access";
 
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { isAllowedForFanZoneOnly, isFanZonePath } from "@/lib/fan-zone-nav";
