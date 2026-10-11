@@ -32,15 +32,32 @@ type AlertJob = {
   kind: string;
 };
 
+const londonFmt = new Intl.DateTimeFormat("en-GB", {
+  timeZone: "Europe/London",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+  hour12: false,
+});
+
 function shiftStartsAt(date: string, time: string): number {
-  // shift_slots stores naive local time + date. The legacy client behaviour
-  // (shiftWindowToUtcMs) treats these as Europe/London wall clock. For the
-  // scheduler we accept that interpretation by building an ISO string and
-  // letting the host parse it as UTC, then offsetting via Intl. For
-  // simplicity & robustness we just parse as UTC; cron runs every minute so
-  // any TZ drift is at most an hour. Most staff are UK based.
-  // TODO: switch to a proper TZ-aware parse when shift_slots gains a TZ col.
-  return Date.parse(`${date}T${time}Z`);
+  // shift_slots stores naive Europe/London wall clock + date. Convert that
+  // wall clock to a real UTC instant: parse as UTC, measure the London
+  // offset at that moment via Intl, then subtract it. Parsing as plain UTC
+  // here was the old bug — during BST every shift alert fired an hour late,
+  // by which point staff had already clocked out and the "shift has ended"
+  // alert never qualified.
+  const guess = Date.parse(`${date}T${time}Z`);
+  if (isNaN(guess)) return NaN;
+  const p = Object.fromEntries(
+    londonFmt.formatToParts(new Date(guess)).map((x) => [x.type, x.value]),
+  );
+  const hour = p.hour === "24" ? "00" : p.hour;
+  const londonAsUtc = Date.parse(`${p.year}-${p.month}-${p.day}T${hour}:${p.minute}:${p.second}Z`);
+  return guess - (londonAsUtc - guess);
 }
 
 export const Route = createFileRoute("/api/public/hooks/scheduled-reminders")({
