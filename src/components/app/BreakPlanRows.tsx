@@ -21,12 +21,18 @@ export function BreakPlanRows({ userId, usedKinds }: { userId: string; usedKinds
     const load = async () => {
       const today = ukNow().date;
       const [{ data: slots }, { data: roles }] = await Promise.all([
-        supabase.from("shift_slots").select("assigned_to,start_time,end_time,slot_type").eq("shift_date", today).not("assigned_to", "is", null),
+        supabase.from("shift_slots").select("assigned_to,required_role,start_time,end_time,slot_type").eq("shift_date", today),
         supabase.rpc("directory_member_roles"),
       ]);
       const eligible = new Set(((roles ?? []) as { user_id: string; role: string }[]).filter((r) => r.role === "staff" || r.role === "management").map((r) => r.user_id));
       const rows = (slots ?? []).filter((s) => s.slot_type === "shift" && s.assigned_to && eligible.has(s.assigned_to))
         .map((s) => ({ userId: s.assigned_to as string, start: toMinutes(s.start_time), end: toMinutes(s.end_time) }));
+      // Open rota slots (no one named) apply to everyone holding that role.
+      if (!rows.some((r) => r.userId === userId)) {
+        const mine = new Set(((roles ?? []) as { user_id: string; role: string }[]).filter((r) => r.user_id === userId).map((r) => r.role));
+        const open = (slots ?? []).find((s) => s.slot_type === "shift" && !s.assigned_to && s.required_role && mine.has(s.required_role));
+        if (open && eligible.has(userId)) rows.push({ userId, start: toMinutes(open.start_time), end: toMinutes(open.end_time) });
+      }
       const { data: stored } = await supabase.from("break_plan_times").select("label,kind,start_min").eq("user_id", userId).eq("shift_date", today);
       if (stored && stored.length >= 3) {
         const by = (l: string) => { const r = stored.find((x) => x.label === l || (l === "Main break" && x.label === "Lunch")); return { kind: (r?.kind === "lunch" ? "lunch" : "break") as "break" | "lunch", label: l, start: r?.start_min ?? null }; };
