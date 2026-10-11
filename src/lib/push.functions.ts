@@ -61,6 +61,17 @@ export const saveSubscription = createServerFn({ method: "POST" })
         { onConflict: "endpoint" },
       );
     if (error) throw new Error(error.message);
+    // One entry per browser per person: drop older rows for the same
+    // user + browser identity whose endpoint rotated, so the same
+    // browser never receives every alert twice.
+    if (data.userAgent) {
+      await supabaseAdmin
+        .from("push_subscriptions")
+        .delete()
+        .eq("user_id", userId)
+        .eq("user_agent", data.userAgent)
+        .neq("endpoint", data.endpoint);
+    }
     return { ok: true };
   });
 
