@@ -20,7 +20,7 @@ import {
 } from "./sports-listing-format";
 import { safePublicEventTitle } from "./public-guide-safety";
 
-const STAFF_ROLES = ["admin", "management", "moderator"] as const;
+const STAFF_ROLES = ["admin", "management", "staff", "moderator"] as const;
 
 async function assertStaff(supabase: any, userId: string) {
   const { data, error } = await supabase.from("user_roles").select("role").eq("user_id", userId);

@@ -64,7 +64,7 @@ type QueueItem = {
 
 function AdminSportsImportPage() {
   const { hasAny } = useAuth();
-  const isStaff = hasAny(["admin", "management", "moderator"]);
+  const isStaff = hasAny(["admin", "management", "staff", "moderator"]);
   const queuePasteFn = useServerFn(queuePastedPost);
   const setupDiscordFn = useServerFn(setupDiscordBot);
   const discordStatusFn = useServerFn(getDiscordStatus);
