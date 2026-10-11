@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { pushToUser } from "@/lib/fcm.server";
 import { broadcastToUser } from "@/lib/push.functions";
+import { planBreaks, toMinutes, fromMinutes } from "@/lib/break-plan";
 import { reconcileUnpaidOrders } from "@/lib/order-payment-reconcile.server";
 
 
@@ -62,6 +63,64 @@ export const Route = createFileRoute("/api/public/hooks/scheduled-reminders")({
           .slice(0, 10);
 
         const jobs: AlertJob[] = [];
+
+        // --- Planned breaks (Break 1 / Lunch / Break 2) -----------------------
+        try {
+          const p = Object.fromEntries(new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false }).formatToParts(new Date(now)).map((x) => [x.type, x.value]));
+          const ukDate = `${p.year}-${p.month}-${p.day}`;
+          const ukMin = (Number(p.hour) % 24) * 60 + Number(p.minute);
+          const db = supabaseAdmin as any;
+          const [{ data: daySlots }, { data: roleRows }, { data: stored }] = await Promise.all([
+            db.from("shift_slots").select("assigned_to,start_time,end_time").eq("shift_date", ukDate).eq("slot_type", "shift").not("assigned_to", "is", null),
+            db.from("user_roles").select("user_id,role").in("role", ["staff", "management"]),
+            db.from("break_plan_times").select("user_id,label,kind,start_min").eq("shift_date", ukDate),
+          ]);
+          const eligible = new Set(((roleRows ?? []) as { user_id: string }[]).map((r) => r.user_id));
+          const rows = ((daySlots ?? []) as { assigned_to: string; start_time: string; end_time: string }[])
+            .filter((s) => eligible.has(s.assigned_to))
+            .map((s) => ({ userId: s.assigned_to, start: toMinutes(s.start_time), end: toMinutes(s.end_time) }));
+          const plans = ((stored ?? []) as { user_id: string; label: string; kind: string; start_min: number | null }[]).slice();
+          const planned = new Set(plans.map((r) => r.user_id));
+          const fresh = rows.filter((r) => !planned.has(r.userId) && ukMin < r.end);
+          if (fresh.length) {
+            const reserved = plans.filter((r) => r.start_min !== null).map((r) => ({ start: r.start_min as number, end: (r.start_min as number) + (r.kind === "lunch" ? 30 : 15) }));
+            const result = planBreaks(rows, 1, ukMin, reserved, planned);
+            const inserts: typeof plans = [];
+            for (const f of fresh) {
+              const up = result.get(f.userId);
+              if (!up) continue;
+              for (const it of [up.break1, up.lunch, up.break2]) inserts.push({ user_id: f.userId, label: it.label, kind: it.kind, start_min: it.start });
+            }
+            if (inserts.length) {
+              await db.from("break_plan_times").upsert(inserts.map((r) => ({ ...r, shift_date: ukDate })), { onConflict: "user_id,shift_date,label", ignoreDuplicates: true });
+              plans.push(...inserts);
+            }
+          }
+          const due = plans.filter((r) => r.start_min !== null && ukMin >= r.start_min && ukMin <= r.start_min + 15);
+          if (due.length) {
+            const dueUsers = Array.from(new Set(due.map((d) => d.user_id)));
+            const { data: openShifts } = await db.from("shifts").select("id,user_id").in("user_id", dueUsers).is("clock_out", null);
+            const shiftIds = ((openShifts ?? []) as { id: string }[]).map((s) => s.id);
+            const { data: taken } = shiftIds.length ? await db.from("breaks").select("user_id,kind").in("shift_id", shiftIds) : { data: [] };
+            const onShift = new Set(((openShifts ?? []) as { user_id: string }[]).map((s) => s.user_id));
+            for (const d of due) {
+              if (!onShift.has(d.user_id)) continue;
+              const used = ((taken ?? []) as { user_id: string; kind: string }[]).filter((b) => b.user_id === d.user_id && b.kind === d.kind).length;
+              const need = d.label === "Break 2" ? 2 : 1;
+              if (used >= need) continue;
+              jobs.push({
+                key: `bplan:${d.user_id}:${ukDate}:${d.label}`,
+                userId: d.user_id,
+                title: `${d.label} is due now`,
+                body: `Your ${d.label.toLowerCase()} is planned for ${fromMinutes(d.start_min as number)}. Start it from Working Status when you're ready.`,
+                url: "/home",
+                kind: "break_warn",
+              });
+            }
+          }
+        } catch (e) {
+          console.error("[scheduled-reminders] break plan failed", e);
+        }
 
         // --- Shift start / end -------------------------------------------------
         const { data: slots } = await supabaseAdmin

@@ -1128,6 +1128,33 @@ export type Database = {
           },
         ]
       }
+      break_plan_times: {
+        Row: {
+          created_at: string
+          kind: string
+          label: string
+          shift_date: string
+          start_min: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          kind: string
+          label: string
+          shift_date: string
+          start_min?: number | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          kind?: string
+          label?: string
+          shift_date?: string
+          start_min?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       breaks: {
         Row: {
           ended_at: string | null
