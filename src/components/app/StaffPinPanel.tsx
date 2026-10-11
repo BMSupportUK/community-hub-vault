@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Eye, KeyRound, Loader2, Lock, RefreshCw, ShieldCheck } from "lucide-react";
+import { Copy, Eye, KeyRound, Loader2, Lock, RefreshCw, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { requestStaffPinReset, revealMyStaffPin } from "@/lib/staff-pin.functions";
+import { Button } from "@/components/ui/button";
 
 type Tab = "view" | "reset";
 
@@ -15,6 +16,16 @@ export function StaffPinPanel() {
   const [pin, setPin] = useState<string | null | undefined>(undefined);
   const [issuedAt, setIssuedAt] = useState<string | null>(null);
   const [reason, setReason] = useState("");
+
+  const copyPin = async () => {
+    if (!pin) return;
+    try {
+      await navigator.clipboard.writeText(pin);
+      toast.success("Staff PIN copied");
+    } catch {
+      toast.error("Couldn't copy PIN — please copy it manually");
+    }
+  };
 
   const reveal = async () => {
     if (!password) return toast.error("Enter your password");
@@ -84,7 +95,12 @@ export function StaffPinPanel() {
             </>
           ) : pin ? (
             <div className="space-y-2">
-              <div className="text-center font-mono text-3xl tracking-[0.4em] py-4 rounded-xl bg-surface-2 border border-primary/30">{pin}</div>
+              <div className="flex items-center justify-center gap-3 py-4 px-3 rounded-xl bg-surface-2 border border-primary/30">
+                <span className="font-mono text-3xl">{pin}</span>
+                <Button size="icon" variant="outline" className="shrink-0" onClick={() => void copyPin()} aria-label="Copy my staff PIN" title="Copy PIN">
+                  <Copy className="size-4" />
+                </Button>
+              </div>
               {issuedAt && <p className="text-xs text-muted-foreground text-center">Issued {new Date(issuedAt).toLocaleString("en-GB")}</p>}
               <button onClick={() => setPin(undefined)} className="w-full text-xs text-muted-foreground underline">Hide</button>
             </div>
