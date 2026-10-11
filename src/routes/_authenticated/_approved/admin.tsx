@@ -14,6 +14,7 @@ import { LayoutGrid } from "lucide-react";
 import { StaffPinAdminCard } from "@/components/app/StaffPinAdminCard";
 import { CardPaymentsAdminCard } from "@/components/app/CardPaymentsAdminCard";
 import { OrderStatusAdminCard } from "@/components/app/OrderStatusAdminCard";
+import shopHero from "@/assets/shop-hero.jpg";
 import { AwaitingPaymentsSidebar } from "@/components/app/AwaitingPaymentsSidebar";
 import { WiseIncomingCard } from "@/components/app/WiseIncomingCard";
 import { BankTransferAdminCard } from "@/components/app/BankTransferAdminCard";
@@ -40,6 +41,16 @@ export const Route = createFileRoute("/_authenticated/_approved/admin")({
     chat: typeof search.chat === "string" ? (search.chat as string) : undefined,
   }),
   component: () => <AdminDashboard zone="bm" />,
+  head: () => ({
+    meta: [
+      { title: "BM Support | Admin Dashboard" },
+      { name: "description", content: "BM Support administration, orders and owner tools." },
+      { property: "og:title", content: "BM Support | Admin Dashboard" },
+      { property: "og:description", content: "BM Support administration, orders and owner tools." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
+    ],
+  }),
 });
 
 async function sha256Hex(input: string) {
@@ -605,7 +616,13 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="relative isolate space-y-6">
+      {!isFz && tab === "order-status" && canSeePins && (
+        <div className="fixed inset-0 -z-10 pointer-events-none" aria-hidden="true">
+          <img src={shopHero} alt="" className="h-full w-full object-cover" />
+          <div className="absolute inset-0 bg-background/60" />
+        </div>
+      )}
       <div className="inline-flex flex-wrap p-1 rounded-xl bg-surface-2 border border-border">
         {tabs.map(([key, label]) =>
           key === "profit-costs" ? (
@@ -634,7 +651,9 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
       </div>
 
       {tab === "order-status" && canSeePins ? (
-        <OrderStatusAdminCard />
+        <div className="[&>div]:bg-card/85 [&>div]:backdrop-blur-sm">
+          <OrderStatusAdminCard />
+        </div>
       ) : tab === "square" && canSeePins ? (
         <CardPaymentsAdminCard provider="square" />
       ) : tab === "stripe" && canSeePins ? (
