@@ -67,7 +67,7 @@ export const NOTIFICATION_SOUNDS: readonly SoundDef[] = [
   { key: "shift-start", label: "Shift start", src: shiftStartAudio, gain: 2.2 },
   { key: "shift-end", label: "Shift end", src: shiftEndAudio, gain: 2.2 },
   { key: "end-break", label: "Break ending", src: endBreakAudio, gain: 2.2 },
-  { key: "end-lunch", label: "Lunch ending", src: endLunchAudio, gain: 2.2 },
+  { key: "end-lunch", label: "Main break ending", src: endLunchAudio, gain: 2.2 },
   { key: "outage", label: "Outage", src: outageAudio, gain: 2.2 },
   { key: "outage-resolved", label: "Outage resolved", src: outageResolvedAudio, gain: 1.8 },
   { key: "fan-zone-appeal", label: "Fan Zone ban appeal", src: fanZoneAppealAsset.url, gain: 2.0 },

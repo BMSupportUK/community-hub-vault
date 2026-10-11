@@ -59,7 +59,7 @@ const SOUNDS: SoundDef[] = [
   { key: "shift-start", label: "Shift start", file: "shift-start.mp3", src: shiftStartAudio, gain: 2.2, trigger: "Your rota shift is about to start." },
   { key: "shift-end", label: "Shift end", file: "shift-end.mp3", src: shiftEndAudio, gain: 2.2, trigger: "Your rota shift is about to end." },
   { key: "end-break", label: "Break ending", file: "end-break.mp3", src: endBreakAudio, gain: 2.2, trigger: "Your break is nearly over (auto-ends after 10s)." },
-  { key: "end-lunch", label: "Lunch ending", file: "end-lunch.mp3", src: endLunchAudio, gain: 2.2, trigger: "Your lunch is nearly over (auto-ends after 10s)." },
+  { key: "end-lunch", label: "Main break ending", file: "end-lunch.mp3", src: endLunchAudio, gain: 2.2, trigger: "Your main break is nearly over (auto-ends after 10s)." },
   { key: "outage", label: "Outage raised", file: "outage-notify.mp3", src: outageAudio, gain: 2.2, trigger: "A service outage is published on the status page." },
   { key: "outage-resolved", label: "Outage resolved", file: "outage-resolved.mp3", src: outageResolvedAudio, gain: 1.8, trigger: "An outage is marked resolved." },
 ];

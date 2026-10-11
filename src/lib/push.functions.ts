@@ -268,13 +268,13 @@ export const sendBreakEventPush = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const name = await getActorName(context.userId);
-    const label = data.breakKind === "lunch" ? "lunch" : "break";
+    const label = data.breakKind === "lunch" ? "main break" : "break";
     const title =
       data.kind === "start"
-        ? data.breakKind === "lunch" ? "Lunch started" : "Break started"
+        ? data.breakKind === "lunch" ? "Main break started" : "Break started"
         : "Break ended";
     const body = data.kind === "start"
-      ? `${name} started a ${label} (${data.breakKind === "lunch" ? "30" : "15"} min).`
+      ? `${name} started their ${label} (${data.breakKind === "lunch" ? "30" : "15"} min).`
       : `${name} ended their ${label}.`;
     const roles = ["admin", "management"] as const;
     const tag = `break-${context.userId}-${data.kind}`;

@@ -11,7 +11,7 @@ const ukNow = () => {
   return { date: `${p.year}-${p.month}-${p.day}`, minutes: (Number(p.hour) % 24) * 60 + Number(p.minute) };
 };
 
-/** Planned Break 1 / Lunch / Break 2 times for staff and management on today's rota. */
+/** Planned Break 1 / Main break / Break 2 times for staff and management on today's rota. */
 export function BreakPlanRows({ userId, usedKinds }: { userId: string; usedKinds: readonly string[] }) {
   const [plan, setPlan] = useState<UserPlan | null>(null);
   const [nowMin, setNowMin] = useState(() => ukNow().minutes);
@@ -29,8 +29,8 @@ export function BreakPlanRows({ userId, usedKinds }: { userId: string; usedKinds
         .map((s) => ({ userId: s.assigned_to as string, start: toMinutes(s.start_time), end: toMinutes(s.end_time) }));
       const { data: stored } = await supabase.from("break_plan_times").select("label,kind,start_min").eq("user_id", userId).eq("shift_date", today);
       if (stored && stored.length >= 3) {
-        const by = (l: string) => { const r = stored.find((x) => x.label === l); return { kind: (r?.kind === "lunch" ? "lunch" : "break") as "break" | "lunch", label: l, start: r?.start_min ?? null }; };
-        if (alive) setPlan({ break1: by("Break 1"), lunch: by("Lunch"), break2: by("Break 2") });
+        const by = (l: string) => { const r = stored.find((x) => x.label === l || (l === "Main break" && x.label === "Lunch")); return { kind: (r?.kind === "lunch" ? "lunch" : "break") as "break" | "lunch", label: l, start: r?.start_min ?? null }; };
+        if (alive) setPlan({ break1: by("Break 1"), lunch: by("Main break"), break2: by("Break 2") });
         return;
       }
       if (alive) setPlan(planBreaks(rows, 1, ukNow().minutes).get(userId) ?? null);

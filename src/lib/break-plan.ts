@@ -1,4 +1,4 @@
-/** Automatic break planning: Break 1 early, Lunch mid-shift, Break 2 late, keeping at least `minCover` people working. */
+/** Automatic break planning: Break 1 early, Main break mid-shift, Break 2 late, keeping at least `minCover` people working. */
 export type PlanSlot = { userId: string; start: number; end: number }; // minutes since midnight (UK)
 export type PlanItem = { kind: "break" | "lunch"; label: string; start: number | null };
 export type UserPlan = { break1: PlanItem; lunch: PlanItem; break2: PlanItem };
@@ -32,7 +32,7 @@ export function planBreaks(slots: readonly PlanSlot[], minCover = 1, nowMin?: nu
     if (start >= s.end - DUR.break) {
       result.set(s.userId, {
         break1: { kind: "break", label: "Break 1", start: null },
-        lunch: { kind: "lunch", label: "Lunch", start: null },
+        lunch: { kind: "lunch", label: "Main break", start: null },
         break2: { kind: "break", label: "Break 2", start: null },
       });
       continue;
@@ -46,7 +46,7 @@ export function planBreaks(slots: readonly PlanSlot[], minCover = 1, nowMin?: nu
     const b2 = reserve(pick(eff, eff.start + (3 * len) / 4, DUR.break, mid + DUR.lunch, eff.end), DUR.break);
     result.set(s.userId, {
       break1: { kind: "break", label: "Break 1", start: b1 },
-      lunch: { kind: "lunch", label: "Lunch", start: lunch },
+      lunch: { kind: "lunch", label: "Main break", start: lunch },
       break2: { kind: "break", label: "Break 2", start: b2 },
     });
   }
