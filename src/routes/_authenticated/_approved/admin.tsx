@@ -558,7 +558,7 @@ function DashboardBody() {
     { tabKey: "android-apk", label: "Android app file", desc: "Upload the BM Support APK the download barcode points to.", icon: Smartphone, adminOnly: true, art: toolArtDevices },
   ];
   const cardKeys = new Set(allTools.filter((t) => t.to).map((t) => pageKeyForPath(t.to!)));
-  const extraPageCards = staffAllowedPageKeys(roles, perms, cardKeys, (k) => permissionSection(k) === "fanzone").map((key) => ({
+  const extraPageCards: typeof allTools = staffAllowedPageKeys(roles, perms, cardKeys, (k) => permissionSection(k) === "fanzone").map((key) => ({
     to: `/${key}`,
     label: pagePermissionLabel(key),
     desc: `Open ${pagePermissionLabel(key)}.`,
