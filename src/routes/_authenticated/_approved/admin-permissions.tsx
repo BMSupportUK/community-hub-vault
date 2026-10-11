@@ -1,6 +1,7 @@
 import { createFileRoute, Navigate, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Loader2, Shield, Layers, Hash, ArrowLeft, RefreshCw } from "lucide-react";
+import { Loader2, Shield, Layers, Hash, ArrowLeft, RefreshCw, Users } from "lucide-react";
+import { permissionSection, type PermissionSection } from "@/lib/permission-sections";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -201,6 +202,11 @@ function PagesTab({ pages, roles, onChanged, canEditManagement }: { pages: PageP
   );
 
   return (
+    <div>
+    <div className="flex gap-2 mb-3">
+      <TabBtn active={section === "bm"} onClick={() => setSection("bm")} icon={Shield}>BM Support ({count("bm")})</TabBtn>
+      <TabBtn active={section === "fanzone"} onClick={() => setSection("fanzone")} icon={Users}>Boro Fan Zone ({count("fanzone")})</TabBtn>
+    </div>
     <div className="rounded-2xl border border-border bg-surface-1 overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
