@@ -26,19 +26,18 @@ test("someone alone on shift gets no slot", () => {
   expect(planBreaks([slot("a", "09:00", "17:00")]).get("a")!.lunch.start).toBeNull();
 });
 
-test("mid-shift start re-spreads all breaks over the rest of the shift", () => {
+test("breaks are planned from the shift start even when viewed mid-shift", () => {
   const p = planBreaks([slot("a", "09:00", "17:00"), slot("b", "09:00", "17:00")], 1, toMinutes("13:30")).get("a")!;
-  expect(p.break1.start).toBe(toMinutes("14:30"));
-  expect(p.lunch.start).toBe(toMinutes("15:15"));
-  expect(p.break2.start).toBe(toMinutes("16:15"));
-  expect(p.break1.start!).toBeGreaterThanOrEqual(toMinutes("13:30"));
+  expect(p.break1.start).toBe(toMinutes("11:00"));
+  expect(p.lunch.start).toBe(toMinutes("13:00"));
+  expect(p.break2.start).toBe(toMinutes("15:00"));
 });
 
-test("no time left today means no slots", () => {
+test("a late current time never re-spreads or drops planned breaks", () => {
   const p = planBreaks([slot("a", "09:00", "17:00"), slot("b", "09:00", "17:00")], 1, toMinutes("16:50")).get("a")!;
-  expect(p.break1.start).toBeNull();
-  expect(p.lunch.start).toBeNull();
-  expect(p.break2.start).toBeNull();
+  expect(p.break1.start).toBe(toMinutes("11:00"));
+  expect(p.lunch.start).toBe(toMinutes("13:00"));
+  expect(p.break2.start).toBe(toMinutes("15:00"));
 });
 
 test("already-planned breaks count against cover for newly planned staff", () => {
