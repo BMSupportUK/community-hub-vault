@@ -71,14 +71,34 @@ export const Route = createFileRoute("/api/public/hooks/scheduled-reminders")({
           const ukMin = (Number(p.hour) % 24) * 60 + Number(p.minute);
           const db = supabaseAdmin as any;
           const [{ data: daySlots }, { data: roleRows }, { data: stored }] = await Promise.all([
-            db.from("shift_slots").select("assigned_to,start_time,end_time").eq("shift_date", ukDate).eq("slot_type", "shift").not("assigned_to", "is", null),
+            db.from("shift_slots").select("assigned_to,start_time,end_time").eq("shift_date", ukDate).eq("slot_type", "shift"),
             db.from("user_roles").select("user_id,role").in("role", ["staff", "management"]),
             db.from("break_plan_times").select("user_id,label,kind,start_min").eq("shift_date", ukDate),
           ]);
           const eligible = new Set(((roleRows ?? []) as { user_id: string }[]).map((r) => r.user_id));
-          const rows = ((daySlots ?? []) as { assigned_to: string; start_time: string; end_time: string }[])
-            .filter((s) => eligible.has(s.assigned_to))
-            .map((s) => ({ userId: s.assigned_to, start: toMinutes(s.start_time), end: toMinutes(s.end_time) }));
+          const allSlots = (daySlots ?? []) as { assigned_to: string | null; start_time: string; end_time: string }[];
+          const rows = allSlots
+            .filter((s) => s.assigned_to && eligible.has(s.assigned_to))
+            .map((s) => ({ userId: s.assigned_to as string, start: toMinutes(s.start_time), end: toMinutes(s.end_time) }));
+          // Open (unassigned) slots: any eligible staff member clocked in today
+          // with no named slot of their own is treated as covering that slot.
+          const openSlots = allSlots.filter((s) => !s.assigned_to);
+          if (openSlots.length) {
+            const named = new Set(rows.map((r) => r.userId));
+            const sinceIso = new Date(now - 20 * 60 * 60 * 1000).toISOString();
+            const { data: openShiftsToday } = await db
+              .from("shifts").select("user_id").is("clock_out", null).gte("clock_in", sinceIso);
+            const covering = new Set(((openShiftsToday ?? []) as { user_id: string }[]).map((s) => s.user_id));
+            for (const s of openSlots) {
+              const start = toMinutes(s.start_time);
+              const end = toMinutes(s.end_time);
+              for (const uid of covering) {
+                if (!eligible.has(uid) || named.has(uid)) continue;
+                rows.push({ userId: uid, start, end });
+                named.add(uid);
+              }
+            }
+          }
           const plans = ((stored ?? []) as { user_id: string; label: string; kind: string; start_min: number | null }[]).slice();
           const planned = new Set(plans.map((r) => r.user_id));
           const fresh = rows.filter((r) => !planned.has(r.userId) && ukMin < r.end);
