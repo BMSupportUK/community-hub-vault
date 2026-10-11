@@ -7,8 +7,10 @@ import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { backfillVpnDetection } from "@/lib/vpn-backfill.functions";
 import { unlockWithStaffPin, requestStaffPinReset } from "@/lib/staff-pin.functions";
-import { adminPanelToolAllowed, canOpenAdminPanel } from "@/lib/admin-panel-access";
-import { usePagePermissions } from "@/lib/page-access";
+import { adminPanelToolAllowed, canOpenAdminPanel, staffAllowedPageKeys } from "@/lib/admin-panel-access";
+import { usePagePermissions, pageKeyForPath, pagePermissionLabel } from "@/lib/page-access";
+import { permissionSection } from "@/lib/permission-sections";
+import { LayoutGrid } from "lucide-react";
 import { StaffPinAdminCard } from "@/components/app/StaffPinAdminCard";
 import { CardPaymentsAdminCard } from "@/components/app/CardPaymentsAdminCard";
 import { OrderStatusAdminCard } from "@/components/app/OrderStatusAdminCard";
@@ -555,8 +557,15 @@ function DashboardBody() {
     { tabKey: "sign-out-devices", label: "Sign out devices", desc: "Sign an account out of every device remotely.", icon: LogOut, managementToo: true, art: toolArtSecurity },
     { tabKey: "android-apk", label: "Android app file", desc: "Upload the BM Support APK the download barcode points to.", icon: Smartphone, adminOnly: true, art: toolArtDevices },
   ];
-  const tools = allTools
-    .filter((t) => adminPanelToolAllowed(t, roles, perms))
+  const cardKeys = new Set(allTools.filter((t) => t.to).map((t) => pageKeyForPath(t.to!)));
+  const extraPageCards = staffAllowedPageKeys(roles, perms, cardKeys, (k) => permissionSection(k) === "fanzone").map((key) => ({
+    to: `/${key}`,
+    label: pagePermissionLabel(key),
+    desc: `Open ${pagePermissionLabel(key)}.`,
+    icon: LayoutGrid,
+    art: toolArtDocs,
+  }));
+  const tools = [...allTools.filter((t) => adminPanelToolAllowed(t, roles, perms)), ...extraPageCards]
     .sort((a, b) => a.label.localeCompare(b.label, "en-GB", { sensitivity: "base" }));
 
   const tabs = ([

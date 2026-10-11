@@ -3,6 +3,7 @@ import {
   adminPanelLabel,
   adminPanelToolAllowed,
   canOpenAdminPanel,
+  staffAllowedPageKeys,
 } from "../src/lib/admin-panel-access";
 
 const perms = {
@@ -55,5 +56,24 @@ describe("admin panel tool cards", () => {
     expect(adminPanelToolAllowed({ tabKey: "sign-out-devices", managementToo: true }, ["management"], perms)).toBe(true);
     expect(adminPanelToolAllowed({ tabKey: "android-apk", adminOnly: true }, ["management"], perms)).toBe(false);
     expect(adminPanelToolAllowed({ to: "/shifts" }, ["management"], perms)).toBe(true);
+  });
+
+  it("ignores Boro Fan Zone roles on the BM Support dashboard", () => {
+    const p = { "admin-fan-zone": ["admin", "boro_fan_zone_moderator"] };
+    expect(adminPanelToolAllowed({ to: "/admin-fan-zone" }, ["staff", "boro_fan_zone_moderator"], p)).toBe(false);
+  });
+
+  it("adds a card for every BM Support page ticked for staff", () => {
+    const p = {
+      admin: ["staff"],
+      tickets: ["staff", "member"],
+      members: ["staff"],
+      shifts: ["staff"],
+      forum: ["boro_fan_zone_moderator", "staff"],
+      "admin-dns": ["admin"],
+    };
+    const keys = staffAllowedPageKeys(["staff", "boro_fan_zone_moderator"], p, new Set(["shifts"]), (k) => k === "forum");
+    expect(keys.sort()).toEqual(["members", "tickets"]);
+    expect(staffAllowedPageKeys(["admin"], p, new Set(), () => false)).toEqual([]);
   });
 });
