@@ -10,6 +10,8 @@ import {
   Calendar,
   Clock,
   ArrowRight,
+  KeyRound,
+  History,
 } from "lucide-react";
 import { Link } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
@@ -795,6 +797,22 @@ export function WorkingStatusBox({
               className="inline-flex shrink-0 items-center justify-center size-8 rounded-full text-white/80 hover:text-white hover:bg-white/10 transition"
             >
               <Calendar className="size-4" />
+            </Link>
+            <Link
+              to="/staff-pin"
+              title="Staff PIN"
+              aria-label="Staff PIN"
+              className="inline-flex size-8 shrink-0 items-center justify-center rounded-full text-foreground/80 transition hover:bg-foreground/10 hover:text-foreground"
+            >
+              <KeyRound className="size-4" />
+            </Link>
+            <Link
+              to="/shift-history"
+              title="Shift history"
+              aria-label="Shift history"
+              className="inline-flex size-8 shrink-0 items-center justify-center rounded-full text-foreground/80 transition hover:bg-foreground/10 hover:text-foreground"
+            >
+              <History className="size-4" />
             </Link>
           </div>
         </div>
