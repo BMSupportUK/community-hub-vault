@@ -849,9 +849,7 @@ export function StaffOnDutyStrip({
               onDutyGroups.map((g, i) => (
                 <div key={g.role}>
                   {groupHeading(formatRoleLabel(g.role), g.shifts.length, i === 0)}
-                  <div className="flex flex-col gap-2">
-                    {g.shifts.map((s) => renderOnDutyCard(s))}
-                  </div>
+                  <RotatingCards items={g.shifts} render={(s) => renderOnDutyCard(s)} />
                 </div>
               ))
             )}
@@ -863,9 +861,7 @@ export function StaffOnDutyStrip({
                 {offDutyGroups.map((g, i) => (
                   <div key={g.role}>
                     {groupHeading(formatRoleLabel(g.role), g.people.length, i === 0)}
-                    <div className="flex flex-col gap-2">
-                      {g.people.map((p) => renderOffDutyCard(p))}
-                    </div>
+                    <RotatingCards items={g.people} render={(p) => renderOffDutyCard(p)} />
                   </div>
                 ))}
               </div>
