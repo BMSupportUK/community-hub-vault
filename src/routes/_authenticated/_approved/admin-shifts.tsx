@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { type BreakKind, breakIcon, breakLabel } from "@/lib/breaks";
 import { awayForShift, awayIcon } from "@/lib/staff-away";
 import { EarlyFinishRequestsPanel } from "@/components/app/EarlyFinishRequestsPanel";
+import { CoverRequestsPanel } from "@/components/app/CoverRequestsPanel";
 import { ShiftBreakdownCard } from "@/components/app/ShiftBreakdownCard";
 import { shiftBreakdown } from "@/lib/shift-breakdown";
 
@@ -355,6 +356,7 @@ function StaffShiftsPage() {
 
   return (
     <div className="space-y-6 p-4 md:p-6">
+      <CoverRequestsPanel />
       <EarlyFinishRequestsPanel />
       <header className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-primary/15 via-surface-1 to-accent/10 p-5 shadow-sm md:p-6">
         <div className="pointer-events-none absolute -right-16 -top-16 size-48 rounded-full bg-primary/10 blur-2xl" />

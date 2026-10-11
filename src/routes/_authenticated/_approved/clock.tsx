@@ -289,8 +289,8 @@ function ClockPage() {
                 <div className="font-semibold">Not clocked in</div>
                 <div className="text-sm text-muted-foreground">Start your shift to track hours.</div>
               </div>
-              <button onClick={clockIn} disabled={busy} className="px-5 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium inline-flex items-center gap-2 disabled:opacity-60">
-                <LogIn className="size-4" /> Clock In
+              <button onClick={clockIn} disabled={busy || (!canSignIn && coverPending)} title={canSignIn ? "Clock in" : coverPending ? "Cover request waiting for admin or management" : "Not on the rota now — request to sign in to cover (needs approval)"} className="px-5 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium inline-flex items-center gap-2 disabled:opacity-60">
+                <LogIn className="size-4" /> {canSignIn ? "Clock In" : coverPending ? "Cover request pending" : "Request to cover"}
               </button>
             </div>
           )}
