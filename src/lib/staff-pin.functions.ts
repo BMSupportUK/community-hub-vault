@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { canManageStaffPins, isStaffPinHolder } from "@/lib/staff-pin-admin-access";
+import { canRevokeStaffPins, canManageStaffPins, isStaffPinHolder } from "@/lib/staff-pin-admin-access";
 
 // Staff PINs are issued by admins, stored encrypted + hashed in the database,
 // and only ever checked or revealed on the server after re-confirming the
@@ -156,4 +156,17 @@ export const revealStaffPinForAdmin = createServerFn({ method: "POST" })
     const { data: pin, error } = await supabaseAdmin.rpc("staff_pin_reveal" as any, { p_user: data.userId });
     if (error) throw new Error("Could not reveal staff PIN");
     return { pin: (pin as string | null) ?? null };
+  });
+
+// Admin role only: removes the staff member's PIN so it stops working.
+export const revokeStaffPin = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i) => z.object({ userId: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    const { data: rows } = await context.supabase.from("user_roles").select("role").eq("user_id", context.userId);
+    if (!canRevokeStaffPins((rows ?? []).map((r: any) => String(r.role)))) throw new Error("Only admins can revoke staff PINs");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin.from("vault_pins").delete().eq("user_id", data.userId);
+    if (error) throw new Error("Could not revoke staff PIN");
+    return { ok: true };
   });
