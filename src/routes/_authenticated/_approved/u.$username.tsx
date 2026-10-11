@@ -536,7 +536,6 @@ function ProfilePage() {
     ...(canSeeCreds ? [{ id: "creds", label: "Credentials" }] : []),
     { id: "tickets", label: `Tickets (${tickets.length})` },
     { id: "friends", label: `Friends (${friends.length})` },
-    ...(canSeeShifts ? [{ id: "shifts", label: "Shift history" }] : []),
     ...(canSeeReferrals ? [{ id: "referrals", label: `Referrals (${referrals.length})` }] : []),
     ...(isOwner ? [{ id: "notifications", label: "Notifications" }] : []),
     ...(isOwner ? [{ id: "theme", label: "Theme" }] : []),
@@ -789,7 +788,7 @@ function ProfilePage() {
           </TabsContent>
 
 
-          {canSeeShifts && (
+          {false && canSeeShifts && (
             <TabsContent value="shifts" className={paneClass}>
               <ShiftHistoryPanel userId={profile.id} name={display} username={profile.username} />
             </TabsContent>
