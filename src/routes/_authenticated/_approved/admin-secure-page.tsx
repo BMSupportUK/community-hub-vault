@@ -4,6 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { SecureLinkPanel } from "@/components/checkout/ManualOrderLinkDialog";
+import shopHero from "@/assets/shop-hero.jpg";
 
 export const Route = createFileRoute("/_authenticated/_approved/admin-secure-page")({
   validateSearch: (search: Record<string, unknown>): { order?: string; ref?: string } => ({
@@ -41,7 +42,14 @@ function SecurePageAdmin() {
   if (!order) return <Navigate to="/admin" search={{ tab: "order-status" } as never} />;
 
   return (
-    <main className="flex-1 overflow-y-auto">
+    <main className="relative isolate flex-1 min-h-full overflow-y-auto">
+      {/* Same shop picture as the Orders tab, kept behind everything: it can
+          never cover the header or the panel because it sits below all content
+          and ignores pointer events. */}
+      <div className="absolute inset-0 -z-10 pointer-events-none" aria-hidden="true">
+        <img src={shopHero} alt="" className="h-full w-full object-cover object-center" />
+        <div className="absolute inset-0 bg-background/55" />
+      </div>
       <div className="w-full px-3 py-8 space-y-6">
         <Link to="/admin" search={{ tab: "order-status" } as never} className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="size-4" /> Back to Orders
@@ -50,7 +58,7 @@ function SecurePageAdmin() {
           <h1 className="font-display text-2xl font-bold">Secure page · {orderRef ?? (loaded ? order.slice(0, 8) : "…")}</h1>
           <p className="text-sm text-muted-foreground">Copy the link and password to send to the customer, and reply to their messages here.</p>
         </div>
-        <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
+        <div className="rounded-2xl border border-border bg-card/85 backdrop-blur-sm p-5 space-y-4">
           <SecureLinkPanel orderId={order} />
         </div>
       </div>
