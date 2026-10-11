@@ -302,6 +302,16 @@ function AuthLayout() {
                 <span className="hidden min-[1700px]:inline">{panelLabel}</span>
               </Link>
             )}
+            {canOpenFanZonePanel && (
+              <Link
+                to="/fan-zone-admin"
+                title="Fan Zone | Admin Panel"
+                className="hidden md:flex shrink-0 items-center gap-2 whitespace-nowrap rounded-full px-3 py-1.5 bg-surface-2 hover:bg-primary hover:text-primary-foreground text-xs font-medium transition-colors"
+              >
+                <ShieldCheck className="size-4" />
+                <span className="hidden min-[1700px]:inline">Fan Zone | Admin Panel</span>
+              </Link>
+            )}
             {isAdmin && (
               <Link
                 to="/moderation"
