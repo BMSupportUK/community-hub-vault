@@ -62,15 +62,23 @@ export function BreakPlanRows({ userId, usedKinds, onStartBreak }: { userId: str
     ].map((it) => ({ ...it, missed: !it.done && it.start !== null && nowMin > it.start + 15 }));
   }, [plan, usedKinds, nowMin]);
 
-  // Notice when an allocated time arrives (the break starts automatically).
+  // When an allocated time arrives, pop a dialog so the staff member starts
+  // the break themselves (they may be mid-ticket and want to hand it over).
+  // Dismissing snoozes it for a few minutes; it keeps coming back until the
+  // break is taken or the slot is missed.
+  const [dueOpen, setDueOpen] = useState(false);
+  const [snoozedUntil, setSnoozedUntil] = useState<Record<string, number>>({});
+  const dueItem = items.find((it) => !it.done && !it.missed && it.start !== null && nowMin >= it.start);
   useEffect(() => {
-    for (const it of items) {
-      if (it.done || it.start === null || nowMin < it.start || nowMin > it.start + 15) continue;
-      const key = `break-plan-${userId}-${ukNow().date}-${it.label}`;
-      try { if (sessionStorage.getItem(key)) continue; sessionStorage.setItem(key, "1"); } catch { /* ignore */ }
-      toast.info(`${it.label} is due now (${fromMinutes(it.start)}) — it starts automatically.`, { duration: 15_000 });
-    }
-  }, [items, nowMin, userId]);
+    if (!dueItem || dueItem.start === null) { setDueOpen(false); return; }
+    if ((snoozedUntil[dueItem.label] ?? 0) > nowMin) { setDueOpen(false); return; }
+    setDueOpen(true);
+  }, [dueItem?.label, dueItem?.start, dueItem?.done, nowMin, snoozedUntil]);
+
+  const snooze = () => {
+    if (dueItem) setSnoozedUntil((s) => ({ ...s, [dueItem.label]: nowMin + 5 }));
+    setDueOpen(false);
+  };
 
   if (!plan) return null;
   const next = items.find((i) => !i.done && !i.missed && i.start !== null);
