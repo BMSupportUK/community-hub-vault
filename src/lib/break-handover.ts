@@ -2,7 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 /**
- * Before a break/lunch: if the staff member has open tickets, offer to pass
+ * Before a break/main break: if the staff member has open tickets, offer to pass
  * them to another on-shift colleague (posts an automated message in each
  * ticket and notifies the new assignee). Returns false if the user cancels.
  */
