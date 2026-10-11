@@ -15,6 +15,8 @@ import { StaffOnDutyStrip } from "@/components/app/StaffOnDutyStrip";
 import { Button } from "@/components/ui/button";
 import { requestEarlyFinish } from "@/lib/early-finish.functions";
 import { askEarlyFinishReason, shiftFinishAction, ukClock } from "@/lib/shift-finish";
+import { requestCoverSignIn } from "@/lib/cover-request.functions";
+import { askCoverRequest } from "@/lib/cover-request";
 
 export const Route = createFileRoute("/_authenticated/_approved/clock")({
   head: () => ({ meta: [
@@ -50,6 +52,9 @@ function ClockPage() {
   const notifyShift = useServerFn(sendShiftEventPush);
   const notifyBreak = useServerFn(sendBreakEventPush);
   const askEarlyFinish = useServerFn(requestEarlyFinish);
+  const askCover = useServerFn(requestCoverSignIn);
+  const [coverPending, setCoverPending] = useState(false);
+  const [signWindow, setSignWindow] = useState<{ start: string; end: string } | null>(null);
   const [rotaEnd, setRotaEnd] = useState<string | null>(null);
   const [finishReady, setFinishReady] = useState(false);
   const [earlyPending, setEarlyPending] = useState(false);
@@ -89,13 +94,17 @@ function ClockPage() {
     setActiveBreaks((allBreaks as Break[]) ?? []);
 
     const london = ukClock(Date.now());
-    const [{ data: slots, error: rotaError }, { data: requests, error: requestError }] = await Promise.all([
+    const [{ data: slots, error: rotaError }, { data: requests, error: requestError }, { data: cov }] = await Promise.all([
       supabase.from("shift_slots").select("start_time,end_time").eq("assigned_to", user.id)
         .eq("shift_date", london.date).order("start_time"),
       mine ? supabase.from("early_finish_requests").select("id").eq("shift_id", mine.id)
         .eq("status", "pending").limit(1) : Promise.resolve({ data: [], error: null }),
+      supabase.from("cover_requests").select("id").eq("user_id", user.id).eq("status", "pending").limit(1),
     ]);
-    setRotaEnd(slots?.find((slot) => slot.end_time > london.time)?.end_time ?? null);
+    const nextSlot = slots?.find((slot) => slot.end_time > london.time);
+    setRotaEnd(nextSlot?.end_time ?? null);
+    setSignWindow(nextSlot ? { start: nextSlot.start_time, end: nextSlot.end_time } : null);
+    setCoverPending((cov ?? []).length > 0);
     setEarlyPending((requests ?? []).length > 0);
     setFinishReady(!rotaError && !requestError);
 
@@ -121,13 +130,39 @@ function ClockPage() {
       .on("postgres_changes", { event: "*", schema: "public", table: "breaks" }, () => refresh())
       .on("postgres_changes", { event: "*", schema: "public", table: "shift_slots" }, () => refresh())
       .on("postgres_changes", { event: "*", schema: "public", table: "early_finish_requests" }, () => refresh())
+      .on("postgres_changes", { event: "*", schema: "public", table: "cover_requests" }, () => refresh())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id, isStaff]);
 
+  // Same rule as Working Status: sign-in opens 15 min before the rota start until rota end.
+  const canSignIn = (() => {
+    if (!signWindow) return false;
+    const [sh, sm] = signWindow.start.split(":").map(Number);
+    const uk = ukClock(now);
+    const [nh, nm] = uk.time.split(":").map(Number);
+    return nh * 60 + nm >= sh * 60 + sm - 15 && uk.time <= signWindow.end;
+  })();
+
   const clockIn = async () => {
     if (!user) return;
+    if (!canSignIn) {
+      if (coverPending) return toast.info("Your cover request is waiting for admin or management.");
+      const ask = askCoverRequest();
+      if (!ask) return;
+      setBusy(true);
+      try {
+        await askCover({ data: ask });
+        setCoverPending(true);
+        toast.success("Cover request sent to admin and management");
+      } catch (e) {
+        toast.error(e instanceof Error ? e.message : "Couldn't send the cover request");
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
     setBusy(true);
     const { error } = await supabase.from("shifts").insert({ user_id: user.id });
     setBusy(false);
@@ -254,8 +289,8 @@ function ClockPage() {
                 <div className="font-semibold">Not clocked in</div>
                 <div className="text-sm text-muted-foreground">Start your shift to track hours.</div>
               </div>
-              <button onClick={clockIn} disabled={busy} className="px-5 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium inline-flex items-center gap-2 disabled:opacity-60">
-                <LogIn className="size-4" /> Clock In
+              <button onClick={clockIn} disabled={busy || (!canSignIn && coverPending)} title={canSignIn ? "Clock in" : coverPending ? "Cover request waiting for admin or management" : "Not on the rota now — request to sign in to cover (needs approval)"} className="px-5 py-2.5 rounded-lg bg-primary text-primary-foreground font-medium inline-flex items-center gap-2 disabled:opacity-60">
+                <LogIn className="size-4" /> {canSignIn ? "Clock In" : coverPending ? "Cover request pending" : "Request to cover"}
               </button>
             </div>
           )}
