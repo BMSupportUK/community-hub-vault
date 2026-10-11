@@ -380,7 +380,7 @@ export function StaffOnDutyStrip({
     return `${h}h ${m}m`;
   };
 
-  const isTickets = variant === "tickets";
+  const isTickets = variant === "tickets" || variant === "tickets-sidebar";
   /** On the tickets strip, Dane J's presence follows business hours like everyone else. */
   const daneOverride = !isTickets;
   const roleRank = (id: string) => {
