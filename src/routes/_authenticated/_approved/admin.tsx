@@ -123,12 +123,6 @@ function AdminDashboard() {
               <p className="text-sm text-white/85">Server-wide controls — staff can see the sections admin allows them to.</p>
             </div>
           <div className="col-span-2 flex min-w-0 flex-wrap items-center gap-2 sm:col-span-1">
-            <Link
-              to="/admin-sounds"
-              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/15 backdrop-blur border border-white/25 text-sm text-white hover:bg-white/25"
-            >
-              <Bell className="size-4" /> Notification sounds
-            </Link>
             {unlocked && (
               <button onClick={lockNow} className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/15 backdrop-blur border border-white/25 text-sm text-white hover:bg-white/25">
                 <Lock className="size-4" /> Lock
@@ -549,7 +543,7 @@ function DashboardBody() {
     { to: "/shop", search: { view: "admin" }, label: "Shop products", desc: "Add, edit and reorder shop products and categories.", icon: Package, adminOnly: true, art: toolArtShop },
     { to: "/shop", search: { view: "discounts" }, label: "Discount codes", desc: "Create and manage promotional discount codes.", icon: Tag, adminOnly: true, art: toolArtShop },
     { to: "/install-guides", search: { tab: "app-apk" }, label: "App APK & transfers", desc: "Upload the Android APK and monitor the live 24-hour install links members have requested.", icon: Package, art: toolArtDevices },
-    { to: "/admin-sounds", label: "Notification sounds", desc: "Play and verify every notification MP3 used across the app, and set volume for this device.", icon: Bell, art: toolArtAlerts },
+    { to: "/admin-sounds", label: "Notification sounds", desc: "Test spoken and phone alerts, and upload replacement sounds.", icon: Bell, art: toolArtAlerts },
     { to: "/admin-ad-stats", label: "Advert performance", desc: "See how many views and clicks each advert unit gets on bmsupport.uk, by page and by day.", icon: BarChart3, art: toolArtMoney },
     { to: "/admin-shifts", label: "Staff shifts", desc: "Review every staff shift, clock-in, clock-out, breaks and auto clock-out, grouped by day.", icon: Users, art: toolArtTeam },
     { tabKey: "theme", label: "Theme", desc: "Choose the default app theme for members.", icon: Palette, art: toolArtDesign },
