@@ -251,6 +251,14 @@ function ForumLayout() {
                 </Link>
               </Button>
             )}
+            {canOpenFanZoneAdminPanel((roles ?? []) as string[]) && (
+              <Button asChild size="sm" variant="outline" className="bg-black/40 backdrop-blur border-white/30 text-white hover:bg-black/60 hover:text-white justify-center col-span-2 sm:col-span-1">
+                <Link to="/fan-zone-admin">
+                  <ShieldCheck className="size-4 mr-1.5" />
+                  Fan Zone | Admin Panel
+                </Link>
+              </Button>
+            )}
             {canModerate && (
               <Button asChild size="sm" variant="outline" className="bg-black/40 backdrop-blur border-white/30 text-white hover:bg-black/60 hover:text-white justify-center col-span-2 sm:col-span-1">
                 <Link to="/admin-reports">
