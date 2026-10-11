@@ -915,10 +915,11 @@ export function WorkingStatusBox({
             <>
               <div className="flex items-center justify-between">
                 <span className="text-muted-foreground font-medium">Shift</span>
-                <span className={cn("inline-flex items-center gap-1.5 font-bold tabular-nums text-success", compact ? "text-sm" : "text-lg")}>
+                <span className={cn("inline-flex items-center gap-2 font-bold tabular-nums text-success", compact ? "text-sm" : "text-lg")}>
                   <CircleDot className={compact ? "size-4" : "size-5"} />
                   {fmtHM(shiftSec)}
                 </span>
+                <ShiftEndCountdown />
               </div>
               {currentHours && (
                 <div className="grid gap-2.5 text-xs">
