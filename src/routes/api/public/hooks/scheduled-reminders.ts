@@ -236,16 +236,24 @@ export const Route = createFileRoute("/api/public/hooks/scheduled-reminders")({
               kind: "shift_auto_clock_in",
             });
           }
-          // END warn — removed: the shift-end alert must fire at the end of
-          // the shift, not before it. Only the "Shift has ended" job below
-          // (kind shift_end_over) sends the end alert.
-          // END overdue
+          // END warn — heads-up shortly before the shift finishes.
+          if (isOpenForSlot && toEnd > 0 && toEnd <= WARN_MS) {
+            jobs.push({
+              key: `slot:${slot.id}:end:warn`,
+              userId,
+              title: "Shift ending soon",
+              body: `Your shift ends in ${Math.max(1, Math.round(toEnd / 60000))} min.`,
+              url: "/clock",
+              kind: "shift_end_warn",
+            });
+          }
+          // END overdue — phone alert at the end of the shift.
           if (isOpenForSlot && toEnd <= 0) {
             jobs.push({
               key: `slot:${slot.id}:end:over`,
               userId,
               title: "Shift has ended",
-              body: "Your shift has ended. Please clock out.",
+              body: "Your shift has ended. Open BM Support to confirm if you're still working.",
               url: "/clock",
               kind: "shift_end_over",
             });
