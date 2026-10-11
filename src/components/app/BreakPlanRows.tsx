@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { CheckCircle2 } from "lucide-react";
-import { toast } from "sonner";
+import { CheckCircle2, Coffee } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { breakIcon } from "@/lib/breaks";
 import { planBreaks, toMinutes, fromMinutes, type UserPlan } from "@/lib/break-plan";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 const ukNow = () => {
   const p = Object.fromEntries(new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/London", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false }).formatToParts(new Date()).map((x) => [x.type, x.value]));
