@@ -83,6 +83,38 @@ function AdminSounds() {
   const [nowPlaying, setNowPlaying] = useState<string | null>(null);
   const sequenceRef = useRef<number | null>(null);
   const [running, setRunning] = useState(false);
+  const [pushBusy, setPushBusy] = useState<string | null>(null);
+
+  const PUSH_KINDS: { key: string; label: string }[] = [
+    { key: "ticket", label: "New ticket" },
+    { key: "ticket_reply", label: "Ticket reply" },
+    { key: "mention", label: "Mention" },
+    { key: "shift_start", label: "Shift start" },
+    { key: "shift_end", label: "Shift end" },
+    { key: "outage", label: "Outage" },
+    { key: "outage_resolved", label: "Outage resolved" },
+    { key: "order", label: "New order" },
+    { key: "payment", label: "Payment" },
+  ];
+
+  const sendPush = async (kind: string) => {
+    if (pushBusy) return;
+    setPushBusy(kind);
+    try {
+      const results = await sendTestPush({ data: { kind } });
+      const entries = Object.entries(results);
+      const skipped = entries.find(([, r]) => r.skipped)?.[1].skipped;
+      const failed = entries.reduce((n, [, r]) => n + r.failed, 0);
+      const sent = entries.reduce((n, [, r]) => n + r.sent, 0);
+      if (skipped) toast.error(`Not sent: ${skipped}`);
+      else if (sent === 0) toast.error(`No phone received it (${failed} failed). Is the app installed and signed in on your phone?`);
+      else toast.success(`Sent to ${sent} device${sent === 1 ? "" : "s"} — lock your phone to hear the sound.`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Test push failed");
+    } finally {
+      setPushBusy(null);
+    }
+  };
 
   useEffect(() => {
     if (!isAdmin) return;
