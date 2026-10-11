@@ -672,7 +672,15 @@ function DashboardBody({ zone }: { zone: "bm" | "fanzone" }) {
       ) : tab === "bank-transfer" && isAdminOnly ? (
         <BankTransferAdminCard />
       ) : tab === "staff-pins" && canSeePins ? (
-        <StaffPinAdminCard />
+        <div className="relative isolate -mx-4 sm:-mx-6 -mb-8 min-h-[calc(100dvh-16rem)] overflow-hidden">
+          <div className="absolute inset-0 -z-10 pointer-events-none" aria-hidden="true">
+            <img src={pinIllustration} alt="" className="h-full w-full object-cover object-center" />
+            <div className="absolute inset-0 bg-background/55" />
+          </div>
+          <div className="px-4 sm:px-6 pb-8 [&>section]:bg-card/85 [&>section]:backdrop-blur-sm">
+            <StaffPinAdminCard />
+          </div>
+        </div>
       ) : tab === "backup-codes" && canSeePins ? (
         <div className="max-w-2xl">
           <RecoveryCodes />
