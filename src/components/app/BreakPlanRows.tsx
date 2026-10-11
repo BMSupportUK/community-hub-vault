@@ -58,8 +58,8 @@ export function BreakPlanRows({ userId, usedKinds }: { userId: string; usedKinds
       { ...plan.break1, done: breaksUsed >= 1 },
       { ...plan.lunch, done: lunchUsed },
       { ...plan.break2, done: breaksUsed >= 2 },
-    ];
-  }, [plan, usedKinds]);
+    ].map((it) => ({ ...it, missed: !it.done && it.start !== null && nowMin > it.start + 15 }));
+  }, [plan, usedKinds, nowMin]);
 
   // Reminder when an allocated time arrives (staff still tap to start it).
   useEffect(() => {
