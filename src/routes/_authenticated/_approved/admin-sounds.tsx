@@ -307,6 +307,43 @@ function AdminSounds() {
         })}
       </div>
 
+      <div className="rounded-2xl border border-border bg-surface-1 p-4 space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="font-display font-bold flex items-center gap-2">
+              <Smartphone className="size-4" /> Test on my phone
+            </h2>
+            <p className="text-xs text-muted-foreground mt-1">
+              Sends a real push notification to every phone where you're signed in, using the exact
+              alert type — lock the phone or close the app to hear its sound.
+            </p>
+          </div>
+          <button
+            type="button"
+            disabled={!!pushBusy}
+            onClick={() => void sendPush("all")}
+            className="inline-flex items-center gap-2 rounded-xl bg-gradient-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-glow disabled:opacity-50"
+          >
+            {pushBusy === "all" ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
+            {pushBusy === "all" ? "Sending all…" : "Send all to my phone"}
+          </button>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {PUSH_KINDS.map((k) => (
+            <button
+              key={k.key}
+              type="button"
+              disabled={!!pushBusy}
+              onClick={() => void sendPush(k.key)}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-surface-2 px-3 py-2 text-xs font-semibold hover:border-primary disabled:opacity-50"
+            >
+              {pushBusy === k.key ? <Loader2 className="size-3.5 animate-spin" /> : <Send className="size-3.5" />}
+              {k.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <SoundSettings />
     </div>
   );
