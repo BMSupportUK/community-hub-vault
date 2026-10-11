@@ -929,7 +929,7 @@ export function WorkingStatusBox({
                   )}
                 </div>
               )}
-              {(roles.includes("staff") || roles.includes("management")) && (
+              {(roles.includes("staff") || roles.includes("management") || roles.includes("admin")) && (
                 <BreakPlanRows userId={user.id} usedKinds={usedKinds} />
               )}
             </>
