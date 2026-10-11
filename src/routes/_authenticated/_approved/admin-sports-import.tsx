@@ -1,4 +1,5 @@
 import { sortForMerge } from "@/lib/queue-merge-order";
+import { eplFamily, eplFamilies } from "@/lib/epl-merge-family";
 import { createFileRoute, Navigate, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
@@ -281,7 +282,10 @@ function AdminSportsImportPage() {
     const groups = new Map<string, QueueItem[]>();
     for (const q of queue) {
       if (q.status !== "pending") continue;
-      const name = matchChannel(q);
+      const text = String(q.parsed_event?.raw ?? q.raw_text ?? "");
+      // EPL split cards group by their own channel family (Hub / Sky / team)
+      // so Hub cards never get welded to Sky Sports cards.
+      const name = eplFamily(text) ?? matchChannel(q);
       if (!name) continue;
       const list = groups.get(name) ?? [];
       list.push(q);
@@ -322,6 +326,11 @@ function AdminSportsImportPage() {
     const items = queue
       .filter((q) => picked.includes(q.id));
     if (items.length < 2) return;
+    const fams = eplFamilies(items.map((q) => String(q.parsed_event?.raw ?? q.raw_text ?? "")));
+    if (fams.length > 1) {
+      toast.error(`These posts mix ${fams.join(" and ")} channels — merge each group separately.`);
+      return;
+    }
     if (!window.confirm(`Join these ${items.length} posts (oldest first) into 1 import?`)) return;
     setCombiningEspn(true);
     try {
