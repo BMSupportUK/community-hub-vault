@@ -64,7 +64,7 @@ function ShiftHistoryPage() {
         <Link to="/home" className="inline-flex items-center gap-1.5 text-xs text-foreground hover:text-primary">
           <ArrowLeft className="size-3.5" /> Back
         </Link>
-        <ShiftHistoryPanel userId={user.id} name={name} username={username} />
+        <ShiftHistoryPanel userId={user.id} name={name} username={username} nameplateId={profile?.equipped_nameplate_id ?? null} />
       </div>
     </div>
   );
