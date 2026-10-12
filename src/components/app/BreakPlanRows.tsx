@@ -163,6 +163,7 @@ export function AutoBreakStartListener() {
       if (n > 0) await passTicketsForBreak(item.kind);
       const { error } = await supabase.from("breaks").insert({ shift_id: shiftId, user_id: user.id, kind: item.kind });
       if (error) return;
+      notifyBreak({ data: { kind: "start", breakKind: item.kind } }).catch(() => {});
       setUsedKinds((k) => [...k, `${item.kind}@${item.start}`]);
       setNotice(`Your ${item.label.toLowerCase()} has started automatically.${n > 0 ? ` Your ticket${n === 1 ? " was" : "s were"} passed over.` : ""} It ends on its own.`);
     })();
