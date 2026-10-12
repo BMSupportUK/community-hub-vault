@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { SecureLinkPanel } from "@/components/checkout/ManualOrderLinkDialog";
 import hero from "@/assets/checkout-family-tv.jpg";
 import { toast } from "sonner";
+import { DEMO_CHECKOUT_VIEW } from "@/lib/demo-data";
 import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/pay/$token")({
@@ -25,8 +26,28 @@ export const Route = createFileRoute("/pay/$token")({
       { name: "twitter:card", content: "summary" },
     ],
   }),
-  component: PayPage,
+  component: PayRoute,
 });
+
+function PayRoute() {
+  const { token } = Route.useParams();
+  return token === "demo" ? <DemoPayPage /> : <PayPage />;
+}
+
+/** Sample secure order for the demo account — no live data, actions do nothing. */
+function DemoPayPage() {
+  const demoOnly = async () => { toast.info("This is a sample order on the demo account"); };
+  return (
+    <main className="min-h-screen overflow-y-auto">
+      <div className="w-full px-3 pt-3">
+        <Link to="/shop" className="inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="size-4" /> Back to my orders
+        </Link>
+      </div>
+      <CheckoutTemplate view={DEMO_CHECKOUT_VIEW as CheckoutView} claimToken="demo" onPaymentSent={demoOnly} onContinueToSetup={demoOnly} />
+    </main>
+  );
+}
 
 function PayPage() {
   const { token } = Route.useParams();
