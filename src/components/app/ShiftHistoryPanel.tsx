@@ -131,7 +131,7 @@ function Pill({
 }
 
 
-export default function ShiftHistoryPanel({ userId, name, username }: { userId: string; name: string; username?: string | null }) {
+export default function ShiftHistoryPanel({ userId, name, username, nameplateId }: { userId: string; name: string; username?: string | null; nameplateId?: string | null }) {
   const [rows, setRows] = useState<ShiftHistoryRow[]>([]);
   const [breaksByShift, setBreaksByShift] = useState<Record<string, BreakRow[]>>({});
   const [awayRows, setAwayRows] = useState<AwayRow[]>([]);
@@ -305,8 +305,19 @@ export default function ShiftHistoryPanel({ userId, name, username }: { userId: 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="font-display text-lg font-bold text-white">
-          {name}&apos;s shift history
+        {/* The user's equipped nameplate stands in for their name text. */}
+        <h3 className="flex flex-wrap items-center gap-x-2 gap-y-1 font-display text-lg font-bold text-white">
+          <span className="relative h-9 w-[151px] max-w-full shrink-0 overflow-hidden rounded-lg">
+            <Nameplate
+              id={nameplateId}
+              className="absolute inset-0"
+              fallbackStyle={{ background: "linear-gradient(to bottom right, hsl(var(--primary)/0.3), hsl(330 80% 60% / 0.2), hsl(220 80% 60% / 0.2))" }}
+            />
+            <span className="relative flex h-full items-center px-2.5">
+              <span className="truncate font-display text-sm font-semibold text-white">{name}</span>
+            </span>
+          </span>
+          <span>&apos;s shift history</span>
         </h3>
         <p className="text-xs text-purple-200/70">
           {filteredRows.length} shift{filteredRows.length === 1 ? "" : "s"} on {fmtDay(selectedDate)} · {total ?? rows.length} in the week shown · newest first
