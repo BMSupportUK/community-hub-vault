@@ -15,14 +15,14 @@ import { StaffGenderPrompt } from "@/components/app/StaffGenderPrompt";
 import { usePushRegister } from "@/hooks/use-push-register";
 import { useLocation } from "@tanstack/react-router";
 
-export function ApprovedDeferredExtras() {
+export function ApprovedDeferredExtras({ notificationsOnly = false }: { notificationsOnly?: boolean }) {
   usePushRegister();
   const pathname = useLocation({ select: (location) => location.pathname });
   const isSoundTestPage = pathname === "/admin-sounds";
 
   return (
     <>
-      <TwoFactorBanner />
+      {!notificationsOnly && <TwoFactorBanner />}
       <FriendRequestsListener />
       <FanZoneFriendRequestsListener />
 
@@ -33,9 +33,9 @@ export function ApprovedDeferredExtras() {
       <TicketHelpRequestedAlert />
       <FanZoneAppealAlert />
       <ContentReportAlert />
-      <FanZoneAccessCard />
+      {!notificationsOnly && <FanZoneAccessCard />}
       <ScreenLockResetAlerts />
-      <StaffGenderPrompt />
+      {!notificationsOnly && <StaffGenderPrompt />}
     </>
   );
 }

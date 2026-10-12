@@ -31,7 +31,7 @@ type Notif = {
   source: "staff" | "user";
 };
 
-export function NotificationBell() {
+export function NotificationBell({ notificationsOnly = false }: { notificationsOnly?: boolean }) {
   const { user, isStaff, isMod, isPending, hasAny } = useAuth();
   const navigate = useNavigate();
   const channelInstanceId = useRef(Math.random().toString(36).slice(2)).current;
@@ -130,6 +130,7 @@ export function NotificationBell() {
           } else if (n.kind === "order_paid") {
             // PaymentConfirmedAlert owns the sound + popup; a second toast and
             // sound here duplicated every payment alert.
+            if (!canManageOrders) toast(n.title, { description: n.body ?? undefined });
           } else if (n.kind === "ticket_assigned") {
             playSound(ticketAudio, { label: "ticket-assigned", gain: 2.0 });
             toast(`🎫 ${n.title}`, {
@@ -389,6 +390,8 @@ export function NotificationBell() {
       : kind === "order_placed" ? ShoppingBag
       : kind === "mention" ? AtSign
       : Bell;
+
+  if (notificationsOnly) return null;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
