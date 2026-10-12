@@ -9,7 +9,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
  */
 export const sendTestPush = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((input: { kind?: string }) => input)
+  .inputValidator((input: { kind?: string; audience?: "me" | "everyone" }) => input)
   .handler(async ({ context, data }) => {
     const { supabase, userId } = context;
 
@@ -20,7 +20,7 @@ export const sendTestPush = createServerFn({ method: "POST" })
       .in("role", ["admin", "management"]);
     if (!roles?.length) throw new Error("Admins only");
 
-    const { PHONE_ALERTS } = await import("@/lib/phone-alerts");
+    const { PHONE_ALERTS, phoneAlertRoles } = await import("@/lib/phone-alerts");
     const KINDS: Record<string, { title: string; body: string; data: Record<string, string> }> = {};
     for (const a of PHONE_ALERTS) {
       KINDS[a.key] = {
@@ -33,10 +33,16 @@ export const sendTestPush = createServerFn({ method: "POST" })
     const kind = data?.kind;
     if (kind !== "all" && (!kind || !KINDS[kind])) throw new Error("Unknown kind");
 
-    const { pushToUser } = await import("@/lib/fcm.server");
+    const { pushToUser, pushToRoles } = await import("@/lib/fcm.server");
+    const everyone = data?.audience === "everyone";
 
     const send = async (key: string) => {
       const k = KINDS[key];
+      if (everyone) {
+        // Same recipients as the real alert: every account with the roles it goes to.
+        const a = PHONE_ALERTS.find((x) => x.key === key)!;
+        return pushToRoles(phoneAlertRoles(a), { title: k.title, body: k.body, data: k.data });
+      }
       return pushToUser(userId, { title: k.title, body: k.body, data: k.data });
     };
 
