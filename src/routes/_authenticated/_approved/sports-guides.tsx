@@ -7,6 +7,8 @@ import { findEarliestEventUtcMs } from "@/lib/parse-event-times";
 import { Plus, Search, Pencil, Trash2, ImageIcon, GripVertical, X, ChevronDown, ChevronRight, ArrowUp, ArrowDown, ArrowLeft, Home } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
+import { useIsDemoAccount } from "@/hooks/use-demo-account";
+import { demoSportsGuides } from "@/lib/demo-data";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

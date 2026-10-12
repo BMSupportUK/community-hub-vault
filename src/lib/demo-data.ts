@@ -160,6 +160,44 @@ export function demoRota(weekStart: Date) {
   return { slots, holidays, swaps, profiles };
 }
 
+/** Sample sports guides for the demo account — made-up events only. */
+export function demoSportsGuides() {
+  const categories = [
+    { id: "00000000-0000-4000-d000-000000000001", name: "Football", slug: "football", sort_order: 1, parent_id: null },
+    { id: "00000000-0000-4000-d000-000000000002", name: "Boxing", slug: "boxing", sort_order: 2, parent_id: null },
+    { id: "00000000-0000-4000-d000-000000000003", name: "US Sports", slug: "us-sports", sort_order: 3, parent_id: null },
+  ];
+  const blog = (
+    n: number, cat: number, title: string, body: string, sub: string | null = null,
+  ) => ({
+    id: `00000000-0000-4000-d100-${String(n).padStart(12, "0")}`,
+    category_id: categories[cat].id,
+    title,
+    excerpt: null,
+    body,
+    image_url: null,
+    badge: null,
+    published: true,
+    created_at: ago(3),
+    sort_order: n,
+    updated_at: ago(1),
+    refresh_notice: null,
+    not_guaranteed: false,
+    subcategory: sub,
+  });
+  const blogs = [
+    blog(1, 0, "Sample FC vs Demo United",
+      "<p>Saturday 18 October</p><p>17:30 GMT Sample FC vs Demo United</p><p>Available channels</p><p>Sample Sports 1</p>"),
+    blog(2, 0, "Example Rovers vs Test City",
+      "<p>Sunday 19 October</p><p>16:00 GMT Example Rovers vs Test City</p><p>Available channels</p><p>Sample Sports 2</p>"),
+    blog(3, 1, "Sample vs Demo: Heavyweight Bout",
+      "<p>Saturday 18 October</p><p>22:00 GMT Sample vs Demo</p><p>Available channels</p><p>Sample Box Office</p>"),
+    blog(4, 2, "Demo Sharks at Sample Jets",
+      "<p>Monday 20 October</p><p>01:15 GMT Demo Sharks at Sample Jets</p><p>Available channels</p><p>Sample NFL 1</p>"),
+  ];
+  return { categories, blogs, subcategories: [], reads: {}, baselineAt: null };
+}
+
 /** Sample secure-order page content for /pay/demo. */
 export const DEMO_CHECKOUT_VIEW = {
   order: {
