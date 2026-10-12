@@ -157,8 +157,10 @@ export function AutoBreakStartListener() {
       if (!s) return;
       const shiftId = (s as { id: string }).id;
       // Re-check inside the insert path: another tab may have started it.
-      const { data: existing } = await supabase.from("breaks").select("id").eq("shift_id", shiftId).eq("kind", item.kind).limit(1);
-      if (existing && existing.length > 0) return;
+      // Break 1 already counts as one "break", so Break 2 is allowed a second.
+      const { data: existing } = await supabase.from("breaks").select("id").eq("shift_id", shiftId).eq("kind", item.kind);
+      const allowed = item.kind === "lunch" ? 1 : item.label === "Break 2" ? 2 : 1;
+      if ((existing?.length ?? 0) >= allowed) return;
       const n = await countOpenTickets(user.id);
       if (n > 0) await passTicketsForBreak(item.kind);
       const { error } = await supabase.from("breaks").insert({ shift_id: shiftId, user_id: user.id, kind: item.kind });
