@@ -20,7 +20,6 @@ import QRCode from "qrcode";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { lockScreenNow } from "@/components/app/ScreenLockProvider";
-import { isDemoAccount, switchDemoRole } from "@/lib/demo-role.functions";
 
 import { usePresence } from "@/components/app/PresenceIndicators";
 import {
@@ -73,26 +72,6 @@ interface MiniProfile {
 export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "bar" } = {}) {
   const { user, roles, signOut, hasAny, isFanZoneOnly, refreshRoles } = useAuth();
   const navigate = useNavigate();
-  const [isDemo, setIsDemo] = useState(false);
-  const [switching, setSwitching] = useState(false);
-  useEffect(() => {
-    if (!user?.id) return;
-    isDemoAccount().then((r) => setIsDemo(r.demo)).catch(() => setIsDemo(false));
-  }, [user?.id]);
-  const flipDemo = async () => {
-    setSwitching(true);
-    try {
-      const to = roles.includes("staff") ? "subscriber" : "staff";
-      await switchDemoRole({ data: { to } });
-      await refreshRoles();
-      toast.success(to === "staff" ? "Now showing the staff layout" : "Now showing the subscriber layout");
-      navigate({ to: "/home" });
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Couldn't switch view");
-    } finally {
-      setSwitching(false);
-    }
-  };
   const [profile, setProfile] = useState<MiniProfile | null>(null);
   const [fanProfile, setFanProfile] = useState<{ fan_alias: string | null; fan_avatar_url: string | null } | null>(null);
   const [copied, setCopied] = useState(false);
