@@ -118,7 +118,7 @@ function ReadPage() {
         queryClient.invalidateQueries({ queryKey: ["sports-guides-data", user.id] });
       }
     })();
-  }, [id, user?.id, navigate, queryClient]);
+  }, [id, user?.id, navigate, queryClient, isDemo]);
 
   const bodyItems = useMemo(() => {
     if (!blog?.body) return [] as string[];
