@@ -924,7 +924,7 @@ export function WorkingStatusBox({
           </div>
           <div role="tablist" aria-label="Shifts" className="grid grid-cols-2 gap-1 rounded-full bg-muted/30 p-1 ring-1 ring-white/10">
             {([
-              ["current", "Current shift"],
+              ["current", "Today's shift"],
               ["next", "Next shift"],
             ] as const).map(([key, label]) => (
               <button
