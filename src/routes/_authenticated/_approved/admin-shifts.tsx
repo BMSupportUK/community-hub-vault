@@ -8,7 +8,6 @@ import { cn } from "@/lib/utils";
 import { type BreakKind, breakIcon, breakLabel } from "@/lib/breaks";
 import { awayForShift, awayIcon } from "@/lib/staff-away";
 import { EarlyFinishRequestsPanel } from "@/components/app/EarlyFinishRequestsPanel";
-import { CoverRequestsPanel } from "@/components/app/CoverRequestsPanel";
 import { ShiftBreakdownCard } from "@/components/app/ShiftBreakdownCard";
 import { shiftBreakdown } from "@/lib/shift-breakdown";
 import { isAutomaticShiftOut, shiftEndSignOutAnswer } from "@/lib/shift-end-history";
