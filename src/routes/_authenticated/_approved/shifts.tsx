@@ -19,6 +19,10 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import shiftsBg from "@/assets/staff-office-illustration.jpg";
+import { useIsDemoAccount } from "@/hooks/use-demo-account";
+import { demoRota } from "@/lib/demo-data";
+
+const DEMO_TOAST = "Sample rota — changes aren't saved on the demo account";
 
 export const Route = createFileRoute("/_authenticated/_approved/shifts")({
   head: () => ({
@@ -240,6 +244,7 @@ function ShiftsPage() {
   const { toUtcMs, tz } = useTimezone();
   const { localMode, toggle: toggleLocalTz, browserTz, fmtRange, deviceRange } = useLocalDisplayTz(tz);
   const isMod = hasRole("moderator");
+  const isDemo = useIsDemoAccount();
   const canPick = isStaffOrAdmin || isMod;
   // Daily block-shift quota: Owner 2, Management 1, Staff 3.
   const myQuota = useMemo(
