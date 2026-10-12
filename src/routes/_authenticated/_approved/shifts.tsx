@@ -777,7 +777,7 @@ function ShiftsPage() {
       <header className="relative px-8 pt-8 pb-6 border-b border-border bg-surface/60 backdrop-blur">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
-            <h1 className="font-display text-3xl font-bold bg-gradient-primary bg-clip-text text-transparent">Shifts</h1>
+            <h1 className="font-display text-3xl font-bold text-foreground">Shifts</h1>
             <p className="text-muted-foreground mt-1">Pick your slots, request holiday, swap shifts.</p>
           </div>
           <button
