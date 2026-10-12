@@ -44,7 +44,7 @@ function DemoPayPage() {
           <ArrowLeft className="size-4" /> Back to my orders
         </Link>
       </div>
-      <CheckoutTemplate view={DEMO_CHECKOUT_VIEW as CheckoutView} claimToken="demo" onPaymentSent={demoOnly} onContinueToSetup={demoOnly} />
+      <CheckoutTemplate view={DEMO_CHECKOUT_VIEW as CheckoutView} onPaymentSent={demoOnly} onContinueToSetup={demoOnly} />
     </main>
   );
 }
