@@ -10,6 +10,8 @@ import AdSenseSlot from "@/components/app/AdSenseSlot";
 import { toast } from "sonner";
 import { annotateTimesInEl } from "@/lib/parse-event-times";
 import { useUserTimezone } from "@/hooks/use-user-timezone";
+import { useIsDemoAccount } from "@/hooks/use-demo-account";
+import { demoSportsGuides } from "@/lib/demo-data";
 
 export const Route = createFileRoute("/_authenticated/_approved/sports-guides/read/$id")({
   head: () => ({
@@ -45,6 +47,7 @@ function ReadPage() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const viewerTz = useUserTimezone();
+  const isDemo = useIsDemoAccount();
   const stageRef = useRef<HTMLDivElement | null>(null);
   const [blog, setBlog] = useState<Blog | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
