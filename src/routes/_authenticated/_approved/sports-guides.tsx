@@ -227,7 +227,7 @@ function SportsGuidesPage() {
   }, []);
 
 
-  const queryKey = ["sports-guides-data", user?.id ?? "anon"] as const;
+  const queryKey = ["sports-guides-data", user?.id ?? "anon", isDemo] as const;
   const prune = useServerFn(pruneStaleSportsGuides);
   const dataQuery = useQuery({
     queryKey,
