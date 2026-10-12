@@ -108,25 +108,35 @@ export function BreakPlanRows({ userId, usedKinds, onStartBreak }: { userId: str
   // No snooze / remind-me option and it can't be dismissed.
   const dueItem = items.find((it) => !it.done && !it.missed && it.start !== null && nowMin >= it.start);
   const dueKey = dueItem && dueItem.start !== null ? `${dueItem.label}@${dueItem.start}` : null;
+  // Manual fallback: staff can still start a break they missed or that has no
+  // allocated slot, via a confirm dialog with the same ticket handover.
+  const [manualItem, setManualItem] = useState<(typeof items)[number] | null>(null);
+  const activeItem = dueItem ?? manualItem;
+  const activeKey = dueKey ?? (manualItem ? `manual-${manualItem.label}` : null);
   const [ticketCount, setTicketCount] = useState<number | null>(null);
   const [passed, setPassed] = useState(false);
   const [working, setWorking] = useState(false);
   useEffect(() => {
     setPassed(false);
     setTicketCount(null);
-    if (!dueKey) return;
+    if (!activeKey) return;
     let alive = true;
     void countOpenTickets(userId).then((n) => { if (alive) setTicketCount(n); });
     return () => { alive = false; };
-  }, [dueKey, userId]);
+  }, [activeKey, userId]);
 
   const onTicket = (ticketCount ?? 0) > 0 && !passed;
   const passOver = async () => {
-    if (!dueItem) return;
+    if (!activeItem) return;
     setWorking(true);
-    const ok = await passTicketsForBreak(dueItem.kind);
+    const ok = await passTicketsForBreak(activeItem.kind);
     setWorking(false);
     if (ok) setPassed(true);
+  };
+  const startActive = () => {
+    if (!activeItem) return;
+    onStartBreak?.(activeItem.kind);
+    setManualItem(null);
   };
 
   if (!plan) return null;
