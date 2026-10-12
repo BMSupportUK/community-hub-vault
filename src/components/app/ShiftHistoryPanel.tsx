@@ -6,9 +6,9 @@ import { cn } from "@/lib/utils";
 import { type BreakKind, breakLabel, breakIcon } from "@/lib/breaks";
 import { awayForShift, awayIcon } from "@/lib/staff-away";
 import { ShiftBreakdownCard } from "@/components/app/ShiftBreakdownCard";
+import { isAutomaticShiftOut, shiftEndSignOutAnswer } from "@/lib/shift-end-history";
 
 const PAGE_SIZE = 20;
-const AUTO_OUT_GRACE_MS = 1 * 60 * 1000;
 
 interface ShiftHistoryRow {
   id: string;
@@ -198,7 +198,7 @@ export default function ShiftHistoryPanel({ userId, name, username }: { userId: 
     async (offset: number) => {
       const { data, error, count } = await supabase
         .from("shifts")
-        .select("id, clock_in, clock_out, end_prompt_asked_at, still_working_ack_at, early_finish_at", { count: "exact" })
+        .select("id, clock_in, clock_out, end_prompt_asked_at, still_working_ack_at, end_prompt_signed_out_at, early_finish_at", { count: "exact" })
         .eq("user_id", userId)
         .gte("clock_in", new Date(weekFrom).toISOString())
         .lt("clock_in", new Date(weekTo).toISOString())
@@ -414,10 +414,8 @@ export default function ShiftHistoryPanel({ userId, name, username }: { userId: 
         {filteredRows.map((s) => {
           const open = !s.clock_out;
           const acked = !!s.still_working_ack_at;
-          const autoOut =
-            !!s.clock_out &&
-            !!s.end_prompt_asked_at &&
-            Math.abs(new Date(s.clock_out).getTime() - (new Date(s.end_prompt_asked_at).getTime() + AUTO_OUT_GRACE_MS)) < 15_000;
+          const autoOut = isAutomaticShiftOut(s);
+          const signedOutAnswer = shiftEndSignOutAnswer(s);
           return (
             <div key={s.id} className="grid min-w-0 gap-3 xl:grid-cols-2">
             <div
@@ -503,10 +501,8 @@ export default function ShiftHistoryPanel({ userId, name, username }: { userId: 
                 {acked ? (
                   <Pill icon={CheckCircle2} label={`Said still working at ${fmtTime(s.still_working_ack_at ?? s.clock_in)}`} tone="ok" />
                 ) : null}
-                {s.end_prompt_signed_out_at ? (
-                  <Pill icon={CheckCircle2} label={`Answered: finished, signed out at ${fmtTime(s.end_prompt_signed_out_at)}`} tone="ok" />
-                ) : !acked && s.end_prompt_asked_at && s.clock_out && !autoOut ? (
-                  <Pill icon={CheckCircle2} label={`Answered: signed out at ${fmtTime(s.clock_out)}`} tone="ok" />
+                {signedOutAnswer ? (
+                  <Pill icon={CheckCircle2} label={`Answered: finished, signed out at ${fmtTime(signedOutAnswer)}`} tone="ok" />
                 ) : !acked && s.end_prompt_asked_at ? (
                   <Pill icon={HelpCircle} label="No answer given" tone="warn" />
                 ) : null}

@@ -18,9 +18,19 @@ import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
-import shiftsBg from "@/assets/shifts-bg.jpg";
+import shiftsBg from "@/assets/staff-office-illustration.jpg";
 
 export const Route = createFileRoute("/_authenticated/_approved/shifts")({
+  head: () => ({
+    meta: [
+      { title: "Staff Rota & Shifts | BM Support" },
+      { name: "description", content: "Your BM Support staff rota, booked shifts, holidays and shift swaps." },
+      { property: "og:title", content: "Staff Rota & Shifts | BM Support" },
+      { property: "og:description", content: "Your BM Support staff rota, booked shifts, holidays and shift swaps." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
   component: ShiftsPage,
 });
 
@@ -760,10 +770,10 @@ function ShiftsPage() {
 
   return (
     <div
-      className="flex-1 overflow-y-auto relative bg-cover bg-center bg-fixed"
-      style={{ backgroundImage: `url(${shiftsBg})` }}
+      className="flex-1 overflow-y-auto relative isolate"
     >
-      <div className="absolute inset-0 bg-background/45 backdrop-blur-[2px] pointer-events-none" aria-hidden />
+      <img src={shiftsBg} alt="" aria-hidden="true" className="pointer-events-none absolute inset-0 -z-20 size-full object-cover object-center" />
+      <div className="absolute inset-0 -z-10 bg-background/85 pointer-events-none" aria-hidden />
       <header className="relative px-8 pt-8 pb-6 border-b border-border bg-surface/60 backdrop-blur">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
