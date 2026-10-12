@@ -304,6 +304,10 @@ export function WorkingStatusBox({
   // today) — shown as the "Shift hours" line while the person is signed in.
   const [currentHours, setCurrentHours] = useState<NextSlot | null>(null);
   const [hadShiftToday, setHadShiftToday] = useState(false);
+  // Today's own rota slots: the one that has already finished, and the next one
+  // still to come. Both are shown as shift information in the Today's shift tab.
+  const [endedToday, setEndedToday] = useState<NextSlot | null>(null);
+  const [laterToday, setLaterToday] = useState<NextSlot | null>(null);
   const [shiftTab, setShiftTab] = useState<"current" | "next">("current");
   // Auto-switch the tab: once today's shift has finished show Next shift, and
   // switch back to Current shift when the new shift day arrives. Only flips
@@ -409,6 +413,13 @@ export function WorkingStatusBox({
           ? { start: upcomingToday.start_time, end: upcomingToday.end_time }
           : null,
       );
+      // Today's own shift information: the slot that has already finished
+      // (the latest one if there were several), and the next one still to come.
+      const finishedToday = todays
+        .filter((sl) => sl.end_time <= nowTime)
+        .sort((a, b) => b.start_time.localeCompare(a.start_time))[0];
+      setEndedToday(finishedToday ?? null);
+      setLaterToday(upcomingToday ?? null);
       const underwayToday =
         todays.find((sl) => sl.start_time <= nowTime && sl.end_time > nowTime) ??
         (s
@@ -667,29 +678,18 @@ export function WorkingStatusBox({
       .padStart(2, "0")}:${(s % 60).toString().padStart(2, "0")}`;
   };
 
-  const currentShiftLocal = currentHours && deviceTz !== "Europe/London"
-    ? (() => {
-        const { startsAt, endsAt } = shiftWindowToUtcMs(currentHours.shift_date, currentHours.start_time, currentHours.end_time, "Europe/London");
-        const date = (value: number) => new Intl.DateTimeFormat("en-GB", {
-          timeZone: deviceTz, weekday: "short", day: "numeric", month: "short",
-        }).format(value);
-        const time = (value: number) => new Intl.DateTimeFormat("en-GB", {
-          timeZone: deviceTz, hour: "2-digit", minute: "2-digit", hour12: false,
-        }).format(value);
-        return { startDate: date(startsAt), endDate: date(endsAt), startTime: time(startsAt), endTime: time(endsAt) };
-      })()
-    : null;
-
-  const currentShiftUk = currentHours ? (() => {
-    const { startsAt, endsAt } = shiftWindowToUtcMs(currentHours.shift_date, currentHours.start_time, currentHours.end_time, "Europe/London");
+  // Rota wall-clock (UK) converted into any viewer's timezone. When the shift
+  // crosses midnight locally, start and end are listed as separate days.
+  const timesFor = (slot: NextSlot, tz: string) => {
+    const { startsAt, endsAt } = shiftWindowToUtcMs(slot.shift_date, slot.start_time, slot.end_time, "Europe/London");
     const date = (value: number) => new Intl.DateTimeFormat("en-GB", {
-      timeZone: "Europe/London", weekday: "short", day: "numeric", month: "short",
+      timeZone: tz, weekday: "short", day: "numeric", month: "short",
     }).format(value);
     const time = (value: number) => new Intl.DateTimeFormat("en-GB", {
-      timeZone: "Europe/London", hour: "2-digit", minute: "2-digit", hour12: false,
+      timeZone: tz, hour: "2-digit", minute: "2-digit", hour12: false,
     }).format(value);
     return { startDate: date(startsAt), endDate: date(endsAt), startTime: time(startsAt), endTime: time(endsAt) };
-  })() : null;
+  };
 
   // Same-day shifts read on one line; shifts that run into the next day stay
   // on one line too, with a glowing divider between the two days.
@@ -721,6 +721,29 @@ export function WorkingStatusBox({
       </span>
     );
 
+
+  // Both shift rows are pills so the office and local times read as a pair.
+  // Pills stack their label above the times when the card itself is narrow —
+  // the card width, not the screen width, decides.
+  const ShiftTimePills = ({ slot }: { slot: NextSlot | null }) => {
+    if (!slot) return null;
+    const uk = timesFor(slot, "Europe/London");
+    const local = deviceTz !== "Europe/London" ? timesFor(slot, deviceTz) : null;
+    return (
+      <div className="grid gap-2.5 text-xs">
+        <div className="flex flex-col items-start gap-0.5 rounded-xl bg-white/[0.07] px-3 py-1.5 ring-1 ring-white/25 @min-[19rem]:flex-row @min-[19rem]:items-center @min-[19rem]:justify-between @min-[19rem]:gap-3 @min-[19rem]:rounded-full">
+          <span className="whitespace-nowrap text-muted-foreground font-medium">UK office</span>
+          <ShiftTimes {...uk} className="text-foreground @max-[12rem]:whitespace-normal" />
+        </div>
+        {local && (
+          <div className="flex flex-col items-start gap-0.5 rounded-xl bg-primary/10 px-3 py-1.5 ring-1 ring-primary/30 @min-[19rem]:flex-row @min-[19rem]:items-center @min-[19rem]:justify-between @min-[19rem]:gap-3 @min-[19rem]:rounded-full">
+            <span className="whitespace-nowrap font-medium text-primary">Your local time</span>
+            <ShiftTimes {...local} className="text-[11px] text-foreground @min-[19rem]:text-xs @max-[12rem]:whitespace-normal" />
+          </div>
+        )}
+      </div>
+    );
+  };
 
   const ActionIcons = ({ compact = false }: { compact?: boolean }) => {
     const iconButtonClass = compact ? "size-8" : "size-10";
@@ -954,49 +977,32 @@ export function WorkingStatusBox({
                 </span>
                 <ShiftEndCountdown />
               </div>
-              {currentHours && (
-                <div className="grid gap-2.5 text-xs">
-                  {/* Both shift rows are pills so the office and local times read as a pair. */}
-                  {/* Pills stack their label above the times when the card itself is
-                      narrow — the card width, not the screen width, decides. */}
-                  <div className="flex flex-col items-start gap-0.5 rounded-xl bg-white/[0.07] px-3 py-1.5 ring-1 ring-white/25 @min-[19rem]:flex-row @min-[19rem]:items-center @min-[19rem]:justify-between @min-[19rem]:gap-3 @min-[19rem]:rounded-full">
-                    <span className="whitespace-nowrap text-muted-foreground font-medium">UK office</span>
-                    {currentShiftUk && <ShiftTimes {...currentShiftUk} className="text-foreground @max-[12rem]:whitespace-normal" />}
-                  </div>
-
-                  {currentShiftLocal && (
-                    <div className="flex flex-col items-start gap-0.5 rounded-xl bg-primary/10 px-3 py-1.5 ring-1 ring-primary/30 @min-[19rem]:flex-row @min-[19rem]:items-center @min-[19rem]:justify-between @min-[19rem]:gap-3 @min-[19rem]:rounded-full">
-                      <span className="whitespace-nowrap font-medium text-primary">Your local time</span>
-                      <ShiftTimes {...currentShiftLocal} className="text-[11px] text-foreground @min-[19rem]:text-xs @max-[12rem]:whitespace-normal" />
-                    </div>
-                  )}
-                </div>
-              )}
+              <ShiftTimePills slot={currentHours} />
               <BreakPlanRows userId={user.id} usedKinds={usedKinds} onStartBreak={(kind) => void startBreak(kind, { skipHandover: true })} />
             </>
           ) : (
             <>
               <BreakPlanRows userId={user.id} usedKinds={usedKinds} listHidden onStartBreak={(kind) => void startBreak(kind, { skipHandover: true })} />
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground font-medium">Shift</span>
-                <span className="text-muted-foreground italic">Shift completed</span>
-              </div>
-              {!todayWindow && !hadShiftToday && (
+              {hadShiftToday && !todayWindow ? (
+                <>
+                  <div className="flex items-center justify-between">
+                    <span className="text-muted-foreground font-medium">Shift</span>
+                    <span className="text-muted-foreground italic">Shift completed</span>
+                  </div>
+                  {/* The day's own shift information stays here once the clock
+                      has run past it — the next rota slot has its own tab. */}
+                  <ShiftTimePills slot={endedToday} />
+                </>
+              ) : todayWindow ? (
+                <>
+                  <ShiftTimePills slot={laterToday} />
+                  {!canSignIn && <SignInOpensNote win={todayWindow} />}
+                </>
+              ) : (
                 <p className="text-xs text-muted-foreground">
                   You're not on the rota today, so signing in is unavailable.
                 </p>
               )}
-              {!todayWindow && hadShiftToday && nextSlot && (
-                <p className="text-xs text-muted-foreground">
-                  Today's shift has ended — your next shift is below.
-                </p>
-              )}
-              {!todayWindow && hadShiftToday && !nextSlot && (
-                <p className="text-xs text-muted-foreground">
-                  Today's shift has ended — no upcoming shift on the rota yet.
-                </p>
-              )}
-              {todayWindow && !canSignIn && <SignInOpensNote win={todayWindow} />}
             </>
           )}
           {/* Break time reads before the next shift, so the live break timer
