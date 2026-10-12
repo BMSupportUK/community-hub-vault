@@ -416,7 +416,7 @@ export default function ShiftHistoryPanel({ userId, name, username }: { userId: 
           const autoOut =
             !!s.clock_out &&
             !!s.end_prompt_asked_at &&
-            Math.abs(new Date(s.clock_out).getTime() - (new Date(s.end_prompt_asked_at).getTime() + AUTO_OUT_GRACE_MS)) < 60_000;
+            Math.abs(new Date(s.clock_out).getTime() - (new Date(s.end_prompt_asked_at).getTime() + AUTO_OUT_GRACE_MS)) < 15_000;
           return (
             <div key={s.id} className="grid min-w-0 gap-3 xl:grid-cols-2">
             <div
