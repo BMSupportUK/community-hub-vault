@@ -155,3 +155,4 @@
 - [x] Admin secure checkout page: same Shop picture as Orders, kept behind the panel so nothing is covered
 - [x] Admin secure checkout page: chat becomes the customer's bottom-corner bubble, order details full width
 - [x] Restore manual Break/Main break buttons on Working Status and Clock page; moderators included in break plan; Start now fallback for missed/no-slot breaks
+- [x] Manual orders get their own staff alert ("Manual order — added by X for Y") instead of "New order — DaneJ placed an order"; Telegram hook flags manual orders too
