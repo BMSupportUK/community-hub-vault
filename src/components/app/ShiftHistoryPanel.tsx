@@ -17,6 +17,7 @@ interface ShiftHistoryRow {
   end_prompt_asked_at: string | null;
   still_working_ack_at: string | null;
   early_finish_at?: string | null;
+  end_prompt_signed_out_at?: string | null;
 }
 
 interface BreakRow {
