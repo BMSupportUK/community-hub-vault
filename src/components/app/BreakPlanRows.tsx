@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, Coffee } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { breakIcon } from "@/lib/breaks";
 import { planBreaks, toMinutes, fromMinutes, type UserPlan } from "@/lib/break-plan";

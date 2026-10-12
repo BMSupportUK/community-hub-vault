@@ -263,6 +263,7 @@ function AuthLayout() {
           <BreakEndingAlert />
           <ShiftStartEndAlert />
           <EarlyFinishAlert />
+          <AutoBreakStartListener />
           <NotificationBell notificationsOnly />
           {!isPending && !isBanned && !isRejected && <ApprovedDeferredExtras notificationsOnly />}
         </Suspense>
