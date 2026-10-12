@@ -4,8 +4,6 @@ import { ArrowLeft, CalendarDays, Clock as ClockIcon, Hourglass, Loader2, LogIn,
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { type BreakKind, breakIcon, breakLabel } from "@/lib/breaks";
 import { awayForShift, awayIcon } from "@/lib/staff-away";
@@ -29,6 +27,12 @@ export const Route = createFileRoute("/_authenticated/_approved/admin-shifts")({
   }),
 });
 
+
+const RANGES = [
+  { days: 1, label: "Today" },
+  { days: 7, label: "Last 7 days" },
+  { days: 30, label: "Last 30 days" },
+];
 
 interface ShiftRow {
   id: string;
@@ -74,6 +78,19 @@ const ROLE_TABS = [
 ] as const;
 
 type RoleKey = (typeof ROLE_TABS)[number]["key"];
+
+/** Monday-first weekday tabs; value is the JS getDay() index. */
+const DAY_TABS = [
+  { key: 1, label: "Monday" },
+  { key: 2, label: "Tuesday" },
+  { key: 3, label: "Wednesday" },
+  { key: 4, label: "Thursday" },
+  { key: 5, label: "Friday" },
+  { key: 6, label: "Saturday" },
+  { key: 0, label: "Sunday" },
+];
+
+type DayKey = number;
 
 const ROLE_ORDER: RoleKey[] = ["admin", "management", "staff", "moderator"];
 
@@ -155,8 +172,7 @@ function StatCard({ label, value, icon: Icon, tone }: { label: string; value: st
 function StaffShiftsPage() {
   const { hasAny } = useAuth();
   const canView = hasAny(["admin", "management", "staff", "moderator"]);
-  const [selectedDate, setSelectedDate] = useState(() => new Date());
-  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [days, setDays] = useState(1);
   const [loading, setLoading] = useState(true);
   const [shifts, setShifts] = useState<ShiftRow[]>([]);
   const [breaksByShift, setBreaksByShift] = useState<Record<string, BreakRow[]>>({});
@@ -164,18 +180,17 @@ function StaffShiftsPage() {
   const [people, setPeople] = useState<Record<string, PersonRow>>({});
   const [rolesByUser, setRolesByUser] = useState<Record<string, string[]>>({});
   const [role, setRole] = useState<RoleKey>("admin");
+  const [weekday, setWeekday] = useState<DayKey>(new Date().getDay());
 
-  const load = useCallback(async (date: Date, silent = false) => {
+  const load = useCallback(async (d: number, silent = false) => {
     if (!silent) setLoading(true);
-    const from = new Date(date);
+    const from = new Date();
     from.setHours(0, 0, 0, 0);
-    const until = new Date(from);
-    until.setDate(until.getDate() + 1);
+    from.setDate(from.getDate() - (d - 1));
     const { data } = await supabase
       .from("shifts")
       .select("id, user_id, clock_in, clock_out, end_prompt_asked_at, still_working_ack_at, end_prompt_signed_out_at, early_finish_at, early_finish_reason")
       .gte("clock_in", from.toISOString())
-      .lt("clock_in", until.toISOString())
       .order("clock_in", { ascending: false });
     const rows = (data ?? []) as ShiftRow[];
     setShifts(rows);
@@ -224,14 +239,14 @@ function StaffShiftsPage() {
   }, []);
 
   useEffect(() => {
-    if (canView) void load(selectedDate);
-  }, [canView, selectedDate, load]);
+    if (canView) void load(days);
+  }, [canView, days, load]);
 
   // Keep breaks/shifts live so main break and short-break status changes
   // show without a hard refresh.
   useEffect(() => {
     if (!canView) return;
-    const refresh = () => { void load(selectedDate, true); };
+    const refresh = () => { void load(days, true); };
     const ch = supabase
       .channel(`admin-shifts-live-${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "breaks" }, refresh)
@@ -248,7 +263,7 @@ function StaffShiftsPage() {
       window.removeEventListener("focus", onWake);
       document.removeEventListener("visibilitychange", onWake);
     };
-  }, [canView, selectedDate, load]);
+  }, [canView, days, load]);
 
   const primaryRole = useCallback(
     (userId: string) => {
@@ -258,15 +273,34 @@ function StaffShiftsPage() {
     [rolesByUser],
   );
 
-  const roleCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
-    for (const s of shifts) counts[primaryRole(s.user_id)] = (counts[primaryRole(s.user_id)] ?? 0) + 1;
-    return counts;
-  }, [shifts, primaryRole]);
+  const byWeekday = useMemo(
+    () => shifts.filter((s) => new Date(s.clock_in).getDay() === weekday),
+    [shifts, weekday],
+  );
 
-  const visible = useMemo(
+  const byRole = useMemo(
     () => shifts.filter((s) => primaryRole(s.user_id) === role),
     [shifts, role, primaryRole],
+  );
+
+  const roleCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const s of byWeekday) counts[primaryRole(s.user_id)] = (counts[primaryRole(s.user_id)] ?? 0) + 1;
+    return counts;
+  }, [byWeekday, primaryRole]);
+
+  const weekdayCounts = useMemo(() => {
+    const counts: Record<number, number> = {};
+    for (const s of byRole) {
+      const d = new Date(s.clock_in).getDay();
+      counts[d] = (counts[d] ?? 0) + 1;
+    }
+    return counts;
+  }, [byRole]);
+
+  const visible = useMemo(
+    () => byWeekday.filter((s) => primaryRole(s.user_id) === role),
+    [byWeekday, role, primaryRole],
   );
 
   // day -> role -> shifts
@@ -334,40 +368,32 @@ function StaffShiftsPage() {
             </p>
           </div>
           <div className="ml-auto flex items-center gap-2">
-            <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-              <PopoverTrigger asChild>
-                <Button variant="outline" className="h-auto whitespace-normal text-left" aria-label="Choose shift date">
-                  <CalendarDays className="size-4 shrink-0" />
-                  {selectedDate.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short", year: "numeric" })}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="end">
-                <Calendar
-                  mode="single"
-                  required
-                  selected={selectedDate}
-                  defaultMonth={selectedDate}
-                  onSelect={(date) => {
-                    if (!date) return;
-                    setSelectedDate(date);
-                    setCalendarOpen(false);
-                  }}
-                  weekStartsOn={1}
-                  autoFocus
-                  className="pointer-events-auto p-3"
-                />
-              </PopoverContent>
-            </Popover>
-            <Button size="icon" variant="outline" className="rounded-xl" onClick={() => void load(selectedDate)} disabled={loading} aria-label="Refresh shifts">
+            <div className="flex items-center gap-1 rounded-xl border border-border bg-background/60 p-1 backdrop-blur">
+              {RANGES.map((r) => (
+                <button
+                  key={r.days}
+                  type="button"
+                  onClick={() => setDays(r.days)}
+                  className={cn(
+                    "rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors",
+                    days === r.days ? "bg-gradient-primary text-white shadow" : "text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {r.label}
+                </button>
+              ))}
+            </div>
+            <Button size="icon" variant="outline" className="rounded-xl" onClick={() => void load(days)} disabled={loading} aria-label="Refresh shifts">
               {loading ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
             </Button>
           </div>
         </div>
       </header>
 
-      <div className="grid gap-3">
+      <div className="grid gap-3 md:grid-cols-2">
         {[
           { tabs: ROLE_TABS, counts: roleCounts, current: role, set: (k: any) => setRole(k), label: "Role" },
+          { tabs: DAY_TABS, counts: weekdayCounts, current: weekday, set: (k: any) => setWeekday(k), label: "Day" },
         ].map((group) => (
           <div key={group.label} className="rounded-2xl border border-border bg-surface-1 p-2 shadow-sm">
             <p className="px-2 pb-1.5 pt-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">{group.label}</p>
@@ -416,7 +442,7 @@ function StaffShiftsPage() {
         </div>
       ) : grouped.length === 0 ? (
         <div className="rounded-2xl border border-border bg-surface-1 p-8 text-center text-muted-foreground">
-          No shifts recorded for this date.
+          No shifts recorded in this period.
         </div>
       ) : (
         <div className="space-y-6">
