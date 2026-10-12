@@ -1,6 +1,8 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Clock as ClockIcon, LogIn, LogOut, CheckCircle2, HelpCircle, Loader2, ChevronLeft, ChevronRight, CalendarDays } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { type BreakKind, breakLabel, breakIcon } from "@/lib/breaks";
@@ -77,11 +79,16 @@ function weekEnd(now = new Date()) {
   return d;
 }
 
-function fmtRange(start: Date, end: Date) {
-  const opts: Intl.DateTimeFormatOptions = { day: "2-digit", month: "short" };
-  const last = new Date(end.getTime() - 1);
-  return `${start.toLocaleDateString("en-GB", opts)} – ${last.toLocaleDateString("en-GB", { ...opts, year: "numeric" })}`;
+/** Local calendar day as YYYY-MM-DD, used to match a shift to the chosen day. */
+function isoDay(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
+
+/** Long, unambiguous day label, e.g. "Monday 12 October 2026". */
+function fmtDay(d: Date) {
+  return d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+}
+
 
 function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-GB", { weekday: "short", day: "2-digit", month: "short", year: "numeric" });
@@ -123,14 +130,6 @@ function Pill({
   );
 }
 
-const DAY_LABELS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-const DAY_SHORT = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
-
-/** Index (0=Monday) of the day a timestamp falls on, in local time. */
-function dayIndexOfIso(iso: string) {
-  const d = new Date(iso);
-  return (d.getDay() + 6) % 7;
-}
 
 export default function ShiftHistoryPanel({ userId, name, username }: { userId: string; name: string; username?: string | null }) {
   const [rows, setRows] = useState<ShiftHistoryRow[]>([]);
@@ -140,53 +139,41 @@ export default function ShiftHistoryPanel({ userId, name, username }: { userId: 
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(false);
   const [total, setTotal] = useState<number | null>(null);
-  // Monday-to-Sunday window, navigable: 0 = this week, -1 = last week, etc.
-  const [currentWeek, setCurrentWeek] = useState(() => weekStart().getTime());
-  const [weekOffset, setWeekOffset] = useState(0);
   const [claimed, setClaimed] = useState<ClaimedSlot[]>([]);
-  // Selected day tab (0 = Monday). Defaults to today for the current week.
-  const [selectedDay, setSelectedDay] = useState(() => Math.min((new Date().getDay() + 6) % 7, 6));
+  // The day being viewed, picked from the calendar.
+  const [selectedDate, setSelectedDate] = useState(() => new Date());
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
-  useEffect(() => {
-    const tick = () => {
-      const current = weekStart().getTime();
-      setCurrentWeek((prev) => (prev === current ? prev : current));
-    };
-    const t = setInterval(tick, 60_000);
-    return () => clearInterval(t);
-  }, []);
 
-  const weekFrom = (() => {
-    const d = new Date(currentWeek);
-    d.setDate(d.getDate() + weekOffset * 7);
-    d.setHours(0, 0, 0, 0);
-    return d.getTime();
-  })();
+  // The chosen day's Monday-to-Sunday window: the query always loads the whole
+  // week so paging and claimed-hours lookups stay cheap.
+  const weekFrom = weekStart(selectedDate).getTime();
   const weekTo = weekEnd(new Date(weekFrom)).getTime();
 
-  const goWeek = (delta: number) => {
-    setWeekOffset((prev) => {
-      const next = Math.min(0, prev + delta);
-      if (next !== prev) setSelectedDay(next === 0 ? Math.min((new Date().getDay() + 6) % 7, 6) : 0);
-      return next;
+  const selectedIso = isoDay(selectedDate);
+  const isToday = selectedIso === isoDay(new Date());
+
+  const goDay = (delta: number) => {
+    setSelectedDate((prev) => {
+      const d = new Date(prev);
+      d.setDate(d.getDate() + delta);
+      d.setHours(0, 0, 0, 0);
+      return d;
     });
   };
+
 
   // Hourly rota slots this person claimed (moderator cover hours).
   useEffect(() => {
     let cancelled = false;
-    const iso = (t: number) => {
-      const d = new Date(t);
-      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-    };
     (async () => {
       const { data } = await supabase
         .from("shift_slots")
         .select("id, shift_date, start_time, end_time, notes")
         .eq("assigned_to", userId)
         .eq("slot_type", "hourly")
-        .gte("shift_date", iso(weekFrom))
-        .lt("shift_date", iso(weekTo))
+        .gte("shift_date", isoDay(new Date(weekFrom)))
+        .lt("shift_date", isoDay(new Date(weekTo)))
         .order("shift_date", { ascending: false })
         .order("start_time", { ascending: true });
       if (!cancelled) setClaimed((data ?? []) as ClaimedSlot[]);
@@ -283,22 +270,15 @@ export default function ShiftHistoryPanel({ userId, name, username }: { userId: 
     );
   }
 
-  const rangeLabel = fmtRange(new Date(weekFrom), new Date(weekTo));
+  // Shifts and claimed hours for the day chosen in the calendar.
+  const filteredRows = rows.filter((r) => isoDay(new Date(r.clock_in)) === selectedIso);
+  const dayClaimed = claimed.filter((c) => c.shift_date === selectedIso);
 
-  // Shifts and claimed hours for the selected day tab.
-  const filteredRows = rows.filter((r) => dayIndexOfIso(r.clock_in) === selectedDay);
-  const dayCounts = DAY_LABELS.map(
-    (_, i) => rows.filter((r) => dayIndexOfIso(r.clock_in) === i).length,
-  );
-  const selectedDate = new Date(weekFrom);
-  selectedDate.setDate(selectedDate.getDate() + selectedDay);
-  const selectedDateIso = `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, "0")}-${String(selectedDate.getDate()).padStart(2, "0")}`;
-  const dayClaimed = claimed.filter((c) => c.shift_date === selectedDateIso);
 
   const claimedBlock = claimed.length > 0 ? (
     <div className="rounded-2xl border border-amber-400/40 bg-amber-950/20 p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h4 className="font-semibold text-white">Claimed hours — {DAY_LABELS[selectedDay]}</h4>
+        <h4 className="font-semibold text-white">Claimed hours — {fmtDay(selectedDate)}</h4>
         <span className="text-xs text-amber-200/80">
           {dayClaimed.length} slot{dayClaimed.length === 1 ? "" : "s"} booked
         </span>
@@ -321,8 +301,6 @@ export default function ShiftHistoryPanel({ userId, name, username }: { userId: 
     </div>
   ) : null;
 
-  const todayIndex = (new Date().getDay() + 6) % 7;
-  const weekLabel = weekOffset === 0 ? "This week" : weekOffset === -1 ? "Last week" : `${Math.abs(weekOffset)} weeks ago`;
 
   return (
     <div className="space-y-4">
@@ -331,83 +309,83 @@ export default function ShiftHistoryPanel({ userId, name, username }: { userId: 
           {name}&apos;s shift history
         </h3>
         <p className="text-xs text-purple-200/70">
-          {weekLabel} ({rangeLabel}) · {total ?? rows.length} shift{(total ?? rows.length) === 1 ? "" : "s"} · newest first
+          {filteredRows.length} shift{filteredRows.length === 1 ? "" : "s"} on {fmtDay(selectedDate)} · {total ?? rows.length} in the week shown · newest first
         </p>
+
       </div>
 
-      <div className="flex items-center gap-2 rounded-2xl border border-purple-500/30 bg-purple-950/50 p-2">
+      <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-purple-500/30 bg-purple-950/50 p-2">
         <Button
           type="button"
           variant="outline"
           size="sm"
-          onClick={() => goWeek(-1)}
+          onClick={() => goDay(-1)}
           className="border-purple-500/40 bg-purple-900/40 text-white hover:bg-purple-800/60"
+          aria-label="Previous day"
         >
           <ChevronLeft className="size-4" />
-          <span className="hidden sm:inline">Previous week</span>
+          <span className="hidden sm:inline">Previous day</span>
         </Button>
-        <div className="flex-1 text-center">
-          <p className="flex items-center justify-center gap-1.5 text-sm font-semibold text-white">
-            <CalendarDays className="size-4 text-purple-300" />
-            {rangeLabel}
-          </p>
-          <p className="text-[11px] text-purple-200/70">{weekLabel}</p>
-        </div>
-        {weekOffset < 0 ? (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => goWeek(1)}
-            className="border-purple-500/40 bg-purple-900/40 text-white hover:bg-purple-800/60"
-          >
-            <span className="hidden sm:inline">Next week</span>
-            <ChevronRight className="size-4" />
-          </Button>
-        ) : (
-          <Button type="button" variant="outline" size="sm" disabled className="border-purple-500/20 bg-purple-900/20 text-purple-300/50">
-            <span className="hidden sm:inline">Next week</span>
-            <ChevronRight className="size-4" />
-          </Button>
-        )}
+        <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1 border-purple-500/40 bg-purple-900/40 text-white hover:bg-purple-800/60"
+              aria-label="Choose a day"
+            >
+              <CalendarDays className="size-4 text-purple-300" />
+              {fmtDay(selectedDate)}
+              {isToday ? " · today" : ""}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="center">
+            <Calendar
+              mode="single"
+              required
+              selected={selectedDate}
+              defaultMonth={selectedDate}
+              onSelect={(date) => {
+                if (!date) return;
+                setSelectedDate(date);
+                setCalendarOpen(false);
+              }}
+              weekStartsOn={1}
+              autoFocus
+              className="pointer-events-auto p-3"
+            />
+          </PopoverContent>
+        </Popover>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => goDay(1)}
+          className="border-purple-500/40 bg-purple-900/40 text-white hover:bg-purple-800/60"
+          aria-label="Next day"
+        >
+          <span className="hidden sm:inline">Next day</span>
+          <ChevronRight className="size-4" />
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          onClick={() => setSelectedDate(new Date())}
+          disabled={isToday}
+          className="border-purple-500/40 bg-purple-900/40 text-white hover:bg-purple-800/60 disabled:text-purple-300/50"
+        >
+          Today
+        </Button>
       </div>
 
-      <div className="flex flex-wrap gap-1.5 rounded-2xl border border-purple-500/30 bg-purple-950/50 p-1.5">
-        {DAY_SHORT.map((label, i) => {
-          const isToday = weekOffset === 0 && todayIndex === i;
-          const dayDate = new Date(weekFrom);
-          dayDate.setDate(dayDate.getDate() + i);
-          return (
-            <button
-              key={label}
-              type="button"
-              onClick={() => setSelectedDay(i)}
-              className={cn(
-                "flex-1 min-w-[64px] rounded-xl px-2 py-2 text-sm font-medium transition-colors",
-                selectedDay === i
-                  ? "bg-purple-500/40 text-white shadow-[0_0_20px_-8px_rgba(168,85,247,0.8)]"
-                  : "text-purple-200/70 hover:bg-purple-500/20 hover:text-white",
-                isToday && selectedDay !== i ? "ring-1 ring-amber-400/50" : "",
-              )}
-            >
-              <span className="block">{label}</span>
-              <span className="block text-[11px] font-semibold tabular-nums text-white/85">
-                {dayDate.toLocaleDateString("en-GB", { day: "2-digit", month: "short" })}
-              </span>
-              <span className={cn("block text-[10px] font-normal", dayCounts[i] > 0 ? "text-amber-300" : "text-purple-300/40")}>
-                {dayCounts[i]} shift{dayCounts[i] === 1 ? "" : "s"}
-                {isToday ? " · today" : ""}
-              </span>
-            </button>
-          );
-        })}
-      </div>
+
 
       {claimedBlock}
 
       {filteredRows.length === 0 ? (
         <div className="rounded-2xl border border-purple-500/30 bg-purple-950/50 p-8 text-center text-purple-200/80">
-          No shifts on {DAY_LABELS[selectedDay]} ({selectedDate.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}).
+          No shifts on {fmtDay(selectedDate)}.
         </div>
       ) : (
       <div className="grid gap-4">
