@@ -1,9 +1,11 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, CalendarDays, Clock as ClockIcon, Hourglass, Loader2, LogIn, LogOut, RefreshCw, TimerReset, UserCheck, Users } from "lucide-react";
+import { ArrowLeft, CalendarDays, ChevronLeft, ChevronRight, Clock as ClockIcon, Hourglass, Loader2, LogIn, LogOut, RefreshCw, TimerReset, UserCheck, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { type BreakKind, breakIcon, breakLabel } from "@/lib/breaks";
 import { awayForShift, awayIcon } from "@/lib/staff-away";
@@ -27,11 +29,30 @@ export const Route = createFileRoute("/_authenticated/_approved/admin-shifts")({
 });
 
 
-const RANGES = [
-  { days: 1, label: "Today" },
-  { days: 7, label: "Last 7 days" },
-  { days: 30, label: "Last 30 days" },
-];
+/** Monday 00:00 local time of the week containing `now`. */
+function weekStart(now = new Date()) {
+  const d = new Date(now);
+  const dow = (d.getDay() + 6) % 7; // 0 = Monday
+  d.setDate(d.getDate() - dow);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function weekEnd(now = new Date()) {
+  const d = weekStart(now);
+  d.setDate(d.getDate() + 7);
+  return d;
+}
+
+/** Local calendar day as YYYY-MM-DD. */
+function isoDay(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/** Long, unambiguous day label, e.g. "Monday 12 October 2026". */
+function fmtDay(d: Date) {
+  return d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+}
 
 interface ShiftRow {
   id: string;
