@@ -1,9 +1,11 @@
 import { createFileRoute, Link, Navigate } from "@tanstack/react-router";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft, CalendarDays, Clock as ClockIcon, Hourglass, Loader2, LogIn, LogOut, RefreshCw, TimerReset, UserCheck, Users } from "lucide-react";
+import { ArrowLeft, CalendarDays, ChevronLeft, ChevronRight, Clock as ClockIcon, Hourglass, Loader2, LogIn, LogOut, RefreshCw, TimerReset, UserCheck, Users } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { type BreakKind, breakIcon, breakLabel } from "@/lib/breaks";
 import { awayForShift, awayIcon } from "@/lib/staff-away";
@@ -27,11 +29,30 @@ export const Route = createFileRoute("/_authenticated/_approved/admin-shifts")({
 });
 
 
-const RANGES = [
-  { days: 1, label: "Today" },
-  { days: 7, label: "Last 7 days" },
-  { days: 30, label: "Last 30 days" },
-];
+/** Monday 00:00 local time of the week containing `now`. */
+function weekStart(now = new Date()) {
+  const d = new Date(now);
+  const dow = (d.getDay() + 6) % 7; // 0 = Monday
+  d.setDate(d.getDate() - dow);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function weekEnd(now = new Date()) {
+  const d = weekStart(now);
+  d.setDate(d.getDate() + 7);
+  return d;
+}
+
+/** Local calendar day as YYYY-MM-DD. */
+function isoDay(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+/** Long, unambiguous day label, e.g. "Monday 12 October 2026". */
+function fmtDay(d: Date) {
+  return d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+}
 
 interface ShiftRow {
   id: string;
@@ -171,7 +192,9 @@ function StatCard({ label, value, icon: Icon, tone }: { label: string; value: st
 function StaffShiftsPage() {
   const { hasAny } = useAuth();
   const canView = hasAny(["admin", "management", "staff", "moderator"]);
-  const [days, setDays] = useState(1);
+  // The day picked in the calendar; the query always loads its Monday–Sunday week.
+  const [selectedDate, setSelectedDate] = useState(() => new Date());
+  const [calendarOpen, setCalendarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [shifts, setShifts] = useState<ShiftRow[]>([]);
   const [breaksByShift, setBreaksByShift] = useState<Record<string, BreakRow[]>>({});
@@ -181,15 +204,26 @@ function StaffShiftsPage() {
   const [role, setRole] = useState<RoleKey>("admin");
   const [weekday, setWeekday] = useState<DayKey>(new Date().getDay());
 
-  const load = useCallback(async (d: number, silent = false) => {
+  const weekFrom = weekStart(selectedDate);
+  const weekTo = weekEnd(selectedDate);
+  const isToday = isoDay(selectedDate) === isoDay(new Date());
+
+  const goDay = (delta: number) => {
+    setSelectedDate((prev) => {
+      const d = new Date(prev);
+      d.setDate(d.getDate() + delta);
+      d.setHours(0, 0, 0, 0);
+      return d;
+    });
+  };
+
+  const load = useCallback(async (from: Date, to: Date, silent = false) => {
     if (!silent) setLoading(true);
-    const from = new Date();
-    from.setHours(0, 0, 0, 0);
-    from.setDate(from.getDate() - (d - 1));
     const { data } = await supabase
       .from("shifts")
       .select("id, user_id, clock_in, clock_out, end_prompt_asked_at, still_working_ack_at, end_prompt_signed_out_at, early_finish_at, early_finish_reason")
       .gte("clock_in", from.toISOString())
+      .lt("clock_in", to.toISOString())
       .order("clock_in", { ascending: false });
     const rows = (data ?? []) as ShiftRow[];
     setShifts(rows);
@@ -238,14 +272,15 @@ function StaffShiftsPage() {
   }, []);
 
   useEffect(() => {
-    if (canView) void load(days);
-  }, [canView, days, load]);
+    if (canView) void load(weekFrom, weekTo);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canView, weekFrom.getTime(), weekTo.getTime(), load]);
 
   // Keep breaks/shifts live so main break and short-break status changes
   // show without a hard refresh.
   useEffect(() => {
     if (!canView) return;
-    const refresh = () => { void load(days, true); };
+    const refresh = () => { void load(weekFrom, weekTo, true); };
     const ch = supabase
       .channel(`admin-shifts-live-${Math.random().toString(36).slice(2)}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "breaks" }, refresh)
@@ -262,7 +297,8 @@ function StaffShiftsPage() {
       window.removeEventListener("focus", onWake);
       document.removeEventListener("visibilitychange", onWake);
     };
-  }, [canView, days, load]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canView, weekFrom.getTime(), weekTo.getTime(), load]);
 
   const primaryRole = useCallback(
     (userId: string) => {
@@ -367,21 +403,72 @@ function StaffShiftsPage() {
           </div>
           <div className="ml-auto flex items-center gap-2">
             <div className="flex items-center gap-1 rounded-xl border border-border bg-background/60 p-1 backdrop-blur">
-              {RANGES.map((r) => (
-                <button
-                  key={r.days}
-                  type="button"
-                  onClick={() => setDays(r.days)}
-                  className={cn(
-                    "rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors",
-                    days === r.days ? "bg-gradient-primary text-white shadow" : "text-muted-foreground hover:text-foreground",
-                  )}
-                >
-                  {r.label}
-                </button>
-              ))}
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => goDay(-1)}
+                className="rounded-lg px-2 text-xs font-semibold text-muted-foreground hover:text-foreground"
+                aria-label="Previous day"
+              >
+                <ChevronLeft className="size-4" />
+                <span className="hidden sm:inline">Previous day</span>
+              </Button>
+              <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="rounded-lg px-3 text-xs font-semibold text-muted-foreground hover:text-foreground"
+                    aria-label="Choose a day"
+                  >
+                    <CalendarDays className="size-4" />
+                    {fmtDay(selectedDate)}
+                    {isToday ? " · today" : ""}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="center">
+                  <Calendar
+                    mode="single"
+                    required
+                    selected={selectedDate}
+                    defaultMonth={selectedDate}
+                    onSelect={(date) => {
+                      if (!date) return;
+                      setSelectedDate(date);
+                      setWeekday(date.getDay());
+                      setCalendarOpen(false);
+                    }}
+                    weekStartsOn={1}
+                    autoFocus
+                    className="pointer-events-auto p-3"
+                  />
+                </PopoverContent>
+              </Popover>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => goDay(1)}
+                className="rounded-lg px-2 text-xs font-semibold text-muted-foreground hover:text-foreground"
+                aria-label="Next day"
+              >
+                <span className="hidden sm:inline">Next day</span>
+                <ChevronRight className="size-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => { const t = new Date(); setSelectedDate(t); setWeekday(t.getDay()); }}
+                disabled={isToday}
+                className="rounded-lg px-3 text-xs font-semibold text-muted-foreground hover:text-foreground disabled:opacity-50"
+              >
+                Today
+              </Button>
             </div>
-            <Button size="icon" variant="outline" className="rounded-xl" onClick={() => void load(days)} disabled={loading} aria-label="Refresh shifts">
+            <Button size="icon" variant="outline" className="rounded-xl" onClick={() => void load(weekFrom, weekTo)} disabled={loading} aria-label="Refresh shifts">
               {loading ? <Loader2 className="size-4 animate-spin" /> : <RefreshCw className="size-4" />}
             </Button>
           </div>
@@ -391,7 +478,13 @@ function StaffShiftsPage() {
       <div className="grid gap-3 md:grid-cols-2">
         {[
           { tabs: ROLE_TABS, counts: roleCounts, current: role, set: (k: any) => setRole(k), label: "Role" },
-          { tabs: DAY_TABS, counts: weekdayCounts, current: weekday, set: (k: any) => setWeekday(k), label: "Day" },
+          { tabs: DAY_TABS, counts: weekdayCounts, current: weekday, set: (k: any) => {
+              setWeekday(k);
+              // Jump the calendar to that weekday within the week being shown.
+              const d = weekStart(selectedDate);
+              d.setDate(d.getDate() + ((k + 6) % 7));
+              setSelectedDate(d);
+            }, label: "Day" },
         ].map((group) => (
           <div key={group.label} className="rounded-2xl border border-border bg-surface-1 p-2 shadow-sm">
             <p className="px-2 pb-1.5 pt-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">{group.label}</p>
@@ -440,7 +533,7 @@ function StaffShiftsPage() {
         </div>
       ) : grouped.length === 0 ? (
         <div className="rounded-2xl border border-border bg-surface-1 p-8 text-center text-muted-foreground">
-          No shifts recorded in this period.
+          No shifts recorded in the week of {fmtDay(selectedDate)}.
         </div>
       ) : (
         <div className="space-y-6">
