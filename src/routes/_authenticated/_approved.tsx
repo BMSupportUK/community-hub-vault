@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { isFanZonePath } from "@/lib/fan-zone-nav";
 import { FanZoneBanGate } from "@/components/app/FanZoneBanGate";
 import { isPageAllowed, pageKeyForPath, usePagePermissions } from "@/lib/page-access";
+import { DemoRoleBanner } from "@/components/app/DemoRoleBanner";
 
 const ApprovedDeferredExtras = lazy(() =>
   import("@/components/app/ApprovedDeferredExtras").then((module) => ({

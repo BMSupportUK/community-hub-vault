@@ -382,16 +382,6 @@ export function UserAvatarMenu({ variant = "header" }: { variant?: "header" | "b
           <DropdownMenuLabel className="text-[10px] uppercase tracking-wider text-muted-foreground">
             {inFanZone ? "Fan Zone account" : "Account"}
           </DropdownMenuLabel>
-          {!inFanZone && isDemo ? (
-            <DropdownMenuItem
-              onSelect={(e) => { e.preventDefault(); void flipDemo(); }}
-              disabled={switching}
-              className="cursor-pointer font-semibold text-primary"
-            >
-              <ShieldCheck className="size-4 mr-2" />
-              {roles.includes("staff") ? "Switch to subscriber view" : "Switch to staff view"}
-            </DropdownMenuItem>
-          ) : null}
           {!inFanZone ? (
             <DropdownMenuItem onSelect={goEdit} className="cursor-pointer">
               <Pencil className="size-4 mr-2" />
